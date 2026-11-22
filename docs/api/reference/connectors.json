@@ -4,10 +4,10 @@
     "response": {
       "items": [
         {
-          "type": "example",
-          "version": 1,
-          "displayName": "Ada Example",
-          "description": "example",
+          "type": "generic",
+          "version": 3,
+          "displayName": "Day pass",
+          "description": "A day pass for the climbing gym, scanned at the front desk.",
           "capabilities": {
             "poll": false,
             "delta": false,
@@ -18,36 +18,42 @@
           "configSchema": {},
           "secretSchema": {},
           "outputFields": {
-            "example": {
+            "tier": {
               "type": "string",
-              "description": "example"
+              "description": "A day pass for the climbing gym, scanned at the front desk."
             }
           },
           "defaults": {
-            "intervalSeconds": 1,
-            "maxConcurrency": 1,
-            "requestsPerMinute": 1,
-            "timeoutMs": 1764000000000
+            "intervalSeconds": 300,
+            "maxConcurrency": 3,
+            "requestsPerMinute": 60,
+            "timeoutMs": 3
           },
           "recipes": [
             {
               "id": "custom",
-              "label": "Ada Example",
+              "label": "Day pass",
               "pasteSecret": false,
               "outputFields": {
-                "example": {
+                "tier": {
                   "type": "string"
                 }
               },
               "mapping": {
-                "example": {
-                  "from": "example"
+                "name": {
+                  "from": "Name"
+                },
+                "tier": {
+                  "from": "Tier"
+                },
+                "validUntil": {
+                  "from": "Valid until"
                 }
               },
-              "holderEmailField": "ada@example.com",
+              "holderEmailField": "/Holder email",
               "voidWhen": [
                 {
-                  "from": "example",
+                  "from": "Booking sheet",
                   "op": "in"
                 }
               ]
@@ -61,10 +67,10 @@
   "connectors.getConnectorsByType": {
     "description": "One connector type with its settings.",
     "response": {
-      "type": "example",
-      "version": 1,
-      "displayName": "Ada Example",
-      "description": "example",
+      "type": "generic",
+      "version": 3,
+      "displayName": "Day pass",
+      "description": "A day pass for the climbing gym, scanned at the front desk.",
       "capabilities": {
         "poll": false,
         "delta": false,
@@ -75,42 +81,45 @@
       "configSchema": {},
       "secretSchema": {},
       "outputFields": {
-        "example": {
+        "tier": {
           "type": "string",
-          "description": "example"
+          "description": "A day pass for the climbing gym, scanned at the front desk."
         }
       },
       "defaults": {
-        "intervalSeconds": 1,
-        "maxConcurrency": 1,
-        "requestsPerMinute": 1,
-        "timeoutMs": 1764000000000
+        "intervalSeconds": 300,
+        "maxConcurrency": 3,
+        "requestsPerMinute": 60,
+        "timeoutMs": 3
       },
       "recipes": [
         {
           "id": "custom",
-          "label": "Ada Example",
+          "label": "Day pass",
           "pasteSecret": false,
           "outputFields": {
-            "example": {
+            "tier": {
               "type": "string",
-              "description": "example"
+              "description": "A day pass for the climbing gym, scanned at the front desk."
             }
           },
           "mapping": {
-            "example": {
-              "from": "example",
-              "transform": {
-                "kind": "enum"
-              }
+            "name": {
+              "from": "Name"
+            },
+            "tier": {
+              "from": "Tier"
+            },
+            "validUntil": {
+              "from": "Valid until"
             }
           },
-          "holderEmailField": "ada@example.com",
+          "holderEmailField": "/Holder email",
           "voidWhen": [
             {
-              "from": "example",
+              "from": "Booking sheet",
               "op": "in",
-              "values": ["example"]
+              "values": ["Day pass"]
             }
           ]
         }

@@ -7,14 +7,23 @@ type Param = { name: string; in: string; deprecated?: boolean; 'x-platform-only'
 type Op = {
   operationId: string;
   parameters?: Param[];
-  responses?: Record<string, { content?: Record<string, { schema?: { properties?: object } }> }>;
+  responses?: Record<string, { content?: Record<string, { schema?: Schema }> }>;
 };
-type Doc = { paths: Record<string, Record<string, Op>> };
+type Schema = { $ref?: string; properties?: Record<string, unknown> };
+type Doc = {
+  paths: Record<string, Record<string, Op>>;
+  components: { schemas: Record<string, Schema> };
+};
 
 const doc = buildOpenApiDocument(createApp({ stores: fakeAuth().stores })) as unknown as Doc;
 const ops = Object.entries(doc.paths).flatMap(([path, item]) =>
   Object.entries(item).map(([method, op]) => ({ path, method, op })),
 );
+/** A 200 body's schema, with a named one (`$ref`) read through the components. */
+const bodyOf = (op: Op): Schema | undefined => {
+  const schema = op.responses?.['200']?.content?.['application/json']?.schema;
+  return schema?.$ref ? doc.components.schemas[schema.$ref.split('/').pop() ?? ''] : schema;
+};
 const queryNames = (op: Op) => (op.parameters ?? []).filter((p) => p.in === 'query');
 
 /** Reads one object, one map or one result, or a set with a hard cap (a pass's notes, a session's scanners): no collection to page. */
@@ -33,7 +42,7 @@ const NOT_COLLECTIONS = new Set([
 const STREAMS = new Set(['/api/v1/events', '/api/v1/scan/live']);
 
 const collections = ops.filter(({ path, method, op }) => {
-  const schema = op.responses?.['200']?.content?.['application/json']?.schema;
+  const schema = bodyOf(op);
   return (
     method === 'get' &&
     path.startsWith('/api/v1/') &&
@@ -50,7 +59,7 @@ describe('collection GETs', () => {
 
   it('return nextCursor in the page', () => {
     const missing = collections.filter(({ op }) => {
-      const props = op.responses?.['200']?.content?.['application/json']?.schema?.properties;
+      const props = bodyOf(op)?.properties;
       return !props || !('nextCursor' in props);
     });
     expect(missing.map((m) => m.path)).toEqual([]);

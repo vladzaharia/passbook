@@ -4,13 +4,13 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "id": "0193a1b2-7c00-7000-8000-000000000033",
           "kind": "push",
           "state": "pending",
-          "attempts": 1,
-          "errorCode": "AB12CD34",
-          "createdAt": 1764000000000,
-          "finishedAt": 1764000000000
+          "attempts": 3,
+          "errorCode": null,
+          "createdAt": 1794322800000,
+          "finishedAt": 1795521600000
         }
       ]
     }

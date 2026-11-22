@@ -4,25 +4,42 @@
     "response": {
       "saved": [
         {
-          "name": "Gym export",
-          "columns": ["Member #", "Name", "Holder email"],
-          "savedAt": 1790000000000,
+          "name": "Spring members",
+          "columns": ["tier"],
           "plan": {
             "mapping": {
-              "memberName": {
-                "from": "/Name"
+              "name": {
+                "from": "Name"
+              },
+              "tier": {
+                "from": "Tier"
+              },
+              "validUntil": {
+                "from": "Valid until"
               }
             },
             "holderEmail": {
-              "from": "/Holder email"
+              "from": "Booking sheet",
+              "transform": {
+                "kind": "enum"
+              }
             },
             "externalId": {
-              "from": "/Member #"
+              "from": "Booking sheet",
+              "transform": {
+                "kind": "enum"
+              }
             },
             "match": "externalId",
             "keepManual": false,
-            "save": true
-          }
+            "save": false,
+            "overrides": {
+              "Plan": {
+                "Annual": "Day pass"
+              }
+            }
+          },
+          "savedAt": 1795521600000
         }
       ]
     }
@@ -30,71 +47,83 @@
   "pass-imports.putPassImportsMappings": {
     "description": "Saves a named column mapping for a template. The same name replaces the earlier one; up to 20 are kept. Cell fixes are not saved.",
     "request": {
-      "templateId": "0197f1c2-6f3a-7b11-9c1e-2a5d4c8e9b10",
-      "name": "Gym export",
-      "columns": ["Member #", "Name", "Holder email"],
+      "name": "Spring members",
+      "columns": ["tier"],
       "plan": {
         "mapping": {
-          "memberName": {
-            "from": "/Name"
+          "name": {
+            "from": "Name"
+          },
+          "tier": {
+            "from": "Tier"
+          },
+          "validUntil": {
+            "from": "Valid until"
           }
         },
         "holderEmail": {
-          "from": "/Holder email"
+          "from": "Booking sheet",
+          "transform": {
+            "kind": "enum",
+            "options": {
+              "tier": {}
+            }
+          }
         },
         "externalId": {
-          "from": "/Member #"
+          "from": "Booking sheet",
+          "transform": {
+            "kind": "enum",
+            "options": {
+              "tier": {}
+            }
+          }
         },
         "match": "externalId",
         "keepManual": false,
-        "save": true
-      }
-    },
-    "requests": {
-      "Match by member number": {
-        "templateId": "0197f1c2-6f3a-7b11-9c1e-2a5d4c8e9b10",
-        "name": "Gym export",
-        "columns": ["Member #", "Name", "Holder email"],
-        "plan": {
-          "mapping": {
-            "memberName": {
-              "from": "/Name"
-            }
-          },
-          "holderEmail": {
-            "from": "/Holder email"
-          },
-          "externalId": {
-            "from": "/Member #"
-          },
-          "match": "externalId",
-          "keepManual": false,
-          "save": true
-        }
-      }
+        "save": false
+      },
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
     },
     "response": {
       "saved": [
         {
-          "name": "Gym export",
-          "columns": ["Member #", "Name", "Holder email"],
-          "savedAt": 1790000000000,
+          "name": "Spring members",
+          "columns": ["tier"],
           "plan": {
             "mapping": {
-              "memberName": {
-                "from": "/Name"
+              "name": {
+                "from": "Name"
+              },
+              "tier": {
+                "from": "Tier"
+              },
+              "validUntil": {
+                "from": "Valid until"
               }
             },
             "holderEmail": {
-              "from": "/Holder email"
+              "from": "Booking sheet",
+              "transform": {
+                "kind": "enum"
+              }
             },
             "externalId": {
-              "from": "/Member #"
+              "from": "Booking sheet",
+              "transform": {
+                "kind": "enum"
+              }
             },
             "match": "externalId",
             "keepManual": false,
-            "save": true
-          }
+            "save": false,
+            "overrides": {
+              "Plan": {
+                "Annual": "Day pass"
+              }
+            }
+          },
+          "savedAt": 1795521600000
         }
       ]
     }
@@ -102,22 +131,64 @@
   "pass-imports.deletePassImportsMappings": {
     "description": "Deletes a saved column mapping by name. A name that is not saved changes nothing.",
     "response": {
-      "saved": []
+      "saved": [
+        {
+          "name": "Spring members",
+          "columns": ["tier"],
+          "plan": {
+            "mapping": {
+              "name": {
+                "from": "Name"
+              },
+              "tier": {
+                "from": "Tier"
+              },
+              "validUntil": {
+                "from": "Valid until"
+              }
+            },
+            "holderEmail": {
+              "from": "Booking sheet",
+              "transform": {
+                "kind": "enum"
+              }
+            },
+            "externalId": {
+              "from": "Booking sheet",
+              "transform": {
+                "kind": "enum"
+              }
+            },
+            "match": "externalId",
+            "keepManual": false,
+            "save": false,
+            "overrides": {
+              "Plan": {
+                "Annual": "Day pass"
+              }
+            }
+          },
+          "savedAt": 1795521600000
+        }
+      ]
     }
   },
   "pass-imports.postPassImportsByIdUndo": {
-    "description": "Undoes an ended import for 24 hours after it ends, as a background run. Passes it created are removed unless they were edited or scanned since. Passes it updated get their earlier values back while still at the version the import wrote. Anything else is kept and listed in `kept`. Held emails are cancelled; emails already sent are not recalled. Asking again returns the same run. Poll GET /pass-imports/{id} for `undo`.",
+    "description": "Undoes an ended import for 24 hours after it ends, as a background run. Passes it created are removed unless they were edited or scanned since. Passes it updated get their earlier values back while still at the version the import wrote. Anything else is kept and listed in `kept`. Held emails are canceled; emails already sent are not recalled. Asking again returns the same run. Poll GET /pass-imports/{id} for `undo`.",
     "request": {},
-    "requests": {
-      "Undo the import": {}
-    },
     "response": {
-      "state": "running",
-      "removed": 0,
-      "restored": 0,
-      "keptTotal": 0,
-      "kept": [],
-      "emailsCancelled": 3
+      "state": "done",
+      "removed": 3,
+      "restored": 3,
+      "keptTotal": 3,
+      "kept": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "code": "NW7K2Q"
+        }
+      ],
+      "emailsCancelled": 3,
+      "unrevertable": 3
     }
   },
   "pass-imports.postPassImports": {
@@ -126,8 +197,8 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "source": {
         "kind": "file",
-        "name": "guests.csv",
-        "csv": "Holder email,Event,Venue,City,Starts,Ends,Attendee,Ticket ID\nada@example.com,Harbor Night,Harbor Hall,\"Cupertino, CA\",2030-06-01T19:00:00-07:00,2030-06-01T22:00:00-07:00,Ada Example,TICKET-1001\ngrace@example.com,Harbor Night,Harbor Hall,\"Cupertino, CA\",TBD,2030-06-01T22:00:00-07:00,Grace Host,TICKET-1002\nalan@example.com,Harbor Night,Harbor Hall,\"Cupertino, CA\",2030-06-01T19:00:00-07:00,2030-06-01T22:00:00-07:00,Alan Guest,TICKET-1003"
+        "name": "members.csv",
+        "csv": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\n"
       },
       "mapping": "auto"
     },
@@ -136,8 +207,8 @@
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
         "source": {
           "kind": "file",
-          "name": "guests.csv",
-          "csv": "Holder email,Event,Venue,City,Starts,Ends,Attendee,Ticket ID\nada@example.com,Harbor Night,Harbor Hall,\"Cupertino, CA\",2030-06-01T19:00:00-07:00,2030-06-01T22:00:00-07:00,Ada Example,TICKET-1001\ngrace@example.com,Harbor Night,Harbor Hall,\"Cupertino, CA\",TBD,2030-06-01T22:00:00-07:00,Grace Host,TICKET-1002\nalan@example.com,Harbor Night,Harbor Hall,\"Cupertino, CA\",2030-06-01T19:00:00-07:00,2030-06-01T22:00:00-07:00,Alan Guest,TICKET-1003"
+          "name": "members.csv",
+          "csv": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\n"
         },
         "mapping": "auto"
       },
@@ -145,22 +216,19 @@
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
         "source": {
           "kind": "file",
-          "name": "guests.csv",
-          "csv": "Holder email,Event,Venue,City,Starts,Ends,Attendee,Ticket ID\nada@example.com,Harbor Night,Harbor Hall,\"Cupertino, CA\",2030-06-01T19:00:00-07:00,2030-06-01T22:00:00-07:00,Ada Example,TICKET-1001\ngrace@example.com,Harbor Night,Harbor Hall,\"Cupertino, CA\",TBD,2030-06-01T22:00:00-07:00,Grace Host,TICKET-1002\nalan@example.com,Harbor Night,Harbor Hall,\"Cupertino, CA\",2030-06-01T19:00:00-07:00,2030-06-01T22:00:00-07:00,Alan Guest,TICKET-1003"
+          "name": "members.csv",
+          "csv": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\n"
         },
         "plan": {
           "mapping": {
-            "eventName": {
-              "from": "/Event"
+            "name": {
+              "from": "/Name"
             },
-            "venueName": {
-              "from": "/Venue"
+            "tier": {
+              "from": "/Tier"
             },
-            "venueRegion": {
-              "from": "/City"
-            },
-            "startsAt": {
-              "from": "/Starts",
+            "validUntil": {
+              "from": "/Valid until",
               "transform": {
                 "kind": "date",
                 "options": {
@@ -168,783 +236,68 @@
                   "output": "iso"
                 }
               }
-            },
-            "endsAt": {
-              "from": "/Ends",
-              "transform": {
-                "kind": "date",
-                "options": {
-                  "input": "iso",
-                  "output": "iso"
-                }
-              }
-            },
-            "attendee": {
-              "from": "/Attendee"
-            },
-            "ticketId": {
-              "from": "/Ticket ID"
             }
           },
           "holderEmail": {
             "from": "/Holder email"
           },
           "externalId": {
-            "from": "/Ticket ID"
+            "from": "/Member ID"
           },
           "match": "externalId",
           "keepManual": false,
-          "save": true
+          "save": true,
+          "overrides": {}
         }
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "id": "0193a1b2-7c00-7000-8000-000000000071",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-      "templateVersion": "d5b6a5d2e06a2a73",
-      "mode": "test",
-      "state": "ready",
-      "source": {
-        "kind": "file",
-        "name": "guests.csv"
-      },
-      "columns": [
-        {
-          "pointer": "/Holder email",
-          "label": "Holder email",
-          "samples": ["ada@example.com", "grace@example.com", "alan@example.com"]
-        },
-        {
-          "pointer": "/Event",
-          "label": "Event",
-          "samples": ["Harbor Night", "Harbor Night", "Harbor Night"]
-        },
-        {
-          "pointer": "/Venue",
-          "label": "Venue",
-          "samples": ["Harbor Hall", "Harbor Hall", "Harbor Hall"]
-        },
-        {
-          "pointer": "/City",
-          "label": "City",
-          "samples": ["Cupertino, CA", "Cupertino, CA", "Cupertino, CA"]
-        },
-        {
-          "pointer": "/Starts",
-          "label": "Starts",
-          "samples": ["2030-06-01T19:00:00-07:00", "TBD", "2030-06-01T19:00:00-07:00"]
-        },
-        {
-          "pointer": "/Ends",
-          "label": "Ends",
-          "samples": [
-            "2030-06-01T22:00:00-07:00",
-            "2030-06-01T22:00:00-07:00",
-            "2030-06-01T22:00:00-07:00"
-          ]
-        },
-        {
-          "pointer": "/Attendee",
-          "label": "Attendee",
-          "samples": ["Ada Example", "Grace Host", "Alan Guest"]
-        },
-        {
-          "pointer": "/Ticket ID",
-          "label": "Ticket ID",
-          "samples": ["TICKET-1001", "TICKET-1002", "TICKET-1003"]
-        }
-      ],
-      "plan": {
-        "mapping": {
-          "eventName": {
-            "from": "/Event"
-          },
-          "venueName": {
-            "from": "/Venue"
-          },
-          "venueRegion": {
-            "from": "/City"
-          },
-          "startsAt": {
-            "from": "/Starts",
-            "transform": {
-              "kind": "date",
-              "options": {
-                "input": "iso",
-                "output": "iso"
-              }
-            }
-          },
-          "endsAt": {
-            "from": "/Ends",
-            "transform": {
-              "kind": "date",
-              "options": {
-                "input": "iso",
-                "output": "iso"
-              }
-            }
-          },
-          "attendee": {
-            "from": "/Attendee"
-          },
-          "ticketId": {
-            "from": "/Ticket ID"
-          }
-        },
-        "holderEmail": {
-          "from": "/Holder email"
-        },
-        "externalId": {
-          "from": "/Ticket ID"
-        },
-        "match": "externalId",
-        "keepManual": false,
-        "save": true
-      },
-      "counts": {
-        "rows": 3,
-        "create": 2,
-        "update": 0,
-        "unchanged": 0,
-        "errors": 1,
-        "warnings": 0,
-        "emailable": 2,
-        "errorsCreate": 1,
-        "errorsUpdate": 0
-      },
-      "previews": [
-        {
-          "row": 2,
-          "action": "create",
-          "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Ada Example",
-            "ticketId": "TICKET-1001"
-          }
-        },
-        {
-          "row": 4,
-          "action": "create",
-          "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Alan Guest",
-            "ticketId": "TICKET-1003"
-          }
-        }
-      ],
-      "problems": [
-        {
-          "row": 3,
-          "column": "Starts",
-          "field": "startsAt",
-          "label": "Starts",
-          "code": "IMPORT_DATE_UNREADABLE",
-          "message": "Starts is not in the right format.",
-          "severity": "error",
-          "value": "TBD"
-        }
-      ],
-      "problemTotals": {
-        "errors": 1,
-        "warnings": 0
-      },
-      "problemsTruncated": false,
-      "emailBudget": 500,
-      "email": false,
-      "progress": null,
-      "errorCode": null,
-      "errorFile": true,
-      "createdAt": 1790000000000,
-      "checkedAt": 1790000000000,
-      "committedAt": null,
-      "finishedAt": null,
-      "expiresAt": 1790082800000,
-      "mapping": {
-        "fields": [
-          {
-            "role": "holderEmail",
-            "target": "holderEmail",
-            "label": "Holder email",
-            "required": false,
-            "from": ["/Holder email"],
-            "confidence": "exact",
-            "matchBy": false,
-            "entry": {
-              "from": "/Holder email"
-            },
-            "values": [],
-            "date": null
-          },
-          {
-            "role": "externalId",
-            "target": "externalId",
-            "label": "External ID",
-            "required": false,
-            "from": ["/Ticket ID"],
-            "confidence": "exact",
-            "matchBy": true,
-            "entry": {
-              "from": "/Ticket ID"
-            },
-            "values": [],
-            "date": null
-          },
-          {
-            "role": "input",
-            "target": "eventName",
-            "label": "Event",
-            "required": true,
-            "from": ["/Event"],
-            "confidence": "exact",
-            "matchBy": false,
-            "entry": {
-              "from": "/Event"
-            },
-            "values": [],
-            "date": null
-          },
-          {
-            "role": "input",
-            "target": "venueName",
-            "label": "Venue",
-            "required": true,
-            "from": ["/Venue"],
-            "confidence": "exact",
-            "matchBy": false,
-            "entry": {
-              "from": "/Venue"
-            },
-            "values": [],
-            "date": null
-          },
-          {
-            "role": "input",
-            "target": "venueRegion",
-            "label": "City",
-            "required": true,
-            "from": ["/City"],
-            "confidence": "exact",
-            "matchBy": false,
-            "entry": {
-              "from": "/City"
-            },
-            "values": [],
-            "date": null
-          },
-          {
-            "role": "input",
-            "target": "startsAt",
-            "label": "Starts",
-            "required": true,
-            "from": ["/Starts"],
-            "confidence": "exact",
-            "matchBy": false,
-            "entry": {
-              "from": "/Starts",
-              "transform": {
-                "kind": "date",
-                "options": {
-                  "input": "iso",
-                  "output": "iso"
-                }
-              }
-            },
-            "values": [],
-            "date": {
-              "format": "iso",
-              "choices": [],
-              "parsed": 2,
-              "total": 3
-            }
-          },
-          {
-            "role": "input",
-            "target": "endsAt",
-            "label": "Ends",
-            "required": true,
-            "from": ["/Ends"],
-            "confidence": "exact",
-            "matchBy": false,
-            "entry": {
-              "from": "/Ends",
-              "transform": {
-                "kind": "date",
-                "options": {
-                  "input": "iso",
-                  "output": "iso"
-                }
-              }
-            },
-            "values": [],
-            "date": {
-              "format": "iso",
-              "choices": [],
-              "parsed": 3,
-              "total": 3
-            }
-          },
-          {
-            "role": "input",
-            "target": "attendee",
-            "label": "Attendee",
-            "required": true,
-            "from": ["/Attendee"],
-            "confidence": "exact",
-            "matchBy": false,
-            "entry": {
-              "from": "/Attendee"
-            },
-            "values": [],
-            "date": null
-          },
-          {
-            "role": "input",
-            "target": "ticketId",
-            "label": "Ticket ID",
-            "required": true,
-            "from": ["/Ticket ID"],
-            "confidence": "exact",
-            "matchBy": false,
-            "entry": {
-              "from": "/Ticket ID"
-            },
-            "values": [],
-            "date": null
-          }
-        ],
-        "unused": [],
-        "columns": 8,
-        "used": 8,
-        "missing": []
-      },
-      "emailHoldUntil": null
-    }
-  },
-  "pass-imports.postPassImportsByIdCheck": {
-    "description": "Checks the file against a plan and counts what each row would do: `create`, `update`, `unchanged` and `errors`. `overrides` fix single cells, by spreadsheet row (the header is row 1) and column pointer, without editing the file; up to 200. Writes no passes.",
-    "request": {
-      "plan": {
-        "mapping": {
-          "eventName": {
-            "from": "/Event"
-          },
-          "venueName": {
-            "from": "/Venue"
-          },
-          "venueRegion": {
-            "from": "/City"
-          },
-          "startsAt": {
-            "from": "/Starts",
-            "transform": {
-              "kind": "date",
-              "options": {
-                "input": "iso",
-                "output": "iso"
-              }
-            }
-          },
-          "endsAt": {
-            "from": "/Ends",
-            "transform": {
-              "kind": "date",
-              "options": {
-                "input": "iso",
-                "output": "iso"
-              }
-            }
-          },
-          "attendee": {
-            "from": "/Attendee"
-          },
-          "ticketId": {
-            "from": "/Ticket ID"
-          }
-        },
-        "holderEmail": {
-          "from": "/Holder email"
-        },
-        "externalId": {
-          "from": "/Ticket ID"
-        },
-        "match": "externalId",
-        "keepManual": false,
-        "save": true,
-        "overrides": {
-          "3": {
-            "/Starts": "2030-06-01T19:00:00-07:00"
-          }
-        }
-      }
-    },
-    "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
-      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-      "templateVersion": "d5b6a5d2e06a2a73",
-      "mode": "test",
-      "state": "ready",
-      "source": {
-        "kind": "file",
-        "name": "guests.csv"
-      },
-      "columns": [
-        {
-          "pointer": "/Holder email",
-          "label": "Holder email",
-          "samples": ["ada@example.com", "grace@example.com", "alan@example.com"]
-        },
-        {
-          "pointer": "/Event",
-          "label": "Event",
-          "samples": ["Harbor Night", "Harbor Night", "Harbor Night"]
-        },
-        {
-          "pointer": "/Venue",
-          "label": "Venue",
-          "samples": ["Harbor Hall", "Harbor Hall", "Harbor Hall"]
-        },
-        {
-          "pointer": "/City",
-          "label": "City",
-          "samples": ["Cupertino, CA", "Cupertino, CA", "Cupertino, CA"]
-        },
-        {
-          "pointer": "/Starts",
-          "label": "Starts",
-          "samples": ["2030-06-01T19:00:00-07:00", "TBD", "2030-06-01T19:00:00-07:00"]
-        },
-        {
-          "pointer": "/Ends",
-          "label": "Ends",
-          "samples": [
-            "2030-06-01T22:00:00-07:00",
-            "2030-06-01T22:00:00-07:00",
-            "2030-06-01T22:00:00-07:00"
-          ]
-        },
-        {
-          "pointer": "/Attendee",
-          "label": "Attendee",
-          "samples": ["Ada Example", "Grace Host", "Alan Guest"]
-        },
-        {
-          "pointer": "/Ticket ID",
-          "label": "Ticket ID",
-          "samples": ["TICKET-1001", "TICKET-1002", "TICKET-1003"]
-        }
-      ],
-      "plan": {
-        "mapping": {
-          "eventName": {
-            "from": "/Event"
-          },
-          "venueName": {
-            "from": "/Venue"
-          },
-          "venueRegion": {
-            "from": "/City"
-          },
-          "startsAt": {
-            "from": "/Starts",
-            "transform": {
-              "kind": "date",
-              "options": {
-                "input": "iso",
-                "output": "iso"
-              }
-            }
-          },
-          "endsAt": {
-            "from": "/Ends",
-            "transform": {
-              "kind": "date",
-              "options": {
-                "input": "iso",
-                "output": "iso"
-              }
-            }
-          },
-          "attendee": {
-            "from": "/Attendee"
-          },
-          "ticketId": {
-            "from": "/Ticket ID"
-          }
-        },
-        "holderEmail": {
-          "from": "/Holder email"
-        },
-        "externalId": {
-          "from": "/Ticket ID"
-        },
-        "match": "externalId",
-        "keepManual": false,
-        "save": true,
-        "overrides": {
-          "3": {
-            "/Starts": "2030-06-01T19:00:00-07:00"
-          }
-        }
-      },
-      "counts": {
-        "rows": 3,
-        "create": 3,
-        "update": 0,
-        "unchanged": 0,
-        "errors": 0,
-        "warnings": 0,
-        "emailable": 3,
-        "errorsCreate": 0,
-        "errorsUpdate": 0
-      },
-      "previews": [
-        {
-          "row": 2,
-          "action": "create",
-          "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Ada Example",
-            "ticketId": "TICKET-1001"
-          }
-        },
-        {
-          "row": 3,
-          "action": "create",
-          "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Grace Host",
-            "ticketId": "TICKET-1002"
-          }
-        },
-        {
-          "row": 4,
-          "action": "create",
-          "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Alan Guest",
-            "ticketId": "TICKET-1003"
-          }
-        }
-      ],
-      "problems": [],
-      "problemTotals": {
-        "errors": 0,
-        "warnings": 0
-      },
-      "problemsTruncated": false,
-      "emailBudget": 500,
-      "email": false,
-      "progress": null,
-      "errorCode": null,
-      "errorFile": false,
-      "createdAt": 1790000000000,
-      "checkedAt": 1790000000000,
-      "committedAt": null,
-      "finishedAt": null,
-      "expiresAt": 1790082800000,
-      "emailHoldUntil": null
-    }
-  },
-  "pass-imports.postPassImportsByIdCommit": {
-    "description": "Creates the new passes and updates the matched ones, in the background; read the import until `state` is `done`. `skipInvalid` skips error rows instead of refusing the commit. `email` is off by default: `true` sends at once, `{ \"send\": \"held\", \"holdMs\": 300000 }` holds the mail for 1 to 60 minutes so an undo cancels it. Another commit of the same template meanwhile is 409 `IMPORT_BUSY`. Send an `Idempotency-Key`.",
-    "request": {
-      "skipInvalid": false,
-      "email": {
-        "send": "held",
-        "holdMs": 300000
-      }
-    },
-    "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
-      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-      "templateVersion": "d5b6a5d2e06a2a73",
-      "mode": "test",
-      "state": "committing",
-      "source": {
-        "kind": "file",
-        "name": "guests.csv"
-      },
-      "columns": [],
-      "plan": {
-        "mapping": {
-          "eventName": {
-            "from": "/Event"
-          },
-          "venueName": {
-            "from": "/Venue"
-          },
-          "venueRegion": {
-            "from": "/City"
-          },
-          "startsAt": {
-            "from": "/Starts",
-            "transform": {
-              "kind": "date",
-              "options": {
-                "input": "iso",
-                "output": "iso"
-              }
-            }
-          },
-          "endsAt": {
-            "from": "/Ends",
-            "transform": {
-              "kind": "date",
-              "options": {
-                "input": "iso",
-                "output": "iso"
-              }
-            }
-          },
-          "attendee": {
-            "from": "/Attendee"
-          },
-          "ticketId": {
-            "from": "/Ticket ID"
-          }
-        },
-        "holderEmail": {
-          "from": "/Holder email"
-        },
-        "externalId": {
-          "from": "/Ticket ID"
-        },
-        "match": "externalId",
-        "keepManual": false,
-        "save": true,
-        "overrides": {
-          "3": {
-            "/Starts": "2030-06-01T19:00:00-07:00"
-          }
-        }
-      },
-      "counts": {
-        "rows": 3,
-        "create": 3,
-        "update": 0,
-        "unchanged": 0,
-        "errors": 0,
-        "warnings": 0,
-        "emailable": 3,
-        "errorsCreate": 0,
-        "errorsUpdate": 0
-      },
-      "previews": [
-        {
-          "row": 2,
-          "action": "create",
-          "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Ada Example",
-            "ticketId": "TICKET-1001"
-          }
-        },
-        {
-          "row": 3,
-          "action": "create",
-          "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Grace Host",
-            "ticketId": "TICKET-1002"
-          }
-        },
-        {
-          "row": 4,
-          "action": "create",
-          "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Alan Guest",
-            "ticketId": "TICKET-1003"
-          }
-        }
-      ],
-      "problems": [],
-      "problemTotals": {
-        "errors": 0,
-        "warnings": 0
-      },
-      "problemsTruncated": false,
-      "emailBudget": 500,
-      "email": true,
-      "progress": {
-        "done": 0,
-        "created": 0,
-        "updated": 0,
-        "unchanged": 0,
-        "failed": 0,
-        "skipped": 0,
-        "notEmailed": 0,
-        "removed": 0
-      },
-      "errorCode": null,
-      "errorFile": false,
-      "createdAt": 1790000000000,
-      "checkedAt": 1790000000000,
-      "committedAt": 1790000060000,
-      "finishedAt": null,
-      "expiresAt": 1790082800000,
-      "emailHoldUntil": 1790000360000
-    }
-  },
-  "pass-imports.getPassImportsById": {
-    "description": "Reads an import: `state`, `counts`, `problems`, the `plan`, and `progress` while it commits. After an undo it also carries `undo`.",
-    "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
-      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-      "templateVersion": "d5b6a5d2e06a2a73",
-      "mode": "test",
+      "templateVersion": "3",
+      "mode": "live",
       "state": "done",
       "source": {
         "kind": "file",
-        "name": "guests.csv"
+        "name": "members.csv"
       },
-      "columns": [],
+      "columns": [
+        {
+          "pointer": "/Holder email",
+          "label": "Holder email",
+          "samples": ["ada@example.com", "grace@example.com"]
+        },
+        {
+          "pointer": "/Name",
+          "label": "Name",
+          "samples": ["Ada Example", "Grace Okafor"]
+        },
+        {
+          "pointer": "/Tier",
+          "label": "Tier",
+          "samples": ["Day pass"]
+        },
+        {
+          "pointer": "/Valid until",
+          "label": "Valid until",
+          "samples": ["2026-12-31", "2027-01-15"]
+        },
+        {
+          "pointer": "/Member ID",
+          "label": "Member ID",
+          "samples": ["NW-1001", "NW-1002"]
+        }
+      ],
       "plan": {
         "mapping": {
-          "eventName": {
-            "from": "/Event"
+          "name": {
+            "from": "/Name"
           },
-          "venueName": {
-            "from": "/Venue"
+          "tier": {
+            "from": "/Tier"
           },
-          "venueRegion": {
-            "from": "/City"
-          },
-          "startsAt": {
-            "from": "/Starts",
+          "validUntil": {
+            "from": "/Valid until",
             "transform": {
               "kind": "date",
               "options": {
@@ -952,38 +305,18 @@
                 "output": "iso"
               }
             }
-          },
-          "endsAt": {
-            "from": "/Ends",
-            "transform": {
-              "kind": "date",
-              "options": {
-                "input": "iso",
-                "output": "iso"
-              }
-            }
-          },
-          "attendee": {
-            "from": "/Attendee"
-          },
-          "ticketId": {
-            "from": "/Ticket ID"
           }
         },
         "holderEmail": {
           "from": "/Holder email"
         },
         "externalId": {
-          "from": "/Ticket ID"
+          "from": "/Member ID"
         },
         "match": "externalId",
         "keepManual": false,
         "save": true,
-        "overrides": {
-          "3": {
-            "/Starts": "2030-06-01T19:00:00-07:00"
-          }
-        }
+        "overrides": {}
       },
       "counts": {
         "rows": 3,
@@ -1001,39 +334,27 @@
           "row": 2,
           "action": "create",
           "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Ada Example",
-            "ticketId": "TICKET-1001"
+            "name": "Ada Example",
+            "tier": "Day pass",
+            "validUntil": "2026-12-31"
           }
         },
         {
           "row": 3,
           "action": "create",
           "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Grace Host",
-            "ticketId": "TICKET-1002"
+            "name": "Grace Okafor",
+            "tier": "Day pass",
+            "validUntil": "2026-12-31"
           }
         },
         {
           "row": 4,
           "action": "create",
           "input": {
-            "eventName": "Harbor Night",
-            "venueName": "Harbor Hall",
-            "venueRegion": "Cupertino, CA",
-            "startsAt": "2030-06-02T02:00:00.000Z",
-            "endsAt": "2030-06-02T05:00:00.000Z",
-            "attendee": "Alan Guest",
-            "ticketId": "TICKET-1003"
+            "name": "Alan Reyes",
+            "tier": "Day pass",
+            "validUntil": "2027-01-15"
           }
         }
       ],
@@ -1057,12 +378,463 @@
       },
       "errorCode": null,
       "errorFile": false,
-      "createdAt": 1790000000000,
-      "checkedAt": 1790000000000,
-      "committedAt": 1790000060000,
-      "finishedAt": 1790000070000,
-      "expiresAt": 1790082800000,
-      "emailHoldUntil": 1790000360000
+      "createdAt": 1795520400000,
+      "checkedAt": 1795520520000,
+      "committedAt": 1795520700000,
+      "finishedAt": 1795520760000,
+      "expiresAt": 1796137200000,
+      "emailHoldUntil": 1795521000000
+    }
+  },
+  "pass-imports.postPassImportsByIdCheck": {
+    "description": "Checks the file against a plan and counts what each row would do: `create`, `update`, `unchanged` and `errors`. `overrides` fix single cells, by spreadsheet row (the header is row 1) and column pointer, without editing the file; up to 200. Writes no passes.",
+    "request": {
+      "plan": {
+        "mapping": {
+          "name": {
+            "from": "Name"
+          },
+          "tier": {
+            "from": "Tier"
+          },
+          "validUntil": {
+            "from": "Valid until"
+          }
+        },
+        "holderEmail": {
+          "from": "Booking sheet",
+          "transform": {
+            "kind": "enum",
+            "options": {
+              "tier": {}
+            }
+          }
+        },
+        "externalId": {
+          "from": "Booking sheet",
+          "transform": {
+            "kind": "enum",
+            "options": {
+              "tier": {}
+            }
+          }
+        },
+        "match": "externalId",
+        "keepManual": false,
+        "save": false
+      }
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000071",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "mode": "live",
+      "state": "done",
+      "source": {
+        "kind": "file",
+        "name": "members.csv"
+      },
+      "columns": [
+        {
+          "pointer": "/Holder email",
+          "label": "Holder email",
+          "samples": ["ada@example.com", "grace@example.com"]
+        },
+        {
+          "pointer": "/Name",
+          "label": "Name",
+          "samples": ["Ada Example", "Grace Okafor"]
+        },
+        {
+          "pointer": "/Tier",
+          "label": "Tier",
+          "samples": ["Day pass"]
+        },
+        {
+          "pointer": "/Valid until",
+          "label": "Valid until",
+          "samples": ["2026-12-31", "2027-01-15"]
+        },
+        {
+          "pointer": "/Member ID",
+          "label": "Member ID",
+          "samples": ["NW-1001", "NW-1002"]
+        }
+      ],
+      "plan": {
+        "mapping": {
+          "name": {
+            "from": "/Name"
+          },
+          "tier": {
+            "from": "/Tier"
+          },
+          "validUntil": {
+            "from": "/Valid until",
+            "transform": {
+              "kind": "date",
+              "options": {
+                "input": "iso",
+                "output": "iso"
+              }
+            }
+          }
+        },
+        "holderEmail": {
+          "from": "/Holder email"
+        },
+        "externalId": {
+          "from": "/Member ID"
+        },
+        "match": "externalId",
+        "keepManual": false,
+        "save": true,
+        "overrides": {}
+      },
+      "counts": {
+        "rows": 3,
+        "create": 3,
+        "update": 0,
+        "unchanged": 0,
+        "errors": 0,
+        "warnings": 0,
+        "emailable": 3,
+        "errorsCreate": 0,
+        "errorsUpdate": 0
+      },
+      "previews": [
+        {
+          "row": 2,
+          "action": "create",
+          "input": {
+            "name": "Ada Example",
+            "tier": "Day pass",
+            "validUntil": "2026-12-31"
+          }
+        },
+        {
+          "row": 3,
+          "action": "create",
+          "input": {
+            "name": "Grace Okafor",
+            "tier": "Day pass",
+            "validUntil": "2026-12-31"
+          }
+        },
+        {
+          "row": 4,
+          "action": "create",
+          "input": {
+            "name": "Alan Reyes",
+            "tier": "Day pass",
+            "validUntil": "2027-01-15"
+          }
+        }
+      ],
+      "problems": [],
+      "problemTotals": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "problemsTruncated": false,
+      "emailBudget": 500,
+      "email": true,
+      "progress": {
+        "done": 3,
+        "created": 3,
+        "updated": 0,
+        "unchanged": 0,
+        "failed": 0,
+        "skipped": 0,
+        "notEmailed": 0,
+        "removed": 0
+      },
+      "errorCode": null,
+      "errorFile": false,
+      "createdAt": 1795520400000,
+      "checkedAt": 1795520520000,
+      "committedAt": 1795520700000,
+      "finishedAt": 1795520760000,
+      "expiresAt": 1796137200000,
+      "emailHoldUntil": 1795521000000
+    }
+  },
+  "pass-imports.postPassImportsByIdCommit": {
+    "description": "Creates the new passes and updates the matched ones, in the background; read the import until `state` is `done`. `skipInvalid` skips error rows instead of refusing the commit. `email` is off by default: `true` sends at once, `{ \"send\": \"held\", \"holdMs\": 300000 }` holds the mail for 1 to 60 minutes so an undo cancels it. Another commit of the same template meanwhile is 409 `IMPORT_BUSY`. Send an `Idempotency-Key`.",
+    "request": {
+      "skipInvalid": false,
+      "email": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000071",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "mode": "live",
+      "state": "done",
+      "source": {
+        "kind": "file",
+        "name": "members.csv"
+      },
+      "columns": [
+        {
+          "pointer": "/Holder email",
+          "label": "Holder email",
+          "samples": ["ada@example.com", "grace@example.com"]
+        },
+        {
+          "pointer": "/Name",
+          "label": "Name",
+          "samples": ["Ada Example", "Grace Okafor"]
+        },
+        {
+          "pointer": "/Tier",
+          "label": "Tier",
+          "samples": ["Day pass"]
+        },
+        {
+          "pointer": "/Valid until",
+          "label": "Valid until",
+          "samples": ["2026-12-31", "2027-01-15"]
+        },
+        {
+          "pointer": "/Member ID",
+          "label": "Member ID",
+          "samples": ["NW-1001", "NW-1002"]
+        }
+      ],
+      "plan": {
+        "mapping": {
+          "name": {
+            "from": "/Name"
+          },
+          "tier": {
+            "from": "/Tier"
+          },
+          "validUntil": {
+            "from": "/Valid until",
+            "transform": {
+              "kind": "date",
+              "options": {
+                "input": "iso",
+                "output": "iso"
+              }
+            }
+          }
+        },
+        "holderEmail": {
+          "from": "/Holder email"
+        },
+        "externalId": {
+          "from": "/Member ID"
+        },
+        "match": "externalId",
+        "keepManual": false,
+        "save": true,
+        "overrides": {}
+      },
+      "counts": {
+        "rows": 3,
+        "create": 3,
+        "update": 0,
+        "unchanged": 0,
+        "errors": 0,
+        "warnings": 0,
+        "emailable": 3,
+        "errorsCreate": 0,
+        "errorsUpdate": 0
+      },
+      "previews": [
+        {
+          "row": 2,
+          "action": "create",
+          "input": {
+            "name": "Ada Example",
+            "tier": "Day pass",
+            "validUntil": "2026-12-31"
+          }
+        },
+        {
+          "row": 3,
+          "action": "create",
+          "input": {
+            "name": "Grace Okafor",
+            "tier": "Day pass",
+            "validUntil": "2026-12-31"
+          }
+        },
+        {
+          "row": 4,
+          "action": "create",
+          "input": {
+            "name": "Alan Reyes",
+            "tier": "Day pass",
+            "validUntil": "2027-01-15"
+          }
+        }
+      ],
+      "problems": [],
+      "problemTotals": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "problemsTruncated": false,
+      "emailBudget": 500,
+      "email": true,
+      "progress": {
+        "done": 3,
+        "created": 3,
+        "updated": 0,
+        "unchanged": 0,
+        "failed": 0,
+        "skipped": 0,
+        "notEmailed": 0,
+        "removed": 0
+      },
+      "errorCode": null,
+      "errorFile": false,
+      "createdAt": 1795520400000,
+      "checkedAt": 1795520520000,
+      "committedAt": 1795520700000,
+      "finishedAt": 1795520760000,
+      "expiresAt": 1796137200000,
+      "emailHoldUntil": 1795521000000
+    }
+  },
+  "pass-imports.getPassImportsById": {
+    "description": "Reads an import: `state`, `counts`, `problems`, the `plan`, and `progress` while it commits. After an undo it also carries `undo`.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000071",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "mode": "live",
+      "state": "done",
+      "source": {
+        "kind": "file",
+        "name": "members.csv"
+      },
+      "columns": [
+        {
+          "pointer": "/Holder email",
+          "label": "Holder email",
+          "samples": ["ada@example.com", "grace@example.com"]
+        },
+        {
+          "pointer": "/Name",
+          "label": "Name",
+          "samples": ["Ada Example", "Grace Okafor"]
+        },
+        {
+          "pointer": "/Tier",
+          "label": "Tier",
+          "samples": ["Day pass"]
+        },
+        {
+          "pointer": "/Valid until",
+          "label": "Valid until",
+          "samples": ["2026-12-31", "2027-01-15"]
+        },
+        {
+          "pointer": "/Member ID",
+          "label": "Member ID",
+          "samples": ["NW-1001", "NW-1002"]
+        }
+      ],
+      "plan": {
+        "mapping": {
+          "name": {
+            "from": "/Name"
+          },
+          "tier": {
+            "from": "/Tier"
+          },
+          "validUntil": {
+            "from": "/Valid until",
+            "transform": {
+              "kind": "date",
+              "options": {
+                "input": "iso",
+                "output": "iso"
+              }
+            }
+          }
+        },
+        "holderEmail": {
+          "from": "/Holder email"
+        },
+        "externalId": {
+          "from": "/Member ID"
+        },
+        "match": "externalId",
+        "keepManual": false,
+        "save": true,
+        "overrides": {}
+      },
+      "counts": {
+        "rows": 3,
+        "create": 3,
+        "update": 0,
+        "unchanged": 0,
+        "errors": 0,
+        "warnings": 0,
+        "emailable": 3,
+        "errorsCreate": 0,
+        "errorsUpdate": 0
+      },
+      "previews": [
+        {
+          "row": 2,
+          "action": "create",
+          "input": {
+            "name": "Ada Example",
+            "tier": "Day pass",
+            "validUntil": "2026-12-31"
+          }
+        },
+        {
+          "row": 3,
+          "action": "create",
+          "input": {
+            "name": "Grace Okafor",
+            "tier": "Day pass",
+            "validUntil": "2026-12-31"
+          }
+        },
+        {
+          "row": 4,
+          "action": "create",
+          "input": {
+            "name": "Alan Reyes",
+            "tier": "Day pass",
+            "validUntil": "2027-01-15"
+          }
+        }
+      ],
+      "problems": [],
+      "problemTotals": {
+        "errors": 0,
+        "warnings": 0
+      },
+      "problemsTruncated": false,
+      "emailBudget": 500,
+      "email": true,
+      "progress": {
+        "done": 3,
+        "created": 3,
+        "updated": 0,
+        "unchanged": 0,
+        "failed": 0,
+        "skipped": 0,
+        "notEmailed": 0,
+        "removed": 0
+      },
+      "errorCode": null,
+      "errorFile": false,
+      "createdAt": 1795520400000,
+      "checkedAt": 1795520520000,
+      "committedAt": 1795520700000,
+      "finishedAt": 1795520760000,
+      "expiresAt": 1796137200000,
+      "emailHoldUntil": 1795521000000
     }
   },
   "pass-imports.getPassImports": {
@@ -1070,159 +842,138 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "templateVersion": "example",
+          "id": "0193a1b2-7c00-7000-8000-000000000071",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "templateVersion": "3",
           "mode": "live",
-          "state": "mapping",
+          "state": "done",
           "source": {
             "kind": "file",
-            "name": "Ada Example"
+            "name": "members.csv"
           },
           "columns": [
             {
-              "pointer": "example",
-              "label": "Ada Example",
-              "samples": ["example"]
+              "pointer": "/Holder email",
+              "label": "Holder email",
+              "samples": ["ada@example.com", "grace@example.com"]
+            },
+            {
+              "pointer": "/Name",
+              "label": "Name",
+              "samples": ["Ada Example", "Grace Okafor"]
+            },
+            {
+              "pointer": "/Tier",
+              "label": "Tier",
+              "samples": ["Day pass"]
+            },
+            {
+              "pointer": "/Valid until",
+              "label": "Valid until",
+              "samples": ["2026-12-31", "2027-01-15"]
+            },
+            {
+              "pointer": "/Member ID",
+              "label": "Member ID",
+              "samples": ["NW-1001", "NW-1002"]
             }
           ],
           "plan": {
             "mapping": {
-              "example": {
-                "from": "example"
+              "name": {
+                "from": "/Name"
+              },
+              "tier": {
+                "from": "/Tier"
+              },
+              "validUntil": {
+                "from": "/Valid until",
+                "transform": {
+                  "kind": "date",
+                  "options": {
+                    "input": "iso",
+                    "output": "iso"
+                  }
+                }
               }
             },
             "holderEmail": {
-              "from": "example",
-              "transform": {
-                "kind": "enum"
-              }
+              "from": "/Holder email"
             },
             "externalId": {
-              "from": "example",
-              "transform": {
-                "kind": "enum"
-              }
+              "from": "/Member ID"
             },
             "match": "externalId",
             "keepManual": false,
-            "save": false,
-            "overrides": {
-              "example": {
-                "example": "example"
-              }
-            }
+            "save": true,
+            "overrides": {}
           },
           "counts": {
-            "rows": 1,
-            "create": 1,
-            "update": 1,
-            "unchanged": 1,
-            "errors": 1,
-            "warnings": 1,
-            "emailable": 1,
-            "errorsCreate": 1,
-            "errorsUpdate": 1
+            "rows": 3,
+            "create": 3,
+            "update": 0,
+            "unchanged": 0,
+            "errors": 0,
+            "warnings": 0,
+            "emailable": 3,
+            "errorsCreate": 0,
+            "errorsUpdate": 0
           },
           "previews": [
             {
               "row": 2,
               "action": "create",
               "input": {
-                "example": {}
+                "name": "Ada Example",
+                "tier": "Day pass",
+                "validUntil": "2026-12-31"
+              }
+            },
+            {
+              "row": 3,
+              "action": "create",
+              "input": {
+                "name": "Grace Okafor",
+                "tier": "Day pass",
+                "validUntil": "2026-12-31"
+              }
+            },
+            {
+              "row": 4,
+              "action": "create",
+              "input": {
+                "name": "Alan Reyes",
+                "tier": "Day pass",
+                "validUntil": "2027-01-15"
               }
             }
           ],
-          "problems": [
-            {
-              "row": 2,
-              "column": "example",
-              "field": "example",
-              "label": "Ada Example",
-              "value": "example",
-              "code": "AB12CD34",
-              "message": "example",
-              "severity": "error"
-            }
-          ],
+          "problems": [],
           "problemTotals": {
-            "errors": 1,
-            "warnings": 1
+            "errors": 0,
+            "warnings": 0
           },
           "problemsTruncated": false,
-          "emailBudget": 1,
-          "email": false,
+          "emailBudget": 500,
+          "email": true,
           "progress": {
-            "done": 1,
-            "created": 1,
-            "updated": 1,
-            "unchanged": 1,
-            "failed": 1,
-            "skipped": 1,
-            "notEmailed": 1,
-            "removed": 1
+            "done": 3,
+            "created": 3,
+            "updated": 0,
+            "unchanged": 0,
+            "failed": 0,
+            "skipped": 0,
+            "notEmailed": 0,
+            "removed": 0
           },
-          "errorCode": "AB12CD34",
+          "errorCode": null,
           "errorFile": false,
-          "createdAt": 1764000000000,
-          "checkedAt": 1764000000000,
-          "committedAt": 1764000000000,
-          "finishedAt": 1764000000000,
-          "expiresAt": 1764000000000,
-          "mapping": {
-            "fields": [
-              {
-                "role": "holderEmail",
-                "target": "example",
-                "label": "Ada Example",
-                "required": false,
-                "from": ["example"],
-                "confidence": "exact",
-                "matchBy": false,
-                "entry": {
-                  "from": "example"
-                },
-                "values": [
-                  {
-                    "value": "example",
-                    "count": 10,
-                    "to": "example"
-                  }
-                ],
-                "date": {
-                  "format": "iso",
-                  "choices": [],
-                  "parsed": 1,
-                  "total": 10
-                }
-              }
-            ],
-            "unused": [
-              {
-                "pointer": "example",
-                "label": "Ada Example"
-              }
-            ],
-            "columns": 1,
-            "used": 1,
-            "missing": ["example"]
-          },
-          "emailHoldUntil": 1,
-          "undo": {
-            "state": "running",
-            "removed": 1,
-            "restored": 1,
-            "keptTotal": 10,
-            "kept": [
-              {
-                "passId": "0193a1b2-7c00-7000-8000-0000000000a3",
-                "code": "AB12CD34"
-              }
-            ],
-            "emailsCancelled": 1,
-            "unrevertable": 1
-          },
-          "unrevertable": 1
+          "createdAt": 1795520400000,
+          "checkedAt": 1795520520000,
+          "committedAt": 1795520700000,
+          "finishedAt": 1795520760000,
+          "expiresAt": 1796137200000,
+          "emailHoldUntil": 1795521000000
         }
       ],
       "nextCursor": "c1.4812"
@@ -1239,21 +990,21 @@
     "response": {
       "items": [
         {
-          "row": 2,
+          "row": 3,
           "action": "create",
-          "state": "planned",
+          "state": "done",
           "result": "created",
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "externalId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "code": "AB12CD34",
-          "message": "example",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "externalId": "0193a1b2-7c00-7000-8000-c880b42017cb",
+          "code": "NW7K2Q",
+          "message": "The gym closes at 18:00 on 24 December.",
           "emailed": false,
           "changes": [
             {
-              "key": "example-key",
-              "label": "Ada Example",
-              "from": "example",
-              "to": "example"
+              "key": "tier",
+              "label": "Spring members",
+              "from": "Booking sheet",
+              "to": "ada@example.com"
             }
           ],
           "wouldBe": "create"
@@ -1274,9 +1025,9 @@
       "cursor": "c1.4812"
     },
     "response": {
-      "sent": 1,
-      "skipped": 1,
-      "alreadyQueued": 1,
+      "sent": 3,
+      "skipped": 3,
+      "alreadyQueued": 3,
       "nextCursor": "c1.4812"
     }
   },

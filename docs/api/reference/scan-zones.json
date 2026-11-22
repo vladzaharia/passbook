@@ -5,36 +5,36 @@
       "items": [
         {
           "occupancy": "off",
-          "capacity": 10,
+          "capacity": 3,
           "maxStayMinutes": 15,
           "hardLimit": false,
-          "clearAt": "12:00",
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "key": "example-key",
-          "name": "Ada Example",
-          "parentId": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "timeZone": "example",
-          "effectiveTimeZone": "example",
-          "sort": 1,
-          "depth": 1,
-          "sessions": 1,
+          "clearAt": "04:00",
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "key": "tier",
+          "name": "Main hall",
+          "parentId": "0193a1b2-7c00-7000-8000-02e051ce892a",
+          "timeZone": "America/Los_Angeles",
+          "effectiveTimeZone": "America/Los_Angeles",
+          "sort": 3,
+          "depth": 3,
+          "sessions": 3,
           "checkedAt": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0000000000a4",
-              "name": "Ada Example"
+              "id": "0193a1b2-7c00-7000-8000-000000000081",
+              "name": "Main hall"
             }
           ],
           "plans": [
             {
-              "templateId": "0193a1b2-7c00-7000-8000-0000000000a5",
-              "templateName": "Ada Example",
-              "planId": "0193a1b2-7c00-7000-8000-0000000000a6",
-              "label": "Ada Example"
+              "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+              "templateName": "Day pass",
+              "planId": "0193a1b2-7c00-7000-8000-9f9f474c8309",
+              "label": "Main hall"
             }
           ],
-          "inNow": 1,
-          "archivedAt": 1764000000000
+          "inNow": 3,
+          "archivedAt": null
         }
       ],
       "nextCursor": "c1.4812"
@@ -44,161 +44,163 @@
     "description": "Creates a zone.",
     "request": {
       "occupancy": "off",
-      "capacity": 10,
+      "capacity": 3,
+      "maxStayMinutes": 15,
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "key": "example-key",
-      "name": "Ada Example"
+      "key": "tier",
+      "name": "Main hall"
     },
     "response": {
       "occupancy": "off",
-      "capacity": 10,
+      "capacity": 3,
       "maxStayMinutes": 15,
       "hardLimit": false,
-      "clearAt": "12:00",
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "key": "example-key",
-      "name": "Ada Example",
-      "parentId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "timeZone": "example",
-      "effectiveTimeZone": "example",
-      "sort": 1,
-      "depth": 1,
-      "sessions": 1,
+      "clearAt": "04:00",
+      "id": "0193a1b2-7c00-7000-8000-000000000081",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "key": "tier",
+      "name": "Main hall",
+      "parentId": "0193a1b2-7c00-7000-8000-da4db099ff6f",
+      "timeZone": "America/Los_Angeles",
+      "effectiveTimeZone": "America/Los_Angeles",
+      "sort": 3,
+      "depth": 3,
+      "sessions": 3,
       "checkedAt": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "name": "Main hall"
         }
       ],
       "plans": [
         {
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000a5",
-          "templateName": "Ada Example",
-          "planId": "0193a1b2-7c00-7000-8000-0000000000a6",
-          "label": "Ada Example"
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "templateName": "Day pass",
+          "planId": "0193a1b2-7c00-7000-8000-e910671e53fd",
+          "label": "Main hall"
         }
       ],
-      "inNow": 1,
-      "archivedAt": 1764000000000
+      "inNow": 3,
+      "archivedAt": null
     }
   },
   "scan-zones.patchScanZonesById": {
     "description": "Edits a zone.",
     "request": {
       "occupancy": "off",
-      "capacity": 10
+      "capacity": 3,
+      "maxStayMinutes": 15
     },
     "response": {
       "occupancy": "off",
-      "capacity": 10,
+      "capacity": 3,
       "maxStayMinutes": 15,
       "hardLimit": false,
-      "clearAt": "12:00",
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "key": "example-key",
-      "name": "Ada Example",
-      "parentId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "timeZone": "example",
-      "effectiveTimeZone": "example",
-      "sort": 1,
-      "depth": 1,
-      "sessions": 1,
+      "clearAt": "04:00",
+      "id": "0193a1b2-7c00-7000-8000-000000000081",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "key": "tier",
+      "name": "Main hall",
+      "parentId": "0193a1b2-7c00-7000-8000-60b007bcf07b",
+      "timeZone": "America/Los_Angeles",
+      "effectiveTimeZone": "America/Los_Angeles",
+      "sort": 3,
+      "depth": 3,
+      "sessions": 3,
       "checkedAt": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "name": "Main hall"
         }
       ],
       "plans": [
         {
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000a5",
-          "templateName": "Ada Example",
-          "planId": "0193a1b2-7c00-7000-8000-0000000000a6",
-          "label": "Ada Example"
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "templateName": "Day pass",
+          "planId": "0193a1b2-7c00-7000-8000-a620dcb1e91a",
+          "label": "Main hall"
         }
       ],
-      "inNow": 1,
-      "archivedAt": 1764000000000
+      "inNow": 3,
+      "archivedAt": null
     }
   },
   "scan-zones.postScanZonesByIdArchive": {
     "description": "Archives a zone and the zones below it.",
     "response": {
       "occupancy": "off",
-      "capacity": 10,
+      "capacity": 3,
       "maxStayMinutes": 15,
       "hardLimit": false,
-      "clearAt": "12:00",
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "key": "example-key",
-      "name": "Ada Example",
-      "parentId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "timeZone": "example",
-      "effectiveTimeZone": "example",
-      "sort": 1,
-      "depth": 1,
-      "sessions": 1,
+      "clearAt": "04:00",
+      "id": "0193a1b2-7c00-7000-8000-000000000081",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "key": "tier",
+      "name": "Main hall",
+      "parentId": "0193a1b2-7c00-7000-8000-3f15685e3cc7",
+      "timeZone": "America/Los_Angeles",
+      "effectiveTimeZone": "America/Los_Angeles",
+      "sort": 3,
+      "depth": 3,
+      "sessions": 3,
       "checkedAt": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "name": "Main hall"
         }
       ],
       "plans": [
         {
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000a5",
-          "templateName": "Ada Example",
-          "planId": "0193a1b2-7c00-7000-8000-0000000000a6",
-          "label": "Ada Example"
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "templateName": "Day pass",
+          "planId": "0193a1b2-7c00-7000-8000-0f6a194a77ad",
+          "label": "Main hall"
         }
       ],
-      "inNow": 1,
-      "archivedAt": 1764000000000
+      "inNow": 3,
+      "archivedAt": null
     }
   },
   "scan-zones.postScanZonesByIdRestore": {
     "description": "Restores a zone and the zones below it.",
     "response": {
       "occupancy": "off",
-      "capacity": 10,
+      "capacity": 3,
       "maxStayMinutes": 15,
       "hardLimit": false,
-      "clearAt": "12:00",
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "key": "example-key",
-      "name": "Ada Example",
-      "parentId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "timeZone": "example",
-      "effectiveTimeZone": "example",
-      "sort": 1,
-      "depth": 1,
-      "sessions": 1,
+      "clearAt": "04:00",
+      "id": "0193a1b2-7c00-7000-8000-000000000081",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "key": "tier",
+      "name": "Main hall",
+      "parentId": "0193a1b2-7c00-7000-8000-6cd02b708732",
+      "timeZone": "America/Los_Angeles",
+      "effectiveTimeZone": "America/Los_Angeles",
+      "sort": 3,
+      "depth": 3,
+      "sessions": 3,
       "checkedAt": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "name": "Main hall"
         }
       ],
       "plans": [
         {
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000a5",
-          "templateName": "Ada Example",
-          "planId": "0193a1b2-7c00-7000-8000-0000000000a6",
-          "label": "Ada Example"
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "templateName": "Day pass",
+          "planId": "0193a1b2-7c00-7000-8000-4a1c5483273a",
+          "label": "Main hall"
         }
       ],
-      "inNow": 1,
-      "archivedAt": 1764000000000
+      "inNow": 3,
+      "archivedAt": null
     }
   },
   "scan-zones.postScanZonesVisitsByIdReset": {
     "description": "Resets a pass's visits to a zone.",
     "response": {
-      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "visits": 0
     }
   },

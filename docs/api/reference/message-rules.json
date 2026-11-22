@@ -4,40 +4,40 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "id": "0193a1b2-7c00-7000-8000-000000000052",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "name": "Ada Example",
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+          "name": "Renewal reminder",
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "match": [
             {
-              "input": "example",
-              "values": ["example"]
+              "input": "tier",
+              "values": ["Day pass"]
             }
           ],
           "anchor": {
             "kind": "input",
-            "input": "example"
+            "input": "tier"
           },
           "offset": {
-            "amount": 1,
+            "amount": 3,
             "unit": "day",
             "when": "before"
           },
           "yearly": false,
-          "sendAt": "example",
-          "timeZone": "example",
-          "message": "example",
-          "clearAfter": 1,
+          "sendAt": "2026-12-24T09:00:00.000Z",
+          "timeZone": "America/Los_Angeles",
+          "message": "The gym closes at 18:00 on 24 December.",
+          "clearAfter": 1798124400000,
           "on": false,
           "state": "on",
           "pausedCode": "RULE_CREATOR_REVOKED",
-          "nextCheckAt": 1764000000000,
-          "sent": 1,
-          "skipped": 1,
-          "createdAt": 1764000000000,
-          "updatedAt": 1764000000000,
-          "version": 1
+          "nextCheckAt": 1795521600000,
+          "sent": 3,
+          "skipped": 3,
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000,
+          "version": 3
         }
       ],
       "nextCursor": "c1.4812"
@@ -47,164 +47,166 @@
     "description": "Creates an automatic message.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
-          "input": "example",
-          "values": ["example"]
+          "input": "tier",
+          "values": ["Day pass"]
         }
       ],
       "anchor": {
         "kind": "input",
-        "input": "example"
+        "input": "tier"
       },
       "offset": {
-        "amount": 1,
+        "amount": 3,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "timeZone": "example",
-      "message": "example"
+      "sendAt": "04:00",
+      "timeZone": "America/Los_Angeles",
+      "message": "The gym closes at 18:00 on 24 December."
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
-          "input": "example",
-          "values": ["example"]
+          "input": "tier",
+          "values": ["Day pass"]
         }
       ],
       "anchor": {
         "kind": "input",
-        "input": "example"
+        "input": "tier"
       },
       "offset": {
-        "amount": 1,
+        "amount": 3,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "sendAt": "example",
-      "timeZone": "example",
-      "message": "example",
-      "clearAfter": 1,
+      "sendAt": "2026-12-24T09:00:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "message": "The gym closes at 18:00 on 24 December.",
+      "clearAfter": 1798124400000,
       "on": false,
       "state": "on",
       "pausedCode": "RULE_CREATOR_REVOKED",
-      "nextCheckAt": 1764000000000,
-      "sent": 1,
-      "skipped": 1,
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "version": 1
+      "nextCheckAt": 1795521600000,
+      "sent": 3,
+      "skipped": 3,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "version": 3
     }
   },
   "message-rules.getMessageRulesById": {
     "description": "One automatic message.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
-          "input": "example",
-          "values": ["example"]
+          "input": "tier",
+          "values": ["Day pass"]
         }
       ],
       "anchor": {
         "kind": "input",
-        "input": "example"
+        "input": "tier"
       },
       "offset": {
-        "amount": 1,
+        "amount": 3,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "sendAt": "example",
-      "timeZone": "example",
-      "message": "example",
-      "clearAfter": 1,
+      "sendAt": "2026-12-24T09:00:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "message": "The gym closes at 18:00 on 24 December.",
+      "clearAfter": 1798124400000,
       "on": false,
       "state": "on",
       "pausedCode": "RULE_CREATOR_REVOKED",
-      "nextCheckAt": 1764000000000,
-      "sent": 1,
-      "skipped": 1,
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "version": 1
+      "nextCheckAt": 1795521600000,
+      "sent": 3,
+      "skipped": 3,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "version": 3
     }
   },
   "message-rules.putMessageRulesById": {
     "description": "Saves an automatic message. Saving resumes a paused one.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
-          "input": "example",
-          "values": ["example"]
+          "input": "tier",
+          "values": ["Day pass"]
         }
       ],
       "anchor": {
         "kind": "input",
-        "input": "example"
+        "input": "tier"
       },
       "offset": {
-        "amount": 1,
+        "amount": 3,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "timeZone": "example",
-      "message": "example",
-      "version": 1
+      "sendAt": "04:00",
+      "timeZone": "America/Los_Angeles",
+      "message": "The gym closes at 18:00 on 24 December.",
+      "version": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
-          "input": "example",
-          "values": ["example"]
+          "input": "tier",
+          "values": ["Day pass"]
         }
       ],
       "anchor": {
         "kind": "input",
-        "input": "example"
+        "input": "tier"
       },
       "offset": {
-        "amount": 1,
+        "amount": 3,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "sendAt": "example",
-      "timeZone": "example",
-      "message": "example",
-      "clearAfter": 1,
+      "sendAt": "2026-12-24T09:00:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "message": "The gym closes at 18:00 on 24 December.",
+      "clearAfter": 1798124400000,
       "on": false,
       "state": "on",
       "pausedCode": "RULE_CREATOR_REVOKED",
-      "nextCheckAt": 1764000000000,
-      "sent": 1,
-      "skipped": 1,
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "version": 1
+      "nextCheckAt": 1795521600000,
+      "sent": 3,
+      "skipped": 3,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "version": 3
     }
   },
   "message-rules.deleteMessageRulesById": {
@@ -216,40 +218,40 @@
   "message-rules.postMessageRulesByIdPause": {
     "description": "Pauses an automatic message. Save it to resume.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
-          "input": "example",
-          "values": ["example"]
+          "input": "tier",
+          "values": ["Day pass"]
         }
       ],
       "anchor": {
         "kind": "input",
-        "input": "example"
+        "input": "tier"
       },
       "offset": {
-        "amount": 1,
+        "amount": 3,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "sendAt": "example",
-      "timeZone": "example",
-      "message": "example",
-      "clearAfter": 1,
+      "sendAt": "2026-12-24T09:00:00.000Z",
+      "timeZone": "America/Los_Angeles",
+      "message": "The gym closes at 18:00 on 24 December.",
+      "clearAfter": 1798124400000,
       "on": false,
       "state": "on",
       "pausedCode": "RULE_CREATOR_REVOKED",
-      "nextCheckAt": 1764000000000,
-      "sent": 1,
-      "skipped": 1,
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "version": 1
+      "nextCheckAt": 1795521600000,
+      "sent": 3,
+      "skipped": 3,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "version": 3
     }
   },
   "message-rules.getMessageRulesByIdRuns": {
@@ -257,53 +259,53 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "id": "0193a1b2-7c00-7000-8000-000000000052",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "kind": "message",
-          "name": "Ada Example",
+          "name": "Renewal reminder",
           "state": "draft",
           "target": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
             "onDevice": false,
             "holderState": "unassigned",
-            "q": "example",
+            "q": "ada",
             "scan": {
-              "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
               "checkedIn": false
             },
             "match": [
               {
-                "input": "example",
-                "values": ["example"]
+                "input": "tier",
+                "values": ["Day pass"]
               }
             ],
-            "version": "example"
+            "version": "3"
           },
           "patch": {
-            "example": {}
+            "healthy": {}
           },
           "notify": false,
-          "at": 1764000000000,
-          "clearAfter": 1,
-          "parentId": "0193a1b2-7c00-7000-8000-0000000000a5",
-          "message": "example",
-          "ruleId": "0193a1b2-7c00-7000-8000-0000000000a6",
+          "at": 3,
+          "clearAfter": 1798124400000,
+          "parentId": "0193a1b2-7c00-7000-8000-da3c0125d33e",
+          "message": "The gym closes at 18:00 on 24 December.",
+          "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
           "followUp": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000a7",
-            "at": 1764000000000
+            "id": "0193a1b2-7c00-7000-8000-000000000052",
+            "at": 3
           },
           "counts": {
-            "targeted": 1,
-            "updated": 1,
-            "unchanged": 1,
-            "overBudget": 1,
-            "failed": 1
+            "targeted": 3,
+            "updated": 3,
+            "unchanged": 3,
+            "overBudget": 3,
+            "failed": 3
           },
-          "errorCode": "AB12CD34",
-          "createdAt": 1764000000000,
-          "startedAt": 1764000000000,
-          "finishedAt": 1764000000000
+          "errorCode": null,
+          "createdAt": 1794322800000,
+          "startedAt": 1794322800000,
+          "finishedAt": 1795521600000
         }
       ],
       "nextCursor": "c1.4812"
@@ -313,91 +315,92 @@
     "description": "Counts the passes due each of the next 14 days.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
-          "input": "example",
-          "values": ["example"]
+          "input": "tier",
+          "values": ["Day pass"]
         }
       ],
       "anchor": {
         "kind": "input",
-        "input": "example"
+        "input": "tier"
       },
       "offset": {
-        "amount": 1,
+        "amount": 3,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "timeZone": "example",
-      "message": "example"
+      "sendAt": "04:00",
+      "timeZone": "America/Los_Angeles",
+      "message": "The gym closes at 18:00 on 24 December."
     },
     "response": {
       "days": [
         {
-          "date": "example",
-          "count": 10
+          "date": "2026-12-24",
+          "count": 12
         }
       ],
-      "total": 10,
-      "atLimit": 10
+      "total": 128,
+      "atLimit": 25
     }
   },
   "message-rules.postMessageRulesByIdTest": {
     "description": "Sends the text now to one pass.",
     "request": {
-      "passId": "0193a1b2-7c00-7000-8000-0000000000a1"
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Ada Example",
+      "name": "Renewal reminder",
       "state": "draft",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false,
         "holderState": "unassigned",
-        "q": "example",
+        "q": "ada",
         "scan": {
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
           "checkedIn": false
         },
         "match": [
           {
-            "input": "example",
-            "values": ["example"]
+            "input": "tier",
+            "values": ["Day pass"]
           }
         ],
-        "version": "example"
+        "version": "3"
       },
       "patch": {
-        "example": {}
+        "healthy": {}
       },
       "notify": false,
-      "at": 1764000000000,
-      "clearAfter": 1,
-      "parentId": "0193a1b2-7c00-7000-8000-0000000000a5",
-      "message": "example",
-      "ruleId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "at": 3,
+      "clearAfter": 1798124400000,
+      "parentId": "0193a1b2-7c00-7000-8000-7f797b34da16",
+      "message": "The gym closes at 18:00 on 24 December.",
+      "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
-        "at": 1764000000000
+        "id": "0193a1b2-7c00-7000-8000-000000000052",
+        "at": 3
       },
       "counts": {
-        "targeted": 1,
-        "updated": 1,
-        "unchanged": 1,
-        "overBudget": 1,
-        "failed": 1
+        "targeted": 3,
+        "updated": 3,
+        "unchanged": 3,
+        "overBudget": 3,
+        "failed": 3
       },
-      "errorCode": "AB12CD34",
-      "createdAt": 1764000000000,
-      "startedAt": 1764000000000,
-      "finishedAt": 1764000000000
+      "errorCode": null,
+      "createdAt": 1794322800000,
+      "startedAt": 1794322800000,
+      "finishedAt": 1795521600000
     }
   }
 }

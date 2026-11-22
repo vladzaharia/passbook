@@ -2,22 +2,22 @@
   "wallet-providers.getWalletProvidersPassesById": {
     "description": "The local provider instance status of a pass.",
     "response": {
-      "credentialGeneration": 1,
+      "credentialGeneration": 3,
       "providers": [
         {
           "provider": "google",
-          "lifecycle": "absent",
+          "lifecycle": "active",
           "desiredOperation": {
-            "version": 1,
+            "version": 3,
             "kind": "upsert",
-            "state": "pending",
-            "reason": "ok"
+            "state": "succeeded",
+            "reason": null
           },
           "priorGenerationRetirementPending": false,
           "installation": "unknown",
           "reported": {
             "event": "saved",
-            "at": 1764000000000
+            "at": 3
           },
           "issuance": {
             "state": "disabled",
@@ -26,18 +26,18 @@
         },
         {
           "provider": "samsung",
-          "lifecycle": "absent",
+          "lifecycle": "active",
           "desiredOperation": {
-            "version": 1,
+            "version": 3,
             "kind": "upsert",
-            "state": "pending",
-            "reason": "ok"
+            "state": "succeeded",
+            "reason": null
           },
           "priorGenerationRetirementPending": false,
           "installation": "unknown",
           "reported": {
             "event": "saved",
-            "at": 1764000000000
+            "at": 3
           },
           "issuance": {
             "state": "disabled",

@@ -3,40 +3,40 @@
     "description": "The open roll call.",
     "response": {
       "rollCall": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "placeNames": ["Ada Example"],
-        "startedAt": 1764000000000,
-        "startedBy": "example",
-        "endedAt": 1764000000000,
-        "endedBy": "example",
-        "rev": 1,
-        "serverNow": 1,
+        "id": "0193a1b2-7c00-7000-8000-000000000072",
+        "placeNames": ["Main hall"],
+        "startedAt": 1794322800000,
+        "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
+        "endedAt": 1795521600000,
+        "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
+        "rev": 3,
+        "serverNow": 3,
         "counts": {
-          "total": 10,
-          "present": 1,
-          "out": 1,
-          "unconfirmed": 1,
-          "notConfirmedOut": 1,
-          "late": 1,
-          "inNow": 1,
-          "tappedIn": 1
+          "total": 128,
+          "present": 3,
+          "out": 3,
+          "unconfirmed": 3,
+          "notConfirmedOut": 3,
+          "late": 3,
+          "inNow": 3,
+          "tappedIn": 3
         },
         "people": [
           {
-            "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
-            "holder": "example",
-            "plan": "example",
-            "host": "example",
-            "place": "zone:main",
-            "placeName": "Ada Example",
-            "since": 1,
+            "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "holder": "Ada Example",
+            "plan": "Day pass",
+            "host": "host",
+            "place": "zone:main-hall",
+            "placeName": "Main hall",
+            "since": 3,
             "basis": "in_now",
             "presence": "in",
             "late": false,
             "mark": {
               "status": "present",
-              "by": "example",
-              "at": 1764000000000
+              "by": "Sam Rivera",
+              "at": 3
             },
             "notConfirmedOut": false
           }
@@ -47,40 +47,40 @@
   "roll-calls.postRollCalls": {
     "description": "Starts a roll call, or joins the open one.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "placeNames": ["Ada Example"],
-      "startedAt": 1764000000000,
-      "startedBy": "example",
-      "endedAt": 1764000000000,
-      "endedBy": "example",
-      "rev": 1,
-      "serverNow": 1,
+      "id": "0193a1b2-7c00-7000-8000-000000000072",
+      "placeNames": ["Main hall"],
+      "startedAt": 1794322800000,
+      "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "endedAt": 1795521600000,
+      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "rev": 3,
+      "serverNow": 3,
       "counts": {
-        "total": 10,
-        "present": 1,
-        "out": 1,
-        "unconfirmed": 1,
-        "notConfirmedOut": 1,
-        "late": 1,
-        "inNow": 1,
-        "tappedIn": 1
+        "total": 128,
+        "present": 3,
+        "out": 3,
+        "unconfirmed": 3,
+        "notConfirmedOut": 3,
+        "late": 3,
+        "inNow": 3,
+        "tappedIn": 3
       },
       "people": [
         {
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "holder": "example",
-          "plan": "example",
-          "host": "example",
-          "place": "zone:main",
-          "placeName": "Ada Example",
-          "since": 1,
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "plan": "Day pass",
+          "host": "host",
+          "place": "zone:main-hall",
+          "placeName": "Main hall",
+          "since": 3,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
-            "by": "example",
-            "at": 1764000000000
+            "by": "Sam Rivera",
+            "at": 3
           },
           "notConfirmedOut": false
         }
@@ -90,40 +90,40 @@
   "roll-calls.getRollCallsById": {
     "description": "One roll call.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "placeNames": ["Ada Example"],
-      "startedAt": 1764000000000,
-      "startedBy": "example",
-      "endedAt": 1764000000000,
-      "endedBy": "example",
-      "rev": 1,
-      "serverNow": 1,
+      "id": "0193a1b2-7c00-7000-8000-000000000072",
+      "placeNames": ["Main hall"],
+      "startedAt": 1794322800000,
+      "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "endedAt": 1795521600000,
+      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "rev": 3,
+      "serverNow": 3,
       "counts": {
-        "total": 10,
-        "present": 1,
-        "out": 1,
-        "unconfirmed": 1,
-        "notConfirmedOut": 1,
-        "late": 1,
-        "inNow": 1,
-        "tappedIn": 1
+        "total": 128,
+        "present": 3,
+        "out": 3,
+        "unconfirmed": 3,
+        "notConfirmedOut": 3,
+        "late": 3,
+        "inNow": 3,
+        "tappedIn": 3
       },
       "people": [
         {
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "holder": "example",
-          "plan": "example",
-          "host": "example",
-          "place": "zone:main",
-          "placeName": "Ada Example",
-          "since": 1,
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "plan": "Day pass",
+          "host": "host",
+          "place": "zone:main-hall",
+          "placeName": "Main hall",
+          "since": 3,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
-            "by": "example",
-            "at": 1764000000000
+            "by": "Sam Rivera",
+            "at": 3
           },
           "notConfirmedOut": false
         }
@@ -135,58 +135,58 @@
     "request": {
       "marks": [
         {
-          "rollCallId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "status": "present",
-          "at": 1764000000000
+          "at": 3
         }
       ]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "placeNames": ["Ada Example"],
-      "startedAt": 1764000000000,
-      "startedBy": "example",
-      "endedAt": 1764000000000,
-      "endedBy": "example",
-      "rev": 1,
-      "serverNow": 1,
+      "id": "0193a1b2-7c00-7000-8000-000000000072",
+      "placeNames": ["Main hall"],
+      "startedAt": 1794322800000,
+      "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "endedAt": 1795521600000,
+      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "rev": 3,
+      "serverNow": 3,
       "counts": {
-        "total": 10,
-        "present": 1,
-        "out": 1,
-        "unconfirmed": 1,
-        "notConfirmedOut": 1,
-        "late": 1,
-        "inNow": 1,
-        "tappedIn": 1
+        "total": 128,
+        "present": 3,
+        "out": 3,
+        "unconfirmed": 3,
+        "notConfirmedOut": 3,
+        "late": 3,
+        "inNow": 3,
+        "tappedIn": 3
       },
       "people": [
         {
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "holder": "example",
-          "plan": "example",
-          "host": "example",
-          "place": "zone:main",
-          "placeName": "Ada Example",
-          "since": 1,
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "plan": "Day pass",
+          "host": "host",
+          "place": "zone:main-hall",
+          "placeName": "Main hall",
+          "since": 3,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
-            "by": "example",
-            "at": 1764000000000
+            "by": "Sam Rivera",
+            "at": 3
           },
           "notConfirmedOut": false
         }
       ],
       "results": [
         {
-          "rollCallId": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "status": "applied",
-          "code": "AB12CD34"
+          "code": "NW7K2Q"
         }
       ]
     }
@@ -194,40 +194,40 @@
   "roll-calls.postRollCallsByIdEnd": {
     "description": "Ends a roll call.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "placeNames": ["Ada Example"],
-      "startedAt": 1764000000000,
-      "startedBy": "example",
-      "endedAt": 1764000000000,
-      "endedBy": "example",
-      "rev": 1,
-      "serverNow": 1,
+      "id": "0193a1b2-7c00-7000-8000-000000000072",
+      "placeNames": ["Main hall"],
+      "startedAt": 1794322800000,
+      "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "endedAt": 1795521600000,
+      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "rev": 3,
+      "serverNow": 3,
       "counts": {
-        "total": 10,
-        "present": 1,
-        "out": 1,
-        "unconfirmed": 1,
-        "notConfirmedOut": 1,
-        "late": 1,
-        "inNow": 1,
-        "tappedIn": 1
+        "total": 128,
+        "present": 3,
+        "out": 3,
+        "unconfirmed": 3,
+        "notConfirmedOut": 3,
+        "late": 3,
+        "inNow": 3,
+        "tappedIn": 3
       },
       "people": [
         {
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "holder": "example",
-          "plan": "example",
-          "host": "example",
-          "place": "zone:main",
-          "placeName": "Ada Example",
-          "since": 1,
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "plan": "Day pass",
+          "host": "host",
+          "place": "zone:main-hall",
+          "placeName": "Main hall",
+          "since": 3,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
-            "by": "example",
-            "at": 1764000000000
+            "by": "Sam Rivera",
+            "at": 3
           },
           "notConfirmedOut": false
         }

@@ -4,34 +4,34 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000101",
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "kind": "pass",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "bundleId": null,
+          "bundleId": "0193a1b2-7c00-7000-8000-000000000032",
           "to": "ada@example.com",
-          "subject": "Your ticket to Example Events",
-          "attached": true,
-          "createdAt": 1764000000000
+          "subject": "Your day pass",
+          "attached": false,
+          "createdAt": 1794322800000
         }
       ],
-      "nextCursor": null
+      "nextCursor": "c1.4812"
     }
   },
   "sandbox.getTestInboxById": {
     "description": "One captured email with its HTML and text.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000101",
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "pass",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "bundleId": null,
+      "bundleId": "0193a1b2-7c00-7000-8000-000000000032",
       "to": "ada@example.com",
-      "subject": "Your ticket to Example Events",
-      "attached": true,
-      "createdAt": 1764000000000,
-      "html": "<p>Your ticket is ready.</p>",
-      "text": "Your ticket is ready.",
+      "subject": "Your day pass",
+      "attached": false,
+      "createdAt": 1794322800000,
+      "html": "html",
+      "text": "The gym closes at 18:00 on 24 December.",
       "forwarding": "none"
     }
   }

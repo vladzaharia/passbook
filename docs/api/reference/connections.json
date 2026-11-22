@@ -3,63 +3,46 @@
     "description": "A dry run of the next sync over the last 30 days of records, at most 200: what it would create, update, leave unchanged, skip or reject. New records wait (`counts.waiting`) while the template has no approved release (`releaseBlocked`). It reads the source and the connection's passes and writes nothing: no cursor moves and no run is recorded. `columns` lists the source's fields with up to three sample cells and, for a field with few distinct values, those values and their counts. Needs connections:read and passes:read.",
     "response": {
       "ok": true,
-      "records": 115,
+      "records": 3,
       "counts": {
-        "create": 98,
-        "update": 4,
-        "unchanged": 0,
-        "skipped": 13,
+        "create": 3,
+        "update": 3,
+        "unchanged": 3,
+        "skipped": 3,
         "errors": 0,
-        "waiting": 0
+        "waiting": 3
+      },
+      "releaseBlocked": "no_release",
+      "window": {
+        "days": 3,
+        "limit": 25,
+        "since": 3,
+        "excluded": 3
       },
       "samples": [
         {
-          "ref": "o-1001",
+          "ref": "booking_8841",
           "action": "create",
           "fields": {
-            "memberName": "Maya Chen",
-            "plan": "monthly"
-          }
-        },
-        {
-          "ref": "o-1002",
-          "action": "skipped",
-          "fields": {
-            "memberName": "Sam Ortiz"
-          }
+            "tier": {}
+          },
+          "message": "The gym closes at 18:00 on 24 December."
         }
       ],
       "columns": [
         {
-          "pointer": "/memberName",
-          "label": "memberName",
-          "samples": ["Maya Chen", "Sam Ortiz", "Ana Ruiz"],
-          "values": []
-        },
-        {
-          "pointer": "/plan",
-          "label": "plan",
-          "samples": ["Monthly membership", "Gift card", "Monthly membership"],
+          "pointer": "/input/tier",
+          "label": "Booking sheet",
+          "samples": ["Day pass"],
           "values": [
             {
-              "value": "Monthly membership",
-              "count": 84
-            },
-            {
-              "value": "Gift card",
-              "count": 13
+              "value": "Day pass",
+              "count": 12
             }
           ]
         }
       ],
-      "durationMs": 412,
-      "releaseBlocked": null,
-      "window": {
-        "days": 30,
-        "limit": 200,
-        "since": 1788000000000,
-        "excluded": 0
-      }
+      "durationMs": 3
     }
   },
   "connections.getConnectionsByIdWebhookFailures": {
@@ -67,15 +50,15 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "eventRef": "example",
-          "generation": 1,
+          "id": "0193a1b2-7c00-7000-8000-000000000051",
+          "eventRef": "event:open-climbing",
+          "generation": 3,
           "connectionMode": "webhook",
           "state": "pending",
-          "errorCode": "AB12CD34",
-          "uncertainItems": 1,
-          "receivedAt": 1764000000000,
-          "updatedAt": 1764000000000
+          "errorCode": null,
+          "uncertainItems": 3,
+          "receivedAt": 1795521600000,
+          "updatedAt": 1795359600000
         }
       ],
       "nextCursor": "c1.4812"
@@ -91,7 +74,7 @@
     "description": "Marks an uncertain webhook resolved after you have checked the source system.",
     "response": {
       "ok": true,
-      "resolved": 1,
+      "resolved": 3,
       "state": "failed"
     }
   },
@@ -100,54 +83,58 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "connectorType": "example",
-          "connectorVersion": 1,
-          "name": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-000000000051",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "connectorType": "google-sheets",
+          "connectorVersion": 3,
+          "name": "Booking sheet",
           "config": {
-            "example": {}
+            "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+            "range": "Members!A:E"
           },
           "hasCredential": true,
           "hasWebhookSecret": true,
           "mapping": {
-            "example": {
-              "from": "example",
-              "transform": {
-                "kind": "enum"
-              }
+            "name": {
+              "from": "Name"
+            },
+            "tier": {
+              "from": "Tier"
+            },
+            "validUntil": {
+              "from": "Valid until"
             }
           },
-          "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "holderEmailField": "ada@example.com",
+          "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "holderEmailField": "/Holder email",
           "autoCreate": false,
           "autoEmail": false,
           "onMissing": "keep",
           "voidWhen": [
             {
-              "from": "example",
+              "from": "Booking sheet",
               "op": "in",
-              "values": ["example"]
+              "values": ["Day pass"]
             }
           ],
-          "webhookPrevUntil": 1,
+          "webhookPrevUntil": 1798124400000,
           "mode": "poll",
-          "intervalSeconds": 1,
-          "maxConcurrency": 1,
-          "requestsPerMinute": 1,
-          "enabled": false,
-          "health": "unknown",
-          "consecutiveFailures": 1,
-          "breakerOpenUntil": 1,
-          "nextRunAt": 1764000000000,
-          "lastRunAt": 1764000000000,
-          "lastSuccessAt": 1764000000000,
-          "lastErrorCode": "AB12CD34",
-          "lastErrorAt": 1764000000000,
-          "webhookUrl": "https://passbook.mobile/p/abc123",
-          "createdAt": 1764000000000,
-          "updatedAt": 1764000000000,
-          "passCount": 10
+          "intervalSeconds": 300,
+          "maxConcurrency": 3,
+          "requestsPerMinute": 60,
+          "enabled": true,
+          "health": "healthy",
+          "consecutiveFailures": 0,
+          "breakerOpenUntil": null,
+          "nextRunAt": 1795521600000,
+          "lastRunAt": 1795521600000,
+          "lastSuccessAt": 1795521600000,
+          "lastErrorCode": null,
+          "lastErrorAt": null,
+          "webhookUrl": "https://hooks.example.com/passbook",
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000,
+          "passCount": 12
         }
       ],
       "nextCursor": "c1.4812"
@@ -157,85 +144,98 @@
     "description": "Creates a connection.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "connectorType": "example",
-      "name": "Ada Example",
+      "connectorType": "google-sheets",
+      "name": "Booking sheet",
       "config": {
-        "example": {}
+        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        "range": "Members!A:E"
       },
       "secrets": {
-        "example": "example"
+        "sheetsToken": "ya29.5cf1a0a365e2f9095ee3a707eb4bb0d8260657b6"
       },
-      "webhookSecret": "AB12CD34xxxxxxxx"
+      "webhookSecret": "whsec_571d4d450b1de2be7856efd7cafc8701",
+      "mapping": {
+        "name": {
+          "from": "Name"
+        },
+        "tier": {
+          "from": "Tier"
+        },
+        "validUntil": {
+          "from": "Valid until"
+        }
+      }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "connectorType": "example",
-      "connectorVersion": 1,
-      "name": "Ada Example",
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "google-sheets",
+      "connectorVersion": 3,
+      "name": "Booking sheet",
       "config": {
-        "example": {}
+        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        "range": "Members!A:E"
       },
       "hasCredential": true,
       "hasWebhookSecret": true,
       "mapping": {
-        "example": {
-          "from": "example",
-          "transform": {
-            "kind": "enum",
-            "options": {
-              "example": {}
-            }
-          }
+        "name": {
+          "from": "Name"
+        },
+        "tier": {
+          "from": "Tier"
+        },
+        "validUntil": {
+          "from": "Valid until"
         }
       },
-      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "holderEmailField": "ada@example.com",
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Holder email",
       "autoCreate": false,
       "autoEmail": false,
       "onMissing": "keep",
       "voidWhen": [
         {
-          "from": "example",
+          "from": "Booking sheet",
           "op": "in",
-          "values": ["example"]
+          "values": ["Day pass"]
         }
       ],
-      "webhookPrevUntil": 1,
+      "webhookPrevUntil": 1798124400000,
       "mode": "poll",
-      "intervalSeconds": 1,
-      "maxConcurrency": 1,
-      "requestsPerMinute": 1,
-      "enabled": false,
-      "health": "unknown",
-      "consecutiveFailures": 1,
-      "breakerOpenUntil": 1,
-      "nextRunAt": 1764000000000,
-      "lastRunAt": 1764000000000,
-      "lastSuccessAt": 1764000000000,
-      "lastErrorCode": "AB12CD34",
-      "lastErrorAt": 1764000000000,
-      "webhookUrl": "https://passbook.mobile/p/abc123",
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "webhookSecret": "AB12CD34"
+      "intervalSeconds": 300,
+      "maxConcurrency": 3,
+      "requestsPerMinute": 60,
+      "enabled": true,
+      "health": "healthy",
+      "consecutiveFailures": 0,
+      "breakerOpenUntil": null,
+      "nextRunAt": 1795521600000,
+      "lastRunAt": 1795521600000,
+      "lastSuccessAt": 1795521600000,
+      "lastErrorCode": null,
+      "lastErrorAt": null,
+      "webhookUrl": "https://hooks.example.com/passbook",
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "webhookSecret": "whsec_571d4d450b1de2be7856efd7cafc8701"
     }
   },
   "connections.getConnectionsSummary": {
     "description": "A health summary across connections.",
     "response": {
-      "total": 10,
+      "total": 128,
       "byHealth": {
-        "example": 1
+        "healthy": 3
       },
       "attention": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "name": "Ada Example",
-          "health": "unknown",
-          "lastErrorCode": "AB12CD34",
-          "lastErrorAt": 1764000000000
+          "id": "0193a1b2-7c00-7000-8000-000000000051",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Booking sheet",
+          "health": "healthy",
+          "lastErrorCode": null,
+          "lastErrorAt": null
         }
       ]
     }
@@ -243,142 +243,148 @@
   "connections.getConnectionsById": {
     "description": "A connection with its runs and metrics.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "connectorType": "example",
-      "connectorVersion": 1,
-      "name": "Ada Example",
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "google-sheets",
+      "connectorVersion": 3,
+      "name": "Booking sheet",
       "config": {
-        "example": {}
+        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        "range": "Members!A:E"
       },
       "hasCredential": true,
       "hasWebhookSecret": true,
       "mapping": {
-        "example": {
-          "from": "example",
-          "transform": {
-            "kind": "enum",
-            "options": {
-              "example": {}
-            }
-          }
+        "name": {
+          "from": "Name"
+        },
+        "tier": {
+          "from": "Tier"
+        },
+        "validUntil": {
+          "from": "Valid until"
         }
       },
-      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "holderEmailField": "ada@example.com",
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Holder email",
       "autoCreate": false,
       "autoEmail": false,
       "onMissing": "keep",
       "voidWhen": [
         {
-          "from": "example",
+          "from": "Booking sheet",
           "op": "in",
-          "values": ["example"]
+          "values": ["Day pass"]
         }
       ],
-      "webhookPrevUntil": 1,
+      "webhookPrevUntil": 1798124400000,
       "mode": "poll",
-      "intervalSeconds": 1,
-      "maxConcurrency": 1,
-      "requestsPerMinute": 1,
-      "enabled": false,
-      "health": "unknown",
-      "consecutiveFailures": 1,
-      "breakerOpenUntil": 1,
-      "nextRunAt": 1764000000000,
-      "lastRunAt": 1764000000000,
-      "lastSuccessAt": 1764000000000,
-      "lastErrorCode": "AB12CD34",
-      "lastErrorAt": 1764000000000,
-      "webhookUrl": "https://passbook.mobile/p/abc123",
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
+      "intervalSeconds": 300,
+      "maxConcurrency": 3,
+      "requestsPerMinute": 60,
+      "enabled": true,
+      "health": "healthy",
+      "consecutiveFailures": 0,
+      "breakerOpenUntil": null,
+      "nextRunAt": 1795521600000,
+      "lastRunAt": 1795521600000,
+      "lastSuccessAt": 1795521600000,
+      "lastErrorCode": null,
+      "lastErrorAt": null,
+      "webhookUrl": "https://hooks.example.com/passbook",
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
       "runs": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "id": "0193a1b2-7c00-7000-8000-000000000023",
           "trigger": "schedule",
-          "startedAt": 1764000000000,
-          "finishedAt": 1764000000000,
+          "startedAt": 1794322800000,
+          "finishedAt": 1795521600000,
           "outcome": "running",
-          "recordsSeen": 1,
-          "passesChanged": 1,
-          "passesCreated": 1,
-          "passesVoided": 1,
-          "recordsFailed": 1,
-          "errorCode": "AB12CD34",
-          "errorDetail": "example",
-          "httpStatus": 1,
-          "durationMs": 1764000000000
+          "recordsSeen": 3,
+          "passesChanged": 3,
+          "passesCreated": 3,
+          "passesVoided": 3,
+          "recordsFailed": 3,
+          "errorCode": null,
+          "errorDetail": null,
+          "httpStatus": 200,
+          "durationMs": 3
         }
       ],
       "metrics": {
-        "p50Ms": 1764000000000,
-        "p95Ms": 1764000000000,
-        "errorRate": 1,
-        "passCount": 10
+        "p50Ms": 3,
+        "p95Ms": 3,
+        "errorRate": 3,
+        "passCount": 12
       }
     }
   },
   "connections.patchConnectionsById": {
     "description": "Updates a connection.",
     "request": {
-      "name": "Ada Example",
+      "name": "Booking sheet",
       "config": {
-        "example": {}
+        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        "range": "Members!A:E"
+      },
+      "secrets": {
+        "sheetsToken": "ya29.fb90204b82135d002e703a9f596d0c121e293bc0"
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "connectorType": "example",
-      "connectorVersion": 1,
-      "name": "Ada Example",
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "google-sheets",
+      "connectorVersion": 3,
+      "name": "Booking sheet",
       "config": {
-        "example": {}
+        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        "range": "Members!A:E"
       },
       "hasCredential": true,
       "hasWebhookSecret": true,
       "mapping": {
-        "example": {
-          "from": "example",
-          "transform": {
-            "kind": "enum",
-            "options": {
-              "example": {}
-            }
-          }
+        "name": {
+          "from": "Name"
+        },
+        "tier": {
+          "from": "Tier"
+        },
+        "validUntil": {
+          "from": "Valid until"
         }
       },
-      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "holderEmailField": "ada@example.com",
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Holder email",
       "autoCreate": false,
       "autoEmail": false,
       "onMissing": "keep",
       "voidWhen": [
         {
-          "from": "example",
+          "from": "Booking sheet",
           "op": "in",
-          "values": ["example"]
+          "values": ["Day pass"]
         }
       ],
-      "webhookPrevUntil": 1,
+      "webhookPrevUntil": 1798124400000,
       "mode": "poll",
-      "intervalSeconds": 1,
-      "maxConcurrency": 1,
-      "requestsPerMinute": 1,
-      "enabled": false,
-      "health": "unknown",
-      "consecutiveFailures": 1,
-      "breakerOpenUntil": 1,
-      "nextRunAt": 1764000000000,
-      "lastRunAt": 1764000000000,
-      "lastSuccessAt": 1764000000000,
-      "lastErrorCode": "AB12CD34",
-      "lastErrorAt": 1764000000000,
-      "webhookUrl": "https://passbook.mobile/p/abc123",
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "webhookSecret": "AB12CD34"
+      "intervalSeconds": 300,
+      "maxConcurrency": 3,
+      "requestsPerMinute": 60,
+      "enabled": true,
+      "health": "healthy",
+      "consecutiveFailures": 0,
+      "breakerOpenUntil": null,
+      "nextRunAt": 1795521600000,
+      "lastRunAt": 1795521600000,
+      "lastSuccessAt": 1795521600000,
+      "lastErrorCode": null,
+      "lastErrorAt": null,
+      "webhookUrl": "https://hooks.example.com/passbook",
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "webhookSecret": "whsec_59bd19d02690b6086c1f0b8c31c681bd"
     }
   },
   "connections.deleteConnectionsById": {
@@ -391,71 +397,78 @@
     "description": "Tests an unsaved configuration without saving it.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "connectorType": "example",
+      "connectorType": "google-sheets",
       "config": {
-        "example": {}
+        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        "range": "Members!A:E"
       },
       "secrets": {
-        "example": "example"
+        "sheetsToken": "ya29.07b655bbd0c4f2a4a40f18285549a2a81d813168"
       },
       "mapping": {
-        "example": {
-          "from": "example",
-          "transform": {
-            "kind": "enum",
-            "options": {
-              "example": {}
-            }
-          }
+        "name": {
+          "from": "Name"
+        },
+        "tier": {
+          "from": "Tier"
+        },
+        "validUntil": {
+          "from": "Valid until"
         }
-      }
+      },
+      "voidWhen": [
+        {
+          "from": "Booking sheet",
+          "op": "in",
+          "values": ["Day pass"]
+        }
+      ]
     },
     "response": {
-      "ok": false,
-      "detail": "example",
-      "errorCode": "AB12CD34",
-      "durationMs": 1764000000000,
+      "ok": true,
+      "detail": "The pass has already been used today.",
+      "durationMs": 3,
       "sample": [
         {
-          "pointer": "example",
-          "preview": "example"
+          "pointer": "/input/tier",
+          "preview": "Day pass"
         }
       ],
-      "records": 1,
+      "records": 3,
       "counts": {
-        "create": 1,
-        "update": 1,
-        "unchanged": 1,
-        "skipped": 1,
-        "errors": 1,
-        "waiting": 1
+        "create": 3,
+        "update": 3,
+        "unchanged": 3,
+        "skipped": 3,
+        "errors": 0,
+        "waiting": 3
       },
-      "releaseBlocked": "example",
+      "releaseBlocked": "no_release",
       "window": {
-        "days": 1,
-        "limit": 10,
-        "since": 1,
-        "excluded": 1
+        "days": 3,
+        "limit": 25,
+        "since": 3,
+        "excluded": 3
       },
       "samples": [
         {
-          "ref": "example",
+          "ref": "booking_8841",
           "action": "create",
           "fields": {
-            "example": {}
+            "tier": {}
           },
-          "message": "example"
+          "message": "The gym closes at 18:00 on 24 December."
         }
       ],
       "columns": [
         {
-          "pointer": "example",
-          "label": "Ada Example",
-          "samples": ["example"],
+          "pointer": "/input/tier",
+          "label": "Booking sheet",
+          "samples": ["Day pass"],
           "values": [
             {
-              "value": "example",
-              "count": 10
+              "value": "Day pass",
+              "count": 12
             }
           ]
         }
@@ -465,14 +478,13 @@
   "connections.postConnectionsByIdTest": {
     "description": "Tests the saved connection against its source.",
     "response": {
-      "ok": false,
-      "detail": "example",
-      "errorCode": "AB12CD34",
-      "durationMs": 1764000000000,
+      "ok": true,
+      "detail": "The pass has already been used today.",
+      "durationMs": 3,
       "sample": [
         {
-          "pointer": "example",
-          "preview": "example"
+          "pointer": "/input/tier",
+          "preview": "Day pass"
         }
       ]
     }
@@ -480,8 +492,8 @@
   "connections.postConnectionsByIdSync": {
     "description": "Syncs now instead of waiting for the schedule.",
     "response": {
-      "runId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "workflowInstanceId": "0193a1b2-7c00-7000-8000-0000000000a2"
+      "runId": "0193a1b2-7c00-7000-8000-000000000023",
+      "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c"
     }
   },
   "connections.getConnectionsByIdRuns": {
@@ -489,20 +501,20 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "id": "0193a1b2-7c00-7000-8000-000000000051",
           "trigger": "schedule",
-          "startedAt": 1764000000000,
-          "finishedAt": 1764000000000,
+          "startedAt": 1794322800000,
+          "finishedAt": 1795521600000,
           "outcome": "running",
-          "recordsSeen": 1,
-          "passesChanged": 1,
-          "passesCreated": 1,
-          "passesVoided": 1,
-          "recordsFailed": 1,
-          "errorCode": "AB12CD34",
-          "errorDetail": "example",
-          "httpStatus": 1,
-          "durationMs": 1764000000000
+          "recordsSeen": 3,
+          "passesChanged": 3,
+          "passesCreated": 3,
+          "passesVoided": 3,
+          "recordsFailed": 3,
+          "errorCode": null,
+          "errorDetail": null,
+          "httpStatus": 200,
+          "durationMs": 3
         }
       ],
       "nextCursor": "c1.4812"
@@ -511,112 +523,114 @@
   "connections.postConnectionsByIdWebhookSecret": {
     "description": "Generates a new webhook secret. It is shown once.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "connectorType": "example",
-      "connectorVersion": 1,
-      "name": "Ada Example",
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "google-sheets",
+      "connectorVersion": 3,
+      "name": "Booking sheet",
       "config": {
-        "example": {}
+        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        "range": "Members!A:E"
       },
       "hasCredential": true,
       "hasWebhookSecret": true,
       "mapping": {
-        "example": {
-          "from": "example",
-          "transform": {
-            "kind": "enum",
-            "options": {
-              "example": {}
-            }
-          }
+        "name": {
+          "from": "Name"
+        },
+        "tier": {
+          "from": "Tier"
+        },
+        "validUntil": {
+          "from": "Valid until"
         }
       },
-      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "holderEmailField": "ada@example.com",
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Holder email",
       "autoCreate": false,
       "autoEmail": false,
       "onMissing": "keep",
       "voidWhen": [
         {
-          "from": "example",
+          "from": "Booking sheet",
           "op": "in",
-          "values": ["example"]
+          "values": ["Day pass"]
         }
       ],
-      "webhookPrevUntil": 1,
+      "webhookPrevUntil": 1798124400000,
       "mode": "poll",
-      "intervalSeconds": 1,
-      "maxConcurrency": 1,
-      "requestsPerMinute": 1,
-      "enabled": false,
-      "health": "unknown",
-      "consecutiveFailures": 1,
-      "breakerOpenUntil": 1,
-      "nextRunAt": 1764000000000,
-      "lastRunAt": 1764000000000,
-      "lastSuccessAt": 1764000000000,
-      "lastErrorCode": "AB12CD34",
-      "lastErrorAt": 1764000000000,
-      "webhookUrl": "https://passbook.mobile/p/abc123",
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "webhookSecret": "AB12CD34"
+      "intervalSeconds": 300,
+      "maxConcurrency": 3,
+      "requestsPerMinute": 60,
+      "enabled": true,
+      "health": "healthy",
+      "consecutiveFailures": 0,
+      "breakerOpenUntil": null,
+      "nextRunAt": 1795521600000,
+      "lastRunAt": 1795521600000,
+      "lastSuccessAt": 1795521600000,
+      "lastErrorCode": null,
+      "lastErrorAt": null,
+      "webhookUrl": "https://hooks.example.com/passbook",
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "webhookSecret": "whsec_fce251621e0fe56c79f85670fdd2a08f"
     }
   },
   "connections.deleteConnectionsByIdWebhookSecretPrevious": {
     "description": "Stops accepting the previous webhook secret now.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "connectorType": "example",
-      "connectorVersion": 1,
-      "name": "Ada Example",
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "google-sheets",
+      "connectorVersion": 3,
+      "name": "Booking sheet",
       "config": {
-        "example": {}
+        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
+        "range": "Members!A:E"
       },
       "hasCredential": true,
       "hasWebhookSecret": true,
       "mapping": {
-        "example": {
-          "from": "example",
-          "transform": {
-            "kind": "enum",
-            "options": {
-              "example": {}
-            }
-          }
+        "name": {
+          "from": "Name"
+        },
+        "tier": {
+          "from": "Tier"
+        },
+        "validUntil": {
+          "from": "Valid until"
         }
       },
-      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "holderEmailField": "ada@example.com",
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Holder email",
       "autoCreate": false,
       "autoEmail": false,
       "onMissing": "keep",
       "voidWhen": [
         {
-          "from": "example",
+          "from": "Booking sheet",
           "op": "in",
-          "values": ["example"]
+          "values": ["Day pass"]
         }
       ],
-      "webhookPrevUntil": 1,
+      "webhookPrevUntil": 1798124400000,
       "mode": "poll",
-      "intervalSeconds": 1,
-      "maxConcurrency": 1,
-      "requestsPerMinute": 1,
-      "enabled": false,
-      "health": "unknown",
-      "consecutiveFailures": 1,
-      "breakerOpenUntil": 1,
-      "nextRunAt": 1764000000000,
-      "lastRunAt": 1764000000000,
-      "lastSuccessAt": 1764000000000,
-      "lastErrorCode": "AB12CD34",
-      "lastErrorAt": 1764000000000,
-      "webhookUrl": "https://passbook.mobile/p/abc123",
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000
+      "intervalSeconds": 300,
+      "maxConcurrency": 3,
+      "requestsPerMinute": 60,
+      "enabled": true,
+      "health": "healthy",
+      "consecutiveFailures": 0,
+      "breakerOpenUntil": null,
+      "nextRunAt": 1795521600000,
+      "lastRunAt": 1795521600000,
+      "lastSuccessAt": 1795521600000,
+      "lastErrorCode": null,
+      "lastErrorAt": null,
+      "webhookUrl": "https://hooks.example.com/passbook",
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000
     }
   }
 }

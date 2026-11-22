@@ -2,17 +2,18 @@
   "scan.postScanResolve": {
     "description": "Reads a code and says what it is, without acting on it.",
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-16cd4619eddb",
       "input": {
-        "code": "AB12CD34",
+        "code": "NW7K2Q",
         "method": "camera"
       },
-      "clientTs": 1,
-      "dayStart": 1,
+      "clientTs": 3,
+      "dayStart": 3,
       "scope": {
-        "setupId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "timeZone": "example"
+        "setupId": "0193a1b2-7c00-7000-8000-4759fe6c0ab9",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "timeZone": "America/Los_Angeles"
       }
     },
     "response": {
@@ -20,18 +21,18 @@
         "mode": "single",
         "direction": "in",
         "inside": false,
-        "enteredAt": 1764000000000,
-        "firstAt": 1764000000000,
-        "validFrom": 1,
-        "validUntil": 1
+        "enteredAt": 1795521600000,
+        "firstAt": 1795521600000,
+        "validFrom": 1795532400000,
+        "validUntil": 1798124400000
       },
-      "scanId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "scanId": "0193a1b2-7c00-7000-8000-000000000043",
       "kind": "ok",
-      "reason": "not_found",
+      "reason": null,
       "replay": false,
       "action": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "label": "Ada Example",
+        "id": "admit",
+        "label": "Admit",
         "kind": "check_in"
       },
       "card": {
@@ -39,139 +40,121 @@
           "mode": "single",
           "direction": "in",
           "inside": false,
-          "enteredAt": 1764000000000,
-          "firstAt": 1764000000000,
-          "validFrom": 1,
-          "validUntil": 1
+          "enteredAt": 1795521600000,
+          "firstAt": 1795521600000,
+          "validFrom": 1795532400000,
+          "validUntil": 1798124400000
         },
-        "passId": "0193a1b2-7c00-7000-8000-0000000000a3",
-        "version": 1,
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "version": 3,
         "mode": "live",
-        "title": "Ada Example",
+        "title": "Day pass",
         "subtitle": "Ada Example",
         "template": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
-          "name": "Ada Example",
-          "style": "example"
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "style": "generic"
         },
         "status": "active",
-        "validFrom": 1,
-        "validUntil": 1,
-        "flags": [
-          {
-            "label": "Ada Example",
-            "tone": "warning",
-            "stop": false
-          }
-        ],
-        "values": [
-          {
-            "input": "example",
-            "label": "Ada Example",
-            "before": {},
-            "after": {},
-            "goal": 10,
-            "format": "number",
-            "currency": "example",
-            "counter": false,
-            "need": 1
-          }
-        ],
+        "validFrom": 1795532400000,
+        "validUntil": 1798124400000,
+        "flags": [],
+        "values": [],
         "actions": [
           {
-            "id": "0193a1b2-7c00-7000-8000-0000000000a5",
-            "label": "Ada Example",
+            "id": "admit",
+            "label": "Admit",
             "kind": "check_in",
             "available": false,
             "lock": "role",
-            "reason": "not_found",
+            "reason": null,
             "amount": {
-              "fixed": 1
+              "fixed": 3
             },
             "confirm": false,
-            "confirmAbove": 1,
-            "cooldownRemainingMs": 1764000000000,
+            "confirmAbove": 3,
+            "cooldownRemainingMs": 3,
             "armable": "sticky",
-            "rewardLabel": "Ada Example",
+            "rewardLabel": "Free day pass",
             "input": {
               "type": "string",
-              "label": "Ada Example",
-              "min": 1,
-              "max": 1,
-              "step": 1,
-              "maxLength": 1,
-              "enum": ["example"]
+              "label": "Day pass",
+              "min": 3,
+              "max": 3,
+              "step": 3,
+              "maxLength": 3,
+              "enum": ["adult"]
             }
           }
         ],
         "display": {
           "v": 1,
-          "screen": "ready",
-          "templateVersion": "example",
-          "variant": "example",
+          "screen": "ok",
+          "templateVersion": "3",
+          "variant": "default",
           "identity": {
-            "holder": "example",
-            "initials": "ex",
+            "holder": "Ada Example",
+            "initials": "AE",
             "photo": {
-              "url": "https://passbook.mobile/p/abc123",
-              "alt": "example"
+              "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+              "alt": "Northwind logo"
             }
           },
           "header": {
             "icon": "user",
-            "title": "Ada Example",
+            "title": "Day pass",
             "titleLines": 1,
-            "meta": "example",
+            "meta": "Northwind",
             "chips": [
               {
-                "id": "0193a1b2-7c00-7000-8000-0000000000a6",
-                "text": "example",
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes a",
                 "tone": "neutral"
               }
             ]
           },
           "panels": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
               "kind": "membership",
-              "title": "Ada Example",
+              "title": "Day pass",
               "icon": "user",
               "tone": "neutral",
               "rows": [
                 {
                   "type": "heading",
-                  "id": "0193a1b2-7c00-7000-8000-0000000000a8",
-                  "text": "example",
-                  "detail": "example"
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "text": "The gym closes at 18:00 ",
+                  "detail": "The pass has already bee"
                 }
               ]
             }
           ],
           "notes": {
-            "staff": "example",
-            "refused": "example"
+            "staff": "Sam Rivera",
+            "refused": "expired"
           }
         },
         "lastScans": [
           {
-            "scanId": "0193a1b2-7c00-7000-8000-0000000000a9",
-            "at": 1764000000000,
-            "actionLabel": "Ada Example",
+            "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+            "at": 3,
+            "actionLabel": "Admit",
             "outcome": "ok",
-            "scannerName": "Ada Example",
+            "scannerName": "Front desk",
             "undoable": false
           }
         ],
         "bundle": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000aa",
-          "name": "Ada Example",
-          "size": 1,
-          "checkedIn": 1,
+          "id": "0193a1b2-7c00-7000-8000-000000000032",
+          "name": "Family bundle",
+          "size": 24576,
+          "checkedIn": 3,
           "members": [
             {
-              "initials": "exam",
+              "initials": "AE",
               "checkedIn": false,
-              "refusedReason": "example"
+              "refusedReason": "expired"
             }
           ]
         },
@@ -180,236 +163,236 @@
         },
         "access": {
           "plan": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000ab",
-            "label": "Ada Example",
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "label": "Day pass",
             "kind": "always"
           },
           "zone": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000ac",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-000000000081",
+            "name": "Main hall"
           },
-          "closesAt": 1764000000000,
-          "nextOpenAt": 1764000000000,
+          "closesAt": 1795521600000,
+          "nextOpenAt": 1795521600000,
           "visits": {
-            "used": 1,
-            "limit": 10
+            "used": 128,
+            "limit": 25
           },
           "visit": false,
-          "timeZone": "example"
+          "timeZone": "America/Los_Angeles"
         },
         "tag": {
-          "hint": "ABCD",
+          "hint": "909D",
           "assurance": "basic",
           "system": "uid",
-          "typeName": "Ada Example",
+          "typeName": "Wristband 14",
           "scope": "pass",
           "count": 8,
           "passes": [
             {
-              "passId": "0193a1b2-7c00-7000-8000-0000000000ad",
-              "templateName": "Ada Example",
+              "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+              "templateName": "Day pass",
               "state": "used",
-              "reason": "example"
+              "reason": "Left the gym early; refund issued at the desk."
             }
           ]
         },
         "occupancy": {
           "place": {
             "kind": "zone",
-            "id": "0193a1b2-7c00-7000-8000-0000000000ae",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "name": "Day pass"
           },
           "direction": "in",
           "auto": false,
           "state": "in",
-          "since": 1,
-          "via": "example",
-          "stayMs": 1764000000000,
-          "inNow": 1,
-          "capacity": 10,
-          "turnaround": "in",
+          "since": 3,
+          "via": "api",
+          "stayMs": 3,
+          "inNow": 3,
+          "capacity": 3,
+          "turnaround": null,
           "parent": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000af",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "name": "Day pass"
           }
         },
         "passView": {
           "passJson": {},
-          "assetBaseUrl": "https://passbook.mobile/p/abc123",
-          "assetGrant": "example",
-          "assetNames": ["Ada Example"]
+          "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+          "assetGrant": "logo",
+          "assetNames": ["Day pass"]
         }
       },
       "previous": {
-        "scanId": "0193a1b2-7c00-7000-8000-0000000000b0",
-        "at": 1764000000000,
-        "scannerName": "Ada Example",
-        "staffName": "Ada Example",
-        "actionLabel": "Ada Example",
+        "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+        "at": 3,
+        "scannerName": "Front desk",
+        "staffName": "Sam Rivera",
+        "actionLabel": "Admit",
         "override": false
       },
       "event": {
-        "name": "Ada Example",
-        "startsAt": 1764000000000
+        "name": "Open climbing",
+        "startsAt": 1795521600000
       },
       "template": {
-        "name": "Ada Example",
-        "style": "example"
+        "name": "Day pass",
+        "style": "generic"
       },
-      "at": 1764000000000,
-      "cooldownRemainingMs": 1764000000000,
+      "at": 3,
+      "cooldownRemainingMs": 3,
       "value": {
-        "input": "example",
-        "label": "Ada Example",
+        "input": "tier",
+        "label": "Day pass",
         "before": {},
         "after": {},
-        "goal": 10,
+        "goal": 3,
         "format": "number",
-        "currency": "example",
+        "currency": "USD",
         "counter": false,
-        "need": 1
+        "need": 3
       },
-      "flags": ["example"],
+      "flags": [],
       "channel": "mobile",
       "overridable": false,
       "approvals": false,
       "group": {
-        "total": 10,
-        "done": 1,
-        "already": 1,
-        "refused": 1,
+        "total": 128,
+        "done": 3,
+        "already": 3,
+        "refused": 0,
         "members": [
           {
-            "name": "Ada Example",
+            "name": "Sam Rivera",
             "state": "done",
-            "reason": "example"
+            "reason": "Left the gym early; refund issued at the desk."
           }
         ]
       },
       "bundle": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000b1",
-        "name": "Ada Example",
-        "size": 1,
-        "checkedIn": 1,
+        "id": "0193a1b2-7c00-7000-8000-000000000032",
+        "name": "Family bundle",
+        "size": 24576,
+        "checkedIn": 3,
         "members": [
           {
-            "initials": "exam",
+            "initials": "AE",
             "checkedIn": false,
-            "refusedReason": "example"
+            "refusedReason": "expired"
           }
         ]
       },
       "inBundle": false,
       "counts": {
-        "today": 1,
+        "today": 3,
         "event": {
-          "arrived": 1,
-          "inside": 1,
-          "expected": 1,
-          "capacity": 10
+          "arrived": 3,
+          "inside": 3,
+          "expected": 3,
+          "capacity": 3
         },
         "place": {
-          "name": "Ada Example",
-          "inNow": 1,
-          "capacity": 10
+          "name": "Day pass",
+          "inNow": 3,
+          "capacity": 3
         },
         "byType": [
           {
-            "templateId": "0193a1b2-7c00-7000-8000-0000000000b2",
-            "name": "Ada Example",
-            "count": 10
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "count": 12
           }
         ],
-        "asOf": 1,
-        "configRev": 1
+        "asOf": 3,
+        "configRev": 3
       },
-      "milestone": "count",
-      "undoUntil": 1,
+      "milestone": null,
+      "undoUntil": null,
       "access": {
         "plan": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b3",
-          "label": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "label": "Day pass",
           "kind": "always"
         },
         "zone": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b4",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "name": "Main hall"
         },
-        "closesAt": 1764000000000,
-        "nextOpenAt": 1764000000000,
+        "closesAt": 1795521600000,
+        "nextOpenAt": 1795521600000,
         "visits": {
-          "used": 1,
-          "limit": 10
+          "used": 128,
+          "limit": 25
         },
         "visit": false,
-        "timeZone": "example"
+        "timeZone": "America/Los_Angeles"
       },
       "admit": {
-        "type": "example",
+        "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 1764000000000
+          "at": 3
         },
-        "timeZone": "example"
+        "timeZone": "America/Los_Angeles"
       },
       "tag": {
-        "hint": "ABCD",
+        "hint": "9F00",
         "assurance": "basic",
         "system": "uid",
-        "typeName": "Ada Example",
+        "typeName": "Wristband 14",
         "scope": "pass",
         "count": 8,
         "passes": [
           {
-            "passId": "0193a1b2-7c00-7000-8000-0000000000b5",
-            "templateName": "Ada Example",
+            "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "templateName": "Day pass",
             "state": "used",
-            "reason": "example"
+            "reason": "Left the gym early; refund issued at the desk."
           }
         ]
       },
       "occupancy": {
         "place": {
           "kind": "zone",
-          "id": "0193a1b2-7c00-7000-8000-0000000000b6",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass"
         },
         "direction": "in",
         "auto": false,
         "state": "in",
-        "since": 1,
-        "via": "example",
-        "stayMs": 1764000000000,
-        "inNow": 1,
-        "capacity": 10,
-        "turnaround": "in",
+        "since": 3,
+        "via": "api",
+        "stayMs": 3,
+        "inNow": 3,
+        "capacity": 3,
+        "turnaround": null,
         "parent": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b7",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass"
         }
       },
       "display": {
         "v": 1,
-        "screen": "ready",
-        "templateVersion": "example",
-        "variant": "example",
+        "screen": "ok",
+        "templateVersion": "3",
+        "variant": "default",
         "identity": {
-          "holder": "example",
-          "initials": "ex",
+          "holder": "Ada Example",
+          "initials": "AE",
           "photo": {
-            "url": "https://passbook.mobile/p/abc123",
-            "alt": "example"
+            "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+            "alt": "Northwind logo"
           }
         },
         "header": {
           "icon": "user",
-          "title": "Ada Example",
+          "title": "Day pass",
           "titleLines": 1,
-          "meta": "example",
+          "meta": "Northwind",
           "chips": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0000000000b8",
-              "text": "example",
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "text": "The gym closes a",
               "tone": "neutral",
               "icon": "user"
             }
@@ -417,24 +400,24 @@
         },
         "panels": [
           {
-            "id": "0193a1b2-7c00-7000-8000-0000000000b9",
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
             "kind": "membership",
-            "title": "Ada Example",
+            "title": "Day pass",
             "icon": "user",
             "tone": "neutral",
             "rows": [
               {
                 "type": "heading",
-                "id": "0193a1b2-7c00-7000-8000-0000000000ba",
-                "text": "example",
-                "detail": "example"
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes at 18:00 ",
+                "detail": "The pass has already bee"
               }
             ]
           }
         ],
         "notes": {
-          "staff": "example",
-          "refused": "example"
+          "staff": "Sam Rivera",
+          "refused": "expired"
         }
       }
     }
@@ -442,37 +425,39 @@
   "scan.postScanActions": {
     "description": "Scans a code and acts on it.",
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-b448066034ab",
       "input": {
-        "code": "AB12CD34",
+        "code": "NW7K2Q",
         "method": "camera"
       },
-      "clientTs": 1,
-      "dayStart": 1,
+      "clientTs": 3,
+      "dayStart": 3,
       "scope": {
-        "setupId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "timeZone": "example"
+        "setupId": "0193a1b2-7c00-7000-8000-bcf079ceb0e2",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "timeZone": "America/Los_Angeles"
       },
-      "actionId": "0193a1b2-7c00-7000-8000-00000000"
+      "actionId": "admit",
+      "amount": 3
     },
     "response": {
       "checkIn": {
         "mode": "single",
         "direction": "in",
         "inside": false,
-        "enteredAt": 1764000000000,
-        "firstAt": 1764000000000,
-        "validFrom": 1,
-        "validUntil": 1
+        "enteredAt": 1795521600000,
+        "firstAt": 1795521600000,
+        "validFrom": 1795532400000,
+        "validUntil": 1798124400000
       },
-      "scanId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "scanId": "0193a1b2-7c00-7000-8000-000000000043",
       "kind": "ok",
-      "reason": "not_found",
+      "reason": null,
       "replay": false,
       "action": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "label": "Ada Example",
+        "id": "admit",
+        "label": "Admit",
         "kind": "check_in"
       },
       "card": {
@@ -480,139 +465,121 @@
           "mode": "single",
           "direction": "in",
           "inside": false,
-          "enteredAt": 1764000000000,
-          "firstAt": 1764000000000,
-          "validFrom": 1,
-          "validUntil": 1
+          "enteredAt": 1795521600000,
+          "firstAt": 1795521600000,
+          "validFrom": 1795532400000,
+          "validUntil": 1798124400000
         },
-        "passId": "0193a1b2-7c00-7000-8000-0000000000a3",
-        "version": 1,
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "version": 3,
         "mode": "live",
-        "title": "Ada Example",
+        "title": "Day pass",
         "subtitle": "Ada Example",
         "template": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
-          "name": "Ada Example",
-          "style": "example"
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "style": "generic"
         },
         "status": "active",
-        "validFrom": 1,
-        "validUntil": 1,
-        "flags": [
-          {
-            "label": "Ada Example",
-            "tone": "warning",
-            "stop": false
-          }
-        ],
-        "values": [
-          {
-            "input": "example",
-            "label": "Ada Example",
-            "before": {},
-            "after": {},
-            "goal": 10,
-            "format": "number",
-            "currency": "example",
-            "counter": false,
-            "need": 1
-          }
-        ],
+        "validFrom": 1795532400000,
+        "validUntil": 1798124400000,
+        "flags": [],
+        "values": [],
         "actions": [
           {
-            "id": "0193a1b2-7c00-7000-8000-0000000000a5",
-            "label": "Ada Example",
+            "id": "admit",
+            "label": "Admit",
             "kind": "check_in",
             "available": false,
             "lock": "role",
-            "reason": "not_found",
+            "reason": null,
             "amount": {
-              "fixed": 1
+              "fixed": 3
             },
             "confirm": false,
-            "confirmAbove": 1,
-            "cooldownRemainingMs": 1764000000000,
+            "confirmAbove": 3,
+            "cooldownRemainingMs": 3,
             "armable": "sticky",
-            "rewardLabel": "Ada Example",
+            "rewardLabel": "Free day pass",
             "input": {
               "type": "string",
-              "label": "Ada Example",
-              "min": 1,
-              "max": 1,
-              "step": 1,
-              "maxLength": 1,
-              "enum": ["example"]
+              "label": "Day pass",
+              "min": 3,
+              "max": 3,
+              "step": 3,
+              "maxLength": 3,
+              "enum": ["adult"]
             }
           }
         ],
         "display": {
           "v": 1,
-          "screen": "ready",
-          "templateVersion": "example",
-          "variant": "example",
+          "screen": "ok",
+          "templateVersion": "3",
+          "variant": "default",
           "identity": {
-            "holder": "example",
-            "initials": "ex",
+            "holder": "Ada Example",
+            "initials": "AE",
             "photo": {
-              "url": "https://passbook.mobile/p/abc123",
-              "alt": "example"
+              "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+              "alt": "Northwind logo"
             }
           },
           "header": {
             "icon": "user",
-            "title": "Ada Example",
+            "title": "Day pass",
             "titleLines": 1,
-            "meta": "example",
+            "meta": "Northwind",
             "chips": [
               {
-                "id": "0193a1b2-7c00-7000-8000-0000000000a6",
-                "text": "example",
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes a",
                 "tone": "neutral"
               }
             ]
           },
           "panels": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
               "kind": "membership",
-              "title": "Ada Example",
+              "title": "Day pass",
               "icon": "user",
               "tone": "neutral",
               "rows": [
                 {
                   "type": "heading",
-                  "id": "0193a1b2-7c00-7000-8000-0000000000a8",
-                  "text": "example",
-                  "detail": "example"
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "text": "The gym closes at 18:00 ",
+                  "detail": "The pass has already bee"
                 }
               ]
             }
           ],
           "notes": {
-            "staff": "example",
-            "refused": "example"
+            "staff": "Sam Rivera",
+            "refused": "expired"
           }
         },
         "lastScans": [
           {
-            "scanId": "0193a1b2-7c00-7000-8000-0000000000a9",
-            "at": 1764000000000,
-            "actionLabel": "Ada Example",
+            "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+            "at": 3,
+            "actionLabel": "Admit",
             "outcome": "ok",
-            "scannerName": "Ada Example",
+            "scannerName": "Front desk",
             "undoable": false
           }
         ],
         "bundle": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000aa",
-          "name": "Ada Example",
-          "size": 1,
-          "checkedIn": 1,
+          "id": "0193a1b2-7c00-7000-8000-000000000032",
+          "name": "Family bundle",
+          "size": 24576,
+          "checkedIn": 3,
           "members": [
             {
-              "initials": "exam",
+              "initials": "AE",
               "checkedIn": false,
-              "refusedReason": "example"
+              "refusedReason": "expired"
             }
           ]
         },
@@ -621,236 +588,236 @@
         },
         "access": {
           "plan": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000ab",
-            "label": "Ada Example",
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "label": "Day pass",
             "kind": "always"
           },
           "zone": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000ac",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-000000000081",
+            "name": "Main hall"
           },
-          "closesAt": 1764000000000,
-          "nextOpenAt": 1764000000000,
+          "closesAt": 1795521600000,
+          "nextOpenAt": 1795521600000,
           "visits": {
-            "used": 1,
-            "limit": 10
+            "used": 128,
+            "limit": 25
           },
           "visit": false,
-          "timeZone": "example"
+          "timeZone": "America/Los_Angeles"
         },
         "tag": {
-          "hint": "ABCD",
+          "hint": "1E35",
           "assurance": "basic",
           "system": "uid",
-          "typeName": "Ada Example",
+          "typeName": "Wristband 14",
           "scope": "pass",
           "count": 8,
           "passes": [
             {
-              "passId": "0193a1b2-7c00-7000-8000-0000000000ad",
-              "templateName": "Ada Example",
+              "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+              "templateName": "Day pass",
               "state": "used",
-              "reason": "example"
+              "reason": "Left the gym early; refund issued at the desk."
             }
           ]
         },
         "occupancy": {
           "place": {
             "kind": "zone",
-            "id": "0193a1b2-7c00-7000-8000-0000000000ae",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "name": "Day pass"
           },
           "direction": "in",
           "auto": false,
           "state": "in",
-          "since": 1,
-          "via": "example",
-          "stayMs": 1764000000000,
-          "inNow": 1,
-          "capacity": 10,
-          "turnaround": "in",
+          "since": 3,
+          "via": "api",
+          "stayMs": 3,
+          "inNow": 3,
+          "capacity": 3,
+          "turnaround": null,
           "parent": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000af",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "name": "Day pass"
           }
         },
         "passView": {
           "passJson": {},
-          "assetBaseUrl": "https://passbook.mobile/p/abc123",
-          "assetGrant": "example",
-          "assetNames": ["Ada Example"]
+          "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+          "assetGrant": "logo",
+          "assetNames": ["Day pass"]
         }
       },
       "previous": {
-        "scanId": "0193a1b2-7c00-7000-8000-0000000000b0",
-        "at": 1764000000000,
-        "scannerName": "Ada Example",
-        "staffName": "Ada Example",
-        "actionLabel": "Ada Example",
+        "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+        "at": 3,
+        "scannerName": "Front desk",
+        "staffName": "Sam Rivera",
+        "actionLabel": "Admit",
         "override": false
       },
       "event": {
-        "name": "Ada Example",
-        "startsAt": 1764000000000
+        "name": "Open climbing",
+        "startsAt": 1795521600000
       },
       "template": {
-        "name": "Ada Example",
-        "style": "example"
+        "name": "Day pass",
+        "style": "generic"
       },
-      "at": 1764000000000,
-      "cooldownRemainingMs": 1764000000000,
+      "at": 3,
+      "cooldownRemainingMs": 3,
       "value": {
-        "input": "example",
-        "label": "Ada Example",
+        "input": "tier",
+        "label": "Day pass",
         "before": {},
         "after": {},
-        "goal": 10,
+        "goal": 3,
         "format": "number",
-        "currency": "example",
+        "currency": "USD",
         "counter": false,
-        "need": 1
+        "need": 3
       },
-      "flags": ["example"],
+      "flags": [],
       "channel": "mobile",
       "overridable": false,
       "approvals": false,
       "group": {
-        "total": 10,
-        "done": 1,
-        "already": 1,
-        "refused": 1,
+        "total": 128,
+        "done": 3,
+        "already": 3,
+        "refused": 0,
         "members": [
           {
-            "name": "Ada Example",
+            "name": "Sam Rivera",
             "state": "done",
-            "reason": "example"
+            "reason": "Left the gym early; refund issued at the desk."
           }
         ]
       },
       "bundle": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000b1",
-        "name": "Ada Example",
-        "size": 1,
-        "checkedIn": 1,
+        "id": "0193a1b2-7c00-7000-8000-000000000032",
+        "name": "Family bundle",
+        "size": 24576,
+        "checkedIn": 3,
         "members": [
           {
-            "initials": "exam",
+            "initials": "AE",
             "checkedIn": false,
-            "refusedReason": "example"
+            "refusedReason": "expired"
           }
         ]
       },
       "inBundle": false,
       "counts": {
-        "today": 1,
+        "today": 3,
         "event": {
-          "arrived": 1,
-          "inside": 1,
-          "expected": 1,
-          "capacity": 10
+          "arrived": 3,
+          "inside": 3,
+          "expected": 3,
+          "capacity": 3
         },
         "place": {
-          "name": "Ada Example",
-          "inNow": 1,
-          "capacity": 10
+          "name": "Day pass",
+          "inNow": 3,
+          "capacity": 3
         },
         "byType": [
           {
-            "templateId": "0193a1b2-7c00-7000-8000-0000000000b2",
-            "name": "Ada Example",
-            "count": 10
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "count": 12
           }
         ],
-        "asOf": 1,
-        "configRev": 1
+        "asOf": 3,
+        "configRev": 3
       },
-      "milestone": "count",
-      "undoUntil": 1,
+      "milestone": null,
+      "undoUntil": null,
       "access": {
         "plan": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b3",
-          "label": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "label": "Day pass",
           "kind": "always"
         },
         "zone": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b4",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "name": "Main hall"
         },
-        "closesAt": 1764000000000,
-        "nextOpenAt": 1764000000000,
+        "closesAt": 1795521600000,
+        "nextOpenAt": 1795521600000,
         "visits": {
-          "used": 1,
-          "limit": 10
+          "used": 128,
+          "limit": 25
         },
         "visit": false,
-        "timeZone": "example"
+        "timeZone": "America/Los_Angeles"
       },
       "admit": {
-        "type": "example",
+        "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 1764000000000
+          "at": 3
         },
-        "timeZone": "example"
+        "timeZone": "America/Los_Angeles"
       },
       "tag": {
-        "hint": "ABCD",
+        "hint": "E196",
         "assurance": "basic",
         "system": "uid",
-        "typeName": "Ada Example",
+        "typeName": "Wristband 14",
         "scope": "pass",
         "count": 8,
         "passes": [
           {
-            "passId": "0193a1b2-7c00-7000-8000-0000000000b5",
-            "templateName": "Ada Example",
+            "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "templateName": "Day pass",
             "state": "used",
-            "reason": "example"
+            "reason": "Left the gym early; refund issued at the desk."
           }
         ]
       },
       "occupancy": {
         "place": {
           "kind": "zone",
-          "id": "0193a1b2-7c00-7000-8000-0000000000b6",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass"
         },
         "direction": "in",
         "auto": false,
         "state": "in",
-        "since": 1,
-        "via": "example",
-        "stayMs": 1764000000000,
-        "inNow": 1,
-        "capacity": 10,
-        "turnaround": "in",
+        "since": 3,
+        "via": "api",
+        "stayMs": 3,
+        "inNow": 3,
+        "capacity": 3,
+        "turnaround": null,
         "parent": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b7",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass"
         }
       },
       "display": {
         "v": 1,
-        "screen": "ready",
-        "templateVersion": "example",
-        "variant": "example",
+        "screen": "ok",
+        "templateVersion": "3",
+        "variant": "default",
         "identity": {
-          "holder": "example",
-          "initials": "ex",
+          "holder": "Ada Example",
+          "initials": "AE",
           "photo": {
-            "url": "https://passbook.mobile/p/abc123",
-            "alt": "example"
+            "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+            "alt": "Northwind logo"
           }
         },
         "header": {
           "icon": "user",
-          "title": "Ada Example",
+          "title": "Day pass",
           "titleLines": 1,
-          "meta": "example",
+          "meta": "Northwind",
           "chips": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0000000000b8",
-              "text": "example",
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "text": "The gym closes a",
               "tone": "neutral",
               "icon": "user"
             }
@@ -858,24 +825,24 @@
         },
         "panels": [
           {
-            "id": "0193a1b2-7c00-7000-8000-0000000000b9",
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
             "kind": "membership",
-            "title": "Ada Example",
+            "title": "Day pass",
             "icon": "user",
             "tone": "neutral",
             "rows": [
               {
                 "type": "heading",
-                "id": "0193a1b2-7c00-7000-8000-0000000000ba",
-                "text": "example",
-                "detail": "example"
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes at 18:00 ",
+                "detail": "The pass has already bee"
               }
             ]
           }
         ],
         "notes": {
-          "staff": "example",
-          "refused": "example"
+          "staff": "Sam Rivera",
+          "refused": "expired"
         }
       }
     }
@@ -883,15 +850,16 @@
   "scan.postScanScansByScanIdUndo": {
     "description": "Undoes a check-in.",
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-26c98103fc9c",
       "scope": {
-        "setupId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "timeZone": "example"
+        "setupId": "0193a1b2-7c00-7000-8000-27347ab42881",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "timeZone": "America/Los_Angeles"
       },
       "approval": {
-        "staffId": "0193a1b2-7c00-7000-8000-0000000000a3",
-        "pin": "123456"
+        "staffId": "0193a1b2-7c00-7000-8000-000000000022",
+        "pin": "193248"
       }
     },
     "response": {
@@ -899,18 +867,18 @@
         "mode": "single",
         "direction": "in",
         "inside": false,
-        "enteredAt": 1764000000000,
-        "firstAt": 1764000000000,
-        "validFrom": 1,
-        "validUntil": 1
+        "enteredAt": 1795521600000,
+        "firstAt": 1795521600000,
+        "validFrom": 1795532400000,
+        "validUntil": 1798124400000
       },
-      "scanId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "scanId": "0193a1b2-7c00-7000-8000-000000000043",
       "kind": "ok",
-      "reason": "not_found",
+      "reason": null,
       "replay": false,
       "action": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "label": "Ada Example",
+        "id": "admit",
+        "label": "Admit",
         "kind": "check_in"
       },
       "card": {
@@ -918,139 +886,121 @@
           "mode": "single",
           "direction": "in",
           "inside": false,
-          "enteredAt": 1764000000000,
-          "firstAt": 1764000000000,
-          "validFrom": 1,
-          "validUntil": 1
+          "enteredAt": 1795521600000,
+          "firstAt": 1795521600000,
+          "validFrom": 1795532400000,
+          "validUntil": 1798124400000
         },
-        "passId": "0193a1b2-7c00-7000-8000-0000000000a3",
-        "version": 1,
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "version": 3,
         "mode": "live",
-        "title": "Ada Example",
+        "title": "Day pass",
         "subtitle": "Ada Example",
         "template": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
-          "name": "Ada Example",
-          "style": "example"
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "style": "generic"
         },
         "status": "active",
-        "validFrom": 1,
-        "validUntil": 1,
-        "flags": [
-          {
-            "label": "Ada Example",
-            "tone": "warning",
-            "stop": false
-          }
-        ],
-        "values": [
-          {
-            "input": "example",
-            "label": "Ada Example",
-            "before": {},
-            "after": {},
-            "goal": 10,
-            "format": "number",
-            "currency": "example",
-            "counter": false,
-            "need": 1
-          }
-        ],
+        "validFrom": 1795532400000,
+        "validUntil": 1798124400000,
+        "flags": [],
+        "values": [],
         "actions": [
           {
-            "id": "0193a1b2-7c00-7000-8000-0000000000a5",
-            "label": "Ada Example",
+            "id": "admit",
+            "label": "Admit",
             "kind": "check_in",
             "available": false,
             "lock": "role",
-            "reason": "not_found",
+            "reason": null,
             "amount": {
-              "fixed": 1
+              "fixed": 3
             },
             "confirm": false,
-            "confirmAbove": 1,
-            "cooldownRemainingMs": 1764000000000,
+            "confirmAbove": 3,
+            "cooldownRemainingMs": 3,
             "armable": "sticky",
-            "rewardLabel": "Ada Example",
+            "rewardLabel": "Free day pass",
             "input": {
               "type": "string",
-              "label": "Ada Example",
-              "min": 1,
-              "max": 1,
-              "step": 1,
-              "maxLength": 1,
-              "enum": ["example"]
+              "label": "Day pass",
+              "min": 3,
+              "max": 3,
+              "step": 3,
+              "maxLength": 3,
+              "enum": ["adult"]
             }
           }
         ],
         "display": {
           "v": 1,
-          "screen": "ready",
-          "templateVersion": "example",
-          "variant": "example",
+          "screen": "ok",
+          "templateVersion": "3",
+          "variant": "default",
           "identity": {
-            "holder": "example",
-            "initials": "ex",
+            "holder": "Ada Example",
+            "initials": "AE",
             "photo": {
-              "url": "https://passbook.mobile/p/abc123",
-              "alt": "example"
+              "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+              "alt": "Northwind logo"
             }
           },
           "header": {
             "icon": "user",
-            "title": "Ada Example",
+            "title": "Day pass",
             "titleLines": 1,
-            "meta": "example",
+            "meta": "Northwind",
             "chips": [
               {
-                "id": "0193a1b2-7c00-7000-8000-0000000000a6",
-                "text": "example",
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes a",
                 "tone": "neutral"
               }
             ]
           },
           "panels": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
               "kind": "membership",
-              "title": "Ada Example",
+              "title": "Day pass",
               "icon": "user",
               "tone": "neutral",
               "rows": [
                 {
                   "type": "heading",
-                  "id": "0193a1b2-7c00-7000-8000-0000000000a8",
-                  "text": "example",
-                  "detail": "example"
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "text": "The gym closes at 18:00 ",
+                  "detail": "The pass has already bee"
                 }
               ]
             }
           ],
           "notes": {
-            "staff": "example",
-            "refused": "example"
+            "staff": "Sam Rivera",
+            "refused": "expired"
           }
         },
         "lastScans": [
           {
-            "scanId": "0193a1b2-7c00-7000-8000-0000000000a9",
-            "at": 1764000000000,
-            "actionLabel": "Ada Example",
+            "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+            "at": 3,
+            "actionLabel": "Admit",
             "outcome": "ok",
-            "scannerName": "Ada Example",
+            "scannerName": "Front desk",
             "undoable": false
           }
         ],
         "bundle": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000aa",
-          "name": "Ada Example",
-          "size": 1,
-          "checkedIn": 1,
+          "id": "0193a1b2-7c00-7000-8000-000000000032",
+          "name": "Family bundle",
+          "size": 24576,
+          "checkedIn": 3,
           "members": [
             {
-              "initials": "exam",
+              "initials": "AE",
               "checkedIn": false,
-              "refusedReason": "example"
+              "refusedReason": "expired"
             }
           ]
         },
@@ -1059,236 +1009,236 @@
         },
         "access": {
           "plan": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000ab",
-            "label": "Ada Example",
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "label": "Day pass",
             "kind": "always"
           },
           "zone": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000ac",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-000000000081",
+            "name": "Main hall"
           },
-          "closesAt": 1764000000000,
-          "nextOpenAt": 1764000000000,
+          "closesAt": 1795521600000,
+          "nextOpenAt": 1795521600000,
           "visits": {
-            "used": 1,
-            "limit": 10
+            "used": 128,
+            "limit": 25
           },
           "visit": false,
-          "timeZone": "example"
+          "timeZone": "America/Los_Angeles"
         },
         "tag": {
-          "hint": "ABCD",
+          "hint": "07ED",
           "assurance": "basic",
           "system": "uid",
-          "typeName": "Ada Example",
+          "typeName": "Wristband 14",
           "scope": "pass",
           "count": 8,
           "passes": [
             {
-              "passId": "0193a1b2-7c00-7000-8000-0000000000ad",
-              "templateName": "Ada Example",
+              "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+              "templateName": "Day pass",
               "state": "used",
-              "reason": "example"
+              "reason": "Left the gym early; refund issued at the desk."
             }
           ]
         },
         "occupancy": {
           "place": {
             "kind": "zone",
-            "id": "0193a1b2-7c00-7000-8000-0000000000ae",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "name": "Day pass"
           },
           "direction": "in",
           "auto": false,
           "state": "in",
-          "since": 1,
-          "via": "example",
-          "stayMs": 1764000000000,
-          "inNow": 1,
-          "capacity": 10,
-          "turnaround": "in",
+          "since": 3,
+          "via": "api",
+          "stayMs": 3,
+          "inNow": 3,
+          "capacity": 3,
+          "turnaround": null,
           "parent": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000af",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "name": "Day pass"
           }
         },
         "passView": {
           "passJson": {},
-          "assetBaseUrl": "https://passbook.mobile/p/abc123",
-          "assetGrant": "example",
-          "assetNames": ["Ada Example"]
+          "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+          "assetGrant": "logo",
+          "assetNames": ["Day pass"]
         }
       },
       "previous": {
-        "scanId": "0193a1b2-7c00-7000-8000-0000000000b0",
-        "at": 1764000000000,
-        "scannerName": "Ada Example",
-        "staffName": "Ada Example",
-        "actionLabel": "Ada Example",
+        "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+        "at": 3,
+        "scannerName": "Front desk",
+        "staffName": "Sam Rivera",
+        "actionLabel": "Admit",
         "override": false
       },
       "event": {
-        "name": "Ada Example",
-        "startsAt": 1764000000000
+        "name": "Open climbing",
+        "startsAt": 1795521600000
       },
       "template": {
-        "name": "Ada Example",
-        "style": "example"
+        "name": "Day pass",
+        "style": "generic"
       },
-      "at": 1764000000000,
-      "cooldownRemainingMs": 1764000000000,
+      "at": 3,
+      "cooldownRemainingMs": 3,
       "value": {
-        "input": "example",
-        "label": "Ada Example",
+        "input": "tier",
+        "label": "Day pass",
         "before": {},
         "after": {},
-        "goal": 10,
+        "goal": 3,
         "format": "number",
-        "currency": "example",
+        "currency": "USD",
         "counter": false,
-        "need": 1
+        "need": 3
       },
-      "flags": ["example"],
+      "flags": [],
       "channel": "mobile",
       "overridable": false,
       "approvals": false,
       "group": {
-        "total": 10,
-        "done": 1,
-        "already": 1,
-        "refused": 1,
+        "total": 128,
+        "done": 3,
+        "already": 3,
+        "refused": 0,
         "members": [
           {
-            "name": "Ada Example",
+            "name": "Sam Rivera",
             "state": "done",
-            "reason": "example"
+            "reason": "Left the gym early; refund issued at the desk."
           }
         ]
       },
       "bundle": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000b1",
-        "name": "Ada Example",
-        "size": 1,
-        "checkedIn": 1,
+        "id": "0193a1b2-7c00-7000-8000-000000000032",
+        "name": "Family bundle",
+        "size": 24576,
+        "checkedIn": 3,
         "members": [
           {
-            "initials": "exam",
+            "initials": "AE",
             "checkedIn": false,
-            "refusedReason": "example"
+            "refusedReason": "expired"
           }
         ]
       },
       "inBundle": false,
       "counts": {
-        "today": 1,
+        "today": 3,
         "event": {
-          "arrived": 1,
-          "inside": 1,
-          "expected": 1,
-          "capacity": 10
+          "arrived": 3,
+          "inside": 3,
+          "expected": 3,
+          "capacity": 3
         },
         "place": {
-          "name": "Ada Example",
-          "inNow": 1,
-          "capacity": 10
+          "name": "Day pass",
+          "inNow": 3,
+          "capacity": 3
         },
         "byType": [
           {
-            "templateId": "0193a1b2-7c00-7000-8000-0000000000b2",
-            "name": "Ada Example",
-            "count": 10
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "count": 12
           }
         ],
-        "asOf": 1,
-        "configRev": 1
+        "asOf": 3,
+        "configRev": 3
       },
-      "milestone": "count",
-      "undoUntil": 1,
+      "milestone": null,
+      "undoUntil": null,
       "access": {
         "plan": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b3",
-          "label": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "label": "Day pass",
           "kind": "always"
         },
         "zone": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b4",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "name": "Main hall"
         },
-        "closesAt": 1764000000000,
-        "nextOpenAt": 1764000000000,
+        "closesAt": 1795521600000,
+        "nextOpenAt": 1795521600000,
         "visits": {
-          "used": 1,
-          "limit": 10
+          "used": 128,
+          "limit": 25
         },
         "visit": false,
-        "timeZone": "example"
+        "timeZone": "America/Los_Angeles"
       },
       "admit": {
-        "type": "example",
+        "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 1764000000000
+          "at": 3
         },
-        "timeZone": "example"
+        "timeZone": "America/Los_Angeles"
       },
       "tag": {
-        "hint": "ABCD",
+        "hint": "364F",
         "assurance": "basic",
         "system": "uid",
-        "typeName": "Ada Example",
+        "typeName": "Wristband 14",
         "scope": "pass",
         "count": 8,
         "passes": [
           {
-            "passId": "0193a1b2-7c00-7000-8000-0000000000b5",
-            "templateName": "Ada Example",
+            "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "templateName": "Day pass",
             "state": "used",
-            "reason": "example"
+            "reason": "Left the gym early; refund issued at the desk."
           }
         ]
       },
       "occupancy": {
         "place": {
           "kind": "zone",
-          "id": "0193a1b2-7c00-7000-8000-0000000000b6",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass"
         },
         "direction": "in",
         "auto": false,
         "state": "in",
-        "since": 1,
-        "via": "example",
-        "stayMs": 1764000000000,
-        "inNow": 1,
-        "capacity": 10,
-        "turnaround": "in",
+        "since": 3,
+        "via": "api",
+        "stayMs": 3,
+        "inNow": 3,
+        "capacity": 3,
+        "turnaround": null,
         "parent": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b7",
-          "name": "Ada Example"
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass"
         }
       },
       "display": {
         "v": 1,
-        "screen": "ready",
-        "templateVersion": "example",
-        "variant": "example",
+        "screen": "ok",
+        "templateVersion": "3",
+        "variant": "default",
         "identity": {
-          "holder": "example",
-          "initials": "ex",
+          "holder": "Ada Example",
+          "initials": "AE",
           "photo": {
-            "url": "https://passbook.mobile/p/abc123",
-            "alt": "example"
+            "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+            "alt": "Northwind logo"
           }
         },
         "header": {
           "icon": "user",
-          "title": "Ada Example",
+          "title": "Day pass",
           "titleLines": 1,
-          "meta": "example",
+          "meta": "Northwind",
           "chips": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0000000000b8",
-              "text": "example",
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "text": "The gym closes a",
               "tone": "neutral",
               "icon": "user"
             }
@@ -1296,24 +1246,24 @@
         },
         "panels": [
           {
-            "id": "0193a1b2-7c00-7000-8000-0000000000b9",
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
             "kind": "membership",
-            "title": "Ada Example",
+            "title": "Day pass",
             "icon": "user",
             "tone": "neutral",
             "rows": [
               {
                 "type": "heading",
-                "id": "0193a1b2-7c00-7000-8000-0000000000ba",
-                "text": "example",
-                "detail": "example"
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes at 18:00 ",
+                "detail": "The pass has already bee"
               }
             ]
           }
         ],
         "notes": {
-          "staff": "example",
-          "refused": "example"
+          "staff": "Sam Rivera",
+          "refused": "expired"
         }
       }
     }

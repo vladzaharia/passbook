@@ -4,26 +4,26 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "name": "Ada Example",
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+          "name": "Open climbing",
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "match": {
-            "input": "example",
-            "values": ["example"]
+            "input": "tier",
+            "values": ["Day pass"]
           },
-          "opensAt": 1764000000000,
-          "closesAt": 1764000000000,
-          "timeZone": "example",
-          "capacity": 10,
+          "opensAt": 1795521600000,
+          "closesAt": 1795521600000,
+          "timeZone": "America/Los_Angeles",
+          "capacity": 3,
           "reentry": false,
           "hardLimit": false,
-          "note": "example",
-          "status": "upcoming",
-          "arrived": 1,
-          "expected": 1,
-          "scanners": 1
+          "note": "Photo ID checked at the desk.",
+          "status": "live",
+          "arrived": 3,
+          "expected": 3,
+          "scanners": 3
         }
       ],
       "nextCursor": "c1.4812"
@@ -33,145 +33,150 @@
     "description": "Creates a scan event.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
-        "input": "example",
-        "values": ["example"]
+        "input": "tier",
+        "values": ["Day pass"]
       },
-      "opensAt": 1764000000000,
-      "closesAt": 1764000000000,
-      "timeZone": "example",
-      "capacity": 10
+      "opensAt": 1795521600000,
+      "closesAt": 1795521600000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 3,
+      "reentry": false
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
-        "input": "example",
-        "values": ["example"]
+        "input": "tier",
+        "values": ["Day pass"]
       },
-      "opensAt": 1764000000000,
-      "closesAt": 1764000000000,
-      "timeZone": "example",
-      "capacity": 10,
+      "opensAt": 1795521600000,
+      "closesAt": 1795521600000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 3,
       "reentry": false,
       "hardLimit": false,
-      "note": "example",
-      "status": "upcoming",
-      "arrived": 1,
-      "expected": 1,
-      "scanners": 1
+      "note": "Photo ID checked at the desk.",
+      "status": "live",
+      "arrived": 3,
+      "expected": 3,
+      "scanners": 3
     }
   },
   "scan-events.getScanEventsById": {
     "description": "One scan event.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
-        "input": "example",
-        "values": ["example"]
+        "input": "tier",
+        "values": ["Day pass"]
       },
-      "opensAt": 1764000000000,
-      "closesAt": 1764000000000,
-      "timeZone": "example",
-      "capacity": 10,
+      "opensAt": 1795521600000,
+      "closesAt": 1795521600000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 3,
       "reentry": false,
       "hardLimit": false,
-      "note": "example",
-      "status": "upcoming",
-      "arrived": 1,
-      "expected": 1,
-      "scanners": 1
+      "note": "Photo ID checked at the desk.",
+      "status": "live",
+      "arrived": 3,
+      "expected": 3,
+      "scanners": 3
     }
   },
   "scan-events.patchScanEventsById": {
     "description": "Edits a scan event.",
     "request": {
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a1"]
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "match": {
+        "input": "tier",
+        "values": ["Day pass"]
+      }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
-        "input": "example",
-        "values": ["example"]
+        "input": "tier",
+        "values": ["Day pass"]
       },
-      "opensAt": 1764000000000,
-      "closesAt": 1764000000000,
-      "timeZone": "example",
-      "capacity": 10,
+      "opensAt": 1795521600000,
+      "closesAt": 1795521600000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 3,
       "reentry": false,
       "hardLimit": false,
-      "note": "example",
-      "status": "upcoming",
-      "arrived": 1,
-      "expected": 1,
-      "scanners": 1
+      "note": "Photo ID checked at the desk.",
+      "status": "live",
+      "arrived": 3,
+      "expected": 3,
+      "scanners": 3
     }
   },
   "scan-events.postScanEventsByIdArchive": {
     "description": "Archives a scan event. Its scanners are detached.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
-        "input": "example",
-        "values": ["example"]
+        "input": "tier",
+        "values": ["Day pass"]
       },
-      "opensAt": 1764000000000,
-      "closesAt": 1764000000000,
-      "timeZone": "example",
-      "capacity": 10,
+      "opensAt": 1795521600000,
+      "closesAt": 1795521600000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 3,
       "reentry": false,
       "hardLimit": false,
-      "note": "example",
-      "status": "upcoming",
-      "arrived": 1,
-      "expected": 1,
-      "scanners": 1
+      "note": "Photo ID checked at the desk.",
+      "status": "live",
+      "arrived": 3,
+      "expected": 3,
+      "scanners": 3
     }
   },
   "scan-events.postScanEventsByIdScanners": {
     "description": "Moves scanners onto a scan event.",
     "request": {
-      "scannerIds": ["0193a1b2-7c00-7000-8000-0000000000a1"]
+      "scannerIds": ["0193a1b2-7c00-7000-8000-000000000031"]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
-        "input": "example",
-        "values": ["example"]
+        "input": "tier",
+        "values": ["Day pass"]
       },
-      "opensAt": 1764000000000,
-      "closesAt": 1764000000000,
-      "timeZone": "example",
-      "capacity": 10,
+      "opensAt": 1795521600000,
+      "closesAt": 1795521600000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 3,
       "reentry": false,
       "hardLimit": false,
-      "note": "example",
-      "status": "upcoming",
-      "arrived": 1,
-      "expected": 1,
-      "scanners": 1
+      "note": "Photo ID checked at the desk.",
+      "status": "live",
+      "arrived": 3,
+      "expected": 3,
+      "scanners": 3
     }
   },
   "scan-events.getScanEventsByIdInside": {

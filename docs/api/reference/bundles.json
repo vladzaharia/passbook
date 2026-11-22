@@ -4,22 +4,22 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "id": "0193a1b2-7c00-7000-8000-000000000032",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "name": "Ada Example",
-          "url": "https://passbook.mobile/p/abc123",
+          "name": "Family bundle",
+          "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
           "holderEmail": "ada@example.com",
           "passes": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0000000000a3",
-              "title": "Ada Example",
+              "id": "0193a1b2-7c00-7000-8000-000000000032",
+              "title": "Family bundle",
               "status": "active",
-              "removedAt": 1764000000000
+              "removedAt": null
             }
           ],
-          "createdAt": 1764000000000,
-          "linkRotatedAt": 1764000000000
+          "createdAt": 1794322800000,
+          "linkRotatedAt": 1795521600000
         }
       ],
       "nextCursor": "c1.4812"
@@ -29,49 +29,49 @@
     "description": "Creates a bundle of up to 10 passes with one link.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "passIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
-      "name": "Ada Example",
+      "passIds": ["0193a1b2-7c00-7000-8000-0000000000c1"],
+      "name": "Family bundle",
       "holderEmail": "ada@example.com",
-      "sendEmail": false
+      "sendEmail": true
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000032",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "url": "https://passbook.mobile/p/abc123",
+      "name": "Family bundle",
+      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "holderEmail": "ada@example.com",
       "passes": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "title": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-000000000032",
+          "title": "Family bundle",
           "status": "active",
-          "removedAt": 1764000000000
+          "removedAt": null
         }
       ],
-      "createdAt": 1764000000000,
-      "linkRotatedAt": 1764000000000
+      "createdAt": 1794322800000,
+      "linkRotatedAt": 1795521600000
     }
   },
   "bundles.getBundlesById": {
     "description": "One bundle.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000032",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "url": "https://passbook.mobile/p/abc123",
+      "name": "Family bundle",
+      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "holderEmail": "ada@example.com",
       "passes": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "title": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-000000000032",
+          "title": "Family bundle",
           "status": "active",
-          "removedAt": 1764000000000
+          "removedAt": null
         }
       ],
-      "createdAt": 1764000000000,
-      "linkRotatedAt": 1764000000000
+      "createdAt": 1794322800000,
+      "linkRotatedAt": 1795521600000
     }
   },
   "bundles.deleteBundlesById": {
@@ -83,7 +83,7 @@
   "bundles.postBundlesByIdSendEmail": {
     "description": "Emails the bundle link. Send an `Idempotency-Key` to retry safely.",
     "request": {
-      "to": "example"
+      "to": "ada@example.com"
     },
     "response": {
       "ok": true
@@ -92,22 +92,22 @@
   "bundles.postBundlesByIdRotateLink": {
     "description": "Replaces the bundle link. The old link stops working.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000032",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Ada Example",
-      "url": "https://passbook.mobile/p/abc123",
+      "name": "Family bundle",
+      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "holderEmail": "ada@example.com",
       "passes": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "title": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-000000000032",
+          "title": "Family bundle",
           "status": "active",
-          "removedAt": 1764000000000
+          "removedAt": null
         }
       ],
-      "createdAt": 1764000000000,
-      "linkRotatedAt": 1764000000000
+      "createdAt": 1794322800000,
+      "linkRotatedAt": 1795521600000
     }
   }
 }

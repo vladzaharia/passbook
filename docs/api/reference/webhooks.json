@@ -2,46 +2,48 @@
   "webhooks.postWebhookEndpoints": {
     "description": "Creates an endpoint for events of this mode. The signing `secret` is shown once. Send `?validate=1` to check the body without creating anything.",
     "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "url": "https://hooks.example.com/passbook",
-      "description": "Order system",
-      "eventTypes": ["pass.issued", "pass.scanned"]
+      "description": "Booking system events",
+      "eventTypes": ["pass.issued"],
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
     },
     "response": {
       "endpoint": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+        "id": "0193a1b2-7c00-7000-8000-000000000061",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
         "url": "https://hooks.example.com/passbook",
         "urlMasked": "https://hooks.example.com/…",
-        "description": "Order system",
-        "eventTypes": ["pass.issued", "pass.scanned"],
-        "templateIds": null,
+        "description": "Booking system events",
+        "eventTypes": ["pass.issued"],
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "apiVersion": "2026-12-01",
         "status": "active",
         "target": "url",
         "failingSince": null,
         "disabledAt": null,
-        "lastSuccessAt": null,
-        "lastFailureAt": null,
+        "lastSuccessAt": 1795521600000,
+        "lastFailureAt": 1795521600000,
         "lastStatus": null,
-        "secretCreatedAt": 1764000000000,
+        "secretCreatedAt": 1795521600000,
         "previousSecretExpiresAt": null,
-        "createdAt": 1764000000000
+        "createdAt": 1794322800000
       },
-      "secret": "whsec_example_0000000000000000000000000000"
+      "secret": "whsec_804ccd39d8db7971fac7175ab0b93138"
     }
   },
   "webhooks.postWebhookEndpointsByIdTest": {
     "description": "Sends one signed event to the endpoint and reports the result. `type` is any event type and defaults to `webhook.test`; every other type carries sample data and goes to Test endpoints only. A capture endpoint stores the request and returns its `captureId`.",
     "request": {
-      "type": "pass.updated"
+      "type": "pass.issued"
     },
     "response": {
       "ok": true,
-      "status": 200,
-      "durationMs": 12,
+      "status": 3,
+      "durationMs": 3,
       "errorCode": null,
-      "captureId": "0193a1b2-7c00-7000-8000-0000000000d1"
+      "captureId": "0193a1b2-7c00-7000-8000-b233783a6345"
     }
   },
   "webhooks.getWebhookEndpoints": {
@@ -49,79 +51,81 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+          "id": "0193a1b2-7c00-7000-8000-000000000061",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "url": "https://hooks.example.com/passbook",
           "urlMasked": "https://hooks.example.com/…",
-          "description": "Order system",
-          "eventTypes": ["pass.issued", "pass.scanned"],
-          "templateIds": null,
+          "description": "Booking system events",
+          "eventTypes": ["pass.issued"],
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "apiVersion": "2026-12-01",
           "status": "active",
           "target": "url",
           "failingSince": null,
           "disabledAt": null,
-          "lastSuccessAt": null,
-          "lastFailureAt": null,
+          "lastSuccessAt": 1795521600000,
+          "lastFailureAt": 1795521600000,
           "lastStatus": null,
-          "secretCreatedAt": 1764000000000,
+          "secretCreatedAt": 1795521600000,
           "previousSecretExpiresAt": null,
-          "createdAt": 1764000000000
+          "createdAt": 1794322800000
         }
       ],
-      "nextCursor": null
+      "nextCursor": "c1.4812"
     }
   },
   "webhooks.getWebhookEndpointsById": {
     "description": "One endpoint. The signing secret is never returned.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+      "id": "0193a1b2-7c00-7000-8000-000000000061",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "url": "https://hooks.example.com/passbook",
       "urlMasked": "https://hooks.example.com/…",
-      "description": "Order system",
-      "eventTypes": ["pass.issued", "pass.scanned"],
-      "templateIds": null,
+      "description": "Booking system events",
+      "eventTypes": ["pass.issued"],
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "apiVersion": "2026-12-01",
       "status": "active",
       "target": "url",
       "failingSince": null,
       "disabledAt": null,
-      "lastSuccessAt": null,
-      "lastFailureAt": null,
+      "lastSuccessAt": 1795521600000,
+      "lastFailureAt": 1795521600000,
       "lastStatus": null,
-      "secretCreatedAt": 1764000000000,
+      "secretCreatedAt": 1795521600000,
       "previousSecretExpiresAt": null,
-      "createdAt": 1764000000000
+      "createdAt": 1794322800000
     }
   },
   "webhooks.patchWebhookEndpointsById": {
     "description": "Changes an endpoint, or pauses or resumes it with `status`. A disabled endpoint resumes with `active`.",
     "request": {
-      "status": "paused"
+      "url": "https://hooks.example.com/passbook",
+      "description": "",
+      "eventTypes": ["pass.issued"]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000f1",
+      "id": "0193a1b2-7c00-7000-8000-000000000061",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "url": "https://hooks.example.com/passbook",
       "urlMasked": "https://hooks.example.com/…",
-      "description": "Order system",
-      "eventTypes": ["pass.issued", "pass.scanned"],
-      "templateIds": null,
+      "description": "Booking system events",
+      "eventTypes": ["pass.issued"],
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "apiVersion": "2026-12-01",
-      "status": "paused",
+      "status": "active",
       "target": "url",
       "failingSince": null,
       "disabledAt": null,
-      "lastSuccessAt": null,
-      "lastFailureAt": null,
+      "lastSuccessAt": 1795521600000,
+      "lastFailureAt": 1795521600000,
       "lastStatus": null,
-      "secretCreatedAt": 1764000000000,
+      "secretCreatedAt": 1795521600000,
       "previousSecretExpiresAt": null,
-      "createdAt": 1764000000000
+      "createdAt": 1794322800000
     }
   },
   "webhooks.deleteWebhookEndpointsById": {
@@ -133,10 +137,10 @@
   "webhooks.postWebhookEndpointsByIdSecret": {
     "description": "Rotates the signing secret and returns the new one once. The old secret stays valid for `overlapHours` (default 24).",
     "request": {
-      "overlapHours": 24
+      "overlapHours": 0
     },
     "response": {
-      "secret": "whsec_example_1111111111111111111111111111"
+      "secret": "whsec_4a08e13cebd01883d36521de9c0b6392"
     }
   },
   "webhooks.getWebhookEndpointsByIdDeliveries": {
@@ -147,18 +151,18 @@
           "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
           "type": "pass.issued",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "externalId": "booking_8841",
-          "state": "delivered",
-          "attempts": 1,
-          "nextAt": 1764000000000,
-          "lastStatus": 200,
+          "externalId": "0193a1b2-7c00-7000-8000-6acd4049449c",
+          "state": "pending",
+          "attempts": 3,
+          "nextAt": 1795521600000,
+          "lastStatus": null,
           "lastError": null,
-          "lastAttemptAt": 1764000000000,
-          "finishedAt": 1764000000000,
-          "replays": 0
+          "lastAttemptAt": 1795521600000,
+          "finishedAt": 1795521600000,
+          "replays": 3
         }
       ],
-      "nextCursor": null
+      "nextCursor": "c1.4812"
     }
   },
   "webhooks.getWebhookEndpointsByIdDeliveriesByEventId": {
@@ -167,90 +171,93 @@
       "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
       "type": "pass.issued",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "externalId": "booking_8841",
-      "state": "delivered",
-      "attempts": 1,
-      "nextAt": 1764000000000,
-      "lastStatus": 200,
+      "externalId": "0193a1b2-7c00-7000-8000-66998b12251b",
+      "state": "pending",
+      "attempts": 3,
+      "nextAt": 1795521600000,
+      "lastStatus": null,
       "lastError": null,
-      "lastAttemptAt": 1764000000000,
-      "finishedAt": 1764000000000,
-      "replays": 0,
+      "lastAttemptAt": 1795521600000,
+      "finishedAt": 1795521600000,
+      "replays": 3,
       "attemptLog": [
         {
-          "attempt": 1,
+          "attempt": 3,
           "trigger": "event",
-          "status": 200,
+          "status": 3,
           "errorCode": null,
-          "durationMs": 84,
-          "at": 1764000000000
+          "durationMs": 3,
+          "at": 3
         }
       ],
       "payload": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "id": "0193a1b2-7c00-7000-8000-000000000061",
         "type": "pass.issued",
         "apiVersion": "2026-12-01",
-        "createdAt": 1764000000000,
+        "createdAt": 1794322800000,
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
         "pass": {
           "id": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "externalId": "booking_8841",
+          "externalId": "0193a1b2-7c00-7000-8000-0c4167996ea0",
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
         },
         "data": {
-          "version": 1,
+          "version": 3,
           "source": "api"
-        }
+        },
+        "sample": true
       }
     }
   },
   "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay": {
     "description": "Sends one delivery again with a fresh signature.",
     "response": {
-      "queued": 1
+      "queued": 3
     }
   },
   "webhooks.postWebhookEndpointsByIdReplay": {
     "description": "Sends the deliveries in a time range again. `dryRun` counts without sending.",
     "request": {
-      "from": 1764000000000,
-      "to": 1764003600000,
+      "from": 3,
+      "to": 3,
       "include": "failed",
-      "dryRun": true
+      "missing": false,
+      "dryRun": false
     },
     "response": {
-      "queued": 12
+      "queued": 3
     }
   },
   "webhooks.postWebhookEndpointsCapture": {
     "description": "Returns the capture endpoint of your sandbox, making it if there is none. A capture endpoint stores the signed requests PassBook would send, so you can read and verify them; it sends nothing and takes nothing from outside. Sandbox orgs in Test mode only. The signing `secret` is shown once, on creation; later calls return `secret: null`.",
     "request": {
-      "eventTypes": ["pass.issued", "pass.updated"]
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "eventTypes": ["pass.issued"]
     },
     "response": {
       "endpoint": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000f2",
+        "id": "0193a1b2-7c00-7000-8000-000000000061",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "mode": "test",
-        "url": "https://capture.invalid/",
-        "urlMasked": "capture.invalid",
-        "description": "Test capture endpoint",
-        "eventTypes": ["pass.issued", "pass.updated", "pass.scanned"],
-        "templateIds": null,
+        "mode": "live",
+        "url": "https://hooks.example.com/passbook",
+        "urlMasked": "https://hooks.example.com/…",
+        "description": "Booking system events",
+        "eventTypes": ["pass.issued"],
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "apiVersion": "2026-12-01",
         "status": "active",
-        "target": "capture",
+        "target": "url",
         "failingSince": null,
         "disabledAt": null,
-        "lastSuccessAt": null,
-        "lastFailureAt": null,
+        "lastSuccessAt": 1795521600000,
+        "lastFailureAt": 1795521600000,
         "lastStatus": null,
-        "secretCreatedAt": 1764000000000,
+        "secretCreatedAt": 1795521600000,
         "previousSecretExpiresAt": null,
-        "createdAt": 1764000000000
+        "createdAt": 1794322800000
       },
-      "secret": "whsec_example_1111111111111111111111111111"
+      "secret": "whsec_712fb5e0f8d48a301e30f524302bf543"
     }
   },
   "webhooks.getWebhookEndpointsByIdCaptures": {
@@ -258,76 +265,61 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000d1",
-          "endpointId": "0193a1b2-7c00-7000-8000-0000000000f2",
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000e2",
-          "type": "pass.updated",
-          "trigger": "test",
-          "status": 200,
-          "durationMs": 12,
+          "id": "0193a1b2-7c00-7000-8000-000000000061",
+          "endpointId": "0193a1b2-7c00-7000-8000-000000000061",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "type": "pass.issued",
+          "trigger": "event",
+          "status": 3,
+          "durationMs": 3,
           "headers": {
-            "content-type": "application/json",
-            "user-agent": "PassBook-Webhooks/1.0",
-            "x-passbook-event-id": "0193a1b2-7c00-7000-8000-0000000000e2",
-            "x-passbook-event-type": "pass.updated",
-            "x-passbook-timestamp": "1764000000",
-            "x-passbook-signature": "v1=5f2c0e9a1b7d4c3e8a6f0d2b9c4e1a7f3d5b8c0e2a4f6d8b1c3e5a7f9b0d2c4e"
+            "tier": "Day pass"
           },
-          "body": "{\"id\":\"0193a1b2-7c00-7000-8000-0000000000e2\",\"type\":\"pass.updated\"}",
-          "createdAt": 1764000000000
+          "body": "The gym closes at 18:00 on 24 December.",
+          "createdAt": 1794322800000
         }
       ],
-      "nextCursor": null
+      "nextCursor": "c1.4812"
     }
   },
   "webhooks.getWebhookEndpointsByIdCapturesByCaptureId": {
     "description": "One stored request: the exact headers and raw body. Verify the signature over these bytes.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
-      "endpointId": "0193a1b2-7c00-7000-8000-0000000000f2",
-      "eventId": "0193a1b2-7c00-7000-8000-0000000000e2",
-      "type": "pass.updated",
-      "trigger": "test",
-      "status": 200,
-      "durationMs": 12,
+      "id": "0193a1b2-7c00-7000-8000-000000000061",
+      "endpointId": "0193a1b2-7c00-7000-8000-000000000061",
+      "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "type": "pass.issued",
+      "trigger": "event",
+      "status": 3,
+      "durationMs": 3,
       "headers": {
-        "content-type": "application/json",
-        "user-agent": "PassBook-Webhooks/1.0",
-        "x-passbook-event-id": "0193a1b2-7c00-7000-8000-0000000000e2",
-        "x-passbook-event-type": "pass.updated",
-        "x-passbook-timestamp": "1764000000",
-        "x-passbook-signature": "v1=5f2c0e9a1b7d4c3e8a6f0d2b9c4e1a7f3d5b8c0e2a4f6d8b1c3e5a7f9b0d2c4e"
+        "tier": "Day pass"
       },
-      "body": "{\"id\":\"0193a1b2-7c00-7000-8000-0000000000e2\",\"type\":\"pass.updated\"}",
-      "createdAt": 1764000000000
+      "body": "The gym closes at 18:00 on 24 December.",
+      "createdAt": 1794322800000
     }
   },
   "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay": {
     "description": "Signs a stored request again with a fresh timestamp and stores it as a new capture with the same event id.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
-      "endpointId": "0193a1b2-7c00-7000-8000-0000000000f2",
-      "eventId": "0193a1b2-7c00-7000-8000-0000000000e2",
-      "type": "pass.updated",
-      "trigger": "test",
-      "status": 200,
-      "durationMs": 12,
+      "id": "0193a1b2-7c00-7000-8000-000000000061",
+      "endpointId": "0193a1b2-7c00-7000-8000-000000000061",
+      "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "type": "pass.issued",
+      "trigger": "event",
+      "status": 3,
+      "durationMs": 3,
       "headers": {
-        "content-type": "application/json",
-        "user-agent": "PassBook-Webhooks/1.0",
-        "x-passbook-event-id": "0193a1b2-7c00-7000-8000-0000000000e2",
-        "x-passbook-event-type": "pass.updated",
-        "x-passbook-timestamp": "1764000000",
-        "x-passbook-signature": "v1=5f2c0e9a1b7d4c3e8a6f0d2b9c4e1a7f3d5b8c0e2a4f6d8b1c3e5a7f9b0d2c4e"
+        "tier": "Day pass"
       },
-      "body": "{\"id\":\"0193a1b2-7c00-7000-8000-0000000000e2\",\"type\":\"pass.updated\"}",
-      "createdAt": 1764000000000
+      "body": "The gym closes at 18:00 on 24 December.",
+      "createdAt": 1794322800000
     }
   },
   "webhooks.postWebhookEndpointsByIdCapturesSecret": {
     "description": "Returns the current signing secret of a capture endpoint, so you can verify its captures. It protects nothing outside your sandbox.",
     "response": {
-      "secret": "whsec_example_1111111111111111111111111111"
+      "secret": "whsec_458ec8858fdacfb528d34ed8972ad2c2"
     }
   },
   "webhooks.getWebhookEndpointsByIdTests": {
@@ -335,13 +327,13 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
-          "type": "webhook.test",
+          "id": "0193a1b2-7c00-7000-8000-000000000061",
+          "type": "pass.issued",
           "ok": true,
-          "status": 200,
+          "status": 3,
           "errorCode": null,
-          "durationMs": 12,
-          "at": 1795153318000
+          "durationMs": 3,
+          "at": 3
         }
       ]
     }

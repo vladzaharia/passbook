@@ -6,20 +6,20 @@
         {
           "id": "0193a1b2-7c00-7000-8000-0000000000b1",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "orgName": "Example Events",
-          "slug": "event-ticket",
-          "name": "Event ticket",
-          "description": "Admission ticket with a seat and a QR code.",
+          "orgName": "Northwind Climbing",
+          "slug": "day-pass",
+          "name": "Day pass",
+          "description": "A day pass for the climbing gym, scanned at the front desk.",
           "origin": "uploaded",
           "status": "active",
           "activeVersion": "3",
-          "styles": ["eventTicket"],
+          "styles": ["generic"],
           "passCount": 128,
-          "createdAt": 1764000000000,
-          "updatedAt": 1764086400000
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000
         }
       ],
-      "nextCursor": null
+      "nextCursor": "c1.4812"
     }
   },
   "templates.getTemplatesById": {
@@ -27,26 +27,27 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgName": "Example Events",
-      "slug": "event-ticket",
-      "name": "Event ticket",
-      "description": "Admission ticket with a seat and a QR code.",
+      "orgName": "Northwind Climbing",
+      "slug": "day-pass",
+      "name": "Day pass",
+      "description": "A day pass for the climbing gym, scanned at the front desk.",
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
-      "styles": ["eventTicket"],
+      "styles": ["generic"],
       "passCount": 128,
-      "createdAt": 1764000000000,
-      "updatedAt": 1764086400000,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
       "sample": {
         "name": "Ada Example",
-        "seat": "Row 4, seat 12"
+        "tier": "Day pass",
+        "validUntil": "2026-12-31"
       },
       "versions": [
         {
           "version": "3",
-          "createdAt": 1764000000000,
-          "createdBy": null,
+          "createdAt": 1795359600000,
+          "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
           "assets": [],
           "report": {
             "ok": true,
@@ -62,221 +63,213 @@
   "templates.getTemplatesByIdInputSchema": {
     "description": "Returns the JSON Schema that `input` must satisfy in `POST /passes` for this template's active version. Field labels, groups and order are in the `x-label`, `x-group` and `x-order` keywords. Use it to build a form or generate types.",
     "response": {
-      "type": "object",
-      "required": ["name"],
-      "properties": {
-        "name": {
-          "type": "string",
-          "x-label": "Name"
-        },
-        "seat": {
-          "type": "string",
-          "x-label": "Seat"
-        }
-      },
-      "additionalProperties": false
+      "tier": {}
     }
   },
   "templates.getTemplatesByIdRollout": {
     "description": "How far the approved release has reached the organization's passes in the request's mode. `remaining` counts active passes on a different, non-equivalent build, the ones the automatic rollout moves, and `updating` splits the ones still on their way by version. Passes left behind are counted in `failedCount`: the rebuild recorded why, or every rebuild of this release has finished (or none started within ten minutes, `stalled`). `failed` lists the first 50 with the reason, only for a caller who can also read passes. `tell` offers a message to the holders whose passes are on the release, for 24 hours after it and until one is sent; send it as a message broadcast targeting `{ templateIds, version }` with `tell.key` as the `Idempotency-Key`.",
     "response": {
-      "releaseVersion": "4",
-      "releaseId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "releaseVersion": "releaseVersion",
+      "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
       "fromVersion": "3",
-      "total": 1240,
-      "onRelease": 758,
-      "remaining": 482,
+      "total": 128,
+      "onRelease": 3,
+      "remaining": 3,
       "updating": [
         {
           "version": "3",
-          "count": 479
+          "count": 12
         }
       ],
-      "failedCount": 3,
+      "failedCount": 12,
       "failed": [
         {
-          "passId": "0193a1b2-7c00-7000-8000-0000000000e1",
-          "title": "Alex Morgan",
-          "reason": "The card holds more stamps than the new version allows."
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "title": "Day pass",
+          "reason": "Left the gym early; refund issued at the desk."
         }
       ],
-      "startedAt": 1764086400000,
-      "runId": "bulk-0193a1b2-7c00-7000-8000-0000000000d4",
-      "running": true,
+      "startedAt": 1794322800000,
+      "runId": "0193a1b2-7c00-7000-8000-000000000023",
+      "running": false,
       "stalled": false,
-      "changes": [],
+      "changes": [
+        {
+          "group": "colors",
+          "rows": [
+            {
+              "label": "Day pass",
+              "kind": "added",
+              "from": {
+                "type": "text",
+                "text": "The gym closes at 18:00 on 24 December."
+              },
+              "to": {
+                "type": "text",
+                "text": "The gym closes at 18:00 on 24 December."
+              }
+            }
+          ],
+          "more": 3
+        }
+      ],
       "tell": {
-        "text": "Gym has a new design.",
-        "until": 1764172800000,
-        "key": "rollout-tell:0193a1b2-7c00-7000-8000-0000000000c1"
+        "text": "The gym closes at 18:00 on 24 December.",
+        "until": 3,
+        "key": "tier"
       }
     }
   },
   "templates.getTemplatesByIdSampleCsv": {
-    "description": "Downloads a sample import file for the template: one column per field, labelled as in the pass form, and Holder email, with one valid row. Importing it with mapping auto maps every column and checks without errors."
+    "description": "Downloads a sample import file for the template: one column per field, labeled as in the pass form, and Holder email, with one valid row. Importing it with mapping auto maps every column and checks without errors."
   },
   "templates.postTemplatesByIdRelease": {
     "description": "Release a saved version to Test and Live in one call. Test runs first, then Live; each mode creates or reuses its candidate, reuses or writes an approval (a `test` approval in Test, a `sole` approval in Live only for the sole reviewer) and publishes at the expected generation. Test follows Live: a newer Test head stays and is reported as `kept`. Another reviewer's approval is needed otherwise: 409 `TEMPLATE_REVIEW_REQUIRED` with the plan; Test stays released and a repeat call resumes. `?dryRun=true` returns the plan and changes nothing. Send `Idempotency-Key`: the same key and body replays the stored answer with `Idempotent-Replayed: true`. `expected` is the generation each head must still be at, `0` before a first release. A Test key may name only `test`; a Live key cannot release.",
     "request": {
-      "version": "4",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "version": "3",
+      "modes": ["live"],
       "expected": {
-        "live": 2,
+        "live": 3,
         "test": 3
       }
     },
-    "requests": {
-      "Try in Test": {
-        "version": "4",
-        "modes": ["test"]
-      },
-      "Release to Test and Live": {
-        "version": "4",
-        "expected": {
-          "live": 2,
-          "test": 3
-        }
-      },
-      "Preview with dryRun=true": {
-        "version": "4",
-        "modes": ["test", "live"]
-      }
-    },
     "response": {
-      "version": "4",
+      "version": "3",
       "modes": {
         "test": {
           "outcome": "released",
-          "releaseId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "generation": 4,
-          "approvalKind": "test"
+          "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
+          "generation": 3,
+          "approvalKind": "peer"
         },
         "live": {
           "outcome": "released",
-          "releaseId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
           "generation": 3,
-          "approvalKind": "sole"
+          "approvalKind": "peer"
         }
       },
       "state": {
         "live": {
-          "version": "4",
-          "at": 1764086400000,
-          "by": "Ada Example"
+          "version": "3",
+          "at": 3,
+          "by": "Sam Rivera"
         },
         "test": {
-          "version": "4",
-          "at": 1764086400000,
+          "version": "3",
+          "at": 3,
           "state": "following"
         },
-        "draft": null,
+        "draft": {
+          "version": "3",
+          "at": 3
+        },
         "review": {
           "state": "none"
         },
-        "alone": true,
-        "next": null
+        "alone": false,
+        "next": "design"
       }
     }
   },
   "templates.postTemplatesByIdReviewRequests": {
     "description": "Create or reuse the Test and Live candidates of a saved version without approving them, and email the org's other reviewers. A newer request replaces an older open one. Send `Idempotency-Key`.",
     "request": {
-      "version": "4"
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "version": "3",
+      "modes": ["live"],
+      "expected": {
+        "live": 3,
+        "test": 3
+      }
     },
     "response": {
-      "version": "4",
+      "version": "3",
       "modes": {
         "test": {
-          "outcome": "review_requested",
-          "releaseId": null,
+          "outcome": "released",
+          "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
           "generation": 3,
-          "approvalKind": null
+          "approvalKind": "peer"
         },
         "live": {
-          "outcome": "review_requested",
-          "releaseId": null,
-          "generation": 2,
-          "approvalKind": null
+          "outcome": "released",
+          "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
+          "generation": 3,
+          "approvalKind": "peer"
         }
       },
       "state": {
         "live": {
           "version": "3",
-          "at": 1764000000000,
-          "by": "Ada Example"
+          "at": 3,
+          "by": "Sam Rivera"
         },
         "test": {
           "version": "3",
-          "at": 1764000000000,
+          "at": 3,
           "state": "following"
         },
         "draft": {
-          "version": "4",
-          "at": 1764086400000
+          "version": "3",
+          "at": 3
         },
         "review": {
-          "state": "open",
-          "version": "4",
-          "by": "Ada Example",
-          "at": 1764086400000
+          "state": "none"
         },
         "alone": false,
-        "next": "wait"
+        "next": "design"
       }
     }
   },
   "templates.postTemplatesByIdReview": {
     "description": "Approve a requested version in Test and Live as a peer. A Test key approves Test only. Set `release` to also release it when you can publish. You cannot approve your own work.",
     "request": {
-      "version": "4",
-      "release": true,
-      "note": "Looks right."
-    },
-    "requests": {
-      "Approve only": {
-        "version": "4"
-      },
-      "Approve and release": {
-        "version": "4",
-        "release": true,
-        "note": "Looks right."
-      }
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "version": "3",
+      "release": false,
+      "note": "Photo ID checked at the desk."
     },
     "response": {
-      "version": "4",
-      "approved": ["test", "live"],
+      "version": "3",
+      "approved": ["live"],
       "release": {
-        "version": "4",
+        "version": "3",
         "modes": {
           "test": {
             "outcome": "released",
-            "releaseId": "0193a1b2-7c00-7000-8000-0000000000c1",
-            "generation": 4,
+            "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
+            "generation": 3,
             "approvalKind": "peer"
           },
           "live": {
             "outcome": "released",
-            "releaseId": "0193a1b2-7c00-7000-8000-0000000000e1",
+            "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
             "generation": 3,
             "approvalKind": "peer"
           }
         },
         "state": {
           "live": {
-            "version": "4",
-            "at": 1764086400000,
-            "by": "Grace Reviewer"
+            "version": "3",
+            "at": 3,
+            "by": "Sam Rivera"
           },
           "test": {
-            "version": "4",
-            "at": 1764086400000,
+            "version": "3",
+            "at": 3,
             "state": "following"
           },
-          "draft": null,
+          "draft": {
+            "version": "3",
+            "at": 3
+          },
           "review": {
             "state": "none"
           },
           "alone": false,
-          "next": null
+          "next": "design"
         }
       }
     }
@@ -286,15 +279,15 @@
     "response": {
       "items": [
         {
-          "templateId": "0197a3e4-5c1b-7d2e-9f10-2b6a8c4d5e6f",
-          "templateName": "Member card",
-          "orgId": "0197a3e4-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
-          "version": "4",
-          "requestedBy": "Ada Example",
-          "requestedAt": 1764086400000
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "templateName": "Day pass",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "version": "3",
+          "requestedBy": "0193a1b2-7c00-7000-8000-000000000011",
+          "requestedAt": 1795521600000
         }
       ],
-      "nextCursor": null
+      "nextCursor": "c1.4812"
     }
   },
   "templates.getTemplatesUploads": {
@@ -302,14 +295,14 @@
     "response": {
       "items": [
         {
-          "uploadId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "name": "Ada Example",
+          "uploadId": "0193a1b2-7c00-7000-8000-f9beaa4ae374",
+          "name": "Day pass",
           "status": "queued",
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "version": "example",
-          "error": "example",
-          "issues": 1,
-          "createdAt": 1764000000000
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "version": "3",
+          "error": "RATE_LIMITED",
+          "issues": 3,
+          "createdAt": 1794322800000
         }
       ],
       "nextCursor": "c1.4812"
@@ -318,21 +311,21 @@
   "templates.getTemplatesUploadsById": {
     "description": "The status of one template import: its state, and the report when it has failed.",
     "response": {
-      "uploadId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "uploadId": "0193a1b2-7c00-7000-8000-b4c1646ae2f9",
       "status": "queued",
-      "step": "example",
-      "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "version": "example",
+      "step": "mapping",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "version": "3",
       "report": {
-        "ok": false,
+        "ok": true,
         "issues": [
           {
             "severity": "error",
-            "code": "AB12CD34",
-            "message": "example",
-            "path": "example",
+            "code": "NW7K2Q",
+            "message": "The gym closes at 18:00 on 24 December.",
+            "path": "input.tier",
             "params": {
-              "example": "example"
+              "field": "tier"
             },
             "fix": {
               "action": "upload_logo"
@@ -340,7 +333,7 @@
           }
         ]
       },
-      "error": "example"
+      "error": "RATE_LIMITED"
     }
   },
   "templates.getTemplatesPreviews": {
@@ -349,25 +342,55 @@
       "items": [
         {
           "passJson": {
-            "example": {}
+            "formatVersion": 1,
+            "passTypeIdentifier": "pass.mobile.passbook.northwind",
+            "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+            "organizationName": "Northwind Climbing",
+            "description": "Day pass",
+            "backgroundColor": "rgb(17, 42, 74)",
+            "foregroundColor": "rgb(255, 255, 255)",
+            "labelColor": "rgb(255, 196, 0)",
+            "generic": {
+              "primaryFields": [
+                {
+                  "key": "name",
+                  "label": "Guest",
+                  "value": "Ada Example"
+                }
+              ],
+              "secondaryFields": [
+                {
+                  "key": "tier",
+                  "label": "Pass",
+                  "value": "Day pass"
+                }
+              ],
+              "auxiliaryFields": [
+                {
+                  "key": "validUntil",
+                  "label": "Valid until",
+                  "value": "2026-12-31"
+                }
+              ]
+            }
           },
           "warnings": [
             {
               "severity": "error",
-              "code": "AB12CD34",
-              "message": "example",
-              "path": "example",
+              "code": "NW7K2Q",
+              "message": "The gym closes at 18:00 on 24 December.",
+              "path": "input.tier",
               "params": {
-                "example": "example"
+                "field": "tier"
               },
               "fix": {
                 "action": "upload_logo"
               }
             }
           ],
-          "assetBaseUrl": "https://passbook.mobile/p/abc123",
-          "assetNames": ["Ada Example"],
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1"
+          "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+          "assetNames": ["Day pass"],
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1"
         }
       ]
     }
@@ -377,19 +400,19 @@
     "response": {
       "items": [
         {
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "name": "Ada Example",
-          "templateOrgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "templateOrgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "origin": "uploaded",
-          "releaseId": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "releaseGeneration": 1,
-          "version": "example",
-          "candidateHash": "example",
+          "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
+          "releaseGeneration": 3,
+          "version": "3",
+          "candidateHash": "c3ce1f2d52302a212986da4cc02fc874a76bf881c6e3b5256f22a8a2b9aa4b8a",
           "supportsCheckIn": false,
           "rule": {
             "mode": "single",
-            "days": 1,
-            "durationMinutes": 1,
+            "days": 3,
+            "durationMinutes": 90,
             "durationFrom": "first_scan",
             "plans": ["always"],
             "source": "template"
@@ -402,60 +425,95 @@
   "templates.postTemplatesByIdPreview": {
     "description": "Renders the pass.json a template would produce for `input`, without issuing a pass.",
     "request": {
-      "version": "example",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+      "version": "3",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "input": {
+        "name": "Ada Example",
+        "tier": "Day pass",
+        "validUntil": "2026-12-31"
+      }
     },
     "response": {
       "passJson": {
-        "example": {}
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.mobile.passbook.northwind",
+        "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+        "organizationName": "Northwind Climbing",
+        "description": "Day pass",
+        "backgroundColor": "rgb(17, 42, 74)",
+        "foregroundColor": "rgb(255, 255, 255)",
+        "labelColor": "rgb(255, 196, 0)",
+        "generic": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ],
+          "secondaryFields": [
+            {
+              "key": "tier",
+              "label": "Pass",
+              "value": "Day pass"
+            }
+          ],
+          "auxiliaryFields": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "value": "2026-12-31"
+            }
+          ]
+        }
       },
       "warnings": [
         {
           "severity": "error",
-          "code": "AB12CD34",
-          "message": "example",
-          "path": "example",
+          "code": "NW7K2Q",
+          "message": "The gym closes at 18:00 on 24 December.",
+          "path": "input.tier",
           "params": {
-            "example": "example"
+            "field": "tier"
           },
           "fix": {
             "action": "upload_logo"
           }
         }
       ],
-      "assetBaseUrl": "https://passbook.mobile/p/abc123",
-      "assetNames": ["Ada Example"]
+      "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+      "assetNames": ["Day pass"]
     }
   },
   "templates.getTemplatesByIdVersionsByVersion": {
     "description": "One version of a template with its validation report.",
     "response": {
-      "version": "example",
-      "createdAt": 1764000000000,
-      "createdBy": "example",
+      "version": "3",
+      "createdAt": 1794322800000,
+      "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
       "assets": [
         {
-          "name": "Ada Example",
-          "slot": "example",
+          "name": "Day pass",
+          "slot": "logo",
           "scale": 1,
-          "locale": "example",
-          "size": 1,
-          "sha1": "example",
-          "crc32": 1,
-          "width": 1,
-          "height": 1
+          "locale": "en-US",
+          "size": 24576,
+          "sha1": "67a1c9be9f1d82d72a64ae340bc284b05518594d",
+          "crc32": 3,
+          "width": 320,
+          "height": 100
         }
       ],
       "report": {
-        "ok": false,
+        "ok": true,
         "issues": [
           {
             "severity": "error",
-            "code": "AB12CD34",
-            "message": "example",
-            "path": "example",
+            "code": "NW7K2Q",
+            "message": "The gym closes at 18:00 on 24 December.",
+            "path": "input.tier",
             "params": {
-              "example": "example"
+              "field": "tier"
             },
             "fix": {
               "action": "upload_logo"
@@ -463,12 +521,42 @@
           }
         ]
       },
-      "active": false,
+      "active": true,
       "displayOnly": false,
-      "passCount": 10,
+      "passCount": 12,
       "manifest": {},
       "passJson": {
-        "example": {}
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.mobile.passbook.northwind",
+        "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+        "organizationName": "Northwind Climbing",
+        "description": "Day pass",
+        "backgroundColor": "rgb(17, 42, 74)",
+        "foregroundColor": "rgb(255, 255, 255)",
+        "labelColor": "rgb(255, 196, 0)",
+        "generic": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ],
+          "secondaryFields": [
+            {
+              "key": "tier",
+              "label": "Pass",
+              "value": "Day pass"
+            }
+          ],
+          "auxiliaryFields": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "value": "2026-12-31"
+            }
+          ]
+        }
       }
     }
   },
@@ -486,48 +574,42 @@
         "paper": "on",
         "nfc": "on"
       },
-      "revision": 1,
+      "revision": 3,
       "effective": {
         "mobile": {
           "on": false,
           "source": "pass",
           "reason": "not_released",
-          "retiredAt": 1764000000000,
           "retiredCause": "pass"
         },
         "apple": {
           "on": false,
           "source": "pass",
           "reason": "not_released",
-          "retiredAt": 1764000000000,
           "retiredCause": "pass"
         },
         "google": {
           "on": false,
           "source": "pass",
           "reason": "not_released",
-          "retiredAt": 1764000000000,
           "retiredCause": "pass"
         },
         "samsung": {
           "on": false,
           "source": "pass",
           "reason": "not_released",
-          "retiredAt": 1764000000000,
           "retiredCause": "pass"
         },
         "paper": {
           "on": false,
           "source": "pass",
           "reason": "not_released",
-          "retiredAt": 1764000000000,
           "retiredCause": "pass"
         },
         "nfc": {
           "on": false,
           "source": "pass",
           "reason": "not_released",
-          "retiredAt": 1764000000000,
           "retiredCause": "pass"
         }
       },
@@ -582,14 +664,14 @@
         ]
       },
       "overrides": {
-        "mobile": 1,
-        "apple": 1,
-        "google": 1,
-        "samsung": 1,
-        "paper": 1,
-        "nfc": 1
+        "mobile": 3,
+        "apple": 3,
+        "google": 3,
+        "samsung": 3,
+        "paper": 3,
+        "nfc": 3
       },
-      "overridePasses": 1,
+      "overridePasses": 3,
       "defaults": {
         "mobile": "on",
         "apple": "on",
@@ -604,18 +686,18 @@
     "description": "The latest runs that applied saved channel changes to passes, in this mode.",
     "response": [
       {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "state": "pending",
-        "dueAt": 1764000000000,
-        "startedAt": 1764000000000,
-        "finishedAt": 1764000000000,
+        "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "state": "done",
+        "dueAt": 1795521600000,
+        "startedAt": 1794322800000,
+        "finishedAt": 1795521600000,
         "counts": {
-          "example": 1
+          "healthy": 3
         },
-        "errorCode": "AB12CD34",
+        "errorCode": null,
         "waiting": {
-          "name": "Ada Example",
-          "until": 1
+          "name": "Day pass",
+          "until": 3
         }
       }
     ]
@@ -623,118 +705,117 @@
   "templates.getTemplatesByIdStampsImpact": {
     "description": "What changing the stamp goal does to the template's live passes. Read it before saving the change.",
     "response": {
-      "passes": 1,
-      "readyNow": 1,
-      "readyLost": 1,
-      "newlyReady": 1,
-      "highest": 1,
-      "highestKept": 1
+      "passes": 3,
+      "readyNow": 3,
+      "readyLost": 3,
+      "newlyReady": 3,
+      "highest": 3,
+      "highestKept": 3
     }
   },
   "templates.postTemplatesByIdUse": {
     "description": "Makes a template in an organization from a blueprint. The blueprint is not changed.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "orgName": "Ada Example",
-      "slug": "example",
-      "name": "Ada Example",
-      "description": "example",
-      "origin": "baked",
+      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgName": "Northwind Climbing",
+      "slug": "day-pass",
+      "name": "Day pass",
+      "description": "A day pass for the climbing gym, scanned at the front desk.",
+      "origin": "uploaded",
       "status": "active",
-      "activeVersion": "example",
+      "activeVersion": "3",
       "styles": ["generic"],
-      "blueprint": false,
-      "shared": false,
-      "icon": "example",
-      "group": "example",
-      "aliases": ["example"],
-      "fromBlueprint": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a3",
-        "name": "Ada Example"
-      },
-      "openReview": false,
-      "passCount": 10,
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "inputSchema": {},
+      "passCount": 128,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
       "sample": {
-        "example": {}
+        "name": "Ada Example",
+        "tier": "Day pass",
+        "validUntil": "2026-12-31"
       },
-      "manifest": {},
       "versions": [
         {
-          "version": "example",
-          "createdAt": 1764000000000,
-          "createdBy": "example",
-          "assets": [
-            {
-              "name": "Ada Example",
-              "slot": "example",
-              "scale": 1,
-              "locale": "example",
-              "size": 1,
-              "sha1": "example",
-              "crc32": 1,
-              "width": 1,
-              "height": 1
-            }
-          ],
+          "version": "3",
+          "createdAt": 1795359600000,
+          "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+          "assets": [],
           "report": {
-            "ok": false,
-            "issues": [
-              {
-                "severity": "error",
-                "code": "AB12CD34",
-                "message": "example"
-              }
-            ]
+            "ok": true,
+            "issues": []
           },
-          "active": false,
+          "active": true,
           "displayOnly": false,
-          "passCount": 10
+          "passCount": 128
         }
-      ],
-      "passesOnOlderVersions": 1,
-      "passesBlocked": 1,
-      "restorable": false
+      ]
     },
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
+      "name": "Day pass",
       "version": {
         "passJson": {
-          "example": {}
+          "formatVersion": 1,
+          "passTypeIdentifier": "pass.mobile.passbook.northwind",
+          "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+          "organizationName": "Northwind Climbing",
+          "description": "Day pass",
+          "backgroundColor": "rgb(17, 42, 74)",
+          "foregroundColor": "rgb(255, 255, 255)",
+          "labelColor": "rgb(255, 196, 0)",
+          "generic": {
+            "primaryFields": [
+              {
+                "key": "name",
+                "label": "Guest",
+                "value": "Ada Example"
+              }
+            ],
+            "secondaryFields": [
+              {
+                "key": "tier",
+                "label": "Pass",
+                "value": "Day pass"
+              }
+            ],
+            "auxiliaryFields": [
+              {
+                "key": "validUntil",
+                "label": "Valid until",
+                "value": "2026-12-31"
+              }
+            ]
+          }
         },
         "manifest": {
-          "example": {}
+          "tier": {}
         },
         "assets": [
           {
-            "name": "Ada Example",
-            "sha1": "0123456789abcdef0123456789abcdef01234567"
+            "name": "Day pass",
+            "sha1": "e6997603809dcf7d34d188068c529a7808556809"
           }
         ]
       },
-      "baseVersion": "example"
+      "baseVersion": "3"
     }
   },
   "templates.postTemplatesByIdScanSetup": {
     "description": "Sets up scanning for a template: its events and a session. Runs once per template.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "timeZone": "example"
+      "timeZone": "America/Los_Angeles"
     },
     "response": {
       "session": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Ada Example"
+        "id": "0193a1b2-7c00-7000-8000-000000000091",
+        "name": "Evening shift"
       },
       "created": false,
       "events": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "name": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "name": "Open climbing",
           "created": false
         }
       ],
@@ -750,38 +831,38 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "provider": "apple",
-          "version": "example",
-          "contentHash": "example",
-          "candidateHash": "example",
-          "adapterRevision": 1,
-          "adapterCapabilities": ["example"],
-          "audiencePolicyRevision": 1,
-          "authorId": "0193a1b2-7c00-7000-8000-0000000000a4",
-          "versionAuthorId": "0193a1b2-7c00-7000-8000-0000000000a5",
-          "authorName": "Ada Example",
-          "versionAuthorName": "Ada Example",
-          "createdAt": 1764000000000,
-          "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a6",
-          "sourceReleaseGeneration": 1,
-          "sourceReleaseHash": "example",
-          "accountId": "0193a1b2-7c00-7000-8000-0000000000a7",
-          "accountRevision": 10,
-          "providerIdentityHash": "example",
+          "version": "3",
+          "contentHash": "1962d8005fa1946c12ff6f30e9df982d47a7118459b07e8717c09971a014547a",
+          "candidateHash": "d1be8409d99c8a6edf27a23a2af992fa57c5829e9b7decf00526ed59c5aadf18",
+          "adapterRevision": 3,
+          "adapterCapabilities": ["read"],
+          "audiencePolicyRevision": 3,
+          "authorId": "0193a1b2-7c00-7000-8000-3a5a2d975dd8",
+          "versionAuthorId": "0193a1b2-7c00-7000-8000-0df0db664993",
+          "authorName": "Sam Rivera",
+          "versionAuthorName": "Sam Rivera",
+          "createdAt": 1794322800000,
+          "sourceReleaseId": "0193a1b2-7c00-7000-8000-000000000013",
+          "sourceReleaseGeneration": 3,
+          "sourceReleaseHash": "98b2d3d2b4d8c72aec46f892cd3dce4ad873586b66087b2e5848831cfe67810c",
+          "accountId": "0193a1b2-7c00-7000-8000-19590015b3d9",
+          "accountRevision": 12,
+          "providerIdentityHash": "91508906fc51ad873bd478e28ee37f1cc41a9701f96efcb85c74ea9b00b239d2",
           "projection": {},
           "approvals": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0000000000a8",
-              "candidateId": "0193a1b2-7c00-7000-8000-0000000000a9",
-              "candidateHash": "example",
-              "reviewerId": "0193a1b2-7c00-7000-8000-0000000000aa",
-              "reviewerName": "Ada Example",
+              "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+              "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
+              "candidateHash": "d1be8409d99c8a6edf27a23a2af992fa57c5829e9b7decf00526ed59c5aadf18",
+              "reviewerId": "0193a1b2-7c00-7000-8000-553c81052bee",
+              "reviewerName": "Sam Rivera",
               "kind": "peer",
-              "createdAt": 1764000000000
+              "createdAt": 1794322800000
             }
           ]
         }
@@ -795,43 +876,43 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "apple",
-      "version": "example",
-      "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "version": "3",
+      "sourceReleaseId": "0193a1b2-7c00-7000-8000-000000000013",
       "projection": {}
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "apple",
-      "version": "example",
-      "contentHash": "example",
-      "candidateHash": "example",
-      "adapterRevision": 1,
-      "adapterCapabilities": ["example"],
-      "audiencePolicyRevision": 1,
-      "authorId": "0193a1b2-7c00-7000-8000-0000000000a4",
-      "versionAuthorId": "0193a1b2-7c00-7000-8000-0000000000a5",
-      "authorName": "Ada Example",
-      "versionAuthorName": "Ada Example",
-      "createdAt": 1764000000000,
-      "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a6",
-      "sourceReleaseGeneration": 1,
-      "sourceReleaseHash": "example",
-      "accountId": "0193a1b2-7c00-7000-8000-0000000000a7",
-      "accountRevision": 10,
-      "providerIdentityHash": "example",
+      "version": "3",
+      "contentHash": "550d1ffdbe102e6bd710d2253affd3a8a73f08006f2380f692affee413f49e87",
+      "candidateHash": "64488dddee9ce3e407729b188396eb98ef2778a6c9cfa84bd56e2b887b41a611",
+      "adapterRevision": 3,
+      "adapterCapabilities": ["read"],
+      "audiencePolicyRevision": 3,
+      "authorId": "0193a1b2-7c00-7000-8000-de32766d9027",
+      "versionAuthorId": "0193a1b2-7c00-7000-8000-f9eab450ec8f",
+      "authorName": "Sam Rivera",
+      "versionAuthorName": "Sam Rivera",
+      "createdAt": 1794322800000,
+      "sourceReleaseId": "0193a1b2-7c00-7000-8000-000000000013",
+      "sourceReleaseGeneration": 3,
+      "sourceReleaseHash": "1f467c3e8fdcaf050575a33ebd71f14ef7a0e5dc19291f8dc23ff4d4859d0c6e",
+      "accountId": "0193a1b2-7c00-7000-8000-cb8a9de41f3c",
+      "accountRevision": 12,
+      "providerIdentityHash": "15917460b46e916da65bbd338cc8d2f2ebd39892092ce73a893b74527df1ff35",
       "projection": {},
       "approvals": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
-          "candidateId": "0193a1b2-7c00-7000-8000-0000000000a9",
-          "candidateHash": "example",
-          "reviewerId": "0193a1b2-7c00-7000-8000-0000000000aa",
-          "reviewerName": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
+          "candidateHash": "64488dddee9ce3e407729b188396eb98ef2778a6c9cfa84bd56e2b887b41a611",
+          "reviewerId": "0193a1b2-7c00-7000-8000-85d1bffea55c",
+          "reviewerName": "Sam Rivera",
           "kind": "peer",
-          "createdAt": 1764000000000
+          "createdAt": 1794322800000
         }
       ]
     }
@@ -842,74 +923,74 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "apple",
-      "candidateHash": "example",
+      "candidateHash": "463510289cb567f74b834a9484e3874571f6b61236a5b14068b35306399df485",
       "alone": false
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "candidateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "candidateHash": "example",
-      "reviewerId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "reviewerName": "Ada Example",
+      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
+      "candidateHash": "463510289cb567f74b834a9484e3874571f6b61236a5b14068b35306399df485",
+      "reviewerId": "0193a1b2-7c00-7000-8000-1d1099a91130",
+      "reviewerName": "Sam Rivera",
       "kind": "peer",
-      "createdAt": 1764000000000
+      "createdAt": 1794322800000
     }
   },
   "templates.getTemplatesByIdReleases": {
     "description": "Lists the releases of a template, newest first.",
     "response": {
       "active": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
         "provider": "apple",
-        "version": "example",
-        "generation": 1,
-        "candidateHash": "example",
+        "version": "3",
+        "generation": 3,
+        "candidateHash": "2b2ae6259cb2cd91818a8a80d09f7e8263ee289ea4a40538d04a32270338da86",
         "source": "approved",
         "action": "release",
-        "previousReleaseId": "0193a1b2-7c00-7000-8000-0000000000a4",
-        "createdBy": "example",
-        "createdByName": "Ada Example",
-        "createdAt": 1764000000000,
-        "candidateId": "0193a1b2-7c00-7000-8000-0000000000a5",
-        "approvalId": "0193a1b2-7c00-7000-8000-0000000000a6",
-        "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a7",
-        "sourceReleaseGeneration": 1,
-        "sourceReleaseHash": "example",
-        "accountId": "0193a1b2-7c00-7000-8000-0000000000a8",
-        "accountRevision": 10,
-        "providerIdentityHash": "example"
+        "previousReleaseId": null,
+        "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+        "createdByName": "Sam Rivera",
+        "createdAt": 1794322800000,
+        "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
+        "approvalId": "0193a1b2-7c00-7000-8000-d3418cfdd6cb",
+        "sourceReleaseId": "0193a1b2-7c00-7000-8000-000000000013",
+        "sourceReleaseGeneration": 3,
+        "sourceReleaseHash": "2ad2f0105ef3905d78fe00d08f13aeb3c0461966e645b6a7bb016337ca8fa356",
+        "accountId": "0193a1b2-7c00-7000-8000-8429912ca048",
+        "accountRevision": 12,
+        "providerIdentityHash": "dfe115cf4c99d39046b5763a69eca2888a477469f5df521cc96835ebb62e463b"
       },
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a9",
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000aa",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000ab",
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "provider": "apple",
-          "version": "example",
-          "generation": 1,
-          "candidateHash": "example",
+          "version": "3",
+          "generation": 3,
+          "candidateHash": "2b2ae6259cb2cd91818a8a80d09f7e8263ee289ea4a40538d04a32270338da86",
           "source": "approved",
           "action": "release",
-          "previousReleaseId": "0193a1b2-7c00-7000-8000-0000000000ac",
-          "createdBy": "example",
-          "createdByName": "Ada Example",
-          "createdAt": 1764000000000,
-          "candidateId": "0193a1b2-7c00-7000-8000-0000000000ad",
-          "approvalId": "0193a1b2-7c00-7000-8000-0000000000ae",
-          "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000af",
-          "sourceReleaseGeneration": 1,
-          "sourceReleaseHash": "example",
-          "accountId": "0193a1b2-7c00-7000-8000-0000000000b0",
-          "accountRevision": 10,
-          "providerIdentityHash": "example"
+          "previousReleaseId": null,
+          "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+          "createdByName": "Sam Rivera",
+          "createdAt": 1794322800000,
+          "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
+          "approvalId": "0193a1b2-7c00-7000-8000-37f5fd1cad47",
+          "sourceReleaseId": "0193a1b2-7c00-7000-8000-000000000013",
+          "sourceReleaseGeneration": 3,
+          "sourceReleaseHash": "2ad2f0105ef3905d78fe00d08f13aeb3c0461966e645b6a7bb016337ca8fa356",
+          "accountId": "0193a1b2-7c00-7000-8000-93706465d27b",
+          "accountRevision": 12,
+          "providerIdentityHash": "dfe115cf4c99d39046b5763a69eca2888a477469f5df521cc96835ebb62e463b"
         }
       ],
       "nextCursor": "c1.4812",
-      "promotable": ["example"]
+      "promotable": ["yes"]
     }
   },
   "templates.postTemplatesByIdReleases": {
@@ -918,84 +999,84 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "apple",
-      "candidateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "approvalId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "candidateHash": "example",
-      "expectedGeneration": 1
+      "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
+      "approvalId": "0193a1b2-7c00-7000-8000-e933a9c3efe1",
+      "candidateHash": "59e09797f3c21b80c9e720f02a4745530655087e12e1ef1103d9e389f12bf2b1",
+      "expectedGeneration": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "apple",
-      "version": "example",
-      "generation": 1,
-      "candidateHash": "example",
+      "version": "3",
+      "generation": 3,
+      "candidateHash": "59e09797f3c21b80c9e720f02a4745530655087e12e1ef1103d9e389f12bf2b1",
       "source": "approved",
       "action": "release",
-      "previousReleaseId": "0193a1b2-7c00-7000-8000-0000000000a4",
-      "createdBy": "example",
-      "createdByName": "Ada Example",
-      "createdAt": 1764000000000,
-      "candidateId": "0193a1b2-7c00-7000-8000-0000000000a5",
-      "approvalId": "0193a1b2-7c00-7000-8000-0000000000a6",
-      "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a7",
-      "sourceReleaseGeneration": 1,
-      "sourceReleaseHash": "example",
-      "accountId": "0193a1b2-7c00-7000-8000-0000000000a8",
-      "accountRevision": 10,
-      "providerIdentityHash": "example"
+      "previousReleaseId": null,
+      "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "createdByName": "Sam Rivera",
+      "createdAt": 1794322800000,
+      "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
+      "approvalId": "0193a1b2-7c00-7000-8000-e933a9c3efe1",
+      "sourceReleaseId": "0193a1b2-7c00-7000-8000-000000000013",
+      "sourceReleaseGeneration": 3,
+      "sourceReleaseHash": "06581a1309122d6095d4d4be3dffd3782454f4391837da7a76660f2fcdf6a28e",
+      "accountId": "0193a1b2-7c00-7000-8000-049da807cf25",
+      "accountRevision": 12,
+      "providerIdentityHash": "268514a81f3d755b00e746b651d855dbbb16a5426dcb51ee67eb6761a9ebed64"
     }
   },
   "templates.getTemplatesByIdReleasesImpact": {
     "description": "What publishing or rolling back to a version changes, and for how many passes.",
     "response": {
-      "fromVersion": "example",
-      "toVersion": "example",
+      "fromVersion": "3",
+      "toVersion": "3",
       "passes": {
-        "count": 10,
+        "count": 12,
         "capped": false
       },
       "diff": {
         "fields": [
           {
-            "label": "Ada Example",
+            "label": "Day pass",
             "kind": "added",
-            "from": "example",
-            "to": "example"
+            "from": "Booking sheet",
+            "to": "ada@example.com"
           }
         ],
         "images": [
           {
-            "label": "Ada Example",
+            "label": "Day pass",
             "kind": "added",
-            "from": "example",
-            "to": "example"
+            "from": "Booking sheet",
+            "to": "ada@example.com"
           }
         ],
         "barcode": [
           {
-            "label": "Ada Example",
+            "label": "Day pass",
             "kind": "added",
-            "from": "example",
-            "to": "example"
+            "from": "Booking sheet",
+            "to": "ada@example.com"
           }
         ],
         "colors": [
           {
-            "label": "Ada Example",
+            "label": "Day pass",
             "kind": "added",
-            "from": "example",
-            "to": "example"
+            "from": "Booking sheet",
+            "to": "ada@example.com"
           }
         ]
       },
       "more": {
-        "fields": 1,
-        "images": 1,
-        "barcode": 1,
-        "colors": 1
+        "fields": 3,
+        "images": 3,
+        "barcode": 3,
+        "colors": 3
       }
     }
   },

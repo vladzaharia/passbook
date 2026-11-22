@@ -1,9 +1,10 @@
-// Fails when an SDK method starts with a verb nobody reviewed, or an SDK name or reference description
-// uses UK spelling or breaks the sentence form (tools/lib/vocabulary.ts). Run in `npm run check:rules`.
+// Fails when an SDK method starts with a verb nobody reviewed, or an SDK name, reference description or the OpenAPI
+// document's own summaries and descriptions use UK spelling or break the sentence form (tools/lib/vocabulary.ts).
+// Run in `npm run check:rules`.
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { SdkNames } from './lib/openapi-ratchet.ts';
-import { vocabularyFailures } from './lib/vocabulary.ts';
+import { proseFailures, vocabularyFailures } from './lib/vocabulary.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const read = (file: string): unknown => JSON.parse(readFileSync(resolve(root, file), 'utf8'));
@@ -15,7 +16,10 @@ for (const file of readdirSync(resolve(root, 'docs/api/reference'))) {
     if (entry.description) descriptions[id] = entry.description;
 }
 
-const failures = vocabularyFailures(read('docs/api/sdk-names.json') as SdkNames, descriptions);
+const failures = [
+  ...vocabularyFailures(read('docs/api/sdk-names.json') as SdkNames, descriptions),
+  ...proseFailures(read('docs/api/openapi.v1.json') as Record<string, unknown>),
+];
 if (failures.length) {
   console.error(`check-vocabulary: ${failures.length} failure(s)\n  ${failures.join('\n  ')}`);
   process.exit(1);

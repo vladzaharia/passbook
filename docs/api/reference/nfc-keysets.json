@@ -4,21 +4,21 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "name": "Ada Example",
-          "slug": "a1b2c3d4",
+          "id": "0193a1b2-7c00-7000-8000-000000000041",
+          "name": "Gym doors",
+          "slug": "eda1b2cf",
           "diversify": false,
           "perTag": false,
-          "createdAt": 1764000000000,
-          "disabledAt": 1764000000000,
+          "createdAt": 1794322800000,
+          "disabledAt": null,
           "versions": [
             {
-              "version": 1,
+              "version": 3,
               "state": "active",
-              "createdAt": 1764000000000,
-              "stateAt": 1764000000000,
-              "revokedAt": 1764000000000,
-              "tags": 1
+              "createdAt": 1794322800000,
+              "stateAt": 1795521600000,
+              "revokedAt": null,
+              "tags": 3
             }
           ]
         }
@@ -29,30 +29,30 @@
   "nfc-keysets.postNfcKeysets": {
     "description": "Creates a tag keyset.",
     "request": {
-      "name": "Ada Example",
+      "name": "Gym doors",
       "diversify": false,
       "generate": true
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
-      "slug": "a1b2c3d4",
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
+      "name": "Gym doors",
+      "slug": "878bae82",
       "diversify": false,
       "perTag": false,
-      "createdAt": 1764000000000,
-      "disabledAt": 1764000000000,
+      "createdAt": 1794322800000,
+      "disabledAt": null,
       "keys": {
-        "metaKey": "0123456789abcdef0123456789abcdef",
-        "fileKey": "0123456789abcdef0123456789abcdef"
+        "metaKey": "3734030f244336dd77be7910a855f53a",
+        "fileKey": "a9b103b967f2b2f928a4f8242b09b0b9"
       },
       "versions": [
         {
-          "version": 1,
+          "version": 3,
           "state": "active",
-          "createdAt": 1764000000000,
-          "stateAt": 1764000000000,
-          "revokedAt": 1764000000000,
-          "tags": 1
+          "createdAt": 1794322800000,
+          "stateAt": 1795521600000,
+          "revokedAt": null,
+          "tags": 3
         }
       ]
     }
@@ -63,25 +63,25 @@
       "generate": true
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
-      "slug": "a1b2c3d4",
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
+      "name": "Gym doors",
+      "slug": "bcd5c72d",
       "diversify": false,
       "perTag": false,
-      "createdAt": 1764000000000,
-      "disabledAt": 1764000000000,
+      "createdAt": 1794322800000,
+      "disabledAt": null,
       "keys": {
-        "metaKey": "0123456789abcdef0123456789abcdef",
-        "fileKey": "0123456789abcdef0123456789abcdef"
+        "metaKey": "d420d03c258234770ae8061477e6c75d",
+        "fileKey": "f6462dc384b35a601e27dce11423cc6f"
       },
       "versions": [
         {
-          "version": 1,
+          "version": 3,
           "state": "active",
-          "createdAt": 1764000000000,
-          "stateAt": 1764000000000,
-          "revokedAt": 1764000000000,
-          "tags": 1
+          "createdAt": 1794322800000,
+          "stateAt": 1795521600000,
+          "revokedAt": null,
+          "tags": 3
         }
       ]
     }
@@ -89,21 +89,21 @@
   "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire": {
     "description": "Retires an old key version.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
-      "slug": "a1b2c3d4",
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
+      "name": "Gym doors",
+      "slug": "6104ec23",
       "diversify": false,
       "perTag": false,
-      "createdAt": 1764000000000,
-      "disabledAt": 1764000000000,
+      "createdAt": 1794322800000,
+      "disabledAt": null,
       "versions": [
         {
-          "version": 1,
+          "version": 3,
           "state": "active",
-          "createdAt": 1764000000000,
-          "stateAt": 1764000000000,
-          "revokedAt": 1764000000000,
-          "tags": 1
+          "createdAt": 1794322800000,
+          "stateAt": 1795521600000,
+          "revokedAt": null,
+          "tags": 3
         }
       ]
     }
@@ -111,21 +111,21 @@
   "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke": {
     "description": "Revokes a key version. Tags on it must be written again.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
-      "slug": "a1b2c3d4",
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
+      "name": "Gym doors",
+      "slug": "92e661ef",
       "diversify": false,
       "perTag": false,
-      "createdAt": 1764000000000,
-      "disabledAt": 1764000000000,
+      "createdAt": 1794322800000,
+      "disabledAt": null,
       "versions": [
         {
-          "version": 1,
+          "version": 3,
           "state": "active",
-          "createdAt": 1764000000000,
-          "stateAt": 1764000000000,
-          "revokedAt": 1764000000000,
-          "tags": 1
+          "createdAt": 1794322800000,
+          "stateAt": 1795521600000,
+          "revokedAt": null,
+          "tags": 3
         }
       ]
     }
@@ -133,27 +133,27 @@
   "nfc-keysets.postNfcKeysetsByIdReenrol": {
     "description": "Moves the tags of a keyset to another keyset.",
     "request": {
-      "toKeysetId": "0193a1b2-7c00-7000-8000-0000000000a1"
+      "toKeysetId": "0193a1b2-7c00-7000-8000-000000000041"
     },
     "response": {
-      "moved": 1,
-      "ownKey": 1,
+      "moved": 3,
+      "ownKey": 3,
       "keyset": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Ada Example",
-        "slug": "a1b2c3d4",
+        "id": "0193a1b2-7c00-7000-8000-000000000041",
+        "name": "Gym doors",
+        "slug": "53658f1d",
         "diversify": false,
         "perTag": false,
-        "createdAt": 1764000000000,
-        "disabledAt": 1764000000000,
+        "createdAt": 1794322800000,
+        "disabledAt": null,
         "versions": [
           {
-            "version": 1,
+            "version": 3,
             "state": "active",
-            "createdAt": 1764000000000,
-            "stateAt": 1764000000000,
-            "revokedAt": 1764000000000,
-            "tags": 1
+            "createdAt": 1794322800000,
+            "stateAt": 1795521600000,
+            "revokedAt": null,
+            "tags": 3
           }
         ]
       }
@@ -162,42 +162,42 @@
   "nfc-keysets.postNfcKeysetsByIdImport": {
     "description": "Imports supplier-personalized tags. Run it as a dry run first, then add.",
     "request": {
-      "csv": "example",
+      "csv": "name,email,tier\nAda Example,ada@example.com,Day pass\n",
       "dryRun": false
     },
     "response": {
       "dryRun": false,
-      "rows": 1,
-      "ok": 1,
-      "added": 1,
+      "rows": 3,
+      "ok": 3,
+      "added": 3,
       "problems": [
         {
-          "line": 1,
-          "uid": "example",
+          "line": 3,
+          "uid": "04A3B2C1D5E680",
           "reason": "bad_uid"
         }
       ],
-      "moreProblems": 1
+      "moreProblems": 3
     }
   },
   "nfc-keysets.postNfcKeysetsByIdDisable": {
     "description": "Disables a keyset.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
-      "slug": "a1b2c3d4",
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
+      "name": "Gym doors",
+      "slug": "889afe6b",
       "diversify": false,
       "perTag": false,
-      "createdAt": 1764000000000,
-      "disabledAt": 1764000000000,
+      "createdAt": 1794322800000,
+      "disabledAt": null,
       "versions": [
         {
-          "version": 1,
+          "version": 3,
           "state": "active",
-          "createdAt": 1764000000000,
-          "stateAt": 1764000000000,
-          "revokedAt": 1764000000000,
-          "tags": 1
+          "createdAt": 1794322800000,
+          "stateAt": 1795521600000,
+          "revokedAt": null,
+          "tags": 3
         }
       ]
     }

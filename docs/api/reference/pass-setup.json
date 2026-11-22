@@ -2,73 +2,77 @@
   "pass-setup.getOrgsByOrgIdPassSetup": {
     "description": "An organization's brand, channels and accounts in the caller's mode. Each channel carries its chain of levels (PassBook, Plan, Organization, Template), the first of which that is not ok stops it. checks lists what to fix, each with a stable fix action. Send revision back as expectedRevision.",
     "response": {
-      "orgId": "org_1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "revision": "r1",
-      "passCount": 412,
+      "revision": "revision",
+      "passCount": 12,
       "brand": {
         "name": {
-          "value": "Acme Fitness",
-          "source": "org"
+          "value": "Day pass",
+          "source": "passbook"
         },
         "logo": {
           "value": {
-            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "w": 480,
-            "h": 150
+            "sha": "3b31b934ee392193a7760192b68f9cb7b5b6a16c942d419cf5b8617f3387e386",
+            "w": 3,
+            "h": 3
           },
-          "source": "org",
-          "templatesOwn": 0
+          "source": "passbook",
+          "templatesOwn": 3
         },
         "icon": {
           "value": {
-            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "w": 114,
-            "h": 114
+            "sha": "280146e0f0ea5ca19369e425204a4c244c8341a8244be8e3bb34d2347fbb717a",
+            "w": 3,
+            "h": 3
           },
-          "source": "org",
-          "templatesOwn": 0
+          "source": "passbook",
+          "templatesOwn": 3
         },
         "webLogo": {
-          "value": null,
+          "value": {
+            "sha": "637b0e9823f421b3815f17b5e978da27cba9f8cf123102bf718b4e39ecdbdc94",
+            "w": 3,
+            "h": 3
+          },
           "source": "passbook",
-          "sameAsLogo": true
+          "sameAsLogo": false
         },
         "passColors": {
           "value": {
-            "background": "#0f172a",
+            "background": "#112a4a",
             "foreground": "#ffffff",
-            "label": "#fbbf24"
+            "label": "#ffffff"
           },
-          "source": "org",
-          "templatesOwn": 0
+          "source": "passbook",
+          "templatesOwn": 3
         },
         "logoHasName": {
           "value": false,
-          "source": "org"
+          "source": "passbook"
         },
         "accent": {
-          "value": "#2563eb",
-          "source": "org"
+          "value": "#ffc400",
+          "source": "passbook"
         },
         "mark": {
           "chosen": "full",
           "effective": "full",
-          "allowed": ["full", "small"]
+          "allowed": ["full"]
         },
         "support": {
           "email": {
-            "value": "help@acme.test",
-            "source": "org"
+            "value": "Day pass",
+            "source": "passbook"
           },
           "url": {
-            "value": null,
+            "value": "Day pass",
             "source": "passbook"
           }
         },
         "email": {
           "fromName": {
-            "value": "Acme Fitness via PassBook",
+            "value": "Day pass",
             "source": "passbook"
           },
           "buddy": false
@@ -76,67 +80,81 @@
       },
       "channels": {
         "mobile": {
-          "on": true,
+          "on": false,
           "allowed": true,
           "levels": [
             {
               "level": "passbook",
               "state": "ok",
-              "canChange": false
-            },
-            {
-              "level": "plan",
-              "state": "ok",
-              "canChange": false
-            },
-            {
-              "level": "org",
-              "state": "ok",
-              "canChange": true
-            },
-            {
-              "level": "template",
-              "state": "ok",
+              "reason": "not_released",
               "canChange": true
             }
           ],
           "templates": {
-            "on": 2,
-            "off": 0,
-            "never": 0,
-            "total": 2
+            "on": 3,
+            "off": 3,
+            "never": 3,
+            "total": 128
+          },
+          "account": {
+            "mode": "live",
+            "provider": "google",
+            "accountId": "0193a1b2-7c00-7000-8000-ac2bb8403a9a",
+            "source": "platform",
+            "platformAvailable": false,
+            "state": "absent",
+            "enrolmentRevision": 3,
+            "prerequisites": {
+              "check": false,
+              "roundTrip": false
+            },
+            "hold": {
+              "at": 3,
+              "reason": "Left the gym early; refund issued at the desk."
+            },
+            "issuance": {
+              "state": "disabled",
+              "reason": "not_released"
+            }
           }
         },
         "apple": {
-          "on": true,
+          "on": false,
           "allowed": true,
           "levels": [
             {
               "level": "passbook",
               "state": "ok",
-              "canChange": false
-            },
-            {
-              "level": "plan",
-              "state": "ok",
-              "canChange": false
-            },
-            {
-              "level": "org",
-              "state": "ok",
-              "canChange": true
-            },
-            {
-              "level": "template",
-              "state": "ok",
+              "reason": "not_released",
               "canChange": true
             }
           ],
           "templates": {
-            "on": 2,
-            "off": 0,
-            "never": 0,
-            "total": 2
+            "on": 3,
+            "off": 3,
+            "never": 3,
+            "total": 128
+          },
+          "account": {
+            "mode": "live",
+            "provider": "google",
+            "accountId": "0193a1b2-7c00-7000-8000-f0cd4c87f265",
+            "source": "platform",
+            "platformAvailable": false,
+            "state": "absent",
+            "enrolmentRevision": 3,
+            "prerequisites": {
+              "check": false,
+              "roundTrip": false
+            },
+            "hold": {
+              "at": 3,
+              "reason": "Left the gym early; refund issued at the desk."
+            },
+            "issuance": {
+              "state": "disabled",
+              "reason": "not_released"
+            }
           }
         },
         "google": {
@@ -145,45 +163,33 @@
           "levels": [
             {
               "level": "passbook",
-              "state": "locked",
+              "state": "ok",
               "reason": "not_released",
-              "canChange": false
-            },
-            {
-              "level": "plan",
-              "state": "ok",
-              "canChange": false
-            },
-            {
-              "level": "org",
-              "state": "ok",
-              "canChange": true
-            },
-            {
-              "level": "template",
-              "state": "ok",
               "canChange": true
             }
           ],
           "templates": {
-            "on": 2,
-            "off": 0,
-            "never": 0,
-            "total": 2
+            "on": 3,
+            "off": 3,
+            "never": 3,
+            "total": 128
           },
           "account": {
             "mode": "live",
             "provider": "google",
-            "accountId": null,
-            "source": null,
+            "accountId": "0193a1b2-7c00-7000-8000-f8417063061f",
+            "source": "platform",
             "platformAvailable": false,
             "state": "absent",
-            "enrolmentRevision": 0,
+            "enrolmentRevision": 3,
             "prerequisites": {
               "check": false,
               "roundTrip": false
             },
-            "hold": null,
+            "hold": {
+              "at": 3,
+              "reason": "Left the gym early; refund issued at the desk."
+            },
             "issuance": {
               "state": "disabled",
               "reason": "not_released"
@@ -196,45 +202,33 @@
           "levels": [
             {
               "level": "passbook",
-              "state": "locked",
+              "state": "ok",
               "reason": "not_released",
-              "canChange": false
-            },
-            {
-              "level": "plan",
-              "state": "ok",
-              "canChange": false
-            },
-            {
-              "level": "org",
-              "state": "ok",
-              "canChange": true
-            },
-            {
-              "level": "template",
-              "state": "ok",
               "canChange": true
             }
           ],
           "templates": {
-            "on": 2,
-            "off": 0,
-            "never": 0,
-            "total": 2
+            "on": 3,
+            "off": 3,
+            "never": 3,
+            "total": 128
           },
           "account": {
             "mode": "live",
-            "provider": "samsung",
-            "accountId": null,
-            "source": null,
+            "provider": "google",
+            "accountId": "0193a1b2-7c00-7000-8000-4573f52638f1",
+            "source": "platform",
             "platformAvailable": false,
             "state": "absent",
-            "enrolmentRevision": 0,
+            "enrolmentRevision": 3,
             "prerequisites": {
               "check": false,
               "roundTrip": false
             },
-            "hold": null,
+            "hold": {
+              "at": 3,
+              "reason": "Left the gym early; refund issued at the desk."
+            },
             "issuance": {
               "state": "disabled",
               "reason": "not_released"
@@ -248,243 +242,268 @@
             {
               "level": "passbook",
               "state": "ok",
-              "canChange": false
-            },
-            {
-              "level": "plan",
-              "state": "locked",
-              "reason": "not_included",
-              "canChange": false
-            },
-            {
-              "level": "org",
-              "state": "ok",
-              "canChange": true
-            },
-            {
-              "level": "template",
-              "state": "ok",
+              "reason": "not_released",
               "canChange": true
             }
           ],
           "templates": {
-            "on": 2,
-            "off": 0,
-            "never": 0,
-            "total": 2
+            "on": 3,
+            "off": 3,
+            "never": 3,
+            "total": 128
+          },
+          "account": {
+            "mode": "live",
+            "provider": "google",
+            "accountId": "0193a1b2-7c00-7000-8000-e817ef33d4bf",
+            "source": "platform",
+            "platformAvailable": false,
+            "state": "absent",
+            "enrolmentRevision": 3,
+            "prerequisites": {
+              "check": false,
+              "roundTrip": false
+            },
+            "hold": {
+              "at": 3,
+              "reason": "Left the gym early; refund issued at the desk."
+            },
+            "issuance": {
+              "state": "disabled",
+              "reason": "not_released"
+            }
           }
         },
         "nfc": {
-          "on": true,
+          "on": false,
           "allowed": true,
           "levels": [
             {
               "level": "passbook",
               "state": "ok",
-              "canChange": false
-            },
-            {
-              "level": "plan",
-              "state": "ok",
-              "canChange": false
-            },
-            {
-              "level": "org",
-              "state": "ok",
-              "canChange": true
-            },
-            {
-              "level": "template",
-              "state": "ok",
+              "reason": "not_released",
               "canChange": true
             }
           ],
           "templates": {
-            "on": 2,
-            "off": 0,
-            "never": 0,
-            "total": 2
+            "on": 3,
+            "off": 3,
+            "never": 3,
+            "total": 128
+          },
+          "account": {
+            "mode": "live",
+            "provider": "google",
+            "accountId": "0193a1b2-7c00-7000-8000-73e856f1634a",
+            "source": "platform",
+            "platformAvailable": false,
+            "state": "absent",
+            "enrolmentRevision": 3,
+            "prerequisites": {
+              "check": false,
+              "roundTrip": false
+            },
+            "hold": {
+              "at": 3,
+              "reason": "Left the gym early; refund issued at the desk."
+            },
+            "issuance": {
+              "state": "disabled",
+              "reason": "not_released"
+            }
           }
         }
       },
       "apple": {
         "identity": {
-          "id": "idn_1",
+          "id": "0193a1b2-7c00-7000-8000-0000000000d1",
           "provider": "apple",
-          "orgId": "org_1",
-          "label": "Acme Fitness",
-          "identifier": "pass.mobile.passbook.acmefitness",
-          "kind": "managed",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "label": "Northwind signing identity",
+          "identifier": "pass.mobile.passbook.northwind",
+          "kind": "platform",
           "status": "active",
-          "notBefore": 1792627200000,
-          "notAfter": 1821139200000,
+          "notBefore": 1794322800000,
+          "notAfter": 1798124400000,
           "rotation": "auto",
-          "nextRotationAt": 1818547200000,
+          "nextRotationAt": 1795521600000,
           "issuing": true,
           "isDefault": true,
-          "passCount": 375,
-          "createdAt": 1792627200000
+          "passCount": 12,
+          "createdAt": 1794322800000
         },
-        "sharedIdentifier": "pass.mobile.passbook.wallet",
+        "sharedIdentifier": "pass.mobile.passbook.northwind",
         "push": "healthy",
-        "run": null,
-        "managedAllowed": true,
-        "passesOnShared": 37
+        "run": {
+          "id": "0193a1b2-7c00-7000-8000-000000000023",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "kind": "provision",
+          "targetType": "identity",
+          "targetId": "0193a1b2-7c00-7000-8000-a7d5d406ee66",
+          "state": "succeeded",
+          "step": "mapping",
+          "attempt": 3,
+          "waitingFor": "approval",
+          "errorCode": null,
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000,
+          "finishedAt": 1795521600000
+        },
+        "managedAllowed": false,
+        "passesOnShared": 3
       },
       "templates": [
         {
-          "id": "tpl_gym",
-          "name": "tpl_gym",
-          "ownBrand": [],
-          "placeholders": [],
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "ownBrand": ["colors"],
+          "placeholders": ["logo"],
           "channels": {
             "mobile": {
-              "on": true,
-              "source": "template"
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
             },
             "apple": {
-              "on": true,
-              "source": "template"
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
             },
             "google": {
-              "on": true,
-              "source": "template"
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
             },
             "samsung": {
-              "on": true,
-              "source": "template"
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
             },
             "paper": {
-              "on": true,
-              "source": "template"
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
             },
             "nfc": {
-              "on": true,
-              "source": "template"
-            }
-          }
-        },
-        {
-          "id": "tpl_day",
-          "name": "tpl_day",
-          "ownBrand": [],
-          "placeholders": [],
-          "channels": {
-            "mobile": {
-              "on": true,
-              "source": "template"
-            },
-            "apple": {
-              "on": true,
-              "source": "template"
-            },
-            "google": {
-              "on": true,
-              "source": "template"
-            },
-            "samsung": {
-              "on": true,
-              "source": "template"
-            },
-            "paper": {
-              "on": true,
-              "source": "template"
-            },
-            "nfc": {
-              "on": true,
-              "source": "template"
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
             }
           }
         }
       ],
-      "checks": []
+      "checks": [
+        {
+          "code": "BRAND_LOGO",
+          "level": "error",
+          "area": "brand",
+          "message": "The gym closes at 18:00 on 24 December.",
+          "channel": "mobile",
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "fix": {
+            "action": "upload_logo",
+            "target": "tier"
+          }
+        }
+      ]
     }
   },
   "pass-setup.patchOrgsByOrgIdPassSetup": {
     "description": "Change the brand, support, email and which channels the organization allows, in one write against the revision you read. ?dryRun=true answers with the same shape and writes nothing. Absent leaves a value, null clears it. Name an image by the sha POST /orgs/{orgId}/brand-assets answered. Allowing Google or Samsung also turns on the enrollment when the platform has released the provider and the account is ready; blocking never removes copies. A stale expectedRevision is 409 PASS_SETUP_CHANGED.",
     "request": {
-      "expectedRevision": "r1",
+      "expectedRevision": "4",
       "brand": {
+        "name": "Day pass",
         "logo": {
-          "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-        },
-        "passColors": {
-          "background": "#0f172a",
-          "foreground": "#ffffff",
-          "label": "#fbbf24"
+          "sha": "d5d705ca576254bf7ea60c287f5c830178058ba455a678d68b7874cdff9a9d8e",
+          "version": "b78bdcd5b6412c478d2a89e1c1296e3d617e3323c1c49c7d2c2bd73396dad792"
         }
+      },
+      "channels": {
+        "mobile": "allowed",
+        "apple": "allowed"
       }
     },
     "response": {
-      "dryRun": true,
+      "dryRun": false,
       "view": {
-        "orgId": "org_1",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
-        "revision": "r1",
-        "passCount": 412,
+        "revision": "revision",
+        "passCount": 12,
         "brand": {
           "name": {
-            "value": "Acme Fitness",
-            "source": "org"
+            "value": "Day pass",
+            "source": "passbook"
           },
           "logo": {
             "value": {
-              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-              "w": 480,
-              "h": 150
+              "sha": "bde4b49be77ada9698420ea19477dbcbe6e67d599e2b8c10251aca49eed2cbc2",
+              "w": 3,
+              "h": 3
             },
-            "source": "org",
-            "templatesOwn": 0
+            "source": "passbook",
+            "templatesOwn": 3
           },
           "icon": {
             "value": {
-              "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-              "w": 114,
-              "h": 114
+              "sha": "a953339c4037475a818d5971cd83825159337aca328eb5ce6b8368284c60922d",
+              "w": 3,
+              "h": 3
             },
-            "source": "org",
-            "templatesOwn": 0
+            "source": "passbook",
+            "templatesOwn": 3
           },
           "webLogo": {
-            "value": null,
+            "value": {
+              "sha": "68103c92504d324c16866e7937d615c69847110c80f4a930c336b84d8a50fcc3",
+              "w": 3,
+              "h": 3
+            },
             "source": "passbook",
-            "sameAsLogo": true
+            "sameAsLogo": false
           },
           "passColors": {
             "value": {
-              "background": "#0f172a",
+              "background": "#112a4a",
               "foreground": "#ffffff",
-              "label": "#fbbf24"
+              "label": "#ffffff"
             },
-            "source": "org",
-            "templatesOwn": 0
+            "source": "passbook",
+            "templatesOwn": 3
           },
           "logoHasName": {
             "value": false,
-            "source": "org"
+            "source": "passbook"
           },
           "accent": {
-            "value": "#2563eb",
-            "source": "org"
+            "value": "#ffc400",
+            "source": "passbook"
           },
           "mark": {
             "chosen": "full",
             "effective": "full",
-            "allowed": ["full", "small"]
+            "allowed": ["full"]
           },
           "support": {
             "email": {
-              "value": "help@acme.test",
-              "source": "org"
+              "value": "Day pass",
+              "source": "passbook"
             },
             "url": {
-              "value": null,
+              "value": "Day pass",
               "source": "passbook"
             }
           },
           "email": {
             "fromName": {
-              "value": "Acme Fitness via PassBook",
+              "value": "Day pass",
               "source": "passbook"
             },
             "buddy": false
@@ -492,67 +511,79 @@
         },
         "channels": {
           "mobile": {
-            "on": true,
+            "on": false,
             "allowed": true,
             "levels": [
               {
                 "level": "passbook",
                 "state": "ok",
-                "canChange": false
-              },
-              {
-                "level": "plan",
-                "state": "ok",
-                "canChange": false
-              },
-              {
-                "level": "org",
-                "state": "ok",
-                "canChange": true
-              },
-              {
-                "level": "template",
-                "state": "ok",
                 "canChange": true
               }
             ],
             "templates": {
-              "on": 2,
-              "off": 0,
-              "never": 0,
-              "total": 2
+              "on": 3,
+              "off": 3,
+              "never": 3,
+              "total": 128
+            },
+            "account": {
+              "mode": "live",
+              "provider": "google",
+              "accountId": "0193a1b2-7c00-7000-8000-e7640f2d32ba",
+              "source": "platform",
+              "platformAvailable": false,
+              "state": "absent",
+              "enrolmentRevision": 3,
+              "prerequisites": {
+                "check": false,
+                "roundTrip": false
+              },
+              "hold": {
+                "at": 3,
+                "reason": "Left the gym early; refund issued at the desk."
+              },
+              "issuance": {
+                "state": "disabled",
+                "reason": "not_released"
+              }
             }
           },
           "apple": {
-            "on": true,
+            "on": false,
             "allowed": true,
             "levels": [
               {
                 "level": "passbook",
                 "state": "ok",
-                "canChange": false
-              },
-              {
-                "level": "plan",
-                "state": "ok",
-                "canChange": false
-              },
-              {
-                "level": "org",
-                "state": "ok",
-                "canChange": true
-              },
-              {
-                "level": "template",
-                "state": "ok",
                 "canChange": true
               }
             ],
             "templates": {
-              "on": 2,
-              "off": 0,
-              "never": 0,
-              "total": 2
+              "on": 3,
+              "off": 3,
+              "never": 3,
+              "total": 128
+            },
+            "account": {
+              "mode": "live",
+              "provider": "google",
+              "accountId": "0193a1b2-7c00-7000-8000-b9cd9ff1fa5c",
+              "source": "platform",
+              "platformAvailable": false,
+              "state": "absent",
+              "enrolmentRevision": 3,
+              "prerequisites": {
+                "check": false,
+                "roundTrip": false
+              },
+              "hold": {
+                "at": 3,
+                "reason": "Left the gym early; refund issued at the desk."
+              },
+              "issuance": {
+                "state": "disabled",
+                "reason": "not_released"
+              }
             }
           },
           "google": {
@@ -561,45 +592,32 @@
             "levels": [
               {
                 "level": "passbook",
-                "state": "locked",
-                "reason": "not_released",
-                "canChange": false
-              },
-              {
-                "level": "plan",
-                "state": "ok",
-                "canChange": false
-              },
-              {
-                "level": "org",
-                "state": "ok",
-                "canChange": true
-              },
-              {
-                "level": "template",
                 "state": "ok",
                 "canChange": true
               }
             ],
             "templates": {
-              "on": 2,
-              "off": 0,
-              "never": 0,
-              "total": 2
+              "on": 3,
+              "off": 3,
+              "never": 3,
+              "total": 128
             },
             "account": {
               "mode": "live",
               "provider": "google",
-              "accountId": null,
-              "source": null,
+              "accountId": "0193a1b2-7c00-7000-8000-f2cffa8656ba",
+              "source": "platform",
               "platformAvailable": false,
               "state": "absent",
-              "enrolmentRevision": 0,
+              "enrolmentRevision": 3,
               "prerequisites": {
                 "check": false,
                 "roundTrip": false
               },
-              "hold": null,
+              "hold": {
+                "at": 3,
+                "reason": "Left the gym early; refund issued at the desk."
+              },
               "issuance": {
                 "state": "disabled",
                 "reason": "not_released"
@@ -612,45 +630,32 @@
             "levels": [
               {
                 "level": "passbook",
-                "state": "locked",
-                "reason": "not_released",
-                "canChange": false
-              },
-              {
-                "level": "plan",
-                "state": "ok",
-                "canChange": false
-              },
-              {
-                "level": "org",
-                "state": "ok",
-                "canChange": true
-              },
-              {
-                "level": "template",
                 "state": "ok",
                 "canChange": true
               }
             ],
             "templates": {
-              "on": 2,
-              "off": 0,
-              "never": 0,
-              "total": 2
+              "on": 3,
+              "off": 3,
+              "never": 3,
+              "total": 128
             },
             "account": {
               "mode": "live",
-              "provider": "samsung",
-              "accountId": null,
-              "source": null,
+              "provider": "google",
+              "accountId": "0193a1b2-7c00-7000-8000-ff4ff8cf2399",
+              "source": "platform",
               "platformAvailable": false,
               "state": "absent",
-              "enrolmentRevision": 0,
+              "enrolmentRevision": 3,
               "prerequisites": {
                 "check": false,
                 "roundTrip": false
               },
-              "hold": null,
+              "hold": {
+                "at": 3,
+                "reason": "Left the gym early; refund issued at the desk."
+              },
               "issuance": {
                 "state": "disabled",
                 "reason": "not_released"
@@ -664,203 +669,180 @@
               {
                 "level": "passbook",
                 "state": "ok",
-                "canChange": false
-              },
-              {
-                "level": "plan",
-                "state": "locked",
-                "reason": "not_included",
-                "canChange": false
-              },
-              {
-                "level": "org",
-                "state": "ok",
-                "canChange": true
-              },
-              {
-                "level": "template",
-                "state": "ok",
                 "canChange": true
               }
             ],
             "templates": {
-              "on": 2,
-              "off": 0,
-              "never": 0,
-              "total": 2
+              "on": 3,
+              "off": 3,
+              "never": 3,
+              "total": 128
+            },
+            "account": {
+              "mode": "live",
+              "provider": "google",
+              "accountId": "0193a1b2-7c00-7000-8000-d2ae9cf617f4",
+              "source": "platform",
+              "platformAvailable": false,
+              "state": "absent",
+              "enrolmentRevision": 3,
+              "prerequisites": {
+                "check": false,
+                "roundTrip": false
+              },
+              "hold": {
+                "at": 3,
+                "reason": "Left the gym early; refund issued at the desk."
+              },
+              "issuance": {
+                "state": "disabled",
+                "reason": "not_released"
+              }
             }
           },
           "nfc": {
-            "on": true,
+            "on": false,
             "allowed": true,
             "levels": [
               {
                 "level": "passbook",
                 "state": "ok",
-                "canChange": false
-              },
-              {
-                "level": "plan",
-                "state": "ok",
-                "canChange": false
-              },
-              {
-                "level": "org",
-                "state": "ok",
-                "canChange": true
-              },
-              {
-                "level": "template",
-                "state": "ok",
                 "canChange": true
               }
             ],
             "templates": {
-              "on": 2,
-              "off": 0,
-              "never": 0,
-              "total": 2
+              "on": 3,
+              "off": 3,
+              "never": 3,
+              "total": 128
+            },
+            "account": {
+              "mode": "live",
+              "provider": "google",
+              "accountId": "0193a1b2-7c00-7000-8000-2579569ac56a",
+              "source": "platform",
+              "platformAvailable": false,
+              "state": "absent",
+              "enrolmentRevision": 3,
+              "prerequisites": {
+                "check": false,
+                "roundTrip": false
+              },
+              "hold": {
+                "at": 3,
+                "reason": "Left the gym early; refund issued at the desk."
+              },
+              "issuance": {
+                "state": "disabled",
+                "reason": "not_released"
+              }
             }
           }
         },
         "apple": {
           "identity": {
-            "id": "idn_1",
+            "id": "0193a1b2-7c00-7000-8000-0000000000d1",
             "provider": "apple",
-            "orgId": "org_1",
-            "label": "Acme Fitness",
-            "identifier": "pass.mobile.passbook.acmefitness",
-            "kind": "managed",
+            "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "label": "Northwind signing identity",
+            "identifier": "pass.mobile.passbook.northwind",
+            "kind": "platform",
             "status": "active",
-            "notBefore": 1792627200000,
-            "notAfter": 1821139200000,
+            "notBefore": 1794322800000,
+            "notAfter": 1798124400000,
             "rotation": "auto",
-            "nextRotationAt": 1818547200000,
+            "nextRotationAt": 1795521600000,
             "issuing": true,
             "isDefault": true,
-            "passCount": 375,
-            "createdAt": 1792627200000
+            "passCount": 12,
+            "createdAt": 1794322800000
           },
-          "sharedIdentifier": "pass.mobile.passbook.wallet",
+          "sharedIdentifier": "pass.mobile.passbook.northwind",
           "push": "healthy",
-          "run": null,
-          "managedAllowed": true,
-          "passesOnShared": 37
+          "run": {
+            "id": "0193a1b2-7c00-7000-8000-000000000023",
+            "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "kind": "provision",
+            "targetType": "identity",
+            "targetId": "0193a1b2-7c00-7000-8000-ff536f447809",
+            "state": "succeeded",
+            "step": "mapping",
+            "attempt": 3,
+            "waitingFor": "approval",
+            "errorCode": null,
+            "createdAt": 1794322800000,
+            "updatedAt": 1795359600000,
+            "finishedAt": 1795521600000
+          },
+          "managedAllowed": false,
+          "passesOnShared": 3
         },
         "templates": [
           {
-            "id": "tpl_gym",
-            "name": "tpl_gym",
-            "ownBrand": [],
-            "placeholders": [],
+            "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "ownBrand": ["colors"],
+            "placeholders": ["logo"],
             "channels": {
               "mobile": {
-                "on": true,
-                "source": "template"
+                "on": false,
+                "source": "pass"
               },
               "apple": {
-                "on": true,
-                "source": "template"
+                "on": false,
+                "source": "pass"
               },
               "google": {
-                "on": true,
-                "source": "template"
+                "on": false,
+                "source": "pass"
               },
               "samsung": {
-                "on": true,
-                "source": "template"
+                "on": false,
+                "source": "pass"
               },
               "paper": {
-                "on": true,
-                "source": "template"
+                "on": false,
+                "source": "pass"
               },
               "nfc": {
-                "on": true,
-                "source": "template"
-              }
-            }
-          },
-          {
-            "id": "tpl_day",
-            "name": "tpl_day",
-            "ownBrand": [],
-            "placeholders": [],
-            "channels": {
-              "mobile": {
-                "on": true,
-                "source": "template"
-              },
-              "apple": {
-                "on": true,
-                "source": "template"
-              },
-              "google": {
-                "on": true,
-                "source": "template"
-              },
-              "samsung": {
-                "on": true,
-                "source": "template"
-              },
-              "paper": {
-                "on": true,
-                "source": "template"
-              },
-              "nfc": {
-                "on": true,
-                "source": "template"
+                "on": false,
+                "source": "pass"
               }
             }
           }
         ],
-        "checks": []
+        "checks": [
+          {
+            "code": "BRAND_LOGO",
+            "level": "error",
+            "area": "brand",
+            "message": "The gym closes at 18:00 on 24 December.",
+            "channel": "mobile",
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+            "fix": {
+              "action": "upload_logo",
+              "target": "tier"
+            }
+          }
+        ]
       },
       "diff": [
         {
-          "field": "brand.support.email",
-          "before": null,
-          "after": "help@acme.test"
-        },
-        {
-          "field": "channels.mobile",
-          "before": "allowed",
-          "after": "blocked"
+          "field": "brand.name",
+          "before": {},
+          "after": {}
         }
       ],
       "impact": {
-        "passesToUpdate": 412,
+        "passesToUpdate": 3,
         "channelStops": [
           {
             "channel": "mobile",
-            "templates": 2,
-            "passes": 412
+            "templates": 3,
+            "passes": 3
           }
         ],
-        "enrolments": []
-      }
-    },
-    "requests": {
-      "Brand and support": {
-        "expectedRevision": "r1",
-        "brand": {
-          "logo": {
-            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-          },
-          "passColors": {
-            "background": "#0f172a",
-            "foreground": "#ffffff",
-            "label": "#fbbf24"
-          },
-          "support": {
-            "email": "help@acme.test"
-          }
-        }
-      },
-      "Block Mobile": {
-        "expectedRevision": "r1",
-        "channels": {
-          "mobile": "blocked"
-        }
+        "enrolments": ["google"]
       }
     }
   },
@@ -868,15 +850,16 @@
     "description": "Stage a PNG for a logo, icon or web logo. Nothing about the organization changes: a pass-setup save that names the sha keeps the file, and an unused one is deleted after 24 hours. The logo and icon are the @3x; send the @2x as x2 or let it be derived.",
     "request": {
       "slot": "logo",
-      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
+      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
+      "x2": "x2"
     },
     "response": {
       "slot": "logo",
-      "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "version": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-      "w": 480,
-      "h": 150,
-      "expiresAt": 1764086400000
+      "sha": "7b7a3c62f762d5451e01f5aa0bebff75f52d11bc9d87aeb327e389b1035ebf3e",
+      "version": "2d6eb15ab7e17170d9615c70881f226899e5bfe2677d02a1756b035da1742c35",
+      "w": 3,
+      "h": 3,
+      "expiresAt": 1798124400000
     }
   }
 }

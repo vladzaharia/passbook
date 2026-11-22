@@ -4,21 +4,21 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "id": "0193a1b2-7c00-7000-8000-000000000082",
           "system": "uid",
-          "name": "Ada Example",
+          "name": "Wristband 14",
           "use": "member",
           "scopes": "pass",
-          "perPass": 1,
-          "bindingDays": 1,
+          "perPass": 3,
+          "bindingDays": 3,
           "confirm": "none",
           "typed": false,
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
-          "version": 1,
-          "tagCount": 10,
-          "createdAt": 1764000000000,
-          "updatedAt": 1764000000000,
-          "archivedAt": 1764000000000
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "version": 3,
+          "tagCount": 12,
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000,
+          "archivedAt": null
         }
       ],
       "nextCursor": "c1.4812"
@@ -27,75 +27,77 @@
   "nfc-tags.postNfcTagTypes": {
     "description": "Creates a tag type.",
     "request": {
-      "name": "Ada Example",
+      "name": "Wristband 14",
       "use": "member",
       "scopes": "pass",
-      "perPass": 1
+      "perPass": 3,
+      "bindingDays": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "system": "uid",
-      "name": "Ada Example",
+      "name": "Wristband 14",
       "use": "member",
       "scopes": "pass",
-      "perPass": 1,
-      "bindingDays": 1,
+      "perPass": 3,
+      "bindingDays": 3,
       "confirm": "none",
       "typed": false,
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
-      "version": 1,
-      "tagCount": 10,
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "archivedAt": 1764000000000
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "version": 3,
+      "tagCount": 12,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "archivedAt": null
     }
   },
   "nfc-tags.patchNfcTagTypesById": {
     "description": "Changes a tag type. Send the version you read.",
     "request": {
-      "version": 1,
-      "name": "Ada Example",
-      "use": "member"
+      "version": 3,
+      "name": "Wristband 14",
+      "use": "member",
+      "scopes": "pass"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "system": "uid",
-      "name": "Ada Example",
+      "name": "Wristband 14",
       "use": "member",
       "scopes": "pass",
-      "perPass": 1,
-      "bindingDays": 1,
+      "perPass": 3,
+      "bindingDays": 3,
       "confirm": "none",
       "typed": false,
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
-      "version": 1,
-      "tagCount": 10,
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "archivedAt": 1764000000000
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "version": 3,
+      "tagCount": 12,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "archivedAt": null
     }
   },
   "nfc-tags.postNfcTagTypesByIdArchive": {
     "description": "Archives a tag type. Its tags keep working.",
     "request": {
-      "version": 1
+      "version": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "system": "uid",
-      "name": "Ada Example",
+      "name": "Wristband 14",
       "use": "member",
       "scopes": "pass",
-      "perPass": 1,
-      "bindingDays": 1,
+      "perPass": 3,
+      "bindingDays": 3,
       "confirm": "none",
       "typed": false,
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
-      "version": 1,
-      "tagCount": 10,
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "archivedAt": 1764000000000
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "version": 3,
+      "tagCount": 12,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "archivedAt": null
     }
   },
   "nfc-tags.postNfcPassesByPassIdTags": {

@@ -3,6 +3,7 @@ import { fakeAuth } from '../../../test/helpers/index.ts';
 import { validateAgainst } from '../../../test/helpers/openapi-validate.ts';
 import { createApp } from '../app.ts';
 import { buildOpenApiDocument } from './openapi-document.ts';
+import { exampleFailures } from '../../../tools/lib/example-lint.ts';
 import { REFERENCE } from './openapi-reference.ts';
 
 type Media = { schema?: object };
@@ -54,6 +55,10 @@ describe('the document', () => {
   const keyOps = Object.values((doc.paths ?? {}) as Record<string, Record<string, KeyOp>>)
     .flatMap((item) => Object.values(item))
     .filter((op) => op.security?.some((s) => 'apiKey' in s));
+
+  it('has examples that read like real traffic', () => {
+    expect(exampleFailures(doc as never)).toEqual([]);
+  });
 
   it('has a request and a response example on every key-callable JSON body, each valid and named', () => {
     const bad: string[] = [];

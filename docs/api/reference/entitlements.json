@@ -3,12 +3,12 @@
     "description": "The features and limits of the organization's plan, and how much of each it has used.",
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "preset": "example",
-      "label": "Ada Example",
+      "preset": "standard",
+      "label": "Day pass",
       "items": [
         {
           "key": "api",
-          "value": 1,
+          "value": 3,
           "source": "preset"
         }
       ]

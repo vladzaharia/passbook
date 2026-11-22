@@ -7,22 +7,23 @@
           "id": "0193a1b2-7c00-7000-8000-0000000000e1",
           "type": "pass.issued",
           "apiVersion": "2026-12-01",
-          "createdAt": 1764000000000,
+          "createdAt": 1794322800000,
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "pass": {
             "id": "0193a1b2-7c00-7000-8000-0000000000c1",
-            "externalId": "booking_8841",
+            "externalId": "0193a1b2-7c00-7000-8000-fa92b602acd5",
             "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
           },
           "data": {
-            "version": 1,
+            "version": 3,
             "source": "api"
-          }
+          },
+          "sample": true
         }
       ],
-      "nextCursor": "ev1.4812",
-      "hasMore": false
+      "nextCursor": "c1.4812",
+      "hasMore": true
     }
   },
   "events.getEventsById": {
@@ -31,18 +32,19 @@
       "id": "0193a1b2-7c00-7000-8000-0000000000e1",
       "type": "pass.issued",
       "apiVersion": "2026-12-01",
-      "createdAt": 1764000000000,
+      "createdAt": 1794322800000,
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "pass": {
         "id": "0193a1b2-7c00-7000-8000-0000000000c1",
-        "externalId": "booking_8841",
+        "externalId": "0193a1b2-7c00-7000-8000-82600f2104c4",
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
       },
       "data": {
-        "version": 1,
+        "version": 3,
         "source": "api"
-      }
+      },
+      "sample": true
     }
   }
 }
