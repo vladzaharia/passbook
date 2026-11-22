@@ -333,5 +333,145 @@
       "ts": "scan-setup-apply.ts"
     },
     "expect": "reached"
+  },
+  {
+    "id": "import-sample",
+    "title": "Download the template sample file",
+    "guide": "import-auto-map",
+    "ops": [
+      "templates.getTemplatesByIdSampleCsv"
+    ],
+    "files": {
+      "ts": "import-sample.ts",
+      "curl": "import-sample.sh"
+    }
+  },
+  {
+    "id": "import-auto",
+    "title": "Import a CSV with auto mapping",
+    "guide": "import-auto-map",
+    "ops": [
+      "pass-imports.postPassImports"
+    ],
+    "files": {
+      "ts": "import-auto.ts",
+      "curl": "import-auto.sh"
+    }
+  },
+  {
+    "id": "import-fix-cells",
+    "title": "Fix a cell without editing the file",
+    "guide": "import-auto-map",
+    "ops": [
+      "pass-imports.postPassImportsByIdCheck"
+    ],
+    "files": {
+      "ts": "import-fix-cells.ts",
+      "curl": "import-fix-cells.sh"
+    },
+    "expect": "reached"
+  },
+  {
+    "id": "import-commit",
+    "title": "Commit an import",
+    "guide": "import-auto-map",
+    "ops": [
+      "pass-imports.postPassImportsByIdCommit"
+    ],
+    "files": {
+      "ts": "import-commit.ts",
+      "curl": "import-commit.sh"
+    },
+    "expect": "reached"
+  },
+  {
+    "id": "import-status",
+    "title": "Read an import",
+    "guide": "import-auto-map",
+    "ops": [
+      "pass-imports.getPassImportsById"
+    ],
+    "files": {
+      "ts": "import-status.ts",
+      "curl": "import-status.sh"
+    },
+    "expect": "reached"
+  },
+  {
+    "id": "import-undo",
+    "title": "Undo an import",
+    "guide": "import-auto-map",
+    "ops": [
+      "pass-imports.postPassImportsByIdUndo"
+    ],
+    "files": {
+      "ts": "import-undo.ts",
+      "curl": "import-undo.sh"
+    },
+    "expect": "reached"
+  },
+  {
+    "id": "change-count",
+    "title": "Count the passes a filter matches",
+    "guide": "change-many-passes",
+    "ops": [
+      "passes.getPasses"
+    ],
+    "files": {
+      "ts": "change-count.ts",
+      "curl": "change-count.sh"
+    }
+  },
+  {
+    "id": "change-preview",
+    "title": "Preview a change",
+    "guide": "change-many-passes",
+    "ops": [
+      "broadcasts.postBroadcastsPreview"
+    ],
+    "files": {
+      "ts": "change-preview.ts",
+      "curl": "change-preview.sh"
+    }
+  },
+  {
+    "id": "change-run",
+    "title": "Run a change",
+    "guide": "change-many-passes",
+    "ops": [
+      "broadcasts.postBroadcasts"
+    ],
+    "files": {
+      "ts": "change-run.ts",
+      "curl": "change-run.sh"
+    },
+    "expect": "reached"
+  },
+  {
+    "id": "change-watch",
+    "title": "Watch a change run",
+    "guide": "change-many-passes",
+    "ops": [
+      "broadcasts.getBroadcastsById"
+    ],
+    "files": {
+      "ts": "change-watch.ts",
+      "curl": "change-watch.sh"
+    },
+    "expect": "reached"
+  },
+  {
+    "id": "change-undo",
+    "title": "Undo a change",
+    "guide": "change-many-passes",
+    "ops": [
+      "broadcasts.postBroadcastsByIdUndo",
+      "broadcasts.postBroadcastsByIdStop"
+    ],
+    "files": {
+      "ts": "change-undo.ts",
+      "curl": "change-undo.sh"
+    },
+    "expect": "reached"
   }
 ]

@@ -4,14 +4,57 @@ const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
 const result = await pb.passImports.check('0193a1b2-7c00-7000-8000-0000000000e1', {
   plan: {
-    mapping: {},
+    mapping: {
+      eventName: {
+        from: '/Event',
+      },
+      venueName: {
+        from: '/Venue',
+      },
+      venueRegion: {
+        from: '/City',
+      },
+      startsAt: {
+        from: '/Starts',
+        transform: {
+          kind: 'date',
+          options: {
+            input: 'iso',
+            output: 'iso',
+          },
+        },
+      },
+      endsAt: {
+        from: '/Ends',
+        transform: {
+          kind: 'date',
+          options: {
+            input: 'iso',
+            output: 'iso',
+          },
+        },
+      },
+      attendee: {
+        from: '/Attendee',
+      },
+      ticketId: {
+        from: '/Ticket ID',
+      },
+    },
     holderEmail: {
-      from: 'Example',
+      from: '/Holder email',
     },
     externalId: {
-      from: 'Example',
+      from: '/Ticket ID',
     },
     match: 'externalId',
+    keepManual: false,
+    save: true,
+    overrides: {
+      '3': {
+        '/Starts': '2030-06-01T19:00:00-07:00',
+      },
+    },
   },
 });
 console.log(result);
