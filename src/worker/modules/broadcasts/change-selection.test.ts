@@ -64,7 +64,11 @@ describe('change run selection', () => {
     const undo = (await (await ck.post(`/broadcasts/${done.id}/undo`)).json()) as { id: string };
     const list = async (query: string) =>
       (
-        (await (await ck.api(`/broadcasts?kind=change&${query}`, { headers: ck.auth.admin() })).json()) as {
+        (await (
+          await ck.api(`/broadcasts?orgId=${ck.kit.org.id}&kind=change&${query}`, {
+            headers: ck.auth.admin(),
+          })
+        ).json()) as {
           items: { id: string }[];
         }
       ).items.map((b) => b.id);
