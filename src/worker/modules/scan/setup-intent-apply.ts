@@ -40,6 +40,8 @@ export interface ApplyOptions {
   setupTemplateId?: string;
   /** The idempotency claim of this call: its answer commits in the same batch as the work. */
   settle?: IdempotencyId;
+  /** The caller's network prefix, in the audit rows of the credentials the setup makes. */
+  ip?: string | null;
 }
 
 /** Credentials (staff PINs, pairing codes) need `scanning:admin`, org-bound and live; zones need a live key. */
@@ -177,6 +179,7 @@ export async function prepareForCaller(
     orgId: authority.orgId,
     mode: authority.mode,
     origin: options.origin,
+    ip: options.ip ?? null,
   });
   const prepared = await prepareSetup(ctx, setup, capture, facts, {
     pairNow: pairsNow(authority, options),
@@ -257,7 +260,7 @@ export async function applySetupPlan(
       people.add(
         audited(people, ctx, {
           orgId,
-          ...adminActorOf(authority, actorId),
+          ...adminActorOf(authority, actorId, options.ip),
           action: 'scan.setup.apply',
           targetType: 'scanning_session',
           targetId: prepared.sessions[0]?.plan.id ?? '',

@@ -91,6 +91,8 @@ export function credentialKeysFixture() {
     headers: Record<string, string>,
     body?: unknown,
     idempotencyKey?: string,
+    /** Another env (a database that does something mid-call); the real one by default. */
+    over: ReturnType<typeof env> = env(),
   ): Promise<Response> =>
     Promise.resolve(
       app.request(
@@ -105,7 +107,7 @@ export function credentialKeysFixture() {
           },
           ...(body === undefined ? {} : { body: JSON.stringify(body) }),
         },
-        env(),
+        over,
       ),
     );
 
@@ -137,8 +139,16 @@ export function credentialKeysFixture() {
     (await first<{ n: number }>(env().DB, 'SELECT count(*) AS n FROM audit_log'))?.n ?? 0;
 
   /** The scanner row as stored: no column may hold a secret. */
-  const rowText = async (id: string) =>
-    JSON.stringify(await first(env().DB, 'SELECT * FROM scanners WHERE id = ?', [id]));
+  const rowText = async (id: string, table: 'scanners' | 'scan_staff' = 'scanners') =>
+    JSON.stringify(await first(env().DB, `SELECT * FROM ${table} WHERE id = ?`, [id]));
+  /** A field by dotted path; null when a step is missing (a replay nulls `pairing`). */
+  const at = (value: unknown, path: string): unknown =>
+    path
+      .split('.')
+      .reduce<unknown>(
+        (v, k) => (v && typeof v === 'object' ? (v as Record<string, unknown>)[k] : null),
+        value,
+      ) ?? null;
 
   /**
    * Once-only proof (design section 6): the first answer has each secret in its format; a replay with
@@ -152,21 +162,24 @@ export function credentialKeysFixture() {
     ids: string[];
     keyId: string;
     action: string;
-    target: string;
+    /** The target's id, or how to read it from the first answer (a call that makes the target). */
+    target: string | ((first: Record<string, unknown>) => string);
+    table?: 'scanners' | 'scan_staff';
     reads: string[];
   }) {
     expect(o.first.status).toBeLessThan(300);
-    const one = (await o.first.json()) as Record<string, unknown>;
-    const again = (await o.replay.json()) as Record<string, unknown>;
+    const one = (await o.first.clone().json()) as Record<string, unknown>;
+    const again = (await o.replay.clone().json()) as Record<string, unknown>;
+    const target = typeof o.target === 'function' ? o.target(one) : o.target;
     const values = Object.keys(o.secrets).map((name) => {
-      expect(one[name], name).toMatch(o.secrets[name] as RegExp);
-      return String(one[name]);
+      expect(at(one, name), name).toMatch(o.secrets[name] as RegExp);
+      return String(at(one, name));
     });
     expect(o.replay.status).toBe(o.first.status);
     expect(o.replay.headers.get('idempotent-replayed')).toBe('true');
     expect(o.first.headers.get('idempotent-replayed')).toBeNull();
-    for (const id of o.ids) expect(again[id], id).toEqual(one[id]);
-    for (const name of Object.keys(o.secrets)) expect(again[name], name).toBeNull();
+    for (const id of o.ids) expect(at(again, id), id).toEqual(at(one, id));
+    for (const name of Object.keys(o.secrets)) expect(at(again, name), name).toBeNull();
     for (const r of [o.first, o.replay]) expect(r.headers.get('cache-control')).toMatch(/no-store/);
     const stored = await all<{ body: string | null; request_hash: string }>(
       env().DB,
@@ -177,13 +190,13 @@ export function credentialKeysFixture() {
       idempotent: JSON.stringify(stored),
       audit: JSON.stringify(audits),
       logs: output.join('\n'),
-      row: await rowText(o.target),
+      row: await rowText(target, o.table),
       reads: o.reads.join('\n'),
     };
     for (const [name, text] of Object.entries(place))
       for (const v of values) expect(text.includes(v), `${name} holds a secret`).toBe(false);
     expect(output.join('\n')).not.toMatch(/wls_[A-Za-z0-9]{8}_[A-Za-z0-9_-]{43}/);
-    const rows = await keyAudit(o.target, o.action);
+    const rows = await keyAudit(target, o.action);
     expect(rows.length).toBeGreaterThan(0);
     for (const r of rows) {
       expect(r).toMatchObject({ actor_type: 'api_key', actor_id: o.keyId });
@@ -199,9 +212,9 @@ export function credentialKeysFixture() {
     secret: string;
     firstSecret: string;
   }) {
-    const fresh = (await (await o.run(o.other)).json()) as Record<string, unknown>;
-    expect(fresh[o.secret]).not.toBeNull();
-    expect(fresh[o.secret]).not.toBe(o.firstSecret);
+    const fresh = await (await o.run(o.other)).json();
+    expect(at(fresh, o.secret)).not.toBeNull();
+    expect(at(fresh, o.secret)).not.toBe(o.firstSecret);
     await expectProblem(await o.run(o.other, true), 422, 'IDEMPOTENCY_KEY_REUSED');
   }
 
@@ -219,6 +232,8 @@ export function credentialKeysFixture() {
     auditCount,
     rowText,
     expectOnce,
+    at,
+    templateId: () => templateId,
     expectIdempotencyScope,
     output,
   };

@@ -61,7 +61,9 @@ export async function chargeSecrets(
   const today = await bump(ctx.env.DB, secretsKey, day, secrets);
   if (used > calls.limit || today > SECRETS_PER_DAY) {
     await refund();
-    throw new RateLimitedError(Math.max(1, Math.ceil((hour + HOUR - now) / 1000)));
+    // Retry-After names the window that tripped: the hour for calls, the day for the secrets.
+    const retry = used > calls.limit ? hour + HOUR - now : day + DAY - now;
+    throw new RateLimitedError(Math.max(1, Math.ceil(retry / 1000)));
   }
   return refund;
 }

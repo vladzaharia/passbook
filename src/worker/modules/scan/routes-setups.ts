@@ -40,10 +40,7 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const mode = modeOf(c.var.auth);
-    // Like every scanning route, a key is bound to its own org: a platform key reads none.
-    const caller = authOf(c);
-    if (caller.kind === 'api_key' && caller.orgId === null)
-      return c.json({ items: [], nextCursor: null });
+    // A key is bound to its own org: readableScanningPage answers a platform key 404, as every scanning list does.
     const page = await readableScanningPage(
       ctx,
       authOf(c),

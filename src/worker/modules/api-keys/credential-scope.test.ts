@@ -65,13 +65,13 @@ describe('minting a credential scope (scanning:admin)', () => {
     await expectProblem(
       await create({ ...session.headers, 'x-passbook-mode': 'test' }, body({ mode: 'test' })),
       422,
-      'API_KEY_SCANNING_ADMIN_LIVE_ORG',
+      'API_KEY_CREDENTIAL_LIVE_ORG',
     );
     const platform = await platformSession();
     await expectProblem(
       await create(platform.headers, body({ orgId: null, ipAllow: ['198.51.100.0/24'] })),
       422,
-      'API_KEY_SCANNING_ADMIN_LIVE_ORG',
+      'API_KEY_CREDENTIAL_LIVE_ORG',
     );
     await expectProblem(
       await create(session.headers, body({ expiresAt: null })),

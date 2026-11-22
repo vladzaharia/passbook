@@ -210,7 +210,7 @@ export function setupStatements(
   g.add(
     audited(g, ctx, {
       orgId,
-      ...adminActorOf(capture.authority, userId),
+      ...adminActorOf(capture.authority, userId, capture.ip),
       action: 'scanner.setup_create',
       targetType: 'scanner',
       targetId: id,
@@ -221,7 +221,7 @@ export function setupStatements(
     g.add(
       audited(g, ctx, {
         orgId,
-        ...adminActorOf(capture.authority, userId),
+        ...adminActorOf(capture.authority, userId, capture.ip),
         action: 'scanner.pairing_create',
         targetType: 'scanner',
         targetId: id,

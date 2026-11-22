@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { tenantOrgAccessRevision } from '../passes/repo-authority.ts';
 import { credentialKeysFixture, FORMAT } from './credential-keys-test-fixtures.ts';
 import { createPairing } from './pairing.ts';
@@ -309,5 +309,111 @@ describe('pairing poll by key', () => {
     await expectProblem(await t.send('GET', path, test.headers), 404, 'SCANNER_NOT_FOUND');
     const wrong = await t.key(['scans:read']);
     await expectProblem(await t.send('GET', path, wrong.headers), 403, 'MISSING_SCOPE');
+  });
+});
+
+describe('review probes', () => {
+  const counters = (keyId: string) =>
+    all<{ key: string; count: number }>(
+      t.env().DB,
+      'SELECT key, count FROM counters WHERE key LIKE ?',
+      [`%${keyId}`],
+    );
+
+  it('refuses a forced test-mode admin key on a test scanner with 403, and refunds', async () => {
+    const test = await t.fixture.kit.scanner({ kind: 'device', mode: 'test' });
+    const till = await t.fixture.kit.scanner({ kind: 'terminal', mode: 'test' });
+    const before = await t.auditCount();
+    await expectProblem(
+      await t.send('POST', paths.pairing(test.id), keys.testAdmin.headers),
+      403,
+      'FORBIDDEN',
+    );
+    await expectProblem(
+      await t.send('POST', paths.token(till.id), keys.testAdmin.headers),
+      403,
+      'FORBIDDEN',
+    );
+    expect(await t.auditCount()).toBe(before);
+    expect((await counters(keys.testAdmin.id)).every((r: { count: number }) => r.count === 0)).toBe(
+      true,
+    );
+  });
+
+  it('gives a key that breaks the mint rule no code: no expiry, a long expiry, a role', async () => {
+    const s = await t.scanner();
+    const day = 86_400_000;
+    const now = t.fixture.kit.clock.now();
+    const bad = [
+      await t.key(['scanning:admin'], { expiresAt: undefined as never }),
+      await t.key(['scanning:admin'], { expiresAt: now + 200 * day }),
+      await t.key(['scanning:admin'], { roles: ['org_admin'] }),
+    ];
+    const before = await state(s.id);
+    for (const k of bad)
+      await expectProblem(
+        await t.send('POST', paths.pairing(s.id), k.headers),
+        403,
+        'MISSING_SCOPE',
+      );
+    expect(await state(s.id)).toEqual(before);
+  });
+
+  it('refuses at commit a key revoked after the route captured its authority, and refunds', async () => {
+    const k = await t.key(['scanning:admin']);
+    const s = await t.scanner();
+    const before = await state(s.id);
+    let revoked = false;
+    const db = t.env().DB;
+    // The first budget write follows the authority capture: revoke the key right there.
+    const hook = (st: D1PreparedStatement): D1PreparedStatement =>
+      new Proxy(st, {
+        get(target, prop) {
+          if (prop === 'bind') return (...v: unknown[]) => hook(target.bind(...v));
+          if (prop === 'first' && !revoked)
+            return async (...a: unknown[]) => {
+              revoked = true;
+              await run(db, 'UPDATE api_keys SET revoked_at = ? WHERE id = ?', [
+                t.fixture.kit.clock.now(),
+                k.id,
+              ]);
+              return (target.first as (...x: unknown[]) => Promise<unknown>)(...a);
+            };
+          const v = Reflect.get(target, prop);
+          return typeof v === 'function' ? v.bind(target) : v;
+        },
+      });
+    const over = {
+      ...t.env(),
+      DB: new Proxy(db, {
+        get(target, prop) {
+          if (prop === 'prepare')
+            return (sql: string) =>
+              /INSERT INTO counters/.test(sql) ? hook(target.prepare(sql)) : target.prepare(sql);
+          const v = Reflect.get(target, prop);
+          return typeof v === 'function' ? v.bind(target) : v;
+        },
+      }),
+    } as ReturnType<typeof t.env>;
+    const res = await t.send('POST', paths.pairing(s.id), k.headers, undefined, undefined, over);
+    expect(revoked).toBe(true);
+    expect(res.status).toBe(403);
+    expect(await state(s.id)).toEqual(before);
+    expect(await t.keyAudit(s.id, 'scanner.pairing_create')).toHaveLength(0);
+    expect((await counters(k.id)).every((r: { count: number }) => r.count === 0)).toBe(true);
+  });
+
+  it('holds an 80-call burst to the budget: at most 60 calls, and refused ones are refunded', async () => {
+    const k = await t.key(['scanning:admin']);
+    const s = await t.scanner();
+    const res = await Promise.all(
+      Array.from({ length: 80 }, () => t.send('POST', paths.pairing(s.id), k.headers)),
+    );
+    const ok = res.filter((r) => r.status === 200).length;
+    expect(ok).toBeGreaterThanOrEqual(1);
+    expect(ok).toBeLessThanOrEqual(60);
+    const calls = (await counters(k.id)).find((r) => r.key.startsWith('scan-cred:calls'));
+    expect(calls?.count).toBeLessThanOrEqual(60);
+    expect(calls?.count).toBe(ok);
   });
 });

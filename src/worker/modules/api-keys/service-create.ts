@@ -49,7 +49,7 @@ export function assertCredentialKey(
           message: 'The scanning:admin scope is for live keys of one organization.',
         },
       ],
-      'API_KEY_SCANNING_ADMIN_LIVE_ORG',
+      'API_KEY_CREDENTIAL_LIVE_ORG',
     );
   if (expiresAt == null)
     throw new ValidationError(
