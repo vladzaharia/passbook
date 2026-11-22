@@ -1,11 +1,15 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { dismissStepUp } from '@/web/lib/step-up.ts';
 import { json } from '@/web/lib/test-utils.tsx';
 import { AXE_MATRIX, axeAt } from '../../../tags/test-fixtures.tsx';
 import { bodyOf, KEY, openKeys, posted, supplierFixture } from './test-fixtures.tsx';
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  dismissStepUp();
+  vi.restoreAllMocks();
+});
 
 const CSV = `uid,key\n04aa0000000001,${KEY}\n04aa0000000002,${KEY}\nnope,${KEY}\n`;
 const dry = {
@@ -114,6 +118,31 @@ describe('Import tags', () => {
     expect(await within(dialog).findByText('1 of 1 row ready')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Import 1 tag' }));
     expect(await screen.findByText('1 tag imported')).toBeInTheDocument();
+  });
+
+  it('shows no error line when the server asks for a recent sign-in', async () => {
+    const { user, dialog, upload } = await openImport((d) =>
+      d
+        ? json({ ...dry, problems: [] })
+        : new Response(
+            JSON.stringify({
+              type: 'about:blank#STEP_UP_REQUIRED',
+              title: 'STEP_UP_REQUIRED',
+              status: 403,
+              code: 'STEP_UP_REQUIRED',
+              detail: 'Sign in again to confirm it is you.',
+              signInUrl: '/auth/oidc/start?prompt=login&max_age=0&next=%2Fadmin',
+            }),
+            { status: 403, headers: { 'content-type': 'application/problem+json' } },
+          ),
+    );
+    await upload();
+    await within(dialog).findByText('2 of 3 rows ready');
+    await user.click(within(dialog).getByRole('button', { name: 'Import 2 tags' }));
+    expect(
+      await screen.findByRole('alertdialog', { name: "Confirm it's you" }),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByRole('alert', { hidden: true })).toBeNull();
   });
 
   it('cannot import when no row is ready', async () => {

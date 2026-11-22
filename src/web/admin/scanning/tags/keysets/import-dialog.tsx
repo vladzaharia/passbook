@@ -4,6 +4,7 @@ import { KEYSET_COPY } from '@/shared/copy/tag-keysets.ts';
 import { rekeyTagsConfirm } from '@/web/lib/confirms.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { pluralize } from '@/web/lib/format.ts';
+import { isStepUp } from '@/web/lib/step-up.ts';
 import {
   Button,
   Callout,
@@ -83,7 +84,8 @@ export function ImportDialog({
       toast.success(fill(replace ? C.replaced : C.added, { tags: pluralize(done.added, 'tag') }));
       onClose();
     } catch (cause) {
-      setError(errorMessage(cause));
+      // The step-up prompt says it; a second "no access" line would contradict it.
+      if (!isStepUp(cause)) setError(errorMessage(cause));
       setBusy(false);
     }
   }
