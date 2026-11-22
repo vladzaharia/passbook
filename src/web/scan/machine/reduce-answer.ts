@@ -164,7 +164,7 @@ export function fail(s: MachineState, ev: Fail, env: Env): Out {
       retryAfterMs: ev.retryAfterMs ?? SCAN_TIMING.OK_HOLD,
     });
   } else if (ev.error === 'forbidden') {
-    outcome = localOutcome('refused', 'not_accepted', s.counts);
+    outcome = localOutcome('refused', 'forbidden', s.counts);
   } else {
     outcome = localOutcome(
       'system',

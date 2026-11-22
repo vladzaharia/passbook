@@ -51,3 +51,21 @@ describe('dropdown menu items', () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('dropdown menu focus', () => {
+  it('makes the rest of the page inert while open and restores it on close', () => {
+    const page = document.createElement('div');
+    document.body.append(page);
+    const { unmount } = render(
+      <DropdownMenu defaultOpen>
+        <DropdownMenuContent>
+          <DropdownMenuItem>Remove</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    );
+    expect(page.inert).toBe(true);
+    unmount();
+    expect(page.inert).toBe(false);
+    page.remove();
+  });
+});
