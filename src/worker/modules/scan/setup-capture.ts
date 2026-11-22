@@ -15,6 +15,8 @@ export interface SetupCapture {
   readonly orgId: string;
   readonly mode: Mode;
   readonly origin: string;
+  /** The caller's network prefix, carried into the audit rows of a credential write. */
+  readonly ip: string | null;
   readonly zones: Map<string, ZoneRow>;
   /** Event id to the templates it admits. */
   readonly events: Map<string, string[]>;
@@ -25,10 +27,14 @@ export interface SetupCapture {
 }
 
 export const newCapture = (
-  base: Pick<SetupCapture, 'userId' | 'authority' | 'orgId' | 'mode'> & { origin?: string },
+  base: Pick<SetupCapture, 'userId' | 'authority' | 'orgId' | 'mode'> & {
+    origin?: string;
+    ip?: string | null;
+  },
 ): SetupCapture => ({
   ...base,
   origin: base.origin ?? '',
+  ip: base.ip ?? null,
   zones: new Map(),
   events: new Map(),
   sessions: new Map(),
