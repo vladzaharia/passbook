@@ -30,6 +30,7 @@ import { RemoveDialog } from './detail/remove-dialog.tsx';
 import { useStartBulkRun } from './find-api.ts';
 import { canonical } from './find-query.ts';
 import { fingerprint, newKey } from './format.ts';
+import { PhoneActions } from './selection-phone-actions.tsx';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -240,23 +241,13 @@ export function SelectionBar({
         )}
         <MoreMenu>
           {phone ? (
-            <>
-              <DropdownMenuItem
-                disabled={!operable || emailable === 0}
-                onSelect={() => setAsk('send_email')}
-              >
-                <ACTION_ICON.sendEmail aria-hidden />
-                Send email
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={!operable || !canShare}
-                title={canShare ? undefined : SHARE_HINT}
-                onSelect={() => setSharing(true)}
-              >
-                <ACTION_ICON.bundle aria-hidden />
-                Share as bundle
-              </DropdownMenuItem>
-            </>
+            <PhoneActions
+              email={{
+                disabled: !operable || emailable === 0,
+                onSelect: () => setAsk('send_email'),
+              }}
+              share={{ disabled: !operable || !canShare, onSelect: () => setSharing(true) }}
+            />
           ) : null}
           <DropdownMenuItem disabled={!canChannel} onSelect={() => setChannels(true)}>
             <ACTION_ICON.channels aria-hidden />
