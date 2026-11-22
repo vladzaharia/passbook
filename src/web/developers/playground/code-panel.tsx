@@ -70,20 +70,22 @@ export function CodePanel({
   }, [key, code]);
   return (
     <div className="code" data-testid="code-panel">
-      <div className="code-h" role="tablist" aria-label="Language">
-        {LANGS.map((l) => (
-          <button
-            key={l}
-            type="button"
-            role="tab"
-            className="tab"
-            aria-selected={l === lang}
-            aria-current={l === lang ? 'true' : undefined}
-            onClick={() => onLang(l)}
-          >
-            {all.find((s) => s.lang === l)?.label}
-          </button>
-        ))}
+      <div className="code-h">
+        <div role="tablist" aria-label="Language" style={{ display: 'contents' }}>
+          {LANGS.map((l) => (
+            <button
+              key={l}
+              type="button"
+              role="tab"
+              className="tab"
+              aria-selected={l === lang}
+              aria-current={l === lang ? 'true' : undefined}
+              onClick={() => onLang(l)}
+            >
+              {all.find((s) => s.lang === l)?.label}
+            </button>
+          ))}
+        </div>
         <button
           type="button"
           className="iconbtn copy push"

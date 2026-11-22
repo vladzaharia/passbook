@@ -6,9 +6,9 @@ import type { Sample } from '../model/samples.ts';
 /** A static, focusable code region: a labelled section that scrolls, holding the highlighted lines. */
 export function CodeRegion({ html, label, num }: { html: string; label: string; num?: boolean }) {
   return (
-    // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable code region
-    <section className="region" tabIndex={0} aria-label={label}>
-      <pre className={`src${num ? ' num' : ''}`}>
+    <section className="region" aria-label={label}>
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable code region */}
+      <pre className={`src${num ? ' num' : ''}`} tabIndex={0}>
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: highlighted at build from the repo's own spec, escaped per token */}
         <code dangerouslySetInnerHTML={{ __html: html }} />
       </pre>
