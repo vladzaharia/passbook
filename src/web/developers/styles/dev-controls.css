@@ -169,6 +169,13 @@
 .lrow .push {
   overflow-wrap: anywhere;
 }
+/* A summary that wraps reads from the left, under its code, not flush right. */
+@media (max-width: 720px) {
+  .lrow.wrap-row > .push {
+    margin-left: 0;
+    flex: 1 1 100%;
+  }
+}
 a.lrow:hover {
   background: var(--pk-state-hover-tint);
   text-decoration: none;

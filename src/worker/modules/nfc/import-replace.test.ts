@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { loadKekRing } from '../../platform/crypto.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { importTags } from './import.ts';
@@ -145,5 +145,40 @@ describe('replace tag keys by import', () => {
         [row?.tag_id ?? ''],
       ),
     ).rejects.toThrow('tag_sun_fixed');
+  });
+
+  it('logs a failed rekeyed audit write and keeps replacing the later chunks', async () => {
+    const t = await f.org();
+    const { authority, made } = await keyset('Supplier', t);
+    const uids = Array.from({ length: 41 }, (_, n) => `04dd${String(n).padStart(10, '0')}`);
+    const keyFor = (prefix: string, n: number) => `${prefix}${n.toString(16).padStart(30, '0')}`;
+    const csvOf = (prefix: string) => uids.map((u, n) => `${u},${keyFor(prefix, n)}`).join('\n');
+    await importTags(ctx(), authority, made.id, {
+      csv: csvOf('a1'),
+      dryRun: false,
+    });
+    await run(
+      db(),
+      `CREATE TRIGGER fail_rekeyed_audit BEFORE INSERT ON audit_log
+       WHEN NEW.action = 'tag_keyset.rekeyed'
+       BEGIN SELECT RAISE(ABORT, 'audit_down'); END`,
+    );
+    const error = vi.spyOn(ctx().log, 'error').mockImplementation(() => {});
+    try {
+      const out = await importTags(ctx(), authority, made.id, {
+        csv: csvOf('b2'),
+        dryRun: false,
+        replace: true,
+      });
+      expect(out).toMatchObject({ ok: 41, added: 41, problems: [] });
+      expect(await keyOf(t.org.id, made.id, uids[40] ?? '')).toBe(keyFor('b2', 40));
+      expect(error.mock.calls.map((c) => (c[1] as { code: string }).code)).toEqual([
+        'NFC_REKEYED_AUDIT_FAILED',
+        'NFC_REKEYED_AUDIT_FAILED',
+      ]);
+    } finally {
+      error.mockRestore();
+      await run(db(), 'DROP TRIGGER fail_rekeyed_audit');
+    }
   });
 });

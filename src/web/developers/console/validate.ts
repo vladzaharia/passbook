@@ -67,9 +67,15 @@ export function validate(schema: RunSchema, value: Json, path = ''): Issue[] {
       out.push({ path, message: `must be at most ${schema.maximum}` });
   } else if (Array.isArray(value)) {
     if (schema.minItems !== undefined && value.length < schema.minItems)
-      out.push({ path, message: `needs at least ${schema.minItems} items` });
+      out.push({
+        path,
+        message: `needs at least ${schema.minItems} ${schema.minItems === 1 ? 'item' : 'items'}`,
+      });
     if (schema.maxItems !== undefined && value.length > schema.maxItems)
-      out.push({ path, message: `allows at most ${schema.maxItems} items` });
+      out.push({
+        path,
+        message: `allows at most ${schema.maxItems} ${schema.maxItems === 1 ? 'item' : 'items'}`,
+      });
     if (schema.items)
       for (const [i, v] of value.entries()) out.push(...validate(schema.items, v, join(path, i)));
   } else if (value !== null && typeof value === 'object') {

@@ -1,7 +1,7 @@
 import { ArrowRightLeft, KeyRound, ShieldX, Upload } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { KEYSET_COPY } from '@/shared/copy/tag-keysets.ts';
-import { formatDateTime } from '@/web/lib/format.ts';
+import { formatDateTime, pluralize } from '@/web/lib/format.ts';
 import {
   Badge,
   Button,
@@ -233,7 +233,7 @@ function Versions({
                     ? 'No tags'
                     : revoked
                       ? fill(KEYSET_COPY.needKeys, { n: v.tags })
-                      : `${v.tags} tags`}
+                      : pluralize(v.tags, 'tag')}
                 </span>
               </div>
               {canManage && !disabled && v.state !== 'retired' ? (

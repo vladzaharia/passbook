@@ -271,6 +271,11 @@
   padding-inline: clamp(12px, 1.2vw, 32px);
   font-size: clamp(14px, 1.2vw, 30px);
 }
+@media (pointer: coarse) {
+  .mon-letin {
+    min-height: max(44px, clamp(36px, 2.8vw, 72px));
+  }
+}
 .mon-letin svg {
   width: 1.2em;
   height: 1.2em;

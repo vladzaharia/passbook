@@ -1,5 +1,6 @@
 import type { ScannerSetup } from '@/shared/contracts/scan-setups.ts';
 import type { ScannerDto } from '@/shared/contracts/scanners.ts';
+import { pluralize } from '@/web/lib/format.ts';
 
 export type ScannerStatus = 'revoked' | 'not_paired' | 'online' | 'offline';
 
@@ -16,7 +17,7 @@ export function acceptsText(
   eventName?: string,
 ): string {
   if (s.deviceRole === 'customer' || s.deviceRole === 'monitor')
-    return s.watch?.allOrg ? 'All scanners' : `${s.watch?.scannerIds.length ?? 0} scanners`;
+    return s.watch?.allOrg ? 'All scanners' : pluralize(s.watch?.scannerIds.length ?? 0, 'scanner');
   if (!s.accepts) return s.settings?.acceptAllTemplates ? 'All passes' : '—';
   if ('eventId' in s.accepts) return eventName ?? 'An event';
   const n = s.accepts.templateIds.length;

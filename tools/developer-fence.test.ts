@@ -45,6 +45,10 @@ const EXEMPT: Record<string, Exempt> = {
     reason: CREDENTIALS,
     via: 'src/worker/modules/wallet-providers/runtime-core-credentials.ts',
   },
+  'src/worker/modules/wallet-providers/offers-google.ts': {
+    reason: CREDENTIALS,
+    via: 'src/worker/modules/wallet-providers/runtime-core-credentials.ts',
+  },
   'src/worker/modules/wallet-providers/sync-operation-samsung.ts': {
     reason: CREDENTIALS,
     via: 'src/worker/modules/wallet-providers/runtime-core-credentials.ts',
