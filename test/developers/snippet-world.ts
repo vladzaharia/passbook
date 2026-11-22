@@ -1,5 +1,6 @@
 import { MINTABLE_SCOPES } from '../../src/shared/contracts/api-keys.ts';
 import { SANDBOX_KEY_SCOPES } from '../../src/shared/contracts/developer-home.ts';
+import { SANDBOX_TERMINAL_NAME } from '../../src/shared/copy/developer.ts';
 import { BLUEPRINT_ID, EXAMPLE_IDS } from '../../src/web/developers/model/ids.ts';
 import { createApp } from '../../src/worker/app.ts';
 import { createApiKeyStore } from '../../src/worker/modules/api-keys/service.ts';
@@ -12,7 +13,8 @@ import {
 import { denyAllStores } from '../../src/worker/platform/auth.ts';
 import { run } from '../../src/worker/platform/db.ts';
 import { sha256Hex } from '../../src/worker/platform/ids.ts';
-import { makeOrg } from './../helpers/index.ts';
+import { runPassImport } from '../../src/worker/workflows/pass-import.ts';
+import { makeOrg, makeScanner } from './../helpers/index.ts';
 
 const ORIGIN = 'https://passbook.mobile';
 const SCOPES = [
@@ -56,11 +58,38 @@ export interface Call {
  * pass. `fetch` answers like the Worker, with the example ids in the request swapped for these.
  */
 let shared: Promise<BlueprintKit> | undefined;
+type Instance = { id: string; params: Parameters<typeof runPassImport>[2]; done: boolean };
+const instances: Instance[] = [];
+const stepper = {
+  do: async (_name: string, a: unknown, b?: unknown) =>
+    await (typeof a === 'function' ? (a as () => unknown) : (b as () => unknown))(),
+} as unknown as Parameters<typeof runPassImport>[3];
+
+/** Runs the import workflows a request started, as Workflows would after it answered. */
+async function drainImports(env: BlueprintKit['env']) {
+  for (const i of instances.filter((x) => !x.done)) {
+    i.done = true;
+    await runPassImport(env, i.id, i.params, stepper);
+  }
+}
+
 /** The fixtures every world of this file shares: one database, the baked blueprints synced once. */
 export const kit = () => {
   shared ??= blueprintKit().then((k) => {
-    // The import workflow would run in the test runner's own env, which has no signing identity.
-    Object.assign(k.env, { PASS_IMPORT: { create: async ({ id }: { id: string }) => ({ id }) } });
+    // The import workflow runs here, after the request that started it has answered (see `drainImports`).
+    Object.assign(k.env, {
+      PASS_IMPORT: {
+        create: async (o: { id: string; params: Instance['params'] }) => {
+          instances.push({ ...o, done: false });
+          return { id: o.id };
+        },
+        get: async (id: string) => {
+          const i = instances.find((x) => x.id === id);
+          if (!i) throw new Error('instance.not_found');
+          return { status: async () => ({ status: i.done ? 'complete' : 'running' }) };
+        },
+      },
+    });
     return k;
   });
   return shared;
@@ -178,6 +207,30 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
     }),
   );
 
+  // A sandbox's own terminal (ensureSandboxTerminal makes it in the real flow); an ordinary org has none.
+  const terminalId =
+    options.kind === 'developer'
+      ? (
+          await makeScanner(kit.f, {
+            orgId: org.id,
+            mode: 'test',
+            kind: 'terminal',
+            templateIds: [used.id],
+          })
+        ).id
+      : null;
+  if (options.kind === 'developer')
+    await run(
+      kit.env.DB,
+      'INSERT INTO developer_sandboxes (id, org_id, user_id, created_at, terminal_id) VALUES (?, ?, ?, ?, ?)',
+      [kit.f.ids.id(), org.id, owner.userId, kit.clock.now(), terminalId],
+    );
+  if (terminalId)
+    await run(kit.env.DB, 'UPDATE scanners SET name = ? WHERE id = ?', [
+      SANDBOX_TERMINAL_NAME,
+      terminalId,
+    ]);
+
   const real: Record<string, string> = {
     [EXAMPLE_IDS.orgId]: org.id,
     [EXAMPLE_IDS.templateId]: used.id,
@@ -202,6 +255,7 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
     if (CREDENTIAL_PATH.test(url.pathname) && !poll)
       headers.set('authorization', `Bearer ${credentialSecret}`);
     const res = await app.request(url.toString(), { ...init, headers, body }, kit.env);
+    await drainImports(kit.env);
     const problem = res.ok
       ? {}
       : ((await res
@@ -224,6 +278,8 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
     orgId: org.id,
     templateId: used.id,
     passId: pass.id,
+    terminalId,
+    clock: kit.clock,
     calls,
     fetch: fetchLike as typeof fetch,
   };

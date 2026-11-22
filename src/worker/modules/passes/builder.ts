@@ -14,9 +14,10 @@ import type {
   Personalization,
   ValidationIssue,
 } from '../../../passkit/types.ts';
+import { PREVIEW_PASS_IDENTITY } from '../../../shared/copy/developer.ts';
 import { type FieldIssue, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { isPreviewOnlyOrg, PREVIEW_PASS_IDENTITY } from '../developer/fence.ts';
+import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import type { IdentityRow } from '../identities/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';

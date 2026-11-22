@@ -9,6 +9,7 @@ import {
 } from './repo-live-template-snapshot.ts';
 import { type Raw, toCandidate } from './repo-lookup-candidate.ts';
 import { usedReleaseIdSql } from './repo-pass-release-sql.ts';
+import { walletIdentityColumn } from './repo-wallet-snapshot.ts';
 
 type Db = D1Database;
 
@@ -130,7 +131,7 @@ export const channelEpochSql = (org: string, mode: string): string => `(
 const PROJECTION = `SELECT p.*, snapshot.pass_json AS pass_json,
     snapshot.version AS wallet_version, snapshot.personalization AS version_personalization,
     snapshot.template_version AS wallet_template_version,
-    si.pass_type_identifier AS identity_pass_type_identifier, si.team_identifier AS identity_team_identifier,
+    ${walletIdentityColumn('pass_type_identifier')} AS identity_pass_type_identifier, ${walletIdentityColumn('team_identifier')} AS identity_team_identifier,
     si.revision AS identity_revision,
     EXISTS(SELECT 1 FROM pass_credential_transfers transfer
       WHERE transfer.pass_id=p.id AND transfer.state='pending') AS transfer_pending,
