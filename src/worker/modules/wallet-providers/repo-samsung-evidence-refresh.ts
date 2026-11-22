@@ -1,6 +1,10 @@
 import { all } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { reprobeSamsungProjectionEvidence } from './samsung-verification.ts';
+import { selectSamsungCardsToRefresh } from './repo-samsung-card-state.ts';
+import {
+  refreshSamsungCardStates,
+  reprobeSamsungProjectionEvidence,
+} from './samsung-verification.ts';
 
 const AHEAD_MS = 60_000;
 
@@ -41,7 +45,11 @@ export async function refreshExpiringSamsungEvidence(
   ctx: ServiceContext,
   limit: number,
 ): Promise<number> {
-  let refreshed = 0;
+  const now = ctx.clock.now();
+  let refreshed = await refreshSamsungCardStates(
+    ctx,
+    await selectSamsungCardsToRefresh(ctx.env.DB, now, AHEAD_MS, limit),
+  );
   for (const candidate of await selectExpiringSamsungEvidence(ctx.env.DB, ctx.clock.now(), limit)) {
     try {
       if (await reprobeSamsungProjectionEvidence(ctx, candidate.id, candidate.hash)) refreshed++;

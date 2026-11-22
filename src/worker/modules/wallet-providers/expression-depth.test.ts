@@ -64,10 +64,13 @@ const CTE_DEPTH = 25;
 
 describe('expression depth of the largest wallet-provider predicates', () => {
   // Measured when written (the depth is an upper bound): ceilings, so a growing predicate fails here first.
+  // CW10b raised three on purpose: a compiled Samsung card (schema 2) bypasses stored evidence with
+  // one `OR schema = 2` per evidence predicate (upsert terms 248 -> 252, revoke depth 25 -> 26 and
+  // terms 55 -> 56, binding terms 159 -> 162). All stay far below remote D1's limit of 100.
   it.each([
-    ['upsert proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now'), 63, 248],
-    ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 25, 55],
-    ['release binding', bindingSql, 49, 159],
+    ['upsert proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now'), 63, 252],
+    ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 26, 56],
+    ['release binding', bindingSql, 49, 162],
     ['epoch current (grant part)', walletOpCurrentSql('i', 'op'), 24, 32],
     ['epoch current (read)', walletOpReadCurrentSql('i', 'op'), 26, 50],
   ])(
@@ -98,22 +101,39 @@ describe('expression depth of the largest wallet-provider predicates', () => {
       `SELECT name, sql FROM sqlite_master WHERE type = 'trigger'
        AND name IN ('template_provider_approvals_insert', 'template_approvals_insert',
          'template_provider_releases_insert', 'wallet_provider_generation_ready_guard',
-         'pass_credential_transfer_complete_guard', 'wallet_provider_instances_settle')`,
+         'pass_credential_transfer_complete_guard', 'wallet_provider_instances_settle',
+         'wallet_samsung_tombstones_approved_insert', 'wallet_samsung_tombstone_keyset_insert')`,
       [],
     );
-    expect(triggers.length).toBe(6);
+    expect(triggers.length).toBe(8);
     const ceiling: Record<string, [number, number]> = {
       wallet_provider_instances_settle: [4, 2],
       wallet_provider_generation_ready_guard: [15, 16],
       pass_credential_transfer_complete_guard: [48, 59],
       template_provider_approvals_insert: [33, 37],
       template_approvals_insert: [19, 29],
-      template_provider_releases_insert: [46, 113],
+      // 0199: the schema 2 branch (two evidence bypasses and the card-state row requirement) took the
+      // release trigger from 46/113 to 50/131. Remote D1's limit is 100.
+      template_provider_releases_insert: [50, 131],
+      // 0199: evidence joins became LEFT JOINs under an `OR schema = 2`.
+      wallet_samsung_tombstones_approved_insert: [37, 33],
+      wallet_samsung_tombstone_keyset_insert: [39, 35],
     };
     for (const t of triggers) {
       const [depth, n] = ceiling[t.name] ?? [0, 0];
       expect(exprDepth(t.sql), t.name).toBeLessThanOrEqual(depth);
       expect(terms(t.sql), t.name).toBeLessThanOrEqual(n);
     }
+  });
+  it('measures the retirement view the settle trigger reads (0199 made its evidence optional)', async () => {
+    const [view] = await all<{ sql: string }>(
+      env.DB,
+      "SELECT sql FROM sqlite_master WHERE type = 'view' AND name = 'wallet_provider_retirement_complete'",
+      [],
+    );
+    expect(view).toBeDefined();
+    // Measured 33 deep, 75 terms at CW10b; remote D1's limit is 100.
+    expect(exprDepth(view?.sql ?? '')).toBeLessThanOrEqual(33);
+    expect(terms(view?.sql ?? '')).toBeLessThanOrEqual(75);
   });
 });

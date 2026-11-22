@@ -3,7 +3,9 @@
  * this turns the lists of every sample into one report: severities, author choices, `required`
  * blocks, a status, and a canonical order so the same input always gives the same report and hash.
  */
+
 import type { WalletsManifest } from '../template/wallets/schema.ts';
+import type { SamsungCompileOptions } from './samsung/context.ts';
 import type {
   FidelityItem,
   FidelityReport,
@@ -86,7 +88,7 @@ export interface ReportInput {
   /** The version's creation time, so a report never depends on the clock. */
   now: Date;
   /** Compiler-specific options (Samsung's `portalUrl`), the same for every view. */
-  compile?: object;
+  compile?: Partial<SamsungCompileOptions>;
 }
 
 export function fidelityReport(input: ReportInput): FidelityReport {

@@ -48,7 +48,7 @@ vi.mock('./provider-policy.ts', async (original) => ({
   ...(await original<typeof import('./provider-policy.ts')>()),
   walletProviderDisabledReason: (...args: unknown[]) => mocks.orgReason(...args),
 }));
-vi.mock('./samsung-verification.ts', () => ({ samsungCardReady: mocks.ready }));
+vi.mock('./samsung-verification.ts', () => ({ ensureSamsungCardState: mocks.ready }));
 vi.mock('../templates/repo-releases.ts', async (original) => ({
   ...(await original<typeof import('../templates/repo-releases.ts')>()),
   getRelease: mocks.release,
@@ -184,6 +184,13 @@ beforeEach(async () => {
   );
   operation = { ...operationFields };
   mocks.orgReason.mockResolvedValue(null);
+  // The release being sent is a field-mapped (schema 1) Samsung card unless a test says otherwise.
+  mocks.release.mockResolvedValue({ id: 'native-1', candidateId: 'candidate-1' });
+  mocks.candidate.mockResolvedValue({
+    id: 'candidate-1',
+    provider: 'samsung',
+    projection: { schema: 1 },
+  });
   mocks.claim.mockResolvedValue('claimed');
   mocks.fresh.mockResolvedValue(true);
   mocks.getOperation.mockResolvedValue(claimed(operation));
@@ -612,7 +619,11 @@ describe('wallet provider operation fences', () => {
         projection: { schema: 2, provider: 'samsung', type: 'ticket' },
       });
       mocks.release.mockResolvedValue({ id: 'native-1', candidateId: 'candidate-1' });
-      mocks.candidate.mockResolvedValue({ id: 'candidate-1' });
+      mocks.candidate.mockResolvedValue({
+        id: 'candidate-1',
+        provider: 'samsung',
+        projection: { schema: 2 },
+      });
       mocks.listTargets.mockResolvedValue([{ countryCode: 'US', state: 'pending', attempts: 0 }]);
       mocks.beginTarget.mockResolvedValue(1);
       mocks.finishTarget.mockResolvedValue(true);
@@ -632,6 +643,35 @@ describe('wallet provider operation fences', () => {
         expect.anything(),
         expect.objectContaining({ type: 'ticket', state: 'UPDATED', cc2: 'US' }),
       );
+    });
+
+    it('keys the check on the release being sent: a schema 2 release over a schema 1 identity is read', async () => {
+      const samsung = compiled('upsert');
+      mocks.metadata.mockResolvedValueOnce({
+        ...(await mocks.metadata()),
+        projection: { schema: 1, provider: 'samsung', cardType: 'loyalty' },
+      });
+      mocks.ready.mockResolvedValue(false);
+      expect(await runWalletProviderOperation(ctx, samsung)).toBe('deferred');
+      expect(mocks.ready).toHaveBeenCalledOnce();
+      expect(mocks.samsung).not.toHaveBeenCalled();
+    });
+
+    it('does not read the card for a schema 1 release over a schema 2 identity (a rollback)', async () => {
+      const samsung = compiled('upsert');
+      mocks.candidate.mockResolvedValue({
+        id: 'candidate-1',
+        provider: 'samsung',
+        projection: { schema: 1 },
+      });
+      mocks.ready.mockResolvedValue(false);
+      mocks.listTargets
+        .mockResolvedValueOnce([{ countryCode: 'US', state: 'pending', attempts: 0 }])
+        .mockResolvedValueOnce([{ countryCode: 'US', state: 'pending', attempts: 0 }])
+        .mockResolvedValue([{ countryCode: 'US', state: 'succeeded', attempts: 1 }]);
+      expect(await runWalletProviderOperation(ctx, samsung)).toBe('completed');
+      expect(mocks.ready).not.toHaveBeenCalled();
+      expect(mocks.samsung).toHaveBeenCalled();
     });
 
     it('defers an update while the card is not live, without calling Samsung', async () => {

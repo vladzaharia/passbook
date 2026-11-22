@@ -10,7 +10,7 @@ import {
 } from './repo-sync-targets.ts';
 import { sendSamsungRuntimeUpdate, type WalletRetirementClaim } from './runtime.ts';
 import { SamsungNotificationError } from './samsung.ts';
-import { samsungCardReady } from './samsung-verification.ts';
+import { ensureSamsungCardState } from './samsung-verification.ts';
 import { classifyWalletSyncFailure } from './sync-errors.ts';
 import type {
   WalletSyncOperationBinding,
@@ -19,6 +19,10 @@ import type {
 } from './sync-operation-context.ts';
 import { completeWalletSyncOperation as complete } from './sync-operation-retirement.ts';
 
+/**
+ * The card of the release being sent, not of the identity: a schema 1 release carries stored
+ * evidence that the queue checks, a schema 2 release reads its card now (or within five minutes).
+ */
 async function samsungUpdateReady(
   ctx: WalletSyncOperationExecution['ctx'],
   op: WalletSyncOperationExecution['op'],
@@ -27,7 +31,8 @@ async function samsungUpdateReady(
   const candidate = release?.candidateId
     ? await getProjectionCandidate(ctx.env.DB, release.candidateId)
     : null;
-  return candidate !== null && samsungCardReady(ctx, candidate);
+  if (candidate?.provider !== 'samsung') return false;
+  return candidate.projection.schema === 1 || ensureSamsungCardState(ctx, candidate);
 }
 
 export async function runSamsungWalletProviderOperation(
@@ -63,9 +68,9 @@ export async function runSamsungWalletProviderOperation(
   }
   const projection = binding.original.projection;
   const cardType = projection.schema === 1 ? projection.cardType : projection.type;
-  // A compiled card's state lives at Samsung, not in a stored row: read it before an update. A
-  // revoke is sent regardless, since the door has already denied the pass.
-  if (op.kind !== 'revoke' && projection.schema === 2 && !(await samsungUpdateReady(ctx, op))) {
+  // The card of the release being sent must be usable before an update. A revoke is sent
+  // regardless, since the door has already denied the pass.
+  if (op.kind !== 'revoke' && !(await samsungUpdateReady(ctx, op))) {
     return (await complete(ctx, claim, op, {
       kind: 'failure',
       reason: 'unavailable',

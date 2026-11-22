@@ -25,6 +25,7 @@ import {
   type ProjectionScope,
   projectionCandidateEnvelope,
 } from './repo-projection-store.ts';
+import { samsungTypeHasCard } from './samsung-cards.ts';
 
 /**
  * Schema 2: the server compiles the version. The author names the omissions it has (and may send
@@ -80,6 +81,15 @@ export async function buildProjectionCandidate(
     accountRevision: readiness.revision,
   });
   if (!account || account.provider !== scope.provider) throw changed();
+  if (
+    projection.schema === 2 &&
+    account.provider === 'samsung' &&
+    !samsungTypeHasCard(account.credentials, projection.type)
+  )
+    throw new ConflictError(
+      `Blocked: Samsung ${projection.type} card not approved.`,
+      'WALLET_PROJECTION_BLOCKED',
+    );
   const policy = projectionPolicy(scope.provider);
   const candidate: ProjectionCandidate = {
     ...scope,

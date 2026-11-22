@@ -141,6 +141,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   wallet_provider_pass_authority: WALLET,
   wallet_provider_projection_evidence: WALLET,
   wallet_provider_projection_evidence_history: WALLET,
+  wallet_samsung_card_state: WALLET,
   wallet_provider_sync_targets: WALLET,
   wallet_samsung_callback_receipts: WALLET,
   wallet_samsung_country_hints: WALLET,

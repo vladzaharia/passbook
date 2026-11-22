@@ -4,15 +4,17 @@ import {
   type SamsungCompileOptions,
   samsungCardBody,
   samsungCompiler,
+  samsungPortalUrl,
 } from '../../../passkit/wallets/samsung/index.ts';
 import { resolveWalletView } from '../../../passkit/wallets/view.ts';
+import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo.ts';
 import { previewPlan } from '../templates/build-check.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
 import { prepareProjectionArt, sizeShipped, type WalletArt } from './projection-art.ts';
 import type { ProjectionV2 } from './projection-contract.ts';
-import { walletPortalUrl } from './projection-pins.ts';
+import { recordProjectionArt } from './repo-projection-art.ts';
 import type { SamsungCardProjection } from './samsung-token.ts';
 
 interface SamsungCompiledInput {
@@ -26,10 +28,29 @@ interface SamsungCompiledInput {
   revisedAt: number;
   /** `dry` sizes the art (checks); `store` cuts the public copies a card links to. */
   art: 'dry' | 'store';
+  /** The approved candidate: art cut here is recorded against it, so a purge finds it. */
+  candidateId: string;
 }
 
-/** Art is content-addressed per template version: one cut per isolate is enough. */
-const artByVersion = new Map<string, Promise<WalletArt>>();
+/** Art is content-addressed per template version: a bounded, short-lived memo of one cut. */
+const ART_TTL_MS = 600_000;
+const ART_CAP = 64;
+const artByVersion = new Map<string, { until: number; art: Promise<WalletArt> }>();
+
+function memoArt(key: string, now: number, cut: () => Promise<WalletArt>): Promise<WalletArt> {
+  for (const [k, v] of artByVersion) if (v.until <= now) artByVersion.delete(k);
+  const hit = artByVersion.get(key);
+  if (hit) return hit.art;
+  while (artByVersion.size >= ART_CAP) {
+    const oldest = artByVersion.keys().next().value;
+    if (oldest === undefined) break;
+    artByVersion.delete(oldest);
+  }
+  const art = cut();
+  artByVersion.set(key, { until: now + ART_TTL_MS, art });
+  art.catch(() => artByVersion.delete(key));
+  return art;
+}
 
 /**
  * The Get Card Data body of one pass, compiled from the pass as it is now. Null when the pass no
@@ -56,14 +77,25 @@ export async function compileSamsungCard(
     template.passJson.organizationName,
     now,
   );
-  const key = `${pass.orgId}|${pass.templateId}|${pass.templateVersion}|${input.art}`;
-  let cut = artByVersion.get(key);
-  if (!cut) {
-    cut = prepareProjectionArt(ctx, registry, template, 'samsung', plan.assets, input.art);
-    artByVersion.set(key, cut);
-    cut.catch(() => artByVersion.delete(key));
-  }
-  const art = await cut;
+  const key = `${input.candidateId}|${input.art}`;
+  const art = await memoArt(key, now.getTime(), async () => {
+    const cut = await prepareProjectionArt(
+      ctx,
+      registry,
+      template,
+      'samsung',
+      plan.assets,
+      input.art,
+    );
+    // What a runtime cut wrote is recorded like release art, so a purge removes it.
+    if (input.art === 'store' && cut.hashes.size > 0)
+      await recordProjectionArt(ctx.env.DB, {
+        candidateId: input.candidateId,
+        hashes: [...cut.hashes],
+        now: now.getTime(),
+      });
+    return cut;
+  });
   const view = resolveWalletView(
     {
       ...plan,
@@ -86,7 +118,7 @@ export async function compileSamsungCard(
   const options: SamsungCompileOptions = {
     now,
     omit: template.manifest.wallets?.samsung?.omit ?? [],
-    portalUrl: walletPortalUrl(ctx.env),
+    portalUrl: samsungPortalUrl(baseUrl(ctx.env)),
     issuedAt: new Date(input.createdAt),
   };
   const result = samsungCompiler.compile(view, options);

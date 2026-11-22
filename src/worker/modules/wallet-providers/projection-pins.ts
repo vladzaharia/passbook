@@ -1,7 +1,8 @@
 import { fidelityReport, omissionKeys, reportHash } from '../../../passkit/wallets/fidelity.ts';
+import { samsungPortalUrl } from '../../../passkit/wallets/samsung/index.ts';
 import type { FidelityReport, WalletPassView } from '../../../passkit/wallets/types.ts';
 import { resolveWalletView } from '../../../passkit/wallets/view.ts';
-import { type AppEnv, baseUrl } from '../../platform/env.ts';
+import { baseUrl } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { previewPlan } from '../templates/build-check.ts';
@@ -11,10 +12,6 @@ import type { VersionRow } from '../templates/repo.ts';
 import { prepareProjectionArt, sizeShipped, type WalletArt } from './projection-art.ts';
 import type { NativeProvider, ProjectionV2 } from './projection-contract.ts';
 import { COMPILERS, pipelineRevision } from './projection-pipeline.ts';
-
-/** The holder portal: Samsung's app link when the organization sets no address (Q22). Never a capability link. */
-export const walletPortalUrl = (env: Pick<AppEnv, 'PUBLIC_BASE_URL'>): string =>
-  `${baseUrl(env)}/account`;
 
 /** The hash a candidate pins for a version's `wallets` block (`null` when it has none). */
 export const walletsHash = (wallets: unknown): Promise<string> =>
@@ -73,7 +70,9 @@ export async function computeProjectionPins(
     views: [view],
     now,
     wallets,
-    ...(provider === 'samsung' ? { compile: { portalUrl: walletPortalUrl(ctx.env) } } : {}),
+    ...(provider === 'samsung'
+      ? { compile: { portalUrl: samsungPortalUrl(baseUrl(ctx.env)) } }
+      : {}),
   });
   return {
     report,

@@ -15,13 +15,22 @@ import {
   readConfiguredWalletProviderCredentials,
   snapshotWalletCredentialContext,
 } from './account-service.ts';
-import { identityCardType, providerIdentityHash } from './projection-contract.ts';
+import {
+  identityCardType,
+  type ProjectionV2,
+  providerIdentityHash,
+} from './projection-contract.ts';
 import { assertWalletProviderEnabled, walletProviderEnabled } from './provider-policy.ts';
 import {
   getProjectionCandidate,
   type ProjectionCandidate,
   projectionCandidateEnvelope,
 } from './repo-projection-store.ts';
+import {
+  clearSamsungCardState,
+  putSamsungCardState,
+  samsungCardStateFresh,
+} from './repo-samsung-card-state.ts';
 import {
   beginSamsungProjectionProbe,
   completeSamsungProjectionProbe,
@@ -166,10 +175,8 @@ export async function refreshSamsungProjectionEvidence(
       'WALLET_PROJECTION_NOT_FOUND',
     );
   if (candidate.projection.schema === 2) {
-    const now = ctx.clock.now();
-    return (await samsungCardReady(ctx, candidate))
-      ? { verified: true, verifiedAt: now, expiresAt: now + MAX_EVIDENCE_AGE_MS }
-      : unverified();
+    const read = await refreshSamsungCardState(ctx, candidate);
+    return read ? { verified: true, ...read } : unverified();
   }
   const result = await probe(ctx, candidate, authority);
   if (!result.verified && !(await hasSamsungProjectionEvidence(ctx, candidate))) return result;
@@ -205,33 +212,29 @@ export async function ensureSamsungProjectionEvidence(
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const candidate = await candidateForProbe(ctx, candidateId, expectedHash);
   if (!candidate) return false;
-  if (candidate.projection.schema === 2) return samsungCardReady(ctx, candidate);
+  if (candidate.projection.schema === 2) return ensureSamsungCardState(ctx, candidate);
   if (await hasSamsungProjectionEvidence(ctx, candidate)) return true;
   return (await probe(ctx, candidate, authority)).verified;
 }
 
-/** Positive live reads of a compiled card, per isolate: not stored, so no queue or read path waits on them. */
-const readyUntil = new Map<string, number>();
+type CompiledCandidate = ProjectionCandidate & { projection: ProjectionV2 };
+const isCompiled = (c: ProjectionCandidate): c is CompiledCandidate =>
+  c.provider === 'samsung' && c.projection.schema === 2;
 
 /**
- * Whether the Samsung card of a compiled (schema 2) candidate is usable now: the template state is
- * read live and mode-aware (Live needs a launched card, Test also takes one still in testing mode).
- * Nothing is stored; a caller that needs it before an effect (publish, offer, update) asks here.
+ * Reads the card of a compiled (schema 2) candidate from Samsung now, mode-aware (Live needs a
+ * launched card, Test also takes one still in testing mode), and records it in the candidate's
+ * card-state row. A failed read removes the row. Returns the read, or null when the card is not
+ * usable. Only publish, an update, the admin recheck and the sync job call this: request paths
+ * read the row.
  */
-export async function samsungCardReady(
+export async function refreshSamsungCardState(
   ctx: ServiceContext,
   candidate: ProjectionCandidate,
-): Promise<boolean> {
+): Promise<{ verifiedAt: number; expiresAt: number } | null> {
+  if (!isCompiled(candidate) || !walletProviderEnabled('samsung', candidate.mode)) return null;
   const projection = candidate.projection;
-  if (
-    projection.provider !== 'samsung' ||
-    projection.schema !== 2 ||
-    !walletProviderEnabled('samsung', candidate.mode)
-  )
-    return false;
-  const key = `${candidate.id}|${candidate.candidateHash}|${candidate.accountEpoch}`;
   const now = ctx.clock.now();
-  if ((readyUntil.get(key) ?? 0) > now) return true;
   ctx = snapshotWalletCredentialContext(ctx);
   try {
     await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
@@ -247,19 +250,69 @@ export async function samsungCardReady(
       (await providerIdentityHash(account, identityCardType(projection))) !==
         candidate.providerIdentityHash
     )
-      return false;
+      throw new Error();
     const credentials = await validateSamsungCredentials(account.credentials, now, projection.type);
-    await probeSamsungActiveTemplate(credentials, {
+    const read = await probeSamsungActiveTemplate(credentials, {
       cardType: projection.type,
       mode: candidate.mode,
       now,
       requestId: ctx.ids.id().replaceAll('-', ''),
     });
-    readyUntil.set(key, Math.min(now + MAX_EVIDENCE_AGE_MS, credentials.validUntil));
-    return true;
+    const expiresAt = Math.min(now + MAX_EVIDENCE_AGE_MS, credentials.validUntil);
+    if (
+      expiresAt > now &&
+      (await putSamsungCardState(ctx.env.DB, {
+        candidateId: candidate.id,
+        candidateHash: candidate.candidateHash,
+        accountId: candidate.accountId,
+        accountEpoch: candidate.accountEpoch,
+        cardType: projection.type,
+        state: read.state,
+        testingModeOff: read.testingModeOff,
+        verifiedAt: now,
+        expiresAt,
+      }))
+    )
+      return { verifiedAt: now, expiresAt };
   } catch {
     // Never log upstream errors, credentials, identifiers, tokens, or response bodies.
     ctx.log.warn('wallet.verification_failed', { code: 'WALLET_VERIFY_FAILED' });
-    return false;
   }
+  await clearSamsungCardState(ctx.env.DB, candidate.id);
+  return null;
+}
+
+/** The stored read, if it is still within its five minutes. Never calls Samsung. */
+export function samsungCardFresh(
+  ctx: ServiceContext,
+  candidate: ProjectionCandidate,
+): Promise<boolean> {
+  if (!isCompiled(candidate) || !walletProviderEnabled('samsung', candidate.mode))
+    return Promise.resolve(false);
+  return samsungCardStateFresh(ctx.env.DB, candidate, candidate.projection.type, ctx.clock.now());
+}
+
+/** A fresh row, else a live read: the decision of a publish or an update. */
+export async function ensureSamsungCardState(
+  ctx: ServiceContext,
+  candidate: ProjectionCandidate,
+): Promise<boolean> {
+  return (
+    (await samsungCardFresh(ctx, candidate)) ||
+    (await refreshSamsungCardState(ctx, candidate)) !== null
+  );
+}
+
+/** The sync job's pass over compiled cards whose row is missing or about to lapse. */
+export async function refreshSamsungCardStates(
+  ctx: ServiceContext,
+  candidates: { id: string; hash: string }[],
+): Promise<number> {
+  let refreshed = 0;
+  for (const item of candidates) {
+    const candidate = await getProjectionCandidate(ctx.env.DB, item.id);
+    if (candidate?.candidateHash === item.hash && (await refreshSamsungCardState(ctx, candidate)))
+      refreshed++;
+  }
+  return refreshed;
 }

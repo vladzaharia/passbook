@@ -69,27 +69,20 @@ export async function serveSamsungLive(
   ) {
     return null;
   }
-  let projection: SamsungCardProjection | null = null;
-  if (method === 'GET')
-    projection =
-      approved.projection.schema === 2
-        ? await compileSamsungCard(ctx, {
-            projection: approved.projection,
-            pass: materialized.pass,
-            passJson: materialized.passJson,
-            refId,
-            createdAt: snapshot.instanceCreatedAt,
-            revisedAt: materialized.pass.modifiedAt,
-            art: 'store',
-          })
-        : renderSamsungProjection(
-            approved.projection,
-            materialized.passJson,
-            refId,
-            snapshot.instanceCreatedAt,
-            materialized.pass.modifiedAt,
-          );
-  if (method === 'GET' && !projection) return null;
+  // A field-mapped (schema 1) card is a pure render; a compiled one is built after the token has
+  // verified, so an unauthenticated call does no template read or art cut.
+  const compiled = approved.projection.schema === 2 ? approved.projection : null;
+  const mapped =
+    method === 'GET' && !compiled
+      ? renderSamsungProjection(
+          approved.projection,
+          materialized.passJson,
+          refId,
+          snapshot.instanceCreatedAt,
+          materialized.pass.modifiedAt,
+        )
+      : null;
+  if (method === 'GET' && !compiled && !mapped) return null;
   // The receipt id is minted now, but the body is sealed only once a token has verified.
   const receiptId = method === 'POST' ? ctx.ids.id() : null;
   let sealed: Envelope | null = null;
@@ -160,6 +153,28 @@ export async function serveSamsungLive(
       event: event ?? 'unknown',
     });
     return { kind: 'accepted' };
+  }
+  let projection: SamsungCardProjection | null = mapped;
+  if (compiled) {
+    try {
+      projection = await compileSamsungCard(ctx, {
+        projection: compiled,
+        pass: materialized.pass,
+        passJson: materialized.passJson,
+        refId,
+        createdAt: snapshot.instanceCreatedAt,
+        revisedAt: materialized.pass.modifiedAt,
+        art: 'store',
+        candidateId: approved.release.candidateId ?? '',
+      });
+    } catch (error) {
+      ctx.log.error('wallet.samsung_compile_failed', {
+        code: 'WALLET_SAMSUNG_COMPILE_FAILED',
+        orgId: snapshot.orgId,
+        error,
+      });
+      projection = null;
+    }
   }
   if (!projection) return { kind: 'missing' };
   const card = filterSamsungCardFields(projection, fields);

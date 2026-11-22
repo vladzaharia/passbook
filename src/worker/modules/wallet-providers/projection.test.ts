@@ -75,6 +75,7 @@ import {
 import { writeProjectionRelease } from './repo-projection-release-write.ts';
 import { getProjectionCandidate, projectionCandidateEnvelope } from './repo-projection-store.ts';
 import { writeProjectionCandidate } from './repo-projection-write.ts';
+import { putSamsungCardState } from './repo-samsung-card-state.ts';
 import { ensureSamsungProjectionEvidence } from './samsung-verification.ts';
 
 // Publishing a Samsung projection probes Samsung, which only runs while the provider is enabled.
@@ -650,7 +651,7 @@ describe('native projection approval', () => {
     ).toEqual({ changes: 1 });
   }, 30_000);
 
-  it('accepts a Samsung schema 2 release with no evidence row, and keeps the rule for schema 1', async () => {
+  it('accepts a Samsung schema 2 release on a fresh card-state row, and keeps the evidence rule for schema 1', async () => {
     const test = await setup();
     const version = await getVersion(env.DB, test.templateId, test.version);
     if (!version) throw new Error('Test version is missing.');
@@ -669,6 +670,29 @@ describe('native projection approval', () => {
         [compiled.id],
       ),
     ).toBeNull();
+    // A compiled card needs a fresh card-state row from a live read; nothing else will do.
+    await expect(insertDirectProjectionRelease(test, compiled, compiledApproval)).rejects.toThrow(
+      'invalid provider release approval or source',
+    );
+    const now = test.ctx.clock.now();
+    const stored = await first<{ provider_account_id: string; provider_account_epoch: number }>(
+      env.DB,
+      'SELECT provider_account_id, provider_account_epoch FROM template_candidates WHERE id = ?',
+      [compiled.id],
+    );
+    expect(
+      await putSamsungCardState(env.DB, {
+        candidateId: compiled.id,
+        candidateHash: compiled.candidateHash,
+        accountId: stored?.provider_account_id ?? '',
+        accountEpoch: stored?.provider_account_epoch ?? 0,
+        cardType: pins.type,
+        state: 'ACTIVE',
+        testingModeOff: 'Y',
+        verifiedAt: now,
+        expiresAt: now + 300_000,
+      }),
+    ).toBe(true);
     expect(await insertDirectProjectionRelease(test, compiled, compiledApproval)).toEqual({
       changes: 1,
     });
@@ -680,6 +704,66 @@ describe('native projection approval', () => {
     await expect(insertDirectProjectionRelease(second, fieldMapped, approval)).rejects.toThrow(
       'invalid provider release approval or source',
     );
+  });
+
+  it('refuses a schema 1 tombstone without evidence and lets a compiled card have one without', async () => {
+    const tombstone = async (test: ProjectionFixture, candidate: TemplateCandidate) => {
+      const release = await first<{ id: string }>(
+        env.DB,
+        'SELECT id FROM template_releases WHERE candidate_id = ?',
+        [candidate.id],
+      );
+      return run(
+        env.DB,
+        `INSERT INTO wallet_samsung_tombstones
+        (ref_hash, org_id, mode, account_id, account_revision, candidate_id, release_id,
+         provider_identity_hash, retired_at, credential_keyset_commitment)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          'a'.repeat(64),
+          candidate.orgId,
+          candidate.mode,
+          candidate.accountId,
+          candidate.accountRevision,
+          candidate.id,
+          release?.id ?? '',
+          candidate.providerIdentityHash,
+          test.ctx.clock.now(),
+          test.proof.credentialKeysetCommitment,
+        ],
+      );
+    };
+    // The release triggers are lifted to put releases in place without evidence; both are restored.
+    const triggers = (
+      await env.DB.prepare(
+        "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND name IN ('template_provider_releases_insert', 'wallet_provider_release_keyset_insert')",
+      ).all<{ name: string; sql: string }>()
+    ).results;
+    const v1 = await setup();
+    const fieldMapped = await nativeCandidate(v1);
+    const v1Approval = await nativeApproval(v1, fieldMapped);
+    const v2 = await setup();
+    const version = await getVersion(env.DB, v2.templateId, v2.version);
+    if (!version) throw new Error('Test version is missing.');
+    const { pins } = await computeProjectionPins(v2.ctx, 'samsung', version);
+    const compiled = await createProjectionCandidate(v2.ctx, v2.author, v2.templateId, {
+      ...v2.scope,
+      version: v2.version,
+      sourceReleaseId: v2.source.id,
+      projection: { schema: 2, provider: 'samsung', approvedOmissions: pins.approvedOmissions },
+    });
+    const v2Approval = await nativeApproval(v2, compiled);
+    for (const trigger of triggers) await run(env.DB, `DROP TRIGGER ${trigger.name}`);
+    try {
+      await insertDirectProjectionRelease(v1, fieldMapped, v1Approval);
+      await insertDirectProjectionRelease(v2, compiled, v2Approval);
+    } finally {
+      for (const trigger of triggers) await run(env.DB, trigger.sql);
+    }
+    await expect(tombstone(v1, fieldMapped)).rejects.toThrow(
+      /Samsung tombstone (requires verified release evidence|keyset unavailable)/,
+    );
+    expect(await tombstone(v2, compiled)).toEqual({ changes: 1 });
   });
 
   it('rechecks the Apple source and provider account snapshots on direct release inserts', async () => {

@@ -1,6 +1,29 @@
--- CW10b: a Samsung schema 2 release is compiled, so it needs no card-state evidence row: the
--- sync and callback runtimes check the card live (mode-aware) and queues never read evidence.
--- Schema 1 Samsung releases keep the evidence rule. Everything else is 0148's.
+-- CW10b: a Samsung schema 2 (compiled) release has no field-mapped evidence rows. Its proof is one
+-- card-state row per candidate, written from a live card read; the release trigger requires it fresh
+-- at release time (mode-aware: Test also takes a card still in testing mode). Queues, tombstones
+-- and retirement never read it. Schema 1 Samsung releases keep the evidence rule. Everything else is
+-- 0148's.
+CREATE TABLE wallet_samsung_card_state (
+  candidate_id TEXT NOT NULL PRIMARY KEY REFERENCES template_candidates(id) ON DELETE CASCADE,
+  candidate_hash TEXT NOT NULL,
+  account_id TEXT NOT NULL,
+  account_epoch INTEGER NOT NULL,
+  card_type TEXT NOT NULL,
+  state TEXT NOT NULL,
+  testing_mode_off TEXT NOT NULL CHECK (testing_mode_off IN ('Y', 'N')),
+  verified_at INTEGER NOT NULL,
+  expires_at INTEGER NOT NULL,
+  CHECK (expires_at > verified_at AND expires_at <= verified_at + 300000)
+) WITHOUT ROWID;
+
+-- A Google instance has no Samsung card type.
+CREATE TRIGGER wallet_provider_instances_google_card_type_insert BEFORE INSERT ON wallet_provider_instances
+WHEN NEW.provider = 'google' AND NEW.card_type IS NOT NULL
+BEGIN SELECT RAISE(ABORT, 'a Google instance has no card type'); END;
+CREATE TRIGGER wallet_provider_instances_google_card_type_update BEFORE UPDATE OF card_type ON wallet_provider_instances
+WHEN NEW.provider = 'google' AND NEW.card_type IS NOT NULL
+BEGIN SELECT RAISE(ABORT, 'a Google instance has no card type'); END;
+
 DROP TRIGGER template_provider_releases_insert;
 CREATE TRIGGER template_provider_releases_insert BEFORE INSERT ON template_releases
 WHEN NEW.provider IN ('google', 'samsung')
@@ -49,8 +72,9 @@ BEGIN
       AND s.generation = c.source_release_generation AND s.candidate_hash = c.source_release_hash
       AND s.content_hash = c.content_hash
   ) THEN RAISE(ABORT, 'invalid provider release approval or source') END;
-  -- Operator review is not provider proof. Samsung needs verified card state. Google has no
-  -- documented status proof, so its release rests on the compiled schema 2 pins checked above.
+  -- Operator review is not provider proof. A Samsung schema 1 release needs verified evidence; a
+  -- schema 2 release needs a fresh card-state row from a live read (third check below). Google has
+  -- no documented status proof, so its release rests on the compiled schema 2 pins checked above.
   SELECT CASE WHEN NEW.provider = 'samsung' AND NOT EXISTS (SELECT 1 FROM template_candidates s2
     WHERE s2.id = NEW.candidate_id AND json_extract(s2.projection_json, '$.schema') = 2) AND NOT EXISTS (
     SELECT 1 FROM template_candidates c
@@ -77,6 +101,15 @@ BEGIN
       AND eh.card_type = ev.card_type AND eh.card_sub_type = ev.card_sub_type
       AND eh.country_code = ev.country_code AND eh.testing_mode_off = ev.testing_mode_off
       AND eh.verified_at = ev.verified_at AND eh.expires_at = ev.expires_at
+  ) THEN RAISE(ABORT, 'invalid provider release approval or source') END;
+  SELECT CASE WHEN NEW.provider = 'samsung' AND EXISTS (SELECT 1 FROM template_candidates s2
+    WHERE s2.id = NEW.candidate_id AND json_extract(s2.projection_json, '$.schema') = 2) AND NOT EXISTS (
+    SELECT 1 FROM template_candidates c JOIN wallet_samsung_card_state st ON st.candidate_id = c.id
+    WHERE c.id = NEW.candidate_id AND st.candidate_hash = c.candidate_hash
+      AND st.account_id = c.provider_account_id AND st.account_epoch = c.provider_account_epoch
+      AND st.card_type = json_extract(c.projection_json, '$.type')
+      AND (st.testing_mode_off = 'Y' OR NEW.mode = 'test')
+      AND st.verified_at <= NEW.created_at AND NEW.created_at < st.expires_at
   ) THEN RAISE(ABORT, 'invalid provider release approval or source') END;
   SELECT CASE WHEN NEW.action = 'release' AND EXISTS (
     SELECT 1 FROM template_releases r WHERE r.candidate_id = NEW.candidate_id AND r.source = 'approved'
