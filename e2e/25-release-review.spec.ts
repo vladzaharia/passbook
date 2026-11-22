@@ -116,9 +116,8 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
     await expect(authorPage.locator('main')).not.toHaveText(HASH, shown);
     await authorPage.getByRole('button', { name: 'Publish candidate for Version 1' }).click();
     const dialog = authorPage.getByRole('dialog', { name: 'Publish release' });
-    const impact = dialog.getByRole('region', { name: 'Impact' });
-    await expect(impact.getByText('Passes to update')).toBeVisible();
-    await expect(impact.getByText('Loading impact')).toHaveCount(0);
+    await expect(dialog.getByText('Loading changes')).toHaveCount(0);
+    await expect(dialog.getByText(/passes? update|No passes yet/)).toBeVisible();
     await expect(dialog.getByText('Approved by')).toBeVisible();
     if (reviewerSession.user.name)
       await expect(dialog.getByText(reviewerSession.user.name).first()).toBeVisible();
@@ -131,7 +130,7 @@ test('author proposes, reviewer approves, publisher releases, then a pass is iss
     await dialog.getByRole('button', { name: 'Confirm publish' }).click();
     await expect(dialog).toBeHidden();
     await expect(authorPage.getByText('Release published')).toBeVisible();
-    await expect(authorPage.getByText('Published by', { exact: true })).toBeVisible();
+    await expect(authorPage.getByRole('list', { name: 'Releases' })).toContainText('v1');
 
     const release = await requireActiveTemplateRelease(author, org.id, clone.id, 'live');
     expect(release.version).toBe(version);

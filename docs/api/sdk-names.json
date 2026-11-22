@@ -1997,6 +1997,14 @@
     "resource": "templates.releases",
     "method": "create"
   },
+  "templates.postTemplatesByIdReview": {
+    "resource": "templates.reviews",
+    "method": "approve"
+  },
+  "templates.getTemplateReviews": {
+    "resource": "templates.reviews",
+    "method": "list"
+  },
   "templates.postTemplatesByIdReleasesRollback": {
     "resource": "templates.releases",
     "method": "rollback"

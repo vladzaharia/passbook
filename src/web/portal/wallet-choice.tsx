@@ -1,4 +1,4 @@
-import { ChevronRight, Printer, ScanLine, Smartphone } from 'lucide-react';
+import { ChevronRight, LayoutGrid, Printer, ScanLine, Smartphone } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { NATIVE_WALLET_BADGES, type WalletChoice } from '../../shared/wallet-choice.ts';
@@ -77,18 +77,21 @@ interface Row {
 
 /**
  * Everything after the lead, as one quiet list with no visible label: the browser barcode, the
- * other wallets' badges side by side, Apple's line where it cannot add, print, then the caller's
- * row (Email me this pass again on /p). walletChoices orders the wallets; nothing is hidden.
+ * other wallets' badges side by side, Apple's line where it cannot add, print, My passes (/p, a
+ * pass with a holder email), then the caller's row (Email me this pass again on /p).
+ * walletChoices orders the wallets; nothing is hidden.
  */
 export function OtherWays({
   choices,
   apple,
   printHref,
+  portalHref,
   extra,
 }: {
   choices: readonly WalletChoice[];
   apple: ReactNode;
   printHref?: string | undefined;
+  portalHref?: string | undefined;
   extra?: ReactNode;
 }) {
   const native = choices.filter(isNative);
@@ -128,6 +131,18 @@ export function OtherWays({
     rows.push({
       key: 'print',
       body: <OtherLink href={printHref} icon={<Printer aria-hidden />} label={HOLDER_COPY.print} />,
+    });
+  }
+  if (portalHref) {
+    rows.push({
+      key: 'portal',
+      body: (
+        <OtherLink
+          href={portalHref}
+          icon={<LayoutGrid aria-hidden />}
+          label={HOLDER_COPY.myPassesRow}
+        />
+      ),
     });
   }
   if (extra) rows.push({ key: 'extra', body: extra });

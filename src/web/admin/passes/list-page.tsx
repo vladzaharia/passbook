@@ -24,6 +24,7 @@ import { canChangePasses, leaveSelection } from './change/selection.ts';
 import { downloadText, toCsv } from './csv.ts';
 import { PassListContext, passColumns } from './list-columns.tsx';
 import { CLEARED, type ListSearch, PassListFilters } from './list-filters.tsx';
+import { OtherModeHint } from './other-mode-hint.tsx';
 import { SelectionBar } from './selection-bar.tsx';
 import './passes.css';
 
@@ -215,6 +216,9 @@ export function PassesListPage({
               <EmptyState
                 art="passes"
                 title="No passes yet"
+                description={
+                  <OtherModeHint orgId={orgId} hidden={Boolean(scope.membership?.testOnly)} />
+                }
                 action={
                   canOperate ? (
                     <div className="flex flex-wrap justify-center gap-2 max-sm:flex-col max-sm:[&>*]:w-full">

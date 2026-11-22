@@ -4487,6 +4487,7 @@ type PlatformOrgsCreateParams struct {
 	DefaultIdentityID *string      `json:"defaultIdentityId,omitempty"`
 	Branding          *OrgBranding `json:"branding,omitempty"`
 	Preset            *string      `json:"preset,omitempty"`
+	AddMe             *bool        `json:"addMe,omitempty"`
 }
 
 type PlatformOrgsEntitlementsUpdateParams struct {
@@ -4862,6 +4863,19 @@ type ReleaseTemplate struct {
 type ReleaseTemplateExpected struct {
 	Live *int64 `json:"live,omitempty"`
 	Test *int64 `json:"test,omitempty"`
+}
+
+type ReviewResult struct {
+	Version  string         `json:"version"`
+	Approved []string       `json:"approved"`
+	Release  map[string]any `json:"release"`
+}
+
+type ReviewTemplate struct {
+	OrgID   *string `json:"orgId,omitempty"`
+	Version string  `json:"version"`
+	Release *bool   `json:"release,omitempty"`
+	Note    *string `json:"note,omitempty"`
 }
 
 type RollCallsCreateQuery struct {
@@ -6915,6 +6929,20 @@ type TemplatePage struct {
 	NextCursor *string           `json:"nextCursor"`
 }
 
+type TemplateReviewList struct {
+	Items      []TemplateReviewListItemsItem `json:"items"`
+	NextCursor *string                       `json:"nextCursor"`
+}
+
+type TemplateReviewListItemsItem struct {
+	TemplateID   string  `json:"templateId"`
+	TemplateName string  `json:"templateName"`
+	OrgID        string  `json:"orgId"`
+	Version      string  `json:"version"`
+	RequestedBy  *string `json:"requestedBy"`
+	RequestedAt  int64   `json:"requestedAt"`
+}
+
 type TemplateSummary struct {
 	ID            string         `json:"id"`
 	OrgID         *string        `json:"orgId"`
@@ -7405,6 +7433,25 @@ type TemplatesRetrieveStampsImpactResult struct {
 	NewlyReady  int64 `json:"newlyReady"`
 	Highest     int64 `json:"highest"`
 	HighestKept int64 `json:"highestKept"`
+}
+
+type TemplatesReviewsApproveBody = ReviewTemplate
+
+type TemplatesReviewsApproveResult = ReviewResult
+
+type TemplatesReviewsListItem struct {
+	TemplateID   string  `json:"templateId"`
+	TemplateName string  `json:"templateName"`
+	OrgID        string  `json:"orgId"`
+	Version      string  `json:"version"`
+	RequestedBy  *string `json:"requestedBy"`
+	RequestedAt  int64   `json:"requestedAt"`
+}
+
+type TemplatesReviewsListQuery struct {
+	State  *string `json:"state,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
 }
 
 type TemplatesReviewsRequestBody = ReleaseTemplate

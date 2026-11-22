@@ -3,7 +3,7 @@ import { apiAs } from './helpers/api.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
 /** The builder gets the one sandbox a person can have, so this spec needs a fresh server (the default). */
-test('quickstart: from the page view to a 201 and the live TEST preview in six actions', async ({
+test('quickstart: from the page view to a 201 and the live TEST preview in five actions', async ({
   page,
   context,
 }) => {
@@ -42,8 +42,10 @@ test('quickstart: from the page view to a 201 and the live TEST preview in six a
   // The signed-out page is the whole page: five steps and the empty pass.
   await expect(page.getByRole('listitem').filter({ hasText: 'Take it home' })).toBeVisible();
 
-  await act(() => page.locator('main').getByRole('link', { name: 'Sign in' }).click());
-  await act(() => page.getByRole('link', { name: 'Sign in with Polaris ID' }).click());
+  // Step 1 goes straight to Polaris ID.
+  await act(() =>
+    page.locator('main').getByRole('link', { name: 'Sign in with Polaris ID' }).click(),
+  );
   await page.waitForURL((u) => u.pathname === '/developers/quickstart');
 
   await act(() => page.getByRole('button', { name: 'Create sandbox' }).click());
@@ -84,7 +86,7 @@ test('quickstart: from the page view to a 201 and the live TEST preview in six a
   expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
     /^PASSBOOK_KEY=pbp_test_\S+\nPASSBOOK_TEMPLATE_ID=\S+\n$/,
   );
-  expect(actions).toBeLessThanOrEqual(6);
+  expect(actions).toBeLessThanOrEqual(5);
 
   // The key lives in memory for the .env step: not in storage, not in the address.
   const kept = await page.evaluate(() =>
@@ -102,7 +104,7 @@ test('quickstart: from the page view to a 201 and the live TEST preview in six a
   // In Admin the sandbox is Test only: there is no Test switch, and the Overview points back here.
   await page.goto('/admin');
   await expect(page.getByRole('link', { name: 'Open Developers' })).toBeVisible();
-  await expect(page.getByRole('switch', { name: 'Test mode' })).toHaveCount(0);
+  await expect(page.getByRole('radiogroup', { name: 'Mode' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Open Developers' })).toBeVisible();
 
   // The platform's funnel card counts it, in numbers only.

@@ -128,7 +128,7 @@ export function Help({ support }: { support: HolderSupport }) {
   );
 }
 
-/** /p's quiet way to the holder's page: muted until pointed at. Signed out, sign-in comes first. */
+/** /b's quiet way to the holder's page: muted until pointed at. Signed out, sign-in comes first. */
 export function PortalLink({ href }: { href: string }) {
   return (
     <p className="text-sm">

@@ -1,4 +1,4 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
@@ -209,7 +209,7 @@ describe('Messages in Test mode', () => {
     });
     expect(await screen.findByRole('heading', { name: 'Doors open late' })).toBeInTheDocument();
     expect(modeOf(fetchMock.mock.calls, '/api/v1/broadcasts/b1')).toBeUndefined();
-    expect(screen.queryByText('Test')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('main')).queryByText('Test')).not.toBeInTheDocument();
   });
 
   it('badges a test message opened in live mode', async () => {
@@ -219,7 +219,7 @@ describe('Messages in Test mode', () => {
       handlers: { '/api/v1/broadcasts/b1': () => json(broadcast({ mode: 'test' })) },
     });
     expect(await screen.findByRole('heading', { name: 'Doors open late' })).toBeInTheDocument();
-    expect(screen.getByText('Test')).toBeInTheDocument();
+    expect(within(screen.getByRole('main')).getByText('Test')).toBeInTheDocument();
   });
 
   it('lists messages only, and field changes behind the Show filter', async () => {

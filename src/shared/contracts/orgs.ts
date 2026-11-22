@@ -83,8 +83,10 @@ export const CreateOrgSchema = z.object({
   /** The org's Features (entitlements); `standard` when omitted. */
   // The developer preset is for sandboxes, which are made through /developer/sandbox only.
   preset: EntitlementPresetSchema.exclude(['developer']).optional(),
+  /** Join the new org as its admin, with the invitation and membership made in the same batch. On when omitted. */
+  addMe: z.boolean().optional(),
 });
-export const UpdateOrgSchema = CreateOrgSchema.omit({ preset: true })
+export const UpdateOrgSchema = CreateOrgSchema.omit({ preset: true, addMe: true })
   .partial()
   .extend({
     status: z.enum(['active', 'suspended']).optional(),

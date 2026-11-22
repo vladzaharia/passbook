@@ -1643,6 +1643,37 @@ func (r *ScansResource) List(ctx context.Context, query *ScansListQuery, opts ..
 	return newPager[any](r.c, call{method: "GET", path: "/api/v1/scans", query: queryValues(query)}, "cursor", opts)
 }
 
+type TemplatesReviewsResource struct {
+	c *core
+}
+
+func newTemplatesReviewsResource(c *core) *TemplatesReviewsResource {
+	return &TemplatesReviewsResource{
+		c: c,
+	}
+}
+
+// Approve Approve a requested template version in Test and Live, and release it when asked `POST /api/v1/templates/{id}/review`
+func (r *TemplatesReviewsResource) Approve(ctx context.Context, id string, body *TemplatesReviewsApproveBody, opts ...RequestOption) (*TemplatesReviewsApproveResult, error) {
+	var out TemplatesReviewsApproveResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/templates/" + pathEscape(id) + "/review", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List template versions waiting for review `GET /api/v1/template-reviews`
+func (r *TemplatesReviewsResource) List(ctx context.Context, query *TemplatesReviewsListQuery, opts ...RequestOption) *Pager[TemplatesReviewsListItem] {
+	return newPager[TemplatesReviewsListItem](r.c, call{method: "GET", path: "/api/v1/template-reviews", query: queryValues(query)}, "cursor", opts)
+}
+
+// Request Request review of a template version (Idempotency-Key required) `POST /api/v1/templates/{id}/review-requests`
+func (r *TemplatesReviewsResource) Request(ctx context.Context, id string, body *TemplatesReviewsRequestBody, query *TemplatesReviewsRequestQuery, opts ...RequestOption) (TemplatesReviewsRequestResult, error) {
+	var out TemplatesReviewsRequestResult
+	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/templates/" + pathEscape(id) + "/review-requests", query: queryValues(query), body: body, idempotent: true}, &out, opts)
+	return out, err
+}
+
 type TemplatesCandidatesResource struct {
 	c *core
 }
@@ -1742,23 +1773,6 @@ func (r *TemplatesReleasesResource) RetrieveImpact(ctx context.Context, id strin
 	return &out, nil
 }
 
-type TemplatesReviewsResource struct {
-	c *core
-}
-
-func newTemplatesReviewsResource(c *core) *TemplatesReviewsResource {
-	return &TemplatesReviewsResource{
-		c: c,
-	}
-}
-
-// Request Request review of a template version (Idempotency-Key required) `POST /api/v1/templates/{id}/review-requests`
-func (r *TemplatesReviewsResource) Request(ctx context.Context, id string, body *TemplatesReviewsRequestBody, query *TemplatesReviewsRequestQuery, opts ...RequestOption) (TemplatesReviewsRequestResult, error) {
-	var out TemplatesReviewsRequestResult
-	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/templates/" + pathEscape(id) + "/review-requests", query: queryValues(query), body: body, idempotent: true}, &out, opts)
-	return out, err
-}
-
 type TemplatesVersionsResource struct {
 	c *core
 }
@@ -1785,20 +1799,20 @@ func (r *TemplatesVersionsResource) Retrieve(ctx context.Context, id string, ver
 
 type TemplatesResource struct {
 	c          *core
+	Reviews    *TemplatesReviewsResource
 	Candidates *TemplatesCandidatesResource
 	Channels   *TemplatesChannelsResource
 	Releases   *TemplatesReleasesResource
-	Reviews    *TemplatesReviewsResource
 	Versions   *TemplatesVersionsResource
 }
 
 func newTemplatesResource(c *core) *TemplatesResource {
 	return &TemplatesResource{
 		c:          c,
+		Reviews:    newTemplatesReviewsResource(c),
 		Candidates: newTemplatesCandidatesResource(c),
 		Channels:   newTemplatesChannelsResource(c),
 		Releases:   newTemplatesReleasesResource(c),
-		Reviews:    newTemplatesReviewsResource(c),
 		Versions:   newTemplatesVersionsResource(c),
 	}
 }

@@ -320,12 +320,28 @@
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
   },
   {
+    "key": "GET /api/v1/metrics/overview 200.setup.releasedTemplates: field added",
+    "class": "additive",
+    "operationId": "metrics.getMetricsOverview",
+    "op": "GET /api/v1/metrics/overview",
+    "change": "200.setup.releasedTemplates: field added",
+    "note": "setup.releasedTemplates counts templates with a Live release. setup.passes and setup.walletPasses now count Test and Live passes."
+  },
+  {
     "key": "GET /api/v1/metrics/platform/developer new operation",
     "class": "additive",
     "operationId": "metrics.getMetricsPlatformDeveloper",
     "op": "GET /api/v1/metrics/platform/developer",
     "change": "new operation",
     "note": "Platform admins: sandboxes by quickstart step, completion and time to first pass, last 30 days."
+  },
+  {
+    "key": "GET /api/v1/metrics/platform/overview 200.setup.releasedTemplates: field added",
+    "class": "additive",
+    "operationId": "metrics.getMetricsPlatformOverview",
+    "op": "GET /api/v1/metrics/platform/overview",
+    "change": "200.setup.releasedTemplates: field added",
+    "note": "setup.releasedTemplates counts templates with a Live release. setup.passes and setup.walletPasses now count Test and Live passes."
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
@@ -566,6 +582,14 @@
     "op": "GET /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "GET /api/v1/template-reviews new operation",
+    "class": "additive",
+    "operationId": "templates.getTemplateReviews",
+    "op": "GET /api/v1/template-reviews",
+    "change": "new operation",
+    "note": "The reviewer inbox: versions waiting for a peer, newest version only, your own requests left out."
   },
   {
     "key": "GET /api/v1/templates/{id} 200.release: field added",
@@ -1176,6 +1200,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "POST /api/v1/orgs body.addMe: optional input field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "body.addMe: optional input field added",
+    "note": "addMe (default true) makes the creating admin an org_admin of the new org, with the invitation and membership written in the create batch."
+  },
+  {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.postOrgsByIdStatus",
@@ -1430,6 +1462,14 @@
     "op": "POST /api/v1/templates/{id}/restore",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/review new operation",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdReview",
+    "op": "POST /api/v1/templates/{id}/review",
+    "change": "new operation",
+    "note": "A reviewer approves a requested version in Test and Live, and releases it with release: true. Test keys approve Test only."
   },
   {
     "key": "POST /api/v1/templates/{id}/review-requests new operation",

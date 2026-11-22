@@ -13,6 +13,8 @@ const HANDOFF = 'wallet-import-handoff';
 
 export interface ConnectionPrefill {
   templateId: string;
+  /** Template inputs the import joined from several columns; a connection reads one field each. */
+  joined?: string[];
   /** Empty when this tab did not start the import: the wizard asks for the link. */
   url: string;
   idColumn: string;
@@ -33,17 +35,36 @@ export function rememberImportLink(importId: string, url: string): void {
   store()?.setItem(LINK(importId), url);
 }
 
+type PlanMapping = NonNullable<PassImportDto['plan']>['mapping'];
+
+/**
+ * What a connection can carry of an import's mapping. A connection reads one upstream field per
+ * input, so a `join` entry stays out and its input is named in `joined` for the admin to map.
+ */
+export function connectionMappingOf(plan: PlanMapping): { mapping: Mapping; joined: string[] } {
+  const mapping: Mapping = {};
+  const joined: string[] = [];
+  for (const [input, entry] of Object.entries(plan)) {
+    const t = entry.transform;
+    if (t?.kind === 'join') joined.push(input);
+    else if (t) mapping[input] = { from: entry.from, transform: { ...t, kind: t.kind } };
+    else mapping[input] = { from: entry.from };
+  }
+  return { mapping, joined };
+}
+
 /** Leaves the prefill for the wizard that opens next. */
 export function handOffToConnection(imp: PassImportDto): void {
   const plan = imp.plan;
   if (!plan) return;
+  const { mapping, joined } = connectionMappingOf(plan.mapping);
   const prefill: ConnectionPrefill = {
     templateId: imp.templateId,
     url: store()?.getItem(LINK(imp.id)) ?? '',
     idColumn: plan.externalId ? leafOf(plan.externalId.from) : '',
     holderEmailField: plan.holderEmail?.from ?? '',
-    // A joined column has no row in this editor yet (I5); the connection keeps what it can read.
-    mapping: plan.mapping as Mapping,
+    mapping,
+    ...(joined.length ? { joined } : {}),
   };
   store()?.setItem(HANDOFF, JSON.stringify(prefill));
   // The link now travels in the handoff only, which the wizard clears on reading.

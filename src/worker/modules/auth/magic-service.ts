@@ -79,6 +79,7 @@ export async function issueMagicLink(
     expiresMinutes: MAGIC_TTL_MS / 60_000,
     ...(input.requester ? { requester: input.requester } : {}),
     ...(input.prefer ? { prefer: input.prefer } : {}),
+    ...(input.pendingIdentity ? { identityLink: true } : {}),
   });
   const { 'email.senderName': fromName } = await getPlatformSettings(ctx);
   await mailer.send({ to: input.email, fromName, ...mail });

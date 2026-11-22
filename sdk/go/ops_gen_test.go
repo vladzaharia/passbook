@@ -1230,6 +1230,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"templates.reviews.list", "GET", "/api/v1/template-reviews", false,
+		"", `{"items":[{"templateId":"x","templateName":"x","orgId":"x","version":"x","requestedBy":"x","requestedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Templates.Reviews.List(ctx, nil).All(ctx)
+		},
+	},
+	{
 		"templates.list", "GET", "/api/v1/templates", false,
 		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","slug":"x","name":"x","description":"x","origin":"baked","status":"active","activeVersion":"x","styles":["generic"],"passCount":0,"createdAt":0,"updatedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1373,6 +1380,17 @@ var generatedOps = []opCase{
 		"", `{"fromVersion":"x","toVersion":"x","passes":{"count":0,"capped":false},"diff":{"fields":[{"label":"x","kind":"added","from":"x","to":"x"}],"images":[{"label":"x","kind":"added","from":"x","to":"x"}],"barcode":[{"label":"x","kind":"added","from":"x","to":"x"}],"colors":[{"label":"x","kind":"added","from":"x","to":"x"}]},"more":{"fields":0,"images":0,"barcode":0,"colors":0}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Templates.Releases.RetrieveImpact(ctx, "id1", nil)
+		},
+	},
+	{
+		"templates.reviews.approve", "POST", "/api/v1/templates/id1/review", false,
+		`{"version":"x"}`, `{"version":"x","approved":["live"],"release":{"version":"x","modes":{},"state":{"live":{"version":"x","at":0,"by":"x"},"test":{"version":"x","at":0,"state":"following"},"draft":{"version":"x","at":0},"review":{"state":"none"},"alone":false,"next":"design"}}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b TemplatesReviewsApproveBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Templates.Reviews.Approve(ctx, "id1", &b)
 		},
 	},
 	{

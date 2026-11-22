@@ -18,6 +18,10 @@ export interface PassHeaderProps {
   pass?: MyPass | undefined;
   view?: PassView | null | undefined;
   state?: HolderState;
+  /** Beside My passes' stack: no crumbs, and the front's row carries Refresh and More. */
+  panel?: boolean;
+  /** h2 at /, where My passes is the h1; h1 at /passes/:id. */
+  level?: 1 | 2;
 }
 
 /** A pass that cannot be added says so as a pill; then the last update. */
@@ -40,7 +44,13 @@ function Meta({ pass, state }: { pass: MyPass; state: HolderState }) {
  * The portal's pass header (HolderHeading, shared with /p): what the pass is, its org's mark, the
  * breadcrumbs, and Refresh and More; the tab title is the whole title.
  */
-export function PassHeader({ pass, view, state = 'active' }: PassHeaderProps) {
+export function PassHeader({
+  pass,
+  view,
+  state = 'active',
+  panel = false,
+  level = 1,
+}: PassHeaderProps) {
   const navigate = useNavigate();
   const { authed } = useSession();
   const heading =
@@ -51,23 +61,27 @@ export function PassHeader({ pass, view, state = 'active' }: PassHeaderProps) {
           holderPassName(pass, authed?.user),
         )
       : LOADING;
-  useDocumentTitle(heading.title);
+  // At / the tab stays My passes.
+  useDocumentTitle(level === 1 ? heading.title : 'My passes');
   const off = state === 'voided' || state === 'removed';
   return (
     <HolderHeading
       heading={heading}
       icon={view?.images.icon}
+      level={level}
       crumbs={
-        <Breadcrumbs
-          items={[
-            { label: 'My passes', to: '/' },
-            { label: pass ? holderPassName(pass, authed?.user) : heading.title },
-          ]}
-        />
+        panel ? undefined : (
+          <Breadcrumbs
+            items={[
+              { label: 'My passes', to: '/' },
+              { label: pass ? holderPassName(pass, authed?.user) : heading.title },
+            ]}
+          />
+        )
       }
       meta={pass ? <Meta pass={pass} state={state} /> : undefined}
       actions={
-        pass ? (
+        pass && !panel ? (
           <>
             {off ? null : <RefreshButton passId={pass.id} pass={pass} />}
             <PassMoreMenu
