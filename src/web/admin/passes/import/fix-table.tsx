@@ -101,7 +101,7 @@ export function FixTable({
         ) : null}
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[28rem] text-left text-sm">
+        <table className="w-full text-left text-sm sm:min-w-[28rem]">
           <caption className="sr-only">{editable ? C.check.errors : C.check.notes}</caption>
           <thead className="text-xs text-fg-muted">
             <tr>
