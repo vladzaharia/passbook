@@ -3275,6 +3275,12 @@
     "fix": "Fetch the candidate again and send your request.",
     "retryable": false
   },
+  "WALLET_PROJECTION_SCHEMA_RETIRED": {
+    "title": "Field mappings retired",
+    "when": "A Samsung candidate carried a hand-mapped (schema 1) projection.",
+    "fix": "Send a compiled projection: schema 2 with the omissions the report lists.",
+    "retryable": false
+  },
   "WALLET_PROJECTION_NOT_FOUND": {
     "title": "Wallet projection not found",
     "when": "No projection candidate with this id exists.",
@@ -3298,12 +3304,6 @@
     "when": "Another job holds this run.",
     "fix": "Send the request again in a minute.",
     "retryable": true
-  },
-  "WALLET_VERIFICATION_CONFLICT": {
-    "title": "Newer verification running",
-    "when": "A newer account verification is already in progress.",
-    "fix": "Wait for it to finish, then verify again if needed.",
-    "retryable": false
   },
   "WEBHOOK_ALREADY_FINISHED": {
     "title": "Webhook work finished",

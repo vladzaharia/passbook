@@ -5472,6 +5472,16 @@ type PassesRefreshResult struct {
 	RequestedAt int64 `json:"requestedAt"`
 }
 
+type PassesReissueProviderCopiesBody = PassesReissueProviderCopiesParams
+
+type PassesReissueProviderCopiesParams struct {
+	OrgID      *string `json:"orgId,omitempty"`
+	Provider   string  `json:"provider"`
+	TemplateID *string `json:"templateId,omitempty"`
+}
+
+type PassesReissueProviderCopiesResult = WalletReissue
+
 type PassesRemoveBody = PassesRemoveParams
 
 type PassesRemoveParams struct {
@@ -5685,6 +5695,12 @@ type PlatformWalletCredentialsResolveMigrationParams struct {
 
 type PlatformWalletCredentialsRevokeParams struct {
 	ExpectedRevision int64 `json:"expectedRevision"`
+}
+
+type PlatformWalletCredentialsSetSamsungCardParams struct {
+	Type             string `json:"type"`
+	CardID           string `json:"cardId"`
+	ExpectedRevision int64  `json:"expectedRevision"`
 }
 
 type PlatformWalletCredentialsUpsertParams = any
@@ -9525,6 +9541,11 @@ type WalletProviderAccountsVerifyParams struct {
 	Mode          string `json:"mode"`
 	CandidateID   string `json:"candidateId"`
 	CandidateHash string `json:"candidateHash"`
+}
+
+type WalletReissue struct {
+	ReissueID string `json:"reissueId"`
+	Instances int64  `json:"instances"`
 }
 
 type WebhookCapture struct {

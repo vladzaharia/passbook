@@ -1,7 +1,7 @@
 import {
   WalletReissueResponseSchema,
   WalletReissueSchema,
-} from '../../../shared/contracts/wallet-providers.ts';
+} from '../../../shared/contracts/wallet-provider-actions.ts';
 import { modeOf } from '../../platform/auth.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import {

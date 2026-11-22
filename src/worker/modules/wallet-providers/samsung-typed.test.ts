@@ -392,8 +392,7 @@ describe('a Test-mode card at the candidate level', () => {
     const t = await setupWalletOfferKit({ google: 'absent' });
     const db = t.kit.env.DB;
     const candidate = await getProjectionCandidate(db, t.samsungRelease?.candidateId ?? '');
-    if (!candidate || candidate.projection.schema !== 2)
-      throw new Error('Missing candidate fixture');
+    if (candidate?.projection.schema !== 2) throw new Error('Missing candidate fixture');
     const now = t.kit.clock.now();
     const cardType = candidate.projection.type;
     expect(

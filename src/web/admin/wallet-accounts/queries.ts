@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
+import { WalletReissueResponseSchema } from '@/shared/contracts/wallet-provider-actions.ts';
 import {
   PlatformWalletEnrolmentListSchema,
   type ResolveWalletMigration,
@@ -18,7 +19,6 @@ import {
   WalletMigrationReportSchema,
   WalletMigrationResolvedSchema,
   type WalletProvider,
-  WalletReissueResponseSchema,
 } from '@/shared/contracts/wallet-providers.ts';
 import { api, listQuery } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';

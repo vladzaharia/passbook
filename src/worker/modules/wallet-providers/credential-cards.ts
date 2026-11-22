@@ -1,7 +1,5 @@
-import type {
-  SetSamsungCard,
-  WalletCredential,
-} from '../../../shared/contracts/wallet-providers.ts';
+import type { SetSamsungCard } from '../../../shared/contracts/wallet-provider-actions.ts';
+import type { WalletCredential } from '../../../shared/contracts/wallet-providers.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -26,7 +24,7 @@ export async function setPlatformSamsungCard(
   ctx = snapshotWalletCredentialContext(ctx);
   const w = platformWriter(auth, 'platform.wallet.credential_save');
   const row = await findCredential(ctx.env.DB, id, null);
-  if (!row || row.provider !== 'samsung' || row.revoked_at !== null) throw new NotFoundError();
+  if (row?.provider !== 'samsung' || row.revoked_at !== null) throw new NotFoundError();
   if (row.revision !== input.expectedRevision) throw changed();
   const target = await findCheckTarget(ctx.env.DB, id);
   if (!target) throw new NotFoundError();

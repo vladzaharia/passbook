@@ -1371,6 +1371,14 @@ class PassesResource:
         """Rebuild from the connection and re-push `POST /api/v1/passes/{id}/refresh`"""
         return self._core.request("POST", f"/api/v1/passes/{_p(id)}/refresh", result=m.PassesRefreshResult, **opts)
 
+    def reissue_provider_copies(
+        self,
+        body: m.PassesReissueProviderCopiesBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassesReissueProviderCopiesResult:
+        """Send every active Google or Samsung copy of an organization's passes again; a key needs passes:write `POST /api/v1/wallet-providers/reissue`"""
+        return self._core.request("POST", "/api/v1/wallet-providers/reissue", body=body, result=m.PassesReissueProviderCopiesResult, **opts)
+
     def remove(
         self,
         id: str,

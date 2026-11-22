@@ -785,6 +785,9 @@ __all__ = [
     "PassesPrintsListResultPrintsItem",
     "PassesPrintsVoidResult",
     "PassesRefreshResult",
+    "PassesReissueProviderCopiesBody",
+    "PassesReissueProviderCopiesParams",
+    "PassesReissueProviderCopiesResult",
     "PassesRemoveBody",
     "PassesRemoveParams",
     "PassesRemoveResult",
@@ -835,6 +838,7 @@ __all__ = [
     "PlatformWalletAccountsGoogleManagedCreateParams",
     "PlatformWalletCredentialsResolveMigrationParams",
     "PlatformWalletCredentialsRevokeParams",
+    "PlatformWalletCredentialsSetSamsungCardParams",
     "PlatformWalletCredentialsUpsertParams",
     "PlatformWalletCredentialsUpsertParams1",
     "PlatformWalletCredentialsUpsertParams1Credentials",
@@ -1349,6 +1353,7 @@ __all__ = [
     "WalletProviderAccountsUpsertParams2",
     "WalletProviderAccountsUpsertParams2Credentials",
     "WalletProviderAccountsVerifyParams",
+    "WalletReissue",
     "WebhookCapture",
     "WebhookCapturePage",
     "WebhookDeliveryDetail",
@@ -5775,7 +5780,7 @@ class PassesActivityListItem(_Model):
     id: str
     passId: str
     mode: _Literal["live", "test"] | str
-    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"] | str
+    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "wallet.messaged", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"] | str
     device: str | None
     actorType: _Literal["user", "api_key", "system", "connection", "device", "holder", "scanner", None] | str
     actorId: str | None
@@ -5790,7 +5795,7 @@ class PassesActivityListResultItemsItem(_Model):
     id: str
     passId: str
     mode: _Literal["live", "test"] | str
-    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"] | str
+    kind: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.link_rotated", "pass.channels_changed", "pass.printed", "pass.print_voided", "email.queued", "email.sent", "email.failed", "email.captured", "page.opened", "pass.downloaded", "bundle.opened", "bundle.downloaded", "device.registered", "device.unregistered", "device.fetched", "device.log", "wallet.saved", "wallet.removed", "wallet.messaged", "push.queued", "push.sent", "push.failed", "scan.checked_in", "scan.redeemed", "scan.adjusted", "scan.rejected", "scan.checked_out", "scan.heads_up", "scan.undone", "message.applied", "schedule.applied"] | str
     device: str | None
     actorType: _Literal["user", "api_key", "system", "connection", "device", "holder", "scanner", None] | str
     actorId: str | None
@@ -6367,6 +6372,11 @@ class PassesRefreshResult(_Model):
     accepted: _Literal[True]
     requestedAt: int
 
+class PassesReissueProviderCopiesParams(_Model):
+    orgId: str | None = None
+    provider: _Literal["google", "samsung"] | str
+    templateId: str | None = None
+
 class PassesRemoveParams(_Model):
     message: str | None = None
 
@@ -6512,6 +6522,11 @@ class PlatformWalletCredentialsResolveMigrationParams(_Model):
     action: _Literal["assign_platform", "merge", "retire"] | str
 
 class PlatformWalletCredentialsRevokeParams(_Model):
+    expectedRevision: int
+
+class PlatformWalletCredentialsSetSamsungCardParams(_Model):
+    type: _Literal["loyalty", "ticket", "coupon"] | str
+    cardId: str
     expectedRevision: int
 
 class PlatformWalletCredentialsUpsertParams1(_Model):
@@ -9851,6 +9866,10 @@ class WalletProviderAccountsVerifyParams(_Model):
     candidateId: str
     candidateHash: str
 
+class WalletReissue(_Model):
+    reissueId: str
+    instances: int
+
 class WebhookCapture(_Model):
     id: str
     endpointId: str
@@ -10236,6 +10255,10 @@ PassesMatchPhotosBody = PassesMatchPhotosParams
 PassesMemberPhotoUpdateBody = PassesMemberPhotoUpdateParams
 
 PassesMemberPhotoUploadBody = PassesMemberPhotoUploadParams
+
+PassesReissueProviderCopiesBody = PassesReissueProviderCopiesParams
+
+PassesReissueProviderCopiesResult = WalletReissue
 
 PassesRemoveBody = PassesRemoveParams
 

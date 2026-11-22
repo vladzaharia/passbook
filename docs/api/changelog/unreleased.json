@@ -704,6 +704,14 @@
     "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
   },
   {
+    "key": "GET /api/v1/passes/{id}/events 200.items[].kind: enum value \"wallet.messaged\" added",
+    "class": "notable",
+    "operationId": "passes.getPassesByIdEvents",
+    "op": "GET /api/v1/passes/{id}/events",
+    "change": "200.items[].kind: enum value \"wallet.messaged\" added",
+    "note": "wallet.messaged records what a wallet did with a change message: notified, updated only (the card changed, no alert) or not accepted."
+  },
+  {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
     "class": "additive",
     "operationId": "passes.getPassesBulkRunsById",
@@ -2325,12 +2333,28 @@
     "note": "Starts provisioning a managed Google issuer."
   },
   {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared 200.credential.cardTypes: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
+    "change": "200.credential.cardTypes: field added",
+    "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
+  },
+  {
     "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared new operation",
     "class": "additive",
     "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
     "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
     "change": "new operation",
     "note": "Attaches an existing Google issuer shared with the platform."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.cardTypes: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
+    "change": "200.cardTypes: field added",
+    "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -2475,6 +2499,14 @@
     "op": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete",
     "change": "new operation",
     "note": "Completes a managed Google issuer once Google has approved it."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.cardTypes: field added",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
+    "change": "200.cardTypes: field added",
+    "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
   },
   {
     "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.provenance: field added",
@@ -3157,6 +3189,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "POST /api/v1/wallet-providers/reissue new operation",
+    "class": "additive",
+    "operationId": "wallet-providers.postWalletProvidersReissue",
+    "op": "POST /api/v1/wallet-providers/reissue",
+    "change": "new operation",
+    "note": "POST /wallet-providers/reissue sends every active Google or Samsung copy of an org's passes again. A key needs passes:write."
+  },
+  {
     "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
     "class": "additive",
     "operationId": "brand.putBrandWebLogo",
@@ -3237,6 +3277,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.cardTypes: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
+    "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
+    "change": "200.cardTypes: field added",
+    "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
+  },
+  {
     "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.provenance: field added",
     "class": "additive",
     "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
@@ -3285,12 +3333,28 @@
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
   },
   {
+    "key": "PUT /api/v1/platform/wallet-credentials 200.cardTypes: field added",
+    "class": "additive",
+    "operationId": "wallet-platform.putPlatformWalletCredentials",
+    "op": "PUT /api/v1/platform/wallet-credentials",
+    "change": "200.cardTypes: field added",
+    "note": "Wallet credentials report cardTypes: the Samsung card types that have a card. Empty for Google."
+  },
+  {
     "key": "PUT /api/v1/platform/wallet-credentials 200.provenance: field added",
     "class": "additive",
     "operationId": "wallet-platform.putPlatformWalletCredentials",
     "op": "PUT /api/v1/platform/wallet-credentials",
     "change": "200.provenance: field added",
     "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/platform/wallet-credentials/{id}/cards new operation",
+    "class": "additive",
+    "operationId": "wallet-platform.putPlatformWalletCredentialsByIdCards",
+    "op": "PUT /api/v1/platform/wallet-credentials/{id}/cards",
+    "change": "new operation",
+    "note": "PUT /platform/wallet-credentials/{id}/cards names the Samsung card of one more type on a platform credential, without sending the partner secrets again."
   },
   {
     "key": "PUT /api/v1/settings 200.oidc.consoleGroupRequired: field added",

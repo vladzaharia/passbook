@@ -2257,6 +2257,10 @@
     "resource": "platform.walletCredentials",
     "method": "upsert"
   },
+  "wallet-platform.putPlatformWalletCredentialsByIdCards": {
+    "resource": "platform.walletCredentials",
+    "method": "setSamsungCard"
+  },
   "wallet-providers.getWalletProvidersAccounts": {
     "resource": "walletProviderAccounts",
     "method": "retrieve"
@@ -2272,6 +2276,10 @@
   "wallet-providers.postWalletProvidersAccountsVerify": {
     "resource": "walletProviderAccounts",
     "method": "verify"
+  },
+  "wallet-providers.postWalletProvidersReissue": {
+    "resource": "passes",
+    "method": "reissueProviderCopies"
   },
   "wallet-providers.putWalletProvidersAccounts": {
     "resource": "walletProviderAccounts",

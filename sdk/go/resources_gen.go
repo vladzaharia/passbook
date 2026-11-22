@@ -1467,6 +1467,15 @@ func (r *PassesResource) Refresh(ctx context.Context, id string, opts ...Request
 	return &out, nil
 }
 
+// ReissueProviderCopies Send every active Google or Samsung copy of an organization's passes again; a key needs passes:write `POST /api/v1/wallet-providers/reissue`
+func (r *PassesResource) ReissueProviderCopies(ctx context.Context, body *PassesReissueProviderCopiesBody, opts ...RequestOption) (*PassesReissueProviderCopiesResult, error) {
+	var out PassesReissueProviderCopiesResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/wallet-providers/reissue", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Remove Remove from Wallet: publish a voided, expired final version `POST /api/v1/passes/{id}/remove`
 func (r *PassesResource) Remove(ctx context.Context, id string, body *PassesRemoveBody, opts ...RequestOption) (*PassesRemoveResult, error) {
 	var out PassesRemoveResult

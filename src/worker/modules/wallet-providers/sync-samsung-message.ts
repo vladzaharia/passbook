@@ -1,11 +1,10 @@
 import type { PassJson } from '../../../passkit/types.ts';
 import { googleChangeMessage } from '../../../passkit/wallets/google/messages.ts';
-import { batch } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { eventRowOf } from '../events/record.ts';
-import { insertEventStmt } from '../events/repo.ts';
 import { passJsonsBetween } from './repo-google-messages.ts';
 import { priorSucceededOperation } from './repo-instance-prior.ts';
+import { insertWalletMessagedEvent } from './repo-wallet-messaged.ts';
 import type { WalletSyncOperationExecution } from './sync-operation-context.ts';
 
 /**
@@ -40,10 +39,5 @@ export async function recordSamsungMessageOutcome(
     id,
     null,
   );
-  await batch(db, [
-    insertEventStmt(db, row, {
-      sql: 'NOT EXISTS (SELECT 1 FROM pass_events e WHERE e.id = ?)',
-      params: [id],
-    }),
-  ]);
+  await insertWalletMessagedEvent(db, row);
 }

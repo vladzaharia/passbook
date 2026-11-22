@@ -1950,6 +1950,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"passes.reissueProviderCopies", "POST", "/api/v1/wallet-providers/reissue", false,
+		`{"provider":"google"}`, `{"reissueId":"x","instances":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b PassesReissueProviderCopiesBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Passes.ReissueProviderCopies(ctx, &b)
+		},
+	},
+	{
 		"webhookEndpoints.list", "GET", "/api/v1/webhook-endpoints", false,
 		"", `{"items":[{"id":"x","orgId":"x","mode":"live","url":"x","urlMasked":"x","description":"x","eventTypes":["pass.issued"],"templateIds":["x"],"apiVersion":"2026-12-01","status":"active","target":"url","failingSince":0,"disabledAt":0,"lastSuccessAt":0,"lastFailureAt":0,"lastStatus":0,"secretCreatedAt":0,"previousSecretExpiresAt":0,"createdAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

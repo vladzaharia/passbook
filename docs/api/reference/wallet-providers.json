@@ -1,5 +1,17 @@
 {
   "wallet-providers.getWalletProvidersPassesById": {
     "description": "The local provider instance status of a pass."
+  },
+  "wallet-providers.postWalletProvidersReissue": {
+    "description": "Sends every active Google or Samsung copy of an organization's passes again, so a changed release, art or compiler reaches cards whose passes did not change. Passes nobody has added to a wallet have no copy yet and are skipped. A key needs `passes:write`.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "provider": "google",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
+    },
+    "response": {
+      "reissueId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "instances": 12
+    }
   }
 }

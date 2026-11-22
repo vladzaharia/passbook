@@ -2364,6 +2364,12 @@ export type PassesMemberPhotoUploadParams = {
   includeInPass?: boolean;
 };
 
+export type PassesReissueProviderCopiesParams = {
+  orgId?: string;
+  provider: "google" | "samsung";
+  templateId?: string;
+};
+
 export type PassesRemoveParams = {
   message?: string;
 };
@@ -2461,6 +2467,12 @@ export type PlatformWalletCredentialsResolveMigrationParams = {
 };
 
 export type PlatformWalletCredentialsRevokeParams = {
+  expectedRevision: number;
+};
+
+export type PlatformWalletCredentialsSetSamsungCardParams = {
+  type: "loyalty" | "ticket" | "coupon";
+  cardId: string;
   expectedRevision: number;
 };
 
@@ -5343,6 +5355,11 @@ export type WalletProviderAccountsVerifyParams = {
   mode: "live" | "test";
   candidateId: string;
   candidateHash: string;
+};
+
+export type WalletReissue = {
+  reissueId: string;
+  instances: number;
 };
 
 export type WebhookCapture = {

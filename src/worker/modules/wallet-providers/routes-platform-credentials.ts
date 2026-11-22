@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CursorQuerySchema, IdSchema } from '../../../shared/contracts/common.ts';
+import { SetSamsungCardSchema } from '../../../shared/contracts/wallet-provider-actions.ts';
 import {
   HoldWalletEnrolmentSchema,
   PlatformWalletCredentialCheckParamsSchema,
@@ -9,7 +10,6 @@ import {
   ResolveWalletMigrationSchema,
   RevokeWalletCredentialSchema,
   SavePlatformWalletCredentialSchema,
-  SetSamsungCardSchema,
   WalletCredentialCheckQueuedSchema,
   WalletCredentialCheckResultSchema,
   WalletCredentialListSchema,
