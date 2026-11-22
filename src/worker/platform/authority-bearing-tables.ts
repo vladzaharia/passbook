@@ -51,6 +51,9 @@ export const ORG_BEARING_TABLES: ReadonlySet<string> = new Set([
   'scan_offline_reads',
   'scan_offline_state',
   'scan_session_changes',
+  'pass_bulk_runs',
+  'pass_bulk_locks',
+  'pass_views',
 ]);
 export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'broadcasts',
@@ -79,6 +82,9 @@ export const MODE_BEARING_TABLES: ReadonlySet<string> = new Set([
   'request_log',
   'scan_offline_reads',
   'scan_session_changes',
+  'pass_bulk_runs',
+  'pass_bulk_locks',
+  'pass_views',
 ]);
 
 export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
@@ -88,6 +94,7 @@ export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
   'revisions',
   'pass_personalizations',
   'broadcast_items',
+  'broadcast_targets',
   'message_rule_fires',
   'pass_check_in',
   'sandbox_forward_passes',
