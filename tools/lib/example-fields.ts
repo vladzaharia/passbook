@@ -60,6 +60,24 @@ const RULES: Rule[] = [
     'https://bookings.northwind.example.com/hooks/passbook',
   ],
   [ANY, /\.(walletIssuance\.\w+|issuance)$/, { state: 'enabled' }],
+  // A Google Wallet issuer id is a long number (wallet-providers); a finished provisioning run is on its last step.
+  [ANY, /\.issuerId$/, '3388000000022843210'],
+  [
+    /^(identities|identity-runs|wallet-platform|wallet-credentials|pass-setup)\./,
+    /(^|\.run|\.items\[\d+\])\.step$/,
+    'done',
+  ],
+  [/^developer\./, /^\.signInUrl$/, 'https://passbook.mobile/login'],
+  [/^developer\./, /^\.href$/, 'https://passbook.mobile/developers/logs'],
+  [/^wallet-platform\..*Release$/, /^\.status$/, 'released'],
+  // The org is Northwind; an org object's id is the org's (orgs, brand, workspace).
+  [/^(orgs|brand)\./, /^\.id$/, IDS.org],
+  [/^(orgs|brand)\./, /\.personalOwner$/, null],
+  // The signed-in person's own session and email are the current and primary ones.
+  [/^me\./, /\.sessions?\b.*\.current$|^\.items\[0\]\.current$/, true],
+  [/^me\.(getMeEmails|postMeEmailsByEmailPrimary)$/, /^\.items\[0\]\.primary$/, true],
+  // A hold that is in force has not been released.
+  [/^retention\./, /\.(releasedAt|releasedByLabel)$/, null],
   // The org's brand: its own name, and image sizes a Wallet pass takes at 3x (orgs/brand.ts).
   [ANY, /\.brand\.(name|email\.fromName)\.value$/, 'Northwind Climbing'],
   [ANY, /\.(logo|web|webLogo)(\.value)?\.w$/, 480],

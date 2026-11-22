@@ -999,6 +999,38 @@ export const KEYSET = {
   ],
 };
 
+/** The org as a platform admin lists it. */
+export const ORG_ROW = {
+  id: IDS.org,
+  slug: 'northwind-climbing',
+  name: 'Northwind Climbing',
+  status: 'active',
+  personal: false,
+  personalOwner: null,
+  createdAt: Date.UTC(2026, 2, 3, 18, 0, 0),
+  counts: { passes: 128, templates: 2, connections: 1, apiKeys: 2, members: 4 },
+  countsCapped: false,
+};
+
+/** Ada's own view of her pass, in the holder portal. */
+export const MY_PASS = {
+  id: IDS.pass,
+  title: 'Day pass',
+  subtitle: 'Ada Example',
+  templateName: TEMPLATE.name,
+  orgName: 'Northwind Climbing',
+  status: 'active',
+  mode: 'live',
+  modifiedAt: T.updated,
+  voidedAt: null,
+  removedAt: null,
+  removalMessage: null,
+  lastRefreshedAt: T.updated + 3 * MIN,
+  refreshRequestedAt: null,
+  inWallet: true,
+  readOnly: false,
+};
+
 /** Object shapes the API repeats, by properties that give them away, to the world's own object. */
 export const SHAPES: { has: string[]; value: Record<string, unknown> }[] = [
   ...CANON,
@@ -1024,6 +1056,8 @@ export const SHAPES: { has: string[]; value: Record<string, unknown> }[] = [
   { has: ['pinSetAt', 'pinResetRequired', 'role'], value: STAFF },
   { has: ['blockedUserIds', 'transfer', 'ownerUserId'], value: HOLDER },
   { has: ['holderEmail', 'passes', 'linkRotatedAt'], value: BUNDLE },
+  { has: ['slug', 'counts', 'countsCapped'], value: ORG_ROW },
+  { has: ['templateName', 'orgName', 'inWallet'], value: MY_PASS },
   { has: ['endpointId', 'headers', 'trigger'], value: CAPTURE },
   { has: ['apiVersion', 'pass', 'data', 'type'], value: DELIVERY.payload },
   { has: ['placeNames', 'rev', 'serverNow', 'counts'], value: ROLL_CALL },

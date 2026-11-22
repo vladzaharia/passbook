@@ -584,7 +584,11 @@ export function sample(
   if (Array.isArray(type)) type = type.find((t: string) => t !== 'null') ?? type[0];
   if (!type && s.properties) type = 'object';
   // A nested object that is not a known resource is its own row, never the parent's resource.
-  const subKind = KIND_KEYS[key.replace(/Id$/, '')] ?? (/^(body|items|)$/.test(key) ? kind : 'row');
+  // An object's own `id` names the object: the kind it was sampled as, so one entity keeps one id everywhere.
+  const subKind =
+    key === 'id'
+      ? kind
+      : (KIND_KEYS[key.replace(/Id$/, '')] ?? (/^(body|items|)$/.test(key) ? kind : 'row'));
   switch (type) {
     case 'string':
       return str(ctx, s, key, path, subKind);

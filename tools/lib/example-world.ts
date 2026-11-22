@@ -183,8 +183,8 @@ export function hex(seed: string, len: number): string {
   return out.slice(0, len);
 }
 
-/** The pass's link token, as `/p/<token>` shows it (passes/detail.ts). */
-const PASS_TOKEN = 'xK3v9QmT2Lw8Rp4sYb7NcQ';
+/** The pass's link, as `/p/<link>` shows it (passes/detail.ts). */
+const PASS_LINK = 'xK3v9QmT2Lw8Rp4sYb7NcQ';
 /** A bundle's and a join link's tokens (`/b/<token>`, `/j/<token>`). */
 export const BUNDLE_URL = `${API}/b/Fm2qT8vXc4NpL6sRa9WkJd`;
 export const JOIN_URL = `${API}/j/Hs7dK2pYw9QxN4tBc6VmRe`;
@@ -235,11 +235,11 @@ export const PASS = {
   deliveries: [],
   warnings: [],
   passJson: TEMPLATE.passJson,
-  assetBaseUrl: `${API}/p/${PASS_TOKEN}/assets/`,
+  assetBaseUrl: `${API}/p/${PASS_LINK}/assets/`,
   assetNames: ['icon.png', 'icon@2x.png', 'logo.png'],
   blockedUsers: [],
-  downloadUrl: `${API}/p/${PASS_TOKEN}/pass.pkpass`,
-  publicUrl: `${API}/p/${PASS_TOKEN}`,
+  downloadUrl: `${API}/p/${PASS_LINK}/pass.pkpass`,
+  publicUrl: `${API}/p/${PASS_LINK}`,
 };
 
 /** The template every pass and scan example uses. */

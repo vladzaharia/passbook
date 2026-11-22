@@ -36,7 +36,7 @@ const uuid = (seed: string): string => `0193a1b2-7c00-7000-8000-${hex(seed, 12)}
 const GRACE = uuid('pass-grace');
 const scope = { orgId: IDS.org, eventId: IDS.event, timeZone: 'America/Los_Angeles' };
 const scanRequest = {
-  idempotencyKey: uuid('idem-scan'),
+  idempotencyKey: IDS.idem,
   input: SCAN_INPUT,
   clientTs: T.recent,
   dayStart: localHour(0),
@@ -278,7 +278,7 @@ export const SEEDS: Record<string, unknown> = {
   },
   'scan.postScanResolve request': scanRequest,
   'scan.postScanActions request': { ...scanRequest, actionId: 'admit' },
-  'scan.postScanScansByScanIdUndo request': { idempotencyKey: uuid('idem-undo'), scope },
+  'scan.postScanScansByScanIdUndo request': { idempotencyKey: IDS.idem, scope },
   'webhooks.postWebhookEndpoints request': {
     url: WEBHOOK_ENDPOINT.url,
     description: WEBHOOK_ENDPOINT.description,
@@ -829,6 +829,20 @@ export const SEEDS: Record<string, unknown> = {
     versions: [{ ...KEYSET.versions[0], state: 'retired', stateAt: T.now }],
   },
   'nfc-keysets.postNfcKeysetsByIdReenrol response': { moved: 12, ownKey: 0, keyset: KEYSET },
+  'organization-memberships.postOrgsByIdInvitations request': {
+    email: 'priya@example.com',
+    roles: ['org_admin'],
+  },
+  'organization-memberships.postOrgsByIdInvitations response': {
+    id: uuid('invitation-priya'),
+    orgId: IDS.org,
+    email: 'priya@example.com',
+    roles: ['org_admin'],
+    createdAt: T.now,
+    expiresAt: T.now + 7 * 24 * 3_600_000,
+    revokedAt: null,
+    acceptedAt: null,
+  },
   'bundles.postBundles request': {
     passIds: BUNDLE.passes.map((p) => p.id),
     name: BUNDLE.name,
