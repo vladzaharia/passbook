@@ -20,7 +20,10 @@ export function useBlueprintRequest() {
   ): Promise<UseBlueprintRequest> {
     const logo = quick.logo && !toOrg.logo ? quick.logo.asset : undefined;
     const color = quick.color && !toOrg.colors ? quick.color : undefined;
-    const own: BrandPartName[] = [...(logo ? (['logo'] as const) : []), ...(color ? (['colors'] as const) : [])];
+    const own: BrandPartName[] = [
+      ...(logo ? (['logo'] as const) : []),
+      ...(color ? (['colors'] as const) : []),
+    ];
     const touched = own.length > 0 || quick.goal !== undefined || quick.currency !== undefined;
     if (!touched || !blueprint.activeVersion) return input;
     const doc = brandDoc(docOfVersion(await load(blueprint.id, blueprint.activeVersion)), {

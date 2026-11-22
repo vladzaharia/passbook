@@ -160,6 +160,78 @@
     "note": "Keys may hold scanning:admin: staff PINs and pairing codes in the one-call setup."
   },
   {
+    "key": "GET /api/v1/broadcasts 200.items[].message: field added",
+    "class": "additive",
+    "operationId": "broadcasts.getBroadcasts",
+    "op": "GET /api/v1/broadcasts",
+    "change": "200.items[].message: field added",
+    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "GET /api/v1/broadcasts optional parameter query:kind added",
+    "class": "additive",
+    "operationId": "broadcasts.getBroadcasts",
+    "op": "GET /api/v1/broadcasts",
+    "change": "optional parameter query:kind added",
+    "note": "Only messages or only changes. The console's Messages list asks for messages and shows changes behind a filter."
+  },
+  {
+    "key": "GET /api/v1/broadcasts/{id} 200.message: field added",
+    "class": "additive",
+    "operationId": "broadcasts.getBroadcastsById",
+    "op": "GET /api/v1/broadcasts/{id}",
+    "change": "200.message: field added",
+    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.runs[].passesCreated: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.runs[].passesCreated: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.runs[].passesVoided: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.runs[].passesVoided: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id} 200.runs[].recordsFailed: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsById",
+    "op": "GET /api/v1/connections/{id}",
+    "change": "200.runs[].recordsFailed: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/runs 200.items[].passesCreated: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdRuns",
+    "op": "GET /api/v1/connections/{id}/runs",
+    "change": "200.items[].passesCreated: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/runs 200.items[].passesVoided: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdRuns",
+    "op": "GET /api/v1/connections/{id}/runs",
+    "change": "200.items[].passesVoided: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/{id}/runs 200.items[].recordsFailed: field added",
+    "class": "additive",
+    "operationId": "connections.getConnectionsByIdRuns",
+    "op": "GET /api/v1/connections/{id}/runs",
+    "change": "200.items[].recordsFailed: field added",
+    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
     "key": "GET /api/v1/developer/access new operation",
     "class": "additive",
     "operationId": "developer.getAccess",
@@ -320,6 +392,14 @@
     "note": "readOnly marks an ended pass that is listed before it is attached to the account: no refresh, remove or download."
   },
   {
+    "key": "GET /api/v1/message-rules/{id}/runs 200.items[].message: field added",
+    "class": "additive",
+    "operationId": "message-rules.getMessageRulesByIdRuns",
+    "op": "GET /api/v1/message-rules/{id}/runs",
+    "change": "200.items[].message: field added",
+    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
     "key": "GET /api/v1/metrics/overview 200.setup.releasedTemplates: field added",
     "class": "additive",
     "operationId": "metrics.getMetricsOverview",
@@ -382,6 +462,14 @@
     "op": "GET /api/v1/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"identity.managed\" added",
     "note": "New entitlement identity.managed gates managed Apple identities."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/entitlements 200.items[].key: enum value \"passes.changesPerDay\" added",
+    "class": "notable",
+    "operationId": "entitlements.getOrgsByIdEntitlements",
+    "op": "GET /api/v1/orgs/{id}/entitlements",
+    "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
+    "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
@@ -480,12 +568,60 @@
     "note": "Lists a template's saved column mappings."
   },
   {
+    "key": "GET /api/v1/passes 200.count: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.count: field added",
+    "note": "count is the number of passes the filters match, when count=true."
+  },
+  {
+    "key": "GET /api/v1/passes 200.items[].matched: field added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "200.items[].matched: field added",
+    "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "GET /api/v1/passes optional parameter query:count added",
+    "class": "additive",
+    "operationId": "passes.getPasses",
+    "op": "GET /api/v1/passes",
+    "change": "optional parameter query:count added",
+    "note": "count=true adds the number of passes the filters match."
+  },
+  {
     "key": "GET /api/v1/passes/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "passes.getPassesByIdChannels",
     "op": "GET /api/v1/passes/{id}/channels",
     "change": "200.levels: field added",
     "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
+    "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesBulkRunsById",
+    "op": "GET /api/v1/passes/bulk-runs/{id}",
+    "change": "new operation",
+    "note": "GET /passes/bulk-runs/{id} reports a bulk run's progress."
+  },
+  {
+    "key": "GET /api/v1/passes/bulk-runs/current new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesBulkRunsCurrent",
+    "op": "GET /api/v1/passes/bulk-runs/current",
+    "change": "new operation",
+    "note": "GET /passes/bulk-runs/current reports the organization's running bulk run, or the last one to end within the hour."
+  },
+  {
+    "key": "GET /api/v1/passes/views new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesViews",
+    "op": "GET /api/v1/passes/views",
+    "change": "new operation",
+    "note": "GET /passes/views lists the saved views of the passes list."
   },
   {
     "key": "GET /api/v1/platform/apple-calls new operation",
@@ -502,6 +638,14 @@
     "op": "GET /api/v1/platform/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"identity.managed\" added",
     "note": "New entitlement identity.managed gates managed Apple identities."
+  },
+  {
+    "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"passes.changesPerDay\" added",
+    "class": "notable",
+    "operationId": "entitlements.getPlatformOrgsByIdEntitlements",
+    "op": "GET /api/v1/platform/orgs/{id}/entitlements",
+    "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
+    "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
   },
   {
     "key": "GET /api/v1/scan-staff 200.items[].pinLockedToday: field added",
@@ -632,6 +776,14 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "GET /api/v1/templates/{id} 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesById",
+    "op": "GET /api/v1/templates/{id}",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
     "key": "GET /api/v1/templates/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdChannels",
@@ -662,6 +814,30 @@
     "op": "GET /api/v1/templates/{id}/sample.csv",
     "change": "new operation",
     "note": "Downloads a sample import file with the template's field labels and one valid row."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/versions/{version} 200.report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdVersionsByVersion",
+    "op": "GET /api/v1/templates/{id}/versions/{version}",
+    "change": "200.report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "GET /api/v1/templates/previews 200.items[].warnings[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesPreviews",
+    "op": "GET /api/v1/templates/previews",
+    "change": "200.items[].warnings[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "GET /api/v1/templates/uploads/{id} 200.report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesUploadsById",
+    "op": "GET /api/v1/templates/uploads/{id}",
+    "change": "200.report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
   {
     "key": "GET /api/v1/users 200.items[].lastRoles[]: enum value \"console\" added",
@@ -720,6 +896,14 @@
     "note": "Lists wallet identities across Apple and Google."
   },
   {
+    "key": "GET /api/v1/webhook-endpoints/{id}/tests new operation",
+    "class": "additive",
+    "operationId": "webhooks.getWebhookEndpointsByIdTests",
+    "op": "GET /api/v1/webhook-endpoints/{id}/tests",
+    "change": "new operation",
+    "note": "List the recent test sends of a webhook endpoint (sample event type, status, code and timing, kept 7 days), newest first."
+  },
+  {
     "key": "GET /b/{token}/{passId} new operation",
     "class": "additive",
     "operationId": "public.getBByTokenByPassId",
@@ -742,6 +926,46 @@
     "op": "PATCH /api/v1/brand",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PATCH /api/v1/broadcasts/{id} 200.message: field added",
+    "class": "additive",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "200.message: field added",
+    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "PATCH /api/v1/broadcasts/{id} body.message: optional input field added",
+    "class": "additive",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.message: optional input field added",
+    "note": "A change run's lock-screen text; {Label} tokens read each pass's new value (120 characters). Needs notify."
+  },
+  {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target.expectCount: optional input field added",
+    "class": "additive",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target.expectCount: optional input field added",
+    "note": "The count the admin saw. A selection that drifts more than 2% answers 409 SELECTION_CHANGED, and a run that starts far from it applies nothing."
+  },
+  {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target.importId: optional input field added",
+    "class": "additive",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target.importId: optional input field added",
+    "note": "A change run on the passes one import created or updated. Exactly one of templateIds, passIds and importId."
+  },
+  {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target.passIds: optional input field added",
+    "class": "additive",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target.passIds: optional input field added",
+    "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
   },
   {
     "key": "PATCH /api/v1/identities/{id} 200.handle: field added",
@@ -880,6 +1104,14 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "PATCH /api/v1/templates/{id} 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.patchTemplatesById",
+    "op": "PATCH /api/v1/templates/{id}",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
     "key": "PATCH /api/v1/users/{id} 200.lastRoles[]: enum value \"console\" added",
     "class": "notable",
     "operationId": "users.patchUsersById",
@@ -902,926 +1134,6 @@
     "op": "POST /api/v1/api-keys",
     "change": "403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
     "note": "A sandbox key may not hold api-keys:write, scans:write or scanning:admin, at mint or roll: 403, scopes in issues."
-  },
-  {
-    "key": "POST /api/v1/identities 201.handle: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentities",
-    "op": "POST /api/v1/identities",
-    "change": "201.handle: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities 201.issuing: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentities",
-    "op": "POST /api/v1/identities",
-    "change": "201.issuing: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities 201.kind: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentities",
-    "op": "POST /api/v1/identities",
-    "change": "201.kind: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities 201.nextRotationAt: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentities",
-    "op": "POST /api/v1/identities",
-    "change": "201.nextRotationAt: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities 201.rotation: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentities",
-    "op": "POST /api/v1/identities",
-    "change": "201.rotation: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities 201.status: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentities",
-    "op": "POST /api/v1/identities",
-    "change": "201.status: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities/{id}/renew new operation",
-    "class": "additive",
-    "operationId": "identities.postIdentitiesByIdRenew",
-    "op": "POST /api/v1/identities/{id}/renew",
-    "change": "new operation",
-    "note": "Starts a certificate renewal run."
-  },
-  {
-    "key": "POST /api/v1/identities/{id}/revoke-certificate new operation",
-    "class": "additive",
-    "operationId": "identities.postIdentitiesByIdRevokeCertificate",
-    "op": "POST /api/v1/identities/{id}/revoke-certificate",
-    "change": "new operation",
-    "note": "Revokes one certificate of an identity."
-  },
-  {
-    "key": "POST /api/v1/identities/{id}/rotate 200.handle: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentitiesByIdRotate",
-    "op": "POST /api/v1/identities/{id}/rotate",
-    "change": "200.handle: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities/{id}/rotate 200.issuing: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentitiesByIdRotate",
-    "op": "POST /api/v1/identities/{id}/rotate",
-    "change": "200.issuing: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities/{id}/rotate 200.kind: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentitiesByIdRotate",
-    "op": "POST /api/v1/identities/{id}/rotate",
-    "change": "200.kind: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities/{id}/rotate 200.nextRotationAt: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentitiesByIdRotate",
-    "op": "POST /api/v1/identities/{id}/rotate",
-    "change": "200.nextRotationAt: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities/{id}/rotate 200.rotation: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentitiesByIdRotate",
-    "op": "POST /api/v1/identities/{id}/rotate",
-    "change": "200.rotation: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identities/{id}/rotate 200.status: field added",
-    "class": "additive",
-    "operationId": "identities.postIdentitiesByIdRotate",
-    "op": "POST /api/v1/identities/{id}/rotate",
-    "change": "200.status: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "POST /api/v1/identity-runs/{id}/cancel new operation",
-    "class": "additive",
-    "operationId": "identity-runs.postIdentityRunsByIdCancel",
-    "op": "POST /api/v1/identity-runs/{id}/cancel",
-    "change": "new operation",
-    "note": "Cancels an open provisioning run."
-  },
-  {
-    "key": "POST /api/v1/identity-runs/{id}/retry new operation",
-    "class": "additive",
-    "operationId": "identity-runs.postIdentityRunsByIdRetry",
-    "op": "POST /api/v1/identity-runs/{id}/retry",
-    "change": "new operation",
-    "note": "Retries a failed or cancelled provisioning run."
-  },
-  {
-    "key": "POST /api/v1/nfc/passes/{passId}/tags/assign new operation",
-    "class": "additive",
-    "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
-    "op": "POST /api/v1/nfc/passes/{passId}/tags/assign",
-    "change": "new operation",
-    "note": "Assign a typed tag ID or a spare tag to a pass without a scanner."
-  },
-  {
-    "key": "POST /api/v1/orgs 201.kind: field added",
-    "class": "additive",
-    "operationId": "orgs.postOrgs",
-    "op": "POST /api/v1/orgs",
-    "change": "201.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
-  },
-  {
-    "key": "POST /api/v1/orgs 201.personal: field added",
-    "class": "additive",
-    "operationId": "orgs.postOrgs",
-    "op": "POST /api/v1/orgs",
-    "change": "201.personal: field added",
-    "note": "Organizations carry personal: true for a personal org."
-  },
-  {
-    "key": "POST /api/v1/orgs body.addMe: optional input field added",
-    "class": "additive",
-    "operationId": "orgs.postOrgs",
-    "op": "POST /api/v1/orgs",
-    "change": "body.addMe: optional input field added",
-    "note": "addMe (default true) makes the creating admin an org_admin of the new org, with the invitation and membership written in the create batch."
-  },
-  {
-    "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
-    "class": "additive",
-    "operationId": "orgs.postOrgsByIdStatus",
-    "op": "POST /api/v1/orgs/{id}/status",
-    "change": "200.personal: field added",
-    "note": "Organizations carry personal: true for a personal org."
-  },
-  {
-    "key": "POST /api/v1/orgs/{id}/status 200.personalOwner: field added",
-    "class": "additive",
-    "operationId": "orgs.postOrgsByIdStatus",
-    "op": "POST /api/v1/orgs/{id}/status",
-    "change": "200.personalOwner: field added",
-    "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
-  },
-  {
-    "key": "POST /api/v1/orgs/{orgId}/brand-assets new operation",
-    "class": "additive",
-    "operationId": "pass-setup.postOrgsByOrgIdBrandAssets",
-    "op": "POST /api/v1/orgs/{orgId}/brand-assets",
-    "change": "new operation",
-    "note": "Stage a logo, icon or web logo PNG; it answers the sha and version a pass-setup save names. Unused uploads are deleted later. Needs org:write or brand:manage."
-  },
-  {
-    "key": "POST /api/v1/orgs/{orgId}/identities/apple new operation",
-    "class": "additive",
-    "operationId": "identity-runs.postOrgsByOrgIdIdentitiesApple",
-    "op": "POST /api/v1/orgs/{orgId}/identities/apple",
-    "change": "new operation",
-    "note": "Starts provisioning a managed Apple identity."
-  },
-  {
-    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/managed new operation",
-    "class": "additive",
-    "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleManaged",
-    "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/managed",
-    "change": "new operation",
-    "note": "Starts provisioning a managed Google issuer."
-  },
-  {
-    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared new operation",
-    "class": "additive",
-    "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
-    "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
-    "change": "new operation",
-    "note": "Attaches an existing Google issuer shared with the platform."
-  },
-  {
-    "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.provenance: field added",
-    "class": "additive",
-    "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
-    "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
-    "change": "200.provenance: field added",
-    "note": "Wallet credentials report provenance."
-  },
-  {
-    "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
-    "class": "additive",
-    "operationId": "organization-memberships.postOrgsInvitationsAccept",
-    "op": "POST /api/v1/orgs/invitations/accept",
-    "change": "200.personal: field added",
-    "note": "Organizations carry personal: true for a personal org."
-  },
-  {
-    "key": "POST /api/v1/orgs/invitations/accept 200.testOnly: field added",
-    "class": "additive",
-    "operationId": "organization-memberships.postOrgsInvitationsAccept",
-    "op": "POST /api/v1/orgs/invitations/accept",
-    "change": "200.testOnly: field added",
-    "note": "Memberships carry testOnly: true for a developer sandbox, which never holds Live."
-  },
-  {
-    "key": "POST /api/v1/pass-imports request.mapping: field added",
-    "class": "additive",
-    "operationId": "pass-imports.postPassImports",
-    "op": "POST /api/v1/pass-imports",
-    "change": "request.mapping: field added",
-    "note": "Send mapping: auto with no plan to map the file from the template. Create and commit take an Idempotency-Key."
-  },
-  {
-    "key": "POST /api/v1/pass-imports/{id}/check request.plan.overrides: field added",
-    "class": "additive",
-    "operationId": "pass-imports.postPassImportsByIdCheck",
-    "op": "POST /api/v1/pass-imports/{id}/check",
-    "change": "request.plan.overrides: field added",
-    "note": "A plan can carry overrides: cell fixes by row and column, at most 200."
-  },
-  {
-    "key": "POST /api/v1/pass-imports/{id}/commit request.email: union added",
-    "class": "additive",
-    "operationId": "pass-imports.postPassImportsByIdCommit",
-    "op": "POST /api/v1/pass-imports/{id}/commit",
-    "change": "request.email: union added",
-    "note": "email also takes {send: now} or {send: held, holdMs}; held mail goes out after the wait unless the import is undone."
-  },
-  {
-    "key": "POST /api/v1/pass-imports/{id}/email-rest 200.alreadyQueued: field added",
-    "class": "additive",
-    "operationId": "pass-imports.postPassImportsByIdEmailRest",
-    "op": "POST /api/v1/pass-imports/{id}/email-rest",
-    "change": "200.alreadyQueued: field added",
-    "note": "Held mail a stopped run had already queued is settled and counted here, not in sent."
-  },
-  {
-    "key": "POST /api/v1/pass-imports/{id}/email-rest 409: IMPORT_UNDO_RUNNING added",
-    "class": "additive",
-    "operationId": "pass-imports.postPassImportsByIdEmailRest",
-    "op": "POST /api/v1/pass-imports/{id}/email-rest",
-    "change": "409: IMPORT_UNDO_RUNNING added",
-    "note": "email-rest sends now, also during a hold, and is refused while an undo runs."
-  },
-  {
-    "key": "POST /api/v1/pass-imports/{id}/undo new operation",
-    "class": "additive",
-    "operationId": "pass-imports.postPassImportsByIdUndo",
-    "op": "POST /api/v1/pass-imports/{id}/undo",
-    "change": "new operation",
-    "note": "Undoes an ended import for 24 hours: removes its unedited passes, restores the ones it updated, cancels held mail."
-  },
-  {
-    "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
-    "class": "additive",
-    "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged",
-    "op": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed",
-    "change": "new operation",
-    "note": "Starts a managed Google issuer for an org."
-  },
-  {
-    "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete new operation",
-    "class": "additive",
-    "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManagedComplete",
-    "op": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete",
-    "change": "new operation",
-    "note": "Completes a managed Google issuer once Google has approved it."
-  },
-  {
-    "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.provenance: field added",
-    "class": "additive",
-    "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
-    "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
-    "change": "200.provenance: field added",
-    "note": "Wallet credentials report provenance."
-  },
-  {
-    "key": "POST /api/v1/platform/wallet-credentials/{id}/rotate-key new operation",
-    "class": "additive",
-    "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRotateKey",
-    "op": "POST /api/v1/platform/wallet-credentials/{id}/rotate-key",
-    "change": "new operation",
-    "note": "Starts a service account key rotation."
-  },
-  {
-    "key": "POST /api/v1/scan-staff 201.staff.pinLockedToday: field added",
-    "class": "additive",
-    "operationId": "scan-staff.postScanStaff",
-    "op": "POST /api/v1/scan-staff",
-    "change": "201.staff.pinLockedToday: field added",
-    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
-  },
-  {
-    "key": "POST /api/v1/scan-staff 201.staff.pinResetRequired: field added",
-    "class": "additive",
-    "operationId": "scan-staff.postScanStaff",
-    "op": "POST /api/v1/scan-staff",
-    "change": "201.staff.pinResetRequired: field added",
-    "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
-  },
-  {
-    "key": "POST /api/v1/scan-staff/{id}/unlock-pin new operation",
-    "class": "additive",
-    "operationId": "scan-staff.postScanStaffByIdUnlockPin",
-    "op": "POST /api/v1/scan-staff/{id}/unlock-pin",
-    "change": "new operation",
-    "note": "Admins lift a staff member's daily PIN lock with POST /scan-staff/{id}/unlock-pin."
-  },
-  {
-    "key": "POST /api/v1/scan-staff/reset-untagged new operation",
-    "class": "additive",
-    "operationId": "scan-staff.postScanStaffResetUntagged",
-    "op": "POST /api/v1/scan-staff/reset-untagged",
-    "change": "new operation",
-    "note": "Admins ask everyone whose PIN predates PIN tags for a new PIN with POST /scan-staff/reset-untagged."
-  },
-  {
-    "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",
-    "class": "additive",
-    "operationId": "scan.postScanDevice",
-    "op": "POST /api/v1/scan/device",
-    "change": "200.device.capabilities.hardware: field added",
-    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
-  },
-  {
-    "key": "POST /api/v1/scan/device body.capabilities.hardware: optional input field added",
-    "class": "additive",
-    "operationId": "scan.postScanDevice",
-    "op": "POST /api/v1/scan/device",
-    "change": "body.capabilities.hardware: optional input field added",
-    "note": "Devices may report found hardware by kind, count and state; names and ids are refused."
-  },
-  {
-    "key": "POST /api/v1/scan/pair 200.staff.pinResetRequired: field added",
-    "class": "additive",
-    "operationId": "scan.postScanPair",
-    "op": "POST /api/v1/scan/pair",
-    "change": "200.staff.pinResetRequired: field added",
-    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
-  },
-  {
-    "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.hardware: field added",
-    "class": "additive",
-    "operationId": "scan.postScanPair",
-    "op": "POST /api/v1/scan/pair",
-    "change": "200.workspace.device.capabilities.hardware: field added",
-    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
-  },
-  {
-    "key": "POST /api/v1/scan/pair/preview 200.sessionName: field added",
-    "class": "additive",
-    "operationId": "scan.postScanPairPreview",
-    "op": "POST /api/v1/scan/pair/preview",
-    "change": "200.sessionName: field added",
-    "note": "The pairing preview names the session the device joins."
-  },
-  {
-    "key": "POST /api/v1/scan/role 200.staff.pinResetRequired: field added",
-    "class": "additive",
-    "operationId": "scan.postScanRole",
-    "op": "POST /api/v1/scan/role",
-    "change": "200.staff.pinResetRequired: field added",
-    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
-  },
-  {
-    "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.hardware: field added",
-    "class": "additive",
-    "operationId": "scan.postScanRole",
-    "op": "POST /api/v1/scan/role",
-    "change": "200.workspace.device.capabilities.hardware: field added",
-    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
-  },
-  {
-    "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",
-    "class": "additive",
-    "operationId": "scan.postScanStaff",
-    "op": "POST /api/v1/scan/staff",
-    "change": "200.staff.pinResetRequired: field added",
-    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
-  },
-  {
-    "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.hardware: field added",
-    "class": "additive",
-    "operationId": "scan.postScanStaff",
-    "op": "POST /api/v1/scan/staff",
-    "change": "200.workspace.device.capabilities.hardware: field added",
-    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
-  },
-  {
-    "key": "POST /api/v1/scan/staff/pin new operation",
-    "class": "additive",
-    "operationId": "scan.postScanStaffPin",
-    "op": "POST /api/v1/scan/staff/pin",
-    "change": "new operation",
-    "note": "A flagged staff member gets a new random PIN, returned once with the session, from POST /scan/staff/pin. They never choose it."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.hardware: field added",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessions",
-    "op": "POST /api/v1/scanning-sessions",
-    "change": "201.devices[].capabilities.hardware: field added",
-    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.hardware: field added",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsByIdDevices",
-    "op": "POST /api/v1/scanning-sessions/{id}/devices",
-    "change": "201.capabilities.hardware: field added",
-    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.hardware: field added",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsByIdHold",
-    "op": "POST /api/v1/scanning-sessions/{id}/hold",
-    "change": "200.devices[].capabilities.hardware: field added",
-    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/setup new operation",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsSetup",
-    "op": "POST /api/v1/scanning-sessions/setup",
-    "change": "new operation",
-    "note": "Set up scanning in one call: places, events, staff, sessions and devices."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/archive 200.release: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdArchive",
-    "op": "POST /api/v1/templates/{id}/archive",
-    "change": "200.release: field added",
-    "note": "A template carries its release state: release says which version is current, pending or rolled back."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/channels/reset-passes new operation",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdChannelsResetPasses",
-    "op": "POST /api/v1/templates/{id}/channels/reset-passes",
-    "change": "new operation",
-    "note": "Resets passes with their own channel choice to the template, a page per call; repeat while remaining is above 0."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/clone 201.release: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdClone",
-    "op": "POST /api/v1/templates/{id}/clone",
-    "change": "201.release: field added",
-    "note": "A template carries its release state: release says which version is current, pending or rolled back."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/release new operation",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdRelease",
-    "op": "POST /api/v1/templates/{id}/release",
-    "change": "new operation",
-    "note": "Releases a saved version to Test and Live in one call, with dryRun to preview. Test follows Live; Idempotency-Key is required."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/restore 200.release: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdRestore",
-    "op": "POST /api/v1/templates/{id}/restore",
-    "change": "200.release: field added",
-    "note": "A template carries its release state: release says which version is current, pending or rolled back."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/review new operation",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdReview",
-    "op": "POST /api/v1/templates/{id}/review",
-    "change": "new operation",
-    "note": "A reviewer approves a requested version in Test and Live, and releases it with release: true. Test keys approve Test only."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/review-requests new operation",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdReviewRequests",
-    "op": "POST /api/v1/templates/{id}/review-requests",
-    "change": "new operation",
-    "note": "Creates or reuses the Test and Live candidates of a version so another reviewer can approve."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/share 200.release: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdShare",
-    "op": "POST /api/v1/templates/{id}/share",
-    "change": "200.release: field added",
-    "note": "A template carries its release state: release says which version is current, pending or rolled back."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/use 201.release: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdUse",
-    "op": "POST /api/v1/templates/{id}/use",
-    "change": "201.release: field added",
-    "note": "A template carries its release state: release says which version is current, pending or rolled back."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/use/check 200.template.release: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdUseCheck",
-    "op": "POST /api/v1/templates/{id}/use/check",
-    "change": "200.template.release: field added",
-    "note": "A template carries its release state: release says which version is current, pending or rolled back."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/versions 200.template.release: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdVersions",
-    "op": "POST /api/v1/templates/{id}/versions",
-    "change": "200.template.release: field added",
-    "note": "A template carries its release state: release says which version is current, pending or rolled back."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"console\" added",
-    "class": "notable",
-    "operationId": "users.postUsersByIdEmails",
-    "op": "POST /api/v1/users/{id}/emails",
-    "change": "202.lastRoles[]: enum value \"console\" added",
-    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"developer\" added",
-    "class": "notable",
-    "operationId": "users.postUsersByIdEmails",
-    "op": "POST /api/v1/users/{id}/emails",
-    "change": "202.lastRoles[]: enum value \"developer\" added",
-    "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"console\" added",
-    "class": "notable",
-    "operationId": "users.postUsersByIdEmails",
-    "op": "POST /api/v1/users/{id}/emails",
-    "change": "202.sessions[].roles[]: enum value \"console\" added",
-    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"developer\" added",
-    "class": "notable",
-    "operationId": "users.postUsersByIdEmails",
-    "op": "POST /api/v1/users/{id}/emails",
-    "change": "202.sessions[].roles[]: enum value \"developer\" added",
-    "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.lastRoles[]: enum value \"console\" added",
-    "class": "notable",
-    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
-    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
-    "change": "200.lastRoles[]: enum value \"console\" added",
-    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.lastRoles[]: enum value \"developer\" added",
-    "class": "notable",
-    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
-    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
-    "change": "200.lastRoles[]: enum value \"developer\" added",
-    "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"console\" added",
-    "class": "notable",
-    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
-    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
-    "change": "200.sessions[].roles[]: enum value \"console\" added",
-    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
-  },
-  {
-    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"developer\" added",
-    "class": "notable",
-    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
-    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
-    "change": "200.sessions[].roles[]: enum value \"developer\" added",
-    "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
-  },
-  {
-    "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
-    "class": "additive",
-    "operationId": "brand.putBrandWebLogo",
-    "op": "PUT /api/v1/brand/web-logo",
-    "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
-  },
-  {
-    "key": "PUT /api/v1/brand/web-logo 200.personal: field added",
-    "class": "additive",
-    "operationId": "brand.putBrandWebLogo",
-    "op": "PUT /api/v1/brand/web-logo",
-    "change": "200.personal: field added",
-    "note": "Organizations carry personal: true for a personal org."
-  },
-  {
-    "key": "PUT /api/v1/identities/{id}/push-key 200.handle: field added",
-    "class": "additive",
-    "operationId": "identities.putIdentitiesByIdPushKey",
-    "op": "PUT /api/v1/identities/{id}/push-key",
-    "change": "200.handle: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "PUT /api/v1/identities/{id}/push-key 200.issuing: field added",
-    "class": "additive",
-    "operationId": "identities.putIdentitiesByIdPushKey",
-    "op": "PUT /api/v1/identities/{id}/push-key",
-    "change": "200.issuing: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "PUT /api/v1/identities/{id}/push-key 200.kind: field added",
-    "class": "additive",
-    "operationId": "identities.putIdentitiesByIdPushKey",
-    "op": "PUT /api/v1/identities/{id}/push-key",
-    "change": "200.kind: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "PUT /api/v1/identities/{id}/push-key 200.nextRotationAt: field added",
-    "class": "additive",
-    "operationId": "identities.putIdentitiesByIdPushKey",
-    "op": "PUT /api/v1/identities/{id}/push-key",
-    "change": "200.nextRotationAt: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "PUT /api/v1/identities/{id}/push-key 200.rotation: field added",
-    "class": "additive",
-    "operationId": "identities.putIdentitiesByIdPushKey",
-    "op": "PUT /api/v1/identities/{id}/push-key",
-    "change": "200.rotation: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "PUT /api/v1/identities/{id}/push-key 200.status: field added",
-    "class": "additive",
-    "operationId": "identities.putIdentitiesByIdPushKey",
-    "op": "PUT /api/v1/identities/{id}/push-key",
-    "change": "200.status: field added",
-    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.kind: field added",
-    "class": "additive",
-    "operationId": "orgs.putOrgsByIdBrandingBySlot",
-    "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
-    "change": "200.kind: field added",
-    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
-  },
-  {
-    "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
-    "class": "additive",
-    "operationId": "orgs.putOrgsByIdBrandingBySlot",
-    "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
-    "change": "200.personal: field added",
-    "note": "Organizations carry personal: true for a personal org."
-  },
-  {
-    "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.provenance: field added",
-    "class": "additive",
-    "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
-    "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
-    "change": "200.provenance: field added",
-    "note": "Wallet credentials report provenance."
-  },
-  {
-    "key": "PUT /api/v1/pass-imports/mappings new operation",
-    "class": "additive",
-    "operationId": "pass-imports.putPassImportsMappings",
-    "op": "PUT /api/v1/pass-imports/mappings",
-    "change": "new operation",
-    "note": "Saves a named column mapping for a template; the same name replaces it."
-  },
-  {
-    "key": "PUT /api/v1/passes/{id}/channels 200.levels: field added",
-    "class": "additive",
-    "operationId": "passes.putPassesByIdChannels",
-    "op": "PUT /api/v1/passes/{id}/channels",
-    "change": "200.levels: field added",
-    "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
-  },
-  {
-    "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
-    "class": "notable",
-    "operationId": "entitlements.putPlatformOrgsByIdEntitlements",
-    "op": "PUT /api/v1/platform/orgs/{id}/entitlements",
-    "change": "200.items[].key: enum value \"identity.managed\" added",
-    "note": "New entitlement identity.managed gates managed Apple identities."
-  },
-  {
-    "key": "PUT /api/v1/platform/wallet-credentials 200.provenance: field added",
-    "class": "additive",
-    "operationId": "wallet-platform.putPlatformWalletCredentials",
-    "op": "PUT /api/v1/platform/wallet-credentials",
-    "change": "200.provenance: field added",
-    "note": "Wallet credentials report provenance."
-  },
-  {
-    "key": "PUT /api/v1/settings 200.oidc.consoleGroupRequired: field added",
-    "class": "additive",
-    "operationId": "settings.putSettings",
-    "op": "PUT /api/v1/settings",
-    "change": "200.oidc.consoleGroupRequired: field added",
-    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
-  },
-  {
-    "key": "PUT /api/v1/settings 200.oidc.developerGroup: field added",
-    "class": "additive",
-    "operationId": "settings.putSettings",
-    "op": "PUT /api/v1/settings",
-    "change": "200.oidc.developerGroup: field added",
-    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
-  },
-  {
-    "key": "PUT /api/v1/settings 200.oidc.platformAdminGroup: field added",
-    "class": "additive",
-    "operationId": "settings.putSettings",
-    "op": "PUT /api/v1/settings",
-    "change": "200.oidc.platformAdminGroup: field added",
-    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
-  },
-  {
-    "key": "PUT /api/v1/templates/{id}/channels 200.levels: field added",
-    "class": "additive",
-    "operationId": "templates.putTemplatesByIdChannels",
-    "op": "PUT /api/v1/templates/{id}/channels",
-    "change": "200.levels: field added",
-    "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
-  },
-  {
-    "key": "PUT /api/v1/templates/{id}/channels 200.overridePasses: field added",
-    "class": "additive",
-    "operationId": "templates.putTemplatesByIdChannels",
-    "op": "PUT /api/v1/templates/{id}/channels",
-    "change": "200.overridePasses: field added",
-    "note": "overridePasses counts the passes with at least one choice of their own."
-  },
-  {
-    "key": "PUT /api/v1/templates/{id}/channels 200.overrides: field added",
-    "class": "additive",
-    "operationId": "templates.putTemplatesByIdChannels",
-    "op": "PUT /api/v1/templates/{id}/channels",
-    "change": "200.overrides: field added",
-    "note": "overrides counts the template's passes with their own choice, per channel."
-  },
-  {
-    "key": "PUT /api/v1/templates/{id}/manifest 200.release: field added",
-    "class": "additive",
-    "operationId": "templates.putTemplatesByIdManifest",
-    "op": "PUT /api/v1/templates/{id}/manifest",
-    "change": "200.release: field added",
-    "note": "A template carries its release state: release says which version is current, pending or rolled back."
-  },
-  {
-    "key": "GET /api/v1/broadcasts 200.items[].message: field added",
-    "class": "additive",
-    "operationId": "broadcasts.getBroadcasts",
-    "op": "GET /api/v1/broadcasts",
-    "change": "200.items[].message: field added",
-    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
-  },
-  {
-    "key": "GET /api/v1/broadcasts optional parameter query:kind added",
-    "class": "additive",
-    "operationId": "broadcasts.getBroadcasts",
-    "op": "GET /api/v1/broadcasts",
-    "change": "optional parameter query:kind added",
-    "note": "Only messages or only changes. The console's Messages list asks for messages and shows changes behind a filter."
-  },
-  {
-    "key": "GET /api/v1/broadcasts/{id} 200.message: field added",
-    "class": "additive",
-    "operationId": "broadcasts.getBroadcastsById",
-    "op": "GET /api/v1/broadcasts/{id}",
-    "change": "200.message: field added",
-    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
-  },
-  {
-    "key": "GET /api/v1/message-rules/{id}/runs 200.items[].message: field added",
-    "class": "additive",
-    "operationId": "message-rules.getMessageRulesByIdRuns",
-    "op": "GET /api/v1/message-rules/{id}/runs",
-    "change": "200.items[].message: field added",
-    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
-  },
-  {
-    "key": "GET /api/v1/orgs/{id}/entitlements 200.items[].key: enum value \"passes.changesPerDay\" added",
-    "class": "notable",
-    "operationId": "entitlements.getOrgsByIdEntitlements",
-    "op": "GET /api/v1/orgs/{id}/entitlements",
-    "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
-    "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
-  },
-  {
-    "key": "GET /api/v1/passes 200.count: field added",
-    "class": "additive",
-    "operationId": "passes.getPasses",
-    "op": "GET /api/v1/passes",
-    "change": "200.count: field added",
-    "note": "count is the number of passes the filters match, when count=true."
-  },
-  {
-    "key": "GET /api/v1/passes 200.items[].matched: field added",
-    "class": "additive",
-    "operationId": "passes.getPasses",
-    "op": "GET /api/v1/passes",
-    "change": "200.items[].matched: field added",
-    "note": "Passes carry matched (input, value) when the list has a match filter."
-  },
-  {
-    "key": "GET /api/v1/passes optional parameter query:count added",
-    "class": "additive",
-    "operationId": "passes.getPasses",
-    "op": "GET /api/v1/passes",
-    "change": "optional parameter query:count added",
-    "note": "count=true adds the number of passes the filters match."
-  },
-  {
-    "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
-    "class": "additive",
-    "operationId": "passes.getPassesBulkRunsById",
-    "op": "GET /api/v1/passes/bulk-runs/{id}",
-    "change": "new operation",
-    "note": "GET /passes/bulk-runs/{id} reports a bulk run's progress."
-  },
-  {
-    "key": "GET /api/v1/passes/bulk-runs/current new operation",
-    "class": "additive",
-    "operationId": "passes.getPassesBulkRunsCurrent",
-    "op": "GET /api/v1/passes/bulk-runs/current",
-    "change": "new operation",
-    "note": "GET /passes/bulk-runs/current reports the organization's running bulk run, or the last one to end within the hour."
-  },
-  {
-    "key": "GET /api/v1/passes/views new operation",
-    "class": "additive",
-    "operationId": "passes.getPassesViews",
-    "op": "GET /api/v1/passes/views",
-    "change": "new operation",
-    "note": "GET /passes/views lists the saved views of the passes list."
-  },
-  {
-    "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"passes.changesPerDay\" added",
-    "class": "notable",
-    "operationId": "entitlements.getPlatformOrgsByIdEntitlements",
-    "op": "GET /api/v1/platform/orgs/{id}/entitlements",
-    "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
-    "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
-  },
-  {
-    "key": "PATCH /api/v1/broadcasts/{id} 200.message: field added",
-    "class": "additive",
-    "operationId": "broadcasts.patchBroadcastsById",
-    "op": "PATCH /api/v1/broadcasts/{id}",
-    "change": "200.message: field added",
-    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
-  },
-  {
-    "key": "PATCH /api/v1/broadcasts/{id} body.message: optional input field added",
-    "class": "additive",
-    "operationId": "broadcasts.patchBroadcastsById",
-    "op": "PATCH /api/v1/broadcasts/{id}",
-    "change": "body.message: optional input field added",
-    "note": "A change run's lock-screen text; {Label} tokens read each pass's new value (120 characters). Needs notify."
-  },
-  {
-    "key": "PATCH /api/v1/broadcasts/{id} body.target.expectCount: optional input field added",
-    "class": "additive",
-    "operationId": "broadcasts.patchBroadcastsById",
-    "op": "PATCH /api/v1/broadcasts/{id}",
-    "change": "body.target.expectCount: optional input field added",
-    "note": "The count the admin saw. A selection that drifts more than 2% answers 409 SELECTION_CHANGED, and a run that starts far from it applies nothing."
-  },
-  {
-    "key": "PATCH /api/v1/broadcasts/{id} body.target.importId: optional input field added",
-    "class": "additive",
-    "operationId": "broadcasts.patchBroadcastsById",
-    "op": "PATCH /api/v1/broadcasts/{id}",
-    "change": "body.target.importId: optional input field added",
-    "note": "A change run on the passes one import created or updated. Exactly one of templateIds, passIds and importId."
-  },
-  {
-    "key": "PATCH /api/v1/broadcasts/{id} body.target.passIds: optional input field added",
-    "class": "additive",
-    "operationId": "broadcasts.patchBroadcastsById",
-    "op": "PATCH /api/v1/broadcasts/{id}",
-    "change": "body.target.passIds: optional input field added",
-    "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",
@@ -2016,294 +1328,6 @@
     "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
   },
   {
-    "key": "POST /api/v1/message-rules/{id}/test 201.message: field added",
-    "class": "additive",
-    "operationId": "message-rules.postMessageRulesByIdTest",
-    "op": "POST /api/v1/message-rules/{id}/test",
-    "change": "201.message: field added",
-    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
-  },
-  {
-    "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",
-    "class": "additive",
-    "operationId": "passes.postPassesByIdRemove",
-    "op": "POST /api/v1/passes/{id}/remove",
-    "change": "200.matched: field added",
-    "note": "Passes carry matched (input, value) when the list has a match filter."
-  },
-  {
-    "key": "POST /api/v1/passes/{id}/restore 200.matched: field added",
-    "class": "additive",
-    "operationId": "passes.postPassesByIdRestore",
-    "op": "POST /api/v1/passes/{id}/restore",
-    "change": "200.matched: field added",
-    "note": "Passes carry matched (input, value) when the list has a match filter."
-  },
-  {
-    "key": "POST /api/v1/passes/{id}/unvoid 200.matched: field added",
-    "class": "additive",
-    "operationId": "passes.postPassesByIdUnvoid",
-    "op": "POST /api/v1/passes/{id}/unvoid",
-    "change": "200.matched: field added",
-    "note": "Passes carry matched (input, value) when the list has a match filter."
-  },
-  {
-    "key": "POST /api/v1/passes/{id}/void 200.matched: field added",
-    "class": "additive",
-    "operationId": "passes.postPassesByIdVoid",
-    "op": "POST /api/v1/passes/{id}/void",
-    "change": "200.matched: field added",
-    "note": "Passes carry matched (input, value) when the list has a match filter."
-  },
-  {
-    "key": "POST /api/v1/passes/bulk-runs new operation",
-    "class": "additive",
-    "operationId": "passes.postPassesBulkRuns",
-    "op": "POST /api/v1/passes/bulk-runs",
-    "change": "new operation",
-    "note": "POST /passes/bulk-runs voids, emails or removes every pass a filter matches, in the background. expectCount must equal the count, or 409 SELECTION_CHANGED."
-  },
-  {
-    "key": "POST /api/v1/passes/bulk-runs/{id}/stop new operation",
-    "class": "additive",
-    "operationId": "passes.postPassesBulkRunsByIdStop",
-    "op": "POST /api/v1/passes/bulk-runs/{id}/stop",
-    "change": "new operation",
-    "note": "POST /passes/bulk-runs/{id}/stop stops a bulk run after its current chunk."
-  },
-  {
-    "key": "PUT /api/v1/passes/views new operation",
-    "class": "additive",
-    "operationId": "passes.putPassesViews",
-    "op": "PUT /api/v1/passes/views",
-    "change": "new operation",
-    "note": "PUT /passes/views replaces the saved views (at most 20)."
-  },
-  {
-    "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"passes.changesPerDay\" added",
-    "class": "notable",
-    "operationId": "entitlements.putPlatformOrgsByIdEntitlements",
-    "op": "PUT /api/v1/platform/orgs/{id}/entitlements",
-    "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
-    "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
-  },
-  {
-    "key": "webhook pass.removed data.runId: field added",
-    "class": "additive",
-    "operationId": "webhook.pass.removed",
-    "op": "webhook pass.removed",
-    "change": "data.runId: field added",
-    "note": "pass.removed data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
-  },
-  {
-    "key": "webhook pass.voided data.runId: field added",
-    "class": "additive",
-    "operationId": "webhook.pass.voided",
-    "op": "webhook pass.voided",
-    "change": "data.runId: field added",
-    "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox/reopen new operation",
-    "class": "additive",
-    "operationId": "developer.postSandboxReopen",
-    "op": "POST /api/v1/developer/sandbox/reopen",
-    "change": "new operation",
-    "note": "Reopen your closed developer sandbox inside its 30 days; returns a new key, shown once."
-  },
-  {
-    "key": "POST /api/v1/developer/sandbox/reset new operation",
-    "class": "additive",
-    "operationId": "developer.postSandboxReset",
-    "op": "POST /api/v1/developer/sandbox/reset",
-    "change": "new operation",
-    "note": "Reset your developer sandbox: deletes its test passes, captured webhooks and request log, restarts the quickstart and replaces the key (3 a day)."
-  },
-  {
-    "key": "GET /api/v1/webhook-endpoints/{id}/tests new operation",
-    "class": "additive",
-    "operationId": "webhooks.getWebhookEndpointsByIdTests",
-    "op": "GET /api/v1/webhook-endpoints/{id}/tests",
-    "change": "new operation",
-    "note": "List the recent test sends of a webhook endpoint (sample event type, status, code and timing, kept 7 days), newest first."
-  },
-  {
-    "key": "GET /api/v1/templates/{id} 200.versions[].report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.getTemplatesById",
-    "op": "GET /api/v1/templates/{id}",
-    "change": "200.versions[].report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "GET /api/v1/templates/{id}/versions/{version} 200.report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.getTemplatesByIdVersionsByVersion",
-    "op": "GET /api/v1/templates/{id}/versions/{version}",
-    "change": "200.report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "GET /api/v1/templates/previews 200.items[].warnings[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.getTemplatesPreviews",
-    "op": "GET /api/v1/templates/previews",
-    "change": "200.items[].warnings[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "GET /api/v1/templates/uploads/{id} 200.report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.getTemplatesUploadsById",
-    "op": "GET /api/v1/templates/uploads/{id}",
-    "change": "200.report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "PATCH /api/v1/templates/{id} 200.versions[].report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.patchTemplatesById",
-    "op": "PATCH /api/v1/templates/{id}",
-    "change": "200.versions[].report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/archive 200.versions[].report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdArchive",
-    "op": "POST /api/v1/templates/{id}/archive",
-    "change": "200.versions[].report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/clone 201.versions[].report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdClone",
-    "op": "POST /api/v1/templates/{id}/clone",
-    "change": "201.versions[].report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/preview 200.warnings[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdPreview",
-    "op": "POST /api/v1/templates/{id}/preview",
-    "change": "200.warnings[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/restore 200.versions[].report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdRestore",
-    "op": "POST /api/v1/templates/{id}/restore",
-    "change": "200.versions[].report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/share 200.versions[].report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdShare",
-    "op": "POST /api/v1/templates/{id}/share",
-    "change": "200.versions[].report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/use 201.versions[].report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdUse",
-    "op": "POST /api/v1/templates/{id}/use",
-    "change": "201.versions[].report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/use/check 200.report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdUseCheck",
-    "op": "POST /api/v1/templates/{id}/use/check",
-    "change": "200.report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/use/check 200.template.versions[].report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdUseCheck",
-    "op": "POST /api/v1/templates/{id}/use/check",
-    "change": "200.template.versions[].report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/versions 200.report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdVersions",
-    "op": "POST /api/v1/templates/{id}/versions",
-    "change": "200.report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "POST /api/v1/templates/{id}/versions 200.template.versions[].report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.postTemplatesByIdVersions",
-    "op": "POST /api/v1/templates/{id}/versions",
-    "change": "200.template.versions[].report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "PUT /api/v1/templates/{id}/manifest 200.versions[].report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.putTemplatesByIdManifest",
-    "op": "PUT /api/v1/templates/{id}/manifest",
-    "change": "200.versions[].report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "GET /api/v1/connections/{id} 200.runs[].passesCreated: field added",
-    "class": "additive",
-    "operationId": "connections.getConnectionsById",
-    "op": "GET /api/v1/connections/{id}",
-    "change": "200.runs[].passesCreated: field added",
-    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
-  },
-  {
-    "key": "GET /api/v1/connections/{id} 200.runs[].passesVoided: field added",
-    "class": "additive",
-    "operationId": "connections.getConnectionsById",
-    "op": "GET /api/v1/connections/{id}",
-    "change": "200.runs[].passesVoided: field added",
-    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
-  },
-  {
-    "key": "GET /api/v1/connections/{id} 200.runs[].recordsFailed: field added",
-    "class": "additive",
-    "operationId": "connections.getConnectionsById",
-    "op": "GET /api/v1/connections/{id}",
-    "change": "200.runs[].recordsFailed: field added",
-    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
-  },
-  {
-    "key": "GET /api/v1/connections/{id}/runs 200.items[].passesCreated: field added",
-    "class": "additive",
-    "operationId": "connections.getConnectionsByIdRuns",
-    "op": "GET /api/v1/connections/{id}/runs",
-    "change": "200.items[].passesCreated: field added",
-    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
-  },
-  {
-    "key": "GET /api/v1/connections/{id}/runs 200.items[].passesVoided: field added",
-    "class": "additive",
-    "operationId": "connections.getConnectionsByIdRuns",
-    "op": "GET /api/v1/connections/{id}/runs",
-    "change": "200.items[].passesVoided: field added",
-    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
-  },
-  {
-    "key": "GET /api/v1/connections/{id}/runs 200.items[].recordsFailed: field added",
-    "class": "additive",
-    "operationId": "connections.getConnectionsByIdRuns",
-    "op": "GET /api/v1/connections/{id}/runs",
-    "change": "200.items[].recordsFailed: field added",
-    "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
-  },
-  {
     "key": "POST /api/v1/connections/{id}/preview new operation",
     "class": "additive",
     "operationId": "connections.postConnectionsByIdPreview",
@@ -2398,5 +1422,981 @@
     "op": "POST /api/v1/connections/test-config",
     "change": "optional parameter query:preview added",
     "note": "With preview=true, test-config dry-runs the unsaved configuration with the mapping, rules and template given."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reopen new operation",
+    "class": "additive",
+    "operationId": "developer.postSandboxReopen",
+    "op": "POST /api/v1/developer/sandbox/reopen",
+    "change": "new operation",
+    "note": "Reopen your closed developer sandbox inside its 30 days; returns a new key, shown once."
+  },
+  {
+    "key": "POST /api/v1/developer/sandbox/reset new operation",
+    "class": "additive",
+    "operationId": "developer.postSandboxReset",
+    "op": "POST /api/v1/developer/sandbox/reset",
+    "change": "new operation",
+    "note": "Reset your developer sandbox: deletes its test passes, captured webhooks and request log, restarts the quickstart and replaces the key (3 a day)."
+  },
+  {
+    "key": "POST /api/v1/identities 201.handle: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.handle: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities 201.issuing: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.issuing: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities 201.kind: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.kind: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities 201.nextRotationAt: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.nextRotationAt: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities 201.rotation: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.rotation: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities 201.status: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentities",
+    "op": "POST /api/v1/identities",
+    "change": "201.status: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/renew new operation",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRenew",
+    "op": "POST /api/v1/identities/{id}/renew",
+    "change": "new operation",
+    "note": "Starts a certificate renewal run."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/revoke-certificate new operation",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRevokeCertificate",
+    "op": "POST /api/v1/identities/{id}/revoke-certificate",
+    "change": "new operation",
+    "note": "Revokes one certificate of an identity."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.handle: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.handle: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.issuing: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.issuing: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.kind: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.kind: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.nextRotationAt: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.nextRotationAt: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.rotation: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.rotation: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identities/{id}/rotate 200.status: field added",
+    "class": "additive",
+    "operationId": "identities.postIdentitiesByIdRotate",
+    "op": "POST /api/v1/identities/{id}/rotate",
+    "change": "200.status: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "POST /api/v1/identity-runs/{id}/cancel new operation",
+    "class": "additive",
+    "operationId": "identity-runs.postIdentityRunsByIdCancel",
+    "op": "POST /api/v1/identity-runs/{id}/cancel",
+    "change": "new operation",
+    "note": "Cancels an open provisioning run."
+  },
+  {
+    "key": "POST /api/v1/identity-runs/{id}/retry new operation",
+    "class": "additive",
+    "operationId": "identity-runs.postIdentityRunsByIdRetry",
+    "op": "POST /api/v1/identity-runs/{id}/retry",
+    "change": "new operation",
+    "note": "Retries a failed or cancelled provisioning run."
+  },
+  {
+    "key": "POST /api/v1/message-rules/{id}/test 201.message: field added",
+    "class": "additive",
+    "operationId": "message-rules.postMessageRulesByIdTest",
+    "op": "POST /api/v1/message-rules/{id}/test",
+    "change": "201.message: field added",
+    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "POST /api/v1/nfc/passes/{passId}/tags/assign new operation",
+    "class": "additive",
+    "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
+    "op": "POST /api/v1/nfc/passes/{passId}/tags/assign",
+    "change": "new operation",
+    "note": "Assign a typed tag ID or a spare tag to a pass without a scanner."
+  },
+  {
+    "key": "POST /api/v1/orgs 201.kind: field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "201.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+  },
+  {
+    "key": "POST /api/v1/orgs 201.personal: field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "201.personal: field added",
+    "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "POST /api/v1/orgs body.addMe: optional input field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "body.addMe: optional input field added",
+    "note": "addMe (default true) makes the creating admin an org_admin of the new org, with the invitation and membership written in the create batch."
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgsByIdStatus",
+    "op": "POST /api/v1/orgs/{id}/status",
+    "change": "200.personal: field added",
+    "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/status 200.personalOwner: field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgsByIdStatus",
+    "op": "POST /api/v1/orgs/{id}/status",
+    "change": "200.personalOwner: field added",
+    "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/brand-assets new operation",
+    "class": "additive",
+    "operationId": "pass-setup.postOrgsByOrgIdBrandAssets",
+    "op": "POST /api/v1/orgs/{orgId}/brand-assets",
+    "change": "new operation",
+    "note": "Stage a logo, icon or web logo PNG; it answers the sha and version a pass-setup save names. Unused uploads are deleted later. Needs org:write or brand:manage."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/identities/apple new operation",
+    "class": "additive",
+    "operationId": "identity-runs.postOrgsByOrgIdIdentitiesApple",
+    "op": "POST /api/v1/orgs/{orgId}/identities/apple",
+    "change": "new operation",
+    "note": "Starts provisioning a managed Apple identity."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/managed new operation",
+    "class": "additive",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleManaged",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/managed",
+    "change": "new operation",
+    "note": "Starts provisioning a managed Google issuer."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared new operation",
+    "class": "additive",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletAccountsGoogleShared",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-accounts/google/shared",
+    "change": "new operation",
+    "note": "Attaches an existing Google issuer shared with the platform."
+  },
+  {
+    "key": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke 200.provenance: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.postOrgsByOrgIdWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/orgs/{orgId}/wallet-credentials/{id}/revoke",
+    "change": "200.provenance: field added",
+    "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsInvitationsAccept",
+    "op": "POST /api/v1/orgs/invitations/accept",
+    "change": "200.personal: field added",
+    "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "POST /api/v1/orgs/invitations/accept 200.testOnly: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsInvitationsAccept",
+    "op": "POST /api/v1/orgs/invitations/accept",
+    "change": "200.testOnly: field added",
+    "note": "Memberships carry testOnly: true for a developer sandbox, which never holds Live."
+  },
+  {
+    "key": "POST /api/v1/pass-imports request.mapping: field added",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImports",
+    "op": "POST /api/v1/pass-imports",
+    "change": "request.mapping: field added",
+    "note": "Send mapping: auto with no plan to map the file from the template. Create and commit take an Idempotency-Key."
+  },
+  {
+    "key": "POST /api/v1/pass-imports/{id}/check request.plan.overrides: field added",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImportsByIdCheck",
+    "op": "POST /api/v1/pass-imports/{id}/check",
+    "change": "request.plan.overrides: field added",
+    "note": "A plan can carry overrides: cell fixes by row and column, at most 200."
+  },
+  {
+    "key": "POST /api/v1/pass-imports/{id}/commit request.email: union added",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImportsByIdCommit",
+    "op": "POST /api/v1/pass-imports/{id}/commit",
+    "change": "request.email: union added",
+    "note": "email also takes {send: now} or {send: held, holdMs}; held mail goes out after the wait unless the import is undone."
+  },
+  {
+    "key": "POST /api/v1/pass-imports/{id}/email-rest 200.alreadyQueued: field added",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImportsByIdEmailRest",
+    "op": "POST /api/v1/pass-imports/{id}/email-rest",
+    "change": "200.alreadyQueued: field added",
+    "note": "Held mail a stopped run had already queued is settled and counted here, not in sent."
+  },
+  {
+    "key": "POST /api/v1/pass-imports/{id}/email-rest 409: IMPORT_UNDO_RUNNING added",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImportsByIdEmailRest",
+    "op": "POST /api/v1/pass-imports/{id}/email-rest",
+    "change": "409: IMPORT_UNDO_RUNNING added",
+    "note": "email-rest sends now, also during a hold, and is refused while an undo runs."
+  },
+  {
+    "key": "POST /api/v1/pass-imports/{id}/undo new operation",
+    "class": "additive",
+    "operationId": "pass-imports.postPassImportsByIdUndo",
+    "op": "POST /api/v1/pass-imports/{id}/undo",
+    "change": "new operation",
+    "note": "Undoes an ended import for 24 hours: removes its unedited passes, restores the ones it updated, cancels held mail."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRemove",
+    "op": "POST /api/v1/passes/{id}/remove",
+    "change": "200.matched: field added",
+    "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/restore 200.matched: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdRestore",
+    "op": "POST /api/v1/passes/{id}/restore",
+    "change": "200.matched: field added",
+    "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/unvoid 200.matched: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdUnvoid",
+    "op": "POST /api/v1/passes/{id}/unvoid",
+    "change": "200.matched: field added",
+    "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/{id}/void 200.matched: field added",
+    "class": "additive",
+    "operationId": "passes.postPassesByIdVoid",
+    "op": "POST /api/v1/passes/{id}/void",
+    "change": "200.matched: field added",
+    "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk-runs new operation",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkRuns",
+    "op": "POST /api/v1/passes/bulk-runs",
+    "change": "new operation",
+    "note": "POST /passes/bulk-runs voids, emails or removes every pass a filter matches, in the background. expectCount must equal the count, or 409 SELECTION_CHANGED."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk-runs/{id}/stop new operation",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkRunsByIdStop",
+    "op": "POST /api/v1/passes/bulk-runs/{id}/stop",
+    "change": "new operation",
+    "note": "POST /passes/bulk-runs/{id}/stop stops a bulk run after its current chunk."
+  },
+  {
+    "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged",
+    "op": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed",
+    "change": "new operation",
+    "note": "Starts a managed Google issuer for an org."
+  },
+  {
+    "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete new operation",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManagedComplete",
+    "op": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed/complete",
+    "change": "new operation",
+    "note": "Completes a managed Google issuer once Google has approved it."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-credentials/{id}/revoke 200.provenance: field added",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRevoke",
+    "op": "POST /api/v1/platform/wallet-credentials/{id}/revoke",
+    "change": "200.provenance: field added",
+    "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "POST /api/v1/platform/wallet-credentials/{id}/rotate-key new operation",
+    "class": "additive",
+    "operationId": "wallet-platform.postPlatformWalletCredentialsByIdRotateKey",
+    "op": "POST /api/v1/platform/wallet-credentials/{id}/rotate-key",
+    "change": "new operation",
+    "note": "Starts a service account key rotation."
+  },
+  {
+    "key": "POST /api/v1/scan-staff 201.staff.pinLockedToday: field added",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaff",
+    "op": "POST /api/v1/scan-staff",
+    "change": "201.staff.pinLockedToday: field added",
+    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
+  },
+  {
+    "key": "POST /api/v1/scan-staff 201.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaff",
+    "op": "POST /api/v1/scan-staff",
+    "change": "201.staff.pinResetRequired: field added",
+    "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/{id}/unlock-pin new operation",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffByIdUnlockPin",
+    "op": "POST /api/v1/scan-staff/{id}/unlock-pin",
+    "change": "new operation",
+    "note": "Admins lift a staff member's daily PIN lock with POST /scan-staff/{id}/unlock-pin."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/reset-untagged new operation",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffResetUntagged",
+    "op": "POST /api/v1/scan-staff/reset-untagged",
+    "change": "new operation",
+    "note": "Admins ask everyone whose PIN predates PIN tags for a new PIN with POST /scan-staff/reset-untagged."
+  },
+  {
+    "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/device body.capabilities.hardware: optional input field added",
+    "class": "additive",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "body.capabilities.hardware: optional input field added",
+    "note": "Devices may report found hardware by kind, count and state; names and ids are refused."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/pair/preview 200.sessionName: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPairPreview",
+    "op": "POST /api/v1/scan/pair/preview",
+    "change": "200.sessionName: field added",
+    "note": "The pairing preview names the session the device joins."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin new operation",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "new operation",
+    "note": "A flagged staff member gets a new random PIN, returned once with the session, from POST /scan/staff/pin. They never choose it."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup new operation",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "new operation",
+    "note": "Set up scanning in one call: places, events, staff, sessions and devices."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/archive 200.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdArchive",
+    "op": "POST /api/v1/templates/{id}/archive",
+    "change": "200.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/archive 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdArchive",
+    "op": "POST /api/v1/templates/{id}/archive",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/channels/reset-passes new operation",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdChannelsResetPasses",
+    "op": "POST /api/v1/templates/{id}/channels/reset-passes",
+    "change": "new operation",
+    "note": "Resets passes with their own channel choice to the template, a page per call; repeat while remaining is above 0."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/clone 201.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdClone",
+    "op": "POST /api/v1/templates/{id}/clone",
+    "change": "201.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/clone 201.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdClone",
+    "op": "POST /api/v1/templates/{id}/clone",
+    "change": "201.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/preview 200.warnings[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdPreview",
+    "op": "POST /api/v1/templates/{id}/preview",
+    "change": "200.warnings[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/release new operation",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdRelease",
+    "op": "POST /api/v1/templates/{id}/release",
+    "change": "new operation",
+    "note": "Releases a saved version to Test and Live in one call, with dryRun to preview. Test follows Live; Idempotency-Key is required."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/restore 200.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdRestore",
+    "op": "POST /api/v1/templates/{id}/restore",
+    "change": "200.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/restore 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdRestore",
+    "op": "POST /api/v1/templates/{id}/restore",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/review new operation",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdReview",
+    "op": "POST /api/v1/templates/{id}/review",
+    "change": "new operation",
+    "note": "A reviewer approves a requested version in Test and Live, and releases it with release: true. Test keys approve Test only."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/review-requests new operation",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdReviewRequests",
+    "op": "POST /api/v1/templates/{id}/review-requests",
+    "change": "new operation",
+    "note": "Creates or reuses the Test and Live candidates of a version so another reviewer can approve."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/share 200.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdShare",
+    "op": "POST /api/v1/templates/{id}/share",
+    "change": "200.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/share 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdShare",
+    "op": "POST /api/v1/templates/{id}/share",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/use 201.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUse",
+    "op": "POST /api/v1/templates/{id}/use",
+    "change": "201.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/use 201.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUse",
+    "op": "POST /api/v1/templates/{id}/use",
+    "change": "201.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/use/check 200.report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUseCheck",
+    "op": "POST /api/v1/templates/{id}/use/check",
+    "change": "200.report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/use/check 200.template.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUseCheck",
+    "op": "POST /api/v1/templates/{id}/use/check",
+    "change": "200.template.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/use/check 200.template.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdUseCheck",
+    "op": "POST /api/v1/templates/{id}/use/check",
+    "change": "200.template.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/versions 200.report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdVersions",
+    "op": "POST /api/v1/templates/{id}/versions",
+    "change": "200.report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/versions 200.template.release: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdVersions",
+    "op": "POST /api/v1/templates/{id}/versions",
+    "change": "200.template.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/versions 200.template.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.postTemplatesByIdVersions",
+    "op": "POST /api/v1/templates/{id}/versions",
+    "change": "200.template.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmails",
+    "op": "POST /api/v1/users/{id}/emails",
+    "change": "202.lastRoles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails 202.lastRoles[]: enum value \"developer\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmails",
+    "op": "POST /api/v1/users/{id}/emails",
+    "change": "202.lastRoles[]: enum value \"developer\" added",
+    "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmails",
+    "op": "POST /api/v1/users/{id}/emails",
+    "change": "202.sessions[].roles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails 202.sessions[].roles[]: enum value \"developer\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmails",
+    "op": "POST /api/v1/users/{id}/emails",
+    "change": "202.sessions[].roles[]: enum value \"developer\" added",
+    "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.lastRoles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
+    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
+    "change": "200.lastRoles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.lastRoles[]: enum value \"developer\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
+    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
+    "change": "200.lastRoles[]: enum value \"developer\" added",
+    "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"console\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
+    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
+    "change": "200.sessions[].roles[]: enum value \"console\" added",
+    "note": "Roles can include console: set by the Polaris ID admin group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/users/{id}/emails/{email}/primary 200.sessions[].roles[]: enum value \"developer\" added",
+    "class": "notable",
+    "operationId": "users.postUsersByIdEmailsByEmailPrimary",
+    "op": "POST /api/v1/users/{id}/emails/{email}/primary",
+    "change": "200.sessions[].roles[]: enum value \"developer\" added",
+    "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "PUT /api/v1/brand/web-logo 200.kind: field added",
+    "class": "additive",
+    "operationId": "brand.putBrandWebLogo",
+    "op": "PUT /api/v1/brand/web-logo",
+    "change": "200.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+  },
+  {
+    "key": "PUT /api/v1/brand/web-logo 200.personal: field added",
+    "class": "additive",
+    "operationId": "brand.putBrandWebLogo",
+    "op": "PUT /api/v1/brand/web-logo",
+    "change": "200.personal: field added",
+    "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.handle: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.handle: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.issuing: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.issuing: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.kind: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.kind: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.nextRotationAt: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.nextRotationAt: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.rotation: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.rotation: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/identities/{id}/push-key 200.status: field added",
+    "class": "additive",
+    "operationId": "identities.putIdentitiesByIdPushKey",
+    "op": "PUT /api/v1/identities/{id}/push-key",
+    "change": "200.status: field added",
+    "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.kind: field added",
+    "class": "additive",
+    "operationId": "orgs.putOrgsByIdBrandingBySlot",
+    "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
+    "change": "200.kind: field added",
+    "note": "Organizations carry kind: standard, or developer for a test-only sandbox. A Live request on a developer org is refused with ORG_TEST_ONLY (409)."
+  },
+  {
+    "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.personal: field added",
+    "class": "additive",
+    "operationId": "orgs.putOrgsByIdBrandingBySlot",
+    "op": "PUT /api/v1/orgs/{id}/branding/{slot}",
+    "change": "200.personal: field added",
+    "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PUT /api/v1/orgs/{orgId}/wallet-credentials 200.provenance: field added",
+    "class": "additive",
+    "operationId": "wallet-credentials.putOrgsByOrgIdWalletCredentials",
+    "op": "PUT /api/v1/orgs/{orgId}/wallet-credentials",
+    "change": "200.provenance: field added",
+    "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/pass-imports/mappings new operation",
+    "class": "additive",
+    "operationId": "pass-imports.putPassImportsMappings",
+    "op": "PUT /api/v1/pass-imports/mappings",
+    "change": "new operation",
+    "note": "Saves a named column mapping for a template; the same name replaces it."
+  },
+  {
+    "key": "PUT /api/v1/passes/{id}/channels 200.levels: field added",
+    "class": "additive",
+    "operationId": "passes.putPassesByIdChannels",
+    "op": "PUT /api/v1/passes/{id}/channels",
+    "change": "200.levels: field added",
+    "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
+    "key": "PUT /api/v1/passes/views new operation",
+    "class": "additive",
+    "operationId": "passes.putPassesViews",
+    "op": "PUT /api/v1/passes/views",
+    "change": "new operation",
+    "note": "PUT /passes/views replaces the saved views (at most 20)."
+  },
+  {
+    "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
+    "class": "notable",
+    "operationId": "entitlements.putPlatformOrgsByIdEntitlements",
+    "op": "PUT /api/v1/platform/orgs/{id}/entitlements",
+    "change": "200.items[].key: enum value \"identity.managed\" added",
+    "note": "New entitlement identity.managed gates managed Apple identities."
+  },
+  {
+    "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"passes.changesPerDay\" added",
+    "class": "notable",
+    "operationId": "entitlements.putPlatformOrgsByIdEntitlements",
+    "op": "PUT /api/v1/platform/orgs/{id}/entitlements",
+    "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
+    "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
+  },
+  {
+    "key": "PUT /api/v1/platform/wallet-credentials 200.provenance: field added",
+    "class": "additive",
+    "operationId": "wallet-platform.putPlatformWalletCredentials",
+    "op": "PUT /api/v1/platform/wallet-credentials",
+    "change": "200.provenance: field added",
+    "note": "Wallet credentials report provenance."
+  },
+  {
+    "key": "PUT /api/v1/settings 200.oidc.consoleGroupRequired: field added",
+    "class": "additive",
+    "operationId": "settings.putSettings",
+    "op": "PUT /api/v1/settings",
+    "change": "200.oidc.consoleGroupRequired: field added",
+    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "PUT /api/v1/settings 200.oidc.developerGroup: field added",
+    "class": "additive",
+    "operationId": "settings.putSettings",
+    "op": "PUT /api/v1/settings",
+    "change": "200.oidc.developerGroup: field added",
+    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "PUT /api/v1/settings 200.oidc.platformAdminGroup: field added",
+    "class": "additive",
+    "operationId": "settings.putSettings",
+    "op": "PUT /api/v1/settings",
+    "change": "200.oidc.platformAdminGroup: field added",
+    "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/channels 200.levels: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdChannels",
+    "op": "PUT /api/v1/templates/{id}/channels",
+    "change": "200.levels: field added",
+    "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/channels 200.overridePasses: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdChannels",
+    "op": "PUT /api/v1/templates/{id}/channels",
+    "change": "200.overridePasses: field added",
+    "note": "overridePasses counts the passes with at least one choice of their own."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/channels 200.overrides: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdChannels",
+    "op": "PUT /api/v1/templates/{id}/channels",
+    "change": "200.overrides: field added",
+    "note": "overrides counts the template's passes with their own choice, per channel."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/manifest 200.release: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdManifest",
+    "op": "PUT /api/v1/templates/{id}/manifest",
+    "change": "200.release: field added",
+    "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "PUT /api/v1/templates/{id}/manifest 200.versions[].report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.putTemplatesByIdManifest",
+    "op": "PUT /api/v1/templates/{id}/manifest",
+    "change": "200.versions[].report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "webhook pass.removed data.runId: field added",
+    "class": "additive",
+    "operationId": "webhook.pass.removed",
+    "op": "webhook pass.removed",
+    "change": "data.runId: field added",
+    "note": "pass.removed data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "webhook pass.voided data.runId: field added",
+    "class": "additive",
+    "operationId": "webhook.pass.voided",
+    "op": "webhook pass.voided",
+    "change": "data.runId: field added",
+    "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
   }
 ]

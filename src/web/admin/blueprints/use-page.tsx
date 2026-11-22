@@ -132,9 +132,7 @@ function Loaded({
     if (!next) return setError('Enter a name.');
     setError(undefined);
     try {
-      const made = await create.mutateAsync(
-        await request(b, { orgId, name: next }, quick, toOrg),
-      );
+      const made = await create.mutateAsync(await request(b, { orgId, name: next }, quick, toOrg));
       markMinted(`template:${made.id}`);
       if (toOrg.logo || toOrg.colors) {
         try {

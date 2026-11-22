@@ -14,6 +14,7 @@ import {
   templateDetail,
   templateSummary,
 } from '../passes/test-fixtures.ts';
+import { sampleDoc } from '../templates/designer/fixtures.ts';
 
 const ID = 'baked:starter-monthly-pass';
 const member = membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug });
@@ -110,5 +111,62 @@ describe('Make it yours', () => {
     await open({ [`/api/v1/orgs/${ORG.id}/pass-setup`]: () => json(viewOf(readyFacts())) });
     const toggle = await screen.findByRole('switch', { name: 'Use for all passes' });
     expect(toggle).not.toBeChecked();
+  });
+
+  it('keeps the organization brand read only until Override, and writes nothing to it', async () => {
+    const user = userEvent.setup();
+    const patches: unknown[] = [];
+    const view = viewOf(readyFacts());
+    await open({
+      [`/api/v1/orgs/${ORG.id}/pass-setup`]: (_u: URL, init?: RequestInit) => {
+        if (init?.method === 'PATCH') patches.push(init.body);
+        return json(view);
+      },
+    });
+    const overrides = await screen.findAllByRole('button', { name: 'Override for this template' });
+    expect(screen.getAllByText('From organization').length).toBe(overrides.length);
+    await user.click(overrides[0] as HTMLElement);
+    expect(screen.getAllByText('From organization').length).toBe(overrides.length - 1);
+    await user.click(screen.getByRole('button', { name: 'Create' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Create' })).toBeEnabled());
+    expect(patches).toEqual([]);
+  });
+
+  it('leaves the colour out of the template when it goes to the organization, and keeps it own otherwise', async () => {
+    const user = userEvent.setup();
+    const doc = sampleDoc();
+    const bodies: { version?: { manifest: { brand?: Record<string, string> } } }[] = [];
+    const view = viewOf(newOrgFacts());
+    await open({
+      [`/api/v1/templates/${ID}`]: () => json({ ...blueprint, activeVersion: 'v1' }),
+      [`/api/v1/templates/${ID}/versions/v1`]: () =>
+        json({
+          version: 'v1',
+          createdAt: 1,
+          createdBy: null,
+          assets: [],
+          report: { ok: true, issues: [] },
+          active: true,
+          displayOnly: false,
+          passCount: 0,
+          manifest: { ...doc.manifest, blueprint: true },
+          passJson: doc.passJson,
+        }),
+      [`/api/v1/templates/${ID}/use`]: (_u: URL, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)));
+        return json(made, 201);
+      },
+      [`/api/v1/orgs/${ORG.id}/pass-setup`]: (_u: URL, init?: RequestInit) =>
+        init?.method === 'PATCH'
+          ? json({ saved: true, view, diff: [], impact: { passesToUpdate: 0, channelStops: [] } })
+          : json(view),
+    });
+    const toggle = await screen.findByRole('switch', { name: 'Use for all passes' });
+    await waitFor(() => expect(toggle).toBeChecked());
+    fireEvent.change(screen.getByLabelText('Custom colour'), { target: { value: '#0f766e' } });
+    await user.click(screen.getByRole('button', { name: 'Create' }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(bodies[0]?.version?.manifest.brand?.colors).toBeUndefined();
+    await waitFor(() => expect(toggle).toBeEnabled());
   });
 });
