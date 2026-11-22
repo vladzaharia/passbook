@@ -288,6 +288,14 @@
     "note": "GET /developer/home: your sandbox, quickstart track, usage, keys, calls, webhooks, passes, Live orgs. GET /developer/logs takes source and after."
   },
   {
+    "key": "GET /api/v1/developer/logs optional parameter query:portal added",
+    "class": "additive",
+    "operationId": "developer.getLogs",
+    "op": "GET /api/v1/developer/logs",
+    "change": "optional parameter query:portal added",
+    "note": "hide leaves out the portal's own background reads."
+  },
+  {
     "key": "GET /api/v1/developer/resolve new operation",
     "class": "additive",
     "operationId": "developer.getResolve",
