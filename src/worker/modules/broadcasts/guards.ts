@@ -46,7 +46,21 @@ export async function checkTemplates(
   const action = body.kind === 'change' ? changeActionOf(body.patch) : null;
   const defined = new Set<string>();
   for (const templateId of body.target.templateIds) {
-    const { manifest } = await resolveTemplate(ctx, body.orgId, templateId);
+    // The mode's own active release decides the version, as when a pass is issued: a template with
+    // only a Test release resolves in Test, and one with no release in this mode is not found.
+    const release = await activeRelease(ctx, templateId, body.orgId, mode, 'apple');
+    if (!release) {
+      await resolveTemplate(ctx, body.orgId, templateId);
+      // Latest design moves passes to the template's approved release: without one there is nothing to move to.
+      if (action === 'design')
+        throw new ValidationError(
+          'The template has no approved design to move to.',
+          [],
+          'BROADCAST_NO_RELEASE',
+        );
+      throw new NotFoundError('Template not found.', 'TEMPLATE_NOT_FOUND');
+    }
+    const { manifest } = await resolveTemplate(ctx, body.orgId, templateId, release.version);
     for (const key of Object.keys(manifest.inputs.properties ?? {})) defined.add(key);
     if (body.kind === 'message') {
       if (!manifest.messaging)
@@ -58,13 +72,6 @@ export async function checkTemplates(
       continue;
     }
     if (action) {
-      // Latest design moves passes to the template's approved release: without one there is nothing to move to.
-      if (action === 'design' && !(await activeRelease(ctx, templateId, body.orgId, mode, 'apple')))
-        throw new ValidationError(
-          `${manifest.name} has no approved design to move to.`,
-          [],
-          'BROADCAST_NO_RELEASE',
-        );
       continue;
     }
     const known = new Set(Object.keys(manifest.inputs.properties ?? {}));

@@ -5,7 +5,7 @@ line: Preview, run, undo
 status: ready
 ops: broadcasts.getBroadcastsByIdItems, broadcasts.postBroadcastsByIdRetry
 ---
-Set, clear, shift or add to an input on every pass a target names. Preview first: it takes the same target and patch as the run, answers with what would change, and changes nothing. A key needs `messages:write` and `passes:write`, and `passes:read` for the preview samples; without one the answer is 403 [MISSING_SCOPE](/developers/errors/MISSING_SCOPE). A sandbox previews only: it allows no runs, so starting one is refused with 403 `SANDBOX_QUOTA`.
+Set, clear, shift or add to an input on every pass a target names. Preview first: it takes the same target and patch as the run, answers with what would change, and changes nothing. A key needs `messages:write` and `passes:write`, and `passes:read` for the preview samples; without one the answer is 403 [MISSING_SCOPE](/developers/errors/MISSING_SCOPE). A sandbox starts up to 10 runs a day; past that it is 403 `SANDBOX_QUOTA`.
 
 ## Pick the passes
 
@@ -114,7 +114,7 @@ Send the preview's `targeted` as `expectCount`, and an `Idempotency-Key`: a retr
 
 {{show change-run}}
 
-The answer is the run, `201`, in state `scheduled` or `sending`. Preview works on any template. A run needs a template with a live release: without one the answer is 404 [TEMPLATE_NOT_FOUND](/developers/errors/TEMPLATE_NOT_FOUND), which a template that only has a Test release gets before the sandbox check.
+The answer is the run, `201`, in state `scheduled` or `sending`. A Test key reaches templates released in Test, a Live key those released in Live.
 
 ## The 2% drift rule
 
@@ -138,7 +138,7 @@ A filter or an import that matches more than 20,000 passes is 422 [MATCH_TOO_BRO
 
 ## Filters a run can't take
 
-The passes list filters more than a run does. A key the target does not know is dropped, not refused, so a preview of `status` or `holderEmail` still counts every active pass. Compare `targeted` with the list's `count`.
+The passes list filters more than a run does. A target key the run does not take is 422 `BROADCAST_UNSUPPORTED_FILTER` on preview and on run, and `issues` names the field (`target.status`), so a run never reaches more passes than you asked for.
 
 - `status`, `holderEmail`, `externalId`, `connectionId`: list the passes with them, then send the ids as `passIds`.
 - `templateId`: send `templateIds`.
@@ -172,4 +172,4 @@ For 24 hours after a run ends, `POST /broadcasts/{id}/undo` starts a silent run 
 
 ## Result
 
-Read the preview: `targeted` is the passes the target reaches, and each sample shows the pass's value before and after. Nothing changed. Outside a sandbox, read the run until state is `sent`: `counts.updated` matches the preview's `targeted`, and after an undo each pass is back to its earlier value.
+Read the preview: `targeted` is the passes the target reaches, and each sample shows the pass's value before and after. Nothing changed. Read the run until state is `sent`, in a sandbox too: `counts.updated` matches the preview's `targeted`, and after an undo each pass is back to its earlier value.

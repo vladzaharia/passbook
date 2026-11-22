@@ -1024,6 +1024,14 @@
     "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
   },
   {
+    "key": "PATCH /api/v1/broadcasts/{id} request.target: unsupported filter fields refused",
+    "class": "notable",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "request.target: unsupported filter fields refused",
+    "note": "A target key the run does not filter by (status, holderEmail, externalId, connectionId) is now 422 BROADCAST_UNSUPPORTED_FILTER, not dropped."
+  },
+  {
     "key": "PATCH /api/v1/identities/{id} 200.handle: field added",
     "class": "additive",
     "operationId": "identities.patchIdentitiesById",
@@ -1272,6 +1280,14 @@
     "note": "A retry with the same key returns the first result instead of creating a second run."
   },
   {
+    "key": "POST /api/v1/broadcasts request.target: unsupported filter fields refused",
+    "class": "notable",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "request.target: unsupported filter fields refused",
+    "note": "A target key the run does not filter by (status, holderEmail, externalId, connectionId) is now 422 BROADCAST_UNSUPPORTED_FILTER, not dropped."
+  },
+  {
     "key": "POST /api/v1/broadcasts/{id}/cancel 200.message: field added",
     "class": "additive",
     "operationId": "broadcasts.postBroadcastsByIdCancel",
@@ -1414,6 +1430,14 @@
     "op": "POST /api/v1/broadcasts/preview",
     "change": "body.target.passIds: optional input field added",
     "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/preview request.target: unsupported filter fields refused",
+    "class": "notable",
+    "operationId": "broadcasts.postBroadcastsPreview",
+    "op": "POST /api/v1/broadcasts/preview",
+    "change": "request.target: unsupported filter fields refused",
+    "note": "A target key the run does not filter by (status, holderEmail, externalId, connectionId) is now 422 BROADCAST_UNSUPPORTED_FILTER, not dropped."
   },
   {
     "key": "POST /api/v1/connections/{id}/preview new operation",

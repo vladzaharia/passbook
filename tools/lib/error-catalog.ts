@@ -28,6 +28,7 @@ const DECLARED: Record<string, { status: number; module: string }> = {
   IDP_EMAIL_NOT_PRIMARY: { status: 403, module: 'sign-in' },
   STAFF_NAME_REQUIRED: { status: 409, module: 'scan' },
   TEMPLATE_REVIEW_REQUIRED: { status: 409, module: 'templates' },
+  BROADCAST_UNSUPPORTED_FILTER: { status: 422, module: 'broadcasts' },
   VALIDATION: { status: 422, module: 'platform' },
   INTERNAL: { status: 500, module: 'platform' },
   HTTP_ERROR: { status: 400, module: 'platform' },

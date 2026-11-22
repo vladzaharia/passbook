@@ -18,6 +18,8 @@ export interface BroadcastKit extends Kit {
   messaging: { id: string };
   /** A template without a message field. */
   plain: { id: string };
+  /** A new messaging template released in `modes` only. */
+  releasedIn(modes: Mode[]): Promise<{ id: string }>;
   makePass(input?: {
     orgId?: string;
     templateId?: string;
@@ -193,11 +195,33 @@ export async function broadcastKit(): Promise<BroadcastKit> {
   const messaging = await add(true);
   const plain = await add(false);
   const releases = new Map<string, Promise<TemplateRelease>>();
+  // A broadcast resolves its templates through the mode's release: the two fixtures have one in each mode.
+  for (const { id: templateId } of [messaging, plain])
+    for (const mode of ['live', 'test'] as const) {
+      const version = (await kit.registry.resolve(templateId)).version;
+      releases.set(
+        JSON.stringify([templateId, kit.org.id, mode]),
+        approveAppleRelease(kit, { templateId, version, orgId: kit.org.id, mode }),
+      );
+    }
+  await Promise.all(releases.values());
   return {
     ...kit,
     broadcast,
     messaging,
     plain,
+    releasedIn: async (modes) => {
+      const created = await add(true);
+      const version = (await kit.registry.resolve(created.id)).version;
+      for (const mode of modes)
+        await approveAppleRelease(kit, {
+          templateId: created.id,
+          version,
+          orgId: kit.org.id,
+          mode,
+        });
+      return created;
+    },
     makePass: async (input = {}) => {
       const orgId = input.orgId ?? kit.org.id;
       const mode = input.mode ?? 'live';

@@ -65,7 +65,11 @@ export function toProblem(
     detail = error.message;
   } else if (error instanceof ZodError) {
     status = 422;
-    code = 'VALIDATION';
+    // A contract can name its refusal: a custom issue with `params.code` is the problem's code.
+    const named = error.issues.flatMap((i) =>
+      i.code === 'custom' && typeof i.params?.code === 'string' ? [i.params.code] : [],
+    )[0];
+    code = named ?? 'VALIDATION';
     detail = 'Invalid request.';
     issues = zodIssues(error);
   } else if (error instanceof HTTPException) {

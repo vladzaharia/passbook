@@ -25142,7 +25142,8 @@
                 "type": "integer",
                 "minimum": 0
               }
-            }
+            },
+            "additionalProperties": {}
           },
           "patch": {
             "type": "object",
@@ -25356,7 +25357,8 @@
                 "type": "integer",
                 "minimum": 0
               }
-            }
+            },
+            "additionalProperties": {}
           },
           "patch": {
             "type": "object",
@@ -25607,7 +25609,8 @@
                 "type": "integer",
                 "minimum": 0
               }
-            }
+            },
+            "additionalProperties": {}
           },
           "patch": {
             "type": "object",
