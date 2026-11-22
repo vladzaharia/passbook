@@ -1,4 +1,4 @@
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, TriangleAlert } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { SCAN_COPY, scanLine } from '../../../shared/copy/scan.ts';
 import { SCAN_TRAY_COPY as COPY } from '../../../shared/copy/scan-tray.ts';
@@ -168,6 +168,7 @@ export function ApprovalTray({
             />
             <Keypad disabled={idle} onDigit={digit} onDelete={pin.pop} />
             <p className="scan-pin-note" role="alert" data-invalid={line ? '' : undefined}>
+              {line ? <TriangleAlert aria-hidden size={18} /> : null}
               {line ?? ''}
             </p>
           </>

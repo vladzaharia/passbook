@@ -71,6 +71,13 @@
   height: 18px;
   font-size: 10.5px;
 }
+/* Key hints are for a keyboard: not on a phone, by width or by touch. */
+@media (pointer: coarse), (max-width: 599px) {
+  .op-status-keys,
+  .op-kbd {
+    display: none;
+  }
+}
 @media (pointer: coarse) {
   .op-app {
     grid-template-rows: 56px minmax(0, 1fr);

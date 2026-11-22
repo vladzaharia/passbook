@@ -123,7 +123,6 @@ export function SearchResults({
       {result ? (
         <div className="op-list-foot">
           <span>{S[result.more ? 'capped' : 'showing'].replace('{n}', String(items.length))}</span>
-          <span>{S.clears}</span>
         </div>
       ) : null}
     </section>

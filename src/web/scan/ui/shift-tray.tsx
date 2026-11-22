@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 import { SCAN_HANDHELD_COPY } from '../../../shared/copy/scan-handheld.ts';
-import { formatCount, formatTime } from '../../lib/format.ts';
+import { formatTime } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import type { Counts } from '../machine/types.ts';
 import { SheetFrame } from './sheet-frame.tsx';
-import { Handover, type Summary, Totals } from './shift-parts.tsx';
+import { Handover, type Summary, shiftCount, shiftYou, Totals } from './shift-parts.tsx';
 import './shift-tray.css';
 
 const C = SCAN_HANDHELD_COPY.shift;
@@ -13,24 +13,16 @@ const fill = (text: string, values: Record<string, string | number>) =>
 
 /** How full the door is: the count with its bar, or Today's count when there is no capacity. */
 function Count({ counts }: { counts: Counts | null }) {
-  if (!counts) return null;
-  const e = counts.event;
-  const total = e ? (e.capacity ?? e.expected) : null;
-  const n = e ? e.arrived : counts.today;
-  const pct = total ? Math.min(100, Math.round((n / total) * 100)) : null;
+  const hero = shiftCount(counts);
+  if (!hero) return null;
   return (
     <section className="scan-tray-count" aria-label={C.title} data-testid="shift-count">
       <p>
-        <strong>{formatCount(n)}</strong>{' '}
-        <span>
-          {[total ? fill(C.of, { cap: formatCount(total) }) : null, e ? C.in : C.today]
-            .filter(Boolean)
-            .join(' ')}
-        </span>
+        <strong>{hero.n}</strong> <span>{hero.caption}</span>
       </p>
-      {pct !== null ? (
-        <div role="img" aria-label={`${pct}%`} className="scan-tray-bar">
-          <i style={{ width: `${pct}%` }} />
+      {hero.pct !== null ? (
+        <div role="img" aria-label={`${hero.pct}%`} className="scan-tray-bar">
+          <i style={{ width: `${hero.pct}%` }} />
         </div>
       ) : null}
     </section>
@@ -83,14 +75,11 @@ export function ShiftTray({
       footer={
         ending ? (
           <>
-            <Button
-              variant="secondary"
-              className="min-h-14 pointer-coarse:min-h-14"
-              onClick={onClose}
-            >
+            <Button className="min-h-14 pointer-coarse:min-h-14" onClick={onClose}>
               {C.keep}
             </Button>
             <Button
+              variant="danger"
               className="min-h-14 pointer-coarse:min-h-14"
               disabled={pending > 0}
               onClick={onEnd}
@@ -113,7 +102,7 @@ export function ShiftTray({
       {scope}
       {summary ? (
         <p className="scan-tray-you" data-testid="shift-you">
-          {fill(C.you, { in: summary.ok, refused: summary.refused, undone: summary.undone })}
+          {shiftYou(summary)}
         </p>
       ) : null}
       {error}
@@ -129,8 +118,8 @@ export function ShiftTray({
       ) : null}
       {ending ? (
         <>
-          <p className="text-sm">{C.endNote}</p>
           {pending ? <p role="status">{fill(C.pending, { n: pending })}</p> : null}
+          <p className="text-sm">{C.endNote}</p>
         </>
       ) : null}
     </SheetFrame>

@@ -110,6 +110,9 @@ export function MarkOutButton({
       onClick={() => onMark(row)}
     >
       <span className="scan-in-mark-label">{SCAN_COPY.actions.markAsOut}</span>
+      <span className="scan-in-mark-short" aria-hidden>
+        {SCAN_COPY.actions.markOutShort}
+      </span>
     </Button>
   );
 }

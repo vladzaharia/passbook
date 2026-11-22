@@ -27,6 +27,22 @@
   align-items: center;
   gap: 8px;
 }
+.scan-rc-top {
+  flex-wrap: wrap;
+}
+.scan-rc-stall {
+  display: contents;
+}
+@media (max-width: 479px) {
+  /* The banner and Try again go under the name, so the name and the count keep their width. */
+  .scan-rc-stall {
+    display: flex;
+    flex: 1 0 100%;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+  }
+}
 .scan-rc-top h2 {
   flex: 1;
   min-width: 0;

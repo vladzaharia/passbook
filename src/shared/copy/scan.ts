@@ -72,7 +72,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   ended: { headline: '{place} ended', sub: 'Ended {time}.' },
   capacity_full: { headline: '{place} full', sub: '{in} of {capacity} in.' },
   check_required: { headline: '{flag}', sub: 'Check it, then tap {action}.' },
-  needs_approval: { headline: 'Needs a manager', sub: '{action} is for managers.' },
+  needs_approval: { headline: 'Needs a manager', sub: '{action} needs a manager.' },
   stale: { headline: '{input} changed', sub: 'Now {value}. Check it and set again.' },
   in_progress: {
     headline: 'Being scanned',
@@ -201,6 +201,7 @@ export const SCAN_COPY = {
     tapIn: 'Tap in',
     tapOut: 'Tap out',
     markAsOut: 'Mark as out',
+    markOutShort: 'Out',
     letIn: 'Let in',
     signInToAct: 'Sign in to act',
     letInAnyway: 'Let in anyway',

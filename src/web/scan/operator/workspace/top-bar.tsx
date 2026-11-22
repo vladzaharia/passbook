@@ -27,7 +27,7 @@ function InNowChip({ counts }: { counts: ScanCounts }) {
       data-testid="op-in-now"
       data-tone={now.ratio === 1 ? 'warn' : undefined}
     >
-      {T.inNow}
+      <span className="op-chip-k">{T.inNow}</span>
       <b>
         <CountUp value={now.count} />
       </b>
@@ -91,10 +91,12 @@ export function TopBar({
       </div>
       <span className="op-sep" aria-hidden />
       {testing}
-      <span className="op-chip" data-tone={chip.open ? 'open' : 'closed'}>
+      <span className="op-chip op-chip-state" data-tone={chip.open ? 'open' : 'closed'}>
         <span className="op-dot" data-off={chip.open ? undefined : ''} aria-hidden />
-        {chip.text}
-        {chip.sub ? <span className="op-chip-sub"> · {chip.sub}</span> : null}
+        <span className="op-chip-text" title={chip.text}>
+          {chip.text}
+          {chip.sub ? <span className="op-chip-sub"> · {chip.sub}</span> : null}
+        </span>
       </span>
       {types.length ? (
         <span className="op-chip op-admits" data-muted title={types.join(', ')}>

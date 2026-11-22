@@ -67,6 +67,21 @@ function open(props: Partial<Parameters<typeof ShiftSheet>[0]> = {}) {
 }
 
 describe('ShiftSheet', () => {
+  it('leads with the door count and the staff line, as the phone tray does', async () => {
+    open({
+      counts: {
+        today: 312,
+        event: { arrived: 312, inside: null, expected: 500, capacity: 500 },
+        asOf: 1,
+        configRev: 1,
+      },
+    });
+    expect(await screen.findByTestId('shift-you')).toHaveTextContent(
+      'You: 9 in · 2 refused · 0 undone',
+    );
+    expect(screen.getByTestId('shift-count')).toHaveTextContent(/312.*of 500 in/);
+  });
+
   it('shows the shift by action, value, hour and reason, and passes axe', async () => {
     open();
     expect(await screen.findByText('Check in')).toBeInTheDocument();
