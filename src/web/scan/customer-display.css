@@ -199,3 +199,13 @@
     width: min(44vw, 60dvh);
   }
 }
+
+/* Narrow screens: two short lines, so the button stays clear of the buddy standing in the middle. */
+@media (max-width: 479px) {
+  button.scan-hold-switch {
+    max-width: 6.5rem;
+    white-space: normal;
+    text-align: start;
+    line-height: 1.2;
+  }
+}

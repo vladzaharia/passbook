@@ -64,6 +64,7 @@ export function ShiftTray({
   return (
     <SheetFrame
       tray
+      fit={ending}
       label={title}
       onClose={onClose}
       header={

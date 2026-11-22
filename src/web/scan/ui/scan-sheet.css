@@ -23,6 +23,10 @@
 .scan-pass-sheet[data-tray] {
   height: min(560px, calc(100dvh - env(safe-area-inset-top, 0px) - 48px));
 }
+.scan-pass-sheet[data-tray][data-fit] {
+  height: auto;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 48px);
+}
 @media (prefers-reduced-motion: no-preference) {
   .scan-pass-sheet {
     transition: height 200ms var(--wl-ease-out);

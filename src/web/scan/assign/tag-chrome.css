@@ -10,7 +10,7 @@
 .scan-request-strip {
   position: absolute;
   inset-inline: 0;
-  inset-block-start: calc(env(safe-area-inset-top, 0px) + 66px);
+  inset-block-start: calc(env(safe-area-inset-top, 0px) + 80px);
   margin-inline: auto;
   z-index: calc(var(--scan-z-capsule) + 1);
   display: flex;

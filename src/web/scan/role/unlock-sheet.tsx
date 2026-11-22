@@ -40,6 +40,7 @@ export function RoleUnlock({ api, refetch }: { api: ScanApi; refetch: () => Prom
         <Button
           variant="ghost"
           size="sm"
+          className="scan-hold-switch"
           onPointerDown={start}
           onPointerUp={stop}
           onPointerLeave={stop}

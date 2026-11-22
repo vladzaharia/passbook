@@ -10,8 +10,10 @@ import { admitNames, inNowOf, type SessionChip } from './session-state.ts';
 
 const T = OPERATOR_COPY.top;
 
-function InNowChip({ counts }: { counts: ScanCounts }) {
+/** `hideToday`: the device's own count chip already says Today, so the fallback would repeat it. */
+function InNowChip({ counts, hideToday }: { counts: ScanCounts; hideToday: boolean }) {
   const now = inNowOf(counts);
+  if (!now && hideToday) return null;
   if (!now)
     return (
       <span className="op-chip" data-testid="op-in-now">
@@ -119,7 +121,7 @@ export function TopBar({
           </span>
         ) : null}
         {chips}
-        <InNowChip counts={counts} />
+        <InNowChip counts={counts} hideToday={Boolean(chips)} />
         {staff ? (
           <button type="button" className="op-staff" onClick={onStaff}>
             <span className="op-staff-av" aria-hidden>
