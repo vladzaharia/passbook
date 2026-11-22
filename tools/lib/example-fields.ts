@@ -107,6 +107,11 @@ const RULES: Rule[] = [
   // The audit log names actions as `<area>.<verb>` (web/lib/actions.ts); the everyday one issued Ada's pass.
   [/^audit\./, /\.items\[\d+\]\.action$/, 'pass.create'],
   [/^audit\./, /\.items\[\d+\]\.targetId$/, IDS.pass],
+  // A staff user is Sam: one world record for the name and every email on it.
+  [/^users\./, /(^|\.items\[\d+\])\.name$/, 'Sam Rivera'],
+  [/^users\./, /\.(primaryEmail|email|emailClaim)$/, 'sam@example.com'],
+  // A sweep the receipt calls ok was verified against the policy (retention/receipt-service.ts).
+  [/^retention\./, /\.verified$/, true],
   // The org is Northwind; an org object's id is the org's (orgs, brand, workspace).
   [/^(orgs|brand)\./, /^\.id$/, IDS.org],
   [/^(orgs|brand)\./, /\.personalOwner$/, null],

@@ -165,6 +165,32 @@ describe('fitFailures', () => {
     expect(run('passes.postPassesByIdUnvoid', { voidedAt: null })).toEqual([]);
   });
 
+  it('rejects a person with someone else’s email, and an ok sweep that was not verified', () => {
+    expect(
+      run('users.getUsers', { items: [{ name: 'Tomas Ortega', primaryEmail: 'ada@example.com' }] }),
+    ).toEqual([
+      "users.getUsers response.items[0].primaryEmail: Tomas Ortega has the email ada@example.com; a person's email is their own",
+    ]);
+    expect(
+      run('users.getUsers', {
+        items: [{ name: 'Sam Rivera', primaryEmail: 'sam.rivera@example.com' }],
+      }),
+    ).toEqual([]);
+    expect(
+      run('visitors.getVisitorsHosts', { hostName: 'Sam Rivera', hostEmail: 'priya@example.com' }),
+    ).toEqual([
+      "visitors.getVisitorsHosts response.hostEmail: Sam Rivera has the email priya@example.com; a person's email is their own",
+    ]);
+    expect(
+      run('retention.getOrgsByOrgIdRetentionReceipts', { cls: 'ok', verified: false }),
+    ).toEqual([
+      'retention.getOrgsByOrgIdRetentionReceipts response.verified: an ok sweep is not verified',
+    ]);
+    expect(run('retention.getOrgsByOrgIdRetentionReceipts', { cls: 'ok', verified: true })).toEqual(
+      [],
+    );
+  });
+
   it('rejects a scanning session named after a person', () => {
     expect(run('scan.getScanSession', { workspace: { session: { name: 'Sam Rivera' } } })).toEqual([
       'scan.getScanSession response.workspace.session.name: the scanning session is named after a person (Sam Rivera); name it for a place or shift',

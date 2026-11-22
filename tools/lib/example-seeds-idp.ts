@@ -26,6 +26,11 @@ const INVITATION = {
   revokedAt: null,
   acceptedAt: null,
 };
+/** The org's people: Sam runs it, Priya runs the front desk. */
+const PEOPLE: Record<string, [name: string, email: string]> = {
+  [IDS.user as string]: ['Sam Rivera', 'sam@example.com'],
+  [uuid('user-priya')]: ['Priya Nair', 'priya@example.com'],
+};
 const membership = (userId: string | undefined, roles: string[], createdAt: number) => ({
   id: uuid(`membership-${userId}`),
   orgId: IDS.org,
@@ -34,6 +39,8 @@ const membership = (userId: string | undefined, roles: string[], createdAt: numb
   personal: false,
   testOnly: false,
   userId,
+  userName: PEOPLE[userId ?? '']?.[0],
+  userEmail: PEOPLE[userId ?? '']?.[1],
   roles,
   createdAt,
   revokedAt: null,

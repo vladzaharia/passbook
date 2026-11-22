@@ -52,6 +52,7 @@ export function fitFailures(doc: object, examples: Example[]): string[] {
         const o = v as Json;
         const tz = typeof o.timeZone === 'string' ? o.timeZone : zone;
         settledError(o, at, bad);
+        personEmail(o, at, bad);
         for (const [k, x] of Object.entries(o)) visit(x, `${at}.${k}`, k, tz);
         return;
       }
@@ -105,7 +106,30 @@ const isSessionName = (op: string, at: string): boolean =>
   (/\.sessions?(\[\d+\])?\.name$/.test(at) ||
     (/ScanningSessions/.test(op) && /^(\.items\[\d+\])?\.name$/.test(at)));
 
+/** `name`/`email`, `primaryEmail`, and `<x>Name`/`<x>Email` pairs on one object. */
+const EMAIL_OF: [RegExp, (k: string) => string[]][] = [
+  [/^name$/, () => ['email', 'primaryEmail']],
+  [/^(\w+)Name$/, (k) => [k.replace(/Name$/, 'Email')]],
+];
+/** A person's email starts with their first name, or is their whole name: one world record per person. */
+function personEmail(o: Json, at: string, bad: (at: string, why: string) => void): void {
+  for (const [k, v] of Object.entries(o)) {
+    if (typeof v !== 'string' || !PEOPLE.has(v)) continue;
+    const keys = EMAIL_OF.find(([re]) => re.test(k))?.[1](k) ?? [];
+    const [first = '', ...rest] = v.toLowerCase().split(' ');
+    for (const ek of keys) {
+      const email = o[ek];
+      if (typeof email !== 'string' || !email.includes('@')) continue;
+      const local = email.split('@')[0] ?? '';
+      const ok = local.split(/[._+-]/)[0] === first || local === [first, ...rest].join('');
+      if (!ok) bad(`${at}.${ek}`, `${v} has the email ${email}; a person's email is their own`);
+    }
+  }
+}
+
 function settledError(o: Json, at: string, bad: (at: string, why: string) => void): void {
+  // A retention sweep the receipt calls ok was verified.
+  if (o.cls === 'ok' && o.verified === false) bad(`${at}.verified`, 'an ok sweep is not verified');
   const state = [o.state, o.status, o.outcome].find((s) => typeof s === 'string') as
     | string
     | undefined;
