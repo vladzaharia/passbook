@@ -69,10 +69,11 @@ export async function resolveIncident(
 ): Promise<Incident> {
   const existing = await getIncident(ctx.env.DB, id);
   if (!existing) throw new NotFoundError('Incident not found.', 'INCIDENT_NOT_FOUND');
-  // One batch. `changes()` is the UPDATE's row count, so a second resolve changes nothing and writes no audit
-  // row, and a failed audit rolls the resolve back so a retry still audits it.
+  // One batch: the audit row is written only while this call's time is the note's resolved time, so a second resolve
+  // (which changes nothing) writes none, and a failed audit rolls the resolve back so a retry still audits it.
+  const at = ctx.clock.now();
   await ctx.env.DB.batch([
-    resolveIncidentStmt(ctx.env.DB, id, ctx.clock.now()),
+    resolveIncidentStmt(ctx.env.DB, id, at),
     auditStmtWhere(
       ctx.env.DB,
       ctx,
@@ -82,8 +83,8 @@ export async function resolveIncident(
         targetType: 'status_incident',
         targetId: id,
       },
-      'changes() > 0',
-      [],
+      'EXISTS (SELECT 1 FROM status_incidents WHERE id = ? AND resolved_at = ?)',
+      [id, at],
     ),
   ]);
   clearPublicStatusMemo(ctx.env.DB);
