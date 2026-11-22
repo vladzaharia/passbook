@@ -512,6 +512,22 @@
     "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
+    "key": "GET /api/v1/nfc/tags optional parameter query:binding added",
+    "class": "additive",
+    "operationId": "nfc-tags.getNfcTags",
+    "op": "GET /api/v1/nfc/tags",
+    "change": "optional parameter query:binding added",
+    "note": "With status=spare and passId: the tag scope the spare is assigned as; defaults to pass."
+  },
+  {
+    "key": "GET /api/v1/nfc/tags optional parameter query:passId added",
+    "class": "additive",
+    "operationId": "nfc-tags.getNfcTags",
+    "op": "GET /api/v1/nfc/tags",
+    "change": "optional parameter query:passId added",
+    "note": "With status=spare: lists only the spare tags this pass takes by its tag-type policy."
+  },
+  {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgs",
