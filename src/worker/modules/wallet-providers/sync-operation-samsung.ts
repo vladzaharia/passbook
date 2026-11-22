@@ -18,6 +18,7 @@ import type {
   WalletSyncRunResult,
 } from './sync-operation-context.ts';
 import { completeWalletSyncOperation as complete } from './sync-operation-retirement.ts';
+import { samsungOperationState } from './sync-samsung-state.ts';
 
 /**
  * The card of the release being sent, not of the identity: a schema 1 release carries stored
@@ -79,6 +80,7 @@ export async function runSamsungWalletProviderOperation(
       ? 'deferred'
       : 'uncertain';
   }
+  const state = await samsungOperationState(ctx, op);
   await ensureSamsungSyncTargets(ctx, { ...claim, now: ctx.clock.now() });
   const targets = await listSamsungSyncTargets(ctx, claim);
   for (const item of targets) {
@@ -97,11 +99,11 @@ export async function runSamsungWalletProviderOperation(
         cc2: item.countryCode,
         type: cardType,
         refId: target.refId,
-        state: op.kind === 'revoke' ? 'DELETED' : 'UPDATED',
+        state,
         attempt,
         assertCurrent,
         onProviderResponse,
-        ...(op.kind === 'revoke'
+        ...(state === 'DELETED'
           ? { retirement }
           : { refresh: { instanceId: op.instanceId, operationVersion: op.version } }),
       });
@@ -130,7 +132,7 @@ export async function runSamsungWalletProviderOperation(
         return 'uncertain';
       }
       if (
-        op.kind === 'revoke' &&
+        state === 'DELETED' &&
         error instanceof SamsungNotificationError &&
         error.status === 204
       ) {

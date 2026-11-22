@@ -18,11 +18,11 @@ import { walletProviderEnabled, walletProviderReleaseReason } from './provider-p
 import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback-replay.ts';
 import { refreshExpiringSamsungEvidence } from './repo-samsung-evidence-refresh.ts';
 import { ackCleanWalletPlaceholder, deferWalletSyncOperation } from './repo-sync-queue.ts';
-import { listUncertainGoogleOperations } from './repo-sync-uncertain.ts';
+import { listUncertainOperations } from './repo-sync-uncertain.ts';
 import { walletSyncHasWork } from './repo-sync-work.ts';
 import { runWalletProviderOperation } from './sync-operation.ts';
 import { finishWalletProviderRetirement } from './sync-operation-retirement.ts';
-import { sweepUncertainGoogleOperations } from './sync-uncertain.ts';
+import { sweepUncertainOperations } from './sync-uncertain.ts';
 
 const BATCH_SIZE = 30;
 const BLOCKED_DELAY_MS = 60_000;
@@ -47,7 +47,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
   // Nothing queued means nothing to pin: a fresh deployment has no keyset until its first pass.
   if (
     !(await walletSyncHasWork(db, ctx.clock.now())) &&
-    (await listUncertainGoogleOperations(db, ctx.clock.now(), 1)).length === 0
+    (await listUncertainOperations(db, ctx.clock.now(), 1)).length === 0
   )
     return;
   try {
@@ -58,7 +58,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
     return;
   }
   await expireWalletClaims(ctx, ctx.clock.now(), BATCH_SIZE);
-  await sweepUncertainGoogleOperations(ctx, BATCH_SIZE);
+  await sweepUncertainOperations(ctx, BATCH_SIZE);
   const dirty = await listDirtyWalletInstances(db, ctx.clock.now(), BATCH_SIZE);
   for (const item of dirty) {
     try {
