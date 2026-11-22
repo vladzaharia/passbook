@@ -123,6 +123,18 @@ export const DEV_GUIDES = [
     tone: 'amber',
   },
   { id: 'bulk-import', title: 'Bulk import', line: 'A CSV to passes', tone: 'blue' },
+  {
+    id: 'import-auto-map',
+    title: 'Import with auto mapping',
+    line: 'Map a CSV from the template',
+    tone: 'blue',
+  },
+  {
+    id: 'change-many-passes',
+    title: 'Change many passes',
+    line: 'Preview, run, undo',
+    tone: 'violet',
+  },
   { id: 'react-to-events', title: 'React to events', line: 'Webhooks or polling', tone: 'teal' },
   { id: 'nfc', title: 'NFC', line: 'Tags and bindings', tone: 'violet' },
   { id: 'pass-lifecycle', title: 'Pass lifecycle', line: 'Void, remove, delete', tone: 'amber' },

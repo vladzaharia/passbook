@@ -1,0 +1,201 @@
+import { describe, expect, it } from 'vitest';
+import { run } from '../../src/worker/platform/db.ts';
+import { fence, guideApi, snippetBody } from './guide-api.ts';
+import { kit } from './snippet-world.ts';
+
+const TEMPLATE = '0193a1b2-7c00-7000-8000-0000000000b1';
+const ORG = '0193a1b2-7c00-7000-8000-0000000000a1';
+
+/** The claims of the auto-mapping and change-many-passes guides, each proven by the API. */
+describe('import with auto mapping', () => {
+  it('maps the file, reports the bad cell, takes the fix, and starts the commit', async () => {
+    const { call } = await guideApi();
+    const made = await call(
+      'POST',
+      '/pass-imports',
+      fence('import-auto-map', 'pass-imports.postPassImports'),
+    );
+    expect(made.status).toBe(201);
+    expect(made.json.state).toBe('ready');
+    expect(made.json.counts).toMatchObject({ rows: 3, create: 2, errors: 1, errorsCreate: 1 });
+    expect(made.json.problems[0]).toMatchObject({
+      row: 3,
+      column: 'Starts',
+      field: 'startsAt',
+      code: 'IMPORT_DATE_UNREADABLE',
+      value: 'TBD',
+    });
+    expect(made.json.mapping).toMatchObject({ missing: [], unused: [], columns: 8, used: 8 });
+
+    const checked = await call(
+      'POST',
+      `/pass-imports/${made.json.id}/check`,
+      fence('import-auto-map', 'pass-imports.postPassImportsByIdCheck'),
+    );
+    expect(checked.status).toBe(200);
+    expect(checked.json.counts).toMatchObject({ create: 3, errors: 0 });
+
+    const commit = await call(
+      'POST',
+      `/pass-imports/${made.json.id}/commit`,
+      fence('import-auto-map', 'pass-imports.postPassImportsByIdCommit'),
+    );
+    expect(commit.status).toBe(200);
+    expect(commit.json.state).toBe('committing');
+    // The commit workflow does not run here, so the import is busy and cannot be undone yet.
+    const undo = await call('POST', `/pass-imports/${made.json.id}/undo`, {});
+    expect([undo.status, undo.json.code]).toEqual([409, 'IMPORT_BUSY']);
+  });
+
+  it('leaves state mapping with no plan when no column fits, and asks for a date format when two fit', async () => {
+    const { call } = await guideApi();
+    const none = await call('POST', '/pass-imports', {
+      templateId: TEMPLATE,
+      source: { kind: 'file', name: 'x.csv', csv: 'Foo,Bar\n1,2' },
+      mapping: 'auto',
+    });
+    expect(none.json.state).toBe('mapping');
+    expect(none.json.plan).toBeNull();
+    expect(none.json.mapping.missing).toContain('startsAt');
+
+    const head = 'Holder email,Event,Venue,City,Starts,Ends,Attendee,Ticket ID';
+    const row = (n: string, d: string) =>
+      `${n}@example.com,Harbor Night,Harbor Hall,"Cupertino, CA",${d},2030-06-01T22:00:00-07:00,${n},T-${n}`;
+    const csv = [head, row('ada', '03/04/2030'), row('bo', '05/06/2030')].join('\n');
+    const made = await call('POST', '/pass-imports', {
+      templateId: TEMPLATE,
+      source: { kind: 'file', name: 'dates.csv', csv },
+      mapping: 'auto',
+    });
+    const starts = made.json.mapping.fields.find(
+      (f: { target: string }) => f.target === 'startsAt',
+    );
+    expect(starts.entry).toBeNull();
+    expect(starts.date.choices).toEqual(['mdy', 'dmy']);
+    expect(made.json.problems[0].message).toBe('Starts is required.');
+
+    // The guide's one-line fix: name the format.
+    const plan = {
+      ...made.json.plan,
+      mapping: {
+        ...made.json.plan.mapping,
+        startsAt: {
+          from: '/Starts',
+          transform: { kind: 'date', options: { input: 'mdy', output: 'iso' } },
+        },
+      },
+    };
+    const fixed = await call('POST', `/pass-imports/${made.json.id}/check`, { plan });
+    expect(fixed.json.counts).toMatchObject({ create: 2, errors: 0 });
+  });
+});
+
+describe('change many passes', () => {
+  it('previews in a sandbox and refuses to start a run there', async () => {
+    const { call, world } = await guideApi();
+    const preview = await call(
+      'POST',
+      '/broadcasts/preview',
+      fence('change-many-passes', 'broadcasts.postBroadcastsPreview'),
+    );
+    expect(preview.status).toBe(200);
+    expect(preview.json).toMatchObject({ targeted: 1, unchanged: 0, blocked: [], estimated: true });
+    expect(preview.json.samples[0].changes).toEqual([
+      { key: 'venueName', label: 'Venue', from: 'Sample Hall', to: 'Pier 9' },
+    ]);
+    // A template with only a Test release has no active version: the run is not found first.
+    const body = snippetBody('change-run');
+    const first = await call('POST', '/broadcasts', body);
+    expect([first.status, first.json.code]).toEqual([404, 'TEMPLATE_NOT_FOUND']);
+    await run(
+      (await kit()).env.DB,
+      `UPDATE templates SET active_version = (SELECT version FROM template_versions
+         WHERE template_id = templates.id LIMIT 1) WHERE id = ?`,
+      [world.templateId],
+    );
+    const second = await call('POST', '/broadcasts', body);
+    expect([second.status, second.json.code]).toEqual([403, 'SANDBOX_QUOTA']);
+  });
+
+  it('starts with the preview count, refuses a drifted count, and cannot undo a running run', async () => {
+    const { call, world } = await guideApi({ sandbox: false });
+    // A run resolves the template's active version, which only a Live release sets.
+    await run(
+      (await kit()).env.DB,
+      `UPDATE templates SET active_version = (SELECT version FROM template_versions
+         WHERE template_id = templates.id LIMIT 1) WHERE id = ?`,
+      [world.templateId],
+    );
+    const body = snippetBody('change-run') as { target: Record<string, unknown> };
+    const drifted = await call('POST', '/broadcasts', {
+      ...body,
+      target: { ...body.target, expectCount: 2 },
+    });
+    expect([drifted.status, drifted.json.code]).toEqual([409, 'SELECTION_CHANGED']);
+
+    const started = await call('POST', '/broadcasts', body);
+    expect(started.status).toBe(201);
+    expect(started.json).toMatchObject({ kind: 'change', notify: false });
+    expect(['scheduled', 'sending']).toContain(started.json.state);
+
+    const read = await call('GET', `/broadcasts/${started.json.id}`);
+    expect(read.json.counts).toHaveProperty('overBudget');
+    const early = await call('POST', `/broadcasts/${started.json.id}/undo`);
+    expect([early.status, early.json.code]).toEqual([409, 'BROADCAST_NOT_UNDOABLE']);
+    expect((await call('POST', `/broadcasts/${started.json.id}/stop`)).status).toBe(200);
+  });
+
+  it('shifts dates, counts a filter it does not know, and refuses what a run cannot take', async () => {
+    const { call, world } = await guideApi({ sandbox: false });
+    await run(
+      (await kit()).env.DB,
+      `UPDATE templates SET active_version = (SELECT version FROM template_versions
+         WHERE template_id = templates.id LIMIT 1) WHERE id = ?`,
+      [world.templateId],
+    );
+    const target = { templateIds: [TEMPLATE] };
+    const shift = await call('POST', '/broadcasts/preview', {
+      orgId: ORG,
+      target,
+      patch: { startsAt: { shift: 'P1D' }, endsAt: { shift: 'P1D' } },
+    });
+    expect(shift.json.samples[0].changes.map((c: { key: string }) => c.key)).toEqual([
+      'startsAt',
+      'endsAt',
+    ]);
+
+    // Unknown target keys are dropped: the count is the same as without them.
+    const plain = await call('POST', '/broadcasts/preview', { orgId: ORG, target });
+    const dropped = await call('POST', '/broadcasts/preview', {
+      orgId: ORG,
+      target: { ...target, status: 'voided', holderEmail: 'nobody@example.com' },
+    });
+    expect(dropped.json.targeted).toBe(plain.json.targeted);
+
+    const text = await call('POST', '/broadcasts/preview', {
+      orgId: ORG,
+      target: { ...target, match: [{ input: 'attendee', op: 'contains', value: 'Ada' }] },
+    });
+    expect([text.status, text.json.issues[0].message]).toEqual([
+      422,
+      'Runs match values or ranges.',
+    ]);
+
+    const two = await call('POST', '/broadcasts/preview', {
+      orgId: ORG,
+      target: { ...target, passIds: ['0193a1b2-7c00-7000-8000-0000000000c1'] },
+    });
+    expect(two.status).toBe(422);
+
+    // An input the template lacks: preview shows nothing, the run refuses it.
+    const unknown = { orgId: ORG, target, patch: { nope: { set: 'x' } } };
+    const empty = await call('POST', '/broadcasts/preview', unknown);
+    expect(empty.json.samples[0].changes).toEqual([]);
+    const refused = await call('POST', '/broadcasts', {
+      ...unknown,
+      kind: 'change',
+      send: 'now',
+    });
+    expect([refused.status, refused.json.code]).toEqual([422, 'BROADCAST_UNKNOWN_INPUT']);
+  });
+});
