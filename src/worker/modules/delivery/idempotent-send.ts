@@ -38,7 +38,10 @@ export async function sendOnce<T>(
     request: unknown;
     authority: TenantPassWrite;
     progress?: () => boolean;
-    /** One reservation for the whole organization, whoever asks (a send that must happen once, like Tell holders). */
+    /**
+     * One reservation for the whole organization (a send that must happen once, like Tell holders). Only
+     * the principal who claimed it replays; any other gets 409 `TELL_ALREADY_SENT` and no stored body.
+     */
     shared?: boolean;
   },
   send: () => Promise<T>,
@@ -49,6 +52,8 @@ export async function sendOnce<T>(
   const key = input.shared
     ? `${input.scope}:${input.key}`
     : `${input.scope}:${principal}:${input.key}`;
+  // A shared reservation also leaves this principal's own row, which is how the claimant is known.
+  const ownKey = `${input.scope}:${principal}:${input.key}`;
   const hash = await sha256Hex(JSON.stringify(input.request));
   const replay = async (): Promise<{ replayed: true; value: T } | null> => {
     const existing = await idempotencyRow(db, input.orgId, key);
@@ -60,8 +65,11 @@ export async function sendOnce<T>(
         [],
         'IDEMPOTENCY_KEY_REUSED',
       );
-    if (existing.resource_id?.startsWith(DONE))
+    if (existing.resource_id?.startsWith(DONE)) {
+      if (input.shared && !(await idempotencyRow(db, input.orgId, ownKey)))
+        throw new ConflictError('Holders were already told for this release.', 'TELL_ALREADY_SENT');
       return { replayed: true, value: JSON.parse(existing.resource_id.slice(DONE.length)) as T };
+    }
     if (ctx.clock.now() - existing.created_at < IN_PROGRESS_MS)
       throw new ConflictError('The first request is still running.', 'IDEMPOTENCY_IN_PROGRESS');
     await reclaimIdempotencyKey(db, input.orgId, key, existing.created_at, DONE);
@@ -88,13 +96,20 @@ export async function sendOnce<T>(
     if (done) return done;
     throw new ConflictError('The first request is still running.', 'IDEMPOTENCY_IN_PROGRESS');
   }
+  const own = input.shared ? ctx.ids.id() : null;
+  if (own)
+    await claimIdempotencyKey(db, input.orgId, ownKey, hash, own, ctx.clock.now(), input.authority);
   let value: T;
   try {
     value = await send();
   } catch (error) {
-    if (!input.progress?.()) await releaseIdempotencyKey(db, input.orgId, key, reservation, hash);
+    if (!input.progress?.()) {
+      await releaseIdempotencyKey(db, input.orgId, key, reservation, hash);
+      if (own) await releaseIdempotencyKey(db, input.orgId, ownKey, own, hash);
+    }
     throw error;
   }
+  if (own) await settleIdempotencyKey(db, input.orgId, ownKey, own, `${DONE}{}`);
   await settleIdempotencyKey(db, input.orgId, key, reservation, `${DONE}${JSON.stringify(value)}`);
   return { replayed: false, value };
 }

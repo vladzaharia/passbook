@@ -743,6 +743,12 @@
     "fix": "Send a unique string of 1 to 200 characters, such as a UUID, and reuse it to retry.",
     "retryable": false
   },
+  "IDEMPOTENCY_KEY_RESERVED": {
+    "title": "Idempotency-Key reserved",
+    "when": "The key starts with rollout-tell:, which only the console's Tell holders may use, for the template's active release.",
+    "fix": "Use another Idempotency-Key.",
+    "retryable": false
+  },
   "IDEMPOTENCY_KEY_REUSED": {
     "title": "Idempotency-Key reused",
     "when": "The same Idempotency-Key came with a different request.",
@@ -2601,6 +2607,12 @@
     "title": "Pass doesn't take this tag use",
     "when": "The pass's template doesn't accept tags for this use (member, staff or visitor).",
     "fix": "Choose a tag type whose use the template accepts.",
+    "retryable": false
+  },
+  "TELL_ALREADY_SENT": {
+    "title": "Holders already told",
+    "when": "Another member already sent the message that tells holders about this release.",
+    "fix": "Nothing to do. Open Messages to see it.",
     "retryable": false
   },
   "TEMPLATE_ARCHIVED": {

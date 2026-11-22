@@ -1072,6 +1072,22 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
+    "key": "POST /api/v1/broadcasts clear follow-up covers unchanged passes",
+    "class": "notable",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "clear follow-up covers unchanged passes",
+    "note": "A message's clearAfter follow-up clears every pass the run updated or found already showing its text."
+  },
+  {
+    "key": "POST /api/v1/broadcasts idempotency-key rollout-tell reserved",
+    "class": "notable",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "idempotency-key rollout-tell reserved",
+    "note": "Idempotency-Key values starting rollout-tell: are reserved for telling holders about a release: any other use is 422 IDEMPOTENCY_KEY_RESERVED, and a second caller after the send is 409 TELL_ALREADY_SENT."
+  },
+  {
     "key": "POST /api/v1/broadcasts optional parameter header:Idempotency-Key added",
     "class": "additive",
     "operationId": "broadcasts.postBroadcasts",

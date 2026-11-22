@@ -42,6 +42,7 @@ import {
   sendBroadcast,
 } from './service.ts';
 import { listBroadcastItems, retryBroadcast, updateBroadcast } from './service-edit.ts';
+import { tellHoldersKey } from './tell-key.ts';
 
 type Ctx = Parameters<typeof authOf>[0];
 
@@ -149,6 +150,7 @@ register(
       });
     const key = idempotencyKeyOf(c.req.header('idempotency-key'));
     if (key === undefined) return c.json(await create(), 201);
+    const tellKey = await tellHoldersKey(ctx, mode, body, key);
     const { value } = await sendOnce(
       ctx,
       {
@@ -159,7 +161,7 @@ register(
         authority,
         progress: () => inserted,
         // Tell holders sends once per release for the organization, not once per admin.
-        shared: key.startsWith('rollout-tell:'),
+        shared: tellKey !== null,
       },
       create,
     );

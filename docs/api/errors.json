@@ -1422,6 +1422,15 @@
       ]
     },
     {
+      "code": "IDEMPOTENCY_KEY_RESERVED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "IDEMPOTENCY_KEY_REUSED",
       "statuses": [
         409,
@@ -4932,6 +4941,15 @@
       ],
       "modules": [
         "nfc"
+      ]
+    },
+    {
+      "code": "TELL_ALREADY_SENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "delivery"
       ]
     },
     {

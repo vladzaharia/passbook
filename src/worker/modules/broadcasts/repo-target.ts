@@ -20,7 +20,7 @@ type TargetFilter = PassListFilter & {
   passIds?: string[];
   /** Only the passes snapshotted for this change run (`broadcast_targets`). */
   snapshot?: string;
-  /** Only passes this broadcast updated: a follow-up that clears its message. */
+  /** Only passes this broadcast updated or found already showing its text: a follow-up that clears its message. */
   sentBy?: string;
 };
 
@@ -62,7 +62,7 @@ function targetWhere(filter: TargetFilter, now: number) {
   }
   if (filter.sentBy) {
     where.push(`EXISTS (SELECT 1 FROM broadcast_items bi WHERE bi.broadcast_id = ?
-      AND bi.pass_id = passes.id AND bi.outcome = 'updated')`);
+      AND bi.pass_id = passes.id AND bi.outcome IN ('updated', 'unchanged'))`);
     params.push(filter.sentBy);
   }
   where.push(`NOT COALESCE((SELECT unixepoch(json_extract(v.pass_json, '$.expirationDate')) * 1000 <= ?

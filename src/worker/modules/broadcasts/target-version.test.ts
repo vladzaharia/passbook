@@ -177,45 +177,140 @@ describe('a message to the passes on one version', () => {
     expect((await getPass(kit.env.DB, told.id, null))?.personalization.message ?? '').toBe('');
   });
 
-  it('reserves a Tell holders send once per release for the whole organization', async () => {
-    const as = (headers: Record<string, string>, text: string) =>
+  describe('Tell holders reservation', () => {
+    const post2 = (headers: Record<string, string>, key: string, body: Record<string, unknown>) =>
       app.request(
         `${ORIGIN}/api/v1/broadcasts`,
         {
           method: 'POST',
-          headers: {
-            ...headers,
-            'content-type': 'application/json',
-            'idempotency-key': 'rollout-tell:rel-1',
-          },
-          body: JSON.stringify({
-            orgId: kit.org.id,
-            kind: 'message',
-            target: { templateIds: [kit.messaging.id], version: 'v1' },
-            patch: { message: text },
-          }),
+          headers: { ...headers, 'content-type': 'application/json', 'idempotency-key': key },
+          body: JSON.stringify({ orgId: kit.org.id, ...body }),
         },
         kit.env,
       );
-    // The clock moved a week in the test above: sign in afresh.
+    const tell = (text: string, extra: Record<string, unknown> = {}) => ({
+      kind: 'message',
+      target: { templateIds: [kit.messaging.id], version: 'v1' },
+      patch: { message: text },
+      ...extra,
+    });
+    const releaseId = async () =>
+      (
+        await first<{ id: string }>(
+          kit.env.DB,
+          "SELECT id FROM template_releases WHERE template_id = ? AND mode = 'live' ORDER BY generation DESC",
+          [kit.messaging.id],
+        )
+      )?.id ?? '';
+
+    it('lets only the claimant replay; another principal gets 409 and no body', async () => {
+      await kit.makePass();
+      // The clock moved a week in the tests above: sign in afresh.
+      const fresh = await broadcastAuth(kit, ORIGIN);
+      const other = await fresh.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
+      const key = `rollout-tell:${await releaseId()}`;
+      const first = await post2(fresh.admin(), key, tell('Tell once per release.'));
+      expect(first.status).toBe(201);
+      const id = ((await first.json()) as { id: string }).id;
+      // The claimant's retry is a normal replay.
+      const again = await post2(fresh.admin(), key, tell('Tell once per release.'));
+      expect(again.status).toBe(201);
+      expect(((await again.json()) as { id: string }).id).toBe(id);
+      // Anyone else is told it was sent, with nothing of the first response.
+      const second = await post2(other, key, tell('Tell once per release.'));
+      expect(second.status).toBe(409);
+      const problem = (await second.json()) as { code: string };
+      expect(problem).toMatchObject({ code: 'TELL_ALREADY_SENT' });
+      expect(JSON.stringify(problem)).not.toContain(id);
+      const sent = await all<{ id: string }>(
+        kit.env.DB,
+        "SELECT id FROM broadcasts WHERE org_id = ? AND patch LIKE '%Tell once per release.%'",
+        [kit.org.id],
+      );
+      expect(sent).toEqual([{ id }]);
+    });
+
+    it('reserves the prefix: a wrong release, or a body that is not that message, is 422', async () => {
+      const fresh = await broadcastAuth(kit, ORIGIN);
+      const right = `rollout-tell:${await releaseId()}`;
+      const code = async (res: Response) => ((await res.json()) as { code: string }).code;
+      const wrong = await post2(fresh.admin(), 'rollout-tell:not-the-release', tell('x'));
+      expect(wrong.status).toBe(422);
+      expect(await code(wrong)).toBe('IDEMPOTENCY_KEY_RESERVED');
+      const noVersion = await post2(fresh.admin(), right, {
+        ...tell('x'),
+        target: { templateIds: [kit.messaging.id] },
+      });
+      expect(noVersion.status).toBe(422);
+      const change = await post2(fresh.admin(), right, {
+        kind: 'change',
+        target: { templateIds: [kit.messaging.id] },
+        patch: { gate: 'A' },
+      });
+      expect(change.status).toBe(422);
+      const two = await post2(fresh.admin(), right, {
+        ...tell('x'),
+        target: { templateIds: [kit.messaging.id, kit.plain.id], version: 'v1' },
+      });
+      expect(two.status).toBe(422);
+    });
+  });
+
+  it('clears a pass that already showed the same text, as well as those it updated', async () => {
     const fresh = await broadcastAuth(kit, ORIGIN);
-    const other = await fresh.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
-    const first = await as(fresh.admin(), 'Tell once per release.');
-    expect(first.status).toBe(201);
-    const id = ((await first.json()) as { id: string }).id;
-    // A second admin (another principal) gets the first send back, not a second message.
-    const second = await as(other, 'Tell once per release.');
-    expect(second.status).toBe(201);
-    expect(((await second.json()) as { id: string }).id).toBe(id);
-    const sent = await all<{ id: string }>(
-      kit.env.DB,
-      "SELECT id FROM broadcasts WHERE org_id = ? AND patch LIKE '%Tell once per release.%'",
-      [kit.org.id],
+    const same = await kit.makePass({ message: 'Doors open at 8.' });
+    await run(kit.env.DB, "UPDATE passes SET status = 'voided' WHERE id != ? AND template_id = ?", [
+      same.id,
+      kit.messaging.id,
+    ]);
+    const res = await app.request(
+      `${ORIGIN}/api/v1/broadcasts`,
+      {
+        method: 'POST',
+        headers: { ...fresh.admin(), 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: kit.org.id,
+          kind: 'message',
+          target: { templateIds: [kit.messaging.id] },
+          patch: { message: 'Doors open at 8.' },
+          clearAfter: 3_600_000,
+        }),
+      },
+      kit.env,
     );
-    expect(sent).toEqual([{ id }]);
-    // Another text for the same release is refused outright.
-    const other2 = await as(other, 'Something else.');
-    expect(other2.status).toBe(422);
-    expect(await other2.json()).toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED' });
+    const sent = (await res.json()) as { id: string };
+    const step = {
+      do: async (_n: string, a: unknown, b?: unknown) =>
+        await ((typeof a === 'function' ? a : b) as () => Promise<unknown>)(),
+    } as unknown as Parameters<typeof runBroadcast>[3];
+    const exec = async (id: string) => {
+      const instance = kit.broadcast.created.at(-1);
+      expect(instance?.id).toBe(`broadcast-${id}`);
+      await runBroadcast(
+        kit.env,
+        instance?.id ?? '',
+        { broadcastId: id },
+        step,
+        undefined,
+        kit.clock,
+      );
+      await kit.settle();
+    };
+    await exec(sent.id);
+    // The pass already showed that text: the run records it unchanged.
+    expect(
+      await first(kit.env.DB, 'SELECT outcome FROM broadcast_items WHERE broadcast_id = ?', [
+        sent.id,
+      ]),
+    ).toEqual({ outcome: 'unchanged' });
+    kit.clock.advance(3_700_000);
+    await startDueBroadcasts(jobCtxOf(kit));
+    const follow = await first<{ id: string }>(
+      kit.env.DB,
+      'SELECT id FROM broadcasts WHERE parent_id = ?',
+      [sent.id],
+    );
+    await exec(follow?.id ?? '');
+    expect((await getPass(kit.env.DB, same.id, null))?.personalization.message ?? '').toBe('');
   });
 });
