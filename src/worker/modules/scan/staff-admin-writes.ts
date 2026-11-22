@@ -75,6 +75,7 @@ export async function commitPinReset(
   authority: TenantPassWrite,
   staff: ScanStaffRow,
   ip: string | null = null,
+  committed: () => void = () => {},
 ): Promise<string> {
   const { orgId, id } = staff;
   // Never the old PIN (under either root mid-rotation), and unique among the org's active staff.
@@ -104,6 +105,7 @@ export async function commitPinReset(
     }),
   );
   await g.commit();
+  committed();
   // The person starts the day clean: an admin reset also lifts the daily lock.
   await clearNamedDayStatement(ctx.env.DB, id).run();
   return pin;

@@ -23,8 +23,8 @@ import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, tenantAuthorityOf } from '../passes/http.ts';
-import { credentialOnce } from '../scan/credential-once.ts';
-import { chargedKeysetWrite } from '../scan/key-credentials.ts';
+import { credentialOnce, withoutSecrets } from '../scan/credential-once.ts';
+import { chargedKeysetWrite, orgOf } from '../scan/key-credentials.ts';
 import { importTags } from './import.ts';
 import { keysetRequestBody } from './keyset-idem.ts';
 import {
@@ -97,7 +97,7 @@ export function registerKeysetRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void 
       response: TagKeysetListSchema,
     },
     async (c) => {
-      const { orgId } = c.req.valid('query');
+      const orgId = orgOf(c.var.auth, c.req.valid('query').orgId);
       const { ctx, authority } = await acting(c, orgId, 'scanning:read', orgMissing);
       return c.json({ items: await listKeysets(ctx, orgId, authority.mode), nextCursor: null });
     },
@@ -117,7 +117,7 @@ export function registerKeysetRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void 
       response: MadeTagKeysetSchema,
     },
     async (c) => {
-      const { orgId } = c.req.valid('query');
+      const orgId = orgOf(c.var.auth, c.req.valid('query').orgId);
       const { ctx, authority } = await acting(c, orgId, 'scanning:manage', orgMissing);
       const a = keysetAuthorityOf(authority, ipOf(c));
       const input = c.req.valid('json');
@@ -126,7 +126,7 @@ export function registerKeysetRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void 
         body: await keysetRequestBody(ctx.env, input),
         status: 201,
         execute: () => chargedKeysetWrite(ctx, a, () => createKeyset(ctx, a, input)),
-        redact: (v) => ({ ...v, keys: null }),
+        redact: (v) => withoutSecrets(MadeTagKeysetSchema, v, ['keys']),
       });
     },
   );
@@ -154,7 +154,7 @@ export function registerKeysetRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void 
         status: 200,
         execute: () =>
           chargedKeysetWrite(ctx, authority, () => rotateKeyset(ctx, authority, id, input)),
-        redact: (v) => ({ ...v, keys: null }),
+        redact: (v) => withoutSecrets(MadeTagKeysetSchema, v, ['keys']),
       });
     },
   );

@@ -182,17 +182,42 @@ describe('keysets by nfc:keys key', () => {
     );
     const before = await writes(k.id);
     const dry = await call(k.headers, 'POST', `/keysets/${perTag.id}/import`, {
-      csv: 'uid,key\n',
+      csv: `04aa0000000001,${'e5'.repeat(16)}`,
       dryRun: true,
     });
     expect(dry.status).toBe(200);
     expect(await writes(k.id)).toBe(before);
     const add = await call(k.headers, 'POST', `/keysets/${perTag.id}/import`, {
-      csv: 'uid,key\n',
+      csv: `04aa0000000001,${'e5'.repeat(16)}`,
       dryRun: false,
     });
     expect(add.status).toBe(200);
     expect(await writes(k.id)).toBe(before + 1);
+  });
+});
+
+describe('import by key', () => {
+  it('gives a dry run no signal about the meta key; only the charged add refuses it', async () => {
+    const t = await f.org();
+    const k = await key(t);
+    const meta = 'c3'.repeat(16);
+    const guess = 'd4'.repeat(16);
+    const perTag = await body(
+      await call(k.headers, 'POST', `/keysets?orgId=${t.org.id}`, {
+        name: 'Supplier meta',
+        perTag: true,
+        metaKey: meta,
+      }),
+    );
+    const csv = `04aa0000000011,${meta}\n04aa0000000012,${guess}`;
+    const problems = async (dryRun: boolean) =>
+      (
+        (await body(await call(k.headers, 'POST', `/keysets/${perTag.id}/import`, { csv, dryRun })))
+          .problems as { reason: string }[]
+      ).map((p) => p.reason);
+    // Right and wrong guesses look the same in a dry run.
+    expect(await problems(true)).toEqual([]);
+    expect(await problems(false)).toEqual(['meta_key']);
   });
 });
 
@@ -295,8 +320,14 @@ describe('keysets: who may call', () => {
     expect((await call(k.headers, 'POST', `/keysets/${made.id}/keys/1/retire`)).status).toBe(409);
     expect(await writes(k.id)).toBe(28);
     expect((await call(k.headers, 'POST', `/keysets/${made.id}/disable`)).status).toBe(200);
+    expect(await writes(k.id)).toBe(29);
+    // A repeated disable commits nothing, so it costs nothing.
     expect((await call(k.headers, 'POST', `/keysets/${made.id}/disable`)).status).toBe(200);
-    const over = await call(k.headers, 'POST', `/keysets/${made.id}/disable`);
+    expect(await writes(k.id)).toBe(29);
+    const other = await body(await create(t, k.headers, { name: 'Thirtieth' }));
+    expect(other.id).toBeDefined();
+    expect(await writes(k.id)).toBe(30);
+    const over = await call(k.headers, 'POST', `/keysets/${other.id}/disable`);
     expect(over.status).toBe(429);
     expect(Number(over.headers.get('retry-after'))).toBeGreaterThan(3600);
     expect(await writes(k.id)).toBe(30);

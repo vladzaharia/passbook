@@ -48,6 +48,8 @@ export async function createScanner(
   origin: string,
   authority: TenantPassWrite,
   ip: string | null = null,
+  /** Called right after the commit: what follows reads, and a failure there keeps a code's charge. */
+  committed: () => void = () => {},
 ) {
   const db = ctx.env.DB;
   if (!(await orgIsActive(db, input.orgId)))
@@ -128,6 +130,7 @@ export async function createScanner(
   } catch (error) {
     nameTaken(error);
   }
+  committed();
   const pairing =
     code !== null && pair
       ? { code, url: `${origin}/scan#pair=${code}`, expiresAt: pair.expiresAt }

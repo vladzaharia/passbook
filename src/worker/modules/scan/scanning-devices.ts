@@ -60,6 +60,8 @@ export async function createScanningDevice(
   authority: TenantPassWrite,
   admin?: { userId: string; deviceKey: string },
   ip: string | null = null,
+  /** Called right after the commit: what follows reads, and a failure there keeps a code's charge. */
+  committed: () => void = () => {},
 ) {
   const parent = await loadScanningSession(ctx, sessionId);
   const capture = newCapture({
@@ -90,6 +92,7 @@ export async function createScanningDevice(
   } catch (error) {
     setupConflict(error);
   }
+  committed();
   const pairing = key ? made.pairing : await issuePairing(ctx, capture, plan.input, made.id);
   const row = await scanningDeviceRow(ctx.env.DB, parent.org_id, made.id);
   if (!row) throw new NotFoundError('Device not found.', 'SCANNING_DEVICE_NOT_FOUND');

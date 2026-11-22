@@ -69,6 +69,7 @@ export async function createStaffByKey(
   actorId: string,
   input: CreateStaff,
   ip: string | null,
+  committed: () => void = () => {},
 ) {
   const key = credentialKeyOf(authority, input.orgId, actorId, 'scanning:admin');
   const capture = newCapture({
@@ -95,6 +96,7 @@ export async function createStaffByKey(
   } catch (error) {
     staffMutationError(error);
   }
+  committed();
   return { staff: await account(ctx, input.orgId, id), pin };
 }
 
@@ -117,7 +119,8 @@ export async function resetStaffPinByKey(
   actorId: string,
   staff: ScanStaffRow,
   ip: string | null,
+  committed: () => void = () => {},
 ) {
   const key = credentialKeyOf(authority, staff.orgId, actorId, 'scanning:admin');
-  return { pin: await commitPinReset(ctx, actorId, key, staff, ip) };
+  return { pin: await commitPinReset(ctx, actorId, key, staff, ip, committed) };
 }

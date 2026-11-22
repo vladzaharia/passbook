@@ -14,7 +14,7 @@ import { type createRouter, register } from '../../platform/openapi.ts';
 import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, type C, tenantAuthorityOf } from '../passes/http.ts';
-import { credentialOnce } from './credential-once.ts';
+import { credentialOnce, withoutSecrets } from './credential-once.ts';
 import { charged } from './key-credentials.ts';
 import { withoutNames } from './key-names.ts';
 import { createPairing, pairingState } from './pairing.ts';
@@ -92,7 +92,7 @@ export function registerScannerCredentials(router: Router): void {
         body: input,
         status: 201,
         execute: async () =>
-          charged(ctx, authority, code ? 1 : 0, async () => {
+          charged(ctx, authority, code ? 1 : 0, async (committed) => {
             const made = await createScanner(
               ctx,
               actorId,
@@ -101,13 +101,14 @@ export function registerScannerCredentials(router: Router): void {
               origin,
               authority,
               ipPrefix(clientIp(c)),
+              committed,
             );
             return scopedScanningView(
               auth.kind === 'api_key' ? withoutNames(made) : made,
               input.orgId,
             );
           }),
-        redact: (v) => ({ ...v, pairing: null }),
+        redact: (v) => withoutSecrets(CreatedScannerSchema, v, ['pairing']),
       });
     },
   );

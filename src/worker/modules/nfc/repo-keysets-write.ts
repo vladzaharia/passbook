@@ -18,7 +18,11 @@ type Key = Extract<TenantPassWrite, { kind: 'api_key' }>;
 export type KeysetAuthority = (
   | (Session & { capability: 'scanning:manage' })
   | (Key & { scope: 'nfc:keys' })
-) & { ip?: string | null };
+) & {
+  ip?: string | null;
+  /** Set by a key's budget: called when a write commits, so a no-op is refunded. */
+  onCommit?: () => void;
+};
 
 /** The user or key id: what the audit row names and `created_by` holds (no foreign key). */
 export const keysetActorId = (a: KeysetAuthority) => (a.kind === 'api_key' ? a.keyId : a.userId);

@@ -111,9 +111,14 @@ export const scopeOf = (k: Pick<KeysetRow, 'id' | 'orgId' | 'mode'>): KeyScope =
 });
 
 /** Turns the keyset triggers' refusals into stable answers. */
-export async function commitKeyset(g: { commit(): Promise<D1Result[]> }): Promise<D1Result[]> {
+export async function commitKeyset(
+  g: { commit(): Promise<D1Result[]> },
+  a?: Pick<KeysetAuthority, 'onCommit'>,
+): Promise<D1Result[]> {
   try {
-    return await g.commit();
+    const results = await g.commit();
+    a?.onCommit?.();
+    return results;
   } catch (error) {
     const text = error instanceof Error ? error.message : '';
     if (text.includes('keyset_limit'))
@@ -177,7 +182,7 @@ export async function createKeyset(
       first,
     });
     try {
-      await commitKeyset(g);
+      await commitKeyset(g, a);
       break;
     } catch (error) {
       const clash = error instanceof ConflictError && error.code === 'KEYSET_CHANGED';
@@ -224,6 +229,7 @@ export async function rotateKeyset(
       version: next,
       envelope: await sealVersion(ring, { ...scope, keyId, version: next }, meta, file),
     }),
+    a,
   );
   return { ...(await keysetView(ctx, a, id)), keys: shown };
 }
@@ -245,7 +251,7 @@ export async function retireKeyVersion(
   if (found.state === 'retired') return keysetView(ctx, a, id);
   if (found.tags > 0)
     throw conflict(`${found.tags} tags still use version ${version}.`, 'KEYSET_KEY_IN_USE');
-  await commitKeyset(retireKeyGrant(ctx, a, id, version));
+  await commitKeyset(retireKeyGrant(ctx, a, id, version), a);
   return keysetView(ctx, a, id);
 }
 
@@ -256,7 +262,7 @@ export async function disableKeyset(
   id: string,
 ): Promise<KeysetView> {
   const row = await keysetIn(ctx, a, id);
-  if (row.disabledAt === null) await commitKeyset(disableKeysetGrant(ctx, a, id));
+  if (row.disabledAt === null) await commitKeyset(disableKeysetGrant(ctx, a, id), a);
   return keysetView(ctx, a, id);
 }
 

@@ -4,6 +4,21 @@ import type { AppBindings } from '../../platform/context.ts';
 import { idempotencyKeyHeader, principalOf, withIdempotency } from '../../platform/idempotency.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 
+/**
+ * The stored form of an answer, by allowlist: only the fields of its schema, with the secret fields null.
+ * A field added to the answer later is stored only if the schema names it, and never a secret by accident.
+ */
+export function withoutSecrets(
+  schema: { shape: Record<string, unknown> },
+  value: object,
+  secrets: readonly string[],
+): Record<string, unknown> {
+  const from = value as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.keys(schema.shape).map((k) => [k, secrets.includes(k) ? null : from[k]]),
+  );
+}
+
 export interface CredentialOnce<T> {
   orgId: string;
   /** What the request means, hashed to tell a retry from another request (the body and any query flag). */

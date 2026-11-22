@@ -199,5 +199,12 @@
         "generate": true
       }
     }
+  },
+  "scan-staff.patchScanStaffById": {
+    "snippet": {
+      "request": {
+        "role": "manager"
+      }
+    }
   }
 }

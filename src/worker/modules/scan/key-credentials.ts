@@ -1,5 +1,11 @@
+import type { AuthContext } from '../../platform/auth.ts';
 import { bump } from '../../platform/counters.ts';
-import { ForbiddenError, RateLimitedError } from '../../platform/errors.ts';
+import {
+  ForbiddenError,
+  NotFoundError,
+  RateLimitedError,
+  ValidationError,
+} from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import type { KeyAdminAuthority } from './repo-admin-grant.ts';
@@ -11,6 +17,19 @@ export const CREDENTIAL_CALLS = { counter: 'scan-cred:calls', limit: 60 } as con
 export const SETUP_CALLS = { counter: 'scan-setup:calls', limit: 10 } as const;
 /** PINs, codes and tokens a key makes in a day, across the setup and the credential routes. */
 const SECRETS_PER_DAY = 100;
+
+/**
+ * The org a credential route acts in: the query's, or an org-bound key's own when it omits it. A session
+ * must name one; a platform key (no org) finds none.
+ */
+export function orgOf(auth: AuthContext | undefined, given: string | undefined): string {
+  if (given !== undefined) return given;
+  if (auth?.kind === 'api_key') {
+    if (auth.orgId === null) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+    return auth.orgId;
+  }
+  throw new ValidationError('orgId is required.', [{ path: 'orgId', message: 'Required.' }]);
+}
 
 /**
  * The key that may make door credentials in this org: a live `scanning:admin` key bound to it, acting
@@ -68,18 +87,25 @@ export async function chargeSecrets(
   return refund;
 }
 
-/** `run` under a charge for `secrets` (see `chargeSecrets`): a call that throws costs nothing. */
+/**
+ * `run` under a charge for `secrets` (see `chargeSecrets`). A call that fails before its commit costs
+ * nothing; `run` calls `committed()` right after the commit, and from then on the credential exists, so a
+ * failure in the reads that follow keeps the charge.
+ */
 export async function charged<T>(
   ctx: ServiceContext,
   authority: TenantPassWrite,
   secrets: number,
-  run: () => Promise<T>,
+  run: (committed: () => void) => Promise<T>,
 ): Promise<T> {
   const refund = await chargeSecrets(ctx, authority, secrets);
+  let done = false;
   try {
-    return await run();
+    return await run(() => {
+      done = true;
+    });
   } catch (error) {
-    await refund();
+    if (!done) await refund();
     throw error;
   }
 }
@@ -93,7 +119,7 @@ const NFC_WRITES_PER_DAY = 30;
  */
 export async function chargedKeysetWrite<T>(
   ctx: ServiceContext,
-  authority: TenantPassWrite,
+  authority: TenantPassWrite & { onCommit?: () => void },
   run: () => Promise<T>,
 ): Promise<T> {
   if (authority.kind !== 'api_key') return run();
@@ -104,10 +130,17 @@ export async function chargedKeysetWrite<T>(
     await bump(ctx.env.DB, key, day, -1);
     throw new RateLimitedError(Math.max(1, Math.ceil((day + DAY - now) / 1000)));
   }
+  // A write that commits nothing (a repeated disable, a retire of a retired version) is refunded too.
+  let committed = false;
+  authority.onCommit = () => {
+    committed = true;
+  };
   try {
-    return await run();
+    const out = await run();
+    if (!committed) await bump(ctx.env.DB, key, day, -1);
+    return out;
   } catch (error) {
-    await bump(ctx.env.DB, key, day, -1);
+    if (!committed) await bump(ctx.env.DB, key, day, -1);
     throw error;
   }
 }

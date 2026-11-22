@@ -17,7 +17,9 @@ func main() {
 	}
 
 	var body passbook.ScanStaffUpdateBody
-	if err := json.Unmarshal([]byte(`{}`), &body); err != nil {
+	if err := json.Unmarshal([]byte(`{
+  "role": "manager"
+}`), &body); err != nil {
 		panic(err)
 	}
 

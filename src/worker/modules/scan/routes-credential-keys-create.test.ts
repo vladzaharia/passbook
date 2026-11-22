@@ -112,7 +112,9 @@ describe('create a scanner by key', () => {
 
   it('refuses a key that may not, and writes nothing', async () => {
     const before = [await count('scanners'), await t.auditCount()];
+    // nfc:keys is a credential scope of its own: it opens no door credential.
     await expectProblem(await create(keys.read.headers), 403, 'MISSING_SCOPE');
+    await expectProblem(await create(keys.nfc.headers), 403, 'MISSING_SCOPE');
     await expectProblem(await create(keys.platform.headers), 404, 'ORG_NOT_FOUND');
     await expectProblem(await create(keys.otherOrg.headers), 404, 'ORG_NOT_FOUND');
     await expectProblem(
@@ -202,6 +204,7 @@ describe('add a device to a session by key', () => {
   it('refuses keys that may not, and a session of another mode', async () => {
     const before = [await count('scanners'), await t.auditCount()];
     await expectProblem(await add(keys.read.headers), 403, 'MISSING_SCOPE');
+    await expectProblem(await add(keys.nfc.headers), 403, 'MISSING_SCOPE');
     for (const k of [keys.platform, keys.otherOrg])
       await expectProblem(await add(k.headers), 404, 'SCANNING_SESSION_NOT_FOUND');
     const test = await t.key(['scanning:write'], { mode: 'test' });
@@ -211,6 +214,30 @@ describe('add a device to a session by key', () => {
     for (const k of [keys.revoked, keys.expired])
       await expectProblem(await add(k.headers), 401, 'INVALID_API_KEY');
     expect([await count('scanners'), await t.auditCount()]).toEqual(before);
+  });
+
+  it('refuses a forced test-mode admin key adding a device to a test session, and an oversized body', async () => {
+    const made = await t.fixture.call(
+      'POST',
+      '/scanning-sessions',
+      { orgId: t.orgId(), name: 'Key test session', timeZone: 'UTC' },
+      { ...t.fixture.fake.admin(), 'x-passbook-mode': 'test' },
+    );
+    expect(made.status).toBe(201);
+    const testSession = ((await made.json()) as { id: string }).id;
+    const before = [await count('scanners'), await t.auditCount()];
+    expect((await add(keys.testAdmin.headers, testSession)).status).toBe(403);
+    expect([await count('scanners'), await t.auditCount()]).toEqual(before);
+    // The 64 KiB cap holds on both creating routes.
+    const big = { name: 'x'.repeat(70_000), surface: 'auto' };
+    expect(
+      (await t.send('POST', `/scanning-sessions/${session}/devices`, keys.admin.headers, big))
+        .status,
+    ).toBe(413);
+    expect(
+      (await t.send('POST', '/scanners', keys.admin.headers, { ...scannerBody(), name: big.name }))
+        .status,
+    ).toBe(413);
   });
 
   it('refuses a paused session with 409 and refunds the charge', async () => {

@@ -16,7 +16,7 @@ import { type ServiceContext, serviceContext } from '../../platform/service-cont
 import { getOrgAccess } from '../orgs/access.ts';
 import { authOf, type C, type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { credentialOnce } from './credential-once.ts';
-import { charged } from './key-credentials.ts';
+import { charged, orgOf } from './key-credentials.ts';
 import { STAFF_PAGE_MAX } from './repo-staff-page.ts';
 import {
   committedStaffOf,
@@ -46,7 +46,9 @@ const StaffList = z.object({
   hasMore: z.boolean().optional(),
   nextCursor: z.string().optional(),
 });
-const StaffListQuery = OrgQuery.extend({
+/** An org-bound key may omit `orgId`; a session names one. */
+const KeyOrgQuery = z.object({ orgId: IdSchema.optional() });
+const StaffListQuery = KeyOrgQuery.extend({
   q: z.string().trim().max(80).optional(),
   limit: z.coerce.number().int().min(1).max(STAFF_PAGE_MAX).optional(),
   cursor: z.string().max(300).optional(),
@@ -135,7 +137,8 @@ export function registerStaffAdmin(router: Router): void {
     },
     async (c) => {
       const k = await caller(c, false);
-      const { orgId, q, limit, cursor } = c.req.valid('query');
+      const { orgId: given, q, limit, cursor } = c.req.valid('query');
+      const orgId = orgOf(k.auth, given);
       if (k.auth.kind === 'api_key') {
         // A platform key (no org) finds nothing, as on every scanning list; another org's key reads an empty page.
         if (k.auth.orgId === null)
@@ -179,9 +182,9 @@ export function registerStaffAdmin(router: Router): void {
         body: input,
         status: 201,
         execute: () =>
-          charged(k.ctx, authority, 1, () =>
+          charged(k.ctx, authority, 1, (committed) =>
             authority.kind === 'api_key'
-              ? createStaffByKey(k.ctx, authority, k.actorId, input, k.ip)
+              ? createStaffByKey(k.ctx, authority, k.actorId, input, k.ip, committed)
               : createStaff(
                   k.ctx,
                   sessionOf(k.auth),
@@ -203,13 +206,13 @@ export function registerStaffAdmin(router: Router): void {
       summary: 'Update or disable a staff member',
       auth: ADMIN,
       params: IdParamSchema,
-      query: OrgQuery,
+      query: KeyOrgQuery,
       body: UpdateScanStaffSchema.strict(),
       response: ScanStaffSchema,
     },
     async (c) => {
       const k = await caller(c, true);
-      const { orgId } = c.req.valid('query');
+      const orgId = orgOf(k.auth, c.req.valid('query').orgId);
       const { id } = c.req.valid('param');
       if (k.auth.kind === 'api_key') {
         const staff = await keyStaff(k, orgId, id);
@@ -240,12 +243,12 @@ export function registerStaffAdmin(router: Router): void {
       summary: 'Replace a staff PIN and reveal it once',
       auth: ADMIN,
       params: IdParamSchema,
-      query: OrgQuery,
+      query: KeyOrgQuery,
       response: StaffPinSchema,
     },
     async (c) => {
       const k = await caller(c, true);
-      const { orgId } = c.req.valid('query');
+      const orgId = orgOf(k.auth, c.req.valid('query').orgId);
       const { id } = c.req.valid('param');
       const found =
         k.auth.kind === 'api_key'
@@ -257,9 +260,9 @@ export function registerStaffAdmin(router: Router): void {
         body: { orgId },
         status: 200,
         execute: () =>
-          charged(k.ctx, authority, 1, () =>
+          charged(k.ctx, authority, 1, (committed) =>
             authority.kind === 'api_key'
-              ? resetStaffPinByKey(k.ctx, authority, k.actorId, found, k.ip)
+              ? resetStaffPinByKey(k.ctx, authority, k.actorId, found, k.ip, committed)
               : resetStaffPin(k.ctx, sessionOf(k.auth), sessionAuthorityOf(authority), found),
           ),
         redact: (v) => ({ ...v, pin: null }),

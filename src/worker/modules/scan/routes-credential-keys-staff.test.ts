@@ -131,11 +131,33 @@ describe('staff by scanning:admin key', () => {
   });
 });
 
+describe('a key reset signs the person out', () => {
+  it('unbinds the person from every scanner, so the next scan asks for the new PIN', async () => {
+    const person = await made();
+    const { kit } = t.fixture;
+    const scanner = await kit.scanner({
+      templateIds: [t.templateId()],
+      settings: { staffSignIn: true },
+    });
+    expect(
+      (await kit.post(scanner.headers, '/staff', { staffId: person.staff.id, pin: person.pin }))
+        .status,
+    ).toBe(200);
+    const bound = () =>
+      first<{ staff_id: string | null }>(t.env().DB, 'SELECT staff_id FROM scanners WHERE id = ?', [
+        scanner.id,
+      ]);
+    expect((await bound())?.staff_id).toBe(person.staff.id);
+    expect((await reset(keys.admin.headers, person.staff.id)).status).toBe(200);
+    expect((await bound())?.staff_id).toBeNull();
+  });
+});
+
 describe('staff: who may call', () => {
   it('refuses scanning:write and scan-setup:read with MISSING_SCOPE, writing nothing', async () => {
     const person = await made();
     const [rows, audits] = [await staffCount(), await t.auditCount()];
-    for (const k of [keys.write, keys.read]) {
+    for (const k of [keys.write, keys.read, keys.nfc]) {
       await expectProblem(await create(k.headers), 403, 'MISSING_SCOPE');
       await expectProblem(await list(k.headers), 403, 'MISSING_SCOPE');
       await expectProblem(

@@ -89,6 +89,29 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
       kit.clock.now(),
     ],
   );
+  // The credential routes (pairing, token, staff, keysets) take only a live, org-bound key with a credential
+  // scope and an expiry within 90 days, which a sandbox key can never be: they run through this one.
+  const credentialPrefix = kit.f.ids.token(6);
+  const credentialSecret = `wlt_${credentialPrefix}_${kit.f.ids.token()}`;
+  // A developer sandbox org can hold no credential key (the sandbox ceiling), and its guides call none.
+  if (options.kind !== 'developer')
+    await run(
+      kit.env.DB,
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_by, created_at, expires_at)
+       VALUES (?, ?, 'Credential snippets', ?, ?, ?, 'live', ?, ?, ?)`,
+      [
+        kit.f.ids.id(),
+        org.id,
+        credentialPrefix,
+        await sha256Hex(credentialSecret),
+        JSON.stringify(['scanning:admin', 'nfc:keys']),
+        owner.userId,
+        kit.clock.now(),
+        kit.clock.now() + 30 * 86_400_000,
+      ],
+    );
+  const CREDENTIAL_PATH =
+    /^\/api\/v1\/(?:scanners\/[^/]+\/(?:pairing|token)|scan-staff(?:\/.*)?|nfc\/keysets(?:\/.*)?)$/;
   const app = createApp({
     stores: {
       ...denyAllStores,
@@ -167,7 +190,12 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
   const fetchLike = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
     const url = new URL(swap(String(input instanceof Request ? input.url : input)));
     const body = typeof init.body === 'string' ? swap(init.body) : init.body;
-    const res = await app.request(url.toString(), { ...init, body }, kit.env);
+    const headers = new Headers(init.headers);
+    // The pairing poll is a read (`scan-setup:read`): the sandbox key keeps it.
+    const poll = (init.method ?? 'GET') === 'GET' && url.pathname.endsWith('/pairing');
+    if (CREDENTIAL_PATH.test(url.pathname) && !poll)
+      headers.set('authorization', `Bearer ${credentialSecret}`);
+    const res = await app.request(url.toString(), { ...init, headers, body }, kit.env);
     const problem = res.ok
       ? {}
       : ((await res
