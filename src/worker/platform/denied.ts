@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import { apiKeyPrefixOf } from './api-key-token.ts';
 import type { ApiKeyAuth, ScannerAuth, SessionAuth } from './auth.ts';
 import type { AppBindings } from './context.ts';
 import { ipPrefix } from './ip.ts';
@@ -37,5 +38,25 @@ export function reportDenied(
     Promise.resolve(hook(event)).catch((error) =>
       ctx.log.warn('auth.denied_audit_failed', { code: 'DENIED_AUDIT', error }),
     ),
+  );
+}
+
+/**
+ * Notes a key refused at the route gate (401 INVALID_API_KEY, 403 MISSING_SCOPE) on the request, so the one
+ * `request.done` line the 4xx already writes carries a stable code (a second line would double the log volume
+ * of an unauthenticated flood). An unknown key carries only the non-secret lookup prefix, never the token; it
+ * is not audited (see `reportDenied`). A known key carries its id.
+ */
+export function noteKeyRefused(
+  c: Context<AppBindings>,
+  refusal:
+    | { code: 'INVALID_API_KEY'; token: string }
+    | { code: 'MISSING_SCOPE'; keyId: string; scope: string | null },
+): void {
+  c.set(
+    'refusal',
+    refusal.code === 'INVALID_API_KEY'
+      ? { code: refusal.code, keyPrefix: apiKeyPrefixOf(refusal.token) }
+      : { code: refusal.code, keyId: refusal.keyId, scope: refusal.scope },
   );
 }

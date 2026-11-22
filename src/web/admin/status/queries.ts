@@ -2,6 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { z } from 'zod';
 import {
   type ComponentStatusSchema,
+  IncidentListSchema,
+  type OpenIncidentSchema,
+  PublicIncidentSchema,
   StatusResponseSchema,
   WorkflowRunListSchema,
 } from '@/shared/contracts/status.ts';
@@ -52,5 +55,33 @@ export function useWorkflowRuns() {
     queryKey: ['status', 'workflows'],
     queryFn: ({ signal }) => api.get('/api/v1/status/workflows', WorkflowRunListSchema, { signal }),
     staleTime: 15_000,
+  });
+}
+
+const INCIDENTS = '/api/v1/status/incidents';
+
+export function useIncidents() {
+  return useQuery({
+    queryKey: ['status', 'incidents'],
+    queryFn: ({ signal }) => api.get(INCIDENTS, IncidentListSchema, { signal }),
+    staleTime: 15_000,
+  });
+}
+
+export function useOpenIncident() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: z.input<typeof OpenIncidentSchema>) =>
+      api.post(INCIDENTS, PublicIncidentSchema, body),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['status', 'incidents'] }),
+  });
+}
+
+export function useResolveIncident() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.post(`${INCIDENTS}/${encodeURIComponent(id)}/resolve`, PublicIncidentSchema),
+    onSuccess: () => client.invalidateQueries({ queryKey: ['status', 'incidents'] }),
   });
 }

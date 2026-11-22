@@ -6,12 +6,19 @@ import type {
 import { loadKekRing } from '../../platform/crypto.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordAudit } from '../audit/service.ts';
 import { type ImportProblem, parseImportCsv } from './import-csv.ts';
 import { openVersion, sealTagKey } from './keyset-seal.ts';
 import { commitKeyset, conflict, keysetIn, scopeOf } from './keysets.ts';
-import { existingRefs, type ImportedTag, importGrant } from './repo-import.ts';
+import {
+  existingRefs,
+  type ImportedTag,
+  importGrant,
+  ownKeyTags,
+  rekeyGrant,
+} from './repo-import.ts';
 import { keyVersionsOf, versionEnvelopes } from './repo-keysets.ts';
-import type { KeysetAuthority } from './repo-keysets-write.ts';
+import { type KeysetAuthority, keysetActorId } from './repo-keysets-write.ts';
 import { bytesToHex, hexToBytes } from './sun.ts';
 import { tagRef } from './tag-ref.ts';
 
@@ -25,6 +32,8 @@ const CHUNK = 40;
  * (AES-GCM envelope, bound to its tag, keyset, mode and org) and never returned or logged. A dry run reads the
  * file and the org's tags and reports what would be added; nothing is written. Duplicates (in the file, or
  * a tag the org already has, Basic ones included) and bad rows are listed, never added. The rest go in.
+ * With `replace`, rows name tags already on this keyset with keys of their own and swap their sealed key
+ * (counters and bindings stay; the tag must be rewritten); anything else is listed as `not_on_keyset`.
  */
 export async function importTags(
   ctx: ServiceContext,
@@ -65,15 +74,13 @@ export async function importTags(
   const refs = await Promise.all(
     parsed.rows.map(async (r) => ({ row: r, ...(await tagRef(ctx.env, a.orgId, a.mode, r.uid)) })),
   );
-  const taken = await existingRefs(
-    ctx.env.DB,
-    a.orgId,
-    a.mode,
-    refs.map((r) => r.ref),
-  );
+  const refList = refs.map((r) => r.ref);
+  const replace = input.replace === true;
+  const own = replace ? await ownKeyTags(ctx.env.DB, a.orgId, a.mode, keyset.id, refList) : null;
+  const taken = replace ? null : await existingRefs(ctx.env.DB, a.orgId, a.mode, refList);
   const fresh = refs.filter((r) => {
-    if (!taken.has(r.ref)) return true;
-    problems.push({ line: r.row.line, uid: r.row.uid, reason: 'exists' });
+    if (own ? own.has(r.ref) : !taken?.has(r.ref)) return true;
+    problems.push({ line: r.row.line, uid: r.row.uid, reason: own ? 'not_on_keyset' : 'exists' });
     return false;
   });
   let added = 0;
@@ -83,7 +90,7 @@ export async function importTags(
     for (let i = 0; i < fresh.length; i += CHUNK) {
       const tags: ImportedTag[] = [];
       for (const r of fresh.slice(i, i + CHUNK)) {
-        const tagId = ctx.ids.id();
+        const tagId = own?.get(r.ref) ?? ctx.ids.id();
         tags.push({
           tagId,
           ref: r.ref,
@@ -91,12 +98,11 @@ export async function importTags(
           envelope: await sealTagKey(ring, scope, tagId, hexToBytes(r.row.key) as Uint8Array),
         });
       }
-      const { grant, inserts } = importGrant(
-        ctx,
-        a,
-        { id: keyset.id, version: active.version },
-        tags,
-      );
+      const target = { id: keyset.id, version: active.version };
+      const { grant, writes } = replace
+        ? (({ grant, updates }) => ({ grant, writes: updates }))(rekeyGrant(ctx, a, target, tags))
+        : (({ grant, inserts }) => ({ grant, writes: inserts }))(importGrant(ctx, a, target, tags));
+      const before = added;
       const results = await commitKeyset(grant, a).catch((error: unknown) => {
         if (added > 0 && error instanceof AppError)
           throw conflict(
@@ -105,9 +111,22 @@ export async function importTags(
           );
         throw error;
       });
-      added += inserts.filter(
-        (s) => (results[grant.indexOf(s)]?.results?.length ?? 0) === 1,
-      ).length;
+      const done = writes.map((s) => (results[grant.indexOf(s)]?.results?.length ?? 0) === 1);
+      added += done.filter(Boolean).length;
+      if (replace)
+        await recordAudit(ctx, {
+          orgId: a.orgId,
+          actorType: a.kind === 'api_key' ? 'api_key' : 'user',
+          actorId: keysetActorId(a),
+          ...(a.ip ? { ipPrefix: a.ip } : {}),
+          action: 'tag_keyset.rekeyed',
+          targetType: 'tag_keyset',
+          targetId: keyset.id,
+          detail: {
+            count: added - before,
+            tagIds: tags.filter((_, n) => done[n]).map((t) => t.tagId),
+          },
+        });
     }
   }
   problems.sort((x, y) => x.line - y.line);

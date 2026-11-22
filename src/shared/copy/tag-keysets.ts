@@ -31,6 +31,7 @@ export const KEYSET_COPY = {
     dup_key: 'Same key as another row',
     meta_key: 'Same as the meta key',
     exists: 'Already in this organization',
+    not_on_keyset: 'Not on this keyset',
   },
   revoke: {
     title: 'Revoke version {v}?',

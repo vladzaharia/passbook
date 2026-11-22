@@ -1,0 +1,5 @@
+{
+  "wallet-providers.getWalletProvidersPassesById": {
+    "description": "The local provider instance status of a pass."
+  }
+}

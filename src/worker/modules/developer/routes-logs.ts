@@ -11,6 +11,7 @@ import {
 import { keyCaller, requireSession } from '../../platform/auth.ts';
 import { TRY_TOKEN_PREFIX } from '../../platform/browser-signals.ts';
 import type { AppBindings } from '../../platform/context.ts';
+import { noteKeyRefused } from '../../platform/denied.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { declareKeyAccess } from '../../platform/openapi-security.ts';
@@ -28,8 +29,10 @@ const logCaller = declareKeyAccess(
     const token = /^Bearer\s+(\S+)$/i.exec(c.req.header('authorization') ?? '')?.[1];
     if (token?.startsWith(TRY_TOKEN_PREFIX)) {
       const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
-      if (key?.via !== 'try' || key.orgId === null)
+      if (key?.via !== 'try' || key.orgId === null) {
+        noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
         throw new UnauthenticatedError('The try token is invalid or expired.', 'INVALID_API_KEY');
+      }
       c.set('auth', key);
       return next();
     }

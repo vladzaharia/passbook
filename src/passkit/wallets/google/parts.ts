@@ -161,11 +161,18 @@ export function locationsOf(ctx: Ctx): GoogleLatLong[] | undefined {
   return points.length > 0 ? points.slice(0, MAX_LOCATIONS) : undefined;
 }
 
-/** What Google has no slot for. */
+/** What Google has no slot for, and what it words itself (the change alert). */
 export function unsupportedParts(ctx: Ctx): void {
   const { view } = ctx;
   if (view.relevance.beacons.length > 0)
     ctx.note('relevance.beacons', 'beacons', 'unsupported', 'Google Wallet has no beacons.');
+  if (view.messaging.fields.length > 0)
+    ctx.note(
+      'messaging.notify',
+      '',
+      'difference',
+      'Google Wallet writes the alert; the message shows on the pass.',
+    );
   if (view.nfc) ctx.note('nfc', '', 'unsupported', 'Google Smart Tap is not set up.');
   if (view.personalization)
     ctx.note('personalization', '', 'unsupported', 'Google Wallet has no sign-up on the pass.');

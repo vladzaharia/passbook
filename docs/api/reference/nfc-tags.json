@@ -1,0 +1,14 @@
+{
+  "nfc-tags.getNfcTagTypes": {
+    "description": "The tag types of an organization."
+  },
+  "nfc-tags.postNfcTagTypes": {
+    "description": "Creates a tag type."
+  },
+  "nfc-tags.patchNfcTagTypesById": {
+    "description": "Changes a tag type. Send the version you read."
+  },
+  "nfc-tags.postNfcTagTypesByIdArchive": {
+    "description": "Archives a tag type. Its tags keep working."
+  }
+}

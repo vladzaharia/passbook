@@ -1,0 +1,20 @@
+{
+  "scan-events.getScanEvents": {
+    "description": "Lists scan events."
+  },
+  "scan-events.postScanEvents": {
+    "description": "Creates a scan event."
+  },
+  "scan-events.getScanEventsById": {
+    "description": "One scan event."
+  },
+  "scan-events.patchScanEventsById": {
+    "description": "Edits a scan event."
+  },
+  "scan-events.postScanEventsByIdArchive": {
+    "description": "Archives a scan event. Its scanners are detached."
+  },
+  "scan-events.postScanEventsByIdScanners": {
+    "description": "Moves scanners onto a scan event."
+  }
+}
