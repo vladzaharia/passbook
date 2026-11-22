@@ -92,12 +92,20 @@ export const countItems = (
       );
 
 /** Writes what a change is about to do to a pass, before it does it (see `broadcast_targets.intent`). */
-export const setIntent = (db: D1Database, broadcastId: string, passId: string, intent: string) =>
-  run(db, 'UPDATE broadcast_targets SET intent = ? WHERE broadcast_id = ? AND pass_id = ?', [
-    intent,
-    broadcastId,
-    passId,
-  ]);
+export async function setIntent(
+  db: D1Database,
+  broadcastId: string,
+  passId: string,
+  intent: string,
+): Promise<void> {
+  const { changes } = await run(
+    db,
+    'UPDATE broadcast_targets SET intent = ? WHERE broadcast_id = ? AND pass_id = ?',
+    [intent, broadcastId, passId],
+  );
+  // No target row means no stamp from the write: a crash would apply the change twice.
+  if (changes !== 1) throw new Error(`No target row for ${broadcastId} on ${passId}.`);
+}
 
 export const clearIntent = (db: D1Database, broadcastId: string, passId: string) =>
   run(db, 'UPDATE broadcast_targets SET intent = NULL WHERE broadcast_id = ? AND pass_id = ?', [

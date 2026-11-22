@@ -101,7 +101,7 @@ describe('no-op broadcasts', () => {
       target: { templateIds: [kit.messaging.id] },
       patch: { note: 'unseen' },
     });
-    expect(done.counts).toMatchObject({ updated: 0, unchanged: 1 });
+    expect(done.counts).toMatchObject({ updated: 1, unchanged: 0 });
     expect(await pushEvents(pass.id)).toHaveLength(before.length);
     expect((await getPass(kit.env.DB, pass.id, null))?.personalization.note).toBe('unseen');
   });

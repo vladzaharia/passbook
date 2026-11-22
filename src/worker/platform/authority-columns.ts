@@ -110,6 +110,7 @@ export const EPOCH_TABLES: EpochTable[] = [
       'pending_actor_id',
       'pending_pass_json',
       'pending_source',
+      'write_ref',
       'object_sha256',
       'object_size',
       'content_hash',

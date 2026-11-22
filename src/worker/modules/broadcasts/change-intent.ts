@@ -2,8 +2,14 @@ import type { Json } from '../../../shared/contracts/common.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { atValues } from './change-ops.ts';
-import { type BroadcastRow, clearIntent, insertItems, pendingIntents } from './repo.ts';
-import { stampedWrite } from './repo-items.ts';
+import {
+  type BroadcastRow,
+  clearIntent,
+  handledPassIds,
+  insertItems,
+  pendingIntents,
+} from './repo.ts';
+import { stampedWrite, writtenBy } from './repo-items.ts';
 
 /** What a change was about to do to one pass: its touched values before and after, and the pass version it read. */
 export interface Intent {
@@ -14,6 +20,18 @@ export interface Intent {
 }
 
 const SETTLE = 25;
+
+/** The run's item for the pass is recorded, or its own write is stamped past the version it read. */
+export async function alreadyWritten(
+  db: D1Database,
+  runId: string,
+  passId: string,
+  version: number,
+): Promise<boolean> {
+  if ((await handledPassIds(db, runId, [passId])).has(passId)) return true;
+  const found = await writtenBy(db, runId, passId);
+  return found !== null && found.version > version;
+}
 
 /**
  * Settles passes a step died on: an intent is written before a pass is changed and cleared with its
@@ -32,10 +50,15 @@ export async function settlePending(ctx: ServiceContext, row: BroadcastRow): Pro
       // edit is not ours, whatever values it left, and a racing edit between the read and the write is
       // told apart because `before` is read from the stamped version and the one before it.
       const write = await stampedWrite(db, r.pass_id, row.id, intent.version);
+      // An input no field renders is stored with no version row: the run's own target row holds the
+      // version its write produced, which another run's or anyone's later write cannot overwrite.
+      const found = write ? null : await writtenBy(db, row.id, r.pass_id);
+      const stored = found !== null && found.version > intent.version ? found : null;
       const landed =
         pass !== null &&
         pass.mode === row.mode &&
         (write !== null ||
+          stored !== null ||
           (intent.action === 'design'
             ? pass.templateVersion === intent.to.templateVersion
             : !intent.action &&
@@ -51,13 +74,19 @@ export async function settlePending(ctx: ServiceContext, row: BroadcastRow): Pro
             before.to[k] = now[k] ?? null;
           }
         }
+        if (stored && !intent.action) {
+          for (const k of Object.keys(intent.to)) {
+            before.from[k] = stored.prev[k] ?? null;
+            before.to[k] = stored.next[k] ?? null;
+          }
+        }
         await insertItems(db, row.id, [
           {
             passId: r.pass_id,
             outcome: 'updated',
             silent: false,
             before: JSON.stringify(before),
-            version: write?.version ?? pass.version,
+            version: write?.version ?? stored?.version ?? pass.version,
           },
         ]);
       } else await clearIntent(db, row.id, r.pass_id);
