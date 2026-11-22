@@ -137,3 +137,25 @@
     animation: wl-fade 120ms linear;
   }
 }
+
+/* Query-bar chips settle in; the suggestion list uses the kit's pop. */
+@media (prefers-reduced-motion: no-preference) {
+  .wl-find-chip {
+    animation: wl-find-chip-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
+  }
+  @keyframes wl-find-chip-in {
+    from {
+      opacity: 0;
+      transform: scale(0.88);
+    }
+  }
+  .wl-find-banner {
+    animation: wl-find-banner-in var(--wl-dur-enter) var(--wl-ease-out) backwards;
+  }
+  @keyframes wl-find-banner-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+  }
+}

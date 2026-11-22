@@ -18,6 +18,7 @@ import { tickMessageRules } from '../modules/message-rules/tick.ts';
 import { expireBindings } from '../modules/nfc/expiry.ts';
 import { dailyOrgLifecycle } from '../modules/org-lifecycle/jobs.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
+import { sweepBulkRuns } from '../modules/passes/bulk-run.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
 import { dailyImports } from '../modules/passes/import-retention.ts';
 import { sweepStuckImports } from '../modules/passes/import-sweep.ts';
@@ -82,6 +83,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     },
     { name: 'passes.transfer_asset_gc', run: sweepTransferAssetGc },
     { name: 'passes.import_stuck', run: sweepStuckImports },
+    { name: 'passes.bulk_run_stuck', run: sweepBulkRuns },
     { name: 'developer.request_log_purge', run: minutelyRequestLogPurge },
     { name: 'nfc.binding_expiry', run: async (ctx) => void (await expireBindings(ctx)) },
   ],

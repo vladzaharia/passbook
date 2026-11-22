@@ -29,11 +29,15 @@ interface VersionDbRow {
   pass_json: string | null;
 }
 
+/** A run's writes carry its id after the source (`schedule:<run id>`); the history reports the source. */
+const sourceOf = (raw: string | null) =>
+  PassSourceSchema.safeParse(raw?.split(':')[0]).data ?? null;
+
 const mapVersion = (r: VersionDbRow): VersionRow => ({
   version: r.version,
   templateVersion: r.template_version,
   cause: r.cause,
-  source: PassSourceSchema.safeParse(r.source).data ?? null,
+  source: sourceOf(r.source),
   actorType: r.actor_type,
   actorId: r.actor_id,
   createdAt: r.created_at,
@@ -60,7 +64,7 @@ export async function listVersions(
     version: r.version,
     templateVersion: r.template_version,
     cause: r.cause,
-    source: PassSourceSchema.safeParse(r.source).data ?? null,
+    source: sourceOf(r.source),
     actorType: r.actor_type,
     actorId: r.actor_id,
     createdAt: r.created_at,

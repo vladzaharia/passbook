@@ -50,6 +50,7 @@ import { Route as AdminUsersUserIdRouteImport } from './routes/admin/users/$user
 import { Route as AdminConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/connections/webhooks.$endpointId'
 import { Route as AdminConnectionsWebhooksNewRouteImport } from './routes/admin/connections/webhooks.new'
 import { Route as AdminOOrgIdIndexRouteImport } from './routes/admin/o/$orgId/index'
+import { Route as AdminPassesChangeIndexRouteImport } from './routes/admin/passes/change/index'
 import { Route as AdminPassesImportIndexRouteImport } from './routes/admin/passes/import/index'
 import { Route as AdminPassesImportImportIdRouteImport } from './routes/admin/passes/import/$importId'
 import { Route as AdminPlatformApiKeysIndexRouteImport } from './routes/admin/platform/api-keys/index'
@@ -99,6 +100,8 @@ import { Route as AdminOOrgIdVisitorsIndexRouteImport } from './routes/admin/o/$
 import { Route as AdminOOrgIdWalletAccountsIndexRouteImport } from './routes/admin/o/$orgId/wallet-accounts/index'
 import { Route as AdminOOrgIdConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/o/$orgId/connections/webhooks.$endpointId'
 import { Route as AdminOOrgIdConnectionsWebhooksNewRouteImport } from './routes/admin/o/$orgId/connections/webhooks.new'
+import { Route as AdminOOrgIdPassesChangeIndexRouteImport } from './routes/admin/o/$orgId/passes/change/index'
+import { Route as AdminOOrgIdPassesChangeRunIdRouteImport } from './routes/admin/o/$orgId/passes/change/$runId'
 import { Route as AdminOOrgIdPassesImportIndexRouteImport } from './routes/admin/o/$orgId/passes/import/index'
 import { Route as AdminOOrgIdPassesImportImportIdRouteImport } from './routes/admin/o/$orgId/passes/import/$importId'
 import { Route as AdminOOrgIdScanningEventsEventIdRouteImport } from './routes/admin/o/$orgId/scanning/events.$eventId'
@@ -318,6 +321,11 @@ const AdminOOrgIdIndexRoute = AdminOOrgIdIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AdminOOrgIdRouteRoute,
+} as any)
+const AdminPassesChangeIndexRoute = AdminPassesChangeIndexRouteImport.update({
+  id: '/passes/change/',
+  path: '/passes/change/',
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const AdminPassesImportIndexRoute = AdminPassesImportIndexRouteImport.update({
   id: '/passes/import/',
@@ -597,6 +605,18 @@ const AdminOOrgIdConnectionsWebhooksNewRoute =
     path: '/connections/webhooks/new',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
+const AdminOOrgIdPassesChangeIndexRoute =
+  AdminOOrgIdPassesChangeIndexRouteImport.update({
+    id: '/passes/change/',
+    path: '/passes/change/',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
+const AdminOOrgIdPassesChangeRunIdRoute =
+  AdminOOrgIdPassesChangeRunIdRouteImport.update({
+    id: '/passes/change/$runId',
+    path: '/passes/change/$runId',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
 const AdminOOrgIdPassesImportIndexRoute =
   AdminOOrgIdPassesImportIndexRouteImport.update({
     id: '/passes/import/',
@@ -692,6 +712,7 @@ export interface FileRoutesByFullPath {
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
   '/admin/templates/$templateId/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
   '/admin/o/$orgId/': typeof AdminOOrgIdIndexRoute
+  '/admin/passes/change/': typeof AdminPassesChangeIndexRoute
   '/admin/passes/import/': typeof AdminPassesImportIndexRoute
   '/admin/platform/api-keys/': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit/': typeof AdminPlatformAuditIndexRoute
@@ -731,12 +752,14 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
+  '/admin/o/$orgId/passes/change/$runId': typeof AdminOOrgIdPassesChangeRunIdRoute
   '/admin/o/$orgId/passes/import/$importId': typeof AdminOOrgIdPassesImportImportIdRoute
   '/admin/o/$orgId/scanning/events/$eventId': typeof AdminOOrgIdScanningEventsEventIdRoute
   '/admin/o/$orgId/scanning/scanners/$scannerId': typeof AdminOOrgIdScanningScannersScannerIdRoute
   '/admin/o/$orgId/scanning/sessions/$sessionId': typeof AdminOOrgIdScanningSessionsSessionIdRoute
   '/admin/o/$orgId/templates/$templateId/design': typeof AdminOOrgIdTemplatesTemplateIdDesignRoute
   '/admin/o/$orgId/templates/$templateId/join-sign': typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
+  '/admin/o/$orgId/passes/change/': typeof AdminOOrgIdPassesChangeIndexRoute
   '/admin/o/$orgId/passes/import/': typeof AdminOOrgIdPassesImportIndexRoute
 }
 export interface FileRoutesByTo {
@@ -788,6 +811,7 @@ export interface FileRoutesByTo {
   '/admin/templates/$templateId/design': typeof AdminTemplatesTemplateIdDesignRoute
   '/admin/templates/$templateId/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
   '/admin/o/$orgId': typeof AdminOOrgIdIndexRoute
+  '/admin/passes/change': typeof AdminPassesChangeIndexRoute
   '/admin/passes/import': typeof AdminPassesImportIndexRoute
   '/admin/platform/api-keys': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit': typeof AdminPlatformAuditIndexRoute
@@ -827,12 +851,14 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/wallet-accounts': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
+  '/admin/o/$orgId/passes/change/$runId': typeof AdminOOrgIdPassesChangeRunIdRoute
   '/admin/o/$orgId/passes/import/$importId': typeof AdminOOrgIdPassesImportImportIdRoute
   '/admin/o/$orgId/scanning/events/$eventId': typeof AdminOOrgIdScanningEventsEventIdRoute
   '/admin/o/$orgId/scanning/scanners/$scannerId': typeof AdminOOrgIdScanningScannersScannerIdRoute
   '/admin/o/$orgId/scanning/sessions/$sessionId': typeof AdminOOrgIdScanningSessionsSessionIdRoute
   '/admin/o/$orgId/templates/$templateId/design': typeof AdminOOrgIdTemplatesTemplateIdDesignRoute
   '/admin/o/$orgId/templates/$templateId/join-sign': typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
+  '/admin/o/$orgId/passes/change': typeof AdminOOrgIdPassesChangeIndexRoute
   '/admin/o/$orgId/passes/import': typeof AdminOOrgIdPassesImportIndexRoute
 }
 export interface FileRoutesById {
@@ -888,6 +914,7 @@ export interface FileRoutesById {
   '/admin/templates/$templateId_/design': typeof AdminTemplatesTemplateIdDesignRoute
   '/admin/templates/$templateId_/join-sign': typeof AdminTemplatesTemplateIdJoinSignRoute
   '/admin/o/$orgId/': typeof AdminOOrgIdIndexRoute
+  '/admin/passes/change/': typeof AdminPassesChangeIndexRoute
   '/admin/passes/import/': typeof AdminPassesImportIndexRoute
   '/admin/platform/api-keys/': typeof AdminPlatformApiKeysIndexRoute
   '/admin/platform/audit/': typeof AdminPlatformAuditIndexRoute
@@ -927,12 +954,14 @@ export interface FileRoutesById {
   '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
+  '/admin/o/$orgId/passes/change/$runId': typeof AdminOOrgIdPassesChangeRunIdRoute
   '/admin/o/$orgId/passes/import/$importId': typeof AdminOOrgIdPassesImportImportIdRoute
   '/admin/o/$orgId/scanning/events/$eventId': typeof AdminOOrgIdScanningEventsEventIdRoute
   '/admin/o/$orgId/scanning/scanners/$scannerId': typeof AdminOOrgIdScanningScannersScannerIdRoute
   '/admin/o/$orgId/scanning/sessions/$sessionId': typeof AdminOOrgIdScanningSessionsSessionIdRoute
   '/admin/o/$orgId/templates/$templateId_/design': typeof AdminOOrgIdTemplatesTemplateIdDesignRoute
   '/admin/o/$orgId/templates/$templateId_/join-sign': typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
+  '/admin/o/$orgId/passes/change/': typeof AdminOOrgIdPassesChangeIndexRoute
   '/admin/o/$orgId/passes/import/': typeof AdminOOrgIdPassesImportIndexRoute
 }
 export interface FileRouteTypes {
@@ -989,6 +1018,7 @@ export interface FileRouteTypes {
     | '/admin/templates/$templateId/design'
     | '/admin/templates/$templateId/join-sign'
     | '/admin/o/$orgId/'
+    | '/admin/passes/change/'
     | '/admin/passes/import/'
     | '/admin/platform/api-keys/'
     | '/admin/platform/audit/'
@@ -1028,12 +1058,14 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/wallet-accounts/'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
+    | '/admin/o/$orgId/passes/change/$runId'
     | '/admin/o/$orgId/passes/import/$importId'
     | '/admin/o/$orgId/scanning/events/$eventId'
     | '/admin/o/$orgId/scanning/scanners/$scannerId'
     | '/admin/o/$orgId/scanning/sessions/$sessionId'
     | '/admin/o/$orgId/templates/$templateId/design'
     | '/admin/o/$orgId/templates/$templateId/join-sign'
+    | '/admin/o/$orgId/passes/change/'
     | '/admin/o/$orgId/passes/import/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -1085,6 +1117,7 @@ export interface FileRouteTypes {
     | '/admin/templates/$templateId/design'
     | '/admin/templates/$templateId/join-sign'
     | '/admin/o/$orgId'
+    | '/admin/passes/change'
     | '/admin/passes/import'
     | '/admin/platform/api-keys'
     | '/admin/platform/audit'
@@ -1124,12 +1157,14 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/wallet-accounts'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
+    | '/admin/o/$orgId/passes/change/$runId'
     | '/admin/o/$orgId/passes/import/$importId'
     | '/admin/o/$orgId/scanning/events/$eventId'
     | '/admin/o/$orgId/scanning/scanners/$scannerId'
     | '/admin/o/$orgId/scanning/sessions/$sessionId'
     | '/admin/o/$orgId/templates/$templateId/design'
     | '/admin/o/$orgId/templates/$templateId/join-sign'
+    | '/admin/o/$orgId/passes/change'
     | '/admin/o/$orgId/passes/import'
   id:
     | '__root__'
@@ -1184,6 +1219,7 @@ export interface FileRouteTypes {
     | '/admin/templates/$templateId_/design'
     | '/admin/templates/$templateId_/join-sign'
     | '/admin/o/$orgId/'
+    | '/admin/passes/change/'
     | '/admin/passes/import/'
     | '/admin/platform/api-keys/'
     | '/admin/platform/audit/'
@@ -1223,12 +1259,14 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/wallet-accounts/'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
+    | '/admin/o/$orgId/passes/change/$runId'
     | '/admin/o/$orgId/passes/import/$importId'
     | '/admin/o/$orgId/scanning/events/$eventId'
     | '/admin/o/$orgId/scanning/scanners/$scannerId'
     | '/admin/o/$orgId/scanning/sessions/$sessionId'
     | '/admin/o/$orgId/templates/$templateId_/design'
     | '/admin/o/$orgId/templates/$templateId_/join-sign'
+    | '/admin/o/$orgId/passes/change/'
     | '/admin/o/$orgId/passes/import/'
   fileRoutesById: FileRoutesById
 }
@@ -1528,6 +1566,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/o/$orgId/'
       preLoaderRoute: typeof AdminOOrgIdIndexRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
+    }
+    '/admin/passes/change/': {
+      id: '/admin/passes/change/'
+      path: '/passes/change'
+      fullPath: '/admin/passes/change/'
+      preLoaderRoute: typeof AdminPassesChangeIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/admin/passes/import/': {
       id: '/admin/passes/import/'
@@ -1872,6 +1917,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdConnectionsWebhooksNewRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/passes/change/': {
+      id: '/admin/o/$orgId/passes/change/'
+      path: '/passes/change'
+      fullPath: '/admin/o/$orgId/passes/change/'
+      preLoaderRoute: typeof AdminOOrgIdPassesChangeIndexRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
+    '/admin/o/$orgId/passes/change/$runId': {
+      id: '/admin/o/$orgId/passes/change/$runId'
+      path: '/passes/change/$runId'
+      fullPath: '/admin/o/$orgId/passes/change/$runId'
+      preLoaderRoute: typeof AdminOOrgIdPassesChangeRunIdRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
     '/admin/o/$orgId/passes/import/': {
       id: '/admin/o/$orgId/passes/import/'
       path: '/passes/import'
@@ -1992,12 +2051,14 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdWalletAccountsIndexRoute: typeof AdminOOrgIdWalletAccountsIndexRoute
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute: typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   AdminOOrgIdConnectionsWebhooksNewRoute: typeof AdminOOrgIdConnectionsWebhooksNewRoute
+  AdminOOrgIdPassesChangeRunIdRoute: typeof AdminOOrgIdPassesChangeRunIdRoute
   AdminOOrgIdPassesImportImportIdRoute: typeof AdminOOrgIdPassesImportImportIdRoute
   AdminOOrgIdScanningEventsEventIdRoute: typeof AdminOOrgIdScanningEventsEventIdRoute
   AdminOOrgIdScanningScannersScannerIdRoute: typeof AdminOOrgIdScanningScannersScannerIdRoute
   AdminOOrgIdScanningSessionsSessionIdRoute: typeof AdminOOrgIdScanningSessionsSessionIdRoute
   AdminOOrgIdTemplatesTemplateIdDesignRoute: typeof AdminOOrgIdTemplatesTemplateIdDesignRoute
   AdminOOrgIdTemplatesTemplateIdJoinSignRoute: typeof AdminOOrgIdTemplatesTemplateIdJoinSignRoute
+  AdminOOrgIdPassesChangeIndexRoute: typeof AdminOOrgIdPassesChangeIndexRoute
   AdminOOrgIdPassesImportIndexRoute: typeof AdminOOrgIdPassesImportIndexRoute
 }
 
@@ -2036,6 +2097,7 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
     AdminOOrgIdConnectionsWebhooksEndpointIdRoute,
   AdminOOrgIdConnectionsWebhooksNewRoute:
     AdminOOrgIdConnectionsWebhooksNewRoute,
+  AdminOOrgIdPassesChangeRunIdRoute: AdminOOrgIdPassesChangeRunIdRoute,
   AdminOOrgIdPassesImportImportIdRoute: AdminOOrgIdPassesImportImportIdRoute,
   AdminOOrgIdScanningEventsEventIdRoute: AdminOOrgIdScanningEventsEventIdRoute,
   AdminOOrgIdScanningScannersScannerIdRoute:
@@ -2046,6 +2108,7 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
     AdminOOrgIdTemplatesTemplateIdDesignRoute,
   AdminOOrgIdTemplatesTemplateIdJoinSignRoute:
     AdminOOrgIdTemplatesTemplateIdJoinSignRoute,
+  AdminOOrgIdPassesChangeIndexRoute: AdminOOrgIdPassesChangeIndexRoute,
   AdminOOrgIdPassesImportIndexRoute: AdminOOrgIdPassesImportIndexRoute,
 }
 
@@ -2093,6 +2156,7 @@ interface AdminRouteRouteChildren {
   AdminScanningSessionsSessionIdRoute: typeof AdminScanningSessionsSessionIdRoute
   AdminTemplatesTemplateIdDesignRoute: typeof AdminTemplatesTemplateIdDesignRoute
   AdminTemplatesTemplateIdJoinSignRoute: typeof AdminTemplatesTemplateIdJoinSignRoute
+  AdminPassesChangeIndexRoute: typeof AdminPassesChangeIndexRoute
   AdminPassesImportIndexRoute: typeof AdminPassesImportIndexRoute
 }
 
@@ -2138,6 +2202,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminScanningSessionsSessionIdRoute: AdminScanningSessionsSessionIdRoute,
   AdminTemplatesTemplateIdDesignRoute: AdminTemplatesTemplateIdDesignRoute,
   AdminTemplatesTemplateIdJoinSignRoute: AdminTemplatesTemplateIdJoinSignRoute,
+  AdminPassesChangeIndexRoute: AdminPassesChangeIndexRoute,
   AdminPassesImportIndexRoute: AdminPassesImportIndexRoute,
 }
 

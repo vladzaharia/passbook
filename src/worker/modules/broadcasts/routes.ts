@@ -1,19 +1,23 @@
 import {
+  ChangePreviewBodySchema,
+  ChangeRunPreviewSchema,
+  CreateBroadcastBodySchema,
+  RetryQuerySchema,
+  UpdateBroadcastBodySchema,
+} from '../../../shared/contracts/broadcasts-change.ts';
+import {
   BroadcastItemListQuerySchema,
   BroadcastItemListSchema,
   BroadcastListQuerySchema,
   BroadcastListSchema,
-  BroadcastPreviewBodySchema,
-  BroadcastPreviewSchema,
   BroadcastSchema,
-  CreateBroadcastSchema,
   IdParamSchema,
   SendBroadcastSchema,
-  UpdateBroadcastSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
 import { activeMembership } from '../orgs/repo-members.ts';
 import {
   actorFor,
@@ -26,13 +30,15 @@ import {
   type TenantPassWrite,
   tenantAuthorityOf,
 } from '../passes/http.ts';
+import { limitChanges } from './change-limit.ts';
+import { previewChange } from './change-preview.ts';
 import { type BroadcastScope, requireBroadcast } from './guards.ts';
+import { registerChangeRoutes } from './routes-change.ts';
 import {
   cancelBroadcast,
   createBroadcast,
   getBroadcastDto,
   listBroadcastDtos,
-  previewTarget,
   sendBroadcast,
 } from './service.ts';
 import { listBroadcastItems, retryBroadcast, updateBroadcast } from './service-edit.ts';
@@ -70,6 +76,9 @@ async function scopeOf(
     }
     throw error;
   }
+  // A session that changes passes needs passes:operate too: without it the run would fail at its first write.
+  if (row.kind === 'change' && capability === 'messages:manage' && auth.kind === 'session')
+    await tenantAuthorityOf(ctx, auth, row.org_id, 'passes:operate');
   return { ...scope, orgId: row.org_id, canChange: canChange(c), authority };
 }
 
@@ -100,6 +109,7 @@ register(
         mode: modeOf(auth),
         state: q.state,
         origin: q.origin,
+        kind: q.kind,
         cursor: q.cursor,
         limit: q.limit,
       }),
@@ -113,8 +123,8 @@ register(
   {
     method: 'post',
     path: '/',
-    summary: 'Save, send or schedule a message or change',
-    body: CreateBroadcastSchema,
+    summary: 'Save, send or schedule a message or change (Idempotency-Key)',
+    body: CreateBroadcastBodySchema,
     status: 201,
     response: BroadcastSchema,
   },
@@ -126,7 +136,32 @@ register(
     const authority = await tenantAuthorityOf(ctx, auth, body.orgId, 'messages:manage');
     if (body.kind === 'change' && !canChange(c))
       throw new ForbiddenError('Changing passes needs the passes:write scope.', 'MISSING_SCOPE');
-    return c.json(await createBroadcast(ctx, actorFor(c), modeOf(auth), body, authority), 201);
+    if (body.kind === 'change' && auth.kind === 'session')
+      await tenantAuthorityOf(ctx, auth, body.orgId, 'passes:operate');
+    const mode = modeOf(auth);
+    let inserted = false;
+    const create = () =>
+      createBroadcast(ctx, actorFor(c), mode, body, authority, {
+        onInserted: () => {
+          inserted = true;
+        },
+        ...(body.kind === 'change' ? { limit: () => limitChanges(ctx, authority) } : {}),
+      });
+    const key = idempotencyKeyOf(c.req.header('idempotency-key'));
+    if (key === undefined) return c.json(await create(), 201);
+    const { value } = await sendOnce(
+      ctx,
+      {
+        orgId: body.orgId,
+        scope: `broadcast-create:${mode}`,
+        key,
+        request: body,
+        authority,
+        progress: () => inserted,
+      },
+      create,
+    );
+    return c.json(value, 201);
   },
 );
 
@@ -137,8 +172,8 @@ register(
     method: 'post',
     path: '/preview',
     summary: 'Count the passes a target matches',
-    body: BroadcastPreviewBodySchema,
-    response: BroadcastPreviewSchema,
+    body: ChangePreviewBodySchema,
+    response: ChangeRunPreviewSchema,
   },
   async (c) => {
     const ctx = svc(c);
@@ -146,7 +181,13 @@ register(
     const body = c.req.valid('json');
     assertOrg(c, body.orgId);
     await tenantAuthorityOf(ctx, auth, body.orgId, 'messages:read');
-    return c.json(await previewTarget(ctx, modeOf(auth), body.orgId, body.target));
+    // Samples show each pass's own values: reading them needs the right to read passes.
+    if (body.patch) {
+      if (auth.kind === 'api_key' && !auth.scopes.includes('passes:read'))
+        throw new ForbiddenError('A change preview needs the passes:read scope.', 'MISSING_SCOPE');
+      if (auth.kind === 'session') await tenantAuthorityOf(ctx, auth, body.orgId, 'passes:read');
+    }
+    return c.json(await previewChange(ctx, modeOf(auth), body));
   },
 );
 
@@ -210,7 +251,7 @@ register(
     path: '/{id}',
     summary: 'Edit a draft or a scheduled message that has not started',
     params: IdParamSchema,
-    body: UpdateBroadcastSchema,
+    body: UpdateBroadcastBodySchema,
     response: BroadcastSchema,
   },
   async (c) => {
@@ -227,15 +268,20 @@ register(
   {
     method: 'post',
     path: '/{id}/retry',
-    summary: 'Send a failed or cancelled message again, as a new one in the same mode',
+    summary:
+      'Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount)',
     params: IdParamSchema,
+    query: RetryQuerySchema,
     status: 201,
     response: BroadcastSchema,
   },
   async (c) => {
     const id = c.req.valid('param').id;
     const scope = await scopeOf(c, id, 'messages:manage');
-    return c.json(await retryBroadcast(svc(c), actorFor(c), id, scope), 201);
+    return c.json(
+      await retryBroadcast(svc(c), actorFor(c), id, scope, c.req.valid('query').expectCount),
+      201,
+    );
   },
 );
 
@@ -262,3 +308,5 @@ register(
     return c.json(await listBroadcastItems(svc(c), id, scope, c.req.valid('query')));
   },
 );
+
+registerChangeRoutes(broadcastsRoutes, scopeOf);

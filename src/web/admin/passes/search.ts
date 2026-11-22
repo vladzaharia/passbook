@@ -6,6 +6,7 @@ const opt = <T extends z.ZodType>(schema: T) => schema.optional().catch(undefine
 
 export const passListSearchSchema = z.object({
   q: opt(z.string().max(200)),
+  m: opt(z.string().max(2000)),
   orgId: opt(z.string()),
   templateId: opt(z.string()),
   connectionId: opt(z.string()),

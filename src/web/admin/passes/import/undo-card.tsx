@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { Button, ConfirmDialog, toast } from '../../../ui/index.ts';
+import { UndoPanel } from '../run-kit.tsx';
 import { emailTheRest } from './api.ts';
 import { type UndoResult, undoImport } from './api-run.ts';
 
@@ -90,31 +91,51 @@ export function UndoCard({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-md border border-border p-4">
-      {holding ? (
-        <svg viewBox="0 0 32 32" aria-hidden className="size-9 shrink-0 -rotate-90">
-          <circle
-            cx="16"
-            cy="16"
-            r="14"
-            fill="none"
-            strokeWidth="3"
-            className="stroke-surface-sunken"
-          />
-          <circle
-            cx="16"
-            cy="16"
-            r="14"
-            fill="none"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray={RING}
-            strokeDashoffset={RING * (1 - share)}
-            className="stroke-accent motion-safe:transition-[stroke-dashoffset] motion-safe:duration-1000 motion-safe:ease-linear"
-          />
-        </svg>
-      ) : null}
-      <p className="min-w-0 flex-1 text-sm text-fg-muted">
+    <>
+      <UndoPanel
+        lead={
+          holding ? (
+            <svg viewBox="0 0 32 32" aria-hidden className="size-9 shrink-0 -rotate-90">
+              <circle
+                cx="16"
+                cy="16"
+                r="14"
+                fill="none"
+                strokeWidth="3"
+                className="stroke-surface-sunken"
+              />
+              <circle
+                cx="16"
+                cy="16"
+                r="14"
+                fill="none"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={RING}
+                strokeDashoffset={RING * (1 - share)}
+                className="stroke-accent motion-safe:transition-[stroke-dashoffset] motion-safe:duration-1000 motion-safe:ease-linear"
+              />
+            </svg>
+          ) : null
+        }
+        actions={
+          <>
+            <Button
+              variant="outline"
+              loading={working}
+              iconStart={<Undo2 aria-hidden />}
+              onClick={() => setConfirm(true)}
+            >
+              {C.undo.button}
+            </Button>
+            {holding ? (
+              <Button variant="ghost" loading={sending} onClick={sendNow}>
+                {C.undo.sendNow}
+              </Button>
+            ) : null}
+          </>
+        }
+      >
         {holding && hold ? (
           <>
             <b className="tabular-nums text-fg-strong">{clock(hold - now)}</b> {C.undo.until(held)}
@@ -123,22 +144,7 @@ export function UndoCard({
           C.undo.window
         )}
         {imp.unrevertable ? ` ${C.undo.unrevertable(imp.unrevertable)}` : ''}
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          loading={working}
-          iconStart={<Undo2 aria-hidden />}
-          onClick={() => setConfirm(true)}
-        >
-          {C.undo.button}
-        </Button>
-        {holding ? (
-          <Button variant="ghost" loading={sending} onClick={sendNow}>
-            {C.undo.sendNow}
-          </Button>
-        ) : null}
-      </div>
+      </UndoPanel>
       <ConfirmDialog
         open={confirm}
         onOpenChange={setConfirm}
@@ -158,6 +164,6 @@ export function UndoCard({
           }
         }}
       />
-    </div>
+    </>
   );
 }

@@ -209,18 +209,18 @@ func (r *BroadcastsResource) CountRecipients(ctx context.Context, body *Broadcas
 	return &out, nil
 }
 
-// Create Save, send or schedule a message or change `POST /api/v1/broadcasts`
+// Create Save, send or schedule a message or change (Idempotency-Key) `POST /api/v1/broadcasts`
 func (r *BroadcastsResource) Create(ctx context.Context, body *BroadcastsCreateBody, opts ...RequestOption) (*BroadcastsCreateResult, error) {
 	var out BroadcastsCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts", body: body}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts", body: body, idempotent: true}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
 }
 
 // List List messages and scheduled changes `GET /api/v1/broadcasts`
-func (r *BroadcastsResource) List(ctx context.Context, query *BroadcastsListQuery, opts ...RequestOption) *Pager[BroadcastsListItem] {
-	return newPager[BroadcastsListItem](r.c, call{method: "GET", path: "/api/v1/broadcasts", query: queryValues(query)}, "cursor", opts)
+func (r *BroadcastsResource) List(ctx context.Context, query *BroadcastsListQuery, opts ...RequestOption) *Pager[Broadcast] {
+	return newPager[Broadcast](r.c, call{method: "GET", path: "/api/v1/broadcasts", query: queryValues(query)}, "cursor", opts)
 }
 
 // Retrieve One message or change, with progress `GET /api/v1/broadcasts/{id}`
@@ -232,10 +232,10 @@ func (r *BroadcastsResource) Retrieve(ctx context.Context, id string, opts ...Re
 	return &out, nil
 }
 
-// Retry Send a failed or cancelled message again, as a new one in the same mode `POST /api/v1/broadcasts/{id}/retry`
-func (r *BroadcastsResource) Retry(ctx context.Context, id string, opts ...RequestOption) (*BroadcastsRetryResult, error) {
+// Retry Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`
+func (r *BroadcastsResource) Retry(ctx context.Context, id string, query *BroadcastsRetryQuery, opts ...RequestOption) (*BroadcastsRetryResult, error) {
 	var out BroadcastsRetryResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/retry"}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/retry", query: queryValues(query)}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -245,6 +245,24 @@ func (r *BroadcastsResource) Retry(ctx context.Context, id string, opts ...Reque
 func (r *BroadcastsResource) Send(ctx context.Context, id string, body *BroadcastsSendBody, opts ...RequestOption) (*BroadcastsSendResult, error) {
 	var out BroadcastsSendResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/send", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Stop Stop a sending message or change after its current chunk `POST /api/v1/broadcasts/{id}/stop`
+func (r *BroadcastsResource) Stop(ctx context.Context, id string, opts ...RequestOption) (*BroadcastsStopResult, error) {
+	var out BroadcastsStopResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/stop"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Undo Undo a change for 24 hours: restores passes still at the value the change set `POST /api/v1/broadcasts/{id}/undo`
+func (r *BroadcastsResource) Undo(ctx context.Context, id string, opts ...RequestOption) (*BroadcastsUndoResult, error) {
+	var out BroadcastsUndoResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/undo"}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -630,8 +648,8 @@ func newMessageRulesRunsResource(c *core) *MessageRulesRunsResource {
 }
 
 // List The messages an automatic message sent `GET /api/v1/message-rules/{id}/runs`
-func (r *MessageRulesRunsResource) List(ctx context.Context, id string, query *MessageRulesRunsListQuery, opts ...RequestOption) *Pager[MessageRulesRunsListItem] {
-	return newPager[MessageRulesRunsListItem](r.c, call{method: "GET", path: "/api/v1/message-rules/" + pathEscape(id) + "/runs", query: queryValues(query)}, "cursor", opts)
+func (r *MessageRulesRunsResource) List(ctx context.Context, id string, query *MessageRulesRunsListQuery, opts ...RequestOption) *Pager[Broadcast] {
+	return newPager[Broadcast](r.c, call{method: "GET", path: "/api/v1/message-rules/" + pathEscape(id) + "/runs", query: queryValues(query)}, "cursor", opts)
 }
 
 type MessageRulesResource struct {
@@ -1292,7 +1310,7 @@ func newPassesResource(c *core) *PassesResource {
 	}
 }
 
-// BulkApply Void, email or remove up to 100 passes of one org (Idempotency-Key for email) `POST /api/v1/passes/bulk`
+// BulkApply Void, email or remove up to 100 passes of one org, or all passes a filter matches (Idempotency-Key for email) `POST /api/v1/passes/bulk`
 func (r *PassesResource) BulkApply(ctx context.Context, body *PassesBulkApplyBody, opts ...RequestOption) (*PassesBulkApplyResult, error) {
 	var out PassesBulkApplyResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/bulk", body: body, idempotent: true}, &out, opts); err != nil {
@@ -1487,6 +1505,80 @@ func (r *PrintJobsResource) DownloadPDF(ctx context.Context, jobId string, opts 
 func (r *PrintJobsResource) Retrieve(ctx context.Context, jobId string, opts ...RequestOption) (*PrintJobsRetrieveResult, error) {
 	var out PrintJobsRetrieveResult
 	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/passes/bulk-print/" + pathEscape(jobId)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type BulkRunsResource struct {
+	c *core
+}
+
+func newBulkRunsResource(c *core) *BulkRunsResource {
+	return &BulkRunsResource{
+		c: c,
+	}
+}
+
+// Current Get the organization's running bulk run, or the last one that ended within the hour `GET /api/v1/passes/bulk-runs/current`
+func (r *BulkRunsResource) Current(ctx context.Context, opts ...RequestOption) (*BulkRunsCurrentResult, error) {
+	var out BulkRunsCurrentResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/passes/bulk-runs/current"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retrieve Get the progress of a bulk run `GET /api/v1/passes/bulk-runs/{id}`
+func (r *BulkRunsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*BulkRunsRetrieveResult, error) {
+	var out BulkRunsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/passes/bulk-runs/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Start Void, email or remove every pass a filter matches, in the background `POST /api/v1/passes/bulk-runs`
+func (r *BulkRunsResource) Start(ctx context.Context, body *BulkRunsStartBody, opts ...RequestOption) (*BulkRunsStartResult, error) {
+	var out BulkRunsStartResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/bulk-runs", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Stop Stop a bulk run after its current chunk `POST /api/v1/passes/bulk-runs/{id}/stop`
+func (r *BulkRunsResource) Stop(ctx context.Context, id string, opts ...RequestOption) (*BulkRunsStopResult, error) {
+	var out BulkRunsStopResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/bulk-runs/" + pathEscape(id) + "/stop"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type PassViewsResource struct {
+	c *core
+}
+
+func newPassViewsResource(c *core) *PassViewsResource {
+	return &PassViewsResource{
+		c: c,
+	}
+}
+
+// List List the saved views of the passes list `GET /api/v1/passes/views`
+func (r *PassViewsResource) List(ctx context.Context, opts ...RequestOption) (*PassViewsListResult, error) {
+	var out PassViewsListResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/passes/views"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Replace Replace the saved views of the passes list `PUT /api/v1/passes/views`
+func (r *PassViewsResource) Replace(ctx context.Context, body *PassViewsReplaceBody, opts ...RequestOption) (*PassViewsReplaceResult, error) {
+	var out PassViewsReplaceResult
+	if err := r.c.do(ctx, call{method: "PUT", path: "/api/v1/passes/views", body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -2204,6 +2296,8 @@ type Resources struct {
 	PassImports      *PassImportsResource
 	Passes           *PassesResource
 	PrintJobs        *PrintJobsResource
+	BulkRuns         *BulkRunsResource
+	PassViews        *PassViewsResource
 	RollCalls        *RollCallsResource
 	ScanSetups       *ScanSetupsResource
 	Terminal         *TerminalResource
@@ -2234,6 +2328,8 @@ func newResources(c *core) Resources {
 		PassImports:      newPassImportsResource(c),
 		Passes:           newPassesResource(c),
 		PrintJobs:        newPrintJobsResource(c),
+		BulkRuns:         newBulkRunsResource(c),
+		PassViews:        newPassViewsResource(c),
 		RollCalls:        newRollCallsResource(c),
 		ScanSetups:       newScanSetupsResource(c),
 		Terminal:         newTerminalResource(c),

@@ -32,6 +32,7 @@ export type BroadcastItem = BroadcastItemDto;
 export interface BroadcastFilters {
   orgId?: string | undefined;
   state?: BroadcastState | undefined;
+  kind?: 'message' | 'change' | undefined;
 }
 
 export const broadcastKeys = {

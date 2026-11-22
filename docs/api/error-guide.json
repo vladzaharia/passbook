@@ -3250,5 +3250,125 @@
     "when": "The signed-in person has a shared PIN and has not taken the new one the server sets.",
     "fix": "Call POST /scan/staff/pin, or sign out.",
     "retryable": false
+  },
+  "BROADCAST_EMPTY": {
+    "title": "No passes chosen",
+    "when": "The target names no template, pass or import.",
+    "fix": "Send templateIds, passIds or an importId.",
+    "retryable": false
+  },
+  "BROADCAST_INVALID_OP": {
+    "title": "Change does not fit the field",
+    "when": "A change asks for a shift on a field that is not a date, an add on one that is not a number, or a clear on a required field.",
+    "fix": "Use set for text, shift for dates, add for numbers, and clear only for optional fields.",
+    "retryable": false
+  },
+  "BROADCAST_PASS_CHANGED": {
+    "title": "Pass changed since the run",
+    "when": "An undo found a pass whose input no longer holds the value the change set, so it kept the pass.",
+    "fix": "Edit the pass by hand if you still want the earlier value.",
+    "retryable": false
+  },
+  "BROADCAST_TOO_MANY_TEMPLATES": {
+    "title": "Passes of too many templates",
+    "when": "The chosen passes belong to more than 20 templates.",
+    "fix": "Split the change by template.",
+    "retryable": false
+  },
+  "BROADCAST_UNKNOWN_TOKEN": {
+    "title": "Unknown field in the message",
+    "when": "The message has a {Label} token that no field of the targeted templates carries.",
+    "fix": "Use a field label as the form shows it, or remove the token.",
+    "retryable": false
+  },
+  "BROADCAST_NOT_UNDOABLE": {
+    "title": "Cannot be undone",
+    "when": "The run is not a finished change: it is a message, an undo, still sending, or never sent.",
+    "fix": "Stop a sending change first, then undo it.",
+    "retryable": false
+  },
+  "BROADCAST_UNDO_EXPIRED": {
+    "title": "Undo window has passed",
+    "when": "A change can be undone for 24 hours after it ends.",
+    "fix": "Change the passes again by hand or with a new change.",
+    "retryable": false
+  },
+  "BROADCAST_NOT_SENDING": {
+    "title": "Not sending",
+    "when": "Only a sending message or change can be stopped.",
+    "fix": "Read the run with GET /api/v1/broadcasts/{id}.",
+    "retryable": false
+  },
+  "BROADCAST_NO_RELEASE": {
+    "title": "No approved design",
+    "when": "A template in the run has no approved release to move passes to.",
+    "fix": "Approve and publish a release of the template, then run it again.",
+    "retryable": false
+  },
+  "IMPORT_NOT_ENDED": {
+    "title": "Import not ended",
+    "when": "The import is still running, or was undone, so the passes it made are not fixed.",
+    "fix": "Wait for the import to finish, or choose passes another way.",
+    "retryable": false
+  },
+  "EXPECT_COUNT_REQUIRED": {
+    "title": "Send the count left",
+    "when": "Resuming a change needs expectCount: the passes it has left.",
+    "fix": "Preview the remainder, then retry with ?expectCount=<count>.",
+    "retryable": false
+  },
+  "MATCH_AMBIGUOUS_FIELD": {
+    "title": "Input has different types",
+    "when": "A match without a template names an input that your templates give different types.",
+    "fix": "Send templateId with the match.",
+    "retryable": false
+  },
+  "MATCH_TOO_BROAD": {
+    "title": "Too many passes match",
+    "when": "A selection by filter matches more than 20,000 passes.",
+    "fix": "Narrow the filter and send the request again.",
+    "retryable": false
+  },
+  "SELECTION_CHANGED": {
+    "title": "Selection changed",
+    "when": "The passes the request matches now differ from expectCount (a change run allows 2%).",
+    "fix": "Check the new count, then send it as expectCount.",
+    "retryable": false
+  },
+  "SELECTION_USE_RUN": {
+    "title": "Use a bulk run",
+    "when": "POST /passes/bulk was given a filter that matches more than 100 passes.",
+    "fix": "Send the same selection to POST /passes/bulk-runs.",
+    "retryable": false
+  },
+  "BULK_RUN_ENDED": {
+    "title": "The run has ended",
+    "when": "The bulk run is done, stopped or failed.",
+    "fix": "Start a new run if passes are left.",
+    "retryable": false
+  },
+  "BULK_RUN_NOT_FOUND": {
+    "title": "Run not found",
+    "when": "No bulk run with this id exists in this organization and mode.",
+    "fix": "Check the id, organization and mode.",
+    "retryable": false
+  },
+  "BULK_RUN_START": {
+    "title": "The run did not start",
+    "when": "The background run could not be created.",
+    "fix": "Try again.",
+    "retryable": true
+  },
+  "VIEWS_CHANGED": {
+    "title": "Views changed",
+    "when": "The saved views changed since the revision you sent.",
+    "fix": "Read the views again and save with the new revision.",
+    "retryable": false
+  },
+  "PASS_CHANGED": {
+    "title": "Pass changed",
+    "when": "A pass moved since the bulk run's snapshot; the run skips it and counts it under PASS_CHANGED.",
+    "fix": "Start a new run for the passes that are left.",
+    "retryable": false
   }
 }

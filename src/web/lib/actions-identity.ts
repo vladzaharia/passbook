@@ -1,5 +1,6 @@
 import { Clock, type LucideIcon } from 'lucide-react';
 import { ACTION_ICON } from './action-icons.ts';
+import { PASS_RUN_ACTIONS } from './actions-passes.ts';
 import type { Tone } from './status.ts';
 
 const a = (label: string, icon: LucideIcon, tone: Tone) => ({ label, icon, tone });
@@ -8,6 +9,7 @@ const key = ACTION_ICON.pushKey;
 
 /** Identity expiry, managed identity runs and Google issuer and key events. */
 export const IDENTITY_RUN_ACTIONS = {
+  ...PASS_RUN_ACTIONS,
   'identity.expired': a('Identity expired', Clock, 'danger'),
   'identity.expiring': a('Identity expiring', Clock, 'warning'),
   'identity.provision_requested': a('Identity requested', rotate, 'info'),

@@ -56,6 +56,8 @@ export const WEBHOOK_MAX_BODY_BYTES = 8192;
 const Version = z.number().int().nonnegative();
 const Str = z.string().max(300);
 const Wallet = z.literal('apple');
+const RunId = Str.optional();
+const Flag = z.boolean().optional();
 
 /**
  * The `data` of each type is an allowlist: receivers must ignore unknown fields, and nothing about
@@ -69,9 +71,9 @@ export const WEBHOOK_DATA_SCHEMAS = {
     source: Str.nullable().optional(),
     notified: z.boolean().optional(),
   }),
-  'pass.voided': z.object({ actorType: Str.nullable().optional() }),
+  'pass.voided': z.object({ actorType: Str.nullable().optional(), runId: RunId }),
   'pass.unvoided': z.object({ actorType: Str.nullable().optional() }),
-  'pass.removed': z.object({ version: Version.optional(), message: z.boolean().optional() }),
+  'pass.removed': z.object({ version: Version.optional(), message: Flag, runId: RunId }),
   'pass.restored': z.object({ version: Version.optional() }),
   'pass.installed': z.object({
     wallet: Wallet,

@@ -1,5 +1,4 @@
 import type { Personalization } from '../../../passkit/types.ts';
-import type { PassSource } from '../../../shared/contracts/passes.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { coalesceTo, type SetValue } from '../../platform/authority-expr.ts';
 import type { HolderPrincipal } from '../../platform/authority-principal.ts';
@@ -36,7 +35,7 @@ export interface PublishWrite {
   contentHash: string;
   cause: PassCause;
   /** Why beside the cause (scan, broadcast, ...); copied to pass_versions.source by the trigger. */
-  source: PassSource | null;
+  source: string | null;
   actorType: string | null;
   actorId: string | null;
   passJson: string;

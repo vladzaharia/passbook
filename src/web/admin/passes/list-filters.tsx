@@ -1,9 +1,11 @@
-import { useDebouncedCommit } from '@/web/lib/debounce.ts';
 import { FilterBar, type FilterDef } from '../../ui/index.ts';
 import { useConnections } from '../connections/api.ts';
 import type { PassFilters } from './api.ts';
 
-export interface ListSearch extends Omit<PassFilters, 'orgId'> {}
+export interface ListSearch extends Omit<PassFilters, 'orgId' | 'match'> {
+  /** The query bar's chips (JSON): see find-query.ts. */
+  m?: string | undefined;
+}
 
 export const CLEARED: { [K in keyof Required<ListSearch>]: undefined } = {
   q: undefined,
@@ -14,27 +16,23 @@ export const CLEARED: { [K in keyof Required<ListSearch>]: undefined } = {
   holderState: undefined,
   onDevice: undefined,
   noScanDays: undefined,
+  m: undefined,
 };
 
 const ANY = 'all';
 const pick = <T extends string>(v: string): T | undefined => (v === ANY ? undefined : (v as T));
 
-/** Status and Template inline; Holder, On device and Connection join Filters below 1280. */
+/** Status and Holder inline; the rest join Filters below 1280. Search and Template are the query bar's. */
 export function PassListFilters({
   search,
   orgId,
-  templates,
   onChange,
 }: {
   search: ListSearch;
   orgId: string | undefined;
-  templates: { id: string; name: string }[];
   onChange: (patch: Partial<ListSearch>) => void;
 }) {
   const connections = useConnections({ orgId });
-  const [q, setQ] = useDebouncedCommit(search.q ?? '', (next) =>
-    onChange({ q: next || undefined }),
-  );
   const filters: FilterDef[] = [
     {
       id: 'status',
@@ -48,17 +46,6 @@ export function PassListFilters({
         { value: 'removed', label: 'Removed' },
       ],
       onChange: (v) => onChange({ status: pick(v) }),
-    },
-    {
-      id: 'template',
-      label: 'Template',
-      value: search.templateId ?? ANY,
-      defaultValue: ANY,
-      options: [
-        { value: ANY, label: 'All' },
-        ...templates.map((t) => ({ value: t.id, label: t.name })),
-      ],
-      onChange: (v) => onChange({ templateId: pick(v) }),
     },
     {
       id: 'holder',
@@ -124,15 +111,5 @@ export function PassListFilters({
         ]
       : []),
   ];
-  return (
-    <FilterBar
-      maxInline={5}
-      search={{ value: q, onChange: setQ, placeholder: 'Search passes' }}
-      filters={filters}
-      onClear={() => {
-        setQ('');
-        onChange(CLEARED);
-      }}
-    />
-  );
+  return <FilterBar maxInline={5} filters={filters} onClear={() => onChange(CLEARED)} />;
 }

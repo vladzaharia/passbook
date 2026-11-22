@@ -26,6 +26,7 @@ export const FEATURE_GROUPS: readonly { title: string; keys: readonly Entitlemen
       'templates.stylesBlocked',
       'join.perDay',
       'messages.perDay',
+      'passes.changesPerDay',
       'email.perDay',
       'members',
     ],

@@ -259,39 +259,13 @@ export type BrandWebLogoUploadParams = {
   configRevision?: number;
 };
 
-export type BroadcastsCountRecipientsParams = {
+export type Broadcast = {
+  id: string;
   orgId: string;
-  target: {
-    templateIds: Array<string>;
-    onDevice?: boolean;
-    holderState?: "unassigned" | "waiting" | "owned";
-    q?: string;
-    scan?: {
-      eventId: string;
-      checkedIn: boolean;
-    } | {
-      noScanDays: number;
-    };
-    match?: Array<{
-      input: string;
-      values: Array<string>;
-    } | {
-      input: string;
-      min?: number;
-      max?: number;
-    } | {
-      input: string;
-      from?: string;
-      to?: string;
-      timeZone: string;
-    }>;
-  };
-};
-
-export type BroadcastsCreateParams = {
-  orgId: string;
+  mode: "live" | "test";
   kind: "message" | "change";
-  name?: string;
+  name: string;
+  state: "draft" | "scheduled" | "sending" | "sent" | "partial" | "failed" | "cancelled";
   target: {
     templateIds: Array<string>;
     onDevice?: boolean;
@@ -318,10 +292,117 @@ export type BroadcastsCreateParams = {
     }>;
   };
   patch: Record<string, unknown>;
+  notify: boolean;
+  at: number | null;
+  clearAfter: number | null;
+  parentId: string | null;
+  message?: string | null;
+  ruleId: string | null;
+  followUp: {
+    id: string;
+    at: number | null;
+  } | null;
+  counts: {
+    targeted: number;
+    updated: number;
+    unchanged: number;
+    overBudget: number;
+    failed: number;
+  };
+  errorCode: string | null;
+  createdAt: number;
+  startedAt: number | null;
+  finishedAt: number | null;
+};
+
+export type BroadcastUndo = {
+  id: string;
+  parentId: string;
+  restorable: number;
+  kept: number;
+};
+
+export type BroadcastsCountRecipientsParams = {
+  orgId: string;
+  target: {
+    templateIds?: Array<string>;
+    onDevice?: boolean;
+    holderState?: "unassigned" | "waiting" | "owned";
+    q?: string;
+    scan?: {
+      eventId: string;
+      checkedIn: boolean;
+    } | {
+      noScanDays: number;
+    };
+    match?: Array<{
+      input: string;
+      values: Array<string>;
+    } | {
+      input: string;
+      min?: number;
+      max?: number;
+    } | {
+      input: string;
+      from?: string;
+      to?: string;
+      timeZone: string;
+    } | {
+      input: string;
+      op: "startsWith" | "contains";
+      value: string;
+    }>;
+    passIds?: Array<string>;
+    importId?: string;
+    expectCount?: number;
+  };
+  patch?: Record<string, unknown>;
+  notify?: boolean;
+  message?: string;
+};
+
+export type BroadcastsCreateParams = {
+  orgId: string;
+  kind: "message" | "change";
+  name?: string;
   notify?: boolean;
   send?: "draft" | "now" | "schedule";
   at?: number;
   clearAfter?: number | null;
+  target: {
+    templateIds?: Array<string>;
+    onDevice?: boolean;
+    holderState?: "unassigned" | "waiting" | "owned";
+    q?: string;
+    scan?: {
+      eventId: string;
+      checkedIn: boolean;
+    } | {
+      noScanDays: number;
+    };
+    match?: Array<{
+      input: string;
+      values: Array<string>;
+    } | {
+      input: string;
+      min?: number;
+      max?: number;
+    } | {
+      input: string;
+      from?: string;
+      to?: string;
+      timeZone: string;
+    } | {
+      input: string;
+      op: "startsWith" | "contains";
+      value: string;
+    }>;
+    passIds?: Array<string>;
+    importId?: string;
+    expectCount?: number;
+  };
+  patch: Record<string, unknown>;
+  message?: string;
 };
 
 export type BroadcastsSendParams = {
@@ -332,8 +413,12 @@ export type BroadcastsUpdateParams = {
   orgId: string;
   kind: "message" | "change";
   name?: string;
+  notify?: boolean;
+  send?: "draft" | "now" | "schedule";
+  at?: number;
+  clearAfter?: number | null;
   target: {
-    templateIds: Array<string>;
+    templateIds?: Array<string>;
     onDevice?: boolean;
     holderState?: "unassigned" | "waiting" | "owned";
     q?: string;
@@ -355,13 +440,42 @@ export type BroadcastsUpdateParams = {
       from?: string;
       to?: string;
       timeZone: string;
+    } | {
+      input: string;
+      op: "startsWith" | "contains";
+      value: string;
     }>;
+    passIds?: Array<string>;
+    importId?: string;
+    expectCount?: number;
   };
   patch: Record<string, unknown>;
-  notify?: boolean;
-  send?: "draft" | "now" | "schedule";
-  at?: number;
-  clearAfter?: number | null;
+  message?: string;
+};
+
+export type BulkRun = {
+  id: string;
+  orgId: string;
+  action: "void" | "send_email" | "remove";
+  state: "queued" | "running" | "done" | "stopped" | "failed";
+  total: number;
+  done: number;
+  skipped: number;
+  skippedBy: Record<string, number>;
+  stopRequested: boolean;
+  createdAt: number;
+  finishedAt: number | null;
+  code: string | null;
+};
+
+export type BulkRunsStartParams = {
+  action: "void" | "send_email" | "remove";
+  message?: string;
+  orgId?: string;
+  selection: {
+    filter: PassFilter;
+    expectCount: number;
+  };
 };
 
 export type BundlesCreateParams = {
@@ -548,6 +662,10 @@ export type CreatedScanningDevice = {
     url: string;
     expiresAt: number;
   } | null;
+};
+
+export type CurrentBulkRun = {
+  run?: BulkRun;
 };
 
 export type EmailFailedEvent = {
@@ -1027,6 +1145,10 @@ export type PassDetail = {
   serial: string;
   title: string | null;
   subtitle: string | null;
+  matched?: Array<{
+    input: string;
+    value: string;
+  }>;
   externalId: string | null;
   status: "active" | "voided";
   mode?: "live" | "test";
@@ -1163,6 +1285,41 @@ export type PassDevice = {
     state: "pending" | "enqueued" | "processing" | "sent" | "partial" | "failed" | "cancelled";
     at: number;
   } | null;
+};
+
+export type PassFilter = {
+  templateId?: string;
+  connectionId?: string;
+  importId?: string;
+  status?: "active" | "voided" | "removed";
+  holderEmail?: string;
+  holderState?: "unassigned" | "waiting" | "owned";
+  onDevice?: boolean;
+  q?: string;
+  externalId?: string;
+  scan?: {
+    eventId: string;
+    checkedIn: boolean;
+  } | {
+    noScanDays: number;
+  };
+  match?: Array<{
+    input: string;
+    values: Array<string>;
+  } | {
+    input: string;
+    min?: number;
+    max?: number;
+  } | {
+    input: string;
+    from?: string;
+    to?: string;
+    timeZone: string;
+  } | {
+    input: string;
+    op: "startsWith" | "contains";
+    value: string;
+  }>;
 };
 
 export type PassImportMappings = {
@@ -1371,6 +1528,7 @@ export type PassIssuedEvent = {
 export type PassPage = {
   items: Array<PassSummary>;
   nextCursor: string | null;
+  count?: number;
 };
 
 export type PassPrintVoidedEvent = {
@@ -1415,6 +1573,7 @@ export type PassRemovedEvent = {
   data: {
     version?: number;
     message?: boolean;
+    runId?: string;
   };
   sample?: true;
 };
@@ -1935,6 +2094,10 @@ export type PassSummary = {
   serial: string;
   title: string | null;
   subtitle: string | null;
+  matched?: Array<{
+    input: string;
+    value: string;
+  }>;
   externalId: string | null;
   status: "active" | "voided";
   mode?: "live" | "test";
@@ -2011,6 +2174,25 @@ export type PassVersion = {
   purged: boolean;
 };
 
+export type PassViews = {
+  items: Array<{
+    id: string;
+    name: string;
+    filter: PassFilter;
+  }>;
+  revision: number;
+};
+
+export type PassViewsReplaceParams = {
+  items: Array<{
+    id: string;
+    name: string;
+    filter: PassFilter;
+  }>;
+  revision: number;
+  orgId?: string;
+};
+
 export type PassVoidedEvent = {
   id: string;
   type: "pass.voided";
@@ -2021,6 +2203,7 @@ export type PassVoidedEvent = {
   pass: WebhookPassRef;
   data: {
     actorType?: string | null;
+    runId?: string;
   };
   sample?: true;
 };
@@ -2028,8 +2211,14 @@ export type PassVoidedEvent = {
 export type PassesBulkApplyParams = {
   action: "void" | "send_email" | "remove";
   message?: string;
-  ids: Array<string>;
   orgId?: string;
+  ids?: Array<string>;
+  selection?: {
+    ids: Array<string>;
+  } | {
+    filter: PassFilter;
+    expectCount: number;
+  };
 };
 
 export type PassesBulkReissueParams = {

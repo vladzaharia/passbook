@@ -4,11 +4,18 @@ import {
   type ReissueParams,
   reissuePage,
 } from '../modules/passes/bulk-reissue-page.ts';
+import { failBulkRun } from '../modules/passes/bulk-run.ts';
+import { runBulkChunk } from '../modules/passes/bulk-run-chunk.ts';
 import { setWorkflowStatus } from '../modules/passes/repo.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { createJobContext } from '../platform/service-context.ts';
 
 export type BulkReissueParams = ReissueParams;
+/** A bulk action over a snapshot of passes (`POST /passes/bulk-runs`): same workflow class, own params. */
+export interface BulkActionParams {
+  kind: 'bulk_action';
+  runId: string;
+}
 
 const MAX_PAGES = 1000;
 const PAGE_RETRY = { retries: { limit: 3, delay: '10 seconds', backoff: 'exponential' } } as const;
@@ -78,8 +85,39 @@ export async function runBulkReissue(
   return totals;
 }
 
-export class BulkReissue extends WorkflowEntrypoint<AppEnv, BulkReissueParams> {
-  override async run(event: WorkflowEvent<BulkReissueParams>, step: WorkflowStep): Promise<void> {
-    await runBulkReissue(this.env, event.instanceId, event.payload, step, this.ctx);
+const MAX_CHUNKS = 1000;
+
+/** One step per chunk; the run's own record holds the cursor, so a retried step resumes where it stopped. */
+export async function runBulkAction(
+  env: AppEnv,
+  params: BulkActionParams,
+  step: StepLike,
+  exec?: ExecutionContext,
+): Promise<void> {
+  const ctx = createJobContext(env, 'bulk-action', {
+    ...(exec ? { ctx: exec } : {}),
+    base: { workflow: 'bulk-action', runId: params.runId },
+  });
+  try {
+    for (let chunk = 0; chunk < MAX_CHUNKS; chunk++) {
+      const { more } = await step.do(`chunk-${chunk}`, PAGE_RETRY, () =>
+        runBulkChunk(ctx, params.runId),
+      );
+      if (!more) return;
+    }
+    await step.do('too-long', () => failBulkRun(ctx, params.runId, 'BULK_RUN_TOO_LONG'));
+  } catch (error) {
+    await step.do('fail', () => failBulkRun(ctx, params.runId, 'BULK_RUN_FAILED'));
+    throw error;
+  }
+}
+
+export class BulkReissue extends WorkflowEntrypoint<AppEnv, BulkReissueParams | BulkActionParams> {
+  override async run(
+    event: WorkflowEvent<BulkReissueParams | BulkActionParams>,
+    step: WorkflowStep,
+  ): Promise<void> {
+    if ('kind' in event.payload) await runBulkAction(this.env, event.payload, step, this.ctx);
+    else await runBulkReissue(this.env, event.instanceId, event.payload, step, this.ctx);
   }
 }

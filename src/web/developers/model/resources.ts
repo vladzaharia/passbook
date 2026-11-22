@@ -18,6 +18,8 @@ const GROUPS: Record<string, (typeof GROUP_ORDER)[number]> = {
   passImports: 'Passes',
   bundles: 'Passes',
   holders: 'Passes',
+  bulkRuns: 'Passes',
+  passViews: 'Passes',
   templates: 'Templates',
   templateImports: 'Templates',
   blueprints: 'Templates',

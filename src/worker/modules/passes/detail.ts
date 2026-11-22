@@ -28,8 +28,19 @@ export function holderStateOf(pass: Pass): 'unassigned' | 'waiting' | 'owned' {
   return pass.holderEmail ? 'waiting' : 'unassigned';
 }
 
-export function toSummary(pass: Pass) {
+/** The value of each input a list `match` names, for the list to show under the name. */
+function matchedOf(pass: Pass, clauses: readonly { input: string }[]) {
+  return clauses.flatMap((c) => {
+    const v = pass.personalization[c.input];
+    return typeof v === 'string' || typeof v === 'number'
+      ? [{ input: c.input, value: String(v).slice(0, 120) }]
+      : [];
+  });
+}
+
+export function toSummary(pass: Pass, match?: readonly { input: string }[]) {
   return {
+    ...(match?.length ? { matched: matchedOf(pass, match) } : {}),
     id: pass.id,
     orgId: pass.orgId,
     templateId: pass.templateId,

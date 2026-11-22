@@ -74,9 +74,9 @@ describe('pass selection', () => {
     expect(PassMatchSchema.safeParse(Array(6).fill(clause)).success).toBe(false);
   });
 
-  it('drifts past 2%', () => {
-    expect(selectionDrifted(1000, 1020)).toBe(false);
-    expect(selectionDrifted(1000, 1021)).toBe(true);
-    expect(selectionDrifted(10, 11)).toBe(true);
+  it('refuses any drift', () => {
+    expect(selectionDrifted(1000, 1000)).toBe(false);
+    expect(selectionDrifted(1000, 1001)).toBe(true);
+    expect(selectionDrifted(10, 9)).toBe(true);
   });
 });

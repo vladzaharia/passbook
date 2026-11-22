@@ -87,6 +87,9 @@ export async function bulkPassAction(
       done++;
     } else if (pass.removedAt !== null) {
       skipped.push({ id: pass.id, code: 'PASS_REMOVED' });
+    } else if (pass.status !== 'active') {
+      // A voided pass is not mailed: the holder would get a link to a card that no longer works.
+      skipped.push({ id: pass.id, code: 'NOT_ACTIVE' });
     } else if (!pass.holderEmail) {
       skipped.push({ id: pass.id, code: 'NO_RECIPIENT' });
     } else {

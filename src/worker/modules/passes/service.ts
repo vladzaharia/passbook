@@ -3,8 +3,7 @@ import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { deliverPush } from '../delivery/push.ts';
-import { recordPassEvent } from '../events/record.ts';
-import { dropPrintPdfs } from '../prints/pdf-drop.ts';
+import type { RunWrite } from './bulk-write.ts';
 import { ensureCredentialRefKeyset } from './credential-keyset.ts';
 import { currentSummary, detailOf, toSummary } from './detail.ts';
 import { assertExternalIdFree, externalIdUpdateGuard } from './external-id.ts';
@@ -22,6 +21,7 @@ import { softDeletePassGranted } from './repo-pass-grants.ts';
 import { captureConnectionTransferPending, connectionForPass } from './repo-read-connection.ts';
 import { getPass, pendingPushId } from './repo-read-pass.ts';
 import type { ScopeArg } from './scope.ts';
+import { setPassStatus } from './service-status.ts';
 import { stampMovePlan } from './stamps-keep.ts';
 
 /** Workstream d owns this module; e, f and others call these. Keep the signatures. */
@@ -38,7 +38,7 @@ export async function listPassSummaries(
   query: Parameters<typeof listPasses>[1],
 ) {
   const page = await listPasses(ctx.env.DB, query);
-  return { items: page.items.map(toSummary), nextCursor: page.nextCursor };
+  return { items: page.items.map((p) => toSummary(p, query.match)), nextCursor: page.nextCursor };
 }
 
 export interface PassPatch {
@@ -227,34 +227,10 @@ async function setStatus(
   status: 'active' | 'voided',
   scope: ScopeArg,
   authority?: TenantPassWrite,
+  runWrite?: RunWrite,
 ) {
-  const current = await getPassForWrite(ctx.env.DB, passId, scope);
-  if (current.removedAt !== null)
-    throw new ConflictError('This pass was removed from Wallet. Restore it first.', 'PASS_REMOVED');
-  const result = await publishPass(ctx, {
-    passId,
-    orgScope: scope,
-    cause: causeOf(actor),
-    actor,
-    ...(authority ? { authority } : {}),
-    mutate: () => ({ status }),
-  });
-  // A void ends the pass's prints (a trigger), so their PDFs, single and bulk, go too.
-  if (status === 'voided') await dropPrintPdfs(ctx, result.pass);
-  await recordAudit(ctx, {
-    orgId: result.pass.orgId,
-    actorType: actor.type,
-    actorId: actor.id,
-    action: status === 'voided' ? 'pass.void' : 'pass.unvoid',
-    targetType: 'pass',
-    targetId: passId,
-  });
-  await recordPassEvent(ctx, {
-    orgId: result.pass.orgId,
-    passId,
-    mode: result.pass.mode,
-    kind: status === 'voided' ? 'pass.voided' : 'pass.unvoided',
-    actor,
+  const result = await setPassStatus(ctx, actor, passId, status, scope, authority, {
+    ...(runWrite ? { runWrite } : {}),
   });
   return currentSummary(ctx, result.pass, authority);
 }
@@ -265,7 +241,8 @@ export const voidPass = (
   id: string,
   scope: ScopeArg,
   authority?: TenantPassWrite,
-) => setStatus(ctx, actor, id, 'voided', scope, authority);
+  runWrite?: RunWrite,
+) => setStatus(ctx, actor, id, 'voided', scope, authority, runWrite);
 export const unvoidPass = (
   ctx: ServiceContext,
   actor: Actor,

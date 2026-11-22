@@ -475,15 +475,11 @@
   "body": {
    "orgId": "x",
    "kind": "message",
-   "target": {
-    "templateIds": [
-     "x"
-    ]
-   },
+   "target": {},
    "patch": {}
   },
   "binary": false,
-  "idempotent": false,
+  "idempotent": true,
   "raw": false,
   "cursor": null,
   "result": {
@@ -530,11 +526,7 @@
   "query": [],
   "body": {
    "orgId": "x",
-   "target": {
-    "templateIds": [
-     "x"
-    ]
-   }
+   "target": {}
   },
   "binary": false,
   "idempotent": false,
@@ -544,7 +536,30 @@
    "targeted": 0,
    "onDevice": 0,
    "overBudget": 0,
-   "limit": 0
+   "limit": 0,
+   "samples": [
+    {
+     "passId": "x",
+     "title": "x",
+     "changes": [
+      {
+       "key": "x",
+       "label": "x",
+       "from": "x",
+       "to": "x"
+      }
+     ]
+    }
+   ],
+   "unchanged": 0,
+   "blocked": [
+    {
+     "code": "x",
+     "count": 0
+    }
+   ],
+   "notified": 0,
+   "silent": 0
   }
  },
  {
@@ -615,11 +630,7 @@
   "body": {
    "orgId": "x",
    "kind": "message",
-   "target": {
-    "templateIds": [
-     "x"
-    ]
-   },
+   "target": {},
    "patch": {}
   },
   "binary": false,
@@ -846,6 +857,82 @@
    "createdAt": 0,
    "startedAt": 0,
    "finishedAt": 0
+  }
+ },
+ {
+  "id": "broadcasts.postBroadcastsByIdStop",
+  "call": "broadcasts.stop",
+  "http": "POST",
+  "path": "/api/v1/broadcasts/{id}/stop",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "message",
+   "name": "x",
+   "state": "draft",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {},
+   "notify": false,
+   "at": 0,
+   "clearAfter": 0,
+   "parentId": "x",
+   "ruleId": "x",
+   "followUp": {
+    "id": "x",
+    "at": 0
+   },
+   "counts": {
+    "targeted": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "overBudget": 0,
+    "failed": 0
+   },
+   "errorCode": "x",
+   "createdAt": 0,
+   "startedAt": 0,
+   "finishedAt": 0
+  }
+ },
+ {
+  "id": "broadcasts.postBroadcastsByIdUndo",
+  "call": "broadcasts.undo",
+  "http": "POST",
+  "path": "/api/v1/broadcasts/{id}/undo",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "parentId": "x",
+   "restorable": 0,
+   "kept": 0
   }
  },
  {
@@ -3917,10 +4004,7 @@
   "pathParams": [],
   "query": [],
   "body": {
-   "action": "void",
-   "ids": [
-    "x"
-   ]
+   "action": "void"
   },
   "binary": false,
   "idempotent": true,
@@ -4023,6 +4107,116 @@
   }
  },
  {
+  "id": "passes.postPassesBulkRuns",
+  "call": "bulk_runs.start",
+  "http": "POST",
+  "path": "/api/v1/passes/bulk-runs",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "action": "void",
+   "selection": {
+    "filter": {},
+    "expectCount": 0
+   }
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "action": "void",
+   "state": "queued",
+   "total": 0,
+   "done": 0,
+   "skipped": 0,
+   "skippedBy": {},
+   "stopRequested": false,
+   "createdAt": 0,
+   "finishedAt": 0,
+   "code": "x"
+  }
+ },
+ {
+  "id": "passes.getPassesBulkRunsCurrent",
+  "call": "bulk_runs.current",
+  "http": "GET",
+  "path": "/api/v1/passes/bulk-runs/current",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {}
+ },
+ {
+  "id": "passes.getPassesBulkRunsById",
+  "call": "bulk_runs.retrieve",
+  "http": "GET",
+  "path": "/api/v1/passes/bulk-runs/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "action": "void",
+   "state": "queued",
+   "total": 0,
+   "done": 0,
+   "skipped": 0,
+   "skippedBy": {},
+   "stopRequested": false,
+   "createdAt": 0,
+   "finishedAt": 0,
+   "code": "x"
+  }
+ },
+ {
+  "id": "passes.postPassesBulkRunsByIdStop",
+  "call": "bulk_runs.stop",
+  "http": "POST",
+  "path": "/api/v1/passes/bulk-runs/{id}/stop",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "action": "void",
+   "state": "queued",
+   "total": 0,
+   "done": 0,
+   "skipped": 0,
+   "skippedBy": {},
+   "stopRequested": false,
+   "createdAt": 0,
+   "finishedAt": 0,
+   "code": "x"
+  }
+ },
+ {
   "id": "passes.postPassesBulkChannels",
   "call": "passes.bulk_update_channels",
   "http": "POST",
@@ -4076,6 +4270,60 @@
      "state": "matched"
     }
    ]
+  }
+ },
+ {
+  "id": "passes.getPassesViews",
+  "call": "pass_views.list",
+  "http": "GET",
+  "path": "/api/v1/passes/views",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "filter": {}
+    }
+   ],
+   "revision": 0
+  }
+ },
+ {
+  "id": "passes.putPassesViews",
+  "call": "pass_views.replace",
+  "http": "PUT",
+  "path": "/api/v1/passes/views",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "filter": {}
+    }
+   ],
+   "revision": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "filter": {}
+    }
+   ],
+   "revision": 0
   }
  },
  {

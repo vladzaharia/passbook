@@ -1,6 +1,6 @@
-import type { InputMatch } from '../../../shared/contracts/broadcasts.ts';
+import type { PassMatch } from '../../../shared/contracts/broadcasts.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, prefixMatch } from '../../platform/db.ts';
+import { all, first, prefixMatch } from '../../platform/db.ts';
 import { inputMatchSql } from './repo-input-match.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow, type PassStatus } from './repo-map.ts';
 
@@ -22,13 +22,13 @@ export interface PassListFilter {
   /** Only passes with no completed scan since this time (ms). */
   noScanSince?: number;
   /** Only passes whose inputs satisfy every clause. */
-  match?: InputMatch;
+  match?: PassMatch;
   /** Skips passes removed from Wallet. */
   excludeRemoved?: boolean;
   q?: string;
   /** Exact match. */
   externalId?: string;
-  cursor?: string;
+  cursor?: string | undefined;
   limit: number;
 }
 
@@ -103,6 +103,19 @@ export function passFilterSql(filter: PassListFilter): {
   return { where, params };
 }
 
+/** Passes a list filter matches, ignoring the cursor and limit. */
+export async function countPasses(db: D1Database, filter: PassListFilter): Promise<number> {
+  const { where, params } = passFilterSql({ ...filter, cursor: undefined });
+  const row = await first<{ n: number }>(
+    db,
+    `SELECT COUNT(*) AS n FROM passes WHERE ${where.join(' AND ')}
+      AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
+        WHERE t.pass_id = passes.id AND t.state = 'pending')`,
+    params,
+  );
+  return row?.n ?? 0;
+}
+
 /** Newest first by id (UUIDv7). Search is prefix-only on display fields, exact on serial. */
 export async function listPasses(
   db: D1Database,
@@ -120,4 +133,14 @@ export async function listPasses(
   const page = rows.slice(0, filter.limit).map(mapPass);
   const last = page.at(-1);
   return { items: page, nextCursor: rows.length > filter.limit && last ? last.id : null };
+}
+
+/** The templates the org's passes of this mode use. */
+export async function orgTemplateIds(db: D1Database, orgId: string, mode: Mode): Promise<string[]> {
+  const rows = await all<{ template_id: string }>(
+    db,
+    'SELECT DISTINCT template_id FROM passes WHERE org_id = ? AND mode = ? AND deleted_at IS NULL',
+    [orgId, mode],
+  );
+  return rows.map((r) => r.template_id);
 }

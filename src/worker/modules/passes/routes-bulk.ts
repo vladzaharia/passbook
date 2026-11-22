@@ -1,9 +1,9 @@
 import {
   BulkPassActionResponseSchema,
-  BulkPassActionSchema,
   BulkReissueResponseSchema,
   BulkReissueSchema,
 } from '../../../shared/contracts/index.ts';
+import { BulkPassRequestSchema } from '../../../shared/contracts/pass-selection.ts';
 import { bump } from '../../platform/counters.ts';
 import {
   ForbiddenError,
@@ -15,6 +15,7 @@ import { type createRouter, register } from '../../platform/openapi.ts';
 import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
 import { startBulkReissue } from './bulk.ts';
 import { bulkPassAction, selectBulkPasses } from './bulk-actions.ts';
+import { resolveFilterPasses } from './find.ts';
 import { actorFor, assertOrg, authOf, passScopeOf, svc, tenantAuthorityOf } from './http.ts';
 import { getPass } from './repo-read-pass.ts';
 
@@ -37,18 +38,27 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
     {
       method: 'post',
       path: '/bulk',
-      summary: 'Void, email or remove up to 100 passes of one org (Idempotency-Key for email)',
-      body: BulkPassActionSchema,
+      summary:
+        'Void, email or remove up to 100 passes of one org, or all passes a filter matches (Idempotency-Key for email)',
+      body: BulkPassRequestSchema,
       response: BulkPassActionResponseSchema,
     },
     async (c) => {
-      const body = c.req.valid('json');
-      if (body.orgId) assertOrg(c, body.orgId);
+      const { selection: chosen, ...rest } = c.req.valid('json');
+      if (rest.orgId) assertOrg(c, rest.orgId);
       const ctx = svc(c);
       const scope = passScopeOf(c);
-      let orgId = body.orgId;
-      if (!orgId) {
-        const firstId = body.ids[0];
+      const filterRun = chosen !== undefined && 'filter' in chosen ? chosen : undefined;
+      let ids = rest.ids ?? (chosen && 'ids' in chosen ? chosen.ids : []);
+      let orgId = rest.orgId;
+      if (filterRun) {
+        const auth = authOf(c);
+        orgId ??= auth.kind === 'api_key' ? (auth.orgId ?? undefined) : undefined;
+        if (!orgId)
+          throw new ValidationError('Send orgId to choose an organization.', [], 'ORG_REQUIRED');
+        assertOrg(c, orgId);
+      } else if (!orgId) {
+        const firstId = ids[0];
         if (!firstId) throw new NotFoundError('Some passes were not found.', 'PASS_NOT_FOUND');
         const first = await getPass(ctx.env.DB, firstId, scope);
         if (!first) throw new NotFoundError('Some passes were not found.', 'PASS_NOT_FOUND');
@@ -56,6 +66,17 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
       }
       const authority = await tenantAuthorityOf(ctx, authOf(c), orgId, 'passes:operate');
       const authorizedScope = { ...scope, orgId: authority.orgId };
+      if (filterRun)
+        ids = (
+          await resolveFilterPasses(
+            ctx,
+            { orgId: authority.orgId, mode: scope.mode },
+            filterRun.filter,
+            filterRun.expectCount,
+            true,
+          )
+        ).map((p) => p.id);
+      const body = { ...rest, ids };
       let selection: Awaited<ReturnType<typeof selectBulkPasses>>;
       try {
         selection = await selectBulkPasses(ctx, body, authorizedScope);

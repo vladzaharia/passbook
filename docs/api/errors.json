@@ -459,7 +459,25 @@
       ]
     },
     {
+      "code": "BROADCAST_EMPTY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BROADCAST_INVALID_INPUT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_INVALID_OP",
       "statuses": [
         422
       ],
@@ -513,9 +531,45 @@
       ]
     },
     {
+      "code": "BROADCAST_NOT_SENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_NOT_UNDOABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_NO_RELEASE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BROADCAST_ORG",
       "statuses": [
         422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_PASS_CHANGED",
+      "statuses": [
+        409
       ],
       "modules": [
         "broadcasts"
@@ -540,7 +594,34 @@
       ]
     },
     {
+      "code": "BROADCAST_TOO_MANY_TEMPLATES",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_UNDO_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BROADCAST_UNKNOWN_INPUT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_UNKNOWN_TOKEN",
       "statuses": [
         422
       ],
@@ -552,6 +633,33 @@
       "code": "BULK_RUN_ACTIVE",
       "statuses": [
         409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BULK_RUN_ENDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BULK_RUN_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BULK_RUN_START",
+      "statuses": [
+        503
       ],
       "modules": [
         "passes"
@@ -1097,6 +1205,15 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "EXPECT_COUNT_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
       ]
     },
     {
@@ -1774,11 +1891,21 @@
       ]
     },
     {
+      "code": "IMPORT_NOT_ENDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "IMPORT_NOT_FOUND",
       "statuses": [
         404
       ],
       "modules": [
+        "broadcasts",
         "passes"
       ]
     },
@@ -2163,7 +2290,25 @@
       ]
     },
     {
+      "code": "MATCH_AMBIGUOUS_FIELD",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "MATCH_NEEDS_TEMPLATE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MATCH_TOO_BROAD",
       "statuses": [
         422
       ],
@@ -2661,6 +2806,15 @@
       ]
     },
     {
+      "code": "PASS_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "PASS_CHANGING",
       "statuses": [
         409
@@ -2755,6 +2909,7 @@
         404
       ],
       "modules": [
+        "broadcasts",
         "bundles",
         "channels",
         "delivery",
@@ -4227,6 +4382,25 @@
       ]
     },
     {
+      "code": "SELECTION_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts",
+        "passes"
+      ]
+    },
+    {
+      "code": "SELECTION_USE_RUN",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "SELF_DISABLE",
       "statuses": [
         409
@@ -5438,6 +5612,15 @@
       "code": "VERSION_PURGED",
       "statuses": [
         410
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "VIEWS_CHANGED",
+      "statuses": [
+        409
       ],
       "modules": [
         "passes"

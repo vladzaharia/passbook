@@ -43,6 +43,8 @@ export interface PublishOptions {
   cause: PassCause;
   /** Why beside the cause: scan, broadcast, schedule, remove, restore or designer. */
   source?: PassSource;
+  /** Stamped after `source` in the version row, so a change run can find its own write. */
+  sourceRef?: string;
   actor: Actor;
   /** If-Match: a stale version fails with 412 instead of re-reading. */
   expectedVersion?: number;
@@ -71,6 +73,8 @@ export interface PublishOptions {
    * changeMessage. Omit for syncs and upgrades (the template's messages stay).
    */
   notify?: boolean;
+  /** With `notify`: this text replaces the template's change messages, on the first changed field only. */
+  changeText?: string | ((personalization: Personalization) => string);
   /**
    * Read after `mutate`: true sends the update's message even at the daily limit. Only for a
    * message that would otherwise be lost for good (the stamp that fills a card).

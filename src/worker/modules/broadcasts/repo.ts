@@ -6,8 +6,16 @@ import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/rep
 import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
 import { planGate } from './repo-day-limit.ts';
 
+export { followUpsOf } from './repo-followup.ts';
 export type { CountRow, ItemRow } from './repo-outcomes.ts';
-export { countItems, handledPassIds, insertItems } from './repo-outcomes.ts';
+export {
+  clearIntent,
+  countItems,
+  handledPassIds,
+  insertItems,
+  pendingIntents,
+  setIntent,
+} from './repo-outcomes.ts';
 export type { BroadcastKind, BroadcastState };
 
 export interface BroadcastRow {
@@ -34,6 +42,12 @@ export interface BroadcastRow {
   checked_at: number | null;
   rule_id: string | null;
   window_key: string | null;
+  /** A stop was asked for: the run ends after its chunk. */
+  stop_at: number | null;
+  retry_of: string | null;
+  snapshot_at: number | null;
+  /** The workflow instance when not `broadcast-<id>` (a restarted undo). */
+  instance: string | null;
 }
 
 export interface NewBroadcast {
@@ -50,6 +64,7 @@ export interface NewBroadcast {
   clearAfter: number | null;
   expect?: unknown;
   parentId?: string | null;
+  retryOf?: string | null;
   ruleId?: string | null;
   windowKey?: string | null;
   actor: { type: string; id: string | null };
@@ -92,6 +107,7 @@ export function broadcastValues(b: NewBroadcast): SqlValue[] {
     b.parentId ?? null,
     b.ruleId ?? null,
     b.windowKey ?? null,
+    b.retryOf ?? null,
     b.actor.type,
     b.actor.id,
     b.now,
@@ -103,8 +119,8 @@ export function insertBroadcastStmt(db: D1Database, b: NewBroadcast): D1Prepared
   return stmt(
     db,
     `INSERT OR IGNORE INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, notify, at,
-       clear_after, expect, parent_id, rule_id, window_key, created_by_type, created_by_id, created_at, started_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       clear_after, expect, parent_id, rule_id, window_key, retry_of, created_by_type, created_by_id, created_at, started_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     broadcastValues(b),
   );
 }
@@ -115,17 +131,19 @@ export function insertAuthorizedBroadcastStmt(
   b: NewBroadcast,
   authority: TenantPassWrite,
   now: number,
+  /** A further condition held in the same write (an undo's parent is still undoable). */
+  extra: { sql: string; params: SqlValue[] } = { sql: '', params: [] },
 ): D1PreparedStatement {
   const guard = broadcastAuthority(authority, now, b.kind === 'change');
-  const plan = planGate(b.ruleId, b.orgId, b.mode, b.now);
+  const plan = planGate(b.ruleId ?? b.parentId, b.orgId, b.mode, b.now, b.kind);
   const tenant = [b.orgId, authority.orgId, b.mode, authority.mode];
   return stmt(
     db,
     `INSERT OR IGNORE INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, notify, at,
-       clear_after, expect, parent_id, rule_id, window_key, created_by_type, created_by_id, created_at, started_at)
-     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-     WHERE ? = ? AND ? = ? AND (${guard.sql})${plan.sql}`,
-    [...broadcastValues(b), ...tenant, ...guard.params, ...plan.params],
+       clear_after, expect, parent_id, rule_id, window_key, retry_of, created_by_type, created_by_id, created_at, started_at)
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+     WHERE ? = ? AND ? = ? AND (${guard.sql})${plan.sql}${extra.sql}`,
+    [...broadcastValues(b), ...tenant, ...guard.params, ...plan.params, ...extra.params],
   );
 }
 
@@ -143,6 +161,7 @@ export interface BroadcastListFilter {
   state?: BroadcastState | undefined;
   /** Default `manual`: leaves out the runs of automatic messages. */
   origin?: 'manual' | 'rule' | undefined;
+  kind?: BroadcastKind | undefined;
   /** Only the runs of this automatic message. */
   ruleId?: string | undefined;
   cursor?: string | undefined;
@@ -158,6 +177,10 @@ export async function listBroadcasts(
   if (f.state) {
     where.push('state = ?');
     params.push(f.state);
+  }
+  if (f.kind) {
+    where.push('kind = ?');
+    params.push(f.kind);
   }
   where.push(f.origin === 'rule' ? 'rule_id IS NOT NULL' : 'rule_id IS NULL');
   if (f.ruleId) {
@@ -210,7 +233,7 @@ export function scheduleBroadcastStmt(
   return stmt(
     db,
     `UPDATE broadcasts SET state = 'scheduled', at = ?
-     WHERE id = ? AND state = 'draft' AND kind = ? AND org_id = ? AND mode = ? AND (${guard.sql})`,
+     WHERE id = ? AND NOT (kind = 'change' AND parent_id IS NOT NULL) AND state = 'draft' AND kind = ? AND org_id = ? AND mode = ? AND (${guard.sql})`,
     [at, id, kind, authority.orgId, authority.mode, ...guard.params],
   );
 }
@@ -226,7 +249,7 @@ export function cancelBroadcastStmt(
   return stmt(
     db,
     `UPDATE broadcasts SET state = 'cancelled', finished_at = ?
-     WHERE id = ? AND state IN ('draft', 'scheduled') AND org_id = ? AND mode = ? AND (${guard.sql})`,
+     WHERE id = ? AND NOT (kind = 'change' AND parent_id IS NOT NULL) AND state IN ('draft', 'scheduled') AND org_id = ? AND mode = ? AND (${guard.sql})`,
     [now, id, authority.orgId, authority.mode, ...guard.params],
   );
 }
@@ -283,7 +306,7 @@ export function updateBroadcastStmt(
   return stmt(
     db,
     `UPDATE broadcasts SET name = ?, kind = ?, target = ?, patch = ?, notify = ?, state = ?, at = ?,
-       clear_after = ? WHERE id = ? AND state IN ('draft', 'scheduled') AND kind = ?
+       clear_after = ? WHERE id = ? AND NOT (kind = 'change' AND parent_id IS NOT NULL) AND state IN ('draft', 'scheduled') AND kind = ?
        AND org_id = ? AND mode = ? AND (${guard.sql})`,
     [
       e.name,
@@ -305,22 +328,3 @@ export function updateBroadcastStmt(
 
 export const setTargeted = (db: D1Database, id: string, targeted: number) =>
   run(db, 'UPDATE broadcasts SET targeted = ? WHERE id = ?', [targeted, id]);
-
-/** The clearing follow-up of each broadcast that has one. */
-export const followUpsOf = (
-  db: D1Database,
-  parentIds: readonly string[],
-  orgId: string,
-  mode: Mode,
-) =>
-  parentIds.length === 0
-    ? Promise.resolve([] as { id: string; parent_id: string; at: number | null }[])
-    : all<{ id: string; parent_id: string; at: number | null }>(
-        db,
-        `SELECT child.id, child.parent_id, child.at
-         FROM broadcasts child JOIN broadcasts parent ON parent.id = child.parent_id
-           AND parent.org_id = child.org_id AND parent.mode = child.mode
-         WHERE parent.org_id = ? AND parent.mode = ?
-           AND child.parent_id IN (SELECT value FROM json_each(?))`,
-        [orgId, mode, JSON.stringify(parentIds)],
-      );

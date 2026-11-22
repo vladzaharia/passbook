@@ -6,6 +6,7 @@ import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { Button, ConfirmDialog, Stepper, toast } from '../../../ui/index.ts';
 import { handOffToConnection } from '../../connections/import-handoff.ts';
+import { ChangeTheseLink } from '../change/entry-links.tsx';
 import { downloadImportFile, emailTheRest } from './api.ts';
 import type { UndoResult } from './api-run.ts';
 import { FailedRows } from './failed-rows.tsx';
@@ -73,6 +74,9 @@ export function ImportResults({
                 {C.results.viewPasses}
               </Link>
             </Button>
+            {canOperate && p.created + p.updated > 0 ? (
+              <ChangeTheseLink orgId={orgId} importId={imp.id} />
+            ) : null}
             {canOperate ? (
               <Button
                 variant="outline"

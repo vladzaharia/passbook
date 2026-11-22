@@ -4,6 +4,7 @@ import {
   BroadcastTargetSchema,
 } from '../../../shared/contracts/broadcasts.ts';
 import type { BroadcastRow, CountRow } from './repo.ts';
+import { StoredBroadcastTargetSchema } from './stored-target.ts';
 
 export function countsOf(row: BroadcastRow, items: readonly CountRow[]): BroadcastCounts {
   const counts: BroadcastCounts = {
@@ -19,6 +20,15 @@ export function countsOf(row: BroadcastRow, items: readonly CountRow[]): Broadca
     if (item.outcome === 'updated' && item.silent === 1) counts.overBudget += item.n;
   }
   return counts;
+}
+
+/** A change run's lock-screen text, kept in its stored target. */
+function messageOf(row: BroadcastRow): string | null {
+  if (row.kind !== 'change') return null;
+  const parsed = StoredBroadcastTargetSchema.pick({ message: true }).safeParse(
+    JSON.parse(row.target),
+  );
+  return parsed.success ? (parsed.data.message ?? null) : null;
 }
 
 export function toDto(
@@ -41,6 +51,7 @@ export function toDto(
     at: row.at,
     clearAfter: row.clear_after,
     parentId: row.parent_id,
+    message: messageOf(row),
     ruleId: row.rule_id,
     followUp: followUp ? { id: followUp.id, at: followUp.at } : null,
     counts: countsOf(row, items),

@@ -27,6 +27,7 @@ export const ENTITLEMENT_LABEL: Record<EntitlementKey, string> = {
   'scanning.devices': 'Scanner devices',
   'join.perDay': 'Join passes per day',
   'messages.perDay': 'Broadcasts per day',
+  'passes.changesPerDay': 'Change runs per day',
   'passes.live': 'Live passes',
   'passes.test': 'Test passes',
   templates: 'Templates',

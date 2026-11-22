@@ -11,7 +11,6 @@ import {
   RefreshPassResponseSchema,
   RotateLinkResponseSchema,
 } from '../../../shared/contracts/index.ts';
-import { strictEmail } from '../../../shared/email.ts';
 import { methodScope, modeOf } from '../../platform/auth.ts';
 import { defaultBodyLimit } from '../../platform/body-limit.ts';
 import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
@@ -22,6 +21,7 @@ import { registerEventRoutes } from '../events/routes.ts';
 import { registerPassPrintRoutes } from '../prints/routes.ts';
 import { bindPassConnection } from './connection-bind.ts';
 import { diffVersions, getPassDetail, getVersionDetail } from './detail.ts';
+import { assertMatchUnambiguous, listFilterOf } from './find.ts';
 import {
   actorFor,
   authOf,
@@ -34,14 +34,17 @@ import { requireTenantPassRead, tenantPassForRead, tenantPassForWrite } from './
 import { rotateLink } from './pass-service-delivery.ts';
 import { requestRefresh } from './pass-service-refresh.ts';
 import { registerRemoveRoutes } from './remove-routes.ts';
+import { countPasses } from './repo-list.ts';
 import { registerActionRoutes } from './routes-actions.ts';
 import { registerAssetRoutes } from './routes-assets.ts';
 import { registerBulkRoutes } from './routes-bulk.ts';
+import { registerBulkRunRoutes } from './routes-bulk-runs.ts';
 import { registerCheckInRoutes } from './routes-check-in.ts';
 import { registerMemberPhotoRoutes } from './routes-member-photo.ts';
 import { registerPhotoImportRoutes } from './routes-photo-import.ts';
 import { registerStampsRoutes } from './routes-stamps.ts';
 import { registerTermRoutes } from './routes-term.ts';
+import { registerViewRoutes } from './routes-views.ts';
 import { registerWriteRoutes } from './routes-write.ts';
 import { deletePass, listPassSummaries, unvoidPass, voidPass } from './service.ts';
 
@@ -93,41 +96,27 @@ register(
     } else {
       await requireTenantPassRead(ctx, auth, orgId);
     }
-    const holderEmail = q.holderEmail ? strictEmail(q.holderEmail) : undefined;
-    if (q.holderEmail && !holderEmail) return c.json({ items: [], nextCursor: null });
-    // A match walks json_each per row: bound it by an organization and a template index.
-    if (q.match && (!orgId || !q.templateId))
-      throw new ValidationError(
-        'Pick an organization and a template to filter by input.',
-        [{ path: 'match', message: 'Needs orgId and templateId.' }],
-        'MATCH_NEEDS_TEMPLATE',
-      );
-    // An event target is not scoped here: only "no scan in N days" is served.
-    if (q.scan && 'eventId' in q.scan)
-      throw new ValidationError('Use noScanDays.', [{ path: 'scan', message: 'Unsupported.' }]);
-    return c.json(
-      await listPassSummaries(ctx, {
-        orgId,
-        mode: modeOf(auth),
-        ...(q.templateId ? { templateId: q.templateId } : {}),
-        ...(q.connectionId ? { connectionId: q.connectionId } : {}),
-        ...(q.importId ? { importId: q.importId } : {}),
-        ...(q.status ? { status: q.status } : {}),
-        ...(holderEmail ? { holderEmail } : {}),
-        ...(q.holderState ? { holderState: q.holderState } : {}),
-        ...(q.onDevice !== undefined ? { onDevice: q.onDevice } : {}),
-        ...(q.scan && 'noScanDays' in q.scan
-          ? { noScanSince: ctx.clock.now() - q.scan.noScanDays * 86_400_000 }
-          : {}),
-        ...(q.match ? { match: q.match } : {}),
-        ...(q.q ? { q: q.q } : {}),
-        ...(q.externalId ? { externalId: q.externalId } : {}),
-        ...(q.cursor ? { cursor: q.cursor } : {}),
-        limit: q.limit,
-      }),
-    );
+    const mode = modeOf(auth);
+    const { limit, cursor, count, orgId: _org, ...filter } = q;
+    const list = listFilterOf(ctx, { orgId, mode }, filter);
+    if (!list) return c.json({ items: [], nextCursor: null, ...(count ? { count: 0 } : {}) });
+    // A match walks json_each per row: bound it by an organization, and read its keys unambiguously.
+    if (q.match) {
+      if (!orgId)
+        throw new ValidationError(
+          'Pick an organization to filter by input.',
+          [{ path: 'match', message: 'Needs orgId.' }],
+          'MATCH_NEEDS_TEMPLATE',
+        );
+      if (!q.templateId) await assertMatchUnambiguous(ctx, orgId, mode, q.match);
+    }
+    const page = await listPassSummaries(ctx, { ...list, ...(cursor ? { cursor } : {}), limit });
+    return c.json(count ? { ...page, count: await countPasses(ctx.env.DB, list) } : page);
   },
 );
+
+registerViewRoutes(passesRoutes);
+registerBulkRunRoutes(passesRoutes);
 
 register(
   passesRoutes,

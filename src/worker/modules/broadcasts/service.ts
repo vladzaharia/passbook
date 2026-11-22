@@ -1,10 +1,7 @@
-import type {
-  BroadcastDto,
-  BroadcastPreviewDto,
-  BroadcastTarget,
-  CreateBroadcastBody,
-} from '../../../shared/contracts/broadcasts.ts';
+import type { BroadcastDto } from '../../../shared/contracts/broadcasts.ts';
+import type { CreateBroadcastBody } from '../../../shared/contracts/broadcasts-change.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { selectionDrifted } from '../../../shared/contracts/pass-selection.ts';
 import { batch } from '../../platform/db.ts';
 import { entitlementsOf } from '../../platform/entitlements.ts';
 import {
@@ -18,12 +15,10 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { orgIsActive } from '../orgs/repo.ts';
-import { BUDGET_WINDOW_MS } from '../passes/change-messages.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import type { ScopeArg } from '../passes/scope.ts';
 import type { Actor } from '../passes/service.ts';
-import { getPlatformSettings } from '../settings/service.ts';
-import { targetFilter } from './apply.ts';
+import { prepareTarget, storedTargetOf } from './change-target.ts';
 import { toDto } from './dto.ts';
 import {
   assertCanChange,
@@ -35,9 +30,15 @@ import {
   requireWritableBroadcast,
 } from './guards.ts';
 import * as repo from './repo.ts';
-import { manualBroadcastsToday } from './repo-day-limit.ts';
-import { countTarget } from './repo-target.ts';
+import { DAY_LIMIT_KEY, manualBroadcastsToday } from './repo-day-limit.ts';
+import {
+  chosenTargetsStmts,
+  resumableCount,
+  resumedBy,
+  resumeTargetsStmt,
+} from './repo-selection.ts';
 import { launchBroadcast } from './start.ts';
+import type { StoredBroadcastTarget } from './stored-target.ts';
 
 export async function createBroadcast(
   ctx: ServiceContext,
@@ -45,25 +46,57 @@ export async function createBroadcast(
   mode: Mode,
   body: CreateBroadcastBody,
   authority: TenantPassWrite,
+  hooks: { onInserted?: () => void; limit?: () => Promise<void> } = {},
 ): Promise<BroadcastDto> {
-  return insertBroadcast(ctx, actor, mode, body, authority, 'broadcast.create');
+  return insertBroadcast(ctx, actor, mode, body, authority, 'broadcast.create', hooks);
 }
 
 export async function insertBroadcast(
   ctx: ServiceContext,
   actor: Actor,
   mode: Mode,
-  body: CreateBroadcastBody,
+  input: CreateBroadcastBody,
   authority: TenantPassWrite,
   action: string,
-  detail: Record<string, unknown> = {},
+  options: {
+    detail?: Record<string, unknown>;
+    onInserted?: () => void;
+    /** Runs after the body is validated and before anything is written (the rate limit). */
+    limit?: () => Promise<void>;
+    /** A retry of a change run: it takes the passes of this run that were never changed. */
+    resume?: { parentId: string };
+    /** What only the server sets on a target, kept when a run is sent again. */
+    keep?: Pick<StoredBroadcastTarget, 'window' | 'sentBy'>;
+  } = {},
 ): Promise<BroadcastDto> {
-  if (!(await orgIsActive(ctx.env.DB, body.orgId)))
+  const { detail = {}, onInserted, keep, limit, resume } = options;
+  if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  if (body.at !== undefined) checkTime(ctx, body.at);
-  await checkTemplates(ctx, body);
+  if (input.at !== undefined) checkTime(ctx, input.at);
+  const { expectCount: seen, ...bare } = input.target;
+  const body = await prepareTarget(ctx, mode, resume ? { ...input, target: bare } : input);
+  await checkTemplates(ctx, body, mode);
+  if (resume) {
+    // A resumed run takes what its parent left: the count the admin saw is that remainder.
+    const left = (await resumableCount(ctx.env.DB, resume.parentId, body.orgId, mode)).left;
+    if (seen !== undefined && selectionDrifted(seen, left))
+      throw new ConflictError(
+        `${left} passes are left, not ${seen}. Review it again.`,
+        'SELECTION_CHANGED',
+      );
+  }
+  await limit?.();
   const now = ctx.clock.now();
   const id = ctx.ids.id();
+  const token = ctx.ids.id();
+  const change = body.kind === 'change';
+  const selection = !change
+    ? undefined
+    : resume
+      ? ('resume' as const)
+      : body.target.passIds
+        ? ('ids' as const)
+        : ('live' as const);
   const at = body.send === 'schedule' ? (body.at ?? now) : now;
   const [inserted] = await batch(ctx.env.DB, [
     repo.insertAuthorizedBroadcastStmt(
@@ -75,19 +108,54 @@ export async function insertBroadcast(
         kind: body.kind,
         name: nameOf(body),
         state: body.send === 'draft' ? 'draft' : 'scheduled',
-        target: body.target,
+        target: {
+          ...storedTargetOf(body, {
+            ...(selection ? { selection, token } : {}),
+            ...(resume ? { retryOf: resume.parentId } : {}),
+            ...(resume && seen !== undefined ? { expectCount: seen } : {}),
+          }),
+          ...keep,
+        },
         patch: body.patch,
-        notify: body.notify,
+        notify: body.notify ?? body.kind === 'message',
         at: body.send === 'draft' ? null : at,
         clearAfter: body.clearAfter ?? null,
+        ...(resume ? { retryOf: resume.parentId } : {}),
         actor: { type: actor.type, id: actor.id },
         now,
       },
       authority,
       now,
     ),
+    ...(selection === 'ids' && body.target.passIds
+      ? chosenTargetsStmts(ctx.env.DB, {
+          id,
+          orgId: body.orgId,
+          mode,
+          token,
+          ids: body.target.passIds,
+          replace: false,
+        })
+      : []),
+    ...(resume
+      ? [
+          resumeTargetsStmt(ctx.env.DB, {
+            id,
+            parentId: resume.parentId,
+            orgId: body.orgId,
+            mode,
+            token,
+          }),
+        ]
+      : []),
   ]);
-  if ((inserted?.meta.changes ?? 0) !== 1) throw await insertRefusal(ctx, body.orgId, mode, now);
+  if ((inserted?.meta.changes ?? 0) !== 1) {
+    // The unique index on retry_of: another resume of this run won.
+    if (resume && (await resumedBy(ctx.env.DB, resume.parentId)))
+      throw new ConflictError('This change was already resumed.', 'BROADCAST_NOT_RETRYABLE');
+    throw await insertRefusal(ctx, body.orgId, mode, now, body.kind);
+  }
+  onInserted?.();
   await recordAudit(ctx, {
     orgId: body.orgId,
     actorType: actor.type,
@@ -107,13 +175,15 @@ async function insertRefusal(
   orgId: string,
   mode: Mode,
   now: number,
+  kind: CreateBroadcastBody['kind'],
 ): Promise<Error> {
-  const limit = (await entitlementsOf(ctx, orgId))['messages.perDay'];
-  const used = await manualBroadcastsToday(ctx.env.DB, orgId, mode, now);
+  const key = DAY_LIMIT_KEY[kind];
+  const limit = (await entitlementsOf(ctx, orgId))[key];
+  const used = await manualBroadcastsToday(ctx.env.DB, orgId, mode, now, kind);
   return typeof limit === 'number' && used >= limit
     ? (await isPreviewOnlyOrg(ctx.env.DB, orgId))
-      ? new SandboxQuotaError({ key: 'messages.perDay', limit, used })
-      : new FeatureLimitError({ key: 'messages.perDay', limit, used })
+      ? new SandboxQuotaError({ key, limit, used })
+      : new FeatureLimitError({ key, limit, used })
     : new ForbiddenError();
 }
 
@@ -205,23 +275,4 @@ export async function listBroadcastDtos(
     filter.mode,
   );
   return { items: rows.map((r) => toDto(r, counts, followUps)), nextCursor };
-}
-
-/** The live count behind the composer: matches, on-device and already at the daily limit. */
-export async function previewTarget(
-  ctx: ServiceContext,
-  mode: Mode,
-  orgId: string,
-  target: BroadcastTarget,
-): Promise<BroadcastPreviewDto> {
-  const limit = (await getPlatformSettings(ctx))['push.budgetPerDay'];
-  const filter = targetFilter({ org_id: orgId, mode, target: JSON.stringify(target) }, null, 1);
-  const counts = await countTarget(
-    ctx.env.DB,
-    filter,
-    ctx.clock.now(),
-    ctx.clock.now() - BUDGET_WINDOW_MS,
-    limit,
-  );
-  return { ...counts, limit };
 }

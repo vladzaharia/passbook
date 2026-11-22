@@ -188,8 +188,8 @@ class BroadcastsResource:
         body: m.BroadcastsCreateBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.BroadcastsCreateResult:
-        """Save, send or schedule a message or change `POST /api/v1/broadcasts`"""
-        return self._core.request("POST", "/api/v1/broadcasts", body=body, result=m.BroadcastsCreateResult, **opts)
+        """Save, send or schedule a message or change (Idempotency-Key) `POST /api/v1/broadcasts`"""
+        return self._core.request("POST", "/api/v1/broadcasts", body=body, idempotent=True, result=m.BroadcastsCreateResult, **opts)
 
     def list(
         self,
@@ -198,10 +198,11 @@ class BroadcastsResource:
         limit: int | None = None,
         state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | None = None,
         origin: _Literal["manual", "rule"] | None = None,
+        kind: _Literal["message", "change"] | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> Page[m.BroadcastsListItem]:
+    ) -> Page[m.Broadcast]:
         """List messages and scheduled changes `GET /api/v1/broadcasts`"""
-        return self._core.paginate("GET", "/api/v1/broadcasts", query={"cursor": cursor, "limit": limit, "state": state, "origin": origin}, result=m.BroadcastsListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", "/api/v1/broadcasts", query={"cursor": cursor, "limit": limit, "state": state, "origin": origin, "kind": kind}, result=m.BroadcastsListResult, cursor_param="cursor", **opts)
 
     def retrieve(
         self,
@@ -214,10 +215,12 @@ class BroadcastsResource:
     def retry(
         self,
         id: str,
+        *,
+        expect_count: int | None | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.BroadcastsRetryResult:
-        """Send a failed or cancelled message again, as a new one in the same mode `POST /api/v1/broadcasts/{id}/retry`"""
-        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/retry", result=m.BroadcastsRetryResult, **opts)
+        """Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`"""
+        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/retry", query={"expectCount": expect_count}, result=m.BroadcastsRetryResult, **opts)
 
     def send(
         self,
@@ -227,6 +230,22 @@ class BroadcastsResource:
     ) -> m.BroadcastsSendResult:
         """Send a draft now or at a time `POST /api/v1/broadcasts/{id}/send`"""
         return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/send", body=body, result=m.BroadcastsSendResult, **opts)
+
+    def stop(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BroadcastsStopResult:
+        """Stop a sending message or change after its current chunk `POST /api/v1/broadcasts/{id}/stop`"""
+        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/stop", result=m.BroadcastsStopResult, **opts)
+
+    def undo(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BroadcastsUndoResult:
+        """Undo a change for 24 hours: restores passes still at the value the change set `POST /api/v1/broadcasts/{id}/undo`"""
+        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/undo", result=m.BroadcastsUndoResult, **opts)
 
     def update(
         self,
@@ -593,7 +612,7 @@ class MessageRulesRunsResource:
         cursor: str | None = None,
         limit: int | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> Page[m.MessageRulesRunsListItem]:
+    ) -> Page[m.Broadcast]:
         """The messages an automatic message sent `GET /api/v1/message-rules/{id}/runs`"""
         return self._core.paginate("GET", f"/api/v1/message-rules/{_p(id)}/runs", query={"cursor": cursor, "limit": limit}, result=m.MessageRulesRunsListResult, cursor_param="cursor", **opts)
 
@@ -1191,7 +1210,7 @@ class PassesResource:
         body: m.PassesBulkApplyBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.PassesBulkApplyResult:
-        """Void, email or remove up to 100 passes of one org (Idempotency-Key for email) `POST /api/v1/passes/bulk`"""
+        """Void, email or remove up to 100 passes of one org, or all passes a filter matches (Idempotency-Key for email) `POST /api/v1/passes/bulk`"""
         return self._core.request("POST", "/api/v1/passes/bulk", body=body, idempotent=True, result=m.PassesBulkApplyResult, **opts)
 
     def bulk_reissue(
@@ -1240,12 +1259,13 @@ class PassesResource:
         external_id: str | None = None,
         scan: str | None = None,
         match: str | None = None,
+        count: _Literal["true", "false"] | None = None,
         cursor: str | None = None,
         limit: int | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.PassSummary]:
         """List passes `GET /api/v1/passes`"""
-        return self._core.paginate("GET", "/api/v1/passes", query={"templateId": template_id, "connectionId": connection_id, "importId": import_id, "status": status, "holderEmail": holder_email, "holderState": holder_state, "onDevice": on_device, "q": q, "externalId": external_id, "scan": scan, "match": match, "cursor": cursor, "limit": limit}, result=m.PassesListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", "/api/v1/passes", query={"templateId": template_id, "connectionId": connection_id, "importId": import_id, "status": status, "holderEmail": holder_email, "holderState": holder_state, "onDevice": on_device, "q": q, "externalId": external_id, "scan": scan, "match": match, "count": count, "cursor": cursor, "limit": limit}, result=m.PassesListResult, cursor_param="cursor", **opts)
 
     def match_photos(
         self,
@@ -1383,6 +1403,62 @@ class PrintJobsResource:
     ) -> m.PrintJobsRetrieveResult:
         """State of a bulk Print job `GET /api/v1/passes/bulk-print/{jobId}`"""
         return self._core.request("GET", f"/api/v1/passes/bulk-print/{_p(job_id)}", result=m.PrintJobsRetrieveResult, **opts)
+
+
+class BulkRunsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def current(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BulkRunsCurrentResult:
+        """Get the organization's running bulk run, or the last one that ended within the hour `GET /api/v1/passes/bulk-runs/current`"""
+        return self._core.request("GET", "/api/v1/passes/bulk-runs/current", result=m.BulkRunsCurrentResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BulkRunsRetrieveResult:
+        """Get the progress of a bulk run `GET /api/v1/passes/bulk-runs/{id}`"""
+        return self._core.request("GET", f"/api/v1/passes/bulk-runs/{_p(id)}", result=m.BulkRunsRetrieveResult, **opts)
+
+    def start(
+        self,
+        body: m.BulkRunsStartBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BulkRunsStartResult:
+        """Void, email or remove every pass a filter matches, in the background `POST /api/v1/passes/bulk-runs`"""
+        return self._core.request("POST", "/api/v1/passes/bulk-runs", body=body, result=m.BulkRunsStartResult, **opts)
+
+    def stop(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BulkRunsStopResult:
+        """Stop a bulk run after its current chunk `POST /api/v1/passes/bulk-runs/{id}/stop`"""
+        return self._core.request("POST", f"/api/v1/passes/bulk-runs/{_p(id)}/stop", result=m.BulkRunsStopResult, **opts)
+
+
+class PassViewsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassViewsListResult:
+        """List the saved views of the passes list `GET /api/v1/passes/views`"""
+        return self._core.request("GET", "/api/v1/passes/views", result=m.PassViewsListResult, **opts)
+
+    def replace(
+        self,
+        body: m.PassViewsReplaceBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassViewsReplaceResult:
+        """Replace the saved views of the passes list `PUT /api/v1/passes/views`"""
+        return self._core.request("PUT", "/api/v1/passes/views", body=body, result=m.PassViewsReplaceResult, **opts)
 
 
 class RollCallsResource:
@@ -2123,6 +2199,8 @@ class Resources:
         self.pass_imports = PassImportsResource(core)
         self.passes = PassesResource(core)
         self.print_jobs = PrintJobsResource(core)
+        self.bulk_runs = BulkRunsResource(core)
+        self.pass_views = PassViewsResource(core)
         self.roll_calls = RollCallsResource(core)
         self.scan_setups = ScanSetupsResource(core)
         self.terminal = TerminalResource(core)

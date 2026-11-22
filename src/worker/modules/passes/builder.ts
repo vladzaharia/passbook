@@ -55,7 +55,7 @@ export interface BuildRequest {
    * An editor's save: without `notify` no field carries a changeMessage; with it only fields whose
    * value differs from `previous` do. Omitted (syncs, upgrades), the template's messages stay.
    */
-  changeMessages?: { previous: PassJson | null; notify: boolean };
+  changeMessages?: { previous: PassJson | null; notify: boolean; text?: string };
   /** Strips every changeMessage: the update reaches devices without a notification. */
   silent?: boolean;
   /** Set while the pass is removed from Wallet: every build stays the stripped, voided version. */
