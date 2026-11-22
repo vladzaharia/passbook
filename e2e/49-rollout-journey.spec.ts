@@ -6,6 +6,7 @@ import {
 } from '../src/shared/contracts/templates.ts';
 import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
+import { runMinuteCron } from './helpers/cron.ts';
 import { frame, shoot, THEMES, WIDTHS } from './helpers/issuing.ts';
 import {
   approveTemplateCandidate,
@@ -16,15 +17,25 @@ import {
 import { createOrgWithRoles } from './helpers/seed.ts';
 
 // The rollout card as a story (the issuing redesign, I9): a release goes out, the card shows how
-// far it has got, and the owner tells the holders who are on it.
+// far it has got, the owner tells the holders who are on it, and the card settles once the
+// minute cron has moved the rest.
 // 42-template-rollout checks the server rules; this one follows the screen at 3 widths, 2 themes.
 // It needs the rollout card, so it lands with origin/feat/template-rollout.
-test.setTimeout(300_000);
+test.setTimeout(480_000);
 test.use({ actionTimeout: 30_000 });
 
-type Rollout = { total: number; onRelease: number; remaining: number; running: boolean };
+type Rollout = {
+  total: number;
+  onRelease: number;
+  remaining: number;
+  running: boolean;
+  tell: { key: string } | null;
+};
 
 /** Opens `url` in each frame and shoots once `ready` holds; a resize would close a dialog. */
+/** The version tab is lazy: the Releases list and the pass preview paint after the card. */
+const loaded = (page: Page) => expect(page.getByText('Technical details').first()).toBeVisible();
+
 async function sweep(
   page: Page,
   url: string,
@@ -42,7 +53,7 @@ async function sweep(
   await page.goto(url);
 }
 
-test('the rollout card: mid-rollout, Tell holders, then told once', async ({ browser }) => {
+test('the rollout card: mid-rollout, Tell holders, settled, then told', async ({ browser }) => {
   const author = await apiAs('admin');
   const ctx = await browser.newContext({ storageState: stateFile('admin') });
   try {
@@ -106,11 +117,15 @@ test('the rollout card: mid-rollout, Tell holders, then told once', async ({ bro
     await expect(page.getByText('Updating passes to v2: 2 of 5')).toBeVisible();
     await expect(page.getByText('v2 · 2')).toBeVisible();
     await expect(page.getByText('v1 · 3')).toBeVisible();
-    await sweep(page, url, 'rollout-1-updating', () => expect(bar(page)).toBeVisible());
+    await sweep(page, url, 'rollout-1-updating', async () => {
+      await expect(bar(page)).toBeVisible();
+      await loaded(page);
+    });
 
     // Tell holders names who gets it: the two on v2, not the three still moving.
     const dialog = page.getByRole('dialog', { name: 'Tell holders' });
     const open = async () => {
+      await loaded(page);
       await page.getByRole('button', { name: 'Tell holders' }).click();
       await expect(dialog.getByText(/2 on v2/)).toBeVisible();
       await expect(dialog.getByText(/3 passes are still updating/)).toBeVisible();
@@ -123,18 +138,43 @@ test('the rollout card: mid-rollout, Tell holders, then told once', async ({ bro
         await open();
         await shoot(page, 'rollout-2-tell', width, theme);
       }
+
+    // The rebuild runs on the minute cron, a quiet minute after the release: tick it until the
+    // three passes on v1 have moved.
+    await expect
+      .poll(
+        async () => {
+          await runMinuteCron();
+          return (await rollout()).remaining;
+        },
+        { timeout: 300_000, intervals: [15_000] },
+      )
+      .toBe(0);
+    const settled = page.getByRole('heading', { name: 'All passes are on v2' });
     await frame(page, 1440, 'light');
     await page.goto(url);
-    await open();
-    await dialog.getByRole('button', { name: 'Tell 2 holders' }).click();
-    await expect(page.getByText('Message sent')).toBeVisible();
+    await expect(settled).toBeVisible();
+    await expect(page.getByText('5 of 5')).toBeVisible();
+    await sweep(page, url, 'rollout-3-settled', async () => {
+      await expect(settled).toBeVisible();
+      await loaded(page);
+    });
 
-    // Told once: the offer is gone and the card keeps its bar. (The rebuild itself runs on the
-    // platform's minute cron, which the e2e server does not tick: the 3 stay on v1.)
+    // Everyone is on v2 now, so the offer names all five. Told once, the card has nothing left to say.
+    await page.getByRole('button', { name: 'Tell holders' }).click();
+    await expect(dialog.getByText(/5 on v2/)).toBeVisible();
+    await dialog.getByRole('button', { name: 'Tell 5 holders' }).click();
+    await expect(page.getByText('Message sent')).toBeVisible();
+    await expect.poll(async () => (await rollout()).tell).toBeNull();
     await page.goto(url);
-    await expect(page.getByRole('heading', { name: 'Updating passes to v2' })).toBeVisible();
+    await expect(page.getByText('Saved versions')).toBeVisible();
+    await loaded(page);
+    await expect(settled).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Tell holders' })).toHaveCount(0);
-    await sweep(page, url, 'rollout-3-after-send', () => expect(bar(page)).toBeVisible());
+    await sweep(page, url, 'rollout-4-told', async () => {
+      await expect(page.getByText('Saved versions')).toBeVisible();
+      await loaded(page);
+    });
     await reviewer.dispose();
   } finally {
     await ctx.close();

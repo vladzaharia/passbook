@@ -111,6 +111,12 @@ test('the export: fix 3 rows, issue, undo', async ({ page }) => {
   await tile(page, 'New', ROWS - 3);
   await tile(page, 'Needs a fix', 3);
   await sweep(page, 'export-2-fix');
+  // On a phone the Fix button sits inside the screen, not beyond a sideways scroll.
+  await frame(page, 390, 'light');
+  const firstFix = page.getByRole('button', { name: 'Fix Membership on row 7' });
+  await firstFix.scrollIntoViewIfNeeded();
+  await expect(firstFix).toBeInViewport({ ratio: 1 });
+  await frame(page, 1440, 'light');
   for (const row of [7, 11, 16]) {
     await page.getByRole('button', { name: `Fix Membership on row ${row}` }).click();
     await page.getByRole('combobox', { name: new RegExp(`^Fix Membership on row ${row}`) }).click();
@@ -139,6 +145,10 @@ test('the export: fix 3 rows, issue, undo', async ({ page }) => {
   await page.getByRole('alertdialog').getByRole('button', { name: 'Undo import' }).click();
   await expect(page.getByText('Import undone')).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText(new RegExp(`Removed ${ROWS}`))).toBeVisible();
+  // Nothing is left to change or to report on.
+  await expect(page.getByRole('link', { name: 'Change these' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Download results' })).toHaveCount(0);
+  await expect(page.getByText('Created', { exact: true })).toHaveCount(0);
   await sweep(page, 'export-5-undone');
   for (const pass of [issued[0], issued.at(-1)])
     expect(await removed(pass?.id as string)).toBe(true);
@@ -171,7 +181,7 @@ test(`Change ${COUNT} passes, then undo`, async ({ browser }) => {
   await page.goto(`/admin/o/${org.id}/passes/import/${importId}`);
   await page.getByRole('link', { name: 'Change these' }).click();
   await expect(page).toHaveURL(/\/passes\/change/);
-  await expect(page.getByText('The passes of this import')).toBeVisible();
+  await expect(page.getByText('1,240 passes of this import')).toBeVisible();
 
   await page.getByRole('button', { name: 'Add a field' }).click();
   await page.getByRole('combobox', { name: 'Field' }).click();
@@ -195,6 +205,8 @@ test(`Change ${COUNT} passes, then undo`, async ({ browser }) => {
   await page.getByRole('button', { name: 'Undo change' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Undo change' }).click();
   await expect(page.getByText(/Restored 1,240\./)).toBeVisible({ timeout: 300_000 });
+  // The undo result stands alone: the change's own counters are gone.
+  await expect(page.getByText('Already set')).toHaveCount(0);
   await sweep(page, 'change-5-undone');
   expect(await tierOf(0)).toBe('Standard');
   expect(await tierOf(COUNT - 1)).toBe('Standard');
