@@ -16,13 +16,20 @@ export async function assertAdminConfigurationAuthority(
   db: Db,
   orgId: string,
   credential: AdminConfigurationClaim,
+  /** A key answers only where the caller opts in: its flows are revoke and the mode move. */
+  options: { key?: true } = {},
 ): Promise<void> {
   const { authority, userId, now } = credential;
+  const holds =
+    authority?.kind === 'api_key'
+      ? options.key === true && authority.scope === 'scanning:write' && authority.keyId === userId
+      : authority?.kind === 'session' &&
+        authority.userId === userId &&
+        authority.capability === 'scanning:manage';
   if (
-    authority?.kind !== 'session' ||
+    !authority ||
+    !holds ||
     authority.orgId !== orgId ||
-    authority.userId !== userId ||
-    authority.capability !== 'scanning:manage' ||
     !(await tenantPassAuthorityValid(db, authority, now))
   )
     throw new ForbiddenError();

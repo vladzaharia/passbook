@@ -6117,9 +6117,17 @@ type ScanEvent struct {
 	Scanners    int64          `json:"scanners"`
 }
 
+type ScanEventsArchiveResult = ScanEvent
+
+type ScanEventsAttachScannersBody = ScanEventsAttachScannersParams
+
 type ScanEventsAttachScannersParams struct {
 	ScannerIds []string `json:"scannerIds"`
 }
+
+type ScanEventsAttachScannersResult = ScanEvent
+
+type ScanEventsCreateBody = ScanEventsCreateParams
 
 type ScanEventsCreateParams struct {
 	OrgID       string         `json:"orgId"`
@@ -6135,10 +6143,23 @@ type ScanEventsCreateParams struct {
 	Note        *string        `json:"note,omitempty"`
 }
 
+type ScanEventsCreateResult = ScanEvent
+
+type ScanEventsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+	Status *string `json:"status,omitempty"`
+	Q      *string `json:"q,omitempty"`
+}
+
 type ScanEventsMarkOutParams struct {
 	PassID string `json:"passId"`
 	Place  string `json:"place"`
 }
+
+type ScanEventsRetrieveResult = ScanEvent
+
+type ScanEventsUpdateBody = ScanEventsUpdateParams
 
 type ScanEventsUpdateParams struct {
 	Name        *string        `json:"name,omitempty"`
@@ -6153,6 +6174,8 @@ type ScanEventsUpdateParams struct {
 	Note        *string        `json:"note,omitempty"`
 	Archived    *bool          `json:"archived,omitempty"`
 }
+
+type ScanEventsUpdateResult = ScanEvent
 
 type ScanFeedRow struct {
 	ID          string   `json:"id"`
@@ -6915,6 +6938,42 @@ type ScanTemplateRef = map[string]any
 
 type ScanWorkspace = map[string]any
 
+type ScanZonesArchiveResult struct {
+	Occupancy         string                                `json:"occupancy"`
+	Capacity          *int64                                `json:"capacity"`
+	MaxStayMinutes    *int64                                `json:"maxStayMinutes"`
+	HardLimit         *bool                                 `json:"hardLimit,omitempty"`
+	ClearAt           *string                               `json:"clearAt"`
+	ID                string                                `json:"id"`
+	OrgID             string                                `json:"orgId"`
+	Key               string                                `json:"key"`
+	Name              string                                `json:"name"`
+	ParentID          *string                               `json:"parentId"`
+	TimeZone          *string                               `json:"timeZone"`
+	EffectiveTimeZone *string                               `json:"effectiveTimeZone"`
+	Sort              int64                                 `json:"sort"`
+	Depth             int64                                 `json:"depth"`
+	Sessions          int64                                 `json:"sessions"`
+	CheckedAt         []ScanZonesArchiveResultCheckedAtItem `json:"checkedAt"`
+	Plans             []ScanZonesArchiveResultPlansItem     `json:"plans"`
+	InNow             *int64                                `json:"inNow"`
+	ArchivedAt        *int64                                `json:"archivedAt"`
+}
+
+type ScanZonesArchiveResultCheckedAtItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ScanZonesArchiveResultPlansItem struct {
+	TemplateID   string `json:"templateId"`
+	TemplateName string `json:"templateName"`
+	PlanID       string `json:"planId"`
+	Label        string `json:"label"`
+}
+
+type ScanZonesCreateBody = ScanZonesCreateParams
+
 type ScanZonesCreateParams struct {
 	Occupancy      *string `json:"occupancy,omitempty"`
 	Capacity       *int64  `json:"capacity,omitempty"`
@@ -6929,10 +6988,125 @@ type ScanZonesCreateParams struct {
 	Sort           *int64  `json:"sort,omitempty"`
 }
 
+type ScanZonesCreateResult struct {
+	Occupancy         string                               `json:"occupancy"`
+	Capacity          *int64                               `json:"capacity"`
+	MaxStayMinutes    *int64                               `json:"maxStayMinutes"`
+	HardLimit         *bool                                `json:"hardLimit,omitempty"`
+	ClearAt           *string                              `json:"clearAt"`
+	ID                string                               `json:"id"`
+	OrgID             string                               `json:"orgId"`
+	Key               string                               `json:"key"`
+	Name              string                               `json:"name"`
+	ParentID          *string                              `json:"parentId"`
+	TimeZone          *string                              `json:"timeZone"`
+	EffectiveTimeZone *string                              `json:"effectiveTimeZone"`
+	Sort              int64                                `json:"sort"`
+	Depth             int64                                `json:"depth"`
+	Sessions          int64                                `json:"sessions"`
+	CheckedAt         []ScanZonesCreateResultCheckedAtItem `json:"checkedAt"`
+	Plans             []ScanZonesCreateResultPlansItem     `json:"plans"`
+	InNow             *int64                               `json:"inNow"`
+	ArchivedAt        *int64                               `json:"archivedAt"`
+}
+
+type ScanZonesCreateResultCheckedAtItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ScanZonesCreateResultPlansItem struct {
+	TemplateID   string `json:"templateId"`
+	TemplateName string `json:"templateName"`
+	PlanID       string `json:"planId"`
+	Label        string `json:"label"`
+}
+
+type ScanZonesListItem struct {
+	Occupancy         string                           `json:"occupancy"`
+	Capacity          *int64                           `json:"capacity"`
+	MaxStayMinutes    *int64                           `json:"maxStayMinutes"`
+	HardLimit         *bool                            `json:"hardLimit,omitempty"`
+	ClearAt           *string                          `json:"clearAt"`
+	ID                string                           `json:"id"`
+	OrgID             string                           `json:"orgId"`
+	Key               string                           `json:"key"`
+	Name              string                           `json:"name"`
+	ParentID          *string                          `json:"parentId"`
+	TimeZone          *string                          `json:"timeZone"`
+	EffectiveTimeZone *string                          `json:"effectiveTimeZone"`
+	Sort              int64                            `json:"sort"`
+	Depth             int64                            `json:"depth"`
+	Sessions          int64                            `json:"sessions"`
+	CheckedAt         []ScanZonesListItemCheckedAtItem `json:"checkedAt"`
+	Plans             []ScanZonesListItemPlansItem     `json:"plans"`
+	InNow             *int64                           `json:"inNow"`
+	ArchivedAt        *int64                           `json:"archivedAt"`
+}
+
+type ScanZonesListItemCheckedAtItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ScanZonesListItemPlansItem struct {
+	TemplateID   string `json:"templateId"`
+	TemplateName string `json:"templateName"`
+	PlanID       string `json:"planId"`
+	Label        string `json:"label"`
+}
+
+type ScanZonesListQuery struct {
+	Cursor   *string `json:"cursor,omitempty"`
+	Limit    *int64  `json:"limit,omitempty"`
+	Archived *string `json:"archived,omitempty"`
+}
+
 type ScanZonesMarkOutParams struct {
 	PassID string `json:"passId"`
 	Place  string `json:"place"`
 }
+
+type ScanZonesResetVisitsResult struct {
+	PassID string `json:"passId"`
+	Visits int64  `json:"visits"`
+}
+
+type ScanZonesRestoreResult struct {
+	Occupancy         string                                `json:"occupancy"`
+	Capacity          *int64                                `json:"capacity"`
+	MaxStayMinutes    *int64                                `json:"maxStayMinutes"`
+	HardLimit         *bool                                 `json:"hardLimit,omitempty"`
+	ClearAt           *string                               `json:"clearAt"`
+	ID                string                                `json:"id"`
+	OrgID             string                                `json:"orgId"`
+	Key               string                                `json:"key"`
+	Name              string                                `json:"name"`
+	ParentID          *string                               `json:"parentId"`
+	TimeZone          *string                               `json:"timeZone"`
+	EffectiveTimeZone *string                               `json:"effectiveTimeZone"`
+	Sort              int64                                 `json:"sort"`
+	Depth             int64                                 `json:"depth"`
+	Sessions          int64                                 `json:"sessions"`
+	CheckedAt         []ScanZonesRestoreResultCheckedAtItem `json:"checkedAt"`
+	Plans             []ScanZonesRestoreResultPlansItem     `json:"plans"`
+	InNow             *int64                                `json:"inNow"`
+	ArchivedAt        *int64                                `json:"archivedAt"`
+}
+
+type ScanZonesRestoreResultCheckedAtItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ScanZonesRestoreResultPlansItem struct {
+	TemplateID   string `json:"templateId"`
+	TemplateName string `json:"templateName"`
+	PlanID       string `json:"planId"`
+	Label        string `json:"label"`
+}
+
+type ScanZonesUpdateBody = ScanZonesUpdateParams
 
 type ScanZonesUpdateParams struct {
 	Occupancy      *string `json:"occupancy,omitempty"`
@@ -6945,6 +7119,40 @@ type ScanZonesUpdateParams struct {
 	TimeZone       *string `json:"timeZone,omitempty"`
 	Sort           *int64  `json:"sort,omitempty"`
 	Archived       *bool   `json:"archived,omitempty"`
+}
+
+type ScanZonesUpdateResult struct {
+	Occupancy         string                               `json:"occupancy"`
+	Capacity          *int64                               `json:"capacity"`
+	MaxStayMinutes    *int64                               `json:"maxStayMinutes"`
+	HardLimit         *bool                                `json:"hardLimit,omitempty"`
+	ClearAt           *string                              `json:"clearAt"`
+	ID                string                               `json:"id"`
+	OrgID             string                               `json:"orgId"`
+	Key               string                               `json:"key"`
+	Name              string                               `json:"name"`
+	ParentID          *string                              `json:"parentId"`
+	TimeZone          *string                              `json:"timeZone"`
+	EffectiveTimeZone *string                              `json:"effectiveTimeZone"`
+	Sort              int64                                `json:"sort"`
+	Depth             int64                                `json:"depth"`
+	Sessions          int64                                `json:"sessions"`
+	CheckedAt         []ScanZonesUpdateResultCheckedAtItem `json:"checkedAt"`
+	Plans             []ScanZonesUpdateResultPlansItem     `json:"plans"`
+	InNow             *int64                               `json:"inNow"`
+	ArchivedAt        *int64                               `json:"archivedAt"`
+}
+
+type ScanZonesUpdateResultCheckedAtItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ScanZonesUpdateResultPlansItem struct {
+	TemplateID   string `json:"templateId"`
+	TemplateName string `json:"templateName"`
+	PlanID       string `json:"planId"`
+	Label        string `json:"label"`
 }
 
 type Scanner struct {
@@ -7076,10 +7284,18 @@ type ScannersCreateParamsSettingsTags struct {
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
 
+type ScannersRevokeResult = Scanner
+
+type ScannersSetModeBody = ScannersSetModeParams
+
 type ScannersSetModeParams struct {
 	Mode        string `json:"mode"`
 	DetachEvent *bool  `json:"detachEvent,omitempty"`
 }
+
+type ScannersSetModeResult = Scanner
+
+type ScannersUpdateBody = ScannersUpdateParams
 
 type ScannersUpdateParams struct {
 	Name     *string                       `json:"name,omitempty"`
@@ -7133,6 +7349,8 @@ type ScannersUpdateParamsSettingsTags struct {
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
+
+type ScannersUpdateResult = Scanner
 
 type ScanningDevice struct {
 	ID               string                  `json:"id"`
@@ -7445,6 +7663,8 @@ type ScanningSessionsDevicesCreateParamsOverrides struct {
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
 }
 
+type ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
+
 type ScanningSessionsDevicesUpdateParams struct {
 	Name      *string                                       `json:"name,omitempty"`
 	Surface   *string                                       `json:"surface,omitempty"`
@@ -7459,6 +7679,15 @@ type ScanningSessionsDevicesUpdateParamsOverrides struct {
 	Lookup    *bool   `json:"lookup,omitempty"`
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
 }
+
+type ScanningSessionsDevicesUpdateResult = ScanningDevice
+
+type ScanningSessionsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+}
+
+type ScanningSessionsOverrideHoursBody = ScanningSessionsOverrideHoursParams
 
 type ScanningSessionsOverrideHoursParams = any
 
@@ -7477,6 +7706,10 @@ type ScanningSessionsOverrideHoursParams3 struct {
 	Action   string `json:"action"`
 	Revision *int64 `json:"revision,omitempty"`
 }
+
+type ScanningSessionsOverrideHoursResult = ScanningSessionDetail
+
+type ScanningSessionsRetrieveResult = ScanningSessionDetail
 
 type ScanningSessionsSetupBody = ScanningSessionsSetupParams
 
@@ -7631,6 +7864,8 @@ type ScanningSessionsSetupQuery struct {
 
 type ScanningSessionsSetupResult = ScanSetupAnswer
 
+type ScanningSessionsUpdateBody = ScanningSessionsUpdateParams
+
 type ScanningSessionsUpdateParams struct {
 	Name          *string                               `json:"name,omitempty"`
 	TimeZone      *string                               `json:"timeZone,omitempty"`
@@ -7703,6 +7938,8 @@ type ScanningSessionsUpdateParamsSettingsTags struct {
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
+
+type ScanningSessionsUpdateResult = ScanningSessionDetail
 
 type ScansListQuery struct {
 	Cursor        *string `json:"cursor,omitempty"`

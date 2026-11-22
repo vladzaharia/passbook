@@ -2398,5 +2398,133 @@
     "op": "webhook pass.voided",
     "change": "data.runId: field added",
     "note": "pass.voided data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
+  },
+  {
+    "key": "PATCH /api/v1/scanners/{id} 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.patchScannersById",
+    "op": "PATCH /api/v1/scanners/{id}",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scanners/{id} 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.getScannersById",
+    "op": "GET /api/v1/scanners/{id}",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/revoke 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdRevoke",
+    "op": "POST /api/v1/scanners/{id}/revoke",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/mode 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdMode",
+    "op": "POST /api/v1/scanners/{id}/mode",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scanners 200.items[].staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.getScanners",
+    "op": "GET /api/v1/scanners",
+    "change": "200.items[].staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScanners",
+    "op": "POST /api/v1/scanners",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/pair-here 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdPairHere",
+    "op": "POST /api/v1/scanners/{id}/pair-here",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.getScanSetups",
+    "op": "GET /api/v1/scan-setups",
+    "change": "200.items[].staff.name, items[].adminUser.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scan-setups 200.staff.name, adminUser.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScanSetups",
+    "op": "POST /api/v1/scan-setups",
+    "change": "200.staff.name, adminUser.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scan-setups/{id} 200.staff.name, adminUser.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.getScanSetupsById",
+    "op": "GET /api/v1/scan-setups/{id}",
+    "change": "200.staff.name, adminUser.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "PATCH /api/v1/scan-setups/{id} 200.staff.name, adminUser.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.patchScanSetupsById",
+    "op": "PATCH /api/v1/scan-setups/{id}",
+    "change": "200.staff.name, adminUser.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/scan-setup 403 for another org's key: now 404 ORG_NOT_FOUND",
+    "class": "notable",
+    "operationId": "templates.postTemplatesByIdScanSetup",
+    "op": "POST /api/v1/templates/{id}/scan-setup",
+    "change": "403 for another org's key: now 404 ORG_NOT_FOUND",
+    "note": "A key bound to another org finds no such org, as on every scanning route."
+  },
+  {
+    "key": "POST /api/v1/scanners 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
+    "class": "notable",
+    "operationId": "scanners.postScanners",
+    "op": "POST /api/v1/scanners",
+    "change": "422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
+    "note": "Another mode's event is as good as unknown: no existence oracle."
+  },
+  {
+    "key": "PATCH /api/v1/scanners/{id} 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
+    "class": "notable",
+    "operationId": "scanners.patchScannersById",
+    "op": "PATCH /api/v1/scanners/{id}",
+    "change": "422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
+    "note": "Another mode's event is as good as unknown: no existence oracle."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
+    "class": "notable",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
+    "note": "Another mode's event is as good as unknown: no existence oracle."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
+    "class": "notable",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
+    "note": "Another mode's event is as good as unknown: no existence oracle."
   }
 ]

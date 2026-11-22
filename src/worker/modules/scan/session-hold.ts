@@ -5,10 +5,12 @@ import type {
   SessionHoldRequestSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { rowIs } from '../../platform/authority-checks.ts';
+import { bump } from '../../platform/counters.ts';
 import {
   BadRequestError,
   ConflictError,
   ForbiddenError,
+  RateLimitedError,
   ValidationError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -17,7 +19,7 @@ import type { TenantPassWrite } from '../passes/http.ts';
 import { verifyApproval } from './approval.ts';
 import type { ScanActor } from './guard.ts';
 import { kickScreen } from './live.ts';
-import { adminGrant, audited, sessionEpoch } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited, sessionEpoch } from './repo-admin-grant.ts';
 import { scanningDeviceRows } from './repo-scanning-devices.ts';
 import { addScanningSessionUpdate, type ScanningSessionRow } from './repo-scanning-sessions.ts';
 import { liveActorGuard } from './repo-tags-bind.ts';
@@ -38,6 +40,8 @@ import {
 type HoldRequest = z.infer<typeof SessionHoldRequestSchema>;
 type OpenNow = z.infer<typeof ScanSessionOpenNowSchema>;
 type HoldAction = 'close' | 'open' | 'clear';
+
+const HOLDS_PER_MINUTE = 10;
 
 const AUDIT_ACTION = {
   close: 'scanning.session_closed',
@@ -101,6 +105,36 @@ export async function holdScanningSession(
   countAuthority: SessionReadAuthority,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
+  // Each change kicks every device of the session: ten a minute per caller is more than a person
+  // needs. A key and the console each have their own budget. The hold is charged first, so a
+  // parallel burst cannot pass the limit, and refunded when it does not commit.
+  const minute = ctx.clock.now() - (ctx.clock.now() % 60_000);
+  const holdKey = `scan:hold:${id}:${userId}`;
+  const refund = () => bump(ctx.env.DB, holdKey, minute, -1);
+  if ((await bump(ctx.env.DB, holdKey, minute)) > HOLDS_PER_MINUTE) {
+    await refund();
+    throw new RateLimitedError(Math.ceil((minute + 60_000 - ctx.clock.now()) / 1000));
+  }
+  let committed = false;
+  try {
+    return await holdCommitted(ctx, userId, id, input, authority, countAuthority, () => {
+      committed = true;
+    });
+  } catch (error) {
+    if (!committed) await refund();
+    throw error;
+  }
+}
+
+async function holdCommitted(
+  ctx: ServiceContext,
+  userId: string,
+  id: string,
+  input: HoldRequest,
+  authority: TenantPassWrite,
+  countAuthority: SessionReadAuthority,
+  onCommit: () => void,
+) {
   const row = await loadScanningSession(ctx, id, authority.mode, authority.orgId);
   if (input.revision !== undefined && input.revision !== row.updated_at)
     throw new ConflictError(
@@ -128,15 +162,18 @@ export async function holdScanningSession(
   g.add(
     audited(g, ctx, {
       orgId: row.org_id,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: AUDIT_ACTION[input.action],
       targetType: 'scanning_session',
       targetId: id,
-      detail: { by: 'user', ...(hold ? { until: hold.until } : {}) },
+      detail: {
+        by: authority.kind === 'api_key' ? 'api_key' : 'user',
+        ...(hold ? { until: hold.until } : {}),
+      },
     }),
   );
   await g.commit();
+  onCommit();
   await kickDevices(ctx, row);
   return scanningSessionDetailForAuthority(ctx, id, row.mode, countAuthority);
 }

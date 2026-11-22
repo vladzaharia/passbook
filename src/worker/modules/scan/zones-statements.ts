@@ -74,7 +74,9 @@ export async function planZone(
   const { authority } = capture;
   // Zones are org-wide, not moded: a key makes them in live mode only (the one-call setup).
   if (authority.kind === 'api_key') {
-    if (authority.orgId !== input.orgId || authority.mode !== 'live') throw new ForbiddenError();
+    if (authority.orgId !== input.orgId) throw new ForbiddenError();
+    if (authority.mode !== 'live')
+      throw new ForbiddenError('Zones need a live key.', 'SCAN_ZONE_LIVE_ONLY');
   } else assertAuthority(authority, input.orgId, 'scanning:manage');
   if (!(await orgIsActive(ctx.env.DB, input.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');

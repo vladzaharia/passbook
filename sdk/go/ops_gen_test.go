@@ -1251,6 +1251,60 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanEvents.list", "GET", "/api/v1/scan-events", false,
+		"", `{"items":[{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanEvents.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"scanEvents.create", "POST", "/api/v1/scan-events", false,
+		`{"orgId":"x","name":"x","templateIds":["x"],"opensAt":0,"closesAt":0,"timeZone":"x"}`, `{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanEventsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanEvents.Create(ctx, &b)
+		},
+	},
+	{
+		"scanEvents.retrieve", "GET", "/api/v1/scan-events/id1", false,
+		"", `{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanEvents.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"scanEvents.update", "PATCH", "/api/v1/scan-events/id1", false,
+		`{}`, `{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanEventsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanEvents.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"scanEvents.archive", "POST", "/api/v1/scan-events/id1/archive", false,
+		"", `{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanEvents.Archive(ctx, "id1")
+		},
+	},
+	{
+		"scanEvents.attachScanners", "POST", "/api/v1/scan-events/id1/scanners", false,
+		`{"scannerIds":["x"]}`, `{"id":"x","orgId":"x","mode":"live","name":"x","templateIds":["x"],"match":{"input":"x","values":["x"]},"opensAt":0,"closesAt":0,"timeZone":"x","capacity":0,"reentry":false,"note":"x","status":"upcoming","arrived":0,"expected":0,"scanners":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanEventsAttachScannersBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanEvents.AttachScanners(ctx, "id1", &b)
+		},
+	},
+	{
 		"scanSetups.list", "GET", "/api/v1/scan-setups", false,
 		"", `{"items":[{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0,"adminUser":{"id":"x","name":"x"},"watch":{}}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1262,6 +1316,56 @@ var generatedOps = []opCase{
 		"", `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0,"adminUser":{"id":"x","name":"x"},"watch":{}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.ScanSetups.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"scanZones.list", "GET", "/api/v1/scan-zones", false,
+		"", `{"items":[{"occupancy":"off","capacity":0,"maxStayMinutes":0,"clearAt":"x","id":"x","orgId":"x","key":"x","name":"x","parentId":"x","timeZone":"x","effectiveTimeZone":"x","sort":0,"depth":0,"sessions":0,"checkedAt":[{"id":"x","name":"x"}],"plans":[{"templateId":"x","templateName":"x","planId":"x","label":"x"}],"inNow":0,"archivedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanZones.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"scanZones.create", "POST", "/api/v1/scan-zones", false,
+		`{"orgId":"x","key":"x","name":"x"}`, `{"occupancy":"off","capacity":0,"maxStayMinutes":0,"clearAt":"x","id":"x","orgId":"x","key":"x","name":"x","parentId":"x","timeZone":"x","effectiveTimeZone":"x","sort":0,"depth":0,"sessions":0,"checkedAt":[{"id":"x","name":"x"}],"plans":[{"templateId":"x","templateName":"x","planId":"x","label":"x"}],"inNow":0,"archivedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanZonesCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanZones.Create(ctx, &b)
+		},
+	},
+	{
+		"scanZones.resetVisits", "POST", "/api/v1/scan-zones/visits/id1/reset", false,
+		"", `{"passId":"x","visits":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanZones.ResetVisits(ctx, "id1")
+		},
+	},
+	{
+		"scanZones.update", "PATCH", "/api/v1/scan-zones/id1", false,
+		`{}`, `{"occupancy":"off","capacity":0,"maxStayMinutes":0,"clearAt":"x","id":"x","orgId":"x","key":"x","name":"x","parentId":"x","timeZone":"x","effectiveTimeZone":"x","sort":0,"depth":0,"sessions":0,"checkedAt":[{"id":"x","name":"x"}],"plans":[{"templateId":"x","templateName":"x","planId":"x","label":"x"}],"inNow":0,"archivedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanZonesUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanZones.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"scanZones.archive", "POST", "/api/v1/scan-zones/id1/archive", false,
+		"", `{"occupancy":"off","capacity":0,"maxStayMinutes":0,"clearAt":"x","id":"x","orgId":"x","key":"x","name":"x","parentId":"x","timeZone":"x","effectiveTimeZone":"x","sort":0,"depth":0,"sessions":0,"checkedAt":[{"id":"x","name":"x"}],"plans":[{"templateId":"x","templateName":"x","planId":"x","label":"x"}],"inNow":0,"archivedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanZones.Archive(ctx, "id1")
+		},
+	},
+	{
+		"scanZones.restore", "POST", "/api/v1/scan-zones/id1/restore", false,
+		"", `{"occupancy":"off","capacity":0,"maxStayMinutes":0,"clearAt":"x","id":"x","orgId":"x","key":"x","name":"x","parentId":"x","timeZone":"x","effectiveTimeZone":"x","sort":0,"depth":0,"sessions":0,"checkedAt":[{"id":"x","name":"x"}],"plans":[{"templateId":"x","templateName":"x","planId":"x","label":"x"}],"inNow":0,"archivedAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanZones.Restore(ctx, "id1")
 		},
 	},
 	{
@@ -1298,6 +1402,42 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanners.update", "PATCH", "/api/v1/scanners/id1", false,
+		`{}`, `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScannersUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Scanners.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"scanners.setMode", "POST", "/api/v1/scanners/id1/mode", false,
+		`{"mode":"live"}`, `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScannersSetModeBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Scanners.SetMode(ctx, "id1", &b)
+		},
+	},
+	{
+		"scanners.revoke", "POST", "/api/v1/scanners/id1/revoke", false,
+		"", `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Scanners.Revoke(ctx, "id1")
+		},
+	},
+	{
+		"scanningSessions.list", "GET", "/api/v1/scanning-sessions", false,
+		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanningSessions.List(ctx, nil).All(ctx)
+		},
+	},
+	{
 		"scanningSessions.setup", "POST", "/api/v1/scanning-sessions/setup", true,
 		`{"orgId":"x","doors":[{"name":"x","admits":{"any":true}}]}`, `{"replayed":false,"mode":"live","sessions":[{"id":"x","ref":"x","name":"x","devices":[{"id":"x","name":"x","pairing":{"code":"x","url":"x","expiresAt":0}}]}],"zones":[{"id":"x","ref":"x","name":"x","created":false}],"events":[{"id":"x","ref":"x","name":"x","created":false}],"staff":[{"id":"x","name":"x","role":"door","pin":"x"}],"checks":[{"code":"NO_EXIT","level":"error","message":"x"}]}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -1306,6 +1446,46 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.ScanningSessions.Setup(ctx, &b, nil)
+		},
+	},
+	{
+		"scanningSessions.retrieve", "GET", "/api/v1/scanning-sessions/id1", false,
+		"", `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanningSessions.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"scanningSessions.update", "PATCH", "/api/v1/scanning-sessions/id1", false,
+		`{}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanningSessionsUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanningSessions.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"scanningSessions.devices.update", "PATCH", "/api/v1/scanning-sessions/id1/devices/id2", false,
+		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanningSessionsDevicesUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanningSessions.Devices.Update(ctx, "id1", "id2", &b)
+		},
+	},
+	{
+		"scanningSessions.overrideHours", "POST", "/api/v1/scanning-sessions/id1/hold", false,
+		`{"action":"close"}`, `{"id":"x","orgId":"x","orgName":"x","mode":"live","name":"x","status":"active","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","createdAt":0,"updatedAt":0,"deviceCount":0,"onlineCount":0,"today":0,"devices":[{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x"}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanningSessionsOverrideHoursBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanningSessions.OverrideHours(ctx, "id1", &b)
 		},
 	},
 	{

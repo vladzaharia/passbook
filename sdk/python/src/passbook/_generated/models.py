@@ -892,10 +892,19 @@ __all__ = [
     "ScanCountsByTypeItem",
     "ScanDeviceCapabilities",
     "ScanEvent",
+    "ScanEventsArchiveResult",
+    "ScanEventsAttachScannersBody",
     "ScanEventsAttachScannersParams",
+    "ScanEventsAttachScannersResult",
+    "ScanEventsCreateBody",
     "ScanEventsCreateParams",
+    "ScanEventsCreateResult",
+    "ScanEventsListResult",
     "ScanEventsMarkOutParams",
+    "ScanEventsRetrieveResult",
+    "ScanEventsUpdateBody",
     "ScanEventsUpdateParams",
+    "ScanEventsUpdateResult",
     "ScanFeedRow",
     "ScanLookupRow",
     "ScanOutcome",
@@ -988,9 +997,31 @@ __all__ = [
     "ScanSummaryOverridesLatestItem",
     "ScanTemplateRef",
     "ScanWorkspace",
+    "ScanZonesArchiveResult",
+    "ScanZonesArchiveResultCheckedAtItem",
+    "ScanZonesArchiveResultPlansItem",
+    "ScanZonesCreateBody",
     "ScanZonesCreateParams",
+    "ScanZonesCreateResult",
+    "ScanZonesCreateResultCheckedAtItem",
+    "ScanZonesCreateResultPlansItem",
+    "ScanZonesListItem",
+    "ScanZonesListItemCheckedAtItem",
+    "ScanZonesListItemPlansItem",
+    "ScanZonesListResult",
+    "ScanZonesListResultItemsItem",
+    "ScanZonesListResultItemsItemCheckedAtItem",
+    "ScanZonesListResultItemsItemPlansItem",
     "ScanZonesMarkOutParams",
+    "ScanZonesResetVisitsResult",
+    "ScanZonesRestoreResult",
+    "ScanZonesRestoreResultCheckedAtItem",
+    "ScanZonesRestoreResultPlansItem",
+    "ScanZonesUpdateBody",
     "ScanZonesUpdateParams",
+    "ScanZonesUpdateResult",
+    "ScanZonesUpdateResultCheckedAtItem",
+    "ScanZonesUpdateResultPlansItem",
     "Scanner",
     "ScannerAccepts1",
     "ScannerAccepts2",
@@ -1004,13 +1035,18 @@ __all__ = [
     "ScannersCreateParamsSettings",
     "ScannersCreateParamsSettingsCheckIn",
     "ScannersCreateParamsSettingsTags",
+    "ScannersRevokeResult",
+    "ScannersSetModeBody",
     "ScannersSetModeParams",
+    "ScannersSetModeResult",
+    "ScannersUpdateBody",
     "ScannersUpdateParams",
     "ScannersUpdateParamsAccepts1",
     "ScannersUpdateParamsAccepts2",
     "ScannersUpdateParamsSettings",
     "ScannersUpdateParamsSettingsCheckIn",
     "ScannersUpdateParamsSettingsTags",
+    "ScannersUpdateResult",
     "ScanningDevice",
     "ScanningDeviceOverrides",
     "ScanningSession",
@@ -1042,12 +1078,18 @@ __all__ = [
     "ScanningSessionsCreateParamsSettingsTags",
     "ScanningSessionsDevicesCreateParams",
     "ScanningSessionsDevicesCreateParamsOverrides",
+    "ScanningSessionsDevicesUpdateBody",
     "ScanningSessionsDevicesUpdateParams",
     "ScanningSessionsDevicesUpdateParamsOverrides",
+    "ScanningSessionsDevicesUpdateResult",
+    "ScanningSessionsListResult",
+    "ScanningSessionsOverrideHoursBody",
     "ScanningSessionsOverrideHoursParams",
     "ScanningSessionsOverrideHoursParams1",
     "ScanningSessionsOverrideHoursParams2",
     "ScanningSessionsOverrideHoursParams3",
+    "ScanningSessionsOverrideHoursResult",
+    "ScanningSessionsRetrieveResult",
     "ScanningSessionsSetupBody",
     "ScanningSessionsSetupParams",
     "ScanningSessionsSetupParamsDoorsItem",
@@ -1068,6 +1110,7 @@ __all__ = [
     "ScanningSessionsSetupParamsPlacesItem2",
     "ScanningSessionsSetupParamsStaffItem",
     "ScanningSessionsSetupResult",
+    "ScanningSessionsUpdateBody",
     "ScanningSessionsUpdateParams",
     "ScanningSessionsUpdateParamsAccepts1",
     "ScanningSessionsUpdateParamsAccepts2",
@@ -1076,6 +1119,7 @@ __all__ = [
     "ScanningSessionsUpdateParamsSettingsCheckIn",
     "ScanningSessionsUpdateParamsSettingsCustomer",
     "ScanningSessionsUpdateParamsSettingsTags",
+    "ScanningSessionsUpdateResult",
     "ScansListResult",
     "ScansListResult1",
     "ScansListResult2",
@@ -6766,6 +6810,10 @@ class ScanEventsCreateParams(_Model):
     hardLimit: bool | None = None
     note: str | None = None
 
+class ScanEventsListResult(_Model):
+    items: _List[ScanEvent]
+    nextCursor: str | None
+
 class ScanEventsMarkOutParams(_Model):
     passId: str
     place: str
@@ -7483,6 +7531,37 @@ class ScanSummaryOverridesLatestItem(_Model):
     approvedBy: str | None
     reason: str | None
 
+class ScanZonesArchiveResult(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesArchiveResultCheckedAtItem]
+    plans: _List[ScanZonesArchiveResultPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesArchiveResultCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesArchiveResultPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
+
 class ScanZonesCreateParams(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str | None = None
     capacity: int | None = None
@@ -7496,9 +7575,141 @@ class ScanZonesCreateParams(_Model):
     timeZone: str | None = None
     sort: int | None = None
 
+class ScanZonesCreateResult(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesCreateResultCheckedAtItem]
+    plans: _List[ScanZonesCreateResultPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesCreateResultCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesCreateResultPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
+
+class ScanZonesListItem(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesListItemCheckedAtItem]
+    plans: _List[ScanZonesListItemPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesListItemCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesListItemPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
+
+class ScanZonesListResult(_Model):
+    items: _List[ScanZonesListResultItemsItem]
+    nextCursor: str | None
+
+class ScanZonesListResultItemsItem(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesListResultItemsItemCheckedAtItem]
+    plans: _List[ScanZonesListResultItemsItemPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesListResultItemsItemCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesListResultItemsItemPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
+
 class ScanZonesMarkOutParams(_Model):
     passId: str
     place: str
+
+class ScanZonesResetVisitsResult(_Model):
+    passId: str
+    visits: _Literal[0]
+
+class ScanZonesRestoreResult(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesRestoreResultCheckedAtItem]
+    plans: _List[ScanZonesRestoreResultPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesRestoreResultCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesRestoreResultPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
 
 class ScanZonesUpdateParams(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str | None = None
@@ -7511,6 +7722,37 @@ class ScanZonesUpdateParams(_Model):
     timeZone: str | None = None
     sort: int | None = None
     archived: bool | None = None
+
+class ScanZonesUpdateResult(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesUpdateResultCheckedAtItem]
+    plans: _List[ScanZonesUpdateResultPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesUpdateResultCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesUpdateResultPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
 
 class Scanner(_Model):
     id: str
@@ -7971,6 +8213,10 @@ class ScanningSessionsDevicesUpdateParamsOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+
+class ScanningSessionsListResult(_Model):
+    items: _List[ScanningSession]
+    nextCursor: str | None
 
 class ScanningSessionsOverrideHoursParams1(_Model):
     action: _Literal["close"] | str
@@ -9693,6 +9939,22 @@ ScanCard = _Dict[str, _Any] | None
 
 ScanDeviceCapabilities = _Dict[str, _Any] | None
 
+ScanEventsArchiveResult = ScanEvent
+
+ScanEventsAttachScannersBody = ScanEventsAttachScannersParams
+
+ScanEventsAttachScannersResult = ScanEvent
+
+ScanEventsCreateBody = ScanEventsCreateParams
+
+ScanEventsCreateResult = ScanEvent
+
+ScanEventsRetrieveResult = ScanEvent
+
+ScanEventsUpdateBody = ScanEventsUpdateParams
+
+ScanEventsUpdateResult = ScanEvent
+
 ScanPrevious = _Dict[str, _Any] | None
 
 ScanSetupAnswer = ScanSetupAnswer1 | ScanSetupAnswer2
@@ -9701,11 +9963,39 @@ ScanTemplateRef = _Dict[str, _Any] | None
 
 ScanWorkspace = _Dict[str, _Any] | None
 
+ScanZonesCreateBody = ScanZonesCreateParams
+
+ScanZonesUpdateBody = ScanZonesUpdateParams
+
+ScannersRevokeResult = Scanner
+
+ScannersSetModeBody = ScannersSetModeParams
+
+ScannersSetModeResult = Scanner
+
+ScannersUpdateBody = ScannersUpdateParams
+
+ScannersUpdateResult = Scanner
+
+ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
+
+ScanningSessionsDevicesUpdateResult = ScanningDevice
+
 ScanningSessionsOverrideHoursParams = ScanningSessionsOverrideHoursParams1 | ScanningSessionsOverrideHoursParams2 | ScanningSessionsOverrideHoursParams3
+
+ScanningSessionsOverrideHoursBody = ScanningSessionsOverrideHoursParams
+
+ScanningSessionsOverrideHoursResult = ScanningSessionDetail
+
+ScanningSessionsRetrieveResult = ScanningSessionDetail
 
 ScanningSessionsSetupBody = ScanningSessionsSetupParams
 
 ScanningSessionsSetupResult = ScanSetupAnswer
+
+ScanningSessionsUpdateBody = ScanningSessionsUpdateParams
+
+ScanningSessionsUpdateResult = ScanningSessionDetail
 
 ScansListResult = ScansListResult1 | ScansListResult2
 

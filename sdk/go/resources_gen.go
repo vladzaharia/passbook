@@ -1648,6 +1648,66 @@ func (r *RollCallsResource) RetrieveOpen(ctx context.Context, query *RollCallsRe
 	return &out, nil
 }
 
+type ScanEventsResource struct {
+	c *core
+}
+
+func newScanEventsResource(c *core) *ScanEventsResource {
+	return &ScanEventsResource{
+		c: c,
+	}
+}
+
+// Archive Archive a scan event (its scanners are detached) `POST /api/v1/scan-events/{id}/archive`
+func (r *ScanEventsResource) Archive(ctx context.Context, id string, opts ...RequestOption) (*ScanEventsArchiveResult, error) {
+	var out ScanEventsArchiveResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-events/" + pathEscape(id) + "/archive"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// AttachScanners Move scanners onto a scan event `POST /api/v1/scan-events/{id}/scanners`
+func (r *ScanEventsResource) AttachScanners(ctx context.Context, id string, body *ScanEventsAttachScannersBody, opts ...RequestOption) (*ScanEventsAttachScannersResult, error) {
+	var out ScanEventsAttachScannersResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-events/" + pathEscape(id) + "/scanners", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Create Create a scan event `POST /api/v1/scan-events`
+func (r *ScanEventsResource) Create(ctx context.Context, body *ScanEventsCreateBody, opts ...RequestOption) (*ScanEventsCreateResult, error) {
+	var out ScanEventsCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-events", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List scan events `GET /api/v1/scan-events`
+func (r *ScanEventsResource) List(ctx context.Context, query *ScanEventsListQuery, opts ...RequestOption) *Pager[ScanEvent] {
+	return newPager[ScanEvent](r.c, call{method: "GET", path: "/api/v1/scan-events", query: queryValues(query)}, "cursor", opts)
+}
+
+// Retrieve Get a scan event `GET /api/v1/scan-events/{id}`
+func (r *ScanEventsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ScanEventsRetrieveResult, error) {
+	var out ScanEventsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/scan-events/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Edit a scan event `PATCH /api/v1/scan-events/{id}`
+func (r *ScanEventsResource) Update(ctx context.Context, id string, body *ScanEventsUpdateBody, opts ...RequestOption) (*ScanEventsUpdateResult, error) {
+	var out ScanEventsUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scan-events/" + pathEscape(id), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type ScanSetupsResource struct {
 	c *core
 }
@@ -1667,6 +1727,66 @@ func (r *ScanSetupsResource) List(ctx context.Context, query *ScanSetupsListQuer
 func (r *ScanSetupsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ScanSetupsRetrieveResult, error) {
 	var out ScanSetupsRetrieveResult
 	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/scan-setups/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type ScanZonesResource struct {
+	c *core
+}
+
+func newScanZonesResource(c *core) *ScanZonesResource {
+	return &ScanZonesResource{
+		c: c,
+	}
+}
+
+// Archive Archive a zone and the zones below it `POST /api/v1/scan-zones/{id}/archive`
+func (r *ScanZonesResource) Archive(ctx context.Context, id string, opts ...RequestOption) (*ScanZonesArchiveResult, error) {
+	var out ScanZonesArchiveResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-zones/" + pathEscape(id) + "/archive"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Create Create a zone `POST /api/v1/scan-zones`
+func (r *ScanZonesResource) Create(ctx context.Context, body *ScanZonesCreateBody, opts ...RequestOption) (*ScanZonesCreateResult, error) {
+	var out ScanZonesCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-zones", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List zones `GET /api/v1/scan-zones`
+func (r *ScanZonesResource) List(ctx context.Context, query *ScanZonesListQuery, opts ...RequestOption) *Pager[ScanZonesListItem] {
+	return newPager[ScanZonesListItem](r.c, call{method: "GET", path: "/api/v1/scan-zones", query: queryValues(query)}, "cursor", opts)
+}
+
+// ResetVisits Reset a pass’s visits `POST /api/v1/scan-zones/visits/{id}/reset`
+func (r *ScanZonesResource) ResetVisits(ctx context.Context, id string, opts ...RequestOption) (*ScanZonesResetVisitsResult, error) {
+	var out ScanZonesResetVisitsResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-zones/visits/" + pathEscape(id) + "/reset"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Restore Restore a zone and the zones below it `POST /api/v1/scan-zones/{id}/restore`
+func (r *ScanZonesResource) Restore(ctx context.Context, id string, opts ...RequestOption) (*ScanZonesRestoreResult, error) {
+	var out ScanZonesRestoreResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-zones/" + pathEscape(id) + "/restore"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Edit a zone `PATCH /api/v1/scan-zones/{id}`
+func (r *ScanZonesResource) Update(ctx context.Context, id string, body *ScanZonesUpdateBody, opts ...RequestOption) (*ScanZonesUpdateResult, error) {
+	var out ScanZonesUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scan-zones/" + pathEscape(id), body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -1721,14 +1841,95 @@ func (r *TerminalResource) Resolve(ctx context.Context, body *TerminalResolveBod
 	return &out, nil
 }
 
-type ScanningSessionsResource struct {
+type ScannersResource struct {
 	c *core
+}
+
+func newScannersResource(c *core) *ScannersResource {
+	return &ScannersResource{
+		c: c,
+	}
+}
+
+// Revoke Remove a scanner from use `POST /api/v1/scanners/{id}/revoke`
+func (r *ScannersResource) Revoke(ctx context.Context, id string, opts ...RequestOption) (*ScannersRevokeResult, error) {
+	var out ScannersRevokeResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners/" + pathEscape(id) + "/revoke"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// SetMode Go live or move to test mode `POST /api/v1/scanners/{id}/mode`
+func (r *ScannersResource) SetMode(ctx context.Context, id string, body *ScannersSetModeBody, opts ...RequestOption) (*ScannersSetModeResult, error) {
+	var out ScannersSetModeResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners/" + pathEscape(id) + "/mode", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Edit a scanner `PATCH /api/v1/scanners/{id}`
+func (r *ScannersResource) Update(ctx context.Context, id string, body *ScannersUpdateBody, opts ...RequestOption) (*ScannersUpdateResult, error) {
+	var out ScannersUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scanners/" + pathEscape(id), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type ScanningSessionsDevicesResource struct {
+	c *core
+}
+
+func newScanningSessionsDevicesResource(c *core) *ScanningSessionsDevicesResource {
+	return &ScanningSessionsDevicesResource{
+		c: c,
+	}
+}
+
+// Update Configure one device `PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}`
+func (r *ScanningSessionsDevicesResource) Update(ctx context.Context, id string, deviceId string, body *ScanningSessionsDevicesUpdateBody, opts ...RequestOption) (*ScanningSessionsDevicesUpdateResult, error) {
+	var out ScanningSessionsDevicesUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scanning-sessions/" + pathEscape(id) + "/devices/" + pathEscape(deviceId), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type ScanningSessionsResource struct {
+	c       *core
+	Devices *ScanningSessionsDevicesResource
 }
 
 func newScanningSessionsResource(c *core) *ScanningSessionsResource {
 	return &ScanningSessionsResource{
-		c: c,
+		c:       c,
+		Devices: newScanningSessionsDevicesResource(c),
 	}
+}
+
+// List Scanning sessions `GET /api/v1/scanning-sessions`
+func (r *ScanningSessionsResource) List(ctx context.Context, query *ScanningSessionsListQuery, opts ...RequestOption) *Pager[ScanningSession] {
+	return newPager[ScanningSession](r.c, call{method: "GET", path: "/api/v1/scanning-sessions", query: queryValues(query)}, "cursor", opts)
+}
+
+// OverrideHours Close now, open now or go back to the session hours `POST /api/v1/scanning-sessions/{id}/hold`
+func (r *ScanningSessionsResource) OverrideHours(ctx context.Context, id string, body *ScanningSessionsOverrideHoursBody, opts ...RequestOption) (*ScanningSessionsOverrideHoursResult, error) {
+	var out ScanningSessionsOverrideHoursResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanning-sessions/" + pathEscape(id) + "/hold", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retrieve Session rules and devices `GET /api/v1/scanning-sessions/{id}`
+func (r *ScanningSessionsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ScanningSessionsRetrieveResult, error) {
+	var out ScanningSessionsRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/scanning-sessions/" + pathEscape(id)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // Setup Set up scanning in one call (Idempotency-Key supported) `POST /api/v1/scanning-sessions/setup`
@@ -1736,6 +1937,15 @@ func (r *ScanningSessionsResource) Setup(ctx context.Context, body *ScanningSess
 	var out ScanningSessionsSetupResult
 	err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanning-sessions/setup", query: queryValues(query), body: body, idempotent: true}, &out, opts)
 	return out, err
+}
+
+// Update Update shared session rules `PATCH /api/v1/scanning-sessions/{id}`
+func (r *ScanningSessionsResource) Update(ctx context.Context, id string, body *ScanningSessionsUpdateBody, opts ...RequestOption) (*ScanningSessionsUpdateResult, error) {
+	var out ScanningSessionsUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scanning-sessions/" + pathEscape(id), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 type ScansResource struct {
@@ -2329,8 +2539,11 @@ type Resources struct {
 	BulkRuns         *BulkRunsResource
 	PassViews        *PassViewsResource
 	RollCalls        *RollCallsResource
+	ScanEvents       *ScanEventsResource
 	ScanSetups       *ScanSetupsResource
+	ScanZones        *ScanZonesResource
 	Terminal         *TerminalResource
+	Scanners         *ScannersResource
 	ScanningSessions *ScanningSessionsResource
 	Scans            *ScansResource
 	Templates        *TemplatesResource
@@ -2361,8 +2574,11 @@ func newResources(c *core) Resources {
 		BulkRuns:         newBulkRunsResource(c),
 		PassViews:        newPassViewsResource(c),
 		RollCalls:        newRollCallsResource(c),
+		ScanEvents:       newScanEventsResource(c),
 		ScanSetups:       newScanSetupsResource(c),
+		ScanZones:        newScanZonesResource(c),
 		Terminal:         newTerminalResource(c),
+		Scanners:         newScannersResource(c),
 		ScanningSessions: newScanningSessionsResource(c),
 		Scans:            newScansResource(c),
 		Templates:        newTemplatesResource(c),

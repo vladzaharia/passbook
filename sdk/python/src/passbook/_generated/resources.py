@@ -1525,6 +1525,65 @@ class RollCallsResource:
         return self._core.request("GET", "/api/v1/roll-calls", query={"sessionId": session_id}, result=m.RollCallsRetrieveOpenResult, **opts)
 
 
+class ScanEventsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def archive(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsArchiveResult:
+        """Archive a scan event (its scanners are detached) `POST /api/v1/scan-events/{id}/archive`"""
+        return self._core.request("POST", f"/api/v1/scan-events/{_p(id)}/archive", result=m.ScanEventsArchiveResult, **opts)
+
+    def attach_scanners(
+        self,
+        id: str,
+        body: m.ScanEventsAttachScannersBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsAttachScannersResult:
+        """Move scanners onto a scan event `POST /api/v1/scan-events/{id}/scanners`"""
+        return self._core.request("POST", f"/api/v1/scan-events/{_p(id)}/scanners", body=body, result=m.ScanEventsAttachScannersResult, **opts)
+
+    def create(
+        self,
+        body: m.ScanEventsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsCreateResult:
+        """Create a scan event `POST /api/v1/scan-events`"""
+        return self._core.request("POST", "/api/v1/scan-events", body=body, result=m.ScanEventsCreateResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        status: _Literal["upcoming", "live", "ended", "archived"] | None = None,
+        q: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanEvent]:
+        """List scan events `GET /api/v1/scan-events`"""
+        return self._core.paginate("GET", "/api/v1/scan-events", query={"cursor": cursor, "limit": limit, "status": status, "q": q}, result=m.ScanEventsListResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsRetrieveResult:
+        """Get a scan event `GET /api/v1/scan-events/{id}`"""
+        return self._core.request("GET", f"/api/v1/scan-events/{_p(id)}", result=m.ScanEventsRetrieveResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanEventsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsUpdateResult:
+        """Edit a scan event `PATCH /api/v1/scan-events/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scan-events/{_p(id)}", body=body, result=m.ScanEventsUpdateResult, **opts)
+
+
 class ScanSetupsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1549,6 +1608,63 @@ class ScanSetupsResource:
     ) -> m.ScanSetupsRetrieveResult:
         """Scanner setup and view settings `GET /api/v1/scan-setups/{id}`"""
         return self._core.request("GET", f"/api/v1/scan-setups/{_p(id)}", result=m.ScanSetupsRetrieveResult, **opts)
+
+
+class ScanZonesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def archive(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesArchiveResult:
+        """Archive a zone and the zones below it `POST /api/v1/scan-zones/{id}/archive`"""
+        return self._core.request("POST", f"/api/v1/scan-zones/{_p(id)}/archive", result=m.ScanZonesArchiveResult, **opts)
+
+    def create(
+        self,
+        body: m.ScanZonesCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesCreateResult:
+        """Create a zone `POST /api/v1/scan-zones`"""
+        return self._core.request("POST", "/api/v1/scan-zones", body=body, result=m.ScanZonesCreateResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        archived: _Literal["true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanZonesListItem]:
+        """List zones `GET /api/v1/scan-zones`"""
+        return self._core.paginate("GET", "/api/v1/scan-zones", query={"cursor": cursor, "limit": limit, "archived": archived}, result=m.ScanZonesListResult, cursor_param="cursor", **opts)
+
+    def reset_visits(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesResetVisitsResult:
+        """Reset a pass’s visits `POST /api/v1/scan-zones/visits/{id}/reset`"""
+        return self._core.request("POST", f"/api/v1/scan-zones/visits/{_p(id)}/reset", result=m.ScanZonesResetVisitsResult, **opts)
+
+    def restore(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesRestoreResult:
+        """Restore a zone and the zones below it `POST /api/v1/scan-zones/{id}/restore`"""
+        return self._core.request("POST", f"/api/v1/scan-zones/{_p(id)}/restore", result=m.ScanZonesRestoreResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanZonesUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesUpdateResult:
+        """Edit a zone `PATCH /api/v1/scan-zones/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scan-zones/{_p(id)}", body=body, result=m.ScanZonesUpdateResult, **opts)
 
 
 class TerminalScansResource:
@@ -1587,9 +1703,83 @@ class TerminalResource:
         return self._core.request("POST", "/api/v1/scan/resolve", body=body, result=m.TerminalResolveResult, **opts)
 
 
+class ScannersResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def revoke(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersRevokeResult:
+        """Remove a scanner from use `POST /api/v1/scanners/{id}/revoke`"""
+        return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/revoke", result=m.ScannersRevokeResult, **opts)
+
+    def set_mode(
+        self,
+        id: str,
+        body: m.ScannersSetModeBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersSetModeResult:
+        """Go live or move to test mode `POST /api/v1/scanners/{id}/mode`"""
+        return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/mode", body=body, result=m.ScannersSetModeResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScannersUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersUpdateResult:
+        """Edit a scanner `PATCH /api/v1/scanners/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scanners/{_p(id)}", body=body, result=m.ScannersUpdateResult, **opts)
+
+
+class ScanningSessionsDevicesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def update(
+        self,
+        id: str,
+        device_id: str,
+        body: m.ScanningSessionsDevicesUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsDevicesUpdateResult:
+        """Configure one device `PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}`"""
+        return self._core.request("PATCH", f"/api/v1/scanning-sessions/{_p(id)}/devices/{_p(device_id)}", body=body, result=m.ScanningSessionsDevicesUpdateResult, **opts)
+
+
 class ScanningSessionsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.devices = ScanningSessionsDevicesResource(core)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanningSession]:
+        """Scanning sessions `GET /api/v1/scanning-sessions`"""
+        return self._core.paginate("GET", "/api/v1/scanning-sessions", query={"cursor": cursor, "limit": limit}, result=m.ScanningSessionsListResult, cursor_param="cursor", **opts)
+
+    def override_hours(
+        self,
+        id: str,
+        body: m.ScanningSessionsOverrideHoursBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsOverrideHoursResult:
+        """Close now, open now or go back to the session hours `POST /api/v1/scanning-sessions/{id}/hold`"""
+        return self._core.request("POST", f"/api/v1/scanning-sessions/{_p(id)}/hold", body=body, result=m.ScanningSessionsOverrideHoursResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsRetrieveResult:
+        """Session rules and devices `GET /api/v1/scanning-sessions/{id}`"""
+        return self._core.request("GET", f"/api/v1/scanning-sessions/{_p(id)}", result=m.ScanningSessionsRetrieveResult, **opts)
 
     def setup(
         self,
@@ -1600,6 +1790,15 @@ class ScanningSessionsResource:
     ) -> m.ScanningSessionsSetupResult:
         """Set up scanning in one call (Idempotency-Key supported) `POST /api/v1/scanning-sessions/setup`"""
         return self._core.request("POST", "/api/v1/scanning-sessions/setup", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.ScanningSessionsSetupResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanningSessionsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsUpdateResult:
+        """Update shared session rules `PATCH /api/v1/scanning-sessions/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scanning-sessions/{_p(id)}", body=body, result=m.ScanningSessionsUpdateResult, **opts)
 
 
 class ScansResource:
@@ -2226,8 +2425,11 @@ class Resources:
         self.bulk_runs = BulkRunsResource(core)
         self.pass_views = PassViewsResource(core)
         self.roll_calls = RollCallsResource(core)
+        self.scan_events = ScanEventsResource(core)
         self.scan_setups = ScanSetupsResource(core)
+        self.scan_zones = ScanZonesResource(core)
         self.terminal = TerminalResource(core)
+        self.scanners = ScannersResource(core)
         self.scanning_sessions = ScanningSessionsResource(core)
         self.scans = ScansResource(core)
         self.templates = TemplatesResource(core)

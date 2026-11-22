@@ -231,7 +231,7 @@ describe('assign and archive', () => {
     expect(await auditActions()).toContain('scan_event.assign');
   });
 
-  it("another org's scanner is a 404, another mode's a 422 SCAN_MODE_MISMATCH", async () => {
+  it("another org's scanner is a 404, another mode's a 404 too (no existence oracle)", async () => {
     const e = (await create()).body;
     const other = await makeOrg(f);
     const theirs = await makeScanner(f, { orgId: other.id });
@@ -242,8 +242,8 @@ describe('assign and archive', () => {
     );
     const testScanner = await makeScanner(f, { orgId, mode: 'test' });
     const res = await call('POST', `/${e.id}/scanners`, { scannerIds: [testScanner.id] });
-    expect(res.status).toBe(422);
-    expect(await codeOf(res)).toBe('SCAN_MODE_MISMATCH');
+    expect(res.status).toBe(404);
+    expect(await codeOf(res)).toBe('SCANNER_NOT_FOUND');
     const screen = await makeScanner(f, { orgId, kind: 'display', deviceRole: 'monitor' });
     expect((await call('POST', `/${e.id}/scanners`, { scannerIds: [screen.id] })).status).toBe(422);
   });

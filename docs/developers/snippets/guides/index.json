@@ -308,5 +308,30 @@
     "files": {
       "ts": "release-blueprint-in-test.ts"
     }
+  },
+  {
+    "id": "scan-setup-preview",
+    "title": "Preview a scanning setup",
+    "guide": "scan-setup",
+    "ops": [
+      "scanners.postScanningSessionsSetup"
+    ],
+    "files": {
+      "ts": "scan-setup-preview.ts",
+      "curl": "scan-setup-preview.sh"
+    },
+    "expect": "reached"
+  },
+  {
+    "id": "scan-setup-apply",
+    "title": "Apply a scanning setup",
+    "guide": "scan-setup",
+    "ops": [
+      "scanners.postScanningSessionsSetup"
+    ],
+    "files": {
+      "ts": "scan-setup-apply.ts"
+    },
+    "expect": "reached"
   }
 ]

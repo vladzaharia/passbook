@@ -81,7 +81,8 @@ export const ScannerSchema = z.object({
   pairedLabel: z.string().nullable(),
   lastSeenAt: TimestampSchema.nullable(),
   expiresAt: TimestampSchema.nullable(),
-  staff: z.object({ id: IdSchema, name: z.string() }).nullable(),
+  /** `name` is null for an API key: keys get ids, not staff names. */
+  staff: z.object({ id: IdSchema, name: z.string().nullable() }).nullable(),
   today: z.number().int(),
   createdAt: TimestampSchema,
 });
