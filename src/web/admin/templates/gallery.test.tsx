@@ -58,6 +58,20 @@ describe('template tile', () => {
     expect(posted[0]).toMatchObject({ version: DRAFT });
   });
 
+  it('says Needs review, not Draft, while a review of the draft is open', async () => {
+    const release = {
+      live: null,
+      test: null,
+      draft: { version: DRAFT, at: 2 },
+      review: { state: 'open', version: DRAFT, by: 'Sam', at: 3 },
+      alone: false,
+      next: 'wait',
+    };
+    await open({ activeVersion: null, release }, [version(2)]);
+    expect(await screen.findByText('Needs review')).toBeInTheDocument();
+    expect(screen.queryByText('Draft')).toBeNull();
+  });
+
   it('shows no badge on an active template', async () => {
     await open({}, [{ ...version(1, 'a1b2c3d4e5f6a7b8'), active: true }]);
     expect(screen.queryByText('Draft')).toBeNull();

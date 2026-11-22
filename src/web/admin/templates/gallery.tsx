@@ -4,6 +4,7 @@ import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { cn } from '../../lib/cn.ts';
 import { useArrivalMode } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
+import { useTemplateReviews } from '../../lib/template-reviews.ts';
 import { Badge, EntityAvatar, Skeleton } from '../../ui/index.ts';
 import { OrgMark } from '../../ui/layout/scope-switcher.tsx';
 import { PassPreview } from '../passes/pass-preview.tsx';
@@ -34,6 +35,7 @@ export function useTemplateStill(template: TemplateSummaryDto) {
   const preview = useTemplatePreview(live || draft ? template.id : '', orgId, draft?.version);
   return {
     draft: Boolean(draft),
+    reviewOpen: unreleased && detail.data?.release?.review.state === 'open',
     preview: live || draft ? preview.data : undefined,
     pending: (unreleased && detail.isPending) || ((live || Boolean(draft)) && preview.isPending),
   };
@@ -85,9 +87,16 @@ export function TemplateOrgMark({ template }: { template: TemplateSummaryDto }) 
   );
 }
 
-/** The badge a tile carries: Draft before a first release, else Archived or Built-in. */
+/** The badge a tile carries: Needs review while a review is open, Draft before a first release, else Archived or Built-in. */
 function TileBadge({ template }: { template: TemplateSummaryDto }) {
-  const { draft } = useTemplateStill(template);
+  const { draft, reviewOpen } = useTemplateStill(template);
+  const { orgId, membership } = useOrgScope();
+  const inbox = useTemplateReviews(
+    orgId,
+    Boolean(membership?.capabilities.includes('templates:review')),
+  );
+  if (reviewOpen || inbox.data?.items.some((r) => r.templateId === template.id))
+    return <Badge tone="accent">Needs review</Badge>;
   if (draft) return <Badge>Draft</Badge>;
   // Built-in names a template that ships with PassBook; an uploaded one needs no badge.
   if (template.status === 'archived' || template.origin === 'baked')
