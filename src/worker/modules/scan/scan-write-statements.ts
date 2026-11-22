@@ -24,6 +24,8 @@ export interface Finalize {
   eventId?: string;
   /** A value action's amount and the input's value before and after, JSON text. */
   value?: { amount: number | null; before: string; after: string };
+  /** A tap-out of a voided, ended or suspended pass (OC4). */
+  passState?: 'voided' | 'expired' | 'suspended';
   /** A tap-out at a tracked zone of an Access card: never a visit (`visit = 0`). */
   noVisit?: boolean;
   /** Why the stay this scan ended was not ended by a tap-out (SA §20.7). */
@@ -51,6 +53,7 @@ export function finalizeScan(g: Grant, f: Finalize, when: GrantCond[] = []): Gra
       ...(f.eventId ? { event_id: f.eventId } : {}),
       ...(f.outCause ? { out_cause: f.outCause } : {}),
       ...(f.noVisit ? { visit: 0 } : {}),
+      ...(f.passState ? { pass_state: f.passState } : {}),
       ...(f.value
         ? { amount: f.value.amount, before_value: f.value.before, after_value: f.value.after }
         : {}),

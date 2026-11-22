@@ -243,6 +243,7 @@ describe('scan records', () => {
     unverified: false,
     late: false,
     actor: { type: 'scanner', id },
+    passState: null,
     undoneAt: null,
     undoneBy: null,
     undoes: key,

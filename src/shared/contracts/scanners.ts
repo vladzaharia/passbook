@@ -20,7 +20,6 @@ import {
 
 const NoteSchema = PlainLineSchema(140);
 const JsonValue = z.any();
-
 export const ScannerKindSchema = z.enum(['device', 'terminal', 'display']);
 /** What the device does now: scan, face a customer, or watch scans. A display never scans. */
 export const DeviceRoleSchema = z.enum(['scan', 'customer', 'monitor']);
@@ -226,6 +225,7 @@ export const ScanRecordSchema = z.object({
   passVersion: z.number().int().nullable(),
   override: z.boolean(),
   offline: z.boolean(),
+  passState: z.enum(['voided', 'expired', 'suspended']).nullable().default(null),
   unverified: z.boolean().default(false),
   late: z.boolean().default(false), // A back-dated offline read: it counts at the time it synced.
   actor: z.object({ type: z.enum(['scanner', 'user']), id: z.string() }),
