@@ -16,6 +16,14 @@ export const ORG_FIELDS: readonly SettingField[] = [
     schema: O['org.timeZone'],
   },
   {
+    key: 'org.website',
+    group: 'General',
+    label: 'Website',
+    kind: 'text',
+    optional: true,
+    schema: O['org.website'],
+  },
+  {
     key: 'branding.accent',
     label: 'Accent color',
     kind: 'color',

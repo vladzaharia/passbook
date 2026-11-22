@@ -13884,6 +13884,9 @@
           "overridable": {
             "type": "boolean"
           },
+          "exitAllowed": {
+            "type": "boolean"
+          },
           "approvals": {
             "type": "boolean"
           },
@@ -21902,6 +21905,19 @@
           },
           "offline": {
             "type": "boolean"
+          },
+          "passState": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "voided",
+              "expired",
+              "suspended",
+              null
+            ],
+            "default": null
           },
           "unverified": {
             "type": "boolean",

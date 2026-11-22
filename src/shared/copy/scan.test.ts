@@ -87,6 +87,7 @@ describe('SCAN_COPY', () => {
     expect(SCAN_COPY.actions).toMatchObject({
       tapIn: 'Tap in',
       tapOut: 'Tap out',
+      checkOut: 'Check out',
       markAsOut: 'Mark as out',
       letIn: 'Let in',
       signInToAct: 'Sign in to act',

@@ -11,6 +11,7 @@ import { FIXTURE_NOW, fixtureOutcome } from './machine/fixture-data.test-support
 import { fixtureDisplay } from './machine/fixtures.test-support.ts';
 import { moodOf, presentOutcome } from './machine/present.ts';
 import type { ScanOutcome } from './machine/types.ts';
+import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { ResultCard } from './result/result-card.tsx';
 import {
   fakeRollCall,
@@ -25,6 +26,8 @@ import { PlaceChip } from './ui/chips.tsx';
 import { DirectionChip } from './ui/direction-chip.tsx';
 import { DirectionSheet } from './ui/direction-sheet.tsx';
 import { DoorThumbRow } from './ui/dock.tsx';
+import { DoorDock } from './ui/door-dock.tsx';
+import { useStaticStore } from './visual-tags.tsx';
 
 const display = fixtureDisplay('ok');
 const verdicts: Record<string, ScanOutcome> = {
@@ -50,6 +53,12 @@ const verdicts: Record<string, ScanOutcome> = {
     display: fixtureDisplay('refused'),
     at: FIXTURE_NOW,
     admit: { type: 'Day pass', rule: null, timeZone: 'UTC' },
+  }),
+  'refused-exit': fixtureOutcome('refused', 'voided', {
+    at: FIXTURE_NOW,
+    exitAllowed: true,
+    card: null,
+    display: null,
   }),
   resolved: { ...grant({ display }), resolvedBy: 'Sam K.' } as ResolvedOutcome,
 };
@@ -172,8 +181,12 @@ function InsideScenario({ scenario }: { scenario: AccessScenario }) {
   );
 }
 
+const noop = () => undefined;
+const runtime = { camera: { hasTorch: () => false, toggleTorch: async () => false } } as never;
+
 export function AccessVisual({ scenario }: { scenario: AccessScenario }) {
   const outcome = verdicts[scenario];
+  const store = useStaticStore();
   // A sheet over the loop: the loop names the page, so the gallery names it here.
   if (scenario === 'roll-call-start' || scenario.startsWith('inside'))
     return (
@@ -211,10 +224,16 @@ export function AccessVisual({ scenario }: { scenario: AccessScenario }) {
         buddy={<Buddy scene="scan" size="xl-scan" mood={faceOf(outcome?.kind ?? 'ok')} immediate />}
         strip={{ kind: 'ok', title: 'Maya Okafor', meta: 'In · Gym · 6:41 PM', undoable: true }}
         dockRow={
-          <DoorThumbRow
-            onLookUp={() => undefined}
-            inside={{ count: 42, onOpen: () => undefined }}
-          />
+          scenario === 'refused-exit' ? (
+            <ScanStoreContext.Provider value={store}>
+              <DoorDock outcome={outcome ?? null} runtime={runtime} open={noop} onError={noop} />
+            </ScanStoreContext.Provider>
+          ) : (
+            <DoorThumbRow
+              onLookUp={() => undefined}
+              inside={{ count: 42, onOpen: () => undefined }}
+            />
+          )
         }
         tint={outcome ? presentOutcome(outcome, 'door', { holdResults: false }).tint : 'none'}
         card={outcome ? <ResultCard outcome={outcome} phase="up" /> : null}
