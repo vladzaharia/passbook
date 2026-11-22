@@ -286,8 +286,14 @@ describe('per-type class and object upsert', () => {
       classBody as never,
     );
     await upsertGoogleObject(ctx, 'event', objectScope, objectBody as never);
+    // A notifying message never rides in a PATCH body (google-messages.md decision 2): only addMessage notifies.
+    await expect(
+      patchGoogleObjectBody(ctx, 'event', objectScope, {
+        messages: [{ id: 'm1', header: 'Hi', body: 'Doors at 7', messageType: 'TEXT_AND_NOTIFY' }],
+      }),
+    ).rejects.toMatchObject({ code: 'invalid_input' });
     await patchGoogleObjectBody(ctx, 'event', objectScope, {
-      messages: [{ id: 'm1', header: 'Hi', body: 'Doors at 7', messageType: 'TEXT_AND_NOTIFY' }],
+      messages: [{ id: 'm1', header: 'Hi', body: 'Doors at 7', messageType: 'TEXT' }],
     });
     const { objectId } = await googleObjectIds(ISSUER, secret, objectScope);
     expect(mock.google.eventTicketObject.get(objectId)).toMatchObject({
