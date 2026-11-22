@@ -3,6 +3,7 @@ import { countD1, makeUser } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import type { ManualClock } from '../../platform/clock.ts';
+import { run } from '../../platform/db.ts';
 import { insertSession } from '../auth/repo-sessions.ts';
 import { createSessionStore, hashSessionCookie } from '../auth/sessions.ts';
 import { putMemberPhoto } from '../passes/member-photo.ts';
@@ -84,6 +85,8 @@ export async function principal(kind: ActorExpiry | 'valid') {
     return { post, advance: 2_000, headers: null, scannerId: null };
   }
   const staff = kind.startsWith('staff') ? await kit.staff('door') : null;
+  // A sign-in never predates the PIN it used: the PIN was set before the binding began (a later PIN ends it).
+  if (staff) await run(kit.env.DB, 'UPDATE scan_staff SET pin_set_at = 0 WHERE id = ?', [staff.id]);
   const scanner = await kit.scanner({
     templateIds: [templateId],
     ...(kind === 'scanner absolute' ? { expiresAt: now + 1_000 } : {}),

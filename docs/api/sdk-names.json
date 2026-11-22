@@ -2308,5 +2308,43 @@
   "webhooks.postWebhookEndpointsCapture": {
     "resource": "webhookEndpoints",
     "method": "ensureCapture"
+  },
+  "pass-setup.getOrgsByOrgIdPassSetup": {
+    "resource": "orgs",
+    "method": "retrievePassSetup"
+  },
+  "pass-setup.patchOrgsByOrgIdPassSetup": {
+    "resource": "orgs",
+    "method": "updatePassSetup"
+  },
+  "pass-setup.postOrgsByOrgIdBrandAssets": {
+    "resource": "orgs",
+    "method": "stageBrandAsset"
+  },
+  "public.getBByTokenByPassId": {
+    "resource": "public.bundles",
+    "method": "retrievePass",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "scan-staff.postScanStaffByIdUnlockPin": {
+    "resource": "scanStaff",
+    "method": "unlockPin"
+  },
+  "scan-staff.postScanStaffResetUntagged": {
+    "resource": "scanStaff",
+    "method": "resetUntagged"
+  },
+  "scan.postScanStaffPin": {
+    "resource": "terminal.staff",
+    "method": "setPin",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "developer.getHome": {
+    "resource": "developer.home",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal workbench: a signed-in person in a browser, not an integration."
   }
 }

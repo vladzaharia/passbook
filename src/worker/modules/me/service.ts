@@ -94,6 +94,7 @@ async function toPass(
   });
   const base = plainToken === null ? null : `${baseUrl(ctx.env)}/p/${plainToken}`;
   const passJson = parsePassJson(ctx, row);
+  const readOnly = row.read_only === 1;
   const { effective: channels, holderPrint } = known ?? (await holderChannels(ctx, gateKey(row)));
   const presentationEligible =
     row.org_status === 'active' &&
@@ -142,7 +143,7 @@ async function toPass(
     removalMessage: row.removal_message,
     lastRefreshedAt: row.last_refreshed_at,
     refreshRequestedAt: row.refresh_requested_at,
-    downloadUrl: base === null || !channels.apple.on ? null : `${base}/pass.pkpass`,
+    downloadUrl: base === null || readOnly || !channels.apple.on ? null : `${base}/pass.pkpass`,
     pageUrl: base,
     presentationEligible,
     channels,
@@ -154,6 +155,7 @@ async function toPass(
     assetNames,
     tags,
     inWallet: row.registered === 1,
+    readOnly,
   };
 }
 
@@ -201,8 +203,13 @@ export async function listMyPasses(
   };
 }
 
-async function ownedRow(ctx: ServiceContext, userId: string, passId: string) {
-  const row = await repo.getMyPass(ctx.env.DB, userId, passId);
+async function ownedRow(
+  ctx: ServiceContext,
+  userId: string,
+  passId: string,
+  read = repo.getMyPass,
+) {
+  const row = await read(ctx.env.DB, userId, passId);
   if (!row) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   return row;
 }
@@ -211,14 +218,14 @@ const DETAIL_READS = 3;
 
 /** A pass that changes while it is built is read again; only one gone from the holder is a 404. */
 export async function getMyPass(ctx: ServiceContext, userId: string, passId: string) {
-  let row = await ownedRow(ctx, userId, passId);
+  let row = await ownedRow(ctx, userId, passId, repo.getMyPassListed);
   for (let attempt = 1; ; attempt++) {
     const tags = await tagsByPass(ctx.env.DB, userId, [row], ctx.clock.now());
     const [pass, support] = await Promise.all([
       toPass(ctx, row, tags.get(row.id) ?? []),
       supportContacts(ctx, row.org_id),
     ]);
-    const current = await repo.getMyPass(ctx.env.DB, userId, passId);
+    const current = await repo.getMyPassListed(ctx.env.DB, userId, passId);
     if (!current) throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
     if (sameSnapshot(row, current)) return { ...pass, support };
     if (attempt >= DETAIL_READS) {

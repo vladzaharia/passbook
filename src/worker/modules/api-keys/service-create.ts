@@ -13,6 +13,7 @@ import { attenuate } from './attenuate.ts';
 import { countOpenChildren, getKey, keyResources } from './repo.ts';
 import { createKey } from './repo-create.ts';
 import type { ApiKeyRow } from './repo-row.ts';
+import { assertSandboxCeiling } from './sandbox-ceiling.ts';
 import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
 
 /** A personal or platform key lives at most 90 days; a day of slack covers a client clock that runs ahead. */
@@ -40,6 +41,15 @@ export function assertScanningAdminKey(
     throw invalid(
       'The scanning:admin scope is for live keys of one organization.',
       'API_KEY_SCANNING_ADMIN_LIVE_ORG',
+    );
+}
+
+/** `org:write` and `wallet:write` change one organization's setup: a platform key never holds them. */
+export function assertOrgBoundScopes(scopes: readonly string[], kind: ApiKeyKind): void {
+  if (kind === 'platform' && scopes.some((s) => s === 'org:write' || s === 'wallet:write'))
+    throw invalid(
+      'org:write and wallet:write are for keys of one organization.',
+      'API_KEY_ORG_SCOPE_ORG_ONLY',
     );
 }
 
@@ -205,8 +215,11 @@ export async function createApiKey(
   if (orgId && !(await orgIsActive(ctx.env.DB, orgId))) {
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   }
+  // A sandbox holds the sandbox ceiling, whoever mints (a role's bundle counts too).
+  await assertSandboxCeiling(ctx.env.DB, orgId, effectiveScopes(input.scopes, input.roles));
   const mode = authority.kind === 'platform' ? input.mode : authority.mode;
   assertScanningAdminKey(effectiveScopes(input.scopes, input.roles), kind, mode);
+  assertOrgBoundScopes(effectiveScopes(input.scopes, input.roles), kind);
   const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);
   const row: ApiKeyRow = {
     id: ctx.ids.id(),

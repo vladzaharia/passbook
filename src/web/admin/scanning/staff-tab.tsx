@@ -1,12 +1,11 @@
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { Ban, CircleCheck, IdCard, Pencil, Plus, RotateCw } from 'lucide-react';
+import { Ban, CircleCheck, IdCard, LockOpen, Pencil, Plus, RotateCw } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { z } from 'zod';
 import { ScanStaffSchema } from '@/shared/contracts/scanners.ts';
 import { api } from '@/web/lib/api.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
 import { isApiError } from '@/web/lib/errors.ts';
-import { formatCount } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
@@ -28,6 +27,12 @@ import {
   StaffResetDialog,
   StaffStatusDialog,
 } from './staff-dialogs.tsx';
+import {
+  type PinToolDialog,
+  StaffPinCell,
+  StaffPinToolDialog,
+  StaffTodayCell,
+} from './staff-pin-cells.tsx';
 import { StaffPinOnlyNotice } from './staff-pin-only-notice.tsx';
 
 const StaffListSchema = z.object({
@@ -44,7 +49,8 @@ type StaffDialog =
   | { type: 'edit'; staff: ScanStaff }
   | { type: 'status'; staff: ScanStaff }
   | { type: 'reset'; staff: ScanStaff }
-  | { type: 'pin'; name: string; pin: string };
+  | { type: 'pin'; name: string; pin: string }
+  | PinToolDialog;
 
 export function StaffTab() {
   const { orgId, membership } = useOrgScope();
@@ -118,6 +124,15 @@ function OrganizationStaff({
               icon: RotateCw,
               onSelect: () => setDialog({ type: 'reset', staff: person }),
             },
+            ...(person.pinLockedToday
+              ? [
+                  {
+                    label: 'Unlock PIN',
+                    icon: LockOpen,
+                    onSelect: () => setDialog({ type: 'unlock', staff: person }),
+                  },
+                ]
+              : []),
             {
               label: disabled ? 'Enable' : 'Disable',
               icon: disabled ? CircleCheck : Ban,
@@ -160,29 +175,13 @@ function OrganizationStaff({
       id: 'pin',
       header: 'PIN',
       meta: { nowrap: true },
-      cell: ({ row }) =>
-        row.original.locked ? (
-          <StatusPill status="pin_locked" tone="warning">
-            Locked on a scanner
-          </StatusPill>
-        ) : (
-          <span className="text-fg-muted">Set</span>
-        ),
+      cell: ({ row }) => <StaffPinCell person={row.original} />,
     },
     {
       id: 'today',
       header: 'Successful today',
       meta: { numeric: true },
-      cell: ({ row }) => (
-        <span className="tabular-nums">
-          <span aria-hidden>{formatCount(row.original.today)}</span>
-          <span className="sr-only">
-            {formatCount(row.original.today)} successful, not-undone{' '}
-            {row.original.today === 1 ? 'scan' : 'scans'} since each scanner&apos;s local midnight
-            for {row.original.name}; removed scanners use UTC
-          </span>
-        </span>
-      ),
+      cell: ({ row }) => <StaffTodayCell person={row.original} />,
     },
     {
       id: 'lastScan',
@@ -216,12 +215,18 @@ function OrganizationStaff({
       <div className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-border bg-surface-raised p-4">
         <p className="text-sm text-fg-muted">
           Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans since each
-          scanner's local midnight, not undone.
+          scanner's local midnight, not undone. A device's day lock on named PINs clears when it is
+          re-paired.
         </p>
         {canManage && !staff.isPending && !staff.isError && (rows.length > 0 || q) ? (
-          <Button iconStart={<Plus aria-hidden />} onClick={() => setDialog({ type: 'create' })}>
-            Add staff
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => setDialog({ type: 'untagged' })}>
+              Reset untagged PINs
+            </Button>
+            <Button iconStart={<Plus aria-hidden />} onClick={() => setDialog({ type: 'create' })}>
+              Add staff
+            </Button>
+          </div>
         ) : null}
       </div>
       {staff.isError ? (
@@ -307,6 +312,14 @@ function OrganizationStaff({
             setDialog({ type: 'pin', name, pin });
             refresh();
           }}
+        />
+      ) : null}
+      {canManage && (dialog?.type === 'unlock' || dialog?.type === 'untagged') ? (
+        <StaffPinToolDialog
+          orgId={orgId}
+          dialog={dialog}
+          onClose={() => setDialog(undefined)}
+          onDone={refresh}
         />
       ) : null}
       {canManage && dialog?.type === 'pin' ? (

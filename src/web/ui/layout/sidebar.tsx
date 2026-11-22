@@ -1,11 +1,16 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import { Fragment } from 'react';
+import { Fragment, lazy, Suspense } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { adminNavGroups, isActivePath } from '../../lib/nav.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
 import { readTabScope, useRememberedScope } from '../../lib/scope-store.ts';
 import { useSession } from '../../lib/session.ts';
+import { useTemplateReviews } from '../../lib/template-reviews.ts';
 import { ActiveIndicator } from '../active-indicator.tsx';
+
+const BrandCount = lazy(() =>
+  import('../../admin/brand/sidebar-count.tsx').then((m) => ({ default: m.BrandCount })),
+);
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
@@ -19,6 +24,11 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     ? scope.memberships.find((m) => shown?.kind === 'org' && m.orgId === shown.orgId)
     : undefined;
   const groups = adminNavGroups(shown, isAdmin, membership);
+  const reviews = useTemplateReviews(
+    shown?.kind === 'org' ? shown.orgId : undefined,
+    Boolean(membership?.capabilities.includes('templates:review')),
+  );
+  const pending = reviews.data?.items.length ?? 0;
   return (
     <nav aria-label="Admin" className="relative flex flex-col gap-0.5 p-2">
       <ActiveIndicator />
@@ -44,6 +54,20 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
               >
                 <item.icon aria-hidden className={cn('size-4', active && 'text-accent-fg')} />
                 {item.label}
+                {item.section === '/templates' && pending > 0 ? (
+                  <span
+                    role="status"
+                    aria-label={`${pending} to review`}
+                    className="ml-auto grid min-w-5 place-items-center rounded-full bg-accent px-1.5 text-xs font-medium text-accent-on tabular-nums"
+                  >
+                    {pending}
+                  </span>
+                ) : null}
+                {item.section === '/brand' && shown?.kind === 'org' ? (
+                  <Suspense fallback={null}>
+                    <BrandCount orgId={shown.orgId} />
+                  </Suspense>
+                ) : null}
               </Link>
             );
           })}

@@ -82,7 +82,7 @@ describe('staff sign-in with a PIN alone', () => {
     await problem(await pinOnly(scanner.headers, foreign.pin), 400, 'PIN_INVALID', foreign.pin);
   });
 
-  it('answers a shared PIN exactly as a wrong one, audits both people, and a name still signs in', async () => {
+  it('answers a shared PIN exactly as a wrong one, audits and flags both people, and a name still signs in with a new PIN asked for', async () => {
     const { kit, problem, binding, session, signIn } = fixture;
     const a = await makeScanStaff(kit.fx, { orgId: kit.org.id, role: 'desk', pin: '112358' });
     const b = await makeScanStaff(kit.fx, { orgId: kit.org.id, role: 'door', pin: '112358' });
@@ -96,7 +96,15 @@ describe('staff sign-in with a PIN alone', () => {
     expect((await audits('scan_staff.pin_shared')).map((r) => r.target_id).sort()).toEqual(
       [a.id, b.id].sort(),
     );
-    expect((await session(await signIn(first.headers, b), b.pin)).staff?.id).toBe(b.id);
+    // Both are flagged. A name and the shared PIN still sign each in, and the session asks for a new PIN.
+    expect((await session(await signIn(first.headers, b), b.pin)).staff).toMatchObject({
+      id: b.id,
+      pinResetRequired: true,
+    });
+    expect((await session(await signIn(first.headers, a), a.pin)).staff).toMatchObject({
+      id: a.id,
+      pinResetRequired: true,
+    });
   });
 
   it('never signs a Manager in by PIN alone: a miss, audited; the name still works', async () => {

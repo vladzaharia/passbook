@@ -10,8 +10,11 @@ import type { ScanApi } from '../api/scan-api.ts';
 import { toFail } from '../api/to-fail.ts';
 import type { ScanState } from '../machine/types.ts';
 import { keepSession, keptSession } from '../offline/shell.ts';
+import { syncBeforeOnline } from '../offline/sync-gate.ts';
 import { takePairCode, watchPairLink } from './pair-link.ts';
 
+/** A sync holds session polls this long at most. */
+const SYNC_HOLD_MS = 30_000;
 const REFETCH_MS = 10_000;
 const KEY = ['scan', 'session'] as const;
 
@@ -65,9 +68,35 @@ export function useScanSession(
   // Read before the first request: the fragment is gone from the address bar by then.
   const [pairCode, setPairCode] = useState(() => takePairCode());
   useEffect(() => watchPairLink(setPairCode), []);
+  // The server dates a queued read no earlier than the last online contact, and every session poll is one.
+  // While a sync is in flight (30 s at most) polls wait, and a reconnect refetch waits for the sync that
+  // reconnecting starts; after that, or after a failed sync, polling goes on: a stuck queue must never
+  // hide an unpaired device, an ended session or a flagged person.
+  const queuedReads = (machine?.queue.pending ?? 0) > 0;
+  const syncing = machine?.offline?.syncing === true;
+  const [syncExpired, setSyncExpired] = useState(false);
+  useEffect(() => {
+    setSyncExpired(false);
+    if (!syncing) return;
+    const timer = setTimeout(() => setSyncExpired(true), SYNC_HOLD_MS);
+    return () => clearTimeout(timer);
+  }, [syncing]);
+  const syncFailed = useRef(false);
+  const wasSyncing = useRef(false);
+  useEffect(() => {
+    if (syncing) wasSyncing.current = true;
+    else if (wasSyncing.current) {
+      wasSyncing.current = false;
+      syncFailed.current = queuedReads;
+    }
+    if (!queuedReads) syncFailed.current = false;
+  }, [syncing, queuedReads]);
+  const held = syncing && !syncExpired;
   const query = useQuery({
     queryKey: KEY,
     queryFn: async () => {
+      // Reads queued offline go up first: this poll is an online contact that would date them later.
+      if ((pendingRef.current ?? 0) > 0) await syncBeforeOnline();
       try {
         const session = await api.session(undefined, undefined, pendingRef.current);
         csrf.set(session.csrfToken);
@@ -83,13 +112,14 @@ export function useScanSession(
       }
     },
     refetchInterval:
-      !machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay)
+      !held && (!machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay))
         ? REFETCH_MS
         : false,
     refetchOnWindowFocus:
-      !machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay),
-    refetchOnReconnect:
-      !machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay),
+      !held && (!machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay)),
+    refetchOnReconnect: () =>
+      !(queuedReads && !syncFailed.current) &&
+      (!machine || (machine.loop.s === 'ready' && !machine.card && !machine.overlay)),
     staleTime: 0,
     gcTime: 0,
     retry: false,

@@ -21,7 +21,6 @@ export interface TemplateReleasesPanelProps {
   mode: Mode;
   versions: readonly ReleaseVersion[];
   capabilities: readonly OrgCapability[];
-  currentUserId: string | null;
   /** The server's release state: Test following Live decides Restore's reach. */
   release?: TemplateReleaseState | undefined;
 }

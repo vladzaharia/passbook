@@ -14,6 +14,11 @@ import {
   SavedImportMappingsResultSchema,
 } from '../../shared/contracts/pass-imports.ts';
 import {
+  PassSetupResultSchema,
+  PassSetupSchema,
+  StagedBrandAssetSchema,
+} from '../../shared/contracts/pass-setup.ts';
+import {
   PassDetailSchema,
   PassDeviceSchema,
   PassListSchema,
@@ -168,6 +173,9 @@ const names = {
   ReviewTemplate: ReviewTemplateSchema,
   ReviewResult: ReviewResultSchema,
   TemplateReviewList: TemplateReviewListSchema,
+  PassSetup: PassSetupSchema,
+  PassSetupResult: PassSetupResultSchema,
+  StagedBrandAsset: StagedBrandAssetSchema,
 };
 
 for (const [refId, schema] of Object.entries(names))

@@ -36,18 +36,6 @@ export function useWalletIdentityPages(filter: WalletIdentityFilter) {
   );
 }
 
-/** An organization's Apple identities; a member reads their own. */
-export function useOrgWalletIdentities(orgId: string) {
-  return useQuery({
-    queryKey: [...KEY, 'wallet-org', orgId],
-    queryFn: ({ signal }) =>
-      api.get('/api/v1/wallet-identities', WalletIdentityListSchema, {
-        query: { orgId, limit: 50 },
-        signal,
-      }),
-  });
-}
-
 export function useIdentityRuns(query: { orgId?: string; targetId?: string }, enabled = true) {
   return useQuery({
     queryKey: [...KEY, 'runs', query],

@@ -330,7 +330,12 @@ describe('renderErrorPage', () => {
       expect(html.includes('data-part="hg"')).toBe(status === 429);
       expect(primaries(html)).toBe(0);
       expect(outline(html)).toEqual([[href, label]]);
-      expect(scripts(html)).toEqual([REPLAY_SCRIPT]);
+      // 403 carries the Switch account form, which save.js intercepts to clear saved passes.
+      expect(scripts(html)).toEqual(
+        status === 403
+          ? [REPLAY_SCRIPT, '<script src="/p/save.js" defer></script>']
+          : [REPLAY_SCRIPT],
+      );
     },
   );
 

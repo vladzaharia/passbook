@@ -77,6 +77,14 @@ export function ReleaseStrip({
     flown.current = liveName;
     if (!prefersReducedMotion()) setFlight((n) => n + 1);
   }, [liveName]);
+  const { review } = state;
+  const draftSub = !draft
+    ? 'Nothing new'
+    : review.state === 'open'
+      ? `In review${review.by ? ` · ${review.by}` : ''}`
+      : review.state === 'approved'
+        ? `Approved${review.by ? ` · ${review.by}` : ''}`
+        : 'Saved';
   const testSub = !test
     ? 'Not released'
     : test.state === 'ahead'
@@ -91,7 +99,7 @@ export function ReleaseStrip({
         icon={<Pencil aria-hidden />}
         label="Draft"
         value={draft ? name(draft.version) : null}
-        sub={draft ? 'Saved' : 'Nothing new'}
+        sub={draftSub}
       />
       <ChevronRight aria-hidden className="wl-strip-arrow wl-strip-arrow-1" />
       <Cell

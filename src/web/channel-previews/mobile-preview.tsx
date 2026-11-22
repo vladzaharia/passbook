@@ -31,7 +31,13 @@ export function MobilePreview({
   /** What each channel offers this pass; absent means all on. */
   channels?: EffectiveChannels | undefined;
 }) {
-  const view = usePassView(source.passJson, source.assetBaseUrl, source.assetNames);
+  const view = usePassView(
+    source.passJson,
+    source.assetBaseUrl,
+    source.assetNames,
+    false,
+    source.assetUrls,
+  );
   const now = useMemo(() => new Date(), []);
   const device: DeviceInfo = {
     device: channels?.apple.on === false ? 'android' : 'iphone',

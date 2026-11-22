@@ -165,6 +165,10 @@ Org names and the sender name reject controls, line separators and bidi marks at
 - An org export link lasts 1 hour and works once. Pass and bundle links go to another address only when an org admin sends them.
 - Deploy and apply new D1 migrations yourself. Agents never deploy or use `--remote`.
 
+## Save to this phone
+
+The saved door view (`/p/<token>/barcode`) is one Cache Storage entry per pass, kept 7 days at most and never past the pass's expiry. The page holds no token. "Add to Home screen" makes a plain shortcut with no manifest, so no install service sees the URL; the shortcut URL still lives in launcher and device-backup data, and a revoked link only dies when the shortcut is next opened online.
+
 ## Dev advisories
 
 `npm audit` and `npm audit --omit=dev` report 0. Overrides in `package.json` pin `undici` 7.30.1 and `sharp` 0.35.5 inside `miniflare`, and `zod` 4.6.7 inside `@cloudflare/vitest-plugin`. Drop them once the Cloudflare packages ship fixed ranges. `@cloudflare/vite-plugin` stays at 1.64.0: the fixed 1.66.0 is under 14 days old.

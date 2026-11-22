@@ -15,7 +15,9 @@ import { bindScanningSession } from './scanning-workspace.ts';
 import { buildSession } from './session.ts';
 import { boundStaff } from './staff-binding.ts';
 import { checkPin } from './staff-pin.ts';
+import { countNamedMiss, guardNamedDay } from './staff-pin-day.ts';
 import { checkPinOnly } from './staff-pin-only.ts';
+import { afterVerifiedPin } from './staff-pin-tag.ts';
 
 /** Staff sign-in belongs to a paired scanner device; a terminal, a screen or an admin has none. */
 function staffScanner(actor: ScanActor) {
@@ -27,7 +29,7 @@ function staffScanner(actor: ScanActor) {
   return actor.scanner;
 }
 
-function requireSignIn(actor: ScanActor) {
+export function requireSignIn(actor: ScanActor) {
   const scanner = staffScanner(actor);
   if (!actor.settings.staffSignIn)
     throw new ForbiddenError(
@@ -41,7 +43,7 @@ function requireSignIn(actor: ScanActor) {
  * Re-read the binding after a mutation, in case another staff change won the race. The mutation has
  * committed, so a capture that lost a race to a later change is rebuilt from the rows as they are now.
  */
-async function staffSession(ctx: ServiceContext, actor: ScanActor): Promise<ScanSession> {
+export async function staffSession(ctx: ServiceContext, actor: ScanActor): Promise<ScanSession> {
   const previous = staffScanner(actor);
   const keyEnv = captureCredentialKeyEnv(ctx.env);
   for (let attempt = 0; ; attempt++) {
@@ -105,9 +107,18 @@ export async function signInStaff(
   // With no name, the PIN picks the person among the org's active staff.
   const staff = staffId
     ? await getStaff(ctx.env.DB, actor.orgId, staffId)
-    : await checkPinOnly(ctx, { scannerId: scanner.id, orgId: actor.orgId }, pin);
-  if (staffId)
-    await checkPin(ctx, { scannerId: scanner.id, orgId: actor.orgId, staffId, staff, pin });
+    : await checkPinOnly(ctx, scanner, pin);
+  if (staffId) {
+    // Only a person who exists is counted, so unknown names cannot grow the counters.
+    if (staff) await guardNamedDay(ctx, scanner.id, staffId);
+    await checkPin(ctx, { scannerId: scanner.id, orgId: actor.orgId, staffId, staff, pin }).catch(
+      async (error: unknown) => {
+        if (staff)
+          await countNamedMiss(ctx, { orgId: actor.orgId, scannerId: scanner.id, staffId }, error);
+        throw error;
+      },
+    );
+  }
   const bound = actor.scanningSession;
   const sessionEpoch = scanEpochsOf(actor)?.session;
   if (!staff || staff.authEpoch === undefined || (bound && sessionEpoch?.id !== bound.id))
@@ -115,6 +126,7 @@ export async function signInStaff(
       'The scanner or staff member changed. Try again.',
       'SCAN_STAFF_CHANGED',
     );
+  await afterVerifiedPin(ctx, scanner, staff.id, pin);
   await bindStaff(
     ctx,
     scanner,

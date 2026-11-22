@@ -17,15 +17,33 @@ const props = {
 } as const;
 
 describe('presentation page', () => {
-  it('sits on the hosted card with no lede and no jargon', () => {
+  it('is a white field with the pass name, the code and the way back, and no jargon', () => {
     const html = renderPresentationPage(props);
-    expect(html).toContain('class="hosted wide"');
+    expect(html).toContain('class="door"');
     expect(html).toContain('<h1>Membership</h1>');
-    expect(html).not.toContain('class="lede"');
+    expect(html).toContain('html,body{background:#fff');
     expect(html.slice(html.indexOf('<body')).replace(/aria-label="[^"]*"/g, '')).not.toMatch(
       /Code 39|NFC|presentation barcode/i,
     );
     expect(html).toContain('href="/p/t"');
+  });
+
+  it('forces the light theme, whatever the visitor chose', () => {
+    expect(renderPresentationPage({ ...props, theme: 'dark' })).toContain('data-theme="light"');
+  });
+
+  it('offers the saved note and wake lock only on a saveable door view, with no token and no manifest', () => {
+    const saveable = renderPresentationPage({ ...props, offline: true });
+    expect(saveable).toContain('data-door-saved');
+    expect(saveable).toContain('Works offline');
+    expect(saveable).toContain('wakeLock');
+    expect(saveable).not.toContain('manifest');
+    expect(saveable).not.toContain('/p/t');
+    expect(saveable).toContain('href="./"');
+    const member = renderPresentationPage(props);
+    expect(member).not.toContain('data-door-saved');
+    expect(member).toContain('href="/p/t"');
+    expect(member).not.toMatch(/<script\b/);
   });
 
   it('keeps the code on a white tile and the credential out of the text', () => {

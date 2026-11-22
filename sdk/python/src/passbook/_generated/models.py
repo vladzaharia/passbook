@@ -446,7 +446,18 @@ __all__ = [
     "OrgsCloseParams",
     "OrgsEntitlementsRetrieveResult",
     "OrgsEntitlementsRetrieveResultItemsItem",
+    "OrgsRetrievePassSetupResult",
+    "OrgsStageBrandAssetBody",
+    "OrgsStageBrandAssetParams",
+    "OrgsStageBrandAssetResult",
     "OrgsUpdateParams",
+    "OrgsUpdatePassSetupBody",
+    "OrgsUpdatePassSetupParams",
+    "OrgsUpdatePassSetupParamsBrand",
+    "OrgsUpdatePassSetupParamsBrandEmail",
+    "OrgsUpdatePassSetupParamsBrandSupport",
+    "OrgsUpdatePassSetupParamsChannels",
+    "OrgsUpdatePassSetupResult",
     "PassChannelsChangedEvent",
     "PassChannelsChangedEventData",
     "PassDetail",
@@ -588,6 +599,79 @@ __all__ = [
     "PassScanUndoneEventData",
     "PassScannedEvent",
     "PassScannedEventData",
+    "PassSetup",
+    "PassSetupApple",
+    "PassSetupBrand",
+    "PassSetupBrandAccent",
+    "PassSetupBrandEmail",
+    "PassSetupBrandEmailFromName",
+    "PassSetupBrandIcon",
+    "PassSetupBrandLogo",
+    "PassSetupBrandLogoHasName",
+    "PassSetupBrandMark",
+    "PassSetupBrandName",
+    "PassSetupBrandPassColors",
+    "PassSetupBrandSupport",
+    "PassSetupBrandSupportEmail",
+    "PassSetupBrandSupportUrl",
+    "PassSetupBrandWebLogo",
+    "PassSetupChannels",
+    "PassSetupChannelsApple",
+    "PassSetupChannelsAppleAccount",
+    "PassSetupChannelsAppleAccountIssuance1",
+    "PassSetupChannelsAppleAccountIssuance2",
+    "PassSetupChannelsAppleAccountPrerequisites",
+    "PassSetupChannelsAppleLevelsItem",
+    "PassSetupChannelsAppleTemplates",
+    "PassSetupChannelsGoogle",
+    "PassSetupChannelsGoogleAccount",
+    "PassSetupChannelsGoogleAccountIssuance1",
+    "PassSetupChannelsGoogleAccountIssuance2",
+    "PassSetupChannelsGoogleAccountPrerequisites",
+    "PassSetupChannelsGoogleLevelsItem",
+    "PassSetupChannelsGoogleTemplates",
+    "PassSetupChannelsMobile",
+    "PassSetupChannelsMobileAccount",
+    "PassSetupChannelsMobileAccountIssuance1",
+    "PassSetupChannelsMobileAccountIssuance2",
+    "PassSetupChannelsMobileAccountPrerequisites",
+    "PassSetupChannelsMobileLevelsItem",
+    "PassSetupChannelsMobileTemplates",
+    "PassSetupChannelsNfc",
+    "PassSetupChannelsNfcAccount",
+    "PassSetupChannelsNfcAccountIssuance1",
+    "PassSetupChannelsNfcAccountIssuance2",
+    "PassSetupChannelsNfcAccountPrerequisites",
+    "PassSetupChannelsNfcLevelsItem",
+    "PassSetupChannelsNfcTemplates",
+    "PassSetupChannelsPaper",
+    "PassSetupChannelsPaperAccount",
+    "PassSetupChannelsPaperAccountIssuance1",
+    "PassSetupChannelsPaperAccountIssuance2",
+    "PassSetupChannelsPaperAccountPrerequisites",
+    "PassSetupChannelsPaperLevelsItem",
+    "PassSetupChannelsPaperTemplates",
+    "PassSetupChannelsSamsung",
+    "PassSetupChannelsSamsungAccount",
+    "PassSetupChannelsSamsungAccountIssuance1",
+    "PassSetupChannelsSamsungAccountIssuance2",
+    "PassSetupChannelsSamsungAccountPrerequisites",
+    "PassSetupChannelsSamsungLevelsItem",
+    "PassSetupChannelsSamsungTemplates",
+    "PassSetupChecksItem",
+    "PassSetupChecksItemFix",
+    "PassSetupResult",
+    "PassSetupResultDiffItem",
+    "PassSetupResultImpact",
+    "PassSetupResultImpactChannelStopsItem",
+    "PassSetupTemplatesItem",
+    "PassSetupTemplatesItemChannels",
+    "PassSetupTemplatesItemChannelsApple",
+    "PassSetupTemplatesItemChannelsGoogle",
+    "PassSetupTemplatesItemChannelsMobile",
+    "PassSetupTemplatesItemChannelsNfc",
+    "PassSetupTemplatesItemChannelsPaper",
+    "PassSetupTemplatesItemChannelsSamsung",
     "PassSummary",
     "PassUninstalledEvent",
     "PassUninstalledEventData",
@@ -1007,6 +1091,7 @@ __all__ = [
     "SettingsReplyToConfirmParams",
     "SettingsReplyToResendConfirmationParams",
     "SettingsUpdateParams",
+    "StagedBrandAsset",
     "TemplateDetail",
     "TemplateDetailRelease",
     "TemplateDetailReleaseReview1",
@@ -1384,7 +1469,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "scanning:write", "scan-setup:read", "scanning:admin", "api-keys:write"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "api-keys:write"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -4125,6 +4210,11 @@ class OrgsEntitlementsRetrieveResultItemsItem(_Model):
     value: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
 
+class OrgsStageBrandAssetParams(_Model):
+    slot: _Literal["logo", "icon", "webLogo"] | str
+    png: str
+    x2: str | None = None
+
 class OrgsUpdateParams(_Model):
     slug: str | None = None
     name: str | None = None
@@ -4132,6 +4222,40 @@ class OrgsUpdateParams(_Model):
     branding: OrgBranding | None = None
     status: _Literal["active", "suspended"] | str | None = None
     configRevision: int | None = None
+
+class OrgsUpdatePassSetupParams(_Model):
+    expectedRevision: str
+    brand: OrgsUpdatePassSetupParamsBrand | None = None
+    channels: OrgsUpdatePassSetupParamsChannels | None = None
+
+class OrgsUpdatePassSetupParamsBrand(_Model):
+    name: str | None = None
+    logo: _Dict[str, _Any] | None = None
+    icon: _Dict[str, _Any] | None = None
+    webLogo: _Dict[str, _Any] | None = None
+    webLogoSameAsLogo: bool | None = None
+    passColors: _Dict[str, _Any] | None = None
+    logoHasName: bool | None = None
+    accent: str | None = None
+    mark: _Literal["full", "small", "none"] | str | None = None
+    support: OrgsUpdatePassSetupParamsBrandSupport | None = None
+    email: OrgsUpdatePassSetupParamsBrandEmail | None = None
+
+class OrgsUpdatePassSetupParamsBrandEmail(_Model):
+    fromName: str | None = None
+    buddy: bool | None = None
+
+class OrgsUpdatePassSetupParamsBrandSupport(_Model):
+    email: str | None = None
+    url: str | None = None
+
+class OrgsUpdatePassSetupParamsChannels(_Model):
+    mobile: _Literal["allowed", "blocked"] | str | None = None
+    apple: _Literal["allowed", "blocked"] | str | None = None
+    google: _Literal["allowed", "blocked"] | str | None = None
+    samsung: _Literal["allowed", "blocked"] | str | None = None
+    paper: _Literal["allowed", "blocked"] | str | None = None
+    nfc: _Literal["allowed", "blocked"] | str | None = None
 
 class PassChannelsChangedEvent(_Model):
     id: str
@@ -5144,6 +5268,445 @@ class PassScannedEventData(_Model):
     override: bool | None = None
     offline: bool | None = None
     amount: float | None = None
+
+class PassSetup(_Model):
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    revision: str
+    passCount: int
+    brand: PassSetupBrand
+    channels: PassSetupChannels
+    apple: PassSetupApple
+    templates: _List[PassSetupTemplatesItem]
+    checks: _List[PassSetupChecksItem]
+
+class PassSetupApple(_Model):
+    identity: _Dict[str, _Any] | None
+    sharedIdentifier: str
+    push: _Literal["unknown", "healthy", "failing"] | str
+    run: _Dict[str, _Any] | None
+    managedAllowed: bool
+    passesOnShared: int
+
+class PassSetupBrand(_Model):
+    name: PassSetupBrandName
+    logo: PassSetupBrandLogo
+    icon: PassSetupBrandIcon
+    webLogo: PassSetupBrandWebLogo
+    passColors: PassSetupBrandPassColors
+    logoHasName: PassSetupBrandLogoHasName
+    accent: PassSetupBrandAccent
+    mark: PassSetupBrandMark
+    support: PassSetupBrandSupport
+    email: PassSetupBrandEmail
+
+class PassSetupBrandAccent(_Model):
+    value: str | None
+    source: _Literal["passbook", "plan", "org", "template", "pass"] | str
+
+class PassSetupBrandEmail(_Model):
+    fromName: PassSetupBrandEmailFromName
+    buddy: bool
+
+class PassSetupBrandEmailFromName(_Model):
+    value: str | None
+    source: _Literal["passbook", "plan", "org", "template", "pass"] | str
+
+class PassSetupBrandIcon(_Model):
+    value: _Dict[str, _Any] | None
+    source: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    templatesOwn: int
+
+class PassSetupBrandLogo(_Model):
+    value: _Dict[str, _Any] | None
+    source: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    templatesOwn: int
+
+class PassSetupBrandLogoHasName(_Model):
+    value: bool | None
+    source: _Literal["passbook", "plan", "org", "template", "pass"] | str
+
+class PassSetupBrandMark(_Model):
+    chosen: _Literal["full", "small", "none"] | str
+    effective: _Literal["full", "small", "none"] | str
+    allowed: _List[_Literal["full", "small", "none"] | str]
+
+class PassSetupBrandName(_Model):
+    value: str | None
+    source: _Literal["passbook", "plan", "org", "template", "pass"] | str
+
+class PassSetupBrandPassColors(_Model):
+    value: _Dict[str, _Any] | None
+    source: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    templatesOwn: int
+
+class PassSetupBrandSupport(_Model):
+    email: PassSetupBrandSupportEmail
+    url: PassSetupBrandSupportUrl
+
+class PassSetupBrandSupportEmail(_Model):
+    value: str | None
+    source: _Literal["passbook", "plan", "org", "template", "pass"] | str
+
+class PassSetupBrandSupportUrl(_Model):
+    value: str | None
+    source: _Literal["passbook", "plan", "org", "template", "pass"] | str
+
+class PassSetupBrandWebLogo(_Model):
+    value: _Dict[str, _Any] | None
+    source: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    sameAsLogo: bool
+
+class PassSetupChannels(_Model):
+    mobile: PassSetupChannelsMobile | None = None
+    apple: PassSetupChannelsApple | None = None
+    google: PassSetupChannelsGoogle | None = None
+    samsung: PassSetupChannelsSamsung | None = None
+    paper: PassSetupChannelsPaper | None = None
+    nfc: PassSetupChannelsNfc | None = None
+
+class PassSetupChannelsApple(_Model):
+    on: bool
+    allowed: bool
+    levels: _List[PassSetupChannelsAppleLevelsItem]
+    templates: PassSetupChannelsAppleTemplates
+    account: PassSetupChannelsAppleAccount | None = None
+
+class PassSetupChannelsAppleAccount(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: PassSetupChannelsAppleAccountPrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: PassSetupChannelsAppleAccountIssuance1 | PassSetupChannelsAppleAccountIssuance2
+
+class PassSetupChannelsAppleAccountIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class PassSetupChannelsAppleAccountIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class PassSetupChannelsAppleAccountPrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
+
+class PassSetupChannelsAppleLevelsItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassSetupChannelsAppleTemplates(_Model):
+    on: int
+    off: int
+    never: int
+    total: int
+
+class PassSetupChannelsGoogle(_Model):
+    on: bool
+    allowed: bool
+    levels: _List[PassSetupChannelsGoogleLevelsItem]
+    templates: PassSetupChannelsGoogleTemplates
+    account: PassSetupChannelsGoogleAccount | None = None
+
+class PassSetupChannelsGoogleAccount(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: PassSetupChannelsGoogleAccountPrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: PassSetupChannelsGoogleAccountIssuance1 | PassSetupChannelsGoogleAccountIssuance2
+
+class PassSetupChannelsGoogleAccountIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class PassSetupChannelsGoogleAccountIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class PassSetupChannelsGoogleAccountPrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
+
+class PassSetupChannelsGoogleLevelsItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassSetupChannelsGoogleTemplates(_Model):
+    on: int
+    off: int
+    never: int
+    total: int
+
+class PassSetupChannelsMobile(_Model):
+    on: bool
+    allowed: bool
+    levels: _List[PassSetupChannelsMobileLevelsItem]
+    templates: PassSetupChannelsMobileTemplates
+    account: PassSetupChannelsMobileAccount | None = None
+
+class PassSetupChannelsMobileAccount(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: PassSetupChannelsMobileAccountPrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: PassSetupChannelsMobileAccountIssuance1 | PassSetupChannelsMobileAccountIssuance2
+
+class PassSetupChannelsMobileAccountIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class PassSetupChannelsMobileAccountIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class PassSetupChannelsMobileAccountPrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
+
+class PassSetupChannelsMobileLevelsItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassSetupChannelsMobileTemplates(_Model):
+    on: int
+    off: int
+    never: int
+    total: int
+
+class PassSetupChannelsNfc(_Model):
+    on: bool
+    allowed: bool
+    levels: _List[PassSetupChannelsNfcLevelsItem]
+    templates: PassSetupChannelsNfcTemplates
+    account: PassSetupChannelsNfcAccount | None = None
+
+class PassSetupChannelsNfcAccount(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: PassSetupChannelsNfcAccountPrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: PassSetupChannelsNfcAccountIssuance1 | PassSetupChannelsNfcAccountIssuance2
+
+class PassSetupChannelsNfcAccountIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class PassSetupChannelsNfcAccountIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class PassSetupChannelsNfcAccountPrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
+
+class PassSetupChannelsNfcLevelsItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassSetupChannelsNfcTemplates(_Model):
+    on: int
+    off: int
+    never: int
+    total: int
+
+class PassSetupChannelsPaper(_Model):
+    on: bool
+    allowed: bool
+    levels: _List[PassSetupChannelsPaperLevelsItem]
+    templates: PassSetupChannelsPaperTemplates
+    account: PassSetupChannelsPaperAccount | None = None
+
+class PassSetupChannelsPaperAccount(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: PassSetupChannelsPaperAccountPrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: PassSetupChannelsPaperAccountIssuance1 | PassSetupChannelsPaperAccountIssuance2
+
+class PassSetupChannelsPaperAccountIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class PassSetupChannelsPaperAccountIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class PassSetupChannelsPaperAccountPrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
+
+class PassSetupChannelsPaperLevelsItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassSetupChannelsPaperTemplates(_Model):
+    on: int
+    off: int
+    never: int
+    total: int
+
+class PassSetupChannelsSamsung(_Model):
+    on: bool
+    allowed: bool
+    levels: _List[PassSetupChannelsSamsungLevelsItem]
+    templates: PassSetupChannelsSamsungTemplates
+    account: PassSetupChannelsSamsungAccount | None = None
+
+class PassSetupChannelsSamsungAccount(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: PassSetupChannelsSamsungAccountPrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: PassSetupChannelsSamsungAccountIssuance1 | PassSetupChannelsSamsungAccountIssuance2
+
+class PassSetupChannelsSamsungAccountIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class PassSetupChannelsSamsungAccountIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class PassSetupChannelsSamsungAccountPrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
+
+class PassSetupChannelsSamsungLevelsItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassSetupChannelsSamsungTemplates(_Model):
+    on: int
+    off: int
+    never: int
+    total: int
+
+class PassSetupChecksItem(_Model):
+    code: _Literal["BRAND_LOGO", "BRAND_ICON", "BRAND_COLORS", "BRAND_CONTRAST", "ACCENT_CONTRAST", "SUPPORT_MISSING", "APPLE_SHARED_ID", "APPLE_ID_FAILED", "APPLE_ID_EXPIRING", "APPLE_PUSH", "WALLET_ACCOUNT", "NO_CHANNEL", "TEMPLATE_BRAND_OWN"] | str
+    level: _Literal["error", "warn", "info"] | str
+    area: _Literal["brand", "support", "channels"] | str
+    message: str
+    channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str | None = None
+    templateIds: _List[str] | None = None
+    fix: PassSetupChecksItemFix
+
+class PassSetupChecksItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon", "use_logo_colors", "edit_colors", "fix_contrast", "fix_accent", "edit_support", "start_apple_managed", "retry_identity_run", "renew_identity", "replace_certificate", "check_push", "setup_wallet_account", "allow_channel", "review_template"] | str
+    target: str | None = None
+
+class PassSetupResult(_Model):
+    dryRun: bool
+    view: PassSetup
+    diff: _List[PassSetupResultDiffItem]
+    impact: PassSetupResultImpact
+
+class PassSetupResultDiffItem(_Model):
+    field: _Literal["brand.name", "brand.logo", "brand.icon", "brand.webLogo", "brand.webLogoSameAsLogo", "brand.passColors", "brand.logoHasName", "brand.accent", "brand.mark", "brand.support.email", "brand.support.url", "brand.email.fromName", "brand.email.buddy", "channels.mobile", "channels.apple", "channels.google", "channels.samsung", "channels.paper", "channels.nfc"] | str
+    before: _Any | None = None
+    after: _Any | None = None
+
+class PassSetupResultImpact(_Model):
+    passesToUpdate: int
+    channelStops: _List[PassSetupResultImpactChannelStopsItem]
+    enrolments: _List[_Literal["google", "samsung"] | str]
+
+class PassSetupResultImpactChannelStopsItem(_Model):
+    channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str
+    templates: int
+    passes: int
+
+class PassSetupTemplatesItem(_Model):
+    id: str
+    name: str
+    ownBrand: _List[_Literal["colors", "logo", "icon"] | str]
+    placeholders: _List[_Literal["logo", "icon"] | str]
+    channels: PassSetupTemplatesItemChannels
+
+class PassSetupTemplatesItemChannels(_Model):
+    mobile: PassSetupTemplatesItemChannelsMobile | None = None
+    apple: PassSetupTemplatesItemChannelsApple | None = None
+    google: PassSetupTemplatesItemChannelsGoogle | None = None
+    samsung: PassSetupTemplatesItemChannelsSamsung | None = None
+    paper: PassSetupTemplatesItemChannelsPaper | None = None
+    nfc: PassSetupTemplatesItemChannelsNfc | None = None
+
+class PassSetupTemplatesItemChannelsApple(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class PassSetupTemplatesItemChannelsGoogle(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class PassSetupTemplatesItemChannelsMobile(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class PassSetupTemplatesItemChannelsNfc(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class PassSetupTemplatesItemChannelsPaper(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class PassSetupTemplatesItemChannelsSamsung(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
 
 class PassSummary(_Model):
     id: str
@@ -6537,6 +7100,7 @@ class ScanRecord(_Model):
     override: bool
     offline: bool
     unverified: bool | None = None
+    late: bool | None = None
     actor: ScanRecordActor
     undoneAt: int | None
     undoneBy: str | None
@@ -7043,6 +7607,8 @@ class ScanStaff(_Model):
     name: str
     role: _Literal["door", "desk", "manager"] | str
     pinSetAt: int
+    pinResetRequired: bool
+    pinLockedToday: bool
     locked: bool
     disabledAt: int | None
     today: int
@@ -7857,6 +8423,14 @@ class SettingsUpdateParams(_Model):
     scope: _Literal["platform"] | str | str | None = None
     values: _Dict[str, _Any]
     configRevision: int | None = None
+
+class StagedBrandAsset(_Model):
+    slot: _Literal["logo", "icon", "webLogo"] | str
+    sha: str
+    version: str
+    w: int
+    h: int
+    expiresAt: int
 
 class TemplateDetail(_Model):
     id: str
@@ -9101,6 +9675,16 @@ NfcTagTypesCreateBody = NfcTagTypesCreateParams
 NfcTagTypesUpdateBody = NfcTagTypesUpdateParams
 
 NfcTagsAssignParams = NfcTagsAssignParams1 | NfcTagsAssignParams2
+
+OrgsRetrievePassSetupResult = PassSetup
+
+OrgsStageBrandAssetBody = OrgsStageBrandAssetParams
+
+OrgsStageBrandAssetResult = StagedBrandAsset
+
+OrgsUpdatePassSetupBody = OrgsUpdatePassSetupParams
+
+OrgsUpdatePassSetupResult = PassSetupResult
 
 PassImportsCheckBody = PassImportsCheckParams
 

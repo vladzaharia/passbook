@@ -8,6 +8,7 @@ import { getStaff } from './repo-staff.ts';
 import { createStaff, resetStaffPin } from './staff-admin.ts';
 import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
 import { hashPin } from './staff-pin.ts';
+import { pinTag } from './staff-pin-hash.ts';
 
 const staffAdmin = setupStaffAdminTestKit();
 const {
@@ -310,5 +311,87 @@ describe('staff records and credentials', () => {
         expect(detail).not.toContain(secret);
       }
     }
+  });
+});
+
+describe('staff PIN tag', () => {
+  const state = (id: string) =>
+    first<{ pin_tag: string | null; pin_reset_required: number }>(
+      env.DB,
+      'SELECT pin_tag, pin_reset_required FROM scan_staff WHERE id = ?',
+      [id],
+    );
+
+  it('is set with a new PIN, and a reset sets it again and clears the reset flag', async () => {
+    const created = await create('Tagged', 'door');
+    const id = created.staff.id;
+    expect((await state(id))?.pin_tag).toBe(await pinTag(env, orgId, created.pin));
+    await run(env.DB, 'UPDATE scan_staff SET pin_reset_required = 1 WHERE id = ?', [id]);
+    const res = await send('POST', resetPath(id), undefined, admin('test'));
+    const { pin } = StaffPinSchema.parse(await res.json());
+    expect(await state(id)).toEqual({
+      pin_tag: await pinTag(env, orgId, pin),
+      pin_reset_required: 0,
+    });
+  });
+});
+
+describe('staff daily PIN lock and untagged PINs', () => {
+  const lockKey = (id: string) => `scan:pinday:${id}`;
+  const lock = (id: string) =>
+    run(env.DB, 'INSERT INTO counters (key, window_start, count) VALUES (?, ?, 50)', [
+      lockKey(id),
+      clock.now() - (clock.now() % 86_400_000),
+    ]);
+  const listed = async (id: string) => (await list()).find((p) => p.id === id);
+
+  it('shows Locked today, lifts it with Unlock (audited) and with an admin reset', async () => {
+    const a = await makeScanStaff(f, { orgId, pin: '482914' });
+    const b = await makeScanStaff(f, { orgId, pin: '482915' });
+    await lock(a.id);
+    await lock(b.id);
+    expect((await listed(a.id))?.pinLockedToday).toBe(true);
+    const unlock = await send(
+      'POST',
+      resetPath(a.id).replace('reset-pin', 'unlock-pin'),
+      undefined,
+      admin('test'),
+    );
+    expect(unlock.status).toBe(200);
+    expect((await listed(a.id))?.pinLockedToday).toBe(false);
+    expect(
+      await all(
+        env.DB,
+        "SELECT 1 FROM audit_log WHERE action = 'scan_staff.pin_unlock' AND target_id = ?",
+        [a.id],
+      ),
+    ).toHaveLength(1);
+    expect((await send('POST', resetPath(b.id), undefined, admin('test'))).status).toBe(200);
+    expect((await listed(b.id))?.pinLockedToday).toBe(false);
+  });
+
+  it('flags only active people with no PIN tag, and audits', async () => {
+    const untagged = await makeScanStaff(f, { orgId, pin: '482916' });
+    const made = await create('Has a tag', 'door');
+    const manager = await makeScanStaff(f, { orgId, role: 'manager', pin: '482918' });
+    const res = await send(
+      'POST',
+      resetPath('x').replace('/x/reset-pin', '/reset-untagged'),
+      undefined,
+      admin('test'),
+    );
+    expect(res.status).toBe(200);
+    expect(((await res.json()) as { flagged: number }).flagged).toBeGreaterThan(0);
+    expect((await listed(untagged.id))?.pinResetRequired).toBe(true);
+    expect((await listed(made.staff.id))?.pinResetRequired).toBe(false);
+    // A Manager's PIN is reset by an admin, one by one.
+    expect((await listed(manager.id))?.pinResetRequired).toBe(false);
+    expect(
+      await all(
+        env.DB,
+        "SELECT 1 FROM audit_log WHERE action = 'scan_staff.reset_untagged' AND org_id = ?",
+        [orgId],
+      ),
+    ).toHaveLength(1);
   });
 });

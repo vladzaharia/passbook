@@ -6,7 +6,7 @@ import { AccountPage } from '../../portal/account-page.tsx';
 export const Route = createFileRoute('/admin/account')({
   validateSearch: accountSearchSchema,
   component: function AdminAccountRoute() {
-    const { add } = Route.useSearch();
-    return <AccountPage focusAdd={add === 'email'} />;
+    const { add, verified } = Route.useSearch();
+    return <AccountPage focusAdd={add === 'email'} verified={verified} />;
   },
 });

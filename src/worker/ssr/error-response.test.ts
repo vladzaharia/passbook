@@ -4,6 +4,7 @@ import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
 import { fakeRateLimiter } from '../../../test/helpers/fakes.ts';
 import { createApp } from '../app.ts';
 import type { AppEnv } from '../platform/env.ts';
+import { renderErrorPage } from './error-page.tsx';
 
 const ORIGIN = 'https://wallet.test';
 const app = createApp({ stores: fakeAuth(ORIGIN).stores });
@@ -97,5 +98,14 @@ describe('browser error pages', () => {
     const html = await res.text();
     expect(html).toMatch(/<h1[^>]*>Too many requests<\/h1>/);
     expect(html).toContain('Try again in a minute.');
+  });
+});
+
+describe('the forbidden page', () => {
+  it("clears this phone's saved passes before Switch account posts", () => {
+    const html = renderErrorPage({ status: 403, nonce: 'n' });
+    expect(html).toContain('action="/auth/logout?next=%2Flogin"');
+    expect(html).toContain('<script src="/p/save.js" defer></script>');
+    expect(renderErrorPage({ status: 500, nonce: 'n' })).not.toContain('/p/save.js');
   });
 });

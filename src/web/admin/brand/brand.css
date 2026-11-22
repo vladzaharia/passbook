@@ -1,0 +1,56 @@
+/* Brand and channels: the few motions the kit does not have. Timing comes from the --wl tokens. */
+@keyframes bc-collapse {
+  to {
+    grid-template-rows: 0fr;
+    margin-bottom: 0;
+    opacity: 0;
+  }
+}
+@keyframes bc-land {
+  from {
+    scale: 0.94;
+  }
+}
+@keyframes bc-stamp {
+  from {
+    scale: 1.6;
+    rotate: -12deg;
+    opacity: 0;
+  }
+}
+
+/* A resolved check holds 900 ms with its tick, then folds away. */
+.bc-check {
+  display: grid;
+  grid-template-rows: 1fr;
+  margin-bottom: 0.5rem;
+}
+.bc-check > div {
+  min-height: 0;
+  overflow: hidden;
+}
+.bc-check[data-done] {
+  animation: bc-collapse var(--wl-dur-enter) var(--wl-ease-move) 900ms forwards;
+}
+.bc-landed {
+  animation: bc-land var(--wl-dur-enter) var(--wl-ease-bounce) backwards;
+}
+.bc-stamp {
+  animation: bc-stamp var(--wl-dur-card) var(--wl-ease-bounce) backwards;
+}
+/* The preview card deals in when its tab changes. */
+.bc-deal {
+  animation: wl-deal var(--wl-dur-card) var(--wl-ease-spring) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-check[data-done] {
+    animation: none;
+    display: none;
+  }
+  .bc-landed,
+  .bc-stamp,
+  .bc-deal {
+    animation: none;
+  }
+}

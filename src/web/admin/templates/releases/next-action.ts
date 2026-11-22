@@ -1,4 +1,7 @@
-import type { ReleaseNext } from '@/shared/contracts/template-release-flow.ts';
+import type {
+  ReleaseNext,
+  TemplateReleaseState,
+} from '@/shared/contracts/template-release-flow.ts';
 
 export type NextKind = 'design' | 'try' | 'release' | 'request' | 'review' | 'wait' | 'pass';
 
@@ -27,4 +30,11 @@ export function nextAction(next: ReleaseNext | undefined, draft: string): NextAc
     default:
       return { kind: 'pass', label: 'New pass' };
   }
+}
+
+/** The strip's alternative to the header's primary: none while a review is open. */
+export function stripAlt(state: TemplateReleaseState): 'try' | 'release' | null {
+  if (state.review.state === 'open') return null;
+  if (state.next === 'try') return 'release';
+  return state.next === 'release' && state.test?.version !== state.draft?.version ? 'try' : null;
 }

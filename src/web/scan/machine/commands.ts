@@ -2,7 +2,9 @@
  * The command runner: executes what the reducer asks for over the injected ports, and feeds the
  * results back as events. It owns the in-flight requests, their timeouts and the unsure retries.
  */
+
 import { doneResult } from '../assign/enroll-result.ts';
+import { afterSync } from '../offline/sync-gate.ts';
 import { SCAN_TIMING } from '../timing.ts';
 import type { MachineEvent } from './access-events.ts';
 import { type AssignCmd, isAssignCmd } from './assign-state.ts';
@@ -208,7 +210,11 @@ export function createRunner(deps: ScanDeps, host: Host) {
           deps.pin?.touch();
           // A PIN is never kept: strip it before the request can become an unsure retry.
           bodies.set(cmd.key, { wire, draft: withoutPin(cmd.draft) });
-          send(cmd.key, (signal) => deps.api.act(body, { signal }), answerOf(cmd.key));
+          send(
+            cmd.key,
+            (signal) => afterSync(() => deps.api.act(body, { signal })),
+            answerOf(cmd.key),
+          );
           break;
         }
         case 'undo':
@@ -294,7 +300,11 @@ export function createRunner(deps: ScanDeps, host: Host) {
       }
       if (!body) continue;
       const req = actBody(entry.key, body.wire, body.draft);
-      send(entry.key, (signal) => deps.api.act(req, { signal }), answerOf(entry.key));
+      send(
+        entry.key,
+        (signal) => afterSync(() => deps.api.act(req, { signal })),
+        answerOf(entry.key),
+      );
     }
   }
 

@@ -27,6 +27,7 @@ export function usePassView(
   assetBaseUrl: string,
   assetNames?: readonly string[],
   removed = false,
+  urls?: Record<string, string>,
 ): PassView | null {
   return useMemo(() => {
     try {
@@ -35,7 +36,7 @@ export function usePassView(
       const ended = passJson.voided === true || removed;
       const { barcode: _b, barcodes: _bs, ...bare } = passJson;
       const view = normalize((ended ? bare : passJson) as unknown as PassJson, {
-        assets: assetMap(assetBaseUrl, assetNames),
+        assets: urls ?? assetMap(assetBaseUrl, assetNames),
         ...(removed ? { stateWord: 'Removed' } : {}),
       });
       // A removed pass is stored voided: no stamp, as on the holder's pages; the card is greyed and reads Removed.
@@ -44,7 +45,7 @@ export function usePassView(
       // A malformed pass.json must not take the page down; callers show the fallback line.
       return null;
     }
-  }, [passJson, assetBaseUrl, assetNames, removed]);
+  }, [passJson, assetBaseUrl, assetNames, removed, urls]);
 }
 
 export interface PassPreviewProps {

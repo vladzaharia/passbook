@@ -4,8 +4,11 @@ import {
   ReleasePlanSchema,
   ReleaseResultSchema,
   type ReleaseTemplate,
+  ReviewResultSchema,
+  type ReviewTemplate,
 } from '@/shared/contracts/template-release-flow.ts';
 import { api } from '../../../lib/api.ts';
+import { reviewInboxKey } from '../../../lib/template-reviews.ts';
 
 const base = (templateId: string) => `/api/v1/templates/${encodeURIComponent(templateId)}/release`;
 
@@ -41,6 +44,24 @@ export function useReleaseFlow(templateId: string, orgId: string) {
       Promise.all([
         client.invalidateQueries({ queryKey: ['admin', 'templates'] }),
         client.invalidateQueries({ queryKey: ['admin', 'template-releases', templateId] }),
+      ]),
+  });
+}
+
+/** A reviewer's approval of a version for both modes, and its release when `release` is set. */
+export function useReviewFlow(templateId: string, orgId: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Omit<ReviewTemplate, 'orgId'>) =>
+      api.post(`/api/v1/templates/${encodeURIComponent(templateId)}/review`, ReviewResultSchema, {
+        ...body,
+        orgId,
+      }),
+    onSettled: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: ['admin', 'templates'] }),
+        client.invalidateQueries({ queryKey: ['admin', 'template-releases', templateId] }),
+        client.invalidateQueries({ queryKey: reviewInboxKey(orgId) }),
       ]),
   });
 }

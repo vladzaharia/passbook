@@ -8,7 +8,9 @@ import { ApiError } from '../../lib/errors.ts';
 import { json, sessionFixture as platformSession, stubFetch } from '../../lib/test-utils.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { AdminStart } from './admin-start.tsx';
+import { issuedPins, needsPinReset } from './pin-reset-state.ts';
 import { sessionFixture } from './session.test-support.ts';
+import { StaffPinReset } from './staff-pin-reset.tsx';
 import { StaffStart } from './staff-start.tsx';
 
 afterEach(() => {
@@ -252,5 +254,81 @@ describe('scanner entry flows', () => {
       ),
     );
     expect(screen.queryByLabelText('Find your name')).not.toBeInTheDocument();
+  });
+});
+
+describe('a shared PIN: getting a new one', () => {
+  afterEach(() => issuedPins.clear());
+  const session = () =>
+    sessionFixture({
+      staff: { id: 'staff-r', name: 'Dana', role: 'door', pinResetRequired: true },
+    });
+  const reset = (
+    newPin: ScanApi['staffNewPin'],
+    refetch = vi.fn().mockResolvedValue(undefined),
+    staffSignOut: ScanApi['staffSignOut'] = vi.fn().mockResolvedValue(sessionFixture()),
+  ) => {
+    render(
+      wrapper(
+        <StaffPinReset
+          session={session()}
+          api={{ staffNewPin: newPin, staffSignOut }}
+          refetch={refetch}
+        />,
+      ),
+    );
+    return { refetch, user: userEvent.setup() };
+  };
+  const issue = () =>
+    vi.fn<ScanApi['staffNewPin']>().mockResolvedValue({ pin: '497205', session: sessionFixture() });
+  const key = async (user: ReturnType<typeof userEvent.setup>, digits: string) => {
+    for (const digit of digits) await user.click(screen.getByRole('button', { name: digit }));
+  };
+  it('shows the server PIN once, then asks it back before going on', async () => {
+    const newPin = issue();
+    const { user, refetch } = reset(newPin);
+    await user.click(screen.getByRole('button', { name: 'Get new PIN' }));
+    expect(await screen.findByTestId('new-pin')).toHaveTextContent('497205');
+    expect(screen.getByText('Remember this PIN')).toBeInTheDocument();
+    expect(refetch).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'I remember it' }));
+    expect(screen.queryByTestId('new-pin')).not.toBeInTheDocument();
+    await key(user, '497205');
+    await waitFor(() => expect(refetch).toHaveBeenCalledOnce());
+    expect(newPin).toHaveBeenCalledOnce();
+    expect(needsPinReset(session())).toBe(true);
+  });
+  it('says when the typed PIN is not it, and can show it again', async () => {
+    const { user, refetch } = reset(issue());
+    await user.click(screen.getByRole('button', { name: 'Get new PIN' }));
+    await user.click(await screen.findByRole('button', { name: 'I remember it' }));
+    await key(user, '497206');
+    expect(await screen.findByText("That's not it. Try again.")).toBeInTheDocument();
+    expect(refetch).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Show it again' }));
+    expect(await screen.findByTestId('new-pin')).toHaveTextContent('497205');
+  });
+  it('shows a refusal and offers the button again', async () => {
+    const newPin = vi
+      .fn<ScanApi['staffNewPin']>()
+      .mockRejectedValue(
+        new ApiError({ status: 429, code: 'RATE_LIMITED', detail: 'Too many requests.' }),
+      );
+    const { user } = reset(newPin);
+    await user.click(screen.getByRole('button', { name: 'Get new PIN' }));
+    expect(await screen.findByText('Too many requests.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Get new PIN' })).toBeInTheDocument();
+  });
+  it('lets the person sign out instead, and drops an unconfirmed PIN from memory', async () => {
+    const out = vi.fn<ScanApi['staffSignOut']>().mockResolvedValue(sessionFixture());
+    const { user, refetch } = reset(issue(), undefined, out);
+    await user.click(screen.getByRole('button', { name: 'Get new PIN' }));
+    await screen.findByTestId('new-pin');
+    expect(issuedPins.size).toBe(1);
+    // The session no longer has this person: the PIN is forgotten.
+    expect(needsPinReset(sessionFixture())).toBe(false);
+    expect(issuedPins.size).toBe(0);
+    expect(out).not.toHaveBeenCalled();
+    expect(refetch).not.toHaveBeenCalled();
   });
 });

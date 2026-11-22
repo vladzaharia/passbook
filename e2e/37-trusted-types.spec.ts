@@ -1,5 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
-import { apiAs, BASE, createPass } from './helpers/api.ts';
+import { apiAs, BASE, createPass, uid } from './helpers/api.ts';
+import { ANDROID_CHROME } from './helpers/devices.ts';
+import { signInHolder } from './helpers/holder.ts';
 import { readSeed } from './helpers/seed.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
@@ -85,20 +87,67 @@ test('the scanner document draws without a Trusted Types violation', async ({ pa
   expect(await violations()).toEqual([]);
 });
 
-test('the public pass and its barcode page save offline under the policy', async ({ page }) => {
+test('Save to this phone works on /p under the policy, and the door view needs no sink', async ({
+  browser,
+}) => {
   const admin = await apiAs('admin');
   const pass = await createPass(admin, readSeed().org.id, { holder: 'Trusted Types' });
   const detail = await admin.get(`/api/v1/passes/${pass.id}`);
   await admin.dispose();
   const publicPath = new URL(detail.publicUrl, BASE).pathname;
+  const ctx = await browser.newContext({ userAgent: ANDROID_CHROME });
+  const page = await ctx.newPage();
   await arm(page);
   const violations = watch(page);
   await page.goto(publicPath);
-  await expect(page.locator('main')).toBeVisible();
-  await page.goto(`${publicPath}/barcode`);
-  const save = page.getByRole('button', { name: /save/i }).first();
-  await expect(save).toBeVisible();
-  await save.click();
-  await expect(page.getByText('Saved on this device')).toBeVisible();
+  await page.getByRole('link', { name: 'Save to this phone' }).first().click();
+  await expect(page.getByText('On this phone · Works offline')).toBeVisible();
+  await page.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('link', { name: 'Show at the door' }).first().click();
+  await expect(page.getByText('Works offline')).toBeVisible();
   expect(await violations()).toEqual([]);
+  await ctx.close();
+});
+
+test('Save to this phone works in the portal under the policy', async ({ browser }) => {
+  const admin = await apiAs('admin');
+  const email = `${uid('tt')}@example.test`;
+  const pass = await createPass(admin, readSeed().org.id, { holder: 'Trusted Types', email });
+  await admin.dispose();
+  const ctx = await browser.newContext({ userAgent: ANDROID_CHROME });
+  const page = await ctx.newPage();
+  await arm(page);
+  const violations = watch(page);
+  await signInHolder(page, email);
+  await page.goto(`/passes/${pass.id}`);
+  await page.getByRole('link', { name: 'Save to this phone' }).first().click();
+  await expect(page.getByText('On this phone · Works offline')).toBeVisible();
+  expect(await violations()).toEqual([]);
+  await ctx.close();
+});
+
+test('Save to this phone works on a bundle member page under the policy', async ({ browser }) => {
+  const admin = await apiAs('admin');
+  const orgId = readSeed().org.id;
+  const a = await createPass(admin, orgId, { holder: 'Trusted Bundle A' });
+  const b = await createPass(admin, orgId, { holder: 'Trusted Bundle B' });
+  const bundle = await admin.send('POST', '/api/v1/bundles', {
+    orgId,
+    passIds: [a.id, b.id],
+    name: 'Trusted Types',
+  });
+  await admin.dispose();
+  const path = new URL(bundle.url, BASE).pathname;
+  const ctx = await browser.newContext({ userAgent: ANDROID_CHROME });
+  const page = await ctx.newPage();
+  await arm(page);
+  const violations = watch(page);
+  await page.goto(`${path}/${a.id}`);
+  await page.getByRole('link', { name: 'Save to this phone' }).first().click();
+  await expect(page.getByText('On this phone · Works offline')).toBeVisible();
+  await page.getByRole('button', { name: 'Done' }).click();
+  await page.getByRole('link', { name: 'Show at the door' }).first().click();
+  await expect(page.getByText('Works offline')).toBeVisible();
+  expect(await violations()).toEqual([]);
+  await ctx.close();
 });

@@ -66,7 +66,7 @@ async function holder(
     // Why: a missing role or key scope is the answer "can't"; any other refusal is a real failure.
     if (
       error instanceof ForbiddenError &&
-      ['FORBIDDEN', 'MISSING_SCOPE', 'KEY_TEST_ONLY'].includes(error.code)
+      ['FORBIDDEN', 'MISSING_SCOPE', 'KEY_TEST_ONLY', 'KEY_CREATOR_NOT_MEMBER'].includes(error.code)
     )
       return null;
     throw error;
