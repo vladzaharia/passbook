@@ -110,3 +110,25 @@ export async function googleFetch(
     throw new GoogleWalletError('provider_error', operation, response.status);
   return response;
 }
+
+/**
+ * Google's refusal of a fourth notifying message in 24 h (docs/design/wallet-providers/google-messages.md section 7). Google
+ * documents no status for it, so any of 400, 403 or 429 whose JSON error names QuotaExceeded counts.
+ */
+export function isGoogleNotifyQuota(status: number, body: string): boolean {
+  if (status !== 400 && status !== 403 && status !== 429) return false;
+  let error: unknown;
+  try {
+    error = (JSON.parse(body) as { error?: unknown }).error;
+  } catch {
+    return false;
+  }
+  if (typeof error !== 'object' || error === null) return false;
+  const { message, status: name, errors } = error as Record<string, unknown>;
+  const reasons = Array.isArray(errors)
+    ? errors.map((e) => (e as { reason?: unknown })?.reason)
+    : [];
+  return [message, name, ...reasons].some(
+    (v) => typeof v === 'string' && /quotaexceeded/iu.test(v),
+  );
+}

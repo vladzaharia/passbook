@@ -159,12 +159,12 @@ describe('notified and silenced', () => {
       ev('message.applied', 1, {
         broadcastId: 'b1',
         notified: true,
-        providers: { google: 'deferred', samsung: 'over' },
+        providers: { google: 'over' },
       }),
     ]);
     expect(rows[0]?.facts.map((f) => f.text)).toEqual([
       'Notified',
-      'Samsung Wallet: daily limit reached',
+      'Google Wallet: daily limit reached',
     ]);
   });
 });
