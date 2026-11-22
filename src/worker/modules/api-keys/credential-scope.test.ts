@@ -98,4 +98,47 @@ describe('minting a credential scope (scanning:admin)', () => {
     expect(key.scopes).toContain('scanning:write');
     expect(key.scopes).not.toContain('scanning:admin');
   });
+
+  it('refuses a pass_operator or integration_admin asking for it, personal key included', async () => {
+    for (const role of ['pass_operator', 'integration_admin'] as const) {
+      const { session } = await member(role);
+      await expectProblem(
+        await create(session.headers, body()),
+        403,
+        'API_KEY_SCOPE_EXCEEDS_CREATOR',
+      );
+    }
+    const { session } = await member('pass_operator');
+    await expectProblem(
+      await create(session.headers, body({ kind: 'personal' })),
+      403,
+      'API_KEY_SCOPE_EXCEEDS_CREATOR',
+    );
+  });
+
+  it('rotates only with an expiry of at most 90 days left: the key itself, or a session', async () => {
+    const { session } = await member('org_admin');
+    const stored = async (expiresAt: number | null, scopes = ['scanning:admin']) => {
+      const k = await makeApiKey(f(), { orgId: org.id, scopes, expiresAt: expiresAt ?? undefined });
+      return k;
+    };
+    const rotate = (headers: Record<string, string>, id: string) =>
+      h.call(`/api/v1/api-keys/${id}/rotate`, {
+        method: 'POST',
+        headers,
+        json: { orgId: org.id },
+      });
+    const none = await stored(null);
+    await expectProblem(await rotate(session.headers, none.id), 422, 'API_KEY_EXPIRY_REQUIRED');
+    const far = await stored(h.clock.now() + 200 * DAY);
+    await expectProblem(await rotate(session.headers, far.id), 422, 'API_KEY_EXPIRY_TOO_LONG');
+    const self = await stored(null, ['scanning:admin', 'api-keys:write']);
+    await expectProblem(
+      await rotate({ authorization: `Bearer ${self.secret}` }, self.id),
+      422,
+      'API_KEY_EXPIRY_REQUIRED',
+    );
+    const ok = await stored(h.clock.now() + 30 * DAY);
+    expect((await rotate(session.headers, ok.id)).status).toBe(201);
+  });
 });

@@ -65,8 +65,8 @@ export async function rotateApiKey(
   };
   // A key made before the ceiling held keeps no successor: make a new one.
   await assertSandboxCeiling(ctx.env.DB, old.org_id, parseScopes(old.scopes));
-  // The successor keeps the old expiry, which was checked at mint; only the kind and mode are asserted again.
-  assertCredentialKey(parseScopes(old.scopes), old.kind, old.mode, old.expires_at ?? now, now);
+  // The successor keeps the old expiry: a credential key with none, or with more than 90 days left, is replaced, not rotated.
+  assertCredentialKey(parseScopes(old.scopes), old.kind, old.mode, old.expires_at, now);
   assertOrgBoundScopes(parseScopes(old.scopes), old.kind);
   const { prefix, label, secret, hash } = await newSecret(ctx, old.kind, old.mode);
   const row: ApiKeyRow = {

@@ -85,6 +85,27 @@ describe('redaction', () => {
     );
   });
 
+  it('redacts camelCase secret keys and pairingCode, and keeps ops fields', () => {
+    const out = JSON.stringify(
+      redact({
+        objectIdHmacKey: 'h1',
+        signingPrivateKey: 'p1',
+        clientSecret: 's1',
+        pairingCode: 'PC-1',
+        hmacKeyVersion: 2,
+        keysetId: 'ks',
+        secretCount: 4,
+      }),
+    );
+    for (const secret of ['h1', 'p1', 's1', 'PC-1']) expect(out).not.toContain(secret);
+    expect(out).toContain('"hmacKeyVersion":2');
+    expect(out).toContain('"keysetId":"ks"');
+  });
+
+  it('redacts the wallet image route /w/i/<ref>', () => {
+    expect(redactString('GET /w/i/abcdefghijklmnop.png')).toBe('GET /w/i/[redacted]');
+  });
+
   it('redacts webhook secrets, JWTs, NFC links and /w/ links in strings', () => {
     expect(redactString('whsec_abc123DEF')).toBe('whsec_[redacted]');
     expect(redactString('t eyJhbGciOi.eyJzdWIiOi.c2lnbmF0dXJl')).toBe('t [redacted jwt]');
