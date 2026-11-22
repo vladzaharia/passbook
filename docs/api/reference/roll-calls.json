@@ -1,0 +1,17 @@
+{
+  "roll-calls.getRollCalls": {
+    "description": "The open roll call."
+  },
+  "roll-calls.postRollCalls": {
+    "description": "Starts a roll call, or joins the open one."
+  },
+  "roll-calls.getRollCallsById": {
+    "description": "One roll call."
+  },
+  "roll-calls.postRollCallsByIdMarks": {
+    "description": "Confirms people present or out."
+  },
+  "roll-calls.postRollCallsByIdEnd": {
+    "description": "Ends a roll call."
+  }
+}

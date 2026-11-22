@@ -1,0 +1,5 @@
+{
+  "scans.getScans": {
+    "description": "Lists scans for admins, or the scan feed for a key with `scans:read`."
+  }
+}

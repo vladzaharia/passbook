@@ -199,5 +199,14 @@
         "rotatedFrom": null
       }
     }
+  },
+  "api-keys.deleteApiKeysById": {
+    "description": "Revokes a key for an authorized organization, or a platform-wide key with `orgId=null`."
+  },
+  "api-keys.getApiKeys": {
+    "description": "Lists keys for an authorized organization, or platform-wide keys with `orgId=null`."
+  },
+  "api-keys.postApiKeys": {
+    "description": "Creates an organization or platform API key. The secret is shown once."
   }
 }

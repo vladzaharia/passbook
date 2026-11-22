@@ -70,6 +70,7 @@ const BEST: Partial<Record<CapabilityId, Support>> = {
   nfc: 'unsupported',
   personalization: 'unsupported',
   'role.appLink': 'unsupported',
+  'messaging.notify': 'difference',
 };
 
 function supportOf(type: GoogleType, id: CapabilityId): Support {

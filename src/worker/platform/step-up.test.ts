@@ -152,6 +152,7 @@ const SENSITIVE: [string, string, unknown?][] = [
   ['PUT', '/api/v1/settings', { scope: 'platform', values: { 'oidc.trustEmail': true } }],
   ['POST', '/api/v1/platform/wallet-credentials/w1/rotate-key'],
   ['POST', '/api/v1/nfc/keysets/k1/rotate', {}],
+  ['POST', '/api/v1/nfc/keysets/k1/import', { csv: 'x', replace: true, dryRun: false }],
   ['POST', '/api/v1/users/u1/emails', { email: 'x@example.test' }],
 ];
 
@@ -161,6 +162,8 @@ const NOT_ASKED: [string, string, unknown][] = [
   ['PATCH', '/api/v1/webhook-endpoints/w1', { description: 'x' }],
   ['POST', '/api/v1/orgs/o1/invitations', { email: 'new@example.test', roles: ['read_only'] }],
   ['PUT', '/api/v1/settings', { scope: 'platform', values: { 'email.senderName': 'X' } }],
+  ['POST', '/api/v1/nfc/keysets/k1/import', { csv: 'x', replace: true, dryRun: true }],
+  ['POST', '/api/v1/nfc/keysets/k1/import', { csv: 'x', dryRun: false }],
 ];
 
 async function codeOf(
@@ -239,6 +242,7 @@ describe('step-up route inventory', () => {
         "POST /api/v1/identities",
         "POST /api/v1/identities/:id/revoke-certificate",
         "POST /api/v1/identities/:id/rotate",
+        "POST /api/v1/nfc/keysets/:id/import",
         "POST /api/v1/nfc/keysets/:id/rotate",
         "POST /api/v1/orgs/:id/invitations",
         "POST /api/v1/orgs/:orgId/close",

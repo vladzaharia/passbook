@@ -826,6 +826,7 @@ __all__ = [
     "PlatformOrgsLegalHoldsCreateParams",
     "PlatformOrgsSetStatusParams",
     "PlatformOrgsWalletEnrollmentsHoldParams",
+    "PlatformStatusOpenIncidentParams",
     "PlatformTemplatesAssignParams",
     "PlatformTemplatesShareParams",
     "PlatformUsersEmailsCreateParams",
@@ -3734,6 +3735,7 @@ class NfcKeysetsDisableResultVersionsItem(_Model):
 class NfcKeysetsImportTagsParams(_Model):
     csv: str
     dryRun: bool
+    replace: bool | None = None
 
 class NfcKeysetsImportTagsResult(_Model):
     dryRun: bool
@@ -3746,7 +3748,7 @@ class NfcKeysetsImportTagsResult(_Model):
 class NfcKeysetsImportTagsResultProblemsItem(_Model):
     line: int
     uid: str | None
-    reason: _Literal["bad_uid", "bad_key", "weak_key", "dup_file", "dup_key", "meta_key", "exists"] | str
+    reason: _Literal["bad_uid", "bad_key", "weak_key", "dup_file", "dup_key", "meta_key", "exists", "not_on_keyset"] | str
 
 class NfcKeysetsListItem(_Model):
     id: str
@@ -6478,6 +6480,12 @@ class PlatformOrgsSetStatusParams(_Model):
 
 class PlatformOrgsWalletEnrollmentsHoldParams(_Model):
     reason: str
+
+class PlatformStatusOpenIncidentParams(_Model):
+    title: str
+    note: str
+    component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str = None
+    impact: _Literal["notice", "degraded", "outage"] | str
 
 class PlatformTemplatesAssignParams(_Model):
     orgId: str | None

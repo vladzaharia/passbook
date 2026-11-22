@@ -14,6 +14,7 @@ import {
   publishTemplateCandidate,
   templateReviewer,
 } from './helpers/releases.ts';
+import { gotoRollout } from './helpers/rollout.ts';
 import { createOrgWithRoles } from './helpers/seed.ts';
 
 // The rollout card as a story (the issuing redesign, I9): a release goes out, the card shows how
@@ -49,12 +50,12 @@ async function sweep(
   for (const theme of THEMES)
     for (const width of WIDTHS) {
       await frame(page, width, theme);
-      await page.goto(url);
+      await gotoRollout(page, url);
       await ready();
       await shoot(page, name, width, theme);
     }
   await frame(page, 1440, 'light');
-  await page.goto(url);
+  await gotoRollout(page, url);
 }
 
 test('the rollout card: mid-rollout, Tell holders, settled, then told', async ({ browser }) => {
@@ -114,7 +115,7 @@ test('the rollout card: mid-rollout, Tell holders, settled, then told', async ({
     const url = `/admin/templates/${encodeURIComponent(clone.id)}?orgId=${encodeURIComponent(org.id)}&tab=versions`;
     const bar = (page: Page) => page.getByRole('progressbar', { name: 'Passes on the release' });
     const page = await ctx.newPage();
-    await page.goto(url);
+    await gotoRollout(page, url);
 
     // Mid-rollout: the title counts, and the bar is split by version.
     await expect(page.getByRole('heading', { name: 'Updating passes to v2' })).toBeVisible();
@@ -142,7 +143,7 @@ test('the rollout card: mid-rollout, Tell holders, settled, then told', async ({
     for (const theme of THEMES)
       for (const width of WIDTHS) {
         await frame(page, width, theme);
-        await page.goto(url);
+        await gotoRollout(page, url);
         await open();
         await shoot(page, 'rollout-2-tell', width, theme);
       }
@@ -160,7 +161,7 @@ test('the rollout card: mid-rollout, Tell holders, settled, then told', async ({
       .toBe(0);
     const settled = page.getByRole('heading', { name: 'All passes are on v2' });
     await frame(page, 1440, 'light');
-    await page.goto(url);
+    await gotoRollout(page, url);
     await expect(settled).toBeVisible();
     await expect(page.getByText('5 of 5')).toBeVisible();
     // Only the release is left: the bar is one segment.
@@ -177,7 +178,7 @@ test('the rollout card: mid-rollout, Tell holders, settled, then told', async ({
     await dialog.getByRole('button', { name: 'Tell 5 holders' }).click();
     await expect(page.getByText('Message sent')).toBeVisible();
     await expect.poll(async () => (await rollout()).tell).toBeNull();
-    await page.goto(url);
+    await gotoRollout(page, url);
     await expect(page.getByText('Saved versions')).toBeVisible();
     await loaded(page);
     await expect(settled).toHaveCount(0);
@@ -256,7 +257,7 @@ test("the rollout card: a pass that can't take the release is named, with the re
       await loaded(page);
     };
     await frame(page, 1440, 'light');
-    await page.goto(url);
+    await gotoRollout(page, url);
     await ready();
     // The bar names the pass left behind in its own segment, beside the release.
     await expect(page.locator('[data-segment="release"]')).toHaveCSS('flex-grow', '1');

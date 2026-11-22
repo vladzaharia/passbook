@@ -70,7 +70,7 @@ const localizedOf = (ctx: Ctx, text: string): GoogleLocalized | undefined => {
     : undefined;
 };
 
-function bodyOf(field: ViewField): string {
+export function bodyOf(field: ViewField): string {
   if ((field.dateStyle || field.timeStyle) && typeof field.value === 'string')
     return formatWhen(field.value, field.dateStyle, field.timeStyle);
   const numeric = field.currencyCode !== undefined && Number.isFinite(Number(field.text));
