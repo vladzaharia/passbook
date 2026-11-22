@@ -54,8 +54,14 @@ const send = (headers: Record<string, string>, body: unknown, key: string | null
     },
     fixture.kit.env,
   );
+/** A credential scope counts only on a key that expires within 91 days, so every key here does. */
 const keyOf = (scopes: string[], over: { orgId?: string; mode?: 'live' | 'test' } = {}) =>
-  makeApiKey(fixture.kit.fx, { orgId: orgId(), scopes, ...over });
+  makeApiKey(fixture.kit.fx, {
+    orgId: orgId(),
+    scopes,
+    expiresAt: fixture.kit.fx.clock.now() + 30 * 86_400_000,
+    ...over,
+  });
 
 describe('atomicity', () => {
   it('writes nothing when the last statement fails', async () => {
