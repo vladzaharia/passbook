@@ -69,8 +69,8 @@ describe('exampleFailures', () => {
     expect(run({ validFrom: 1 })).toEqual([
       'a.getA response.validFrom: time 1 is not a plausible millisecond time',
     ]);
-    expect(run({ secret: 'whsec_11111111111111111111' })).toEqual([
-      'a.getA response.secret: "whsec_11111111111111111111" repeats one character',
+    expect(run({ tok: 'tok_11111111111111111111' })).toEqual([
+      'a.getA response.tok: "tok_11111111111111111111" repeats one character',
     ]);
   });
 
@@ -93,5 +93,74 @@ describe('exampleFailures', () => {
       '"K7M2QX9P" is a regex sample reused by 4 operations',
     ]);
     expect(exampleFailures(docWith({ 'x.geta': ops['x.geta'] as never }))).toEqual([]);
+  });
+
+  it('rejects filler words and case variants', () => {
+    expect(run({ a: 'EXAMPLE' })).toEqual(['a.getA response.a: "EXAMPLE" is filler']);
+    expect(run({ a: 'Lorem ipsum dolor' })).toEqual([
+      'a.getA response.a: "Lorem ipsum dolor" is filler text',
+    ]);
+    expect(run({ a: 'TODO later' })).toEqual(['a.getA response.a: "TODO later" is filler text']);
+    expect(run({ a: 'Jane Doe' })).toEqual(['a.getA response.a: "Jane Doe" is filler text']);
+    expect(run({ a: 'changeme' })).toEqual([
+      'a.getA response.a: "changeme" is filler',
+      'a.getA response.a: "changeme" is filler text',
+    ]);
+  });
+
+  it('rejects zero-padded ids that are not in the world', () => {
+    expect(run({ id: '0193a1b2-7c00-7000-8000-0000000000ff' })).toEqual([
+      'a.getA response.id: "0193a1b2-7c00-7000-8000-0000000000ff" is a zero-padded id',
+    ]);
+  });
+
+  it('rejects one id under two entity keys in one object', () => {
+    expect(run({ id: UUID7, templateId: UUID7 })).toEqual([
+      `a.getA response.templateId: the id ${UUID7} is also the self id in this object`,
+    ]);
+    expect(run({ createdBy: UUID7, ownerUserId: UUID7 })).toEqual([]);
+  });
+
+  it('rejects objects whose numbers are all 1 or all 3', () => {
+    expect(run({ a: 3, b: 3, c: 3 })).toEqual([
+      'a.getA response: every number is 3, which reads as filler',
+    ]);
+    expect(run({ a: 1, b: 1, c: 1 })).toEqual([
+      'a.getA response: every number is 1, which reads as filler',
+    ]);
+    expect(run({ a: 3, b: 12, c: 3 })).toEqual([]);
+  });
+
+  it('rejects secret shapes a scanner reports, and accepts test-mode keys', () => {
+    const live = `pb_live_${'k3Qx9Zt2'}_${'x7Kp'.repeat(11).slice(0, 43)}`;
+    expect(run({ t: live })).toEqual([
+      `a.getA response.t: "${live.slice(0, 24)}…" looks like a live-prefixed key`,
+    ]);
+    expect(run({ t: 'ya29.a0AfH6SMBx' })).toEqual([
+      'a.getA response.t: "ya29.a0AfH6SMBx…" looks like a Google OAuth token',
+    ]);
+    expect(run({ t: 'AKIAIOSFODNN7EXAMPLE' })).toHaveLength(1);
+    expect(run({ t: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc' })).toHaveLength(1);
+    expect(run({ t: `pb_test_k3Qx9Zt2_${'b9'.repeat(21)}x` })).toEqual([]);
+    expect(run({ t: 'whsec_demo4f9a0c' })).toEqual([]);
+    expect(run({ t: 'whsec_4f9a0c31d7' })).toHaveLength(1);
+    expect(run({ t: '-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----' })).toEqual([]);
+    expect(
+      run({
+        t: `-----BEGIN PRIVATE KEY-----\n${'MIIEvQIBADANBgkq'.repeat(4)}\n-----END PRIVATE KEY-----`,
+      }),
+    ).toHaveLength(1);
+  });
+
+  it('rejects a secret that does not match its prefix', () => {
+    const key = {
+      prefix: 'k3Qx9Zt2',
+      secretPrefix: 'pb_test_k3Qx9Zt2',
+      secret: 'pb_test_q8Wm3Lr5_x',
+    };
+    expect(run(key)).toEqual(['a.getA response.secret: does not start with "pb_test_k3Qx9Zt2"']);
+    expect(run({ prefix: 'pb_test_k3Qx9Zt2', secretPrefix: 'pb_test_k3Qx9Zt2' })).toEqual([
+      'a.getA response.prefix: equals secretPrefix; the prefix is the part after the label',
+    ]);
   });
 });
