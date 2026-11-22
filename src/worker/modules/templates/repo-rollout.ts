@@ -1,7 +1,6 @@
 import { all, first, run } from '../../platform/db.ts';
 import {
   type ImpactInput,
-  impactArgs,
   MOVES_WITH_RELEASE,
   versionJoins,
 } from './repo-release-impact.ts';
