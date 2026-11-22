@@ -916,6 +916,8 @@ A PIN, pairing code or till token appears once, in the answer of the call that m
 
 An `Idempotency-Key` on create and rotate replays the answer with `keys: null`; the stored request is hashed over HMACs of any typed-in keys and the import file, never the raw values. A key's keyset writes share 30 a day, charged first and refunded when nothing commits. A `scanning:admin` key cannot touch keysets, and an `nfc:keys` key cannot touch pairing, tokens or staff (403 `MISSING_SCOPE`).
 
+On staff list, edit and reset, and on keyset list and create, an org-bound key may omit `orgId`: it acts in its own organization. A platform key gets 404 `ORG_NOT_FOUND` on every scan list, whether or not it names an organization, and a session that omits `orgId` where the list does not page across its organizations gets 422 `VALIDATION`.
+
 These keys are live and bound to one organization: a key of another organization or a platform key gets 404, the same answer as a missing id, and test-mode scanners get 404. A key's staff list shows no activity or locks; a key never makes a credential in test mode. The audit log names the key and the caller's network.
 
 Limits per key: 60 credential calls an hour, and 100 PINs, codes and tokens a day, shared with `POST /scanning-sessions/setup`; keyset writes have their own 30 a day. Over a limit is 429 `RATE_LIMITED` with `Retry-After`; a call refused with 4xx costs nothing.

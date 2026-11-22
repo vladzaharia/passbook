@@ -22,7 +22,11 @@ export const MadeTagKeysetSchema = CreatedTagKeysetSchema.extend({
   versions: z.array(TagKeyVersionSchema),
 });
 /** An org-bound key may omit `orgId`; a session names one. */
-export const TagKeysetListQuerySchema = z.object({ orgId: IdSchema.optional() });
+export const TagKeysetListQuerySchema = z.object({
+  orgId: IdSchema.optional().describe(
+    'Optional for an org-bound key, which acts in its own organization.',
+  ),
+});
 export const TagKeysetListSchema = pageOf(TagKeysetViewSchema);
 /** Entered keys, or `generate: true` (recommended). A keyset of imported tags takes the new meta key only. */
 export const RotateTagKeysetSchema = z.union([

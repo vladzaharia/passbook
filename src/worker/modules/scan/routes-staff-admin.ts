@@ -47,7 +47,11 @@ const StaffList = z.object({
   nextCursor: z.string().optional(),
 });
 /** An org-bound key may omit `orgId`; a session names one. */
-const KeyOrgQuery = z.object({ orgId: IdSchema.optional() });
+const KeyOrgQuery = z.object({
+  orgId: IdSchema.optional().describe(
+    'Optional for an org-bound key, which acts in its own organization.',
+  ),
+});
 const StaffListQuery = KeyOrgQuery.extend({
   q: z.string().trim().max(80).optional(),
   limit: z.coerce.number().int().min(1).max(STAFF_PAGE_MAX).optional(),

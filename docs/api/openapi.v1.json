@@ -113162,7 +113162,6 @@
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "SCAN_CONFIG_CHANGED",
@@ -114293,9 +114292,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 64
+              "maxLength": 64,
+              "description": "Optional for an org-bound key, which acts in its own organization."
             },
             "required": false,
+            "description": "Optional for an org-bound key, which acts in its own organization.",
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -114521,9 +114522,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 64
+              "maxLength": 64,
+              "description": "Optional for an org-bound key, which acts in its own organization."
             },
             "required": false,
+            "description": "Optional for an org-bound key, which acts in its own organization.",
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -114620,9 +114623,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 64
+              "maxLength": 64,
+              "description": "Optional for an org-bound key, which acts in its own organization."
             },
             "required": false,
+            "description": "Optional for an org-bound key, which acts in its own organization.",
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -115126,7 +115131,6 @@
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -126005,9 +126009,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 64
+              "maxLength": 64,
+              "description": "Optional for an org-bound key, which acts in its own organization."
             },
             "required": false,
+            "description": "Optional for an org-bound key, which acts in its own organization.",
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -126197,9 +126203,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 64
+              "maxLength": 64,
+              "description": "Optional for an org-bound key, which acts in its own organization."
             },
             "required": false,
+            "description": "Optional for an org-bound key, which acts in its own organization.",
             "name": "orgId",
             "in": "query",
             "x-platform-only": true

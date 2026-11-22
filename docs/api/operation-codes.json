@@ -5875,11 +5875,11 @@
     "FORBIDDEN",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
-    "ORG_REQUIRED",
     "ORG_TEST_ONLY",
     "SCAN_CONFIG_CHANGED",
     "SCAN_STAFF_CHANGED",
-    "UNAUTHENTICATED"
+    "UNAUTHENTICATED",
+    "VALIDATION"
   ],
   "scan-events get /{id}": [
     "EVENT_NOT_FOUND",
@@ -6040,9 +6040,9 @@
     "FORBIDDEN",
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
-    "ORG_REQUIRED",
     "ORG_TEST_ONLY",
-    "UNAUTHENTICATED"
+    "UNAUTHENTICATED",
+    "VALIDATION"
   ],
   "scan-zones patch /{id}": [
     "FORBIDDEN",

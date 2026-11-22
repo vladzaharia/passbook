@@ -496,6 +496,14 @@
     "note": "Callable with a live, org-bound nfc:keys key; never key material."
   },
   {
+    "key": "GET /api/v1/nfc/keysets query orgId: now optional",
+    "class": "additive",
+    "operationId": "nfc-keysets.getNfcKeysets",
+    "op": "GET /api/v1/nfc/keysets",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
+  },
+  {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgs",
@@ -766,6 +774,14 @@
     "op": "GET /api/v1/scan-staff",
     "change": "callable by scanning:admin key",
     "note": "Callable with a live, org-bound scanning:admin key: plain accounts, no activity or locks."
+  },
+  {
+    "key": "GET /api/v1/scan-staff query orgId: now optional",
+    "class": "additive",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
     "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
@@ -1238,6 +1254,14 @@
     "op": "PATCH /api/v1/scan-staff/{id}",
     "change": "callable by scanning:admin key",
     "note": "Callable with a live, org-bound scanning:admin key."
+  },
+  {
+    "key": "PATCH /api/v1/scan-staff/{id} query orgId: now optional",
+    "class": "additive",
+    "operationId": "scan-staff.patchScanStaffById",
+    "op": "PATCH /api/v1/scan-staff/{id}",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
     "key": "PATCH /api/v1/scanners/{id} 200.staff.name: now nullable",
@@ -1880,6 +1904,14 @@
     "note": "Callable with a live, org-bound nfc:keys key; generated keys are in this answer only (null on an Idempotency-Key replay)."
   },
   {
+    "key": "POST /api/v1/nfc/keysets query orgId: now optional",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysets",
+    "op": "POST /api/v1/nfc/keysets",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
+  },
+  {
     "key": "POST /api/v1/nfc/keysets/{id}/disable callable by nfc:keys key",
     "class": "additive",
     "operationId": "nfc-keysets.postNfcKeysetsByIdDisable",
@@ -2222,6 +2254,14 @@
     "op": "POST /api/v1/scan-staff/{id}/reset-pin",
     "change": "callable by scanning:admin key",
     "note": "Callable with a live, org-bound scanning:admin key; the secret is in this answer only."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/{id}/reset-pin query orgId: now optional",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffByIdResetPin",
+    "op": "POST /api/v1/scan-staff/{id}/reset-pin",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
     "key": "POST /api/v1/scan-staff/{id}/unlock-pin new operation",

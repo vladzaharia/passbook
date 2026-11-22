@@ -19,16 +19,20 @@ export const SETUP_CALLS = { counter: 'scan-setup:calls', limit: 10 } as const;
 const SECRETS_PER_DAY = 100;
 
 /**
- * The org a credential route acts in: the query's, or an org-bound key's own when it omits it. A session
- * must name one; a platform key (no org) finds none.
+ * The one decision for the org of a scan list or credential route that takes an optional `orgId`: a
+ * platform key (no org) finds none, named or not (404 `ORG_NOT_FOUND`); an org-bound key acts in the org it
+ * names, or its own when it omits it (another org is the route's own 404 or empty page); a session must name
+ * one (422, issue `invalid_type`). Lists that page across a session's orgs (sessions, setups) skip this.
  */
 export function orgOf(auth: AuthContext | undefined, given: string | undefined): string {
-  if (given !== undefined) return given;
   if (auth?.kind === 'api_key') {
     if (auth.orgId === null) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-    return auth.orgId;
+    return given ?? auth.orgId;
   }
-  throw new ValidationError('orgId is required.', [{ path: 'orgId', message: 'Required.' }]);
+  if (given !== undefined) return given;
+  throw new ValidationError('Invalid request.', [
+    { path: 'orgId', message: 'Required', code: 'invalid_type' },
+  ]);
 }
 
 /**
