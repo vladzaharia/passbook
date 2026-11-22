@@ -82,6 +82,8 @@ export interface ApiKeyAuth {
   limited?: true;
   /** Presented as a developer try token (`pbtry_`), not the key's secret. */
   via?: 'try';
+  /** For a try token: `auth_time` of the session it stands for (null: none recorded), so step-up applies to it. */
+  sessionAuthTime?: number | null;
   /** The key's org is a developer org (the sandbox); absent for every other org. */
   orgKind?: 'developer';
 }

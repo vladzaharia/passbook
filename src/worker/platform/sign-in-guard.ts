@@ -79,11 +79,12 @@ function stepUpNext(c: Context<AppBindings>): string {
 
 /**
  * A sensitive action needs a recent sign-in: the session's `auth_time` within `maxAgeSec`. A session
- * with no `auth_time` (an email link, or a provider that sent none) is always stale. Keys never get here.
+ * with no `auth_time` (an email link, or a provider that sent none) is always stale. A try token is its
+ * session in a key's clothing, so it carries the session's `auth_time`; other keys never get here.
  */
 export function assertStepUp(
   c: Context<AppBindings>,
-  session: SessionAuth,
+  session: Pick<SessionAuth, 'authTime' | 'amr'>,
   maxAgeSec: number,
 ): void {
   const now = serviceContext(c).clock.now();
@@ -115,7 +116,7 @@ export const stepUpOf = (guard: object): StepUpDecl | undefined => stepUps.get(g
 
 /**
  * Step-up for a session, registered per route (`router.post(path, requireStepUp(...))`) ahead of its
- * handler; a key passes untouched. With `when`, only requests it accepts are asked (it may read the body).
+ * handler; a key passes untouched, except a developer try token, which asks what its session would. With `when`, only requests it accepts are asked (it may read the body).
  */
 export const requireStepUp = (
   maxAgeSec: number,
@@ -124,7 +125,13 @@ export const requireStepUp = (
   declareStepUp(
     async (c, next) => {
       const auth = c.var.auth;
-      if (auth?.kind === 'session' && (!when || (await when(c)))) assertStepUp(c, auth, maxAgeSec);
+      const person =
+        auth?.kind === 'session'
+          ? auth
+          : auth?.kind === 'api_key' && auth.via === 'try'
+            ? { authTime: auth.sessionAuthTime ?? null, amr: 'oidc' as const }
+            : null;
+      if (person && (!when || (await when(c)))) assertStepUp(c, person, maxAgeSec);
       await next();
     },
     { maxAgeSec, conditional: when !== undefined },

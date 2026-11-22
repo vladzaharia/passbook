@@ -95,7 +95,10 @@ export async function resolveTryToken(
   const row = await tryTokenKeyRow(env.DB, claims, now);
   if (!row) return null;
   const auth = await keyAuthOf(env, clock, row, caller, options);
-  if (auth) auth.via = 'try';
+  if (auth) {
+    auth.via = 'try';
+    auth.sessionAuthTime = row.session_auth_time;
+  }
   return auth;
 }
 
