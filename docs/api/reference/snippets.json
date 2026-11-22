@@ -184,5 +184,27 @@
         "name": "Main hall"
       }
     }
+  },
+  "nfc-keysets.postNfcKeysets": {
+    "snippet": {
+      "request": {
+        "name": "Staff badges",
+        "generate": true
+      }
+    }
+  },
+  "nfc-keysets.postNfcKeysetsByIdRotate": {
+    "snippet": {
+      "request": {
+        "generate": true
+      }
+    }
+  },
+  "scan-staff.patchScanStaffById": {
+    "snippet": {
+      "request": {
+        "role": "manager"
+      }
+    }
   }
 }

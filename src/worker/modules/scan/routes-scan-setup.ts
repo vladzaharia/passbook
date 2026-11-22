@@ -4,7 +4,9 @@ import {
   ScanSetupIntentSchema,
 } from '../../../shared/contracts/scan-setup-intent.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
+import { ipPrefix } from '../../platform/ip.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
+import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { applyScanSetup, dryRunSetup } from './setup-intent.ts';
 
@@ -44,6 +46,7 @@ export function registerScanSetup(router: Router): void {
         method: c.req.method,
         path: c.req.path,
         origin: new URL(c.req.url).origin,
+        ip: ipPrefix(clientIp(c)),
       });
       if (result.replayed) c.header('Idempotent-Replayed', 'true');
       return c.json(result);

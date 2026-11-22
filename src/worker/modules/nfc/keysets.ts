@@ -44,11 +44,25 @@ const SLUG_TRIES = 3;
 export type KeysetView = z.infer<typeof TagKeysetViewSchema>;
 export type MadeKeyset = KeysetView & { keys: Keys | null };
 
-/** The captured console session holds scanning:manage for this org. */
-export function keysetAuthorityOf(authority: TenantPassWrite): KeysetAuthority {
-  if (authority.kind !== 'session' || authority.capability !== 'scanning:manage')
-    throw new ForbiddenError();
-  return { ...authority, capability: 'scanning:manage' };
+/**
+ * The captured console session holds scanning:manage for this org, or the key is a live `nfc:keys` key
+ * bound to it (platform keys, test keys and other scopes are refused).
+ */
+export function keysetAuthorityOf(
+  authority: TenantPassWrite,
+  ip: string | null = null,
+): KeysetAuthority {
+  if (authority.kind === 'api_key') {
+    if (
+      authority.scope !== 'nfc:keys' ||
+      authority.keyOrgId !== authority.orgId ||
+      authority.mode !== 'live'
+    )
+      throw new ForbiddenError();
+    return { ...authority, scope: 'nfc:keys', ip };
+  }
+  if (authority.capability !== 'scanning:manage') throw new ForbiddenError();
+  return { ...authority, capability: 'scanning:manage', ip };
 }
 
 const notFound = () => new NotFoundError('Keyset not found.', 'KEYSET_NOT_FOUND');
@@ -97,9 +111,14 @@ export const scopeOf = (k: Pick<KeysetRow, 'id' | 'orgId' | 'mode'>): KeyScope =
 });
 
 /** Turns the keyset triggers' refusals into stable answers. */
-export async function commitKeyset(g: { commit(): Promise<D1Result[]> }): Promise<D1Result[]> {
+export async function commitKeyset(
+  g: { commit(): Promise<D1Result[]> },
+  a?: Pick<KeysetAuthority, 'onCommit'>,
+): Promise<D1Result[]> {
   try {
-    return await g.commit();
+    const results = await g.commit();
+    a?.onCommit?.();
+    return results;
   } catch (error) {
     const text = error instanceof Error ? error.message : '';
     if (text.includes('keyset_limit'))
@@ -163,7 +182,7 @@ export async function createKeyset(
       first,
     });
     try {
-      await commitKeyset(g);
+      await commitKeyset(g, a);
       break;
     } catch (error) {
       const clash = error instanceof ConflictError && error.code === 'KEYSET_CHANGED';
@@ -210,6 +229,7 @@ export async function rotateKeyset(
       version: next,
       envelope: await sealVersion(ring, { ...scope, keyId, version: next }, meta, file),
     }),
+    a,
   );
   return { ...(await keysetView(ctx, a, id)), keys: shown };
 }
@@ -231,7 +251,7 @@ export async function retireKeyVersion(
   if (found.state === 'retired') return keysetView(ctx, a, id);
   if (found.tags > 0)
     throw conflict(`${found.tags} tags still use version ${version}.`, 'KEYSET_KEY_IN_USE');
-  await commitKeyset(retireKeyGrant(ctx, a, id, version));
+  await commitKeyset(retireKeyGrant(ctx, a, id, version), a);
   return keysetView(ctx, a, id);
 }
 
@@ -242,7 +262,7 @@ export async function disableKeyset(
   id: string,
 ): Promise<KeysetView> {
   const row = await keysetIn(ctx, a, id);
-  if (row.disabledAt === null) await commitKeyset(disableKeysetGrant(ctx, a, id));
+  if (row.disabledAt === null) await commitKeyset(disableKeysetGrant(ctx, a, id), a);
   return keysetView(ctx, a, id);
 }
 

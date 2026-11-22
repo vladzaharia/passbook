@@ -22,7 +22,7 @@ export async function revokeKeyVersion(
   );
   if (!found) throw new NotFoundError('Key version not found.', 'KEYSET_KEY_NOT_FOUND');
   if (found.state === 'retired') return keysetView(ctx, a, id);
-  await commitKeyset(revokeKeyGrant(ctx, a, id, version, found.state, found.tags));
+  await commitKeyset(revokeKeyGrant(ctx, a, id, version, found.state, found.tags), a);
   return keysetView(ctx, a, id);
 }
 
@@ -55,7 +55,7 @@ export async function reenrolTags(
     toVersion: active.version,
     tags: movable,
   });
-  const results = await commitKeyset(grant);
+  const results = await commitKeyset(grant, a);
   const n = results[grant.indexOf(moved)]?.results?.length ?? 0;
   return { moved: n, ownKey, keyset: await keysetView(ctx, a, fromId) };
 }
