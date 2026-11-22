@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Upload } from 'lucide-react';
 import { useDeferredValue, useMemo, useState } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
+import { pluralize } from '@/web/lib/format.ts';
 import { useArrivalMode } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { Buddy, Button, EmptyState, ErrorState, FilterBar, PageHeader } from '../../ui/index.ts';
@@ -71,7 +72,7 @@ export function BlueprintsPage() {
             />
           </div>
           <p role="status" className="sr-only">
-            {`${shown.length} blueprints`}
+            {pluralize(shown.length, 'blueprint')}
           </p>
           {none ? (
             <EmptyState inline art="template" title="No blueprints match" />

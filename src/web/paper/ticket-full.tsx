@@ -43,7 +43,7 @@ function Band({ p }: { p: TicketProps }) {
       </div>
       <div className="pp-bottom">
         <div className="pp-kicker">{c.kicker}</div>
-        <h1>{c.title}</h1>
+        <h2>{c.title}</h2>
       </div>
     </div>
   );

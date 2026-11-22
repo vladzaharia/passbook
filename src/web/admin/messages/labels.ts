@@ -1,5 +1,5 @@
 import type { BroadcastDto, BroadcastKind, BroadcastState } from '@/shared/contracts/broadcasts.ts';
-import { formatCount, formatDateTime } from '../../lib/format.ts';
+import { formatCount, formatDateTime, pluralize } from '../../lib/format.ts';
 
 export const KIND_LABEL: Record<BroadcastKind, string> = {
   message: 'Message',
@@ -87,7 +87,7 @@ export function audienceOf(b: BroadcastDto, eventName?: string): string {
       b.target.scan
         ? 'eventId' in b.target.scan
           ? `${b.target.scan.checkedIn ? 'Checked in' : 'Not checked in'} · ${eventName ?? 'an event'}`
-          : `No scan in ${b.target.scan.noScanDays} days`
+          : `No scan in ${pluralize(b.target.scan.noScanDays, 'day')}`
         : null,
       b.target.q ? `Matching “${b.target.q}”` : null,
     ]

@@ -106,7 +106,7 @@ export const HOLDER_COPY = {
   stackLabel: 'Passes',
   addAllTitle: 'Add all to Apple Wallet',
   addAllOne: 'Add to Apple Wallet',
-  addAllCount: (n: number) => `Add ${n} passes`,
+  addAllCount: (n: number) => (n === 1 ? 'Add 1 pass' : `Add ${n} passes`),
   removalPending: (n: number) => (n === 1 ? 'Removing 1 pass.' : `Removing ${n} passes.`),
   removalPendingLine: 'Each leaves this list once your wallets let go of it.',
   removalStarted: 'Removal started. It finishes once your wallets let go of the pass.',

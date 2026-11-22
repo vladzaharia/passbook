@@ -8,7 +8,8 @@ test.use({ storageState: 'e2e/.auth/admin.json' });
 const COUNT = 101;
 // 101 passes and a background run: each step gets longer than the default five seconds.
 const slow = expect.configure({ timeout: 30_000 });
-const prefix = uid('BR').toUpperCase();
+// The bar offers "ID starts with" only for ID-like text, which needs a digit; a random uid may have none.
+const prefix = `${uid('BR').toUpperCase()}0`;
 
 test('select all matching, void in the background, watch it finish', async ({ page }) => {
   test.setTimeout(420_000);
@@ -22,6 +23,9 @@ test('select all matching, void in the background, watch it finish', async ({ pa
   const bar = page.getByRole('combobox', { name: 'Find passes' });
   await bar.click();
   await bar.pressSequentially(`${prefix}-`);
+  // The ID offer needs the template's input fields, which load after the page; until then Enter
+  // would take another offer. Wait for the offer itself.
+  await slow(page.getByRole('option', { name: `ID starts with ${prefix}-` })).toBeVisible();
   await page.keyboard.press('Enter');
   await slow(page.getByText(`ID starts with ${prefix}-`)).toBeVisible();
   await slow(page.getByRole('link', { name: /^Run \d+$/ }).first()).toBeVisible();

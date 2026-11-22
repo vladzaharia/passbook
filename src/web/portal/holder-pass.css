@@ -221,8 +221,8 @@
 @media (pointer: coarse) {
   .wl-holder p > a,
   .wl-hh p > a {
-    padding-block: calc((2.75rem - 1.2em) / 2);
-    margin-block: calc((1.2em - 2.75rem) / 2);
+    padding-block: calc((2.75rem - 1.1em) / 2);
+    margin-block: calc((1.1em - 2.75rem) / 2);
   }
 }
 

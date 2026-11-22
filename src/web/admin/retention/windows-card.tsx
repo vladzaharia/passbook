@@ -1,5 +1,6 @@
 import { RETENTION_COPY, RETENTION_LINES } from '@/shared/copy/retention.ts';
 import { DATA_CLASSES, RETENTION_CLASSES } from '@/shared/privacy/data-classes.ts';
+import { pluralize } from '@/web/lib/format.ts';
 import { Card, CardBody, CardHeader, ErrorState, KeyValue, SkeletonRows } from '@/web/ui/index.ts';
 import { ORG_FIELDS } from '../settings/fields-org.ts';
 import { useSettings } from '../settings/queries.ts';
@@ -21,7 +22,7 @@ function EffectiveWindows({ orgId }: { orgId: string }) {
       label: DATA_CLASSES[cls].label,
       value: (
         <>
-          {typeof days === 'number' ? `${days} days` : 'Platform default'}
+          {typeof days === 'number' ? pluralize(days, 'day') : 'Platform default'}
           <span className="block text-xs text-fg-muted">{RETENTION_LINES[cls]}</span>
         </>
       ),

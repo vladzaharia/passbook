@@ -11,6 +11,7 @@ import {
   formatShortDateHour,
   formatTime,
   formatWallTime,
+  pluralize,
 } from './format.ts';
 
 // Local wall time, so the expectations hold in any zone the tests run in.
@@ -68,5 +69,13 @@ describe('formatEndedOn', () => {
 describe('formatExpiry date-only', () => {
   it('shows the written day in a western zone', () => {
     expect(formatExpiry('2026-12-01', 'America/Los_Angeles')).toBe('Dec 1, 2026');
+  });
+});
+
+describe('pluralize', () => {
+  it('keeps the noun singular only for 1', () => {
+    expect(pluralize(0, 'tag')).toBe('0 tags');
+    expect(pluralize(1, 'tag')).toBe('1 tag');
+    expect(pluralize(2, 'tag')).toBe('2 tags');
   });
 });
