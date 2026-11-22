@@ -47,7 +47,7 @@ export function walletQueueGrant(
   const always = ALWAYS.includes(purpose);
   return jobGrant(ctx, {
     purpose: `org_mode.job.wallet.${purpose}`,
-    job: 'wallet-sync',
+    job: ctx.jobName ?? 'wallet-sync',
     orgId: scope.orgId,
     mode: scope.mode,
     ...(always ? { inactiveOk: true as const, closedOk: true as const } : {}),

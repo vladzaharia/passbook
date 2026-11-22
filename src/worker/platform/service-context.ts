@@ -19,6 +19,8 @@ export interface ServiceContext {
   requestId: string | null;
   /** Set by `createJobContext` only; `jobGrant` refuses a context without it. */
   job?: JobAuthority;
+  /** The job kind a job context was made for, so a grant's audit row names it. */
+  jobName?: string;
   /** The request's key came as a developer try token: its audit rows carry `via: 'try'`. */
   via?: 'try';
   waitUntil(promise: Promise<unknown>): void;
@@ -82,9 +84,12 @@ export function createJobContext(
   kind: string,
   options: ContextOptions = {},
 ): ServiceContext {
-  return withJobAuthority(
-    createDetachedContext(env, { ...options, base: { job: kind, ...options.base } }),
-  );
+  return {
+    ...withJobAuthority(
+      createDetachedContext(env, { ...options, base: { job: kind, ...options.base } }),
+    ),
+    jobName: kind,
+  };
 }
 
 /** The detached form, kept for tests and fixtures that need a plain context. */

@@ -17,6 +17,7 @@ import {
   WalletRuntimeError,
   type WalletRuntimeScope,
 } from './runtime-core-credentials.ts';
+import { runtimeGoogleIssuanceCurrent } from './runtime-google-issuance.ts';
 import {
   captureRuntimeResponse,
   type WalletRuntimeResponseSink,
@@ -80,7 +81,11 @@ function safeProviderError(error: unknown, ambiguous: boolean): Error {
     return new GoogleWalletError(
       error.code,
       // The token exchange has no side effects, so its failures stay distinguishable.
-      error.operation === 'oauth' ? 'oauth' : 'runtime',
+      error.operation === 'oauth'
+        ? 'oauth'
+        : error.operation.endsWith(' confirm')
+          ? 'confirm'
+          : 'runtime',
       error.status,
       error.retryAfterMs,
       error.staleToken,
@@ -210,8 +215,7 @@ export async function assertWalletRuntimeAccount(
   ctx = snapshotWalletCredentialContext(ctx);
   const scope = copyRuntimeScope(input);
   if (provider !== 'google' && provider !== 'samsung') throw runtimeAccountUnavailable();
-  const issuance = { kind: 'issuance' } as const;
-  if (provider === 'google') await runtimeGoogleAccount(ctx, scope, issuance);
-  else await runtimeSamsungAccount(ctx, scope);
-  await current(ctx, scope, provider, provider === 'google' ? issuance : undefined);
+  if (provider === 'google') return runtimeGoogleIssuanceCurrent(ctx, scope);
+  await runtimeSamsungAccount(ctx, scope);
+  await current(ctx, scope, provider);
 }

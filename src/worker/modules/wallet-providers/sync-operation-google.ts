@@ -5,6 +5,7 @@ import { compileGooglePass, projectionGoogleType } from './google-compile.ts';
 import { markWalletClaimUncertain } from './instance.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { renderGoogleProjection } from './render-projection.ts';
+import { getGoogleBindingClass } from './repo-google-callback.ts';
 import { readPassSnapshot } from './repo-instance.ts';
 import {
   inactivateGoogleRuntimeObject,
@@ -27,7 +28,7 @@ export async function runGoogleWalletProviderOperation(
 ): Promise<WalletSyncRunResult> {
   const { ctx, claim, op, assertCurrent, onProviderResponse, holdClaim } = execution;
   let providerStarted = false;
-  let confirmed = false;
+  let confirmed: 'inactive' | 'absent' | undefined;
   try {
     const type = projectionGoogleType(binding.original.projection);
     const identity = {
@@ -41,12 +42,13 @@ export async function runGoogleWalletProviderOperation(
     if (op.kind === 'revoke') {
       providerStarted = true;
       // G5: PUT inactive, then GET to confirm. Only a confirmed revoke lets retirement settle.
-      await inactivateGoogleRuntimeObject(ctx, binding.scope, {
+      const issued = await getGoogleBindingClass(ctx.env.DB, op.instanceId);
+      confirmed = await inactivateGoogleRuntimeObject(ctx, binding.scope, {
         ...identity,
         ...(binding.original.projection.schema === 2 ? { type } : {}),
+        ...(issued ? { classIdHash: issued.classIdHash } : {}),
         retirement,
       });
-      confirmed = true;
     } else {
       const pass = await readPassSnapshot(ctx.env.DB, op);
       if (!pass?.issuingReleaseId || binding.original.projection.provider !== 'google') {
@@ -90,19 +92,39 @@ export async function runGoogleWalletProviderOperation(
       if (approved.projection.schema === 2) {
         // The compiler is the content (architecture 6): each type has its own class and object.
         const found = await getPass(ctx.env.DB, op.passId);
-        const compiled = found
-          ? await compileGooglePass(ctx, found, approved.projection)
-          : 'unreadable';
+        const own = found?.orgId === op.orgId && found.mode === op.mode ? found : null;
+        const candidateId = approved.release.candidateId;
+        const compiled =
+          own && candidateId
+            ? await compileGooglePass(ctx, own, approved.projection, candidateId)
+            : 'unreadable';
+        if (compiled === 'art_missing') {
+          // Publication stored the art; rebuild it and let the claim retry.
+          await ctx.env.JOBS.send({ kind: 'wallet.google_art', candidateId: candidateId ?? '' });
+          return complete(ctx, claim, op, {
+            kind: 'failure',
+            reason: 'unavailable',
+            retryable: true,
+          });
+        }
+        const issued = await getGoogleBindingClass(ctx.env.DB, op.instanceId);
         if (
           typeof compiled === 'string' ||
           binding.original.projection.schema !== 2 ||
-          type !== compiled.type
+          type !== compiled.type ||
+          // A class key that changed after issue would name another class: refused like a type change.
+          (issued !== null && (issued.classKey ?? undefined) !== compiled.classKey)
         ) {
           // Not a provider fault, and a class is never reassociated: keep the original binding.
           ctx.log.warn('wallet.google_compile_refused', {
             code: 'WALLET_GOOGLE_COMPILE',
             orgId: op.orgId,
-            reason: typeof compiled === 'string' ? compiled : 'type_changed',
+            reason:
+              typeof compiled === 'string'
+                ? compiled
+                : type !== compiled.type
+                  ? 'type_changed'
+                  : 'class_key_changed',
           });
           return complete(ctx, claim, op, {
             kind: 'failure',
@@ -124,13 +146,18 @@ export async function runGoogleWalletProviderOperation(
         });
         await assertCurrent();
         providerStarted = true;
-        await upsertGoogleRuntimeClass(ctx, binding.scope, {
+        const classResult = await upsertGoogleRuntimeClass(ctx, binding.scope, {
           releaseId: op.identityProjectionReleaseId,
           ...partition,
           projection: { ...compiled.classBody, ...callback },
           assertCurrent,
           onProviderResponse,
         });
+        if (classResult === 'drift')
+          ctx.log.warn('wallet.google_class_drift', {
+            code: 'GOOGLE_CLASS_DRIFT',
+            orgId: op.orgId,
+          });
         await assertCurrent();
         await upsertGoogleRuntimeObject(ctx, binding.scope, {
           ...identity,
@@ -180,7 +207,7 @@ export async function runGoogleWalletProviderOperation(
       ctx,
       claim,
       op,
-      confirmed ? { kind: 'success', confirmed: true } : { kind: 'success' },
+      confirmed ? { kind: 'success', confirmed } : { kind: 'success' },
     );
   } catch (error) {
     if (execution.fenceLost) return holdClaim();

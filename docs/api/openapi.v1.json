@@ -129739,7 +129739,6 @@
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
           "VALIDATION",
-          "WALLET_ART_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -130516,7 +130515,6 @@
           "TEMPLATE_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
-          "WALLET_ART_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]

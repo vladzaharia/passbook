@@ -212,11 +212,13 @@ describe('per-type class and object upsert', () => {
       'unchanged',
     );
     expect(mock.requests.filter((r) => r.method === 'PATCH')).toEqual([]);
-    // A changed class is patched, with its review state, once.
+    // A changed body is drift: the class is kept as it is, never patched, so a second pass of the key
+    // cannot rewrite it (or send it back through review).
     const changed = { ...classBody, programName: 'Club 2' };
-    expect(await upsertGoogleClass(ctx, 'loyalty', classScope, changed as never)).toBe('updated');
-    expect(await upsertGoogleClass(ctx, 'loyalty', classScope, changed as never)).toBe('unchanged');
-    expect(mock.requests.filter((r) => r.method === 'PATCH')).toHaveLength(1);
+    expect(await upsertGoogleClass(ctx, 'loyalty', classScope, changed as never)).toBe('drift');
+    expect(await upsertGoogleClass(ctx, 'loyalty', classScope, changed as never)).toBe('drift');
+    expect([...mock.google.loyaltyClass.values()][0]).toMatchObject({ programName: 'Club' });
+    expect(mock.requests.filter((r) => r.method === 'PATCH')).toEqual([]);
   });
 
   it('retries idempotently: a repeated object upsert patches the same object', async () => {
@@ -333,7 +335,7 @@ describe('revoke: PUT inactive, then GET to confirm', () => {
     });
   });
 
-  it('does not report a revoke that Google did not keep: the outcome is unknown', async () => {
+  it('retries rather than settles when Google gives the object back still active', async () => {
     const { objectScope, resource } = await issued('offer');
     // Google acknowledges the PUT but serves the old object on the read back.
     let held: unknown;
@@ -353,17 +355,63 @@ describe('revoke: PUT inactive, then GET to confirm', () => {
       return fetcher(input, init);
     }) as typeof fetch;
     const ctx = await rest(stale);
+    // A distinct code, which the operation classes as a retry (the PUT is a full replace).
     await expect(revokeGoogleObject(ctx, 'offer', objectScope, message)).rejects.toMatchObject({
-      code: 'server_error',
-      status: 502,
+      code: 'invalid_response',
+      operation: expect.stringContaining('confirm'),
     });
+    // The retry reads a good copy and settles.
+    const again = await rest();
+    expect(await revokeGoogleObject(again, 'offer', objectScope, message)).toBe('inactive');
   });
 
-  it('refuses to revoke an object it never issued', async () => {
+  it('accepts the state in any case, and does not send the tap value or output-only fields', async () => {
+    const { ctx, objectScope, objectId, resource } = await issued('loyalty');
+    Object.assign(mock.google[resource].get(objectId) ?? {}, {
+      smartTapRedemptionValue: 'tap',
+      hasUsers: true,
+      version: '3',
+      kind: 'walletobjects#loyaltyObject',
+    });
+    const lower = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await fetcher(input, init);
+      if ((init?.method ?? 'GET') !== 'GET' || !String(input).includes(resource)) return response;
+      const body = (await response.json()) as Record<string, unknown>;
+      return Response.json({ ...body, state: String(body.state).toLowerCase() });
+    }) as typeof fetch;
+    expect(
+      await revokeGoogleObject({ ...ctx, fetcher: lower }, 'loyalty', objectScope, message),
+    ).toBe('inactive');
+    const put = mock.requests.find((r) => r.method === 'PUT')?.body as Record<string, unknown>;
+    for (const key of ['smartTapRedemptionValue', 'hasUsers', 'version', 'kind', 'barcode'])
+      expect(put).not.toHaveProperty(key);
+  });
+
+  it('refuses an object that sits under another class of the issuer', async () => {
+    const { ctx, objectScope, objectId, resource } = await issued('loyalty');
+    const other = await googleClassId(ISSUER, secret, {
+      tenantId: 'other-org',
+      releaseId: 'r',
+      type: 'loyalty',
+    });
+    mock.google.loyaltyClass.set(other, { id: other });
+    Object.assign(mock.google[resource].get(objectId) ?? {}, { classId: other });
+    await expect(revokeGoogleObject(ctx, 'loyalty', objectScope, message)).rejects.toMatchObject({
+      code: 'conflict',
+    });
+    expect(mock.requests.filter((r) => r.method === 'PUT')).toEqual([]);
+    // The class the instance was issued under (its binding's hash) is what the revoke keeps to.
+    const { sha256Hex } = await import('../../platform/ids.ts');
+    expect(
+      await revokeGoogleObject(ctx, 'loyalty', objectScope, message, await sha256Hex(other)),
+    ).toBe('inactive');
+  });
+
+  it('treats an object Google does not have as absent, and sends nothing', async () => {
     const ctx = await rest();
-    await expect(
-      revokeGoogleObject(ctx, 'event', { ...scope, type: 'event' }, message),
-    ).rejects.toMatchObject({ code: 'not_found' });
+    expect(await revokeGoogleObject(ctx, 'event', { ...scope, type: 'event' }, message)).toBe(
+      'absent',
+    );
     expect(mock.requests.filter((r) => r.method === 'PUT')).toEqual([]);
   });
 });

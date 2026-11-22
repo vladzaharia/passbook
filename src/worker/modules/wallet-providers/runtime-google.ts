@@ -62,6 +62,8 @@ interface GoogleRuntimeObjectIdentity extends GoogleRuntimePartition {
 }
 
 interface GoogleRuntimeInactivateInput extends GoogleRuntimeObjectIdentity {
+  /** The hash of the class the instance was issued under (its callback binding); the revoke keeps to it. */
+  classIdHash?: string;
   onProviderResponse: WalletRuntimeResponseSink;
   retirement: WalletRetirementClaim;
 }
@@ -185,27 +187,31 @@ export async function upsertGoogleRuntimeClass(
   ctx: ServiceContext,
   scope: WalletRuntimeScope,
   input: GoogleRuntimeClassInput,
-): Promise<void> {
+): Promise<'ok' | 'drift'> {
   ctx = snapshotWalletCredentialContext(ctx);
-  await withGoogleRest(
+  return withGoogleRest(
     ctx,
     scope,
     input.assertCurrent,
     'google-class',
     input.onProviderResponse,
-    (rest, s) =>
-      input.type === undefined
-        ? upsertGoogleGenericClass(
-            rest,
-            { tenantId: s.orgId, releaseId: input.releaseId },
-            input.projection,
-          )
-        : upsertGoogleClass(
-            rest,
-            input.type,
-            { tenantId: s.orgId, releaseId: input.releaseId, ...partition(input) },
-            input.projection,
-          ),
+    async (rest, s) => {
+      if (input.type === undefined) {
+        await upsertGoogleGenericClass(
+          rest,
+          { tenantId: s.orgId, releaseId: input.releaseId },
+          input.projection,
+        );
+        return 'ok';
+      }
+      const result = await upsertGoogleClass(
+        rest,
+        input.type,
+        { tenantId: s.orgId, releaseId: input.releaseId, ...partition(input) },
+        input.projection,
+      );
+      return result === 'drift' ? 'drift' : 'ok';
+    },
   );
 }
 
@@ -273,7 +279,7 @@ export async function inactivateGoogleRuntimeObject(
   ctx: ServiceContext,
   scope: WalletRuntimeScope,
   input: GoogleRuntimeInactivateInput,
-): Promise<void> {
+): Promise<'inactive' | 'absent'> {
   ctx = snapshotWalletCredentialContext(ctx);
   scope = copyRuntimeScope(scope);
   const {
@@ -292,18 +298,20 @@ export async function inactivateGoogleRuntimeObject(
     credentialGeneration,
     channelEpoch,
   });
-  await withGoogleRest(
+  return withGoogleRest(
     ctx,
     scope,
     assertCurrent,
     'google-object',
     onProviderResponse,
     (rest, s) =>
-      revokeGoogleObject(rest, input.type ?? 'generic', objectScope(s, input), {
-        id: claim.operationId,
-        header: 'Pass status',
-        body: REVOKED_MESSAGE,
-      }),
+      revokeGoogleObject(
+        rest,
+        input.type ?? 'generic',
+        objectScope(s, input),
+        { id: claim.operationId, header: 'Pass status', body: REVOKED_MESSAGE },
+        input.classIdHash,
+      ),
     retirement,
   );
 }

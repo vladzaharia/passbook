@@ -1,4 +1,4 @@
-import { walletFirstTapContext } from '../../jobs/wallet-first-tap.ts';
+import { runFirstTapUpsert } from '../../jobs/wallet-first-tap.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, UnavailableError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -9,27 +9,36 @@ import { getWalletOperation, type WalletInstance, type WalletOperation } from '.
 import type { EligibleWalletProvider } from './offers-eligibility.ts';
 import { walletOfferNotFound as notFound } from './offers-instance.ts';
 import { createGoogleRuntimeOffer } from './runtime.ts';
-import { runWalletProviderOperation } from './sync-operation.ts';
 
 /** The first tap builds the object itself, inside this budget; a slower provider gets an error page. */
-const FIRST_TAP_BUDGET_MS = 15_000;
+let firstTapBudgetMs = 15_000;
+
+/** Tests only: a budget short enough to outlast with a slow provider. */
+export function setFirstTapBudgetForTest(ms: number): () => void {
+  const previous = firstTapBudgetMs;
+  firstTapBudgetMs = ms;
+  return () => {
+    firstTapBudgetMs = previous;
+  };
+}
 
 /** Runs the pending operation inline and returns it as it stands, or null when it did not finish in time. */
 async function provisionFirstTap(
   ctx: ServiceContext,
   operation: WalletOperation,
+  pass: Pass,
 ): Promise<WalletOperation | null> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const outcome = await Promise.race([
-      runWalletProviderOperation(walletFirstTapContext(ctx), operation).catch((error: unknown) => {
+      runFirstTapUpsert(ctx, operation, pass).catch((error: unknown) => {
         ctx.log.warn('wallet.google_first_tap_failed', {
           code: error instanceof AppError ? error.code : 'WALLET_GOOGLE_FIRST_TAP',
         });
         return 'failed' as const;
       }),
       new Promise<'timeout'>((resolve) => {
-        timer = setTimeout(() => resolve('timeout'), FIRST_TAP_BUDGET_MS);
+        timer = setTimeout(() => resolve('timeout'), firstTapBudgetMs);
       }),
     ]);
     ctx.log.info('wallet.google_first_tap_ran', { code: 'WALLET_GOOGLE_FIRST_TAP', outcome });
@@ -59,7 +68,7 @@ export async function googleSaveLocation(
   let { operation } = p;
   const projection = eligible.approved.projection;
   if (operation.state !== 'succeeded') {
-    const ready = await provisionFirstTap(ctx, operation);
+    const ready = await provisionFirstTap(ctx, operation, pass);
     if (ready?.state !== 'succeeded' || ready.id !== operation.id) {
       ctx.log.warn('wallet.google_first_tap_pending', {
         code: 'WALLET_GOOGLE_FIRST_TAP',

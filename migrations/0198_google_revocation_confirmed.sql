@@ -5,31 +5,56 @@
 -- revoke, and settles the instance through the retirement view.
 
 -- The class a typed object belongs to depends on its type and class key, which the callback must
--- re-derive. NULL means the original derivation (Generic, one class per release).
+-- re-derive. NULL means the original derivation (Generic, one class per release). A key needs a type.
 ALTER TABLE wallet_google_callback_bindings ADD COLUMN class_type TEXT
   CHECK(class_type IS NULL OR class_type IN ('generic', 'event', 'loyalty', 'gift', 'offer'));
 ALTER TABLE wallet_google_callback_bindings ADD COLUMN class_key TEXT
-  CHECK(class_key IS NULL OR (length(class_key) = 64 AND class_key NOT GLOB '*[^0-9a-f]*'));
+  CHECK(class_key IS NULL OR (class_type IS NOT NULL AND length(class_key) = 64 AND class_key NOT GLOB '*[^0-9a-f]*'));
 
+-- `inactive`: Google served the object back inactive and without a barcode. `absent`: Google has no such
+-- object (a 404), so no replayed save link can show one. Either way the stored response of the confirming
+-- read is referenced, so the evidence can be checked against what Google said.
 CREATE TABLE wallet_google_revocation_confirmations (
   operation_id TEXT PRIMARY KEY REFERENCES wallet_provider_instance_operations(id) ON DELETE CASCADE,
   instance_id TEXT NOT NULL REFERENCES wallet_provider_instances(id) ON DELETE CASCADE,
   version INTEGER NOT NULL CHECK(version > 0),
+  outcome TEXT NOT NULL CHECK(outcome IN ('inactive', 'absent')),
+  outcome_id TEXT NOT NULL REFERENCES wallet_provider_instance_outcomes(id) ON DELETE CASCADE,
   confirmed_at INTEGER NOT NULL,
   credential_keyset_commitment TEXT NOT NULL
   CHECK(length(credential_keyset_commitment) = 64 AND credential_keyset_commitment NOT GLOB '*[^0-9a-f]*')
 );
 CREATE INDEX wallet_google_revocation_confirmations_instance ON wallet_google_revocation_confirmations(instance_id);
+CREATE INDEX wallet_google_revocation_confirmations_outcome ON wallet_google_revocation_confirmations(outcome_id);
 CREATE TRIGGER wallet_google_revocation_confirmations_insert BEFORE INSERT ON wallet_google_revocation_confirmations
 WHEN NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations op
   JOIN wallet_provider_instances i ON i.id = op.instance_id
+  JOIN wallet_provider_instance_outcomes o ON o.id = NEW.outcome_id AND o.operation_id = op.id
+    AND o.attempt = op.attempts
   WHERE op.id = NEW.operation_id AND op.instance_id = NEW.instance_id AND op.version = NEW.version
     AND op.kind = 'revoke' AND op.state IN ('claimed', 'uncertain') AND i.provider = 'google'
     AND op.credential_keyset_commitment = NEW.credential_keyset_commitment
-    AND i.credential_keyset_commitment = NEW.credential_keyset_commitment)
-BEGIN SELECT RAISE(ABORT, 'google revocation confirmation needs a claimed revoke'); END;
+    AND i.credential_keyset_commitment = NEW.credential_keyset_commitment
+    AND o.http_status = CASE NEW.outcome WHEN 'inactive' THEN 200 ELSE 404 END)
+BEGIN SELECT RAISE(ABORT, 'google revocation confirmation needs a claimed revoke and its read back'); END;
 CREATE TRIGGER wallet_google_revocation_confirmations_immutable BEFORE UPDATE ON wallet_google_revocation_confirmations
 BEGIN SELECT RAISE(ABORT, 'google revocation confirmation is immutable'); END;
+-- The evidence stays until the instance settles; deleting it before then would unsettle a revoke.
+CREATE TRIGGER wallet_google_revocation_confirmations_keep BEFORE DELETE ON wallet_google_revocation_confirmations
+WHEN EXISTS (SELECT 1 FROM wallet_provider_instances i
+  WHERE i.id = OLD.instance_id AND i.retirement_settled_at IS NULL)
+BEGIN SELECT RAISE(ABORT, 'google revocation confirmation is kept until retirement settles'); END;
+
+-- The art a release published: which template file became which public copy, so a claim reads it instead
+-- of cutting images (CW9b). Written with the release; a missing copy is rebuilt by wallet.google_art.
+CREATE TABLE wallet_projection_art_files (
+  candidate_id TEXT NOT NULL REFERENCES template_candidates(id) ON DELETE CASCADE,
+  asset TEXT NOT NULL,
+  sha256 TEXT NOT NULL CHECK(length(sha256) = 64 AND sha256 NOT GLOB '*[^0-9a-f]*'),
+  width INTEGER NOT NULL CHECK(width > 0),
+  height INTEGER NOT NULL CHECK(height > 0),
+  PRIMARY KEY (candidate_id, asset)
+);
 
 -- The Google branch of the retirement evidence, in its own view so no expression gets deeper.
 CREATE VIEW wallet_google_retirement_complete AS
@@ -142,6 +167,8 @@ WHEN OLD.retirement_settled_at IS NULL
     AND (p.org_id != OLD.org_id OR p.mode != OLD.mode))
 BEGIN SELECT RAISE(ABORT, 'provider retirement incomplete'); END;
 
+-- BEFORE triggers fire newest first, so this one now answers before the others on lifecycle; the rules
+-- are 0114's apart from the Google clause.
 DROP TRIGGER wallet_provider_instances_lifecycle_forward;
 CREATE TRIGGER wallet_provider_instances_lifecycle_forward BEFORE UPDATE OF lifecycle ON wallet_provider_instances
 WHEN (OLD.lifecycle = 'retired' AND NEW.lifecycle != 'retired')

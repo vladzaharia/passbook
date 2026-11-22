@@ -129,8 +129,11 @@ export type WalletProviderResult =
       kind: 'success';
       httpStatus?: number;
       rawBody?: Uint8Array;
-      /** A Google revoke whose inactive, barcode-less state was read back (G5): the replay boundary. */
-      confirmed?: true;
+      /**
+       * A Google revoke that was read back (G5), the replay boundary: `inactive` (barcode-less) or `absent`
+       * (Google has no such object). The confirming read is the last response recorded for the attempt.
+       */
+      confirmed?: 'inactive' | 'absent';
     }
   | { kind: 'not_issued'; httpStatus?: never; rawBody?: never }
   | {

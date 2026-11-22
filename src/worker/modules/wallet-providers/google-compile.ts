@@ -6,16 +6,18 @@ import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
 import { googleCompiler } from '../../../passkit/wallets/google/compilers.ts';
 import type { GoogleType } from '../../../passkit/wallets/google/types.ts';
 import { resolveWalletView } from '../../../passkit/wallets/view.ts';
+import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { currentPassJson } from '../passes/repo-read-pass.ts';
-import { createTemplateRegistry } from '../templates/registry.ts';
+import { walletArtExists } from './assets.ts';
 import { GoogleWalletError } from './google-errors.ts';
 import { googleClassKeyDigest } from './google-ids.ts';
 import type { GoogleGenericProjection } from './google-projection.ts';
-import { prepareProjectionArt, sizeShipped } from './projection-art.ts';
+import { sizeShipped, type WalletArt } from './projection-art.ts';
 import type { NativeProjection } from './projection-contract.ts';
+import { listProjectionArtFiles } from './repo-projection-art.ts';
 
 /** Which class a pass belongs to: its type and the digest of its `google.classKey` (absent: default). */
 export interface GoogleClassPartition {
@@ -30,7 +32,7 @@ export type GoogleCompiled = GoogleClassPartition & {
 };
 
 /** Why a pass cannot be compiled now. None of these is a provider fault, so none is retried. */
-export type GoogleCompileFailure = 'unreadable' | 'blocked' | 'type_changed';
+export type GoogleCompileFailure = 'unreadable' | 'blocked' | 'type_changed' | 'art_missing';
 
 const MAX_CLASS_KEY = 200;
 
@@ -68,13 +70,15 @@ export async function googleClassPartition(
 }
 
 /**
- * The compiler output for the pass as it is now, under the release's pinned type. The art is the
- * template's own, cut and addressed by hash (`store` is idempotent: an existing copy is kept).
+ * The compiler output for the pass as it is now, under the release's pinned type. The art is what the
+ * release published (`candidateId`'s stored copies); a claim never cuts an image. A copy that is not in
+ * storage is `art_missing`: the caller queues `wallet.google_art` and the claim retries.
  */
 export async function compileGooglePass(
   ctx: ServiceContext,
   pass: Pass,
   projection: NativeProjection,
+  candidateId: string,
 ): Promise<GoogleCompiled | GoogleCompileFailure> {
   if (projection.schema !== 2 || projection.provider !== 'google') return 'unreadable';
   const raw = await currentPassJson(ctx.env.DB, pass.id);
@@ -86,7 +90,6 @@ export async function compileGooglePass(
   }
   if (passJson === null || typeof passJson !== 'object') return 'unreadable';
   const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
-  const registry = createTemplateRegistry(ctx.env, { ctx });
   const previewOnly = new Set(template.manifest.previewOnlyAssets ?? []);
   const shipped: ShippedAsset[] = template.assets
     .filter((asset) => !previewOnly.has(asset.name))
@@ -95,7 +98,15 @@ export async function compileGooglePass(
       ...(asset.width ? { width: asset.width } : {}),
       ...(asset.height ? { height: asset.height } : {}),
     }));
-  const art = await prepareProjectionArt(ctx, registry, template, 'google', shipped, 'store');
+  const files = await listProjectionArtFiles(ctx.env.DB, candidateId);
+  const present = await Promise.all(files.map((file) => walletArtExists(ctx.env, file.sha256)));
+  if (present.includes(false)) return 'art_missing';
+  const origin = baseUrl(ctx.env);
+  const art: WalletArt = {
+    urls: new Map(files.map((f) => [f.asset, `${origin}/w/i/${f.sha256}.png`])),
+    sizes: new Map(files.map((f) => [f.asset, { width: f.width, height: f.height }])),
+    hashes: new Set(),
+  };
   const now = new Date(ctx.clock.now());
   const view = resolveWalletView(
     {

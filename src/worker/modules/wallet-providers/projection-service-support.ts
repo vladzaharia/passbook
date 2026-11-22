@@ -40,7 +40,7 @@ import {
 } from './projection-pins.ts';
 import { assertProjectionSource, verifiedAppleSource } from './projection-source.ts';
 import type { ProjectionAuthority } from './projection-system-authority.ts';
-import { recordProjectionArt } from './repo-projection-art.ts';
+import { recordProjectionArt, recordProjectionArtFiles } from './repo-projection-art.ts';
 import {
   getProjectionCandidate,
   type ProjectionCandidate,
@@ -278,6 +278,13 @@ export async function storeReleaseArt(
     hashes: [...current.art.hashes],
     now: ctx.clock.now(),
   });
+  // Claims read this instead of cutting the images again.
+  const files = [...current.art.urls].flatMap(([asset, url]) => {
+    const sha256 = /\/w\/i\/([0-9a-f]{64})\.png$/.exec(url)?.[1];
+    const size = current.art.sizes.get(asset);
+    return sha256 && size ? [{ asset, sha256, ...size }] : [];
+  });
+  await recordProjectionArtFiles(ctx.env.DB, { candidateId: candidate.id, files });
 }
 export async function scopedCandidate(
   ctx: ServiceContext,

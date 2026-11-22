@@ -3,7 +3,6 @@ import { sha256Hex } from '../../platform/ids.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { GoogleWalletError } from './google-errors.ts';
 import {
-  type DerivedGoogleId,
   type GoogleClassScope,
   type GoogleObjectScope,
   googleClassId,
@@ -54,21 +53,27 @@ function covers(actual: unknown, wanted: unknown): boolean {
 /** Review state is Google's to set, so it is not content. */
 const content = ({ reviewStatus: _review, ...rest }: Record<string, unknown>) => rest;
 
-/** Creates the class, or PATCHes it only when what Google holds differs from the compiled body. */
+/**
+ * Creates the class and never rewrites it. A class holds release-level content (release, type, class key), so
+ * the same id compiled again must give the same body; when what Google holds differs (two passes of one key
+ * compiled different class content, or a compiler update) the class is kept as it is and `drift` is returned
+ * for the caller to log. Rewriting it would show every holder in the class the last writer's values and send
+ * the class back through Google review (Q16).
+ */
 export async function upsertGoogleClass(
   ctx: GoogleWalletRestContext,
   type: GoogleType,
   scope: GoogleClassScope,
   projection: GoogleGenericProjection,
-): Promise<GoogleUpsertResult | 'unchanged'> {
+): Promise<'created' | 'unchanged' | 'drift'> {
   const body = copyGoogleProjection(projection);
   const resource = GOOGLE_RESOURCES[type].class;
   const id = await googleClassId(ctx.account.issuerId, ctx.objectIdHmacKey, { ...scope, type });
   const memo = `${resource}/${id}`;
   const digest = await sha256Hex(canonicalJson(body));
-  if (classDigests.get(memo) === digest) return 'unchanged';
+  const known = classDigests.get(memo);
+  if (known !== undefined) return known === digest ? 'unchanged' : 'drift';
   const remember = () => {
-    classDigests.delete(memo);
     if (classDigests.size >= MAX_KNOWN_CLASSES) {
       const oldest = classDigests.keys().next().value;
       if (oldest !== undefined) classDigests.delete(oldest);
@@ -84,9 +89,10 @@ export async function upsertGoogleClass(
   }
   const held = await verifyIdentity(ctx, resource, id);
   const same = covers(content(held), content(body));
-  if (!same) await request(ctx, resource, 'PATCH', id, body);
-  remember();
-  return same ? 'unchanged' : 'updated';
+  // What this isolate remembers is what Google holds, so a later body is compared with that.
+  if (same) remember();
+  else classDigests.set(memo, await sha256Hex(canonicalJson(content(held))));
+  return same ? 'unchanged' : 'drift';
 }
 
 export async function upsertGoogleObject(
@@ -115,31 +121,57 @@ export async function patchGoogleObjectBody(
   await request(ctx, GOOGLE_RESOURCES[type].object, 'PATCH', objectId, copyGoogleProjection(body));
 }
 
+const NOT_SENT = ['barcode', 'rotatingBarcode', 'classReference', 'smartTapRedemptionValue'];
+const OUTPUT_ONLY = ['hasUsers', 'kind', 'version'];
+const gone = (value: Record<string, unknown>) =>
+  [...NOT_SENT, ...OUTPUT_ONLY].reduce<Record<string, unknown>>((rest, key) => {
+    const { [key]: _dropped, ...others } = rest;
+    return others;
+  }, value);
+
 /**
- * G5: PUTs the object inactive and without its barcode, with one message, then GETs it back. A save
- * link replayed after this can only add an inactive, barcode-less object, so a confirmed revoke is the
- * replay boundary retirement waits for. The PUT carries the object as Google holds it (all its content,
- * its own class), so a revoke needs neither the pass nor the template.
+ * G5: PUTs the object inactive and without its barcode or tap value, with one message, then GETs it back.
+ * A save link replayed after this can only add an inactive, barcode-less object, so a confirmed revoke is
+ * the replay boundary retirement waits for. The PUT carries the object as Google holds it, so a revoke needs
+ * neither the pass nor the template, but only for the class this instance was issued under
+ * (`classIdHash`, or the class derived for its partition): another class of the issuer is refused.
+ * An object Google does not have (404) is `absent`: nothing remains for a link to show.
  */
 export async function revokeGoogleObject(
   ctx: GoogleWalletRestContext,
   type: GoogleType,
   scope: GoogleObjectScope,
   message: GoogleRevokeMessage,
-): Promise<void> {
+  expectedClassIdHash?: string,
+): Promise<'inactive' | 'absent'> {
   const resource = GOOGLE_RESOURCES[type].object;
-  const { objectId } = await googleObjectIds(ctx.account.issuerId, ctx.objectIdHmacKey, scope);
-  const held = await verifyIdentity(ctx, resource, objectId);
-  const { barcode: _b, rotatingBarcode: _r, classReference: _c, ...rest } = held;
-  if (typeof rest.classId !== 'string' || !rest.classId.startsWith(`${ctx.account.issuerId}.`))
-    throw new GoogleWalletError('invalid_response', `${resource} GET`);
-  await request(ctx, resource, 'PUT', objectId as DerivedGoogleId, {
-    ...rest,
+  const { classId, objectId } = await googleObjectIds(
+    ctx.account.issuerId,
+    ctx.objectIdHmacKey,
+    scope,
+  );
+  let held: Record<string, unknown>;
+  try {
+    held = await verifyIdentity(ctx, resource, objectId);
+  } catch (error) {
+    if (error instanceof GoogleWalletError && error.code === 'not_found') return 'absent';
+    throw error;
+  }
+  const hash = typeof held.classId === 'string' ? await sha256Hex(held.classId) : null;
+  if (hash === null || hash !== (expectedClassIdHash ?? (await sha256Hex(classId))))
+    throw new GoogleWalletError('conflict', `${resource} class`);
+  await request(ctx, resource, 'PUT', objectId, {
+    ...gone(held),
     state: 'INACTIVE',
     messages: [{ ...message, messageType: 'TEXT' }],
   });
   const confirmed = await verifyIdentity(ctx, resource, objectId);
-  if (confirmed.state !== 'INACTIVE' || 'barcode' in confirmed || 'rotatingBarcode' in confirmed)
-    // The write may have landed; the outcome is unknown, so the operation is not settled.
-    throw new GoogleWalletError('server_error', `${resource} confirm`, 502);
+  if (
+    String(confirmed.state).toUpperCase() !== 'INACTIVE' ||
+    NOT_SENT.some((key) => key in confirmed && key !== 'classReference') ||
+    confirmed.classId !== held.classId
+  )
+    // A stale or lagging read: the PUT is a full replace, so the operation retries it.
+    throw new GoogleWalletError('invalid_response', `${resource} confirm`);
+  return 'inactive';
 }
