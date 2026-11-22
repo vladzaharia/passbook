@@ -55,10 +55,25 @@ describe('check-sql-owner', () => {
     expect(optionalBindPredicate(rel, "'WHERE (pass_id IS NULL OR pass_id = ?)'")).toEqual([]);
   });
 
-  it('allows the reviewed SET values only up to their count', () => {
+  it('catches flag, subselect and NULLIF forms', () => {
+    const rel = 'src/worker/modules/a/repo.ts';
+    for (const sql of [
+      'WHERE (? = 0 OR org_id = ?)',
+      'WHERE ((SELECT ?) IS NULL OR org_id = ?)',
+      "WHERE org_id = IFNULL(NULLIF(?, ''), org_id)",
+    ])
+      expect(optionalBindPredicate(rel, `const q = \`${sql}\`;`), sql).toHaveLength(1);
+  });
+
+  it('pins each reviewed line by its text, and reports a new one at its own line', () => {
     const rel = 'src/worker/platform/workflow-runs.ts';
-    const line = 'a = COALESCE(?, a)\n';
-    expect(optionalBindPredicate(rel, line.repeat(2))).toEqual([]);
-    expect(optionalBindPredicate(rel, line.repeat(3))).toHaveLength(1);
+    const reviewed = 'run_guard = CASE WHEN ? THEN NULL ELSE run_guard END';
+    expect(optionalBindPredicate(rel, `x\n  ${reviewed}\ny`)).toEqual([]);
+    const added = `${reviewed}\nWHERE (? IS NULL OR org_id = ?)`;
+    const found = optionalBindPredicate(rel, added);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatch(/workflow-runs\.ts:2 /);
+    // The same new predicate in place of a reviewed line is still a finding.
+    expect(optionalBindPredicate(rel, 'WHERE (? IS NULL OR org_id = ?)')).toHaveLength(1);
   });
 });

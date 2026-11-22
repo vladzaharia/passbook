@@ -10,12 +10,13 @@ import {
 } from '../src/worker/platform/authority-tables.ts';
 import {
   DYNAMIC_WRITE_ALLOWLIST,
-  PINNED_CALL_ALLOWLIST,
   RAW_WRITE_ALLOWLIST,
   REPLACE_ALLOWLIST,
   UNTENANTED_CHECK_ALLOWLIST,
 } from './authority-scope-allowlists.ts';
 import { scanBans } from './authority-scope-bans.ts';
+import { opaqueFindings, opaqueHash } from './authority-scope-opaque.ts';
+import { OPAQUE_ALLOWLIST } from './authority-scope-opaque-allowlist.ts';
 import {
   type Cx,
   describeStatement,
@@ -386,12 +387,13 @@ export function scanFile(
   // An allowlisted file may hold exactly the reviewed statements: a new one, or a changed one, is a finding.
   const pinned = [...(RAW_WRITE_ALLOWLIST[rel]?.writes ?? [])];
   if (rel in RAW_WRITE_ALLOWLIST)
-    for (const call of uninlinedWriteCalls(text, files && { rel, files }))
-      if (!PINNED_CALL_ALLOWLIST[rel]?.includes(call.slice(call.indexOf(':') + 1)))
-        add(
-          'raw-guarded-write',
-          `a pinned statement calls ${call.slice(call.indexOf(':') + 1)}() inside its SQL, which the pin cannot see: put its terms in a literal constant`,
-        );
+    for (const detail of opaqueFindings(
+      rel,
+      uninlinedWriteCalls(text, files && { rel, files }).map((c) => c.slice(c.indexOf(':') + 1)),
+      OPAQUE_ALLOWLIST[rel],
+      files,
+    ))
+      add('raw-guarded-write', detail);
   for (const id of rawWriteStatements(text, files && { rel, files })) {
     const at = pinned.indexOf(id);
     if (at !== -1) {
@@ -570,6 +572,11 @@ if (import.meta.main) {
         process.stdout.write(
           `${rel} ${rawWriteStatements(text, { rel, files: new Map(files) }).join(' ')}\n`,
         );
+    process.exit(0);
+  }
+  if (process.argv.includes('--opaque')) {
+    for (const [rel, entry] of Object.entries(OPAQUE_ALLOWLIST))
+      process.stdout.write(`${rel} ${opaqueHash(rel, entry.deps ?? [], new Map(files))}\n`);
     process.exit(0);
   }
   const findings = scanTree(readFileSync(join(root, DOC), 'utf8'), files);

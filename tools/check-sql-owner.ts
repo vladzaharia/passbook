@@ -2,6 +2,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { stripComments } from './authority-scope-statements.ts';
+import { OPTIONAL_BIND_ALLOWED } from './sql-optional-bind-allowlist.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const SQL =
@@ -33,7 +34,8 @@ export function sqlOutsideRepo(rel: string, text: string): string | null {
 
 // A bound parameter that switches a filter off defeats index use and lets a null drop a tenant filter.
 // Build the WHERE from the filters that are present instead. The patterns cover a null test of a bind in
-// either order, `?NNN`, ISNULL / COALESCE / IFNULL of a bind, an empty-string sentinel and CASE WHEN ?.
+// either order (also through `(SELECT ?)`), `?NNN`, ISNULL / COALESCE / IFNULL / NULLIF of a bind, an
+// empty-string sentinel, `? = 0|1` flags and CASE WHEN ?.
 const P = String.raw`\?\d*`;
 const OPTIONAL_BIND = [
   new RegExp(String.raw`${P}\s+IS\s+(?:NOT\s+)?NULL\b`, 'gi'),
@@ -42,50 +44,37 @@ const OPTIONAL_BIND = [
   new RegExp(String.raw`\b(?:ISNULL|COALESCE|IFNULL)\s*\(\s*${P}\s*[,)]`, 'gi'),
   new RegExp(String.raw`${P}\s*(?:=|==|!=|<>)\s*''|''\s*(?:=|==|!=|<>)\s*${P}(?!\d)`, 'gi'),
   new RegExp(String.raw`\bCASE\s+WHEN\s+${P}`, 'gi'),
+  new RegExp(String.raw`${P}\s*(?:=|==|!=|<>)\s*[01]\b`, 'gi'),
+  new RegExp(String.raw`\(\s*SELECT\s+${P}\s*\)\s+IS\s+(?:NOT\s+)?NULL\b`, 'gi'),
+  new RegExp(String.raw`\bNULLIF\s*\(\s*${P}\s*,`, 'gi'),
 ];
 const TEST_FILE =
   /\.test\.tsx?$|(^|\/)(?:test-kit|test-support|test-utils|testing|[a-z0-9-]*(?:test-support|fixtures?))\.tsx?$/;
-
-const SET_VALUE = 'a SET or SELECT value (COALESCE / CASE on a bound value), not a filter';
-const CLOSED_GUARD =
-  'a bound flag inside a disjunct or a fail-closed non-null check; no tenant filter depends on it';
-/** Reviewed lines per file: more than the count is a finding. */
-export const OPTIONAL_BIND_ALLOWED: Record<string, { lines: number; reason: string }> = {
-  'src/worker/modules/broadcasts/repo.ts': { lines: 2, reason: SET_VALUE },
-  'src/worker/modules/developer/repo-request-log.ts': { lines: 3, reason: SET_VALUE },
-  'src/worker/modules/identities/repo-runs.ts': { lines: 1, reason: SET_VALUE },
-  'src/worker/modules/message-rules/repo.ts': { lines: 1, reason: SET_VALUE },
-  'src/worker/modules/passes/repo-authority.ts': {
-    lines: 1,
-    reason: '`? IS NOT NULL` asserts the bound org id is present, so a null fails closed',
-  },
-  'src/worker/modules/scan/override-scope.ts': { lines: 1, reason: CLOSED_GUARD },
-  'src/worker/modules/scan/repo-act-claim.ts': { lines: 1, reason: SET_VALUE },
-  'src/worker/modules/scan/repo-admission.ts': { lines: 1, reason: SET_VALUE },
-  'src/worker/modules/scan/repo-device.ts': { lines: 1, reason: SET_VALUE },
-  'src/worker/modules/scan/repo-scans.ts': { lines: 1, reason: SET_VALUE },
-  'src/worker/modules/scan/repo-watch-cover.ts': { lines: 1, reason: CLOSED_GUARD },
-  'src/worker/modules/wallet-providers/repo-google-managed.ts': { lines: 2, reason: SET_VALUE },
-  'src/worker/modules/wallet-providers/repo-instance-desired.ts': { lines: 2, reason: SET_VALUE },
-  'src/worker/modules/wallet-providers/repo-instance-mutations.ts': { lines: 2, reason: SET_VALUE },
-  'src/worker/platform/workflow-runs.ts': { lines: 2, reason: SET_VALUE },
-};
 
 /** `file:line` of each optional-bind predicate in worker code; comments, tests and fixtures are not checked. */
 export function optionalBindPredicate(rel: string, text: string): string[] {
   if (TEST_FILE.test(rel) || !rel.startsWith('src/worker/')) return [];
   const { text: code } = stripComments(text);
-  const lines = new Set<number>();
+  const found = new Map<number, string>();
   for (const re of OPTIONAL_BIND)
-    for (const m of code.matchAll(re)) lines.add(code.slice(0, m.index ?? 0).split('\n').length);
-  const allowed = OPTIONAL_BIND_ALLOWED[rel]?.lines ?? 0;
-  return [...lines]
-    .sort((a, b) => a - b)
-    .slice(allowed)
-    .map(
-      (line) =>
+    for (const m of code.matchAll(re)) {
+      const before = code.slice(0, m.index ?? 0);
+      const line = before.split('\n').length;
+      const lineText = code.split('\n')[line - 1] ?? '';
+      found.set(line, lineText.replace(/\s+/g, ' ').trim());
+    }
+  // Reviewed lines are pinned by their text, so a new predicate beside one still fails, at its own line.
+  const allowed = [...(OPTIONAL_BIND_ALLOWED[rel] ?? [])];
+  const out: string[] = [];
+  for (const [line, lineText] of [...found].sort((a, b) => a[0] - b[0])) {
+    const at = allowed.findIndex((a) => a.text === lineText);
+    if (at !== -1) allowed.splice(at, 1);
+    else
+      out.push(
         `${rel}:${line} binds a parameter to switch a filter off; build the WHERE from the filters that are present`,
-    );
+      );
+  }
+  return out;
 }
 
 if (import.meta.main) {

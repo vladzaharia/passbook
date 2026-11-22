@@ -20,21 +20,6 @@ export interface RawWriteEntry {
 }
 
 /**
- * Calls a pinned statement may interpolate although the pin cannot see their SQL: bind-marker lists, and
- * generators that were pinned before the check existed. A call not named here for its file fails the lint.
- * Put a term that must stay (an org or mode filter) in a literal constant, never behind a call.
- */
-export const PINNED_CALL_ALLOWLIST: Record<string, string[]> = {
-  'src/worker/modules/delivery/repo-outbox-processing.ts': ['placeholders'],
-  'src/worker/modules/passes/repo-ops-retention.ts': ['providerRetirementCompleteSql'],
-  'src/worker/modules/passes/repo-transfer-asset-gc.ts': ['prior'],
-  'src/worker/modules/retention/repo-sweep.ts': ['IN_IDS'],
-  'src/worker/modules/sandbox/repo.ts': ['ids.map'],
-  'src/worker/modules/scan/repo-counts.ts': ['effectiveReleaseIdSql'],
-  'src/worker/modules/webhooks/repo-retention.ts': ['IN_ROWS'],
-};
-
-/**
  * Files whose remaining raw writes to a guarded table are reviewed and intended. Each needs a reason that
  * names why no grant principal exists or applies. Everything else is a finding.
  */
@@ -92,18 +77,18 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       "release, fail, quarantine and retention purge of the actor's own server-minted claim row: they run after authority is revoked and only close a claim; a scan takes effect only through scan.* grants. Also the daily test-mode window of staff notes (pass_notes by age), a platform job with no principal",
     writes: [
       'pass_notes:eaa253f3ccef',
-      'scans:1150c5ae6cbd',
-      'scans:1150c5ae6cbd@use',
-      'scans:1150c5ae6cbd@use',
-      'scans:1150c5ae6cbd@use',
-      'scans:1150c5ae6cbd@use',
-      'scans:1150c5ae6cbd@use',
-      'scans:3e7682d6b1b9',
+      'scans:4d2be8302d2d',
+      'scans:4d2be8302d2d@use',
+      'scans:4d2be8302d2d@use',
+      'scans:4d2be8302d2d@use',
+      'scans:4d2be8302d2d@use',
+      'scans:4d2be8302d2d@use',
       'scans:4df40f2dbb58',
       'scans:5f5758655d9a',
       'scans:8f59dc9eb4bd',
+      'scans:a4620d033950',
       'scans:af3fe65731a1',
-      'scans:dfc09a902e56',
+      'scans:bece3e07a044',
     ],
   },
   'src/worker/modules/scan/repo-act-claim.ts': {
@@ -124,7 +109,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/events/repo.ts': {
     reason:
       'pass_events is an append-only ledger written by recordPassEvent; WP5b owns the grant conversion',
-    writes: ['pass_events:03f8a33d119c', 'pass_events:7ac7f822118d'],
+    writes: ['pass_events:5bc69fcc1cf4', 'pass_events:7ac7f822118d'],
   },
   'src/worker/modules/apple/repo-events.ts': {
     reason:
@@ -135,7 +120,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     reason:
       "exact-state compensation of this request's own removal claim (must run after authority is revoked) and claims for trusted callers without tenant authority: fixtures and service tests, and the deferred runs (pass import undo, bulk run remove), whose claim carries the starter's proof in the same UPDATE; routes take the grants in repo-remove.ts",
     writes: [
-      'passes:cce4dbd784ee',
+      'passes:8a543a1f29ac',
       'passes:d03344a9a7dc',
       'passes:dbb5af80fe98',
       'passes:ec2d184a0290',
@@ -149,11 +134,14 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'bundle_remac_marks:c55ee2c8e29c',
       'bundles:4d66feaeeccb',
       'join_links:4a5b982fa241',
-      'passes:a726179ad7c0',
+      'passes:3461614bd186',
+      'passes:840d9eabd590',
+      'passes:840d9eabd590@use',
+      'passes:8576df69c778',
+      'passes:8576df69c778@use',
       'passes:a565c31165b3',
       'passes:a978e7f9948b',
       'passes:a978e7f9948b@use',
-      'passes:47b01e0ecaeb',
       'passes:d60295b23550',
       'passes:d60295b23550@use',
       'token_remac_marks:b15f0832d2e7',
@@ -163,16 +151,16 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/passes/repo-connection-state.ts': {
     reason:
       'sync_error_code is volatile bookkeeping stamped by connection sync behind a full pass and release snapshot',
-    writes: ['passes:b30f1cdd3ba3'],
+    writes: ['passes:8379a08fde3b'],
   },
   'src/worker/modules/passes/repo-history-assets.ts': {
     reason:
       'exact-state rollback of an asset write after a failed rebuild, and trusted callers; tenant writes take replaceAssetGranted',
     writes: [
-      'pass_assets:164ccd291b04',
-      'pass_assets:36673c726e64',
-      'pass_assets:88614d0b93c3',
+      'pass_assets:3420bcddbc34',
+      'pass_assets:3683f679f009',
       'pass_assets:bbb4bf4399cf',
+      'pass_assets:f898a06f4016',
     ],
   },
   'src/worker/modules/passes/repo-history-image.ts': {
@@ -183,21 +171,21 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/passes/repo-member-photo.ts': {
     reason:
       "exact-state compensation of this request's own photo write (after authority may be revoked) and trusted callers; tenant writes take replaceMemberPhotoGranted",
-    writes: ['member_photos:a452bec42f60', 'member_photos:dffb95a72d08'],
+    writes: ['member_photos:1eab4b139064', 'member_photos:a452bec42f60'],
   },
   'src/worker/modules/passes/repo-ops-retention.ts': {
     reason:
       'retention purge of a soft-deleted pass past its grace period: server-selected ids behind a keyset commitment and scan retention proof, no principal',
-    writes: ['passes:481a78f5dfa3'],
+    writes: ['passes:3152b8aa078f'],
   },
   'src/worker/modules/passes/repo-transfer-asset-gc.ts': {
     reason:
       'the transfer asset sweeper (no principal): GC of retired server-minted r2 keys, and recovery of an expired image stage that restores the exact staged pass_assets / member_photos row (UPDATE ... AS a|m, INSERT) and advances passes.link_generation, only while the stage still matches its pass incarnation and no transfer is pending',
     writes: [
-      'member_photos:84a93c949219',
-      'member_photos:a9231f4ca532',
-      'pass_assets:ddc0f614f874',
-      'pass_assets:ebf4efff6f76',
+      'member_photos:2ce965946654',
+      'member_photos:61c8305aee02',
+      'pass_assets:1ec1def172ab',
+      'pass_assets:f5f08a195c71',
       'passes:a92c1702af5b',
     ],
   },
@@ -238,9 +226,9 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'outbox:25f751c88a47',
       'outbox:2765ae869719',
       'outbox:7ad4bf487573',
-      'outbox:85016337fdf1',
       'outbox:9de783f49135',
       'outbox:a99e262e1616',
+      'outbox:b161b0723bc6',
       'outbox:b57a00ed96d9',
       'outbox:c344a3932d66',
       'outbox:c884cec3a55c',
@@ -250,7 +238,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/delivery/repo-binding.ts': {
     reason:
       'outbox lease check, provider acceptance and uncertain-outcome settlement for a leased row; no principal acts on it',
-    writes: ['outbox:453ccd650aed', 'outbox:b26971782270', 'outbox:ed7e37d8a9b2'],
+    writes: ['outbox:21c26f941048', 'outbox:453ccd650aed', 'outbox:b26971782270'],
   },
   'src/worker/modules/delivery/repo-devices.ts': {
     reason:
@@ -288,8 +276,8 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'retention receipts and their anchors are append-only bookkeeping of platform jobs and the erasure finisher (no principal): a MAC-chained row per delete run, and the 6-year trim that moves the MACed anchor forward first; table triggers refuse update and early delete',
     writes: [
       'retention_receipt_anchors:be676f0b2666',
+      'retention_receipts:71b1efea96ea',
       'retention_receipts:726f943d12d9',
-      'retention_receipts:7df4923eaf10',
     ],
   },
   'src/worker/modules/keys/repo-rewrap.ts': {
