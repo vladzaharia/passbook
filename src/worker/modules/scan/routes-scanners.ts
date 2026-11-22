@@ -1,24 +1,24 @@
-import { z } from 'zod';
 import {
   CreatedScannerSchema,
   CreateScannerSchema,
   IdParamSchema,
   ScannerListQuerySchema,
   ScannerListSchema,
-  ScannerPairingSchema,
-  ScannerPairingStateSchema,
   ScannerSamplePassSchema,
   ScannerSchema,
-  TerminalTokenSchema,
 } from '../../../shared/contracts/index.ts';
 import { currentUserId, modeOf } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
-import { createPairing, pairingState } from './pairing.ts';
-import { pairHere, replaceTerminalToken } from './pairing-token.ts';
+import { pairHere } from './pairing-token.ts';
 import { setScannerCookie } from './routes-pair.ts';
+import {
+  RestoreQuerySchema,
+  registerScannerCredentials,
+  restoreOf,
+} from './routes-scanners-credentials.ts';
 import { registerScannerWrites } from './routes-scanners-key.ts';
 import { createSamplePass } from './sample-pass.ts';
 import { listScanners, loadScanner, scannerView } from './scanner-views.ts';
@@ -30,13 +30,11 @@ import { scannerAuthority } from './target-authority.ts';
 export const scannersRoutes = createRouter();
 /** Edit and revoke take a console session or a `scanning:write` key, so they register before the session guard. */
 registerScannerWrites(scannersRoutes);
+registerScannerCredentials(scannersRoutes);
 guard(scannersRoutes, requireTenantSession);
 scannersRoutes.use('*', limitBody(64 * 1024));
 
 const TAG = 'scanners';
-/** `?restore=true` lets a pairing, pair-here or token call bring a removed scanner back (audited). */
-const RestoreQuerySchema = z.object({ restore: z.enum(['true']).optional() });
-const restoreOf = (q: z.infer<typeof RestoreQuerySchema>) => q.restore === 'true';
 const originOf = (url: string) => new URL(url).origin;
 
 register(
@@ -112,50 +110,6 @@ register(
   TAG,
   {
     method: 'post',
-    path: '/{id}/pairing',
-    summary: 'A new pairing code (replaces any live one)',
-    params: IdParamSchema,
-    query: RestoreQuerySchema,
-    response: ScannerPairingSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
-    return c.json(
-      await createPairing(
-        ctx,
-        currentUserId(c),
-        row,
-        originOf(c.req.url),
-        authority,
-        restoreOf(c.req.valid('query')),
-      ),
-    );
-  },
-);
-register(
-  scannersRoutes,
-  TAG,
-  {
-    method: 'get',
-    path: '/{id}/pairing',
-    summary: 'Poll a pairing',
-    params: IdParamSchema,
-    response: ScannerPairingStateSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:read');
-    return c.json(pairingState(row, ctx.clock.now()));
-  },
-);
-register(
-  scannersRoutes,
-  TAG,
-  {
-    method: 'post',
     path: '/{id}/pair-here',
     summary: 'Make this browser the scanner',
     params: IdParamSchema,
@@ -177,36 +131,6 @@ register(
     const view = scopedScanningView(await scannerView(ctx, row.id), row.orgId);
     setScannerCookie(c, issued.token);
     return c.json(view);
-  },
-);
-register(
-  scannersRoutes,
-  TAG,
-  {
-    method: 'post',
-    path: '/{id}/token',
-    summary: 'A till token, shown once (replaces the old one)',
-    params: IdParamSchema,
-    query: RestoreQuerySchema,
-    response: TerminalTokenSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
-    return c.json(
-      await replaceTerminalToken(
-        ctx,
-        currentUserId(c),
-        row,
-        authority,
-        restoreOf(c.req.valid('query')),
-      ),
-      200,
-      {
-        'cache-control': 'no-store',
-      },
-    );
   },
 );
 register(

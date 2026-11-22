@@ -120,15 +120,18 @@ export const ScannerListQuerySchema = PageQuerySchema.extend({
 });
 export const ScannerListSchema = pageOf(ScannerSchema);
 export const ScannerPairingSchema = z.object({
-  code: z.string(),
-  url: z.string(),
+  code: z.string().nullable(),
+  url: z.string().nullable(),
   expiresAt: TimestampSchema,
 });
 export const ScannerPairingStateSchema = z.object({
   state: z.enum(['waiting', 'paired', 'expired']),
   device: z.object({ label: z.string(), at: TimestampSchema }).nullable(),
 });
-export const TerminalTokenSchema = z.object({ token: z.string(), expiresAt: TimestampSchema });
+export const TerminalTokenSchema = z.object({
+  token: z.string().nullable(),
+  expiresAt: TimestampSchema,
+});
 export const ScannerStatsSchema = z.object({
   days: z.array(
     z.object({
@@ -196,7 +199,6 @@ export const ScanEventListQuerySchema = PageQuerySchema.extend({
   status: z.enum(['upcoming', 'live', 'ended', 'archived']).optional(),
   q: z.string().trim().max(80).optional(),
 });
-
 export const ScanRecordSchema = z.object({
   id: IdSchema,
   at: TimestampSchema,
@@ -261,7 +263,6 @@ export const ScanEventLiveSchema = z.object({
   reasons: z.array(z.object({ reason: ScanReasonSchema, count: z.number().int() })),
   latest: z.array(ScanRecordSchema).max(20),
 });
-
 export const ScanStaffSchema = z.object({
   id: IdSchema,
   orgId: IdSchema,
@@ -286,9 +287,8 @@ export const UpdateScanStaffSchema = z.object({
   role: ScanRoleSchema.optional(),
   disabled: z.boolean().optional(),
 });
-/** Shown once, when a person is added or a PIN is reset. */
-export const StaffPinSchema = z.object({ pin: z.string().regex(/^\d{6}$/) });
-
+/** Shown once, when a person is added or a PIN is reset; null on an Idempotency-Key replay. */
+export const StaffPinSchema = z.object({ pin: z.nullable(z.string().regex(/^\d{6}$/)) });
 export const ScanListQuerySchema = PageQuerySchema.extend({
   q: z.string().trim().max(80).optional(),
   orgId: IdSchema.optional(),

@@ -7,15 +7,15 @@ import type {
 import type { Grant } from '../../platform/authority.ts';
 import { grantedBatchWith } from '../../platform/authority-batch.ts';
 import type { Check } from '../../platform/authority-checks.ts';
-import { bump } from '../../platform/counters.ts';
 import { classifyD1Error } from '../../platform/db.ts';
-import { ConflictError, ForbiddenError, RateLimitedError } from '../../platform/errors.ts';
+import { ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { IdempotencyId } from '../../platform/repo-idempotency.ts';
 import { settleStatement } from '../../platform/repo-idempotency.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { scanningDeviceStatements } from './device-statements.ts';
 import { eventStatements } from './events-statements.ts';
+import { chargeSecrets, SETUP_CALLS } from './key-credentials.ts';
 import { adminActorOf, adminGrant, audited, SETUP_APPLY, setupTables } from './repo-admin-grant.ts';
 import { sessionStatements } from './scanning-session-insert.ts';
 import { newCapture } from './setup-capture.ts';
@@ -72,22 +72,6 @@ export function assertSetupScope(authority: TenantPassWrite, plan: ScanSetupPlan
 
 /** Devices per grant: each adds about three lineage checks to its grant row (90 binds). */
 const DEVICES_PER_GRANT = 10;
-
-const HOUR = 3_600_000;
-const DAY = 24 * HOUR;
-/** A key that mints secrets: this many setups an hour, this many PINs and codes a day. */
-const SECRET_CALLS_PER_HOUR = 10;
-const SECRETS_PER_DAY = 100;
-
-async function limitSecrets(ctx: ServiceContext, authority: TenantPassWrite, secrets: number) {
-  if (authority.kind !== 'api_key' || secrets === 0) return;
-  const now = ctx.clock.now();
-  const window = (ms: number) => Math.floor(now / ms) * ms;
-  const calls = await bump(ctx.env.DB, `scan-setup:calls:${authority.keyId}`, window(HOUR));
-  const day = await bump(ctx.env.DB, `scan-setup:secrets:${authority.keyId}`, window(DAY), secrets);
-  if (calls > SECRET_CALLS_PER_HOUR || day > SECRETS_PER_DAY)
-    throw new RateLimitedError(Math.max(1, Math.ceil((window(HOUR) + HOUR - now) / 1000)));
-}
 
 const links = (all: SetupLink[][]) => {
   const seen = new Set<string>();
@@ -227,82 +211,88 @@ export async function applySetupPlan(
   const secrets =
     prepared.staff.length +
     (pairs ? prepared.sessions.reduce((n, s) => n + s.devices.length, 0) : 0);
-  await limitSecrets(ctx, authority, secrets);
-  // Each grant row has a bind budget and every write adds lineage checks to its row, so the batch is
-  // several grants in order (a later one sees the earlier ones' writes), sharing their refusal codes.
-  const grant = (checks: Check[] = []) =>
-    adminGrant(
-      ctx,
-      SETUP_APPLY,
-      actorId,
-      authority,
-      orgId,
-      checks,
-      SETUP_GRANT.codes,
-      undefined,
-      setupTables(authority),
-    );
-  const grants: Grant[] = [grant(prepared.checks)];
-  const [shared] = grants;
-  if (!shared) throw new Error('No grant.');
-  for (const z of prepared.zones) zoneStatements(shared, ctx, z, capture);
-  for (const e of prepared.events) eventStatements(shared, ctx, e, capture);
-  const people = grant();
-  grants.push(people);
-  const staff = new Map<string, string>();
-  for (const s of prepared.staff) {
-    const made = staffStatements(people, ctx, s, capture);
-    staff.set(made.id, made.pin);
-  }
-  const pairing = new Map<
-    string,
-    ScanSetupResult['sessions'][number]['devices'][number]['pairing']
-  >();
-  for (const s of prepared.sessions) sessionStatements(people, ctx, s.plan, capture);
-  const devices = prepared.sessions.flatMap((s) => s.devices);
-  for (let at = 0; at < devices.length; at += DEVICES_PER_GRANT) {
-    const g = grant();
-    grants.push(g);
-    for (const d of devices.slice(at, at + DEVICES_PER_GRANT)) {
-      const made = scanningDeviceStatements(g, ctx, d, capture);
-      pairing.set(made.id, made.pairing);
-    }
-  }
-  if (options.setupTemplateId === undefined)
-    people.add(
-      audited(people, ctx, {
-        orgId,
-        ...adminActorOf(authority, actorId),
-        action: 'scan.setup.apply',
-        targetType: 'scanning_session',
-        targetId: prepared.sessions[0]?.plan.id ?? '',
-        detail: {
-          mode,
-          preset: plan.preset,
-          zones: plan.zones.length,
-          events: plan.events.length,
-          staff: plan.staff.length,
-          sessions: plan.sessions.length,
-          devices: devices.length,
-          pins: staff.size,
-          pairingCodes: [...pairing.values()].filter((p) => p !== null).length,
-        },
-      }),
-    );
-  // The ids are made before the commit, so the answer is too: its redacted copy commits with the work.
-  const result = resultOf(setup, facts, prepared, { staff, pairing }, mode);
-  const settle = options.settle
-    ? [settleStatement(ctx.env.DB, options.settle, 200, JSON.stringify(redacted(result)))]
-    : [];
+  const refund = await chargeSecrets(ctx, authority, secrets, SETUP_CALLS);
   try {
-    await grantedBatchWith(ctx.env.DB, grants, [], settle);
-  } catch (error) {
-    if (classifyD1Error(error)?.kind === 'unique')
-      throw new ConflictError(
-        'A name or key was taken while setting up. Try again.',
-        'SCAN_SETUP_NAME_TAKEN',
+    // Each grant row has a bind budget and every write adds lineage checks to its row, so the batch is
+    // several grants in order (a later one sees the earlier ones' writes), sharing their refusal codes.
+    const grant = (checks: Check[] = []) =>
+      adminGrant(
+        ctx,
+        SETUP_APPLY,
+        actorId,
+        authority,
+        orgId,
+        checks,
+        SETUP_GRANT.codes,
+        undefined,
+        setupTables(authority),
       );
+    const grants: Grant[] = [grant(prepared.checks)];
+    const [shared] = grants;
+    if (!shared) throw new Error('No grant.');
+    for (const z of prepared.zones) zoneStatements(shared, ctx, z, capture);
+    for (const e of prepared.events) eventStatements(shared, ctx, e, capture);
+    const people = grant();
+    grants.push(people);
+    const staff = new Map<string, string>();
+    for (const s of prepared.staff) {
+      const made = staffStatements(people, ctx, s, capture);
+      staff.set(made.id, made.pin);
+    }
+    const pairing = new Map<
+      string,
+      ScanSetupResult['sessions'][number]['devices'][number]['pairing']
+    >();
+    for (const s of prepared.sessions) sessionStatements(people, ctx, s.plan, capture);
+    const devices = prepared.sessions.flatMap((s) => s.devices);
+    for (let at = 0; at < devices.length; at += DEVICES_PER_GRANT) {
+      const g = grant();
+      grants.push(g);
+      for (const d of devices.slice(at, at + DEVICES_PER_GRANT)) {
+        const made = scanningDeviceStatements(g, ctx, d, capture);
+        pairing.set(made.id, made.pairing);
+      }
+    }
+    if (options.setupTemplateId === undefined)
+      people.add(
+        audited(people, ctx, {
+          orgId,
+          ...adminActorOf(authority, actorId),
+          action: 'scan.setup.apply',
+          targetType: 'scanning_session',
+          targetId: prepared.sessions[0]?.plan.id ?? '',
+          detail: {
+            mode,
+            preset: plan.preset,
+            zones: plan.zones.length,
+            events: plan.events.length,
+            staff: plan.staff.length,
+            sessions: plan.sessions.length,
+            devices: devices.length,
+            pins: staff.size,
+            pairingCodes: [...pairing.values()].filter((p) => p !== null).length,
+          },
+        }),
+      );
+    // The ids are made before the commit, so the answer is too: its redacted copy commits with the work.
+    const result = resultOf(setup, facts, prepared, { staff, pairing }, mode);
+    const settle = options.settle
+      ? [settleStatement(ctx.env.DB, options.settle, 200, JSON.stringify(redacted(result)))]
+      : [];
+    try {
+      await grantedBatchWith(ctx.env.DB, grants, [], settle);
+    } catch (error) {
+      if (classifyD1Error(error)?.kind === 'unique')
+        throw new ConflictError(
+          'A name or key was taken while setting up. Try again.',
+          'SCAN_SETUP_NAME_TAKEN',
+        );
+      throw error;
+    }
+    return result;
+  } catch (error) {
+    // One batch: a failure wrote nothing, so the budget is given back.
+    await refund();
     throw error;
   }
-  return result;
 }

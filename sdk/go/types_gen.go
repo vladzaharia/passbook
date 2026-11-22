@@ -7286,7 +7286,31 @@ type ScannersCreateParamsSettingsTags struct {
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
 
+type ScannersPairingCreateQuery struct {
+	Restore *string `json:"restore,omitempty"`
+}
+
+type ScannersPairingCreateResult struct {
+	Code      *string `json:"code"`
+	URL       *string `json:"url"`
+	ExpiresAt int64   `json:"expiresAt"`
+}
+
+type ScannersPairingRetrieveResult struct {
+	State  string         `json:"state"`
+	Device map[string]any `json:"device"`
+}
+
 type ScannersRevokeResult = Scanner
+
+type ScannersRotateTokenQuery struct {
+	Restore *string `json:"restore,omitempty"`
+}
+
+type ScannersRotateTokenResult struct {
+	Token     *string `json:"token"`
+	ExpiresAt int64   `json:"expiresAt"`
+}
 
 type ScannersSetModeBody = ScannersSetModeParams
 

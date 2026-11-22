@@ -19,6 +19,7 @@ import {
   adminActorOf,
   adminGrant,
   audited,
+  createdByOf,
   eventsOpen,
   scannerEpoch,
   scopeTemplatesUsable,
@@ -77,16 +78,22 @@ export async function createScanner(
     settings: JSON.stringify(settings),
     timeZone: input.timeZone,
     expiresAt: input.kind === 'terminal' ? now + TERMINAL_TTL_MS : null,
-    createdBy: userId,
+    createdBy: createdByOf(authority, userId),
     now,
   });
   addScannerTemplates(g, id, accepts.templateIds);
-  addEnrollment(ctx, g, id, userId, { ...input, deviceRole: 'scan' }, settings);
+  addEnrollment(
+    ctx,
+    g,
+    id,
+    createdByOf(authority, userId),
+    { ...input, deviceRole: 'scan' },
+    settings,
+  );
   g.add(
     audited(g, ctx, {
       orgId: input.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: 'scanner.create',
       targetType: 'scanner',
       targetId: id,

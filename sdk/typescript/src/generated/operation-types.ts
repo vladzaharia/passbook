@@ -3536,8 +3536,40 @@ export type ScannersSetModeBody = ScannersSetModeParams;
 /** Response of `scanners.setMode`. */
 export type ScannersSetModeResult = Scanner;
 
+/** Response of `scanners.pairing.retrieve`. */
+export type ScannersPairingRetrieveResult = {
+  state: "waiting" | "paired" | "expired";
+  device: {
+    label: string;
+    at: number;
+  } | null;
+};
+
+/** Query of `scanners.pairing.create`. */
+export type ScannersPairingCreateQuery = {
+  restore?: "true";
+};
+
+/** Response of `scanners.pairing.create`. */
+export type ScannersPairingCreateResult = {
+  code: string | null;
+  url: string | null;
+  expiresAt: number;
+};
+
 /** Response of `scanners.revoke`. */
 export type ScannersRevokeResult = Scanner;
+
+/** Query of `scanners.rotateToken`. */
+export type ScannersRotateTokenQuery = {
+  restore?: "true";
+};
+
+/** Response of `scanners.rotateToken`. */
+export type ScannersRotateTokenResult = {
+  token: string | null;
+  expiresAt: number;
+};
 
 /** Query of `scanningSessions.list`. */
 export type ScanningSessionsListQuery = {

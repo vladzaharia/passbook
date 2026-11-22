@@ -46,7 +46,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `org:write` | change the org's pass setup (`PATCH /orgs/{orgId}/pass-setup`, `POST /orgs/{orgId}/brand-assets`): name, brand, support, email, allowed channels. Only `org_admin` can mint it |
 | `wallet:write` | turn a Google or Samsung account on for a channel that is already allowed (`PATCH /orgs/{orgId}/pass-setup`). Allowing or blocking a channel needs `org:write`. Needs `integrations:manage` to delegate |
 | `api-keys:write` | child keys of the calling key: mint, list, read, rotate, retire, revoke; rotate itself. A service key only (see Child keys) |
-| `scanning:admin` | `POST /scanning-sessions/setup` with staff and paired devices: PINs and pairing codes come back once. Org-bound, live keys only, expiry within 90 days, rate limited. Only an `org_admin` session with Polaris ID sign-in and step-up mints it, by naming it in `scopes`: no role or parent key includes it |
+| `scanning:admin` | Door credentials: pairing codes (`POST /scanners/{id}/pairing`), till tokens (`POST /scanners/{id}/token`), and `POST /scanning-sessions/setup` with staff and paired devices. PINs, codes and tokens come back once. Org-bound, live keys only, expiry within 90 days, rate limited. Only an `org_admin` session with Polaris ID sign-in and step-up mints it, by naming it in `scopes`: no role or parent key includes it |
 | `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |
 | `scan-setup:read` | `GET /scan-setups` and `GET /scan-setups/{id}`: read the org's managed scanner and screen setups. Needs `scanning:read` to delegate. Reaches nothing else; another org's setup is a 404 |
 
@@ -884,7 +884,7 @@ The call writes everything in one batch: a failure writes nothing. Names that ar
 
 - **Replay.** The same `Idempotency-Key` and body returns the same ids with `replayed: true` and no PINs or codes. A device that was never paired and whose code ran out gets a new one, and `pairingReissued` is true. The same key with another body is 409 `SCAN_SETUP_KEY_REUSED`.
 - **Errors.** A plan problem is 422 `SCAN_SETUP_INVALID`, an `error` check 422 `SCAN_SETUP_CHECKS_FAILED`; both carry `issues` with a path. A name or key taken during the call is 409 `SCAN_SETUP_NAME_TAKEN`: send it again. A key for another org gets 404.
-- **Keys.** `scanning:write` makes events, sessions, new places (live keys only) and devices with no pairing code; its rows have no user creator and the audit row names the key. `scanning:admin` (org-bound, live keys only, refused at mint otherwise as 422 `API_KEY_SCANNING_ADMIN_LIVE_ORG`; `expiresAt` required, at most 90 days ahead: 422 `API_KEY_EXPIRY_REQUIRED` / `API_KEY_EXPIRY_TOO_LONG`; only an `org_admin` session with Polaris ID sign-in and step-up can mint it, never a key or a role) also makes staff and gives PINs and pairing codes once, up to 10 such setups an hour and 100 PINs and codes a day per key (429 `RATE_LIMITED`). Without it, staff are 403 `SCAN_SETUP_ADMIN_SCOPE`; places or staff from a test key are 403 `SCAN_SETUP_LIVE_ONLY`. The grant itself refuses the tables a key's scope does not cover. Test mode: places and staff are shared with live.
+- **Keys.** `scanning:write` makes events, sessions, new places (live keys only) and devices with no pairing code; its rows have no user creator and the audit row names the key. `scanning:admin` (org-bound, live keys only, refused at mint otherwise as 422 `API_KEY_SCANNING_ADMIN_LIVE_ORG`; `expiresAt` required, at most 90 days ahead: 422 `API_KEY_EXPIRY_REQUIRED` / `API_KEY_EXPIRY_TOO_LONG`; only an `org_admin` session with Polaris ID sign-in and step-up can mint it, never a key or a role) also makes staff and gives PINs and pairing codes once, up to 10 such setups an hour and 100 PINs, codes and tokens a day per key, shared with the credential routes below (429 `RATE_LIMITED`). Without it, staff are 403 `SCAN_SETUP_ADMIN_SCOPE`; places or staff from a test key are 403 `SCAN_SETUP_LIVE_ONLY`. The grant itself refuses the tables a key's scope does not cover. Test mode: places and staff are shared with live.
 - **Platform keys.** Every route a `scanning:*` or `scan-setup:*` key calls is bound to the key's own org, so a platform key (no org) gets 404 or an empty page. The exception is `GET /scans` with `scans:read`, which a platform key may use to name an org: it is the read-only feed, with no names and no pass titles.
 - **Modes.** A live `scanning:write` key can move a scanner between live and test, either way, and can revoke it. A test key gets 404 on live scanners.
 - **Replay and pairing.** A replay reissues expired codes for a console session only, one commit per device: two replays at once can each mint a code, and the later one wins.
@@ -892,6 +892,22 @@ The call writes everything in one batch: a failure writes nothing. Names that ar
 - **Limits.** At most 10 new events in all, counting each `fromTemplate` entry's events (422 `SCAN_SETUP_INVALID`).
 - **Devices.** `name` is optional on `POST /scanning-sessions/{id}/devices`: the session's name and the next free number.
 - **End.** `PATCH /scanning-sessions/{id}` with `{ "status": "ended", "removeDevices": true }` revokes every device of the session in the same write. It defaults to false and needs a console session.
+
+## Credentials by API key
+
+A PIN, pairing code or till token appears once, in the answer of the call that made it. It is stored only as a hash and is never logged or audited. With an `Idempotency-Key`, a replay returns the same ids with `Idempotent-Replayed: true`, and every secret is `null`. To get a new one, call again without the key: that replaces the credential. The API returns the pairing `url` and no QR image: draw the QR from `url`.
+
+| Call | Key scope | Does |
+| --- | --- | --- |
+| `POST /scanners/{id}/pairing` | `scanning:admin` | A new pairing code for a browser device; replaces any live one. `?restore=true` brings a removed scanner back (audited) |
+| `GET /scanners/{id}/pairing` | `scan-setup:read` | Polls `waiting`, `paired` or `expired`; never shows the code |
+| `POST /scanners/{id}/token` | `scanning:admin` | A till token (365 days); replaces the old one at once. Only tills take one: a device is 422 `SCANNER_NOT_TERMINAL`, and a till has no pairing code (422 `SCANNER_NOT_PAIRABLE`) |
+
+These keys are live and bound to one organization: a key of another organization or a platform key gets 404, the same answer as a missing id, and test-mode scanners get 404. The audit log names the key and the caller's network.
+
+Limits per key: 60 credential calls an hour, and 100 PINs, codes and tokens a day, shared with `POST /scanning-sessions/setup`. Over a limit is 429 `RATE_LIMITED` with `Retry-After`; a call refused with 4xx costs nothing.
+
+Console only: pair here, joining as an admin device, sample passes, and every credential in test mode. Use an IP allowlist on these keys.
 
 ## Scanner device actions
 

@@ -1424,10 +1424,31 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanners.pairing.retrieve", "GET", "/api/v1/scanners/id1/pairing", false,
+		"", `{"state":"waiting","device":{"label":"x","at":0}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Scanners.Pairing.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"scanners.pairing.create", "POST", "/api/v1/scanners/id1/pairing", false,
+		"", `{"code":"x","url":"x","expiresAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Scanners.Pairing.Create(ctx, "id1", nil)
+		},
+	},
+	{
 		"scanners.revoke", "POST", "/api/v1/scanners/id1/revoke", false,
 		"", `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Scanners.Revoke(ctx, "id1")
+		},
+	},
+	{
+		"scanners.rotateToken", "POST", "/api/v1/scanners/id1/token", false,
+		"", `{"token":"x","expiresAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Scanners.RotateToken(ctx, "id1", nil)
 		},
 	},
 	{

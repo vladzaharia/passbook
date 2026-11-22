@@ -14,7 +14,7 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
-import { adminGrant, audited } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited } from './repo-admin-grant.ts';
 import { pinOnlyOff } from './repo-pin-only.ts';
 import { clearNamedDayStatement } from './repo-pin-tag.ts';
 import {
@@ -208,8 +208,7 @@ export async function updateStaff(
   g.add(
     audited(g, ctx, {
       orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action,
       targetType: 'scan_staff',
       targetId: id,
@@ -256,8 +255,7 @@ export async function resetStaffPin(
   g.add(
     audited(g, ctx, {
       orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: 'scan_staff.pin_reset',
       targetType: 'scan_staff',
       targetId: id,

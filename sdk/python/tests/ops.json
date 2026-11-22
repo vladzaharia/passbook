@@ -7625,6 +7625,54 @@
   }
  },
  {
+  "id": "scanners.getScannersByIdPairing",
+  "call": "scanners.pairing.retrieve",
+  "http": "GET",
+  "path": "/api/v1/scanners/{id}/pairing",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "state": "waiting",
+   "device": {
+    "label": "x",
+    "at": 0
+   }
+  }
+ },
+ {
+  "id": "scanners.postScannersByIdPairing",
+  "call": "scanners.pairing.create",
+  "http": "POST",
+  "path": "/api/v1/scanners/{id}/pairing",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "code": "x",
+   "url": "x",
+   "expiresAt": 0
+  }
+ },
+ {
   "id": "scanners.postScannersByIdRevoke",
   "call": "scanners.revoke",
   "http": "POST",
@@ -7680,6 +7728,28 @@
    },
    "today": 0,
    "createdAt": 0
+  }
+ },
+ {
+  "id": "scanners.postScannersByIdToken",
+  "call": "scanners.rotate_token",
+  "http": "POST",
+  "path": "/api/v1/scanners/{id}/token",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "token": "x",
+   "expiresAt": 0
   }
  },
  {

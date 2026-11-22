@@ -1841,13 +1841,43 @@ func (r *TerminalResource) Resolve(ctx context.Context, body *TerminalResolveBod
 	return &out, nil
 }
 
-type ScannersResource struct {
+type ScannersPairingResource struct {
 	c *core
+}
+
+func newScannersPairingResource(c *core) *ScannersPairingResource {
+	return &ScannersPairingResource{
+		c: c,
+	}
+}
+
+// Create A new pairing code (replaces any live one) `POST /api/v1/scanners/{id}/pairing`
+func (r *ScannersPairingResource) Create(ctx context.Context, id string, query *ScannersPairingCreateQuery, opts ...RequestOption) (*ScannersPairingCreateResult, error) {
+	var out ScannersPairingCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners/" + pathEscape(id) + "/pairing", query: queryValues(query)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retrieve Poll a pairing `GET /api/v1/scanners/{id}/pairing`
+func (r *ScannersPairingResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ScannersPairingRetrieveResult, error) {
+	var out ScannersPairingRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/scanners/" + pathEscape(id) + "/pairing"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type ScannersResource struct {
+	c       *core
+	Pairing *ScannersPairingResource
 }
 
 func newScannersResource(c *core) *ScannersResource {
 	return &ScannersResource{
-		c: c,
+		c:       c,
+		Pairing: newScannersPairingResource(c),
 	}
 }
 
@@ -1855,6 +1885,15 @@ func newScannersResource(c *core) *ScannersResource {
 func (r *ScannersResource) Revoke(ctx context.Context, id string, opts ...RequestOption) (*ScannersRevokeResult, error) {
 	var out ScannersRevokeResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners/" + pathEscape(id) + "/revoke"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RotateToken A till token, shown once (replaces the old one) `POST /api/v1/scanners/{id}/token`
+func (r *ScannersResource) RotateToken(ctx context.Context, id string, query *ScannersRotateTokenQuery, opts ...RequestOption) (*ScannersRotateTokenResult, error) {
+	var out ScannersRotateTokenResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners/" + pathEscape(id) + "/token", query: queryValues(query)}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil

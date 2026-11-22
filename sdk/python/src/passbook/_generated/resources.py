@@ -1705,9 +1705,33 @@ class TerminalResource:
         return self._core.request("POST", "/api/v1/scan/resolve", body=body, result=m.TerminalResolveResult, **opts)
 
 
+class ScannersPairingResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        id: str,
+        *,
+        restore: _Literal["true"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersPairingCreateResult:
+        """A new pairing code (replaces any live one) `POST /api/v1/scanners/{id}/pairing`"""
+        return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/pairing", query={"restore": restore}, result=m.ScannersPairingCreateResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersPairingRetrieveResult:
+        """Poll a pairing `GET /api/v1/scanners/{id}/pairing`"""
+        return self._core.request("GET", f"/api/v1/scanners/{_p(id)}/pairing", result=m.ScannersPairingRetrieveResult, **opts)
+
+
 class ScannersResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.pairing = ScannersPairingResource(core)
 
     def revoke(
         self,
@@ -1716,6 +1740,16 @@ class ScannersResource:
     ) -> m.ScannersRevokeResult:
         """Remove a scanner from use `POST /api/v1/scanners/{id}/revoke`"""
         return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/revoke", result=m.ScannersRevokeResult, **opts)
+
+    def rotate_token(
+        self,
+        id: str,
+        *,
+        restore: _Literal["true"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersRotateTokenResult:
+        """A till token, shown once (replaces the old one) `POST /api/v1/scanners/{id}/token`"""
+        return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/token", query={"restore": restore}, result=m.ScannersRotateTokenResult, **opts)
 
     def set_mode(
         self,

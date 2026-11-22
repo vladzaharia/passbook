@@ -1035,7 +1035,10 @@ __all__ = [
     "ScannersCreateParamsSettings",
     "ScannersCreateParamsSettingsCheckIn",
     "ScannersCreateParamsSettingsTags",
+    "ScannersPairingCreateResult",
+    "ScannersPairingRetrieveResult",
     "ScannersRevokeResult",
+    "ScannersRotateTokenResult",
     "ScannersSetModeBody",
     "ScannersSetModeParams",
     "ScannersSetModeResult",
@@ -7869,6 +7872,19 @@ class ScannersCreateParamsSettingsTags(_Model):
     level: _Literal["off", "basic", "secure"] | str | None = None
     types: _List[str | _Literal["standard"] | str] | None = None
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
+
+class ScannersPairingCreateResult(_Model):
+    code: str | None
+    url: str | None
+    expiresAt: int
+
+class ScannersPairingRetrieveResult(_Model):
+    state: _Literal["waiting", "paired", "expired"] | str
+    device: _Dict[str, _Any] | None
+
+class ScannersRotateTokenResult(_Model):
+    token: str | None
+    expiresAt: int
 
 class ScannersSetModeParams(_Model):
     mode: _Literal["live", "test"] | str

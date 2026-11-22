@@ -6385,6 +6385,9 @@
   ],
   "scanners post /{id}/pairing": [
     "FORBIDDEN",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "SCANNER_NAME_TAKEN",
@@ -6465,6 +6468,9 @@
   ],
   "scanners post /{id}/token": [
     "FORBIDDEN",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "ORG_FORBIDDEN",
     "ORG_TEST_ONLY",
     "SCANNER_NAME_TAKEN",
