@@ -425,13 +425,10 @@ describe('syncing queued reads', () => {
     it('is moved by a session poll, and a device that only uploads gains nothing', async () => {
       const { tpl, scanner, headers, roster, t0, reads } = await outage();
       // Uploads only: reads dated before the last contact stay late however many batches it sends.
-      const before = item(
-        (await kit.scanPass(reads[0] ? await ticketTemplate() : '')).scanCode ?? '',
-        {
-          clientTs: t0 - 30 * 60_000,
-          door: 'listed',
-        },
-      );
+      const before = item((await kit.scanPass(tpl)).scanCode ?? '', {
+        clientTs: t0 - 30 * 60_000,
+        door: 'listed',
+      });
       await batch(headers, [before], roster);
       await batch(headers, [], roster);
       expect(await lateCount([before.idempotencyKey])).toBe(1);
