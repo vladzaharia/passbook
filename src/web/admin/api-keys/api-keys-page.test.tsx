@@ -184,6 +184,7 @@ describe('api keys page', () => {
       },
     });
     const user = userEvent.setup();
+    expect(await screen.findByRole('heading', { name: 'API keys' })).toBeInTheDocument();
     expect(screen.queryByText('All modes')).toBeNull();
     expect(seen.every((orgId) => orgId === 'o1')).toBe(true);
     expect(screen.queryByRole('combobox', { name: 'Key context' })).toBeNull();

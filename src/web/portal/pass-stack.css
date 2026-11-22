@@ -1,7 +1,7 @@
 /* PassStack (pass-stack.tsx): plain classes only, so the bundle page (SSR) can inline this sheet
    as it is. The stack is the card's width (22rem at most); its container sizes the peeks' radius
    as the card's own (14 of 320). A peek is the card's top 68 px: the header's two lines (an org name
-   that wraps) read whole, and the next peek covers only its 10 px overlap. Transform and opacity only; reduced motion keeps nothing moving. */
+   that wraps) read whole, and the next peek covers only its 8 px overlap. Transform and opacity only; reduced motion keeps nothing moving. */
 .wl-stack {
   --wl-peek: 4.25rem;
   --wl-peek-radius: calc(100cqw * 14 / 320);
@@ -21,12 +21,12 @@
   justify-items: center;
   min-width: 0;
 }
-/* The front's row sits 14 px above the first peek; peeks overlap 10 px. */
+/* The front's row sits 14 px above the first peek; peeks overlap 8 px. */
 .wl-stack-front + .wl-stack-peek {
   margin-top: 0.875rem;
 }
 .wl-stack-peek + .wl-stack-peek {
-  margin-top: -0.625rem;
+  margin-top: -0.5rem;
 }
 .wl-stack-peek {
   position: relative;

@@ -1,13 +1,22 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
+import { cn } from '../../lib/cn.ts';
 import { blueprintGlyph } from './glyph.ts';
 import { blueprintVars } from './identity.ts';
 import './blueprints.css';
 
 /** The icon tile in the pass's colours; 36 px on tiles, 48 px in the page header. */
-export function BlueprintGlyph({ icon: Icon, size = 36 }: { icon: LucideIcon; size?: 36 | 48 }) {
+export function BlueprintGlyph({
+  icon: Icon,
+  size = 36,
+  className,
+}: {
+  icon: LucideIcon;
+  size?: 36 | 48;
+  className?: string;
+}) {
   return (
-    <span aria-hidden className="bp-glyph" data-size={size}>
+    <span aria-hidden className={cn('bp-glyph', className)} data-size={size}>
       <Icon />
     </span>
   );

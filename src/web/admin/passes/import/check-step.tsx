@@ -91,8 +91,7 @@ export function CheckStep({
       {canOperate && !undone ? (
         <div>
           <Button
-            variant="ghost"
-            className="-ml-3"
+            variant="outline"
             loading={discard.isPending}
             onClick={() => discard.mutate(undefined, { onSuccess: onDiscarded })}
           >

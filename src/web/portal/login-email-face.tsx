@@ -91,7 +91,10 @@ export function EmailFace({
 
   const { challengeFailed } = request;
   useEffect(() => {
-    if (challengeFailed) scene.fail('error');
+    if (!challengeFailed) return;
+    scene.fail('error');
+    // The error is the news: the autofocused field's ring would compete with it.
+    if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
   }, [challengeFailed, scene]);
 
   const callout = error ?? (request.challengeFailed ? { message: CHALLENGE_FAILED } : null);

@@ -40,7 +40,7 @@ const plainClick = (e: MouseEvent) =>
 
 /**
  * Wallet's stack, one structure for My passes and the bundle page (SSR-safe, no hooks): the front
- * pass at full size, then the top 58 px of every other card, overlapping. Peeks are the real card
+ * pass at full size, then the top 66 px of every other card, overlapping. Peeks are the real card
  * clipped, never a redrawn strip, so they truncate as Wallet's do. Each peek carries the card's
  * view-transition name, so bringing it forward morphs the strip into the front card.
  */

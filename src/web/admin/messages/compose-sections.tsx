@@ -159,7 +159,7 @@ export function WhenSection({
       <SegmentedControl
         label="When"
         options={[
-          { value: 'now', label: 'Send now' },
+          { value: 'now', label: 'Now' },
           { value: 'later', label: 'Schedule' },
         ]}
         value={state.when}

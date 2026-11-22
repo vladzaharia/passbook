@@ -17,7 +17,7 @@ import {
   shownRows,
   stateOfImport,
 } from './match-model.ts';
-import { MatchRowView } from './match-rows.tsx';
+import { MatchRows } from './match-rows.tsx';
 import { MatchSummary, SavedPicker, UnusedColumns, valuesLeft } from './match-summary.tsx';
 import { IMPORT_STEPS, STEP } from './steps.ts';
 
@@ -129,19 +129,13 @@ function MatchForm({
           </Callout>
         ) : null}
         <MatchSummary state={state} columns={imp.columns.length} />
-        <ul className="@container wl-stagger border-t border-border">
-          {shownRows(state).map((row, i) => (
-            <MatchRowView
-              key={row.key}
-              row={row}
-              columns={imp.columns}
-              state={state}
-              index={i}
-              error={shown ? result.errors[row.key] : undefined}
-              onRow={setRow}
-            />
-          ))}
-        </ul>
+        <MatchRows
+          rows={shownRows(state)}
+          columns={imp.columns}
+          state={state}
+          errors={shown ? result.errors : {}}
+          onRow={setRow}
+        />
         <UnusedColumns state={state} onUse={use} />
       </Card>
       {wide ? null : (

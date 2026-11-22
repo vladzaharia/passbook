@@ -1,4 +1,4 @@
-import { ArrowRight, KeyRound, Sparkles } from 'lucide-react';
+import { ArrowRight, ChevronRight, KeyRound, Sparkles } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import type { MappingDateFormat } from '@/shared/contracts/issuing.ts';
 import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
@@ -233,5 +233,56 @@ export function MatchRowView({
         </p>
       ) : null}
     </li>
+  );
+}
+
+/** Fields with a column, then the optional ones with none, folded (a template can have dozens). */
+export function MatchRows({
+  rows,
+  columns,
+  state,
+  errors,
+  onRow,
+}: {
+  rows: readonly MatchRow[];
+  columns: Columns;
+  state: MatchState;
+  errors: Record<string, string | undefined>;
+  onRow: (row: MatchRow) => void;
+}) {
+  const empty = rows.filter((r) => r.from.length === 0 && !r.required);
+  const fold = empty.length > 3;
+  const open = fold ? rows.filter((r) => !empty.includes(r)) : rows;
+  const view = (list: readonly MatchRow[]) =>
+    list.map((row, i) => (
+      <MatchRowView
+        key={row.key}
+        row={row}
+        columns={columns}
+        state={state}
+        index={i}
+        error={errors[row.key]}
+        onRow={onRow}
+      />
+    ));
+  return (
+    <>
+      <ul className="@container wl-stagger border-t border-border">{view(open)}</ul>
+      {fold ? (
+        <details
+          className="group border-t border-border"
+          open={empty.some((r) => errors[r.key]) || undefined}
+        >
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 [&::-webkit-details-marker]:hidden text-sm font-medium text-fg-muted hover:text-fg-strong sm:px-6">
+            <ChevronRight
+              aria-hidden
+              className="size-4 motion-safe:transition-transform group-open:rotate-90"
+            />
+            {C.match.emptyFields(empty.length)}
+          </summary>
+          <ul className="@container border-t border-border">{view(empty)}</ul>
+        </details>
+      ) : null}
+    </>
   );
 }

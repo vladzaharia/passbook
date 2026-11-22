@@ -26,6 +26,8 @@ const reviewTemplates = (
   </Button>
 );
 
+const TEMPLATE_NOUN: [string, string] = ['template', 'templates'];
+
 export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
   const {
     principalId,
@@ -186,13 +188,11 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
                 canReadTemplates &&
                 eligible.data &&
                 (!eligible.isError || eligible.isFetchNextPageError) &&
-                (!eligible.isFetching || eligible.isFetchingNextPage) ? (
-                  <LoadMore
-                    query={eligible}
-                    shown={usable.length}
-                    noun={['template', 'templates']}
-                    scoped
-                  />
+                (!eligible.isFetching || eligible.isFetchingNextPage) &&
+                !(scope.isLoading && usable.length === 0) ? (
+                  <div className="wl-rise [animation-delay:240ms]">
+                    <LoadMore query={eligible} shown={usable.length} noun={TEMPLATE_NOUN} scoped />
+                  </div>
                 ) : null}
                 {templateId &&
                 !scope.isLoading &&
