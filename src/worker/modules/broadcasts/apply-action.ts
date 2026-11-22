@@ -8,8 +8,9 @@ import { setPassStatus } from '../passes/service-status.ts';
 import { releaseMovePlan, type StampMove } from '../passes/stamps-keep.ts';
 import { activeRelease } from '../templates/releases.ts';
 import { actorOf } from './actor.ts';
+import { alreadyWritten, settlePending } from './change-intent.ts';
 import { type BroadcastRow, type ItemRow, setIntent } from './repo.ts';
-import { creatorLive } from './repo-creator.ts';
+import { creatorLive, notWrittenYet } from './repo-creator.ts';
 
 /** The approved design each template moves to, read once per chunk, with its stamp plan. */
 export type DesignCache = Map<
@@ -31,7 +32,7 @@ export async function applyAction(
   action: ChangeAction,
   designs: DesignCache,
   pass: Pass,
-): Promise<ItemRow> {
+): Promise<ItemRow | null> {
   const base = { passId: pass.id, silent: false };
   let release: { id: string; generation: number; version: string; move: StampMove } | null = null;
   if (action === 'design') {
@@ -105,7 +106,7 @@ export async function applyAction(
           dispatch: false,
           // A design move tells holders only when the run says so.
           notify: row.notify === 1,
-          extraChecks: [creatorLive(row, ctx.clock.now())],
+          extraChecks: [creatorLive(row, ctx.clock.now()), notWrittenYet(row.id, pass.id)],
           expectedRelease: { id: target.id, generation: target.generation },
           mutate: (current) => {
             stillOurs(current);
@@ -121,7 +122,7 @@ export async function applyAction(
           { orgId: row.org_id, mode: row.mode, principal: 'session' },
           undefined,
           {
-            extraChecks: [creatorLive(row, ctx.clock.now())],
+            extraChecks: [creatorLive(row, ctx.clock.now()), notWrittenYet(row.id, pass.id)],
             source: 'schedule',
             sourceRef: row.id,
             notify: false,
@@ -155,6 +156,11 @@ export async function applyAction(
     };
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
+    // Refused because this run already wrote the pass (a newer attempt): settle that write, record no failure.
+    if (await alreadyWritten(ctx.env.DB, row.id, pass.id)) {
+      await settlePending(ctx, row, pass.id);
+      return null;
+    }
     ctx.log.warn('broadcast.pass_failed', {
       broadcastId: row.id,
       passId: pass.id,

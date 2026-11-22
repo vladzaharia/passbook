@@ -6,6 +6,8 @@ import { publishPass } from '../passes/publish.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { applyChunk } from './apply.ts';
 import { type ChangeKit, changeKit } from './change-fixtures.ts';
+import { settlePending } from './change-intent.ts';
+import type { BroadcastRow } from './repo.ts';
 import * as repo from './repo.ts';
 
 vi.mock('./repo.ts', async (importOriginal) => {
@@ -252,5 +254,95 @@ describe('an undo that crashes before its item', () => {
     expect(await input(passId, 'visits')).toBe(0);
     await applyChunk(jobCtxOf(ck.kit), undoId, null);
     expect((await ck.items(undoId))[0]).toMatchObject({ outcome: 'updated' });
+  });
+});
+
+const rowOf = async (id: string) =>
+  (await first<BroadcastRow>(ck.kit.env.DB, 'SELECT * FROM broadcasts WHERE id = ?', [
+    id,
+  ])) as BroadcastRow;
+const intents = (id: string) =>
+  all<{ pass_id: string; intent: string | null }>(
+    ck.kit.env.DB,
+    'SELECT pass_id, intent FROM broadcast_targets WHERE broadcast_id = ? ORDER BY pass_id',
+    [id],
+  );
+
+describe('keys the stamp must keep', () => {
+  it('stamps an input whose name holds a quote and a backslash, so a clear can be undone', async () => {
+    const key = 'q"x\\y';
+    const passId = await unrendered({ [key]: 'kept' });
+    const id = await start(passId);
+    const version = (await getPass(ck.kit.env.DB, passId, null))?.version ?? 0;
+    await run(
+      ck.kit.env.DB,
+      'UPDATE broadcast_targets SET intent = ? WHERE broadcast_id = ? AND pass_id = ?',
+      [JSON.stringify({ from: { [key]: 'kept' }, to: { [key]: null }, version }), id, passId],
+    );
+    const without = JSON.stringify({ memberName: 'Alex', visits: 0 });
+    await run(
+      ck.kit.env.DB,
+      'UPDATE passes SET write_ref = ?, personalization = ?, version = version + 1 WHERE id = ?',
+      [id, without, passId],
+    );
+    await settlePending(jobCtxOf(ck.kit), await rowOf(id));
+    const { before } = await beforeOf(id);
+    expect(before.from[key]).toBe('kept');
+    expect(before.to[key]).toBeNull();
+  });
+});
+
+describe('a stale attempt cannot take over', () => {
+  it('setIntent leaves a live intent alone', async () => {
+    const passId = await unrendered();
+    const id = await start(passId);
+    const real = vi.mocked(repo.setIntent).getMockImplementation() as typeof repo.setIntent;
+    await real(ck.kit.env.DB, id, passId, '{"live":true}');
+    await expect(real(ck.kit.env.DB, id, passId, '{"stale":true}')).rejects.toThrow();
+    expect((await intents(id))[0]?.intent).toBe('{"live":true}');
+  });
+
+  it('refuses a write once the run has stamped its own, whatever version it read', async () => {
+    const passId = await unrendered();
+    const id = await start(passId);
+    await run(
+      ck.kit.env.DB,
+      'UPDATE broadcast_targets SET written_version = 1 WHERE broadcast_id = ? AND pass_id = ?',
+      [id, passId],
+    );
+    await applyChunk(jobCtxOf(ck.kit), id, null);
+    expect(await input(passId, 'visits')).toBe(0);
+    expect((await ck.items(id)).map((i) => i.outcome)).not.toContain('failed');
+  });
+
+  it('settles only the pass it stopped on', async () => {
+    const a = await unrendered();
+    const b = await unrendered();
+    const res = await ck.post('/broadcasts', {
+      orgId: ck.kit.org.id,
+      kind: 'change',
+      target: { passIds: [a, b] },
+      patch: { visits: { add: 1 } },
+    });
+    const id = ((await res.json()) as { id: string }).id;
+    for (const passId of [a, b])
+      await run(
+        ck.kit.env.DB,
+        'UPDATE broadcast_targets SET intent = ? WHERE broadcast_id = ? AND pass_id = ?',
+        [JSON.stringify({ from: { visits: 0 }, to: { visits: 1 }, version: 99 }), id, passId],
+      );
+    await settlePending(jobCtxOf(ck.kit), await rowOf(id), a);
+    const left = await intents(id);
+    expect(left.find((r) => r.pass_id === a)?.intent).toBeNull();
+    expect(left.find((r) => r.pass_id === b)?.intent).not.toBeNull();
+  });
+
+  it('a stale void loses to the live attempt without recording a failure', async () => {
+    const pass = await ck.kit.makePass();
+    const id = await start(pass.id, { $void: true });
+    afterIntent(() => crashBeforeItem(id));
+    await applyChunk(jobCtxOf(ck.kit), id, null);
+    expect((await getPass(ck.kit.env.DB, pass.id, null))?.status).toBe('voided');
+    expect((await ck.items(id)).map((i) => i.outcome)).toEqual(['updated']);
   });
 });
