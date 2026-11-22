@@ -51,7 +51,7 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     if (m.type() === 'error' && /TrustedHTML|Trusted Types/.test(m.text())) errors.push(m.text());
   });
 
-  // Signed out: no authenticated call on any page, Reference current under Console and Playground, a sign-in action.
+  // Signed out: no authenticated call on any page, no section current under Console, a sign-in action.
   for (const path of [
     '/developers/reference/passes',
     '/developers/logs',
@@ -64,8 +64,8 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   expect(failures).toEqual([]);
   await page.goto('/developers/console');
   await expect(
-    page.getByRole('navigation', { name: 'Sections' }).getByRole('link', { name: 'Reference' }),
-  ).toHaveAttribute('aria-current', 'page');
+    page.getByRole('navigation', { name: 'Sections' }).locator('[aria-current]'),
+  ).toHaveCount(0);
   await expect(page.locator('main').getByRole('link', { name: 'Sign in to try' })).toBeVisible();
   await shot(page, 'console-signed-out');
   await page.goto('/developers/playground');
