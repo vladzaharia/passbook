@@ -188,7 +188,7 @@ export function LiveScreen({
             />
           </span>
           <span className="scan-live-brand-text">
-            <span className="scan-live-name">{session.scanner?.name}</span>
+            <span className="scan-live-name">{session.scanner?.name}</span>{' '}
             <span className="scan-live-org">{orgName}</span>
           </span>
         </button>
