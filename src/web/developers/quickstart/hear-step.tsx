@@ -5,7 +5,7 @@ import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import { formatTime } from '../../lib/format.ts';
-import type { LiveClient } from '../playground/live.ts';
+import { type LiveClient, PORTAL_READ } from '../playground/live.ts';
 import { Step, type StepState } from './parts.tsx';
 import { usePoll } from './use-home.ts';
 import type { Quickstart } from './use-quickstart.ts';
@@ -21,8 +21,11 @@ function useCaptures(client: LiveClient | null, endpointId: string | undefined, 
       const page = await client.send<{ items: WebhookCaptureDto[] }>(
         'GET',
         `/webhook-endpoints/${encodeURIComponent(endpointId)}/captures?limit=10`,
+        undefined,
+        PORTAL_READ,
       );
-      if (page.body) setItems(page.body.items);
+      // Events can arrive in any order: the list is by event time, newest first.
+      if (page.body) setItems([...page.body.items].sort((a, b) => b.createdAt - a.createdAt));
     } catch {
       // The list keeps what it has; the next poll asks again.
     }

@@ -12,6 +12,11 @@ const TEST_BEARER = /^Bearer\s+(?:pbp?_test_|pbtry_)/i;
 const NOT_LOGGED = /^\/api\/v1\/developer\/(?:logs|rail)(?:\/|$)/;
 const CODE = /^[A-Z0-9_]{2,64}$/;
 
+/** What the portal's own background reads call themselves, so the workbench can leave them out of its Calls. */
+export const PORTAL_CLIENT = 'portal';
+const portalCall = (via: string | null | undefined, header: string | undefined) =>
+  via === 'try' && header === PORTAL_CLIENT;
+
 interface Read {
   text: string;
   bytes: number;
@@ -109,7 +114,9 @@ export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
     orgId: auth.orgId,
     keyId: auth.keyId,
     via: auth.via ?? null,
-    client: clientOf(c.req.header('user-agent')),
+    client: portalCall(auth.via, c.req.header('x-passbook-client'))
+      ? PORTAL_CLIENT
+      : clientOf(c.req.header('user-agent')),
     mode: auth.mode,
     requestId: c.var.requestId,
     method: c.req.method,

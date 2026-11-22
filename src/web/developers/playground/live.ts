@@ -8,6 +8,9 @@ type Template = z.infer<typeof TemplateDetailSchema>;
 const RENEW_BEFORE_MS = 2 * 60_000;
 const API = '/api/v1';
 
+/** Marks a background read as the portal's own: the workbench leaves it out of Calls. */
+export const PORTAL_READ = { 'x-passbook-client': 'portal' } as const;
+
 export interface Built {
   passJson: Record<string, unknown>;
   assetBaseUrl: string;

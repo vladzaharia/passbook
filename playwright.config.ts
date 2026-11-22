@@ -33,6 +33,7 @@ export default defineConfig({
     command: 'node tools/e2e-server.ts',
     url: `http://localhost:${port}/health`,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    // A cold start builds the app and the developer pages; under load that has taken over 120 s.
+    timeout: 300_000,
   },
 });

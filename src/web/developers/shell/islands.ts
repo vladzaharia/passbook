@@ -52,6 +52,9 @@ export function mountIslands(root: ParentNode = document): void {
           try {
             const island = await ISLANDS[el.dataset.island ?? '']?.();
             await island?.mount(el);
+          } catch (error) {
+            // Not silent, and not an unhandled rejection: the page's error handler gets it.
+            reportError(error);
           } finally {
             // Mounted or not, the static markup shows again if the island never replaced it.
             delete el.dataset.hydrating;

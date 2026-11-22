@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import type { DeveloperProgress } from '../../../shared/contracts/developer-home.ts';
 import { type Sandbox, type Session, updateSession } from '../console/session.ts';
-import { type Built, LiveClient, LiveError } from '../playground/live.ts';
+import { type Built, LiveClient, LiveError, PORTAL_READ } from '../playground/live.ts';
 import type { InputValues } from '../playground/model.ts';
 import { fromDetail, type PgTemplate } from '../playground/templates.ts';
 import { beacon } from './beacon.ts';
@@ -218,13 +218,15 @@ export function useQuickstart(initial: Session) {
   useEffect(() => {
     if (!client || !held || (pass && pass.id === held.id && pass.version >= held.version)) return;
     let live = true;
-    client.send<PassBody>('GET', `/passes/${encodeURIComponent(held.id)}`).then(
-      (sent) => {
-        if (live && sent.ok && sent.body) setPass(passOf(sent.body, performance.now()));
-      },
-      // The stage keeps its empty card; the next read of the home tries again.
-      () => undefined,
-    );
+    client
+      .send<PassBody>('GET', `/passes/${encodeURIComponent(held.id)}`, undefined, PORTAL_READ)
+      .then(
+        (sent) => {
+          if (live && sent.ok && sent.body) setPass(passOf(sent.body, performance.now()));
+        },
+        // The stage keeps its empty card; the next read of the home tries again.
+        () => undefined,
+      );
     return () => {
       live = false;
     };
