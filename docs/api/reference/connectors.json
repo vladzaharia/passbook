@@ -56,9 +56,7 @@
                 {
                   "from": "Tier",
                   "op": "in",
-                  "values": [
-                    "Refunded"
-                  ]
+                  "values": ["Refunded"]
                 }
               ]
             }
@@ -123,9 +121,7 @@
             {
               "from": "Tier",
               "op": "in",
-              "values": [
-                "Refunded"
-              ]
+              "values": ["Refunded"]
             }
           ]
         }

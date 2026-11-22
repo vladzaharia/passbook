@@ -58,9 +58,7 @@
         "mark": {
           "chosen": "full",
           "effective": "full",
-          "allowed": [
-            "full"
-          ]
+          "allowed": ["full"]
         },
         "support": {
           "email": {
@@ -334,12 +332,8 @@
         {
           "id": "0193a1b2-7c00-7000-8000-19da33726412",
           "name": "Day pass",
-          "ownBrand": [
-            "colors"
-          ],
-          "placeholders": [
-            "logo"
-          ],
+          "ownBrand": ["colors"],
+          "placeholders": ["logo"],
           "channels": {
             "mobile": {
               "on": false,
@@ -387,9 +381,7 @@
           "area": "brand",
           "message": "The gym closes at 18:00 on 24 December.",
           "channel": "mobile",
-          "templateIds": [
-            "0193a1b2-7c00-7000-8000-0000000000b1"
-          ],
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "fix": {
             "action": "upload_logo",
             "target": "tier"
@@ -473,9 +465,7 @@
           "mark": {
             "chosen": "full",
             "effective": "full",
-            "allowed": [
-              "full"
-            ]
+            "allowed": ["full"]
           },
           "support": {
             "email": {
@@ -749,12 +739,8 @@
           {
             "id": "0193a1b2-7c00-7000-8000-a1d8aed1fc7a",
             "name": "Day pass",
-            "ownBrand": [
-              "colors"
-            ],
-            "placeholders": [
-              "logo"
-            ],
+            "ownBrand": ["colors"],
+            "placeholders": ["logo"],
             "channels": {
               "mobile": {
                 "on": false,
@@ -802,9 +788,7 @@
             "area": "brand",
             "message": "The gym closes at 18:00 on 24 December.",
             "channel": "mobile",
-            "templateIds": [
-              "0193a1b2-7c00-7000-8000-0000000000b1"
-            ],
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
             "fix": {
               "action": "upload_logo",
               "target": "tier"
@@ -828,9 +812,7 @@
             "passes": 37
           }
         ],
-        "enrolments": [
-          "google"
-        ]
+        "enrolments": ["google"]
       }
     }
   },

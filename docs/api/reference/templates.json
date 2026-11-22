@@ -13,9 +13,7 @@
           "origin": "uploaded",
           "status": "active",
           "activeVersion": "3",
-          "styles": [
-            "generic"
-          ],
+          "styles": ["generic"],
           "passCount": 128,
           "createdAt": 1794322800000,
           "updatedAt": 1795359600000
@@ -36,9 +34,7 @@
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
-      "styles": [
-        "generic"
-      ],
+      "styles": ["generic"],
       "passCount": 128,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -132,9 +128,7 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "version": "3",
-      "modes": [
-        "live"
-      ],
+      "modes": ["live"],
       "expected": {
         "live": 8,
         "test": 39
@@ -184,9 +178,7 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "version": "3",
-      "modes": [
-        "live"
-      ],
+      "modes": ["live"],
       "expected": {
         "live": 8,
         "test": 39
@@ -241,9 +233,7 @@
     },
     "response": {
       "version": "3",
-      "approved": [
-        "live"
-      ],
+      "approved": ["live"],
       "release": {
         "version": "3",
         "modes": {
@@ -399,9 +389,7 @@
             }
           ],
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-          "assetNames": [
-            "icon.png"
-          ],
+          "assetNames": ["icon.png"],
           "id": "0193a1b2-7c00-7000-8000-9d4d6122249a"
         }
       ]
@@ -426,9 +414,7 @@
             "days": 18,
             "durationMinutes": 90,
             "durationFrom": "first_scan",
-            "plans": [
-              "always"
-            ],
+            "plans": ["always"],
             "source": "template"
           }
         }
@@ -496,9 +482,7 @@
         }
       ],
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": [
-        "logo.png"
-      ]
+      "assetNames": ["logo.png"]
     }
   },
   "templates.getTemplatesByIdVersionsByVersion": {
@@ -735,9 +719,7 @@
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
-      "styles": [
-        "generic"
-      ],
+      "styles": ["generic"],
       "passCount": 128,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -852,9 +834,7 @@
           "contentHash": "1962d8005fa1946c12ff6f30e9df982d47a7118459b07e8717c09971a014547a",
           "candidateHash": "d1be8409d99c8a6edf27a23a2af992fa57c5829e9b7decf00526ed59c5aadf18",
           "adapterRevision": 3,
-          "adapterCapabilities": [
-            "read"
-          ],
+          "adapterCapabilities": ["read"],
           "audiencePolicyRevision": 6,
           "authorId": "0193a1b2-7c00-7000-8000-3a5a2d975dd8",
           "versionAuthorId": "0193a1b2-7c00-7000-8000-0df0db664993",
@@ -904,9 +884,7 @@
       "contentHash": "550d1ffdbe102e6bd710d2253affd3a8a73f08006f2380f692affee413f49e87",
       "candidateHash": "64488dddee9ce3e407729b188396eb98ef2778a6c9cfa84bd56e2b887b41a611",
       "adapterRevision": 3,
-      "adapterCapabilities": [
-        "read"
-      ],
+      "adapterCapabilities": ["read"],
       "audiencePolicyRevision": 6,
       "authorId": "0193a1b2-7c00-7000-8000-de32766d9027",
       "versionAuthorId": "0193a1b2-7c00-7000-8000-f9eab450ec8f",
@@ -1006,9 +984,7 @@
         }
       ],
       "nextCursor": "c1.4812",
-      "promotable": [
-        "yes"
-      ]
+      "promotable": ["yes"]
     }
   },
   "templates.postTemplatesByIdReleases": {
@@ -1117,9 +1093,7 @@
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
-      "styles": [
-        "generic"
-      ],
+      "styles": ["generic"],
       "passCount": 128,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -1159,9 +1133,7 @@
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
-      "styles": [
-        "generic"
-      ],
+      "styles": ["generic"],
       "passCount": 128,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -1208,9 +1180,7 @@
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
-      "styles": [
-        "generic"
-      ],
+      "styles": ["generic"],
       "passCount": 128,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -1252,9 +1222,7 @@
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
-      "styles": [
-        "generic"
-      ],
+      "styles": ["generic"],
       "passCount": 128,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -1427,9 +1395,7 @@
   },
   "templates.postTemplatesByIdChannelsResetPasses": {
     "request": {
-      "channels": [
-        "mobile"
-      ],
+      "channels": ["mobile"],
       "dryRun": false,
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
     },
@@ -1528,9 +1494,7 @@
         "origin": "uploaded",
         "status": "active",
         "activeVersion": "3",
-        "styles": [
-          "generic"
-        ],
+        "styles": ["generic"],
         "passCount": 128,
         "createdAt": 1794322800000,
         "updatedAt": 1795359600000,
@@ -1683,9 +1647,7 @@
         "origin": "uploaded",
         "status": "active",
         "activeVersion": "3",
-        "styles": [
-          "generic"
-        ],
+        "styles": ["generic"],
         "passCount": 128,
         "createdAt": 1794322800000,
         "updatedAt": 1795359600000,
@@ -1772,9 +1734,7 @@
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
-      "styles": [
-        "generic"
-      ],
+      "styles": ["generic"],
       "passCount": 128,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -1811,9 +1771,7 @@
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
-      "styles": [
-        "generic"
-      ],
+      "styles": ["generic"],
       "passCount": 128,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -1856,9 +1814,7 @@
       "contentHash": "3e36df5b5a3f4a749a5294580622d344f96ec94bfa48cda3fba1563b73ad4461",
       "candidateHash": "917b9b8f3fa2b2d1237d7aeae7903a83ec725a67641584f69ea42baaa14f7b40",
       "adapterRevision": 3,
-      "adapterCapabilities": [
-        "read"
-      ],
+      "adapterCapabilities": ["read"],
       "audiencePolicyRevision": 6,
       "authorId": "0193a1b2-7c00-7000-8000-7a4c33d5a5ef",
       "versionAuthorId": "0193a1b2-7c00-7000-8000-6cdc3c4f6291",

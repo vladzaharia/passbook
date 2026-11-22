@@ -13,9 +13,7 @@
           "bindingDays": 5,
           "confirm": "staff",
           "typed": false,
-          "templateIds": [
-            "0193a1b2-7c00-7000-8000-0000000000b1"
-          ],
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "version": 3,
           "tagCount": 5,
           "createdAt": 1794322800000,
@@ -45,9 +43,7 @@
       "bindingDays": 5,
       "confirm": "staff",
       "typed": false,
-      "templateIds": [
-        "0193a1b2-7c00-7000-8000-0000000000b1"
-      ],
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "version": 3,
       "tagCount": 5,
       "createdAt": 1794322800000,
@@ -73,9 +69,7 @@
       "bindingDays": 5,
       "confirm": "staff",
       "typed": false,
-      "templateIds": [
-        "0193a1b2-7c00-7000-8000-0000000000b1"
-      ],
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "version": 3,
       "tagCount": 5,
       "createdAt": 1794322800000,
@@ -98,9 +92,7 @@
       "bindingDays": 5,
       "confirm": "staff",
       "typed": false,
-      "templateIds": [
-        "0193a1b2-7c00-7000-8000-0000000000b1"
-      ],
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "version": 3,
       "tagCount": 5,
       "createdAt": 1794322800000,

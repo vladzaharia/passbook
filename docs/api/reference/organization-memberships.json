@@ -10,12 +10,8 @@
           "personal": false,
           "testOnly": false,
           "userId": "0193a1b2-7c00-7000-8000-000000000011",
-          "roles": [
-            "org_admin"
-          ],
-          "capabilities": [
-            "org:read"
-          ],
+          "roles": ["org_admin"],
+          "capabilities": ["org:read"],
           "createdAt": 1794322800000,
           "revokedAt": null,
           "userName": "Marcus Webb",
@@ -32,9 +28,7 @@
           "id": "0193a1b2-7c00-7000-8000-3d6a4a906b1c",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "email": "ada@example.com",
-          "roles": [
-            "org_admin"
-          ],
+          "roles": ["org_admin"],
           "createdAt": 1794322800000,
           "expiresAt": 1798124400000,
           "revokedAt": null,
@@ -47,17 +41,13 @@
   "organization-memberships.postOrgsByIdInvitations": {
     "request": {
       "email": "ada@example.com",
-      "roles": [
-        "org_admin"
-      ]
+      "roles": ["org_admin"]
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-ca3f7056f73b",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "email": "ada@example.com",
-      "roles": [
-        "org_admin"
-      ],
+      "roles": ["org_admin"],
       "createdAt": 1794322800000,
       "expiresAt": 1798124400000,
       "revokedAt": null,
@@ -86,12 +76,8 @@
       "personal": false,
       "testOnly": false,
       "userId": "0193a1b2-7c00-7000-8000-000000000011",
-      "roles": [
-        "org_admin"
-      ],
-      "capabilities": [
-        "org:read"
-      ],
+      "roles": ["org_admin"],
+      "capabilities": ["org:read"],
       "createdAt": 1794322800000,
       "revokedAt": null
     }
@@ -115,12 +101,8 @@
           "personal": false,
           "testOnly": false,
           "userId": "0193a1b2-7c00-7000-8000-000000000011",
-          "roles": [
-            "org_admin"
-          ],
-          "capabilities": [
-            "org:read"
-          ],
+          "roles": ["org_admin"],
+          "capabilities": ["org:read"],
           "createdAt": 1794322800000,
           "revokedAt": null
         }

@@ -1,9 +1,7 @@
 {
   "apple.postWalletV1Log": {
     "request": {
-      "logs": [
-        "Delivered to the endpoint; it answered 200."
-      ]
+      "logs": ["Delivered to the endpoint; it answered 200."]
     }
   }
 }

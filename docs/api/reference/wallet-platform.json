@@ -61,9 +61,7 @@
         "issuerId": "0193a1b2-7c00-7000-8000-654cf905765e",
         "serviceAccountEmail": "ada@example.com",
         "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
-        "scopes": [
-          "https://www.googleapis.com/auth/wallet_object.issuer"
-        ]
+        "scopes": ["https://www.googleapis.com/auth/wallet_object.issuer"]
       },
       "mode": "live"
     },

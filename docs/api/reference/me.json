@@ -109,9 +109,7 @@
             }
           },
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-          "assetNames": [
-            "strip.png"
-          ],
+          "assetNames": ["strip.png"],
           "tags": [
             {
               "id": "0193a1b2-7c00-7000-8000-df21d53b4950",
@@ -264,9 +262,7 @@
         }
       },
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": [
-        "logo.png"
-      ],
+      "assetNames": ["logo.png"],
       "tags": [
         {
           "id": "0193a1b2-7c00-7000-8000-b696562afc51",

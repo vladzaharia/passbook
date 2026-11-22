@@ -220,9 +220,7 @@
           "since": 1794322800000,
           "dueAt": 1795521600000,
           "via": "api",
-          "flags": [
-            "long_stay"
-          ]
+          "flags": ["long_stay"]
         }
       ],
       "count": 12,

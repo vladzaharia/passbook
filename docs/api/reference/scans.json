@@ -176,9 +176,7 @@
               "max": 2,
               "step": 39,
               "maxLength": 20,
-              "enum": [
-                "adult"
-              ]
+              "enum": ["adult"]
             }
           }
         ],
@@ -316,9 +314,7 @@
           "passJson": {},
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
           "assetGrant": "logo",
-          "assetNames": [
-            "logo.png"
-          ]
+          "assetNames": ["logo.png"]
         }
       },
       "previous": {
@@ -350,9 +346,7 @@
         "counter": false,
         "need": 13
       },
-      "flags": [
-        "vip"
-      ],
+      "flags": ["vip"],
       "channel": "mobile",
       "overridable": false,
       "exitAllowed": false,
