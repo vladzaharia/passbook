@@ -1971,6 +1971,16 @@ class TemplatesResource:
         """Get the JSON Schema of a template's pass input `GET /api/v1/templates/{id}/input-schema`"""
         return self._core.request("GET", f"/api/v1/templates/{_p(id)}/input-schema", result=m.TemplatesRetrieveInputSchemaResult, **opts)
 
+    def retrieve_rollout(
+        self,
+        id: str,
+        *,
+        mode: _Literal["live", "test"],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TemplatesRetrieveRolloutResult:
+        """How far the approved release has reached the organization’s passes `GET /api/v1/templates/{id}/rollout`"""
+        return self._core.request("GET", f"/api/v1/templates/{_p(id)}/rollout", query={"mode": mode}, result=m.TemplatesRetrieveRolloutResult, **opts)
+
     def retrieve_stamps_impact(
         self,
         id: str,

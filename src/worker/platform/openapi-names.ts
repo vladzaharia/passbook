@@ -81,6 +81,7 @@ import {
   ReviewTemplateSchema,
   TemplateReviewListSchema,
 } from '../../shared/contracts/template-release-flow.ts';
+import { TemplateRolloutSchema } from '../../shared/contracts/template-rollout.ts';
 import {
   TemplateDetailSchema,
   TemplateInputSchemaSchema,
@@ -146,6 +147,7 @@ const names = {
   Broadcast: BroadcastSchema,
   BroadcastUndo: BroadcastUndoResultSchema,
   ConnectionPreview: ConnectionPreviewSchema,
+  TemplateRollout: TemplateRolloutSchema,
   PassImportMappings: SavedImportMappingsResultSchema,
   PassImportUndo: PassImportUndoResultSchema,
   PassSummary: PassSummarySchema,

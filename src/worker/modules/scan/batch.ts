@@ -17,6 +17,7 @@ import { deepFreeze } from './freeze.ts';
 import { requireOfflineQueue } from './offline-policy.ts';
 import { unknownOutcome } from './outcome.ts';
 import { markScanOffline } from './repo-act-claim.ts';
+import { contactFloorOf } from './repo-device.ts';
 import {
   offlineReadRecorded,
   offlineReadScan,
@@ -179,11 +180,12 @@ export async function syncBatch(
   const sessionId = scopeSessionId(actor);
   const changes = sessionId ? await sessionChanges(ctx.env.DB, sessionId) : [];
   // Both are kept by the server, none by the device: the last list it served, and the last contact (any
-  // request but an upload) before this one, as read at the start of the request. An upload, however many
+  // request but an upload) before this one, as read at the start of the request, or the contact before a
+  // silence while the reconnect grace lasts (`contactFloorOf`). An upload, however many
   // chunks it takes, never moves it; a contact is stamped at most once a minute, which is the slack on top
   // of the clock drift below.
   const floor = actor.scanner
-    ? Math.max(await rosterAtOf(ctx.env.DB, actor.scanner.id), actor.scanner.contactAt ?? 0)
+    ? Math.max(await rosterAtOf(ctx.env.DB, actor.scanner.id), contactFloorOf(actor.scanner, now))
     : 0;
   for (const { item, index } of order) {
     const { door, expired } = await doorOf(ctx, actor, item, request.roster);

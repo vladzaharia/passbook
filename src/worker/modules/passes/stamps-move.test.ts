@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../app.ts';
-import { run } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
 import { rollbackRelease } from '../templates/releases.ts';
 import { approvedForTransfer, buildTransfer } from './credential-transfer-build.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
@@ -177,7 +177,43 @@ describe('a card above the new maximum', () => {
     expect(await reissueStamps(kit, id)).toMatchObject({ failed: 1, aboveMax: 1, changed: 1 });
     expect(await stamps(over.id)).toBe(15);
     expect(await versionOf(over.id)).toBe('v1');
+    // The rollout view can say why: one row for the pass left behind, none for the one that moved.
+    expect(
+      await all(kit.env.DB, 'SELECT pass_id, code FROM template_rollout_failures', []),
+    ).toEqual([{ pass_id: over.id, code: 'STAMPS_ABOVE_MAX' }]);
     expect(await stamps(fits.id)).toBe(6);
     expect(await versionOf(fits.id)).toBe('v2');
+  });
+
+  it('finishes the page when the failure note cannot be written', async () => {
+    const id = 'tpl-move-above-noted';
+    await stampVersion(kit, id, 'v1', 10);
+    const v1 = await releaseStamps(kit, id, 'v1');
+    const over = await stampCard(kit, v1, 6);
+    const fits = await stampCard(kit, v1, 6);
+    await stampVersion(kit, id, 'v2', 5, { maximum: 9 });
+    await releaseStamps(kit, id, 'v2');
+    await run(
+      kit.env.DB,
+      "UPDATE passes SET personalization = json_set(personalization, '$.stamps', 15) WHERE id = ?",
+      [over.id],
+    );
+    // Bookkeeping only: without its table the run still moves the others and reports the failure.
+    await run(
+      kit.env.DB,
+      'ALTER TABLE template_rollout_failures RENAME TO template_rollout_failures_off',
+      [],
+    );
+    try {
+      expect(await reissueStamps(kit, id)).toMatchObject({ failed: 1, changed: 1 });
+    } finally {
+      await run(
+        kit.env.DB,
+        'ALTER TABLE template_rollout_failures_off RENAME TO template_rollout_failures',
+        [],
+      );
+    }
+    expect(await versionOf(fits.id)).toBe('v2');
+    expect(await versionOf(over.id)).toBe('v1');
   });
 });

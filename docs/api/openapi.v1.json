@@ -5325,6 +5325,372 @@
         "type": "object",
         "additionalProperties": {}
       },
+      "TemplateRollout": {
+        "type": "object",
+        "properties": {
+          "releaseVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "releaseId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "fromVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "onRelease": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "remaining": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "updating": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "version": {
+                  "type": "string"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "version",
+                "count"
+              ]
+            }
+          },
+          "failedCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "failed": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "passId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "passId",
+                "title",
+                "reason"
+              ]
+            },
+            "maxItems": 50
+          },
+          "startedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "runId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "running": {
+            "type": "boolean"
+          },
+          "stalled": {
+            "type": "boolean"
+          },
+          "changes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "group": {
+                  "type": "string",
+                  "enum": [
+                    "colors",
+                    "front",
+                    "back",
+                    "images",
+                    "barcode"
+                  ]
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string"
+                      },
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "added",
+                          "removed",
+                          "changed"
+                        ]
+                      },
+                      "from": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "text"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "text"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "color"
+                                ]
+                              },
+                              "color": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "color"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "date"
+                                ]
+                              },
+                              "at": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "at"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "image"
+                                ]
+                              },
+                              "version": {
+                                "type": "string"
+                              },
+                              "asset": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "version",
+                              "asset"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "to": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "text"
+                                ]
+                              },
+                              "text": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "text"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "color"
+                                ]
+                              },
+                              "color": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "color"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "date"
+                                ]
+                              },
+                              "at": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "at"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "image"
+                                ]
+                              },
+                              "version": {
+                                "type": "string"
+                              },
+                              "asset": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "version",
+                              "asset"
+                            ]
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "label",
+                      "kind",
+                      "from",
+                      "to"
+                    ]
+                  }
+                },
+                "more": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "group",
+                "rows",
+                "more"
+              ]
+            }
+          },
+          "tell": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "until": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text",
+              "until",
+              "key"
+            ]
+          }
+        },
+        "required": [
+          "releaseVersion",
+          "releaseId",
+          "fromVersion",
+          "total",
+          "onRelease",
+          "remaining",
+          "updating",
+          "failedCount",
+          "failed",
+          "startedAt",
+          "runId",
+          "running",
+          "stalled",
+          "changes",
+          "tell"
+        ]
+      },
       "ReleaseResponse": {
         "anyOf": [
           {
@@ -8757,6 +9123,11 @@
                 },
                 "minItems": 1,
                 "maxItems": 3
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
               }
             },
             "required": [
@@ -25129,6 +25500,11 @@
                 "minItems": 1,
                 "maxItems": 5
               },
+              "version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
               "passIds": {
                 "type": "array",
                 "items": {
@@ -25349,6 +25725,11 @@
                 },
                 "minItems": 1,
                 "maxItems": 5
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
               },
               "passIds": {
                 "type": "array",
@@ -25607,6 +25988,11 @@
                 },
                 "minItems": 1,
                 "maxItems": 5
+              },
+              "version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
               },
               "passIds": {
                 "type": "array",
@@ -37724,8 +38110,11 @@
           "ACTOR_CHANGED",
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_EXPIRY_REQUIRED",
+          "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
+          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -38217,8 +38606,11 @@
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_EXPIRY_REQUIRED",
+          "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
+          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -38437,8 +38829,11 @@
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_EXPIRY_REQUIRED",
+          "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
+          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -57636,6 +58031,139 @@
         ]
       }
     },
+    "/api/v1/templates/{id}/rollout": {
+      "get": {
+        "summary": "How far the approved release has reached the organization’s passes",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "live",
+                "test"
+              ]
+            },
+            "required": true,
+            "name": "mode",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateRollout"
+                },
+                "example": {
+                  "releaseVersion": "4",
+                  "releaseId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                  "fromVersion": "3",
+                  "total": 1240,
+                  "onRelease": 758,
+                  "remaining": 482,
+                  "updating": [
+                    {
+                      "version": "3",
+                      "count": 479
+                    }
+                  ],
+                  "failedCount": 3,
+                  "failed": [
+                    {
+                      "passId": "0193a1b2-7c00-7000-8000-0000000000e1",
+                      "title": "Alex Morgan",
+                      "reason": "The card holds more stamps than the new version allows."
+                    }
+                  ],
+                  "startedAt": 1764086400000,
+                  "runId": "bulk-0193a1b2-7c00-7000-8000-0000000000d4",
+                  "running": true,
+                  "stalled": false,
+                  "changes": [],
+                  "tell": {
+                    "text": "Gym has a new design.",
+                    "until": 1764172800000,
+                    "key": "rollout-tell:0193a1b2-7c00-7000-8000-0000000000c1"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.getTemplatesByIdRollout",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "retrieveRollout"
+        },
+        "description": "How far the approved release has reached the organization's passes in the request's mode. `remaining` counts active passes on a different, non-equivalent build, the ones the automatic rollout moves, and `updating` splits the ones still on their way by version. Passes left behind are counted in `failedCount`: the rebuild recorded why, or every rebuild of this release has finished (or none started within ten minutes, `stalled`). `failed` lists the first 50 with the reason, only for a caller who can also read passes. `tell` offers a message to the holders whose passes are on the release, for 24 hours after it and until one is sent; send it as a message broadcast targeting `{ templateIds, version }` with `tell.key` as the `Idempotency-Key`.",
+        "security": [
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "UNAUTHENTICATED",
+          "VALIDATION",
+          "WALLET_PROJECTION_UNSUPPORTED"
+        ]
+      }
+    },
     "/api/v1/templates/{id}/releases/rollback": {
       "post": {
         "summary": "Roll back to a prior template release",
@@ -57998,6 +58526,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REQUIRED",
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
@@ -58184,6 +58714,8 @@
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
           "IDEMPOTENCY_KEY_REQUIRED",
           "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
@@ -58888,7 +59420,15 @@
         ],
         "parameters": [
           {
-            "$ref": "#/components/parameters/IdempotencyKey"
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "1 to 200 characters. A retry with the same key and body returns the first result. Keys starting broadcast-create:, bulk-send: or rollout-tell: are reserved (422 IDEMPOTENCY_KEY_RESERVED).",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
           }
         ],
         "x-sign-in": "idp",
@@ -58909,6 +59449,7 @@
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_RESERVED",
           "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -59203,6 +59744,7 @@
           "RATE_LIMITED",
           "SELECTION_CHANGED",
           "SELECTION_USE_RUN",
+          "TELL_ALREADY_SENT",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -63054,6 +63596,7 @@
           "SELECTION_CHANGED",
           "SELECTION_USE_RUN",
           "STALE",
+          "TELL_ALREADY_SENT",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
@@ -76147,6 +76690,7 @@
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_RESERVED",
           "IDEMPOTENCY_KEY_REUSED",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -76165,6 +76709,7 @@
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "SELECTION_CHANGED",
+          "TELL_ALREADY_SENT",
           "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
           "TEMPLATE_PROVIDER_UNSUPPORTED",
@@ -96708,10 +97253,13 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_EXPIRY_REQUIRED",
+          "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_MODE_MISMATCH",
           "API_KEY_NOT_FOUND",
           "API_KEY_NOT_ROTATABLE",
           "API_KEY_REQUIRED",
+          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
           "FORBIDDEN",
@@ -96863,9 +97411,12 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_EXPIRY_REQUIRED",
+          "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_MODE_MISMATCH",
           "API_KEY_NOT_FOUND",
           "API_KEY_NOT_ROTATABLE",
+          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
           "FORBIDDEN",
@@ -97675,8 +98226,11 @@
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_EXPIRY_REQUIRED",
+          "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
+          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -108369,6 +108923,7 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -109373,6 +109928,7 @@
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
@@ -111016,6 +111572,7 @@
           "INVALID_API_KEY",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",

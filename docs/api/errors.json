@@ -56,6 +56,24 @@
       ]
     },
     {
+      "code": "API_KEY_EXPIRY_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
+      "code": "API_KEY_EXPIRY_TOO_LONG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
       "code": "API_KEY_MODE_MISMATCH",
       "statuses": [
         403
@@ -153,6 +171,15 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "API_KEY_SCANNING_ADMIN_LIVE_ORG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
       ]
     },
     {
@@ -1443,8 +1470,6 @@
         400
       ],
       "modules": [
-        "delivery",
-        "passes",
         "platform"
       ]
     },
@@ -1455,6 +1480,16 @@
       ],
       "modules": [
         "templates"
+      ]
+    },
+    {
+      "code": "IDEMPOTENCY_KEY_RESERVED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts",
+        "platform"
       ]
     },
     {
@@ -5097,6 +5132,15 @@
       ],
       "modules": [
         "nfc"
+      ]
+    },
+    {
+      "code": "TELL_ALREADY_SENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "delivery"
       ]
     },
     {

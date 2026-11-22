@@ -60,7 +60,8 @@ def test_an_event_of_an_unknown_type_verifies_and_parses():
 
 
 def test_a_known_type_with_a_newer_api_version_verifies_and_parses():
-    body = VECTORS[0]["body"].replace('"2026-12-01"', '"2027-01-01"').replace('"mode":"test"', '"mode":"sandbox"')
+    current = json.loads(VECTORS[0]["body"])["apiVersion"]
+    body = VECTORS[0]["body"].replace(f'"{current}"', '"2027-01-01"').replace('"mode":"test"', '"mode":"sandbox"')
     assert body != VECTORS[0]["body"]
     headers, now = _signed(body)
     event = verify_webhook(body, headers, "whsec_x", now=now)

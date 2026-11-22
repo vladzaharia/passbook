@@ -32,6 +32,9 @@ export interface ScannerRow {
   lastSeenAt: number | null;
   /** The last request that was not an upload (`POST /batch`, `POST /device`), stamped by the server: the floor for a queued read. */
   contactAt: number | null;
+  /** The contact before the last silence of `CONTACT_GAP_MS`, and when the contact after it came: see `graceFloor`. */
+  contactPrevAt: number | null;
+  onlineSince: number | null;
   revokedAt: number | null;
   staffId: string | null;
   staffSince: number | null;
@@ -58,6 +61,8 @@ interface Raw {
   expires_at: number | null;
   last_seen_at: number | null;
   contact_at: number | null;
+  contact_prev_at: number | null;
+  online_since: number | null;
   revoked_at: number | null;
   staff_id: string | null;
   staff_since: number | null;
@@ -69,7 +74,7 @@ interface Raw {
 }
 
 const COLUMNS = `id, org_id, mode, kind, device_role, name, event_id, settings, time_zone, token_prefix, token_hash,
-  csrf_secret, paired_at, expires_at, last_seen_at, contact_at, revoked_at, staff_id, staff_since, staff_seen_at, updated_at,
+  csrf_secret, paired_at, expires_at, last_seen_at, contact_at, contact_prev_at, online_since, revoked_at, staff_id, staff_since, staff_seen_at, updated_at,
   credential_epoch, config_epoch,
   EXISTS(SELECT 1 FROM scanners screen WHERE screen.org_id=scanners.org_id AND screen.mode=scanners.mode
     AND screen.device_role!='scan' AND screen.revoked_at IS NULL AND screen.token_hash IS NOT NULL) AS has_screens`;
@@ -96,6 +101,8 @@ const toRow = (r: Raw): ScannerRow => ({
   expiresAt: r.expires_at,
   lastSeenAt: r.last_seen_at,
   contactAt: r.contact_at,
+  contactPrevAt: r.contact_prev_at,
+  onlineSince: r.online_since,
   revokedAt: r.revoked_at,
   staffId: r.staff_id,
   staffSince: r.staff_since,
@@ -139,14 +146,55 @@ export async function touchScanner(
   /** False for an upload: it stamps the device as seen but never moves `contact_at`. */
   contact = true,
 ): Promise<void> {
+  // A contact after a real silence of CONTACT_GAP_MS keeps the contact before it (a row from before 0175 has only
+  // `last_seen_at`) and starts a new stretch. The stored contact lags the real one by up to `everyMs`, so a stored
+  // age of GAP + everyMs is the least that proves a real silence of GAP. While a grace is open neither column moves
+  // (a second gap must not re-date the first outage, nor chain graces). No commas: a stamp-only write is matched
+  // by tools/authority-scope.ts.
+  const gap =
+    '? = 1 AND (contact_at <= ? OR contact_at IS NULL AND last_seen_at <= ?) AND (online_since IS NULL OR online_since <= ?)';
+  const c = contact ? 1 : 0;
+  const silent = [
+    c,
+    now - CONTACT_GAP_MS - everyMs,
+    now - CONTACT_GAP_MS - everyMs,
+    now - CONTACT_GRACE_MS,
+  ];
   await run(
     db,
     `UPDATE scanners SET last_seen_at = ?, last_ip_prefix = ?,
+       contact_prev_at = CASE WHEN ${gap} THEN CASE WHEN contact_at IS NULL THEN last_seen_at ELSE contact_at END ELSE contact_prev_at END,
+       online_since = CASE WHEN ${gap} THEN ? ELSE online_since END,
        contact_at = CASE WHEN ? = 1 THEN ? ELSE contact_at END
      WHERE id = ? AND (last_seen_at IS NULL OR last_seen_at <= ?
        OR (? = 1 AND (contact_at IS NULL OR contact_at <= ?)))`,
-    [now, ipPrefix, contact ? 1 : 0, now, id, now - everyMs, contact ? 1 : 0, now - everyMs],
+    [now, ipPrefix, ...silent, ...silent, now, c, now, id, now - everyMs, c, now - everyMs],
   );
+}
+
+/**
+ * The reconnect grace behind the floor for a queued read. A request after a silence of `CONTACT_GAP_MS` or
+ * more keeps the contact before it; for `CONTACT_GRACE_MS` after that request every batch is judged against
+ * the pre-gap contact, not the reconnect, so the order of polls, sign-in, a refused sync and upload chunks
+ * does not matter to an honest door. Bound for a dishonest door: the floor is never earlier than the last
+ * contact the server saw before a real silence of at least `CONTACT_GAP_MS`, and the grace is spent within
+ * `CONTACT_GRACE_MS` of the reconnect; a door that stays silent that long gets the same floor. The most the
+ * grace adds is that the door was in contact for up to `CONTACT_GRACE_MS` of the span it back-dates over.
+ * A row with no `contact_at` yet (before 0175 reached it) falls back to `last_seen_at`.
+ */
+export const CONTACT_GAP_MS = 3 * 60_000;
+export const CONTACT_GRACE_MS = 20 * 60_000;
+
+export function contactFloorOf(
+  scanner: Pick<ScannerRow, 'contactAt' | 'contactPrevAt' | 'onlineSince' | 'lastSeenAt'>,
+  now: number,
+): number {
+  const current = scanner.contactAt ?? scanner.lastSeenAt ?? 0;
+  return scanner.contactPrevAt !== null &&
+    scanner.onlineSince !== null &&
+    now - scanner.onlineSince < CONTACT_GRACE_MS
+    ? Math.min(current, scanner.contactPrevAt)
+    : current;
 }
 
 /** Why a bind or unbind was refused rather than applied; the codes keep the staff-sign-in contract. */

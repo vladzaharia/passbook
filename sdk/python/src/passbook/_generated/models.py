@@ -1127,6 +1127,19 @@ __all__ = [
     "TemplatePage",
     "TemplateReviewList",
     "TemplateReviewListItemsItem",
+    "TemplateRollout",
+    "TemplateRolloutChangesItem",
+    "TemplateRolloutChangesItemRowsItem",
+    "TemplateRolloutChangesItemRowsItemFrom1",
+    "TemplateRolloutChangesItemRowsItemFrom2",
+    "TemplateRolloutChangesItemRowsItemFrom3",
+    "TemplateRolloutChangesItemRowsItemFrom4",
+    "TemplateRolloutChangesItemRowsItemTo1",
+    "TemplateRolloutChangesItemRowsItemTo2",
+    "TemplateRolloutChangesItemRowsItemTo3",
+    "TemplateRolloutChangesItemRowsItemTo4",
+    "TemplateRolloutFailedItem",
+    "TemplateRolloutUpdatingItem",
     "TemplateSummary",
     "TemplatesCandidatesApproveBody",
     "TemplatesCandidatesApproveParams",
@@ -1196,6 +1209,7 @@ __all__ = [
     "TemplatesReleasesRollbackParams",
     "TemplatesRetrieveInputSchemaResult",
     "TemplatesRetrieveResult",
+    "TemplatesRetrieveRolloutResult",
     "TemplatesRetrieveStampsImpactResult",
     "TemplatesReviewsApproveBody",
     "TemplatesReviewsApproveResult",
@@ -1679,6 +1693,7 @@ class BroadcastTarget(_Model):
     q: str | None = None
     scan: BroadcastTargetScan1 | BroadcastTargetScan2 | None = None
     match: _List[BroadcastTargetMatchItem1 | BroadcastTargetMatchItem2 | BroadcastTargetMatchItem3] | None = None
+    version: str | None = None
 
 class BroadcastTargetMatchItem1(_Model):
     input: str
@@ -1722,6 +1737,7 @@ class BroadcastsCountRecipientsParamsTarget(_Model):
     q: str | None = None
     scan: BroadcastsCountRecipientsParamsTargetScan1 | BroadcastsCountRecipientsParamsTargetScan2 | None = None
     match: _List[BroadcastsCountRecipientsParamsTargetMatchItem1 | BroadcastsCountRecipientsParamsTargetMatchItem2 | BroadcastsCountRecipientsParamsTargetMatchItem3 | BroadcastsCountRecipientsParamsTargetMatchItem4] | None = None
+    version: str | None = None
     passIds: _List[str] | None = None
     importId: str | None = None
     expectCount: int | None = None
@@ -1772,6 +1788,7 @@ class BroadcastsCreateParamsTarget(_Model):
     q: str | None = None
     scan: BroadcastsCreateParamsTargetScan1 | BroadcastsCreateParamsTargetScan2 | None = None
     match: _List[BroadcastsCreateParamsTargetMatchItem1 | BroadcastsCreateParamsTargetMatchItem2 | BroadcastsCreateParamsTargetMatchItem3 | BroadcastsCreateParamsTargetMatchItem4] | None = None
+    version: str | None = None
     passIds: _List[str] | None = None
     importId: str | None = None
     expectCount: int | None = None
@@ -1825,6 +1842,7 @@ class BroadcastsUpdateParamsTarget(_Model):
     q: str | None = None
     scan: BroadcastsUpdateParamsTargetScan1 | BroadcastsUpdateParamsTargetScan2 | None = None
     match: _List[BroadcastsUpdateParamsTargetMatchItem1 | BroadcastsUpdateParamsTargetMatchItem2 | BroadcastsUpdateParamsTargetMatchItem3 | BroadcastsUpdateParamsTargetMatchItem4] | None = None
+    version: str | None = None
     passIds: _List[str] | None = None
     importId: str | None = None
     expectCount: int | None = None
@@ -8535,6 +8553,77 @@ class TemplateReviewListItemsItem(_Model):
     requestedBy: str | None
     requestedAt: int
 
+class TemplateRollout(_Model):
+    releaseVersion: str | None
+    releaseId: str | None
+    fromVersion: str | None
+    total: int
+    onRelease: int
+    remaining: int
+    updating: _List[TemplateRolloutUpdatingItem]
+    failedCount: int
+    failed: _List[TemplateRolloutFailedItem]
+    startedAt: int | None
+    runId: str | None
+    running: bool
+    stalled: bool
+    changes: _List[TemplateRolloutChangesItem]
+    tell: _Dict[str, _Any] | None
+
+class TemplateRolloutChangesItem(_Model):
+    group: _Literal["colors", "front", "back", "images", "barcode"] | str
+    rows: _List[TemplateRolloutChangesItemRowsItem]
+    more: int
+
+class TemplateRolloutChangesItemRowsItem(_Model):
+    label: str
+    kind: _Literal["added", "removed", "changed"] | str
+    from_: TemplateRolloutChangesItemRowsItemFrom1 | TemplateRolloutChangesItemRowsItemFrom2 | TemplateRolloutChangesItemRowsItemFrom3 | TemplateRolloutChangesItemRowsItemFrom4 | None = _Field(alias="from")
+    to: TemplateRolloutChangesItemRowsItemTo1 | TemplateRolloutChangesItemRowsItemTo2 | TemplateRolloutChangesItemRowsItemTo3 | TemplateRolloutChangesItemRowsItemTo4 | None
+
+class TemplateRolloutChangesItemRowsItemFrom1(_Model):
+    type: _Literal["text"]
+    text: str
+
+class TemplateRolloutChangesItemRowsItemFrom2(_Model):
+    type: _Literal["color"]
+    color: str
+
+class TemplateRolloutChangesItemRowsItemFrom3(_Model):
+    type: _Literal["date"]
+    at: int
+
+class TemplateRolloutChangesItemRowsItemFrom4(_Model):
+    type: _Literal["image"]
+    version: str
+    asset: str
+
+class TemplateRolloutChangesItemRowsItemTo1(_Model):
+    type: _Literal["text"]
+    text: str
+
+class TemplateRolloutChangesItemRowsItemTo2(_Model):
+    type: _Literal["color"]
+    color: str
+
+class TemplateRolloutChangesItemRowsItemTo3(_Model):
+    type: _Literal["date"]
+    at: int
+
+class TemplateRolloutChangesItemRowsItemTo4(_Model):
+    type: _Literal["image"]
+    version: str
+    asset: str
+
+class TemplateRolloutFailedItem(_Model):
+    passId: str
+    title: str | None
+    reason: str
+
+class TemplateRolloutUpdatingItem(_Model):
+    version: str
+    count: int
+
 class TemplateSummary(_Model):
     id: str
     orgId: str | None
@@ -9927,6 +10016,8 @@ TemplatesReleasesReleaseResult = ReleaseResponse
 TemplatesRetrieveInputSchemaResult = TemplateInputSchema
 
 TemplatesRetrieveResult = TemplateDetail
+
+TemplatesRetrieveRolloutResult = TemplateRollout
 
 TemplatesReviewsApproveBody = ReviewTemplate
 

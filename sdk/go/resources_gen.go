@@ -2078,6 +2078,15 @@ func (r *TemplatesResource) RetrieveInputSchema(ctx context.Context, id string, 
 	return out, err
 }
 
+// RetrieveRollout How far the approved release has reached the organization’s passes `GET /api/v1/templates/{id}/rollout`
+func (r *TemplatesResource) RetrieveRollout(ctx context.Context, id string, query *TemplatesRetrieveRolloutQuery, opts ...RequestOption) (*TemplatesRetrieveRolloutResult, error) {
+	var out TemplatesRetrieveRolloutResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/templates/" + pathEscape(id) + "/rollout", query: queryValues(query)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // RetrieveStampsImpact What changing the stamp goal does to live passes `GET /api/v1/templates/{id}/stamps-impact`
 func (r *TemplatesResource) RetrieveStampsImpact(ctx context.Context, id string, query *TemplatesRetrieveStampsImpactQuery, opts ...RequestOption) (*TemplatesRetrieveStampsImpactResult, error) {
 	var out TemplatesRetrieveStampsImpactResult

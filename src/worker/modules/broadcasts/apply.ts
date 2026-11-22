@@ -214,6 +214,7 @@ export function targetFilter(
     ...(target.q ? { q: target.q } : {}),
     ...(target.scan ? { scan: target.scan } : {}),
     ...(target.match ? { match: target.match } : {}),
+    ...(target.version ? { version: target.version } : {}),
     ...(target.window ? { window: target.window, ruleId: row.rule_id ?? '' } : {}),
     ...(target.sentBy ? { sentBy: target.sentBy } : {}),
     ...(target.passIds ? { passIds: target.passIds } : {}),
