@@ -6,9 +6,9 @@ function Group({ title, items }: { title: string; items: readonly ReportItem[] }
   if (items.length === 0) return null;
   return (
     <div className="flex flex-col gap-2">
-      <h4 className="text-sm font-semibold text-fg-strong">
+      <h3 className="text-sm font-semibold text-fg-strong">
         {title} <span className="font-normal text-fg-muted">({items.length})</span>
-      </h4>
+      </h3>
       <ul className="flex flex-col divide-y divide-border rounded-lg border border-border bg-surface-raised">
         {items.map((item) => (
           <li

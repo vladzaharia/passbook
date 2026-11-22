@@ -30,7 +30,7 @@ export function WalletNotes({ previews }: { previews: WalletPreviews }) {
         {out ? (
           (['google', 'samsung'] as const).map((t) => (
             <div key={t}>
-              <h4 className="strong sm">{t === 'google' ? 'Google Wallet' : 'Samsung Wallet'}</h4>
+              <h2 className="strong sm">{t === 'google' ? 'Google Wallet' : 'Samsung Wallet'}</h2>
               <FidelityNotes report={out[t].report} />
             </div>
           ))
