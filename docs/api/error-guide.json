@@ -3233,12 +3233,6 @@
     "fix": "Read the run with GET /api/v1/broadcasts/{id}.",
     "retryable": false
   },
-  "SELECTION_CHANGED": {
-    "title": "Selection changed",
-    "when": "The passes the request matches now differ by more than 2% from expectCount.",
-    "fix": "Preview the selection again and send the new count as expectCount.",
-    "retryable": false
-  },
   "BROADCAST_NO_RELEASE": {
     "title": "No approved design",
     "when": "A template in the run has no approved release to move passes to.",
@@ -3271,8 +3265,8 @@
   },
   "SELECTION_CHANGED": {
     "title": "Selection changed",
-    "when": "The number of passes the filter matches is not expectCount.",
-    "fix": "Check the new count in the message, then send it as expectCount.",
+    "when": "The passes the request matches now differ from expectCount (a change run allows 2%).",
+    "fix": "Check the new count, then send it as expectCount.",
     "retryable": false
   },
   "SELECTION_USE_RUN": {
