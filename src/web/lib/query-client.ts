@@ -11,8 +11,7 @@ export function shouldRetry(failureCount: number, error: unknown): boolean {
     (!error.isTransient || error.code === 'invalid_response' || error.code === 'timeout')
   )
     return false;
-  // One retry: a failing list shows its error after about a second, not after the backoff ladder.
-  return failureCount < 1;
+  return failureCount < 2;
 }
 
 export function createQueryClient(): QueryClient {

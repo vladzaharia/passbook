@@ -114,19 +114,11 @@ export function DataTable<T extends RowData>({
   const fresh = useInsertHighlight(rows.map((r) => r.id));
   const busy = useDelayed(Boolean(fetching || loading) && data.length > 0, 150);
 
-  if (firstLoad) {
+  if (firstLoad || (error && data.length === 0)) {
     return (
       <>
         {toolbar}
-        <SkeletonRows label={`Loading ${caption}`} />
-      </>
-    );
-  }
-  if (error && data.length === 0) {
-    return (
-      <>
-        {toolbar}
-        {error}
+        {firstLoad ? <SkeletonRows label={`Loading ${caption}`} /> : error}
       </>
     );
   }

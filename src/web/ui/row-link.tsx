@@ -3,7 +3,6 @@ import type { LucideIcon } from 'lucide-react';
 import type { AnchorHTMLAttributes, Ref } from 'react';
 import { cn } from '../lib/cn.ts';
 import { formatCount } from '../lib/format.ts';
-import { TOUCH_HIT } from './button.tsx';
 
 type AnchorProps = AnchorHTMLAttributes<HTMLAnchorElement> & { ref?: Ref<HTMLAnchorElement> };
 
@@ -19,14 +18,12 @@ const ROW_LINK_INACTIVE =
 
 /** A count that opens the filtered list: teal, because following it is an action. */
 const COUNT_LINK = cn(
-  'relative inline-flex items-center gap-1.5 rounded-sm font-medium text-accent-fg tabular-nums underline-offset-2 hover:underline [&_svg]:size-4',
-  TOUCH_HIT,
+  'inline-flex items-center gap-1.5 rounded-sm font-medium text-accent-fg tabular-nums underline-offset-2 hover:underline pointer-coarse:min-h-11 [&_svg]:size-4',
 );
 
 /** A link in a meta line (page header meta, card meta): muted like its neighbours. */
 const META_LINK = cn(
-  'relative inline-flex min-h-6 items-center gap-1.5 rounded-sm text-fg-muted underline-offset-2 wl-colors hover:text-fg-strong hover:underline [&_svg]:size-4',
-  TOUCH_HIT,
+  'inline-flex min-h-6 items-center gap-1.5 rounded-sm text-fg-muted underline-offset-2 wl-colors hover:text-fg-strong hover:underline pointer-coarse:min-h-11 [&_svg]:size-4',
 );
 
 function RowAnchor({

@@ -17,10 +17,11 @@ describe('shouldRetry', () => {
     expect(shouldRetry(0, new ApiError({ status: 502, code: 'invalid_response' }))).toBe(false);
   });
 
-  it('retries a transient failure once', () => {
+  it('retries transient failures twice', () => {
     const error = new ApiError({ status: 503, code: 'unavailable' });
     expect(shouldRetry(0, error)).toBe(true);
-    expect(shouldRetry(1, error)).toBe(false);
+    expect(shouldRetry(1, error)).toBe(true);
+    expect(shouldRetry(2, error)).toBe(false);
   });
 
   it('does not retry client errors', () => {

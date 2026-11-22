@@ -13,7 +13,6 @@ import { EmptyState } from '../../ui/empty-state.tsx';
 import { ErrorState } from '../../ui/error-state.tsx';
 import { OrgMark } from '../../ui/layout/scope-switcher.tsx';
 import { ListRow, ListRows } from '../../ui/list-row.tsx';
-import { PageHeader } from '../../ui/page-header.tsx';
 import { RowLink } from '../../ui/row-link.tsx';
 import { SkeletonRows } from '../../ui/skeleton.tsx';
 
@@ -55,8 +54,8 @@ function ScopeChooser() {
   }
   return (
     <>
-      <PageHeader title="Choose an organization" />
-      <Card className="max-w-xl">
+      <EmptyState heading art="building" title="Choose an organization" />
+      <Card className="mx-auto mt-4 max-w-xl">
         <CardBody>
           <ListRows label="Organizations">
             {scope.memberships.map((m) => {
