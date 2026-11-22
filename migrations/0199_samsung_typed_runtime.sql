@@ -199,9 +199,12 @@ WHEN NOT EXISTS (SELECT 1 FROM template_releases projection_release
       AND projection_release.created_at < evidence.expires_at)))
 BEGIN SELECT RAISE(ABORT, 'Samsung tombstone keyset unavailable'); END;
 
--- Retirement of a compiled card needs no evidence history either.
+-- Retirement of a compiled card needs no evidence history either: the Samsung branch of the base
+-- view only. 0198's union (base + wallet_google_retirement_complete) is rebuilt around it; the
+-- Google view is not touched.
 DROP VIEW wallet_provider_retirement_complete;
-CREATE VIEW wallet_provider_retirement_complete AS
+DROP VIEW wallet_provider_retirement_complete_base;
+CREATE VIEW wallet_provider_retirement_complete_base AS
 SELECT i.id FROM wallet_provider_instances i
 WHERE i.lifecycle = 'retired'
   AND EXISTS (SELECT 1 FROM credential_ref_keyset keyset WHERE keyset.id = 1
@@ -271,3 +274,7 @@ WHERE i.lifecycle = 'retired'
     )
   )
 );
+CREATE VIEW wallet_provider_retirement_complete AS
+SELECT id FROM wallet_provider_retirement_complete_base
+UNION ALL
+SELECT id FROM wallet_google_retirement_complete;
