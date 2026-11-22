@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { opUrl, PATHS } from '../../../../shared/developers.ts';
 import { Ticket } from '../../ui/ticket.tsx';
 import { loadFile, loadIndex } from '../data.ts';
@@ -162,6 +162,12 @@ function ConsolePage({ sandbox, csrf }: { sandbox: Sandbox; csrf: string }) {
   );
 }
 
+// The buddy art is only for the empty and failed cards: its own chunk, so a ready sandbox never loads it.
+const StateCard = lazy(() =>
+  import('../../ui/state-card.tsx').then((m) => ({ default: m.StateCard })),
+);
+const Retry = lazy(() => import('../../ui/state-card.tsx').then((m) => ({ default: m.Retry })));
+
 export function RunApp({ session, mode, slug, opId }: RunAppProps) {
   const [codes, setCodes] = useState<ReadonlySet<string>>(new Set());
   useEffect(() => {
@@ -180,10 +186,18 @@ export function RunApp({ session, mode, slug, opId }: RunAppProps) {
         action="Create sandbox"
       />
     );
+  if (session.kind === 'failed')
+    return (
+      <Suspense fallback={null}>
+        <StateCard kind="error" title="Your sandbox did not load">
+          <Retry onClick={() => location.reload()} />
+        </StateCard>
+      </Suspense>
+    );
   if (session.kind === 'none')
     return (
-      <Ticket
-        stub={
+      <Suspense fallback={null}>
+        <StateCard kind="empty" title="No sandbox yet">
           <CreateSandbox
             csrf={session.csrf}
             siteKey={session.siteKey}
@@ -192,9 +206,8 @@ export function RunApp({ session, mode, slug, opId }: RunAppProps) {
               location.reload();
             }}
           />
-        }
-        body={<p className="muted sm resp-hint">Nothing is issued.</p>}
-      />
+        </StateCard>
+      </Suspense>
     );
   if (session.kind === 'closed')
     return (

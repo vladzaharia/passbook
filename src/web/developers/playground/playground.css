@@ -85,6 +85,15 @@
   align-items: center;
   min-width: 0;
 }
+/* A narrow card (tablet, two across) shrinks the band's text instead of cutting it at the card's edge. */
+.chan .wp-g-card,
+.chan .wp-s-card {
+  container-type: inline-size;
+}
+.chan .wp-g-card > .test-band,
+.chan .wp-s-card > .test-band {
+  --tb-size: min(0.6875rem, 4cqw);
+}
 .chan figcaption {
   font-size: 12px;
   font-weight: 500;
@@ -108,18 +117,17 @@
 }
 .pg-skel {
   border-radius: var(--pk-radius-lg);
-  background: linear-gradient(
-    100deg,
-    var(--pk-state-hover-tint) 30%,
-    color-mix(in oklab, var(--pk-accent) 10%, var(--pk-state-hover-tint)) 50%,
-    var(--pk-state-hover-tint) 70%
-  );
-  background-size: 200% 100%;
-  animation: pg-shimmer 1.4s linear infinite;
+  background: color-mix(in oklab, var(--pk-accent) 8%, var(--pk-state-hover-tint));
 }
-@keyframes pg-shimmer {
-  to {
-    background-position: -200% 0;
+/* Pending only: an opacity pulse, still under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .pg-skel {
+    animation: pg-pulse 1.4s ease-in-out infinite;
+  }
+}
+@keyframes pg-pulse {
+  50% {
+    opacity: 0.55;
   }
 }
 .pg-off {

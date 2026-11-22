@@ -239,7 +239,7 @@ export function renderSite(
     twin: appTwins.playground(),
     body: html(<PlaygroundPage site={site} previews={previews} />),
   });
-  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, 'reference', <ConsoleView />, {
+  page(PATHS.console, DEV_COPY.console.title, DEV_COPY.console.line, undefined, <ConsoleView />, {
     md: appTwins.console(),
   });
   // What the Run island reads: per page the operations it can run, and one index for the console.

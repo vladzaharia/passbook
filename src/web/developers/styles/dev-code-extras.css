@@ -1,0 +1,54 @@
+/* The errors index groups and the code scroll fade. */
+/* The errors index: one closed group per first letter, so the page is a short list, not 30,000 px. */
+.errs-group {
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.errs-group:last-child {
+  border-bottom: 1px solid var(--pk-border-subtle);
+}
+.errs-group > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+}
+.errs-group > summary::-webkit-details-marker {
+  display: none;
+}
+.errs-group > summary::after {
+  content: "";
+  margin-left: auto;
+  inline-size: 8px;
+  block-size: 8px;
+  border-right: 2px solid var(--pk-text-muted);
+  border-bottom: 2px solid var(--pk-text-muted);
+  rotate: 45deg;
+}
+.errs-group[open] > summary::after {
+  rotate: -135deg;
+}
+
+/* Code that runs past its box fades at the right edge until scrolled to the end. No overflow, no fade. */
+@property --src-fade {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@supports (animation-timeline: scroll(self x)) {
+  pre.src {
+    animation: src-fade linear both;
+    animation-timeline: scroll(self x);
+    mask-image: linear-gradient(to right, #000 calc(100% - var(--src-fade)), transparent);
+  }
+}
+@keyframes src-fade {
+  0%,
+  90% {
+    --src-fade: 32px;
+  }
+  100% {
+    --src-fade: 0px;
+  }
+}

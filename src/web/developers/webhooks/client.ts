@@ -93,6 +93,7 @@ export async function connect(
 ): Promise<TesterAuth> {
   let token: { value: string; expiresAt: number } | null = null;
   let csrf = '';
+  let known = false;
 
   async function mint(): Promise<'ok' | 'signed-out' | 'no-sandbox'> {
     const session = await fetchFn('/api/v1/session', { headers: { accept: 'application/json' } });
@@ -100,6 +101,16 @@ export async function connect(
     const state = (await session.json()) as { authenticated: boolean; csrfToken?: string };
     if (!state.authenticated) return 'signed-out';
     csrf = state.csrfToken ?? '';
+    // Without a sandbox there is no token to ask for: say so without a call that can only 404.
+    if (!known) {
+      const box = await fetchFn('/api/v1/developer/sandbox', {
+        headers: { accept: 'application/json' },
+      });
+      if (!box.ok) throw await problem(box);
+      const { sandbox } = (await box.json()) as { sandbox?: { closedAt?: unknown } | null };
+      if (!sandbox || sandbox.closedAt) return 'no-sandbox';
+      known = true;
+    }
     const res = await fetchFn('/api/v1/developer/try-token', {
       method: 'POST',
       headers: { accept: 'application/json', 'x-csrf-token': csrf },

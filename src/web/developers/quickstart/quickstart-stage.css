@@ -130,7 +130,8 @@
   border-color: var(--pk-danger);
 }
 .qs-tl > li[data-state="wait"] .qs-tl-t {
-  opacity: 0.75;
+  /* Dimmed by colour, not opacity: the helper line under it must keep its contrast. */
+  color: var(--pk-text-muted);
 }
 .qs-tl-t {
   display: flex;

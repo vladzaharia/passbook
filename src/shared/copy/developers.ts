@@ -95,7 +95,8 @@ export const DEV_COPY = {
   },
   notFound: {
     title: 'Page not found',
-    line: 'Nothing lives at this address. Press ⌘K to search the docs, or start from one of these.',
+    line: 'Nothing lives at this address.',
+    home: 'Home',
   },
   guides: {
     title: 'Guides',

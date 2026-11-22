@@ -9,6 +9,7 @@ import '../../generated/menubar-kit.css';
 import './styles/dev-layout.css';
 import './styles/dev-controls.css';
 import './styles/dev-code.css';
+import './styles/dev-code-extras.css';
 import './styles/dev-ticket.css';
 import './styles/dev-home.css';
 import './styles/dev-reference.css';

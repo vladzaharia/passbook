@@ -4,6 +4,16 @@
   min-height: 32px;
   padding-inline: 12px;
 }
+@media (pointer: coarse) {
+  .btn,
+  .btn.sm {
+    min-height: 44px;
+  }
+  .foot-links a {
+    min-height: 44px;
+    padding-block: 0.75rem;
+  }
+}
 .btn.ghost {
   background: none;
   box-shadow: none;

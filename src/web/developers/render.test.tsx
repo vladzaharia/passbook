@@ -36,13 +36,11 @@ describe('the prerendered portal', () => {
     }
   });
 
-  it('marks Reference for the folded console and playground, and offers sign-in in place of an empty panel', () => {
+  it('marks no key for the console, Reference for the playground, and offers sign-in in place of an empty panel', () => {
     const html = body(`${PATHS.console}.html`);
-    expect(html).toMatch(
-      /<a href="\/developers\/reference"[^>]*aria-current="page"[^>]*>Reference<\/a>/,
-    );
-    expect(html).toContain('Sign in to try');
     const bar = html.slice(html.indexOf('aria-label="Sections"'), html.indexOf('</nav>'));
+    expect(bar).not.toContain('aria-current');
+    expect(html).toContain('Sign in to try');
     expect([...bar.matchAll(/>([^<]+)<\/a>/g)].map((m) => m[1])).toEqual([
       'Quickstart',
       'Guides',
