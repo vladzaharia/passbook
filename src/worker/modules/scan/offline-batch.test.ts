@@ -196,7 +196,8 @@ describe('syncing queued reads', () => {
     const { tpl, scanner, headers } = await door();
     const pass = await kit.scanPass(tpl);
     const roster = await rosterOf(headers);
-    await run(kit.env.DB, 'UPDATE scanners SET updated_at = updated_at + 1 WHERE id = ?', [
+    // A configuration change (the time zone) moves the config epoch the list is keyed on.
+    await run(kit.env.DB, "UPDATE scanners SET time_zone = 'Pacific/Auckland' WHERE id = ?", [
       scanner.id,
     ]);
     const sent = item(pass.scanCode ?? '', { door: 'listed' });
