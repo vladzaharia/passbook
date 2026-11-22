@@ -8,3 +8,5 @@ CREATE TABLE template_rollout_failures (
   message TEXT NOT NULL,
   at INTEGER NOT NULL
 ) WITHOUT ROWID;
+-- The foreign-key index 0186's broadcast_targets lacks (its primary key leads with broadcast_id).
+CREATE INDEX broadcast_targets_pass_fk ON broadcast_targets (pass_id);
