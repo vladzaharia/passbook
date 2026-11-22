@@ -18,9 +18,7 @@
       "name": "Scheduled change",
       "state": "sending",
       "target": {
-        "templateIds": [
-          "tpl_1"
-        ]
+        "templateIds": ["tpl_1"]
       },
       "patch": {
         "plan": {
@@ -51,9 +49,7 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "target": {
-        "templateIds": [
-          "0193a1b2-7c00-7000-8000-0000000000b1"
-        ]
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
       },
       "patch": {
         "plan": {

@@ -6,6 +6,7 @@ import { cn } from '@/web/lib/cn.ts';
 import { Buddy, Button, Celebrate, IconButton, Skeleton, Tick } from '@/web/ui/index.ts';
 import { useTemplate, useTemplates } from '../templates/api.ts';
 import { nextAction } from '../templates/releases/next-action.ts';
+import { BrandRow } from './first-pass-brand.tsx';
 import { currentStep, PATH_STEPS, progress, stepDone } from './first-pass-state.ts';
 import { FirstPassTiles } from './first-pass-tiles.tsx';
 import './first-pass.css';
@@ -210,6 +211,7 @@ export function FirstPassCard({
             <TemplateStep orgId={orgId} />
           </div>
         )}
+        <BrandRow orgId={orgId} />
       </div>
     </Seat>
   );
@@ -295,6 +297,9 @@ export function NextRow({
               <NextTile icon={<Link2 className="size-4" />}>Join link</NextTile>
             </Link>
           ) : null}
+        </div>
+        <div className="mt-3">
+          <BrandRow orgId={orgId} />
         </div>
       </div>
     </Seat>

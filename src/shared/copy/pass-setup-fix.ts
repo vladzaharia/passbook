@@ -17,7 +17,6 @@ export const PASS_FIX_COPY = {
   overview: {
     step: 'Brand and channels',
     toDo: '{n} to do',
-    ready: 'All set',
     open: 'Open',
     /** The short name of each to-do in the overview step's line. */
     names: {
