@@ -5,7 +5,7 @@ import type {
   SessionHoldRequestSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { rowIs } from '../../platform/authority-checks.ts';
-import { bump, read } from '../../platform/counters.ts';
+import { bump } from '../../platform/counters.ts';
 import {
   BadRequestError,
   ConflictError,
@@ -106,11 +106,35 @@ export async function holdScanningSession(
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
   // Each change kicks every device of the session: ten a minute per caller is more than a person
-  // needs. A key and the console each have their own budget; only a hold that commits spends it.
+  // needs. A key and the console each have their own budget. The hold is charged first, so a
+  // parallel burst cannot pass the limit, and refunded when it does not commit.
   const minute = ctx.clock.now() - (ctx.clock.now() % 60_000);
   const holdKey = `scan:hold:${id}:${userId}`;
-  if ((await read(ctx.env.DB, holdKey, minute)) >= HOLDS_PER_MINUTE)
+  const refund = () => bump(ctx.env.DB, holdKey, minute, -1);
+  if ((await bump(ctx.env.DB, holdKey, minute)) > HOLDS_PER_MINUTE) {
+    await refund();
     throw new RateLimitedError(Math.ceil((minute + 60_000 - ctx.clock.now()) / 1000));
+  }
+  let committed = false;
+  try {
+    return await holdCommitted(ctx, userId, id, input, authority, countAuthority, () => {
+      committed = true;
+    });
+  } catch (error) {
+    if (!committed) await refund();
+    throw error;
+  }
+}
+
+async function holdCommitted(
+  ctx: ServiceContext,
+  userId: string,
+  id: string,
+  input: HoldRequest,
+  authority: TenantPassWrite,
+  countAuthority: SessionReadAuthority,
+  onCommit: () => void,
+) {
   const row = await loadScanningSession(ctx, id, authority.mode, authority.orgId);
   if (input.revision !== undefined && input.revision !== row.updated_at)
     throw new ConflictError(
@@ -149,7 +173,7 @@ export async function holdScanningSession(
     }),
   );
   await g.commit();
-  await bump(ctx.env.DB, holdKey, minute);
+  onCommit();
   await kickDevices(ctx, row);
   return scanningSessionDetailForAuthority(ctx, id, row.mode, countAuthority);
 }

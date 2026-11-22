@@ -98,12 +98,12 @@ describe('template scan setup by API key', () => {
     const id = await template();
     const other = await makeOrg(fixture.kit.fx);
     const k = await keyOf(['scanning:write']);
-    expect((await call(id, k.headers, other.id)).status).toBe(404);
+    await expectProblem(await call(id, k.headers, other.id), 404, 'ORG_NOT_FOUND');
     const foreign = await makeApiKey(fixture.kit.fx, {
       orgId: other.id,
       scopes: ['scanning:write'],
     });
-    expect((await call(id, foreign.headers)).status).toBe(404);
+    await expectProblem(await call(id, foreign.headers), 404, 'ORG_NOT_FOUND');
     expect(await sessions(id)).toHaveLength(0);
   });
 

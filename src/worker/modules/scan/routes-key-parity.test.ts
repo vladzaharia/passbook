@@ -1,10 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { makeApiKey } from '../../../../test/helpers/index.ts';
+import { makeApiKey, makeScanStaff } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createScannerStore } from './auth-store.ts';
+import { withoutNames } from './key-names.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { eventTemplate } from './template-setup-test-fixtures.ts';
 
@@ -464,5 +465,122 @@ describe('review fixes', () => {
     expect(
       (await send('GET', `/scan-setups/${row?.id}`, platform.headers)).status,
     ).toBeGreaterThanOrEqual(403);
+  });
+
+  it('withoutNames nulls staff and admin names and keeps the ids', () => {
+    const out = withoutNames({
+      staff: { id: 's1', name: 'Maya Chen' },
+      adminUser: { id: 'u1', name: 'Sam Ortiz' },
+      other: 1,
+    });
+    expect(out).toEqual({
+      staff: { id: 's1', name: null },
+      adminUser: { id: 'u1', name: null },
+      other: 1,
+    });
+    expect(withoutNames({ staff: null })).toEqual({ staff: null });
+  });
+
+  it('nulls staff.name on the scanner edit, revoke and mode answers for a key', async () => {
+    const made = await fixture.call('POST', '/scanners', {
+      orgId: orgId(),
+      name: 'Staffed scanner',
+      kind: 'device',
+      accepts: { templateIds: [await eventTemplate(fixture.kit, 'Staffed ticket')] },
+      timeZone: 'UTC',
+    });
+    const scanner = (await made.json()) as { id: string };
+    const staff = await makeScanStaff(fixture.kit.fx, { orgId: orgId(), name: 'Maya Chen' });
+    const now = fixture.kit.clock.now();
+    // A mode move or a revoke unbinds the staff member, so each call starts bound.
+    const bind = () =>
+      run(
+        fixture.kit.env.DB,
+        'UPDATE scanners SET staff_id = ?, staff_since = ?, staff_seen_at = ? WHERE id = ?',
+        [staff.id, now, now, scanner.id],
+      );
+    await bind();
+    const k = await keyOf(['scanning:write']);
+    const named = async (res: Response) => {
+      expect(res.status).toBe(200);
+      return ((await res.json()) as { staff: { id: string; name: string | null } | null }).staff;
+    };
+    const path = `/scanners/${scanner.id}`;
+    expect(await named(await send('PATCH', path, k.headers, { name: 'Staffed 2' }))).toEqual({
+      id: staff.id,
+      name: null,
+    });
+    for (const mode of ['test', 'live']) {
+      await bind();
+      expect(await named(await send('POST', `${path}/mode`, k.headers, { mode }))).toEqual({
+        id: staff.id,
+        name: null,
+      });
+    }
+    await bind();
+    // A revoke unbinds the staff member, so its answer has none; a name is never in it.
+    const revoked = await named(await send('POST', `${path}/revoke`, k.headers));
+    expect(revoked?.name ?? null).toBeNull();
+    // The console still sees the name.
+    await bind();
+    const view = await fixture.call('GET', path);
+    expect(((await view.json()) as { staff: { name: string } | null }).staff?.name).toBe(
+      'Maya Chen',
+    );
+  });
+
+  it('never lets a parallel burst of holds from one key pass the limit', async () => {
+    const session = await fixture.parent('Hold burst');
+    const k = await keyOf(['scanning:write']);
+    const path = `/scanning-sessions/${session.id}/hold`;
+    const results = await Promise.all(
+      Array.from({ length: 16 }, () => send('POST', path, k.headers, { action: 'clear' })),
+    );
+    const ok = results.filter((r) => r.status === 200).length;
+    expect(ok).toBeLessThanOrEqual(10);
+    expect(results.filter((r) => r.status === 429).length).toBe(16 - ok);
+  });
+
+  it('counts zone sessions in the key mode only, in the list and the write answers', async () => {
+    const { DB } = fixture.kit.env;
+    const k = await keyOf(['scanning:write']);
+    const made = await send('POST', '/scan-zones', k.headers, {
+      orgId: orgId(),
+      key: 'mode-count',
+      name: 'Mode count',
+    });
+    const zone = (await made.json()) as { id: string };
+    const live = await fixture.parent('Zone count live');
+    await run(
+      DB,
+      `INSERT INTO scanning_sessions(id,org_id,mode,name,status,settings,time_zone,created_at,updated_at)
+       VALUES ('zc-test',?,'test','zc-test','active','{}','UTC',1,1)`,
+      [orgId()],
+    );
+    for (const id of [live.id, 'zc-test'])
+      await run(DB, 'INSERT INTO scanning_session_zones(session_id, zone_id) VALUES (?, ?)', [
+        id,
+        zone.id,
+      ]);
+    type Z = { id: string; sessions: number };
+    const count = async (res: Response, list: boolean) => {
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as Z | { items: Z[] };
+      return list
+        ? (body as { items: Z[] }).items.find((z) => z.id === zone.id)?.sessions
+        : (body as Z).sessions;
+    };
+    const read = await keyOf(['scan-setup:read']);
+    expect(await count(await send('GET', `/scan-zones?orgId=${orgId()}`, read.headers), true)).toBe(
+      1,
+    );
+    expect(
+      await count(
+        await send('PATCH', `/scan-zones/${zone.id}`, k.headers, { name: 'Mode count 2' }),
+        false,
+      ),
+    ).toBe(1);
+    // The console keeps every session that uses the zone.
+    expect(await count(await fixture.call('GET', `/scan-zones?orgId=${orgId()}`), true)).toBe(2);
   });
 });

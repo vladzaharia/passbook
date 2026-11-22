@@ -2059,7 +2059,7 @@
   },
   "SCAN_MODE_LIVE_ONLY": {
     "title": "Live key needed",
-    "when": "Moving a scanner between live and test changes its organization, so a test key cannot do it.",
+    "when": "Moving a scanner between live and test changes its mode for everyone, so a test key cannot do it.",
     "fix": "Use a live key.",
     "retryable": false
   },
