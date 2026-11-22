@@ -70,12 +70,32 @@ describe('the assign card', () => {
     show('assign-done-photo');
     expect(document.querySelector('.scan-assign-photo')).toBeTruthy();
   });
+  it('a held tag with a blanked holder (another template) is not called lost', () => {
+    show('assign-pin-other-template');
+    expect(screen.getByText(/Moving this tag from another pass to Maya Okafor/)).toBeTruthy();
+    expect(screen.queryByText(/lost tag/)).toBeNull();
+    expect(screen.getByText(/It works with another pass now\./)).toBeTruthy();
+  });
+  it('a tag new at the read and held at the bind is not called lost', () => {
+    show('assign-pin-new-then-held');
+    expect(screen.getByText(/Moving this tag from another pass to Maya Okafor/)).toBeTruthy();
+    expect(screen.queryByText(/lost tag/)).toBeNull();
+  });
+  it('staff sign-in shows the move line beside the named manager', () => {
+    show('assign-pin-staff');
+    expect(screen.getByText('Moving this tag from Leo Park to Maya Okafor')).toBeTruthy();
+    expect(screen.getByTestId('scan-approval').textContent).toContain('Manager');
+  });
+  it('a really lost tag says so', () => {
+    show('assign-pin-lost');
+    expect(screen.getByText(/Moving this lost tag to Maya Okafor/)).toBeTruthy();
+  });
   it('the move PIN says whose tag it takes, in one line', () => {
     show('assign-confirm-other-pin');
-    expect(screen.getByText(/Moves this tag from Leo Park to Maya Okafor/)).toBeTruthy();
+    expect(screen.getByText(/Moving this tag from Leo Park to Maya Okafor/)).toBeTruthy();
     cleanup();
     show('assign-confirm-lost-pin');
-    expect(screen.getByText(/Moves this lost tag to Maya Okafor/)).toBeTruthy();
+    expect(screen.getByText(/Moving this lost tag to Maya Okafor/)).toBeTruthy();
   });
   it('while the PIN form is open the dock has no Ask a manager', () => {
     show('assign-confirm-lost-pin');

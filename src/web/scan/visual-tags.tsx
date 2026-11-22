@@ -147,8 +147,13 @@ export function TagVisual({
                 org: 'Northwind HQ',
                 reader: assign.reader,
                 manager: assign.manager ?? false,
-                managers: [],
-                code: true,
+                managers: assign.named
+                  ? [
+                      { id: 'm1', name: 'Ana Reyes' },
+                      { id: 'm2', name: 'Ben Ito' },
+                    ]
+                  : [],
+                code: !assign.named,
                 knownName: assign.knownName ?? null,
                 readerNote: null,
                 webStatus: 'idle',

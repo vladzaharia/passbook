@@ -22,20 +22,20 @@ export function infoLine(a: AssignState): { tone: 'info' | 'warn' | 'muted'; tex
       text: bound?.holderName
         ? fill(SCAN_TAG_COPY.confirm.moveOther, {
             holder: bound.holderName,
-            pass: bound.passTitle ?? 'pass',
+            pass: bound.passTitle || 'pass',
             name,
           })
         : fill(SCAN_TAG_COPY.confirm.moveOtherPass, {
-            pass: bound?.passTitle ?? 'another pass',
+            pass: bound?.passTitle || 'another pass',
             name,
           }),
     };
   if (w.includes('lost'))
     return {
       tone: 'warn',
-      text: fill(TAG_EXTRA_COPY.lostWarn, {
-        date: a.preview?.lostAt ? formatShortDate(a.preview.lostAt) : '',
-      }),
+      text: a.preview?.lostAt
+        ? fill(TAG_EXTRA_COPY.lostWarn, { date: formatShortDate(a.preview.lostAt) })
+        : 'Reported lost.',
     };
   if (w.includes('replaces_user_tag'))
     return { tone: 'info', text: fill(SCAN_TAG_COPY.confirm.moveOwn[1], { name }) };
@@ -54,10 +54,14 @@ export function infoLine(a: AssignState): { tone: 'info' | 'warn' | 'muted'; tex
 /** What the Manager approves: a move says whose tag it takes, otherwise the assign. */
 function pinLine(a: AssignState, name: string): string {
   if (!a.pin?.move) return fill(SCAN_TAG_COPY.confirm.pinAssign, { name });
-  const from = a.inspected?.bound?.holderName ?? a.inspected?.bound?.passTitle;
+  // Lost only when the preview or the earlier check says so: a blank holder is not a lost tag
+  // (another template's pass is blanked, and a tag new at the read may be held at the bind).
+  const lost = a.preview?.warnings.includes('lost') || a.inspected?.state === 'lost';
+  if (lost) return fill(SCAN_TAG_COPY.confirm.pinMoveLost, { to: name });
+  const from = a.inspected?.bound?.holderName || a.inspected?.bound?.passTitle || null;
   return from
     ? fill(SCAN_TAG_COPY.confirm.pinMove, { from, to: name })
-    : fill(SCAN_TAG_COPY.confirm.pinMoveLost, { to: name });
+    : fill(SCAN_TAG_COPY.confirm.pinMoveOther, { to: name });
 }
 
 export function ConfirmBody({

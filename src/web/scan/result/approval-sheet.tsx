@@ -82,6 +82,7 @@ export function ApprovalSheet({
           </p>
         </>
       ) : null}
+      {!code && action ? <p className="scan-approval-verb">{action}</p> : null}
       {named ? (
         <FormField label={desk ? SCAN_COPY.managerCode.approver : 'Manager'}>
           {(p) => (

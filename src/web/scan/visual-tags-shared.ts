@@ -56,4 +56,6 @@ export interface Assign {
   reader: TagReader;
   knownName?: string | null;
   manager?: boolean;
+  /** Staff sign-in is on: managers are named, not a code. */
+  named?: boolean;
 }
