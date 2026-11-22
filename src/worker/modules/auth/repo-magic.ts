@@ -1,4 +1,4 @@
-import { knownEmail } from '../../../shared/email.ts';
+import { knownEmail, normalizeEmail } from '../../../shared/email.ts';
 import { first, run } from '../../platform/db.ts';
 
 type Db = D1Database;
@@ -181,10 +181,11 @@ export async function isOwnedByOther(db: Db, email: string, userId: string): Pro
   const row = await first<{ found: number }>(
     db,
     `SELECT 1 AS found WHERE EXISTS (SELECT 1 FROM user_emails WHERE email = ? AND user_id != ?)
-       OR EXISTS (SELECT 1 FROM users u WHERE u.primary_email = ? AND u.id != ?
+       OR EXISTS (SELECT 1 FROM users u WHERE lower(u.primary_email) = ? AND u.id != ?
          AND NOT EXISTS (SELECT 1 FROM auth_identities a
            WHERE a.user_id = u.id AND a.provider <> 'breakglass'))`,
-    [email, userId, email, userId],
+    // Case-insensitive like findUserByPrimaryEmail: a legacy mixed-case primary must still count.
+    [normalizeEmail(email), userId, normalizeEmail(email), userId],
   );
   return row !== null;
 }
