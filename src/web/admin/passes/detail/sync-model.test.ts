@@ -179,6 +179,24 @@ describe('wallet events', () => {
     expect(eventDetail(gone?.events[0] as PassEventDto)).toBe('Samsung Wallet');
   });
 
+  it('titles a Google message, names the wallet and says what Google did with it', () => {
+    const facts = (data: PassEventDto['data']) =>
+      groupEvents([ev('wallet.messaged', 1, { provider: 'google', version: 3, ...data })])[0];
+    const notified = facts({ outcome: 'notified' });
+    expect(notified?.title).toBe('Wallet message');
+    expect(eventDetail(notified?.events[0] as PassEventDto)).toBe('v3 · Google Wallet');
+    expect(notified?.facts).toEqual([{ text: 'Notified', tone: 'info' }]);
+    const limited = facts({ outcome: 'text', reason: 'quota' });
+    expect(limited?.facts).toEqual([{ text: 'Daily limit reached', tone: 'warning' }]);
+    expect(eventDetail(limited?.events[0] as PassEventDto)).toBe('v3 · Google Wallet');
+    expect(facts({ outcome: 'failed' })?.facts).toEqual([
+      { text: 'Not accepted', tone: 'warning' },
+    ]);
+    expect(facts({ outcome: 'unknown' })?.facts).toEqual([
+      { text: 'Not confirmed', tone: 'warning' },
+    ]);
+  });
+
   it('lists the wallets a removal reached', () => {
     const [row] = groupEvents([
       ev('pass.removed', 1, { version: 2, message: false, wallets: ['apple', 'google'] }),

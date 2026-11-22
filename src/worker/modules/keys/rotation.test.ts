@@ -370,7 +370,7 @@ async function expectEverythingOpens(r: Rotated) {
           wrappedDek: new Uint8Array(row?.wrapped_dek ?? []),
           ciphertext: new Uint8Array(row?.ciphertext ?? []),
         },
-        credentialAad(p.id, p.org, p.kind),
+        p.aad ?? credentialAad(p.id, p.org, p.kind),
       ),
       p.table,
     ).toBe(p.text);
