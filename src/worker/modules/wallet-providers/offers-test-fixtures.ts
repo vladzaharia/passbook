@@ -13,6 +13,7 @@ import { approveAppleRelease, grantKitMembership } from '../passes/apple-release
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { ICON_PNG, type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
+import { getVersion } from '../templates/repo.ts';
 import {
   configureWalletProviderAccount,
   getWalletProviderReadiness,
@@ -20,6 +21,7 @@ import {
 } from './account-service.ts';
 import { GOOGLE_WALLET_SCOPE } from './google-credentials.ts';
 import type { NativeProvider } from './projection-contract.ts';
+import { computeProjectionPins } from './projection-pins.ts';
 import {
   approveProjectionCandidate,
   createProjectionCandidate,
@@ -85,6 +87,8 @@ export async function setupWalletOfferKit(
   options: {
     google?: 'absent' | 'configured';
     samsung?: OfferFixtureState;
+    /** `2` publishes the compiled projection: no evidence row, the card is read live. */
+    samsungSchema?: 1 | 2;
     holderEmail?: string;
     source?: OfferFixtureSource;
     db?: D1Database;
@@ -163,17 +167,9 @@ export async function setupWalletOfferKit(
           credentials: samsung,
         });
   }
-  async function refreshSamsungEvidence(candidateId: string, candidateHash: string) {
-    // The provider verifies with the certificate on the account's current revision, which rotation replaces.
-    const readiness = await getWalletProviderReadiness(kit.ctx, scope('samsung'));
-    const current = await readConfiguredWalletProviderCredentials(kit.ctx, scope('samsung'), {
-      accountId: readiness.accountId ?? '',
-      accountRevision: readiness.revision,
-    });
-    if (current?.provider !== 'samsung')
-      throw new Error('Samsung account missing in wallet offer fixture.');
-    const partnerCertificatePem = current.credentials.partnerCertificatePem;
-    const fetch = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+  /** The provider's template read, verified against the account's certificate. */
+  function mockTemplateFetch(partnerCertificatePem: string, template: Record<string, string> = {}) {
+    return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
       const url = input instanceof Request ? input.url : String(input);
       const method = (
         init?.method ?? (input instanceof Request ? input.method : 'GET')
@@ -212,9 +208,22 @@ export async function setupWalletOfferKit(
           cardType: 'loyalty',
           subType: 'others',
           countryCode: 'GB',
+          ...template,
         },
       });
     });
+  }
+  async function refreshSamsungEvidence(candidateId: string, candidateHash: string) {
+    // The provider verifies with the certificate on the account's current revision, which rotation replaces.
+    const readiness = await getWalletProviderReadiness(kit.ctx, scope('samsung'));
+    const current = await readConfiguredWalletProviderCredentials(kit.ctx, scope('samsung'), {
+      accountId: readiness.accountId ?? '',
+      accountRevision: readiness.revision,
+    });
+    if (current?.provider !== 'samsung')
+      throw new Error('Samsung account missing in wallet offer fixture.');
+    const partnerCertificatePem = current.credentials.partnerCertificatePem;
+    const fetch = mockTemplateFetch(partnerCertificatePem);
     const restoreGate = setWalletProvidersEnabledForTest(true);
     try {
       const result = await refreshSamsungProjectionEvidence(kit.ctx, auth, {
@@ -229,6 +238,13 @@ export async function setupWalletOfferKit(
       fetch.mockRestore();
       restoreGate();
     }
+  }
+  async function candidateProjection(provider: NativeProvider) {
+    if (options.samsungSchema !== 2) return projection(provider);
+    const version = await getVersion(kit.env.DB, kit.template.id, kit.template.version);
+    if (!version) throw new Error('Offer fixture version is missing.');
+    const { pins } = await computeProjectionPins(kit.ctx, provider, version);
+    return { schema: 2 as const, provider, approvedOmissions: pins.approvedOmissions };
   }
   async function publish(provider: 'samsung', expectedGeneration = 0) {
     // Evidence probing is a provider call, so publishing runs with the gate opened for the fixture only.
@@ -245,7 +261,7 @@ export async function setupWalletOfferKit(
       ...common,
       version: kit.template.version,
       sourceReleaseId: apple.id,
-      projection: projection(provider),
+      projection: await candidateProjection(provider),
     });
     const approval = await approveProjectionCandidate(
       kit.ctx,
@@ -257,14 +273,20 @@ export async function setupWalletOfferKit(
         candidateHash: candidate.candidateHash,
       },
     );
-    await refreshSamsungEvidence(candidate.id, candidate.candidateHash);
-    return publishProjectionRelease(kit.ctx, apple.publisherAuth, kit.template.id, {
-      ...common,
-      candidateId: candidate.id,
-      approvalId: approval.id,
-      candidateHash: candidate.candidateHash,
-      expectedGeneration,
-    });
+    if (options.samsungSchema !== 2)
+      await refreshSamsungEvidence(candidate.id, candidate.candidateHash);
+    const live = options.samsungSchema === 2 ? mockTemplateFetch(identity.certificate) : null;
+    try {
+      return await publishProjectionRelease(kit.ctx, apple.publisherAuth, kit.template.id, {
+        ...common,
+        candidateId: candidate.id,
+        approvalId: approval.id,
+        candidateHash: candidate.candidateHash,
+        expectedGeneration,
+      });
+    } finally {
+      live?.mockRestore();
+    }
   }
   if ((options.google ?? 'configured') !== 'absent') await configure('google');
   const samsungState = options.samsung ?? 'published';
@@ -284,5 +306,6 @@ export async function setupWalletOfferKit(
     configure,
     publish,
     refreshSamsungEvidence,
+    mockTemplateFetch,
   };
 }

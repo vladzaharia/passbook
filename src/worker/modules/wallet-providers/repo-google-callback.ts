@@ -1,3 +1,4 @@
+import type { GoogleType } from '../../../passkit/wallets/google/types.ts';
 import type { Envelope } from '../../platform/crypto.ts';
 import { batch, first, stmt } from '../../platform/db.ts';
 import { UnavailableError } from '../../platform/errors.ts';
@@ -14,7 +15,16 @@ export interface GoogleCallbackAccountScope {
   accountRevision: number;
 }
 
-export interface GoogleCallbackBinding extends GoogleCallbackAccountScope {
+/** The class partition of a typed object; absent on a Generic binding (original derivation). */
+export interface GoogleCallbackClassPartition {
+  classType?: GoogleType;
+  /** `googleClassKeyDigest`; absent means the `default` key. */
+  classKey?: string;
+}
+
+export interface GoogleCallbackBinding
+  extends GoogleCallbackAccountScope,
+    GoogleCallbackClassPartition {
   instanceId: string;
   passId: string;
   releaseId: string;
@@ -22,7 +32,7 @@ export interface GoogleCallbackBinding extends GoogleCallbackAccountScope {
   channelEpoch: number;
 }
 
-export interface GoogleCallbackBindingInput {
+export interface GoogleCallbackBindingInput extends GoogleCallbackClassPartition {
   instanceId: string;
   passId: string;
   /** The immutable original provider projection, not the latest projection. */
@@ -104,10 +114,19 @@ export async function putGoogleCallbackBinding(
     stmt(
       db,
       `INSERT INTO wallet_google_callback_bindings
-        (instance_id, account_id, class_id_hash, object_id_hash, created_at, credential_keyset_commitment)
-      SELECT i.id, i.account_id, ?, ?, ?, ${pinnedKeysetSql} ${join} WHERE ${where}
+        (instance_id, account_id, class_id_hash, object_id_hash, created_at, credential_keyset_commitment,
+         class_type, class_key)
+      SELECT i.id, i.account_id, ?, ?, ?, ${pinnedKeysetSql}, ?, ? ${join} WHERE ${where}
       ON CONFLICT(instance_id) DO NOTHING`,
-      [hashes.classIdHash, hashes.objectIdHash, now, now, ...params],
+      [
+        hashes.classIdHash,
+        hashes.objectIdHash,
+        now,
+        input.classType ?? null,
+        input.classKey ?? null,
+        now,
+        ...params,
+      ],
     ),
     googleBindingCurrentStatement(db, scope, input, hashes, now),
   ]);
@@ -136,7 +155,7 @@ export async function findGoogleCallbackBinding(
     db,
     `SELECT i.id AS instanceId, i.pass_id AS passId,
       i.identity_projection_release_id AS releaseId, i.credential_generation AS credentialGeneration,
-      i.channel_epoch AS channelEpoch, a.id AS accountId, a.org_id AS orgId, a.mode, ${REVISION_EXPR} AS accountRevision,
+      i.channel_epoch AS channelEpoch, b.class_type AS classType, b.class_key AS classKey, a.id AS accountId, a.org_id AS orgId, a.mode, ${REVISION_EXPR} AS accountRevision,
       (i.credential_keyset_commitment = b.credential_keyset_commitment
         AND b.credential_keyset_commitment = ${pinnedKeysetSql}) AS keysetOk
     FROM wallet_google_callback_bindings b
@@ -154,8 +173,12 @@ export async function findGoogleCallbackBinding(
       'Google Wallet callback service is unavailable.',
       'GOOGLE_CALLBACK_UNAVAILABLE',
     );
-  const { keysetOk: _keysetOk, ...binding } = row;
-  return binding;
+  const { keysetOk: _keysetOk, classType, classKey, ...binding } = row;
+  return {
+    ...binding,
+    ...(classType === null || classType === undefined ? {} : { classType }),
+    ...(classKey === null || classKey === undefined ? {} : { classKey }),
+  };
 }
 
 export interface GoogleCallbackReceiptInput {

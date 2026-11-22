@@ -17,12 +17,20 @@ export { walletNoProviderArtifactsSql };
 
 /**
  * Set once by the wallet_provider_instances_settle trigger (0148) when the retirement evidence holds.
- * An issued Google object cannot retire until an independent replay guarantee exists, so it stays NULL.
+ * An issued Google object settles only after its revocation was read back inactive (0198, G5), so an
+ * unconfirmed one stays NULL.
  */
 export function walletRetiredInstanceSettledSql(instanceAlias: string): string {
   if (!/^[a-z][a-z0-9_]*$/i.test(instanceAlias)) throw new Error('Invalid trusted SQL alias');
   return `${instanceAlias}.retirement_settled_at IS NOT NULL`;
 }
+
+/** A Google revoke counts only once the object was read back inactive and barcode-less (0198). */
+const googleConfirmedSql = (i: string) =>
+  `(${i}.provider != 'google' OR EXISTS (SELECT 1 FROM wallet_google_revocation_confirmations confirmed
+    WHERE confirmed.operation_id = ${i}.desired_operation_id AND confirmed.instance_id = ${i}.id
+      AND confirmed.version = ${i}.desired_version
+      AND confirmed.credential_keyset_commitment = ${i}.credential_keyset_commitment))`;
 
 export async function retireInstance(
   db: D1Database,
@@ -32,9 +40,11 @@ export async function retireInstance(
     db,
     `UPDATE wallet_provider_instances AS i SET lifecycle = 'retired', retired_at = ?, updated_at = ?
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.desired_version = ?
-      AND i.provider = 'samsung' AND i.lifecycle = 'revoked' AND i.retirement_requested_at IS NOT NULL
+      AND i.lifecycle = 'revoked' AND i.retirement_requested_at IS NOT NULL
       AND i.credential_keyset_commitment = ${pinnedKeysetSql}
-      AND ${samsungRetirementProjectionSql('i')}
+      AND (i.provider != 'google' OR ${retirementProjectionSql('i')})
+      AND (i.provider != 'samsung' OR ${samsungRetirementProjectionSql('i')})
+      AND ${googleConfirmedSql('i')}
       AND EXISTS (SELECT 1 FROM wallet_provider_instance_operations op
         WHERE op.id = i.desired_operation_id AND op.instance_id = i.id AND op.version = i.desired_version
           AND op.kind = 'revoke' AND op.state = 'succeeded' AND op.credential_keyset_commitment = ${pinnedKeysetSql})
@@ -61,10 +71,12 @@ export async function retirementReconciled(
     JOIN wallet_provider_instance_operations op ON op.id = i.desired_operation_id
       AND op.instance_id = i.id AND op.version = i.desired_version
     WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = ? AND i.desired_version = ?
-      AND i.provider = 'samsung' AND i.lifecycle IN ('revoked', 'retired')
+      AND i.lifecycle IN ('revoked', 'retired')
       AND op.kind = 'revoke' AND op.state = 'succeeded'
       AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND op.credential_keyset_commitment = ${pinnedKeysetSql}
-      AND ${samsungRetirementProjectionSql('i')}
+      AND (i.provider != 'google' OR ${retirementProjectionSql('i')})
+      AND (i.provider != 'samsung' OR ${samsungRetirementProjectionSql('i')})
+      AND ${googleConfirmedSql('i')}
       AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations busy
         WHERE busy.instance_id = i.id AND busy.state IN ('pending', 'retry', 'claimed', 'uncertain'))
       AND NOT EXISTS (SELECT 1 FROM wallet_samsung_fetch_refs r WHERE r.instance_id = i.id
@@ -109,6 +121,7 @@ export function listRetirementsReady(
       AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND op.credential_keyset_commitment = ${pinnedKeysetSql}
       AND ${retirementProjectionSql('i')}
       AND (i.provider != 'samsung' OR ${samsungRetirementProjectionSql('i')})
+      AND ${googleConfirmedSql('i')}
       ${afterId === null ? '' : 'AND i.id > ?'} ORDER BY i.id LIMIT ?`,
     [now, ...(afterId === null ? [] : [afterId]), limit],
   );

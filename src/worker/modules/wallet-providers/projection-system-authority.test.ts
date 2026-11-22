@@ -2,7 +2,10 @@ import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { first } from '../../platform/db.ts';
 import { publishableSchema } from './projection-contract.ts';
-import { versionAuthorIndependentSql } from './projection-system-authority.ts';
+import {
+  SYSTEM_AUTHORED_PROVIDERS,
+  versionAuthorIndependentSql,
+} from './projection-system-authority.ts';
 
 const independent = async (provider: string, author: string) =>
   (
@@ -24,7 +27,8 @@ describe('system author exemption', () => {
     expect(await independent('google', 'someone-else')).toBe(0);
   });
 
-  it('holds only while Samsung schema 2 is unpublishable', () => {
-    expect(publishableSchema('samsung', 2)).toBe(false);
+  it('the platform authors candidates for Google only, though Samsung schema 2 is publishable', () => {
+    expect(SYSTEM_AUTHORED_PROVIDERS).toEqual(['google']);
+    expect(publishableSchema('samsung', 2)).toBe(true);
   });
 });

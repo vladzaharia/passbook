@@ -96,6 +96,8 @@ export async function publish(
   if (!written) return failedWrite(ctx, authority);
   const row = await getRelease(db, id);
   if (!row) throw new Error('Committed wallet projection release was not found.');
+  if (candidate.provider === 'google' && action === 'release')
+    await queueGoogleReconcile(ctx, scope, row.version, row.generation);
   return releaseDto(row, candidate);
 }
 export async function publishProjectionRelease(
@@ -167,4 +169,25 @@ export async function rollbackProjectionRelease(
     'rollback',
     target.id,
   );
+}
+
+/** Best effort: a missed message only leaves classes to follow on the next pass edit. */
+async function queueGoogleReconcile(
+  ctx: ServiceContext,
+  scope: { orgId: string; mode: 'live' | 'test'; templateId: string },
+  version: string,
+  generation: number,
+): Promise<void> {
+  try {
+    await ctx.env.JOBS.send({
+      kind: 'wallet.google_reconcile',
+      orgId: scope.orgId,
+      mode: scope.mode,
+      templateId: scope.templateId,
+      version,
+      generation,
+    });
+  } catch {
+    ctx.log.warn('wallet.google_reconcile_not_queued', { code: 'WALLET_GOOGLE_RECONCILE' });
+  }
 }

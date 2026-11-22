@@ -337,6 +337,20 @@ describe('authority-scope', () => {
     expect(scanBrandImport(`${MOD}/templates/sync.ts`, factory)).toEqual([]);
     const ingress = "import { webhookIngressGrant } from '../../jobs/webhook-ingress.ts';";
     expect(scanBrandImport(`${MOD}/x/routes.ts`, ingress)).toHaveLength(1);
+    // The first-tap factory: only offers-google.ts, and the wallet module is not exempt from the rule.
+    const firstTap = "import { runFirstTapUpsert } from '../../jobs/wallet-first-tap.ts';";
+    expect(scanBrandImport(`${MOD}/wallet-providers/offers-google.ts`, firstTap)).toEqual([]);
+    expect(scanBrandImport(`${MOD}/wallet-providers/offers.ts`, firstTap)).toHaveLength(1);
+    expect(scanBrandImport(`${MOD}/passes/routes.ts`, firstTap)).toHaveLength(1);
+    expect(scanBrandImport('src/worker/routes/x.ts', firstTap)).toHaveLength(1);
+    // A re-export, from jobs/ too, and a dynamic import are the same import.
+    const reexport = "export { runFirstTapUpsert } from './wallet-first-tap.ts';";
+    expect(scanBrandImport('src/worker/jobs/relay.ts', reexport)).toHaveLength(1);
+    expect(scanBrandImport(`${MOD}/passes/relay.ts`, reexport)).toHaveLength(1);
+    const dynamic = "const m = await import('../../jobs/wallet-first-tap.ts');";
+    expect(scanBrandImport(`${MOD}/passes/routes.ts`, dynamic)).toHaveLength(1);
+    expect(scanBrandImport(`${MOD}/wallet-providers/offers-google.ts`, dynamic)).toEqual([]);
+    expect(scanBrandImport('src/worker/jobs/wallet-first-tap.ts', reexport)).toEqual([]);
     expect(scanBrandImport(`${MOD}/connections/routes.ts`, ingress)).toHaveLength(1);
     expect(scanBrandImport(`${MOD}/connections/repo-grants.ts`, ingress)).toEqual([]);
     expect(scanBrandImport(`${MOD}/connections/webhooks.ts`, ingress)).toEqual([]);

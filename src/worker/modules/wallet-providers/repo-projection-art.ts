@@ -90,3 +90,35 @@ export async function orgHasLivePasses(db: D1Database, orgId: string): Promise<b
     )) !== null
   );
 }
+
+export interface ProjectionArtFile {
+  asset: string;
+  sha256: string;
+  width: number;
+  height: number;
+}
+
+/** Which template file each public copy a release published came from, with the size it was cut to. */
+export async function recordProjectionArtFiles(
+  db: D1Database,
+  input: { candidateId: string; files: readonly ProjectionArtFile[] },
+): Promise<void> {
+  for (const file of input.files)
+    await run(
+      db,
+      `INSERT INTO wallet_projection_art_files (candidate_id, asset, sha256, width, height)
+      VALUES (?, ?, ?, ?, ?) ON CONFLICT (candidate_id, asset) DO NOTHING`,
+      [input.candidateId, file.asset, file.sha256, file.width, file.height],
+    );
+}
+
+export function listProjectionArtFiles(
+  db: D1Database,
+  candidateId: string,
+): Promise<ProjectionArtFile[]> {
+  return all(
+    db,
+    'SELECT asset, sha256, width, height FROM wallet_projection_art_files WHERE candidate_id = ?',
+    [candidateId],
+  );
+}

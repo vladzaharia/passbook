@@ -129,6 +129,8 @@ export async function runWalletProviderOperation(
           body: payload,
           reason: response.status < 400 ? 'ok' : 'provider_error',
           httpStatus: response.status,
+          method: response.method,
+          stage: response.stage,
         });
       } catch (error) {
         execution.fenceLost = true;

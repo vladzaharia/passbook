@@ -24,6 +24,7 @@ import {
   type WalletProviderCredentialSnapshot,
 } from './account-service.ts';
 import {
+  identityCardType,
   type NativeProjection,
   type NativeProvider,
   NativeProviderSchema,
@@ -40,7 +41,7 @@ import {
 } from './projection-pins.ts';
 import { assertProjectionSource, verifiedAppleSource } from './projection-source.ts';
 import type { ProjectionAuthority } from './projection-system-authority.ts';
-import { recordProjectionArt } from './repo-projection-art.ts';
+import { recordProjectionArt, recordProjectionArtFiles } from './repo-projection-art.ts';
 import {
   getProjectionCandidate,
   type ProjectionCandidate,
@@ -210,12 +211,8 @@ export async function verifiedCandidate(
     account.provider !== candidate.provider ||
     account.accountId !== candidate.accountId ||
     account.authorityEpoch !== candidate.accountEpoch ||
-    (await providerIdentityHash(
-      account,
-      candidate.projection.schema === 1 && candidate.projection.provider === 'samsung'
-        ? candidate.projection.cardType
-        : undefined,
-    )) !== candidate.providerIdentityHash
+    (await providerIdentityHash(account, identityCardType(candidate.projection))) !==
+      candidate.providerIdentityHash
   )
     return false;
   if (candidate.projection.schema === 2)
@@ -258,7 +255,7 @@ async function currentPins(
   if (!version) return false;
   return pinsAcceptable(
     candidate,
-    await computeProjectionPins(ctx, candidate.provider, version),
+    await computeProjectionPins(ctx, candidate.provider, version, 'dry', candidate.orgId),
     rule,
   );
 }
@@ -271,13 +268,26 @@ export async function storeReleaseArt(
   if (candidate.projection.schema !== 2) return;
   const version = await getVersion(ctx.env.DB, candidate.templateId, candidate.version);
   if (!version) throw changed();
-  const current = await computeProjectionPins(ctx, candidate.provider, version, 'store');
+  const current = await computeProjectionPins(
+    ctx,
+    candidate.provider,
+    version,
+    'store',
+    candidate.orgId,
+  );
   if (!pinsAcceptable(candidate, current, rule)) throw changed();
   await recordProjectionArt(ctx.env.DB, {
     candidateId: candidate.id,
     hashes: [...current.art.hashes],
     now: ctx.clock.now(),
   });
+  // Claims read this instead of cutting the images again.
+  const files = [...current.art.urls].flatMap(([asset, url]) => {
+    const sha256 = /\/w\/i\/([0-9a-f]{64})\.png$/.exec(url)?.[1];
+    const size = current.art.sizes.get(asset);
+    return sha256 && size ? [{ asset, sha256, ...size }] : [];
+  });
+  await recordProjectionArtFiles(ctx.env.DB, { candidateId: candidate.id, files });
 }
 export async function scopedCandidate(
   ctx: ServiceContext,

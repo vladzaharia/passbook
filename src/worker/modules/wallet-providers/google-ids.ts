@@ -1,10 +1,20 @@
+import type { GoogleType } from '../../../passkit/wallets/google/types.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import { isGoogleIssuerId } from './google-credentials.ts';
 import { googleBase64Url } from './google-crypto.ts';
 import { GoogleWalletError } from './google-errors.ts';
 
+/**
+ * A class is one per release and, for a typed pass, per type and class key (architecture 3.1, Q17: an
+ * event ticket class is one per event). Absent `type` keeps the original Generic derivation, so classes
+ * already on Google keep their ids.
+ */
 export interface GoogleClassScope {
   tenantId: string;
   releaseId: string;
+  type?: GoogleType;
+  /** `googleClassKeyDigest` of the `google.classKey` value; absent means `default`. */
+  classKey?: string;
 }
 
 /** releaseId is the original class binding; credentialGeneration identifies the holder lineage. */
@@ -50,6 +60,23 @@ async function idKey(
   );
 }
 
+/** The stored, non-reversible form of a `google.classKey` value; callbacks re-derive from it. */
+export function googleClassKeyDigest(classKey: string): Promise<string> {
+  return sha256Hex(classKey);
+}
+
+const isDigest = (value: unknown): value is string =>
+  typeof value === 'string' && /^[0-9a-f]{64}$/.test(value);
+
+function classValues(scope: GoogleClassScope): (string | number)[] {
+  const base = [scope.tenantId, scope.releaseId];
+  if (scope.type === undefined || (scope.type === 'generic' && scope.classKey === undefined))
+    return base;
+  if (scope.classKey !== undefined && !isDigest(scope.classKey))
+    throw new GoogleWalletError('invalid_input', 'identifiers');
+  return [...base, scope.type, scope.classKey ?? 'default'];
+}
+
 async function derive(
   key: CryptoKey,
   issuerId: string,
@@ -68,7 +95,7 @@ export async function googleClassId(
   scope: GoogleClassScope,
 ): Promise<DerivedGoogleId> {
   const key = await idKey(issuerId, secret, scope);
-  return derive(key, issuerId, 'class', [scope.tenantId, scope.releaseId]);
+  return derive(key, issuerId, 'class', classValues(scope));
 }
 
 export async function googleObjectIds(
@@ -90,7 +117,7 @@ export async function googleObjectIds(
   }
   const key = await idKey(issuerId, secret, scope);
   const [classId, objectId] = await Promise.all([
-    derive(key, issuerId, 'class', [scope.tenantId, scope.releaseId]),
+    derive(key, issuerId, 'class', classValues(scope)),
     derive(key, issuerId, 'object', [
       scope.tenantId,
       scope.mode,

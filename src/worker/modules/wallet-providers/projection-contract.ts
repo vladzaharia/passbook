@@ -146,11 +146,11 @@ export function parseProjectionInput(
 }
 
 /**
- * Schema 1 maps fields by hand and is refused for Google. Samsung keeps it only while its runtime
- * and card evidence still read those fields (CW10b ports them); Samsung schema 2 stays unpublishable.
+ * Schema 1 maps fields by hand and is refused for Google. Samsung still publishes it beside schema
+ * 2 (compiled) until its field-mapped candidates are retired.
  */
 export function publishableSchema(provider: NativeProvider, schema: 1 | 2): boolean {
-  return provider === 'google' ? schema === 2 : schema === 1;
+  return provider === 'google' ? schema === 2 : true;
 }
 
 /** The non-secret provider identity is hashed; private credentials never enter a projection. */
@@ -160,6 +160,12 @@ export type ProviderIdentitySnapshot =
       provider: 'samsung';
       credentials: { partnerId: string; cardId: string; cardIds?: Record<string, string> };
     };
+/** The Samsung card type whose card identifies a projection: schema 1 names it, schema 2 compiles it. */
+export function identityCardType(projection: NativeProjection): string | undefined {
+  if (projection.provider !== 'samsung') return undefined;
+  return projection.schema === 1 ? projection.cardType : projection.type;
+}
+
 /** Samsung: the partner plus the card of the projection's type (`cardType`, default card if omitted). */
 export function providerIdentityHash(
   snapshot: ProviderIdentitySnapshot,

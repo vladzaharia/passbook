@@ -26,9 +26,9 @@ export async function finishWalletProviderRetirement(
   if (!instance || instance.desiredVersion !== ref.version) return false;
   if (instance.lifecycle === 'retired') return retirementReconciled(ctx.env.DB, ref);
   if (instance.lifecycle !== 'revoked') return false;
-  // A previously disclosed Save JWT may be replayable after inactivation. Until a provider-
-  // verified replay boundary exists, acceptance of INACTIVE alone cannot authorize hard purge.
-  if (instance.provider === 'google') return false;
+  // A previously disclosed Save JWT may be replayable after inactivation. The repository retires a
+  // Google instance only once its revoke was read back inactive and barcode-less (0198), so
+  // acceptance of the PUT alone never authorizes a hard purge.
   if (
     instance.provider === 'samsung' &&
     !(await persistSamsungTombstone(ctx, {

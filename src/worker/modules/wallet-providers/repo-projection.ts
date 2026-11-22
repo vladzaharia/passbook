@@ -98,7 +98,7 @@ export function projectionReleaseBindingPredicateSql(scope: ProjectionReleaseSco
         AND pc.adapter_revision = ${GOOGLE_PROJECTION_POLICY.adapterRevision}
         AND pc.adapter_capabilities = '${google}'
         AND pc.audience_policy_revision = ${GOOGLE_PROJECTION_POLICY.audiencePolicyRevision})
-      OR (pc.provider = 'samsung' AND json_extract(pc.projection_json, '$.schema') = 1
+      OR (pc.provider = 'samsung' AND json_extract(pc.projection_json, '$.schema') IN (1, 2)
         AND pc.adapter_revision = ${SAMSUNG_PROJECTION_POLICY.adapterRevision}
         AND pc.adapter_capabilities = '${samsung}' AND pc.audience_policy_revision = ${SAMSUNG_PROJECTION_POLICY.audiencePolicyRevision}
         AND (${samsungProjectionEvidencePredicateSql('pc', nowSql)})))`;

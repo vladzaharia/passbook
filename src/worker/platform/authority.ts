@@ -44,7 +44,7 @@ import {
 import { buildUpsert, type UpsertOptions } from './authority-upsert.ts';
 import { exactStmt, type SqlValue } from './db.ts';
 import type { DenyReason, LimitHit } from './errors.ts';
-import { hasJobAuthority } from './job-authority.ts';
+import { assertJobGrantAllowed, hasFullJobAuthority } from './job-authority.ts';
 import type { ServiceContext } from './service-context.ts';
 
 export type { AuditRow } from './authority-audit.ts';
@@ -315,7 +315,7 @@ export function grant(ctx: ServiceContext, input: GrantInput): Grant {
   if (input.principal.kind === 'system')
     throw new AuthorityError('GRANT_NOT_JOB', 'System grants come from jobGrant().');
   const scope = scopeOf(input);
-  assertDeferredContext(hasJobAuthority(ctx), input);
+  assertDeferredContext(hasFullJobAuthority(ctx), input);
   const p = input.principal;
   const full = { ...input, ...(p.kind === 'holder' ? { target: p.passId } : {}), via: ctx.via };
   return new Grant(ctx.env.DB, ctx.ids.token(), scope, full, ctx.clock.now());
@@ -323,8 +323,7 @@ export function grant(ctx: ServiceContext, input: GrantInput): Grant {
 
 /** Only a context built by `createJobContext` (queue, cron, workflow) can mint a `system:` grant. */
 export function jobGrant(ctx: ServiceContext, input: JobGrantInput): Grant {
-  if (!hasJobAuthority(ctx))
-    throw new AuthorityError('GRANT_NOT_JOB', 'jobGrant needs a queue, cron or workflow context.');
+  assertJobGrantAllowed(ctx.job, input.purpose);
   const full = jobGrantInputOf(input);
   return new Grant(ctx.env.DB, ctx.ids.token(), scopeOf(full), full, ctx.clock.now());
 }

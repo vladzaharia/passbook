@@ -12,7 +12,15 @@ import { copyGoogleProjection, type GoogleGenericProjection } from './google-pro
 
 const WALLET_API = 'https://walletobjects.googleapis.com/walletobjects/v1';
 
-type Resource = 'genericClass' | 'genericObject';
+/** The REST collection of each type's class and object (google-wallet.md section 1). */
+export const GOOGLE_RESOURCES = {
+  generic: { class: 'genericClass', object: 'genericObject' },
+  event: { class: 'eventTicketClass', object: 'eventTicketObject' },
+  loyalty: { class: 'loyaltyClass', object: 'loyaltyObject' },
+  gift: { class: 'giftCardClass', object: 'giftCardObject' },
+  offer: { class: 'offerClass', object: 'offerObject' },
+} as const;
+export type Resource = (typeof GOOGLE_RESOURCES)[keyof typeof GOOGLE_RESOURCES]['class' | 'object'];
 export type GoogleUpsertResult = 'created' | 'updated';
 
 export interface GoogleWalletRestContext {
@@ -47,10 +55,10 @@ export function clearGoogleRestMemo(): void {
   knownResources.clear();
 }
 
-async function request(
+export async function request(
   ctx: GoogleWalletRestContext,
   resource: Resource,
-  method: 'GET' | 'POST' | 'PATCH',
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT',
   id?: DerivedGoogleId,
   body?: Record<string, unknown>,
 ): Promise<Response> {
@@ -86,12 +94,13 @@ async function request(
   return response;
 }
 
-async function verifyIdentity(
+/** GETs the resource and proves it is the one this id names (and, for an object, this class). */
+export async function verifyIdentity(
   ctx: GoogleWalletRestContext,
   resource: Resource,
   id: DerivedGoogleId,
   classId?: DerivedGoogleId,
-): Promise<void> {
+): Promise<Record<string, unknown>> {
   const response = await request(ctx, resource, 'GET', id);
   let value: unknown;
   try {
@@ -109,10 +118,11 @@ async function verifyIdentity(
   if (record.id !== id || (classId && record.classId !== classId)) {
     throw new GoogleWalletError('conflict', `${resource} identity`);
   }
+  return record;
 }
 
 // A 409 is not success: confirm the existing resource's identity, then require PATCH success.
-async function upsert(
+export async function upsert(
   ctx: GoogleWalletRestContext,
   resource: Resource,
   id: DerivedGoogleId,
