@@ -28330,6 +28330,50 @@
           "token"
         ]
       },
+      "PlatformStatusOpenIncidentParams": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "component": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "api",
+              "apple_push",
+              "email",
+              "webhooks",
+              "google",
+              "samsung",
+              null
+            ],
+            "default": null
+          },
+          "impact": {
+            "type": "string",
+            "enum": [
+              "notice",
+              "degraded",
+              "outage"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "note",
+          "impact"
+        ]
+      },
       "TerminalResolveParams": {
         "type": "object",
         "properties": {
@@ -100558,6 +100602,10 @@
           }
         },
         "operationId": "status.getStatusIncidents",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "listIncidents"
+        },
         "security": [
           {
             "session": []
@@ -100581,48 +100629,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 120
-                  },
-                  "note": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 600
-                  },
-                  "component": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "enum": [
-                      "api",
-                      "apple_push",
-                      "email",
-                      "webhooks",
-                      "google",
-                      "samsung",
-                      null
-                    ],
-                    "default": null
-                  },
-                  "impact": {
-                    "type": "string",
-                    "enum": [
-                      "notice",
-                      "degraded",
-                      "outage"
-                    ]
-                  }
-                },
-                "required": [
-                  "title",
-                  "note",
-                  "impact"
-                ]
+                "$ref": "#/components/schemas/PlatformStatusOpenIncidentParams"
               }
             }
           }
@@ -100704,6 +100711,10 @@
           }
         },
         "operationId": "status.postStatusIncidents",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "openIncident"
+        },
         "security": [
           {
             "session": []
@@ -100814,6 +100825,10 @@
           }
         },
         "operationId": "status.postStatusIncidentsByIdResolve",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "resolveIncident"
+        },
         "security": [
           {
             "session": []
