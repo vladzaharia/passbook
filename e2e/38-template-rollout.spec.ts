@@ -88,7 +88,7 @@ test('the Versions tab shows how far a release has reached the live passes', asy
     await page.goto(
       `/admin/templates/${encodeURIComponent(clone.id)}?orgId=${encodeURIComponent(org.id)}&tab=versions`,
     );
-    await expect(page.getByRole('heading', { name: 'Updating passes to Version 2' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Updating passes to v2' })).toBeVisible();
     await expect(page.getByRole('progressbar', { name: 'Passes on the release' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Tell holders' })).toBeVisible();
     await expect(page.getByText('Updating 3')).toBeVisible();

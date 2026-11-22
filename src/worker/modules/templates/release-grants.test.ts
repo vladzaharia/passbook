@@ -35,6 +35,7 @@ import { basicPackage, passJson, zipOf } from './package/fixtures.ts';
 import { createTemplateRegistry } from './registry.ts';
 import { getTemplate } from './repo.ts';
 import { archiveUploadedTemplate } from './repo-mutations.ts';
+import { recordRolloutFailure } from './repo-release-impact.ts';
 import { writeApproval, writeRelease } from './repo-release-write.ts';
 import { getCandidate } from './repo-releases.ts';
 import { resetBakedSync, syncBakedTemplates } from './sync.ts';
@@ -824,6 +825,88 @@ describe('rollout and impact', () => {
 
     await run(env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [behind.id]);
     expect(await read()).toMatchObject({ total: 1, remaining: 0, failed: [] });
+  });
+
+  it('shows the recorded reason before any rebuild has finished', async () => {
+    const t = await released('Rollout Reason');
+    const second = await secondVersion('Rollout Reason');
+    const old = await createTemplateRegistry(env).resolve(
+      t.templateId,
+      second.result?.version ?? '',
+    );
+    const behind = await makePass(f, { orgId: org.id, template: old });
+    const release = await first<{ id: string }>(
+      env.DB,
+      'SELECT id FROM template_releases WHERE template_id = ? ORDER BY generation DESC',
+      [t.templateId],
+    );
+    await recordRolloutFailure(env.DB, {
+      passId: behind.id,
+      orgId: org.id,
+      mode: 'live',
+      templateId: t.templateId,
+      releaseId: release?.id ?? '',
+      code: 'STAMPS_ABOVE_MAX',
+      message: 'The card holds more stamps than the new version allows.',
+      at: clock.now(),
+    });
+    const body = TemplateRolloutSchema.parse(await (await rollout(t.templateId, publisher)).json());
+    expect(body).toMatchObject({ failedCount: 1, remaining: 1, running: false });
+    expect(body.failed).toEqual([
+      {
+        passId: behind.id,
+        title: null,
+        reason: expect.stringContaining('more stamps'),
+      },
+    ]);
+    // The row belongs to that pass in that org: another org's pass id records nothing.
+    await recordRolloutFailure(env.DB, {
+      passId: behind.id,
+      orgId: otherOrg.id,
+      mode: 'live',
+      templateId: t.templateId,
+      releaseId: 'r',
+      code: 'X',
+      message: 'x',
+      at: 1,
+    });
+    expect(
+      await all(env.DB, 'SELECT code FROM template_rollout_failures WHERE pass_id = ?', [
+        behind.id,
+      ]),
+    ).toEqual([{ code: 'STAMPS_ABOVE_MAX' }]);
+  });
+
+  it('offers Tell holders as a change before passes move, a message after, nothing after a day', async () => {
+    const t = await released('Rollout Tell');
+    const registry = createTemplateRegistry(env);
+    const second = await secondVersion('Rollout Tell');
+    const old = await registry.resolve(t.templateId, second.result?.version ?? '');
+    const onRelease = await registry.resolve(t.templateId, t.version);
+    await makePass(f, { orgId: org.id, template: onRelease });
+    const behind = await makePass(f, { orgId: org.id, template: old });
+    const read = async () =>
+      TemplateRolloutSchema.parse(await (await rollout(t.templateId, publisher)).json());
+    expect((await read()).tell).toMatchObject({ path: 'change', text: null });
+    await run(env.DB, 'UPDATE passes SET template_version = ? WHERE id = ?', [
+      t.version,
+      behind.id,
+    ]);
+    const after = await read();
+    expect(after.remaining).toBe(0);
+    expect(after.tell).toMatchObject({
+      path: 'message',
+      text: expect.stringContaining('Rollout Tell'),
+    });
+    const now = clock.now();
+    clock.set(now + 25 * 3_600_000);
+    try {
+      const later = await member(org.id, ['template_publisher']);
+      const res = await rollout(t.templateId, later);
+      expect(TemplateRolloutSchema.parse(await res.json()).tell).toBeNull();
+    } finally {
+      clock.set(now);
+    }
   });
 
   it('refuses another org and another mode', async () => {

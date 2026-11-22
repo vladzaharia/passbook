@@ -152,13 +152,7 @@ export function RolloutCard({
   const tellCount = r.tell?.path === 'message' ? r.onRelease : updating;
   return (
     <section aria-label="Rollout" className="relative mt-11 grid gap-3">
-      <Buddy
-        size="sm"
-        at="end"
-        state="working"
-        scene={done ? 'cheer' : 'wave'}
-        mood={done ? 'happy' : 'curious'}
-      />
+      <Buddy size="sm" at="end" scene={done ? 'cheer' : 'wave'} mood={done ? 'happy' : 'curious'} />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-fg-strong">
           {done ? `All passes are on ${version}` : `Updating passes to ${version}`}

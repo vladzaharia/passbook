@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../../app.ts';
-import { run } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
 import { rollbackRelease } from '../templates/releases.ts';
 import { approvedForTransfer, buildTransfer } from './credential-transfer-build.ts';
 import { type Kit, setupKit } from './pass-test-fixtures.ts';
@@ -177,6 +177,10 @@ describe('a card above the new maximum', () => {
     expect(await reissueStamps(kit, id)).toMatchObject({ failed: 1, aboveMax: 1, changed: 1 });
     expect(await stamps(over.id)).toBe(15);
     expect(await versionOf(over.id)).toBe('v1');
+    // The rollout view can say why: one row for the pass left behind, none for the one that moved.
+    expect(
+      await all(kit.env.DB, 'SELECT pass_id, code FROM template_rollout_failures', []),
+    ).toEqual([{ pass_id: over.id, code: 'STAMPS_ABOVE_MAX' }]);
     expect(await stamps(fits.id)).toBe(6);
     expect(await versionOf(fits.id)).toBe('v2');
   });
