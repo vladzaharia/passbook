@@ -13,6 +13,7 @@ import { attenuate } from './attenuate.ts';
 import { countOpenChildren, getKey, keyResources } from './repo.ts';
 import { createKey } from './repo-create.ts';
 import type { ApiKeyRow } from './repo-row.ts';
+import { assertSandboxCeiling } from './sandbox-ceiling.ts';
 import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
 
 /** A personal or platform key lives at most 90 days; a day of slack covers a client clock that runs ahead. */
@@ -205,6 +206,8 @@ export async function createApiKey(
   if (orgId && !(await orgIsActive(ctx.env.DB, orgId))) {
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   }
+  // A sandbox holds the sandbox ceiling, whoever mints (a role's bundle counts too).
+  await assertSandboxCeiling(ctx.env.DB, orgId, effectiveScopes(input.scopes, input.roles));
   const mode = authority.kind === 'platform' ? input.mode : authority.mode;
   assertScanningAdminKey(effectiveScopes(input.scopes, input.roles), kind, mode);
   const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);

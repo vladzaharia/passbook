@@ -70,6 +70,7 @@
   "developer.deleteSandbox",
   "developer.deleteTryToken",
   "developer.getAccess",
+  "developer.getHome",
   "developer.getLog",
   "developer.getLogs",
   "developer.getRail",
