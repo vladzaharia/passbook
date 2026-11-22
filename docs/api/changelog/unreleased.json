@@ -2610,7 +2610,7 @@
     "operationId": "scan.postScanTagsBind",
     "op": "POST /api/v1/scan/tags/bind",
     "change": "409.IDEMPOTENCY_KEY_REUSED: now 422",
-    "note": "With PassBook-Version 2026-11-22, a reused Idempotency-Key with another request answers 422 IDEMPOTENCY_KEY_REUSED, not 409. SDKs raise ValidationError instead of ConflictError. Without the header it stays 409."
+    "note": "Pinned to 2026-11-22, a reused key answers 422, not 409; the SDKs raise ValidationError, not ConflictError."
   },
   {
     "key": "POST /api/v1/scanners 200.staff.name: now nullable",
