@@ -168,6 +168,22 @@
     "note": "Only messages or only changes. The console's Messages list asks for messages and shows changes behind a filter."
   },
   {
+    "key": "GET /api/v1/broadcasts optional parameter query:parentId added",
+    "class": "additive",
+    "operationId": "broadcasts.getBroadcasts",
+    "op": "GET /api/v1/broadcasts",
+    "change": "optional parameter query:parentId added",
+    "note": "Only the undo run of this change."
+  },
+  {
+    "key": "GET /api/v1/broadcasts optional parameter query:retryOf added",
+    "class": "additive",
+    "operationId": "broadcasts.getBroadcasts",
+    "op": "GET /api/v1/broadcasts",
+    "change": "optional parameter query:retryOf added",
+    "note": "Only the run that resumed this change."
+  },
+  {
     "key": "GET /api/v1/broadcasts/{id} 200.message: field added",
     "class": "additive",
     "operationId": "broadcasts.getBroadcastsById",

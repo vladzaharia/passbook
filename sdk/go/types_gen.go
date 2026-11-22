@@ -597,11 +597,13 @@ type BroadcastsCreateParamsTargetScan2 struct {
 type BroadcastsCreateResult = Broadcast
 
 type BroadcastsListQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
-	Limit  *int64  `json:"limit,omitempty"`
-	State  *string `json:"state,omitempty"`
-	Origin *string `json:"origin,omitempty"`
-	Kind   *string `json:"kind,omitempty"`
+	Cursor   *string `json:"cursor,omitempty"`
+	Limit    *int64  `json:"limit,omitempty"`
+	State    *string `json:"state,omitempty"`
+	Origin   *string `json:"origin,omitempty"`
+	Kind     *string `json:"kind,omitempty"`
+	ParentID *string `json:"parentId,omitempty"`
+	RetryOf  *string `json:"retryOf,omitempty"`
 }
 
 type BroadcastsRecipientsListItem struct {
