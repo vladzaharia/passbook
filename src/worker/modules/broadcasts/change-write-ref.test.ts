@@ -302,6 +302,30 @@ describe('a stale attempt cannot take over', () => {
     expect((await intents(id))[0]?.intent).toBe('{"live":true}');
   });
 
+  it('setIntent refuses a pass whose item is recorded, leaving no orphan intent', async () => {
+    const passId = await unrendered();
+    const id = await start(passId);
+    await applyChunk(jobCtxOf(ck.kit), id, null);
+    const real = vi.mocked(repo.setIntent).getMockImplementation() as typeof repo.setIntent;
+    await expect(real(ck.kit.env.DB, id, passId, '{"late":true}')).rejects.toMatchObject({
+      code: 'INTENT_ITEM_RECORDED',
+    });
+    expect((await intents(id))[0]?.intent).not.toBe('{"late":true}');
+  });
+
+  it('names a live intent and a missing target apart', async () => {
+    const passId = await unrendered();
+    const id = await start(passId);
+    const real = vi.mocked(repo.setIntent).getMockImplementation() as typeof repo.setIntent;
+    await real(ck.kit.env.DB, id, passId, '{"live":true}');
+    await expect(real(ck.kit.env.DB, id, passId, '{}')).rejects.toMatchObject({
+      code: 'INTENT_LIVE',
+    });
+    await expect(real(ck.kit.env.DB, id, 'no-such-pass', '{}')).rejects.toMatchObject({
+      code: 'INTENT_NO_TARGET',
+    });
+  });
+
   it('refuses a write once the run has stamped its own, whatever version it read', async () => {
     const passId = await unrendered();
     const id = await start(passId);

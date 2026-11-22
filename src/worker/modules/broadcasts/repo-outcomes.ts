@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { all, batch, placeholders, run, stmt } from '../../platform/db.ts';
+import { all, batch, first, placeholders, run, stmt } from '../../platform/db.ts';
+import { ConflictError } from '../../platform/errors.ts';
 
 type Outcome = 'updated' | 'unchanged' | 'failed';
 
@@ -100,12 +101,26 @@ export async function setIntent(
 ): Promise<void> {
   const { changes } = await run(
     db,
-    'UPDATE broadcast_targets SET intent = ? WHERE broadcast_id = ? AND pass_id = ? AND intent IS NULL',
+    `UPDATE broadcast_targets SET intent = ?
+     WHERE broadcast_id = ? AND pass_id = ? AND intent IS NULL
+       AND NOT EXISTS (SELECT 1 FROM broadcast_items i
+         WHERE i.broadcast_id = broadcast_targets.broadcast_id AND i.pass_id = broadcast_targets.pass_id)`,
     [intent, broadcastId, passId],
   );
-  // No target row means no stamp from the write (a crash would apply the change twice); a live intent
-  // is another attempt's, which a stale attempt must not overwrite.
-  if (changes === 0) throw new Error(`No target row for ${broadcastId} on ${passId}.`);
+  if (changes > 0) return;
+  // Each refusal is its own case: no row means no stamp from the write (a crash would apply the change
+  // twice); a live intent is another attempt's; a recorded item means a newer attempt finished the pass.
+  const row = await first<{ intent: string | null; recorded: number }>(
+    db,
+    `SELECT t.intent, EXISTS (SELECT 1 FROM broadcast_items i
+       WHERE i.broadcast_id = t.broadcast_id AND i.pass_id = t.pass_id) AS recorded
+     FROM broadcast_targets t WHERE t.broadcast_id = ? AND t.pass_id = ?`,
+    [broadcastId, passId],
+  );
+  if (!row) throw new ConflictError('The pass is not a target of this run.', 'INTENT_NO_TARGET');
+  if (row.recorded)
+    throw new ConflictError('This run already recorded the pass.', 'INTENT_ITEM_RECORDED');
+  throw new ConflictError('Another attempt holds the pass.', 'INTENT_LIVE');
 }
 
 export const clearIntent = (db: D1Database, broadcastId: string, passId: string) =>
