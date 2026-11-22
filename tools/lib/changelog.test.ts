@@ -143,10 +143,15 @@ describe('versions', () => {
       false,
     );
   });
-  it('an unversioned entry covers exactly its own breaking change', () => {
+  it('an unversioned entry covers only a request-side tightening', () => {
     const pending = [
-      { key: 'POST /a body.t: unknown keys now refused', unversioned: true },
-      { key: 'POST /a body.u: field removed' },
+      {
+        key: 'POST /a body.t: unknown keys now refused',
+        change: 'body.t: unknown keys now refused',
+        unversioned: true,
+      },
+      { key: 'POST /a body.u: field removed', change: 'body.u: field removed' },
+      { key: 'GET /b 200.x: field removed', change: '200.x: field removed', unversioned: true },
     ] as Pending[];
     expect(
       versionedBreaks(

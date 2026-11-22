@@ -432,22 +432,6 @@
     "note": "readOnly marks an ended pass that is listed before it is attached to the account: no refresh, remove or download."
   },
   {
-    "key": "GET /api/v1/message-rules 200.items[].pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
-    "class": "notable",
-    "operationId": "message-rules.getMessageRules",
-    "op": "GET /api/v1/message-rules",
-    "change": "200.items[].pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
-    "note": "A rule pauses with RULE_TEMPLATE_CHANGED when its template content no longer matches its release."
-  },
-  {
-    "key": "GET /api/v1/message-rules/{id} 200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
-    "class": "notable",
-    "operationId": "message-rules.getMessageRulesById",
-    "op": "GET /api/v1/message-rules/{id}",
-    "change": "200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
-    "note": "A rule pauses with RULE_TEMPLATE_CHANGED when its template content no longer matches its release."
-  },
-  {
     "key": "GET /api/v1/message-rules/{id}/runs 200.items[].message: field added",
     "class": "additive",
     "operationId": "message-rules.getMessageRulesByIdRuns",
@@ -2029,22 +2013,6 @@
     "note": "Retries a failed or cancelled provisioning run."
   },
   {
-    "key": "POST /api/v1/message-rules 201.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
-    "class": "notable",
-    "operationId": "message-rules.postMessageRules",
-    "op": "POST /api/v1/message-rules",
-    "change": "201.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
-    "note": "A rule pauses with RULE_TEMPLATE_CHANGED when its template content no longer matches its release."
-  },
-  {
-    "key": "POST /api/v1/message-rules/{id}/pause 200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
-    "class": "notable",
-    "operationId": "message-rules.postMessageRulesByIdPause",
-    "op": "POST /api/v1/message-rules/{id}/pause",
-    "change": "200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
-    "note": "A rule pauses with RULE_TEMPLATE_CHANGED when its template content no longer matches its release."
-  },
-  {
     "key": "POST /api/v1/message-rules/{id}/test 201.message: field added",
     "class": "additive",
     "operationId": "message-rules.postMessageRulesByIdTest",
@@ -2803,14 +2771,6 @@
     "op": "PUT /api/v1/identities/{id}/push-key",
     "change": "200.status: field added",
     "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
-  },
-  {
-    "key": "PUT /api/v1/message-rules/{id} 200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
-    "class": "notable",
-    "operationId": "message-rules.putMessageRulesById",
-    "op": "PUT /api/v1/message-rules/{id}",
-    "change": "200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
-    "note": "A rule pauses with RULE_TEMPLATE_CHANGED when its template content no longer matches its release."
   },
   {
     "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.kind: field added",

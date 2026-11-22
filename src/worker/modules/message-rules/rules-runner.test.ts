@@ -244,6 +244,13 @@ describe('lifecycle and back-pressure', () => {
     expect(row?.next_check_at).toBeGreaterThan(kit.clock.now());
   });
 
+  it('pauses, not reschedules, when its template was deleted', async () => {
+    const id = await created({});
+    await run(kit.env.DB, "UPDATE templates SET status = 'deleted' WHERE id = ?", [kit.dated.id]);
+    await check(id);
+    expect(await ruleRow(id)).toMatchObject({ state: 'paused', paused_code: 'RULE_INPUT_MISSING' });
+  });
+
   it('defers while its own run is still waiting', async () => {
     await kit.datedPass({ expiry: date(T0 + 7 * DAY) });
     const id = await created({});

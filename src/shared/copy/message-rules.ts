@@ -16,8 +16,6 @@ export const RULE_COPY = {
   paused: {
     RULE_CREATOR_REVOKED: 'Paused. The person who saved it lost access. Save it again to resume.',
     RULE_INPUT_MISSING: 'Paused. A template no longer has the date or message field.',
-    RULE_TEMPLATE_CHANGED:
-      'Paused. A template changed since its release. Save the rule again to resume.',
     RULE_TARGET_INVALID:
       'Paused. A condition uses a time zone that no longer exists. Pick another.',
     ORG_INACTIVE: 'Paused. The organization is inactive.',

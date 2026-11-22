@@ -1116,7 +1116,7 @@ export type MessageRulesListResult = {
     clearAfter: number | null;
     on?: boolean;
     state: "on" | "paused";
-    pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TEMPLATE_CHANGED" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
+    pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
     nextCheckAt: number | null;
     sent: number;
     skipped: number;
@@ -1168,7 +1168,7 @@ export type MessageRulesCreateResult = {
   clearAfter: number | null;
   on?: boolean;
   state: "on" | "paused";
-  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TEMPLATE_CHANGED" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
+  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
   nextCheckAt: number | null;
   sent: number;
   skipped: number;
@@ -1228,7 +1228,7 @@ export type MessageRulesRetrieveResult = {
   clearAfter: number | null;
   on?: boolean;
   state: "on" | "paused";
-  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TEMPLATE_CHANGED" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
+  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
   nextCheckAt: number | null;
   sent: number;
   skipped: number;
@@ -1278,7 +1278,7 @@ export type MessageRulesUpdateResult = {
   clearAfter: number | null;
   on?: boolean;
   state: "on" | "paused";
-  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TEMPLATE_CHANGED" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
+  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
   nextCheckAt: number | null;
   sent: number;
   skipped: number;
@@ -1330,7 +1330,7 @@ export type MessageRulesPauseResult = {
   clearAfter: number | null;
   on?: boolean;
   state: "on" | "paused";
-  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TEMPLATE_CHANGED" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
+  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
   nextCheckAt: number | null;
   sent: number;
   skipped: number;

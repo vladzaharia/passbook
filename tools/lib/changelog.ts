@@ -95,7 +95,12 @@ export const hasNewVersion = (next: Versions, base: Versions | null): boolean =>
 
 /** The breaking changes no `unversioned` entry of unreleased.json covers. */
 export const versionedBreaks = (broken: string[], pending: Pending[]): string[] => {
-  const free = new Set(pending.filter((p) => p.unversioned).map((p) => p.key));
+  // Only a request-side tightening may ship unversioned; a removed field or the like still needs a version.
+  const free = new Set(
+    pending
+      .filter((p) => p.unversioned && p.change.endsWith(': unknown keys now refused'))
+      .map((p) => p.key),
+  );
   return broken.filter((b) => !free.has(b));
 };
 

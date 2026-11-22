@@ -78171,7 +78171,6 @@
                             "enum": [
                               "RULE_CREATOR_REVOKED",
                               "RULE_INPUT_MISSING",
-                              "RULE_TEMPLATE_CHANGED",
                               "RULE_TARGET_INVALID",
                               "ORG_INACTIVE",
                               null
@@ -78526,7 +78525,6 @@
                       "enum": [
                         "RULE_CREATOR_REVOKED",
                         "RULE_INPUT_MISSING",
-                        "RULE_TEMPLATE_CHANGED",
                         "RULE_TARGET_INVALID",
                         "ORG_INACTIVE",
                         null
@@ -78888,7 +78886,6 @@
                       "enum": [
                         "RULE_CREATOR_REVOKED",
                         "RULE_INPUT_MISSING",
-                        "RULE_TEMPLATE_CHANGED",
                         "RULE_TARGET_INVALID",
                         "ORG_INACTIVE",
                         null
@@ -79244,7 +79241,6 @@
                       "enum": [
                         "RULE_CREATOR_REVOKED",
                         "RULE_INPUT_MISSING",
-                        "RULE_TEMPLATE_CHANGED",
                         "RULE_TARGET_INVALID",
                         "ORG_INACTIVE",
                         null
@@ -79687,7 +79683,6 @@
                       "enum": [
                         "RULE_CREATOR_REVOKED",
                         "RULE_INPUT_MISSING",
-                        "RULE_TEMPLATE_CHANGED",
                         "RULE_TARGET_INVALID",
                         "ORG_INACTIVE",
                         null

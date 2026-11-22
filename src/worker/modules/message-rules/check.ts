@@ -6,6 +6,7 @@ import { safeTargetFilter } from '../broadcasts/apply.ts';
 import { creatorLive } from '../broadcasts/repo-creator.ts';
 import { insertRuleRunStmt } from '../broadcasts/repo-rule-run.ts';
 import { countTargeted } from '../broadcasts/repo-target.ts';
+import { TemplateUnreleasedError } from '../broadcasts/target-release.ts';
 import {
   getRule,
   pauseWithCode,
@@ -101,19 +102,17 @@ export async function checkRule(
   } catch (error) {
     if (!(error instanceof AppError) || error.status >= 500) throw error;
     // No release in the mode and no active passes: nothing is due yet, and the rule keeps its place.
-    if (error.code === 'TEMPLATE_NOT_FOUND') {
+    if (error instanceof TemplateUnreleasedError) {
       ctx.log.info('message_rule.no_template', { ruleId: row.id, code: error.code });
       await setNextCheck(db, row.id, version, Math.max(nextCheckAt(rule, now), now + 1000));
       return;
     }
-    const code =
-      error.code === 'TEMPLATE_CONTENT_CHANGED' ? 'RULE_TEMPLATE_CHANGED' : 'RULE_INPUT_MISSING';
     ctx.log.warn('message_rule.paused', {
       ruleId: row.id,
       orgId: row.org_id,
-      code,
+      code: 'RULE_INPUT_MISSING',
     });
-    await pauseWithCode(db, row.id, code, now);
+    await pauseWithCode(db, row.id, 'RULE_INPUT_MISSING', now);
     return;
   }
   // Day rules send only inside their day; a missed day stays unsent so the text is never wrong.

@@ -88,8 +88,10 @@ function checkDeclaration(spec: RouteSpec): void {
 }
 
 /** The router's hook for a failed validation: the ZodError reaches the error handler (422). */
-const throwInvalid = (result: { success: boolean; error?: ZodError }): void => {
-  if (!result.success && result.error) throw result.error;
+const throwInvalid = (
+  result: { success: true; data: unknown } | { success: false; error: ZodError },
+): void => {
+  if (!result.success) throw result.error;
 };
 
 /**
