@@ -18,7 +18,8 @@ func main() {
 
 	var body passbook.PassesMemberPhotoUploadBody
 	if err := json.Unmarshal([]byte(`{
-  "png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGUlEQVR42mOQz3/9nxLMMGrAqAGjBgwXAwCBLngfV/beKAAAAABJRU5ErkJggg=="
+  "png": "example",
+  "includeInPass": false
 }`), &body); err != nil {
 		panic(err)
 	}

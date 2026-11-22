@@ -1,5 +1,516 @@
 {
   "scans.getScans": {
-    "description": "Lists scans for admins, or the scan feed for a key with `scans:read`."
+    "description": "Lists scans for admins, or the scan feed for a key with `scans:read`.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "at": 1764000000000,
+          "outcome": "ok",
+          "reason": "not_found",
+          "kind": "check_in",
+          "actionId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "actionLabel": "Ada Example",
+          "direction": "in",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "passTitle": "Ada Example",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "templateName": "Ada Example",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "eventName": "Ada Example",
+          "scannerId": "0193a1b2-7c00-7000-8000-0000000000a6",
+          "scannerName": "Ada Example",
+          "staffId": "0193a1b2-7c00-7000-8000-0000000000a7",
+          "staffName": "Ada Example",
+          "apiKeyId": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "approvedBy": "example",
+          "method": "camera",
+          "amount": 1,
+          "before": {},
+          "after": {},
+          "passVersion": 1,
+          "override": false,
+          "offline": false,
+          "unverified": false,
+          "late": false,
+          "actor": {
+            "type": "scanner",
+            "id": "0193a1b2-7c00-7000-8000-0000000000a9"
+          },
+          "undoneAt": 1764000000000,
+          "undoneBy": "example",
+          "undoes": "example"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "scans.getScansById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "at": 1764000000000,
+      "outcome": "ok",
+      "reason": "not_found",
+      "kind": "check_in",
+      "actionId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "actionLabel": "Ada Example",
+      "direction": "in",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "passTitle": "Ada Example",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a4",
+      "templateName": "Ada Example",
+      "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "eventName": "Ada Example",
+      "scannerId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "scannerName": "Ada Example",
+      "staffId": "0193a1b2-7c00-7000-8000-0000000000a7",
+      "staffName": "Ada Example",
+      "apiKeyId": "0193a1b2-7c00-7000-8000-0000000000a8",
+      "approvedBy": "example",
+      "method": "camera",
+      "amount": 1,
+      "before": {},
+      "after": {},
+      "passVersion": 1,
+      "override": false,
+      "offline": false,
+      "unverified": false,
+      "late": false,
+      "actor": {
+        "type": "scanner",
+        "id": "0193a1b2-7c00-7000-8000-0000000000a9"
+      },
+      "undoneAt": 1764000000000,
+      "undoneBy": "example",
+      "undoes": "example"
+    }
+  },
+  "scans.postScansByIdUndo": {
+    "request": {
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "checkIn": {
+        "mode": "single",
+        "direction": "in",
+        "inside": false,
+        "enteredAt": 1764000000000,
+        "firstAt": 1764000000000,
+        "validFrom": 1,
+        "validUntil": 1
+      },
+      "scanId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "ok",
+      "reason": "not_found",
+      "replay": false,
+      "action": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "label": "Ada Example",
+        "kind": "check_in"
+      },
+      "card": {
+        "checkIn": {
+          "mode": "single",
+          "direction": "in",
+          "inside": false,
+          "enteredAt": 1764000000000,
+          "firstAt": 1764000000000,
+          "validFrom": 1,
+          "validUntil": 1
+        },
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "version": 1,
+        "mode": "live",
+        "title": "Ada Example",
+        "subtitle": "Ada Example",
+        "template": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "name": "Ada Example",
+          "style": "example"
+        },
+        "status": "active",
+        "validFrom": 1,
+        "validUntil": 1,
+        "flags": [
+          {
+            "label": "Ada Example",
+            "tone": "warning",
+            "stop": false
+          }
+        ],
+        "values": [
+          {
+            "input": "example",
+            "label": "Ada Example",
+            "before": {},
+            "after": {},
+            "goal": 10,
+            "format": "number",
+            "currency": "example",
+            "counter": false,
+            "need": 1
+          }
+        ],
+        "actions": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a5",
+            "label": "Ada Example",
+            "kind": "check_in",
+            "available": false,
+            "lock": "role",
+            "reason": "not_found",
+            "amount": {
+              "fixed": 1
+            },
+            "confirm": false,
+            "confirmAbove": 1,
+            "cooldownRemainingMs": 1764000000000,
+            "armable": "sticky",
+            "rewardLabel": "Ada Example",
+            "input": {
+              "type": "string",
+              "label": "Ada Example",
+              "min": 1,
+              "max": 1,
+              "step": 1,
+              "maxLength": 1,
+              "enum": ["example"]
+            }
+          }
+        ],
+        "display": {
+          "v": 1,
+          "screen": "ready",
+          "templateVersion": "example",
+          "variant": "example",
+          "identity": {
+            "holder": "example",
+            "initials": "ex",
+            "photo": {
+              "url": "https://passbook.mobile/p/abc123",
+              "alt": "example"
+            }
+          },
+          "header": {
+            "icon": "user",
+            "title": "Ada Example",
+            "titleLines": 1,
+            "meta": "example",
+            "chips": [
+              {
+                "id": "0193a1b2-7c00-7000-8000-0000000000a6",
+                "text": "example",
+                "tone": "neutral"
+              }
+            ]
+          },
+          "panels": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+              "kind": "membership",
+              "title": "Ada Example",
+              "icon": "user",
+              "tone": "neutral",
+              "rows": [
+                {
+                  "type": "heading",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+                  "text": "example",
+                  "detail": "example"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "staff": "example",
+            "refused": "example"
+          }
+        },
+        "lastScans": [
+          {
+            "scanId": "0193a1b2-7c00-7000-8000-0000000000a9",
+            "at": 1764000000000,
+            "actionLabel": "Ada Example",
+            "outcome": "ok",
+            "scannerName": "Ada Example",
+            "undoable": false
+          }
+        ],
+        "bundle": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000aa",
+          "name": "Ada Example",
+          "size": 1,
+          "checkedIn": 1,
+          "members": [
+            {
+              "initials": "exam",
+              "checkedIn": false,
+              "refusedReason": "example"
+            }
+          ]
+        },
+        "door": {
+          "state": "in"
+        },
+        "access": {
+          "plan": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+            "label": "Ada Example",
+            "kind": "always"
+          },
+          "zone": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000ac",
+            "name": "Ada Example"
+          },
+          "closesAt": 1764000000000,
+          "nextOpenAt": 1764000000000,
+          "visits": {
+            "used": 1,
+            "limit": 10
+          },
+          "visit": false,
+          "timeZone": "example"
+        },
+        "tag": {
+          "hint": "ABCD",
+          "assurance": "basic",
+          "system": "uid",
+          "typeName": "Ada Example",
+          "scope": "pass",
+          "count": 8,
+          "passes": [
+            {
+              "passId": "0193a1b2-7c00-7000-8000-0000000000ad",
+              "templateName": "Ada Example",
+              "state": "used",
+              "reason": "example"
+            }
+          ]
+        },
+        "occupancy": {
+          "place": {
+            "kind": "zone",
+            "id": "0193a1b2-7c00-7000-8000-0000000000ae",
+            "name": "Ada Example"
+          },
+          "direction": "in",
+          "auto": false,
+          "state": "in",
+          "since": 1,
+          "via": "example",
+          "stayMs": 1764000000000,
+          "inNow": 1,
+          "capacity": 10,
+          "turnaround": "in",
+          "parent": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000af",
+            "name": "Ada Example"
+          }
+        },
+        "passView": {
+          "passJson": {},
+          "assetBaseUrl": "https://passbook.mobile/p/abc123",
+          "assetGrant": "example",
+          "assetNames": ["Ada Example"]
+        }
+      },
+      "previous": {
+        "scanId": "0193a1b2-7c00-7000-8000-0000000000b0",
+        "at": 1764000000000,
+        "scannerName": "Ada Example",
+        "staffName": "Ada Example",
+        "actionLabel": "Ada Example",
+        "override": false
+      },
+      "event": {
+        "name": "Ada Example",
+        "startsAt": 1764000000000
+      },
+      "template": {
+        "name": "Ada Example",
+        "style": "example"
+      },
+      "at": 1764000000000,
+      "cooldownRemainingMs": 1764000000000,
+      "value": {
+        "input": "example",
+        "label": "Ada Example",
+        "before": {},
+        "after": {},
+        "goal": 10,
+        "format": "number",
+        "currency": "example",
+        "counter": false,
+        "need": 1
+      },
+      "flags": ["example"],
+      "channel": "mobile",
+      "overridable": false,
+      "approvals": false,
+      "group": {
+        "total": 10,
+        "done": 1,
+        "already": 1,
+        "refused": 1,
+        "members": [
+          {
+            "name": "Ada Example",
+            "state": "done",
+            "reason": "example"
+          }
+        ]
+      },
+      "bundle": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "name": "Ada Example",
+        "size": 1,
+        "checkedIn": 1,
+        "members": [
+          {
+            "initials": "exam",
+            "checkedIn": false,
+            "refusedReason": "example"
+          }
+        ]
+      },
+      "inBundle": false,
+      "counts": {
+        "today": 1,
+        "event": {
+          "arrived": 1,
+          "inside": 1,
+          "expected": 1,
+          "capacity": 10
+        },
+        "place": {
+          "name": "Ada Example",
+          "inNow": 1,
+          "capacity": 10
+        },
+        "byType": [
+          {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b2",
+            "name": "Ada Example",
+            "count": 10
+          }
+        ],
+        "asOf": 1,
+        "configRev": 1
+      },
+      "milestone": "count",
+      "undoUntil": 1,
+      "access": {
+        "plan": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b3",
+          "label": "Ada Example",
+          "kind": "always"
+        },
+        "zone": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b4",
+          "name": "Ada Example"
+        },
+        "closesAt": 1764000000000,
+        "nextOpenAt": 1764000000000,
+        "visits": {
+          "used": 1,
+          "limit": 10
+        },
+        "visit": false,
+        "timeZone": "example"
+      },
+      "admit": {
+        "type": "example",
+        "rule": {
+          "kind": "until",
+          "at": 1764000000000
+        },
+        "timeZone": "example"
+      },
+      "tag": {
+        "hint": "ABCD",
+        "assurance": "basic",
+        "system": "uid",
+        "typeName": "Ada Example",
+        "scope": "pass",
+        "count": 8,
+        "passes": [
+          {
+            "passId": "0193a1b2-7c00-7000-8000-0000000000b5",
+            "templateName": "Ada Example",
+            "state": "used",
+            "reason": "example"
+          }
+        ]
+      },
+      "occupancy": {
+        "place": {
+          "kind": "zone",
+          "id": "0193a1b2-7c00-7000-8000-0000000000b6",
+          "name": "Ada Example"
+        },
+        "direction": "in",
+        "auto": false,
+        "state": "in",
+        "since": 1,
+        "via": "example",
+        "stayMs": 1764000000000,
+        "inNow": 1,
+        "capacity": 10,
+        "turnaround": "in",
+        "parent": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b7",
+          "name": "Ada Example"
+        }
+      },
+      "display": {
+        "v": 1,
+        "screen": "ready",
+        "templateVersion": "example",
+        "variant": "example",
+        "identity": {
+          "holder": "example",
+          "initials": "ex",
+          "photo": {
+            "url": "https://passbook.mobile/p/abc123",
+            "alt": "example"
+          }
+        },
+        "header": {
+          "icon": "user",
+          "title": "Ada Example",
+          "titleLines": 1,
+          "meta": "example",
+          "chips": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-0000000000b8",
+              "text": "example",
+              "tone": "neutral",
+              "icon": "user"
+            }
+          ]
+        },
+        "panels": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-0000000000b9",
+            "kind": "membership",
+            "title": "Ada Example",
+            "icon": "user",
+            "tone": "neutral",
+            "rows": [
+              {
+                "type": "heading",
+                "id": "0193a1b2-7c00-7000-8000-0000000000ba",
+                "text": "example",
+                "detail": "example"
+              }
+            ]
+          }
+        ],
+        "notes": {
+          "staff": "example",
+          "refused": "example"
+        }
+      }
+    }
   }
 }

@@ -1,23 +1,143 @@
 {
   "holders.getHolders": {
-    "description": "Lists holder assignments."
+    "description": "Lists holder assignments.",
+    "response": {
+      "items": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "state": "unassigned",
+          "email": "ada@example.com",
+          "ownerUserId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "ownerName": "Ada Example",
+          "blockedUserIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+          "transfer": {
+            "transferId": "0193a1b2-7c00-7000-8000-0000000000a4",
+            "state": "pending"
+          },
+          "reissueRequired": false,
+          "updatedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "holders.getHoldersById": {
-    "description": "A holder assignment and any pending transfer."
+    "description": "A holder assignment and any pending transfer.",
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "state": "unassigned",
+      "email": "ada@example.com",
+      "ownerUserId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "ownerName": "Ada Example",
+      "blockedUserIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "transfer": {
+        "transferId": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "state": "pending"
+      },
+      "reissueRequired": false,
+      "updatedAt": 1764000000000
+    }
   },
   "holders.postHoldersAssign": {
-    "description": "Sets the holder email of an unowned pass."
+    "description": "Sets the holder email of an unowned pass.",
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "email": "ada@example.com"
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "state": "unassigned",
+      "email": "ada@example.com",
+      "ownerUserId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "ownerName": "Ada Example",
+      "blockedUserIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "transfer": {
+        "transferId": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "state": "pending"
+      },
+      "reissueRequired": false,
+      "updatedAt": 1764000000000
+    }
   },
   "holders.postHoldersAssignBulk": {
-    "description": "Assigns up to 100 holders in one call."
+    "description": "Assigns up to 100 holders in one call.",
+    "request": {
+      "items": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "email": "ada@example.com"
+        }
+      ]
+    },
+    "response": {
+      "items": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "state": "unassigned",
+          "email": "ada@example.com",
+          "ownerUserId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "ownerName": "Ada Example",
+          "blockedUserIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+          "transfer": {
+            "transferId": "0193a1b2-7c00-7000-8000-0000000000a4",
+            "state": "pending"
+          },
+          "reissueRequired": false,
+          "updatedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "holders.postHoldersReassign": {
-    "description": "Stages a holder reassignment. The new holder confirms it."
+    "description": "Stages a holder reassignment. The new holder confirms it.",
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "email": "ada@example.com"
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "state": "unassigned",
+      "email": "ada@example.com",
+      "ownerUserId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "ownerName": "Ada Example",
+      "blockedUserIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "transfer": {
+        "transferId": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "state": "pending"
+      },
+      "reissueRequired": false,
+      "updatedAt": 1764000000000
+    }
   },
   "holders.postHoldersUnassign": {
-    "description": "Stages removal of the holder."
+    "description": "Stages removal of the holder.",
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "state": "unassigned",
+      "email": "ada@example.com",
+      "ownerUserId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "ownerName": "Ada Example",
+      "blockedUserIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "transfer": {
+        "transferId": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "state": "pending"
+      },
+      "reissueRequired": false,
+      "updatedAt": 1764000000000
+    }
   },
   "holders.postHoldersClearBlock": {
-    "description": "Allows a user to be attached to a pass again."
+    "description": "Allows a user to be attached to a pass again.",
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "userId": "0193a1b2-7c00-7000-8000-0000000000a2"
+    },
+    "response": {
+      "ok": true
+    }
   }
 }

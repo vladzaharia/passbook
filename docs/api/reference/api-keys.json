@@ -201,12 +201,75 @@
     }
   },
   "api-keys.deleteApiKeysById": {
-    "description": "Revokes a key for an authorized organization, or a platform-wide key with `orgId=null`."
+    "description": "Revokes a key for an authorized organization, or a platform-wide key with `orgId=null`.",
+    "response": {
+      "ok": true
+    }
   },
   "api-keys.getApiKeys": {
-    "description": "Lists keys for an authorized organization, or platform-wide keys with `orgId=null`."
+    "description": "Lists keys for an authorized organization, or platform-wide keys with `orgId=null`.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "name": "Ada Example",
+          "prefix": "example",
+          "secretPrefix": "AB12CD34",
+          "scopes": ["passes:read"],
+          "mode": "live",
+          "createdBy": "example",
+          "createdByName": "Ada Example",
+          "createdAt": 1764000000000,
+          "lastUsedAt": 1764000000000,
+          "expiresAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "kind": "service",
+          "roles": ["org_admin"],
+          "retireAt": 1764000000000,
+          "ipAllow": ["example"],
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+          "passStyles": ["generic"],
+          "rateTier": "standard",
+          "parentKeyId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "rotatedFrom": "example"
+        }
+      ],
+      "nextCursor": "c1.4812",
+      "revokedCount": 10
+    }
   },
   "api-keys.postApiKeys": {
-    "description": "Creates an organization or platform API key. The secret is shown once."
+    "description": "Creates an organization or platform API key. The secret is shown once.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "kind": "service",
+      "scopes": ["passes:read"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "name": "Ada Example",
+      "prefix": "example",
+      "secretPrefix": "AB12CD34",
+      "scopes": ["passes:read"],
+      "mode": "live",
+      "createdBy": "example",
+      "createdByName": "Ada Example",
+      "createdAt": 1764000000000,
+      "lastUsedAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "revokedAt": 1764000000000,
+      "kind": "service",
+      "roles": ["org_admin"],
+      "retireAt": 1764000000000,
+      "ipAllow": ["example"],
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "passStyles": ["generic"],
+      "rateTier": "standard",
+      "parentKeyId": "0193a1b2-7c00-7000-8000-0000000000a4",
+      "rotatedFrom": "example"
+    }
   }
 }

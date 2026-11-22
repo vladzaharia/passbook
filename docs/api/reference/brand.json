@@ -1,14 +1,158 @@
 {
   "brand.getBrand": {
-    "description": "The organization's brand kit: accent colour, mark level and web logo."
+    "description": "The organization's brand kit: accent color, mark level and web logo.",
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "accent": "#1a73e8",
+      "webLogo": {
+        "url": "https://passbook.mobile/p/abc123",
+        "w": 1,
+        "h": 1
+      },
+      "supportEmail": "ada@example.com",
+      "supportUrl": "https://passbook.mobile/p/abc123",
+      "mark": "full",
+      "markChosen": "full",
+      "markAllowed": ["full"],
+      "configRevision": 1
+    }
   },
   "brand.patchBrand": {
-    "description": "Sets the accent colour and the mark level. Send only the fields to change."
+    "description": "Sets the accent color and the mark level. Send only the fields to change.",
+    "request": {
+      "accent": "#1a73e8",
+      "mark": "full"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "example",
+      "name": "Ada Example",
+      "status": "active",
+      "personal": false,
+      "kind": "standard",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "branding": {
+        "accent": "#1a73e8",
+        "supportEmail": "ada@example.com",
+        "supportUrl": "https://passbook.mobile/p/abc123",
+        "passColors": {
+          "background": "#1a73e8",
+          "foreground": "#1a73e8",
+          "label": "#1a73e8"
+        },
+        "logo": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "icon": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "web": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "mark": "full",
+        "logoHasName": false
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "configRevision": 1,
+      "passesToUpdate": 1
+    }
   },
   "brand.putBrandWebLogo": {
-    "description": "Uploads the web logo as a PNG body, at most 1024 by 512 px and 512 KB. It replaces the current logo."
+    "description": "Uploads the web logo as a PNG body, at most 1024 by 512 px and 512 KB. It replaces the current logo.",
+    "request": {
+      "png": "example",
+      "configRevision": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "example",
+      "name": "Ada Example",
+      "status": "active",
+      "personal": false,
+      "kind": "standard",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "branding": {
+        "accent": "#1a73e8",
+        "supportEmail": "ada@example.com",
+        "supportUrl": "https://passbook.mobile/p/abc123",
+        "passColors": {
+          "background": "#1a73e8",
+          "foreground": "#1a73e8",
+          "label": "#1a73e8"
+        },
+        "logo": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "icon": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "web": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "mark": "full",
+        "logoHasName": false
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "configRevision": 1,
+      "passesToUpdate": 1
+    }
   },
   "brand.deleteBrandWebLogo": {
-    "description": "Removes the web logo. The brand kit keeps its other settings."
+    "description": "Removes the web logo. The brand kit keeps its other settings.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "example",
+      "name": "Ada Example",
+      "status": "active",
+      "personal": false,
+      "kind": "standard",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "branding": {
+        "accent": "#1a73e8",
+        "supportEmail": "ada@example.com",
+        "supportUrl": "https://passbook.mobile/p/abc123",
+        "passColors": {
+          "background": "#1a73e8",
+          "foreground": "#1a73e8",
+          "label": "#1a73e8"
+        },
+        "logo": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "icon": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "web": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "mark": "full",
+        "logoHasName": false
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "configRevision": 1,
+      "passesToUpdate": 1
+    }
   }
 }

@@ -1,0 +1,67 @@
+{
+  "organization-memberships.getOrgsByIdMemberships": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "orgName": "Ada Example",
+          "orgSlug": "example",
+          "personal": false,
+          "testOnly": false,
+          "userId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "roles": ["org_admin"],
+          "capabilities": ["org:read"],
+          "createdAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "userName": "Ada Example",
+          "userEmail": "ada@example.com"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "organization-memberships.getOrgsByIdInvitations": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "email": "ada@example.com",
+          "roles": ["org_admin"],
+          "createdAt": 1764000000000,
+          "expiresAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "acceptedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "organization-memberships.postOrgsByIdInvitations": {
+    "request": {
+      "email": "ada@example.com",
+      "roles": ["org_admin"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "email": "ada@example.com",
+      "roles": ["org_admin"],
+      "createdAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "revokedAt": 1764000000000,
+      "acceptedAt": 1764000000000
+    }
+  },
+  "organization-memberships.deleteOrgsByIdInvitationsByInvitationId": {
+    "response": {
+      "ok": true
+    }
+  },
+  "organization-memberships.deleteOrgsByIdMembershipsByMembershipId": {
+    "response": {
+      "ok": true
+    }
+  }
+}

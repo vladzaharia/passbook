@@ -1,8 +1,120 @@
 {
   "connectors.getConnectors": {
-    "description": "Lists connector types."
+    "description": "Lists connector types.",
+    "response": {
+      "items": [
+        {
+          "type": "example",
+          "version": 1,
+          "displayName": "Ada Example",
+          "description": "example",
+          "capabilities": {
+            "poll": false,
+            "delta": false,
+            "webhook": false,
+            "import": false,
+            "snapshot": false
+          },
+          "configSchema": {},
+          "secretSchema": {},
+          "outputFields": {
+            "example": {
+              "type": "string",
+              "description": "example"
+            }
+          },
+          "defaults": {
+            "intervalSeconds": 1,
+            "maxConcurrency": 1,
+            "requestsPerMinute": 1,
+            "timeoutMs": 1764000000000
+          },
+          "recipes": [
+            {
+              "id": "custom",
+              "label": "Ada Example",
+              "pasteSecret": false,
+              "outputFields": {
+                "example": {
+                  "type": "string"
+                }
+              },
+              "mapping": {
+                "example": {
+                  "from": "example"
+                }
+              },
+              "holderEmailField": "ada@example.com",
+              "voidWhen": [
+                {
+                  "from": "example",
+                  "op": "in"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "connectors.getConnectorsByType": {
-    "description": "One connector type with its settings."
+    "description": "One connector type with its settings.",
+    "response": {
+      "type": "example",
+      "version": 1,
+      "displayName": "Ada Example",
+      "description": "example",
+      "capabilities": {
+        "poll": false,
+        "delta": false,
+        "webhook": false,
+        "import": false,
+        "snapshot": false
+      },
+      "configSchema": {},
+      "secretSchema": {},
+      "outputFields": {
+        "example": {
+          "type": "string",
+          "description": "example"
+        }
+      },
+      "defaults": {
+        "intervalSeconds": 1,
+        "maxConcurrency": 1,
+        "requestsPerMinute": 1,
+        "timeoutMs": 1764000000000
+      },
+      "recipes": [
+        {
+          "id": "custom",
+          "label": "Ada Example",
+          "pasteSecret": false,
+          "outputFields": {
+            "example": {
+              "type": "string",
+              "description": "example"
+            }
+          },
+          "mapping": {
+            "example": {
+              "from": "example",
+              "transform": {
+                "kind": "enum"
+              }
+            }
+          },
+          "holderEmailField": "ada@example.com",
+          "voidWhen": [
+            {
+              "from": "example",
+              "op": "in",
+              "values": ["example"]
+            }
+          ]
+        }
+      ]
+    }
   }
 }

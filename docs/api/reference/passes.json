@@ -542,85 +542,1283 @@
     }
   },
   "passes.putPassesByIdConnection": {
-    "description": "Binds a pass to a connection ref, or unbinds it. A bound pass takes its fields from the connection."
+    "description": "Binds a pass to a connection ref, or unbinds it. A bound pass takes its fields from the connection.",
+    "request": {
+      "connectionId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "externalRef": "example",
+      "resetFieldSources": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "templateVersion": "example",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000a4",
+      "serial": "example",
+      "title": "Ada Example",
+      "subtitle": "Ada Example",
+      "matched": [
+        {
+          "input": "example",
+          "value": "example"
+        }
+      ],
+      "externalId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "status": "active",
+      "mode": "live",
+      "version": 1,
+      "connectionId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "externalRef": "example",
+      "syncErrorCode": "AB12CD34",
+      "holderEmail": "ada@example.com",
+      "holderState": "unassigned",
+      "ownerUserId": "0193a1b2-7c00-7000-8000-0000000000a7",
+      "deviceCount": 10,
+      "removedAt": 1764000000000,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000,
+      "email": {
+        "outcome": "queued",
+        "cap": "org"
+      },
+      "reissueRequired": false,
+      "pushBudget": {
+        "used": 1,
+        "limit": 10,
+        "resetsAt": 1764000000000
+      },
+      "ownerName": "Ada Example",
+      "ownerEmail": "ada@example.com",
+      "personalization": {
+        "example": {}
+      },
+      "fieldSources": {
+        "example": "manual"
+      },
+      "passJson": {
+        "example": {}
+      },
+      "assetBaseUrl": "https://passbook.mobile/p/abc123",
+      "assetNames": ["Ada Example"],
+      "stamps": {
+        "input": "example",
+        "goal": 10,
+        "count": 10,
+        "card": 1,
+        "ready": false,
+        "maximum": 1
+      },
+      "term": {
+        "input": "example",
+        "end": "example"
+      },
+      "blockedUsers": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "name": "Ada Example"
+        }
+      ],
+      "downloadUrl": "https://passbook.mobile/p/abc123",
+      "publicUrl": "https://passbook.mobile/p/abc123",
+      "testPreview": false,
+      "channels": {
+        "mobile": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "apple": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "google": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "samsung": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "paper": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "nfc": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        }
+      },
+      "registrations": 1,
+      "devices": [
+        {
+          "shortId": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "device": "example",
+          "createdAt": 1764000000000,
+          "lastPush": {
+            "state": "pending",
+            "at": 1764000000000
+          }
+        }
+      ],
+      "lastRefreshedAt": 1764000000000,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "example",
+          "cause": "create",
+          "source": "scan",
+          "actorType": "example",
+          "actorId": "0193a1b2-7c00-7000-8000-0000000000aa",
+          "createdAt": 1764000000000,
+          "purged": false
+        }
+      ],
+      "deliveries": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+          "kind": "push",
+          "state": "pending",
+          "attempts": 1,
+          "errorCode": "AB12CD34",
+          "createdAt": 1764000000000,
+          "finishedAt": 1764000000000
+        }
+      ],
+      "warnings": [
+        {
+          "severity": "error",
+          "code": "AB12CD34",
+          "message": "example",
+          "path": "example",
+          "params": {
+            "example": "example"
+          },
+          "fix": {
+            "action": "upload_logo"
+          }
+        }
+      ]
+    }
   },
   "passes.postPassesByIdRefresh": {
-    "description": "Rebuilds the pass from its connection and pushes the change to devices."
+    "description": "Rebuilds the pass from its connection and pushes the change to devices.",
+    "response": {
+      "accepted": true,
+      "requestedAt": 1764000000000
+    }
   },
   "passes.getPassesByIdVersionsByVersion": {
-    "description": "A retained version of a pass, for rendering."
+    "description": "A retained version of a pass, for rendering.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "templateVersion": "example",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000a4",
+      "serial": "example",
+      "title": "Ada Example",
+      "subtitle": "Ada Example",
+      "matched": [
+        {
+          "input": "example",
+          "value": "example"
+        }
+      ],
+      "externalId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "status": "active",
+      "mode": "live",
+      "version": 1,
+      "connectionId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "externalRef": "example",
+      "syncErrorCode": "AB12CD34",
+      "holderEmail": "ada@example.com",
+      "holderState": "unassigned",
+      "ownerUserId": "0193a1b2-7c00-7000-8000-0000000000a7",
+      "deviceCount": 10,
+      "removedAt": 1764000000000,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000,
+      "email": {
+        "outcome": "queued",
+        "cap": "org"
+      },
+      "reissueRequired": false,
+      "pushBudget": {
+        "used": 1,
+        "limit": 10,
+        "resetsAt": 1764000000000
+      },
+      "ownerName": "Ada Example",
+      "ownerEmail": "ada@example.com",
+      "personalization": {
+        "example": {}
+      },
+      "fieldSources": {
+        "example": "manual"
+      },
+      "passJson": {
+        "example": {}
+      },
+      "assetBaseUrl": "https://passbook.mobile/p/abc123",
+      "assetNames": ["Ada Example"],
+      "stamps": {
+        "input": "example",
+        "goal": 10,
+        "count": 10,
+        "card": 1,
+        "ready": false,
+        "maximum": 1
+      },
+      "term": {
+        "input": "example",
+        "end": "example"
+      },
+      "blockedUsers": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "name": "Ada Example"
+        }
+      ],
+      "downloadUrl": "https://passbook.mobile/p/abc123",
+      "publicUrl": "https://passbook.mobile/p/abc123",
+      "testPreview": false,
+      "channels": {
+        "mobile": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "apple": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "google": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "samsung": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "paper": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "nfc": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        }
+      },
+      "registrations": 1,
+      "devices": [
+        {
+          "shortId": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "device": "example",
+          "createdAt": 1764000000000,
+          "lastPush": {
+            "state": "pending",
+            "at": 1764000000000
+          }
+        }
+      ],
+      "lastRefreshedAt": 1764000000000,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "example",
+          "cause": "create",
+          "source": "scan",
+          "actorType": "example",
+          "actorId": "0193a1b2-7c00-7000-8000-0000000000aa",
+          "createdAt": 1764000000000,
+          "purged": false
+        }
+      ],
+      "deliveries": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+          "kind": "push",
+          "state": "pending",
+          "attempts": 1,
+          "errorCode": "AB12CD34",
+          "createdAt": 1764000000000,
+          "finishedAt": 1764000000000
+        }
+      ],
+      "warnings": [
+        {
+          "severity": "error",
+          "code": "AB12CD34",
+          "message": "example",
+          "path": "example",
+          "params": {
+            "example": "example"
+          },
+          "fix": {
+            "action": "upload_logo"
+          }
+        }
+      ]
+    }
   },
   "passes.getPassesByIdDiff": {
-    "description": "The fields that differ between two retained versions of a pass."
+    "description": "The fields that differ between two retained versions of a pass.",
+    "response": {
+      "changes": [
+        {
+          "path": "example",
+          "from": {},
+          "to": {}
+        }
+      ]
+    }
   },
   "passes.getPassesByIdAssets": {
-    "description": "The per-pass image overrides of a pass."
+    "description": "The per-pass image overrides of a pass.",
+    "response": {
+      "items": [
+        {
+          "name": "Ada Example",
+          "sha1": "example",
+          "size": 1,
+          "width": 1,
+          "height": 1,
+          "createdAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "passes.putPassesByIdAssetsByName": {
-    "description": "Uploads an image override for one pass as a PNG body."
+    "description": "Uploads an image override for one pass as a PNG body.",
+    "response": {
+      "name": "Ada Example",
+      "sha1": "example",
+      "size": 1,
+      "width": 1,
+      "height": 1,
+      "createdAt": 1764000000000
+    }
   },
   "passes.deletePassesByIdAssetsByName": {
-    "description": "Removes an image override. The pass goes back to the template's image."
+    "description": "Removes an image override. The pass goes back to the template's image.",
+    "response": {
+      "ok": true
+    }
   },
   "passes.getPassesByIdMemberPhoto": {
-    "description": "The member photo settings of a pass."
+    "description": "The member photo settings of a pass.",
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "url": "https://passbook.mobile/p/abc123",
+      "includeInPass": false,
+      "walletSupported": false,
+      "updatedAt": 1764000000000
+    }
   },
   "passes.putPassesByIdMemberPhoto": {
-    "description": "Uploads a member photo for a pass."
+    "description": "Uploads a member photo for a pass.",
+    "request": {
+      "png": "example",
+      "includeInPass": false
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "url": "https://passbook.mobile/p/abc123",
+      "includeInPass": false,
+      "walletSupported": false,
+      "updatedAt": 1764000000000
+    }
   },
   "passes.patchPassesByIdMemberPhoto": {
-    "description": "Sets whether the photo is included in the Wallet pass."
+    "description": "Sets whether the photo is included in the Wallet pass.",
+    "request": {
+      "includeInPass": false
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "url": "https://passbook.mobile/p/abc123",
+      "includeInPass": false,
+      "walletSupported": false,
+      "updatedAt": 1764000000000
+    }
   },
   "passes.deletePassesByIdMemberPhoto": {
-    "description": "Removes the member photo."
+    "description": "Removes the member photo.",
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "url": "https://passbook.mobile/p/abc123",
+      "includeInPass": false,
+      "walletSupported": false,
+      "updatedAt": 1764000000000
+    }
   },
   "passes.getPassesByIdMemberPhotoImage": {
     "description": "The member photo bytes. The photo is private and needs a key with access to the pass."
   },
   "passes.postPassesPhotosMatch": {
-    "description": "Matches photo file names to passes by external ID or serial. It reads names only and changes nothing."
+    "description": "Matches photo file names to passes by external ID or serial. It reads names only and changes nothing.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "keys": ["example-key"]
+    },
+    "response": {
+      "matches": [
+        {
+          "key": "example-key",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "state": "matched"
+        }
+      ]
+    }
   },
   "passes.getPassesByIdCheckIn": {
-    "description": "The check-in rules of a pass."
+    "description": "The check-in rules of a pass.",
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "rules": {
+        "mode": "single",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "validFrom": 1,
+        "validUntil": 1,
+        "durationMinutes": 1,
+        "durationFrom": "first_scan",
+        "days": 1
+      },
+      "defaults": {
+        "mode": "single",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "validFrom": 1,
+        "validUntil": 1,
+        "durationMinutes": 1,
+        "durationFrom": "first_scan",
+        "days": 1
+      },
+      "effective": {
+        "mode": "single",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "validFrom": 1,
+        "validUntil": 1,
+        "durationMinutes": 1,
+        "durationFrom": "first_scan",
+        "days": 1
+      },
+      "updatedAt": 1764000000000
+    }
   },
   "passes.putPassesByIdCheckIn": {
-    "description": "Sets the check-in rules of a pass."
+    "description": "Sets the check-in rules of a pass.",
+    "request": {
+      "rules": {
+        "mode": "single"
+      }
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "rules": {
+        "mode": "single",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "validFrom": 1,
+        "validUntil": 1,
+        "durationMinutes": 1,
+        "durationFrom": "first_scan",
+        "days": 1
+      },
+      "defaults": {
+        "mode": "single",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "validFrom": 1,
+        "validUntil": 1,
+        "durationMinutes": 1,
+        "durationFrom": "first_scan",
+        "days": 1
+      },
+      "effective": {
+        "mode": "single",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "validFrom": 1,
+        "validUntil": 1,
+        "durationMinutes": 1,
+        "durationFrom": "first_scan",
+        "days": 1
+      },
+      "updatedAt": 1764000000000
+    }
   },
   "passes.postPassesByIdStamps": {
-    "description": "Adds stamps to a stamp card, or redeems its reward."
+    "description": "Adds stamps to a stamp card, or redeems its reward.",
+    "request": {
+      "action": "add",
+      "count": 10
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "templateVersion": "example",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000a4",
+      "serial": "example",
+      "title": "Ada Example",
+      "subtitle": "Ada Example",
+      "matched": [
+        {
+          "input": "example",
+          "value": "example"
+        }
+      ],
+      "externalId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "status": "active",
+      "mode": "live",
+      "version": 1,
+      "connectionId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "externalRef": "example",
+      "syncErrorCode": "AB12CD34",
+      "holderEmail": "ada@example.com",
+      "holderState": "unassigned",
+      "ownerUserId": "0193a1b2-7c00-7000-8000-0000000000a7",
+      "deviceCount": 10,
+      "removedAt": 1764000000000,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000,
+      "email": {
+        "outcome": "queued",
+        "cap": "org"
+      },
+      "reissueRequired": false,
+      "pushBudget": {
+        "used": 1,
+        "limit": 10,
+        "resetsAt": 1764000000000
+      },
+      "ownerName": "Ada Example",
+      "ownerEmail": "ada@example.com",
+      "personalization": {
+        "example": {}
+      },
+      "fieldSources": {
+        "example": "manual"
+      },
+      "passJson": {
+        "example": {}
+      },
+      "assetBaseUrl": "https://passbook.mobile/p/abc123",
+      "assetNames": ["Ada Example"],
+      "stamps": {
+        "input": "example",
+        "goal": 10,
+        "count": 10,
+        "card": 1,
+        "ready": false,
+        "maximum": 1
+      },
+      "term": {
+        "input": "example",
+        "end": "example"
+      },
+      "blockedUsers": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "name": "Ada Example"
+        }
+      ],
+      "downloadUrl": "https://passbook.mobile/p/abc123",
+      "publicUrl": "https://passbook.mobile/p/abc123",
+      "testPreview": false,
+      "channels": {
+        "mobile": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "apple": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "google": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "samsung": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "paper": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "nfc": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        }
+      },
+      "registrations": 1,
+      "devices": [
+        {
+          "shortId": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "device": "example",
+          "createdAt": 1764000000000,
+          "lastPush": {
+            "state": "pending",
+            "at": 1764000000000
+          }
+        }
+      ],
+      "lastRefreshedAt": 1764000000000,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "example",
+          "cause": "create",
+          "source": "scan",
+          "actorType": "example",
+          "actorId": "0193a1b2-7c00-7000-8000-0000000000aa",
+          "createdAt": 1764000000000,
+          "purged": false
+        }
+      ],
+      "deliveries": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+          "kind": "push",
+          "state": "pending",
+          "attempts": 1,
+          "errorCode": "AB12CD34",
+          "createdAt": 1764000000000,
+          "finishedAt": 1764000000000
+        }
+      ],
+      "warnings": [
+        {
+          "severity": "error",
+          "code": "AB12CD34",
+          "message": "example",
+          "path": "example",
+          "params": {
+            "example": "example"
+          },
+          "fix": {
+            "action": "upload_logo"
+          }
+        }
+      ]
+    }
   },
   "passes.postPassesByIdRenew": {
-    "description": "Renews the term of a pass."
+    "description": "Renews the term of a pass.",
+    "request": {},
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "templateVersion": "example",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000a4",
+      "serial": "example",
+      "title": "Ada Example",
+      "subtitle": "Ada Example",
+      "matched": [
+        {
+          "input": "example",
+          "value": "example"
+        }
+      ],
+      "externalId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "status": "active",
+      "mode": "live",
+      "version": 1,
+      "connectionId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "externalRef": "example",
+      "syncErrorCode": "AB12CD34",
+      "holderEmail": "ada@example.com",
+      "holderState": "unassigned",
+      "ownerUserId": "0193a1b2-7c00-7000-8000-0000000000a7",
+      "deviceCount": 10,
+      "removedAt": 1764000000000,
+      "modifiedAt": 1764000000000,
+      "createdAt": 1764000000000,
+      "email": {
+        "outcome": "queued",
+        "cap": "org"
+      },
+      "reissueRequired": false,
+      "pushBudget": {
+        "used": 1,
+        "limit": 10,
+        "resetsAt": 1764000000000
+      },
+      "ownerName": "Ada Example",
+      "ownerEmail": "ada@example.com",
+      "personalization": {
+        "example": {}
+      },
+      "fieldSources": {
+        "example": "manual"
+      },
+      "passJson": {
+        "example": {}
+      },
+      "assetBaseUrl": "https://passbook.mobile/p/abc123",
+      "assetNames": ["Ada Example"],
+      "stamps": {
+        "input": "example",
+        "goal": 10,
+        "count": 10,
+        "card": 1,
+        "ready": false,
+        "maximum": 1
+      },
+      "term": {
+        "input": "example",
+        "end": "example"
+      },
+      "blockedUsers": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "name": "Ada Example"
+        }
+      ],
+      "downloadUrl": "https://passbook.mobile/p/abc123",
+      "publicUrl": "https://passbook.mobile/p/abc123",
+      "testPreview": false,
+      "channels": {
+        "mobile": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "apple": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "google": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "samsung": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "paper": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "nfc": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        }
+      },
+      "registrations": 1,
+      "devices": [
+        {
+          "shortId": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "device": "example",
+          "createdAt": 1764000000000,
+          "lastPush": {
+            "state": "pending",
+            "at": 1764000000000
+          }
+        }
+      ],
+      "lastRefreshedAt": 1764000000000,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "example",
+          "cause": "create",
+          "source": "scan",
+          "actorType": "example",
+          "actorId": "0193a1b2-7c00-7000-8000-0000000000aa",
+          "createdAt": 1764000000000,
+          "purged": false
+        }
+      ],
+      "deliveries": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+          "kind": "push",
+          "state": "pending",
+          "attempts": 1,
+          "errorCode": "AB12CD34",
+          "createdAt": 1764000000000,
+          "finishedAt": 1764000000000
+        }
+      ],
+      "warnings": [
+        {
+          "severity": "error",
+          "code": "AB12CD34",
+          "message": "example",
+          "path": "example",
+          "params": {
+            "example": "example"
+          },
+          "fix": {
+            "action": "upload_logo"
+          }
+        }
+      ]
+    }
   },
   "passes.postPassesBulkReissue": {
-    "description": "Rebuilds the passes of a template in your org and pushes them to devices. A key needs `passes:write`."
+    "description": "Rebuilds the passes of a template in your org and pushes them to devices. A key needs `passes:write`.",
+    "request": {
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "version": "example"
+    },
+    "response": {
+      "workflowInstanceId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    }
   },
   "passes.postPassesBulkChannels": {
-    "description": "Turns channels on, off or back to the template for up to 100 passes in one call."
+    "description": "Turns channels on, off or back to the template for up to 100 passes in one call.",
+    "request": {
+      "action": "on",
+      "channels": ["mobile"],
+      "ids": ["0193a1b2-7c00-7000-8000-0000000000a1"],
+      "notify": false,
+      "replaceCodes": false
+    },
+    "response": {
+      "done": 1,
+      "skipped": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "code": "AB12CD34"
+        }
+      ],
+      "preview": {
+        "impact": [
+          {
+            "channel": "mobile",
+            "passes": 1,
+            "rotated": 1
+          }
+        ],
+        "unsupported": 1,
+        "allOff": 1,
+        "blocked": {
+          "name": "Ada Example",
+          "closesAt": 1764000000000
+        },
+        "windows": [
+          {
+            "kind": "event",
+            "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+            "name": "Ada Example",
+            "opensAt": 1764000000000,
+            "closesAt": 1764000000000,
+            "open": false,
+            "scheduled": false
+          }
+        ]
+      }
+    }
   },
   "passes.getPassesByIdChannels": {
-    "description": "A pass's channels: effective state, source and overrides."
+    "description": "A pass's channels: effective state, source and overrides.",
+    "response": {
+      "effective": {
+        "mobile": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "apple": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "google": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "samsung": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "paper": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "nfc": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        }
+      },
+      "levels": {
+        "mobile": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "apple": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "google": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "samsung": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "paper": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "nfc": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ]
+      },
+      "overrides": {
+        "mobile": "on",
+        "apple": "on",
+        "google": "on",
+        "samsung": "on",
+        "paper": "on",
+        "nfc": "on"
+      },
+      "replace": {
+        "supported": false,
+        "windows": [
+          {
+            "kind": "event",
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "name": "Ada Example",
+            "opensAt": 1764000000000,
+            "closesAt": 1764000000000,
+            "open": false,
+            "scheduled": false
+          }
+        ],
+        "owed": false,
+        "blocked": {
+          "name": "Ada Example",
+          "closesAt": 1764000000000
+        },
+        "lastDigital": ["mobile"]
+      }
+    }
   },
   "passes.putPassesByIdChannels": {
-    "description": "Overrides channels for one pass. A `null` value returns that channel to its template."
+    "description": "Overrides channels for one pass. A `null` value returns that channel to its template.",
+    "request": {
+      "channels": {
+        "mobile": "on"
+      },
+      "notify": false,
+      "replaceCodes": false
+    },
+    "response": {
+      "effective": {
+        "mobile": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "apple": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "google": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "samsung": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "paper": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "nfc": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        }
+      },
+      "levels": {
+        "mobile": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "apple": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "google": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "samsung": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "paper": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "nfc": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ]
+      },
+      "overrides": {
+        "mobile": "on",
+        "apple": "on",
+        "google": "on",
+        "samsung": "on",
+        "paper": "on",
+        "nfc": "on"
+      },
+      "replace": {
+        "supported": false,
+        "windows": [
+          {
+            "kind": "event",
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "name": "Ada Example",
+            "opensAt": 1764000000000,
+            "closesAt": 1764000000000,
+            "open": false,
+            "scheduled": false
+          }
+        ],
+        "owed": false,
+        "blocked": {
+          "name": "Ada Example",
+          "closesAt": 1764000000000
+        },
+        "lastDigital": ["mobile"]
+      }
+    }
   },
   "passes.postPassesBulkPrint": {
-    "description": "Prints up to 50 passes of one org into one PDF. A job renders it; poll the job."
+    "description": "Prints up to 50 passes of one org into one PDF. A job renders it; poll the job.",
+    "request": {
+      "ids": ["0193a1b2-7c00-7000-8000-0000000000a1"],
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2"
+    },
+    "response": {
+      "jobId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "count": 10,
+      "skipped": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "code": "AB12CD34",
+          "reason": "example"
+        }
+      ]
+    }
   },
   "passes.getPassesBulkPrintByJobId": {
-    "description": "The state of a bulk print job."
+    "description": "The state of a bulk print job.",
+    "response": {
+      "state": "pending",
+      "count": 10,
+      "skipped": 1,
+      "engine": "pdf-lib",
+      "lossy": false
+    }
   },
   "passes.getPassesBulkPrintByJobIdPdf": {
     "description": "The combined PDF of a finished bulk print job."
   },
   "passes.postPassesByIdPrints": {
-    "description": "Prints a ticket. An earlier print of the same pass is voided."
+    "description": "Prints a ticket. An earlier print of the same pass is voided.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "generation": 1,
+      "status": "active",
+      "createdAt": 1764000000000,
+      "voidedAt": 1764000000000,
+      "voidCause": "example",
+      "code": "AB12CD34"
+    }
   },
   "passes.getPassesByIdPrints": {
-    "description": "A pass's prints, newest first. Codes are never listed."
+    "description": "A pass's prints, newest first. Codes are never listed.",
+    "response": {
+      "prints": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "generation": 1,
+          "status": "active",
+          "createdAt": 1764000000000,
+          "voidedAt": 1764000000000,
+          "voidCause": "example"
+        }
+      ]
+    }
   },
   "passes.postPassesByIdPrintsByPrintIdVoid": {
-    "description": "Voids a printed ticket so its code stops working."
+    "description": "Voids a printed ticket so its code stops working.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "generation": 1,
+      "status": "active",
+      "createdAt": 1764000000000,
+      "voidedAt": 1764000000000,
+      "voidCause": "example"
+    }
   },
   "passes.getPassesByIdPrint": {
     "description": "The print page of the active print, for staff."
@@ -632,9 +1830,57 @@
     "description": "A template image used by the print page, for staff."
   },
   "passes.getPassesByIdEvents": {
-    "description": "The sync log and activity of a pass, newest first."
+    "description": "The sync log and activity of a pass, newest first.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "mode": "live",
+          "kind": "pass.issued",
+          "device": "example",
+          "actorType": "user",
+          "actorId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "data": {
+            "example": {}
+          },
+          "at": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "passes.getPassesByIdDevices": {
-    "description": "The devices of a pass with their sync status."
+    "description": "The devices of a pass with their sync status.",
+    "response": {
+      "version": 1,
+      "devices": [
+        {
+          "device": "example",
+          "status": "current",
+          "registeredAt": 1764000000000,
+          "unregisteredAt": 1764000000000,
+          "lastFetch": {
+            "at": 1764000000000,
+            "version": 1,
+            "httpStatus": 1
+          },
+          "lastPush": {
+            "at": 1764000000000,
+            "ok": false,
+            "version": 1,
+            "httpStatus": 1,
+            "reason": "example"
+          },
+          "removal": "pending"
+        }
+      ],
+      "removal": {
+        "removedAt": 1764000000000,
+        "version": 1,
+        "total": 10,
+        "done": 1
+      }
+    }
   }
 }

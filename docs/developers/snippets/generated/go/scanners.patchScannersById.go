@@ -17,7 +17,12 @@ func main() {
 	}
 
 	var body passbook.ScannersUpdateBody
-	if err := json.Unmarshal([]byte(`{}`), &body); err != nil {
+	if err := json.Unmarshal([]byte(`{
+  "name": "Ada Example",
+  "accepts": {
+    "eventId": "0193a1b2-7c00-7000-8000-0000000000a1"
+  }
+}`), &body); err != nil {
 		panic(err)
 	}
 

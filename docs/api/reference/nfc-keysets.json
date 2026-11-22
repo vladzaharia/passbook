@@ -1,26 +1,205 @@
 {
   "nfc-keysets.getNfcKeysets": {
-    "description": "Lists tag keysets."
+    "description": "Lists tag keysets.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Ada Example",
+          "slug": "a1b2c3d4",
+          "diversify": false,
+          "perTag": false,
+          "createdAt": 1764000000000,
+          "disabledAt": 1764000000000,
+          "versions": [
+            {
+              "version": 1,
+              "state": "active",
+              "createdAt": 1764000000000,
+              "stateAt": 1764000000000,
+              "revokedAt": 1764000000000,
+              "tags": 1
+            }
+          ]
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "nfc-keysets.postNfcKeysets": {
-    "description": "Creates a tag keyset."
+    "description": "Creates a tag keyset.",
+    "request": {
+      "name": "Ada Example",
+      "diversify": false,
+      "generate": true
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "slug": "a1b2c3d4",
+      "diversify": false,
+      "perTag": false,
+      "createdAt": 1764000000000,
+      "disabledAt": 1764000000000,
+      "keys": {
+        "metaKey": "0123456789abcdef0123456789abcdef",
+        "fileKey": "0123456789abcdef0123456789abcdef"
+      },
+      "versions": [
+        {
+          "version": 1,
+          "state": "active",
+          "createdAt": 1764000000000,
+          "stateAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "tags": 1
+        }
+      ]
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdRotate": {
-    "description": "Rotates a keyset to a new key version."
+    "description": "Rotates a keyset to a new key version.",
+    "request": {
+      "generate": true
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "slug": "a1b2c3d4",
+      "diversify": false,
+      "perTag": false,
+      "createdAt": 1764000000000,
+      "disabledAt": 1764000000000,
+      "keys": {
+        "metaKey": "0123456789abcdef0123456789abcdef",
+        "fileKey": "0123456789abcdef0123456789abcdef"
+      },
+      "versions": [
+        {
+          "version": 1,
+          "state": "active",
+          "createdAt": 1764000000000,
+          "stateAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "tags": 1
+        }
+      ]
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire": {
-    "description": "Retires an old key version."
+    "description": "Retires an old key version.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "slug": "a1b2c3d4",
+      "diversify": false,
+      "perTag": false,
+      "createdAt": 1764000000000,
+      "disabledAt": 1764000000000,
+      "versions": [
+        {
+          "version": 1,
+          "state": "active",
+          "createdAt": 1764000000000,
+          "stateAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "tags": 1
+        }
+      ]
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke": {
-    "description": "Revokes a key version. Tags on it must be written again."
+    "description": "Revokes a key version. Tags on it must be written again.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "slug": "a1b2c3d4",
+      "diversify": false,
+      "perTag": false,
+      "createdAt": 1764000000000,
+      "disabledAt": 1764000000000,
+      "versions": [
+        {
+          "version": 1,
+          "state": "active",
+          "createdAt": 1764000000000,
+          "stateAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "tags": 1
+        }
+      ]
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdReenrol": {
-    "description": "Moves the tags of a keyset to another keyset."
+    "description": "Moves the tags of a keyset to another keyset.",
+    "request": {
+      "toKeysetId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "moved": 1,
+      "ownKey": 1,
+      "keyset": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Ada Example",
+        "slug": "a1b2c3d4",
+        "diversify": false,
+        "perTag": false,
+        "createdAt": 1764000000000,
+        "disabledAt": 1764000000000,
+        "versions": [
+          {
+            "version": 1,
+            "state": "active",
+            "createdAt": 1764000000000,
+            "stateAt": 1764000000000,
+            "revokedAt": 1764000000000,
+            "tags": 1
+          }
+        ]
+      }
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdImport": {
-    "description": "Imports supplier-personalised tags. Run it as a dry run first, then add."
+    "description": "Imports supplier-personalized tags. Run it as a dry run first, then add.",
+    "request": {
+      "csv": "example",
+      "dryRun": false
+    },
+    "response": {
+      "dryRun": false,
+      "rows": 1,
+      "ok": 1,
+      "added": 1,
+      "problems": [
+        {
+          "line": 1,
+          "uid": "example",
+          "reason": "bad_uid"
+        }
+      ],
+      "moreProblems": 1
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdDisable": {
-    "description": "Disables a keyset."
+    "description": "Disables a keyset.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "slug": "a1b2c3d4",
+      "diversify": false,
+      "perTag": false,
+      "createdAt": 1764000000000,
+      "disabledAt": 1764000000000,
+      "versions": [
+        {
+          "version": 1,
+          "state": "active",
+          "createdAt": 1764000000000,
+          "stateAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "tags": 1
+        }
+      ]
+    }
   }
 }

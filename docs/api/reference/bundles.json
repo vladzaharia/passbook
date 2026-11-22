@@ -1,20 +1,113 @@
 {
   "bundles.getBundles": {
-    "description": "Lists bundles."
+    "description": "Lists bundles.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "mode": "live",
+          "name": "Ada Example",
+          "url": "https://passbook.mobile/p/abc123",
+          "holderEmail": "ada@example.com",
+          "passes": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+              "title": "Ada Example",
+              "status": "active",
+              "removedAt": 1764000000000
+            }
+          ],
+          "createdAt": 1764000000000,
+          "linkRotatedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "bundles.postBundles": {
-    "description": "Creates a bundle of up to 10 passes with one link."
+    "description": "Creates a bundle of up to 10 passes with one link.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "passIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "name": "Ada Example",
+      "holderEmail": "ada@example.com",
+      "sendEmail": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "url": "https://passbook.mobile/p/abc123",
+      "holderEmail": "ada@example.com",
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "title": "Ada Example",
+          "status": "active",
+          "removedAt": 1764000000000
+        }
+      ],
+      "createdAt": 1764000000000,
+      "linkRotatedAt": 1764000000000
+    }
   },
   "bundles.getBundlesById": {
-    "description": "One bundle."
+    "description": "One bundle.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "url": "https://passbook.mobile/p/abc123",
+      "holderEmail": "ada@example.com",
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "title": "Ada Example",
+          "status": "active",
+          "removedAt": 1764000000000
+        }
+      ],
+      "createdAt": 1764000000000,
+      "linkRotatedAt": 1764000000000
+    }
   },
   "bundles.deleteBundlesById": {
-    "description": "Deletes the bundle and revokes its link. The passes are kept."
+    "description": "Deletes the bundle and revokes its link. The passes are kept.",
+    "response": {
+      "ok": true
+    }
   },
   "bundles.postBundlesByIdSendEmail": {
-    "description": "Emails the bundle link. Send an `Idempotency-Key` to retry safely."
+    "description": "Emails the bundle link. Send an `Idempotency-Key` to retry safely.",
+    "request": {
+      "to": "example"
+    },
+    "response": {
+      "ok": true
+    }
   },
   "bundles.postBundlesByIdRotateLink": {
-    "description": "Replaces the bundle link. The old link stops working."
+    "description": "Replaces the bundle link. The old link stops working.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "url": "https://passbook.mobile/p/abc123",
+      "holderEmail": "ada@example.com",
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "title": "Ada Example",
+          "status": "active",
+          "removedAt": 1764000000000
+        }
+      ],
+      "createdAt": 1764000000000,
+      "linkRotatedAt": 1764000000000
+    }
   }
 }

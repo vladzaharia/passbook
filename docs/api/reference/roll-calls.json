@@ -1,17 +1,237 @@
 {
   "roll-calls.getRollCalls": {
-    "description": "The open roll call."
+    "description": "The open roll call.",
+    "response": {
+      "rollCall": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "placeNames": ["Ada Example"],
+        "startedAt": 1764000000000,
+        "startedBy": "example",
+        "endedAt": 1764000000000,
+        "endedBy": "example",
+        "rev": 1,
+        "serverNow": 1,
+        "counts": {
+          "total": 10,
+          "present": 1,
+          "out": 1,
+          "unconfirmed": 1,
+          "notConfirmedOut": 1,
+          "late": 1,
+          "inNow": 1,
+          "tappedIn": 1
+        },
+        "people": [
+          {
+            "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+            "holder": "example",
+            "plan": "example",
+            "host": "example",
+            "place": "zone:main",
+            "placeName": "Ada Example",
+            "since": 1,
+            "basis": "in_now",
+            "presence": "in",
+            "late": false,
+            "mark": {
+              "status": "present",
+              "by": "example",
+              "at": 1764000000000
+            },
+            "notConfirmedOut": false
+          }
+        ]
+      }
+    }
   },
   "roll-calls.postRollCalls": {
-    "description": "Starts a roll call, or joins the open one."
+    "description": "Starts a roll call, or joins the open one.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "placeNames": ["Ada Example"],
+      "startedAt": 1764000000000,
+      "startedBy": "example",
+      "endedAt": 1764000000000,
+      "endedBy": "example",
+      "rev": 1,
+      "serverNow": 1,
+      "counts": {
+        "total": 10,
+        "present": 1,
+        "out": 1,
+        "unconfirmed": 1,
+        "notConfirmedOut": 1,
+        "late": 1,
+        "inNow": 1,
+        "tappedIn": 1
+      },
+      "people": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "holder": "example",
+          "plan": "example",
+          "host": "example",
+          "place": "zone:main",
+          "placeName": "Ada Example",
+          "since": 1,
+          "basis": "in_now",
+          "presence": "in",
+          "late": false,
+          "mark": {
+            "status": "present",
+            "by": "example",
+            "at": 1764000000000
+          },
+          "notConfirmedOut": false
+        }
+      ]
+    }
   },
   "roll-calls.getRollCallsById": {
-    "description": "One roll call."
+    "description": "One roll call.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "placeNames": ["Ada Example"],
+      "startedAt": 1764000000000,
+      "startedBy": "example",
+      "endedAt": 1764000000000,
+      "endedBy": "example",
+      "rev": 1,
+      "serverNow": 1,
+      "counts": {
+        "total": 10,
+        "present": 1,
+        "out": 1,
+        "unconfirmed": 1,
+        "notConfirmedOut": 1,
+        "late": 1,
+        "inNow": 1,
+        "tappedIn": 1
+      },
+      "people": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "holder": "example",
+          "plan": "example",
+          "host": "example",
+          "place": "zone:main",
+          "placeName": "Ada Example",
+          "since": 1,
+          "basis": "in_now",
+          "presence": "in",
+          "late": false,
+          "mark": {
+            "status": "present",
+            "by": "example",
+            "at": 1764000000000
+          },
+          "notConfirmedOut": false
+        }
+      ]
+    }
   },
   "roll-calls.postRollCallsByIdMarks": {
-    "description": "Confirms people present or out."
+    "description": "Confirms people present or out.",
+    "request": {
+      "marks": [
+        {
+          "rollCallId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "status": "present",
+          "at": 1764000000000
+        }
+      ]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "placeNames": ["Ada Example"],
+      "startedAt": 1764000000000,
+      "startedBy": "example",
+      "endedAt": 1764000000000,
+      "endedBy": "example",
+      "rev": 1,
+      "serverNow": 1,
+      "counts": {
+        "total": 10,
+        "present": 1,
+        "out": 1,
+        "unconfirmed": 1,
+        "notConfirmedOut": 1,
+        "late": 1,
+        "inNow": 1,
+        "tappedIn": 1
+      },
+      "people": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "holder": "example",
+          "plan": "example",
+          "host": "example",
+          "place": "zone:main",
+          "placeName": "Ada Example",
+          "since": 1,
+          "basis": "in_now",
+          "presence": "in",
+          "late": false,
+          "mark": {
+            "status": "present",
+            "by": "example",
+            "at": 1764000000000
+          },
+          "notConfirmedOut": false
+        }
+      ],
+      "results": [
+        {
+          "rollCallId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "status": "applied",
+          "code": "AB12CD34"
+        }
+      ]
+    }
   },
   "roll-calls.postRollCallsByIdEnd": {
-    "description": "Ends a roll call."
+    "description": "Ends a roll call.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "placeNames": ["Ada Example"],
+      "startedAt": 1764000000000,
+      "startedBy": "example",
+      "endedAt": 1764000000000,
+      "endedBy": "example",
+      "rev": 1,
+      "serverNow": 1,
+      "counts": {
+        "total": 10,
+        "present": 1,
+        "out": 1,
+        "unconfirmed": 1,
+        "notConfirmedOut": 1,
+        "late": 1,
+        "inNow": 1,
+        "tappedIn": 1
+      },
+      "people": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "holder": "example",
+          "plan": "example",
+          "host": "example",
+          "place": "zone:main",
+          "placeName": "Ada Example",
+          "since": 1,
+          "basis": "in_now",
+          "presence": "in",
+          "late": false,
+          "mark": {
+            "status": "present",
+            "by": "example",
+            "at": 1764000000000
+          },
+          "notConfirmedOut": false
+        }
+      ]
+    }
   }
 }

@@ -1,20 +1,101 @@
 {
   "visitors.getVisitors": {
-    "description": "Lists the visitors of a day."
+    "description": "Lists the visitors of a day.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "name": "Ada Example",
+          "hostName": "Ada Example",
+          "windowFrom": 1,
+          "windowUntil": 1,
+          "note": "example",
+          "status": "expected",
+          "statusAt": 1764000000000,
+          "autoOut": false,
+          "hasEmail": true
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "visitors.postVisitors": {
-    "description": "Invites a visitor: a visitor pass with a host."
+    "description": "Invites a visitor: a visitor pass with a host.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "email": "ada@example.com",
+      "hostUserId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "windowFrom": 1,
+      "windowUntil": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "name": "Ada Example",
+      "hostName": "Ada Example",
+      "windowFrom": 1,
+      "windowUntil": 1,
+      "note": "example",
+      "status": "expected",
+      "statusAt": 1764000000000,
+      "autoOut": false,
+      "hasEmail": true
+    }
   },
   "visitors.getVisitorsHosts": {
-    "description": "The people who can host a visitor: the organization's members."
+    "description": "The people who can host a visitor: the organization's members.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Ada Example",
+          "email": "ada@example.com"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "visitors.postVisitorsByIdCheckOut": {
-    "description": "Checks a visitor out."
+    "description": "Checks a visitor out.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "name": "Ada Example",
+      "hostName": "Ada Example",
+      "windowFrom": 1,
+      "windowUntil": 1,
+      "note": "example",
+      "status": "expected",
+      "statusAt": 1764000000000,
+      "autoOut": false,
+      "hasEmail": true
+    }
   },
   "visitors.postVisitorsByIdCancel": {
-    "description": "Cancels a visit and voids its pass."
+    "description": "Cancels a visit and voids its pass.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "name": "Ada Example",
+      "hostName": "Ada Example",
+      "windowFrom": 1,
+      "windowUntil": 1,
+      "note": "example",
+      "status": "expected",
+      "statusAt": 1764000000000,
+      "autoOut": false,
+      "hasEmail": true
+    }
   },
   "visitors.postVisitorsByIdHostEmail": {
-    "description": "Sends the host their arrival email again."
+    "description": "Sends the host their arrival email again.",
+    "request": {
+      "timeZone": "example"
+    },
+    "response": {
+      "ok": true
+    }
   }
 }

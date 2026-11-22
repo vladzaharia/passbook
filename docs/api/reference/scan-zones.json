@@ -1,20 +1,244 @@
 {
   "scan-zones.getScanZones": {
-    "description": "Lists zones."
+    "description": "Lists zones.",
+    "response": {
+      "items": [
+        {
+          "occupancy": "off",
+          "capacity": 10,
+          "maxStayMinutes": 15,
+          "hardLimit": false,
+          "clearAt": "12:00",
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "key": "example-key",
+          "name": "Ada Example",
+          "parentId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "timeZone": "example",
+          "effectiveTimeZone": "example",
+          "sort": 1,
+          "depth": 1,
+          "sessions": 1,
+          "checkedAt": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+              "name": "Ada Example"
+            }
+          ],
+          "plans": [
+            {
+              "templateId": "0193a1b2-7c00-7000-8000-0000000000a5",
+              "templateName": "Ada Example",
+              "planId": "0193a1b2-7c00-7000-8000-0000000000a6",
+              "label": "Ada Example"
+            }
+          ],
+          "inNow": 1,
+          "archivedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "scan-zones.postScanZones": {
-    "description": "Creates a zone."
+    "description": "Creates a zone.",
+    "request": {
+      "occupancy": "off",
+      "capacity": 10,
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "key": "example-key",
+      "name": "Ada Example"
+    },
+    "response": {
+      "occupancy": "off",
+      "capacity": 10,
+      "maxStayMinutes": 15,
+      "hardLimit": false,
+      "clearAt": "12:00",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "key": "example-key",
+      "name": "Ada Example",
+      "parentId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "timeZone": "example",
+      "effectiveTimeZone": "example",
+      "sort": 1,
+      "depth": 1,
+      "sessions": 1,
+      "checkedAt": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "name": "Ada Example"
+        }
+      ],
+      "plans": [
+        {
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "templateName": "Ada Example",
+          "planId": "0193a1b2-7c00-7000-8000-0000000000a6",
+          "label": "Ada Example"
+        }
+      ],
+      "inNow": 1,
+      "archivedAt": 1764000000000
+    }
   },
   "scan-zones.patchScanZonesById": {
-    "description": "Edits a zone."
+    "description": "Edits a zone.",
+    "request": {
+      "occupancy": "off",
+      "capacity": 10
+    },
+    "response": {
+      "occupancy": "off",
+      "capacity": 10,
+      "maxStayMinutes": 15,
+      "hardLimit": false,
+      "clearAt": "12:00",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "key": "example-key",
+      "name": "Ada Example",
+      "parentId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "timeZone": "example",
+      "effectiveTimeZone": "example",
+      "sort": 1,
+      "depth": 1,
+      "sessions": 1,
+      "checkedAt": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "name": "Ada Example"
+        }
+      ],
+      "plans": [
+        {
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "templateName": "Ada Example",
+          "planId": "0193a1b2-7c00-7000-8000-0000000000a6",
+          "label": "Ada Example"
+        }
+      ],
+      "inNow": 1,
+      "archivedAt": 1764000000000
+    }
   },
   "scan-zones.postScanZonesByIdArchive": {
-    "description": "Archives a zone and the zones below it."
+    "description": "Archives a zone and the zones below it.",
+    "response": {
+      "occupancy": "off",
+      "capacity": 10,
+      "maxStayMinutes": 15,
+      "hardLimit": false,
+      "clearAt": "12:00",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "key": "example-key",
+      "name": "Ada Example",
+      "parentId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "timeZone": "example",
+      "effectiveTimeZone": "example",
+      "sort": 1,
+      "depth": 1,
+      "sessions": 1,
+      "checkedAt": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "name": "Ada Example"
+        }
+      ],
+      "plans": [
+        {
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "templateName": "Ada Example",
+          "planId": "0193a1b2-7c00-7000-8000-0000000000a6",
+          "label": "Ada Example"
+        }
+      ],
+      "inNow": 1,
+      "archivedAt": 1764000000000
+    }
   },
   "scan-zones.postScanZonesByIdRestore": {
-    "description": "Restores a zone and the zones below it."
+    "description": "Restores a zone and the zones below it.",
+    "response": {
+      "occupancy": "off",
+      "capacity": 10,
+      "maxStayMinutes": 15,
+      "hardLimit": false,
+      "clearAt": "12:00",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "key": "example-key",
+      "name": "Ada Example",
+      "parentId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "timeZone": "example",
+      "effectiveTimeZone": "example",
+      "sort": 1,
+      "depth": 1,
+      "sessions": 1,
+      "checkedAt": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "name": "Ada Example"
+        }
+      ],
+      "plans": [
+        {
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "templateName": "Ada Example",
+          "planId": "0193a1b2-7c00-7000-8000-0000000000a6",
+          "label": "Ada Example"
+        }
+      ],
+      "inNow": 1,
+      "archivedAt": 1764000000000
+    }
   },
   "scan-zones.postScanZonesVisitsByIdReset": {
-    "description": "Resets a pass's visits to a zone."
+    "description": "Resets a pass's visits to a zone.",
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "visits": 0
+    }
+  },
+  "scan-zones.getScanZonesByIdInside": {
+    "response": {
+      "items": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "holder": "example",
+          "photoUrl": "https://passbook.mobile/p/abc123",
+          "plan": "example",
+          "type": "example",
+          "host": "example",
+          "place": "zone:main",
+          "placeName": "Ada Example",
+          "parentName": "Ada Example",
+          "since": 1,
+          "dueAt": 1764000000000,
+          "via": "example",
+          "flags": ["long_stay"]
+        }
+      ],
+      "count": 10,
+      "rev": 1,
+      "places": [
+        {
+          "name": "Ada Example",
+          "inNow": 1,
+          "capacity": 10,
+          "place": "zone:main",
+          "rev": 1
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "scan-zones.postScanZonesByIdMarkOut": {
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "place": "zone:main"
+    }
   }
 }

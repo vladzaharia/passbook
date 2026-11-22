@@ -21,10 +21,10 @@ func main() {
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
   "mode": "test",
   "provider": "apple",
-  "candidateId": "0193a1b2-7c00-7000-8000-0000000000e1",
-  "approvalId": "0193a1b2-7c00-7000-8000-0000000000e1",
-  "candidateHash": "Example",
-  "expectedGeneration": 0
+  "candidateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+  "approvalId": "0193a1b2-7c00-7000-8000-0000000000a3",
+  "candidateHash": "example",
+  "expectedGeneration": 1
 }`), &body); err != nil {
 		panic(err)
 	}

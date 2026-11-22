@@ -17,7 +17,12 @@ func main() {
 	}
 
 	var body passbook.ConnectionsUpdateBody
-	if err := json.Unmarshal([]byte(`{}`), &body); err != nil {
+	if err := json.Unmarshal([]byte(`{
+  "name": "Ada Example",
+  "config": {
+    "example": {}
+  }
+}`), &body); err != nil {
 		panic(err)
 	}
 

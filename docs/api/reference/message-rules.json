@@ -1,29 +1,403 @@
 {
   "message-rules.getMessageRules": {
-    "description": "Lists automatic messages."
+    "description": "Lists automatic messages.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "mode": "live",
+          "name": "Ada Example",
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+          "match": [
+            {
+              "input": "example",
+              "values": ["example"]
+            }
+          ],
+          "anchor": {
+            "kind": "input",
+            "input": "example"
+          },
+          "offset": {
+            "amount": 1,
+            "unit": "day",
+            "when": "before"
+          },
+          "yearly": false,
+          "sendAt": "example",
+          "timeZone": "example",
+          "message": "example",
+          "clearAfter": 1,
+          "on": false,
+          "state": "on",
+          "pausedCode": "RULE_CREATOR_REVOKED",
+          "nextCheckAt": 1764000000000,
+          "sent": 1,
+          "skipped": 1,
+          "createdAt": 1764000000000,
+          "updatedAt": 1764000000000,
+          "version": 1
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "message-rules.postMessageRules": {
-    "description": "Creates an automatic message."
+    "description": "Creates an automatic message.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "match": [
+        {
+          "input": "example",
+          "values": ["example"]
+        }
+      ],
+      "anchor": {
+        "kind": "input",
+        "input": "example"
+      },
+      "offset": {
+        "amount": 1,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "timeZone": "example",
+      "message": "example"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "match": [
+        {
+          "input": "example",
+          "values": ["example"]
+        }
+      ],
+      "anchor": {
+        "kind": "input",
+        "input": "example"
+      },
+      "offset": {
+        "amount": 1,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "sendAt": "example",
+      "timeZone": "example",
+      "message": "example",
+      "clearAfter": 1,
+      "on": false,
+      "state": "on",
+      "pausedCode": "RULE_CREATOR_REVOKED",
+      "nextCheckAt": 1764000000000,
+      "sent": 1,
+      "skipped": 1,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "version": 1
+    }
   },
   "message-rules.getMessageRulesById": {
-    "description": "One automatic message."
+    "description": "One automatic message.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "match": [
+        {
+          "input": "example",
+          "values": ["example"]
+        }
+      ],
+      "anchor": {
+        "kind": "input",
+        "input": "example"
+      },
+      "offset": {
+        "amount": 1,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "sendAt": "example",
+      "timeZone": "example",
+      "message": "example",
+      "clearAfter": 1,
+      "on": false,
+      "state": "on",
+      "pausedCode": "RULE_CREATOR_REVOKED",
+      "nextCheckAt": 1764000000000,
+      "sent": 1,
+      "skipped": 1,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "version": 1
+    }
   },
   "message-rules.putMessageRulesById": {
-    "description": "Saves an automatic message. Saving resumes a paused one."
+    "description": "Saves an automatic message. Saving resumes a paused one.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "match": [
+        {
+          "input": "example",
+          "values": ["example"]
+        }
+      ],
+      "anchor": {
+        "kind": "input",
+        "input": "example"
+      },
+      "offset": {
+        "amount": 1,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "timeZone": "example",
+      "message": "example",
+      "version": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "match": [
+        {
+          "input": "example",
+          "values": ["example"]
+        }
+      ],
+      "anchor": {
+        "kind": "input",
+        "input": "example"
+      },
+      "offset": {
+        "amount": 1,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "sendAt": "example",
+      "timeZone": "example",
+      "message": "example",
+      "clearAfter": 1,
+      "on": false,
+      "state": "on",
+      "pausedCode": "RULE_CREATOR_REVOKED",
+      "nextCheckAt": 1764000000000,
+      "sent": 1,
+      "skipped": 1,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "version": 1
+    }
   },
   "message-rules.deleteMessageRulesById": {
-    "description": "Deletes an automatic message and cancels its runs that have not started."
+    "description": "Deletes an automatic message and cancels its runs that have not started.",
+    "response": {
+      "ok": true
+    }
   },
   "message-rules.postMessageRulesByIdPause": {
-    "description": "Pauses an automatic message. Save it to resume."
+    "description": "Pauses an automatic message. Save it to resume.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "match": [
+        {
+          "input": "example",
+          "values": ["example"]
+        }
+      ],
+      "anchor": {
+        "kind": "input",
+        "input": "example"
+      },
+      "offset": {
+        "amount": 1,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "sendAt": "example",
+      "timeZone": "example",
+      "message": "example",
+      "clearAfter": 1,
+      "on": false,
+      "state": "on",
+      "pausedCode": "RULE_CREATOR_REVOKED",
+      "nextCheckAt": 1764000000000,
+      "sent": 1,
+      "skipped": 1,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "version": 1
+    }
   },
   "message-rules.getMessageRulesByIdRuns": {
-    "description": "The messages an automatic message sent."
+    "description": "The messages an automatic message sent.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "mode": "live",
+          "kind": "message",
+          "name": "Ada Example",
+          "state": "draft",
+          "target": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+            "onDevice": false,
+            "holderState": "unassigned",
+            "q": "example",
+            "scan": {
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+              "checkedIn": false
+            },
+            "match": [
+              {
+                "input": "example",
+                "values": ["example"]
+              }
+            ],
+            "version": "example"
+          },
+          "patch": {
+            "example": {}
+          },
+          "notify": false,
+          "at": 1764000000000,
+          "clearAfter": 1,
+          "parentId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "message": "example",
+          "ruleId": "0193a1b2-7c00-7000-8000-0000000000a6",
+          "followUp": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+            "at": 1764000000000
+          },
+          "counts": {
+            "targeted": 1,
+            "updated": 1,
+            "unchanged": 1,
+            "overBudget": 1,
+            "failed": 1
+          },
+          "errorCode": "AB12CD34",
+          "createdAt": 1764000000000,
+          "startedAt": 1764000000000,
+          "finishedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "message-rules.postMessageRulesPreview": {
-    "description": "Counts the passes due each of the next 14 days."
+    "description": "Counts the passes due each of the next 14 days.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "match": [
+        {
+          "input": "example",
+          "values": ["example"]
+        }
+      ],
+      "anchor": {
+        "kind": "input",
+        "input": "example"
+      },
+      "offset": {
+        "amount": 1,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "timeZone": "example",
+      "message": "example"
+    },
+    "response": {
+      "days": [
+        {
+          "date": "example",
+          "count": 10
+        }
+      ],
+      "total": 10,
+      "atLimit": 10
+    }
   },
   "message-rules.postMessageRulesByIdTest": {
-    "description": "Sends the text now to one pass."
+    "description": "Sends the text now to one pass.",
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "message",
+      "name": "Ada Example",
+      "state": "draft",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "onDevice": false,
+        "holderState": "unassigned",
+        "q": "example",
+        "scan": {
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "checkedIn": false
+        },
+        "match": [
+          {
+            "input": "example",
+            "values": ["example"]
+          }
+        ],
+        "version": "example"
+      },
+      "patch": {
+        "example": {}
+      },
+      "notify": false,
+      "at": 1764000000000,
+      "clearAfter": 1,
+      "parentId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "message": "example",
+      "ruleId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "followUp": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "at": 1764000000000
+      },
+      "counts": {
+        "targeted": 1,
+        "updated": 1,
+        "unchanged": 1,
+        "overBudget": 1,
+        "failed": 1
+      },
+      "errorCode": "AB12CD34",
+      "createdAt": 1764000000000,
+      "startedAt": 1764000000000,
+      "finishedAt": 1764000000000
+    }
   }
 }

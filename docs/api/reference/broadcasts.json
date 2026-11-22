@@ -354,21 +354,298 @@
     }
   },
   "broadcasts.getBroadcasts": {
-    "description": "Lists messages and scheduled changes."
+    "description": "Lists messages and scheduled changes.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "mode": "live",
+          "kind": "message",
+          "name": "Ada Example",
+          "state": "draft",
+          "target": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+            "onDevice": false,
+            "holderState": "unassigned",
+            "q": "example",
+            "scan": {
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+              "checkedIn": false
+            },
+            "match": [
+              {
+                "input": "example",
+                "values": ["example"]
+              }
+            ],
+            "version": "example"
+          },
+          "patch": {
+            "example": {}
+          },
+          "notify": false,
+          "at": 1764000000000,
+          "clearAfter": 1,
+          "parentId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "message": "example",
+          "ruleId": "0193a1b2-7c00-7000-8000-0000000000a6",
+          "followUp": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+            "at": 1764000000000
+          },
+          "counts": {
+            "targeted": 1,
+            "updated": 1,
+            "unchanged": 1,
+            "overBudget": 1,
+            "failed": 1
+          },
+          "errorCode": "AB12CD34",
+          "createdAt": 1764000000000,
+          "startedAt": 1764000000000,
+          "finishedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "broadcasts.patchBroadcastsById": {
-    "description": "Edits a draft, or a scheduled message that has not started."
+    "description": "Edits a draft, or a scheduled message that has not started.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "message",
+      "name": "Ada Example",
+      "notify": false,
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"]
+      },
+      "patch": {
+        "example": {}
+      }
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "message",
+      "name": "Ada Example",
+      "state": "draft",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "onDevice": false,
+        "holderState": "unassigned",
+        "q": "example",
+        "scan": {
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "checkedIn": false
+        },
+        "match": [
+          {
+            "input": "example",
+            "values": ["example"]
+          }
+        ],
+        "version": "example"
+      },
+      "patch": {
+        "example": {}
+      },
+      "notify": false,
+      "at": 1764000000000,
+      "clearAfter": 1,
+      "parentId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "message": "example",
+      "ruleId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "followUp": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "at": 1764000000000
+      },
+      "counts": {
+        "targeted": 1,
+        "updated": 1,
+        "unchanged": 1,
+        "overBudget": 1,
+        "failed": 1
+      },
+      "errorCode": "AB12CD34",
+      "createdAt": 1764000000000,
+      "startedAt": 1764000000000,
+      "finishedAt": 1764000000000
+    }
   },
   "broadcasts.postBroadcastsByIdSend": {
-    "description": "Sends a draft now or at a time."
+    "description": "Sends a draft now or at a time.",
+    "request": {
+      "at": 1764000000000
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "message",
+      "name": "Ada Example",
+      "state": "draft",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "onDevice": false,
+        "holderState": "unassigned",
+        "q": "example",
+        "scan": {
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "checkedIn": false
+        },
+        "match": [
+          {
+            "input": "example",
+            "values": ["example"]
+          }
+        ],
+        "version": "example"
+      },
+      "patch": {
+        "example": {}
+      },
+      "notify": false,
+      "at": 1764000000000,
+      "clearAfter": 1,
+      "parentId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "message": "example",
+      "ruleId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "followUp": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "at": 1764000000000
+      },
+      "counts": {
+        "targeted": 1,
+        "updated": 1,
+        "unchanged": 1,
+        "overBudget": 1,
+        "failed": 1
+      },
+      "errorCode": "AB12CD34",
+      "createdAt": 1764000000000,
+      "startedAt": 1764000000000,
+      "finishedAt": 1764000000000
+    }
   },
   "broadcasts.postBroadcastsByIdCancel": {
-    "description": "Cancels a draft or a scheduled message."
+    "description": "Cancels a draft or a scheduled message.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "message",
+      "name": "Ada Example",
+      "state": "draft",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "onDevice": false,
+        "holderState": "unassigned",
+        "q": "example",
+        "scan": {
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "checkedIn": false
+        },
+        "match": [
+          {
+            "input": "example",
+            "values": ["example"]
+          }
+        ],
+        "version": "example"
+      },
+      "patch": {
+        "example": {}
+      },
+      "notify": false,
+      "at": 1764000000000,
+      "clearAfter": 1,
+      "parentId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "message": "example",
+      "ruleId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "followUp": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "at": 1764000000000
+      },
+      "counts": {
+        "targeted": 1,
+        "updated": 1,
+        "unchanged": 1,
+        "overBudget": 1,
+        "failed": 1
+      },
+      "errorCode": "AB12CD34",
+      "createdAt": 1764000000000,
+      "startedAt": 1764000000000,
+      "finishedAt": 1764000000000
+    }
   },
   "broadcasts.postBroadcastsByIdRetry": {
-    "description": "Sends a failed or cancelled message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size."
+    "description": "Sends a failed or cancelled message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "message",
+      "name": "Ada Example",
+      "state": "draft",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "onDevice": false,
+        "holderState": "unassigned",
+        "q": "example",
+        "scan": {
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "checkedIn": false
+        },
+        "match": [
+          {
+            "input": "example",
+            "values": ["example"]
+          }
+        ],
+        "version": "example"
+      },
+      "patch": {
+        "example": {}
+      },
+      "notify": false,
+      "at": 1764000000000,
+      "clearAfter": 1,
+      "parentId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "message": "example",
+      "ruleId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "followUp": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "at": 1764000000000
+      },
+      "counts": {
+        "targeted": 1,
+        "updated": 1,
+        "unchanged": 1,
+        "overBudget": 1,
+        "failed": 1
+      },
+      "errorCode": "AB12CD34",
+      "createdAt": 1764000000000,
+      "startedAt": 1764000000000,
+      "finishedAt": 1764000000000
+    }
   },
   "broadcasts.getBroadcastsByIdItems": {
-    "description": "The passes a message reached: updated, unchanged or failed."
+    "description": "The passes a message reached: updated, unchanged or failed.",
+    "response": {
+      "items": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "title": "Ada Example",
+          "holderEmail": "ada@example.com",
+          "outcome": "updated",
+          "silent": false
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   }
 }

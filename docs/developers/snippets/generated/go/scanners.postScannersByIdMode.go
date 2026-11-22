@@ -18,7 +18,8 @@ func main() {
 
 	var body passbook.ScannersSetModeBody
 	if err := json.Unmarshal([]byte(`{
-  "mode": "test"
+  "mode": "test",
+  "detachEvent": false
 }`), &body); err != nil {
 		panic(err)
 	}

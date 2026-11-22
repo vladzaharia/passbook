@@ -1,0 +1,96 @@
+{
+  "org-lifecycle.getOrgsByOrgIdLifecycle": {
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "status": "active",
+      "closedAt": 1764000000000,
+      "purgeAfter": 1,
+      "purging": false,
+      "purged": false,
+      "held": false,
+      "canReopen": true
+    }
+  },
+  "org-lifecycle.postOrgsByOrgIdClose": {
+    "request": {
+      "confirmSlug": "example"
+    },
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "status": "active",
+      "closedAt": 1764000000000,
+      "purgeAfter": 1,
+      "purging": false,
+      "purged": false,
+      "held": false,
+      "canReopen": true
+    }
+  },
+  "org-lifecycle.postOrgsByOrgIdReopen": {
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "status": "active",
+      "closedAt": 1764000000000,
+      "purgeAfter": 1,
+      "purging": false,
+      "purged": false,
+      "held": false,
+      "canReopen": true
+    }
+  },
+  "org-lifecycle.getOrgsByOrgIdExports": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "state": "queued",
+          "createdAt": 1764000000000,
+          "finishedAt": 1764000000000,
+          "expiresAt": 1764000000000,
+          "bytes": 1,
+          "entities": {
+            "example": 1
+          },
+          "errorCode": "AB12CD34"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "org-lifecycle.postOrgsByOrgIdExports": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "state": "queued",
+      "createdAt": 1764000000000,
+      "finishedAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "bytes": 1,
+      "entities": {
+        "example": 1
+      },
+      "errorCode": "AB12CD34"
+    }
+  },
+  "org-lifecycle.postOrgsByOrgIdExportsByExportIdLink": {
+    "response": {
+      "url": "https://passbook.mobile/p/abc123",
+      "expiresAt": 1764000000000
+    }
+  },
+  "org-lifecycle.getPlatformClosedOrgs": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "slug": "example",
+          "name": "Ada Example",
+          "closedAt": 1764000000000,
+          "purgeAfter": 1,
+          "purging": false,
+          "held": false
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  }
+}

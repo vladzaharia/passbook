@@ -6,6 +6,7 @@ const result = await pb.templates.candidates.approve('0193a1b2-7c00-7000-8000-00
   orgId: '0193a1b2-7c00-7000-8000-0000000000a1',
   mode: 'test',
   provider: 'apple',
-  candidateHash: 'Example',
+  candidateHash: 'example',
+  alone: false,
 });
 console.log(result);

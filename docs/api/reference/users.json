@@ -1,0 +1,295 @@
+{
+  "users.getUsers": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Ada Example",
+          "primaryEmail": "ada@example.com",
+          "status": "active",
+          "lastRoles": ["admin"],
+          "createdAt": 1764000000000,
+          "lastLoginAt": 1764000000000,
+          "passCount": 10,
+          "signInMethods": ["oidc"]
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "users.getUsersById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "primaryEmail": "ada@example.com",
+      "status": "active",
+      "lastRoles": ["admin"],
+      "createdAt": 1764000000000,
+      "lastLoginAt": 1764000000000,
+      "signInMethods": ["oidc"],
+      "emails": [
+        {
+          "email": "ada@example.com",
+          "verifiedVia": "magic_link",
+          "verifiedAt": 1764000000000
+        }
+      ],
+      "identities": [
+        {
+          "provider": "example",
+          "subject": "example",
+          "emailClaim": "ada@example.com",
+          "emailVerified": false,
+          "groups": ["example"],
+          "lastUsedAt": 1764000000000
+        }
+      ],
+      "sessions": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "amr": "oidc",
+          "roles": ["admin"],
+          "createdAt": 1764000000000,
+          "lastSeenAt": 1764000000000,
+          "expiresAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "userAgent": "example",
+          "current": false,
+          "method": "example"
+        }
+      ],
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "title": "Ada Example",
+          "templateName": "Ada Example",
+          "orgName": "Ada Example",
+          "status": "active"
+        }
+      ],
+      "passCount": 10,
+      "recentAudit": [
+        {
+          "id": 1,
+          "at": 1764000000000,
+          "action": "example",
+          "actorType": "example",
+          "actorId": "0193a1b2-7c00-7000-8000-0000000000a4"
+        }
+      ]
+    }
+  },
+  "users.patchUsersById": {
+    "request": {
+      "status": "active"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "primaryEmail": "ada@example.com",
+      "status": "active",
+      "lastRoles": ["admin"],
+      "createdAt": 1764000000000,
+      "lastLoginAt": 1764000000000
+    }
+  },
+  "users.postUsersByIdEmails": {
+    "request": {
+      "email": "ada@example.com"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "primaryEmail": "ada@example.com",
+      "status": "active",
+      "lastRoles": ["admin"],
+      "createdAt": 1764000000000,
+      "lastLoginAt": 1764000000000,
+      "signInMethods": ["oidc"],
+      "emails": [
+        {
+          "email": "ada@example.com",
+          "verifiedVia": "magic_link",
+          "verifiedAt": 1764000000000
+        }
+      ],
+      "identities": [
+        {
+          "provider": "example",
+          "subject": "example",
+          "emailClaim": "ada@example.com",
+          "emailVerified": false,
+          "groups": ["example"],
+          "lastUsedAt": 1764000000000
+        }
+      ],
+      "sessions": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "amr": "oidc",
+          "roles": ["admin"],
+          "createdAt": 1764000000000,
+          "lastSeenAt": 1764000000000,
+          "expiresAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "userAgent": "example",
+          "current": false,
+          "method": "example"
+        }
+      ],
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "title": "Ada Example",
+          "templateName": "Ada Example",
+          "orgName": "Ada Example",
+          "status": "active"
+        }
+      ],
+      "passCount": 10,
+      "recentAudit": [
+        {
+          "id": 1,
+          "at": 1764000000000,
+          "action": "example",
+          "actorType": "example",
+          "actorId": "0193a1b2-7c00-7000-8000-0000000000a4"
+        }
+      ]
+    }
+  },
+  "users.deleteUsersByIdEmailsByEmail": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "primaryEmail": "ada@example.com",
+      "status": "active",
+      "lastRoles": ["admin"],
+      "createdAt": 1764000000000,
+      "lastLoginAt": 1764000000000,
+      "signInMethods": ["oidc"],
+      "emails": [
+        {
+          "email": "ada@example.com",
+          "verifiedVia": "magic_link",
+          "verifiedAt": 1764000000000
+        }
+      ],
+      "identities": [
+        {
+          "provider": "example",
+          "subject": "example",
+          "emailClaim": "ada@example.com",
+          "emailVerified": false,
+          "groups": ["example"],
+          "lastUsedAt": 1764000000000
+        }
+      ],
+      "sessions": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "amr": "oidc",
+          "roles": ["admin"],
+          "createdAt": 1764000000000,
+          "lastSeenAt": 1764000000000,
+          "expiresAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "userAgent": "example",
+          "current": false,
+          "method": "example"
+        }
+      ],
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "title": "Ada Example",
+          "templateName": "Ada Example",
+          "orgName": "Ada Example",
+          "status": "active"
+        }
+      ],
+      "passCount": 10,
+      "recentAudit": [
+        {
+          "id": 1,
+          "at": 1764000000000,
+          "action": "example",
+          "actorType": "example",
+          "actorId": "0193a1b2-7c00-7000-8000-0000000000a4"
+        }
+      ]
+    }
+  },
+  "users.postUsersByIdEmailsByEmailPrimary": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "primaryEmail": "ada@example.com",
+      "status": "active",
+      "lastRoles": ["admin"],
+      "createdAt": 1764000000000,
+      "lastLoginAt": 1764000000000,
+      "signInMethods": ["oidc"],
+      "emails": [
+        {
+          "email": "ada@example.com",
+          "verifiedVia": "magic_link",
+          "verifiedAt": 1764000000000
+        }
+      ],
+      "identities": [
+        {
+          "provider": "example",
+          "subject": "example",
+          "emailClaim": "ada@example.com",
+          "emailVerified": false,
+          "groups": ["example"],
+          "lastUsedAt": 1764000000000
+        }
+      ],
+      "sessions": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "amr": "oidc",
+          "roles": ["admin"],
+          "createdAt": 1764000000000,
+          "lastSeenAt": 1764000000000,
+          "expiresAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "userAgent": "example",
+          "current": false,
+          "method": "example"
+        }
+      ],
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "title": "Ada Example",
+          "templateName": "Ada Example",
+          "orgName": "Ada Example",
+          "status": "active"
+        }
+      ],
+      "passCount": 10,
+      "recentAudit": [
+        {
+          "id": 1,
+          "at": 1764000000000,
+          "action": "example",
+          "actorType": "example",
+          "actorId": "0193a1b2-7c00-7000-8000-0000000000a4"
+        }
+      ]
+    }
+  },
+  "users.postUsersByIdSessionsRevoke": {
+    "response": {
+      "ok": true
+    }
+  },
+  "users.deleteUsersByIdSessionsBySessionId": {
+    "response": {
+      "ok": true
+    }
+  }
+}

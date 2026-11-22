@@ -3,20 +3,29 @@ curl -X PUT "https://passbook.mobile/api/v1/message-rules/0193a1b2-7c00-7000-800
   -H "Content-Type: application/json" \
   -d '{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-  "name": "Example",
+  "name": "Ada Example",
   "templateIds": [
-    "0193a1b2-7c00-7000-8000-0000000000b1"
+    "0193a1b2-7c00-7000-8000-0000000000a2"
+  ],
+  "match": [
+    {
+      "input": "example",
+      "values": [
+        "example"
+      ]
+    }
   ],
   "anchor": {
     "kind": "input",
-    "input": "Example"
+    "input": "example"
   },
   "offset": {
-    "amount": 0,
+    "amount": 1,
     "unit": "day",
     "when": "before"
   },
-  "timeZone": "Europe/Berlin",
-  "message": "Example",
+  "yearly": false,
+  "timeZone": "example",
+  "message": "example",
   "version": 1
 }'

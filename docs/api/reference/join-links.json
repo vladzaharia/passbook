@@ -1,0 +1,148 @@
+{
+  "join-links.getJoinLinksByTemplateId": {
+    "response": {
+      "link": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "mode": "live",
+        "enabled": false,
+        "nameInput": "Ada Example",
+        "nameInputs": [
+          {
+            "key": "example-key",
+            "label": "Ada Example"
+          }
+        ],
+        "askEmail": false,
+        "generated": [
+          {
+            "key": "example-key",
+            "label": "Ada Example"
+          }
+        ],
+        "dailyLimit": 10,
+        "issuedToday": 1,
+        "limitReached": false,
+        "url": "https://passbook.mobile/p/abc123",
+        "ready": false,
+        "issues": [
+          {
+            "code": "no_release",
+            "input": "example",
+            "label": "Ada Example"
+          }
+        ],
+        "revision": 1,
+        "createdAt": 1764000000000,
+        "rotatedAt": 1764000000000
+      },
+      "ready": false,
+      "issues": [
+        {
+          "code": "no_release",
+          "input": "example",
+          "label": "Ada Example"
+        }
+      ]
+    }
+  },
+  "join-links.putJoinLinksByTemplateId": {
+    "request": {
+      "enabled": false,
+      "nameInput": "Ada Example",
+      "revision": 1
+    },
+    "response": {
+      "link": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "mode": "live",
+        "enabled": false,
+        "nameInput": "Ada Example",
+        "nameInputs": [
+          {
+            "key": "example-key",
+            "label": "Ada Example"
+          }
+        ],
+        "askEmail": false,
+        "generated": [
+          {
+            "key": "example-key",
+            "label": "Ada Example"
+          }
+        ],
+        "dailyLimit": 10,
+        "issuedToday": 1,
+        "limitReached": false,
+        "url": "https://passbook.mobile/p/abc123",
+        "ready": false,
+        "issues": [
+          {
+            "code": "no_release",
+            "input": "example",
+            "label": "Ada Example"
+          }
+        ],
+        "revision": 1,
+        "createdAt": 1764000000000,
+        "rotatedAt": 1764000000000
+      },
+      "ready": false,
+      "issues": [
+        {
+          "code": "no_release",
+          "input": "example",
+          "label": "Ada Example"
+        }
+      ]
+    }
+  },
+  "join-links.postJoinLinksByTemplateIdRotate": {
+    "response": {
+      "link": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "mode": "live",
+        "enabled": false,
+        "nameInput": "Ada Example",
+        "nameInputs": [
+          {
+            "key": "example-key",
+            "label": "Ada Example"
+          }
+        ],
+        "askEmail": false,
+        "generated": [
+          {
+            "key": "example-key",
+            "label": "Ada Example"
+          }
+        ],
+        "dailyLimit": 10,
+        "issuedToday": 1,
+        "limitReached": false,
+        "url": "https://passbook.mobile/p/abc123",
+        "ready": false,
+        "issues": [
+          {
+            "code": "no_release",
+            "input": "example",
+            "label": "Ada Example"
+          }
+        ],
+        "revision": 1,
+        "createdAt": 1764000000000,
+        "rotatedAt": 1764000000000
+      },
+      "ready": false,
+      "issues": [
+        {
+          "code": "no_release",
+          "input": "example",
+          "label": "Ada Example"
+        }
+      ]
+    }
+  }
+}

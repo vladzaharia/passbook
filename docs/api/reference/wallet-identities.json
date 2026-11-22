@@ -1,0 +1,44 @@
+{
+  "wallet-identities.getWalletIdentities": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "provider": "apple",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "label": "Ada Example",
+          "identifier": "example",
+          "kind": "platform",
+          "status": "provisioning",
+          "notBefore": 1,
+          "notAfter": 1,
+          "rotation": "auto",
+          "nextRotationAt": 1764000000000,
+          "issuing": true,
+          "isDefault": true,
+          "passCount": 10,
+          "createdAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "wallet-identities.getPlatformAppleCalls": {
+    "response": {
+      "items": [
+        {
+          "id": 1,
+          "callId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "phase": "example",
+          "method": "example",
+          "target": "example",
+          "caller": "example",
+          "status": "example",
+          "durationMs": 1764000000000,
+          "at": 1764000000000
+        }
+      ],
+      "available": false
+    }
+  }
+}

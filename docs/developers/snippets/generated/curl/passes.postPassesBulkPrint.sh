@@ -3,7 +3,7 @@ curl -X POST "https://passbook.mobile/api/v1/passes/bulk-print" \
   -H "Content-Type: application/json" \
   -d '{
   "ids": [
-    "0193a1b2-7c00-7000-8000-0000000000e1"
+    "0193a1b2-7c00-7000-8000-0000000000a1"
   ],
-  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+  "orgId": "0193a1b2-7c00-7000-8000-0000000000a2"
 }'

@@ -1,0 +1,326 @@
+{
+  "metrics.getMetricsOverview": {
+    "response": {
+      "source": "analytics_engine",
+      "range": "24h",
+      "bucketMs": 1764000000000,
+      "unavailable": ["example"],
+      "totals": {
+        "passes": 1,
+        "activePasses": 1,
+        "voidedPasses": 1,
+        "holders": 1,
+        "devices": 1,
+        "issued": 1,
+        "updated": 1,
+        "downloads": 1,
+        "registrations": 1,
+        "refreshes": 1,
+        "pushes": 1,
+        "pushFailures": 1,
+        "emails": 1,
+        "emailFailures": 1,
+        "emailUnknown": 1,
+        "syncRuns": 1,
+        "signIns": 1,
+        "scans": 1,
+        "scanRefused": 1
+      },
+      "series": {
+        "issued": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "updated": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "downloads": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "registrations": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "refreshes": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "pushes": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "pushFailures": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "emails": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "emailFailures": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "emailUnknown": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "syncRuns": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "signIns": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "scans": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ]
+      },
+      "setup": {
+        "orgs": 1,
+        "assignedTemplates": 1,
+        "passes": 1,
+        "approvedTemplates": 1,
+        "releasedTemplates": 1,
+        "walletPasses": 1,
+        "passEmailsSent": 1,
+        "latestPassId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "scanners": 1
+      },
+      "directory": {
+        "users": 1,
+        "walletAccounts": 10
+      },
+      "live": [
+        {
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "name": "Ada Example",
+          "arrived": 1,
+          "expected": 1,
+          "ratePerMin": 1
+        }
+      ],
+      "recent": [
+        {
+          "at": 1764000000000,
+          "action": "example",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "targetId": "0193a1b2-7c00-7000-8000-0000000000a4"
+        }
+      ]
+    }
+  },
+  "metrics.getMetricsPlatformOverview": {
+    "response": {
+      "source": "analytics_engine",
+      "range": "24h",
+      "bucketMs": 1764000000000,
+      "unavailable": ["example"],
+      "totals": {
+        "passes": 1,
+        "activePasses": 1,
+        "voidedPasses": 1,
+        "holders": 1,
+        "devices": 1,
+        "issued": 1,
+        "updated": 1,
+        "downloads": 1,
+        "registrations": 1,
+        "refreshes": 1,
+        "pushes": 1,
+        "pushFailures": 1,
+        "emails": 1,
+        "emailFailures": 1,
+        "emailUnknown": 1,
+        "syncRuns": 1,
+        "signIns": 1,
+        "scans": 1,
+        "scanRefused": 1
+      },
+      "series": {
+        "issued": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "updated": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "downloads": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "registrations": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "refreshes": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "pushes": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "pushFailures": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "emails": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "emailFailures": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "emailUnknown": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "syncRuns": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "signIns": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "scans": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ]
+      },
+      "setup": {
+        "orgs": 1,
+        "assignedTemplates": 1,
+        "passes": 1,
+        "approvedTemplates": 1,
+        "releasedTemplates": 1,
+        "walletPasses": 1,
+        "passEmailsSent": 1,
+        "latestPassId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "scanners": 1
+      },
+      "directory": {
+        "users": 1,
+        "walletAccounts": 10
+      },
+      "live": [
+        {
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "name": "Ada Example",
+          "arrived": 1,
+          "expected": 1,
+          "ratePerMin": 1
+        }
+      ],
+      "recent": [
+        {
+          "at": 1764000000000,
+          "action": "example",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "targetId": "0193a1b2-7c00-7000-8000-0000000000a4"
+        }
+      ]
+    }
+  },
+  "metrics.getMetricsActivity": {
+    "response": {
+      "range": "24h",
+      "bucketMs": 1764000000000,
+      "totals": {
+        "issued": 1,
+        "added": 1,
+        "removed": 1,
+        "scans": 1,
+        "redemptions": 1,
+        "inWallet": 1,
+        "notAdded": 1
+      },
+      "series": {
+        "issued": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ],
+        "scans": [
+          {
+            "t": 1,
+            "v": 1
+          }
+        ]
+      },
+      "templates": [
+        {
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Ada Example",
+          "issued": 1,
+          "added": 1,
+          "removed": 1,
+          "scans": 1,
+          "redemptions": 1,
+          "inWallet": 1,
+          "notAdded": 1
+        }
+      ]
+    }
+  }
+}

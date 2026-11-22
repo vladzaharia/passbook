@@ -1,0 +1,95 @@
+{
+  "identity-runs.getIdentityRuns": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "kind": "provision",
+          "targetType": "identity",
+          "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "state": "queued",
+          "step": "example",
+          "attempt": 1,
+          "waitingFor": "example",
+          "errorCode": "AB12CD34",
+          "createdAt": 1764000000000,
+          "updatedAt": 1764000000000,
+          "finishedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "identity-runs.getIdentityRunsById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "kind": "provision",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "state": "queued",
+      "step": "example",
+      "attempt": 1,
+      "waitingFor": "example",
+      "errorCode": "AB12CD34",
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "finishedAt": 1764000000000
+    }
+  },
+  "identity-runs.postIdentityRunsByIdRetry": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "kind": "provision",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "state": "queued",
+      "step": "example",
+      "attempt": 1,
+      "waitingFor": "example",
+      "errorCode": "AB12CD34",
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "finishedAt": 1764000000000
+    }
+  },
+  "identity-runs.postIdentityRunsByIdCancel": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "kind": "provision",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "state": "queued",
+      "step": "example",
+      "attempt": 1,
+      "waitingFor": "example",
+      "errorCode": "AB12CD34",
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "finishedAt": 1764000000000
+    }
+  },
+  "identity-runs.postOrgsByOrgIdIdentitiesApple": {
+    "request": {
+      "handle": "example"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "kind": "provision",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "state": "queued",
+      "step": "example",
+      "attempt": 1,
+      "waitingFor": "example",
+      "errorCode": "AB12CD34",
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "finishedAt": 1764000000000
+    }
+  }
+}

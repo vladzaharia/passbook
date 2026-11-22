@@ -1,5 +1,129 @@
 {
   "wallet-providers.getWalletProvidersPassesById": {
-    "description": "The local provider instance status of a pass."
+    "description": "The local provider instance status of a pass.",
+    "response": {
+      "credentialGeneration": 1,
+      "providers": [
+        {
+          "provider": "google",
+          "lifecycle": "absent",
+          "desiredOperation": {
+            "version": 1,
+            "kind": "upsert",
+            "state": "pending",
+            "reason": "ok"
+          },
+          "priorGenerationRetirementPending": false,
+          "installation": "unknown",
+          "reported": {
+            "event": "saved",
+            "at": 1764000000000
+          },
+          "issuance": {
+            "state": "disabled",
+            "reason": "not_released"
+          }
+        },
+        {
+          "provider": "samsung",
+          "lifecycle": "absent",
+          "desiredOperation": {
+            "version": 1,
+            "kind": "upsert",
+            "state": "pending",
+            "reason": "ok"
+          },
+          "priorGenerationRetirementPending": false,
+          "installation": "unknown",
+          "reported": {
+            "event": "saved",
+            "at": 1764000000000
+          },
+          "issuance": {
+            "state": "disabled",
+            "reason": "not_released"
+          }
+        }
+      ]
+    }
+  },
+  "wallet-providers.postWalletProvidersAccountsVerify": {
+    "response": {
+      "verified": false,
+      "verifiedAt": 1764000000000,
+      "expiresAt": 1764000000000
+    },
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "candidateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "candidateHash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+    }
+  },
+  "wallet-providers.getWalletProvidersAccounts": {
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "accountId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "revision": 1,
+      "state": "absent",
+      "externalApprovalVerified": false,
+      "issuance": {
+        "state": "disabled",
+        "reason": "not_released"
+      },
+      "updatedAt": 1764000000000
+    }
+  },
+  "wallet-providers.putWalletProvidersAccounts": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "expectedRevision": 1,
+      "credentials": {
+        "issuerId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "serviceAccountEmail": "ada@example.com",
+        "privateKeyPem": "example-key",
+        "scopes": ["https://www.googleapis.com/auth/wallet_object.issuer"]
+      }
+    },
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "accountId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "revision": 1,
+      "state": "absent",
+      "externalApprovalVerified": false,
+      "issuance": {
+        "state": "disabled",
+        "reason": "not_released"
+      },
+      "updatedAt": 1764000000000
+    }
+  },
+  "wallet-providers.postWalletProvidersAccountsRevoke": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "expectedRevision": 1
+    },
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "accountId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "revision": 1,
+      "state": "absent",
+      "externalApprovalVerified": false,
+      "issuance": {
+        "state": "disabled",
+        "reason": "not_released"
+      },
+      "updatedAt": 1764000000000
+    }
   }
 }

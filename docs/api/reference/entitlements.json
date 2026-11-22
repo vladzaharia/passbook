@@ -1,5 +1,85 @@
 {
   "entitlements.getOrgsByIdEntitlements": {
-    "description": "The features and limits of the organization's plan, and how much of each it has used."
+    "description": "The features and limits of the organization's plan, and how much of each it has used.",
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "preset": "example",
+      "label": "Ada Example",
+      "items": [
+        {
+          "key": "api",
+          "value": 1,
+          "source": "preset"
+        }
+      ]
+    }
+  },
+  "entitlements.getPlatformOrgsByIdEntitlements": {
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "preset": "example",
+      "presetLabel": "Ada Example",
+      "revision": 1,
+      "updatedAt": 1764000000000,
+      "items": [
+        {
+          "key": "api",
+          "value": 1,
+          "presetValue": 1,
+          "source": "preset",
+          "note": "example",
+          "expiresAt": 1764000000000
+        }
+      ],
+      "presets": [
+        {
+          "preset": "example",
+          "label": "Ada Example",
+          "orgCount": 10,
+          "values": {
+            "example": 1
+          }
+        }
+      ]
+    }
+  },
+  "entitlements.putPlatformOrgsByIdEntitlements": {
+    "request": {
+      "expectedRevision": 1,
+      "preset": "example",
+      "overrides": {
+        "example": {
+          "value": 1,
+          "note": "example"
+        }
+      }
+    },
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "preset": "example",
+      "presetLabel": "Ada Example",
+      "revision": 1,
+      "updatedAt": 1764000000000,
+      "items": [
+        {
+          "key": "api",
+          "value": 1,
+          "presetValue": 1,
+          "source": "preset",
+          "note": "example",
+          "expiresAt": 1764000000000
+        }
+      ],
+      "presets": [
+        {
+          "preset": "example",
+          "label": "Ada Example",
+          "orgCount": 10,
+          "values": {
+            "example": 1
+          }
+        }
+      ]
+    }
   }
 }

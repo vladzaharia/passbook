@@ -1,5 +1,18 @@
 {
   "delivery.getDelivery": {
-    "description": "The outbox entries for a pass: each email or push and whether it was sent."
+    "description": "The outbox entries for a pass: each email or push and whether it was sent.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "kind": "push",
+          "state": "pending",
+          "attempts": 1,
+          "errorCode": "AB12CD34",
+          "createdAt": 1764000000000,
+          "finishedAt": 1764000000000
+        }
+      ]
+    }
   }
 }

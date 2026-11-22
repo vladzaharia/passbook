@@ -1,0 +1,185 @@
+{
+  "retention.getOrgsByOrgIdRetentionHolds": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "passLabel": "Ada Example",
+          "placedByKind": "org",
+          "placedByLabel": "Ada Example",
+          "reason": "example",
+          "createdAt": 1764000000000,
+          "releasedAt": 1764000000000,
+          "releasedByLabel": "Ada Example",
+          "canRelease": true
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "retention.postOrgsByOrgIdRetentionHolds": {
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "reason": "example"
+    },
+    "response": {
+      "ok": true
+    }
+  },
+  "retention.postOrgsByOrgIdRetentionHoldsByHoldIdRelease": {
+    "response": {
+      "ok": true
+    }
+  },
+  "retention.getOrgsByOrgIdRetentionReceipts": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "cls": "example",
+          "kind": "sweep",
+          "ranAt": 1764000000000,
+          "cutoffAt": 1764000000000,
+          "policyDays": 1,
+          "deleted": 1,
+          "anonymised": 1,
+          "verified": false
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "retention.getOrgsByOrgIdRetentionReceiptsByReceiptIdDownload": {
+    "response": {
+      "receipt": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "cls": "example",
+        "kind": "sweep",
+        "ranAt": 1764000000000,
+        "cutoffAt": 1764000000000,
+        "policyDays": 1,
+        "deleted": 1,
+        "anonymised": 1,
+        "verified": false,
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "seq": 1,
+        "prevMac": "example",
+        "mac": "example",
+        "refsDigest": "example",
+        "requestId": "0193a1b2-7c00-7000-8000-0000000000a3"
+      }
+    }
+  },
+  "retention.getPlatformOrgsByOrgIdRetentionHolds": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "passLabel": "Ada Example",
+          "placedByKind": "org",
+          "placedByLabel": "Ada Example",
+          "reason": "example",
+          "createdAt": 1764000000000,
+          "releasedAt": 1764000000000,
+          "releasedByLabel": "Ada Example",
+          "canRelease": true
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "retention.postPlatformOrgsByOrgIdRetentionHolds": {
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "reason": "example"
+    },
+    "response": {
+      "ok": true
+    }
+  },
+  "retention.postPlatformOrgsByOrgIdRetentionHoldsByHoldIdRelease": {
+    "response": {
+      "ok": true
+    }
+  },
+  "retention.getPlatformOrgsByOrgIdRetentionReceipts": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "cls": "example",
+          "kind": "sweep",
+          "ranAt": 1764000000000,
+          "cutoffAt": 1764000000000,
+          "policyDays": 1,
+          "deleted": 1,
+          "anonymised": 1,
+          "verified": false
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "retention.getPlatformOrgsByOrgIdRetentionReceiptsByReceiptIdDownload": {
+    "response": {
+      "receipt": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "cls": "example",
+        "kind": "sweep",
+        "ranAt": 1764000000000,
+        "cutoffAt": 1764000000000,
+        "policyDays": 1,
+        "deleted": 1,
+        "anonymised": 1,
+        "verified": false,
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "seq": 1,
+        "prevMac": "example",
+        "mac": "example",
+        "refsDigest": "example",
+        "requestId": "0193a1b2-7c00-7000-8000-0000000000a3"
+      }
+    }
+  },
+  "retention.getPlatformRetentionReceipts": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "cls": "example",
+          "kind": "sweep",
+          "ranAt": 1764000000000,
+          "cutoffAt": 1764000000000,
+          "policyDays": 1,
+          "deleted": 1,
+          "anonymised": 1,
+          "verified": false
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "retention.getPlatformRetentionReceiptsByReceiptIdDownload": {
+    "response": {
+      "receipt": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "cls": "example",
+        "kind": "sweep",
+        "ranAt": 1764000000000,
+        "cutoffAt": 1764000000000,
+        "policyDays": 1,
+        "deleted": 1,
+        "anonymised": 1,
+        "verified": false,
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "seq": 1,
+        "prevMac": "example",
+        "mac": "example",
+        "refsDigest": "example",
+        "requestId": "0193a1b2-7c00-7000-8000-0000000000a3"
+      }
+    }
+  }
+}

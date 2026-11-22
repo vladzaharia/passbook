@@ -1,0 +1,320 @@
+{
+  "orgs.getOrgs": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "slug": "example",
+          "name": "Ada Example",
+          "status": "active",
+          "personal": false,
+          "personalOwner": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+            "name": "Ada Example"
+          },
+          "createdAt": 1764000000000,
+          "counts": {
+            "passes": 1,
+            "templates": 1,
+            "connections": 1,
+            "apiKeys": 1,
+            "members": 1
+          },
+          "countsCapped": false
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "orgs.postOrgs": {
+    "request": {
+      "slug": "example",
+      "name": "Ada Example",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "branding": {
+        "accent": "#1a73e8"
+      }
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "example",
+      "name": "Ada Example",
+      "status": "active",
+      "personal": false,
+      "kind": "standard",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "branding": {
+        "accent": "#1a73e8",
+        "supportEmail": "ada@example.com",
+        "supportUrl": "https://passbook.mobile/p/abc123",
+        "passColors": {
+          "background": "#1a73e8",
+          "foreground": "#1a73e8",
+          "label": "#1a73e8"
+        },
+        "logo": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "icon": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "web": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "mark": "full",
+        "logoHasName": false
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "configRevision": 1,
+      "passesToUpdate": 1
+    }
+  },
+  "orgs.getOrgsById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "example",
+      "name": "Ada Example",
+      "status": "active",
+      "personal": false,
+      "personalOwner": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example"
+      },
+      "createdAt": 1764000000000,
+      "counts": {
+        "passes": 1,
+        "templates": 1,
+        "connections": 1,
+        "apiKeys": 1,
+        "members": 1
+      },
+      "countsCapped": false
+    }
+  },
+  "orgs.patchOrgsById": {
+    "request": {
+      "slug": "example",
+      "name": "Ada Example"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "example",
+      "name": "Ada Example",
+      "status": "active",
+      "personal": false,
+      "kind": "standard",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "branding": {
+        "accent": "#1a73e8",
+        "supportEmail": "ada@example.com",
+        "supportUrl": "https://passbook.mobile/p/abc123",
+        "passColors": {
+          "background": "#1a73e8",
+          "foreground": "#1a73e8",
+          "label": "#1a73e8"
+        },
+        "logo": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "icon": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "web": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "mark": "full",
+        "logoHasName": false
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "configRevision": 1,
+      "passesToUpdate": 1
+    }
+  },
+  "orgs.deleteOrgsById": {
+    "response": {
+      "ok": true
+    }
+  },
+  "orgs.postOrgsByIdStatus": {
+    "request": {
+      "status": "active"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "example",
+      "name": "Ada Example",
+      "status": "active",
+      "personal": false,
+      "personalOwner": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example"
+      },
+      "createdAt": 1764000000000,
+      "counts": {
+        "passes": 1,
+        "templates": 1,
+        "connections": 1,
+        "apiKeys": 1,
+        "members": 1
+      },
+      "countsCapped": false
+    }
+  },
+  "orgs.putOrgsByIdBrandingBySlot": {
+    "request": {
+      "x3": "example",
+      "x2": "example",
+      "configRevision": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "example",
+      "name": "Ada Example",
+      "status": "active",
+      "personal": false,
+      "kind": "standard",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "branding": {
+        "accent": "#1a73e8",
+        "supportEmail": "ada@example.com",
+        "supportUrl": "https://passbook.mobile/p/abc123",
+        "passColors": {
+          "background": "#1a73e8",
+          "foreground": "#1a73e8",
+          "label": "#1a73e8"
+        },
+        "logo": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "icon": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "web": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "mark": "full",
+        "logoHasName": false
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "configRevision": 1,
+      "passesToUpdate": 1
+    }
+  },
+  "orgs.getOrgsByIdWorkspace": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "example",
+      "name": "Ada Example",
+      "status": "active",
+      "personal": false,
+      "kind": "standard",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "branding": {
+        "accent": "#1a73e8",
+        "supportEmail": "ada@example.com",
+        "supportUrl": "https://passbook.mobile/p/abc123",
+        "passColors": {
+          "background": "#1a73e8",
+          "foreground": "#1a73e8",
+          "label": "#1a73e8"
+        },
+        "logo": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "icon": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "web": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "mark": "full",
+        "logoHasName": false
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "configRevision": 1,
+      "passesToUpdate": 1,
+      "counts": {
+        "passes": 1,
+        "templates": 1,
+        "connections": 1,
+        "apiKeys": 1,
+        "members": 1
+      },
+      "countsCapped": false,
+      "personalOwner": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "name": "Ada Example"
+      }
+    }
+  },
+  "orgs.deleteOrgsByIdBrandingBySlot": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "example",
+      "name": "Ada Example",
+      "status": "active",
+      "personal": false,
+      "kind": "standard",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "branding": {
+        "accent": "#1a73e8",
+        "supportEmail": "ada@example.com",
+        "supportUrl": "https://passbook.mobile/p/abc123",
+        "passColors": {
+          "background": "#1a73e8",
+          "foreground": "#1a73e8",
+          "label": "#1a73e8"
+        },
+        "logo": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "icon": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "web": {
+          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "w": 1,
+          "h": 1
+        },
+        "mark": "full",
+        "logoHasName": false
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "configRevision": 1,
+      "passesToUpdate": 1
+    }
+  }
+}

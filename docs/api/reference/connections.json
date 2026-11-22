@@ -63,48 +63,560 @@
     }
   },
   "connections.getConnectionsByIdWebhookFailures": {
-    "description": "Lists retained webhook status for a connection."
+    "description": "Lists retained webhook status for a connection.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "eventRef": "example",
+          "generation": 1,
+          "connectionMode": "webhook",
+          "state": "pending",
+          "errorCode": "AB12CD34",
+          "uncertainItems": 1,
+          "receivedAt": 1764000000000,
+          "updatedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "connections.postConnectionsByIdWebhookFailuresByRetentionIdReplay": {
-    "description": "Replays a retained webhook."
+    "description": "Replays a retained webhook.",
+    "response": {
+      "ok": true
+    }
   },
   "connections.postConnectionsByIdWebhookFailuresByRetentionIdResolve": {
-    "description": "Marks an uncertain webhook resolved after you have checked the source system."
+    "description": "Marks an uncertain webhook resolved after you have checked the source system.",
+    "response": {
+      "ok": true,
+      "resolved": 1,
+      "state": "failed"
+    }
   },
   "connections.getConnections": {
-    "description": "Lists connections."
+    "description": "Lists connections.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "connectorType": "example",
+          "connectorVersion": 1,
+          "name": "Ada Example",
+          "config": {
+            "example": {}
+          },
+          "hasCredential": true,
+          "hasWebhookSecret": true,
+          "mapping": {
+            "example": {
+              "from": "example",
+              "transform": {
+                "kind": "enum"
+              }
+            }
+          },
+          "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "holderEmailField": "ada@example.com",
+          "autoCreate": false,
+          "autoEmail": false,
+          "onMissing": "keep",
+          "voidWhen": [
+            {
+              "from": "example",
+              "op": "in",
+              "values": ["example"]
+            }
+          ],
+          "webhookPrevUntil": 1,
+          "mode": "poll",
+          "intervalSeconds": 1,
+          "maxConcurrency": 1,
+          "requestsPerMinute": 1,
+          "enabled": false,
+          "health": "unknown",
+          "consecutiveFailures": 1,
+          "breakerOpenUntil": 1,
+          "nextRunAt": 1764000000000,
+          "lastRunAt": 1764000000000,
+          "lastSuccessAt": 1764000000000,
+          "lastErrorCode": "AB12CD34",
+          "lastErrorAt": 1764000000000,
+          "webhookUrl": "https://passbook.mobile/p/abc123",
+          "createdAt": 1764000000000,
+          "updatedAt": 1764000000000,
+          "passCount": 10
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "connections.postConnections": {
-    "description": "Creates a connection."
+    "description": "Creates a connection.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "example",
+      "name": "Ada Example",
+      "config": {
+        "example": {}
+      },
+      "secrets": {
+        "example": "example"
+      },
+      "webhookSecret": "AB12CD34xxxxxxxx"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "connectorType": "example",
+      "connectorVersion": 1,
+      "name": "Ada Example",
+      "config": {
+        "example": {}
+      },
+      "hasCredential": true,
+      "hasWebhookSecret": true,
+      "mapping": {
+        "example": {
+          "from": "example",
+          "transform": {
+            "kind": "enum",
+            "options": {
+              "example": {}
+            }
+          }
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "holderEmailField": "ada@example.com",
+      "autoCreate": false,
+      "autoEmail": false,
+      "onMissing": "keep",
+      "voidWhen": [
+        {
+          "from": "example",
+          "op": "in",
+          "values": ["example"]
+        }
+      ],
+      "webhookPrevUntil": 1,
+      "mode": "poll",
+      "intervalSeconds": 1,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 1,
+      "enabled": false,
+      "health": "unknown",
+      "consecutiveFailures": 1,
+      "breakerOpenUntil": 1,
+      "nextRunAt": 1764000000000,
+      "lastRunAt": 1764000000000,
+      "lastSuccessAt": 1764000000000,
+      "lastErrorCode": "AB12CD34",
+      "lastErrorAt": 1764000000000,
+      "webhookUrl": "https://passbook.mobile/p/abc123",
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "webhookSecret": "AB12CD34"
+    }
   },
   "connections.getConnectionsSummary": {
-    "description": "A health summary across connections."
+    "description": "A health summary across connections.",
+    "response": {
+      "total": 10,
+      "byHealth": {
+        "example": 1
+      },
+      "attention": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "name": "Ada Example",
+          "health": "unknown",
+          "lastErrorCode": "AB12CD34",
+          "lastErrorAt": 1764000000000
+        }
+      ]
+    }
   },
   "connections.getConnectionsById": {
-    "description": "A connection with its runs and metrics."
+    "description": "A connection with its runs and metrics.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "connectorType": "example",
+      "connectorVersion": 1,
+      "name": "Ada Example",
+      "config": {
+        "example": {}
+      },
+      "hasCredential": true,
+      "hasWebhookSecret": true,
+      "mapping": {
+        "example": {
+          "from": "example",
+          "transform": {
+            "kind": "enum",
+            "options": {
+              "example": {}
+            }
+          }
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "holderEmailField": "ada@example.com",
+      "autoCreate": false,
+      "autoEmail": false,
+      "onMissing": "keep",
+      "voidWhen": [
+        {
+          "from": "example",
+          "op": "in",
+          "values": ["example"]
+        }
+      ],
+      "webhookPrevUntil": 1,
+      "mode": "poll",
+      "intervalSeconds": 1,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 1,
+      "enabled": false,
+      "health": "unknown",
+      "consecutiveFailures": 1,
+      "breakerOpenUntil": 1,
+      "nextRunAt": 1764000000000,
+      "lastRunAt": 1764000000000,
+      "lastSuccessAt": 1764000000000,
+      "lastErrorCode": "AB12CD34",
+      "lastErrorAt": 1764000000000,
+      "webhookUrl": "https://passbook.mobile/p/abc123",
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "runs": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "trigger": "schedule",
+          "startedAt": 1764000000000,
+          "finishedAt": 1764000000000,
+          "outcome": "running",
+          "recordsSeen": 1,
+          "passesChanged": 1,
+          "passesCreated": 1,
+          "passesVoided": 1,
+          "recordsFailed": 1,
+          "errorCode": "AB12CD34",
+          "errorDetail": "example",
+          "httpStatus": 1,
+          "durationMs": 1764000000000
+        }
+      ],
+      "metrics": {
+        "p50Ms": 1764000000000,
+        "p95Ms": 1764000000000,
+        "errorRate": 1,
+        "passCount": 10
+      }
+    }
   },
   "connections.patchConnectionsById": {
-    "description": "Updates a connection."
+    "description": "Updates a connection.",
+    "request": {
+      "name": "Ada Example",
+      "config": {
+        "example": {}
+      }
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "connectorType": "example",
+      "connectorVersion": 1,
+      "name": "Ada Example",
+      "config": {
+        "example": {}
+      },
+      "hasCredential": true,
+      "hasWebhookSecret": true,
+      "mapping": {
+        "example": {
+          "from": "example",
+          "transform": {
+            "kind": "enum",
+            "options": {
+              "example": {}
+            }
+          }
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "holderEmailField": "ada@example.com",
+      "autoCreate": false,
+      "autoEmail": false,
+      "onMissing": "keep",
+      "voidWhen": [
+        {
+          "from": "example",
+          "op": "in",
+          "values": ["example"]
+        }
+      ],
+      "webhookPrevUntil": 1,
+      "mode": "poll",
+      "intervalSeconds": 1,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 1,
+      "enabled": false,
+      "health": "unknown",
+      "consecutiveFailures": 1,
+      "breakerOpenUntil": 1,
+      "nextRunAt": 1764000000000,
+      "lastRunAt": 1764000000000,
+      "lastSuccessAt": 1764000000000,
+      "lastErrorCode": "AB12CD34",
+      "lastErrorAt": 1764000000000,
+      "webhookUrl": "https://passbook.mobile/p/abc123",
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "webhookSecret": "AB12CD34"
+    }
   },
   "connections.deleteConnectionsById": {
-    "description": "Deletes a connection."
+    "description": "Deletes a connection.",
+    "response": {
+      "ok": true
+    }
   },
   "connections.postConnectionsTestConfig": {
-    "description": "Tests an unsaved configuration without saving it."
+    "description": "Tests an unsaved configuration without saving it.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "example",
+      "config": {
+        "example": {}
+      },
+      "secrets": {
+        "example": "example"
+      },
+      "mapping": {
+        "example": {
+          "from": "example",
+          "transform": {
+            "kind": "enum",
+            "options": {
+              "example": {}
+            }
+          }
+        }
+      }
+    },
+    "response": {
+      "ok": false,
+      "detail": "example",
+      "errorCode": "AB12CD34",
+      "durationMs": 1764000000000,
+      "sample": [
+        {
+          "pointer": "example",
+          "preview": "example"
+        }
+      ],
+      "records": 1,
+      "counts": {
+        "create": 1,
+        "update": 1,
+        "unchanged": 1,
+        "skipped": 1,
+        "errors": 1,
+        "waiting": 1
+      },
+      "releaseBlocked": "example",
+      "window": {
+        "days": 1,
+        "limit": 10,
+        "since": 1,
+        "excluded": 1
+      },
+      "samples": [
+        {
+          "ref": "example",
+          "action": "create",
+          "fields": {
+            "example": {}
+          },
+          "message": "example"
+        }
+      ],
+      "columns": [
+        {
+          "pointer": "example",
+          "label": "Ada Example",
+          "samples": ["example"],
+          "values": [
+            {
+              "value": "example",
+              "count": 10
+            }
+          ]
+        }
+      ]
+    }
   },
   "connections.postConnectionsByIdTest": {
-    "description": "Tests the saved connection against its source."
+    "description": "Tests the saved connection against its source.",
+    "response": {
+      "ok": false,
+      "detail": "example",
+      "errorCode": "AB12CD34",
+      "durationMs": 1764000000000,
+      "sample": [
+        {
+          "pointer": "example",
+          "preview": "example"
+        }
+      ]
+    }
   },
   "connections.postConnectionsByIdSync": {
-    "description": "Syncs now instead of waiting for the schedule."
+    "description": "Syncs now instead of waiting for the schedule.",
+    "response": {
+      "runId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "workflowInstanceId": "0193a1b2-7c00-7000-8000-0000000000a2"
+    }
   },
   "connections.getConnectionsByIdRuns": {
-    "description": "Lists the runs of a connection."
+    "description": "Lists the runs of a connection.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "trigger": "schedule",
+          "startedAt": 1764000000000,
+          "finishedAt": 1764000000000,
+          "outcome": "running",
+          "recordsSeen": 1,
+          "passesChanged": 1,
+          "passesCreated": 1,
+          "passesVoided": 1,
+          "recordsFailed": 1,
+          "errorCode": "AB12CD34",
+          "errorDetail": "example",
+          "httpStatus": 1,
+          "durationMs": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "connections.postConnectionsByIdWebhookSecret": {
-    "description": "Generates a new webhook secret. It is shown once."
+    "description": "Generates a new webhook secret. It is shown once.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "connectorType": "example",
+      "connectorVersion": 1,
+      "name": "Ada Example",
+      "config": {
+        "example": {}
+      },
+      "hasCredential": true,
+      "hasWebhookSecret": true,
+      "mapping": {
+        "example": {
+          "from": "example",
+          "transform": {
+            "kind": "enum",
+            "options": {
+              "example": {}
+            }
+          }
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "holderEmailField": "ada@example.com",
+      "autoCreate": false,
+      "autoEmail": false,
+      "onMissing": "keep",
+      "voidWhen": [
+        {
+          "from": "example",
+          "op": "in",
+          "values": ["example"]
+        }
+      ],
+      "webhookPrevUntil": 1,
+      "mode": "poll",
+      "intervalSeconds": 1,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 1,
+      "enabled": false,
+      "health": "unknown",
+      "consecutiveFailures": 1,
+      "breakerOpenUntil": 1,
+      "nextRunAt": 1764000000000,
+      "lastRunAt": 1764000000000,
+      "lastSuccessAt": 1764000000000,
+      "lastErrorCode": "AB12CD34",
+      "lastErrorAt": 1764000000000,
+      "webhookUrl": "https://passbook.mobile/p/abc123",
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "webhookSecret": "AB12CD34"
+    }
   },
   "connections.deleteConnectionsByIdWebhookSecretPrevious": {
-    "description": "Stops accepting the previous webhook secret now."
+    "description": "Stops accepting the previous webhook secret now.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "connectorType": "example",
+      "connectorVersion": 1,
+      "name": "Ada Example",
+      "config": {
+        "example": {}
+      },
+      "hasCredential": true,
+      "hasWebhookSecret": true,
+      "mapping": {
+        "example": {
+          "from": "example",
+          "transform": {
+            "kind": "enum",
+            "options": {
+              "example": {}
+            }
+          }
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "holderEmailField": "ada@example.com",
+      "autoCreate": false,
+      "autoEmail": false,
+      "onMissing": "keep",
+      "voidWhen": [
+        {
+          "from": "example",
+          "op": "in",
+          "values": ["example"]
+        }
+      ],
+      "webhookPrevUntil": 1,
+      "mode": "poll",
+      "intervalSeconds": 1,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 1,
+      "enabled": false,
+      "health": "unknown",
+      "consecutiveFailures": 1,
+      "breakerOpenUntil": 1,
+      "nextRunAt": 1764000000000,
+      "lastRunAt": 1764000000000,
+      "lastSuccessAt": 1764000000000,
+      "lastErrorCode": "AB12CD34",
+      "lastErrorAt": 1764000000000,
+      "webhookUrl": "https://passbook.mobile/p/abc123",
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000
+    }
   }
 }

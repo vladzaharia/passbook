@@ -1,0 +1,103 @@
+{
+  "settings.getSettings": {
+    "response": {
+      "items": [
+        {
+          "scope": "platform",
+          "key": "example-key",
+          "value": {},
+          "default": {},
+          "source": "org",
+          "ceiling": 1,
+          "blockedByPlatform": false,
+          "blockedByPlan": false,
+          "planBlocked": ["mobile"],
+          "updatedAt": 1764000000000,
+          "updatedBy": "example"
+        }
+      ],
+      "configRevision": 1,
+      "oidc": {
+        "issuer": "example",
+        "platformAdminGroup": "example",
+        "adminGroup": "example",
+        "developerGroup": "example",
+        "userGroup": "example",
+        "consoleGroupRequired": false
+      },
+      "released": {
+        "google": false,
+        "samsung": false
+      }
+    }
+  },
+  "settings.putSettings": {
+    "request": {
+      "scope": "platform",
+      "values": {
+        "example": {}
+      },
+      "configRevision": 1
+    },
+    "response": {
+      "items": [
+        {
+          "scope": "platform",
+          "key": "example-key",
+          "value": {},
+          "default": {},
+          "source": "org",
+          "ceiling": 1,
+          "blockedByPlatform": false,
+          "blockedByPlan": false,
+          "planBlocked": ["mobile"],
+          "updatedAt": 1764000000000,
+          "updatedBy": "example"
+        }
+      ],
+      "configRevision": 1,
+      "oidc": {
+        "issuer": "example",
+        "platformAdminGroup": "example",
+        "adminGroup": "example",
+        "developerGroup": "example",
+        "userGroup": "example",
+        "consoleGroupRequired": false
+      },
+      "released": {
+        "google": false,
+        "samsung": false
+      }
+    }
+  },
+  "settings.getSettingsImpact": {
+    "response": {
+      "emailOnlyUsers": 1
+    }
+  },
+  "settings.getSettingsReplyTo": {
+    "response": {
+      "address": "example",
+      "state": "none"
+    }
+  },
+  "settings.postSettingsReplyToResend": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "address": "example",
+      "state": "none"
+    }
+  },
+  "settings.postSettingsReplyToConfirm": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "token": "AB12CD34xxxxxxxx"
+    },
+    "response": {
+      "address": "example",
+      "state": "none"
+    }
+  }
+}

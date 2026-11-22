@@ -298,60 +298,1641 @@
     }
   },
   "templates.getTemplatesUploads": {
-    "description": "Recent template imports of this mode, newest first."
+    "description": "Recent template imports of this mode, newest first.",
+    "response": {
+      "items": [
+        {
+          "uploadId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Ada Example",
+          "status": "queued",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "version": "example",
+          "error": "example",
+          "issues": 1,
+          "createdAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "templates.getTemplatesUploadsById": {
-    "description": "The status of one template import: its state, and the report when it has failed."
+    "description": "The status of one template import: its state, and the report when it has failed.",
+    "response": {
+      "uploadId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "status": "queued",
+      "step": "example",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "version": "example",
+      "report": {
+        "ok": false,
+        "issues": [
+          {
+            "severity": "error",
+            "code": "AB12CD34",
+            "message": "example",
+            "path": "example",
+            "params": {
+              "example": "example"
+            },
+            "fix": {
+              "action": "upload_logo"
+            }
+          }
+        ]
+      },
+      "error": "example"
+    }
   },
   "templates.getTemplatesPreviews": {
-    "description": "Sample previews of several templates in one call. Pass the template ids in the query."
+    "description": "Sample previews of several templates in one call. Pass the template ids in the query.",
+    "response": {
+      "items": [
+        {
+          "passJson": {
+            "example": {}
+          },
+          "warnings": [
+            {
+              "severity": "error",
+              "code": "AB12CD34",
+              "message": "example",
+              "path": "example",
+              "params": {
+                "example": "example"
+              },
+              "fix": {
+                "action": "upload_logo"
+              }
+            }
+          ],
+          "assetBaseUrl": "https://passbook.mobile/p/abc123",
+          "assetNames": ["Ada Example"],
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1"
+        }
+      ]
+    }
   },
   "templates.getTemplatesEligible": {
-    "description": "Release-backed templates an organization can use. Only templates with an approved release appear."
+    "description": "Release-backed templates an organization can use. Only templates with an approved release appear.",
+    "response": {
+      "items": [
+        {
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Ada Example",
+          "templateOrgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "origin": "uploaded",
+          "releaseId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "releaseGeneration": 1,
+          "version": "example",
+          "candidateHash": "example",
+          "supportsCheckIn": false,
+          "rule": {
+            "mode": "single",
+            "days": 1,
+            "durationMinutes": 1,
+            "durationFrom": "first_scan",
+            "plans": ["always"],
+            "source": "template"
+          }
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "templates.postTemplatesByIdPreview": {
-    "description": "Renders the pass.json a template would produce for `input`, without issuing a pass."
+    "description": "Renders the pass.json a template would produce for `input`, without issuing a pass.",
+    "request": {
+      "version": "example",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "passJson": {
+        "example": {}
+      },
+      "warnings": [
+        {
+          "severity": "error",
+          "code": "AB12CD34",
+          "message": "example",
+          "path": "example",
+          "params": {
+            "example": "example"
+          },
+          "fix": {
+            "action": "upload_logo"
+          }
+        }
+      ],
+      "assetBaseUrl": "https://passbook.mobile/p/abc123",
+      "assetNames": ["Ada Example"]
+    }
   },
   "templates.getTemplatesByIdVersionsByVersion": {
-    "description": "One version of a template with its validation report."
+    "description": "One version of a template with its validation report.",
+    "response": {
+      "version": "example",
+      "createdAt": 1764000000000,
+      "createdBy": "example",
+      "assets": [
+        {
+          "name": "Ada Example",
+          "slot": "example",
+          "scale": 1,
+          "locale": "example",
+          "size": 1,
+          "sha1": "example",
+          "crc32": 1,
+          "width": 1,
+          "height": 1
+        }
+      ],
+      "report": {
+        "ok": false,
+        "issues": [
+          {
+            "severity": "error",
+            "code": "AB12CD34",
+            "message": "example",
+            "path": "example",
+            "params": {
+              "example": "example"
+            },
+            "fix": {
+              "action": "upload_logo"
+            }
+          }
+        ]
+      },
+      "active": false,
+      "displayOnly": false,
+      "passCount": 10,
+      "manifest": {},
+      "passJson": {
+        "example": {}
+      }
+    }
   },
   "templates.getTemplatesByIdVersionsByVersionAssetsByName": {
     "description": "The bytes of one image in a template version."
   },
   "templates.getTemplatesByIdChannels": {
-    "description": "The template's channel policy and what it allows now, in this mode."
+    "description": "The template's channel policy and what it allows now, in this mode.",
+    "response": {
+      "channels": {
+        "mobile": "on",
+        "apple": "on",
+        "google": "on",
+        "samsung": "on",
+        "paper": "on",
+        "nfc": "on"
+      },
+      "revision": 1,
+      "effective": {
+        "mobile": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "apple": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "google": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "samsung": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "paper": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "nfc": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        }
+      },
+      "levels": {
+        "mobile": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "apple": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "google": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "samsung": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "paper": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "nfc": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ]
+      },
+      "overrides": {
+        "mobile": 1,
+        "apple": 1,
+        "google": 1,
+        "samsung": 1,
+        "paper": 1,
+        "nfc": 1
+      },
+      "overridePasses": 1,
+      "defaults": {
+        "mobile": "on",
+        "apple": "on",
+        "google": "on",
+        "samsung": "on",
+        "paper": "on",
+        "nfc": "on"
+      }
+    }
   },
   "templates.getTemplatesByIdChannelsRuns": {
-    "description": "The latest runs that applied saved channel changes to passes, in this mode."
+    "description": "The latest runs that applied saved channel changes to passes, in this mode.",
+    "response": [
+      {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "state": "pending",
+        "dueAt": 1764000000000,
+        "startedAt": 1764000000000,
+        "finishedAt": 1764000000000,
+        "counts": {
+          "example": 1
+        },
+        "errorCode": "AB12CD34",
+        "waiting": {
+          "name": "Ada Example",
+          "until": 1
+        }
+      }
+    ]
   },
   "templates.getTemplatesByIdStampsImpact": {
-    "description": "What changing the stamp goal does to the template's live passes. Read it before saving the change."
+    "description": "What changing the stamp goal does to the template's live passes. Read it before saving the change.",
+    "response": {
+      "passes": 1,
+      "readyNow": 1,
+      "readyLost": 1,
+      "newlyReady": 1,
+      "highest": 1,
+      "highestKept": 1
+    }
   },
   "templates.postTemplatesByIdUse": {
-    "description": "Makes a template in an organization from a blueprint. The blueprint is not changed."
+    "description": "Makes a template in an organization from a blueprint. The blueprint is not changed.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "slug": "example",
+      "name": "Ada Example",
+      "description": "example",
+      "origin": "baked",
+      "status": "active",
+      "activeVersion": "example",
+      "styles": ["generic"],
+      "blueprint": false,
+      "shared": false,
+      "icon": "example",
+      "group": "example",
+      "aliases": ["example"],
+      "fromBlueprint": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "name": "Ada Example"
+      },
+      "openReview": false,
+      "passCount": 10,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "inputSchema": {},
+      "sample": {
+        "example": {}
+      },
+      "manifest": {},
+      "versions": [
+        {
+          "version": "example",
+          "createdAt": 1764000000000,
+          "createdBy": "example",
+          "assets": [
+            {
+              "name": "Ada Example",
+              "slot": "example",
+              "scale": 1,
+              "locale": "example",
+              "size": 1,
+              "sha1": "example",
+              "crc32": 1,
+              "width": 1,
+              "height": 1
+            }
+          ],
+          "report": {
+            "ok": false,
+            "issues": [
+              {
+                "severity": "error",
+                "code": "AB12CD34",
+                "message": "example"
+              }
+            ]
+          },
+          "active": false,
+          "displayOnly": false,
+          "passCount": 10
+        }
+      ],
+      "passesOnOlderVersions": 1,
+      "passesBlocked": 1,
+      "restorable": false
+    },
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "version": {
+        "passJson": {
+          "example": {}
+        },
+        "manifest": {
+          "example": {}
+        },
+        "assets": [
+          {
+            "name": "Ada Example",
+            "sha1": "0123456789abcdef0123456789abcdef01234567"
+          }
+        ]
+      },
+      "baseVersion": "example"
+    }
   },
   "templates.postTemplatesByIdScanSetup": {
-    "description": "Sets up scanning for a template: its events and a session. Runs once per template."
+    "description": "Sets up scanning for a template: its events and a session. Runs once per template.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "timeZone": "example"
+    },
+    "response": {
+      "session": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Ada Example"
+      },
+      "created": false,
+      "events": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "name": "Ada Example",
+          "created": false
+        }
+      ],
+      "noEvents": false,
+      "truncated": false
+    }
   },
   "templates.getTemplatesByIdPackage": {
     "description": "The active version, or the unpublished draft, as an uploadable zip."
   },
   "templates.getTemplatesByIdCandidates": {
-    "description": "Lists the release candidates of a template."
+    "description": "Lists the release candidates of a template.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "mode": "live",
+          "provider": "apple",
+          "version": "example",
+          "contentHash": "example",
+          "candidateHash": "example",
+          "adapterRevision": 1,
+          "adapterCapabilities": ["example"],
+          "audiencePolicyRevision": 1,
+          "authorId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "versionAuthorId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "authorName": "Ada Example",
+          "versionAuthorName": "Ada Example",
+          "createdAt": 1764000000000,
+          "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a6",
+          "sourceReleaseGeneration": 1,
+          "sourceReleaseHash": "example",
+          "accountId": "0193a1b2-7c00-7000-8000-0000000000a7",
+          "accountRevision": 10,
+          "providerIdentityHash": "example",
+          "projection": {},
+          "approvals": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+              "candidateId": "0193a1b2-7c00-7000-8000-0000000000a9",
+              "candidateHash": "example",
+              "reviewerId": "0193a1b2-7c00-7000-8000-0000000000aa",
+              "reviewerName": "Ada Example",
+              "kind": "peer",
+              "createdAt": 1764000000000
+            }
+          ]
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "templates.postTemplatesByIdCandidates": {
-    "description": "Creates a release candidate from the template's current draft."
+    "description": "Creates a release candidate from the template's current draft.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "apple",
+      "version": "example",
+      "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "projection": {}
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "mode": "live",
+      "provider": "apple",
+      "version": "example",
+      "contentHash": "example",
+      "candidateHash": "example",
+      "adapterRevision": 1,
+      "adapterCapabilities": ["example"],
+      "audiencePolicyRevision": 1,
+      "authorId": "0193a1b2-7c00-7000-8000-0000000000a4",
+      "versionAuthorId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "authorName": "Ada Example",
+      "versionAuthorName": "Ada Example",
+      "createdAt": 1764000000000,
+      "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "sourceReleaseGeneration": 1,
+      "sourceReleaseHash": "example",
+      "accountId": "0193a1b2-7c00-7000-8000-0000000000a7",
+      "accountRevision": 10,
+      "providerIdentityHash": "example",
+      "projection": {},
+      "approvals": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "candidateId": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "candidateHash": "example",
+          "reviewerId": "0193a1b2-7c00-7000-8000-0000000000aa",
+          "reviewerName": "Ada Example",
+          "kind": "peer",
+          "createdAt": 1764000000000
+        }
+      ]
+    }
   },
   "templates.postTemplatesByIdCandidatesByCandidateIdApprove": {
-    "description": "Approves a release candidate. A key can approve only in Test; Live approval is for a person."
+    "description": "Approves a release candidate. A key can approve only in Test; Live approval is for a person.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "apple",
+      "candidateHash": "example",
+      "alone": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "candidateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "candidateHash": "example",
+      "reviewerId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "reviewerName": "Ada Example",
+      "kind": "peer",
+      "createdAt": 1764000000000
+    }
   },
   "templates.getTemplatesByIdReleases": {
-    "description": "Lists the releases of a template, newest first."
+    "description": "Lists the releases of a template, newest first.",
+    "response": {
+      "active": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "mode": "live",
+        "provider": "apple",
+        "version": "example",
+        "generation": 1,
+        "candidateHash": "example",
+        "source": "approved",
+        "action": "release",
+        "previousReleaseId": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "createdBy": "example",
+        "createdByName": "Ada Example",
+        "createdAt": 1764000000000,
+        "candidateId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "approvalId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "sourceReleaseGeneration": 1,
+        "sourceReleaseHash": "example",
+        "accountId": "0193a1b2-7c00-7000-8000-0000000000a8",
+        "accountRevision": 10,
+        "providerIdentityHash": "example"
+      },
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000aa",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000ab",
+          "mode": "live",
+          "provider": "apple",
+          "version": "example",
+          "generation": 1,
+          "candidateHash": "example",
+          "source": "approved",
+          "action": "release",
+          "previousReleaseId": "0193a1b2-7c00-7000-8000-0000000000ac",
+          "createdBy": "example",
+          "createdByName": "Ada Example",
+          "createdAt": 1764000000000,
+          "candidateId": "0193a1b2-7c00-7000-8000-0000000000ad",
+          "approvalId": "0193a1b2-7c00-7000-8000-0000000000ae",
+          "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000af",
+          "sourceReleaseGeneration": 1,
+          "sourceReleaseHash": "example",
+          "accountId": "0193a1b2-7c00-7000-8000-0000000000b0",
+          "accountRevision": 10,
+          "providerIdentityHash": "example"
+        }
+      ],
+      "nextCursor": "c1.4812",
+      "promotable": ["example"]
+    }
   },
   "templates.postTemplatesByIdReleases": {
-    "description": "Publishes an approved release. A key can publish only in Test."
+    "description": "Publishes an approved release. A key can publish only in Test.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "apple",
+      "candidateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "approvalId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "candidateHash": "example",
+      "expectedGeneration": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "mode": "live",
+      "provider": "apple",
+      "version": "example",
+      "generation": 1,
+      "candidateHash": "example",
+      "source": "approved",
+      "action": "release",
+      "previousReleaseId": "0193a1b2-7c00-7000-8000-0000000000a4",
+      "createdBy": "example",
+      "createdByName": "Ada Example",
+      "createdAt": 1764000000000,
+      "candidateId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "approvalId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a7",
+      "sourceReleaseGeneration": 1,
+      "sourceReleaseHash": "example",
+      "accountId": "0193a1b2-7c00-7000-8000-0000000000a8",
+      "accountRevision": 10,
+      "providerIdentityHash": "example"
+    }
   },
   "templates.getTemplatesByIdReleasesImpact": {
-    "description": "What publishing or rolling back to a version changes, and for how many passes."
+    "description": "What publishing or rolling back to a version changes, and for how many passes.",
+    "response": {
+      "fromVersion": "example",
+      "toVersion": "example",
+      "passes": {
+        "count": 10,
+        "capped": false
+      },
+      "diff": {
+        "fields": [
+          {
+            "label": "Ada Example",
+            "kind": "added",
+            "from": "example",
+            "to": "example"
+          }
+        ],
+        "images": [
+          {
+            "label": "Ada Example",
+            "kind": "added",
+            "from": "example",
+            "to": "example"
+          }
+        ],
+        "barcode": [
+          {
+            "label": "Ada Example",
+            "kind": "added",
+            "from": "example",
+            "to": "example"
+          }
+        ],
+        "colors": [
+          {
+            "label": "Ada Example",
+            "kind": "added",
+            "from": "example",
+            "to": "example"
+          }
+        ]
+      },
+      "more": {
+        "fields": 1,
+        "images": 1,
+        "barcode": 1,
+        "colors": 1
+      }
+    }
+  },
+  "templates.postTemplatesUploads": {
+    "response": {
+      "uploadId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "workflowInstanceId": "0193a1b2-7c00-7000-8000-0000000000a2"
+    }
+  },
+  "templates.postTemplatesByIdShare": {
+    "request": {
+      "shared": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "slug": "example",
+      "name": "Ada Example",
+      "description": "example",
+      "origin": "baked",
+      "status": "active",
+      "activeVersion": "example",
+      "styles": ["generic"],
+      "blueprint": false,
+      "shared": false,
+      "icon": "example",
+      "group": "example",
+      "aliases": ["example"],
+      "fromBlueprint": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "name": "Ada Example"
+      },
+      "openReview": false,
+      "passCount": 10,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "inputSchema": {},
+      "sample": {
+        "example": {}
+      },
+      "manifest": {},
+      "versions": [
+        {
+          "version": "example",
+          "createdAt": 1764000000000,
+          "createdBy": "example",
+          "assets": [
+            {
+              "name": "Ada Example",
+              "slot": "example",
+              "scale": 1,
+              "locale": "example",
+              "size": 1,
+              "sha1": "example",
+              "crc32": 1,
+              "width": 1,
+              "height": 1
+            }
+          ],
+          "report": {
+            "ok": false,
+            "issues": [
+              {
+                "severity": "error",
+                "code": "AB12CD34",
+                "message": "example"
+              }
+            ]
+          },
+          "active": false,
+          "displayOnly": false,
+          "passCount": 10
+        }
+      ],
+      "passesOnOlderVersions": 1,
+      "passesBlocked": 1,
+      "restorable": false
+    }
+  },
+  "templates.patchTemplatesById": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "slug": "example",
+      "name": "Ada Example",
+      "description": "example",
+      "origin": "baked",
+      "status": "active",
+      "activeVersion": "example",
+      "styles": ["generic"],
+      "blueprint": false,
+      "shared": false,
+      "icon": "example",
+      "group": "example",
+      "aliases": ["example"],
+      "fromBlueprint": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "name": "Ada Example"
+      },
+      "openReview": false,
+      "passCount": 10,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "inputSchema": {},
+      "sample": {
+        "example": {}
+      },
+      "manifest": {},
+      "versions": [
+        {
+          "version": "example",
+          "createdAt": 1764000000000,
+          "createdBy": "example",
+          "assets": [
+            {
+              "name": "Ada Example",
+              "slot": "example",
+              "scale": 1,
+              "locale": "example",
+              "size": 1,
+              "sha1": "example",
+              "crc32": 1,
+              "width": 1,
+              "height": 1
+            }
+          ],
+          "report": {
+            "ok": false,
+            "issues": [
+              {
+                "severity": "error",
+                "code": "AB12CD34",
+                "message": "example"
+              }
+            ]
+          },
+          "active": false,
+          "displayOnly": false,
+          "passCount": 10
+        }
+      ],
+      "passesOnOlderVersions": 1,
+      "passesBlocked": 1,
+      "restorable": false
+    }
+  },
+  "templates.deleteTemplatesById": {
+    "response": {
+      "ok": true,
+      "outcome": "deleted"
+    }
+  },
+  "templates.postTemplatesByIdClone": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "slug": "example",
+      "name": "Ada Example",
+      "description": "example",
+      "origin": "baked",
+      "status": "active",
+      "activeVersion": "example",
+      "styles": ["generic"],
+      "blueprint": false,
+      "shared": false,
+      "icon": "example",
+      "group": "example",
+      "aliases": ["example"],
+      "fromBlueprint": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "name": "Ada Example"
+      },
+      "openReview": false,
+      "passCount": 10,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "inputSchema": {},
+      "sample": {
+        "example": {}
+      },
+      "manifest": {},
+      "versions": [
+        {
+          "version": "example",
+          "createdAt": 1764000000000,
+          "createdBy": "example",
+          "assets": [
+            {
+              "name": "Ada Example",
+              "slot": "example",
+              "scale": 1,
+              "locale": "example",
+              "size": 1,
+              "sha1": "example",
+              "crc32": 1,
+              "width": 1,
+              "height": 1
+            }
+          ],
+          "report": {
+            "ok": false,
+            "issues": [
+              {
+                "severity": "error",
+                "code": "AB12CD34",
+                "message": "example"
+              }
+            ]
+          },
+          "active": false,
+          "displayOnly": false,
+          "passCount": 10
+        }
+      ],
+      "passesOnOlderVersions": 1,
+      "passesBlocked": 1,
+      "restorable": false
+    }
+  },
+  "templates.putTemplatesByIdManifest": {
+    "request": {
+      "manifest": {
+        "example": {}
+      }
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "slug": "example",
+      "name": "Ada Example",
+      "description": "example",
+      "origin": "baked",
+      "status": "active",
+      "activeVersion": "example",
+      "styles": ["generic"],
+      "blueprint": false,
+      "shared": false,
+      "icon": "example",
+      "group": "example",
+      "aliases": ["example"],
+      "fromBlueprint": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "name": "Ada Example"
+      },
+      "openReview": false,
+      "passCount": 10,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "inputSchema": {},
+      "sample": {
+        "example": {}
+      },
+      "manifest": {},
+      "versions": [
+        {
+          "version": "example",
+          "createdAt": 1764000000000,
+          "createdBy": "example",
+          "assets": [
+            {
+              "name": "Ada Example",
+              "slot": "example",
+              "scale": 1,
+              "locale": "example",
+              "size": 1,
+              "sha1": "example",
+              "crc32": 1,
+              "width": 1,
+              "height": 1
+            }
+          ],
+          "report": {
+            "ok": false,
+            "issues": [
+              {
+                "severity": "error",
+                "code": "AB12CD34",
+                "message": "example"
+              }
+            ]
+          },
+          "active": false,
+          "displayOnly": false,
+          "passCount": 10
+        }
+      ],
+      "passesOnOlderVersions": 1,
+      "passesBlocked": 1,
+      "restorable": false
+    }
+  },
+  "templates.putTemplatesByIdChannels": {
+    "request": {
+      "channels": {
+        "mobile": "on"
+      },
+      "revision": 1,
+      "dryRun": false,
+      "replaceCodes": false
+    },
+    "response": {
+      "channels": {
+        "mobile": "on",
+        "apple": "on",
+        "google": "on",
+        "samsung": "on",
+        "paper": "on",
+        "nfc": "on"
+      },
+      "revision": 1,
+      "effective": {
+        "mobile": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "apple": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "google": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "samsung": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "paper": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        },
+        "nfc": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredAt": 1764000000000,
+          "retiredCause": "pass"
+        }
+      },
+      "levels": {
+        "mobile": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "apple": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "google": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "samsung": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "paper": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ],
+        "nfc": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "reason": "not_released",
+            "canChange": true
+          }
+        ]
+      },
+      "overrides": {
+        "mobile": 1,
+        "apple": 1,
+        "google": 1,
+        "samsung": 1,
+        "paper": 1,
+        "nfc": 1
+      },
+      "overridePasses": 1,
+      "defaults": {
+        "mobile": "on",
+        "apple": "on",
+        "google": "on",
+        "samsung": "on",
+        "paper": "on",
+        "nfc": "on"
+      },
+      "impact": [
+        {
+          "channel": "mobile",
+          "passes": 1,
+          "rotated": 1,
+          "clearedOverrides": 1
+        }
+      ],
+      "workflowInstanceId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "replaceSupported": false,
+      "windows": [
+        {
+          "kind": "event",
+          "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "name": "Ada Example",
+          "opensAt": 1764000000000,
+          "closesAt": 1764000000000,
+          "open": false,
+          "scheduled": false
+        }
+      ],
+      "blocked": {
+        "name": "Ada Example",
+        "closesAt": 1764000000000
+      },
+      "allOff": false
+    }
+  },
+  "templates.postTemplatesByIdChannelsResetPasses": {
+    "request": {
+      "channels": ["mobile"],
+      "dryRun": false
+    },
+    "response": {
+      "overrides": {
+        "mobile": 1,
+        "apple": 1,
+        "google": 1,
+        "samsung": 1,
+        "paper": 1,
+        "nfc": 1
+      },
+      "passes": 1,
+      "done": 1,
+      "skipped": 1,
+      "remaining": 1
+    }
+  },
+  "templates.postTemplatesByIdVersions": {
+    "response": {
+      "saved": false,
+      "version": "example",
+      "created": false,
+      "displayOnly": false,
+      "behindTip": false,
+      "report": {
+        "ok": false,
+        "issues": [
+          {
+            "severity": "error",
+            "code": "AB12CD34",
+            "message": "example",
+            "path": "example",
+            "params": {
+              "example": "example"
+            },
+            "fix": {
+              "action": "upload_logo"
+            }
+          }
+        ]
+      },
+      "assets": [
+        {
+          "name": "Ada Example",
+          "slot": "example",
+          "scale": 1,
+          "locale": "example",
+          "size": 1,
+          "sha1": "example",
+          "crc32": 1,
+          "width": 1,
+          "height": 1
+        }
+      ],
+      "passJson": {
+        "example": {}
+      },
+      "template": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "orgName": "Ada Example",
+        "slug": "example",
+        "name": "Ada Example",
+        "description": "example",
+        "origin": "baked",
+        "status": "active",
+        "activeVersion": "example",
+        "styles": ["generic"],
+        "blueprint": false,
+        "shared": false,
+        "icon": "example",
+        "group": "example",
+        "aliases": ["example"],
+        "fromBlueprint": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "name": "Ada Example"
+        },
+        "openReview": false,
+        "passCount": 10,
+        "createdAt": 1764000000000,
+        "updatedAt": 1764000000000,
+        "inputSchema": {},
+        "sample": {
+          "example": {}
+        },
+        "manifest": {},
+        "versions": [
+          {
+            "version": "example",
+            "createdAt": 1764000000000,
+            "createdBy": "example",
+            "assets": [
+              {
+                "name": "Ada Example",
+                "slot": "example",
+                "scale": 1,
+                "size": 1,
+                "sha1": "example",
+                "crc32": 1
+              }
+            ],
+            "report": {
+              "ok": false,
+              "issues": [
+                {
+                  "severity": "error",
+                  "code": "AB12CD34",
+                  "message": "example"
+                }
+              ]
+            },
+            "active": false,
+            "displayOnly": false,
+            "passCount": 10
+          }
+        ],
+        "passesOnOlderVersions": 1,
+        "passesBlocked": 1,
+        "restorable": false
+      }
+    },
+    "request": {
+      "passJson": {
+        "example": {}
+      },
+      "manifest": {
+        "example": {}
+      },
+      "assets": [
+        {
+          "name": "Ada Example",
+          "sha1": "0123456789abcdef0123456789abcdef01234567"
+        }
+      ],
+      "dryRun": false
+    }
+  },
+  "templates.postTemplatesByIdUseCheck": {
+    "response": {
+      "saved": false,
+      "version": "example",
+      "created": false,
+      "displayOnly": false,
+      "behindTip": false,
+      "report": {
+        "ok": false,
+        "issues": [
+          {
+            "severity": "error",
+            "code": "AB12CD34",
+            "message": "example",
+            "path": "example",
+            "params": {
+              "example": "example"
+            },
+            "fix": {
+              "action": "upload_logo"
+            }
+          }
+        ]
+      },
+      "assets": [
+        {
+          "name": "Ada Example",
+          "slot": "example",
+          "scale": 1,
+          "locale": "example",
+          "size": 1,
+          "sha1": "example",
+          "crc32": 1,
+          "width": 1,
+          "height": 1
+        }
+      ],
+      "passJson": {
+        "example": {}
+      },
+      "template": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "orgName": "Ada Example",
+        "slug": "example",
+        "name": "Ada Example",
+        "description": "example",
+        "origin": "baked",
+        "status": "active",
+        "activeVersion": "example",
+        "styles": ["generic"],
+        "blueprint": false,
+        "shared": false,
+        "icon": "example",
+        "group": "example",
+        "aliases": ["example"],
+        "fromBlueprint": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "name": "Ada Example"
+        },
+        "openReview": false,
+        "passCount": 10,
+        "createdAt": 1764000000000,
+        "updatedAt": 1764000000000,
+        "inputSchema": {},
+        "sample": {
+          "example": {}
+        },
+        "manifest": {},
+        "versions": [
+          {
+            "version": "example",
+            "createdAt": 1764000000000,
+            "createdBy": "example",
+            "assets": [
+              {
+                "name": "Ada Example",
+                "slot": "example",
+                "scale": 1,
+                "size": 1,
+                "sha1": "example",
+                "crc32": 1
+              }
+            ],
+            "report": {
+              "ok": false,
+              "issues": [
+                {
+                  "severity": "error",
+                  "code": "AB12CD34",
+                  "message": "example"
+                }
+              ]
+            },
+            "active": false,
+            "displayOnly": false,
+            "passCount": 10
+          }
+        ],
+        "passesOnOlderVersions": 1,
+        "passesBlocked": 1,
+        "restorable": false
+      }
+    },
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "version": {
+        "passJson": {
+          "example": {}
+        },
+        "manifest": {
+          "example": {}
+        },
+        "assets": [
+          {
+            "name": "Ada Example",
+            "sha1": "0123456789abcdef0123456789abcdef01234567"
+          }
+        ]
+      },
+      "baseVersion": "example"
+    }
+  },
+  "templates.postTemplatesByIdArchive": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "slug": "example",
+      "name": "Ada Example",
+      "description": "example",
+      "origin": "baked",
+      "status": "active",
+      "activeVersion": "example",
+      "styles": ["generic"],
+      "blueprint": false,
+      "shared": false,
+      "icon": "example",
+      "group": "example",
+      "aliases": ["example"],
+      "fromBlueprint": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "name": "Ada Example"
+      },
+      "openReview": false,
+      "passCount": 10,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "inputSchema": {},
+      "sample": {
+        "example": {}
+      },
+      "manifest": {},
+      "versions": [
+        {
+          "version": "example",
+          "createdAt": 1764000000000,
+          "createdBy": "example",
+          "assets": [
+            {
+              "name": "Ada Example",
+              "slot": "example",
+              "scale": 1,
+              "locale": "example",
+              "size": 1,
+              "sha1": "example",
+              "crc32": 1,
+              "width": 1,
+              "height": 1
+            }
+          ],
+          "report": {
+            "ok": false,
+            "issues": [
+              {
+                "severity": "error",
+                "code": "AB12CD34",
+                "message": "example"
+              }
+            ]
+          },
+          "active": false,
+          "displayOnly": false,
+          "passCount": 10
+        }
+      ],
+      "passesOnOlderVersions": 1,
+      "passesBlocked": 1,
+      "restorable": false
+    }
+  },
+  "templates.postTemplatesByIdRestore": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "slug": "example",
+      "name": "Ada Example",
+      "description": "example",
+      "origin": "baked",
+      "status": "active",
+      "activeVersion": "example",
+      "styles": ["generic"],
+      "blueprint": false,
+      "shared": false,
+      "icon": "example",
+      "group": "example",
+      "aliases": ["example"],
+      "fromBlueprint": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a3",
+        "name": "Ada Example"
+      },
+      "openReview": false,
+      "passCount": 10,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "inputSchema": {},
+      "sample": {
+        "example": {}
+      },
+      "manifest": {},
+      "versions": [
+        {
+          "version": "example",
+          "createdAt": 1764000000000,
+          "createdBy": "example",
+          "assets": [
+            {
+              "name": "Ada Example",
+              "slot": "example",
+              "scale": 1,
+              "locale": "example",
+              "size": 1,
+              "sha1": "example",
+              "crc32": 1,
+              "width": 1,
+              "height": 1
+            }
+          ],
+          "report": {
+            "ok": false,
+            "issues": [
+              {
+                "severity": "error",
+                "code": "AB12CD34",
+                "message": "example"
+              }
+            ]
+          },
+          "active": false,
+          "displayOnly": false,
+          "passCount": 10
+        }
+      ],
+      "passesOnOlderVersions": 1,
+      "passesBlocked": 1,
+      "restorable": false
+    }
+  },
+  "templates.postTemplatesByIdCandidatesPromote": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "apple",
+      "version": "example"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "mode": "live",
+      "provider": "apple",
+      "version": "example",
+      "contentHash": "example",
+      "candidateHash": "example",
+      "adapterRevision": 1,
+      "adapterCapabilities": ["example"],
+      "audiencePolicyRevision": 1,
+      "authorId": "0193a1b2-7c00-7000-8000-0000000000a4",
+      "versionAuthorId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "authorName": "Ada Example",
+      "versionAuthorName": "Ada Example",
+      "createdAt": 1764000000000,
+      "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "sourceReleaseGeneration": 1,
+      "sourceReleaseHash": "example",
+      "accountId": "0193a1b2-7c00-7000-8000-0000000000a7",
+      "accountRevision": 10,
+      "providerIdentityHash": "example",
+      "projection": {},
+      "approvals": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "candidateId": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "candidateHash": "example",
+          "reviewerId": "0193a1b2-7c00-7000-8000-0000000000aa",
+          "reviewerName": "Ada Example",
+          "kind": "peer",
+          "createdAt": 1764000000000
+        }
+      ]
+    }
+  },
+  "templates.postTemplatesByIdReleasesRollback": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "apple",
+      "releaseId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "candidateHash": "example",
+      "expectedGeneration": 1,
+      "reason": "example"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "mode": "live",
+      "provider": "apple",
+      "version": "example",
+      "generation": 1,
+      "candidateHash": "example",
+      "source": "approved",
+      "action": "release",
+      "previousReleaseId": "0193a1b2-7c00-7000-8000-0000000000a4",
+      "createdBy": "example",
+      "createdByName": "Ada Example",
+      "createdAt": 1764000000000,
+      "candidateId": "0193a1b2-7c00-7000-8000-0000000000a5",
+      "approvalId": "0193a1b2-7c00-7000-8000-0000000000a6",
+      "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a7",
+      "sourceReleaseGeneration": 1,
+      "sourceReleaseHash": "example",
+      "accountId": "0193a1b2-7c00-7000-8000-0000000000a8",
+      "accountRevision": 10,
+      "providerIdentityHash": "example"
+    }
   }
 }

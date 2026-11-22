@@ -4,20 +4,29 @@ const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
 const result = await pb.messageRules.countDue({
   orgId: '0193a1b2-7c00-7000-8000-0000000000a1',
-  name: 'Example',
+  name: 'Ada Example',
   templateIds: [
-    '0193a1b2-7c00-7000-8000-0000000000b1',
+    '0193a1b2-7c00-7000-8000-0000000000a2',
+  ],
+  match: [
+    {
+      input: 'example',
+      values: [
+        'example',
+      ],
+    },
   ],
   anchor: {
     kind: 'input',
-    input: 'Example',
+    input: 'example',
   },
   offset: {
-    amount: 0,
+    amount: 1,
     unit: 'day',
     when: 'before',
   },
-  timeZone: 'Europe/Berlin',
-  message: 'Example',
+  yearly: false,
+  timeZone: 'example',
+  message: 'example',
 });
 console.log(result);

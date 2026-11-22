@@ -17,7 +17,9 @@ func main() {
 	}
 
 	var body passbook.BundlesSendEmailBody
-	if err := json.Unmarshal([]byte(`{}`), &body); err != nil {
+	if err := json.Unmarshal([]byte(`{
+  "to": "example"
+}`), &body); err != nil {
 		panic(err)
 	}
 

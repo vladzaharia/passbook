@@ -18,7 +18,9 @@ func main() {
 
 	var body passbook.PassesCheckInRulesUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "rules": {}
+  "rules": {
+    "mode": "single"
+  }
 }`), &body); err != nil {
 		panic(err)
 	}

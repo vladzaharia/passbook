@@ -2,8 +2,8 @@ import { PassBook } from '@passbook/sdk';
 
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
-const result = await pb.templates.listEligible({
+for await (const item of pb.templates.listEligible({
   mode: 'test',
   provider: 'apple',
-});
-console.log(result);
+  limit: 25,
+})) console.log(item);

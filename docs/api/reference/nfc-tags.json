@@ -1,14 +1,755 @@
 {
   "nfc-tags.getNfcTagTypes": {
-    "description": "The tag types of an organization."
+    "description": "The tag types of an organization.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "system": "uid",
+          "name": "Ada Example",
+          "use": "member",
+          "scopes": "pass",
+          "perPass": 1,
+          "bindingDays": 1,
+          "confirm": "none",
+          "typed": false,
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+          "version": 1,
+          "tagCount": 10,
+          "createdAt": 1764000000000,
+          "updatedAt": 1764000000000,
+          "archivedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "nfc-tags.postNfcTagTypes": {
-    "description": "Creates a tag type."
+    "description": "Creates a tag type.",
+    "request": {
+      "name": "Ada Example",
+      "use": "member",
+      "scopes": "pass",
+      "perPass": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "system": "uid",
+      "name": "Ada Example",
+      "use": "member",
+      "scopes": "pass",
+      "perPass": 1,
+      "bindingDays": 1,
+      "confirm": "none",
+      "typed": false,
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "version": 1,
+      "tagCount": 10,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "archivedAt": 1764000000000
+    }
   },
   "nfc-tags.patchNfcTagTypesById": {
-    "description": "Changes a tag type. Send the version you read."
+    "description": "Changes a tag type. Send the version you read.",
+    "request": {
+      "version": 1,
+      "name": "Ada Example",
+      "use": "member"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "system": "uid",
+      "name": "Ada Example",
+      "use": "member",
+      "scopes": "pass",
+      "perPass": 1,
+      "bindingDays": 1,
+      "confirm": "none",
+      "typed": false,
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "version": 1,
+      "tagCount": 10,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "archivedAt": 1764000000000
+    }
   },
   "nfc-tags.postNfcTagTypesByIdArchive": {
-    "description": "Archives a tag type. Its tags keep working."
+    "description": "Archives a tag type. Its tags keep working.",
+    "request": {
+      "version": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "system": "uid",
+      "name": "Ada Example",
+      "use": "member",
+      "scopes": "pass",
+      "perPass": 1,
+      "bindingDays": 1,
+      "confirm": "none",
+      "typed": false,
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "version": 1,
+      "tagCount": 10,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "archivedAt": 1764000000000
+    }
+  },
+  "nfc-tags.postNfcPassesByPassIdTags": {
+    "request": {
+      "tagId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "binding": "pass"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "ABCD",
+      "label": "Ada Example",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1764000000000,
+      "lastSeenAt": 1764000000000,
+      "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      }
+    }
+  },
+  "nfc-tags.patchNfcBindingsByBindingId": {
+    "request": {
+      "binding": "pass",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "ABCD",
+      "label": "Ada Example",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1764000000000,
+      "lastSeenAt": 1764000000000,
+      "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      }
+    }
+  },
+  "nfc-tags.patchNfcTagsById": {
+    "request": {
+      "label": "Ada Example",
+      "pool": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "ABCD",
+      "label": "Ada Example",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1764000000000,
+      "lastSeenAt": 1764000000000,
+      "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      }
+    }
+  },
+  "nfc-tags.getNfcScanners": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Ada Example",
+          "sessionName": "Ada Example",
+          "role": "door",
+          "online": false,
+          "unavailable": "offline",
+          "secureOnly": false,
+          "lastUsedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "nfc-tags.postNfcPassesByPassIdEnrollments": {
+    "request": {
+      "scannerId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "binding": "pass"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "scannerId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "scannerName": "Ada Example",
+      "scope": "pass",
+      "state": "pending",
+      "createdAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "endedAt": 1764000000000,
+      "shownAt": 1764000000000,
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      },
+      "errorCode": "TAG_LOST",
+      "hint": "ABCD"
+    }
+  },
+  "nfc-tags.postNfcPassesByPassIdTagsAssign": {
+    "request": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "format": "hex",
+      "binding": "pass",
+      "label": "Ada Example"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "ABCD",
+      "label": "Ada Example",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1764000000000,
+      "lastSeenAt": 1764000000000,
+      "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      }
+    }
+  },
+  "nfc-tags.getNfcTagsByIdHistory": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "tagId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "scope": "pass",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "passTitle": "Ada Example",
+          "userId": "0193a1b2-7c00-7000-8000-0000000000a4",
+          "holderName": "Ada Example",
+          "source": "scanner",
+          "lent": false,
+          "boundAt": 1764000000000,
+          "boundByName": "Ada Example",
+          "scannerName": "Ada Example",
+          "expiresAt": 1764000000000,
+          "endedAt": 1764000000000,
+          "endCause": "admin"
+        }
+      ],
+      "nextCursor": "c1.4812",
+      "events": [
+        {
+          "at": 1764000000000,
+          "action": "lost",
+          "actorName": "Ada Example"
+        }
+      ]
+    }
+  },
+  "nfc-tags.getNfcPassesByPassIdTags": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "kind": "uid",
+          "system": "uid",
+          "type": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+            "name": "Ada Example",
+            "use": "member"
+          },
+          "assurance": "basic",
+          "hint": "ABCD",
+          "label": "Ada Example",
+          "pool": false,
+          "status": "active",
+          "state": "assigned",
+          "createdAt": 1764000000000,
+          "lastSeenAt": 1764000000000,
+          "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "binding": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+            "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+            "scope": "pass",
+            "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+            "passTitle": "Ada Example",
+            "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+            "holderName": "Ada Example",
+            "source": "scanner",
+            "lent": false,
+            "boundAt": 1764000000000,
+            "boundByName": "Ada Example",
+            "scannerName": "Ada Example",
+            "expiresAt": 1764000000000,
+            "endedAt": 1764000000000,
+            "endCause": "admin"
+          }
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "nfc-tags.deleteNfcBindingsByBindingId": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "ABCD",
+      "label": "Ada Example",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1764000000000,
+      "lastSeenAt": 1764000000000,
+      "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      }
+    }
+  },
+  "nfc-tags.getNfcTags": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "kind": "uid",
+          "system": "uid",
+          "type": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+            "name": "Ada Example",
+            "use": "member"
+          },
+          "assurance": "basic",
+          "hint": "ABCD",
+          "label": "Ada Example",
+          "pool": false,
+          "status": "active",
+          "state": "assigned",
+          "createdAt": 1764000000000,
+          "lastSeenAt": 1764000000000,
+          "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "binding": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+            "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+            "scope": "pass",
+            "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+            "passTitle": "Ada Example",
+            "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+            "holderName": "Ada Example",
+            "source": "scanner",
+            "lent": false,
+            "boundAt": 1764000000000,
+            "boundByName": "Ada Example",
+            "scannerName": "Ada Example",
+            "expiresAt": 1764000000000,
+            "endedAt": 1764000000000,
+            "endCause": "admin"
+          }
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "nfc-tags.getNfcTagsById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "ABCD",
+      "label": "Ada Example",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1764000000000,
+      "lastSeenAt": 1764000000000,
+      "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      }
+    }
+  },
+  "nfc-tags.postNfcTagsByIdRetire": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "ABCD",
+      "label": "Ada Example",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1764000000000,
+      "lastSeenAt": 1764000000000,
+      "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      }
+    }
+  },
+  "nfc-tags.postNfcTagsByIdRestore": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "ABCD",
+      "label": "Ada Example",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1764000000000,
+      "lastSeenAt": 1764000000000,
+      "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      }
+    }
+  },
+  "nfc-tags.postNfcTagsByIdLost": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "name": "Ada Example",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "ABCD",
+      "label": "Ada Example",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1764000000000,
+      "lastSeenAt": 1764000000000,
+      "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      }
+    }
+  },
+  "nfc-tags.getNfcPassesByPassIdEnrollmentsById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "scannerId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "scannerName": "Ada Example",
+      "scope": "pass",
+      "state": "pending",
+      "createdAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "endedAt": 1764000000000,
+      "shownAt": 1764000000000,
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      },
+      "errorCode": "TAG_LOST",
+      "hint": "ABCD"
+    }
+  },
+  "nfc-tags.deleteNfcPassesByPassIdEnrollmentsById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "scannerId": "0193a1b2-7c00-7000-8000-0000000000a3",
+      "scannerName": "Ada Example",
+      "scope": "pass",
+      "state": "pending",
+      "createdAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "endedAt": 1764000000000,
+      "shownAt": 1764000000000,
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+        "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+        "passTitle": "Ada Example",
+        "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1764000000000,
+        "boundByName": "Ada Example",
+        "scannerName": "Ada Example",
+        "expiresAt": 1764000000000,
+        "endedAt": 1764000000000,
+        "endCause": "admin"
+      },
+      "errorCode": "TAG_LOST",
+      "hint": "ABCD"
+    }
+  },
+  "nfc-tags.getNfcUsersByUserIdTags": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "kind": "uid",
+          "system": "uid",
+          "type": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+            "name": "Ada Example",
+            "use": "member"
+          },
+          "assurance": "basic",
+          "hint": "ABCD",
+          "label": "Ada Example",
+          "pool": false,
+          "status": "active",
+          "state": "assigned",
+          "createdAt": 1764000000000,
+          "lastSeenAt": 1764000000000,
+          "keysetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "binding": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a4",
+            "tagId": "0193a1b2-7c00-7000-8000-0000000000a5",
+            "scope": "pass",
+            "passId": "0193a1b2-7c00-7000-8000-0000000000a6",
+            "passTitle": "Ada Example",
+            "userId": "0193a1b2-7c00-7000-8000-0000000000a7",
+            "holderName": "Ada Example",
+            "source": "scanner",
+            "lent": false,
+            "boundAt": 1764000000000,
+            "boundByName": "Ada Example",
+            "scannerName": "Ada Example",
+            "expiresAt": 1764000000000,
+            "endedAt": 1764000000000,
+            "endCause": "admin"
+          },
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "orgName": "Ada Example"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   }
 }

@@ -20,9 +20,11 @@ func main() {
 	if err := json.Unmarshal([]byte(`{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
   "passIds": [
-    "0193a1b2-7c00-7000-8000-0000000000c1"
+    "0193a1b2-7c00-7000-8000-0000000000a2"
   ],
-  "name": "Example"
+  "name": "Ada Example",
+  "holderEmail": "ada@example.com",
+  "sendEmail": false
 }`), &body); err != nil {
 		panic(err)
 	}

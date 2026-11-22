@@ -1,0 +1,190 @@
+{
+  "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged": {
+    "request": {
+      "mode": "live"
+    },
+    "response": {
+      "runId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "state": "queued",
+      "step": "example",
+      "waitingFor": "example",
+      "errorCode": "AB12CD34",
+      "issuerId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "updatedAt": 1764000000000
+    }
+  },
+  "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManagedComplete": {
+    "request": {
+      "issuerId": "1"
+    },
+    "response": {
+      "runId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "state": "queued",
+      "step": "example",
+      "waitingFor": "example",
+      "errorCode": "AB12CD34",
+      "issuerId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "updatedAt": 1764000000000
+    }
+  },
+  "wallet-platform.postPlatformWalletCredentialsByIdRotateKey": {
+    "response": {
+      "runId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    }
+  },
+  "wallet-platform.getPlatformWalletCredentials": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "scope": "platform",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "mode": "live",
+          "provider": "google",
+          "identityHint": "example",
+          "provenance": "platform",
+          "revision": 1,
+          "verifiedAt": 1764000000000,
+          "revokedAt": 1764000000000,
+          "createdAt": 1764000000000,
+          "updatedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "wallet-platform.putPlatformWalletCredentials": {
+    "request": {
+      "provider": "google",
+      "expectedRevision": 1,
+      "credentials": {
+        "issuerId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "serviceAccountEmail": "ada@example.com",
+        "privateKeyPem": "example-key",
+        "scopes": ["https://www.googleapis.com/auth/wallet_object.issuer"]
+      },
+      "mode": "live"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "scope": "platform",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "provider": "google",
+      "identityHint": "example",
+      "provenance": "platform",
+      "revision": 1,
+      "verifiedAt": 1764000000000,
+      "revokedAt": 1764000000000,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000
+    }
+  },
+  "wallet-platform.postPlatformWalletCredentialsByIdRevoke": {
+    "request": {
+      "expectedRevision": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "scope": "platform",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "provider": "google",
+      "identityHint": "example",
+      "provenance": "platform",
+      "revision": 1,
+      "verifiedAt": 1764000000000,
+      "revokedAt": 1764000000000,
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000
+    }
+  },
+  "wallet-platform.postPlatformWalletCredentialsByIdCheck": {
+    "response": {
+      "checkId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "status": "queued"
+    }
+  },
+  "wallet-platform.getPlatformWalletCredentialsByIdChecksByCheckId": {
+    "response": {
+      "checkId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "status": "pending",
+      "code": "AB12CD34",
+      "checkedAt": 1764000000000
+    }
+  },
+  "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold": {
+    "request": {
+      "reason": "example"
+    },
+    "response": {
+      "status": "held"
+    }
+  },
+  "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderRelease": {
+    "response": {
+      "status": "held"
+    }
+  },
+  "wallet-platform.getPlatformWalletEnrolments": {
+    "response": {
+      "items": [
+        {
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Ada Example",
+          "mode": "live",
+          "provider": "google",
+          "source": "platform",
+          "state": "off",
+          "hold": {
+            "at": 1764000000000,
+            "reason": "example"
+          },
+          "updatedAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "wallet-platform.getPlatformWalletCredentialsMigrate": {
+    "response": {
+      "pending": 1,
+      "migrated": 1,
+      "items": [
+        {
+          "accountId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "mode": "live",
+          "provider": "google",
+          "state": "ready",
+          "reason": "identity_shared",
+          "identityShared": [
+            {
+              "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
+              "mode": "live",
+              "provider": "google"
+            }
+          ]
+        }
+      ],
+      "nextCursor": "c1.4812",
+      "next": "example"
+    }
+  },
+  "wallet-platform.postPlatformWalletCredentialsMigrate": {
+    "response": {
+      "queued": 1
+    }
+  },
+  "wallet-platform.postPlatformWalletCredentialsMigrateResolve": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "action": "assign_platform"
+    },
+    "response": {
+      "accounts": 10
+    }
+  }
+}

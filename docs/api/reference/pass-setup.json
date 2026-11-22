@@ -401,7 +401,7 @@
     }
   },
   "pass-setup.patchOrgsByOrgIdPassSetup": {
-    "description": "Change the brand, support, email and which channels the organization allows, in one write against the revision you read. ?dryRun=true answers with the same shape and writes nothing. Absent leaves a value, null clears it. Name an image by the sha POST /orgs/{orgId}/brand-assets answered. Allowing Google or Samsung also turns on the enrolment when the platform has released the provider and the account is ready; blocking never removes copies. A stale expectedRevision is 409 PASS_SETUP_CHANGED.",
+    "description": "Change the brand, support, email and which channels the organization allows, in one write against the revision you read. ?dryRun=true answers with the same shape and writes nothing. Absent leaves a value, null clears it. Name an image by the sha POST /orgs/{orgId}/brand-assets answered. Allowing Google or Samsung also turns on the enrollment when the platform has released the provider and the account is ready; blocking never removes copies. A stale expectedRevision is 409 PASS_SETUP_CHANGED.",
     "request": {
       "expectedRevision": "r1",
       "brand": {

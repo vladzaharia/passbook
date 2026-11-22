@@ -17,7 +17,10 @@ func main() {
 	}
 
 	var body passbook.ScanningSessionsUpdateBody
-	if err := json.Unmarshal([]byte(`{}`), &body); err != nil {
+	if err := json.Unmarshal([]byte(`{
+  "name": "Ada Example",
+  "timeZone": "example"
+}`), &body); err != nil {
 		panic(err)
 	}
 

@@ -2,6 +2,6 @@ curl -X POST "https://passbook.mobile/api/v1/holders/clear-block" \
   -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-  "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-  "userId": "0193a1b2-7c00-7000-8000-0000000000e1"
+  "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+  "userId": "0193a1b2-7c00-7000-8000-0000000000a2"
 }'

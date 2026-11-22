@@ -1,20 +1,216 @@
 {
   "scan-events.getScanEvents": {
-    "description": "Lists scan events."
+    "description": "Lists scan events.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "mode": "live",
+          "name": "Ada Example",
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+          "match": {
+            "input": "example",
+            "values": ["example"]
+          },
+          "opensAt": 1764000000000,
+          "closesAt": 1764000000000,
+          "timeZone": "example",
+          "capacity": 10,
+          "reentry": false,
+          "hardLimit": false,
+          "note": "example",
+          "status": "upcoming",
+          "arrived": 1,
+          "expected": 1,
+          "scanners": 1
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "scan-events.postScanEvents": {
-    "description": "Creates a scan event."
+    "description": "Creates a scan event.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+      "match": {
+        "input": "example",
+        "values": ["example"]
+      },
+      "opensAt": 1764000000000,
+      "closesAt": 1764000000000,
+      "timeZone": "example",
+      "capacity": 10
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "match": {
+        "input": "example",
+        "values": ["example"]
+      },
+      "opensAt": 1764000000000,
+      "closesAt": 1764000000000,
+      "timeZone": "example",
+      "capacity": 10,
+      "reentry": false,
+      "hardLimit": false,
+      "note": "example",
+      "status": "upcoming",
+      "arrived": 1,
+      "expected": 1,
+      "scanners": 1
+    }
   },
   "scan-events.getScanEventsById": {
-    "description": "One scan event."
+    "description": "One scan event.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "match": {
+        "input": "example",
+        "values": ["example"]
+      },
+      "opensAt": 1764000000000,
+      "closesAt": 1764000000000,
+      "timeZone": "example",
+      "capacity": 10,
+      "reentry": false,
+      "hardLimit": false,
+      "note": "example",
+      "status": "upcoming",
+      "arrived": 1,
+      "expected": 1,
+      "scanners": 1
+    }
   },
   "scan-events.patchScanEventsById": {
-    "description": "Edits a scan event."
+    "description": "Edits a scan event.",
+    "request": {
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a1"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "match": {
+        "input": "example",
+        "values": ["example"]
+      },
+      "opensAt": 1764000000000,
+      "closesAt": 1764000000000,
+      "timeZone": "example",
+      "capacity": 10,
+      "reentry": false,
+      "hardLimit": false,
+      "note": "example",
+      "status": "upcoming",
+      "arrived": 1,
+      "expected": 1,
+      "scanners": 1
+    }
   },
   "scan-events.postScanEventsByIdArchive": {
-    "description": "Archives a scan event. Its scanners are detached."
+    "description": "Archives a scan event. Its scanners are detached.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "match": {
+        "input": "example",
+        "values": ["example"]
+      },
+      "opensAt": 1764000000000,
+      "closesAt": 1764000000000,
+      "timeZone": "example",
+      "capacity": 10,
+      "reentry": false,
+      "hardLimit": false,
+      "note": "example",
+      "status": "upcoming",
+      "arrived": 1,
+      "expected": 1,
+      "scanners": 1
+    }
   },
   "scan-events.postScanEventsByIdScanners": {
-    "description": "Moves scanners onto a scan event."
+    "description": "Moves scanners onto a scan event.",
+    "request": {
+      "scannerIds": ["0193a1b2-7c00-7000-8000-0000000000a1"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "name": "Ada Example",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+      "match": {
+        "input": "example",
+        "values": ["example"]
+      },
+      "opensAt": 1764000000000,
+      "closesAt": 1764000000000,
+      "timeZone": "example",
+      "capacity": 10,
+      "reentry": false,
+      "hardLimit": false,
+      "note": "example",
+      "status": "upcoming",
+      "arrived": 1,
+      "expected": 1,
+      "scanners": 1
+    }
+  },
+  "scan-events.getScanEventsByIdInside": {
+    "response": {
+      "items": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "holder": "example",
+          "photoUrl": "https://passbook.mobile/p/abc123",
+          "plan": "example",
+          "type": "example",
+          "host": "example",
+          "place": "zone:main",
+          "placeName": "Ada Example",
+          "parentName": "Ada Example",
+          "since": 1,
+          "dueAt": 1764000000000,
+          "via": "example",
+          "flags": ["long_stay"]
+        }
+      ],
+      "count": 10,
+      "rev": 1,
+      "places": [
+        {
+          "name": "Ada Example",
+          "inNow": 1,
+          "capacity": 10,
+          "place": "zone:main",
+          "rev": 1
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "scan-events.postScanEventsByIdMarkOut": {
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "place": "zone:main"
+    }
   }
 }

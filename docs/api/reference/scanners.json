@@ -140,48 +140,2094 @@
     }
   },
   "scanners.patchScannersById": {
-    "description": "Edits a scanner."
+    "description": "Edits a scanner.",
+    "request": {
+      "name": "Ada Example",
+      "accepts": {
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000a1"
+      }
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "device",
+      "deviceRole": "scan",
+      "name": "Ada Example",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        }
+      },
+      "timeZone": "example",
+      "status": "not_paired",
+      "online": false,
+      "pairedAt": 1764000000000,
+      "pairedLabel": "Ada Example",
+      "lastSeenAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "name": "Ada Example"
+      },
+      "today": 1,
+      "createdAt": 1764000000000
+    }
   },
   "scanners.postScannersByIdRevoke": {
-    "description": "Removes a scanner from use."
+    "description": "Removes a scanner from use.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "device",
+      "deviceRole": "scan",
+      "name": "Ada Example",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        }
+      },
+      "timeZone": "example",
+      "status": "not_paired",
+      "online": false,
+      "pairedAt": 1764000000000,
+      "pairedLabel": "Ada Example",
+      "lastSeenAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "name": "Ada Example"
+      },
+      "today": 1,
+      "createdAt": 1764000000000
+    }
   },
   "scanners.postScannersByIdMode": {
-    "description": "Moves a scanner live, or to test mode."
+    "description": "Moves a scanner live, or to test mode.",
+    "request": {
+      "mode": "live",
+      "detachEvent": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "device",
+      "deviceRole": "scan",
+      "name": "Ada Example",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        }
+      },
+      "timeZone": "example",
+      "status": "not_paired",
+      "online": false,
+      "pairedAt": 1764000000000,
+      "pairedLabel": "Ada Example",
+      "lastSeenAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "name": "Ada Example"
+      },
+      "today": 1,
+      "createdAt": 1764000000000
+    }
   },
   "scanners.postScanners": {
-    "description": "Creates a scanner. A device comes with a pairing code."
+    "description": "Creates a scanner. A device comes with a pairing code.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "kind": "device",
+      "accepts": {
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000a2"
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single"
+        }
+      },
+      "timeZone": "example"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "device",
+      "deviceRole": "scan",
+      "name": "Ada Example",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        }
+      },
+      "timeZone": "example",
+      "status": "not_paired",
+      "online": false,
+      "pairedAt": 1764000000000,
+      "pairedLabel": "Ada Example",
+      "lastSeenAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "name": "Ada Example"
+      },
+      "today": 1,
+      "createdAt": 1764000000000,
+      "pairing": {
+        "code": "AB12CD34",
+        "url": "https://passbook.mobile/p/abc123",
+        "expiresAt": 1764000000000
+      }
+    }
   },
   "scanners.postScannersByIdPairing": {
-    "description": "Makes a new pairing code. It replaces any live one."
+    "description": "Makes a new pairing code. It replaces any live one.",
+    "response": {
+      "code": "AB12CD34",
+      "url": "https://passbook.mobile/p/abc123",
+      "expiresAt": 1764000000000
+    }
   },
   "scanners.getScannersByIdPairing": {
-    "description": "Polls a pairing to see whether the device has paired."
+    "description": "Polls a pairing to see whether the device has paired.",
+    "response": {
+      "state": "waiting",
+      "device": {
+        "label": "Ada Example",
+        "at": 1764000000000
+      }
+    }
   },
   "scanners.postScannersByIdToken": {
-    "description": "Makes a till token, shown once. It replaces the old one."
+    "description": "Makes a till token, shown once. It replaces the old one.",
+    "response": {
+      "token": "AB12CD34",
+      "expiresAt": 1764000000000
+    }
   },
   "scanners.getScanSetups": {
-    "description": "Lists managed scanner and screen setups."
+    "description": "Lists managed scanner and screen setups.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "mode": "live",
+          "kind": "device",
+          "deviceRole": "scan",
+          "name": "Ada Example",
+          "accepts": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+              "validFrom": 1,
+              "validUntil": 1,
+              "durationMinutes": 1,
+              "durationFrom": "first_scan",
+              "days": 1
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "none",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 1,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["example"],
+              "confirmBasic": "none"
+            }
+          },
+          "timeZone": "example",
+          "status": "not_paired",
+          "online": false,
+          "pairedAt": 1764000000000,
+          "pairedLabel": "Ada Example",
+          "lastSeenAt": 1764000000000,
+          "expiresAt": 1764000000000,
+          "staff": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+            "name": "Ada Example"
+          },
+          "today": 1,
+          "createdAt": 1764000000000,
+          "sessionId": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "adminSession": false,
+          "adminUser": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a9",
+            "name": "Ada Example"
+          },
+          "watch": {
+            "scannerIds": ["0193a1b2-7c00-7000-8000-0000000000aa"],
+            "allOrg": false,
+            "sessionIds": ["0193a1b2-7c00-7000-8000-0000000000ab"],
+            "eventId": "0193a1b2-7c00-7000-8000-0000000000ac",
+            "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000ad"]
+          }
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "scanners.getScanSetupsById": {
-    "description": "A scanner setup and its view settings."
+    "description": "A scanner setup and its view settings.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "device",
+      "deviceRole": "scan",
+      "name": "Ada Example",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        }
+      },
+      "timeZone": "example",
+      "status": "not_paired",
+      "online": false,
+      "pairedAt": 1764000000000,
+      "pairedLabel": "Ada Example",
+      "lastSeenAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "name": "Ada Example"
+      },
+      "today": 1,
+      "createdAt": 1764000000000,
+      "sessionId": "0193a1b2-7c00-7000-8000-0000000000a8",
+      "adminSession": false,
+      "adminUser": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a9",
+        "name": "Ada Example"
+      },
+      "watch": {
+        "scannerIds": ["0193a1b2-7c00-7000-8000-0000000000aa"],
+        "allOrg": false,
+        "sessionIds": ["0193a1b2-7c00-7000-8000-0000000000ab"],
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000ac",
+        "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000ad"]
+      }
+    }
   },
   "scanners.getScanningSessions": {
-    "description": "Lists scanning sessions."
+    "description": "Lists scanning sessions.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "orgName": "Ada Example",
+          "mode": "live",
+          "name": "Ada Example",
+          "status": "active",
+          "accepts": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+              "validFrom": 1,
+              "validUntil": 1,
+              "durationMinutes": 1,
+              "durationFrom": "first_scan",
+              "days": 1
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "none",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 1,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["example"],
+              "confirmBasic": "none"
+            },
+            "customer": {
+              "welcome": "example",
+              "refusedLine": "example",
+              "greet": false,
+              "showReady": false,
+              "showDraft": false
+            }
+          },
+          "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000a7"],
+          "timeZone": "example",
+          "hours": {
+            "mon": ["09:00-17:00"],
+            "tue": ["09:00-17:00"],
+            "wed": ["09:00-17:00"],
+            "thu": ["09:00-17:00"],
+            "fri": ["09:00-17:00"],
+            "sat": ["09:00-17:00"],
+            "sun": ["09:00-17:00"],
+            "dates": {
+              "example": ["09:00-17:00"]
+            }
+          },
+          "hoursInvalid": true,
+          "hold": {
+            "state": "open",
+            "until": 1
+          },
+          "window": {
+            "open": false,
+            "by": "always",
+            "opensAt": 1764000000000,
+            "closesAt": 1764000000000
+          },
+          "createdAt": 1764000000000,
+          "updatedAt": 1764000000000,
+          "deviceCount": 10,
+          "onlineCount": 10,
+          "today": 1
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "scanners.getScanningSessionsById": {
-    "description": "A session's rules and devices."
+    "description": "A session's rules and devices.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "mode": "live",
+      "name": "Ada Example",
+      "status": "active",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        },
+        "customer": {
+          "welcome": "example",
+          "refusedLine": "example",
+          "greet": false,
+          "showReady": false,
+          "showDraft": false
+        }
+      },
+      "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000a7"],
+      "timeZone": "example",
+      "hours": {
+        "mon": ["09:00-17:00"],
+        "tue": ["09:00-17:00"],
+        "wed": ["09:00-17:00"],
+        "thu": ["09:00-17:00"],
+        "fri": ["09:00-17:00"],
+        "sat": ["09:00-17:00"],
+        "sun": ["09:00-17:00"],
+        "dates": {
+          "example": ["09:00-17:00"]
+        }
+      },
+      "hoursInvalid": true,
+      "hold": {
+        "state": "open",
+        "until": 1
+      },
+      "window": {
+        "open": false,
+        "by": "always",
+        "opensAt": 1764000000000,
+        "closesAt": 1764000000000
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "deviceCount": 10,
+      "onlineCount": 10,
+      "today": 1,
+      "devices": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "sessionId": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "name": "Ada Example",
+          "surface": "auto",
+          "effectiveSurface": "phone",
+          "overrides": {
+            "flow": "auto",
+            "reader": "none",
+            "direction": "in",
+            "lookup": false,
+            "showPhoto": false
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000aa",
+              "validFrom": 1,
+              "validUntil": 1,
+              "durationMinutes": 1,
+              "durationFrom": "first_scan",
+              "days": 1
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "none",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 1,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["example"],
+              "confirmBasic": "none"
+            }
+          },
+          "capabilities": {
+            "width": 1,
+            "height": 1,
+            "touch": false,
+            "camera": "unknown",
+            "keyboard": false,
+            "nativeBarcode": false,
+            "native": {
+              "platform": "ios",
+              "appVersion": "example",
+              "camera": {
+                "available": false,
+                "permission": "unknown"
+              },
+              "keyboard": {
+                "supported": false,
+                "connected": false,
+                "connectionObservable": false
+              },
+              "nfc": {
+                "available": false,
+                "reading": false,
+                "formats": ["ndef"]
+              },
+              "haptics": false,
+              "vas": {
+                "deviceSupported": false,
+                "available": false,
+                "reader": "proximityReader",
+                "reason": "example"
+              },
+              "externalReader": {
+                "mode": "keyboard",
+                "connected": false
+              },
+              "customerDisplay": {
+                "supported": false,
+                "available": false,
+                "active": false
+              },
+              "layout": {
+                "posture": "unknown",
+                "division": {
+                  "x": 1,
+                  "y": 1,
+                  "width": 1,
+                  "height": 1
+                }
+              }
+            },
+            "hardware": [
+              {
+                "kind": "camera",
+                "count": 10,
+                "builtIn": false,
+                "connected": false,
+                "state": "ready"
+              }
+            ],
+            "surfaces": ["phone"],
+            "preferred": "phone"
+          },
+          "reportedAt": 1764000000000,
+          "paired": false,
+          "online": false,
+          "revoked": false,
+          "lastSeenAt": 1764000000000,
+          "updatedAt": 1764000000000,
+          "signIn": "paired",
+          "adminName": "Ada Example"
+        }
+      ],
+      "activity": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ac",
+          "at": 1764000000000,
+          "deviceId": "0193a1b2-7c00-7000-8000-0000000000ad",
+          "deviceName": "Ada Example",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000ae",
+          "title": "Ada Example",
+          "outcome": "ok",
+          "direction": "in",
+          "scanId": "0193a1b2-7c00-7000-8000-0000000000af",
+          "reason": "not_found",
+          "staff": "example",
+          "method": "camera",
+          "undoable": false,
+          "groupSize": 2
+        }
+      ]
+    }
   },
   "scanners.patchScanningSessionsById": {
-    "description": "Updates the rules shared by a session's devices."
+    "description": "Updates the rules shared by a session's devices.",
+    "request": {
+      "name": "Ada Example",
+      "timeZone": "example"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "mode": "live",
+      "name": "Ada Example",
+      "status": "active",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        },
+        "customer": {
+          "welcome": "example",
+          "refusedLine": "example",
+          "greet": false,
+          "showReady": false,
+          "showDraft": false
+        }
+      },
+      "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000a7"],
+      "timeZone": "example",
+      "hours": {
+        "mon": ["09:00-17:00"],
+        "tue": ["09:00-17:00"],
+        "wed": ["09:00-17:00"],
+        "thu": ["09:00-17:00"],
+        "fri": ["09:00-17:00"],
+        "sat": ["09:00-17:00"],
+        "sun": ["09:00-17:00"],
+        "dates": {
+          "example": ["09:00-17:00"]
+        }
+      },
+      "hoursInvalid": true,
+      "hold": {
+        "state": "open",
+        "until": 1
+      },
+      "window": {
+        "open": false,
+        "by": "always",
+        "opensAt": 1764000000000,
+        "closesAt": 1764000000000
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "deviceCount": 10,
+      "onlineCount": 10,
+      "today": 1,
+      "devices": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "sessionId": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "name": "Ada Example",
+          "surface": "auto",
+          "effectiveSurface": "phone",
+          "overrides": {
+            "flow": "auto",
+            "reader": "none",
+            "direction": "in",
+            "lookup": false,
+            "showPhoto": false
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000aa",
+              "validFrom": 1,
+              "validUntil": 1,
+              "durationMinutes": 1,
+              "durationFrom": "first_scan",
+              "days": 1
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "none",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 1,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["example"],
+              "confirmBasic": "none"
+            }
+          },
+          "capabilities": {
+            "width": 1,
+            "height": 1,
+            "touch": false,
+            "camera": "unknown",
+            "keyboard": false,
+            "nativeBarcode": false,
+            "native": {
+              "platform": "ios",
+              "appVersion": "example",
+              "camera": {
+                "available": false,
+                "permission": "unknown"
+              },
+              "keyboard": {
+                "supported": false,
+                "connected": false,
+                "connectionObservable": false
+              },
+              "nfc": {
+                "available": false,
+                "reading": false,
+                "formats": ["ndef"]
+              },
+              "haptics": false,
+              "vas": {
+                "deviceSupported": false,
+                "available": false,
+                "reader": "proximityReader",
+                "reason": "example"
+              },
+              "externalReader": {
+                "mode": "keyboard",
+                "connected": false
+              },
+              "customerDisplay": {
+                "supported": false,
+                "available": false,
+                "active": false
+              },
+              "layout": {
+                "posture": "unknown",
+                "division": {
+                  "x": 1,
+                  "y": 1,
+                  "width": 1,
+                  "height": 1
+                }
+              }
+            },
+            "hardware": [
+              {
+                "kind": "camera",
+                "count": 10,
+                "builtIn": false,
+                "connected": false,
+                "state": "ready"
+              }
+            ],
+            "surfaces": ["phone"],
+            "preferred": "phone"
+          },
+          "reportedAt": 1764000000000,
+          "paired": false,
+          "online": false,
+          "revoked": false,
+          "lastSeenAt": 1764000000000,
+          "updatedAt": 1764000000000,
+          "signIn": "paired",
+          "adminName": "Ada Example"
+        }
+      ],
+      "activity": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ac",
+          "at": 1764000000000,
+          "deviceId": "0193a1b2-7c00-7000-8000-0000000000ad",
+          "deviceName": "Ada Example",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000ae",
+          "title": "Ada Example",
+          "outcome": "ok",
+          "direction": "in",
+          "scanId": "0193a1b2-7c00-7000-8000-0000000000af",
+          "reason": "not_found",
+          "staff": "example",
+          "method": "camera",
+          "undoable": false,
+          "groupSize": 2
+        }
+      ]
+    }
   },
   "scanners.postScanningSessionsByIdHold": {
-    "description": "Closes the session now, opens it now, or goes back to the session hours."
+    "description": "Closes the session now, opens it now, or goes back to the session hours.",
+    "request": {
+      "action": "close",
+      "revision": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "mode": "live",
+      "name": "Ada Example",
+      "status": "active",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        },
+        "customer": {
+          "welcome": "example",
+          "refusedLine": "example",
+          "greet": false,
+          "showReady": false,
+          "showDraft": false
+        }
+      },
+      "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000a7"],
+      "timeZone": "example",
+      "hours": {
+        "mon": ["09:00-17:00"],
+        "tue": ["09:00-17:00"],
+        "wed": ["09:00-17:00"],
+        "thu": ["09:00-17:00"],
+        "fri": ["09:00-17:00"],
+        "sat": ["09:00-17:00"],
+        "sun": ["09:00-17:00"],
+        "dates": {
+          "example": ["09:00-17:00"]
+        }
+      },
+      "hoursInvalid": true,
+      "hold": {
+        "state": "open",
+        "until": 1
+      },
+      "window": {
+        "open": false,
+        "by": "always",
+        "opensAt": 1764000000000,
+        "closesAt": 1764000000000
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "deviceCount": 10,
+      "onlineCount": 10,
+      "today": 1,
+      "devices": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "sessionId": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "name": "Ada Example",
+          "surface": "auto",
+          "effectiveSurface": "phone",
+          "overrides": {
+            "flow": "auto",
+            "reader": "none",
+            "direction": "in",
+            "lookup": false,
+            "showPhoto": false
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000aa",
+              "validFrom": 1,
+              "validUntil": 1,
+              "durationMinutes": 1,
+              "durationFrom": "first_scan",
+              "days": 1
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "none",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 1,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["example"],
+              "confirmBasic": "none"
+            }
+          },
+          "capabilities": {
+            "width": 1,
+            "height": 1,
+            "touch": false,
+            "camera": "unknown",
+            "keyboard": false,
+            "nativeBarcode": false,
+            "native": {
+              "platform": "ios",
+              "appVersion": "example",
+              "camera": {
+                "available": false,
+                "permission": "unknown"
+              },
+              "keyboard": {
+                "supported": false,
+                "connected": false,
+                "connectionObservable": false
+              },
+              "nfc": {
+                "available": false,
+                "reading": false,
+                "formats": ["ndef"]
+              },
+              "haptics": false,
+              "vas": {
+                "deviceSupported": false,
+                "available": false,
+                "reader": "proximityReader",
+                "reason": "example"
+              },
+              "externalReader": {
+                "mode": "keyboard",
+                "connected": false
+              },
+              "customerDisplay": {
+                "supported": false,
+                "available": false,
+                "active": false
+              },
+              "layout": {
+                "posture": "unknown",
+                "division": {
+                  "x": 1,
+                  "y": 1,
+                  "width": 1,
+                  "height": 1
+                }
+              }
+            },
+            "hardware": [
+              {
+                "kind": "camera",
+                "count": 10,
+                "builtIn": false,
+                "connected": false,
+                "state": "ready"
+              }
+            ],
+            "surfaces": ["phone"],
+            "preferred": "phone"
+          },
+          "reportedAt": 1764000000000,
+          "paired": false,
+          "online": false,
+          "revoked": false,
+          "lastSeenAt": 1764000000000,
+          "updatedAt": 1764000000000,
+          "signIn": "paired",
+          "adminName": "Ada Example"
+        }
+      ],
+      "activity": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ac",
+          "at": 1764000000000,
+          "deviceId": "0193a1b2-7c00-7000-8000-0000000000ad",
+          "deviceName": "Ada Example",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000ae",
+          "title": "Ada Example",
+          "outcome": "ok",
+          "direction": "in",
+          "scanId": "0193a1b2-7c00-7000-8000-0000000000af",
+          "reason": "not_found",
+          "staff": "example",
+          "method": "camera",
+          "undoable": false,
+          "groupSize": 2
+        }
+      ]
+    }
   },
   "scanners.patchScanningSessionsByIdDevicesByDeviceId": {
-    "description": "Configures one device of a session."
+    "description": "Configures one device of a session.",
+    "request": {
+      "name": "Ada Example",
+      "surface": "auto"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "sessionId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "name": "Ada Example",
+      "surface": "auto",
+      "effectiveSurface": "phone",
+      "overrides": {
+        "flow": "auto",
+        "reader": "none",
+        "direction": "in",
+        "lookup": false,
+        "showPhoto": false
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        }
+      },
+      "capabilities": {
+        "width": 1,
+        "height": 1,
+        "touch": false,
+        "camera": "unknown",
+        "keyboard": false,
+        "nativeBarcode": false,
+        "native": {
+          "platform": "ios",
+          "appVersion": "example",
+          "camera": {
+            "available": false,
+            "permission": "unknown"
+          },
+          "keyboard": {
+            "supported": false,
+            "connected": false,
+            "connectionObservable": false
+          },
+          "nfc": {
+            "available": false,
+            "reading": false,
+            "continuous": false,
+            "formats": ["ndef"]
+          },
+          "haptics": false,
+          "vas": {
+            "deviceSupported": false,
+            "available": false,
+            "reader": "proximityReader",
+            "reason": "example"
+          },
+          "externalReader": {
+            "mode": "keyboard",
+            "connected": false
+          },
+          "customerDisplay": {
+            "supported": false,
+            "available": false,
+            "active": false
+          },
+          "layout": {
+            "posture": "unknown",
+            "division": {
+              "x": 1,
+              "y": 1,
+              "width": 1,
+              "height": 1
+            }
+          }
+        },
+        "hardware": [
+          {
+            "kind": "camera",
+            "count": 10,
+            "builtIn": false,
+            "connected": false,
+            "state": "ready"
+          }
+        ],
+        "surfaces": ["phone"],
+        "preferred": "phone"
+      },
+      "reportedAt": 1764000000000,
+      "paired": false,
+      "online": false,
+      "revoked": false,
+      "lastSeenAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "signIn": "paired",
+      "adminName": "Ada Example"
+    }
   },
   "scanners.postScanningSessionsByIdDevices": {
-    "description": "Adds a device to a scanning session."
+    "description": "Adds a device to a scanning session.",
+    "request": {
+      "name": "Ada Example",
+      "surface": "auto"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "sessionId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "name": "Ada Example",
+      "surface": "auto",
+      "effectiveSurface": "phone",
+      "overrides": {
+        "flow": "auto",
+        "reader": "none",
+        "direction": "in",
+        "lookup": false,
+        "showPhoto": false
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        }
+      },
+      "capabilities": {
+        "width": 1,
+        "height": 1,
+        "touch": false,
+        "camera": "unknown",
+        "keyboard": false,
+        "nativeBarcode": false,
+        "native": {
+          "platform": "ios",
+          "appVersion": "example",
+          "camera": {
+            "available": false,
+            "permission": "unknown"
+          },
+          "keyboard": {
+            "supported": false,
+            "connected": false,
+            "connectionObservable": false
+          },
+          "nfc": {
+            "available": false,
+            "reading": false,
+            "continuous": false,
+            "formats": ["ndef"]
+          },
+          "haptics": false,
+          "vas": {
+            "deviceSupported": false,
+            "available": false,
+            "reader": "proximityReader",
+            "reason": "example"
+          },
+          "externalReader": {
+            "mode": "keyboard",
+            "connected": false
+          },
+          "customerDisplay": {
+            "supported": false,
+            "available": false,
+            "active": false
+          },
+          "layout": {
+            "posture": "unknown",
+            "division": {
+              "x": 1,
+              "y": 1,
+              "width": 1,
+              "height": 1
+            }
+          }
+        },
+        "hardware": [
+          {
+            "kind": "camera",
+            "count": 10,
+            "builtIn": false,
+            "connected": false,
+            "state": "ready"
+          }
+        ],
+        "surfaces": ["phone"],
+        "preferred": "phone"
+      },
+      "reportedAt": 1764000000000,
+      "paired": false,
+      "online": false,
+      "revoked": false,
+      "lastSeenAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "signIn": "paired",
+      "adminName": "Ada Example",
+      "pairing": {
+        "code": "AB12CD34",
+        "url": "https://passbook.mobile/p/abc123",
+        "expiresAt": 1764000000000
+      }
+    }
+  },
+  "scanners.getScannersById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "device",
+      "deviceRole": "scan",
+      "name": "Ada Example",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        }
+      },
+      "timeZone": "example",
+      "status": "not_paired",
+      "online": false,
+      "pairedAt": 1764000000000,
+      "pairedLabel": "Ada Example",
+      "lastSeenAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "name": "Ada Example"
+      },
+      "today": 1,
+      "createdAt": 1764000000000
+    }
+  },
+  "scanners.getScanners": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "mode": "live",
+          "kind": "device",
+          "deviceRole": "scan",
+          "name": "Ada Example",
+          "accepts": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+              "validFrom": 1,
+              "validUntil": 1,
+              "durationMinutes": 1,
+              "durationFrom": "first_scan",
+              "days": 1
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "none",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 1,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["example"],
+              "confirmBasic": "none"
+            }
+          },
+          "timeZone": "example",
+          "status": "not_paired",
+          "online": false,
+          "pairedAt": 1764000000000,
+          "pairedLabel": "Ada Example",
+          "lastSeenAt": 1764000000000,
+          "expiresAt": 1764000000000,
+          "staff": {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+            "name": "Ada Example"
+          },
+          "today": 1,
+          "createdAt": 1764000000000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "scanners.postScannersByIdSamplePass": {
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000a2"
+    }
+  },
+  "scanners.postScanSetups": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "kind": "device",
+      "deviceRole": "scan",
+      "timeZone": "example"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "device",
+      "deviceRole": "scan",
+      "name": "Ada Example",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        }
+      },
+      "timeZone": "example",
+      "status": "not_paired",
+      "online": false,
+      "pairedAt": 1764000000000,
+      "pairedLabel": "Ada Example",
+      "lastSeenAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "name": "Ada Example"
+      },
+      "today": 1,
+      "createdAt": 1764000000000,
+      "sessionId": "0193a1b2-7c00-7000-8000-0000000000a8",
+      "adminSession": false,
+      "adminUser": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a9",
+        "name": "Ada Example"
+      },
+      "watch": {
+        "scannerIds": ["0193a1b2-7c00-7000-8000-0000000000aa"],
+        "allOrg": false,
+        "sessionIds": ["0193a1b2-7c00-7000-8000-0000000000ab"],
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000ac",
+        "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000ad"]
+      },
+      "pairing": {
+        "code": "AB12CD34",
+        "url": "https://passbook.mobile/p/abc123",
+        "expiresAt": 1764000000000
+      }
+    }
+  },
+  "scanners.patchScanSetupsById": {
+    "request": {
+      "name": "Ada Example",
+      "deviceRole": "scan"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "mode": "live",
+      "kind": "device",
+      "deviceRole": "scan",
+      "name": "Ada Example",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        }
+      },
+      "timeZone": "example",
+      "status": "not_paired",
+      "online": false,
+      "pairedAt": 1764000000000,
+      "pairedLabel": "Ada Example",
+      "lastSeenAt": 1764000000000,
+      "expiresAt": 1764000000000,
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
+        "name": "Ada Example"
+      },
+      "today": 1,
+      "createdAt": 1764000000000,
+      "sessionId": "0193a1b2-7c00-7000-8000-0000000000a8",
+      "adminSession": false,
+      "adminUser": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a9",
+        "name": "Ada Example"
+      },
+      "watch": {
+        "scannerIds": ["0193a1b2-7c00-7000-8000-0000000000aa"],
+        "allOrg": false,
+        "sessionIds": ["0193a1b2-7c00-7000-8000-0000000000ab"],
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000ac",
+        "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000ad"]
+      }
+    }
+  },
+  "scanners.postScanningSessions": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Ada Example",
+      "timeZone": "example",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a3"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single"
+        }
+      }
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "orgName": "Ada Example",
+      "mode": "live",
+      "name": "Ada Example",
+      "status": "active",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
+          "validFrom": 1,
+          "validUntil": 1,
+          "durationMinutes": 1,
+          "durationFrom": "first_scan",
+          "days": 1
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "none",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 1,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["example"],
+          "confirmBasic": "none"
+        },
+        "customer": {
+          "welcome": "example",
+          "refusedLine": "example",
+          "greet": false,
+          "showReady": false,
+          "showDraft": false
+        }
+      },
+      "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000a7"],
+      "timeZone": "example",
+      "hours": {
+        "mon": ["09:00-17:00"],
+        "tue": ["09:00-17:00"],
+        "wed": ["09:00-17:00"],
+        "thu": ["09:00-17:00"],
+        "fri": ["09:00-17:00"],
+        "sat": ["09:00-17:00"],
+        "sun": ["09:00-17:00"],
+        "dates": {
+          "example": ["09:00-17:00"]
+        }
+      },
+      "hoursInvalid": true,
+      "hold": {
+        "state": "open",
+        "until": 1
+      },
+      "window": {
+        "open": false,
+        "by": "always",
+        "opensAt": 1764000000000,
+        "closesAt": 1764000000000
+      },
+      "createdAt": 1764000000000,
+      "updatedAt": 1764000000000,
+      "deviceCount": 10,
+      "onlineCount": 10,
+      "today": 1,
+      "devices": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
+          "sessionId": "0193a1b2-7c00-7000-8000-0000000000a9",
+          "name": "Ada Example",
+          "surface": "auto",
+          "effectiveSurface": "phone",
+          "overrides": {
+            "flow": "auto",
+            "reader": "none",
+            "direction": "in",
+            "lookup": false,
+            "showPhoto": false
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000aa",
+              "validFrom": 1,
+              "validUntil": 1,
+              "durationMinutes": 1,
+              "durationFrom": "first_scan",
+              "days": 1
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "none",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 1,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["example"],
+              "confirmBasic": "none"
+            }
+          },
+          "capabilities": {
+            "width": 1,
+            "height": 1,
+            "touch": false,
+            "camera": "unknown",
+            "keyboard": false,
+            "nativeBarcode": false,
+            "native": {
+              "platform": "ios",
+              "appVersion": "example",
+              "camera": {
+                "available": false,
+                "permission": "unknown"
+              },
+              "keyboard": {
+                "supported": false,
+                "connected": false,
+                "connectionObservable": false
+              },
+              "nfc": {
+                "available": false,
+                "reading": false,
+                "formats": ["ndef"]
+              },
+              "haptics": false,
+              "vas": {
+                "deviceSupported": false,
+                "available": false,
+                "reader": "proximityReader",
+                "reason": "example"
+              },
+              "externalReader": {
+                "mode": "keyboard",
+                "connected": false
+              },
+              "customerDisplay": {
+                "supported": false,
+                "available": false,
+                "active": false
+              },
+              "layout": {
+                "posture": "unknown",
+                "division": {
+                  "x": 1,
+                  "y": 1,
+                  "width": 1,
+                  "height": 1
+                }
+              }
+            },
+            "hardware": [
+              {
+                "kind": "camera",
+                "count": 10,
+                "builtIn": false,
+                "connected": false,
+                "state": "ready"
+              }
+            ],
+            "surfaces": ["phone"],
+            "preferred": "phone"
+          },
+          "reportedAt": 1764000000000,
+          "paired": false,
+          "online": false,
+          "revoked": false,
+          "lastSeenAt": 1764000000000,
+          "updatedAt": 1764000000000,
+          "signIn": "paired",
+          "adminName": "Ada Example"
+        }
+      ],
+      "activity": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ac",
+          "at": 1764000000000,
+          "deviceId": "0193a1b2-7c00-7000-8000-0000000000ad",
+          "deviceName": "Ada Example",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000ae",
+          "title": "Ada Example",
+          "outcome": "ok",
+          "direction": "in",
+          "scanId": "0193a1b2-7c00-7000-8000-0000000000af",
+          "reason": "not_found",
+          "staff": "example",
+          "method": "camera",
+          "undoable": false,
+          "groupSize": 2
+        }
+      ]
+    }
+  },
+  "scanners.getScanningSessionsByIdSummary": {
+    "response": {
+      "from": 1,
+      "to": 1,
+      "total": 10,
+      "ok": 1,
+      "headsUp": 1,
+      "refused": 1,
+      "undone": 1,
+      "byAction": [
+        {
+          "actionId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "label": "Ada Example",
+          "count": 10,
+          "amount": 1
+        }
+      ],
+      "firstAt": 1764000000000,
+      "lastAt": 1764000000000,
+      "scope": "device",
+      "timeZone": "example",
+      "byHour": [
+        {
+          "start": 1,
+          "label": "Ada Example",
+          "count": 10,
+          "refused": 1
+        }
+      ],
+      "byValue": [
+        {
+          "kind": "add",
+          "count": 10,
+          "amount": 1
+        }
+      ],
+      "byReason": [
+        {
+          "reason": "example",
+          "count": 10
+        }
+      ],
+      "byType": [
+        {
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "name": "Ada Example",
+          "count": 10
+        }
+      ],
+      "byStaff": [
+        {
+          "staffId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "name": "Ada Example",
+          "count": 10,
+          "overrides": 1,
+          "refused": 1
+        }
+      ],
+      "overrides": {
+        "count": 10,
+        "latest": [
+          {
+            "scanId": "0193a1b2-7c00-7000-8000-0000000000a4",
+            "at": 1764000000000,
+            "staffName": "Ada Example",
+            "approvedBy": "example",
+            "reason": "example"
+          }
+        ]
+      }
+    }
   }
 }

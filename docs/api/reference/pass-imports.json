@@ -1066,13 +1066,201 @@
     }
   },
   "pass-imports.getPassImports": {
-    "description": "Recent imports of this mode, newest first."
+    "description": "Recent imports of this mode, newest first.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "templateVersion": "example",
+          "mode": "live",
+          "state": "mapping",
+          "source": {
+            "kind": "file",
+            "name": "Ada Example"
+          },
+          "columns": [
+            {
+              "pointer": "example",
+              "label": "Ada Example",
+              "samples": ["example"]
+            }
+          ],
+          "plan": {
+            "mapping": {
+              "example": {
+                "from": "example"
+              }
+            },
+            "holderEmail": {
+              "from": "example",
+              "transform": {
+                "kind": "enum"
+              }
+            },
+            "externalId": {
+              "from": "example",
+              "transform": {
+                "kind": "enum"
+              }
+            },
+            "match": "externalId",
+            "keepManual": false,
+            "save": false,
+            "overrides": {
+              "example": {
+                "example": "example"
+              }
+            }
+          },
+          "counts": {
+            "rows": 1,
+            "create": 1,
+            "update": 1,
+            "unchanged": 1,
+            "errors": 1,
+            "warnings": 1,
+            "emailable": 1,
+            "errorsCreate": 1,
+            "errorsUpdate": 1
+          },
+          "previews": [
+            {
+              "row": 2,
+              "action": "create",
+              "input": {
+                "example": {}
+              }
+            }
+          ],
+          "problems": [
+            {
+              "row": 2,
+              "column": "example",
+              "field": "example",
+              "label": "Ada Example",
+              "value": "example",
+              "code": "AB12CD34",
+              "message": "example",
+              "severity": "error"
+            }
+          ],
+          "problemTotals": {
+            "errors": 1,
+            "warnings": 1
+          },
+          "problemsTruncated": false,
+          "emailBudget": 1,
+          "email": false,
+          "progress": {
+            "done": 1,
+            "created": 1,
+            "updated": 1,
+            "unchanged": 1,
+            "failed": 1,
+            "skipped": 1,
+            "notEmailed": 1,
+            "removed": 1
+          },
+          "errorCode": "AB12CD34",
+          "errorFile": false,
+          "createdAt": 1764000000000,
+          "checkedAt": 1764000000000,
+          "committedAt": 1764000000000,
+          "finishedAt": 1764000000000,
+          "expiresAt": 1764000000000,
+          "mapping": {
+            "fields": [
+              {
+                "role": "holderEmail",
+                "target": "example",
+                "label": "Ada Example",
+                "required": false,
+                "from": ["example"],
+                "confidence": "exact",
+                "matchBy": false,
+                "entry": {
+                  "from": "example"
+                },
+                "values": [
+                  {
+                    "value": "example",
+                    "count": 10,
+                    "to": "example"
+                  }
+                ],
+                "date": {
+                  "format": "iso",
+                  "choices": [],
+                  "parsed": 1,
+                  "total": 10
+                }
+              }
+            ],
+            "unused": [
+              {
+                "pointer": "example",
+                "label": "Ada Example"
+              }
+            ],
+            "columns": 1,
+            "used": 1,
+            "missing": ["example"]
+          },
+          "emailHoldUntil": 1,
+          "undo": {
+            "state": "running",
+            "removed": 1,
+            "restored": 1,
+            "keptTotal": 10,
+            "kept": [
+              {
+                "passId": "0193a1b2-7c00-7000-8000-0000000000a3",
+                "code": "AB12CD34"
+              }
+            ],
+            "emailsCancelled": 1,
+            "unrevertable": 1
+          },
+          "unrevertable": 1
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "pass-imports.deletePassImportsById": {
-    "description": "Discards a draft import that is not committing."
+    "description": "Discards a draft import that is not committing.",
+    "response": {
+      "ok": true
+    }
   },
   "pass-imports.getPassImportsByIdRows": {
-    "description": "The rows of an import, 100 a page."
+    "description": "The rows of an import, 100 a page.",
+    "response": {
+      "items": [
+        {
+          "row": 2,
+          "action": "create",
+          "state": "planned",
+          "result": "created",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "externalId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "code": "AB12CD34",
+          "message": "example",
+          "emailed": false,
+          "changes": [
+            {
+              "key": "example-key",
+              "label": "Ada Example",
+              "from": "example",
+              "to": "example"
+            }
+          ],
+          "wouldBe": "create"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "pass-imports.getPassImportsByIdErrorsCsv": {
     "description": "The rows that failed the check, as CSV with a Problem column."
@@ -1081,6 +1269,30 @@
     "description": "What happened to each row, as CSV with the pass and its links."
   },
   "pass-imports.postPassImportsByIdEmailRest": {
-    "description": "Sends now the mail of created passes that were not emailed, including held mail ahead of its wait. 50 a call; a repeat emails nobody twice."
+    "description": "Sends now the mail of created passes that were not emailed, including held mail ahead of its wait. 50 a call; a repeat emails nobody twice.",
+    "request": {
+      "cursor": "c1.4812"
+    },
+    "response": {
+      "sent": 1,
+      "skipped": 1,
+      "alreadyQueued": 1,
+      "nextCursor": "c1.4812"
+    }
+  },
+  "pass-imports.postPassImportsByIdRemoveCreated": {
+    "request": {
+      "cursor": "c1.4812"
+    },
+    "response": {
+      "removed": 1,
+      "skipped": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "code": "AB12CD34"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   }
 }

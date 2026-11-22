@@ -1,0 +1,42 @@
+{
+  "status.getStatus": {
+    "response": {
+      "overall": "failing",
+      "build": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "tag": "example",
+        "timestamp": "example"
+      },
+      "components": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "kind": "database",
+          "label": "Ada Example",
+          "state": "failing",
+          "detail": "example",
+          "checkedAt": 1764000000000,
+          "data": {
+            "example": "example"
+          }
+        }
+      ]
+    }
+  },
+  "status.getStatusWorkflows": {
+    "response": {
+      "items": [
+        {
+          "instanceId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "kind": "template_import",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
+          "status": "queued",
+          "startedAt": 1764000000000,
+          "finishedAt": 1764000000000,
+          "errorCode": "AB12CD34"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  }
+}
