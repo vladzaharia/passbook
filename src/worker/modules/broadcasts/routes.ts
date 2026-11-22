@@ -158,6 +158,8 @@ register(
         request: body,
         authority,
         progress: () => inserted,
+        // Tell holders sends once per release for the organization, not once per admin.
+        shared: key.startsWith('rollout-tell:'),
       },
       create,
     );

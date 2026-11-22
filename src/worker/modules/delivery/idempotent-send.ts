@@ -38,13 +38,17 @@ export async function sendOnce<T>(
     request: unknown;
     authority: TenantPassWrite;
     progress?: () => boolean;
+    /** One reservation for the whole organization, whoever asks (a send that must happen once, like Tell holders). */
+    shared?: boolean;
   },
   send: () => Promise<T>,
 ): Promise<{ replayed: boolean; value: T }> {
   const db = ctx.env.DB;
   const principal =
     input.authority.kind === 'session' ? input.authority.userId : input.authority.keyId;
-  const key = `${input.scope}:${principal}:${input.key}`;
+  const key = input.shared
+    ? `${input.scope}:${input.key}`
+    : `${input.scope}:${principal}:${input.key}`;
   const hash = await sha256Hex(JSON.stringify(input.request));
   const replay = async (): Promise<{ replayed: true; value: T } | null> => {
     const existing = await idempotencyRow(db, input.orgId, key);

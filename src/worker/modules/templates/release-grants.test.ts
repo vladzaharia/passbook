@@ -1045,7 +1045,7 @@ describe('rollout and impact', () => {
       env.DB,
       `INSERT INTO idempotency_keys (org_id, key, request_hash, resource_id, created_at)
        VALUES (?, ?, 'h', 'done:{}', ?)`,
-      [org.id, `broadcast-create:live:user-1:rollout-tell:${releaseId}`, clock.now()],
+      [org.id, `broadcast-create:live:rollout-tell:${releaseId}`, clock.now()],
     );
     expect((await read(t.templateId)).tell).toBeNull();
     await run(env.DB, 'DELETE FROM idempotency_keys WHERE org_id = ?', [org.id]);

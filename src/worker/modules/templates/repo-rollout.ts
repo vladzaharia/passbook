@@ -140,13 +140,11 @@ export async function tellSent(
   db: D1Database,
   input: { orgId: string; mode: string; releaseId: string },
 ): Promise<boolean> {
-  // The key is `broadcast-create:<mode>:<principal>:rollout-tell:<release>`; the principal varies.
-  const tail = `:rollout-tell:${input.releaseId}`;
+  // One reservation per release for the whole org (the broadcasts route shares `rollout-tell:` keys): a point lookup.
   const row = await first<{ n: number }>(
     db,
-    `SELECT 1 AS n FROM idempotency_keys
-     WHERE org_id = ? AND key LIKE ? AND substr(key, -?) = ? LIMIT 1`,
-    [input.orgId, `broadcast-create:${input.mode}:%`, tail.length, tail],
+    'SELECT 1 AS n FROM idempotency_keys WHERE org_id = ? AND key = ?',
+    [input.orgId, `broadcast-create:${input.mode}:rollout-tell:${input.releaseId}`],
   );
   return row !== null && row !== undefined;
 }

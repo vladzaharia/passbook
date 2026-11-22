@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { createApp } from '../../app.ts';
-import { first, run } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { runBroadcast } from '../../workflows/broadcast.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { TINY_PNG } from '../passes/pass-test-fixtures.ts';
@@ -168,5 +168,47 @@ describe('a message to the passes on one version', () => {
     );
     await exec(follow?.id ?? '');
     expect((await getPass(kit.env.DB, told.id, null))?.personalization.message ?? '').toBe('');
+  });
+
+  it('reserves a Tell holders send once per release for the whole organization', async () => {
+    const as = (headers: Record<string, string>, text: string) =>
+      app.request(
+        `${ORIGIN}/api/v1/broadcasts`,
+        {
+          method: 'POST',
+          headers: {
+            ...headers,
+            'content-type': 'application/json',
+            'idempotency-key': 'rollout-tell:rel-1',
+          },
+          body: JSON.stringify({
+            orgId: kit.org.id,
+            kind: 'message',
+            target: { templateIds: [kit.messaging.id], version: 'v1' },
+            patch: { message: text },
+          }),
+        },
+        kit.env,
+      );
+    // The clock moved a week in the test above: sign in afresh.
+    const fresh = await broadcastAuth(kit, ORIGIN);
+    const other = await fresh.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
+    const first = await as(fresh.admin(), 'Tell once per release.');
+    expect(first.status).toBe(201);
+    const id = ((await first.json()) as { id: string }).id;
+    // A second admin (another principal) gets the first send back, not a second message.
+    const second = await as(other, 'Tell once per release.');
+    expect(second.status).toBe(201);
+    expect(((await second.json()) as { id: string }).id).toBe(id);
+    const sent = await all<{ id: string }>(
+      kit.env.DB,
+      "SELECT id FROM broadcasts WHERE org_id = ? AND patch LIKE '%Tell once per release.%'",
+      [kit.org.id],
+    );
+    expect(sent).toEqual([{ id }]);
+    // Another text for the same release is refused outright.
+    const other2 = await as(other, 'Something else.');
+    expect(other2.status).toBe(422);
+    expect(await other2.json()).toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED' });
   });
 });
