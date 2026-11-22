@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
-import { run } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
 import { createScannerStore } from './auth-store.ts';
+import { deviceDayKey } from './repo-pin-tag.ts';
 import {
   auditActions,
   clock,
@@ -165,6 +166,28 @@ describe('pairing', () => {
     const second = cookieOf(await pairCall('', fresh.code)).token;
     expect(await store.resolve(first1, 'cookie')).toBeNull();
     expect((await store.resolve(second, 'cookie'))?.scannerId).toBe(body.id);
+  });
+
+  it("re-pairing and pair-here end the device's wrong-PIN day lock", async () => {
+    const { body } = await create();
+    cookieOf(await pairCall('', body.pairing?.code ?? ''));
+    const locked = () =>
+      all(env.DB, 'SELECT count FROM counters WHERE key = ?', [deviceDayKey(body.id)]);
+    const lock = () =>
+      run(env.DB, 'INSERT INTO counters (key, window_start, count) VALUES (?, 0, 100)', [
+        deviceDayKey(body.id),
+      ]);
+    await lock();
+    expect(await locked()).toHaveLength(1);
+    const fresh = (await (await consoleCall('POST', `/${body.id}/pairing`)).json()) as {
+      code: string;
+    };
+    expect(await locked()).toHaveLength(1);
+    cookieOf(await pairCall('', fresh.code));
+    expect(await locked()).toHaveLength(0);
+    await lock();
+    expect((await consoleCall('POST', `/${body.id}/pair-here`)).status).toBe(200);
+    expect(await locked()).toHaveLength(0);
   });
 
   it('caps misses per IP: the 31st is a 429, even for a good code', async () => {

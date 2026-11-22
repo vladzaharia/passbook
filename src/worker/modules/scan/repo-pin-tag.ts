@@ -151,6 +151,10 @@ export const namedDayCountsStatement = (
 export const clearNamedDayStatement = (db: Db, staffId: string) =>
   stmt(db, 'DELETE FROM counters WHERE key = ?', [namedDayKey(staffId)]);
 
+/** Pairing again keeps the scanner id, so it ends the device's wrong-PIN day lock. */
+export const clearDeviceDayStatement = (db: Db, scannerId: string) =>
+  stmt(db, 'DELETE FROM counters WHERE key = ?', [deviceDayKey(scannerId)]);
+
 /** A day's events for the admin digest, newest last. */
 export const digestEvents = (db: Db, since: number, until: number) =>
   all<{

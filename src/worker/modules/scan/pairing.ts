@@ -18,6 +18,7 @@ import {
 } from './pairing-token.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
 import { credentialEpochOf, getScannerByPrefix } from './repo-device.ts';
+import { clearDeviceDayStatement } from './repo-pin-tag.ts';
 import { type ConsoleScannerRow, scannerSlot } from './repo-scanners.ts';
 import {
   addCodeCredential,
@@ -229,6 +230,7 @@ export async function completePairing(
     );
     try {
       await g.commit();
+      await clearDeviceDayStatement(ctx.env.DB, hit.id).run();
     } catch (error) {
       // A concurrent redemption, a revoke or a rotated credential: the code is no longer good.
       if (error instanceof AppError && error.code === 'PAIRING_INVALID') return null;
