@@ -1,0 +1,29 @@
+{
+  "message-rules.getMessageRules": {
+    "description": "Lists automatic messages."
+  },
+  "message-rules.postMessageRules": {
+    "description": "Creates an automatic message."
+  },
+  "message-rules.getMessageRulesById": {
+    "description": "One automatic message."
+  },
+  "message-rules.putMessageRulesById": {
+    "description": "Saves an automatic message. Saving resumes a paused one."
+  },
+  "message-rules.deleteMessageRulesById": {
+    "description": "Deletes an automatic message and cancels its runs that have not started."
+  },
+  "message-rules.postMessageRulesByIdPause": {
+    "description": "Pauses an automatic message. Save it to resume."
+  },
+  "message-rules.getMessageRulesByIdRuns": {
+    "description": "The messages an automatic message sent."
+  },
+  "message-rules.postMessageRulesPreview": {
+    "description": "Counts the passes due each of the next 14 days."
+  },
+  "message-rules.postMessageRulesByIdTest": {
+    "description": "Sends the text now to one pass."
+  }
+}

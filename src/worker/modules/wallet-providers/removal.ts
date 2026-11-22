@@ -10,9 +10,13 @@ import { walletProviderDisabledReason } from './provider-policy.ts';
  * Google and Samsung only when released, on for the org, and the pass has a live copy there; their revoke runs
  * from the pass's own lifecycle, so this only describes it.
  */
-export async function removalWallets(ctx: ServiceContext, pass: Pass): Promise<RemovalWallet[]> {
+export async function removalWallets(
+  ctx: ServiceContext,
+  pass: Pass,
+  providers: readonly ('google' | 'samsung')[] = ['google', 'samsung'],
+): Promise<RemovalWallet[]> {
   const wallets: RemovalWallet[] = ['apple'];
-  for (const provider of ['google', 'samsung'] as const) {
+  for (const provider of providers) {
     // Released and enrolled for this org and mode, and on for this pass (block, template, pass).
     if (
       (await walletProviderDisabledReason(ctx.env.DB, provider, pass.orgId, pass.mode)) !== null ||

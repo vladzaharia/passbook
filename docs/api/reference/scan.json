@@ -1,0 +1,11 @@
+{
+  "scan.postScanResolve": {
+    "description": "Reads a code and says what it is, without acting on it."
+  },
+  "scan.postScanActions": {
+    "description": "Scans a code and acts on it."
+  },
+  "scan.postScanScansByScanIdUndo": {
+    "description": "Undoes a check-in."
+  }
+}

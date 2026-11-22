@@ -1,0 +1,14 @@
+{
+  "scan-staff.getScanStaff": {
+    "description": "Lists an organization's scanner staff."
+  },
+  "scan-staff.postScanStaff": {
+    "description": "Creates a staff member and reveals their PIN once."
+  },
+  "scan-staff.patchScanStaffById": {
+    "description": "Updates or disables a staff member."
+  },
+  "scan-staff.postScanStaffByIdResetPin": {
+    "description": "Replaces a staff PIN and reveals the new one once."
+  }
+}
