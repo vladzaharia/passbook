@@ -13,6 +13,7 @@ import type {
   WalletProviderResult,
 } from './instance-types.ts';
 import { retirementReconciled } from './repo-instance-retirement.ts';
+import { recordSyncLag } from './sync-lag.ts';
 import type { WalletSyncRunResult } from './sync-operation-context.ts';
 
 /** Idempotent crash recovery: a Samsung tombstone must survive the eventual pass deletion. */
@@ -51,6 +52,7 @@ export async function completeWalletSyncOperation(
 ): Promise<WalletSyncRunResult> {
   const state = await completeWalletOperation(ctx, { ...claim, now: ctx.clock.now(), result });
   if (state === null) return 'uncertain';
+  if (state === 'succeeded') recordSyncLag(ctx, op);
   if (state === 'succeeded' && op.kind === 'revoke') {
     await finishWalletProviderRetirement(ctx, claim);
   }

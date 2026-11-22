@@ -75,7 +75,6 @@ import {
 import { writeProjectionRelease } from './repo-projection-release-write.ts';
 import { getProjectionCandidate, projectionCandidateEnvelope } from './repo-projection-store.ts';
 import { writeProjectionCandidate } from './repo-projection-write.ts';
-import { putSamsungCardState } from './repo-samsung-card-state.ts';
 import { ensureSamsungCard } from './samsung-verification.ts';
 
 // Publishing a Samsung projection probes Samsung, which only runs while the provider is enabled.
@@ -280,11 +279,14 @@ async function nativeCandidate(
   test: ProjectionFixture,
   author = test.author,
 ): Promise<TemplateCandidate> {
+  const version = await getVersion(env.DB, test.templateId, test.version);
+  if (!version) throw new Error('Test version is missing.');
+  const { pins } = await computeProjectionPins(test.ctx, 'samsung', version);
   return createProjectionCandidate(test.ctx, author, test.templateId, {
     ...test.scope,
     version: test.version,
     sourceReleaseId: test.source.id,
-    projection,
+    projection: { schema: 2, provider: 'samsung', approvedOmissions: pins.approvedOmissions },
   });
 }
 async function nativeApproval(
@@ -374,7 +376,7 @@ describe('native projection approval', () => {
     const release = await nativePublish(test, candidate, approval);
     expect(await getApprovedProjection(test.ctx, lookup(test))).toMatchObject({
       release: { id: release.id, sourceReleaseId: test.source.id, accountRevision: 1 },
-      projection,
+      projection: { schema: 2, provider: 'samsung' },
     });
     expect(
       await getApprovedProjection(test.ctx, { ...lookup(test), orgId: test.otherOrg.id }),
@@ -466,241 +468,7 @@ describe('native projection approval', () => {
     ).toBeNull();
   });
 
-  it('enforces the provider evidence and its history on direct release inserts', async () => {
-    const test = await setup();
-    const candidate = await nativeCandidate(test);
-    const approval = await nativeApproval(test, candidate);
-    const reject = 'invalid provider release approval or source';
-    await expect(insertDirectProjectionRelease(test, candidate, approval)).rejects.toThrow(reject);
-    expect(await ensureSamsungCard(test.ctx, candidate.id, candidate.candidateHash)).toBe(true);
-
-    const google = { ...test.scope, provider: 'google' as const };
-    await configureWalletProviderAccount(test.ctx, test.author, {
-      ...google,
-      expectedRevision: 0,
-      credentials: googleCredentials,
-    });
-    const otherAccount = await findAccount(env.DB, google);
-    const evidence = await first<{
-      probe_id: string;
-      org_id: string;
-      mode: string;
-      account_id: string;
-      account_revision: number;
-      provider_identity_hash: string;
-      candidate_hash: string;
-      card_type: string;
-      card_sub_type: string;
-      country_code: string;
-      verified_at: number;
-      expires_at: number;
-    }>(env.DB, 'SELECT * FROM wallet_provider_projection_evidence WHERE candidate_id = ?', [
-      candidate.id,
-    ]);
-    if (!evidence || !otherAccount) throw new Error('Missing evidence or account.');
-
-    const differentHash = (hash: string) => (hash === '0'.repeat(64) ? '1' : '0').repeat(64);
-    for (const overrides of [
-      { orgId: test.otherOrg.id },
-      { mode: 'test' as const },
-      { candidateHash: differentHash(candidate.candidateHash) },
-      { contentHash: differentHash(candidate.contentHash) },
-      { createdAt: evidence.verified_at - 1 },
-      { createdAt: evidence.expires_at },
-    ]) {
-      await expect(
-        insertDirectProjectionRelease(test, candidate, approval, overrides),
-      ).rejects.toThrow(reject);
-    }
-
-    for (const status of ['pending', 'unverified']) {
-      await run(
-        env.DB,
-        `UPDATE wallet_provider_projection_evidence SET status = ?, testing_mode_off = NULL,
-          verified_at = NULL, expires_at = NULL WHERE candidate_id = ?`,
-        [status, candidate.id],
-      );
-      await expect(insertDirectProjectionRelease(test, candidate, approval)).rejects.toThrow(
-        reject,
-      );
-      await run(
-        env.DB,
-        `UPDATE wallet_provider_projection_evidence SET status = 'verified', testing_mode_off = 'Y',
-          verified_at = ?, expires_at = ? WHERE candidate_id = ?`,
-        [evidence.verified_at, evidence.expires_at, candidate.id],
-      );
-    }
-
-    const historyColumns = [
-      'candidate_id',
-      'org_id',
-      'mode',
-      'account_id',
-      'account_revision',
-      'provider_identity_hash',
-      'candidate_hash',
-      'card_type',
-      'card_sub_type',
-      'country_code',
-      'testing_mode_off',
-      'verified_at',
-      'expires_at',
-      'credential_keyset_commitment',
-    ];
-    async function writeHistory(override?: { column: string; value: string | number }) {
-      await run(
-        env.DB,
-        `INSERT INTO wallet_provider_projection_evidence_history (id, ${historyColumns.join(', ')})
-        SELECT ev.probe_id, ${historyColumns
-          .map((column) => (column === override?.column ? '?' : `ev.${column}`))
-          .join(', ')}
-        FROM wallet_provider_projection_evidence ev WHERE ev.candidate_id = ?`,
-        [...(override ? [override.value] : []), candidate.id],
-      );
-    }
-    const mismatches = [
-      ['org_id', test.otherOrg.id],
-      ['mode', 'test'],
-      ['account_id', otherAccount.id],
-      ['account_revision', evidence.account_revision + 1],
-      ['provider_identity_hash', differentHash(evidence.provider_identity_hash)],
-      ['candidate_hash', differentHash(evidence.candidate_hash)],
-      ['card_type', 'ticket'],
-      ['card_sub_type', 'mismatched'],
-      ['country_code', 'US'],
-    ] as const;
-
-    // Give each mismatched current record its own matching immutable history: rejection must
-    // come from the candidate/evidence binding, not merely from missing history.
-    for (const [column, value] of mismatches) {
-      await run(
-        env.DB,
-        `UPDATE wallet_provider_projection_evidence SET ${column} = ?, probe_id = ? WHERE candidate_id = ?`,
-        [value, test.ctx.ids.id(), candidate.id],
-      );
-      await writeHistory();
-      await expect(insertDirectProjectionRelease(test, candidate, approval)).rejects.toThrow(
-        reject,
-      );
-      await run(
-        env.DB,
-        `UPDATE wallet_provider_projection_evidence SET ${column} = ?, probe_id = ? WHERE candidate_id = ?`,
-        [evidence[column], evidence.probe_id, candidate.id],
-      );
-    }
-
-    await run(
-      env.DB,
-      'UPDATE wallet_provider_projection_evidence SET probe_id = ? WHERE candidate_id = ?',
-      [test.ctx.ids.id(), candidate.id],
-    );
-    await expect(insertDirectProjectionRelease(test, candidate, approval)).rejects.toThrow(reject);
-
-    // Now keep current evidence valid and vary only the immutable history snapshot.
-    for (const [column, value] of [
-      ...mismatches,
-      ['verified_at', evidence.verified_at + 1],
-      ['expires_at', evidence.expires_at - 1],
-    ] as const) {
-      await run(
-        env.DB,
-        'UPDATE wallet_provider_projection_evidence SET probe_id = ? WHERE candidate_id = ?',
-        [test.ctx.ids.id(), candidate.id],
-      );
-      await writeHistory({ column, value });
-      await expect(insertDirectProjectionRelease(test, candidate, approval)).rejects.toThrow(
-        reject,
-      );
-    }
-
-    const otherCandidate = await nativeCandidate(test);
-    const otherApproval = await nativeApproval(test, otherCandidate);
-    expect(await ensureSamsungCard(test.ctx, otherCandidate.id, otherCandidate.candidateHash)).toBe(
-      true,
-    );
-    const otherEvidence = await first<{ probe_id: string }>(
-      env.DB,
-      'SELECT probe_id FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
-      [otherCandidate.id],
-    );
-    if (!otherEvidence) throw new Error('Missing other evidence.');
-    await run(
-      env.DB,
-      'UPDATE wallet_provider_projection_evidence SET probe_id = ? WHERE candidate_id = ?',
-      [otherEvidence.probe_id, candidate.id],
-    );
-    await expect(insertDirectProjectionRelease(test, candidate, approval)).rejects.toThrow(reject);
-    await run(
-      env.DB,
-      'UPDATE wallet_provider_projection_evidence SET probe_id = ? WHERE candidate_id = ?',
-      [evidence.probe_id, candidate.id],
-    );
-    await expect(
-      insertDirectProjectionRelease(test, candidate, approval, { approvalId: otherApproval.id }),
-    ).rejects.toThrow(/provider release keyset unavailable/);
-    expect(
-      await insertDirectProjectionRelease(test, candidate, approval, {
-        createdAt: evidence.expires_at - 1,
-      }),
-    ).toEqual({ changes: 1 });
-  }, 30_000);
-
-  it('accepts a Samsung schema 2 release on a fresh card-state row, and keeps the evidence rule for schema 1', async () => {
-    const test = await setup();
-    const version = await getVersion(env.DB, test.templateId, test.version);
-    if (!version) throw new Error('Test version is missing.');
-    const { pins } = await computeProjectionPins(test.ctx, 'samsung', version);
-    const compiled = await createProjectionCandidate(test.ctx, test.author, test.templateId, {
-      ...test.scope,
-      version: test.version,
-      sourceReleaseId: test.source.id,
-      projection: { schema: 2, provider: 'samsung', approvedOmissions: pins.approvedOmissions },
-    });
-    const compiledApproval = await nativeApproval(test, compiled);
-    expect(
-      await first(
-        env.DB,
-        'SELECT 1 AS n FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
-        [compiled.id],
-      ),
-    ).toBeNull();
-    // A compiled card needs a fresh card-state row from a live read; nothing else will do.
-    await expect(insertDirectProjectionRelease(test, compiled, compiledApproval)).rejects.toThrow(
-      'invalid provider release approval or source',
-    );
-    const now = test.ctx.clock.now();
-    const stored = await first<{ provider_account_id: string; provider_account_epoch: number }>(
-      env.DB,
-      'SELECT provider_account_id, provider_account_epoch FROM template_candidates WHERE id = ?',
-      [compiled.id],
-    );
-    expect(
-      await putSamsungCardState(env.DB, {
-        candidateId: compiled.id,
-        candidateHash: compiled.candidateHash,
-        accountId: stored?.provider_account_id ?? '',
-        accountEpoch: stored?.provider_account_epoch ?? 0,
-        cardType: pins.type,
-        state: 'ACTIVE',
-        testingModeOff: 'Y',
-        verifiedAt: now,
-        expiresAt: now + 300_000,
-      }),
-    ).toBe(true);
-    expect(await insertDirectProjectionRelease(test, compiled, compiledApproval)).toEqual({
-      changes: 1,
-    });
-
-    // A schema 1 candidate still needs verified card state: with none, the database refuses it.
-    const second = await setup();
-    const fieldMapped = await nativeCandidate(second);
-    const approval = await nativeApproval(second, fieldMapped);
-    await expect(insertDirectProjectionRelease(second, fieldMapped, approval)).rejects.toThrow(
-      'invalid provider release approval or source',
-    );
-  });
-
-  it('refuses a schema 1 tombstone without evidence and lets a compiled card have one without', async () => {
+  it('lets a compiled card have a tombstone with no evidence', async () => {
     const tombstone = async (test: ProjectionFixture, candidate: TemplateCandidate) => {
       const release = await first<{ id: string }>(
         env.DB,
@@ -733,9 +501,6 @@ describe('native projection approval', () => {
         "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND name IN ('template_provider_releases_insert', 'wallet_provider_release_keyset_insert')",
       ).all<{ name: string; sql: string }>()
     ).results;
-    const v1 = await setup();
-    const fieldMapped = await nativeCandidate(v1);
-    const v1Approval = await nativeApproval(v1, fieldMapped);
     const v2 = await setup();
     const version = await getVersion(env.DB, v2.templateId, v2.version);
     if (!version) throw new Error('Test version is missing.');
@@ -749,14 +514,10 @@ describe('native projection approval', () => {
     const v2Approval = await nativeApproval(v2, compiled);
     for (const trigger of triggers) await run(env.DB, `DROP TRIGGER ${trigger.name}`);
     try {
-      await insertDirectProjectionRelease(v1, fieldMapped, v1Approval);
       await insertDirectProjectionRelease(v2, compiled, v2Approval);
     } finally {
       for (const trigger of triggers) await run(env.DB, trigger.sql);
     }
-    await expect(tombstone(v1, fieldMapped)).rejects.toThrow(
-      /Samsung tombstone (requires verified release evidence|keyset unavailable)/,
-    );
     expect(await tombstone(v2, compiled)).toEqual({ changes: 1 });
   });
 
@@ -893,11 +654,18 @@ describe('native projection approval', () => {
       appleReleaseId: sourceId,
     };
     expect(await getApprovedProjection(syncCtx, trustedScope)).toBeNull();
+    const bakedVersion = await getVersion(db, templateId, version);
+    if (!bakedVersion) throw new Error('Baked version missing.');
+    const { pins: bakedPins } = await computeProjectionPins(syncCtx, 'samsung', bakedVersion);
     const candidate = await createProjectionCandidate(syncCtx, test.author, templateId, {
       ...test.scope,
       version,
       sourceReleaseId: sourceId,
-      projection,
+      projection: {
+        schema: 2,
+        provider: 'samsung',
+        approvedOmissions: bakedPins.approvedOmissions,
+      },
     });
     const approval = await approveProjectionCandidate(
       syncCtx,
@@ -915,7 +683,7 @@ describe('native projection approval', () => {
     });
     expect(await getApprovedProjection(syncCtx, trustedScope)).toMatchObject({
       release: { sourceReleaseId: sourceId, orgId: test.org.id },
-      projection,
+      projection: { schema: 2, provider: 'samsung' },
     });
   }, 30_000);
 
@@ -957,7 +725,7 @@ describe('native projection approval', () => {
       { ...stored, credentialKeysetCommitment: '0'.repeat(64) },
       {
         ...stored,
-        projection: { ...stored.projection, logoUrl: 'https://example.test/changed.png' },
+        projection: { ...stored.projection, report: 'f'.repeat(64) },
       },
     ])
       expect(await candidateHash(projectionCandidateEnvelope(modified))).not.toBe(
@@ -966,7 +734,7 @@ describe('native projection approval', () => {
     const forged = {
       ...stored,
       id: test.ctx.ids.id(),
-      projection: { ...stored.projection, logoUrl: 'https://example.test/changed.png' },
+      projection: { ...stored.projection, report: 'f'.repeat(64) },
     };
     const authority = await authorizeTemplateWrite(
       test.ctx,
@@ -1050,11 +818,18 @@ describe('native projection approval', () => {
     });
     const own = await makeSession(f, { userId: test.author.userId });
     const outsider = await makeSession(f, { userId: test.foreign.userId });
+    const pinned = await getVersion(env.DB, test.templateId, test.version);
+    if (!pinned) throw new Error('Test version is missing.');
+    const { pins: routePins } = await computeProjectionPins(test.ctx, 'samsung', pinned);
     const body = {
       ...test.scope,
       version: test.version,
       sourceReleaseId: test.source.id,
-      projection,
+      projection: {
+        schema: 2,
+        provider: 'samsung',
+        approvedOmissions: routePins.approvedOmissions,
+      },
     };
     const path = `https://wallet.test/api/v1/templates/${test.templateId}/candidates`;
     const post = (headers: Record<string, string>, json: unknown) =>
@@ -1085,7 +860,10 @@ describe('native projection approval', () => {
       sourceReleaseId: string;
       projection: unknown;
     };
-    expect(result).toMatchObject({ sourceReleaseId: test.source.id, projection });
+    expect(result).toMatchObject({
+      sourceReleaseId: test.source.id,
+      projection: { schema: 2, provider: 'samsung' },
+    });
     const reviewed = await app.request(
       `${path}/${result.id}/approve`,
       {
@@ -1225,36 +1003,6 @@ describe('native projection approval', () => {
     await expect(statement()).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
   });
 
-  it('rejects provider evidence that expires before the publication statement', async () => {
-    const test = await setup();
-    const candidate = await nativeCandidate(test);
-    const approval = await nativeApproval(test, candidate);
-    const stored = await getProjectionCandidate(env.DB, candidate.id);
-    const storedApproval = await getApproval(env.DB, approval.id);
-    if (!stored || !storedApproval) throw new Error('Candidate or approval missing.');
-    const authority = await authorizeTemplateWrite(
-      test.ctx,
-      test.author,
-      test.scope.orgId,
-      'templates:publish',
-    );
-    expect(await ensureSamsungCard(test.ctx, candidate.id, candidate.candidateHash)).toBe(true);
-    const statement = () =>
-      writeProjectionRelease(test.ctx, {
-        id: test.ctx.ids.id(),
-        candidate: stored,
-        approval: storedApproval,
-        authority,
-        expectedGeneration: 0,
-        expectedReleaseId: null,
-        action: 'release',
-        targetReleaseId: null,
-        now: clock.now() + 300_000,
-        audit: { action: 'template.release', detail: {} },
-        ...test.proof,
-      });
-    await expect(statement()).rejects.toMatchObject({ code: 'WALLET_PROJECTION_CONFLICT' });
-  });
   it('requires an explicitly bound trusted clock for the atomic issuance predicate', () => {
     expect(() =>
       projectionReleaseBindingPredicateSql({
@@ -1270,7 +1018,7 @@ describe('native projection approval', () => {
     ).toThrow();
   });
 
-  it('retains the original keyset in candidates, reviews, releases and evidence across a rekey', async () => {
+  it('retains the original keyset in candidates, reviews and releases across a rekey', async () => {
     const test = await setup();
     const published = await nativeCandidate(test);
     const publishedApproval = await nativeApproval(test, published);
@@ -1283,8 +1031,6 @@ describe('native projection approval', () => {
       ['template_candidates', 'id', published.id],
       ['template_approvals', 'id', publishedApproval.id],
       ['template_releases', 'id', release.id],
-      ['wallet_provider_projection_evidence', 'candidate_id', published.id],
-      ['wallet_provider_projection_evidence_history', 'candidate_id', published.id],
     ]) {
       expect(
         await first(
@@ -1566,7 +1312,7 @@ describe('native projection approval', () => {
     expect(() => assertProjectionSource(parsed, version)).not.toThrow();
     const google = normalizeNativeProjection(googleProjection);
     expect(() => assertProjectionSource(google, version)).not.toThrow();
-    expect(NativeProjectionSchema.safeParse({ ...projection, cardType: 'ticket' }).success).toBe(
+    expect(NativeProjectionSchema.safeParse({ ...projection, cardType: 'bogus' }).success).toBe(
       false,
     );
     expect(

@@ -123,12 +123,12 @@ describe('a served ref nobody confirms', () => {
     t.kit.clock.advance(SAMSUNG_UNCONFIRMED_SERVE_MS - 1_000);
     expect(await inspectSamsungRefRetirement(t.kit.ctx, revoke)).toBe('needs_notification');
     expect(await getSamsungRefreshTarget(t.kit.ctx, revoke)).toBeNull();
-    // Past it, the ref is routed to the market its approved projection is enabled for.
+    // Past it the ref is served but unconfirmed. A compiled card names no market until ADDED reports one.
     t.kit.clock.advance(2_000);
     expect(await inspectSamsungRefRetirement(t.kit.ctx, revoke)).toBe('served_unconfirmed');
     const target = await getSamsungRefreshTarget(t.kit.ctx, revoke);
     expect(target?.refId).toBe(t.refId);
-    expect(target?.countryCodes).toHaveLength(1);
+    expect(target?.countryCodes).toEqual([]);
     // With no market to notify it is closed under the revoke's lease and the revoke settles.
     const claim = {
       ...scope,

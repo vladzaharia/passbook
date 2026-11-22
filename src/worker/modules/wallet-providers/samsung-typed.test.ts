@@ -17,7 +17,7 @@ import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { queueWalletOperation } from './queue-test-fixtures.ts';
 import { releaseCardType } from './repo-card-type.ts';
 import { getProjectionCandidate } from './repo-projection-store.ts';
-import { samsungCardStateFresh } from './repo-samsung-card-state.ts';
+import { putSamsungCardState, samsungCardStateFresh } from './repo-samsung-card-state.ts';
 import { decryptCard } from './samsung-card-test-fixtures.ts';
 import { samsungCardId, samsungTypeHasCard } from './samsung-cards.ts';
 import { SAMSUNG_TOKEN_WINDOW_MS } from './samsung-limits.ts';
@@ -32,6 +32,8 @@ beforeAll(() => {
   setWalletProvidersEnabledForTest(true);
 });
 afterEach(() => vi.restoreAllMocks());
+
+const SAMSUNG_CARD_STATE_MS = 300_000;
 
 const cardOf = z.object({
   card: z.object({
@@ -266,7 +268,7 @@ describe('the card state is a row, read live only by the paths that decide', () 
     expect(await offered(t)).toBe(true);
   });
 
-  it('a refused read removes the row: testing mode in Live, a blocked card, another type, no answer', async () => {
+  it('a refused read removes the row: testing mode in Live, a blocked card, another type', async () => {
     const refused: Record<string, string>[] = [
       { testingModeOff: 'N' },
       { state: 'BLOCKED', testingModeOff: 'N' },
@@ -288,9 +290,21 @@ describe('the card state is a row, read live only by the paths that decide', () 
       ).toEqual([]);
       expect(await offered(t)).toBe(false);
     }
+  });
+
+  it('a read that got no answer keeps the row to its own expiry, and logs a code', async () => {
     const t = await setupWalletOfferKit({ google: 'absent' });
+    expect(await offered(t)).toBe(true);
+    const warn = vi.spyOn(t.kit.ctx.log, 'warn');
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('offline'));
     expect(await refreshSamsungCardState(t.kit.ctx, await candidateOf(t))).toBeNull();
+    expect(warn).toHaveBeenCalledWith('wallet.verification_failed', {
+      code: 'WALLET_VERIFY_FAILED',
+      reason: 'transient',
+    });
+    // One failed read does not withdraw the offer; the row lapses on its own.
+    expect(await offered(t)).toBe(true);
+    t.kit.clock.advance(SAMSUNG_CARD_STATE_MS + 1);
     expect(await offered(t)).toBe(false);
   });
 
@@ -369,5 +383,57 @@ describe('a type with no card of its own', () => {
     expect(samsungCardId(credentials, 'loyalty')).toBe('own');
     expect(samsungCardId(credentials, 'constructor')).toBe('default');
     expect(samsungCardId(credentials, 'ticket')).toBe('default');
+  });
+});
+
+describe('a Test-mode card at the candidate level', () => {
+  /** The candidate's row as a live read left it; the mode is the one the candidate is read in. */
+  async function rowFor(read: { state: string; testingModeOff: 'Y' | 'N' }) {
+    const t = await setupWalletOfferKit({ google: 'absent' });
+    const db = t.kit.env.DB;
+    const candidate = await getProjectionCandidate(db, t.samsungRelease?.candidateId ?? '');
+    if (!candidate || candidate.projection.schema !== 2)
+      throw new Error('Missing candidate fixture');
+    const now = t.kit.clock.now();
+    const cardType = candidate.projection.type;
+    expect(
+      await putSamsungCardState(db, {
+        candidateId: candidate.id,
+        candidateHash: candidate.candidateHash,
+        accountId: candidate.accountId,
+        accountEpoch: candidate.accountEpoch,
+        cardType,
+        ...read,
+        verifiedAt: now,
+        expiresAt: now + 300_000,
+      }),
+    ).toBe(true);
+    const fresh = (mode: 'live' | 'test', margin = 0) =>
+      samsungCardStateFresh(db, { ...candidate, mode }, cardType, t.kit.clock.now(), margin);
+    return { fresh, clock: t.kit.clock };
+  }
+
+  it('takes a card still in testing mode in Test and never in Live', async () => {
+    const { fresh } = await rowFor({ state: 'ACTIVE', testingModeOff: 'N' });
+    expect(await fresh('test')).toBe(true);
+    expect(await fresh('live')).toBe(false);
+  });
+
+  it('never takes a blocked card, in either mode, whatever its testing flag says', async () => {
+    for (const testingModeOff of ['Y', 'N'] as const) {
+      const { fresh } = await rowFor({ state: 'BLOCKED', testingModeOff });
+      expect(await fresh('test')).toBe(false);
+      expect(await fresh('live')).toBe(false);
+    }
+  });
+
+  it('takes an active launched card in both, and asks for time left when a write follows', async () => {
+    const { fresh, clock } = await rowFor({ state: 'ACTIVE', testingModeOff: 'Y' });
+    expect(await fresh('live')).toBe(true);
+    expect(await fresh('test')).toBe(true);
+    clock.advance(250_000);
+    expect(await fresh('live')).toBe(true);
+    // Fifty seconds are left: enough to read, not enough to cut art and release.
+    expect(await fresh('live', 60_000)).toBe(false);
   });
 });

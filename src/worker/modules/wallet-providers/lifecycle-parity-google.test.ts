@@ -259,3 +259,14 @@ describe('6.1 Google: expiry and upcoming events', () => {
     expect(await first(f.kit.env.DB, 'SELECT 1 FROM wallet_provider_instance_dirty')).toBeNull();
   });
 });
+
+describe('Q4: provider objects are created at the first tap, not at issue', () => {
+  it('sends nothing to Google until the holder taps, then builds the object', async () => {
+    const { f } = await fixture();
+    await drainWalletProviderSync(jobCtxOf(f.kit));
+    expect(mock.requests.filter((r) => r.path.includes('walletobjects'))).toEqual([]);
+    expect(mock.google.genericObject.size).toBe(0);
+    await issueWalletOffer(f.kit.ctx, await tokenOf(f), 'google');
+    expect(mock.google.genericObject.size).toBe(1);
+  });
+});

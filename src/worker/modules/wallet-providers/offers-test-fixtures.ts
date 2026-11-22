@@ -14,7 +14,11 @@ import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { ICON_PNG, type Kit, setupKit } from '../passes/pass-test-fixtures.ts';
 import type { Pass } from '../passes/repo.ts';
 import { getVersion } from '../templates/repo.ts';
-import { configureWalletProviderAccount } from './account-service.ts';
+import {
+  configureWalletProviderAccount,
+  getWalletProviderReadiness,
+  readConfiguredWalletProviderCredentials,
+} from './account-service.ts';
 import { GOOGLE_WALLET_SCOPE } from './google-credentials.ts';
 import type { NativeProvider } from './projection-contract.ts';
 import { computeProjectionPins } from './projection-pins.ts';
@@ -239,7 +243,17 @@ export async function setupWalletOfferKit(
         candidateHash: candidate.candidateHash,
       },
     );
-    const live = mockTemplateFetch(identity.certificate);
+    // Samsung verifies with the certificate on the account's current revision, which a rotation replaces.
+    const readiness = await getWalletProviderReadiness(kit.ctx, common);
+    const current = await readConfiguredWalletProviderCredentials(kit.ctx, common, {
+      accountId: readiness.accountId ?? '',
+      accountRevision: readiness.revision,
+    });
+    const live = mockTemplateFetch(
+      current?.provider === 'samsung'
+        ? current.credentials.partnerCertificatePem
+        : identity.certificate,
+    );
     try {
       return await publishProjectionRelease(kit.ctx, apple.publisherAuth, kit.template.id, {
         ...common,
