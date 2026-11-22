@@ -60,5 +60,16 @@ export function useWalletPreviews(source: PreviewSource | null, enabled = true):
       // A draft the compilers cannot read (a half-edited wallets block) shows the error line.
       return { state: 'error' };
     }
-  }, [kit, failed, passJson, assetBaseUrl, assetNames, assetUrls, manifest, assets, input]);
+  }, [
+    kit,
+    failed,
+    passJson,
+    assetBaseUrl,
+    assetNames,
+    assetUrls,
+    manifest,
+    assets,
+    input,
+    website,
+  ]);
 }
