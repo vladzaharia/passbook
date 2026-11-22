@@ -29,9 +29,10 @@ export const stateFile = (role: Role) => `e2e/.auth/${role}.json`;
 
 /**
  * Starts the real OIDC flow. The app sends no login_hint, so the test adds one to the redirect
- * towards the mock provider to pick which mock account signs in.
+ * towards the mock provider to pick which mock account signs in. `extra` is query text before `next`,
+ * such as `prompt=login&max_age=0&` for a step-up.
  */
-export async function startOidcAs(page: Page, role: Role, next = '/') {
+export async function startOidcAs(page: Page, role: Role, next = '/', extra = '') {
   // Playwright cannot route redirect hops, so rewrite the 302 from /auth/oidc/start instead.
   await page.route('**/auth/oidc/start*', async (route) => {
     const response = await route.fetch({ maxRedirects: 0 });
@@ -49,7 +50,7 @@ export async function startOidcAs(page: Page, role: Role, next = '/') {
   await expect
     .poll(
       async () => {
-        await page.goto(`/auth/oidc/start?next=${encodeURIComponent(next)}`);
+        await page.goto(`/auth/oidc/start?${extra}next=${encodeURIComponent(next)}`);
         return !(await page.content()).includes('Too many requests');
       },
       { intervals: [8_000], timeout: 70_000 },
