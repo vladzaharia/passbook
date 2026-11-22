@@ -76,6 +76,7 @@ function alreadyHere(s: MachineState, a: AssignState, r: BindResult, env: Env): 
       ...a,
       busy: null,
       key: null,
+      approved: null,
       preview: r,
       step: 'error',
       error: {

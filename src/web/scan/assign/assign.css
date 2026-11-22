@@ -310,3 +310,6 @@
   outline: 2px solid currentColor;
   outline-offset: 2px;
 }
+.scan-assign-field input::placeholder {
+  font-weight: 400;
+}

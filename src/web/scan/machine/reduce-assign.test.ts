@@ -743,3 +743,93 @@ describe('the Manager approval of a pass picked by id', () => {
     });
   });
 });
+
+describe('a move and a changed scope under a stored approval', () => {
+  const failEvent = (key: string, over: Record<string, unknown>) =>
+    ({ type: 'assign.failed', key, code: null, status: 0, network: false, ...over }) as const;
+  const previewing = (warnings: ('lost' | 'held_by_other')[]) => {
+    const t = tagged();
+    const r = run(t.state, [300, cardReadEvent()]);
+    const bind = assignCmd(r.cmds, 'assign.bind');
+    return run(r.state, [
+      400,
+      { type: 'assign.previewed', key: bind.key, result: bindResultOf({ warnings }) },
+    ]);
+  };
+  it.each([['lost'], ['held_by_other']] as const)(
+    'a Desk finishes a %s move with one PIN: the bind carries move and the approval',
+    (warning) => {
+      const p = previewing([warning]);
+      const open = step(p.state, { type: 'assign.pin', open: true, move: true }, at(500));
+      const ok = step(
+        open.state,
+        { type: 'assign.approve', staffId: 'm1', pin: '123456' },
+        at(600),
+      );
+      const cmd = assignCmd(ok.cmds, 'assign.bind');
+      expect(cmd.body).toMatchObject({
+        preview: false,
+        move: true,
+        approval: { staffId: 'm1', pin: '123456' },
+      });
+      expect(assignOf(ok.state)).toMatchObject({ busy: 'bind', approved: null });
+      expect(JSON.stringify(assignOf(ok.state)?.retry)).not.toContain('123456');
+      const done = step(
+        ok.state,
+        {
+          type: 'assign.bound',
+          key: cmd.key,
+          result: bindResultOf({ status: 'moved', bindingId: 'b1', undoUntil: at(600_000) }),
+        },
+        at(700),
+      );
+      expect(assignOf(done.state)).toMatchObject({ step: 'done', pin: null });
+    },
+  );
+  it('a PIN typed for one pass is dropped when the scope changes to the person', () => {
+    const t = tagged();
+    const r = run(t.state, [300, passReadEvent()]);
+    const first = assignCmd(r.cmds, 'assign.bind');
+    const asked = step(
+      r.state,
+      failEvent(first.key, { code: 'TAG_APPROVAL_REQUIRED', status: 403 }),
+      at(400),
+    );
+    const ok = step(asked.state, { type: 'assign.approve', pin: '123456' }, at(500));
+    const cmd = assignCmd(ok.cmds, 'assign.bind');
+    const done = step(
+      ok.state,
+      { type: 'assign.previewed', key: cmd.key, result: bindResultOf({ opensDefault: 'pass' }) },
+      at(600),
+    );
+    expect(assignOf(done.state)?.approved).not.toBeNull();
+    const same = step(done.state, { type: 'assign.scope', scope: 'pass' }, at(650));
+    expect(assignOf(same.state)?.approved).not.toBeNull();
+    const wide = step(done.state, { type: 'assign.scope', scope: 'user' }, at(700));
+    expect(assignOf(wide.state)).toMatchObject({ scope: 'user', approved: null });
+    const bind = step(wide.state, { type: 'assign.bind' }, at(800));
+    expect(assignCmd(bind.cmds, 'assign.bind').body).not.toHaveProperty('approval');
+  });
+  it('an already-bound answer clears the approval', () => {
+    const t = tagged();
+    const r = run(t.state, [300, passReadEvent()]);
+    const first = assignCmd(r.cmds, 'assign.bind');
+    const asked = step(
+      r.state,
+      failEvent(first.key, { code: 'TAG_APPROVAL_REQUIRED', status: 403 }),
+      at(400),
+    );
+    const ok = step(asked.state, { type: 'assign.approve', pin: '123456' }, at(500));
+    const cmd = assignCmd(ok.cmds, 'assign.bind');
+    const here = step(
+      ok.state,
+      {
+        type: 'assign.previewed',
+        key: cmd.key,
+        result: bindResultOf({ status: 'already_bound' }),
+      },
+      at(600),
+    );
+    expect(assignOf(here.state)).toMatchObject({ step: 'error', approved: null });
+  });
+});

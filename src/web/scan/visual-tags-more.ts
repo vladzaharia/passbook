@@ -36,4 +36,14 @@ export const moreAssigns: Record<string, Assign> = {
     }),
     reader: ANDROID,
   },
+  'assign-confirm-lost-pin': {
+    a: base({
+      step: 'confirm',
+      tag: READ,
+      card: { code: 'C1', method: 'camera' },
+      preview: { ...PREVIEW, warnings: ['lost'], lostAt: NOW - 86_400_000 },
+      pin: { open: true, move: true },
+    }),
+    reader: ANDROID,
+  },
 };

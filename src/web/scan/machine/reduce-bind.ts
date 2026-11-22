@@ -20,7 +20,12 @@ export function edit(s: MachineState, ev: Of<'assign.scope'> | Of<'assign.label'
   if (ev.type === 'assign.scope')
     return put(
       s,
-      { ...a, scope: ev.scope === 'user' && !a.preview?.ownerAccount ? 'pass' : ev.scope },
+      {
+        ...a,
+        scope: ev.scope === 'user' && !a.preview?.ownerAccount ? 'pass' : ev.scope,
+        // A PIN typed for one pass never widens to the person.
+        approved: ev.scope === a.scope ? a.approved : null,
+      },
       env,
     );
   return put(s, { ...a, label: ev.label.slice(0, 24) }, env);
@@ -70,10 +75,23 @@ export function approve(s: MachineState, ev: Of<'assign.approve'>, env: Env): Ou
   const last = a?.retry;
   if (!a?.pin?.open || a.busy || last?.c !== 'assign.bind') return same(s);
   const key = env.id();
+  const approval = { ...(ev.staffId ? { staffId: ev.staffId } : {}), pin: ev.pin };
+  // A move flagged at the confirm step is finished by the bind itself, with the approval.
+  if (a.pin.move && a.step === 'confirm') {
+    const moving = bindBody(a, true, approval);
+    if (!moving) return same(s);
+    const { approval: _moving, ...rest } = moving;
+    return put(
+      s,
+      { ...a, key, busy: 'bind', approved: null, retry: { c: 'assign.bind', key, body: rest } },
+      env,
+      [send({ c: 'assign.bind', key, body: moving })],
+    );
+  }
   const body: BindBodyIn = {
     ...last.body,
     ...(a.pin.move ? { move: true } : {}),
-    approval: { ...(ev.staffId ? { staffId: ev.staffId } : {}), pin: ev.pin },
+    approval,
   };
   const { approval: _pin, ...kept } = body;
   // A pass picked by id asks for the PIN at the preview: the same preview again, with the approval.
