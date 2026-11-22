@@ -149,7 +149,7 @@ function actionsHtml(props: PrintPageProps) {
       : []),
   ].join('');
   const lossy =
-    props.model.state === 'ready' && hasUndrawable(props.model.content, 'page')
+    props.model.state === 'ready' && hasUndrawable(props.model.content)
       ? `<p class="callout" data-lossy>${escapeHtml(PRINT_COPY.lossy)}</p>`
       : '';
   return `${lossy}<div class="pp-actions">${actions}</div>${

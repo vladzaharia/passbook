@@ -1,8 +1,8 @@
 /**
- * Noto Sans (SIL OFL 1.1, @fontsource-variable/noto-sans) behind Rubik on the sheet. Rubik has no
+ * Noto Sans (SIL OFL 1.1, assets/fonts/noto) behind Rubik on the sheet. Rubik has no
  * Vietnamese tone marks or Greek, and the pages serve only its Latin faces, so these three subsets
  * cover Vietnamese, Greek and Cyrillic. unicode-range keeps each file unfetched until a character
- * needs it. `npm run gen` copies the files to public/fonts/noto. No CJK: a subset is megabytes.
+ * needs it. `npm run gen` copies the files to public/fonts/noto and the PDF's static TTFs to public/fonts/pdf. No CJK: a subset is megabytes.
  */
 export const FALLBACK_FAMILY = 'Noto Sans Print';
 export const FALLBACK_FONTS = [
@@ -20,6 +20,9 @@ export const FALLBACK_FONTS = [
     range: 'U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116',
   },
 ] as const;
+
+/** Static instances for the PDF; pdf-lib embeds static fonts only. */
+export const FALLBACK_PDF_FONTS = ['NotoSans-Regular.ttf', 'NotoSans-Bold.ttf'] as const;
 
 export const FALLBACK_FONT_CSS = FALLBACK_FONTS.map(
   (f) =>

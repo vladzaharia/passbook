@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { hasUndrawable } from './pdf-coverage.ts';
+import { hasUndrawable, needsFallback } from './pdf-coverage.ts';
 
 describe('hasUndrawable', () => {
   it.each(['Ada Lovelace', 'Žofia Łukasz', 'Иван Петров', 'ｆｕｌｌ', '€ 5 – 10'])(
     'passes %s',
     (text) => expect(hasUndrawable({ holder: text })).toBe(false),
   );
-  it.each(['Nguyễn Thị Hương', '李雷', 'שלום', '😀'])('flags %s, also nested', (text) => {
+  it.each(['李雷', 'שלום', '😀'])('flags %s, also nested', (text) => {
     expect(hasUndrawable(text)).toBe(true);
     expect(hasUndrawable({ rows: [{ value: text }] })).toBe(true);
   });
@@ -21,11 +21,13 @@ describe('hasUndrawable', () => {
     ['Hebrew', 'שלום', true],
     ['Arabic', 'مرحبا', true],
     ['emoji', '😀', true],
-  ])('page scope, %s: lossy is %s', (_script, text, lossy) => {
-    expect(hasUndrawable({ holder: text }, 'page')).toBe(lossy);
+  ])('%s: lossy is %s', (_script, text, lossy) => {
+    expect(hasUndrawable({ holder: text })).toBe(lossy);
   });
-  it('the PDF scope still flags Vietnamese and Greek', () => {
-    expect(hasUndrawable('Nguyễn Thị Hương')).toBe(true);
-    expect(hasUndrawable('Αλέξανδρος')).toBe(true);
+  it('asks for the fallback only when Rubik lacks a character', () => {
+    expect(needsFallback({ a: ['Nguyễn'] })).toBe(true);
+    expect(needsFallback('Αλέξανδρος')).toBe(true);
+    expect(needsFallback('Zoë Łukasz Иван')).toBe(false);
+    expect(needsFallback('李雷')).toBe(false);
   });
 });

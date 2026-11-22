@@ -16,12 +16,7 @@
   ],
   "project": ["src/**/*.{ts,tsx}!", "tools/**/*.ts", "e2e/**/*.ts", "test/**/*.ts"],
   "ignore": [],
-  "ignoreDependencies": [
-    "@fontsource-variable/noto-sans",
-    "@polaris-key/brand",
-    "cloudflare",
-    "tailwindcss"
-  ],
+  "ignoreDependencies": ["@polaris-key/brand", "cloudflare", "tailwindcss"],
   "ignoreBinaries": ["openssl", "pytest", "go"],
   "rules": {
     "nsExports": "off",
