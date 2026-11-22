@@ -136,8 +136,16 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     await configuration.getByRole('button', { name: /^Operator/ }).click();
     await configuration.getByRole('combobox', { name: 'Reader', exact: true }).click();
     await page.getByRole('option', { name: 'Camera', exact: true }).click();
+    // The sheet closes when the PATCH lands. Wait for that response, so a rejected save (a stale
+    // revision) fails here with its status instead of as a sheet that never closed, and a slow one
+    // under load gets the time it needs.
+    const saved = page.waitForResponse(
+      (r) =>
+        r.request().method() === 'PATCH' && /\/scanning-sessions\/[^/]+\/devices\//.test(r.url()),
+    );
     await configuration.getByRole('button', { name: 'Save device', exact: true }).click();
-    await expect(configuration).toBeHidden();
+    expect((await saved).status()).toBe(200);
+    await expect(configuration).toBeHidden({ timeout: 15_000 });
     // A refresh that raced the save returns the old configuration; each retry reads again.
     await expect(async () => {
       await refreshScannerSession(phone);

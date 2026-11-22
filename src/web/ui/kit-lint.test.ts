@@ -54,9 +54,9 @@ describe('kit lint', () => {
     expect(text('ui/status-pill.tsx')).toContain('pointer-coarse:size-11');
   });
 
-  it('toasts only through the kit toast (ui/toaster.tsx)', () => {
+  it('toasts only through the kit toast (ui/toaster.tsx, which loads ui/toaster-impl.tsx)', () => {
     for (const { path, text } of files) {
-      if (path === 'ui/toaster.tsx') continue;
+      if (path === 'ui/toaster-impl.tsx') continue;
       expect(text, path).not.toMatch(/from 'sonner'/);
     }
   });

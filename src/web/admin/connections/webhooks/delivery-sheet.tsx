@@ -24,6 +24,7 @@ import {
   DELIVERY_STATUS,
   EVENT_LABEL,
   failureLabel,
+  passLabel,
   TRIGGER_LABEL,
 } from './labels.ts';
 import { queuedLine, replayError } from './replay-errors.ts';
@@ -110,7 +111,7 @@ export function DeliverySheet({
                         title={d.externalId ?? undefined}
                         className="font-normal"
                       >
-                        {d.externalId ?? 'Open pass'}
+                        {passLabel(d)}
                       </RowLink>
                     ),
                   },

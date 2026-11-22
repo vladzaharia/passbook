@@ -184,7 +184,7 @@ Platform certificates: the provisioner never orders or revokes for `pass.im.plrs
 
 Revoke: the provisioner refuses to revoke the newest certificate of a pass type, and any platform certificate (revoke those by hand in the developer portal). It revokes a certificate only when a newer one of the same pass type was ordered at least 24 hours earlier and the main Worker has since called `reportCertificateActive` for it, and at most once per pass type in 7 days. The main Worker calls `reportCertificateActive` after it activates a new certificate.
 
-Trust boundary: the service binding, not the lint rule (`tools/check-apple-binding.ts`), is the boundary. Anyone who can deploy Workers in the account can bind to or redeploy the provisioner, so scope Cloudflare API tokens and never give CI a token that can deploy `apple-provisioner`.
+Trust boundary: the service binding, not the lint rule (`tools/check-apple-binding.ts`), is the boundary. The rule also fails `env['AP'+'PLE']`, a const key, computed `env[key]`, `Object.values(env)` and copies or rest spreads of the env; files reviewed to read by key are listed in `DYNAMIC_ENV_OK`. Anyone who can deploy Workers in the account can bind to or redeploy the provisioner, so scope Cloudflare API tokens and never give CI a token that can deploy `apple-provisioner`.
 
 Rotate the key: create a new one, `secret put` the three values, revoke the old key. Compromise: revoke the key in App Store Connect. Losing it stops automated renewal only; manual upload still works. Calls: `apple-provisioner` D1 table `asc_calls`.
 

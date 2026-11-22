@@ -1,4 +1,4 @@
-import { STEP_UP_REQUIRED_MESSAGE } from './sign-in.ts';
+import { STEP_UP_REQUIRED_MESSAGE } from './step-up-message.ts';
 
 // The sign-in page's `?reason=` lines. Apart from sign-in.ts: the scanner bundles that file.
 

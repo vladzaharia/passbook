@@ -3,6 +3,7 @@ import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import { formatTime } from '../../lib/format.ts';
 import type { ScanApi } from '../api/scan-api.ts';
+import { canReadEnrollments } from '../enroll/can-enroll.ts';
 import { AssignChip } from '../enroll/request-chip.tsx';
 import { RequestStrip } from '../enroll/request-strip.tsx';
 import { useEnrollment } from '../enroll/use-enroll.ts';
@@ -118,7 +119,10 @@ export function useTagUi({
   const tags = useMemo(() => tagsPortOf(api), [api]);
   useEnrollment({
     api: tags,
-    enabled: device && reader.kind !== 'none' && s.started && s.block === null,
+    enabled:
+      canReadEnrollments({ device, reading: reader.kind !== 'none', role, assign: setting }) &&
+      s.started &&
+      s.block === null,
     showing: a?.request?.id ?? null,
     dispatch,
     onResolved: (r) => {

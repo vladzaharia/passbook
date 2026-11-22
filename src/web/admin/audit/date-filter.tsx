@@ -12,7 +12,8 @@ import {
   PopoverTrigger,
   rangeStart,
 } from '@/web/ui/index.ts';
-import { dayToMs, msToDay, rangeLabel } from './audit-search.ts';
+import { rangeLabel } from './audit-range.ts';
+import { dayToMs, msToDay } from './audit-search.ts';
 
 const QUICK = [
   { value: '1d', label: 'Today' },

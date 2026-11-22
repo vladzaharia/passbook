@@ -109,6 +109,28 @@ describe('what the pass and the person allow', () => {
     expect(await codeOf(picked)).toBe(code);
   });
 
+  it('refuses an expired pass, typed and spare, like the scanner does', async () => {
+    const p = await f.pass();
+    const spare = await body<Tag>(
+      await assign((await f.pass()).pass.id, { id: '04c3d1e1', binding: 'pass' }),
+    );
+    await f.nfc(f.operator.headers, 'DELETE', `/bindings/${spare.binding?.id}`);
+    await run(
+      f.kit.env.DB,
+      "UPDATE pass_versions SET pass_json = json_set(pass_json, '$.expirationDate', ?) WHERE pass_id = ?",
+      [new Date(f.kit.clock.now() - 3_600_000).toISOString(), p.pass.id],
+    );
+    for (const req of [
+      { id: '04c3d1e2', binding: 'pass' },
+      { tagId: spare.id, binding: 'pass' },
+    ]) {
+      const res = await assign(p.pass.id, req);
+      expect(res.status).toBe(409);
+      expect(await codeOf(res)).toBe('TAG_PASS_EXPIRED');
+    }
+    expect(await audits('tag.bind', spare.id)).toBe(1);
+  });
+
   it('refuses a person-wide tag for a disabled owner', async () => {
     const p = await f.pass({ owner: true });
     await run(f.kit.env.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [p.ownerId ?? '']);

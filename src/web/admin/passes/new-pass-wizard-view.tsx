@@ -189,7 +189,7 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
                 (!eligible.isError || eligible.isFetchNextPageError) &&
                 (!eligible.isFetching || eligible.isFetchingNextPage) &&
                 !(scope.isLoading && usable.length === 0) ? (
-                  <div className="wl-rise [animation-delay:240ms]">
+                  <div className="wl-rise [--wl-delay:240ms]">
                     <LoadMore query={eligible} shown={usable.length} noun={TEMPLATE_NOUN} scoped />
                   </div>
                 ) : null}

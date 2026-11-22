@@ -122500,6 +122500,28 @@
           {
             "schema": {
               "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "passId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pass",
+                "user"
+              ]
+            },
+            "required": false,
+            "name": "binding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "maxLength": 80
             },
             "required": false,

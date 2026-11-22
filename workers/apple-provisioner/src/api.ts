@@ -28,6 +28,7 @@ import {
   type AppleRpc,
   AscError,
   type CertificateInfo,
+  type CreatedPassType,
   type PassTypeRef,
   type ProvisionerEnv,
 } from './types.ts';
@@ -123,17 +124,20 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
       last = { status: String(res.status), requestId: res.requestId };
       return res;
     };
+    let result: { value: T } | undefined;
+    let failed: unknown;
     try {
-      return await fn(req);
+      result = { value: await fn(req) };
     } catch (error) {
+      failed = error;
       if (error instanceof AscError) {
         // The code, not the last HTTP status: a refused lookup that read 200 must not ledger as 200.
         last.status = error.code;
         if (error.code === 'ASC_REFUSED')
           await logRefusal(db, method, target, caller, deps.now(), error.message);
       }
-      throw error;
-    } finally {
+    }
+    try {
       await finish(
         db,
         callId,
@@ -147,7 +151,12 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
         },
         deps.now(),
       );
+    } catch {
+      // The Apple call already happened: a ledger write failure must not hide its outcome.
+      alert('error', 'provisioner.ledger_write_failed', { method, callId });
     }
+    if (result) return result.value;
+    throw failed;
   }
 
   const requireAllowed = async (ascId: string): Promise<Allowed> =>
@@ -186,13 +195,15 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
         return managedIdentifier(handle);
       });
       const known = await allowedByIdentifier(db, identifier);
-      if (known?.ascId) return { ascId: known.ascId, identifier, name: known.name };
+      if (known?.ascId)
+        return { ascId: known.ascId, identifier, name: known.name, outcome: 'existing' };
       return ledgered('createPassType', identifier, runId, async (req) => {
         const res = await req('POST', '/v1/passTypeIds', {
           data: { type: 'passTypeIds', attributes: { identifier, name } },
         });
         // A lost response from an earlier attempt: Apple already has it, so adopt it.
-        const created = res.status === 409 ? await lookup(req, identifier) : passType(one(res));
+        const adopted = res.status === 409;
+        const created = adopted ? await lookup(req, identifier) : passType(one(res));
         if (!created) throw failure(res);
         await rememberPassType(
           db,
@@ -202,7 +213,7 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
           'created',
           deps.now(),
         );
-        return created;
+        return { ...created, outcome: adopted ? 'adopted' : 'created' } satisfies CreatedPassType;
       });
     },
 
@@ -298,8 +309,18 @@ export function createApi(env: ProvisionerEnv, deps: Deps): AppleRpc {
       });
       return ledgered('findPassType', identifier, runId, async (req) => {
         const found = await lookup(req, identifier);
-        if (found && (await allowedByIdentifier(db, identifier)))
-          await rememberPassType(db, identifier, found.ascId, found.name, 'seeded', deps.now());
+        // A seeded row gets its id; a managed identifier an earlier attempt created joins the allowlist.
+        if (found) {
+          const seeded = (await allowedByIdentifier(db, identifier)) !== null;
+          await rememberPassType(
+            db,
+            identifier,
+            found.ascId,
+            found.name,
+            seeded ? 'seeded' : 'created',
+            deps.now(),
+          );
+        }
         return found;
       });
     },

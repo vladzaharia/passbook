@@ -74,9 +74,10 @@
     "SSRF_DENY_HOSTS": "plrs.im",
     // "1" serves /scan, scan.webmanifest and the decoder worker. Off in production until M1.
     "SCAN_ENABLED": "1",
-    // "1" stores the hardware summary devices report. Off for one release, so a rollback past
-    // the tolerant reader never meets rows with it.
-    "DEVICE_REPORT_HARDWARE": "0"
+    // "1" stores the hardware summary devices report. On since the release after the tolerant
+    // reader shipped. Rollback: set "0" and deploy; stored summaries are ignored by readers, not
+    // dropped. Do not roll the Worker back past the tolerant reader (044cfe11d) while rows exist.
+    "DEVICE_REPORT_HARDWARE": "1"
   },
 
   "secrets": {
