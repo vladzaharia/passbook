@@ -13,6 +13,7 @@ import {
   FilterBar,
   LoadMore,
   SegmentedControl,
+  SkeletonRows,
 } from '@/web/ui/index.ts';
 import type { ScanningSearch } from '../scanning/search.ts';
 import { useTagList } from './api.ts';
@@ -82,7 +83,7 @@ function TagsViews({
         }
       />
       {view === 'keys' ? (
-        <Suspense fallback={<p role="status">Loading keys…</p>}>
+        <Suspense fallback={<SkeletonRows label="Loading keys" />}>
           <KeysetsView
             orgId={orgId}
             canManage={canManage}

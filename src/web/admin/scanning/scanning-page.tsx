@@ -9,6 +9,7 @@ import {
   EmptyState,
   ErrorState,
   PageHeader,
+  SkeletonRows,
   Tabs,
   TabsContent,
   TabsList,
@@ -70,7 +71,7 @@ export function ScanningPage({ search }: { search: ScanningSearch }) {
   useEffect(() => {
     if (!scope.isLoading && (scope.isError || !canManage)) setCreatingSession(undefined);
   }, [canManage, scope.isError, scope.isLoading]);
-  if (scope.isLoading) return <p role="status">Loading scanning…</p>;
+  if (scope.isLoading) return <SkeletonRows label="Loading scanning" />;
   if (scope.isError) return <ErrorState error={scope.error} onRetry={() => scope.refetch()} />;
   if (!scope.orgId || !scope.membership?.capabilities.includes('scanning:read')) {
     return <EmptyState art="scanner" title="Select an organization" />;
@@ -199,12 +200,12 @@ function ScopedScanningPage({
           <ScannersTab live={live} newButton={newSession('primary')} />
         </TabsContent>
         <TabsContent value="events">
-          <Suspense fallback={<p role="status">Loading events…</p>}>
+          <Suspense fallback={<SkeletonRows label="Loading events" />}>
             <EventsTab key={mode} />
           </Suspense>
         </TabsContent>
         <TabsContent value="zones">
-          <Suspense fallback={<p role="status">Loading zones…</p>}>
+          <Suspense fallback={<SkeletonRows label="Loading zones" />}>
             <ZonesTab />
           </Suspense>
         </TabsContent>
@@ -212,12 +213,12 @@ function ScopedScanningPage({
           <StaffTab />
         </TabsContent>
         <TabsContent value="tags">
-          <Suspense fallback={<p role="status">Loading tags…</p>}>
+          <Suspense fallback={<SkeletonRows label="Loading tags" />}>
             <TagsTab key={mode} search={search} />
           </Suspense>
         </TabsContent>
         <TabsContent value="activity">
-          <Suspense fallback={<p role="status">Loading scans…</p>}>
+          <Suspense fallback={<SkeletonRows label="Loading scans" />}>
             <ScansTab search={search} />
           </Suspense>
         </TabsContent>
