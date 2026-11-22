@@ -35,6 +35,11 @@ for (const id of ALL_AGENTS) {
           await expect(page.getByRole('link', { name: 'Back to pass' })).toBeVisible();
           // Not saved: no offline claim, and nothing else on the page.
           await expect(page.getByText('Works offline')).toBeHidden();
+          if (id === 'android') {
+            // The code takes the content width less the page's gutters (24 px a side).
+            const { width } = (await page.locator('figure svg').boundingBox()) ?? { width: 0 };
+            expect(width).toBeGreaterThanOrEqual((page.viewportSize()?.width ?? 0) - 49);
+          }
           if (theme === 'light' || id === 'android') await shoot(page, `door-${id}`, theme);
         },
         { theme },

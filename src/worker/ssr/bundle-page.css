@@ -25,6 +25,19 @@
   font-weight: 500;
   cursor: pointer;
 }
+.bd-more > summary::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-right: 0.625rem;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  rotate: -45deg;
+  transition: rotate 120ms ease-out;
+}
+.bd-more[open] > summary::before {
+  rotate: 45deg;
+}
 .bd-more > summary:hover {
   color: var(--pk-text-strong);
 }
@@ -60,6 +73,10 @@
     .bd-more > summary {
       cursor: default;
       pointer-events: none;
+    }
+    /* Read open beside the stack: a label, not a control. */
+    .bd-more > summary::before {
+      display: none;
     }
   }
   .bd-stack {

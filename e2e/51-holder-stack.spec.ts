@@ -58,6 +58,11 @@ test('My passes groups live, test and ended passes, and fronts the newest live p
     await signInHolder(page, f.email);
     // The front pass is the newest live one; the older live pass peeks behind it.
     await expect(page.locator('.wl-stack-front')).toContainText(f.names.newest);
+    // The code is drawn as the pass appears, not after a first paint of an empty box.
+    await expect(page.locator('.wl-stack-front svg.pc-barcode-svg')).toBeVisible({
+      timeout: 3_000,
+    });
+    await expect(page.locator('.pc-barcode-pending')).toHaveCount(0);
     await expect(stack(page).getByRole('link', { name: f.names.older })).toBeVisible();
     // Test passes sit in their own group with a count, never among the live ones.
     const test = page.locator('[data-group=test]');
@@ -102,6 +107,17 @@ test('six passes take under two screens at 390 wide', async ({ playwright }) => 
   await withAgent(playwright, 'android', async (page) => {
     await signInHolder(page, email);
     await expect(stack(page).locator('.wl-peek')).toHaveCount(5);
+    // Each peek keeps its 68 px strip: the next one covers only the 10 px overlap.
+    for (const width of [390, 834]) {
+      await page.setViewportSize({ width, height: 900 });
+      const tops = await page
+        .locator('.wl-stack-peek')
+        .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().top));
+      for (let i = 1; i < tops.length; i++) {
+        expect((tops[i] ?? 0) - (tops[i - 1] ?? 0)).toBeGreaterThanOrEqual(58);
+      }
+    }
+    await page.setViewportSize({ width: 390, height: 844 });
     const { height } = page.viewportSize() ?? { height: 0 };
     const total = await page.evaluate(() => document.documentElement.scrollHeight);
     expect(total).toBeLessThan(height * 2);

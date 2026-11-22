@@ -45,7 +45,7 @@ test('iPhone Safari: one "All passes" badge, one count line, voided peek named',
   });
 });
 
-test('Android Chrome: no Apple badge, the front pass shows at the door, peeks are links', async ({
+test('Android Chrome: no Apple badge, every live member shows at the door, peeks are links', async ({
   playwright,
 }) => {
   const b = await bundleOf();
@@ -54,10 +54,25 @@ test('Android Chrome: no Apple badge, the front pass shows at the door, peeks ar
     await expect(page.getByText('3 passes · 1 voided')).toBeVisible();
     await expect(page.getByRole('link', { name: /^All passes/ })).toHaveCount(0);
     await expect(page.getByText('For Apple Wallet, open this page on an iPhone.')).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Show at the door' })).toHaveAttribute(
-      'href',
-      new RegExp(`^${b.path}/[0-9a-f-]{36}/barcode$`),
-    );
+    // Every live member shows at the door from its own row; the voided one has none.
+    const doors = page.getByRole('link', { name: /^Show at the door/ });
+    await expect(doors).toHaveCount(2);
+    for (const pass of [b.first, b.second]) {
+      await expect(doors.and(page.locator(`a[href$="/${pass.id}/barcode"]`))).toHaveCount(1);
+    }
+    await expect(page.getByRole('link', { name: /^Show at the door, Second / })).toBeVisible();
+    // The folded details read as a disclosure: a chevron before the label.
+    const chevron = await page
+      .locator('.bd-more > summary')
+      .evaluate((e) => getComputedStyle(e, '::before').content);
+    expect(chevron).not.toBe('none');
+    // A peek is the card's top 68 px, so a wrapped org name reads whole.
+    expect(
+      await page
+        .locator('.wl-peek')
+        .first()
+        .evaluate((e) => e.getBoundingClientRect().height),
+    ).toBe(68);
     // Static page: peeks follow their href with no script.
     await shoot(page, 'bundle-android');
     await page

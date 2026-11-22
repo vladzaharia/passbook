@@ -151,12 +151,11 @@ export function EmailFace({
 
   return (
     <div className="flex flex-1 flex-col justify-center gap-6">
+      {notice ? <Callout>{notice}</Callout> : null}
       {callout ? (
         <Callout tone="danger" title={callout.title}>
           {callout.message}
         </Callout>
-      ) : notice ? (
-        <Callout>{notice}</Callout>
       ) : null}
       {operator ? (
         <>

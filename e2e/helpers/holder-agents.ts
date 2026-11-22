@@ -90,23 +90,33 @@ const WIDTHS = [
   [1440, 900],
 ] as const;
 
+/** A dialog is open: resizing the page under it can close it or move what the test clicks next. */
+export const modalOpen = (page: Page) =>
+  page.locator('dialog[open], [role=dialog], [role=alertdialog]').first().isVisible();
+
 /**
  * With SHOTS set, screenshots the page (full page) at three widths. With no `theme` it takes both
  * themes by flipping the colour scheme the page follows; a page already pinned to a theme by its
- * cookie passes that theme and gets one pass. The viewport is restored after.
+ * cookie passes that theme and gets one pass. The viewport is restored after. While a dialog is
+ * open the page is not resized: one shot at the current width, named for it.
  */
 export async function shoot(page: Page, name: string, theme?: 'light' | 'dark') {
   if (!SHOTS) return;
   mkdirSync(SHOTS, { recursive: true });
   const first = page.viewportSize();
+  const modal = await modalOpen(page);
+  const sizes = modal && first ? [[first.width, first.height] as const] : WIDTHS;
   for (const scheme of theme ? [theme] : (['light', 'dark'] as const)) {
     if (!theme) await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
-    for (const [width, height] of WIDTHS) {
-      await page.setViewportSize({ width, height });
+    for (const [width, height] of sizes) {
+      if (!modal) await page.setViewportSize({ width, height });
       await page.waitForTimeout(250);
-      await page.screenshot({ path: `${SHOTS}/${name}-${width}-${scheme}.png`, fullPage: true });
+      await page.screenshot({
+        path: `${SHOTS}/${name}-${width}-${scheme}.png`,
+        fullPage: !modal,
+      });
     }
   }
   if (!theme) await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'reduce' });
-  if (first) await page.setViewportSize(first);
+  if (!modal && first) await page.setViewportSize(first);
 }

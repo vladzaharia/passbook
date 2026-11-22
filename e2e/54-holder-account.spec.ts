@@ -32,6 +32,15 @@ for (const theme of ['light', 'dark'] as const) {
         await expect(page.getByText('Add another email first.')).toBeVisible();
         await expect(page.getByRole('button', { name: /^Remove/ })).toBeDisabled();
         await expect(page.getByText('This device')).toBeVisible();
+        // The address wraps before the @ or after a dot, never inside the domain's words.
+        const split = await page
+          .locator('main p:has(wbr)')
+          .first()
+          .evaluate(
+            (p) =>
+              [...p.querySelectorAll('span')].filter((s) => s.getClientRects().length > 1).length,
+          );
+        expect(split).toBe(0);
         await shoot(page, 'account', theme);
       },
       { theme },

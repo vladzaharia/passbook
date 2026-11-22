@@ -152,6 +152,21 @@ test('a dead pass link explains itself and opens sign-in with the reason', async
   });
 });
 
+test('a failed browser check shows beside the reason line, not instead of it', async ({
+  playwright,
+}) => {
+  await withAgent(playwright, 'android', async (page) => {
+    await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
+    await page.goto('/login?reason=link');
+    await expect(
+      page.getByText('Could not verify this browser. Reload and try again.'),
+    ).toBeVisible();
+    await expect(
+      page.getByText('That pass link does not work. Sign in to see your current passes.'),
+    ).toBeVisible();
+  });
+});
+
 test('a dead bundle link says bundle', async ({ playwright }) => {
   await withAgent(playwright, 'windows', async (page) => {
     await page.goto(`/b/${'y'.repeat(43)}`);

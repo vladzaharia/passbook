@@ -85,6 +85,8 @@
 /* The code is down and to its left: the pass turns half as far again, the eyes drop. */
 /* On the lead's card it points down and left, at the code or the badge. */
 .wl-hero-buddy {
+  /* The feet stand on the foil ledge's top (it sits 1.5 px above the card's border), not in it. */
+  --wl-seat-border: 1.5px;
   --wl-buddy-inset: 1.25rem;
   --wl-drop: 18px;
   --wl-aim: 1.6;

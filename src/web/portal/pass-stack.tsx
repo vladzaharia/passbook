@@ -14,6 +14,8 @@ export interface StackPeek {
   /** Voided or expired: the card greys. */
   dim?: boolean;
   removed?: boolean;
+  /** A row under the strip (the bundle's Show at the door on Android); the strip rounds off above it. */
+  way?: ReactNode;
 }
 
 export interface PassStackProps {
@@ -52,7 +54,12 @@ export function PassStack({ label, front, peeks, onPick, raise, className }: Pas
         </li>
       ) : null}
       {peeks.map((peek, i) => (
-        <li key={peek.id} className="wl-stack-peek" style={{ '--i': i + 1 } as CSSProperties}>
+        <li
+          key={peek.id}
+          className="wl-stack-peek"
+          data-way={peek.way ? '' : undefined}
+          style={{ '--i': i + 1 } as CSSProperties}
+        >
           <a
             className="wl-peek"
             href={peek.href}
@@ -78,6 +85,7 @@ export function PassStack({ label, front, peeks, onPick, raise, className }: Pas
               <PassCard view={peek.view} face="front" removed={peek.removed} />
             </span>
           </a>
+          {peek.way ? <div className="wl-peek-way">{peek.way}</div> : null}
         </li>
       ))}
     </ul>
