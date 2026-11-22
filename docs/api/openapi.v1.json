@@ -80752,11 +80752,6 @@
             ]
           },
           {
-            "apiKey": [
-              "connections:write"
-            ]
-          },
-          {
             "session": []
           }
         ],
@@ -86818,6 +86813,7 @@
                   "items": [
                     {
                       "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+                      "type": "webhook.test",
                       "ok": true,
                       "status": 200,
                       "errorCode": null,
