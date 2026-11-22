@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
 import { WEBHOOKS_COPY } from '../../../shared/copy/developers-webhooks.ts';
+import { pluralize } from '../../lib/format.ts';
 import { StepUp } from '../ui/step-up.tsx';
 import { stepUpOf } from './client.ts';
 
@@ -13,7 +14,7 @@ const subOf = (e: WebhookEndpointDto) =>
   e.target === 'capture'
     ? 'Built in. Signed, never sent'
     : e.status === 'active'
-      ? `${e.eventTypes.length} events`
+      ? pluralize(e.eventTypes.length, 'event')
       : e.status === 'paused'
         ? 'Paused'
         : 'Disabled';

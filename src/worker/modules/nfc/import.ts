@@ -113,20 +113,31 @@ export async function importTags(
       });
       const done = writes.map((s) => (results[grant.indexOf(s)]?.results?.length ?? 0) === 1);
       added += done.filter(Boolean).length;
-      if (replace)
-        await recordAudit(ctx, {
-          orgId: a.orgId,
-          actorType: a.kind === 'api_key' ? 'api_key' : 'user',
-          actorId: keysetActorId(a),
-          ...(a.ip ? { ipPrefix: a.ip } : {}),
-          action: 'tag_keyset.rekeyed',
-          targetType: 'tag_keyset',
-          targetId: keyset.id,
-          detail: {
-            count: added - before,
-            tagIds: tags.filter((_, n) => done[n]).map((t) => t.tagId),
-          },
-        });
+      if (replace) {
+        // The keys are already swapped; a failed audit write must not fail the rest of the file.
+        try {
+          await recordAudit(ctx, {
+            orgId: a.orgId,
+            actorType: a.kind === 'api_key' ? 'api_key' : 'user',
+            actorId: keysetActorId(a),
+            ...(a.ip ? { ipPrefix: a.ip } : {}),
+            action: 'tag_keyset.rekeyed',
+            targetType: 'tag_keyset',
+            targetId: keyset.id,
+            detail: {
+              count: added - before,
+              tagIds: tags.filter((_, n) => done[n]).map((t) => t.tagId),
+            },
+          });
+        } catch (error) {
+          ctx.log.error('nfc.import.rekeyed_audit_failed', {
+            orgId: a.orgId,
+            keysetId: keyset.id,
+            code: 'NFC_REKEYED_AUDIT_FAILED',
+            error,
+          });
+        }
+      }
     }
   }
   problems.sort((x, y) => x.line - y.line);
