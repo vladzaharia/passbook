@@ -45,6 +45,7 @@ export function useReleaseFlow(templateId: string, orgId: string) {
         client.invalidateQueries({ queryKey: ['admin', 'templates'] }),
         client.invalidateQueries({ queryKey: ['admin', 'template-releases', templateId] }),
         client.invalidateQueries({ queryKey: ['admin', 'join-link', templateId] }),
+        client.invalidateQueries({ queryKey: ['orgs', 'pass-setup', orgId] }),
       ]),
   });
 }
@@ -63,6 +64,7 @@ export function useReviewFlow(templateId: string, orgId: string) {
         client.invalidateQueries({ queryKey: ['admin', 'templates'] }),
         client.invalidateQueries({ queryKey: ['admin', 'template-releases', templateId] }),
         client.invalidateQueries({ queryKey: ['admin', 'join-link', templateId] }),
+        client.invalidateQueries({ queryKey: ['orgs', 'pass-setup', orgId] }),
         client.invalidateQueries({ queryKey: reviewInboxKey(orgId) }),
       ]),
   });

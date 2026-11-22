@@ -63,3 +63,10 @@ it('refreshes the join link after an approval that releases', async () => {
   await act(() => result.current.mutateAsync({ version: 'v', release: true }));
   expect(keys(invalidated)).toContainEqual(['admin', 'join-link', 'tpl1']);
 });
+
+it('refreshes the brand and channels checks after a release, so every count reads the same state', async () => {
+  const { invalidated, wrapper } = harness();
+  const { result } = renderHook(() => useReleaseFlow('tpl1', 'org1'), { wrapper });
+  await act(() => result.current.mutateAsync({ version: 'v', modes: ['test', 'live'] }));
+  expect(keys(invalidated)).toContainEqual(['orgs', 'pass-setup', 'org1']);
+});
