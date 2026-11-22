@@ -22,6 +22,7 @@ import {
   RULE_RUN,
   SCAN_EVENT,
   SCAN_INPUT,
+  SCAN_OK,
   SESSION,
   STAFF,
   TAG_TYPE,
@@ -367,12 +368,22 @@ export const SEEDS: Record<string, unknown> = {
     capacity: SCAN_EVENT.capacity,
     note: SCAN_EVENT.note,
   },
+  // A Test key releases to Test only; Live takes a person (template-release-flow.ts).
   'templates.postTemplatesByIdRelease request': {
     version: '4',
-    modes: ['test', 'live'],
-    expected: { test: 3, live: 3 },
+    modes: ['test'],
+    expected: { test: 3 },
   },
-  'templates.postTemplatesByIdRelease response': RELEASE,
+  'templates.postTemplatesByIdRelease response': {
+    version: '4',
+    modes: { test: RELEASE.modes.test },
+    state: {
+      ...RELEASE.state,
+      live: { version: '3', at: T.created, by: 'Sam Rivera' },
+      test: { version: '4', at: RELEASED_AT, state: 'ahead' },
+      next: 'request_review',
+    },
+  },
   'templates.postTemplatesByIdPreview request': { version: '3', input: TEMPLATE.sample },
   'templates.postTemplatesByIdPreview response': {
     passJson: TEMPLATE.passJson,
@@ -481,13 +492,13 @@ export const SEEDS: Record<string, unknown> = {
   'templates.postTemplatesByIdReleases response': RELEASE_ROW,
   'templates.postTemplatesByIdReviewRequests request': {
     version: '4',
-    modes: ['live'],
-    expected: { live: 3 },
+    modes: ['test'],
+    expected: { test: 3 },
   },
   'templates.postTemplatesByIdReviewRequests response': {
     version: '4',
     modes: {
-      live: { outcome: 'review_requested', releaseId: null, generation: 3, approvalKind: null },
+      test: { outcome: 'review_requested', releaseId: null, generation: 3, approvalKind: null },
     },
     state: {
       live: { version: '3', at: T.created, by: 'Sam Rivera' },
@@ -512,19 +523,27 @@ export const SEEDS: Record<string, unknown> = {
     reason: 'The new logo is cropped on older iPhones.',
   },
   'pass-imports.getPassImportsByIdRows response': IMPORT_ROWS,
+  // A preview is of a change run: what moving everyone's end date would do (broadcasts-change.ts).
   'broadcasts.postBroadcastsPreview request': {
     orgId: IDS.org,
     target: { templateIds: [IDS.template] },
-    patch: {},
+    patch: { validUntil: '2027-01-31' },
     notify: true,
-    message: BROADCAST.message,
   },
   'broadcasts.postBroadcastsPreview response': {
     targeted: 128,
     onDevice: 121,
     overBudget: 0,
     limit: 500,
-    samples: [{ passId: IDS.pass, title: 'Day pass', changes: [] }],
+    samples: [
+      {
+        passId: IDS.pass,
+        title: 'Day pass',
+        changes: [
+          { key: 'validUntil', label: 'Valid until', from: '2026-12-31', to: '2027-01-31' },
+        ],
+      },
+    ],
     unchanged: 0,
     blocked: [],
     notified: 121,
@@ -843,6 +862,39 @@ export const SEEDS: Record<string, unknown> = {
     revokedAt: null,
     acceptedAt: null,
   },
+  'passes.postPassesByIdPrints response': {
+    id: IDS.print,
+    passId: IDS.pass,
+    generation: 1,
+    status: 'active',
+    createdAt: T.now,
+    voidedAt: null,
+    voidCause: null,
+    code: 'P7QK2XJ4MZ3TBWHN5RVC6DLE4A',
+  },
+  'scan.getScanStaff response': {
+    items: [
+      { id: IDS.staff, name: 'Sam Rivera', role: 'desk' },
+      { id: uuid('staff-priya'), name: 'Priya Nair', role: 'manager' },
+    ],
+    nextCursor: null,
+  },
+  'scan.postScanRollCallByIdEnd response': { ...ROLL_CALL, endedAt: T.now, endedBy: IDS.user },
+  'scan.postScanMarkOut response': {
+    ...SCAN_OK,
+    checkIn: { ...SCAN_OK.checkIn, direction: 'out', inside: false },
+    card: { ...SCAN_OK.card, door: { state: 'out' } },
+  },
+  'org-lifecycle.postOrgsByOrgIdClose response': {
+    orgId: IDS.org,
+    status: 'closed',
+    closedAt: T.now,
+    purgeAfter: T.now + 30 * 24 * 3_600_000,
+    purging: false,
+    purged: false,
+    held: false,
+    canReopen: true,
+  },
   'bundles.postBundles request': {
     passIds: BUNDLE.passes.map((p) => p.id),
     name: BUNDLE.name,
@@ -939,8 +991,11 @@ export const SEEDS: Record<string, unknown> = {
   'scanners.postScanningSessionsSetup request': {
     preset: 'front_desk',
     timeZone: 'America/Los_Angeles',
-    places: [{ zoneId: IDS.zone }],
-    doors: [{ name: 'Front desk', place: 'main-hall', admits: { any: true }, hours: 'always' }],
+    doors: [{ name: 'Front desk', admits: { any: true }, hours: 'always' }],
+  },
+  'pass-setup.patchOrgsByOrgIdPassSetup request': {
+    expectedRevision: '4',
+    brand: { accent: '#ffc400', mark: 'full' },
   },
   'message-rules.getMessageRulesByIdRuns response': { items: [RULE_RUN], nextCursor: null },
   'message-rules.postMessageRulesByIdTest request': { passId: IDS.pass },

@@ -70,7 +70,7 @@ const RESOURCE_NAME =
 const FOREIGN = /Harbor|Example Events|TICKET-|Event ticket|Acme|Henry/i;
 /** Keys that hold an instant. `clearAfter` is a duration (contracts/broadcasts.ts). */
 const TIME_KEY =
-  /^(?!clearAfter$).*(?:At|Until|From|Since|Before|After|On)$|^(?:at|serverNow|when|from|to|start|end|until)$/;
+  /^(?!clearAfter$).*(?:At|Until|From|Since|Before|After|On)$|^(?:at|asOf|serverNow|when|from|to|start|end|until)$/;
 const ID_KEY = /^id$|Id$|^serial$|^serialNumber$/;
 
 export interface Example {

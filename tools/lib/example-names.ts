@@ -34,7 +34,7 @@ export const TABLES: Record<string, string[]> = {
     'Email delivery delayed',
   ],
   feature: ['Scanner sessions', 'Connections', 'Team members', 'Webhook endpoints'],
-  tagType: ['Wristband', 'Key fob', 'Card', 'Sticker'],
+  tagType: ['Member wristband', 'Wristband', 'Key fob', 'Card', 'Sticker'],
   tag: ['Wristband 14', 'Key fob 3', 'Locker tag 22', 'Guest wristband'],
   scanner: ['Front desk', 'Side door', 'Cafe counter', 'Gear shop till'],
   device: ['Front desk tablet', 'Side door phone', 'Cafe handheld', 'Spare scanner'],
@@ -131,6 +131,7 @@ const RULES: [RegExp, string][] = [
 
 /** Operations under the `scanners` tag that return a scanning session or one of its devices. */
 const OP_TABLES: [RegExp, string][] = [
+  [/TagTypes/, 'tagType'],
   [/ScanningSessions.*Devices/, 'device'],
   [/ScanningSessions/, 'session'],
 ];

@@ -2,9 +2,9 @@
 // everyday record leaves empty, and free text, which comes from its family's sentences (example-text.ts).
 // Each code rule cites where the server writes it, so a reader can check the example against the code.
 
-import { EFFECTIVE } from './example-canon.ts';
+import { EFFECTIVE, TAG_TYPE } from './example-canon.ts';
 import { type Family, familyOf, PROSE_KEYS, sentenceFor } from './example-text.ts';
-import { BUNDLE_URL, IDS, JOIN_URL, PAIRING_CODE, SCAN_CODE } from './example-world.ts';
+import { BUNDLE_URL, IDS, JOIN_URL, PAIRING_CODE, SCAN_CODE, T } from './example-world.ts';
 
 /** Leave an optional field out: the server omits it in the everyday case. */
 export const OMIT = Symbol('omit');
@@ -15,6 +15,9 @@ const nth =
   <T>(list: readonly T[]) =>
   (path: string): T =>
     list[Number(path.match(/\[(\d+)\](?!.*\[\d+\])/)?.[1] ?? 0) % list.length] as T;
+
+const PNG_1PX =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
 const RULES: Rule[] = [
   // Scan answers. A tag's passes and a group's members carry a scan reason only when refused (scan/tag-choose.ts,
@@ -35,6 +38,9 @@ const RULES: Rule[] = [
     `https://passbook.mobile/scan#pair=${PAIRING_CODE}`,
   ],
   [ANY, /(^|\.)pairing\.url$/, `https://passbook.mobile/scan#pair=${PAIRING_CODE}`],
+  // A pairing code lasts ten minutes (scan/pairing.ts PAIR_TTL_MS).
+  [ANY, /(^|\.)pairing\.expiresAt$/, T.now + 10 * 60_000],
+  [/^scanners\.postScannersByIdPairing$/, /^\.expiresAt$/, T.now + 10 * 60_000],
   [
     /^scanners\./,
     /\.ref$/,
@@ -70,6 +76,29 @@ const RULES: Rule[] = [
   [/^developer\./, /^\.signInUrl$/, 'https://passbook.mobile/login'],
   [/^developer\./, /^\.href$/, 'https://passbook.mobile/developers/logs'],
   [/^wallet-platform\..*Release$/, /^\.status$/, 'released'],
+  // A print that is not voided has no void cause.
+  [/Prints/, /(^|\.items\[\d+\])\.voidCause$/, null],
+  // A tag bound to a pass is the pass's, not a person's; its type is the member wristband.
+  [/^(nfc-tags|scan)\./, /\.binding\.userId$/, null],
+  [/^(nfc-tags|scan)\./, /\.type\.name$/, TAG_TYPE.name],
+  [/^(nfc-tags|scan)\./, /\.type\.id$/, TAG_TYPE.id],
+  // A retention sweep deletes what is older than the policy (retention/receipt-service.ts).
+  [/^retention\./, /\.policyDays$/, 365],
+  [/^retention\./, /\.cutoffAt$/, T.recent - 365 * 86_400_000],
+  // Metrics: hourly buckets over the last day, each point at its hour.
+  [/^metrics\./, /^\.bucketMs$/, 3_600_000],
+  [
+    /^metrics\./,
+    /\.series\.\w+\[\d+\]\.t$/,
+    (p: string) => T.now - 24 * 3_600_000 + Number(p.match(/\[(\d+)\]\.t$/)?.[1] ?? 0) * 3_600_000,
+  ],
+  // A Google service account (wallet-providers): an address at the issuer's own domain.
+  [ANY, /\.serviceAccountEmail$/, 'wallet-issuer@example.com'],
+  // The 2x and 3x images of an upload are PNGs like the 1x one.
+  [ANY, /^\.(x2|x3)$/, PNG_1PX],
+  // One org's migration moves its one account.
+  [/^wallet-platform\..*Migrate/, /^\.(accounts|queued|migrated)$/, 1],
+  [/^wallet-platform\..*Migrate/, /^\.pending$/, 0],
   // The org is Northwind; an org object's id is the org's (orgs, brand, workspace).
   [/^(orgs|brand)\./, /^\.id$/, IDS.org],
   [/^(orgs|brand)\./, /\.personalOwner$/, null],
@@ -173,9 +202,9 @@ const RULES: Rule[] = [
       id: '0193a1b2-7c00-7000-8000-000000000033',
       type: 'pass.issued',
       apiVersion: '2026-12-01',
-      createdAt: 1795572300000,
+      createdAt: 1795570380000,
       orgId: '0193a1b2-7c00-7000-8000-0000000000a1',
-      mode: 'test',
+      mode: 'live',
       pass: {
         id: '0193a1b2-7c00-7000-8000-0000000000c1',
         externalId: 'booking_8841',

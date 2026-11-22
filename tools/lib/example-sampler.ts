@@ -323,7 +323,7 @@ function contextString(key: string, kind: string, path: string, ctx: Ctx): strin
     case 'identityHint':
       return 'Northwind signing identity';
     case 'png':
-      return 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==';
+      return 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     case 'csv':
       return 'name,email,tier\nAda Example,ada@example.com,Day pass\n';
     case 'meta':
@@ -860,6 +860,7 @@ function byPattern(pattern: string, seed: string): string | undefined {
 function num(s: Json, key: string): number {
   let v = 2 + (Number.parseInt(hex(key, 4), 16) % 38);
   if (key === 'clearAfter') v = 7 * 86_400_000;
+  else if (key === 'asOf') v = T.recent;
   else if (/^(from|start)$/.test(key)) v = T.now - 24 * 3_600_000;
   else if (/^(to|end)$/.test(key)) v = T.now;
   else if (key === 'until') v = T.soon;
