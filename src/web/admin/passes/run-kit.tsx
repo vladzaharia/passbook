@@ -88,22 +88,26 @@ export function RunDone({
   clean,
   undone,
   failed,
+  buddy = true,
   children,
 }: {
   title: string;
   clean: boolean;
   undone: boolean;
   failed?: boolean;
+  buddy?: boolean;
   children: ReactNode;
 }) {
   const celebrated = useRef(clean && !undone);
   return (
     <Card data-art-host="" className="wl-buddy-room relative">
-      <Buddy
-        scene={undone ? 'peek' : clean ? 'cheer' : 'sorry'}
-        mood={undone || clean ? 'happy' : 'sad'}
-        size="sm"
-      />
+      {buddy ? (
+        <Buddy
+          scene={undone ? 'peek' : clean ? 'cheer' : 'sorry'}
+          mood={undone || clean ? 'happy' : 'sad'}
+          size="sm"
+        />
+      ) : null}
       <Celebrate when={celebrated.current} />
       <CardBody className="flex flex-col gap-5 p-6">
         <p className="flex items-center gap-2 text-base font-semibold text-fg-strong">

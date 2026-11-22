@@ -75,4 +75,29 @@ describe('change run selection', () => {
     expect(await list(`parentId=${done.id}`)).toEqual([undo.id]);
     expect(await list(`retryOf=${done.id}`)).toEqual([]);
   });
+
+  it('cancels a scheduled change only with passes:write, like stop and undo', async () => {
+    const a = await ck.kit.makePass();
+    const at = ck.kit.clock.now() + 2 * 3_600_000;
+    const made = await ck.post('/broadcasts', {
+      orgId: ck.kit.org.id,
+      kind: 'change',
+      target: { passIds: [a.id] },
+      patch: { gate: { set: 'S' } },
+      notify: false,
+      send: 'schedule',
+      at,
+    });
+    expect(made.status).toBe(201);
+    const { id } = (await made.json()) as { id: string };
+    const noPass = await ck.auth.apiKey({ orgId: ck.kit.org.id, scopes: ['messages:write'] });
+    const denied = await ck.post(`/broadcasts/${id}/cancel`, {}, noPass);
+    expect(denied.status).toBe(403);
+    expect(((await denied.json()) as { code: string }).code).toBe('MISSING_SCOPE');
+    const both = await ck.auth.apiKey({
+      orgId: ck.kit.org.id,
+      scopes: ['messages:write', 'passes:write'],
+    });
+    expect((await ck.post(`/broadcasts/${id}/cancel`, {}, both)).status).toBe(200);
+  });
 });

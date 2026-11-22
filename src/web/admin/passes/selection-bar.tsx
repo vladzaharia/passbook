@@ -9,7 +9,7 @@ import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
 import { errorMessage, isApiError, UserMessageError } from '../../lib/errors.ts';
 import { formatCount } from '../../lib/format.ts';
-import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
+import { BELOW_LG, PHONE, useMediaQuery } from '../../lib/media.ts';
 import { sessionQuery } from '../../lib/session.ts';
 import {
   Button,
@@ -79,6 +79,8 @@ export function SelectionBar({
   const barRef = useBottomBar<HTMLElement>();
   // Change, Email, Share and Void stay on the bar from lg; the rest live in More at every width, so it is one row.
   const compact = useMediaQuery(BELOW_LG);
+  // On a phone only Change and More stay on the bar, so it is one row.
+  const phone = useMediaQuery(PHONE);
   const ids = picked.map((p) => p.id);
   const n = all?.count ?? ids.length;
   // Counted from the rows on screen; for all matching the server skips what cannot change.
@@ -198,30 +200,34 @@ export function SelectionBar({
             )}
           </span>
         ) : null}
-        <Button
-          variant="outline"
-          disabled={!operable || emailable === 0}
-          iconStart={<ACTION_ICON.sendEmail aria-hidden />}
-          onClick={() => setAsk('send_email')}
-        >
-          Send email
-        </Button>
-        <span title={canShare ? undefined : SHARE_HINT}>
-          <Button
-            variant="outline"
-            disabled={!operable || !canShare}
-            aria-describedby={canShare ? undefined : 'share-hint'}
-            iconStart={<ACTION_ICON.bundle aria-hidden />}
-            onClick={() => setSharing(true)}
-          >
-            Share as bundle
-          </Button>
-          {canShare ? null : (
-            <span id="share-hint" className="sr-only">
-              {SHARE_HINT}
+        {phone ? null : (
+          <>
+            <Button
+              variant="outline"
+              disabled={!operable || emailable === 0}
+              iconStart={<ACTION_ICON.sendEmail aria-hidden />}
+              onClick={() => setAsk('send_email')}
+            >
+              Send email
+            </Button>
+            <span title={canShare ? undefined : SHARE_HINT}>
+              <Button
+                variant="outline"
+                disabled={!operable || !canShare}
+                aria-describedby={canShare ? undefined : 'share-hint'}
+                iconStart={<ACTION_ICON.bundle aria-hidden />}
+                onClick={() => setSharing(true)}
+              >
+                Share as bundle
+              </Button>
+              {canShare ? null : (
+                <span id="share-hint" className="sr-only">
+                  {SHARE_HINT}
+                </span>
+              )}
             </span>
-          )}
-        </span>
+          </>
+        )}
         {compact ? null : (
           <Button
             variant="outline"
@@ -233,6 +239,25 @@ export function SelectionBar({
           </Button>
         )}
         <MoreMenu>
+          {phone ? (
+            <>
+              <DropdownMenuItem
+                disabled={!operable || emailable === 0}
+                onSelect={() => setAsk('send_email')}
+              >
+                <ACTION_ICON.sendEmail aria-hidden />
+                Send email
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!operable || !canShare}
+                title={canShare ? undefined : SHARE_HINT}
+                onSelect={() => setSharing(true)}
+              >
+                <ACTION_ICON.bundle aria-hidden />
+                Share as bundle
+              </DropdownMenuItem>
+            </>
+          ) : null}
           <DropdownMenuItem disabled={!canChannel} onSelect={() => setChannels(true)}>
             <ACTION_ICON.channels aria-hidden />
             Channels…

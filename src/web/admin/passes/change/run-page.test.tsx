@@ -105,7 +105,7 @@ describe('Change run page', () => {
 
   it('reads a run booked for now as starting, not scheduled', async () => {
     setup(change({ state: 'scheduled', at: Date.now() + 5_000, finishedAt: null }));
-    expect(await screen.findByText('Starting')).toBeInTheDocument();
+    expect((await screen.findAllByText('Starting')).length).toBe(2);
     expect(screen.queryByText(/^Starts /)).not.toBeInTheDocument();
   });
 

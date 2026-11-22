@@ -199,6 +199,14 @@ describe('Change wizard', () => {
     ).toBeInTheDocument();
   });
 
+  it('turns Run off when an exact preview says nothing would change', async () => {
+    setup(() => json(run(), 201), { previews: () => ({ unchanged: 2, silent: 0 }) });
+    const user = userEvent.setup();
+    const button = await toReview(user);
+    expect(button).toBeDisabled();
+    expect(screen.getAllByText('Nothing would change.').length).toBeGreaterThan(0);
+  });
+
   it('turns Run off only when the server counts no passes', async () => {
     setup(() => json(run(), 201), { previews: () => ({ targeted: 0, samples: [] }) });
     const user = userEvent.setup();
@@ -281,11 +289,11 @@ describe('Change wizard selections', () => {
     });
   });
 
-  it('confirms the new count when the passes a filter reaches differ from the ones selected', async () => {
+  it('confirms the new count only when it went up', async () => {
     leaveSelection('org1', {
       kind: 'filter',
       filter: { templateId: 'tpl1' },
-      count: 5,
+      count: 1,
       templateIds: ['tpl1'],
     });
     const c = collect();
@@ -296,6 +304,32 @@ describe('Change wizard selections', () => {
     expect(c.sent).toHaveLength(0);
     await user.click(screen.getByRole('button', { name: 'Run' }));
     await waitFor(() => expect(c.sent).toHaveLength(1));
+  });
+
+  it('says N of M can change, without a confirm, when fewer passes can be reached', async () => {
+    leaveSelection('org1', {
+      kind: 'filter',
+      filter: { templateId: 'tpl1' },
+      count: 5,
+      templateIds: ['tpl1'],
+    });
+    const c = collect();
+    setup(c.create);
+    const user = userEvent.setup();
+    await toReview(user);
+    expect(await screen.findByText('2 of the 5 selected can change.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Change 2 passes' }));
+    await waitFor(() => expect(c.sent).toHaveLength(1));
+    expect(screen.queryByText(/It now matches/)).not.toBeInTheDocument();
+  });
+
+  it('forgets the hand-off once a run is made, so a plain visit opens empty', async () => {
+    const c = collect();
+    setup(c.create);
+    const user = userEvent.setup();
+    await user.click(await toReview(user));
+    await waitFor(() => expect(c.sent).toHaveLength(1));
+    expect(sessionStorage.getItem('passbook.change-selection')).toBeNull();
   });
 
   it('refuses a stored filter a run cannot take, never falling back to the template', async () => {

@@ -109,7 +109,8 @@ export const CHANGE_COPY = {
     EXPECT_COUNT_REQUIRED: 'Review the passes again before resuming.',
     MATCH_TOO_BROAD: 'More than 20,000 passes match. Narrow the filter.',
     BROADCAST_TARGET_INVALID: 'The passes could not be read. Pick them again.',
-    CREATOR_REVOKED: 'The person who started this lost access, so it stopped.',
+    CREATOR_REVOKED:
+      'It stopped because the person who started it lost access; start it again as yourself.',
     BROADCAST_FAILED: 'The run stopped before it finished. Resume it for the rest.',
   } as Record<string, string>,
   run: {

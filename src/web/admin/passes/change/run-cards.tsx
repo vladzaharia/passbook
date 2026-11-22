@@ -72,10 +72,13 @@ export function RunningCard({
 export function DoneCard({
   b,
   undone,
+  undoing = false,
   children,
 }: {
   b: BroadcastDto;
   undone: boolean;
+  /** The undo's own progress bar carries the buddy: one per view. */
+  undoing?: boolean;
   children: ReactNode;
 }) {
   const failed = b.state === 'failed' || b.state === 'cancelled';
@@ -83,6 +86,7 @@ export function DoneCard({
     <RunDone
       clean={b.state === 'sent' && b.counts.failed === 0}
       undone={undone}
+      buddy={!undoing}
       failed={failed && !undone}
       title={
         undone

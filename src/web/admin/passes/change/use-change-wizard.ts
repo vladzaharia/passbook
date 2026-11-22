@@ -12,7 +12,7 @@ import { localToIso } from '../schema-form/datetime.ts';
 import { type ChangeBody, useChangeActions, useChangePreview } from './api.ts';
 import { type ChangeKind, type FieldRow, patchOf } from './model.ts';
 import { isDrift, refusalText } from './refusal.ts';
-import { type ChangeSelection, targetOf, templatesOf } from './selection.ts';
+import { type ChangeSelection, clearSelection, targetOf, templatesOf } from './selection.ts';
 import { SETTABLE } from './value-control.tsx';
 
 export type Start = 'now' | 'later';
@@ -97,6 +97,7 @@ export function useChangeWizard(
         key: key.current.key,
         at: start === 'later' ? atMs : undefined,
       });
+      clearSelection();
       void navigate({ href: orgPath(orgId, `/passes/change/${run.id}`) });
     } catch (error) {
       if (isDrift(error)) {
