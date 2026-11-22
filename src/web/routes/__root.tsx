@@ -1,14 +1,20 @@
 import { createRootRouteWithContext, Outlet, useRouterState } from '@tanstack/react-router';
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, lazy, type ReactNode, Suspense } from 'react';
 import { isAdminPath, isKnownPortalPath, isPublicPath, requireSession } from '../lib/guards.ts';
 import { RouteAnnouncer, SkipLink } from '../lib/route-focus.tsx';
 import type { RouterContext } from '../lib/router-context.ts';
 import { useSession } from '../lib/session.ts';
-import { Skeleton } from '../ui/index.ts';
-import { BareLayout } from '../ui/layout/bare-layout.tsx';
-import { StandaloneError } from '../ui/layout/error-pages.tsx';
-import { PortalLayout } from '../ui/layout/portal-layout.tsx';
+import { StandaloneError } from '../ui/layout/lazy-error-pages.tsx';
+import { Skeleton } from '../ui/skeleton.tsx';
 import { StepUpGate } from '../ui/step-up-gate.tsx';
+
+/**
+ * The holder and bare shells (menubar, account menu, copy, icons) are their own chunk, fetched
+ * from the first line of the entry in parallel with the route's chunk and not part of the initial load.
+ */
+const layouts = import('../ui/layout/root-layouts.tsx');
+const PortalLayout = lazy(() => layouts.then((m) => ({ default: m.PortalLayout })));
+const BareLayout = lazy(() => layouts.then((m) => ({ default: m.BareLayout })));
 
 /** Discard state and initial-data seeds when the authenticated principal changes. */
 export function PrincipalBoundary({ children }: { children: ReactNode }) {
@@ -31,10 +37,10 @@ function RootComponent() {
       <StepUpGate />
       {isAdminPath(pathname) ? (
         <Outlet />
-      ) : isPublicPath(pathname) ? (
-        <BareLayout />
       ) : (
-        <PortalLayout />
+        <Suspense fallback={<RootPending />}>
+          {isPublicPath(pathname) ? <BareLayout /> : <PortalLayout />}
+        </Suspense>
       )}
     </PrincipalBoundary>
   );

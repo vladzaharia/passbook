@@ -5,7 +5,7 @@ import { orgScopeSearchSchema } from '../../lib/route-search.ts';
 import { useSession } from '../../lib/session.ts';
 import { AdminLayout } from '../../ui/layout/admin-layout.tsx';
 import { AppShell } from '../../ui/layout/app-shell.tsx';
-import { StandaloneError } from '../../ui/layout/error-pages.tsx';
+import { StandaloneError } from '../../ui/layout/lazy-error-pages.tsx';
 import { PolarisIdRequired } from '../../ui/layout/polaris-id-required.tsx';
 import { PORTAL_BAR } from '../../ui/layout/portal-layout.tsx';
 
