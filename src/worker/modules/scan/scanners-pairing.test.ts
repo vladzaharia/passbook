@@ -202,7 +202,7 @@ describe('pairing', () => {
       env,
       /DELETE FROM counters WHERE key = \?/,
       (db) => run(db, "UPDATE scanners SET pair_code_hash = 'moved' WHERE id = ?", [body.id]),
-      () => pairCall('', body.pairing?.code ?? ''),
+      async () => await pairCall('', body.pairing?.code ?? ''),
     );
     expect(fired).toBe(true);
     expect(result.status).toBe(400);
