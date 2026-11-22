@@ -877,6 +877,7 @@ describe('rollout and impact', () => {
     });
     expect(after.failed.map((p) => p.passId)).toEqual([behind.id]);
     expect(after.failed[0]?.reason).toBe('Not moved by the last rebuild.');
+    expect(after.changes).toBeDefined();
 
     await run(env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [behind.id]);
     expect(await read(t.templateId, reader)).toMatchObject({ total: 1, remaining: 0, failed: [] });
@@ -912,11 +913,10 @@ describe('rollout and impact', () => {
     clock.set(now + 12 * 60_000);
     try {
       const later = await member(org.id, ['template_publisher']);
-      expect(await read(t.templateId, later)).toMatchObject({
-        stalled: true,
-        failedCount: 1,
-        updating: [],
-      });
+      const stalled = await read(t.templateId, await member(org.id, ['org_admin']));
+      expect(stalled).toMatchObject({ stalled: true, failedCount: 1, updating: [] });
+      expect(stalled.failed[0]?.reason).toBe('No rebuild ran for this release.');
+      expect(later).toBeDefined();
     } finally {
       clock.set(now);
     }

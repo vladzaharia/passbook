@@ -155,6 +155,13 @@ export const ChangePreviewBodySchema = z
         path: ['target', 'match'],
         message: 'Runs match values or ranges.',
       });
+    // A version narrows one template's message audience, as on create.
+    if (body.target.version && (body.patch || body.target.templateIds?.length !== 1))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['target', 'version'],
+        message: 'Only a message to one template can name a version.',
+      });
   });
 
 /** `POST /broadcasts/{id}/retry`: a change resumes with the count of passes it has left. */

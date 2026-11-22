@@ -1,4 +1,8 @@
-import type { TemplateRollout, TemplateRolloutQuery } from '../../../shared/contracts/index.ts';
+import type {
+  ReleaseDiffGroup,
+  TemplateRollout,
+  TemplateRolloutQuery,
+} from '../../../shared/contracts/index.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -20,6 +24,7 @@ import {
 
 const FAILED_SHOWN = 50;
 const LEFT_BEHIND = 'Not moved by the last rebuild.';
+const NO_REBUILD = 'No rebuild ran for this release.';
 /** Tell holders is offered for a day after a release. */
 export const TELL_WINDOW_MS = 24 * 3_600_000;
 /** The cron queues a release after a quiet minute; no rebuild by then plus this grace is a stall. */
@@ -41,6 +46,31 @@ async function mayListPasses(
     if (error instanceof ForbiddenError) return false;
     throw error;
   }
+}
+
+/** Releases and their versions never change, so what a release changed is worked out once per isolate. */
+const CHANGES = new Map<string, { fromVersion: string | null; changes: ReleaseDiffGroup[] }>();
+const CHANGES_MAX = 200;
+
+async function releaseChanges(
+  ctx: ServiceContext,
+  templateId: string,
+  release: { id: string; version: string; previousReleaseId: string | null },
+) {
+  const cached = CHANGES.get(release.id);
+  if (cached) return cached;
+  const previous = release.previousReleaseId
+    ? await getRelease(ctx.env.DB, release.previousReleaseId)
+    : null;
+  const from = previous ? await getVersion(ctx.env.DB, templateId, previous.version) : null;
+  const to = await getVersion(ctx.env.DB, templateId, release.version);
+  const found = {
+    fromVersion: previous?.version ?? null,
+    changes: from && to ? groupedDiff(from, to) : [],
+  };
+  if (CHANGES.size >= CHANGES_MAX) CHANGES.delete(CHANGES.keys().next().value ?? '');
+  CHANGES.set(release.id, found);
+  return found;
 }
 
 function suggestion(name: string, rollback: boolean): string {
@@ -96,11 +126,7 @@ export async function templateRollout(
       ? await listLeftBehind(ctx.env.DB, { ...left, settled, limit: FAILED_SHOWN })
       : [];
   const updating = settled ? [] : await updatingByVersion(ctx.env.DB, left);
-  const previous = release.previousReleaseId
-    ? await getRelease(ctx.env.DB, release.previousReleaseId)
-    : null;
-  const from = previous ? await getVersion(ctx.env.DB, templateId, previous.version) : null;
-  const to = await getVersion(ctx.env.DB, templateId, release.version);
+  const { fromVersion, changes } = await releaseChanges(ctx, templateId, release);
   const until = release.createdAt + TELL_WINDOW_MS;
   const onRelease = Math.max(0, total - remaining);
   const offered =
@@ -110,18 +136,22 @@ export async function templateRollout(
   return {
     releaseVersion: release.version,
     releaseId: release.id,
-    fromVersion: previous?.version ?? null,
+    fromVersion,
     total,
     onRelease,
     remaining,
     updating: updating.map((u) => ({ version: u.version, count: u.n })),
     failedCount,
-    failed: listed.map((p) => ({ passId: p.id, title: p.title, reason: p.message ?? LEFT_BEHIND })),
+    failed: listed.map((p) => ({
+      passId: p.id,
+      title: p.title,
+      reason: p.message ?? (stalled ? NO_REBUILD : LEFT_BEHIND),
+    })),
     startedAt: release.createdAt,
     runId: runs.latestId,
     running,
     stalled,
-    changes: from && to ? groupedDiff(from, to) : [],
+    changes,
     tell: offered
       ? {
           text: suggestion(template.name, release.action === 'rollback'),

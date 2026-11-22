@@ -93,6 +93,13 @@ describe('a message to the passes on one version', () => {
       ...extra,
     });
     expect((await post('/broadcasts', body({}, { version: 'v1' }))).status).toBe(201);
+    // The preview follows the same rule.
+    const previewOf = (target: Record<string, unknown>) =>
+      post('/broadcasts/preview', { orgId: kit.org.id, target });
+    expect((await previewOf({ templateIds: [kit.messaging.id], version: 'v1' })).status).toBe(200);
+    expect(
+      (await previewOf({ templateIds: [kit.messaging.id, kit.plain.id], version: 'v1' })).status,
+    ).toBe(422);
     expect(
       (
         await post(
