@@ -2620,6 +2620,326 @@
   }
  },
  {
+  "id": "nfc-keysets.getNfcKeysets",
+  "call": "nfc.keysets.list",
+  "http": "GET",
+  "path": "/api/v1/nfc/keysets",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "slug": "x",
+     "diversify": false,
+     "perTag": false,
+     "createdAt": 0,
+     "disabledAt": 0,
+     "versions": [
+      {
+       "version": 0,
+       "state": "active",
+       "createdAt": 0,
+       "stateAt": 0,
+       "revokedAt": 0,
+       "tags": 0
+      }
+     ]
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysets",
+  "call": "nfc.keysets.create",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "name": "x",
+   "generate": true
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "slug": "x",
+   "diversify": false,
+   "perTag": false,
+   "createdAt": 0,
+   "disabledAt": 0,
+   "keys": {
+    "metaKey": "x",
+    "fileKey": "x"
+   },
+   "versions": [
+    {
+     "version": 0,
+     "state": "active",
+     "createdAt": 0,
+     "stateAt": 0,
+     "revokedAt": 0,
+     "tags": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdDisable",
+  "call": "nfc.keysets.disable",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/disable",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "slug": "x",
+   "diversify": false,
+   "perTag": false,
+   "createdAt": 0,
+   "disabledAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "state": "active",
+     "createdAt": 0,
+     "stateAt": 0,
+     "revokedAt": 0,
+     "tags": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdImport",
+  "call": "nfc.keysets.import_tags",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/import",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "csv": "x",
+   "dryRun": false
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "dryRun": false,
+   "rows": 0,
+   "ok": 0,
+   "added": 0,
+   "problems": [
+    {
+     "line": 0,
+     "uid": "x",
+     "reason": "bad_uid"
+    }
+   ],
+   "moreProblems": 0
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire",
+  "call": "nfc.keysets.retire_key",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/keys/{version}/retire",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "version",
+    "py": "version",
+    "integer": true
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "slug": "x",
+   "diversify": false,
+   "perTag": false,
+   "createdAt": 0,
+   "disabledAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "state": "active",
+     "createdAt": 0,
+     "stateAt": 0,
+     "revokedAt": 0,
+     "tags": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke",
+  "call": "nfc.keysets.revoke_key",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/keys/{version}/revoke",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "version",
+    "py": "version",
+    "integer": true
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "slug": "x",
+   "diversify": false,
+   "perTag": false,
+   "createdAt": 0,
+   "disabledAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "state": "active",
+     "createdAt": 0,
+     "stateAt": 0,
+     "revokedAt": 0,
+     "tags": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdReenrol",
+  "call": "nfc.keysets.reenroll",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/reenrol",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "toKeysetId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "moved": 0,
+   "ownKey": 0,
+   "keyset": {
+    "id": "x",
+    "name": "x",
+    "slug": "x",
+    "diversify": false,
+    "perTag": false,
+    "createdAt": 0,
+    "disabledAt": 0,
+    "versions": [
+     {
+      "version": 0,
+      "state": "active",
+      "createdAt": 0,
+      "stateAt": 0,
+      "revokedAt": 0,
+      "tags": 0
+     }
+    ]
+   }
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdRotate",
+  "call": "nfc.keysets.rotate",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/rotate",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "generate": true
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "slug": "x",
+   "diversify": false,
+   "perTag": false,
+   "createdAt": 0,
+   "disabledAt": 0,
+   "keys": {
+    "metaKey": "x",
+    "fileKey": "x"
+   },
+   "versions": [
+    {
+     "version": 0,
+     "state": "active",
+     "createdAt": 0,
+     "stateAt": 0,
+     "revokedAt": 0,
+     "tags": 0
+    }
+   ]
+  }
+ },
+ {
   "id": "nfc-tags.getNfcTagTypes",
   "call": "nfc.tag_types.list",
   "http": "GET",
@@ -6509,6 +6829,131 @@
   }
  },
  {
+  "id": "scan-staff.getScanStaff",
+  "call": "scan_staff.list",
+  "http": "GET",
+  "path": "/api/v1/scan-staff",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "name": "x",
+     "role": "door",
+     "pinSetAt": 0,
+     "pinResetRequired": false,
+     "pinLockedToday": false,
+     "locked": false,
+     "disabledAt": 0,
+     "today": 0,
+     "lastScan": {
+      "at": 0,
+      "scannerName": "x"
+     }
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "scan-staff.postScanStaff",
+  "call": "scan_staff.create",
+  "http": "POST",
+  "path": "/api/v1/scan-staff",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x",
+   "role": "door"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "staff": {
+    "id": "x",
+    "orgId": "x",
+    "name": "x",
+    "role": "door",
+    "pinSetAt": 0,
+    "pinResetRequired": false,
+    "pinLockedToday": false,
+    "locked": false,
+    "disabledAt": 0,
+    "today": 0,
+    "lastScan": {
+     "at": 0,
+     "scannerName": "x"
+    }
+   },
+   "pin": "x"
+  }
+ },
+ {
+  "id": "scan-staff.patchScanStaffById",
+  "call": "scan_staff.update",
+  "http": "PATCH",
+  "path": "/api/v1/scan-staff/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "name": "x",
+   "role": "door",
+   "pinSetAt": 0,
+   "pinResetRequired": false,
+   "pinLockedToday": false,
+   "locked": false,
+   "disabledAt": 0,
+   "today": 0,
+   "lastScan": {
+    "at": 0,
+    "scannerName": "x"
+   }
+  }
+ },
+ {
+  "id": "scan-staff.postScanStaffByIdResetPin",
+  "call": "scan_staff.reset_pin",
+  "http": "POST",
+  "path": "/api/v1/scan-staff/{id}/reset-pin",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "pin": "x"
+  }
+ },
+ {
   "id": "scan-zones.getScanZones",
   "call": "scan_zones.list",
   "http": "GET",
@@ -7505,6 +7950,72 @@
   }
  },
  {
+  "id": "scanners.postScanners",
+  "call": "scanners.create",
+  "http": "POST",
+  "path": "/api/v1/scanners",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x",
+   "kind": "device",
+   "accepts": {
+    "eventId": "x"
+   },
+   "timeZone": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "device",
+   "deviceRole": "scan",
+   "name": "x",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "status": "not_paired",
+   "online": false,
+   "pairedAt": 0,
+   "pairedLabel": "x",
+   "lastSeenAt": 0,
+   "expiresAt": 0,
+   "staff": {
+    "id": "x",
+    "name": "x"
+   },
+   "today": 0,
+   "createdAt": 0,
+   "pairing": {
+    "code": "x",
+    "url": "x",
+    "expiresAt": 0
+   }
+  }
+ },
+ {
   "id": "scanners.patchScannersById",
   "call": "scanners.update",
   "http": "PATCH",
@@ -7625,6 +8136,54 @@
   }
  },
  {
+  "id": "scanners.getScannersByIdPairing",
+  "call": "scanners.pairing.retrieve",
+  "http": "GET",
+  "path": "/api/v1/scanners/{id}/pairing",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "state": "waiting",
+   "device": {
+    "label": "x",
+    "at": 0
+   }
+  }
+ },
+ {
+  "id": "scanners.postScannersByIdPairing",
+  "call": "scanners.pairing.create",
+  "http": "POST",
+  "path": "/api/v1/scanners/{id}/pairing",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "code": "x",
+   "url": "x",
+   "expiresAt": 0
+  }
+ },
+ {
   "id": "scanners.postScannersByIdRevoke",
   "call": "scanners.revoke",
   "http": "POST",
@@ -7680,6 +8239,28 @@
    },
    "today": 0,
    "createdAt": 0
+  }
+ },
+ {
+  "id": "scanners.postScannersByIdToken",
+  "call": "scanners.rotate_token",
+  "http": "POST",
+  "path": "/api/v1/scanners/{id}/token",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "token": "x",
+   "expiresAt": 0
   }
  },
  {
@@ -7991,6 +8572,69 @@
      "adminName": "x"
     }
    ]
+  }
+ },
+ {
+  "id": "scanners.postScanningSessionsByIdDevices",
+  "call": "scanning_sessions.devices.create",
+  "http": "POST",
+  "path": "/api/v1/scanning-sessions/{id}/devices",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "sessionId": "x",
+   "name": "x",
+   "surface": "auto",
+   "effectiveSurface": "phone",
+   "overrides": {},
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "capabilities": {
+    "width": 0,
+    "height": 0,
+    "touch": false,
+    "camera": "unknown",
+    "keyboard": false,
+    "nativeBarcode": false,
+    "surfaces": [
+     "phone"
+    ],
+    "preferred": "phone"
+   },
+   "reportedAt": 0,
+   "paired": false,
+   "online": false,
+   "revoked": false,
+   "lastSeenAt": 0,
+   "updatedAt": 0,
+   "signIn": "paired",
+   "adminName": "x",
+   "pairing": {
+    "code": "x",
+    "url": "x",
+    "expiresAt": 0
+   }
   }
  },
  {

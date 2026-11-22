@@ -16,7 +16,7 @@ import {
   restoring,
   withCredential,
 } from './pairing-token.ts';
-import { adminGrant, audited } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited, createdByOf } from './repo-admin-grant.ts';
 import { credentialEpochOf, getScannerByPrefix } from './repo-device.ts';
 import { clearDeviceDayPart } from './repo-pin-tag.ts';
 import { type ConsoleScannerRow, scannerSlot } from './repo-scanners.ts';
@@ -25,7 +25,7 @@ import {
   addPairCode,
   addTokenClear,
   findByPairCode,
-  requirePairingAuthority,
+  requireCredentialAuthority,
 } from './repo-scanners-pair.ts';
 import { setupMeta } from './repo-setups.ts';
 import { nameTaken } from './scanner-name.ts';
@@ -85,8 +85,9 @@ export async function createPairing(
   origin: string,
   authority: TenantPassWrite,
   restore = false,
+  ip: string | null = null,
 ): Promise<Pairing> {
-  requirePairingAuthority(authority, userId, scanner.orgId);
+  requireCredentialAuthority(authority, userId, scanner.orgId);
   if (
     scanner.kind === 'terminal' ||
     (await setupMeta(ctx.env.DB, scanner.orgId, scanner.id))?.admin_session
@@ -113,19 +114,18 @@ export async function createPairing(
   );
   const restart =
     scanner.revokedAt !== null || (scanner.expiresAt !== null && scanner.expiresAt <= now);
-  addPairCode(g, scanner.id, hash, expiresAt, userId, now, restart);
+  addPairCode(g, scanner.id, hash, expiresAt, createdByOf(authority, userId), now, restart);
   g.add(
     audited(g, ctx, {
       orgId: scanner.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId, ip),
       action: 'scanner.pairing_create',
       targetType: 'scanner',
       targetId: scanner.id,
       detail: { expiresAt },
     }),
   );
-  if (restored) addRestoreAudit(g, ctx, userId, scanner);
+  if (restored) addRestoreAudit(g, ctx, userId, scanner, authority, ip);
   // A restore makes the name active again; another scanner may have taken it meanwhile.
   await g.commit().catch(nameTaken);
   return { code, url: `${origin}/scan#pair=${code}`, expiresAt };

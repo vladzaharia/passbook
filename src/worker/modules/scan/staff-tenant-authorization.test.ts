@@ -152,19 +152,21 @@ describe('staff route tenant authorization', () => {
   it('continues to reject scanner and API-key principals', async () => {
     await grant();
     const person = await makeScanStaff(f, { orgId });
-    for (const principal of [
-      fake.apiKey({ orgId, scopes: ['scans:read'] }),
-      fake.apiKey(),
-      fake.scanner({ orgId }),
-      fake.scanner({ orgId, transport: 'bearer' }),
-    ]) {
+    // A key without `scanning:admin` is refused for its scope; a scanner is not a caller here at all.
+    const refused = [
+      { headers: fake.apiKey({ orgId, scopes: ['scans:read'] }), status: 403 },
+      { headers: fake.apiKey(), status: 403 },
+      { headers: fake.scanner({ orgId }), status: 401 },
+      { headers: fake.scanner({ orgId, transport: 'bearer' }), status: 401 },
+    ];
+    for (const principal of refused) {
       for (const [method, path, body] of [
         ['GET', orgQuery(), undefined],
         ['POST', '', { orgId, name: 'Machine', role: 'door' }],
         ['PATCH', staffPath(person.id), { role: 'manager' }],
         ['POST', resetPath(person.id), undefined],
       ] as const) {
-        expect((await call(method, path, body, principal)).status).toBe(401);
+        expect((await call(method, path, body, principal.headers)).status).toBe(principal.status);
       }
     }
   });
