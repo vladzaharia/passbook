@@ -4,6 +4,7 @@ import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import { Button } from '../../../ui/button.tsx';
 import { sessionTime } from '../../ui/session-time.ts';
 import { type ActivityItem, viewOf } from './activity-model.ts';
+import { ListEmpty } from './list-empty.tsx';
 import { PersonAvatar } from './person-avatar.tsx';
 import type { Problem, ResolvedProblem } from './problems-model.ts';
 import { useRoving } from './use-roving.ts';
@@ -91,7 +92,7 @@ export function ProblemsView({
           <span>{fill(C.needs, open.length)}</span>
           <span>{C.last}</span>
         </div>
-        {!open.length ? <p className="op-list-note">{C.empty}</p> : null}
+        {!open.length ? <ListEmpty>{C.empty}</ListEmpty> : null}
         <ul className="op-rows" onKeyDown={roving.onKeyDown}>
           {open.map(({ item, canLetIn }, index) => (
             <ProblemRow

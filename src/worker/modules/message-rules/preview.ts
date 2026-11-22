@@ -38,6 +38,7 @@ export async function previewRule(ctx: ServiceContext, mode: Mode, body: Body) {
   const kind = await checkRuleTemplates(
     ctx,
     body.orgId,
+    mode,
     body.templateIds,
     body.anchor,
     body.offset,

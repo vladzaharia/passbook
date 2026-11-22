@@ -42,11 +42,11 @@ export const IsoDateSchema = z
     return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(v);
   }, 'Use a real date.');
 /** The scan-event match shape: the input equals any of the values. */
-const ValuesClause = z.object({
+export const ValuesClause = z.object({
   input: InputKey,
   values: z.array(z.string().min(1).max(120)).min(1).max(20),
 });
-const NumberClause = z
+export const NumberClause = z
   .object({
     input: InputKey,
     min: z.number().finite().optional(),
@@ -57,7 +57,7 @@ const NumberClause = z
     (c) => c.min === undefined || c.max === undefined || c.min <= c.max,
     'Lowest is above highest.',
   );
-const DateClause = z
+export const DateClause = z
   .object({
     input: InputKey,
     from: IsoDateSchema.optional(),
@@ -67,7 +67,7 @@ const DateClause = z
   .refine((c) => c.from || c.to, 'Pick a start or end date.')
   .refine((c) => !c.from || !c.to || c.from <= c.to, 'Start is after end.');
 /** Text inputs: starts with or contains `value`, ignoring case. Find by any field only. */
-const TextClause = z.object({
+export const TextClause = z.object({
   input: InputKey,
   op: z.enum(['startsWith', 'contains']),
   value: z.string().trim().min(1).max(120),

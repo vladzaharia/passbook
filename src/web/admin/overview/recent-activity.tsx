@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react';
 import { actionOf } from '@/web/lib/actions.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { entityLabel } from '@/web/lib/entity-label.ts';
+import { entryLabel } from '@/web/lib/entry-label.ts';
 import {
   Button,
   Card,
@@ -124,7 +125,7 @@ function RecentCard({
                       search={link.search}
                       className="whitespace-normal after:absolute after:inset-0"
                     >
-                      {action.label}
+                      {entryLabel(e)}
                     </RowLink>
                   }
                   meta={[target?.name, actor, orgName(e.orgId)].filter(Boolean).join(' · ')}

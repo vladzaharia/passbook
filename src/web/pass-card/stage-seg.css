@@ -1,4 +1,4 @@
-/* Segmented control geometry, one size everywhere: 36 tall with 14 px text, 44 on touch. The kit
+/* Segmented control geometry, one size everywhere: 36 tall with 14 px text, 44 on touch (the segments are 44, not just their hit area). The kit
    SegmentedControl (.wl-seg, colours from tokens) and the script-free SSR side toggle (.pc-seg, a
    Front / Details radio pair) both read it; SSR pages inline this file. */
 .wl-seg,
@@ -17,10 +17,19 @@
   font-weight: 500;
   line-height: 1.25rem;
 }
+/* Touch: the segments themselves are 44 tall, so the track drops its padding and border (an inset
+   outline draws the edge) and stays 44. */
 @media (pointer: coarse) {
+  .wl-seg,
+  .pc-seg {
+    padding: 0;
+    border-width: 0;
+    outline: 1px solid var(--pk-border-subtle);
+    outline-offset: -1px;
+  }
   .wl-seg > [role="radio"],
   .pc-seg label {
-    min-height: 2.375rem;
+    min-height: 2.75rem;
   }
 }
 

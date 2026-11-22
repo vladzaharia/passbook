@@ -44,6 +44,16 @@ describe('kit lint', () => {
     }
   });
 
+  // The sweep measures the element's own box, so a ::before hit area does not count.
+  it('gives checkboxes, breadcrumbs and row links a real 44 px box on touch', () => {
+    const text = (path: string) => files.find((f) => f.path === path)?.text ?? '';
+    expect(text('ui/checkbox.tsx')).toContain('pointer-coarse:size-11');
+    expect(text('ui/page-header.tsx')).toContain('pointer-coarse:min-h-11');
+    expect(text('ui/row-link.tsx')).toContain('pointer-coarse:py-3');
+    expect(text('ui/switch.tsx')).toContain('pointer-coarse:h-11');
+    expect(text('ui/status-pill.tsx')).toContain('pointer-coarse:size-11');
+  });
+
   it('toasts only through the kit toast (ui/toaster.tsx)', () => {
     for (const { path, text } of files) {
       if (path === 'ui/toaster.tsx') continue;

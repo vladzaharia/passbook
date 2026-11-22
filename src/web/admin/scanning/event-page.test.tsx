@@ -31,6 +31,38 @@ const event = (over: Record<string, unknown> = {}) => ({
 
 afterEach(() => resetModeForTests());
 
+describe('Event detail Open scanner', () => {
+  const open = async (over: Record<string, unknown>) =>
+    renderApp('/admin/scanning/events/e1', {
+      session: 'admin',
+      memberships: [northwind],
+      handlers: {
+        '/api/v1/scan-events/e1': () => json(event(over)),
+        '/api/v1/scanners': () => page([]),
+        '/api/v1/templates': () => page([templateFixture()]),
+        '/api/v1/scanning-sessions': () => page([]),
+      },
+    });
+
+  it('is offered for a running event', async () => {
+    const now = Date.now();
+    await open({ status: 'live', opensAt: now - 60_000, closesAt: now + 3_600_000 });
+    expect(await screen.findByRole('link', { name: 'Open scanner' })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['ended', { status: 'ended' }],
+    [
+      'upcoming',
+      { status: 'live', opensAt: Date.now() + 3_600_000, closesAt: Date.now() + 7_200_000 },
+    ],
+  ])('is not offered for an %s event', async (_name, over) => {
+    await open(over);
+    expect(await screen.findByRole('button', { name: 'Edit event' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open scanner' })).not.toBeInTheDocument();
+  });
+});
+
 describe('Event detail organization scope', () => {
   it('canonicalizes an unscoped event link to its authorized organization rather than the remembered one', async () => {
     const previous = localStorage.getItem('wallet-org-filter');

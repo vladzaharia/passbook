@@ -70,8 +70,8 @@ export function useRollCall({
   const [blocked, setBlocked] = useState(false);
   const [stalled, setStalled] = useState(false);
   const [unsaved, setUnsaved] = useState<UnsavedMark[]>([]);
-  const live = useRef({ server, queue, onAppear, onRefused, onBlocked, blocked, stalled });
-  live.current = { server, queue, onAppear, onRefused, onBlocked, blocked, stalled };
+  const live = useRef({ server, queue, onAppear, onRefused, onBlocked, blocked, stalled, connect });
+  live.current = { server, queue, onAppear, onRefused, onBlocked, blocked, stalled, connect };
   // Transient failures (network, 5xx) retry with a growing delay, never in a tight loop.
   const retry = useRef({ fails: 0, at: 0 });
   // The same 4xx or 5xx answer to the same first tap, over and over: after STUCK of them the batch is sent
@@ -227,7 +227,9 @@ export function useRollCall({
     if (!enabled || !online) return;
     void reload().then(flush);
     const t = setInterval(() => void reload().then(flush), SCAN_TIMING.COUNTS_POLL + 5000);
-    const socket = connect({
+    // Read through the ref: a caller passing a new function each render must not re-run this effect, which
+    // reloads, which renders, which would loop.
+    const socket = live.current.connect({
       url: deviceSocketUrl(location),
       onOpen: () => void reload(),
       onNudge: (nudge) => {
@@ -238,7 +240,7 @@ export function useRollCall({
       clearInterval(t);
       socket.close();
     };
-  }, [enabled, online, reload, flush, connect]);
+  }, [enabled, online, reload, flush]);
 
   useEffect(() => {
     if (online && queue.length > 0) void flush();

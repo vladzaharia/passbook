@@ -67,7 +67,8 @@ function clockFor(chip: HTMLElement): void {
 }
 
 function chipFor(session: Session): HTMLElement | null {
-  if (session.kind === 'out') return null;
+  // A sandbox that did not read says nothing here: the page shows the error and Retry.
+  if (session.kind === 'out' || session.kind === 'failed') return null;
   const chip = el('a', 'orgchip');
   chip.href = PATHS.reference;
   if (session.kind !== 'ready') {

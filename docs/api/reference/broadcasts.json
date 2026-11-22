@@ -45,7 +45,7 @@
     }
   },
   "broadcasts.postBroadcastsPreview": {
-    "description": "Counts the passes a target matches. With `patch` (and `notify`) it also previews a change: up to 20 sample passes with their field changes, passes already at the new values, passes it cannot change by reason, and how many holders would be told. Samples show each pass's own values, so a key needs passes:read. Counts and samples come from the 200 newest passes of the target and who is told is an estimate (`estimated`).",
+    "description": "Counts the passes a target matches. With `patch` (and `notify`) it also previews a change: up to 20 sample passes with their field changes, passes already at the new values, passes it cannot change by reason, and how many holders would be told. Samples show each pass's own values, so a key needs passes:read. Counts and samples come from the 200 newest passes of the target and who is told is an estimate (`estimated`). It is the dry run of a change: it takes the same `target` and `patch` as `POST /broadcasts` and changes nothing. An input the template lacks gives empty `changes`; the run refuses it. Over 20,000 passes is 422 `MATCH_TOO_BROAD`.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "target": {
@@ -57,6 +57,300 @@
         }
       },
       "notify": false
+    },
+    "requests": {
+      "Set an input": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "target": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+        },
+        "patch": {
+          "plan": {
+            "set": "monthly"
+          }
+        },
+        "notify": false
+      },
+      "Shift a date": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "target": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+        },
+        "patch": {
+          "startsAt": {
+            "shift": "P1D"
+          }
+        }
+      },
+      "Chosen passes": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "target": {
+          "passIds": ["0193a1b2-7c00-7000-8000-0000000000c1"]
+        },
+        "patch": {
+          "seat": {
+            "clear": true
+          }
+        },
+        "notify": false
+      },
+      "Count only": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "target": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "onDevice": true
+        }
+      }
+    },
+    "response": {
+      "targeted": 1240,
+      "onDevice": 1102,
+      "overBudget": 0,
+      "limit": 3,
+      "samples": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "title": "Harbor Night",
+          "changes": [
+            {
+              "key": "plan",
+              "label": "Plan",
+              "from": "Annual",
+              "to": "Monthly"
+            }
+          ]
+        }
+      ],
+      "unchanged": 12,
+      "blocked": [
+        {
+          "code": "NO_VALUE",
+          "count": 3
+        }
+      ],
+      "notified": 0,
+      "silent": 1228,
+      "estimated": true
+    }
+  },
+  "broadcasts.postBroadcasts": {
+    "description": "Saves, sends or schedules a message or a change run. A change sets inputs on many passes: one target (`templateIds` with filters, `passIds` up to 5,000, or the `importId` of an ended import), `patch` operations (`set`, `clear`, `shift`, `add`, or `$void` or `$design` alone) and an optional `message` for the lock screen (needs `notify`). `target.expectCount` is the count a preview showed: when the server's count differs by more than 2% the run does not start and the answer is 409 `SELECTION_CHANGED`. More than 20,000 passes is 422 `MATCH_TOO_BROAD`. A target key it does not define is 422 `BROADCAST_UNSUPPORTED_FILTER`, never ignored. Needs `messages:write` and, for a change, `passes:write`. Send an `Idempotency-Key`; the same key and body returns the same run.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "change",
+      "name": "Move to Pier 9",
+      "send": "now",
+      "notify": false,
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "match": [
+          {
+            "input": "venueName",
+            "values": ["Sample Hall"]
+          }
+        ],
+        "expectCount": 1240
+      },
+      "patch": {
+        "venueName": {
+          "set": "Pier 9"
+        }
+      }
+    },
+    "requests": {
+      "Change by filter": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "kind": "change",
+        "name": "Move to Pier 9",
+        "send": "now",
+        "notify": false,
+        "target": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "match": [
+            {
+              "input": "venueName",
+              "values": ["Sample Hall"]
+            }
+          ],
+          "expectCount": 1240
+        },
+        "patch": {
+          "venueName": {
+            "set": "Pier 9"
+          }
+        }
+      },
+      "Change chosen passes": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "kind": "change",
+        "send": "now",
+        "target": {
+          "passIds": ["0193a1b2-7c00-7000-8000-0000000000c1"],
+          "expectCount": 1
+        },
+        "patch": {
+          "venueRoom": {
+            "set": "Main hall"
+          },
+          "seat": {
+            "clear": true
+          }
+        }
+      },
+      "Shift a date": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "kind": "change",
+        "name": "One day later",
+        "send": "now",
+        "target": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "expectCount": 1240
+        },
+        "patch": {
+          "startsAt": {
+            "shift": "P1D"
+          },
+          "endsAt": {
+            "shift": "P1D"
+          }
+        }
+      },
+      "Tell holders": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "kind": "change",
+        "send": "now",
+        "notify": true,
+        "message": "Venue is now {Venue}.",
+        "target": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "expectCount": 1240
+        },
+        "patch": {
+          "venueName": {
+            "set": "Pier 9"
+          }
+        }
+      },
+      "Change an import's passes": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "kind": "change",
+        "send": "now",
+        "target": {
+          "importId": "0193a1b2-7c00-7000-8000-0000000000e1"
+        },
+        "patch": {
+          "admission": {
+            "set": "VIP"
+          }
+        }
+      },
+      "Void passes": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "kind": "change",
+        "send": "now",
+        "target": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "expectCount": 1240
+        },
+        "patch": {
+          "$void": true
+        }
+      },
+      "Send a message": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "kind": "message",
+        "name": "Doors open",
+        "send": "draft",
+        "target": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+        },
+        "patch": {
+          "message": "Doors open at 6 PM."
+        }
+      }
+    },
+    "response": {
+      "id": "01JABCDEF0123456789CHNG",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "change",
+      "name": "Move to Pier 9",
+      "state": "sending",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "match": [
+          {
+            "input": "venueName",
+            "values": ["Sample Hall"]
+          }
+        ]
+      },
+      "patch": {
+        "venueName": {
+          "set": "Pier 9"
+        }
+      },
+      "notify": false,
+      "at": 1795000000000,
+      "clearAfter": null,
+      "parentId": null,
+      "message": null,
+      "ruleId": null,
+      "followUp": null,
+      "counts": {
+        "targeted": 0,
+        "updated": 0,
+        "unchanged": 0,
+        "overBudget": 0,
+        "failed": 0
+      },
+      "errorCode": null,
+      "createdAt": 1795000000000,
+      "startedAt": 1795000000000,
+      "finishedAt": null
+    }
+  },
+  "broadcasts.getBroadcastsById": {
+    "description": "One message or change with its progress. A run's `state` goes `scheduled`, `sending`, then `sent`, `partial`, `failed` or `cancelled`; `counts` fills in as chunks finish.",
+    "response": {
+      "id": "01JABCDEF0123456789CHNG",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "change",
+      "name": "Move to Pier 9",
+      "state": "sent",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "match": [
+          {
+            "input": "venueName",
+            "values": ["Sample Hall"]
+          }
+        ]
+      },
+      "patch": {
+        "venueName": {
+          "set": "Pier 9"
+        }
+      },
+      "notify": false,
+      "at": 1795000000000,
+      "clearAfter": null,
+      "parentId": null,
+      "message": null,
+      "ruleId": null,
+      "followUp": null,
+      "counts": {
+        "targeted": 1240,
+        "updated": 1228,
+        "unchanged": 12,
+        "overBudget": 0,
+        "failed": 0
+      },
+      "errorCode": null,
+      "createdAt": 1795000000000,
+      "startedAt": 1795000000000,
+      "finishedAt": 1795000090000
     }
   }
 }

@@ -22,6 +22,42 @@ afterEach(() => {
   });
 });
 
+describe('Toaster placement', () => {
+  const media = (narrow: boolean) =>
+    vi.spyOn(window, 'matchMedia').mockImplementation(
+      (query: string) =>
+        ({
+          matches: narrow && query.includes('max-width: 1023.98px'),
+          media: query,
+          addEventListener: () => {},
+          removeEventListener: () => {},
+          addListener: () => {},
+          removeListener: () => {},
+          onchange: null,
+          dispatchEvent: () => false,
+        }) as MediaQueryList,
+    );
+  afterEach(() => vi.restoreAllMocks());
+
+  it('sits under the top bar below 1024 px, so it never covers the form or a bottom sheet', async () => {
+    media(true);
+    renderToaster();
+    act(() => {
+      toast.success('Saved');
+    });
+    expect((await toastOf('Saved')).getAttribute('data-y-position')).toBe('top');
+  });
+
+  it('sits bottom right from 1024 px, above the SaveBar', async () => {
+    media(false);
+    renderToaster();
+    act(() => {
+      toast.success('Saved');
+    });
+    expect((await toastOf('Saved')).getAttribute('data-y-position')).toBe('bottom');
+  });
+});
+
 describe('Toaster', () => {
   it('gives success the buddy face, decorative; errors keep their own icon', async () => {
     renderToaster();

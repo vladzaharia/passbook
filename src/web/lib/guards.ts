@@ -113,7 +113,15 @@ export async function requireSession(
   if (!session.authenticated) {
     // Home is no destination: signing in picks it (the console for admins, My passes otherwise).
     const target = safeNext(next);
-    throw redirect({ to: '/login', search: target === '/' ? {} : { next: target } });
+    // A pass page's "My passes" row lands here: say which email to use (LOGIN_REASONS.pass).
+    const search =
+      target === '/'
+        ? {}
+        : {
+            next: target,
+            ...(/^\/passes\/[^/?#]+/.test(target) ? { reason: 'pass' as const } : {}),
+          };
+    throw redirect({ to: '/login', search });
   }
   return session;
 }

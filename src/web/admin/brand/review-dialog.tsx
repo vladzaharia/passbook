@@ -134,8 +134,8 @@ export function ReviewDialog({
                     <li key={s.channel}>
                       {scanLine(COPY.impact.stops, {
                         channel: CHANNEL_LABEL[s.channel],
-                        templates: s.templates,
-                        passes: s.passes,
+                        templates: `${s.templates} ${s.templates === 1 ? 'template' : 'templates'}`,
+                        passes: `${s.passes} ${s.passes === 1 ? 'pass' : 'passes'}`,
                       })}
                     </li>
                   ))}

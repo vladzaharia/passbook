@@ -657,6 +657,15 @@
       ]
     },
     {
+      "code": "BROADCAST_UNSUPPORTED_FILTER",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BULK_RUN_ACTIVE",
       "statuses": [
         409
@@ -5279,6 +5288,7 @@
         422
       ],
       "modules": [
+        "broadcasts",
         "channels",
         "connections",
         "join",

@@ -151,7 +151,6 @@ export function JoinSignPage({ templateId }: { templateId: string }) {
       <>
         {header}
         <EmptyState
-          inline
           art="template"
           title={JOIN_COPY.sign.none}
           action={

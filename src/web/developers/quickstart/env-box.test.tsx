@@ -29,6 +29,18 @@ describe('the key box', () => {
     expect(screen.getByText('Key hidden')).toBeTruthy();
   });
 
+  it('masks the key when the user moves on with Next, and Copy .env still copies the whole key', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    const onNext = vi.fn();
+    const { container } = render(<EnvBox secret={SECRET} templateId="tpl-1" onNext={onNext} />);
+    await userEvent.click(screen.getByRole('button', { name: /Next/ }));
+    expect(onNext).toHaveBeenCalledOnce();
+    expect(container.textContent).not.toContain(SECRET);
+    await userEvent.click(screen.getByRole('button', { name: 'Copy .env' }));
+    expect(writeText).toHaveBeenCalledWith(`PASSBOOK_KEY=${SECRET}\nPASSBOOK_TEMPLATE_ID=tpl-1\n`);
+  });
+
   it('masks the key after a minute even if it was never copied', () => {
     vi.useFakeTimers();
     const { container } = render(

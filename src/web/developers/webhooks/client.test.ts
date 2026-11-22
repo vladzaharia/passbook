@@ -33,6 +33,7 @@ function stub(handlers: Record<string, (n: number) => Response>) {
 }
 
 const session = { authenticated: true, csrfToken: 'csrf-1' };
+const open = () => json({ sandbox: { id: 's1', closedAt: null } });
 const token = (n: number) => json({ token: `pbtry_${n}`, expiresAt: 10 * 60_000 }, 201);
 
 describe('connect', () => {
@@ -44,9 +45,19 @@ describe('connect', () => {
     expect(calls).toHaveLength(1);
   });
 
+  it('says no sandbox without asking for a token', async () => {
+    const { fetchFn, calls } = stub({
+      'GET /api/v1/session': () => json(session),
+      'GET /api/v1/developer/sandbox': () => json({ sandbox: null }),
+    });
+    expect(await connect(fetchFn)).toEqual({ kind: 'no-sandbox' });
+    expect(calls.some((c) => c.url.endsWith('/try-token'))).toBe(false);
+  });
+
   it('says no sandbox on a 404 for the token', async () => {
     const { fetchFn } = stub({
       'GET /api/v1/session': () => json(session),
+      'GET /api/v1/developer/sandbox': open,
       'POST /api/v1/developer/try-token': () => json({ code: 'SANDBOX_NOT_FOUND' }, 404),
     });
     expect(await connect(fetchFn)).toEqual({ kind: 'no-sandbox' });
@@ -55,6 +66,7 @@ describe('connect', () => {
   it('mints with the CSRF token, then calls the API with the try token only', async () => {
     const { fetchFn, calls } = stub({
       'GET /api/v1/session': () => json(session),
+      'GET /api/v1/developer/sandbox': open,
       'POST /api/v1/developer/try-token': token,
       'GET /api/v1/webhook-endpoints': () => json({ items: [] }),
       'POST /api/v1/webhook-endpoints/e1/test': () =>
@@ -62,7 +74,7 @@ describe('connect', () => {
     });
     const auth = await connect(fetchFn, () => 0);
     if (auth.kind !== 'ready') throw new Error('expected ready');
-    expect(calls[1]?.headers['x-csrf-token']).toBe('csrf-1');
+    expect(calls.find((c) => c.url.endsWith('/try-token'))?.headers['x-csrf-token']).toBe('csrf-1');
     await auth.api.endpoints();
     expect(await auth.api.sendTest('e1', 'pass.updated')).toMatchObject({ captureId: 'c1' });
     const api = calls.filter((c) => c.url.includes('/webhook-endpoints'));
@@ -74,6 +86,7 @@ describe('connect', () => {
   it('takes a new token once on a 401, and reports a second one', async () => {
     const { fetchFn } = stub({
       'GET /api/v1/session': () => json(session),
+      'GET /api/v1/developer/sandbox': open,
       'POST /api/v1/developer/try-token': token,
       'GET /api/v1/webhook-endpoints': (n) =>
         n === 1 ? json({ code: 'UNAUTHENTICATED' }, 401) : json({ items: [] }),
@@ -83,6 +96,7 @@ describe('connect', () => {
     expect(await auth.api.endpoints()).toEqual([]);
     const refused = stub({
       'GET /api/v1/session': () => json(session),
+      'GET /api/v1/developer/sandbox': open,
       'POST /api/v1/developer/try-token': token,
       'GET /api/v1/webhook-endpoints': () =>
         json({ code: 'UNAUTHENTICATED', detail: 'Sign in.' }, 401),
@@ -99,6 +113,7 @@ describe('connect', () => {
     let now = 0;
     const { fetchFn, calls } = stub({
       'GET /api/v1/session': () => json(session),
+      'GET /api/v1/developer/sandbox': open,
       'POST /api/v1/developer/try-token': token,
       'GET /api/v1/webhook-endpoints': () => json({ items: [] }),
     });

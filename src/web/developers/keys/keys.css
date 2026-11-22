@@ -1,10 +1,14 @@
 /* The Keys page (island): a table, the Live keys card and three sheets. Portal tokens only. */
-.ks,
-.ks-slot,
-.ks-note {
-  max-width: 1020px;
+.ks-slot {
+  /* The page column: the same 960 px and gutters as every other portal page, so the heading lines up. */
+  max-width: 960px;
   margin-inline: auto;
-  padding: 40px clamp(16px, 3vw, 40px) 64px;
+  padding: 32px 40px 64px;
+}
+@media (max-width: 720px) {
+  .ks-slot {
+    padding: 20px 16px 96px;
+  }
 }
 .ks {
   display: grid;

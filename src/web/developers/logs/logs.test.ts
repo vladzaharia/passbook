@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LOGS_COPY } from '../../../shared/copy/developers-ops.ts';
+import { LOGS_COPY, RAIL_COPY } from '../../../shared/copy/developers-ops.ts';
 import { fill, getJson, h } from './dom.ts';
 import { logsIsland, railIsland } from './entry.ts';
 import { clock, count, flavour, prettyBody } from './format.ts';
@@ -128,9 +128,11 @@ describe('the api rail', () => {
     return el;
   };
 
-  it('keeps the placeholder when signed out or without a sandbox', async () => {
+  it('keeps the placeholder when signed out, and says there is no sandbox on a 404', async () => {
     expect((await mount(json({}, 401))).textContent).toBe('placeholder');
-    expect((await mount(json({}, 404))).textContent).toBe('placeholder');
+    expect((await mount(json({}, 404))).textContent).toBe(
+      `${RAIL_COPY.title}${RAIL_COPY.noSandbox}`,
+    );
   });
 
   it('says it failed on any other error', async () => {
@@ -201,9 +203,9 @@ describe('the request log', () => {
     expect(out.el.textContent).toBe('prerendered');
     const none = await open([json({}, 404)]);
     expect(none.el.textContent).toContain(LOGS_COPY.noSandbox);
-    expect(none.el.querySelector('a')?.textContent).toBe('Quickstart');
+    expect(none.el.querySelector('a')?.textContent).toBe(LOGS_COPY.create);
     const failed = await open([json({}, 500)]);
-    expect(failed.el.textContent).toContain(LOGS_COPY.failed);
+    expect(failed.el.textContent).toContain(LOGS_COPY.notLoaded);
   });
 
   it('lists the calls with method, path, status and time', async () => {

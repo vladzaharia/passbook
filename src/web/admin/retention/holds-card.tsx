@@ -94,7 +94,9 @@ export function HoldsCard({
         }
       />
       <CardBody className="flex flex-col gap-4">
-        <p className="text-sm text-fg-muted">{RETENTION_COPY.holdsLede}</p>
+        {items.length > 0 ? (
+          <p className="text-sm text-fg-muted">{RETENTION_COPY.holdsLede}</p>
+        ) : null}
         {platformHeld && scope === 'org' ? (
           <Callout tone="info">{RETENTION_COPY.platformHold}</Callout>
         ) : null}

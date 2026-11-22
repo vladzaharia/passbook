@@ -100,7 +100,7 @@ export function FindBar({
     <search className="relative mb-3 flex flex-wrap items-center gap-x-2 gap-y-1">
       <div
         className={cn(
-          'flex min-h-9 min-w-0 flex-1 basis-72 flex-wrap items-center gap-1.5 rounded-md border border-border-strong bg-(--wl-field) px-2.5 py-1 wl-colors',
+          'flex min-h-9 min-w-0 flex-1 basis-72 flex-wrap items-center gap-1.5 rounded-md border border-border-strong bg-(--wl-field) px-2.5 py-1 wl-colors pointer-coarse:py-0',
           'focus-within:border-focus focus-within:outline-2 focus-within:outline-focus',
         )}
       >
@@ -133,7 +133,7 @@ export function FindBar({
           onFocus={() => setOpen(true)}
           onBlur={() => setOpen(false)}
           onKeyDown={onKey}
-          className="h-7 min-w-16 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-(--wl-placeholder) pointer-coarse:text-[max(16px,1rem)]"
+          className="h-7 min-w-16 flex-1 pointer-coarse:h-11 bg-transparent text-sm text-fg outline-none placeholder:text-(--wl-placeholder) pointer-coarse:text-[max(16px,1rem)]"
         />
       </div>
       {templates.length > 1 ? (

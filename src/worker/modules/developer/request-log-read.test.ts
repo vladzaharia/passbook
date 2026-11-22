@@ -105,6 +105,34 @@ describe('GET /developer/logs', () => {
     );
   });
 
+  it('leaves out the portal’s own background reads on request, and keeps every call a person made', async () => {
+    const d = await t.developer();
+    const { token } = await t.mint(d.browser);
+    const page = fromPage(d.browser, token);
+    // The page's own poll, a Run here from the console, and calls from a terminal (one bad, one fine).
+    await t.call('/passes', { headers: { ...page, 'x-passbook-client': 'portal' } });
+    await t.call('/passes', { headers: page });
+    await t.call('/passes/none', { headers: bearer(d.key.secret) });
+    await t.call('/passes', { headers: bearer(d.key.secret) });
+    // The mark means nothing from a key: only the page's try token can use it.
+    await t.call('/templates', {
+      headers: { ...bearer(d.key.secret), 'x-passbook-client': 'portal' },
+    });
+    await t.settle();
+    const get = async (q: string) =>
+      RequestLogPageSchema.parse(
+        await (await t.call(`/developer/logs?${q}`, { headers: d.browser })).json(),
+      );
+    const all = await get('');
+    expect(all.items).toHaveLength(5);
+    expect(all.items.filter((i) => i.client === 'portal')).toHaveLength(1);
+    const quiet = await get('portal=hide');
+    expect(quiet.items).toHaveLength(4);
+    expect(quiet.items.some((i) => i.client === 'portal')).toBe(false);
+    expect(quiet.items.map((i) => i.status).sort()).toEqual([200, 200, 200, 404]);
+    expect((await get('portal=hide&source=try')).items).toHaveLength(1);
+  });
+
   it('filters by status, code, path, method and key, and pages by cursor', async () => {
     const d = await t.developer();
     const db = t.kit.env.DB;

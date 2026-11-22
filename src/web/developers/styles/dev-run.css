@@ -32,6 +32,10 @@
   min-block-size: 45rem;
   margin-top: 24px;
 }
+/* A state card (no sandbox, failed) is not a ticket: no blank 45rem under it. */
+.console-slot:has(.pstate) {
+  min-block-size: 0;
+}
 .ticket > .body {
   position: relative;
 }
@@ -250,4 +254,14 @@ dialog.sheet::backdrop {
 }
 :root[data-sheet="open"] body {
   overflow: hidden;
+}
+
+/* Until the session is known the Sign in link keeps its place and is not shown, so it never sits beside the chip. */
+[data-island="account"][data-hydrating] {
+  visibility: hidden;
+}
+/* The quickstart and the console page hold their signed-out markup the same way. */
+[data-island="quickstart"][data-hydrating],
+[data-island="run"][data-hydrating] {
+  visibility: hidden;
 }

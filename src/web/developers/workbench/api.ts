@@ -25,7 +25,9 @@ export async function fetchCalls(
   source: Source,
   fetchFn: typeof fetch = fetch,
 ): Promise<RequestLogEntry[]> {
-  const res = await fetchFn(`${API}/logs?limit=8&source=${source}`, { headers: HEADERS });
+  const res = await fetchFn(`${API}/logs?limit=8&portal=hide&source=${source}`, {
+    headers: HEADERS,
+  });
   if (!res.ok) throw new HomeError(res.status);
   return ((await res.json()) as { items: RequestLogEntry[] }).items;
 }

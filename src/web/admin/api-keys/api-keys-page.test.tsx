@@ -86,7 +86,6 @@ describe('api keys page', () => {
     expect(await screen.findByText('CI key')).toBeInTheDocument();
     await waitFor(() => expect(seen.at(-1)).toBe('null'));
     expect(router.state.location.search.orgId).toBeUndefined();
-    expect(screen.queryByText(/All modes/)).toBeNull();
   });
 
   it('shows the key empty state', async () => {
@@ -185,7 +184,8 @@ describe('api keys page', () => {
       },
     });
     const user = userEvent.setup();
-    expect(await screen.findByText('All modes')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'API keys' })).toBeInTheDocument();
+    expect(screen.queryByText('All modes')).toBeNull();
     expect(seen.every((orgId) => orgId === 'o1')).toBe(true);
     expect(screen.queryByRole('combobox', { name: 'Key context' })).toBeNull();
     await screen.findByText(/^No (active )?API keys$/);
@@ -226,7 +226,7 @@ describe('api keys page', () => {
     await waitFor(() => expect(router.state.location.search.new).toBeUndefined());
     expect(router.state.location.pathname.split('/')[3]).toBe('o1');
     await waitFor(() => expect(seen.at(-1)).toBe('o1'));
-    expect(await screen.findByText('All modes')).toBeInTheDocument();
+    expect(screen.queryByText('All modes')).toBeNull();
     expect(within(dialog).getByText('North')).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText(/Name/), 'Org integration');
     await user.click(within(dialog).getByRole('checkbox', { name: 'Scan as a terminal' }));

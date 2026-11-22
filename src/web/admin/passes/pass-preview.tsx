@@ -7,6 +7,7 @@ import { assetUrlMap } from '../../pass-card/assets.ts';
 import { PassCardStage } from '../../pass-card/index.tsx';
 import {
   Badge,
+  Celebrate,
   LoadingRail,
   type PassSide,
   PassSideToggle,
@@ -134,6 +135,7 @@ export function PassPreviewPanel({
   swapKey,
   beside,
   seat = false,
+  celebrate = false,
   className,
   ...preview
 }: Omit<PassPreviewProps, 'face' | 'target' | 'flippable'> & {
@@ -151,6 +153,8 @@ export function PassPreviewPanel({
    * everything under it never shift.
    */
   seat?: boolean;
+  /** Foil sparks fly once from the card's centre: the org's first pass. */
+  celebrate?: boolean;
 }) {
   const [face, setFace] = useState<PassSide>('front');
   const [target, setTarget] = useState<PassTarget>('27');
@@ -178,6 +182,7 @@ export function PassPreviewPanel({
             <PassPreview {...preview} face={face} target={shown} flippable />
           </div>
         </div>
+        <Celebrate when={celebrate} size="lg" />
       </div>
       <div
         className={cn(

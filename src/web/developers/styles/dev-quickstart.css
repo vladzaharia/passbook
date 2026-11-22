@@ -34,6 +34,25 @@
   align-self: start;
   max-height: calc(100dvh - var(--dev-bar));
   overflow-y: auto;
+  /* The column can be taller than the window: a thin bar and an edge shadow say there is more above or below. */
+  background:
+    linear-gradient(var(--pk-surface-page) 30%, transparent) top / 100% 24px no-repeat local,
+    linear-gradient(transparent, var(--pk-surface-page) 70%) bottom / 100% 24px no-repeat local,
+    linear-gradient(rgb(0 0 0 / 0.28), transparent) top / 100% 16px no-repeat scroll,
+    linear-gradient(transparent, rgb(0 0 0 / 0.28)) bottom / 100% 16px no-repeat scroll;
+}
+.qs-stage::-webkit-scrollbar {
+  width: 10px;
+}
+.qs-stage::-webkit-scrollbar-thumb {
+  background: var(--pk-border-strong);
+  border-radius: 999px;
+  border: 2px solid var(--pk-surface-page);
+}
+@supports not selector(::-webkit-scrollbar) {
+  .qs-stage {
+    scrollbar-width: thin;
+  }
 }
 .qs-stage-h {
   display: flex;
@@ -195,6 +214,7 @@
     position: static;
     max-height: none;
     overflow: visible;
+    background: none;
     border: 1px solid var(--pk-border-subtle);
     border-radius: var(--pk-radius-xl);
     margin: 0 0 30px;

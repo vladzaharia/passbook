@@ -25,7 +25,7 @@ export function LockScreenNotice({
       <div
         key={`${silent}-${text}`}
         data-silent={silent ? '' : undefined}
-        className="wl-stage-swap flex min-h-16 items-start gap-3 rounded-xl border border-border bg-surface-raised p-3 shadow-elevation-1 data-[silent]:opacity-60"
+        className="wl-stage-swap flex min-h-16 items-start gap-3 rounded-xl border border-border bg-surface-raised p-3 shadow-elevation-1 data-[silent]:border-dashed data-[silent]:bg-transparent"
       >
         {iconUrl ? (
           <img src={iconUrl} alt="" width={40} height={40} className="size-10 rounded-lg" />

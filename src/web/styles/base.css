@@ -69,7 +69,8 @@ html[data-modality="pointer"]
 /* Touch: inline text links get a 44 px hit height without moving the text. */
 @media (pointer: coarse) {
   /* An inline box is about 1.2em tall (the font's content area), whatever the line height. */
-  :where(p, li, dd, figcaption, h2, h3, h4, label) > a:not([class*="min-h-"]),
+  :where(p, li, dd, figcaption, h2, h3, h4, label)
+    > a:not([class*="min-h-"], [class*="flex"], [class*="border"]),
   :where(td, th) a:not([class*="min-h-"], [class*="flex"]) {
     padding-block: calc((2.75rem - 1.2em) / 2);
     margin-block: calc((1.2em - 2.75rem) / 2);

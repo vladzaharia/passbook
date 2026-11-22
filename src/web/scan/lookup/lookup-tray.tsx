@@ -53,7 +53,7 @@ export function LookupTray({
     <Tray
       label={COPY.enterCode}
       onClose={onClose}
-      height={picked ? 588 : letters || grows ? undefined : 470}
+      height={picked ? 588 : letters || grows ? undefined : 500}
       testId="scan-lookup-tray"
       onEscapeKeyDown={(event) => {
         if (editing) event.preventDefault();
@@ -88,6 +88,7 @@ export function LookupTray({
               lookup.submit();
             }}
           >
+            <p className="scan-code-cap">{COPY.codeLabel}</p>
             <div className="scan-code-row">
               <ScanTextField
                 ref={field}

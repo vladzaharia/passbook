@@ -137,6 +137,7 @@ describe('API key page', () => {
     );
     expect(screen.queryByText('Child keys')).toBeNull();
     expect(await screen.findByText('No calls recorded.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy key' })).toBeInTheDocument();
   });
 
   it('rotates with an overlap, then shows the new secret once and when the old key stops', async () => {

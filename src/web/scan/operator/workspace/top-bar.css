@@ -224,3 +224,38 @@
     display: none;
   }
 }
+
+/* Phone width: logo, state, count and who is signed in. The name, sub-line, meter and key hints go. */
+@media (max-width: 599px) {
+  .op-top {
+    gap: 6px;
+    padding: 0 10px;
+    overflow: hidden;
+  }
+  .op-org {
+    flex: none;
+  }
+  .op-org-text,
+  .op-sep,
+  .op-meter,
+  .op-chip-k,
+  .op-staff-name,
+  .op-staff small {
+    display: none;
+  }
+  .op-chip-state {
+    flex: 0 1 auto;
+    min-width: 44px;
+  }
+  .op-chip-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .op-staff {
+    padding: 0 3px;
+  }
+  .op-top-end {
+    gap: 4px;
+  }
+}

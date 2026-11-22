@@ -37,6 +37,7 @@ function Face({
   lede?: ReactNode;
   children: ReactNode;
 }) {
+  const Heading = hidden ? 'p' : 'h1';
   return (
     <section
       ref={faceRef}
@@ -47,7 +48,10 @@ function Face({
     >
       <div className="flex flex-1 flex-col gap-6 p-5 sm:p-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong">{title}</h1>
+          {/* The face turned away is inert: one h1 in the document. */}
+          <Heading className="text-2xl font-semibold tracking-[-0.015em] text-fg-strong">
+            {title}
+          </Heading>
           {lede ? <p className="mt-1 break-words text-sm text-fg-muted">{lede}</p> : null}
         </div>
         {children}

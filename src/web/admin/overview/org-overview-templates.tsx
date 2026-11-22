@@ -1,9 +1,8 @@
-import { Link } from '@tanstack/react-router';
 import { useMemo } from 'react';
 import type { OrgActivity, TemplateActivity } from '@/shared/contracts/metrics.ts';
 import { formatCount } from '@/web/lib/format.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
-import { Card, CardHeader, DataTable } from '@/web/ui/index.ts';
+import { Card, CardHeader, DataTable, RowLink } from '@/web/ui/index.ts';
 import type { Range } from './range.ts';
 
 /** In a wallet against not added, as shares of the passes that are live now. */
@@ -54,13 +53,9 @@ export function TemplateBreakdown({
         id: 'name',
         cell: ({ row }) =>
           canOpen ? (
-            <Link
-              to="/admin/passes"
-              search={{ templateId: row.original.templateId }}
-              className="font-medium text-fg-strong hover:underline"
-            >
+            <RowLink to="/admin/passes" search={{ templateId: row.original.templateId }}>
               {row.original.name}
-            </Link>
+            </RowLink>
           ) : (
             <span className="font-medium text-fg-strong">{row.original.name}</span>
           ),

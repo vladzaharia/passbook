@@ -78,6 +78,8 @@ function ScopedMessagesPage({
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
   // Test mode already says so in the header; a pill on every row would repeat it.
   const mixed = rows.some((r) => r.mode !== 'test');
+  // The kind is a subtitle only when the list holds more than one.
+  const kinds = new Set(rows.map((r) => r.kind)).size > 1;
   const columns = useMemo<DataColumnDef<BroadcastDto, never>[]>(
     () => [
       {
@@ -91,9 +93,11 @@ function ScopedMessagesPage({
               </RowLink>
               {mixed ? <ModePill mode={row.original.mode} compact /> : null}
             </span>
-            <span className="block truncate text-xs text-fg-muted">
-              {KIND_LABEL[row.original.kind]}
-            </span>
+            {kinds ? (
+              <span className="block truncate text-xs text-fg-muted">
+                {KIND_LABEL[row.original.kind]}
+              </span>
+            ) : null}
             {/* Phones show one row per message: the columns that fit nowhere move under the name. */}
             <span className="mt-1 flex flex-col gap-1 text-xs text-fg-muted md:hidden">
               <span>{whenLine(row.original)}</span>
@@ -136,7 +140,7 @@ function ScopedMessagesPage({
         cell: ({ row }) => whenLine(row.original),
       },
     ],
-    [mixed],
+    [mixed, kinds],
   );
 
   const filtered = Boolean(search.state || search.kind);

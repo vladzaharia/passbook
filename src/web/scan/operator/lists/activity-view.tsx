@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
 import { sessionTime } from '../../ui/session-time.ts';
 import { type ActivityItem, viewOf, visibleRows } from './activity-model.ts';
+import { ListEmpty } from './list-empty.tsx';
 import { PersonAvatar } from './person-avatar.tsx';
 import { useRoving } from './use-roving.ts';
 import './lists.css';
@@ -146,7 +147,7 @@ export function ActivityView({
             {C.unavailable}
           </p>
         ) : null}
-        {!rows.length && loaded && !unavailable ? <p className="op-list-note">{C.empty}</p> : null}
+        {!rows.length && loaded && !unavailable ? <ListEmpty>{C.empty}</ListEmpty> : null}
         <ul className="op-rows" onKeyDown={roving.onKeyDown}>
           {rows.map((item, index) => (
             <ActivityRow

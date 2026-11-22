@@ -1089,7 +1089,7 @@ describe('designer', () => {
     fireEvent.change(await scanHeader(), { target: { value: 'Hello' } });
     await readyToSave();
     await user.click(screen.getByRole('button', { name: 'Save version' }));
-    await screen.findByText('Could not save');
+    expect((await screen.findAllByText('Could not save')).length).toBeGreaterThan(0);
     expect(screen.getByText('Unsaved changes')).toBeInTheDocument();
     expect(
       [...mem.values()].some(

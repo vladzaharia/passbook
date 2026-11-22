@@ -25,6 +25,30 @@
   --wl-ease-in: var(--pk-ease-exit);
   --wl-ease-move: var(--pk-ease-standard);
   --wl-ease-spring: var(--pk-ease-spring);
+  /* The same 4% overshoot, slower to arrive: 90% by 39% of the time. Deal, flip, card morph. */
+  --wl-ease-card: linear(
+    0,
+    0.052 5%,
+    0.173 10%,
+    0.325 15%,
+    0.482 20%,
+    0.625 25%,
+    0.748 30%,
+    0.846 35%,
+    0.92 40%,
+    0.972 45%,
+    1.006 50%,
+    1.026 55%,
+    1.036 60%,
+    1.038 65%,
+    1.036 70%,
+    1.031 75%,
+    1.026 80%,
+    1.02 85%,
+    1.014 90%,
+    1.009 95%,
+    1
+  );
   /* 13% overshoot: stamps, seals, success checks, celebrations. */
   --wl-ease-bounce: linear(
     0,
@@ -140,8 +164,10 @@
 }
 
 /* One-shot entrance for a block that arrives after its skeleton. */
+/* --wl-delay starts it later (a tile's chrome after its card). */
 .wl-rise {
   animation: wl-rise var(--wl-dur-enter) var(--wl-ease-out) backwards;
+  animation-delay: var(--wl-delay, 0ms);
 }
 /* Content replacing a skeleton rises 4 px over 200 ms while the skeleton fades. */
 .wl-handoff {
@@ -158,7 +184,7 @@
   animation: wl-fade 160ms var(--wl-ease-out) backwards;
 }
 .wl-deal > * {
-  animation: wl-deal var(--wl-dur-card) var(--wl-ease-spring) backwards;
+  animation: wl-deal var(--wl-dur-card) var(--wl-ease-card) backwards;
   animation-delay: calc(min(var(--i, 0), 6) * var(--wl-stagger-cards));
 }
 
@@ -229,7 +255,7 @@ html:active-view-transition-type(back) {
 /* Shared pass cards morph between pages (PassCardStage transitionName). */
 ::view-transition-group(*.pass) {
   animation-duration: var(--wl-dur-card);
-  animation-timing-function: var(--wl-ease-spring);
+  animation-timing-function: var(--wl-ease-card);
 }
 /* A card with no partner on the other page leaves and arrives with main. */
 ::view-transition-old(*.pass):only-child {

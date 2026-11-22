@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { entityLabel } from '../../../lib/entity-label.ts';
+import { usePeekMinted } from '../../../lib/motion.ts';
 import { useOrgScope, useResourceOrg } from '../../../lib/org-filter.tsx';
 import { DetailNotFound, detailError, PageHeader, SkeletonDetail } from '../../../ui/index.ts';
 import { usePass } from '../api.ts';
@@ -33,7 +34,11 @@ function PassDetailContent({
   const pass = usePass(passId, bare);
   // A bare deep link must use a newly authorized response, not an older cached pass.
   const checked = !bare || (pass.isFetchedAfterMount && !pass.isFetching);
-  const resourceOrg = useResourceOrg(checked && !pass.isError ? pass.data?.orgId : undefined);
+  const validated = useResourceOrg(checked && !pass.isError ? pass.data?.orgId : undefined);
+  // A pass just created here was checked by the create flow (grants confirmed, detail seeded), so its
+  // page shows at once and the wizard's card morphs into it; a later refusal still replaces it.
+  const justMade = usePeekMinted(passId);
+  const resourceOrg = validated === 'pending' && justMade ? 'ready' : validated;
   const matchesScope = Boolean(
     resourceOrg === 'ready' &&
       !scope.isLoading &&

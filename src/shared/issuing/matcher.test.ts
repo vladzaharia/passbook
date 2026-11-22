@@ -221,6 +221,31 @@ describe('enum labels', () => {
   });
 });
 
+describe('a plan column with a few unknown values', () => {
+  // The design sets the line: 90% of the non-empty cells must fit (analysis.md, risks). Below it the
+  // column is left for the person to choose; at or above it the unknown values ask "Choose".
+  const membership = (rows: number, gold: number) =>
+    toCsv(
+      ['Membership'],
+      Array.from({ length: rows }, (_, i) => [
+        i < gold ? 'Gold' : (['monthly', 'ANNUAL', 'Day'][i % 3] as string),
+      ]),
+    );
+
+  it('is left unmatched when 3 of 24 cells (87.5% fit) are not plans', () => {
+    const { s } = suggest(threePlans, membership(24, 3), 'memberId');
+    expect(field(s, 'plan').from).toEqual([]);
+    expect(s.unused).toEqual([{ pointer: '/Membership', label: 'Membership' }]);
+  });
+
+  it('maps by values when 3 of 40 cells (92.5% fit) are not plans, and asks about Gold', () => {
+    const { s } = suggest(threePlans, membership(40, 3), 'memberId');
+    expect(field(s, 'plan')).toMatchObject({ from: ['/Membership'], confidence: 'values' });
+    const values = Object.fromEntries(field(s, 'plan').values.map((v) => [v.value, v.to]));
+    expect(values).toMatchObject({ monthly: 'member', ANNUAL: 'annual', Day: 'day', Gold: null });
+  });
+});
+
 describe('date detection', () => {
   const dates = (values: string[]) =>
     field(

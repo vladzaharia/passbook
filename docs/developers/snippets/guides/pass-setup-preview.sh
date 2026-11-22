@@ -1,0 +1,13 @@
+curl -X PATCH "https://passbook.mobile/api/v1/orgs/0193a1b2-7c00-7000-8000-0000000000a1/pass-setup?dryRun=true" \
+  -H "Authorization: Bearer $PASSBOOK_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+  "expectedRevision": "r1",
+  "brand": {
+    "passColors": {
+      "background": "#0f172a",
+      "foreground": "#ffffff",
+      "label": "#fbbf24"
+    }
+  }
+}'

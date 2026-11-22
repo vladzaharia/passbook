@@ -11,7 +11,7 @@ import { WorkbenchIsland } from './island.tsx';
 
 /**
  * The `workbench` island in `#workbench` on `/developers`. Signed out, or signed in without developer access, the
- * prerendered home stays as it is. Otherwise the Workbench replaces it: the marketing sections are hidden.
+ * prerendered home stays as it is. Otherwise the Workbench replaces it: the marketing sections are removed.
  */
 export const mount: Island['mount'] = async (el) => {
   const session = await loadSession();
@@ -23,6 +23,7 @@ export const mount: Island['mount'] = async (el) => {
     // No developer access: the public home is the right page. Anything else: the island shows Retry.
     if (error instanceof HomeError && error.out) return;
   }
-  for (const m of document.querySelectorAll<HTMLElement>('[data-home-marketing]')) m.hidden = true;
+  // Removed, not hidden: the Workbench's sandbox name is the page's one h1.
+  for (const m of document.querySelectorAll('[data-home-marketing]')) m.remove();
   createRoot(el).render(<WorkbenchIsland {...(home ? { initial: home } : {})} />);
 };

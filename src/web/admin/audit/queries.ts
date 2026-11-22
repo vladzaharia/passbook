@@ -7,7 +7,7 @@ import type { AuditSearch } from './audit-search.ts';
 export type AuditQuery = Omit<AuditSearch, 'entry'> & { excludeAction?: string | undefined };
 
 /** Keep rows during filter changes only within the same principal and organization filter. */
-export function usePlatformAuditLog(filters: AuditQuery, limit = 50, staleTime?: number) {
+export function usePlatformAuditLog(filters: AuditQuery, limit = 25, staleTime?: number) {
   const { filterOrgId, ...rest } = filters;
   const session = useSession();
   const principal = session.isAdmin && !session.isError ? session.authed?.user.id : undefined;
@@ -37,7 +37,7 @@ export function usePlatformAuditLog(filters: AuditQuery, limit = 50, staleTime?:
 export function useTenantAuditLog(
   orgId: string | undefined,
   filters: Omit<AuditQuery, 'filterOrgId'>,
-  limit = 50,
+  limit = 25,
   staleTime?: number,
 ) {
   const session = useSession();

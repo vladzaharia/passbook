@@ -34,23 +34,21 @@ describe('POST /broadcasts target', () => {
     return { kit, send, stored };
   }
 
-  it('drops window and sentBy, and keeps match', async () => {
+  it('keeps match, and refuses window and sentBy as filters it does not take', async () => {
     const { kit, send, stored } = await setup();
-    const res = await send({
-      kind: 'message',
-      target: {
-        templateIds: [kit.messaging.id],
-        match: [{ input: 'gate', values: ['A'] }],
-        window: { from: 1, to: 2 },
-        sentBy: 'rule-1',
-      },
-      patch: { message: 'Hi' },
-    });
+    const target = { templateIds: [kit.messaging.id], match: [{ input: 'gate', values: ['A'] }] };
+    const res = await send({ kind: 'message', target, patch: { message: 'Hi' } });
     expect(res.status).toBe(201);
-    expect(await stored(((await res.json()) as { id: string }).id)).toEqual({
-      templateIds: [kit.messaging.id],
-      match: [{ input: 'gate', values: ['A'] }],
-    });
+    expect(await stored(((await res.json()) as { id: string }).id)).toEqual(target);
+    await expectProblem(
+      await send({
+        kind: 'message',
+        target: { ...target, window: { from: 1, to: 2 }, sentBy: 'rule-1' },
+        patch: { message: 'Hi' },
+      }),
+      422,
+      'BROADCAST_UNSUPPORTED_FILTER',
+    );
   });
 
   it('refuses a pass list on a message, with or without templates, by name', async () => {
@@ -79,26 +77,17 @@ describe('POST /broadcasts target', () => {
   });
 
   it('never takes the server-only fields from a body', async () => {
-    const { kit, send, stored } = await setup();
+    const { kit, send } = await setup();
     const pass = await kit.makePass();
-    const res = await send({
-      kind: 'change',
-      target: {
-        passIds: [pass.id],
-        revertOf: 'some-run',
-        selection: 'resume',
-        retryOf: 'some-run',
-        token: 'forged',
-        message: 'forged',
-      },
-      patch: { gate: 'B' },
-    });
-    expect(res.status).toBe(201);
-    const target = await stored(((await res.json()) as { id: string }).id);
-    expect(target).toMatchObject({ selection: 'ids' });
-    expect(target).not.toHaveProperty('revertOf');
-    expect(target).not.toHaveProperty('retryOf');
-    expect(target).not.toHaveProperty('message');
-    expect(target.token).not.toBe('forged');
+    for (const field of ['revertOf', 'selection', 'retryOf', 'token', 'message'])
+      await expectProblem(
+        await send({
+          kind: 'change',
+          target: { passIds: [pass.id], [field]: 'forged' },
+          patch: { gate: 'B' },
+        }),
+        422,
+        'BROADCAST_UNSUPPORTED_FILTER',
+      );
   });
 });

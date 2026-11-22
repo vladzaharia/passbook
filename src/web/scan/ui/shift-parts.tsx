@@ -2,7 +2,33 @@ import type { z } from 'zod';
 import type { ScanReason } from '@/shared/contracts/scan.ts';
 import type { ScanSummarySchema } from '@/shared/contracts/scan-session.ts';
 import { SCAN_REASON_COPY } from '@/shared/copy/scan.ts';
+import { SCAN_HANDHELD_COPY } from '@/shared/copy/scan-handheld.ts';
 import { formatCount, formatTime } from '../../lib/format.ts';
+import type { Counts } from '../machine/types.ts';
+
+const C = SCAN_HANDHELD_COPY.shift;
+const fill = (text: string, values: Record<string, string | number>) =>
+  text.replace(/\{(\w+)\}/g, (m, k: string) => (k in values ? String(values[k]) : m));
+
+/** The door's count for the shift hero: the number, its caption and how full it is (null without capacity). */
+export function shiftCount(counts: Counts | null) {
+  if (!counts) return null;
+  const e = counts.event;
+  const total = e ? (e.capacity ?? e.expected) : null;
+  const n = e ? e.arrived : counts.today;
+  return {
+    n: formatCount(n),
+    caption: [total ? fill(C.of, { cap: formatCount(total) }) : null, e ? C.in : C.today]
+      .filter(Boolean)
+      .join(' '),
+    pct: total ? Math.min(100, Math.round((n / total) * 100)) : null,
+  };
+}
+
+/** What this person did in the shift. */
+export function shiftYou(summary: Summary): string {
+  return fill(C.you, { in: summary.ok, refused: summary.refused, undone: summary.undone });
+}
 
 export type Summary = z.infer<typeof ScanSummarySchema>;
 export type Scope = 'device' | 'session';

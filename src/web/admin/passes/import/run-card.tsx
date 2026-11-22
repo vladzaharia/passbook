@@ -76,7 +76,7 @@ export function DoneCard({
         imp.state === 'failed' ? C.results.stopped : undone ? C.undo.undone : C.run.done(total)
       }
     >
-      <Counters imp={imp} />
+      {undone ? null : <Counters imp={imp} />}
       {children}
     </RunDone>
   );

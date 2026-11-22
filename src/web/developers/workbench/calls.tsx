@@ -1,5 +1,5 @@
 import { MonitorPlay, Terminal } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
 import { clock, flavour } from '../logs/format.ts';
 import { SOURCES, type Source } from './model.ts';
@@ -43,6 +43,19 @@ export function Calls({
   const [source, setSource] = useState<Source>('all');
   const [rows, setRows] = useState<Partial<Record<Source, RequestLogEntry[]>>>({ all: calls });
   const [failed, setFailed] = useState(false);
+  // A new home (after a reset or reopen) replaces what was read before, for every source.
+  const seen = useRef(calls);
+  useEffect(() => {
+    if (seen.current === calls) return;
+    seen.current = calls;
+    setFailed(false);
+    setRows({ all: calls });
+    if (source !== 'all')
+      load(source).then(
+        (items) => setRows((r) => ({ ...r, [source]: items })),
+        () => setFailed(true),
+      );
+  }, [calls, source, load]);
   const pick = (next: Source) => {
     setSource(next);
     setFailed(false);

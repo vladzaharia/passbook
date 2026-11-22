@@ -93,11 +93,7 @@ export function PhotosPage() {
   const handled = entries.filter((e) => e.state === 'done' || e.state === 'failed').length;
   return (
     <>
-      <PageHeader
-        title="Photos"
-        description="Name each file after the pass's External ID or serial."
-        breadcrumbs={CRUMBS}
-      />
+      <PageHeader title="Photos" breadcrumbs={CRUMBS} />
       {!orgId ? (
         <EmptyState art="people" title="Choose an organization." />
       ) : !canOperate ? (
@@ -115,15 +111,15 @@ export function PhotosPage() {
                 disabled={busy}
                 onFiles={(files) => void choose(files)}
               />
+              <p className="text-sm text-fg-muted">
+                Images up to 10 MB, named by External ID or serial.
+              </p>
               <CheckboxField
                 label="Include photos in the Wallet pass"
                 checked={include}
                 disabled={busy}
                 onCheckedChange={(checked) => setInclude(checked === true)}
               />
-              <p className="text-sm text-fg-muted">
-                Passes that cannot carry a Wallet photo keep it for scanners only.
-              </p>
             </CardBody>
           </Card>
           {entries.length > 0 ? (

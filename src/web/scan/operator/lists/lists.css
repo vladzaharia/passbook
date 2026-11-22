@@ -51,8 +51,14 @@
   margin: 0;
   padding: 0;
 }
-.op-rows[data-dim] {
-  opacity: 0.66;
+/* Dimmed by colour, not opacity: opacity drags text and the tinted initials below 4.5:1. */
+.op-rows[data-dim] .op-row-title {
+  color: var(--op-muted);
+}
+.op-rows[data-dim] .op-av,
+.op-row[data-muted] .op-av {
+  background: var(--op-chip);
+  color: var(--op-chip-fg);
 }
 .op-row {
   position: relative;
@@ -99,8 +105,8 @@
   border-radius: 2px;
   background: var(--pk-accent);
 }
-.op-row[data-muted] .op-row-main {
-  opacity: 0.6;
+.op-row[data-muted] .op-row-title {
+  color: var(--op-muted);
 }
 .op-row-text {
   display: grid;
@@ -198,4 +204,20 @@
   width: 13px;
   height: 13px;
   flex: none;
+}
+.op-list-empty {
+  /* The buddy stands on this top edge and rises above it. */
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin: 84px 24px 0;
+  padding: 20px 16px;
+  border-top: 1px solid var(--op-line);
+  color: var(--op-muted);
+  font-size: 13px;
+  text-align: center;
+}
+.op-list-empty p {
+  margin: 0;
 }

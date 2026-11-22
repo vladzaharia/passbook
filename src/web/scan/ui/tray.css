@@ -117,6 +117,12 @@
   }
 }
 
+.scan-code-cap {
+  flex: none;
+  margin: 0 0 -4px;
+  color: var(--sd-muted);
+  font: 600 14px / 18px var(--pk-font-sans);
+}
 /* Enter code. */
 .scan-code-row {
   display: flex;
@@ -237,7 +243,8 @@
     margin-top: 2px;
     overflow: hidden;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     font-size: 17px;
     line-height: 22px;
   }

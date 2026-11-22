@@ -410,6 +410,9 @@ describe('who may turn an enrolment on', () => {
     for (const body of [
       { brand: { name: 'Renamed' } },
       { brand: { support: { url: 'https://help.example.com' } } },
+      { brand: { support: { email: 'help@acme.test' } } },
+      { brand: { email: { fromName: 'Acme' } } },
+      { brand: { email: { buddy: true } } },
       { channels: { mobile: 'blocked' } },
     ]) {
       const refused = await patchAs(org.id, ['org:read', 'org:write'], body);
@@ -419,9 +422,15 @@ describe('who may turn an enrolment on', () => {
       });
     }
     const box = await ready({ sandbox: true });
-    expect(
-      (await patchAs(box.org.id, ['org:read', 'org:write'], { channels: { mobile: 'blocked' } }))
-        .status,
-    ).toBe(200);
+    for (const body of [
+      { channels: { mobile: 'blocked' } },
+      { brand: { name: 'Renamed' } },
+      { brand: { support: { email: 'help@acme.test' } } },
+      { brand: { email: { buddy: true } } },
+    ])
+      expect(
+        (await patchAs(box.org.id, ['org:read', 'org:write'], body)).status,
+        JSON.stringify(body),
+      ).toBe(200);
   });
 });

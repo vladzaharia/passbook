@@ -86,7 +86,19 @@ export async function ruleKit(): Promise<RuleKit> {
       await ((typeof a === 'function' ? a : b) as () => Promise<unknown>)(),
   } as unknown as Parameters<typeof runBroadcast>[3];
   const ran = new Set<string>();
-  let release: Awaited<ReturnType<typeof approveAppleRelease>> | undefined;
+  // Rules read a template through the mode's release, so the dated template has one in each mode.
+  const release = await approveAppleRelease(kit, {
+    templateId: dated.id,
+    version: resolved.version,
+    orgId: kit.org.id,
+    mode: 'live',
+  });
+  await approveAppleRelease(kit, {
+    templateId: dated.id,
+    version: resolved.version,
+    orgId: kit.org.id,
+    mode: 'test',
+  });
   return {
     ...kit,
     auth,
@@ -110,12 +122,6 @@ export async function ruleKit(): Promise<RuleKit> {
       ...extra,
     }),
     datedPass: async (input = {}, holderEmail) => {
-      release ??= await approveAppleRelease(kit, {
-        templateId: dated.id,
-        version: (await kit.registry.resolve(dated.id)).version,
-        orgId: kit.org.id,
-        mode: 'live',
-      });
       return createPassRow(jobCtxOf(kit), {
         orgId: kit.org.id,
         templateId: dated.id,

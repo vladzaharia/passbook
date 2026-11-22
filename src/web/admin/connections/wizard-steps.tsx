@@ -75,7 +75,7 @@ export function ConnectorStep({
             aria-label="Connector"
             aria-invalid={showErrors && !type ? true : undefined}
             aria-describedby={showErrors && !type ? 'connector-error' : undefined}
-            className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,16rem),1fr))] gap-2"
+            className="grid grid-cols-1 gap-2 sm:grid-cols-2"
           >
             {connectors.map((c) => {
               const Icon = connectorIcon(c.type);

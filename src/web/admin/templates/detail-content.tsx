@@ -17,6 +17,7 @@ import {
 import { useCreated } from '../passes/created.tsx';
 import { PreviewLayout } from '../passes/preview-layout.tsx';
 import { TemplateChannelsPanel } from './channels/channels-panel.tsx';
+import { useChannelDraft } from './channels/use-channel-draft.ts';
 import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
 import { stripAlt } from './releases/next-action.ts';
@@ -66,6 +67,7 @@ export function TemplateDetailContent({
     (t.orgId !== null || isAdmin);
   const canOperate = scope.membership?.capabilities.includes('passes:operate') ?? false;
   const { stage, still } = useTemplateStage(t, scope);
+  const channelDraft = useChannelDraft(`${scope.orgId}:${mode}:${t.id}`);
   const life = useTemplateLifecycle(t, canPublish);
   const state = t.release;
   const draftHash = state?.draft?.version ?? '';
@@ -193,6 +195,7 @@ export function TemplateDetailContent({
                 orgId={scope.orgId}
                 canPublish={canPublish && !archived}
                 canEdit={canEdit && !archived}
+                draft={channelDraft}
               />
             ) : null}
           </TabsContent>

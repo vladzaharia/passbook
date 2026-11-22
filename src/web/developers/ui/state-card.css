@@ -1,0 +1,39 @@
+/* The empty and error card: the buddy sits on its top edge, the title and one action beside it. */
+.pstate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-top: 40px;
+  padding: 20px;
+  background: var(--dp-stage);
+  overflow: visible;
+}
+.pstate-t {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.pstate-a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-right: 72px;
+}
+/* The unplugged cable reaches past the card's right edge: leave it room, so it never covers a neighbour or scrolls the page sideways. */
+.pstate[data-kind="error"] {
+  margin-right: 28px;
+}
+@media (max-width: 640px) {
+  .pstate {
+    margin-top: 56px;
+    padding: 16px;
+  }
+  .pstate-a {
+    margin-right: 0;
+  }
+}
+/* The create control brings its own padding for the ticket stub; in a card the card's padding is enough. */
+.pstate-a .start {
+  padding: 0;
+}

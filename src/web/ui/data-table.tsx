@@ -28,6 +28,8 @@ export interface DataTableProps<T extends RowData> {
   loading?: boolean;
   /** A refetch with rows on screen (filter, refresh): rows dim and the rail runs after 150 ms. */
   fetching?: boolean;
+  /** The load failed with no rows to show: the toolbar stays and this (an ErrorState) fills the list area. */
+  error?: ReactNode;
   /** A truly empty list. */
   empty?: ReactNode;
   /** No rows match the filters (FilteredEmpty). */
@@ -64,6 +66,7 @@ export function DataTable<T extends RowData>({
   getRowId,
   loading,
   fetching,
+  error,
   empty,
   emptyFiltered,
   filtered,
@@ -111,11 +114,11 @@ export function DataTable<T extends RowData>({
   const fresh = useInsertHighlight(rows.map((r) => r.id));
   const busy = useDelayed(Boolean(fetching || loading) && data.length > 0, 150);
 
-  if (firstLoad) {
+  if (firstLoad || (error && data.length === 0)) {
     return (
       <>
         {toolbar}
-        <SkeletonRows label={`Loading ${caption}`} />
+        {firstLoad ? <SkeletonRows label={`Loading ${caption}`} /> : error}
       </>
     );
   }

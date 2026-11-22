@@ -131,6 +131,9 @@ function ScopedScanningPage({
   const noScanners =
     !live.isPending && !live.isError && !live.data?.pages.some((p) => p.items.length);
 
+  // Nothing set up yet: the empty state stands alone, the other tabs would all be empty too.
+  const bare = tab === 'sessions' && noSessions && noScanners;
+
   const newSession = (variant: 'primary' | 'outline'): ReactNode =>
     canManage ? (
       <Button
@@ -176,13 +179,15 @@ function ScopedScanningPage({
         }
       />
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList aria-label="Scanning">
-          {SCANNING_TABS.map((t) => (
-            <TabsTrigger key={t} value={t}>
-              {LABEL[t]}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        {bare ? null : (
+          <TabsList aria-label="Scanning">
+            {SCANNING_TABS.map((t) => (
+              <TabsTrigger key={t} value={t}>
+                {LABEL[t]}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        )}
         <TabsContent value="sessions">
           <SessionsTab
             canManage={canManage}

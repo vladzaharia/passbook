@@ -58,6 +58,17 @@ describe('template tile', () => {
     expect(posted[0]).toMatchObject({ version: DRAFT });
   });
 
+  it('says Needs review while a review is open, on a draft and on a released template', async () => {
+    await open({ activeVersion: null, openReview: true }, [version(2)]);
+    expect(await screen.findByText('Needs review')).toBeInTheDocument();
+    expect(screen.queryByText('Draft')).toBeNull();
+  });
+
+  it('says Needs review on a released template reviewing a newer version', async () => {
+    await open({ openReview: true }, [{ ...version(1, 'a1b2c3d4e5f6a7b8'), active: true }]);
+    expect(await screen.findByText('Needs review')).toBeInTheDocument();
+  });
+
   it('shows no badge on an active template', async () => {
     await open({}, [{ ...version(1, 'a1b2c3d4e5f6a7b8'), active: true }]);
     expect(screen.queryByText('Draft')).toBeNull();

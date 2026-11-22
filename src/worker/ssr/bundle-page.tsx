@@ -273,6 +273,20 @@ function BundleBody(props: BundlePageProps) {
                 href: item.href,
                 dim: item.state !== 'active',
                 removed: item.state === 'removed',
+                // Android has no Apple add: each live member shows at the door from its own row.
+                ...(android && item.state === 'active' && item.barcodeHref
+                  ? {
+                      way: (
+                        <a
+                          className={OUTLINE_ACTION_CLASS}
+                          href={item.barcodeHref}
+                          aria-label={`${HOLDER_COPY.showAtDoor}, ${item.title}`}
+                        >
+                          {HOLDER_COPY.showAtDoor}
+                        </a>
+                      ),
+                    }
+                  : {}),
               }))}
             />
             {hasBack(front.view, front.view.layouts[front.view.target]) ? (

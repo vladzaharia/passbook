@@ -130,7 +130,7 @@ export function RollCallPanel({
               {COPY.blocked}
             </span>
           ) : roll.stalled ? (
-            <>
+            <div className="scan-rc-stall">
               <span className="scan-chip" data-tone="slate" role="status">
                 <CloudOff aria-hidden size={14} />
                 {fill(COPY.stalled, { n: roll.pending })}
@@ -138,7 +138,7 @@ export function RollCallPanel({
               <Button variant="outline" size="sm" onClick={roll.retryStalled}>
                 {COPY.retry}
               </Button>
-            </>
+            </div>
           ) : roll.pending > 0 || !online ? (
             <span className="scan-chip" data-tone="slate" role="status">
               <CloudOff aria-hidden size={14} />

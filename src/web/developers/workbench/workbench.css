@@ -16,7 +16,7 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 16px;
-  margin-top: 40px;
+  margin-top: 56px;
   padding: 20px 20px 18px;
   background: var(--dp-stage);
   overflow: visible;
@@ -41,6 +41,13 @@
 }
 .wb-closed {
   flex-basis: 100%;
+}
+/* The reset confirm and the new key sit on their own row under the buttons. */
+.wb-act-slot {
+  flex-basis: 100%;
+}
+.wb-act-slot:empty {
+  display: none;
 }
 .wb-empty {
   align-items: center;

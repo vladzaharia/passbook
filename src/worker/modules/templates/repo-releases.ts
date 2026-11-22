@@ -215,3 +215,17 @@ export async function getActiveRelease(
   );
   return found ? row<ReleaseRow>(found) : null;
 }
+
+/** A version's place among its template's versions by age, from 1: the "v3" the console shows. */
+export async function versionPlace(
+  db: D1Database,
+  templateId: string,
+  createdAt: number,
+): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    'SELECT COUNT(*) AS n FROM template_versions WHERE template_id = ? AND created_at <= ?',
+    [templateId, createdAt],
+  );
+  return row?.n ?? 0;
+}

@@ -115,7 +115,7 @@ describe('users list', () => {
     });
     const ui = userEvent.setup();
     expect(await screen.findByRole('heading', { name: 'Users' })).toBeInTheDocument();
-    expect(screen.getByText(/Roles are from the last sign-in/)).toBeInTheDocument();
+    expect(screen.queryByText(/Roles are from the last sign-in/)).toBeNull();
     // The columns render once the list has loaded.
     expect(await screen.findByRole('columnheader', { name: 'Roles' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /manage membership/i })).toBeNull();

@@ -4,8 +4,12 @@ import {
   BroadcastPreviewSchema,
   BroadcastTargetSchema,
   createBroadcastFields,
-  PassMatchSchema,
+  DateClause,
+  NumberClause,
+  PASS_MATCH_MAX,
   refineCreateBroadcast,
+  TextClause,
+  ValuesClause,
 } from './broadcasts.ts';
 import { IdSchema, type Json, JsonSchema, PlainLineSchema } from './common.ts';
 import { FieldChangeSchema } from './issuing.ts';
@@ -19,18 +23,42 @@ export const CHANGE_RUN_MAX_PASS_IDS = 5000;
 export const CHANGE_RUN_MESSAGE_MAX = 120;
 export const CHANGE_RUN_UNDO_MS = 24 * 3_600_000;
 
+/**
+ * A request refuses a key it does not define, at every level of the target: a dropped key would
+ * widen the run (`not: true` on a clause, an `eventId` beside `noScanDays`). The clause schemas are
+ * the shared ones, closed here; the scan shape is a local copy because scan.ts is frozen.
+ */
+const MatchBodySchema = z
+  .array(
+    z.union([
+      ValuesClause.strict(),
+      NumberClause.strict(),
+      DateClause.strict(),
+      TextClause.strict(),
+    ]),
+  )
+  .min(1)
+  .max(PASS_MATCH_MAX);
+const ScanBodySchema = z.union([
+  z.strictObject({ eventId: IdSchema, checkedIn: z.boolean() }),
+  z.strictObject({ noScanDays: z.number().int().min(1).max(730) }),
+]);
+
 /** Exactly one of templates (with the filters), explicit pass ids, or the passes of one import. */
 export const ChangeRunTargetSchema = BroadcastTargetSchema.extend({
   templateIds: BroadcastTargetSchema.shape.templateIds.optional(),
-  match: PassMatchSchema.optional(),
+  match: MatchBodySchema.optional(),
+  scan: ScanBodySchema.optional(),
   passIds: z.array(IdSchema).min(1).max(CHANGE_RUN_MAX_PASS_IDS).optional(),
   importId: IdSchema.optional(),
   /** The count the admin saw; the server re-counts and refuses a drift over 2% (`SELECTION_CHANGED`). */
   expectCount: n.optional(),
-}).refine(
-  (t) => [t.templateIds, t.passIds, t.importId].filter((v) => v !== undefined).length === 1,
-  'Target templates, pass ids or one import.',
-);
+})
+  .strict()
+  .refine(
+    (t) => [t.templateIds, t.passIds, t.importId].filter((v) => v !== undefined).length === 1,
+    'Target templates, pass ids or one import.',
+  );
 export type ChangeRunTarget = z.infer<typeof ChangeRunTargetSchema>;
 
 /** `shift` is an ISO 8601 duration for dates (`P1Y`, `-P7D`); `add` is for numbers. */

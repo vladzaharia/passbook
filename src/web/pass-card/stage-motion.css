@@ -50,7 +50,7 @@
     .pc-face:not([data-side="back"])
     .pc-sheen::before,
   .pc-stage[data-face="back"] .pc-lift[data-mint] .pc-face[data-side="back"] .pc-sheen::before {
-    animation: pc-sheen var(--wl-dur-sheen, 900ms) cubic-bezier(0.2, 0, 0, 1);
+    animation: pc-sheen var(--wl-dur-sheen, 900ms) cubic-bezier(0.35, 0.15, 0.65, 0.85);
   }
   .pc-lift[data-settle] {
     animation: pc-settle 320ms var(--pc-spring);
@@ -77,7 +77,7 @@
 @keyframes pc-deal {
   from {
     opacity: 0;
-    transform: translateY(24px) rotateX(20deg) scale(0.94);
+    transform: translateY(24px) rotate(-2deg) scale(0.96);
   }
 }
 @keyframes pc-quiet {
@@ -120,7 +120,7 @@
     opacity: 1;
     transform: translateX(-110%);
   }
-  85% {
+  90% {
     opacity: 1;
   }
   100% {

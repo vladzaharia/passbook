@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
-import type { LiveClient } from '../playground/live.ts';
+import { type LiveClient, PORTAL_READ } from '../playground/live.ts';
 import type { Caught, QsPass } from './types.ts';
 
 const POLL_MS = 1500;
@@ -35,6 +35,8 @@ export function useCaught(
         const page = await client.send<{ items: WebhookCaptureDto[] }>(
           'GET',
           `/webhook-endpoints/${encodeURIComponent(endpoint)}/captures?limit=20&type=${want}`,
+          undefined,
+          PORTAL_READ,
         );
         const hit = page.body?.items.find((c) => c.body.includes(id));
         if (hit) {

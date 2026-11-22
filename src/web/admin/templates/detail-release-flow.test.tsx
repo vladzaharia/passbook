@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, it } from 'vitest';
 import { setCsrfProvider } from '../../lib/api.ts';
 import { resetModeForTests } from '../../lib/mode.ts';
 import { json, membershipFixture, renderApp } from '../../lib/test-utils.tsx';
-import { ORG, previewsHandler, templateDetail } from '../passes/test-fixtures.ts';
+import { ORG, passSummary, previewsHandler, templateDetail } from '../passes/test-fixtures.ts';
 
 beforeEach(() => setCsrfProvider(async () => 'csrf'));
 afterEach(() => {
@@ -153,4 +153,18 @@ it('previews the draft, with a Live and Draft toggle once a newer draft exists',
   );
   await user.click(within(preview).getByRole('radio', { name: 'Live' }));
   expect(within(preview).getByRole('radio', { name: 'Live' })).toBeChecked();
+});
+
+it('adds the other mode’s passes to the header count', async () => {
+  await renderApp('/admin/templates/tpl1', {
+    session: 'admin',
+    memberships: [member],
+    selectedOrg: ORG.id,
+    handlers: {
+      '/api/v1/templates/tpl1': () => json(detail(state())),
+      '/api/v1/templates/previews': previewsHandler,
+      '/api/v1/passes': () => json({ items: [passSummary({ id: 'p1' })], nextCursor: null }),
+    },
+  });
+  expect(await screen.findByText('· 1 in Test')).toBeInTheDocument();
 });

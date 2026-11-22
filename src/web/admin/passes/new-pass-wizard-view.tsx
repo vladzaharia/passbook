@@ -26,6 +26,8 @@ const reviewTemplates = (
   </Button>
 );
 
+const TEMPLATE_NOUN: [string, string] = ['template', 'templates'];
+
 export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
   const {
     principalId,
@@ -83,14 +85,10 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
   // Do not render the old draft under a newly confirmed scope while its state is reset.
   if (!scope.isLoading && selectedOrg !== scope.orgId)
     return <SkeletonRows label="Updating organization scope" />;
-  const aside = (
-    <StagePreview
-      state={live}
-      name={name}
-      transitionName={createdId ? `pass-${createdId}` : undefined}
-    />
-  );
-  const showPass = <ShowPassRow state={live} title={name ?? 'Pass'} />;
+  // The card the wizard shows is the one the pass's page opens with: the same name morphs it.
+  const vt = createdId ? `pass-${createdId}` : undefined;
+  const aside = <StagePreview state={live} name={name} transitionName={vt} />;
+  const showPass = <ShowPassRow state={live} title={name ?? 'Pass'} transitionName={vt} />;
 
   return (
     <>
@@ -114,7 +112,8 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
           ((at === 'template' || at === 'details' || at === 'holder') && !orgId) ||
           ((at === 'template' || at === 'details') && !canReadTemplates) ||
           (at === 'template' &&
-            (eligible.isPending ||
+            (!templateId ||
+              eligible.isPending ||
               (eligible.isFetching && !eligible.isFetchingNextPage) ||
               (eligible.isError && !eligible.isFetchNextPageError))) ||
           ((at === 'details' || at === 'holder') && !releaseReady)
@@ -186,13 +185,11 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
                 canReadTemplates &&
                 eligible.data &&
                 (!eligible.isError || eligible.isFetchNextPageError) &&
-                (!eligible.isFetching || eligible.isFetchingNextPage) ? (
-                  <LoadMore
-                    query={eligible}
-                    shown={usable.length}
-                    noun={['template', 'templates']}
-                    scoped
-                  />
+                (!eligible.isFetching || eligible.isFetchingNextPage) &&
+                !(scope.isLoading && usable.length === 0) ? (
+                  <div className="wl-rise [animation-delay:240ms]">
+                    <LoadMore query={eligible} shown={usable.length} noun={TEMPLATE_NOUN} scoped />
+                  </div>
                 ) : null}
                 {templateId &&
                 !scope.isLoading &&

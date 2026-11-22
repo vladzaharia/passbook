@@ -74,10 +74,10 @@ export function ImportResults({
                 {C.results.viewPasses}
               </Link>
             </Button>
-            {canOperate && p.created + p.updated > 0 ? (
+            {canOperate && !undo && p.created + p.updated > 0 ? (
               <ChangeTheseLink orgId={orgId} importId={imp.id} />
             ) : null}
-            {canOperate ? (
+            {canOperate && !undo ? (
               <Button
                 variant="outline"
                 iconStart={<Download aria-hidden />}

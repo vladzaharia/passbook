@@ -38,9 +38,9 @@ export interface Answer {
   text: string;
 }
 
-/** A sandbox (developer organization, Test key) and a caller that sends what a reader would. */
-export async function guideApi() {
-  const world = await snippetWorld(await kit(), { kind: 'developer' });
+/** A sandbox (developer organization, Test key) and a caller that sends what a reader would; `sandbox: false` is a plain organization. */
+export async function guideApi({ sandbox = true }: { sandbox?: boolean } = {}) {
+  const world = await snippetWorld(await kit(), sandbox ? { kind: 'developer' } : {});
   const call = async (
     method: string,
     path: string,

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { type Dispatch, type SetStateAction, useRef, useState } from 'react';
 import type { z } from 'zod';
 import { isDigital } from '@/shared/channels.ts';
 import {
@@ -29,7 +29,8 @@ import { ResetPasses } from './reset-passes.tsx';
 import { ReviewDialog } from './review-dialog.tsx';
 import { TemplateBrandCard } from './template-brand-card.tsx';
 
-type Draft = Partial<Record<Channel, TemplateChannelState>>;
+export type ChannelEdits = Partial<Record<Channel, TemplateChannelState>>;
+type Draft = ChannelEdits;
 type Dry = z.infer<typeof PutTemplateChannelsResponseSchema>;
 /** The dry run the review shows, with whether new codes are asked for. */
 interface Review {
@@ -57,18 +58,22 @@ export function TemplateChannelsPanel({
   orgId,
   canPublish,
   canEdit,
+  draft,
 }: {
   templateId: string;
   orgId: string;
   canPublish: boolean;
   /** The caller authors this template: Override and Use organization open its designer. */
   canEdit: boolean;
+  /** The unsaved choices, kept by the page so a layout switch (which remounts this panel) keeps them. */
+  draft?: [Draft, Dispatch<SetStateAction<Draft>>];
 }) {
   const query = useTemplateChannels(templateId, orgId);
   const put = usePutTemplateChannels(templateId, orgId);
   /** The newest dry run; an older answer that lands late is dropped. */
   const latest = useRef(0);
-  const [edits, setEdits] = useState<Draft>({});
+  const own = useState<Draft>({});
+  const [edits, setEdits] = draft ?? own;
   const [review, setReview] = useState<Review | null>(null);
   const data = query.data;
   if (query.isPending) return <SkeletonRows rows={6} label="Loading channels" />;

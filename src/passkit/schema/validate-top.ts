@@ -8,6 +8,7 @@ import {
 } from './constants.ts';
 import {
   checkUrlValue,
+  isLoopbackUrl,
   isObject,
   isRgb,
   parseIsoDate,
@@ -239,9 +240,10 @@ function checkKey(ctx: ValidationContext, key: string, value: unknown, spec: Key
     case 'url': {
       const url = parseUrl(value);
       if (!url) error('URL', `${key} must be a valid URL.`, path);
-      else if (url.protocol === 'http:')
-        warn('URL_SCHEME', `${key} must be https outside developer mode.`, path, { name: key });
-      else if (url.protocol !== 'https:') error('URL', `${key} must be https.`, path);
+      else if (url.protocol === 'http:') {
+        if (!isLoopbackUrl(url))
+          warn('URL_SCHEME', `${key} must be https outside developer mode.`, path, { name: key });
+      } else if (url.protocol !== 'https:') error('URL', `${key} must be https.`, path);
       break;
     }
     case 'intArray':

@@ -67,7 +67,7 @@ export async function createRule(
 ): Promise<MessageRuleDto> {
   if (!(await orgIsActive(ctx.env.DB, body.orgId)))
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
-  await checkRuleTemplates(ctx, body.orgId, body.templateIds, body.anchor, body.offset);
+  await checkRuleTemplates(ctx, body.orgId, mode, body.templateIds, body.anchor, body.offset);
   const now = ctx.clock.now();
   const id = ctx.ids.id();
   const [inserted] = await batch(ctx.env.DB, [
@@ -143,7 +143,7 @@ export async function updateRule(
   const row = await requireRule(ctx, id, authority.orgId);
   if (row.mode !== authority.mode)
     throw new NotFoundError('Automatic message not found.', 'RULE_NOT_FOUND');
-  await checkRuleTemplates(ctx, row.org_id, body.templateIds, body.anchor, body.offset);
+  await checkRuleTemplates(ctx, row.org_id, row.mode, body.templateIds, body.anchor, body.offset);
   const now = ctx.clock.now();
   const [updated] = await batch(ctx.env.DB, [
     repo.updateRuleStmt(
@@ -255,7 +255,7 @@ export async function testRule(
   const templateIds = JSON.parse(row.template_ids) as string[];
   if (!pass || pass.mode !== row.mode || !templateIds.includes(pass.templateId))
     throw new NotFoundError('Pass not found for this automatic message.', 'PASS_NOT_FOUND');
-  await checkRuleTemplates(ctx, row.org_id, templateIds, anchorOf(row), offsetOf(row));
+  await checkRuleTemplates(ctx, row.org_id, row.mode, templateIds, anchorOf(row), offsetOf(row));
   const now = ctx.clock.now();
   // Each test send starts a run: one per rule a minute and ten per person an hour.
   const recent = await recentTestSends(ctx.env.DB, id, actor.id, now);

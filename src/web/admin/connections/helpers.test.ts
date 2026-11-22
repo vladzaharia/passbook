@@ -3,6 +3,7 @@ import { autoMap, blankRow, previewValue } from '../mapping/mapping.ts';
 import { connection } from '../passes/test-fixtures.ts';
 import { flattenSchema, flattenValues, nestValues, secretKeysFor } from './config-schema.ts';
 import { healthLine, healthSentence, overdue } from './health-text.ts';
+import { errorMessage } from './labels.ts';
 
 const NOW = new Date('2026-11-01T04:03:00').getTime();
 const c = (over: Record<string, unknown> = {}) => connection(over) as never;
@@ -116,5 +117,12 @@ describe('mapping helpers', () => {
     const row = { ...blankRow(), input: 'holder', from: '/memberName', kind: 'upper' as const };
     expect(previewValue(row, sources)).toBe('MAYA CHEN');
     expect(previewValue({ ...row, kind: 'constant', options: '{"value": 3}' }, sources)).toBe('3');
+  });
+});
+
+describe('connector error messages', () => {
+  it('explains RECORD_ERRORS in words, never as an unknown error', () => {
+    expect(errorMessage('RECORD_ERRORS')).toMatch(/rows failed/);
+    expect(errorMessage('NOPE')).toBe('The source reported an unknown error.');
   });
 });

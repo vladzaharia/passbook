@@ -91,7 +91,7 @@ const COLUMNS: DataColumnDef<UserRow, never>[] = [
             to="/admin/passes"
             search={{ q: row.original.primaryEmail }}
             aria-label={`Find passes for ${row.original.primaryEmail}`}
-            className="text-xs text-accent-fg"
+            className="inline-flex items-center text-xs text-accent-fg pointer-coarse:min-h-11"
           >
             Find passes
           </MetaLink>
@@ -132,7 +132,7 @@ export function UsersPage({
 
   return (
     <>
-      <PageHeader title="Users" description="Roles are from the last sign-in." />
+      <PageHeader title="Users" />
       {list.isError && rows.length === 0 ? (
         <ErrorState error={list.error} onRetry={() => list.refetch()} />
       ) : (

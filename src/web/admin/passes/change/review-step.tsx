@@ -10,7 +10,9 @@ import {
   CardBody,
   CardHeader,
   CountUp,
+  LoadingRail,
   Skeleton,
+  useDelayed,
 } from '../../../ui/index.ts';
 import { CHANGE_COPY as C } from './copy.ts';
 import { Estimate } from './estimate.tsx';
@@ -57,6 +59,8 @@ export function ReviewStep({
   picked: number | undefined;
 }) {
   const p = w.preview.data;
+  // The last counts stay readable while a re-check runs; a rail along the top says it is.
+  const refreshing = useDelayed(w.preview.isFetching && p !== undefined);
   if (!p)
     return w.preview.isError ? (
       <Callout tone="danger">{refusalText(w.preview.error)}</Callout>
@@ -83,7 +87,8 @@ export function ReviewStep({
     [C.review.undo, w.kind === 'design' ? C.run.notUndoable : C.review.undoLine, -1],
   ];
   return (
-    <div className="flex flex-col gap-6">
+    <div className="relative flex flex-col gap-6" aria-busy={w.preview.isFetching}>
+      <LoadingRail show={refreshing} />
       <dl className="wl-stagger grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Tile i={0} label={C.review.willChange} value={will} />
         <Tile i={1} label={C.review.alreadySet} value={p.unchanged} />
@@ -117,7 +122,8 @@ export function ReviewStep({
         <h3 className="text-sm font-semibold text-fg-strong">{C.review.samples}</h3>
         <SampleDiffs samples={p.samples.slice(0, 5)} />
       </section>
-      <Card>
+      <Card data-art-host="" className="wl-buddy-room relative">
+        <Buddy scene="peek" size="sm" at="end" />
         <CardHeader title={C.review.summary} />
         <CardBody>
           <dl className="grid gap-3 text-sm">
@@ -145,9 +151,6 @@ export function ReviewStep({
           </dl>
         </CardBody>
       </Card>
-      <div className="flex justify-end" aria-hidden>
-        <Buddy scene="peek" size="sm" />
-      </div>
     </div>
   );
 }
