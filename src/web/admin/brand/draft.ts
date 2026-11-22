@@ -9,6 +9,8 @@ import { HEX } from '../orgs/branding.ts';
 /** A PNG staged by POST /brand-assets, with a local URL to draw it before the save commits it. */
 export interface StagedImage {
   sha: string;
+  /** What the upload answered; the save names it with the sha, which differs when an @2x was sent. */
+  version?: string;
   w: number;
   h: number;
   url: string;
@@ -105,7 +107,7 @@ export function draftPatch(view: PassSetup, draft: Draft): PassSetupPatch | null
   if (v.name.trim() !== base.name) brand.name = v.name.trim();
   for (const slot of ['logo', 'icon', 'webLogo'] as const) {
     const img = draft.images?.[slot];
-    if (img !== undefined) brand[slot] = img === null ? null : { sha: img.sha };
+    if (img !== undefined) brand[slot] = img === null ? null : stagedRef(img);
   }
   if (v.sameAsLogo !== base.sameAsLogo) brand.webLogoSameAsLogo = v.sameAsLogo;
   const colors = [v.background, v.foreground, v.label];
@@ -152,6 +154,10 @@ export function changeCount(patch: PassSetupPatch | null): number {
     Object.keys(patch.channels ?? {}).length
   );
 }
+
+/** How a save names a staged upload. */
+export const stagedRef = (img: Pick<StagedImage, 'sha' | 'version'>) =>
+  img.version ? { sha: img.sha, version: img.version } : { sha: img.sha };
 
 const imageValue = (img: StagedImage) => ({ sha: img.sha, w: img.w, h: img.h });
 

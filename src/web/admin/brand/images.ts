@@ -39,5 +39,11 @@ export async function stageImage(orgId: string, slot: ImageSlot, file: File): Pr
           ...(p.x2 ? { x2: p.x2 } : {}),
         }));
   const staged = await stageBrandAsset(orgId, body);
-  return { sha: staged.sha, w: staged.w, h: staged.h, url: await dataUrl(file) };
+  return {
+    sha: staged.sha,
+    version: staged.version,
+    w: staged.w,
+    h: staged.h,
+    url: await dataUrl(file),
+  };
 }
