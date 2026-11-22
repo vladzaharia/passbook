@@ -276,3 +276,31 @@ describe('rate tier', () => {
     ).toEqual({ t: null });
   });
 });
+
+describe('a key refused at the route gate', () => {
+  it('logs a stable code: the prefix of an unknown key, the id of a known key without the scope', async () => {
+    const k = await makeApiKey(f(), { orgId: org.id, scopes: ['passes:write'] });
+    const seen: string[] = [];
+    const spy = vi
+      .spyOn(console, 'info')
+      .mockImplementation((line) => void seen.push(String(line)));
+    try {
+      await expectProblem(
+        await listPasses(bearer(`${k.secret.slice(0, -1)}${k.secret.endsWith('A') ? 'B' : 'A'}`)),
+        401,
+        'INVALID_API_KEY',
+      );
+      await expectProblem(await listPasses(bearer(k.secret)), 403, 'MISSING_SCOPE');
+    } finally {
+      spy.mockRestore();
+    }
+    const logs = seen
+      .map((l) => JSON.parse(l) as Record<string, unknown>)
+      .filter((l) => l.event === 'auth.key_refused');
+    expect(logs.map((l) => l.code)).toEqual(['INVALID_API_KEY', 'MISSING_SCOPE']);
+    expect(logs[0]).toMatchObject({ keyPrefix: k.secret.split('_')[1] });
+    expect(logs[1]).toMatchObject({ keyId: k.id, scope: 'passes:read' });
+    // The token itself is never logged.
+    expect(seen.join()).not.toContain(k.secret.slice(-12));
+  });
+});

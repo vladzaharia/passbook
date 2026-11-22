@@ -19,7 +19,7 @@ import {
 import { type KeyCaller, keyCallerOf } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
-import { type DeniedEvent, reportDenied } from './denied.ts';
+import { type DeniedEvent, logKeyRefused, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
 import { enforceRateLimit } from './rate-limit.ts';
@@ -254,11 +254,14 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     const token = rule ? bearer(c) : null;
     if (rule && token) {
       const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c), limited);
-      if (!key)
+      if (!key) {
+        logKeyRefused(c, { code: 'INVALID_API_KEY', token });
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+      }
       const needed = neededScope(rule, c, key.scopes);
       if (!needed || !key.scopes.includes(needed)) {
         reportDenied(c, 'MISSING_SCOPE', key);
+        logKeyRefused(c, { code: 'MISSING_SCOPE', keyId: key.keyId, scope: needed ?? null });
         throw new ForbiddenError(
           needed ? `The API key lacks the ${needed} scope.` : 'The API key lacks a required scope.',
           'MISSING_SCOPE',
