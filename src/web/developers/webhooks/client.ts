@@ -21,11 +21,22 @@ export interface TestSent {
 export class ApiProblem extends Error {
   readonly status: number;
   readonly code: string;
-  constructor(status: number, code: string, message: string) {
+  /** Set on `STEP_UP_REQUIRED`: where the sign-in goes. */
+  readonly signInUrl: string | undefined;
+  constructor(status: number, code: string, message: string, signInUrl?: string) {
     super(message);
     this.status = status;
     this.code = code;
+    this.signInUrl = signInUrl;
   }
+}
+
+/** The sign-in URL when the server asked for a recent sign-in (possibly empty), else null. */
+export function stepUpOf(e: unknown): string | null {
+  return e instanceof ApiProblem &&
+    (e.code === 'STEP_UP_REQUIRED' || e.code === 'IDP_SIGN_IN_REQUIRED')
+    ? (e.signInUrl ?? '')
+    : null;
 }
 
 export type TesterAuth =
@@ -57,7 +68,7 @@ export interface TesterApi {
 const REFRESH_BEFORE_MS = 60_000;
 
 async function problem(res: Response): Promise<ApiProblem> {
-  let body: { code?: unknown; detail?: unknown; title?: unknown } = {};
+  let body: { code?: unknown; detail?: unknown; title?: unknown; signInUrl?: unknown } = {};
   try {
     body = (await res.json()) as typeof body;
   } catch {
@@ -68,6 +79,7 @@ async function problem(res: Response): Promise<ApiProblem> {
     res.status,
     typeof body.code === 'string' ? body.code : 'ERROR',
     typeof text === 'string' ? text : `The request failed (${res.status}).`,
+    typeof body.signInUrl === 'string' ? body.signInUrl : undefined,
   );
 }
 

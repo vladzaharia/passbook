@@ -92,6 +92,11 @@ if (mode === 'preview') {
   for (const r of config.ratelimits ?? [])
     if (r.name === 'RL_SCAN_PAIR' || r.name === 'RL_LOGIN') r.simple.limit = 100_000;
   writeFileSync(built, JSON.stringify(config));
+  // This dist/ has raised rate limits: mark it so deploy refuses it (tools/lib/build-stamp.ts).
+  writeFileSync(
+    resolve(root, 'dist/wallet/build-info.json'),
+    `${JSON.stringify({ sha: 'e2e', dirty: true, e2e: true })}\n`,
+  );
 }
 
 children.push(

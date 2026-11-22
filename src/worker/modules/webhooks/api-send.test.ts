@@ -192,6 +192,12 @@ describe('the test list', () => {
       'UPDATE webhook_attempts SET sample_type = NULL WHERE endpoint_id = ? AND at = (SELECT MIN(at) FROM webhook_attempts WHERE endpoint_id = ?)',
       [t.endpoint.id, t.endpoint.id],
     );
+    // A type that was removed from the schema since the row was written reads as the plain test too.
+    await run(
+      api.rig.db,
+      "UPDATE webhook_attempts SET sample_type = 'pass.gone' WHERE endpoint_id = ? AND sample_type IS NOT NULL",
+      [t.endpoint.id],
+    );
     const res = await api.call('GET', `${BASE}/${t.endpoint.id}/tests`, undefined, test);
     expect((res.json.items as { type: string }[]).map((i) => i.type).sort()).toEqual([
       'webhook.test',

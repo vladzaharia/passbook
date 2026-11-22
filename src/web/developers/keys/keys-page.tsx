@@ -3,12 +3,13 @@ import { useCallback, useEffect, useState } from 'react';
 import type { DeveloperHome } from '../../../shared/contracts/developer-home.ts';
 import { KEYS_COPY as C } from '../../../shared/copy/developers-keys.ts';
 import { PATHS } from '../../../shared/developers.ts';
+import { envLine } from '../../../shared/developers-keys.ts';
+import { type Revealed, RevealSheet } from '../ui/reveal-sheet.tsx';
 import { fetchHome } from '../workbench/api.ts';
 import { keyState, masked } from '../workbench/model.ts';
 import { type KeyApi, keyApi } from './api.ts';
 import { accessOf, expiryOf, usedOf } from './model.ts';
 import { NewKeySheet } from './new-key-sheet.tsx';
-import { type Revealed, RevealSheet } from './reveal.tsx';
 import { ConfirmKeySheet } from './roll-sheet.tsx';
 
 type Panel =
@@ -232,6 +233,9 @@ export function KeysPage({
       {panel.kind === 'reveal' ? (
         <RevealSheet
           revealed={panel.revealed}
+          labels={C.reveal}
+          prefix="PASSBOOK_KEY="
+          copyAs={envLine}
           onDone={() => setPanel({ kind: 'none' })}
           // The sheet holds the only copy from here on.
           onHide={() =>

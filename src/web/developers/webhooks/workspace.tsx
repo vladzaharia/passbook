@@ -2,7 +2,9 @@ import { Copy, Plus, Send } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
 import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
+import { WEBHOOKS_COPY } from '../../../shared/copy/developers-webhooks.ts';
 import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
+import { type Revealed, RevealSheet } from '../ui/reveal-sheet.tsx';
 import type { ApiProblem, DeliveryDto, TestAttemptDto, TesterApi } from './client.ts';
 import { Deliveries, type ListenState } from './deliveries.tsx';
 import { Detail } from './detail.tsx';
@@ -14,6 +16,7 @@ import { rowsOf, UrlDetail, UrlEvents } from './url-events.tsx';
 const CLI = 'npx @passbook/cli listen --forward-to localhost:3000/hooks';
 
 const POLL_MS = 3000;
+const ROTATE_OVERLAP_MS = 24 * 3_600_000;
 
 export function Notice({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -61,6 +64,7 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
   const [urlDeliveries, setUrlDeliveries] = useState<DeliveryDto[]>([]);
   const [urlTests, setUrlTests] = useState<TestAttemptDto[]>([]);
   const [adding, setAdding] = useState(false);
+  const [revealed, setRevealed] = useState<Revealed | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -155,7 +159,7 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
     return r.captureId;
   }
 
-  async function create(url: string): Promise<string> {
+  async function create(url: string): Promise<void> {
     const made = await api.createEndpoint(
       url,
       types.filter((t) => t !== 'webhook.test'),
@@ -163,7 +167,8 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
     setAll((l) => [...l, made.endpoint]);
     setEndpoint(made.endpoint);
     setPicked(null);
-    return made.secret;
+    setAdding(false);
+    setRevealed({ name: WEBHOOKS_COPY.reveal.env, secret: made.secret });
   }
 
   if (failed) return <Notice title="Could not open the tester">{failed}</Notice>;
@@ -207,9 +212,14 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
           {isUrl ? (
             <RotateSecret
               key={endpoint.id}
-              rotate={() => {
+              rotate={async () => {
                 setMessage(null);
-                return api.rotate(endpoint.id, 24);
+                const secret = await api.rotate(endpoint.id, 24);
+                setRevealed({
+                  name: WEBHOOKS_COPY.reveal.env,
+                  secret,
+                  stopsAt: Date.now() + ROTATE_OVERLAP_MS,
+                });
               }}
             />
           ) : null}
@@ -256,6 +266,15 @@ export function Workspace({ api, types }: { api: TesterApi; types: readonly stri
           {isUrl ? null : <Samples samples={VERIFY_SAMPLES} />}
         </div>
       </div>
+      {revealed ? (
+        <RevealSheet
+          revealed={revealed}
+          labels={WEBHOOKS_COPY.reveal}
+          onDone={() => setRevealed(null)}
+          // The sheet holds the only copy from here on.
+          onHide={() => setRevealed((r) => (r ? { ...r, secret: null } : r))}
+        />
+      ) : null}
     </>
   );
 }

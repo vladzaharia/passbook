@@ -1,40 +1,62 @@
 import { Check, Copy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { KEYS_COPY } from '../../../shared/copy/developers-keys.ts';
-import { envLine } from '../../../shared/developers-keys.ts';
+import { clock, maskSecret } from '../keys/model.ts';
 import { copyToClipboard } from '../playground/copy.ts';
-import { clock, maskSecret } from './model.ts';
 import { Sheet } from './sheet.tsx';
 
-/** A key the server just returned: the only copy there will be. */
+/** A secret the server just returned: the only copy there will be. */
 export interface Revealed {
   name: string;
   secret: string | null;
-  scopes: readonly string[];
-  /** Set after a roll: when the old key stops, in ms. */
+  scopes?: readonly string[];
+  /** Set after a roll or a rotation: when the old one stops, in ms. */
   stopsAt?: number;
+}
+
+/** What the sheet says: Keys and Webhooks each bring their own words. */
+export interface RevealLabels {
+  shownOnce: string;
+  /** The small label over the secret. */
+  env: string;
+  copy: string;
+  copied: string;
+  done: string;
+  masked: string;
+  showAgain: string;
+  clipboard: string;
+  copyFirst: string;
+  lost: string;
+  stops: (when: string) => string;
+  stoppedNow: string;
 }
 
 /** The secret stays readable until it is copied or this long has passed. */
 export const HIDE_MS = 60_000;
 
 /**
- * The one-time sheet after a mint or a roll. The key is a text node in this sheet only: it is hidden after Copy or 60
+ * The one-time sheet after a mint, a roll or a rotation, for Keys and Webhooks alike. The secret is a text node in this sheet only: it is hidden after Copy or 60
  * seconds, never stored, and gone from state when the sheet closes. Escape and the backdrop wait for a copy.
  */
 export function RevealSheet({
   revealed,
+  labels: c,
+  prefix = '',
+  copyAs = (secret) => secret,
   onDone,
   onHide,
   now = Date.now,
 }: {
   revealed: Revealed;
+  labels: RevealLabels;
+  /** Shown before the secret: `PASSBOOK_KEY=`. */
+  prefix?: string;
+  /** What Copy puts on the clipboard. */
+  copyAs?: (secret: string) => string;
   onDone: () => void;
   /** The secret is no longer on screen: the page replaces its own copy with the mask. */
   onHide?: () => void;
   now?: () => number;
 }) {
-  const c = KEYS_COPY.reveal;
   // The sheet holds the only copy once it hides; Copy lets go of it for good.
   const [held, setHeld] = useState(revealed.secret);
   const [lost] = useState(revealed.secret === null);
@@ -53,7 +75,7 @@ export function RevealSheet({
     return () => clearTimeout(t);
   }, [held, hidden]);
   const copy = async () => {
-    if (held !== null && (await copyToClipboard(envLine(held)))) setCopied(true);
+    if (held !== null && (await copyToClipboard(copyAs(held)))) setCopied(true);
   };
   // The clipboard holds it now: the page lets go after the "Copied" beat.
   useEffect(() => {
@@ -96,7 +118,8 @@ export function RevealSheet({
             <span className="pill accent ks-once">{c.shownOnce}</span>
           </div>
           <code className="ks-env-v" data-testid="ks-secret">
-            PASSBOOK_KEY=<span className="ks-secret">{shown ? held : mask}</span>
+            {prefix}
+            <span className="ks-secret">{shown ? held : mask}</span>
           </code>
           <p className="xs muted" aria-live="polite">
             {hidden ? c.masked : ''}
@@ -115,13 +138,15 @@ export function RevealSheet({
           </p>
         </div>
       )}
-      <div className="wrap-row g2 ks-chips">
-        {revealed.scopes.map((s) => (
-          <code key={s} className="chip mono">
-            {s}
-          </code>
-        ))}
-      </div>
+      {revealed.scopes?.length ? (
+        <div className="wrap-row g2 ks-chips">
+          {revealed.scopes.map((s) => (
+            <code key={s} className="chip mono">
+              {s}
+            </code>
+          ))}
+        </div>
+      ) : null}
       {stops === undefined ? null : (
         <p className="sm muted">{stops <= now() ? c.stoppedNow : c.stops(clock(stops))}</p>
       )}

@@ -1,4 +1,5 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
+import { WebhookEventTypeSchema } from '../../../shared/contracts/webhooks.ts';
 import type { Grant, GrantedStatement } from '../../platform/authority.ts';
 import { all, first, placeholders } from '../../platform/db.ts';
 import type { FeedRow } from './payload.ts';
@@ -232,7 +233,9 @@ export async function listTestAttempts(
   );
   return rows.map((r) => ({
     id: r.id,
-    type: r.sample_type ?? 'webhook.test',
+    type: WebhookEventTypeSchema.safeParse(r.sample_type).success
+      ? (r.sample_type as string)
+      : 'webhook.test',
     status: r.status,
     errorCode: r.error_code,
     durationMs: r.duration_ms,

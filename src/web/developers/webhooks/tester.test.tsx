@@ -1,11 +1,11 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import vectorFile from '../../../../docs/api/webhook-vectors.json';
 import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
 import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
 import type { WebhookVector } from '../../../shared/webhook-verify.ts';
-import type { TesterApi, TesterAuth } from './client.ts';
+import { ApiProblem, type TesterApi, type TesterAuth } from './client.ts';
 import { Tester } from './tester.tsx';
 
 const vector = (vectorFile.vectors as WebhookVector[]).find(
@@ -86,6 +86,18 @@ function api(
 const ready =
   (a: TesterApi): (() => Promise<TesterAuth>) =>
   async () => ({ kind: 'ready', api: a });
+beforeAll(() => {
+  // jsdom has no modal dialogs.
+  Object.assign(HTMLDialogElement.prototype, {
+    showModal(this: HTMLDialogElement) {
+      this.setAttribute('open', '');
+    },
+    close(this: HTMLDialogElement) {
+      this.removeAttribute('open');
+    },
+  });
+});
+
 const TYPES = ['pass.issued', 'pass.updated', 'webhook.test'];
 
 describe('Tester', () => {
@@ -192,7 +204,7 @@ describe('Tester', () => {
     expect(await screen.findByText('whsec_once')).toBeInTheDocument();
     expect(screen.getByText('Shown once')).toBeInTheDocument();
     expect(fake.sent).toContain('create https://hooks.example.dev/in pass.issued,pass.updated');
-    await userEvent.click(screen.getByRole('button', { name: 'Hide' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
     expect(screen.queryByText('whsec_once')).toBeNull();
   });
 
@@ -208,9 +220,13 @@ describe('Tester', () => {
       screen.getAllByRole('button').filter((b) => b.className.includes('wh-ep'))[1] as HTMLElement,
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Rotate' }));
+    // One confirm first; nothing is called until it.
+    expect(screen.getByText(/The old one keeps signing for 24 hours/)).toBeInTheDocument();
+    expect(screen.queryByText('whsec_rotated')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Rotate' }));
     expect(await screen.findByText('whsec_rotated')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Copy' }));
-    await waitFor(() => expect(screen.queryByText('whsec_rotated')).toBeNull());
+    await userEvent.click(screen.getByRole('button', { name: 'Copy secret' }));
+    await waitFor(() => expect(screen.queryByText('whsec_rotated')).toBeNull(), { timeout: 3000 });
     expect(written).toEqual(['whsec_rotated']);
   });
 
@@ -225,8 +241,30 @@ describe('Tester', () => {
       expect(await screen.findByText('whsec_once')).toBeInTheDocument();
       await vi.advanceTimersByTimeAsync(60_000);
       await waitFor(() => expect(screen.queryByText('whsec_once')).toBeNull());
+      expect(screen.getByText(/Hidden\. Rotate the secret/)).toBeInTheDocument();
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('asks for a recent sign-in when the server does, with a link back to this page', async () => {
+    const fake = api([capture()]);
+    fake.createEndpoint = async () => {
+      throw new ApiProblem(
+        403,
+        'STEP_UP_REQUIRED',
+        'Sign in again.',
+        '/auth/oidc/start?prompt=login',
+      );
+    };
+    render(<Tester connect={ready(fake)} types={TYPES} />);
+    await screen.findByText('Signature matches');
+    await userEvent.click(screen.getByRole('button', { name: 'Add endpoint' }));
+    await userEvent.type(screen.getByLabelText(/^URL/), 'https://hooks.example.dev/in');
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }));
+    const link = await screen.findByRole('link', { name: 'Continue' });
+    expect(link.getAttribute('href')).toContain('/auth/oidc/start');
+    expect(link.getAttribute('href')).toContain('next=%2Fdevelopers%2Fwebhooks');
+    expect(screen.getByText("Confirm it's you")).toBeInTheDocument();
   });
 });

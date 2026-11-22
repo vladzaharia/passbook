@@ -40,6 +40,12 @@ describe('buildProblem, uploading from dist/', () => {
     expect(run({ stamp: stamp(OTHER) })).toContain(`dist/ was built from ${OTHER.slice(0, 9)}`);
   });
 
+  it('refuses an e2e dist/, even with a matching sha and a clean tree', () => {
+    const e2e = JSON.stringify({ sha: HEAD, dirty: false, e2e: true });
+    expect(parseStamp(e2e)).toEqual({ sha: HEAD, dirty: false, e2e: true });
+    expect(run({ stamp: e2e })).toContain('e2e build');
+  });
+
   it('refuses a dist/ built from a dirty tree', () => {
     expect(run({ stamp: stamp(HEAD, true) })).toContain('dirty tree');
   });

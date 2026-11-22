@@ -122,17 +122,20 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   await tester.getByRole('button', { name: 'Add', exact: true }).click();
   await expect(tester.getByText('Shown once')).toBeVisible();
   await shots(page, 'webhooks-secret');
-  await tester.getByRole('button', { name: 'Hide' }).click();
+  await tester.getByRole('button', { name: 'Done' }).click();
   await expect(tester.getByText('Shown once')).toHaveCount(0);
   await expect(tester.locator('.wh-ep')).toHaveCount(2);
   await tester.getByRole('button', { name: 'Send test event' }).click();
   await expect(tester.getByText('Test', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
   await shots(page, 'webhooks-url-test');
   await tester.getByRole('button', { name: 'Rotate' }).click();
-  await expect(tester.getByText('New signing secret')).toBeVisible();
+  await expect(tester.getByText(/The old one keeps signing for 24 hours/)).toBeVisible();
+  await shots(page, 'webhooks-rotate-confirm');
+  await tester.getByRole('button', { name: 'Rotate' }).click();
+  await expect(tester.getByText('Shown once')).toBeVisible();
   await shots(page, 'webhooks-rotated');
-  await tester.getByRole('button', { name: 'Hide' }).click();
-  await expect(tester.getByText('New signing secret')).toHaveCount(0);
+  await tester.getByRole('button', { name: 'Done' }).click();
+  await expect(tester.getByText('Shown once')).toHaveCount(0);
   expect(errors).toEqual([]);
 
   // The same test send is listed in Admin, tagged the same way.

@@ -1,7 +1,9 @@
 import { Plus } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
-import { SecretReveal } from './secret-reveal.tsx';
+import { WEBHOOKS_COPY } from '../../../shared/copy/developers-webhooks.ts';
+import { StepUp } from '../ui/step-up.tsx';
+import { stepUpOf } from './client.ts';
 
 /** The host and path shape the API returns; the path is a bearer secret, so only the masked form is shown. */
 const labelOf = (e: WebhookEndpointDto) =>
@@ -54,33 +56,37 @@ export function Endpoints({
   );
 }
 
-/** One URL, https only. The signing secret is returned once, so it is shown once. */
+const NEXT = '/developers/webhooks';
+
+/** One URL, https only. The secret comes back once and goes to the reveal sheet, not into this form. */
 export function AddEndpoint({
   onCreate,
   onClose,
 }: {
-  onCreate: (url: string) => Promise<string>;
+  onCreate: (url: string) => Promise<void>;
   onClose: () => void;
 }) {
   const [url, setUrl] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [secret, setSecret] = useState<string | null>(null);
+  const [stepUp, setStepUp] = useState<string | null>(null);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setStepUp(null);
     try {
-      setSecret(await onCreate(url.trim()));
+      await onCreate(url.trim());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not add the endpoint.');
+      const asked = stepUpOf(err);
+      if (asked !== null) setStepUp(asked);
+      else setError(err instanceof Error ? err.message : 'Could not add the endpoint.');
     } finally {
       setBusy(false);
     }
   }
 
-  if (secret) return <SecretReveal secret={secret} onHide={onClose} />;
   return (
     <form className="card card-b stack g2" onSubmit={(e) => void submit(e)}>
       <h2 className="h3">Add endpoint</h2>
@@ -97,6 +103,7 @@ export function AddEndpoint({
         />
         <span className="xs muted">https only. The signing secret shows once.</span>
       </label>
+      {stepUp !== null ? <StepUp signInUrl={stepUp} next={NEXT} /> : null}
       {error ? (
         <p className="wh-msg" role="alert">
           {error}
@@ -115,36 +122,60 @@ export function AddEndpoint({
   );
 }
 
-/** Rotate the signing secret of a URL endpoint; the old one keeps signing for a day. */
-export function RotateSecret({ rotate }: { rotate: () => Promise<string> }) {
-  const [secret, setSecret] = useState<string | null>(null);
+/** Rotate the signing secret of a URL endpoint, after one confirm; the old one keeps signing for a day. */
+export function RotateSecret({ rotate }: { rotate: () => Promise<void> }) {
+  const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  if (secret)
-    return (
-      <SecretReveal title="New signing secret" secret={secret} onHide={() => setSecret(null)} />
-    );
+  const [stepUp, setStepUp] = useState<string | null>(null);
+  const c = WEBHOOKS_COPY.rotate;
+
+  function run() {
+    setBusy(true);
+    setError(null);
+    setStepUp(null);
+    rotate()
+      .then(() => setAsking(false))
+      .catch((e: unknown) => {
+        const asked = stepUpOf(e);
+        if (asked !== null) setStepUp(asked);
+        else setError(e instanceof Error ? e.message : 'Could not rotate.');
+        setAsking(false);
+      })
+      .finally(() => setBusy(false));
+  }
+
   return (
     <div className="card card-b stack g2">
       <div className="row g2">
         <h2 className="h3">Signing secret</h2>
-        <button
-          type="button"
-          className="btn outline sm push"
-          disabled={busy}
-          onClick={() => {
-            setBusy(true);
-            setError(null);
-            rotate()
-              .then(setSecret)
-              .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Could not rotate.'))
-              .finally(() => setBusy(false));
-          }}
-        >
-          Rotate
-        </button>
+        {asking ? null : (
+          <button
+            type="button"
+            className="btn outline sm push"
+            disabled={busy}
+            onClick={() => setAsking(true)}
+          >
+            Rotate
+          </button>
+        )}
       </div>
-      <span className="xs muted">The old secret keeps signing for 24 hours.</span>
+      {asking ? (
+        <div className="stack g2">
+          <span className="sm">{c.ask}</span>
+          <div className="row g2">
+            <button type="button" className="btn sm" disabled={busy} onClick={run}>
+              {c.confirm}
+            </button>
+            <button type="button" className="btn ghost sm" onClick={() => setAsking(false)}>
+              {c.cancel}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <span className="xs muted">The old secret keeps signing for 24 hours.</span>
+      )}
+      {stepUp !== null ? <StepUp signInUrl={stepUp} next={NEXT} /> : null}
       {error ? (
         <p className="wh-msg" role="alert">
           {error}
