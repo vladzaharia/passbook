@@ -121,7 +121,13 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   await expect(calls.getByText(/\/captures/)).toHaveCount(0);
 
   // Admin is pinned to Test: no Test switch, and the Overview points back to Developers.
+  // The Overview is a lazy chunk with no placeholder: wait on its real activity read, not a longer timeout.
+  const activity = page.waitForResponse(
+    (r) => r.request().method() === 'GET' && r.url().includes('/api/v1/metrics/activity?'),
+    { timeout: 60_000 },
+  );
   await page.goto('/admin');
+  await activity;
   await expect(page.getByRole('link', { name: 'Open Developers' })).toBeVisible();
   await expect(page.getByRole('radiogroup', { name: 'Mode' })).toHaveCount(0);
   await shots(page, '10-admin-pinned');
