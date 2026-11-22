@@ -6,7 +6,7 @@ import { tenantAuthorityOf } from '../passes/http.ts';
 
 type Capability = Parameters<typeof tenantAuthorityOf>[3];
 
-/** By-id console routes: a non-member gets the same 404 as a missing id. */
+/** By-id console routes: a non-member, and any platform key (no org), gets the same 404 as a missing id. */
 async function targetAuthority(
   ctx: ServiceContext,
   auth: AuthContext,
@@ -16,7 +16,7 @@ async function targetAuthority(
 ) {
   const outsider =
     auth.kind === 'api_key'
-      ? auth.orgId !== null && auth.orgId !== orgId
+      ? auth.orgId !== orgId
       : auth.kind === 'session' && !(await getOrgAccess(ctx, auth.userId, orgId));
   if (outsider) {
     throw kind === 'scanner'

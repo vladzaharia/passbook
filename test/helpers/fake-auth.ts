@@ -88,8 +88,8 @@ async function seedApiKey(
   const insert = async () =>
     run(
       db,
-      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         crypto.randomUUID(),
         key.auth.orgId,
@@ -100,6 +100,8 @@ async function seedApiKey(
         key.auth.mode,
         clock.now(),
         key.auth.orgId === null ? 'platform' : 'service',
+        // A credential scope counts only on a key that expires within 91 days.
+        key.auth.scopes.includes('scanning:admin') ? clock.now() + 30 * 86_400_000 : null,
       ],
     );
   await (key.auth.orgId === null ? withoutTrigger(db, 'api_keys_kind_rules', insert) : insert());

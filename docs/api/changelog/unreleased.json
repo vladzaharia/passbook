@@ -872,6 +872,22 @@
     "note": "A sandbox key may not hold api-keys:write, scans:write or scanning:admin, at mint or roll: 403, scopes in issues."
   },
   {
+    "key": "POST /api/v1/api-keys keys: scanning:admin removed from org_admin role tokens",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "keys: scanning:admin removed from org_admin role tokens",
+    "note": "scanning:admin is removed from org_admin role tokens, keys with no expiry or over 91 days, and child keys: mint a new compliant key."
+  },
+  {
+    "key": "POST /api/v1/api-keys roles: scanning:admin no longer in a role",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "roles: scanning:admin no longer in a role",
+    "note": "Role presets no longer include scanning:admin: name it in scopes (live, one org, expiry within 90 days, org_admin session)."
+  },
+  {
     "key": "POST /api/v1/identities 201.handle: field added",
     "class": "additive",
     "operationId": "identities.postIdentities",
