@@ -160,6 +160,7 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
           align="start"
           sideOffset={4}
           collisionPadding={16}
+          aria-label="Organizations"
           className="wl-pop origin-(--radix-popover-content-transform-origin) z-50 w-(--radix-popover-trigger-width) min-w-60 rounded-md border border-border bg-surface-overlay shadow-elevation-2"
         >
           <Command>
@@ -191,7 +192,7 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
                 </Command.Group>
               ) : null}
               {(isAdmin || personal) && others.length > 0 ? (
-                <Command.Separator alwaysRender className="mx-1 my-1 h-px bg-border" />
+                <Command.Separator alwaysRender aria-hidden className="mx-1 my-1 h-px bg-border" />
               ) : null}
               {others.length > 0 ? (
                 <Command.Group heading="Organizations" className={GROUP}>
