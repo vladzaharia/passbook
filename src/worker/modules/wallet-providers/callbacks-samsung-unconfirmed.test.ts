@@ -278,7 +278,6 @@ describe('issued-ref callbacks and the credential they verified under', () => {
       // Live path, then (after the window) the issued-ref path.
       expect(await post(t, '?cc2=GB&event=ADDED', forged)).toBe(401);
       t.kit.clock.advance(300_001);
-      await t.renewEvidence();
       expect(await post(t, '?cc2=GB&event=ADDED', forged)).toBe(401);
       expect(encrypt).not.toHaveBeenCalled();
       expect(await post(t, '?cc2=GB&event=ADDED')).toBe(200);

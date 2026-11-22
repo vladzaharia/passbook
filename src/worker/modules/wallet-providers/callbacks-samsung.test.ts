@@ -138,7 +138,6 @@ describe('Samsung authenticated callback route', () => {
     expect(Object.keys(parsed.card.data[0]?.attributes ?? {})).toEqual(['title']);
     expect((await t.call({ token: auth, query: '?fields=providerName' })).status).toBe(401);
     t.kit.clock.advance(300_001);
-    await t.renewEvidence();
     expect((await t.call({ token: await t.token() })).status).toBe(200);
   });
 
@@ -193,7 +192,6 @@ describe('Samsung authenticated callback route', () => {
       ),
     ).toBeNull();
     t.kit.clock.advance(300_001);
-    await t.renewEvidence();
     expect((await t.call({ token: await t.token() })).status).toBe(204);
     expect(await refRow()).toEqual({ promoted_at: null, market_cc2: null });
   });

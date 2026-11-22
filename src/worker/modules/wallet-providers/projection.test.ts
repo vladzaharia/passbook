@@ -76,7 +76,7 @@ import { writeProjectionRelease } from './repo-projection-release-write.ts';
 import { getProjectionCandidate, projectionCandidateEnvelope } from './repo-projection-store.ts';
 import { writeProjectionCandidate } from './repo-projection-write.ts';
 import { putSamsungCardState } from './repo-samsung-card-state.ts';
-import { ensureSamsungProjectionEvidence } from './samsung-verification.ts';
+import { ensureSamsungCard } from './samsung-verification.ts';
 
 // Publishing a Samsung projection probes Samsung, which only runs while the provider is enabled.
 beforeAll(() => {
@@ -472,9 +472,7 @@ describe('native projection approval', () => {
     const approval = await nativeApproval(test, candidate);
     const reject = 'invalid provider release approval or source';
     await expect(insertDirectProjectionRelease(test, candidate, approval)).rejects.toThrow(reject);
-    expect(
-      await ensureSamsungProjectionEvidence(test.ctx, candidate.id, candidate.candidateHash),
-    ).toBe(true);
+    expect(await ensureSamsungCard(test.ctx, candidate.id, candidate.candidateHash)).toBe(true);
 
     const google = { ...test.scope, provider: 'google' as const };
     await configureWalletProviderAccount(test.ctx, test.author, {
@@ -617,13 +615,9 @@ describe('native projection approval', () => {
 
     const otherCandidate = await nativeCandidate(test);
     const otherApproval = await nativeApproval(test, otherCandidate);
-    expect(
-      await ensureSamsungProjectionEvidence(
-        test.ctx,
-        otherCandidate.id,
-        otherCandidate.candidateHash,
-      ),
-    ).toBe(true);
+    expect(await ensureSamsungCard(test.ctx, otherCandidate.id, otherCandidate.candidateHash)).toBe(
+      true,
+    );
     const otherEvidence = await first<{ probe_id: string }>(
       env.DB,
       'SELECT probe_id FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
@@ -771,11 +765,7 @@ describe('native projection approval', () => {
     const sourceCandidate = await nativeCandidate(staleSource);
     const sourceApproval = await nativeApproval(staleSource, sourceCandidate);
     expect(
-      await ensureSamsungProjectionEvidence(
-        staleSource.ctx,
-        sourceCandidate.id,
-        sourceCandidate.candidateHash,
-      ),
+      await ensureSamsungCard(staleSource.ctx, sourceCandidate.id, sourceCandidate.candidateHash),
     ).toBe(true);
     const next = await createCandidate(
       staleSource.ctx,
@@ -808,7 +798,7 @@ describe('native projection approval', () => {
     const accountCandidate = await nativeCandidate(staleAccount);
     const accountApproval = await nativeApproval(staleAccount, accountCandidate);
     expect(
-      await ensureSamsungProjectionEvidence(
+      await ensureSamsungCard(
         staleAccount.ctx,
         accountCandidate.id,
         accountCandidate.candidateHash,
@@ -832,7 +822,7 @@ describe('native projection approval', () => {
     const revokedCandidate = await nativeCandidate(staleAccount);
     const revokedApproval = await nativeApproval(staleAccount, revokedCandidate);
     expect(
-      await ensureSamsungProjectionEvidence(
+      await ensureSamsungCard(
         staleAccount.ctx,
         revokedCandidate.id,
         revokedCandidate.candidateHash,
@@ -1202,9 +1192,7 @@ describe('native projection approval', () => {
       test.scope.orgId,
       'templates:publish',
     );
-    expect(
-      await ensureSamsungProjectionEvidence(test.ctx, candidate.id, candidate.candidateHash),
-    ).toBe(true);
+    expect(await ensureSamsungCard(test.ctx, candidate.id, candidate.candidateHash)).toBe(true);
     const statement = () =>
       writeProjectionRelease(test.ctx, {
         id: test.ctx.ids.id(),
@@ -1250,9 +1238,7 @@ describe('native projection approval', () => {
       test.scope.orgId,
       'templates:publish',
     );
-    expect(
-      await ensureSamsungProjectionEvidence(test.ctx, candidate.id, candidate.candidateHash),
-    ).toBe(true);
+    expect(await ensureSamsungCard(test.ctx, candidate.id, candidate.candidateHash)).toBe(true);
     const statement = () =>
       writeProjectionRelease(test.ctx, {
         id: test.ctx.ids.id(),
@@ -1292,9 +1278,7 @@ describe('native projection approval', () => {
     const unreviewed = await nativeCandidate(test);
     const waiting = await nativeCandidate(test);
     const waitingApproval = await nativeApproval(test, waiting);
-    expect(await ensureSamsungProjectionEvidence(test.ctx, waiting.id, waiting.candidateHash)).toBe(
-      true,
-    );
+    expect(await ensureSamsungCard(test.ctx, waiting.id, waiting.candidateHash)).toBe(true);
     for (const [table, column, id] of [
       ['template_candidates', 'id', published.id],
       ['template_approvals', 'id', publishedApproval.id],
@@ -1354,9 +1338,7 @@ describe('native projection approval', () => {
         await expect(nativePublish(test, waiting, waitingApproval, 1)).rejects.toMatchObject({
           code: 'WALLET_PROJECTION_NOT_FOUND',
         });
-        expect(
-          await ensureSamsungProjectionEvidence(test.ctx, waiting.id, waiting.candidateHash),
-        ).toBe(false);
+        expect(await ensureSamsungCard(test.ctx, waiting.id, waiting.candidateHash)).toBe(false);
         expect(await getApprovedProjection(test.ctx, lookup(test))).toBeNull();
         expect(await getProjectionRetirementMetadata(env.DB, release.id)).toBeNull();
       }

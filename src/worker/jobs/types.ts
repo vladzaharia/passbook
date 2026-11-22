@@ -116,6 +116,18 @@ export const JobSchema = z.discriminatedUnion('kind', [
     after: z.string().max(64).optional(),
     runs: z.number().int().nonnegative().optional(),
   }),
+  /** A wallet reissue: send every active Google or Samsung copy of the org's passes again. */
+  z.object({
+    kind: z.literal('wallet.reissue'),
+    reissueId: z.string().min(1).max(64),
+    orgId: z.string().min(1).max(64),
+    mode: ModeSchema,
+    provider: z.enum(['google', 'samsung']),
+    templateId: z.string().min(1).max(64).optional(),
+    /** Where the last run stopped (an instance id), and how many runs this reissue has used. */
+    after: z.string().max(64).optional(),
+    runs: z.number().int().nonnegative().optional(),
+  }),
   /** A claim found a release's wallet art missing: cut and store it again, as publication did. */
   z.object({ kind: z.literal('wallet.google_art'), candidateId: z.string().min(1).max(64) }),
   /** Apple flipped for a pass: republish (force) so devices fetch the voided or live copy. */

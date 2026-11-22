@@ -61,6 +61,11 @@ export async function buildProjectionCandidate(
 ): Promise<ProjectionCandidate> {
   const named = parseProjectionInput(input.projection);
   if (named.provider !== scope.provider) throw new ValidationError();
+  if (named.schema === 1 && named.provider === 'samsung')
+    throw new ConflictError(
+      'Samsung field mappings are retired. Review a compiled projection.',
+      'WALLET_PROJECTION_SCHEMA_RETIRED',
+    );
   const source = await verifiedAppleSource(ctx, {
     ...scope,
     sourceReleaseId: input.sourceReleaseId,

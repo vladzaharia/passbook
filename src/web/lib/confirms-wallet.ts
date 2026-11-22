@@ -47,3 +47,14 @@ export function walletMigrationConfirm(
   };
   return { ...copy[action], typed: false };
 }
+
+/** A wallet reissue: every active copy of the organization's passes is sent again. */
+export function reissueWalletPassesConfirm(name: string): ConfirmCopy {
+  return {
+    title: `Update ${name} passes?`,
+    confirmLabel: 'Update',
+    description:
+      'Sends every active copy again. Passes nobody has added to the wallet are skipped.',
+    typed: false,
+  };
+}

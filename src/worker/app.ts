@@ -73,6 +73,7 @@ import { walletEnrolmentRoutes } from './modules/wallet-providers/routes-enrolme
 import { googleCallbackRoutes } from './modules/wallet-providers/routes-google-callbacks.ts';
 import { walletOfferRoutes } from './modules/wallet-providers/routes-offers.ts';
 import { walletPlatformRoutes } from './modules/wallet-providers/routes-platform-credentials.ts';
+import { walletReissueRoutes } from './modules/wallet-providers/routes-reissue.ts';
 import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-status.ts';
 import { webhookKick } from './modules/webhooks/kick.ts';
 import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
@@ -200,6 +201,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/platform', platformAppleRoutes);
   app.route('/api/v1/wallet-providers/accounts', walletProviderAccountRoutes);
   app.route('/api/v1/wallet-providers/passes', walletProviderStatusRoutes);
+  app.route('/api/v1/wallet-providers/reissue', walletReissueRoutes);
   app.route('/api/v1/users', usersRoutes);
   app.route('/api/v1/api-keys/me', apiKeyMeRoutes);
   app.route('/api/v1/api-keys', apiKeysRoutes);

@@ -19,6 +19,7 @@ export async function scheduleInstance(
   instance: WalletInstance,
   pass: WalletPassSnapshot,
   kind: WalletOperationKind,
+  reissueId?: string,
 ): Promise<ScheduleResult> {
   if (instance.lifecycle === 'retired') return kind === 'revoke' ? 'unchanged' : 'blocked';
   if (instance.lifecycle === 'blocked' || instance.lifecycle === 'ready') return 'blocked';
@@ -125,6 +126,7 @@ export async function scheduleInstance(
       proof.policyRevision,
       countryHints,
       boundaryPhase(boundaries, now),
+      kind === 'upsert' ? (reissueId ?? null) : null,
     ]),
   );
   const op = await queueWalletOperation(ctx, {

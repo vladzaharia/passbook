@@ -18,6 +18,7 @@ import {
   WalletMigrationReportSchema,
   WalletMigrationResolvedSchema,
   type WalletProvider,
+  WalletReissueResponseSchema,
 } from '@/shared/contracts/wallet-providers.ts';
 import { api, listQuery } from '@/web/lib/api.ts';
 import { useMode } from '@/web/lib/mode.ts';
@@ -102,6 +103,20 @@ export function useWalletActions() {
           { expectedRevision: credential.revision },
         ),
       ),
+    /** A card id is not a secret: it goes in a plain call and the answer is the credential. */
+    setCard: (credential: WalletCredential, type: string, cardId: string) =>
+      done(
+        api.put(
+          `/api/v1/platform/wallet-credentials/${credential.id}/cards`,
+          WalletCredentialSchema,
+          { type, cardId, expectedRevision: credential.revision },
+        ),
+      ),
+    reissue: (orgId: string, provider: WalletProvider) =>
+      api.post('/api/v1/wallet-providers/reissue', WalletReissueResponseSchema, {
+        orgId,
+        provider,
+      }),
     setSource: (
       orgId: string,
       e: WalletEnrolment,

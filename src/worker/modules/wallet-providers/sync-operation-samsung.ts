@@ -21,10 +21,7 @@ import { completeWalletSyncOperation as complete } from './sync-operation-retire
 import { recordSamsungMessageOutcome } from './sync-samsung-message.ts';
 import { samsungOperationState } from './sync-samsung-state.ts';
 
-/**
- * The card of the release being sent, not of the identity: a schema 1 release carries stored
- * evidence that the queue checks, a schema 2 release reads its card now (or within five minutes).
- */
+/** The card of the release being sent, not of the identity: read now, or from its row within five minutes. */
 async function samsungUpdateReady(
   ctx: WalletSyncOperationExecution['ctx'],
   op: WalletSyncOperationExecution['op'],
@@ -34,7 +31,7 @@ async function samsungUpdateReady(
     ? await getProjectionCandidate(ctx.env.DB, release.candidateId)
     : null;
   if (candidate?.provider !== 'samsung') return false;
-  return candidate.projection.schema === 1 || ensureSamsungCardState(ctx, candidate);
+  return ensureSamsungCardState(ctx, candidate);
 }
 
 export async function runSamsungWalletProviderOperation(
