@@ -288,10 +288,10 @@ export function prepareActionPassFence(
   release: ReleaseSnapshot | null | undefined,
   snapshotRaw: string | null | undefined,
   /**
-   * OC4: leaving is never refused for who you are, so a tap-out may read a voided or ended pass.
-   * Only evaluation sets it (`Found.inactive`), and only after it has decided the scan is an exit;
-   * the pass is still fenced to its evaluated status at commit (`scanPassChecks`). Every other
-   * action keeps the live-only fence below.
+   * OC4: a tap-out of a voided or ended pass may read it. Evaluation sets it for any inactive Found on a
+   * scanner that can tap out, before it decides; only an exit is kept (`evaluate` refuses the rest, and
+   * commit throws unless the state is `out`). The pass is still fenced to its evaluated status at commit
+   * (`scanPassChecks`). Every other action keeps the live-only fence below.
    */
   exit?: boolean,
 ): PreparedActionPassFence | null {

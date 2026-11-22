@@ -66,6 +66,8 @@ export interface Found extends ReleaseSnapshot, WalletSnapshot, CredentialTombst
    * Such a Found may only commit a tap-out (OC4); evaluation refuses every other action on it.
    */
   inactive?: 'voided' | 'expired';
+  /** An Access card on hold that is tapping out (OC4): recorded on the scan, never a refusal. */
+  suspended?: boolean;
 }
 
 /** Everything a stop step knows: the pass and template only when a step got far enough to find them. */
@@ -89,6 +91,8 @@ export interface Stop
   flags: string[];
   /** The channel a `channel_off` refusal names. */
   channel?: Channel;
+  /** A refused inactive pass that is inside on a scanner that can tap out: the check-out is offered (OC4). */
+  exitAllowed?: boolean;
   found: Found | null;
   /** Internal ledger linkage for an inactive pass; never an output identity. */
   auditPassId?: string;
@@ -258,7 +262,9 @@ export async function foundOf(
       ref: { name: template.manifest.name, style: styleOf(passJson) },
       ...(state === 'active' ? {} : { inactive: state }),
     };
-    if (actor) {
+    // F8: an inactive pass discloses no identity, even to the tap-out that OC4 allows.
+    if (found.inactive) found.pass = { ...found.pass, displayTitle: null, displaySubtitle: null };
+    else if (actor) {
       const identity = visibleIdentity(found, actor);
       found.pass = {
         ...found.pass,
@@ -279,6 +285,7 @@ export async function foundOf(
  * it still holds the door, so it shows as a generic one rather than as no reason at all.
  */
 export function activeFlags(found: Found, actor?: ScanActor): { label: string; stop: boolean }[] {
+  if (found.inactive) return [];
   const privacy = actor ? cardPrivacy(found, actor) : null;
   const flags: { label: string; stop: boolean }[] = [];
   for (const f of found.scan.flags ?? []) {

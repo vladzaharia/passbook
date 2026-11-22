@@ -1,10 +1,9 @@
 import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
 import { TYPED_NUMBER_FLAG } from '../../../shared/copy/scan.ts';
-import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { paperOff, printRefusal } from '../prints/door.ts';
-import { accessStop, isGuestPass, joinReads, planAccessReads } from './access.ts';
+import { accessStop, joinReads, planAccessReads } from './access.ts';
 import { passRulesOf, planAdmission } from './admission.ts';
 import {
   type CredentialTombstoneSnapshot,
@@ -18,7 +17,7 @@ import { occupancyAsRead, planOccupancy } from './occupancy/admission.ts';
 import { credentialTombstonesClear } from './repo-credential-tombstones.ts';
 import { type Candidate, hasScanPolicy } from './repo-lookup.ts';
 import { codeRotatedOut } from './repo-rotations.ts';
-import { activeFlags, type Evaluated, type Found, foundOf, type Stop } from './resolve.ts';
+import { activeFlags, type Evaluated, type Found, foundOf } from './resolve.ts';
 import {
   accepts,
   candidateAudit,
@@ -29,6 +28,7 @@ import {
   matchesEvent,
 } from './resolve-candidates.ts';
 import { channelVerdict } from './resolve-channels.ts';
+import { exitGate, mayExit, suspendedOf, unavailable } from './resolve-exit.ts';
 import { stop, type Waive, windowStop } from './resolve-policy.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { candidateTakesTag, levelAllows } from './tag-assurance.ts';
@@ -45,6 +45,8 @@ export interface EvaluationOptions {
   prepareReads?: (found: Found) => Promise<EvaluationReadPlan>;
   /** False when the request runs a value action: admission, presence and capacity are a check-in's. */
   admits?: (found: Found) => boolean;
+  /** OC4: true only when the caller will commit a tap-out of this Found (an act with a concrete check-in action). */
+  commitsExit?: (found: Found) => boolean;
 }
 
 /** SA 2.6 steps 5-13. A found pass that passes every step comes back as `found`. */
@@ -75,26 +77,6 @@ export async function evaluate(
     return { ...stop('refused', 'not_found', { stale: true }), ...refs };
   const result = await evaluateObserved(ctx, actor, input, waive, refs, options);
   return result.stop ? Object.assign(result, refs) : result;
-}
-
-/** Why a pass cannot be scanned at all, from the candidate alone. */
-function unavailable(ctx: ServiceContext, one: Candidate): Stop {
-  const json = candidateWallet(one);
-  if (!json) return stop('refused', 'not_found', { stale: true });
-  const audit = candidateAudit(one);
-  if (one.pass.removedAt !== null)
-    return stop('refused', 'removed', { ...audit, at: one.pass.removedAt });
-  if (one.pass.status === 'voided')
-    return stop('refused', 'voided', { ...audit, at: one.pass.modifiedAt });
-  const validity = validityOf(json, ctx.clock.now());
-  if (validity.status === 'voided')
-    return stop('refused', 'voided', { ...audit, at: one.pass.modifiedAt });
-  if (validity.status === 'expired')
-    return stop('refused', isGuestPass(one) ? 'guest_expired' : 'expired', {
-      ...audit,
-      at: validity.validUntil,
-    });
-  return stop('refused', 'not_accepted');
 }
 
 async function evaluateObserved(
@@ -193,15 +175,7 @@ async function evaluateObserved(
           channel: 'paper',
         })
       : stop('refused', 'not_found', { stale: true });
-  // Only a scanner that can tap out asks for a voided or ended pass back (OC4); every other scan
-  // gets the refusal below, exactly as before.
-  const dir = actor.settings.direction;
-  const mayExit =
-    dir === 'out' ||
-    dir === 'both' ||
-    actor.settings.checkIn?.mode === 'in_out' ||
-    one.checkInRules?.mode === 'in_out';
-  const found = await foundOf(ctx, one, actor, { exit: mayExit });
+  const found = await foundOf(ctx, one, actor, { exit: mayExit(actor, one) });
   if (!found) return unavailable(ctx, one);
   const known = {
     pass: found.pass,
@@ -260,18 +234,19 @@ async function evaluateObserved(
   const eventPlaced = !placed ? (planned?.place ?? null) : null;
   const admission = configured && !placed ? planned : null;
   const place = placed ?? eventPlaced;
-  // OC4: leaving is never refused for who you are. A tap-out skips the pass's validity, plan, hours
-  // and guest checks (steps 10-14), so a voided or ended pass still taps out; only "not this
-  // organization's pass" stops it, and `foundOf` already returned null for that. Exits are the one
-  // exemption: a voided or ended pass on any other scan is refused as if it had not been found, and
-  // the pass fence is relaxed only for a Found that carries `inactive` (`prepareActionPassFence`).
   const zoneExit = place?.found.direction === 'out';
   const exiting = admission?.plan.state.direction === 'out' || zoneExit;
   if (found.inactive) {
-    if (!exiting) return unavailable(ctx, one);
-    if (channel?.kind === 'off')
-      return stop('refused', 'channel_off', { ...candidateAudit(one), channel: channel.channel });
-  }
+    const inside = place?.found.inside ?? admission?.plan.state.inside ?? false;
+    const gated = exitGate(ctx, one, {
+      exiting,
+      inside,
+      commits: options.commitsExit?.(found) === true,
+      channel,
+    });
+    if (gated) return gated;
+  } else if (exiting && suspendedOf(ctx, actor, found, known, accessReads, now))
+    found.suspended = true;
   // The pass's own event filter rejects it: a bare refusal, with no card, identity or grant.
   const selected = admission?.plan.event;
   if (selected && !eventAcceptsPass(actor, selected, found.pass))
@@ -312,7 +287,7 @@ async function evaluateObserved(
     return stop('heads_up', 'needs_approval', { ...known, at: null, flags: [tagged.flag] });
   const flagged = activeFlags(found).filter((flag) => flag.stop);
   const typed = channel?.kind === 'typed';
-  if (tagged || ((flagged.length > 0 || typed) && !waive.confirmed && !zoneExit))
+  if (tagged || ((flagged.length > 0 || typed) && !waive.confirmed && !zoneExit && !found.inactive))
     return stop('heads_up', 'check_required', {
       ...known,
       flags: [

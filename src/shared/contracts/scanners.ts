@@ -226,6 +226,8 @@ export const ScanRecordSchema = z.object({
   passVersion: z.number().int().nullable(),
   override: z.boolean(),
   offline: z.boolean(),
+  /** A tap-out of a voided, ended or suspended pass (OC4). */
+  passState: z.enum(['voided', 'expired', 'suspended']).nullable().default(null),
   unverified: z.boolean().default(false),
   late: z.boolean().default(false), // A back-dated offline read: it counts at the time it synced.
   actor: z.object({ type: z.enum(['scanner', 'user']), id: z.string() }),

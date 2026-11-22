@@ -6408,6 +6408,7 @@ type ScanOutcome struct {
 	Flags               []string            `json:"flags"`
 	Channel             *string             `json:"channel,omitempty"`
 	Overridable         bool                `json:"overridable"`
+	ExitAllowed         *bool               `json:"exitAllowed,omitempty"`
 	Approvals           bool                `json:"approvals"`
 	Group               map[string]any      `json:"group"`
 	Bundle              map[string]any      `json:"bundle,omitempty"`
@@ -6477,6 +6478,7 @@ type ScanRecord struct {
 	PassVersion  *int64          `json:"passVersion"`
 	Override     bool            `json:"override"`
 	Offline      bool            `json:"offline"`
+	PassState    *string         `json:"passState,omitempty"`
 	Unverified   *bool           `json:"unverified,omitempty"`
 	Late         *bool           `json:"late,omitempty"`
 	Actor        ScanRecordActor `json:"actor"`

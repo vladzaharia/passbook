@@ -183,14 +183,24 @@ export async function checkOverride(
   return captured;
 }
 
-/** Which action this request runs: named, the scanner's default, or `choose` for the desk. */
+/** A named tap-out of a voided or ended pass (OC4): the desk's Check out, which has no action to name. */
+export const tapsOut = (req: { direction?: 'in' | 'out' | undefined }, found: Found): boolean =>
+  found.inactive !== undefined && req.direction === 'out';
+
+/**
+ * Which action this request runs: named, the scanner's default, or `choose` for the desk. A tap-out
+ * (`exit`) never waits for a choice: it runs the check-in action.
+ */
 export function pickAction(
   actor: ScanActor,
   scan: ResolvedScanManifest,
   id: string,
+  exit = false,
 ): ResolvedScanAction | 'choose' | undefined {
-  if (id === 'auto')
-    return actor.settings.flow === 'choose' ? 'choose' : (defaultAction(actor, scan) ?? undefined);
+  if (id === 'auto') {
+    if (actor.settings.flow !== 'choose') return defaultAction(actor, scan) ?? undefined;
+    return exit ? scan.actions.find((a) => a.kind === 'check_in') : 'choose';
+  }
   return scan.actions.find((a) => a.id === id);
 }
 

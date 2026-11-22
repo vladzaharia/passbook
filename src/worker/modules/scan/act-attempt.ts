@@ -12,6 +12,7 @@ import {
   type Override,
   pickAction,
   StaleScanAuthority,
+  tapsOut,
 } from './act-override.ts';
 import { planActionReads } from './act-read-plan.ts';
 import { ScanAttemptRaced } from './act-stale-refusal.ts';
@@ -94,8 +95,13 @@ export async function attempt(
       candidateRead: { candidates },
       prepareReads: reads.prepare,
       admits: (found) => {
-        const picked = pickAction(actor, found.scan, req.actionId);
+        const picked = pickAction(actor, found.scan, req.actionId, tapsOut(req, found));
         return !picked || picked === 'choose' || picked.kind === 'check_in';
+      },
+      // OC4: only a concrete check-in action can commit a tap-out of a voided or ended pass.
+      commitsExit: (found) => {
+        const picked = pickAction(actor, found.scan, req.actionId, tapsOut(req, found));
+        return !!picked && picked !== 'choose' && picked.kind === 'check_in';
       },
     },
   );
@@ -232,7 +238,7 @@ export async function attempt(
       found.activePolicy,
     );
   reads.bind(actor, found);
-  const picked = pickAction(actor, found.scan, req.actionId);
+  const picked = pickAction(actor, found.scan, req.actionId, tapsOut(req, found));
   if (picked === 'choose')
     return chooseAction({
       ctx,

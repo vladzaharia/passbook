@@ -124,6 +124,14 @@ describe.each(MODES)('OC4 exits skip pass validity (%s)', (mode) => {
     // The record names the state the pass was in; a live pass records nothing extra.
     const wallet = state === 'active' ? [] : [state === 'expired' ? 'expired' : 'voided'];
     expect(await recordedStates(pass.id)).toEqual(state === 'suspended' ? [] : wallet);
+    // The scan row names it too, a suspended pass included.
+    const named = state === 'voided_wallet' ? 'voided' : state === 'active' ? null : state;
+    const stated = await first<{ pass_state: string | null }>(
+      kit.env.DB,
+      'SELECT pass_state FROM scans WHERE id = ?',
+      [exit.scanId],
+    );
+    expect(stated?.pass_state ?? null).toBe(named);
   });
 
   it.each(STATES)('direction in: a %s pass is refused as before', async (state) => {

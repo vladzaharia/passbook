@@ -7102,6 +7102,7 @@ class ScanOutcome(_Model):
     flags: _List[str]
     channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc", None] | str = None
     overridable: bool
+    exitAllowed: bool | None = None
     approvals: bool
     group: _Dict[str, _Any] | None
     bundle: _Dict[str, _Any] | None = None
@@ -7165,6 +7166,7 @@ class ScanRecord(_Model):
     passVersion: int | None
     override: bool
     offline: bool
+    passState: _Literal["voided", "expired", "suspended", None] | str = None
     unverified: bool | None = None
     late: bool | None = None
     actor: ScanRecordActor

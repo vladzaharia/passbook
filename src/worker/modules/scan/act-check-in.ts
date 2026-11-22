@@ -149,6 +149,12 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     throw new ScanAttemptRaced();
   if (presencePlan && !snapshots.samePresence(presencePlan.presence, observed.presenceBefore))
     throw new ScanAttemptRaced();
+  const state =
+    action.kind === 'check_in'
+      ? (place?.direction ?? found.admission?.state.direction ?? ('in' as const))
+      : ('used' as const);
+  // OC4: a relaxed fence is only for a tap-out.
+  if (found.inactive && state !== 'out') throw new StaleScanAuthority();
   const seed = {
     ...gate,
     // At an event place the entry statement holds capacity itself, with the exact reason.
@@ -163,10 +169,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     mode: found.pass.mode,
     templateId: found.pass.templateId,
     kind: action.kind,
-    state:
-      action.kind === 'check_in'
-        ? (place?.direction ?? found.admission?.state.direction ?? ('in' as const))
-        : ('used' as const),
+    state,
     admission: presencePlan,
     ...(accessGate && found.access ? { accessVisit: startsVisit(found.access, now) } : {}),
     method: req.input.method,

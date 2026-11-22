@@ -295,6 +295,8 @@ export const ScanOutcomeSchema = z.object({
   channel: ChannelSchema.nullable().optional(),
   /** A Manager PIN can unlock this heads-up. */
   overridable: z.boolean(),
+  /** A voided or ended pass that is inside, on a scanner that can tap out: offer only "Check out" (OC4). */
+  exitAllowed: z.boolean().optional(),
   /** The org has active managers. */
   approvals: z.boolean(),
   group: z
