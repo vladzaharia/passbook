@@ -97,6 +97,11 @@ test('a Samsung update is recorded and an injected failure is returned once', as
   expect(state.samsung.refs.ref1?.state).toBe('EXPIRED');
 });
 
+// Why this stops at the provider layer: the broadcast to a saved Google pass and the sync-log row cannot run in e2e.
+// ENABLED.google in provider-policy.ts is a code constant that only the in-process test setter changes, and the e2e
+// server is another process with no Google account or release, so lighting issuance here would mean changing the
+// production flag. The send path runs end to end against this same mock in the worker tests
+// (sync-operation-google-messages.test.ts), and the "Wallet message" row is covered by sync-model.test.ts.
 test('a Google change message lands on the object, and a fourth notification in a day is refused', async ({
   request,
 }) => {

@@ -201,7 +201,7 @@ async function rotate(macKeyRotation: boolean) {
     delete env.MAC_KEY_VERSION_PREVIOUS;
   }
   seeded.plain.push(await seedTransfer(t, kek1));
-  seeded.plain.push(await seedGoogleMessage(t, kek1));
+  seeded.plain.push(...(await seedGoogleMessage(t, kek1)));
   const epochsBefore = await epochs(db);
 
   // 3. The rewrap moves every envelope; nothing else changes.

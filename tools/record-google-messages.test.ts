@@ -5,13 +5,22 @@ import { expect, it } from 'vitest';
 import { createMockWallets } from '../test/mock-wallets/index.ts';
 import { recordGoogleMessages, scrub } from './record-google-messages.ts';
 
-it('scrubs issuer ids, ids and addresses', () => {
-  expect(
+it('keeps only status-level facts: no barcode, text module, URL, id or address', () => {
+  const out = JSON.stringify(
     scrub({
-      id: '3388000000022334455.abc',
-      error: { message: 'bot@x.iam.gserviceaccount.com 3388000000022334455' },
+      resource: {
+        id: '3388000000022334455.abc',
+        barcode: { value: 'SECRET-BARCODE' },
+        textModulesData: [{ body: 'Member Jane' }],
+        linksModuleData: { uri: 'https://wallet.example/p/token123' },
+        messages: [{ id: 'm1', messageType: 'TEXT', body: 'private body' }],
+      },
+      error: { message: 'bot@x.iam.gserviceaccount.com 3388000000022334455 https://x.example/a' },
     }),
-  ).toEqual({ id: '<id>', error: { message: '<email> <issuer>' } });
+  );
+  for (const leaked of ['SECRET', 'Jane', 'token123', 'private', 'abc', 'bot@', '3388000000'])
+    expect(out).not.toContain(leaked);
+  expect(out).toContain('"id":"m1"');
 });
 
 it('records V1 to V5 against the mock, with the fourth notification as the quota fixture', async () => {

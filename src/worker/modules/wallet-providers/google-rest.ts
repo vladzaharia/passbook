@@ -64,8 +64,24 @@ const MAX_ERROR_BYTES = 8 * 1024;
 
 async function isQuotaResponse(response: Response): Promise<boolean> {
   try {
-    const text = (await response.text()).slice(0, MAX_ERROR_BYTES);
-    return isGoogleNotifyQuota(response.status, text);
+    const reader = response.body?.getReader();
+    if (!reader) return false;
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    while (size < MAX_ERROR_BYTES) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value.subarray(0, MAX_ERROR_BYTES - size));
+      size += chunks[chunks.length - 1]?.byteLength ?? 0;
+    }
+    void reader.cancel().catch(() => undefined);
+    const bytes = new Uint8Array(size);
+    let at = 0;
+    for (const c of chunks) {
+      bytes.set(c, at);
+      at += c.byteLength;
+    }
+    return isGoogleNotifyQuota(response.status, new TextDecoder().decode(bytes));
   } catch {
     return false;
   }

@@ -128,11 +128,11 @@ export async function googleMessageBase(
   return row?.base ?? null;
 }
 
-const MAX_RANGE = 20;
+const MAX_MIDDLE = 19;
 
 /**
- * `versions[0]` is the newest stored version at or before `base`; the rest are the stored versions after it up
- * to `target`. More than 20 of them: the base and the target only. Null when the base or the target is missing.
+ * `[base, ...stored versions strictly between, target]`, read by exact version. More than 19 in between: the base
+ * and the target only. Null when the base row or the target row is missing (purged, or a metadata-only bump).
  */
 export async function readPassVersionRange(
   db: D1Database,
@@ -140,24 +140,25 @@ export async function readPassVersionRange(
   base: number,
   target: number,
 ): Promise<PassJson[] | null> {
-  const baseRow = await first<{ pass_json: string }>(
+  const exact = (version: number) =>
+    first<{ pass_json: string }>(
+      db,
+      `SELECT pass_json FROM pass_versions
+       WHERE pass_id = ? AND version = ? AND pass_json IS NOT NULL AND purged_at IS NULL`,
+      [passId, version],
+    );
+  const [baseRow, targetRow] = [await exact(base), await exact(target)];
+  if (!baseRow || !targetRow) return null;
+  const middle = await all<{ pass_json: string }>(
     db,
     `SELECT pass_json FROM pass_versions
-     WHERE pass_id = ? AND version <= ? AND pass_json IS NOT NULL AND purged_at IS NULL
-     ORDER BY version DESC LIMIT 1`,
-    [passId, base],
-  );
-  const rest = await all<{ pass_json: string }>(
-    db,
-    `SELECT pass_json FROM pass_versions
-     WHERE pass_id = ? AND version > ? AND version <= ? AND pass_json IS NOT NULL AND purged_at IS NULL
+     WHERE pass_id = ? AND version > ? AND version < ? AND pass_json IS NOT NULL AND purged_at IS NULL
      ORDER BY version LIMIT ?`,
-    [passId, base, target, MAX_RANGE + 1],
+    [passId, base, target, MAX_MIDDLE + 1],
   );
-  if (!baseRow || rest.length === 0) return null;
-  const rows = rest.length > MAX_RANGE ? [rest[rest.length - 1]] : rest;
+  const rows = middle.length > MAX_MIDDLE ? [] : middle;
   try {
-    return [baseRow, ...rows].map((r) => JSON.parse(r?.pass_json ?? 'null') as PassJson);
+    return [baseRow, ...rows, targetRow].map((r) => JSON.parse(r.pass_json) as PassJson);
   } catch {
     return null;
   }
@@ -171,12 +172,19 @@ export async function purgeGoogleMessages(
   now: number,
   limit: number,
 ): Promise<void> {
+  const before = now - PURGE_AFTER_MS;
   await run(
     db,
     `DELETE FROM wallet_google_messages WHERE id IN (
-       SELECT id FROM wallet_google_messages
-       WHERE state IN ('notified', 'text', 'failed', 'unknown', 'superseded')
-         AND COALESCE(settled_at, created_at) < ? ORDER BY COALESCE(settled_at, created_at) LIMIT ?)`,
-    [now - PURGE_AFTER_MS, limit],
+       SELECT id FROM wallet_google_messages WHERE settled_at IS NOT NULL AND settled_at < ?
+       ORDER BY settled_at LIMIT ?)`,
+    [before, limit],
+  );
+  await run(
+    db,
+    `DELETE FROM wallet_google_messages WHERE id IN (
+       SELECT id FROM wallet_google_messages WHERE state = 'superseded' AND created_at < ?
+       ORDER BY created_at LIMIT ?)`,
+    [before, limit],
   );
 }

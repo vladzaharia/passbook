@@ -26,18 +26,26 @@ export async function sealGoogleMessage(
   );
 }
 
+/** Opens rows one at a time: a row that will not decrypt (a missing KEK, corruption) is null and logged, never thrown. */
 export async function openGoogleMessages(
   ctx: ServiceContext,
   rows: readonly { id: string; instanceId: string; envelope: Envelope }[],
-): Promise<GoogleMessageText[]> {
+): Promise<(GoogleMessageText | null)[]> {
   if (rows.length === 0) return [];
   const ring = await loadKekRing(ctx.env);
   return Promise.all(
     rows.map(async (row) => {
-      const value = JSON.parse(
-        await decryptSecretText(ring, row.envelope, googleMessageAad(row.instanceId, row.id)),
-      ) as Partial<GoogleMessageText>;
-      return { header: String(value.header ?? ''), body: String(value.body ?? '') };
+      try {
+        const value = JSON.parse(
+          await decryptSecretText(ring, row.envelope, googleMessageAad(row.instanceId, row.id)),
+        ) as Partial<GoogleMessageText>;
+        return { header: String(value.header ?? ''), body: String(value.body ?? '') };
+      } catch {
+        ctx.log.error('wallet.google_message_unreadable', {
+          code: 'WALLET_GOOGLE_MESSAGE_UNREADABLE',
+        });
+        return null;
+      }
     }),
   );
 }

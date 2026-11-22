@@ -90,7 +90,8 @@ export async function beginGoogleMessage(
     writePart(
       `UPDATE wallet_google_messages
        SET state = 'sending', operation_id = ?, notify = ?, tries = tries + 1
-       WHERE instance_id = ? AND base_version = ? AND target_version = ? AND state = 'pending' AND ${FENCE}
+       WHERE instance_id = ? AND base_version = ? AND target_version = ? AND state = 'pending' AND tries < 8
+         AND ${FENCE}
        RETURNING id, tries`,
       [op.id, notify, op.instanceId, m.baseVersion, m.targetVersion, ...fence],
     ),
@@ -141,24 +142,51 @@ export async function settleGoogleMessage(
   const [part] = g.include(
     writePart(
       `UPDATE wallet_google_messages
-       SET state = ?, reason = ?, http_status = ?, settled_at = ?
+       SET state = ?, reason = CASE WHEN reason = 'quota' THEN 'quota' ELSE ? END, http_status = ?, settled_at = ?
        WHERE id = ? AND instance_id = ? AND state IN ('pending', 'sending') AND ${FENCE}
        RETURNING id`,
       [m.state, m.reason, m.httpStatus, now, m.id, op.instanceId, ...(await fenceOf(claim, op))],
     ),
   );
   if (!part || ((await commitRows(g, part))?.length ?? 0) !== 1) return false;
-  await batch(ctx.env.DB, [
-    walletMessagedEventStmt(ctx.env.DB, {
+  try {
+    await batch(ctx.env.DB, [
+      walletMessagedEventStmt(ctx.env.DB, {
+        orgId: op.orgId,
+        passId: op.passId,
+        mode: op.mode,
+        messageId: m.id,
+        outcome: m.state,
+        ...(m.reason === 'budget' || m.reason === 'quota' ? { reason: m.reason } : {}),
+        version: m.targetVersion,
+        at: now,
+      }),
+    ]);
+  } catch {
+    // The ledger row is the truth; a lost sync-log row must not look like a failed message.
+    ctx.log.error('wallet.google_message_event_failed', {
+      code: 'WALLET_GOOGLE_MESSAGE_EVENT',
       orgId: op.orgId,
-      passId: op.passId,
-      mode: op.mode,
-      messageId: m.id,
-      outcome: m.state,
-      ...(m.reason === 'budget' || m.reason === 'quota' ? { reason: m.reason } : {}),
-      version: m.targetVersion,
-      at: now,
-    }),
-  ]);
+    });
+  }
   return true;
+}
+
+/** Records Google's quota refusal before the TEXT resend, so the spent budget survives a crash or a refused resend. */
+export async function markGoogleMessageQuota(
+  ctx: ServiceContext,
+  claim: WalletClaimRef,
+  op: WalletOperation,
+  id: string,
+): Promise<boolean> {
+  const g = walletQueueGrant(ctx, 'record', op, [instanceCheck(op.instanceId)]);
+  const [part] = g.include(
+    writePart(
+      `UPDATE wallet_google_messages SET notify = 0, reason = 'quota'
+       WHERE id = ? AND instance_id = ? AND state = 'sending' AND ${FENCE}
+       RETURNING id`,
+      [id, op.instanceId, ...(await fenceOf(claim, op))],
+    ),
+  );
+  return part ? ((await commitRows(g, part))?.length ?? 0) === 1 : false;
 }

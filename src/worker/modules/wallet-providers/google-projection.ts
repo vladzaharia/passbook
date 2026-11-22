@@ -37,6 +37,13 @@ export function copyGoogleProjection(projection: GoogleGenericProjection): Recor
     ) {
       throw new Error();
     }
+    // Only object addMessage notifies (google-messages.md decision 2): never inside an insert, PATCH or PUT body.
+    const { messages } = copy as { messages?: unknown };
+    if (
+      Array.isArray(messages) &&
+      messages.some((m) => (m as { messageType?: unknown } | null)?.messageType !== 'TEXT')
+    )
+      throw new Error();
     return copy as Record<string, unknown>;
   } catch {
     throw new GoogleWalletError('invalid_input', 'projection');

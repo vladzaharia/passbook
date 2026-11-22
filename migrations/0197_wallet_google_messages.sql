@@ -25,6 +25,8 @@ CREATE TABLE wallet_google_messages (
 CREATE UNIQUE INDEX wallet_google_messages_one_open ON wallet_google_messages (instance_id)
   WHERE state IN ('pending', 'sending');
 CREATE INDEX wallet_google_messages_settled ON wallet_google_messages (instance_id, state, settled_at);
+CREATE INDEX wallet_google_messages_purge ON wallet_google_messages (settled_at) WHERE settled_at IS NOT NULL;
+CREATE INDEX wallet_google_messages_superseded ON wallet_google_messages (created_at) WHERE state = 'superseded';
 CREATE INDEX wallet_google_messages_operation ON wallet_google_messages (operation_id);
 
 CREATE TRIGGER wallet_google_messages_identity BEFORE UPDATE ON wallet_google_messages

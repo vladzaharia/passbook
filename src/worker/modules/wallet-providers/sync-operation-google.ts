@@ -186,12 +186,16 @@ export async function runGoogleWalletProviderOperation(
           ...identity,
           ...partition,
           // PassBook owns the object's `messages` (decision 3): the delivered history, or the voided message.
-          projection: withMessageHistory(
-            compiled.objectBody as unknown as GoogleObjectCommon,
-            prepared.history,
-            (passJson as PassJson | null)?.voided === true,
-            ctx.clock.now(),
-          ) as unknown as GoogleGenericProjection,
+          // A message in doubt may be on the card: with it unresolved, `messages` is left out of the write.
+          projection:
+            prepared.blocked && (passJson as PassJson | null)?.voided !== true
+              ? compiled.objectBody
+              : (withMessageHistory(
+                  compiled.objectBody as unknown as GoogleObjectCommon,
+                  prepared.history,
+                  (passJson as PassJson | null)?.voided === true,
+                  ctx.clock.now(),
+                ) as unknown as GoogleGenericProjection),
         });
         // Object first, message second: a message failure never fails the write it describes.
         await sendGoogleMessage(execution, binding.scope, messageIdentity, prepared);

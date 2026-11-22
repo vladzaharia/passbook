@@ -49,13 +49,25 @@ async function accessToken(key: { client_email: string; private_key: string }, f
   return token;
 }
 
-/** Ids, issuer numbers and addresses out; shape, status text and codes stay. */
+/**
+ * Only what the fixtures need: the status, the error, and the id and type of each message held. Object content
+ * (barcodes, text modules, links, images) is dropped, and any URL, id, issuer number or address left is scrubbed.
+ */
 export function scrub(value: unknown): unknown {
+  const v = (value ?? {}) as {
+    error?: unknown;
+    resource?: { messages?: { id?: unknown; messageType?: unknown }[] };
+  };
+  const kept: Record<string, unknown> = {};
+  if (v.error !== undefined) kept.error = v.error;
+  if (Array.isArray(v.resource?.messages))
+    kept.messages = v.resource.messages.map((m) => ({ id: m.id, messageType: m.messageType }));
+  if (typeof value === 'string') kept.text = value.slice(0, 500);
   return JSON.parse(
-    JSON.stringify(value)
+    JSON.stringify(kept)
+      .replace(/https?:\/\/[^\s"\\]+/g, '<url>')
       .replace(/\b\d{10,}(\.[\w-]+)?/g, '<issuer>$1')
-      .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '<email>')
-      .replace(/"(id|classId)":"[^"]*"/g, '"$1":"<id>"'),
+      .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '<email>'),
   );
 }
 

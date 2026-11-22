@@ -26,6 +26,7 @@ import {
 } from './repo-google-messages.ts';
 import {
   beginGoogleMessage,
+  markGoogleMessageQuota,
   releaseGoogleMessage,
   settleGoogleMessage,
 } from './repo-google-messages-write.ts';
@@ -68,6 +69,8 @@ function classify(error: unknown): { kind: Failure; status: number | null } {
     return { kind: error.ambiguous ? 'ambiguous' : 'not_sent', status: null };
   if (error instanceof GoogleWalletError) {
     const status = error.status ?? null;
+    // A token that could not be minted changed nothing at Google: the message never left.
+    if (error.operation === 'oauth') return { kind: 'not_sent', status };
     if (error.code === 'quota_exceeded') return { kind: 'quota', status };
     if (error.code === 'rate_limited') return { kind: 'rate_limited', status };
     if (error.code === 'unauthorized' && error.staleToken) return { kind: 'stale', status };
@@ -92,6 +95,24 @@ const messageType = (found: 'TEXT' | 'TEXT_AND_NOTIFY') =>
  * the base version and the delivered history the object's `messages` carries.
  */
 export async function prepareGoogleMessages(
+  execution: WalletSyncOperationExecution,
+  scope: WalletRuntimeScope,
+  identity: GoogleMessageIdentity,
+): Promise<GoogleMessagePrepare> {
+  try {
+    return await prepareUnguarded(execution, scope, identity);
+  } catch (error) {
+    if (execution.fenceLost) throw error;
+    // Never wedge the object write: send nothing, and leave `messages` out of the write (blocked).
+    execution.ctx.log.error('wallet.google_message_prepare_failed', {
+      code: 'WALLET_GOOGLE_MESSAGE_PREPARE',
+      orgId: execution.op.orgId,
+    });
+    return { base: null, blocked: true, history: [] };
+  }
+}
+
+async function prepareUnguarded(
   execution: WalletSyncOperationExecution,
   scope: WalletRuntimeScope,
   identity: GoogleMessageIdentity,
@@ -143,41 +164,31 @@ export async function prepareGoogleMessages(
   return {
     base: await googleMessageBase(db, op.instanceId),
     blocked,
-    history: rows.map((row, i) => ({
-      id: googleMessageId(row.id),
-      header: texts[i]?.header ?? '',
-      body: texts[i]?.body ?? '',
-      settledAt: row.settledAt ?? 0,
-    })),
+    history: rows.flatMap((row, i) => {
+      const text = texts[i];
+      return text ? [{ id: googleMessageId(row.id), ...text, settledAt: row.settledAt ?? 0 }] : [];
+    }),
   };
 }
 
-/** After the object write: builds, budgets and sends the one message of this operation. */
-export async function sendGoogleMessage(
-  execution: WalletSyncOperationExecution,
-  scope: WalletRuntimeScope,
-  identity: GoogleMessageIdentity,
-  prepared: GoogleMessagePrepare,
-): Promise<void> {
-  const { ctx, claim, op, assertCurrent, onProviderResponse } = execution;
+/** Reads, budgets, seals and begins the row: everything before the request. Null when there is nothing to send. */
+async function beginMessage(execution: WalletSyncOperationExecution, base: number, target: number) {
+  const { ctx, claim, op } = execution;
   const db = ctx.env.DB;
-  const base = prepared.base;
-  const target = op.passVersion;
-  if (prepared.blocked || base === null || target <= base) return;
   const existing = await getGoogleMessage(db, op.instanceId, base, target);
   // A settled pair is never sent again (a re-queue of the same versions); a pending one is a rate-limited retry.
-  if (existing && existing.state !== 'pending') return;
+  if (existing && existing.state !== 'pending') return null;
   let text: GoogleMessageText | null;
   if (existing) text = (await openGoogleMessages(ctx, [existing]))[0] ?? null;
   else {
     const versions = await readPassVersionRange(db, op.passId, base, target);
     if (!versions) {
       ctx.log.info('wallet.google_message_no_base', { orgId: op.orgId });
-      return;
+      return null;
     }
     text = googleChangeMessage(versions);
   }
-  if (!text) return;
+  if (!text) return null;
   const budget = await googleNotifiedSince(
     db,
     { instanceId: op.instanceId },
@@ -193,6 +204,63 @@ export async function sendGoogleMessage(
     envelope: existing?.envelope ?? (await sealGoogleMessage(ctx, op.instanceId, id, text)),
   });
   if (!begun) return;
+  if (!begun) return null;
+  return { begun, id, text, notify };
+}
+
+/** After the object write: builds, budgets and sends the one message of this operation. */
+export async function sendGoogleMessage(
+  execution: WalletSyncOperationExecution,
+  scope: WalletRuntimeScope,
+  identity: GoogleMessageIdentity,
+  prepared: GoogleMessagePrepare,
+): Promise<void> {
+  try {
+    await sendUnguarded(execution, scope, identity, prepared);
+  } catch (error) {
+    // Provider errors that mean "try the operation again" (rate limit, stale token) and a lost fence leave this
+    // step; anything else (a database or key error) is logged and the finished object write completes.
+    if (
+      execution.fenceLost ||
+      error instanceof GoogleWalletError ||
+      error instanceof WalletRuntimeError
+    )
+      throw error;
+    execution.ctx.log.error('wallet.google_message_failed', {
+      code: 'WALLET_GOOGLE_MESSAGE_FAILED',
+      orgId: execution.op.orgId,
+    });
+  }
+}
+
+async function sendUnguarded(
+  execution: WalletSyncOperationExecution,
+  scope: WalletRuntimeScope,
+  identity: GoogleMessageIdentity,
+  prepared: GoogleMessagePrepare,
+): Promise<void> {
+  const { ctx, claim, op, assertCurrent, onProviderResponse } = execution;
+  const db = ctx.env.DB;
+  const base = prepared.base;
+  const target = op.passVersion;
+  if (prepared.blocked || base === null || target <= base) return;
+  let begun: { id: string; tries: number } | null;
+  let id: string;
+  let text: GoogleMessageText;
+  let notify: boolean;
+  try {
+    const found = await beginMessage(execution, base, target);
+    if (!found) return;
+    ({ begun, id, text, notify } = found);
+  } catch (error) {
+    if (execution.fenceLost) throw error;
+    // The object write is done: a failure before the request leaves the row as it was, and the operation completes.
+    ctx.log.error('wallet.google_message_failed', {
+      code: 'WALLET_GOOGLE_MESSAGE_FAILED',
+      orgId: op.orgId,
+    });
+    return;
+  }
   let type: 'TEXT' | 'TEXT_AND_NOTIFY' = notify ? 'TEXT_AND_NOTIFY' : 'TEXT';
   let reason: GoogleMessageReason | null = notify ? null : 'budget';
   // A request that left shows as a recorded response; a lost fence with none means it never left.
@@ -245,6 +313,8 @@ export async function sendGoogleMessage(
           code: 'WALLET_GOOGLE_NOTIFY_QUOTA',
           orgId: op.orgId,
         });
+        // Written first, so a crash or a refused resend still leaves the budget spent.
+        await markGoogleMessageQuota(ctx, claim, op, id);
         type = 'TEXT';
         reason = 'quota';
         continue;
@@ -257,9 +327,14 @@ export async function sendGoogleMessage(
         await releaseGoogleMessage(ctx, claim, op, id, 'rate_limited');
         throw error;
       }
-      if (failure.kind === 'stale' || failure.kind === 'not_sent') {
+      if (failure.kind === 'stale') {
         await releaseGoogleMessage(ctx, claim, op, id, null);
         throw error;
+      }
+      if (failure.kind === 'not_sent') {
+        // Never left, and the object write is done: leave the row pending for the next operation.
+        await releaseGoogleMessage(ctx, claim, op, id, null);
+        return;
       }
       if (failure.kind === 'refused' || failure.kind === 'quota') {
         ctx.log.warn('wallet.google_message_refused', {

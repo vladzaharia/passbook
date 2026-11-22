@@ -20,20 +20,30 @@ export async function googleNotifiedSince(
   target: NotifyTarget,
   since: number,
 ): Promise<NotifiedSince> {
-  const rows = await all<{ state: string; reason: string | null; at: number }>(
+  const rows = await all<{ state: string; notify: number; reason: string | null; at: number }>(
     db,
-    `SELECT m.state, m.reason, m.settled_at AS at FROM wallet_google_messages m
+    `SELECT m.state, m.notify, m.reason, COALESCE(m.settled_at, m.created_at) AS at FROM wallet_google_messages m
      JOIN wallet_provider_instances i ON i.id = m.instance_id
-     WHERE ${'instanceId' in target ? 'i.id = ?' : "i.pass_id = ? AND i.provider = 'google' AND i.retirement_requested_at IS NULL"}
-       AND m.settled_at > ? AND (m.state = 'notified' OR m.reason = 'quota')
-     ORDER BY m.settled_at`,
+     WHERE ${
+       'instanceId' in target
+         ? 'i.id = ?'
+         : `i.pass_id = ? AND i.provider = 'google' AND i.retirement_requested_at IS NULL
+       AND i.credential_generation = (SELECT MAX(l.credential_generation) FROM wallet_provider_instances l
+         WHERE l.pass_id = i.pass_id AND l.provider = 'google' AND l.retirement_requested_at IS NULL)`
+     }
+       AND COALESCE(m.settled_at, m.created_at) > ?
+       AND (m.state = 'notified' OR (m.state = 'unknown' AND m.notify = 1) OR m.reason = 'quota')
+     ORDER BY at`,
     ['instanceId' in target ? target.instanceId : target.passId, since],
   );
-  const notified = rows.filter((r) => r.state === 'notified');
+  // An unknown notifying message may have arrived, so it counts; a quota refusal spends the window.
+  const counted = rows.filter(
+    (r) => r.state === 'notified' || (r.state === 'unknown' && r.notify === 1),
+  );
   const quota = rows.filter((r) => r.reason === 'quota');
   return {
-    used: notified.length,
-    oldest: notified[0]?.at ?? null,
+    used: counted.length,
+    oldest: counted[0]?.at ?? null,
     quotaAt: quota.length ? Math.max(...quota.map((r) => r.at)) : null,
   };
 }
