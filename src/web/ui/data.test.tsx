@@ -99,6 +99,24 @@ describe('DataTable', () => {
     expect(screen.queryByText('toolbar')).toBeNull();
   });
 
+  it('keeps the toolbar beside a load error with no rows', () => {
+    render(
+      <DataTable
+        caption="Passes"
+        columns={COLUMNS}
+        data={[]}
+        toolbar={<search>toolbar</search>}
+        error={
+          <ErrorState error={new ApiError({ status: 500, code: 'internal' })} onRetry={() => {}} />
+        }
+        empty={<EmptyState art="passes" title="No passes yet" />}
+      />,
+    );
+    expect(screen.getByText('toolbar')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry|try again/i })).toBeInTheDocument();
+    expect(screen.queryByText('No passes yet')).toBeNull();
+  });
+
   it('keeps rows on a refetch, then dims them and runs the rail after 150 ms', async () => {
     const { container } = render(
       <DataTable caption="Passes" columns={COLUMNS} data={ROWS} getRowId={(r) => r.id} fetching />,

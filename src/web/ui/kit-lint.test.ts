@@ -50,6 +50,8 @@ describe('kit lint', () => {
     expect(text('ui/checkbox.tsx')).toContain('pointer-coarse:size-11');
     expect(text('ui/page-header.tsx')).toContain('pointer-coarse:min-h-11');
     expect(text('ui/row-link.tsx')).toContain('pointer-coarse:py-3');
+    expect(text('ui/switch.tsx')).toContain('pointer-coarse:h-11');
+    expect(text('ui/status-pill.tsx')).toContain('pointer-coarse:size-11');
   });
 
   it('toasts only through the kit toast (ui/toaster.tsx)', () => {
