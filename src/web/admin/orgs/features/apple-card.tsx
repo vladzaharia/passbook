@@ -1,4 +1,4 @@
-import { BadgeCheck, ShieldCheck } from 'lucide-react';
+import { BadgeCheck, FileBadge, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
 import { PASS_FIX_COPY } from '@/shared/copy/pass-setup-fix.ts';
@@ -44,7 +44,9 @@ function Actions({ identityId }: { identityId: string }) {
         {isManaged(identity) ? (
           <ManagedMenuItems identity={identity} onStopNewPasses={() => setStopping(true)} />
         ) : null}
-        <DropdownMenuItem onSelect={() => setCerts(true)}>{FIX.certificates}</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setCerts(true)}>
+          <FileBadge aria-hidden /> {FIX.certificates}
+        </DropdownMenuItem>
       </MoreMenu>
       <StopNewPassesDialog identity={identity} open={stopping} onOpenChange={setStopping} />
       <Dialog open={certs} onOpenChange={setCerts}>

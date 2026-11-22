@@ -15,6 +15,7 @@ CREATE TABLE broadcast_targets (
   PRIMARY KEY (broadcast_id, pass_id)
 ) WITHOUT ROWID;
 CREATE INDEX broadcast_targets_intent ON broadcast_targets (broadcast_id, pass_id) WHERE intent IS NOT NULL;
+CREATE INDEX IF NOT EXISTS broadcast_targets_pass_fk ON broadcast_targets (pass_id);
 -- An org's own broadcast cap carries over to change runs.
 INSERT OR IGNORE INTO org_entitlement_overrides (org_id, key, value, note, expires_at, updated_at, updated_by)
   SELECT org_id, 'passes.changesPerDay', value, note, expires_at, updated_at, updated_by

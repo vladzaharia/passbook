@@ -40,3 +40,18 @@ CREATE TABLE pass_views (
   moved_at INTEGER NOT NULL,
   PRIMARY KEY (org_id, mode)
 );
+
+-- A developer org holds no Live row, whoever writes it (0156).
+CREATE TRIGGER pass_bulk_runs_developer_no_live BEFORE INSERT ON pass_bulk_runs
+WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
+BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live data'); END;
+
+-- A developer org holds no Live row, whoever writes it (0156).
+CREATE TRIGGER pass_bulk_locks_developer_no_live BEFORE INSERT ON pass_bulk_locks
+WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
+BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live data'); END;
+
+-- A developer org holds no Live row, whoever writes it (0156).
+CREATE TRIGGER pass_views_developer_no_live BEFORE INSERT ON pass_views
+WHEN NEW.mode = 'live' AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = NEW.org_id AND o.kind = 'developer')
+BEGIN SELECT RAISE(ABORT, 'a developer org holds no Live data'); END;

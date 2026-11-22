@@ -13,6 +13,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   api_keys: 'key hashes: mint a new key after a restore',
   authority_grants: BOOKKEEPING,
   branding_gc_queue: BOOKKEEPING,
+  broadcast_targets: BOOKKEEPING,
   bundle_remac_marks: BOOKKEEPING,
   bundle_token_seals: SEALED,
   captured_emails: 'Test mode mail capture, not org data',
