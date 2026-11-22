@@ -7,30 +7,44 @@ import { describe, expect, it } from 'vitest';
 import { restrictRow, TEMPLATE_REFS } from './authority-restrict.ts';
 import { all } from './db.ts';
 
-/** Levels a real statement may put around the condition (grant wrappers, EXISTS, joins). */
-const HEADROOM = 5;
+/**
+ * Levels a real statement may put around the condition (grant wrappers, EXISTS, joins), with margin. The deepest
+ * condition measured fits 47 more levels, so this fails when a view or reference grows by about 20.
+ */
+const HEADROOM = 25;
 
 const wrap = (condition: string, levels: number): string =>
   Array.from({ length: levels }).reduce<string>((inner) => `(1=1 AND ${inner})`, condition);
 
+const fits = (table: string, levels: number) =>
+  all(
+    env.DB,
+    `SELECT 1 FROM ${table} t JOIN (SELECT NULL AS limit_key) g WHERE ${wrap(
+      restrictRow(table, 't', 'g.limit_key').replace(/^ AND /, ''),
+      levels,
+    )} LIMIT 1`,
+    [],
+  ).then(
+    () => true,
+    () => false,
+  );
+
 describe('limited-key conditions leave depth headroom on D1', () => {
   it.each(Object.keys(TEMPLATE_REFS))('%s', async (table) => {
-    const condition = restrictRow(table, 't', 'g.limit_key').replace(/^ AND /, '');
-    await expect(
-      all(
-        env.DB,
-        `SELECT 1 FROM ${table} t JOIN (SELECT NULL AS limit_key) g WHERE ${wrap(condition, HEADROOM)} LIMIT 1`,
-        [],
-      ),
-    ).resolves.toBeDefined();
+    expect(await fits(table, HEADROOM)).toBe(true);
   });
 
-  it('fails when the headroom is gone (the probe measures something)', async () => {
-    const deepest = Object.keys(TEMPLATE_REFS)
-      .map((t) => restrictRow(t, 't', 'g.limit_key').replace(/^ AND /, ''))
-      .sort((a, b) => b.length - a.length)[0] as string;
-    await expect(all(env.DB, `SELECT 1 WHERE ${wrap(deepest, 100)}`, [])).rejects.toThrow(
-      /too large|depth/i,
-    );
+  it('the probe measures something: the deepest table stops fitting before 100 levels', async () => {
+    const deepest = 'webhook_deliveries';
+    expect(await fits(deepest, 100)).toBe(false);
+    let lo = HEADROOM;
+    let hi = 100;
+    while (hi - lo > 1) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (await fits(deepest, mid)) lo = mid;
+      else hi = mid;
+    }
+    expect(lo).toBeGreaterThanOrEqual(HEADROOM);
+    expect(lo).toBeLessThan(100);
   });
 });

@@ -30,9 +30,12 @@ const toDto = (n: IncidentRow): Incident => ({
 });
 
 /** Every open note and those resolved in the last 14 days. */
-export async function listIncidents(ctx: ServiceContext): Promise<{ items: Incident[] }> {
+export async function listIncidents(
+  ctx: ServiceContext,
+): Promise<{ items: Incident[]; nextCursor: null }> {
   const rows = await adminIncidents(ctx.env.DB, ctx.clock.now() - 14 * DAY);
-  return { items: rows.map(toDto) };
+  // A capped set (100), so there is never a next page.
+  return { items: rows.map(toDto), nextCursor: null };
 }
 
 export async function openIncident(
@@ -85,7 +88,7 @@ export async function resolveIncident(
         targetId: id,
       },
       RESOLVED_AT_CONDITION,
-      [id, at],
+      [id, at, id],
     ),
   ]);
   clearPublicStatusMemo(ctx.env.DB);

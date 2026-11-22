@@ -3,8 +3,11 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, makeEnv } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
+import { ManualClock } from '../../platform/clock.ts';
 import { all, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
+import { openIncident, resolveIncident } from './incidents.ts';
 
 const fake = fakeAuth();
 const app = createApp({ stores: fake.stores });
@@ -122,6 +125,27 @@ describe('incident notes', () => {
         env.DB,
         "SELECT id FROM audit_log WHERE action = 'status.incident.resolve' AND target_id = ?",
         [id],
+      ),
+    ).toHaveLength(1);
+  });
+
+  it('audits a resolve exactly once, even for two calls in the same millisecond', async () => {
+    await run(env.DB, 'DELETE FROM status_incidents');
+    const ctx = createServiceContext(base, { clock: new ManualClock(1_800_000_000_000) });
+    const actor = { type: 'user', id: 'u1' } as const;
+    const note = await openIncident(ctx, actor, {
+      title: 'Same ms',
+      note: 'n',
+      component: null,
+      impact: 'notice',
+    });
+    await resolveIncident(ctx, actor, note.id);
+    await resolveIncident(ctx, actor, note.id);
+    expect(
+      await all(
+        env.DB,
+        "SELECT id FROM audit_log WHERE action = 'status.incident.resolve' AND target_id = ?",
+        [note.id],
       ),
     ).toHaveLength(1);
   });

@@ -49,6 +49,10 @@ export const resolveIncidentStmt = (db: D1Database, id: string, at: number) =>
     id,
   ]);
 
-/** Binds `[id, at]`: true while the note's resolved time is `at`, so an audit row follows only the call that resolved it. */
-export const RESOLVED_AT_CONDITION =
-  'EXISTS (SELECT 1 FROM status_incidents WHERE id = ? AND resolved_at = ?)';
+/**
+ * Binds `[id, at, id]`: the note's resolved time is `at` and no resolve audit row exists yet, so exactly one
+ * audit row follows a resolve, even when two calls land in the same millisecond.
+ */
+export const RESOLVED_AT_CONDITION = `EXISTS (SELECT 1 FROM status_incidents WHERE id = ? AND resolved_at = ?)
+   AND NOT EXISTS (SELECT 1 FROM audit_log WHERE target_type = 'status_incident' AND target_id = ?
+     AND action = 'status.incident.resolve')`;

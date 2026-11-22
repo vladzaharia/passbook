@@ -100514,6 +100514,17 @@
         "tags": [
           "status"
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Success",
@@ -100581,10 +100592,17 @@
                           "resolvedAt"
                         ]
                       }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
-                    "items"
+                    "items",
+                    "nextCursor"
                   ]
                 }
               }
@@ -100616,7 +100634,8 @@
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
-          "UNAUTHENTICATED"
+          "UNAUTHENTICATED",
+          "VALIDATION"
         ]
       },
       "post": {

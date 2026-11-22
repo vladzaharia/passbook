@@ -52,6 +52,7 @@ register(
     method: 'get',
     path: '/incidents',
     summary: 'Incident notes on the public status page',
+    query: CursorQuerySchema,
     response: IncidentListSchema,
   },
   async (c) => c.json(await listIncidents(serviceContext(c))),

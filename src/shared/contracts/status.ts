@@ -83,7 +83,7 @@ export const OpenIncidentSchema = z.object({
   component: PublicComponentIdSchema.nullable().default(null),
   impact: PublicIncidentSchema.shape.impact,
 });
-export const IncidentListSchema = z.object({ items: z.array(PublicIncidentSchema) });
+export const IncidentListSchema = pageOf(PublicIncidentSchema);
 export const PublicStatusSchema = z.object({
   overall: z.enum(['operational', 'degraded', 'outage']),
   components: z.array(

@@ -305,3 +305,31 @@ describe('a key refused at the route gate', () => {
     expect(seen.join()).not.toContain(k.secret.slice(-12));
   });
 });
+
+describe('a key refused by the other key guards', () => {
+  it('adds the same code to request.done: /me and the try-token logs', async () => {
+    const seen: string[] = [];
+    const spy = vi
+      .spyOn(console, 'info')
+      .mockImplementation((line) => void seen.push(String(line)));
+    const bad = 'Bearer pb_live_ABCDEFGH_0123456789012345678901234567890123456789012';
+    try {
+      expect(
+        (await h.call('/api/v1/api-keys/me', { headers: { authorization: bad } })).status,
+      ).toBe(401);
+      const logs = await h.call('/api/v1/developer/logs', {
+        headers: { authorization: 'Bearer pbtry_nope.nope' },
+      });
+      expect(logs.status).toBe(401);
+    } finally {
+      spy.mockRestore();
+    }
+    const done = seen
+      .map((l) => JSON.parse(l) as Record<string, unknown>)
+      .filter((l) => l.event === 'request.done' && l.code === 'INVALID_API_KEY');
+    expect(done.map((l) => l.route).sort()).toEqual(
+      ['/api/v1/api-keys/me', '/api/v1/developer/logs'].sort(),
+    );
+    expect(done.find((l) => l.route === '/api/v1/api-keys/me')?.keyPrefix).toBe('ABCDEFGH');
+  });
+});
