@@ -78,10 +78,11 @@ export function staffStatements(
   g.add(
     audited(g, ctx, {
       orgId: input.orgId,
-      ...adminActorOf(capture.authority, capture.userId),
+      ...adminActorOf(capture.authority, capture.userId, capture.ip),
       action: 'scan_staff.create',
       targetType: 'scan_staff',
       targetId: id,
+      detail: { role: input.role },
     }),
   );
   return { id, pin };

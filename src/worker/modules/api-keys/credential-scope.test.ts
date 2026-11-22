@@ -65,13 +65,13 @@ describe('minting a credential scope (scanning:admin)', () => {
     await expectProblem(
       await create({ ...session.headers, 'x-passbook-mode': 'test' }, body({ mode: 'test' })),
       422,
-      'API_KEY_SCANNING_ADMIN_LIVE_ORG',
+      'API_KEY_CREDENTIAL_LIVE_ORG',
     );
     const platform = await platformSession();
     await expectProblem(
       await create(platform.headers, body({ orgId: null, ipAllow: ['198.51.100.0/24'] })),
       422,
-      'API_KEY_SCANNING_ADMIN_LIVE_ORG',
+      'API_KEY_CREDENTIAL_LIVE_ORG',
     );
     await expectProblem(
       await create(session.headers, body({ expiresAt: null })),
@@ -169,5 +169,64 @@ describe('minting a credential scope (scanning:admin)', () => {
       expect(await setup(key)).toBe(403);
     }
     expect(await setup(good)).not.toBe(403);
+  });
+});
+
+describe('minting a credential scope (nfc:keys)', () => {
+  const nfc = (over: object = {}) => body({ name: 'Tag keys', scopes: ['nfc:keys'], ...over });
+
+  it('is minted by an org_admin session, and refused for the other mint rules', async () => {
+    const { session } = await member('org_admin');
+    expect((await create(session.headers, nfc())).status).toBe(201);
+    await expectProblem(
+      await create({ ...session.headers, 'x-passbook-mode': 'test' }, nfc({ mode: 'test' })),
+      422,
+      'API_KEY_CREDENTIAL_LIVE_ORG',
+    );
+    await expectProblem(
+      await create(session.headers, nfc({ expiresAt: null })),
+      422,
+      'API_KEY_EXPIRY_REQUIRED',
+    );
+    await expectProblem(
+      await create(session.headers, nfc({ expiresAt: h.clock.now() + 95 * DAY })),
+      422,
+      'API_KEY_EXPIRY_TOO_LONG',
+    );
+    const operator = await member('pass_operator');
+    await expectProblem(await create(operator.session.headers, nfc()), 403, 'FORBIDDEN');
+  });
+
+  it('is refused without Polaris ID sign-in and without a recent step-up', async () => {
+    const { user } = await member('org_admin');
+    const email = await makeSession(f(), { userId: user.id, roles: ['user'], amr: 'magic_link' });
+    await expectProblem(await create(email.headers, nfc()), 403, 'IDP_SIGN_IN_REQUIRED');
+    const stale = await makeSession(f(), {
+      userId: user.id,
+      roles: ['user'],
+      authTime: h.clock.now() - 3_600_000,
+    });
+    await expectProblem(await create(stale.headers, nfc()), 403, 'STEP_UP_REQUIRED');
+  });
+
+  it('is never minted by a key, and never in a role', async () => {
+    const parent = await makeApiKey(f(), { orgId: org.id, scopes: ['api-keys:write', 'nfc:keys'] });
+    await expectProblem(
+      await h.call('/api/v1/api-keys', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${parent.secret}` },
+        json: { orgId: org.id, name: 'Child', scopes: ['nfc:keys'] },
+      }),
+      403,
+      'API_KEY_SCOPE_EXCEEDS_CREATOR',
+    );
+    const { session } = await member('org_admin');
+    const res = await create(session.headers, {
+      orgId: org.id,
+      name: 'Role',
+      scopes: [],
+      roles: ['org_admin'],
+    });
+    expect(((await res.json()) as { scopes: string[] }).scopes).not.toContain('nfc:keys');
   });
 });

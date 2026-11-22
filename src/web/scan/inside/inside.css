@@ -126,8 +126,9 @@
   flex-direction: column;
   gap: 12px;
 }
+/* Stale reads as muted colour, not faded text: the type keeps its contrast. */
 [data-stale] .scan-in-list {
-  opacity: 0.6;
+  filter: saturate(0.5);
 }
 .scan-in-list {
   display: flex;

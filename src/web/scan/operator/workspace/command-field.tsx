@@ -62,9 +62,7 @@ export function CommandField({
           <span className="op-pulse" aria-hidden />
           {offline ? C.status.offline : C.ready.line}
         </span>
-        <span>
-          {value && !offline ? C.ready.move.replace('{keys}', '↑↓').replace('{open}', '↵') : line}
-        </span>
+        <span>{line}</span>
       </p>
     </search>
   );

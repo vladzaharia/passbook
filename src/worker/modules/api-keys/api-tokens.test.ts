@@ -57,7 +57,13 @@ describe('token prefixes', () => {
     expect(platform.secret).toMatch(/^pbo_live_[\w-]{8}_[\w-]{43}$/);
     const stored = await row(live.key.id);
     expect(JSON.stringify(stored)).not.toContain(live.key.secret);
-    expect(JSON.stringify(stored)).not.toContain(live.key.secret.split('_').at(-1) ?? 'x');
+    // The random part is the fixed 43 characters after the prefix (base64url, so it may itself hold `_`).
+    const random = live.key.secret.slice(-43);
+    expect(random).toHaveLength(43);
+    expect(JSON.stringify(stored)).not.toContain(random);
+    // The row carries the prefix and the hash, nothing of the secret.
+    expect(stored?.prefix).toBe(live.key.secret.slice('pb_live_'.length).slice(0, 8));
+    expect(stored?.key_hash).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('never carries the secret into the audit row or a list', async () => {

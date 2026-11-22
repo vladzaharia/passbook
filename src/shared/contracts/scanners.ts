@@ -47,14 +47,12 @@ export type AdmitsInput = z.infer<typeof AdmitsSchema>;
 /** Template entries and events' templates together name at most this many. */
 export const ADMITS_TEMPLATE_CAP = 100;
 export type Admits = { templateIds: string[]; eventIds: string[] };
-
 /** Either form as the stored lists, without repeats. */
 export const admitsOf = (value: AdmitsInput): Admits => ({
   templateIds: 'templateIds' in value ? [...new Set(value.templateIds)] : [],
   eventIds:
     'eventIds' in value ? [...new Set(value.eventIds)] : 'eventId' in value ? [value.eventId] : [],
 });
-
 /** The older one-shape form when the lists fit it, so single-shape readers keep working. */
 export function admitsWire(admits: Admits): AdmitsInput {
   const [only] = admits.eventIds;
@@ -120,15 +118,18 @@ export const ScannerListQuerySchema = PageQuerySchema.extend({
 });
 export const ScannerListSchema = pageOf(ScannerSchema);
 export const ScannerPairingSchema = z.object({
-  code: z.string(),
-  url: z.string(),
+  code: z.string().nullable().describe('Null only on an Idempotency-Key replay.'),
+  url: z.string().nullable().describe('Null only on an Idempotency-Key replay.'),
   expiresAt: TimestampSchema,
 });
 export const ScannerPairingStateSchema = z.object({
   state: z.enum(['waiting', 'paired', 'expired']),
   device: z.object({ label: z.string(), at: TimestampSchema }).nullable(),
 });
-export const TerminalTokenSchema = z.object({ token: z.string(), expiresAt: TimestampSchema });
+export const TerminalTokenSchema = z.object({
+  token: z.string().nullable().describe('Null only on an Idempotency-Key replay.'),
+  expiresAt: TimestampSchema,
+});
 export const ScannerStatsSchema = z.object({
   days: z.array(
     z.object({
@@ -196,7 +197,6 @@ export const ScanEventListQuerySchema = PageQuerySchema.extend({
   status: z.enum(['upcoming', 'live', 'ended', 'archived']).optional(),
   q: z.string().trim().max(80).optional(),
 });
-
 export const ScanRecordSchema = z.object({
   id: IdSchema,
   at: TimestampSchema,
@@ -261,7 +261,6 @@ export const ScanEventLiveSchema = z.object({
   reasons: z.array(z.object({ reason: ScanReasonSchema, count: z.number().int() })),
   latest: z.array(ScanRecordSchema).max(20),
 });
-
 export const ScanStaffSchema = z.object({
   id: IdSchema,
   orgId: IdSchema,
@@ -287,8 +286,9 @@ export const UpdateScanStaffSchema = z.object({
   disabled: z.boolean().optional(),
 });
 /** Shown once, when a person is added or a PIN is reset. */
-export const StaffPinSchema = z.object({ pin: z.string().regex(/^\d{6}$/) });
-
+export const StaffPinSchema = z.object({
+  pin: z.nullable(z.string().regex(/^\d{6}$/)).describe('Null only on an Idempotency-Key replay.'),
+});
 export const ScanListQuerySchema = PageQuerySchema.extend({
   q: z.string().trim().max(80).optional(),
   orgId: IdSchema.optional(),

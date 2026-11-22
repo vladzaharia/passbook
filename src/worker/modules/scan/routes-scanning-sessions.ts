@@ -2,8 +2,6 @@ import { IdParamSchema } from '../../../shared/contracts/common.ts';
 import { ScanSummarySchema } from '../../../shared/contracts/scan-session.ts';
 import { AdminScannerStartedSchema } from '../../../shared/contracts/scan-setups.ts';
 import {
-  CreatedScanningDeviceSchema,
-  CreateScanningDeviceSchema,
   CreateScanningSessionSchema,
   JoinAdminScanningSessionSchema,
   ScanningSessionDetailSchema,
@@ -14,8 +12,9 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { registerScanSetup } from './routes-scan-setup.ts';
+import { registerSessionDevices } from './routes-sessions-devices.ts';
 import { registerSessionReads, registerSessionWrites } from './routes-sessions-key.ts';
-import { createScanningDevice, joinAdminScanningSession } from './scanning-devices.ts';
+import { joinAdminScanningSession } from './scanning-devices.ts';
 import { captureConsoleSessionCountAuthority } from './scanning-session-dto.ts';
 import { createScanningSession, loadScanningSession } from './scanning-sessions.ts';
 import { scopedScanningView } from './scanning-workspace.ts';
@@ -27,6 +26,7 @@ export const scanningSessionsRoutes = createRouter();
 registerScanSetup(scanningSessionsRoutes);
 registerSessionReads(scanningSessionsRoutes);
 registerSessionWrites(scanningSessionsRoutes);
+registerSessionDevices(scanningSessionsRoutes);
 guard(scanningSessionsRoutes, requireTenantSession);
 register(
   scanningSessionsRoutes,
@@ -112,35 +112,5 @@ register(
     const authority = await sessionAuthority(ctx, auth, row.org_id, 'scanning:read');
     const countAuthority = await captureConsoleSessionCountAuthority(ctx, auth, authority);
     return c.json(await consoleSessionSummary(ctx, row.id, mode, authority, countAuthority));
-  },
-);
-register(
-  scanningSessionsRoutes,
-  'scanners',
-  {
-    method: 'post',
-    path: '/{id}/devices',
-    summary: 'Add a device to a scanning session',
-    params: IdParamSchema,
-    body: CreateScanningDeviceSchema,
-    response: CreatedScanningDeviceSchema,
-    status: 201,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const row = await loadScanningSession(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await sessionAuthority(ctx, authOf(c), row.org_id, 'scanning:manage');
-    return c.json(
-      await createScanningDevice(
-        ctx,
-        currentUserId(c),
-        modeOf(c.var.auth),
-        row.id,
-        c.req.valid('json'),
-        new URL(c.req.url).origin,
-        authority,
-      ),
-      201,
-    );
   },
 );

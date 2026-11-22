@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PATHS } from '../../../shared/developers.ts';
 import { installDomShims } from '../../lib/test-utils.tsx';
+import type { Session } from '../console/session.ts';
 import { loadInputs } from '../model/load.ts';
 import { buildSite } from '../model/site.ts';
 import { buildSearchIndex } from './build.ts';
@@ -11,6 +12,9 @@ import * as nav from './nav.ts';
 import type { SearchIndex } from './types.ts';
 
 vi.mock('./nav.ts', () => ({ goTo: vi.fn(), openTab: vi.fn() }));
+// The sandbox's count is read only with a sandbox: signed out (the default here) nothing is asked.
+let session: Session = { kind: 'out' };
+vi.mock('../console/session.ts', () => ({ loadSession: async () => session }));
 
 const root = resolve(import.meta.dirname, '../../../..');
 const INDEX = buildSearchIndex(buildSite(loadInputs(root)));
@@ -64,6 +68,7 @@ const settle = (ms = 1000) => new Promise((done) => setTimeout(done, ms));
 
 beforeEach(() => installDomShims());
 afterEach(() => {
+  session = { kind: 'out' };
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -302,6 +307,12 @@ describe('results while typing', () => {
 
 describe('the preview', () => {
   it('shows the fix and the sandbox’s own count for an error, and opens it in a tab on ⌘↵', async () => {
+    session = {
+      kind: 'ready',
+      csrf: 'c',
+      siteKey: '',
+      sandbox: { id: 's', orgSlug: 'o', templateId: null },
+    };
     stubFetch({
       '/api/v1/developer/logs': () =>
         Response.json({
@@ -320,12 +331,14 @@ describe('the preview', () => {
     expect(nav.openTab).toHaveBeenCalledWith('/developers/errors/TEMPLATE_RELEASE_REQUIRED');
   });
 
-  it('leaves the sandbox line out when signed out', async () => {
-    stubFetch();
+  it('leaves the sandbox line out, and asks for no log, without a sandbox', async () => {
+    session = { kind: 'none', csrf: 'c', siteKey: '' };
+    const calls = stubFetch();
     const { user, box } = await mount();
     await user.type(box, 'TEMPLATE_RELEASE_REQUIRED');
     const pane = await screen.findByRole('complementary', { name: 'Preview' });
     await settle(500);
     expect(within(pane).queryByText('In your request log')).toBeNull();
+    expect(calls.some((c) => c.url.includes('/developer/logs'))).toBe(false);
   });
 });

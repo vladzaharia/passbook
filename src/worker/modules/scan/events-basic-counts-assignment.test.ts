@@ -277,7 +277,7 @@ describe('assign and archive', () => {
 
   it('an event is a 404 for the wrong id and requires an organization selection', async () => {
     await expectProblem(await call('GET', '/missing'), 404, 'EVENT_NOT_FOUND');
-    await expectProblem(await call('GET', '', undefined, fake.user()), 403, 'FORBIDDEN');
+    await expectProblem(await call('GET', '', undefined, fake.user()), 422, 'VALIDATION');
     await makeScanEvent(f, { orgId });
   });
 });
