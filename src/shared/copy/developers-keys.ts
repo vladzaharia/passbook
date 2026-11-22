@@ -6,7 +6,7 @@ export const KEYS_COPY = {
   noSandbox: 'No sandbox yet',
   create: 'Create sandbox',
   closed: 'Keys stopped when the sandbox closed.',
-  failed: 'Your keys did not load.',
+  failed: 'Your keys did not load',
   retry: 'Retry',
   newKey: 'New key',
   empty: 'No keys. Make one.',

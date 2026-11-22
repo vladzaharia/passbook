@@ -14,6 +14,9 @@
   cursor: pointer;
   list-style: none;
 }
+.errs-group > summary .strong {
+  min-width: 1.5em;
+}
 .errs-group > summary::-webkit-details-marker {
   display: none;
 }

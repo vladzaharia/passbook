@@ -5,13 +5,23 @@
   padding-inline: 12px;
 }
 @media (pointer: coarse) {
-  .btn,
-  .btn.sm {
+  /* Page content only: the top bar keeps its own control height. */
+  .btn:not([data-menubar] .btn),
+  .btn.sm:not([data-menubar] .btn) {
     min-height: 44px;
   }
-  .foot-links a {
+  .foot-links a:not(.pill) {
     min-height: 44px;
     padding-block: 0.75rem;
+  }
+  /* The date pill keeps its look; its hit area reaches 44 px beyond it. */
+  .foot-links a.pill {
+    position: relative;
+  }
+  .foot-links a.pill::after {
+    content: "";
+    position: absolute;
+    inset: -10px -4px;
   }
 }
 .btn.ghost {
@@ -170,6 +180,11 @@
 .lrow > * {
   min-width: 0;
 }
+/* A tag and a date keep their own width: the text between them wraps instead. */
+.lrow > .pill,
+.lrow > time {
+  flex: none;
+}
 .lrow code,
 .lrow .push {
   overflow-wrap: anywhere;
@@ -177,4 +192,17 @@
 a.lrow:hover {
   background: var(--pk-state-hover-tint);
   text-decoration: none;
+}
+
+/* The top bar's button keeps the width of its label: it never shrinks under it. */
+[data-menubar] .btn {
+  flex: none;
+  white-space: nowrap;
+}
+@media (pointer: coarse) and (max-width: 480px) {
+  /* 44 px icon buttons leave little room: a compact label keeps the bar on one row. */
+  [data-menubar] .btn {
+    padding-inline: 8px;
+    font-size: 12px;
+  }
 }

@@ -90,7 +90,7 @@ export const DEV_COPY = {
     },
     guides: {
       title: 'Guides',
-      line: 'Ten recipes. Each runs in your sandbox and ends at a test preview.',
+      line: 'Each recipe runs in your sandbox and ends at a test preview.',
     },
   },
   notFound: {

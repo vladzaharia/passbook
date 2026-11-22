@@ -20,15 +20,20 @@
   gap: 8px;
   margin-right: 72px;
 }
+/* The unplugged cable reaches past the card's right edge: leave it room, so it never covers a neighbour or scrolls the page sideways. */
+.pstate[data-kind="error"] {
+  margin-right: 28px;
+}
 @media (max-width: 640px) {
   .pstate {
+    margin-top: 56px;
     padding: 16px;
-  }
-  /* The unplugged cable reaches past the card's right edge: leave it room so the page never scrolls sideways. */
-  .pstate[data-kind="error"] {
-    margin-right: 20px;
   }
   .pstate-a {
     margin-right: 0;
   }
+}
+/* The create control brings its own padding for the ticket stub; in a card the card's padding is enough. */
+.pstate-a .start {
+  padding: 0;
 }
