@@ -9,6 +9,7 @@ export type ClientScanReason =
   | 'still_unconfirmed'
   | 'server'
   | 'rate_limited'
+  | 'forbidden'
   | 'saved_offline'
   | 'offline_decide'
   | 'not_listed'
@@ -87,6 +88,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   still_unconfirmed: { headline: 'Still not confirmed', sub: 'Check Recent before trying again.' },
   server: { headline: 'Something went wrong', sub: 'Scan again.' },
   rate_limited: { headline: 'Too many scans', sub: 'Try again in {seconds} s.' },
+  forbidden: { headline: 'Not allowed', sub: "This device can't do that. Ask a manager." },
   saved_offline: { headline: '{action}', sub: 'Saved offline' },
   offline_decide: {
     headline: 'No connection',

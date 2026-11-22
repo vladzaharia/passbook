@@ -268,6 +268,7 @@ export type ClientReason =
   | 'still_unconfirmed'
   | 'server'
   | 'rate_limited'
+  | 'forbidden'
   | 'saved_offline'
   | 'offline_decide'
   | 'not_listed'
