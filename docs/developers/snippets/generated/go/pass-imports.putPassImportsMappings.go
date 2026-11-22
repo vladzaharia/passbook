@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.PassImportsMappingsSaveBody
 	if err := json.Unmarshal([]byte(`{
-  "name": "Spring members",
+  "name": "Day pass",
   "columns": [
     "tier"
   ],

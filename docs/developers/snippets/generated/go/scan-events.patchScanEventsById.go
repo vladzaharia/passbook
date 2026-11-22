@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.ScanEventsUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "name": "Open climbing",
+  "name": "Day pass",
   "templateIds": [
     "0193a1b2-7c00-7000-8000-0000000000b1"
   ],

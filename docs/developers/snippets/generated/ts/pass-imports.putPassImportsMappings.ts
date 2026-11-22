@@ -3,7 +3,7 @@ import { PassBook } from '@passbook/sdk';
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
 const result = await pb.passImports.mappings.save({
-  name: 'Spring members',
+  name: 'Day pass',
   columns: [
     'tier',
   ],

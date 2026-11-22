@@ -5,7 +5,7 @@ const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 const result = await pb.connections.create({
   orgId: '0193a1b2-7c00-7000-8000-0000000000a1',
   connectorType: 'google-sheets',
-  name: 'Booking sheet',
+  name: 'Day pass',
   config: {
     sheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
     range: 'Members!A:E',

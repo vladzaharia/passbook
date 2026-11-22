@@ -28,7 +28,7 @@ func main() {
   ],
   "doors": [
     {
-      "name": "Front desk",
+      "name": "Day pass",
       "place": "northwind",
       "admits": {
         "any": true

@@ -6,7 +6,7 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 
 result = pb.nfc.tag_types.create(
     {
-        "name": "Wristband 14",
+        "name": "Day pass",
         "use": "member",
         "scopes": "pass",
         "perPass": 4,

@@ -16,7 +16,7 @@ result = pb.scanning_sessions.setup(
         ],
         "doors": [
             {
-                "name": "Front desk",
+                "name": "Day pass",
                 "place": "northwind",
                 "admits": {
                     "any": True,

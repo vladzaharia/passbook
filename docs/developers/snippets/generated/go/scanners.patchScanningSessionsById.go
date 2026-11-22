@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.ScanningSessionsUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "name": "Front desk",
+  "name": "Day pass",
   "timeZone": "America/Los_Angeles",
   "accepts": {
     "templateIds": [
