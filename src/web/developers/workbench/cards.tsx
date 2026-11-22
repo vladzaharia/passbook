@@ -182,7 +182,11 @@ export function GoLive({
         </h2>
       </div>
       {orgs.length === 0 ? (
-        <p className="card-b sm muted">Live keys come from an organization you belong to.</p>
+        <div className="card-b">
+          <a className="btn outline sm" href="/admin">
+            Open Admin
+          </a>
+        </div>
       ) : (
         <div className="list">
           {orgs.map((o) => (

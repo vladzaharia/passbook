@@ -160,6 +160,11 @@
 .lrow > * {
   min-width: 0;
 }
+/* A tag and a date keep their own width: the text between them wraps instead. */
+.lrow > .pill,
+.lrow > time {
+  flex: none;
+}
 .lrow code,
 .lrow .push {
   overflow-wrap: anywhere;
@@ -167,4 +172,50 @@
 a.lrow:hover {
   background: var(--pk-state-hover-tint);
   text-decoration: none;
+}
+
+/* The top bar's button keeps the width of its label: it never shrinks under it. */
+[data-menubar] .btn {
+  flex: none;
+  white-space: nowrap;
+}
+@media (pointer: coarse) and (max-width: 480px) {
+  /* 44 px icon buttons leave little room: a compact label keeps the bar on one row. */
+  [data-menubar] .btn {
+    padding-inline: 8px;
+    font-size: 12px;
+  }
+}
+
+/* Coarse pointers: a control under 44 px becomes a real 44 px box, and a negative margin gives the extra height back so
+   nothing around it moves (the kit's rule, docs/design/ui-consistency.md). No pseudo-element hit areas. */
+@media (pointer: coarse) {
+  .btn,
+  .btn.sm {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  [data-menubar] .btn {
+    margin-block: -6px;
+  }
+  [data-menubar] a[href="/developers"],
+  [data-menubar] [data-island="account"] > a {
+    min-height: 44px;
+    margin-block: -6px;
+  }
+  .foot-links a {
+    min-width: 44px;
+    min-height: 44px;
+    padding-block: 0.75rem;
+  }
+  .qs-happened .card-h a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -14px;
+  }
+  .recipes a {
+    min-height: 44px;
+    margin-block: -7px;
+  }
 }

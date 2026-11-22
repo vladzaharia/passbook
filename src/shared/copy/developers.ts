@@ -90,12 +90,13 @@ export const DEV_COPY = {
     },
     guides: {
       title: 'Guides',
-      line: 'Ten recipes. Each runs in your sandbox and ends at a test preview.',
+      line: 'Each recipe runs in your sandbox and ends at a test preview.',
     },
   },
   notFound: {
     title: 'Page not found',
-    line: 'Nothing lives at this address. Press ⌘K to search the docs, or start from one of these.',
+    line: 'Nothing lives at this address.',
+    home: 'Home',
   },
   guides: {
     title: 'Guides',

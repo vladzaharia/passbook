@@ -9,8 +9,14 @@ const row = (label: string, ...value: (Node | string)[]) =>
 /** "Your API": the sandbox key's mode, scopes and tier, and the calls of the last hour. */
 export async function mountRail(el: HTMLElement): Promise<void> {
   const { status, body } = await getJson<ApiRail>('/api/v1/developer/rail');
-  // Signed out (or no sandbox): the prerendered placeholder stays.
-  if (status === 401 || status === 404) return;
+  // Signed out: the prerendered placeholder stays. Signed in, it must never read "Sign in".
+  if (status === 401) return;
+  if (status === 404)
+    return fill(
+      el,
+      h('h3', { class: 'h3' }, RAIL_COPY.title),
+      h('p', { class: 'sm muted' }, RAIL_COPY.noSandbox),
+    );
   if (!body)
     return fill(
       el,

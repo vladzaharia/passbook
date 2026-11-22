@@ -156,7 +156,7 @@ describe('the workbench island mount', () => {
     vi.stubGlobal('fetch', fetchFn);
     const el = page();
     await act(() => mount(el));
-    expect(marketing()?.hidden).toBe(true);
+    expect(marketing()).toBeNull();
     expect(await screen.findByRole('heading', { name: homeFresh.sandbox?.name })).toBeTruthy();
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });

@@ -72,7 +72,6 @@ export function CreateSandbox({
   }
   return (
     <div className="start">
-      <h3 className="h2">No sandbox yet</h3>
       <button
         type="button"
         className="btn"
