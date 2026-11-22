@@ -37,7 +37,7 @@ import { seedEndpoint } from '../webhooks/webhooks-test-fixtures.ts';
 import { recordMacRoots } from './mac-root-check.ts';
 import { packedEnvelopeColumns } from './packed-scan-test-fixtures.ts';
 import { DONE, rewrapEnvelopes } from './rewrap.ts';
-import { seedGoogleMessage } from './rotation-message-fixtures.ts';
+import { seedGoogleMessage } from './rotation-message-test-fixtures.ts';
 import { rowsOnKek, type Samsung, seedEnvelopes, seedTransfer } from './rotation-test-fixtures.ts';
 
 const kek = (byte: number) => btoa(String.fromCharCode(...new Uint8Array(32).fill(byte)));
