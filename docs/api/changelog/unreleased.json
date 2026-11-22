@@ -624,6 +624,14 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "GET /api/v1/templates/{id}/releases/impact 200.passes: count meaning changed",
+    "class": "notable",
+    "operationId": "templates.getTemplatesByIdReleasesImpact",
+    "op": "GET /api/v1/templates/{id}/releases/impact",
+    "change": "200.passes: count meaning changed",
+    "note": "passes.count is now the active passes the rollout would move (another version, different build), not every pass on another version."
+  },
+  {
     "key": "GET /api/v1/templates/{id}/rollout new operation",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdRollout",
@@ -1838,13 +1846,5 @@
     "op": "PUT /api/v1/templates/{id}/manifest",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
-  },
-  {
-    "key": "GET /api/v1/templates/{id}/releases/impact 200.passes: count meaning changed",
-    "class": "notable",
-    "operationId": "templates.getTemplatesByIdReleasesImpact",
-    "op": "GET /api/v1/templates/{id}/releases/impact",
-    "change": "200.passes: count meaning changed",
-    "note": "passes.count is now the active passes the rollout would move (another version, different build), not every pass on another version."
   }
 ]
