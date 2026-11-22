@@ -11,7 +11,7 @@ export interface Logger {
 
 /** Anchored where a loose match would hide an operational field (`unknownKey`, `cooldownKey`, `ownKey` counts, `pinSetAt`). */
 const SENSITIVE_KEY =
-  /(authorization|cookie|token|secret|password|passphrase|private|credential|signature|csrf|api[-_]?key|session|bearer|email|personalization|userinfo|pushtoken|push_token|auth_token|download|scan[-_]?code|barcode|pair(?:ing)?[-_]?code|[a-zA-Z]hmac[-_]?key$|[a-zA-Z]private[-_]?key$|[a-zA-Z]secret$|(?:^|[^a-zA-Z])(?:file|meta|aes|hmac)[-_]?keys?(?![a-z])|^keys$|key[-_]?material)|^pairing$/i;
+  /(authorization|cookie|token|secret|password|passphrase|private|credential|signature|csrf|api[-_]?key|session|bearer|email|personalization|userinfo|pushtoken|push_token|auth_token|download|scan[-_]?code|barcode|pair(?:ing)?[-_]?code$|[a-zA-Z]hmac[-_]?key$|[a-zA-Z]private[-_]?key$|[a-zA-Z]secret$|(?:^|[^a-zA-Z])(?:file|meta|aes|hmac)[-_]?keys?(?![a-z])|[a-z](?:File|Meta|Aes|Hmac)Keys?$|^keys$|key[-_]?material)|^pairing$/i;
 
 /** Staff and unlock PINs (`pin`, `newPIN`, `staffPins`, `pinHash`, `STAFF_PIN`). Kept apart so `pinSetAt`, `pinOnly`, `pinMacVersion`, `staffPinId`, `shipping` and `mapping` stay readable. */
 const PIN_KEY =

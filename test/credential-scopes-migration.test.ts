@@ -60,7 +60,16 @@ describe('credential scopes out of presets migration', () => {
          VALUES ('child-cred', ?, 'c', 'cpfx', 'chash', '["scanning:admin"]', 'live', 1, 'service', ?)`,
         [org.id, named.id],
       ),
-    ).rejects.toThrow(/child/);
+    ).rejects.toThrow(/child is wider|child cannot/);
+    // A child that satisfies 0155's rules (same scopes as its parent) still cannot hold the credential scope.
+    await expect(
+      run(
+        env.DB,
+        `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, parent_key_id, expires_at)
+         VALUES ('child-ok', ?, 'c', 'cpfx2', 'chash2', '["scanning:admin"]', 'live', 1, 'service', ?, ?)`,
+        [org.id, named.id, soon],
+      ),
+    ).rejects.toThrow(/child cannot hold a credential scope/);
     await expect(
       run(env.DB, "UPDATE api_keys SET scopes = '[]' WHERE id = ?", [named.id]),
     ).rejects.toThrow(/identity is immutable/);

@@ -100,6 +100,7 @@ const TENANT_DETAIL_KEYS: Record<string, true> = {
   after: true,
   attempts: true,
   before: true,
+  scope: true,
   block: true,
   branding: true,
   bytes: true,

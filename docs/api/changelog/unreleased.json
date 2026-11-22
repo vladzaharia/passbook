@@ -877,7 +877,7 @@
     "operationId": "api-keys.postApiKeys",
     "op": "POST /api/v1/api-keys",
     "change": "keys: scanning:admin removed from org_admin role tokens",
-    "note": "Existing org_admin role tokens lose scanning:admin: name it in scopes on a new key to keep it."
+    "note": "scanning:admin is removed from org_admin role tokens, keys with no expiry or over 91 days, and child keys: mint a new compliant key."
   },
   {
     "key": "POST /api/v1/api-keys roles: scanning:admin no longer in a role",

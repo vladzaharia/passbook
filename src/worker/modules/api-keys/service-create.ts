@@ -17,7 +17,7 @@ import { assertSandboxCeiling } from './sandbox-ceiling.ts';
 import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
 
 /** A personal or platform key lives at most 90 days; a day of slack covers a client clock that runs ahead. */
-const MAX_LIFETIME_MS = 91 * 86_400_000;
+export const MAX_LIFETIME_MS = 91 * 86_400_000;
 /** Scopes a template or pass-style restriction can narrow: those whose routes name a template. */
 /** Open (not revoked) child keys one key may hold. */
 const MAX_CHILDREN = 50;

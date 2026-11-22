@@ -139,4 +139,35 @@ describe('minting a credential scope (scanning:admin)', () => {
     const ok = await stored(h.clock.now() + 30 * DAY);
     expect((await rotate(session.headers, ok.id)).status).toBe(201);
   });
+
+  it('ignores the scope on a stored key that breaks the mint rule, and honours a compliant one', async () => {
+    const scopes = ['scanning:admin', 'passes:read'];
+    const setup = async (key: { secret: string }) =>
+      (
+        await h.call('/api/v1/scanning-sessions/setup', {
+          method: 'POST',
+          headers: { authorization: `Bearer ${key.secret}` },
+          json: { orgId: org.id },
+        })
+      ).status;
+    const good = await makeApiKey(f(), {
+      orgId: org.id,
+      scopes,
+      expiresAt: h.clock.now() + 30 * DAY,
+    });
+    const bad = [
+      await makeApiKey(f(), { orgId: org.id, scopes }),
+      await makeApiKey(f(), { orgId: org.id, scopes, expiresAt: h.clock.now() + 200 * DAY }),
+      await makeApiKey(f(), {
+        orgId: org.id,
+        scopes,
+        roles: ['org_admin'],
+        expiresAt: h.clock.now() + 30 * DAY,
+      }),
+    ];
+    for (const key of bad) {
+      expect(await setup(key)).toBe(403);
+    }
+    expect(await setup(good)).not.toBe(403);
+  });
 });

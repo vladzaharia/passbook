@@ -93,11 +93,14 @@ describe('redaction', () => {
         clientSecret: 's1',
         pairingCode: 'PC-1',
         hmacKeyVersion: 2,
+        newFileKey: 'nf1',
+        pairingCodes: 3,
         keysetId: 'ks',
       }),
     );
-    for (const secret of ['h1', 'p1', 's1', 'PC-1']) expect(out).not.toContain(secret);
+    for (const secret of ['h1', 'p1', 's1', 'PC-1', 'nf1']) expect(out).not.toContain(secret);
     expect(out).toContain('"hmacKeyVersion":2');
+    expect(out).toContain('"pairingCodes":3');
     expect(out).toContain('"keysetId":"ks"');
   });
 
