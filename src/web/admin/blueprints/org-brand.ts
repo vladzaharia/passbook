@@ -1,5 +1,6 @@
 import type { PassSetupPatch } from '@/shared/contracts/pass-setup.ts';
 import { getPassSetup, patchPassSetup } from '../brand/api.ts';
+import { stagedRef } from '../brand/draft.ts';
 import { stageImage } from '../brand/images.ts';
 import { type Rgb, toHex } from '../templates/designer/contrast.ts';
 import { textColors } from './quick-setup.ts';
@@ -22,7 +23,7 @@ export async function saveOrgBrand(
       label: toHex(label),
     };
   }
-  if (brand.logo) patch.logo = { sha: (await stageImage(orgId, 'logo', brand.logo)).sha };
+  if (brand.logo) patch.logo = stagedRef(await stageImage(orgId, 'logo', brand.logo));
   if (Object.keys(patch).length === 0) return;
   const setup = await getPassSetup(orgId);
   await patchPassSetup(orgId, { expectedRevision: setup.revision, brand: patch }, false);

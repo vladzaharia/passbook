@@ -102,7 +102,7 @@ export const PASS_SETUP_COPY = {
   impact: {
     passes: '{n} passes update on devices.',
     passesOne: '1 pass updates on devices.',
-    stops: '{channel} stops for {templates} templates · {passes} passes.',
+    stops: '{channel} stops for {templates} · {passes}.',
     copiesKeep: 'Copies keep working.',
   },
   review: {
@@ -114,6 +114,7 @@ export const PASS_SETUP_COPY = {
   stale: 'Someone else changed these settings. Review them and save again.',
   page: {
     passes: '{n} passes',
+    passesOne: '1 pass',
     noPasses: 'No passes yet',
     allSet: 'All set',
     saved: 'Saved',
