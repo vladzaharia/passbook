@@ -37,6 +37,7 @@ import { DEVELOPER_ACTIONS } from './actions-developer.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
 import { SCAN_PIN_ACTIONS } from './actions-scan-pin.ts';
+import { TAG_KEY_ACTIONS } from './actions-tag-keys.ts';
 import { TEMPLATE_VERSION_ACTIONS } from './actions-template-version.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
@@ -236,7 +237,6 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'tag_keyset.revoke_key': a('Tag keys revoked', ShieldAlert, 'danger'),
   'tag_keyset.reenrol': a('Tags moved to new keys', ArrowRightLeft, 'warning'),
   'tag_keyset.import': a('Tags imported', ImagePlus, 'success'),
-  'tag_keyset.rekey': a('Tag keys replaced', I.rotate, 'warning'),
   'tag_keyset.disable': a('Tag keys disabled', ShieldX, 'danger'),
   'template.activate': a('Template activated', CircleCheck, 'success'),
   'template.approved_alone': a('Template version self-approved', CircleCheck, 'warning'),
@@ -273,6 +273,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'template.upload': a('Template uploaded', ENTITY.template.icon, 'success'),
   ...AUTH_ACTIONS,
   ...SCAN_PIN_ACTIONS,
+  ...TAG_KEY_ACTIONS,
   ...BROADCAST_RUN_ACTIONS,
   ...DEVELOPER_ACTIONS,
   'bundle.create': a('Bundle created', ENTITY.bundle.icon, 'success'),
