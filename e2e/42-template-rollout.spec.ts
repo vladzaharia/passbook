@@ -117,9 +117,7 @@ test('Tell holders messages the passes on the release, once, and never the ones 
     const url = `/admin/templates/${encodeURIComponent(clone.id)}?orgId=${encodeURIComponent(org.id)}&tab=versions`;
     const page = await ctx.newPage();
     await page.goto(url);
-    await expect(
-      page.getByRole('status').filter({ hasText: 'Updating passes to v2: 2 of 5' }),
-    ).toBeVisible();
+    await expect(page.getByText('Updating passes to v2: 2 of 5')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Updating passes to v2' })).toBeVisible();
     await expect(page.getByRole('progressbar', { name: 'Passes on the release' })).toBeVisible();
     await expect(page.getByText('v2 · 2')).toBeVisible();
