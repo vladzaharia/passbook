@@ -35,7 +35,7 @@
   content: "";
   position: absolute;
   inset-block: -8px;
-  inset-inline: -4px;
+  inset-inline: -6px;
 }
 .hw-pill:focus-visible {
   outline: 2px solid var(--sd-accent);

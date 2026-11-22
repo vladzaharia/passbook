@@ -1,7 +1,4 @@
-/**
- * The scan machine's frozen contract (AC 3.1-3.3 with SA 7.5's amendments and the B card layer).
- * One pure reducer `reduce(state, event, { now, id }) -> { state, cmds }` serves both postures.
- */
+/** The scan machine's frozen contract (AC 3.1-3.3, SA 7.5, the B card layer): one pure `reduce(state, event, { now, id })` serves both postures. */
 import type {
   ScanCard,
   ScanCounts,
@@ -268,6 +265,7 @@ export type ClientReason =
   | 'still_unconfirmed'
   | 'server'
   | 'rate_limited'
+  | 'forbidden'
   | 'saved_offline'
   | 'offline_decide'
   | 'not_listed'

@@ -1,6 +1,7 @@
 import * as Primitive from '@radix-ui/react-dropdown-menu';
-import { type ComponentProps, type PointerEvent, useRef } from 'react';
+import { type ComponentProps, type PointerEvent, useCallback, useRef } from 'react';
 import { cn } from '../lib/cn.ts';
+import { inertOutside } from './inert-outside.ts';
 
 export const DropdownMenu = Primitive.Root;
 export const DropdownMenuTrigger = Primitive.Trigger;
@@ -13,9 +14,15 @@ export function DropdownMenuContent({
   collisionPadding = 16,
   ...props
 }: ComponentProps<typeof Primitive.Content>) {
+  const restore = useRef<(() => void) | null>(null);
+  const mount = useCallback((node: HTMLDivElement | null) => {
+    restore.current?.();
+    restore.current = node ? inertOutside(node) : null;
+  }, []);
   return (
     <Primitive.Portal>
       <Primitive.Content
+        ref={mount}
         sideOffset={sideOffset}
         collisionPadding={collisionPadding}
         className={cn(

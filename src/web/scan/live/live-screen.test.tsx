@@ -197,7 +197,7 @@ describe('monitor setup access', () => {
       <LiveScreen session={sessionFixture()} refetch={vi.fn(async () => {})} />,
     );
     expect(queryByRole('button', { name: 'Refresh setup' })).toBeNull();
-    const brand = getByRole('button', { name: 'Setup options' });
+    const brand = getByRole('button', { name: /setup options$/ });
     fireEvent.pointerDown(brand);
     act(() => vi.advanceTimersByTime(950));
     expect(getByRole('button', { name: 'Refresh setup' })).toBeVisible();
