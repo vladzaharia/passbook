@@ -4,7 +4,7 @@
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "preset": "standard",
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "items": [
         {
           "key": "api",
@@ -34,7 +34,7 @@
       "presets": [
         {
           "preset": "standard",
-          "label": "Day pass",
+          "label": "Northwind Climbing",
           "orgCount": 8,
           "values": {
             "tier": 8
@@ -74,7 +74,7 @@
       "presets": [
         {
           "preset": "standard",
-          "label": "Day pass",
+          "label": "Northwind Climbing",
           "orgCount": 8,
           "values": {
             "tier": 8

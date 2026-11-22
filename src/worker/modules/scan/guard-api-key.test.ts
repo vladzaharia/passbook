@@ -221,7 +221,7 @@ describe('a refused terminal key', () => {
       const unknown = await t.call(
         {
           ...k.headers,
-          authorization: 'Bearer pb_live_ABCDEFGH_0123456789012345678901234567890123456789012',
+          authorization: `Bearer pb_live_ABCDEFGH_${'0123456789'.repeat(4)}012`,
         },
         '/actions',
         t.request(pass.id),

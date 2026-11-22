@@ -7,7 +7,7 @@
           "id": "0193a1b2-7c00-7000-8000-7fa0630cb730",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "match": {
             "input": "tier",
@@ -33,7 +33,7 @@
     "description": "Creates a scan event.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -49,7 +49,7 @@
       "id": "0193a1b2-7c00-7000-8000-2dfaf68d763b",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -74,7 +74,7 @@
       "id": "0193a1b2-7c00-7000-8000-ee1769b70735",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -96,7 +96,7 @@
   "scan-events.patchScanEventsById": {
     "description": "Edits a scan event.",
     "request": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -107,7 +107,7 @@
       "id": "0193a1b2-7c00-7000-8000-803f36206de9",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -132,7 +132,7 @@
       "id": "0193a1b2-7c00-7000-8000-0e5b2643c94f",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -160,7 +160,7 @@
       "id": "0193a1b2-7c00-7000-8000-8a7533a6ea66",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -191,7 +191,7 @@
           "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
-          "parentName": "Day pass",
+          "parentName": "Northwind Climbing",
           "since": 1794322800000,
           "dueAt": 1795521600000,
           "via": "api",
@@ -202,7 +202,7 @@
       "rev": 24,
       "places": [
         {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "inNow": 8,
           "capacity": 38,
           "place": "zone:main-hall",

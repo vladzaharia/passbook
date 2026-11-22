@@ -82,8 +82,8 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-78ed41b3ddb4",
-          "slug": "day-pass",
-          "name": "Day pass",
+          "slug": "northwind-climbing",
+          "name": "Northwind Climbing",
           "closedAt": 1795521600000,
           "purgeAfter": 1798124400000,
           "purging": false,

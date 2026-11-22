@@ -7,13 +7,13 @@
           "id": "0193a1b2-7c00-7000-8000-4236fdd212cb",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
           "holderEmail": "ada@example.com",
           "passes": [
             {
               "id": "0193a1b2-7c00-7000-8000-b82c1fa6a85e",
-              "title": "Day pass",
+              "title": "Northwind Climbing",
               "status": "active",
               "removedAt": null
             }
@@ -30,7 +30,7 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "passIds": ["0193a1b2-7c00-7000-8000-0000000000c1"],
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "holderEmail": "ada@example.com",
       "sendEmail": true
     },
@@ -38,13 +38,13 @@
       "id": "0193a1b2-7c00-7000-8000-6ddd0e96a901",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "holderEmail": "ada@example.com",
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-e7cd20ce549c",
-          "title": "Day pass",
+          "title": "Northwind Climbing",
           "status": "active",
           "removedAt": null
         }
@@ -59,13 +59,13 @@
       "id": "0193a1b2-7c00-7000-8000-42792a9658f8",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "holderEmail": "ada@example.com",
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-6ffbf8b05006",
-          "title": "Day pass",
+          "title": "Northwind Climbing",
           "status": "active",
           "removedAt": null
         }
@@ -95,13 +95,13 @@
       "id": "0193a1b2-7c00-7000-8000-52878a8babd3",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "holderEmail": "ada@example.com",
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-8e2c6f937724",
-          "title": "Day pass",
+          "title": "Northwind Climbing",
           "status": "active",
           "removedAt": null
         }

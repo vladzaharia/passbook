@@ -12,6 +12,21 @@ title = "PassBook"
 [extend]
 useDefault = true
 
+# Our own formats, as minted by api-key-token.ts, scanner-auth.ts and webhooks/secrets.ts. Custom rules carry no
+# stopwords and need no `key =` context, so a real key is found in a header, a log line or a bare constant, and a
+# tail that contains "demo" or "example" does not hide it.
+[[rules]]
+id = "passbook-api-key"
+description = "A PassBook API key or scanner token"
+regex = '''\b(?:wlt|pb|pbp|pbo|wls)_(?:(?:live|test)_)?[A-Za-z0-9_-]{8}_[A-Za-z0-9_-]{43}\b'''
+keywords = ["pb_", "pbp_", "pbo_", "wlt_", "wls_"]
+
+[[rules]]
+id = "passbook-webhook-secret"
+description = "A PassBook webhook signing secret"
+regex = '''\bwhsec_[A-Za-z0-9_-]{32}\b'''
+keywords = ["whsec_"]
+
 [allowlist]
 description = "Demo shapes, identifiers and public keys, each anchored"
 regexes = [

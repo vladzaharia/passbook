@@ -85,7 +85,7 @@
       "failed": [
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Day pass",
+          "title": "Northwind Climbing",
           "reason": "Left the gym early; refund issued at the desk."
         }
       ],
@@ -98,7 +98,7 @@
           "group": "colors",
           "rows": [
             {
-              "label": "Day pass",
+              "label": "Northwind Climbing",
               "kind": "added",
               "from": {
                 "type": "text",
@@ -296,7 +296,7 @@
       "items": [
         {
           "uploadId": "0193a1b2-7c00-7000-8000-f9beaa4ae374",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "status": "complete",
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "version": "3",
@@ -389,7 +389,7 @@
             }
           ],
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-          "assetNames": ["Day pass"],
+          "assetNames": ["Northwind Climbing"],
           "id": "0193a1b2-7c00-7000-8000-9d4d6122249a"
         }
       ]
@@ -401,7 +401,7 @@
       "items": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "templateOrgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "origin": "uploaded",
           "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
@@ -482,7 +482,7 @@
         }
       ],
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["Day pass"]
+      "assetNames": ["Northwind Climbing"]
     }
   },
   "templates.getTemplatesByIdVersionsByVersion": {
@@ -493,7 +493,7 @@
       "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
       "assets": [
         {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "slot": "logo",
           "scale": 1,
           "locale": "en-US",
@@ -696,7 +696,7 @@
         },
         "errorCode": null,
         "waiting": {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "until": 21
         }
       }
@@ -752,7 +752,7 @@
     },
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "version": {
         "passJson": {
           "formatVersion": 1,
@@ -792,7 +792,7 @@
         },
         "assets": [
           {
-            "name": "Day pass",
+            "name": "Northwind Climbing",
             "sha1": "e6997603809dcf7d34d188068c529a7808556809"
           }
         ]
@@ -809,13 +809,13 @@
     "response": {
       "session": {
         "id": "0193a1b2-7c00-7000-8000-f1786f005c74",
-        "name": "Day pass"
+        "name": "Sam Rivera"
       },
       "created": false,
       "events": [
         {
           "id": "0193a1b2-7c00-7000-8000-089eb962fdc5",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "created": false
         }
       ],
@@ -1174,7 +1174,7 @@
   "templates.postTemplatesByIdClone": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass"
+      "name": "Northwind Climbing"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
@@ -1394,7 +1394,7 @@
         {
           "kind": "event",
           "id": "0193a1b2-7c00-7000-8000-be042db9c03a",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "opensAt": 1795521600000,
           "closesAt": 1798113600000,
           "open": false,
@@ -1452,7 +1452,7 @@
       },
       "assets": [
         {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "slot": "logo",
           "scale": 1,
           "locale": "en-US",
@@ -1571,7 +1571,7 @@
       },
       "assets": [
         {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "sha1": "eb463e387cdd880820a1da5b7513ba8d498c7a0b"
         }
       ],
@@ -1605,7 +1605,7 @@
       },
       "assets": [
         {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "slot": "logo",
           "scale": 1,
           "locale": "en-US",
@@ -1687,7 +1687,7 @@
     },
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "version": {
         "passJson": {
           "formatVersion": 1,
@@ -1727,7 +1727,7 @@
         },
         "assets": [
           {
-            "name": "Day pass",
+            "name": "Northwind Climbing",
             "sha1": "3099a2091b1dcc923ba4d623f8a0ed6ebbf93ec1"
           }
         ]

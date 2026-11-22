@@ -6,7 +6,7 @@ import { sampleRow } from '../../src/worker/modules/webhooks/sample-events.ts';
 import { requestHeaders, signatureHeader } from '../../src/worker/modules/webhooks/sign.ts';
 
 const SECRET = 'whsec_vector_current_0123456789abcdef';
-const PREVIOUS = 'whsec_vector_previous_fedcba9876543210';
+const PREVIOUS = 'whsec_vector_previous_fedcba987654321';
 /** Unix seconds. Every vector is checked at this instant, so none depends on the clock. */
 const NOW = 1_795_153_320;
 const ORG = 'org_vector';

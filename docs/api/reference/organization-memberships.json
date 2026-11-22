@@ -14,8 +14,8 @@
           "capabilities": ["org:read"],
           "createdAt": 1794322800000,
           "revokedAt": null,
-          "userName": "Day pass",
-          "userEmail": "ada@example.com"
+          "userName": "Sam Rivera",
+          "userEmail": "sam@example.com"
         }
       ],
       "nextCursor": "c1.4812"

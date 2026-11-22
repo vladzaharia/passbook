@@ -4,7 +4,7 @@
     "response": {
       "saved": [
         {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "columns": ["tier"],
           "plan": {
             "mapping": {
@@ -53,7 +53,7 @@
   "pass-imports.putPassImportsMappings": {
     "description": "Saves a named column mapping for a template. The same name replaces the earlier one; up to 20 are kept. Cell fixes are not saved.",
     "request": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "columns": ["tier"],
       "plan": {
         "mapping": {
@@ -94,7 +94,7 @@
     "response": {
       "saved": [
         {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "columns": ["tier"],
           "plan": {
             "mapping": {
@@ -145,7 +145,7 @@
     "response": {
       "saved": [
         {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "columns": ["tier"],
           "plan": {
             "mapping": {
@@ -1013,14 +1013,14 @@
           "state": "done",
           "result": "created",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "externalId": "0193a1b2-7c00-7000-8000-c880b42017cb",
+          "externalId": "booking_8841",
           "code": "NW7K2Q",
           "message": "The gym closes at 18:00 on 24 December.",
           "emailed": false,
           "changes": [
             {
               "key": "tier",
-              "label": "Day pass",
+              "label": "Northwind Climbing",
               "from": "Booking sheet",
               "to": "ada@example.com"
             }

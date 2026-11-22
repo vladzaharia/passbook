@@ -65,7 +65,7 @@ export const HEADLINE: Record<string, unknown> = {
   },
   'status.getStatus response': {
     overall: 'verified',
-    build: { id: '2026-11-24.1', tag: 'v2026.11.24', timestamp: new Date(T.created).toISOString() },
+    build: { id: '2026-11-24.1', tag: 'v2026.11.24', timestamp: new Date(T.recent).toISOString() },
     components: [
       ['database', 'database', 'Database', 'verified', null],
       ['storage', 'storage', 'File storage', 'verified', null],

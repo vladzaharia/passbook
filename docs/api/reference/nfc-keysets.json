@@ -5,7 +5,7 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-6ebe432fe383",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "slug": "eda1b2cf",
           "diversify": false,
           "perTag": false,
@@ -29,13 +29,13 @@
   "nfc-keysets.postNfcKeysets": {
     "description": "Creates a tag keyset.",
     "request": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "diversify": false,
       "generate": true
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-c90884bba23a",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "slug": "878bae82",
       "diversify": false,
       "perTag": false,
@@ -64,7 +64,7 @@
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-80ff2c4b2620",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "slug": "bcd5c72d",
       "diversify": false,
       "perTag": false,
@@ -90,7 +90,7 @@
     "description": "Retires an old key version.",
     "response": {
       "id": "0193a1b2-7c00-7000-8000-da98da6257e8",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "slug": "6104ec23",
       "diversify": false,
       "perTag": false,
@@ -112,7 +112,7 @@
     "description": "Revokes a key version. Tags on it must be written again.",
     "response": {
       "id": "0193a1b2-7c00-7000-8000-924d43bf2a9e",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "slug": "92e661ef",
       "diversify": false,
       "perTag": false,
@@ -140,7 +140,7 @@
       "ownKey": 17,
       "keyset": {
         "id": "0193a1b2-7c00-7000-8000-a27ef7dc6bd8",
-        "name": "Day pass",
+        "name": "Northwind Climbing",
         "slug": "53658f1d",
         "diversify": false,
         "perTag": false,
@@ -184,7 +184,7 @@
     "description": "Disables a keyset.",
     "response": {
       "id": "0193a1b2-7c00-7000-8000-350ae7ad43f7",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "slug": "889afe6b",
       "diversify": false,
       "perTag": false,

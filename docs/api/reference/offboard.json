@@ -3,7 +3,7 @@
     "description": "Offboards a person: voids or removes their passes and lets go of their tags.",
     "request": {
       "holderEmail": "ada@example.com",
-      "externalId": "0193a1b2-7c00-7000-8000-7e9606b21c74",
+      "externalId": "booking_8841",
       "passes": "void"
     },
     "response": {

@@ -124,7 +124,7 @@
       "live": [
         {
           "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "arrived": 4,
           "expected": 10,
           "ratePerMin": 19
@@ -265,7 +265,7 @@
       "live": [
         {
           "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "arrived": 4,
           "expected": 10,
           "ratePerMin": 19
@@ -311,7 +311,7 @@
       "templates": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "issued": 32,
           "added": 37,
           "removed": 7,

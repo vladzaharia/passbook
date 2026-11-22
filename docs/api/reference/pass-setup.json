@@ -301,7 +301,7 @@
           "id": "0193a1b2-7c00-7000-8000-c502b02d035c",
           "provider": "apple",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "label": "Day pass",
+          "label": "Northwind Climbing",
           "identifier": "pass.mobile.passbook.northwind",
           "kind": "platform",
           "status": "active",
@@ -337,7 +337,7 @@
       "templates": [
         {
           "id": "0193a1b2-7c00-7000-8000-19da33726412",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "ownBrand": ["colors"],
           "placeholders": ["logo"],
           "channels": {
@@ -401,7 +401,7 @@
     "request": {
       "expectedRevision": "4",
       "brand": {
-        "name": "Day pass",
+        "name": "Northwind Climbing",
         "logo": {
           "sha": "d5d705ca576254bf7ea60c287f5c830178058ba455a678d68b7874cdff9a9d8e",
           "version": "b78bdcd5b6412c478d2a89e1c1296e3d617e3323c1c49c7d2c2bd73396dad792"
@@ -714,7 +714,7 @@
             "id": "0193a1b2-7c00-7000-8000-bbd56be0f791",
             "provider": "apple",
             "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-            "label": "Day pass",
+            "label": "Northwind Climbing",
             "identifier": "pass.mobile.passbook.northwind",
             "kind": "platform",
             "status": "active",
@@ -750,7 +750,7 @@
         "templates": [
           {
             "id": "0193a1b2-7c00-7000-8000-a1d8aed1fc7a",
-            "name": "Day pass",
+            "name": "Northwind Climbing",
             "ownBrand": ["colors"],
             "placeholders": ["logo"],
             "channels": {

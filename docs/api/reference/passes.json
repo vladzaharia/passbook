@@ -244,7 +244,7 @@
         "validUntil": "2026-12-31"
       },
       "templateVersion": "3",
-      "externalId": "0193a1b2-7c00-7000-8000-1ab96d5bf47b"
+      "externalId": "booking_8841"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -484,7 +484,7 @@
       "items": [
         {
           "id": "northwind",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "filter": {
             "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
             "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
@@ -494,7 +494,7 @@
             "holderState": "unassigned",
             "onDevice": false,
             "q": "ada",
-            "externalId": "0193a1b2-7c00-7000-8000-853d780637ae",
+            "externalId": "booking_8841",
             "scan": {
               "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
               "checkedIn": false
@@ -517,7 +517,7 @@
       "items": [
         {
           "id": "northwind",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "filter": {
             "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
             "connectionId": "0193a1b2-7c00-7000-8000-000000000051"
@@ -531,7 +531,7 @@
       "items": [
         {
           "id": "northwind",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "filter": {
             "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
             "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
@@ -541,7 +541,7 @@
             "holderState": "unassigned",
             "onDevice": false,
             "q": "ada",
-            "externalId": "0193a1b2-7c00-7000-8000-023ba20d1e2a",
+            "externalId": "booking_8841",
             "scan": {
               "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
               "checkedIn": false
@@ -883,7 +883,7 @@
     "response": {
       "items": [
         {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "sha1": "36a6fa302bb8a6a922a40706c5979a18539b8cbb",
           "size": 24576,
           "width": 320,
@@ -897,7 +897,7 @@
   "passes.putPassesByIdAssetsByName": {
     "description": "Uploads an image override for one pass as a PNG body.",
     "response": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "sha1": "aa33425fc53ed42f8938c49d5550cf7bc12f3796",
       "size": 24576,
       "width": 320,
@@ -1294,7 +1294,7 @@
           {
             "kind": "event",
             "id": "0193a1b2-7c00-7000-8000-75a9665dea0f",
-            "name": "Day pass",
+            "name": "Northwind Climbing",
             "opensAt": 1795521600000,
             "closesAt": 1798113600000,
             "open": false,
@@ -1409,7 +1409,7 @@
           {
             "kind": "event",
             "id": "0193a1b2-7c00-7000-8000-b04e13de3432",
-            "name": "Day pass",
+            "name": "Northwind Climbing",
             "opensAt": 1795521600000,
             "closesAt": 1798113600000,
             "open": false,
@@ -1536,7 +1536,7 @@
           {
             "kind": "event",
             "id": "0193a1b2-7c00-7000-8000-4485f6ce3565",
-            "name": "Day pass",
+            "name": "Northwind Climbing",
             "opensAt": 1795521600000,
             "closesAt": 1798113600000,
             "open": false,

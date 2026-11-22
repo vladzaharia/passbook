@@ -27,7 +27,7 @@ const pkcs8 = generateKeyPairSync('ec', { namedCurve: 'prime256v1' })
   .toString('base64');
 
 /** Each case is a value in the context the key rule reads; `reported` is what the config must do with it. */
-const cases: { name: string; value: string; reported: boolean }[] = [
+const cases: { name: string; value: string; reported: boolean; bare?: boolean }[] = [
   {
     name: 'demo-key-secret',
     value: `pb_test_k3Qx9Zt2_northwind-demo-key-do-not-use-${hex(12)}`,
@@ -48,6 +48,38 @@ const cases: { name: string; value: string; reported: boolean }[] = [
   { name: 'real-key-other-prefix', value: `pb_test_${rand(8)}_${rand(43)}`, reported: true },
   { name: 'rotation-type-with-tail', value: `ApiKeyRotationKey7${rand(24)}`, reported: true },
   { name: 'hex-with-tail', value: `00112233445566778899aabbccddeeff${rand(24)}`, reported: true },
+  // Our own key formats are found by custom rules with no stopwords and no `key =` context.
+  {
+    name: 'key-demo-in-tail',
+    value: `pb_test_${rand(8)}_${rand(14)}demo${rand(25)}`,
+    reported: true,
+  },
+  {
+    name: 'key-example-in-tail',
+    value: `pb_live_${rand(8)}_${rand(14)}example${rand(22)}`,
+    reported: true,
+  },
+  { name: 'live-key-bare', value: `pb_live_${rand(8)}_${rand(43)}`, reported: true, bare: true },
+  { name: 'scanner-token-bare', value: `wls_${rand(8)}_${rand(43)}`, reported: true, bare: true },
+  { name: 'webhook-32-bare', value: `whsec_${rand(32)}`, reported: true, bare: true },
+  {
+    name: 'webhook-32-demo-tail',
+    value: `whsec_${rand(10)}demo${rand(18)}`,
+    reported: true,
+    bare: true,
+  },
+  {
+    name: 'demo-key-bare',
+    value: `pb_test_k3Qx9Zt2_northwind-demo-key-do-not-use-${hex(12)}`,
+    reported: false,
+    bare: true,
+  },
+  {
+    name: 'demo-webhook-bare',
+    value: `whsec_demo_northwind_${hex(6)}`,
+    reported: false,
+    bare: true,
+  },
   { name: 'passphrase-slug', value: 'correct-horse-battery-staple-v3', reported: true },
   {
     name: 'public-key-with-junk',
@@ -58,9 +90,9 @@ const cases: { name: string; value: string; reported: boolean }[] = [
   { name: 'plain-secret', value: rand(40), reported: true },
 ];
 
-// gitleaks' own stopwords (demo, example, test...) already ignore a finding that contains one, so a real tail after
-// the `whsec_demo_` or `demo-token-` shapes cannot be probed with the binary. For those the pin is structural:
-// every allowlist regex must be anchored, which is what makes "contains the shape" not enough.
+// gitleaks' default rules skip a finding that contains a stopword (demo, example...), so the demo-word shapes
+// are protected only by the custom passbook-* rules, which have none; the cases above probe those. The pin here
+// is structural as well: every allowlist regex must be anchored, so "contains the shape" is not enough.
 const unanchored = [
   ...readFileSync(join(root, '.gitleaks.toml'), 'utf8').matchAll(/^\s*'''(.*)''',?\s*$/gm),
 ]
@@ -76,7 +108,11 @@ const dir = mkdtempSync(join(tmpdir(), 'gitleaks-allowlist-'));
 const report = join(dir, 'report.json');
 const cases_dir = join(dir, 'cases');
 mkdirSync(cases_dir);
-for (const c of cases) writeFileSync(join(cases_dir, `${c.name}.txt`), `api_key = "${c.value}"\n`);
+for (const c of cases)
+  writeFileSync(
+    join(cases_dir, `${c.name}.txt`),
+    c.bare ? `Authorization: Bearer ${c.value}\n` : `api_key = "${c.value}"\n`,
+  );
 
 const run = spawnSync(
   bin,

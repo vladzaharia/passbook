@@ -87,7 +87,7 @@ const KIND_KEYS: Record<string, string> = {
 };
 
 /** A name for a field that is not a person. */
-function nameFor(key: string, kind: string): string {
+function nameFor(key: string, kind: string, path = ''): string {
   if (/^(org|organization)Name$/.test(key)) return ORG;
   if (/template/i.test(key)) return NAMES.template as string;
   if (/scanner|device/i.test(key))
@@ -95,7 +95,11 @@ function nameFor(key: string, kind: string): string {
   if (/event/i.test(key)) return NAMES.event as string;
   if (/zone|place/i.test(key)) return NAMES.zone as string;
   if (/key/i.test(key)) return NAMES.key as string;
-  return (NAMES[kind] as string) ?? 'Day pass';
+  // Only the template is called "Day pass"; everything else takes its name from the world.
+  if (/\.type\b|tagType/i.test(path)) return 'Wristband';
+  if (/sandbox/i.test(path)) return 'Northwind sandbox';
+  if (/user|session|member|owner/i.test(path)) return NAMES.user as string;
+  return (NAMES[kind] as string) ?? (kind === 'row' ? ORG : 'Day pass');
 }
 
 /** The string for a field, or undefined when no rule applies. */
@@ -356,6 +360,8 @@ function contextString(key: string, kind: string, path: string, ctx: Ctx): strin
       return 'read';
     case 'alias':
       return 'daypass';
+    case 'reason':
+      return /Apns/.test(ctx.op) ? 'BadDeviceToken' : undefined;
     case 'actionId':
     case 'defaultActionId':
       return 'admit';
@@ -377,7 +383,7 @@ function nameField(key: string, kind: string, path: string): string | undefined 
     return key === 'subtitle' ? 'Ada Example' : 'Sam Rivera';
   if (/^subtitle$/.test(key)) return 'Ada Example';
   if (/^(ownerName)$/.test(key)) return 'Ada Example';
-  return nameFor(key, kind);
+  return nameFor(key, kind, path);
 }
 
 const PREFER = [
@@ -559,7 +565,12 @@ export function sample(
     case 'object':
       return object(ctx, s, key, path, subKind, depth);
     default:
-      return {};
+      // A field with no declared type: a scalar for a setting, a small real object for an audit detail.
+      return key === 'detail'
+        ? { externalId: 'booking_8841' }
+        : /^(value|default)$/.test(key)
+          ? 'standard'
+          : {};
   }
 }
 
@@ -649,9 +660,11 @@ function str(ctx: Ctx, s: Json, key: string, path: string, kind: string): string
       /Until|After|expires|due|Before/.test(key) ? T.validUntil : T.recent,
     ).toISOString();
   if (f === 'date') return '2026-12-01';
+  if (key === 'externalId') return 'booking_8841';
   if (/Field$/.test(key)) return contextString(key, kind, path, ctx) ?? '/Holder email';
   if (f === 'email' || /email/i.test(key))
-    return /host|staff|admin/i.test(key)
+    return /host|staff|admin/i.test(key) ||
+      (/user|owner|member/i.test(path) && !/holder/i.test(path))
       ? 'sam@example.com'
       : /support|help/i.test(key)
         ? 'help@example.com'
@@ -856,6 +869,20 @@ function fixState(out: Json, props: Json, op: string): void {
     out.path = out.route;
     if ('code' in out) out.code = out.status >= 400 ? 'VALIDATION' : null;
   }
+  if (out.outcome === 'unchanged')
+    for (const k of Object.keys(out))
+      if (/^passes/.test(k) && typeof out[k] === 'number') out[k] = 0;
+  if (typeof out.records === 'number' && out.counts && typeof out.counts === 'object') {
+    const c = out.counts as Record<string, unknown>;
+    out.records = ['create', 'update', 'unchanged', 'skipped', 'errors'].reduce(
+      (n, k) => n + (typeof c[k] === 'number' ? (c[k] as number) : 0),
+      0,
+    );
+    if (typeof out.detail === 'string' && out.detail.startsWith('Read '))
+      out.detail = `Read ${out.records} records from the sheet.`;
+  }
+  if (typeof out.downloadUrl === 'string' && typeof out.id === 'string')
+    out.downloadUrl = `${SITE}/p/${out.id}.pkpass`;
   // A start is before its end.
   for (const [k, v] of Object.entries(out)) {
     const m = /^(.*?)(From|Start|Starts|Opens|Since)(At)?$/i.exec(k);

@@ -6,7 +6,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-cfc0b3bb8737",
           "system": "uid",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "use": "member",
           "scopes": "pass",
           "perPass": 4,
@@ -27,7 +27,7 @@
   "nfc-tags.postNfcTagTypes": {
     "description": "Creates a tag type.",
     "request": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "use": "member",
       "scopes": "pass",
       "perPass": 4,
@@ -36,7 +36,7 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-6cae2a1c9566",
       "system": "uid",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "use": "member",
       "scopes": "pass",
       "perPass": 4,
@@ -55,14 +55,14 @@
     "description": "Changes a tag type. Send the version you read.",
     "request": {
       "version": 3,
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "use": "member",
       "scopes": "pass"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-842df6c2c9ea",
       "system": "uid",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "use": "member",
       "scopes": "pass",
       "perPass": 4,
@@ -85,7 +85,7 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-d68e97300c5c",
       "system": "uid",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "use": "member",
       "scopes": "pass",
       "perPass": 4,
@@ -112,12 +112,12 @@
       "system": "uid",
       "type": {
         "id": "0193a1b2-7c00-7000-8000-3f480fddfed5",
-        "name": "Day pass",
+        "name": "Wristband",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "7559",
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -135,7 +135,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -155,12 +155,12 @@
       "system": "uid",
       "type": {
         "id": "0193a1b2-7c00-7000-8000-eca0e2a0f275",
-        "name": "Day pass",
+        "name": "Wristband",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "3856",
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -178,7 +178,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -188,7 +188,7 @@
   },
   "nfc-tags.patchNfcTagsById": {
     "request": {
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "pool": false
     },
     "response": {
@@ -198,12 +198,12 @@
       "system": "uid",
       "type": {
         "id": "0193a1b2-7c00-7000-8000-efbcaa6386d6",
-        "name": "Day pass",
+        "name": "Wristband",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "FB0A",
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -221,7 +221,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -234,8 +234,8 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-72f29278da35",
-          "name": "Day pass",
-          "sessionName": "Day pass",
+          "name": "Northwind Climbing",
+          "sessionName": "Sam Rivera",
           "role": "door",
           "online": false,
           "unavailable": "offline",
@@ -273,7 +273,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -288,7 +288,7 @@
       "id": "0193a1b2-7c00-7000-8000-811c34ab2abe",
       "format": "hex",
       "binding": "pass",
-      "label": "Day pass"
+      "label": "Northwind Climbing"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-811c34ab2abe",
@@ -297,12 +297,12 @@
       "system": "uid",
       "type": {
         "id": "0193a1b2-7c00-7000-8000-fc556adb1e99",
-        "name": "Day pass",
+        "name": "Wristband",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "D701",
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -320,7 +320,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -342,7 +342,7 @@
           "source": "scanner",
           "lent": false,
           "boundAt": 1795521600000,
-          "boundByName": "Day pass",
+          "boundByName": "Northwind Climbing",
           "scannerName": "Front desk",
           "expiresAt": 1798124400000,
           "endedAt": 1795521600000,
@@ -354,7 +354,7 @@
         {
           "at": 1795521600000,
           "action": "lost",
-          "actorName": "Day pass"
+          "actorName": "Northwind Climbing"
         }
       ]
     }
@@ -369,12 +369,12 @@
           "system": "uid",
           "type": {
             "id": "0193a1b2-7c00-7000-8000-1c298298191d",
-            "name": "Day pass",
+            "name": "Wristband",
             "use": "member"
           },
           "assurance": "basic",
           "hint": "B98B",
-          "label": "Day pass",
+          "label": "Northwind Climbing",
           "pool": false,
           "status": "active",
           "state": "assigned",
@@ -392,7 +392,7 @@
             "source": "scanner",
             "lent": false,
             "boundAt": 1795521600000,
-            "boundByName": "Day pass",
+            "boundByName": "Northwind Climbing",
             "scannerName": "Front desk",
             "expiresAt": 1798124400000,
             "endedAt": 1795521600000,
@@ -411,12 +411,12 @@
       "system": "uid",
       "type": {
         "id": "0193a1b2-7c00-7000-8000-801fae1e7c26",
-        "name": "Day pass",
+        "name": "Wristband",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "1260",
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -434,7 +434,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -452,12 +452,12 @@
           "system": "uid",
           "type": {
             "id": "0193a1b2-7c00-7000-8000-27167bc88f69",
-            "name": "Day pass",
+            "name": "Wristband",
             "use": "member"
           },
           "assurance": "basic",
           "hint": "A7E2",
-          "label": "Day pass",
+          "label": "Northwind Climbing",
           "pool": false,
           "status": "active",
           "state": "assigned",
@@ -475,7 +475,7 @@
             "source": "scanner",
             "lent": false,
             "boundAt": 1795521600000,
-            "boundByName": "Day pass",
+            "boundByName": "Northwind Climbing",
             "scannerName": "Front desk",
             "expiresAt": 1798124400000,
             "endedAt": 1795521600000,
@@ -494,12 +494,12 @@
       "system": "uid",
       "type": {
         "id": "0193a1b2-7c00-7000-8000-1c808876e2d1",
-        "name": "Day pass",
+        "name": "Wristband",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "081D",
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -517,7 +517,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -533,12 +533,12 @@
       "system": "uid",
       "type": {
         "id": "0193a1b2-7c00-7000-8000-0471d1ffdc45",
-        "name": "Day pass",
+        "name": "Wristband",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "5D8B",
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "pool": false,
       "status": "retired",
       "state": "retired",
@@ -556,7 +556,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -572,12 +572,12 @@
       "system": "uid",
       "type": {
         "id": "0193a1b2-7c00-7000-8000-fe597d0e6388",
-        "name": "Day pass",
+        "name": "Wristband",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "2CB1",
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -595,7 +595,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -611,12 +611,12 @@
       "system": "uid",
       "type": {
         "id": "0193a1b2-7c00-7000-8000-8e48009b9c0d",
-        "name": "Day pass",
+        "name": "Wristband",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "E938",
-      "label": "Day pass",
+      "label": "Northwind Climbing",
       "pool": false,
       "status": "active",
       "state": "lost",
@@ -634,7 +634,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -665,7 +665,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -698,7 +698,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Day pass",
+        "boundByName": "Northwind Climbing",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -718,12 +718,12 @@
           "system": "uid",
           "type": {
             "id": "0193a1b2-7c00-7000-8000-edccb75dc99b",
-            "name": "Day pass",
+            "name": "Wristband",
             "use": "member"
           },
           "assurance": "basic",
           "hint": "9578",
-          "label": "Day pass",
+          "label": "Northwind Climbing",
           "pool": false,
           "status": "active",
           "state": "assigned",
@@ -741,7 +741,7 @@
             "source": "scanner",
             "lent": false,
             "boundAt": 1795521600000,
-            "boundByName": "Day pass",
+            "boundByName": "Northwind Climbing",
             "scannerName": "Front desk",
             "expiresAt": 1798124400000,
             "endedAt": 1795521600000,

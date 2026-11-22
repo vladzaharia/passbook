@@ -329,8 +329,24 @@ function invariantFailures(o: Json, at: string): string[] {
     out.push(`${at}: recordsFailed (${failed}) exceeds recordsSeen (${seen})`);
   if (o.outcome === 'unchanged')
     for (const [k, v] of entries)
-      if (/Changed$/.test(k) && typeof v === 'number' && v !== 0)
+      if (/(Changed|Created|Voided|Updated|Removed)$/.test(k) && typeof v === 'number' && v !== 0)
         out.push(`${at}: ${k} is ${v} on an unchanged run`);
+  if (typeof o.records === 'number' && o.counts && typeof o.counts === 'object') {
+    const c = o.counts as Json;
+    const sum = ['create', 'update', 'unchanged', 'skipped', 'errors'].reduce(
+      (n, k) => n + (typeof c[k] === 'number' ? (c[k] as number) : 0),
+      0,
+    );
+    if (sum !== o.records) out.push(`${at}: counts add up to ${sum}, not records ${o.records}`);
+  }
+  for (const k of ['value', 'default', 'detail', 'data'])
+    if (
+      o[k] &&
+      typeof o[k] === 'object' &&
+      !Array.isArray(o[k]) &&
+      Object.keys(o[k] as Json).length === 0
+    )
+      out.push(`${at}.${k}: is an empty object`);
   const total = num(o.total);
   if (total !== undefined) {
     const parts = entries.filter(

@@ -6,7 +6,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-cadb3ad26eec",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "role": "door",
           "pinSetAt": 1795521600000,
           "pinResetRequired": false,
@@ -29,7 +29,7 @@
     "description": "Creates a staff member and reveals their PIN once.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "role": "door"
     },
     "response": {
@@ -55,14 +55,14 @@
   "scan-staff.patchScanStaffById": {
     "description": "Updates or disables a staff member.",
     "request": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "role": "door",
       "disabled": false
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-15934c47c5ba",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "role": "door",
       "pinSetAt": 1795521600000,
       "pinResetRequired": false,
@@ -86,7 +86,7 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-ff40e2fdeb42",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "role": "door",
       "pinSetAt": 1795521600000,
       "pinResetRequired": false,

@@ -105,7 +105,7 @@
       "replay": false,
       "action": {
         "id": "0193a1b2-7c00-7000-8000-09a938cc6289",
-        "label": "Day pass",
+        "label": "Northwind Climbing",
         "kind": "check_in"
       },
       "card": {
@@ -121,11 +121,11 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "version": 3,
         "mode": "live",
-        "title": "Day pass",
+        "title": "Northwind Climbing",
         "subtitle": "Ada Example",
         "template": {
           "id": "0193a1b2-7c00-7000-8000-e9b9c3776a02",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "style": "generic"
         },
         "status": "active",
@@ -133,7 +133,7 @@
         "validUntil": 1798124400000,
         "flags": [
           {
-            "label": "Day pass",
+            "label": "Northwind Climbing",
             "tone": "warning",
             "stop": false
           }
@@ -141,7 +141,7 @@
         "values": [
           {
             "input": "tier",
-            "label": "Day pass",
+            "label": "Northwind Climbing",
             "before": {},
             "after": {},
             "goal": 6,
@@ -154,7 +154,7 @@
         "actions": [
           {
             "id": "0193a1b2-7c00-7000-8000-a5ef4de40dbf",
-            "label": "Day pass",
+            "label": "Northwind Climbing",
             "kind": "check_in",
             "available": false,
             "lock": "role",
@@ -169,7 +169,7 @@
             "rewardLabel": "Free day pass",
             "input": {
               "type": "string",
-              "label": "Day pass",
+              "label": "Northwind Climbing",
               "min": 12,
               "max": 2,
               "step": 39,
@@ -193,7 +193,7 @@
           },
           "header": {
             "icon": "user",
-            "title": "Day pass",
+            "title": "Northwind Climbing",
             "titleLines": 1,
             "meta": "Northwind",
             "chips": [
@@ -209,7 +209,7 @@
             {
               "id": "0193a1b2-7c00-7000-8000-7afee90dc3f9",
               "kind": "membership",
-              "title": "Day pass",
+              "title": "Northwind Climbing",
               "icon": "user",
               "tone": "neutral",
               "rows": [
@@ -239,7 +239,7 @@
         ],
         "bundle": {
           "id": "0193a1b2-7c00-7000-8000-b61c6e6fdfd1",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "size": 24576,
           "checkedIn": 34,
           "members": [
@@ -256,12 +256,12 @@
         "access": {
           "plan": {
             "id": "0193a1b2-7c00-7000-8000-39497a4439f9",
-            "label": "Day pass",
+            "label": "Northwind Climbing",
             "kind": "always"
           },
           "zone": {
             "id": "0193a1b2-7c00-7000-8000-920a4ae1ddc2",
-            "name": "Day pass"
+            "name": "Northwind Climbing"
           },
           "closesAt": 1795521600000,
           "nextOpenAt": 1795521600000,
@@ -276,7 +276,7 @@
           "hint": "15E2",
           "assurance": "basic",
           "system": "uid",
-          "typeName": "Day pass",
+          "typeName": "Northwind Climbing",
           "scope": "pass",
           "count": 8,
           "passes": [
@@ -292,7 +292,7 @@
           "place": {
             "kind": "zone",
             "id": "0193a1b2-7c00-7000-8000-8e7c11177dbd",
-            "name": "Day pass"
+            "name": "Northwind Climbing"
           },
           "direction": "in",
           "auto": false,
@@ -305,14 +305,14 @@
           "turnaround": null,
           "parent": {
             "id": "0193a1b2-7c00-7000-8000-dbaa74f508e1",
-            "name": "Day pass"
+            "name": "Northwind Climbing"
           }
         },
         "passView": {
           "passJson": {},
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
           "assetGrant": "logo",
-          "assetNames": ["Day pass"]
+          "assetNames": ["Northwind Climbing"]
         }
       },
       "previous": {
@@ -324,18 +324,18 @@
         "override": false
       },
       "event": {
-        "name": "Day pass",
+        "name": "Northwind Climbing",
         "startsAt": 1795521600000
       },
       "template": {
-        "name": "Day pass",
+        "name": "Northwind Climbing",
         "style": "generic"
       },
       "at": 1795521600000,
       "cooldownRemainingMs": 1715,
       "value": {
         "input": "tier",
-        "label": "Day pass",
+        "label": "Northwind Climbing",
         "before": {},
         "after": {},
         "goal": 6,
@@ -363,7 +363,7 @@
       },
       "bundle": {
         "id": "0193a1b2-7c00-7000-8000-00c3f1d06ee6",
-        "name": "Day pass",
+        "name": "Northwind Climbing",
         "size": 24576,
         "checkedIn": 34,
         "members": [
@@ -384,14 +384,14 @@
           "capacity": 38
         },
         "place": {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "inNow": 8,
           "capacity": 38
         },
         "byType": [
           {
             "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-            "name": "Day pass",
+            "name": "Northwind Climbing",
             "count": 12
           }
         ],
@@ -403,12 +403,12 @@
       "access": {
         "plan": {
           "id": "0193a1b2-7c00-7000-8000-d02ff5614048",
-          "label": "Day pass",
+          "label": "Northwind Climbing",
           "kind": "always"
         },
         "zone": {
           "id": "0193a1b2-7c00-7000-8000-e310b656d2f4",
-          "name": "Day pass"
+          "name": "Northwind Climbing"
         },
         "closesAt": 1795521600000,
         "nextOpenAt": 1795521600000,
@@ -431,7 +431,7 @@
         "hint": "C50F",
         "assurance": "basic",
         "system": "uid",
-        "typeName": "Day pass",
+        "typeName": "Northwind Climbing",
         "scope": "pass",
         "count": 8,
         "passes": [
@@ -447,7 +447,7 @@
         "place": {
           "kind": "zone",
           "id": "0193a1b2-7c00-7000-8000-e9ccfde41b5f",
-          "name": "Day pass"
+          "name": "Northwind Climbing"
         },
         "direction": "in",
         "auto": false,
@@ -460,7 +460,7 @@
         "turnaround": null,
         "parent": {
           "id": "0193a1b2-7c00-7000-8000-a42f9bb811f8",
-          "name": "Day pass"
+          "name": "Northwind Climbing"
         }
       },
       "display": {
@@ -478,7 +478,7 @@
         },
         "header": {
           "icon": "user",
-          "title": "Day pass",
+          "title": "Northwind Climbing",
           "titleLines": 1,
           "meta": "Northwind",
           "chips": [
@@ -494,7 +494,7 @@
           {
             "id": "0193a1b2-7c00-7000-8000-e3b5cd87ca8a",
             "kind": "membership",
-            "title": "Day pass",
+            "title": "Northwind Climbing",
             "icon": "user",
             "tone": "neutral",
             "rows": [

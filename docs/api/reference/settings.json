@@ -5,8 +5,8 @@
         {
           "scope": "platform",
           "key": "tier",
-          "value": {},
-          "default": {},
+          "value": "standard",
+          "default": "standard",
           "source": "org",
           "ceiling": 24,
           "planBlocked": ["mobile"],
@@ -42,8 +42,8 @@
         {
           "scope": "platform",
           "key": "tier",
-          "value": {},
-          "default": {},
+          "value": "standard",
+          "default": "standard",
           "source": "org",
           "ceiling": 24,
           "planBlocked": ["mobile"],

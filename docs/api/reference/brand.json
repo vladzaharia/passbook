@@ -3,7 +3,7 @@
     "description": "The organization's brand kit: accent color, mark level and web logo.",
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accent": "#ffc400",
       "webLogo": {
         "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
@@ -27,8 +27,8 @@
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-9e56e8b2ba2a",
-      "slug": "day-pass",
-      "name": "Day pass",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
       "kind": "standard",
@@ -74,8 +74,8 @@
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-56996c38ccf5",
-      "slug": "day-pass",
-      "name": "Day pass",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
       "kind": "standard",
@@ -117,8 +117,8 @@
     "description": "Removes the web logo. The brand kit keeps its other settings.",
     "response": {
       "id": "0193a1b2-7c00-7000-8000-1d741e401ccd",
-      "slug": "day-pass",
-      "name": "Day pass",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
       "kind": "standard",

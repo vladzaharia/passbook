@@ -241,4 +241,24 @@ describe('exampleFailures', () => {
     const twice = { items: [{ id: UUID7, name: 'a' }], active: { id: UUID7, name: 'a' } };
     expect(run(twice)).toEqual([]);
   });
+
+  it('rejects an unchanged run that created things, counts that do not add up, and empty values', () => {
+    expect(run({ outcome: 'unchanged', passesCreated: 19 })).toEqual([
+      'a.getA response: passesCreated is 19 on an unchanged run',
+    ]);
+    expect(
+      run({
+        records: 35,
+        counts: { create: 15, update: 38, unchanged: 11, skipped: 7, errors: 0 },
+      }),
+    ).toEqual(['a.getA response: counts add up to 71, not records 35']);
+    expect(
+      run({ records: 10, counts: { create: 4, update: 3, unchanged: 2, skipped: 1, errors: 0 } }),
+    ).toEqual([]);
+    expect(run({ key: 'tier', value: {}, default: {} }).sort()).toEqual([
+      'a.getA response.default: is an empty object',
+      'a.getA response.value: is an empty object',
+    ]);
+    expect(run({ detail: { externalId: 'booking_8841' } })).toEqual([]);
+  });
 });

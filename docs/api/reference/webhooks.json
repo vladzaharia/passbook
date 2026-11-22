@@ -151,7 +151,7 @@
           "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
           "type": "pass.issued",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "externalId": "0193a1b2-7c00-7000-8000-6acd4049449c",
+          "externalId": "booking_8841",
           "state": "pending",
           "attempts": 1,
           "nextAt": 1795533000000,
@@ -171,7 +171,7 @@
       "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
       "type": "pass.issued",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "externalId": "0193a1b2-7c00-7000-8000-66998b12251b",
+      "externalId": "booking_8841",
       "state": "pending",
       "attempts": 1,
       "nextAt": 1795533000000,
@@ -199,7 +199,7 @@
         "mode": "live",
         "pass": {
           "id": "0193a1b2-7c00-7000-8000-bd14eafb244c",
-          "externalId": "0193a1b2-7c00-7000-8000-0c4167996ea0",
+          "externalId": "booking_8841",
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
         },
         "data": {

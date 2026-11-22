@@ -12,7 +12,7 @@
       ],
       "doors": [
         {
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "place": "northwind",
           "admits": {
             "any": true
@@ -28,11 +28,11 @@
         {
           "id": "0193a1b2-7c00-7000-8000-29650d0e4b08",
           "ref": "booking_8841",
-          "name": "Day pass",
+          "name": "Sam Rivera",
           "devices": [
             {
               "id": "0193a1b2-7c00-7000-8000-71f606d06020",
-              "name": "Day pass",
+              "name": "Sam Rivera",
               "pairing": {
                 "code": "NW7K2Q",
                 "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
@@ -47,7 +47,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-2da6a116b65a",
           "ref": "booking_8841",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "created": false
         }
       ],
@@ -55,7 +55,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-573ef07c57f4",
           "ref": "booking_8841",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "created": false
         }
       ],
@@ -92,7 +92,7 @@
   "scanners.patchScannersById": {
     "description": "Edits a scanner.",
     "request": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accepts": {
         "eventId": "0193a1b2-7c00-7000-8000-0000000000e1"
       },
@@ -110,7 +110,7 @@
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -172,7 +172,7 @@
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -238,7 +238,7 @@
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -296,7 +296,7 @@
     "description": "Creates a scanner. A device comes with a pairing code.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "kind": "device",
       "accepts": {
         "eventId": "0193a1b2-7c00-7000-8000-0000000000e1"
@@ -316,7 +316,7 @@
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -388,7 +388,7 @@
     "response": {
       "state": "paired",
       "device": {
-        "label": "Day pass",
+        "label": "Northwind Climbing",
         "at": 1795521600000
       }
     }
@@ -410,7 +410,7 @@
           "mode": "live",
           "kind": "device",
           "deviceRole": "scan",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "accepts": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
             "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -488,7 +488,7 @@
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -564,7 +564,7 @@
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "orgName": "Northwind Climbing",
           "mode": "live",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "status": "active",
           "accepts": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -650,7 +650,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "status": "active",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -728,7 +728,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-49979bf23195",
           "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "surface": "auto",
           "effectiveSurface": "phone",
           "overrides": {
@@ -852,7 +852,7 @@
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Day pass",
+          "title": "Northwind Climbing",
           "outcome": "ok",
           "direction": "in",
           "scanId": "0193a1b2-7c00-7000-8000-000000000043",
@@ -868,7 +868,7 @@
   "scanners.patchScanningSessionsById": {
     "description": "Updates the rules shared by a session's devices.",
     "request": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "timeZone": "America/Los_Angeles",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -880,7 +880,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "status": "active",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -958,7 +958,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-292f5016fbff",
           "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "surface": "auto",
           "effectiveSurface": "phone",
           "overrides": {
@@ -1082,7 +1082,7 @@
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Day pass",
+          "title": "Northwind Climbing",
           "outcome": "ok",
           "direction": "in",
           "scanId": "0193a1b2-7c00-7000-8000-000000000043",
@@ -1106,7 +1106,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "status": "active",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -1184,7 +1184,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-b5759d62c0c6",
           "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "surface": "auto",
           "effectiveSurface": "phone",
           "overrides": {
@@ -1308,7 +1308,7 @@
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Day pass",
+          "title": "Northwind Climbing",
           "outcome": "ok",
           "direction": "in",
           "scanId": "0193a1b2-7c00-7000-8000-000000000043",
@@ -1324,7 +1324,7 @@
   "scanners.patchScanningSessionsByIdDevicesByDeviceId": {
     "description": "Configures one device of a session.",
     "request": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "surface": "auto",
       "overrides": {
         "flow": "auto",
@@ -1334,7 +1334,7 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-a9aa8777a850",
       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "surface": "auto",
       "effectiveSurface": "phone",
       "overrides": {
@@ -1454,7 +1454,7 @@
   "scanners.postScanningSessionsByIdDevices": {
     "description": "Adds a device to a scanning session.",
     "request": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "surface": "auto",
       "overrides": {
         "flow": "auto",
@@ -1464,7 +1464,7 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-fc4006ba0a61",
       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "surface": "auto",
       "effectiveSurface": "phone",
       "overrides": {
@@ -1593,7 +1593,7 @@
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -1656,7 +1656,7 @@
           "mode": "live",
           "kind": "device",
           "deviceRole": "scan",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "accepts": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
             "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -1722,7 +1722,7 @@
   "scanners.postScanSetups": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "kind": "device",
       "deviceRole": "scan",
       "accepts": {
@@ -1736,7 +1736,7 @@
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -1810,7 +1810,7 @@
   },
   "scanners.patchScanSetupsById": {
     "request": {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "deviceRole": "scan",
       "accepts": {
         "eventId": "0193a1b2-7c00-7000-8000-0000000000e1"
@@ -1822,7 +1822,7 @@
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -1892,7 +1892,7 @@
   "scanners.postScanningSessions": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "timeZone": "America/Los_Angeles",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -1912,7 +1912,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
       "mode": "live",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "status": "active",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -1990,7 +1990,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-4d562fa0e440",
           "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "surface": "auto",
           "effectiveSurface": "phone",
           "overrides": {
@@ -2114,7 +2114,7 @@
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Day pass",
+          "title": "Northwind Climbing",
           "outcome": "ok",
           "direction": "in",
           "scanId": "0193a1b2-7c00-7000-8000-000000000043",
@@ -2139,7 +2139,7 @@
       "byAction": [
         {
           "actionId": "admit",
-          "label": "Day pass",
+          "label": "Northwind Climbing",
           "count": 12,
           "amount": 14
         }
@@ -2151,7 +2151,7 @@
       "byHour": [
         {
           "start": 37,
-          "label": "Day pass",
+          "label": "Northwind Climbing",
           "count": 12,
           "refused": 0
         }
@@ -2172,7 +2172,7 @@
       "byType": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-          "name": "Day pass",
+          "name": "Northwind Climbing",
           "count": 12
         }
       ],
@@ -2206,7 +2206,7 @@
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
