@@ -7,12 +7,13 @@ import { stoppedAuditPass } from './act-attempt-audit.ts';
 import { chooseAction } from './act-choose.ts';
 import { type ActRequest, claimOf } from './act-claim.ts';
 import {
+  admitsCheckIn,
   checkOverride,
+  commitsExit,
   invalid,
   type Override,
-  pickAction,
+  pickFor,
   StaleScanAuthority,
-  tapsOut,
 } from './act-override.ts';
 import { planActionReads } from './act-read-plan.ts';
 import { ScanAttemptRaced } from './act-stale-refusal.ts';
@@ -94,15 +95,8 @@ export async function attempt(
     {
       candidateRead: { candidates },
       prepareReads: reads.prepare,
-      admits: (found) => {
-        const picked = pickAction(actor, found.scan, req.actionId, tapsOut(req, found));
-        return !picked || picked === 'choose' || picked.kind === 'check_in';
-      },
-      // OC4: only a concrete check-in action can commit a tap-out of a voided or ended pass.
-      commitsExit: (found) => {
-        const picked = pickAction(actor, found.scan, req.actionId, tapsOut(req, found));
-        return !!picked && picked !== 'choose' && picked.kind === 'check_in';
-      },
+      admits: (found) => admitsCheckIn(actor, found, req),
+      commitsExit: (found) => commitsExit(actor, found, req),
     },
   );
   invalidFound = evaluated.found;
@@ -238,7 +232,7 @@ export async function attempt(
       found.activePolicy,
     );
   reads.bind(actor, found);
-  const picked = pickAction(actor, found.scan, req.actionId, tapsOut(req, found));
+  const picked = pickFor(actor, found, req);
   if (picked === 'choose')
     return chooseAction({
       ctx,

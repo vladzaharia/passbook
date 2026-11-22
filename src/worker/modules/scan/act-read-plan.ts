@@ -1,6 +1,6 @@
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type ActRequest, historyCapacity } from './act-claim.ts';
-import { pickAction, StaleScanAuthority, tapsOut } from './act-override.ts';
+import { pickFor, StaleScanAuthority } from './act-override.ts';
 import {
   type ActionHistoryPreflight,
   type ActionPreflightReadPlan,
@@ -53,7 +53,7 @@ export function planActionReads(
       if (source) reads.history = { preloaded, source };
     },
     async prepare(found) {
-      const picked = pickAction(actor, found.scan, req.actionId, tapsOut(req, found));
+      const picked = pickFor(actor, found, req);
       const action = picked === 'choose' ? undefined : picked;
       const plan = action ? prepareCheckInReads(ctx, actor, found, action) : null;
       if (action && !plan) throw new StaleScanAuthority();
