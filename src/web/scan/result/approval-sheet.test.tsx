@@ -48,6 +48,9 @@ describe('Use manager code', () => {
     render(<ResultCard outcome={needs()} desk={desk({ code: false })} />);
     fireEvent.click(screen.getByRole('button', { name: 'Manager PIN' }));
     expect(screen.getByText('Manager')).toBeVisible();
+    expect(
+      screen.getByText('Add stamp needs a manager.', { selector: '.scan-approval-verb' }),
+    ).toBeVisible();
     expect(screen.queryByText('Manager code')).toBeNull();
   });
 

@@ -83,7 +83,9 @@ describe('the assign card', () => {
   });
   it('staff sign-in shows the move line beside the named manager', () => {
     show('assign-pin-staff');
-    expect(screen.getByText('Moving this tag from Leo Park to Maya Okafor')).toBeTruthy();
+    expect(
+      screen.getByText('Moving this tag from Leo Park to Maya Okafor needs a manager.'),
+    ).toBeTruthy();
     expect(screen.getByTestId('scan-approval').textContent).toContain('Manager');
   });
   it('a really lost tag says so', () => {

@@ -71,18 +71,15 @@ export function ApprovalSheet({
       }}
     >
       {code ? (
-        <>
-          <h2 className="scan-picker-title">
-            {desk ? SCAN_COPY.managerCode.titleDesk : SCAN_COPY.managerCode.title}
-          </h2>
-          <p className="scan-approval-verb">
-            {scanLine(desk ? SCAN_COPY.managerCode.verbDesk : SCAN_COPY.managerCode.verb, {
-              action: action ?? 'This action',
-            })}
-          </p>
-        </>
+        <h2 className="scan-picker-title">
+          {desk ? SCAN_COPY.managerCode.titleDesk : SCAN_COPY.managerCode.title}
+        </h2>
       ) : null}
-      {!code && action ? <p className="scan-approval-verb">{action}</p> : null}
+      {action ? (
+        <p className="scan-approval-verb">
+          {scanLine(desk ? SCAN_COPY.managerCode.verbDesk : SCAN_COPY.managerCode.verb, { action })}
+        </p>
+      ) : null}
       {named ? (
         <FormField label={desk ? SCAN_COPY.managerCode.approver : 'Manager'}>
           {(p) => (
