@@ -3,6 +3,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { GoogleWalletError } from './google-errors.ts';
 import {
+  type DerivedGoogleId,
   type GoogleClassScope,
   type GoogleObjectScope,
   googleClassId,
@@ -65,14 +66,14 @@ export async function upsertGoogleClass(
   type: GoogleType,
   scope: GoogleClassScope,
   projection: GoogleGenericProjection,
-): Promise<'created' | 'unchanged' | 'drift'> {
+): Promise<{ result: 'created' | 'unchanged' | 'drift'; classId: DerivedGoogleId }> {
   const body = copyGoogleProjection(projection);
   const resource = GOOGLE_RESOURCES[type].class;
   const id = await googleClassId(ctx.account.issuerId, ctx.objectIdHmacKey, { ...scope, type });
   const memo = `${resource}/${id}`;
   const digest = await sha256Hex(canonicalJson(body));
   const known = classDigests.get(memo);
-  if (known !== undefined) return known === digest ? 'unchanged' : 'drift';
+  if (known !== undefined) return { result: known === digest ? 'unchanged' : 'drift', classId: id };
   const remember = () => {
     if (classDigests.size >= MAX_KNOWN_CLASSES) {
       const oldest = classDigests.keys().next().value;
@@ -83,7 +84,7 @@ export async function upsertGoogleClass(
   try {
     await request(ctx, resource, 'POST', undefined, { ...body, id });
     remember();
-    return 'created';
+    return { result: 'created', classId: id };
   } catch (error) {
     if (!(error instanceof GoogleWalletError) || error.code !== 'conflict') throw error;
   }
@@ -92,7 +93,22 @@ export async function upsertGoogleClass(
   // What this isolate remembers is what Google holds, so a later body is compared with that.
   if (same) remember();
   else classDigests.set(memo, await sha256Hex(canonicalJson(content(held))));
-  return same ? 'unchanged' : 'drift';
+  return { result: same ? 'unchanged' : 'drift', classId: id };
+}
+
+/** A newer release's class body: PATCHed once; Google reviews it again (Q16, accepted). */
+export async function rewriteGoogleClass(
+  ctx: GoogleWalletRestContext,
+  type: GoogleType,
+  classId: DerivedGoogleId,
+  projection: GoogleGenericProjection,
+): Promise<void> {
+  const body = copyGoogleProjection(projection);
+  await request(ctx, GOOGLE_RESOURCES[type].class, 'PATCH', classId, body);
+  classDigests.set(
+    `${GOOGLE_RESOURCES[type].class}/${classId}`,
+    await sha256Hex(canonicalJson(body)),
+  );
 }
 
 export async function upsertGoogleObject(

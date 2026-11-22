@@ -3,6 +3,9 @@ import { runWalletProviderOperation } from '../modules/wallet-providers/sync-ope
 import type { WalletSyncRunResult } from '../modules/wallet-providers/sync-operation-context.ts';
 import { createJobContext, type ServiceContext } from '../platform/service-context.ts';
 
+/** The grant layer refuses every other purpose on this context: no purge, no closed-org work. */
+const FIRST_TAP_PURPOSES = ['org_mode.job.wallet.sync', 'org_mode.job.wallet.record'] as const;
+
 /**
  * A holder's first tap on Google builds the object itself, so the pass's pending upsert runs inside the
  * request. A request holds no job authority; the job context made here never leaves this function, and
@@ -16,17 +19,22 @@ import { createJobContext, type ServiceContext } from '../platform/service-conte
 export function runFirstTapUpsert(
   ctx: ServiceContext,
   operation: WalletOperation,
-  pass: { orgId: string; mode: 'live' | 'test' },
+  pass: { id: string; orgId: string; mode: 'live' | 'test' },
 ): Promise<WalletSyncRunResult> {
   if (
     operation.provider !== 'google' ||
     operation.kind !== 'upsert' ||
+    operation.passId !== pass.id ||
     operation.orgId !== pass.orgId ||
     operation.mode !== pass.mode
   )
     return Promise.reject(new Error('The first tap runs only the pass’s own Google upsert.'));
   const job: ServiceContext = {
-    ...createJobContext(ctx.env, 'wallet-first-tap', { clock: ctx.clock, log: ctx.log }),
+    ...createJobContext(ctx.env, 'wallet-first-tap', {
+      clock: ctx.clock,
+      log: ctx.log,
+      allowedPurposes: FIRST_TAP_PURPOSES,
+    }),
     ids: ctx.ids,
     requestId: ctx.requestId,
     waitUntil: ctx.waitUntil,

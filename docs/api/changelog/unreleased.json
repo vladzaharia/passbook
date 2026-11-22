@@ -904,6 +904,14 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
+    "key": "GET /api/v1/status/incidents operation removed",
+    "class": "breaking",
+    "operationId": "status.getStatusIncidents",
+    "op": "GET /api/v1/status/incidents",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/template-reviews new operation",
     "class": "additive",
     "operationId": "templates.getTemplateReviews",
@@ -2165,6 +2173,22 @@
     "note": "Callable with a live, org-bound nfc:keys key."
   },
   {
+    "key": "POST /api/v1/nfc/keysets/{id}/import 200.problems[].reason: enum value \"not_on_keyset\" removed",
+    "class": "breaking",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
+    "op": "POST /api/v1/nfc/keysets/{id}/import",
+    "change": "200.problems[].reason: enum value \"not_on_keyset\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/import body.replace: input field removed",
+    "class": "breaking",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
+    "op": "POST /api/v1/nfc/keysets/{id}/import",
+    "change": "body.replace: input field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/nfc/keysets/{id}/import callable by nfc:keys key",
     "class": "additive",
     "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
@@ -2731,6 +2755,22 @@
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "new operation",
     "note": "Set up scanning in one call: places, events, staff, sessions and devices."
+  },
+  {
+    "key": "POST /api/v1/status/incidents operation removed",
+    "class": "breaking",
+    "operationId": "status.postStatusIncidents",
+    "op": "POST /api/v1/status/incidents",
+    "change": "operation removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/status/incidents/{id}/resolve operation removed",
+    "class": "breaking",
+    "operationId": "status.postStatusIncidentsByIdResolve",
+    "op": "POST /api/v1/status/incidents/{id}/resolve",
+    "change": "operation removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/templates/{id}/archive 200.openReview: field added",

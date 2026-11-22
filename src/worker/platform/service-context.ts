@@ -82,11 +82,13 @@ export const isJobContext = (ctx: { job?: JobAuthority | undefined }): boolean =
 export function createJobContext(
   env: AppEnv,
   kind: string,
-  options: ContextOptions = {},
+  options: ContextOptions & { allowedPurposes?: readonly string[] } = {},
 ): ServiceContext {
+  const { allowedPurposes, ...rest } = options;
   return {
     ...withJobAuthority(
-      createDetachedContext(env, { ...options, base: { job: kind, ...options.base } }),
+      createDetachedContext(env, { ...rest, base: { job: kind, ...rest.base } }),
+      allowedPurposes,
     ),
     jobName: kind,
   };

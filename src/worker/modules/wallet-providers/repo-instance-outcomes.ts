@@ -26,6 +26,9 @@ export async function insertOutcome(
     envelope: Envelope;
     reason: WalletReasonCode;
     httpStatus: number | null;
+    /** What the response answered, when the caller knows (a Google revoke's confirmation needs a GET). */
+    method?: string;
+    stage?: string;
     now: number;
   },
 ): Promise<OutcomeReceipt> {
@@ -36,8 +39,8 @@ export async function insertOutcome(
     writePart(
       `INSERT OR IGNORE INTO wallet_provider_instance_outcomes
       (id, operation_id, attempt, sequence, event_hash, payload_hash, reason_code, http_status,
-       kek_version, iv, wrapped_dek, ciphertext, received_at)
-    SELECT ?, op.id, op.attempts, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       kek_version, iv, wrapped_dek, ciphertext, received_at, method, stage)
+    SELECT ?, op.id, op.attempts, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     FROM wallet_provider_instance_operations op JOIN wallet_provider_instances i ON i.id = op.instance_id
     WHERE i.id = ? AND i.org_id = {org} AND i.mode = {mode} AND i.provider = ? AND op.id = ?
       AND op.version = ? AND op.attempts = ? AND op.claim_hash = ? AND op.state IN ('claimed', 'uncertain')
@@ -56,6 +59,8 @@ export async function insertOutcome(
         p.envelope.wrappedDek,
         p.envelope.ciphertext,
         p.now,
+        p.method ?? null,
+        p.stage ?? null,
         p.instanceId,
         p.provider,
         p.operationId,

@@ -134,6 +134,7 @@ export const PURGE_KEEP: Readonly<Record<string, string>> = {
 export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
   apns_keys: 'platform push key',
   wallet_sa_keys: 'platform service-account key inventory',
+  wallet_google_classes: 'derived Google class ids and the release that wrote them; no tenant data',
   auth_identities: 'user sign-in',
   authority_grant_leaks: 'grant bookkeeping',
   counters: 'rate-limit windows',

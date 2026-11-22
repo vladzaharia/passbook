@@ -152,6 +152,8 @@ export async function recordWalletOperationOutcome(
     body: Uint8Array;
     reason: WalletReasonCode;
     httpStatus?: number;
+    method?: string;
+    stage?: string;
   },
 ): Promise<OutcomeReceipt> {
   ctx = snapshotWalletCredentialContext(ctx);

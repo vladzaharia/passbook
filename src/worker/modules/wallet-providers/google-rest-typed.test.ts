@@ -2,6 +2,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createMockWallets } from '../../../../test/mock-wallets/index.ts';
 import type { GoogleType } from '../../../passkit/wallets/google/types.ts';
+import { upsertClassForRelease } from './google-class-release.ts';
 import type { GoogleValidatedAccount } from './google-credentials.ts';
 import { GOOGLE_WALLET_SCOPE, validateGoogleAccount } from './google-credentials.ts';
 import { googleClassId, googleClassKeyDigest, googleObjectIds } from './google-ids.ts';
@@ -160,7 +161,9 @@ describe('per-type class and object upsert', () => {
       const ctx = await rest();
       const { classBody, objectBody } = BODIES[type];
       const classScope = { tenantId: scope.tenantId, releaseId: scope.releaseId };
-      expect(await upsertGoogleClass(ctx, type, classScope, classBody as never)).toBe('created');
+      expect((await upsertGoogleClass(ctx, type, classScope, classBody as never)).result).toBe(
+        'created',
+      );
       const objectScope = { ...scope, type };
       expect(await upsertGoogleObject(ctx, type, objectScope, objectBody as never)).toBe('created');
       const { classId, objectId } = await googleObjectIds(ISSUER, secret, objectScope);
@@ -199,24 +202,30 @@ describe('per-type class and object upsert', () => {
     const ctx = await rest();
     const { classBody } = BODIES.loyalty;
     const classScope = { tenantId: 't', releaseId: 'r' };
-    expect(await upsertGoogleClass(ctx, 'loyalty', classScope, classBody as never)).toBe('created');
+    expect((await upsertGoogleClass(ctx, 'loyalty', classScope, classBody as never)).result).toBe(
+      'created',
+    );
     const sent = () => mock.requests.filter((r) => r.path.includes('loyaltyClass')).length;
-    expect(await upsertGoogleClass(ctx, 'loyalty', classScope, classBody as never)).toBe(
+    expect((await upsertGoogleClass(ctx, 'loyalty', classScope, classBody as never)).result).toBe(
       'unchanged',
     );
     expect(sent()).toBe(1);
     // A fresh isolate: GET finds the class, Google has since approved it, and nothing is patched.
     clearGoogleClassMemo();
     for (const doc of mock.google.loyaltyClass.values()) doc.reviewStatus = 'APPROVED';
-    expect(await upsertGoogleClass(ctx, 'loyalty', classScope, classBody as never)).toBe(
+    expect((await upsertGoogleClass(ctx, 'loyalty', classScope, classBody as never)).result).toBe(
       'unchanged',
     );
     expect(mock.requests.filter((r) => r.method === 'PATCH')).toEqual([]);
     // A changed body is drift: the class is kept as it is, never patched, so a second pass of the key
     // cannot rewrite it (or send it back through review).
     const changed = { ...classBody, programName: 'Club 2' };
-    expect(await upsertGoogleClass(ctx, 'loyalty', classScope, changed as never)).toBe('drift');
-    expect(await upsertGoogleClass(ctx, 'loyalty', classScope, changed as never)).toBe('drift');
+    expect((await upsertGoogleClass(ctx, 'loyalty', classScope, changed as never)).result).toBe(
+      'drift',
+    );
+    expect((await upsertGoogleClass(ctx, 'loyalty', classScope, changed as never)).result).toBe(
+      'drift',
+    );
     expect([...mock.google.loyaltyClass.values()][0]).toMatchObject({ programName: 'Club' });
     expect(mock.requests.filter((r) => r.method === 'PATCH')).toEqual([]);
   });
@@ -413,5 +422,36 @@ describe('revoke: PUT inactive, then GET to confirm', () => {
       'absent',
     );
     expect(mock.requests.filter((r) => r.method === 'PUT')).toEqual([]);
+  });
+});
+
+describe('a class across releases', () => {
+  const classScope = { tenantId: 't', releaseId: 'r' };
+  const body = BODIES.event.classBody as never;
+  const gen = (n: number) => ({ releaseId: `release-${n}`, releaseGeneration: n });
+  const patches = () =>
+    mock.requests.filter((r) => r.method === 'PATCH' && r.path.includes('Class'));
+
+  it('rewrites a changed body once for a newer release, and never for the same one', async () => {
+    const { env } = await import('cloudflare:workers');
+    const ctx = await rest();
+    const up = (b: object, n: number) =>
+      upsertClassForRelease(ctx, env.DB, 1, 'event', classScope, b as never, gen(n));
+    expect(await up(body, 1)).toBe('ok');
+    const renamed = { ...(body as object), eventName: text('Gala 2') };
+    // Release 1 again, another body: two passes of one release disagree. Nothing is written.
+    expect(await up(renamed, 1)).toBe('drift');
+    expect(patches()).toEqual([]);
+    // Release 2 changed the event name: the class follows, exactly once.
+    expect(await up(renamed, 2)).toBe('rewritten');
+    expect(patches()).toHaveLength(1);
+    expect([...mock.google.eventTicketClass.values()][0]).toMatchObject({
+      eventName: text('Gala 2'),
+    });
+    // A fresh isolate, the same release 2 body, and a pass of release 2 with another body.
+    clearGoogleClassMemo();
+    expect(await up(renamed, 2)).toBe('ok');
+    expect(await up({ ...renamed, eventName: text('Other') }, 2)).toBe('drift');
+    expect(patches()).toHaveLength(1);
   });
 });
