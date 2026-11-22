@@ -15,7 +15,7 @@ import {
   readConfiguredWalletProviderCredentials,
   snapshotWalletCredentialContext,
 } from './account-service.ts';
-import { providerIdentityHash } from './projection-contract.ts';
+import { identityCardType, providerIdentityHash } from './projection-contract.ts';
 import { assertWalletProviderEnabled, walletProviderEnabled } from './provider-policy.ts';
 import {
   getProjectionCandidate,
@@ -95,7 +95,7 @@ async function probe(
       account?.provider !== 'samsung' ||
       account.accountId !== candidate.accountId ||
       account.authorityEpoch !== candidate.accountEpoch ||
-      (await providerIdentityHash(account, candidate.projection.cardType)) !==
+      (await providerIdentityHash(account, identityCardType(candidate.projection))) !==
         candidate.providerIdentityHash
     )
       throw new Error();
@@ -165,6 +165,12 @@ export async function refreshSamsungProjectionEvidence(
       'Wallet projection candidate not found.',
       'WALLET_PROJECTION_NOT_FOUND',
     );
+  if (candidate.projection.schema === 2) {
+    const now = ctx.clock.now();
+    return (await samsungCardReady(ctx, candidate))
+      ? { verified: true, verifiedAt: now, expiresAt: now + MAX_EVIDENCE_AGE_MS }
+      : unverified();
+  }
   const result = await probe(ctx, candidate, authority);
   if (!result.verified && !(await hasSamsungProjectionEvidence(ctx, candidate))) return result;
   if (!result.verified)
@@ -199,6 +205,61 @@ export async function ensureSamsungProjectionEvidence(
   await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const candidate = await candidateForProbe(ctx, candidateId, expectedHash);
   if (!candidate) return false;
+  if (candidate.projection.schema === 2) return samsungCardReady(ctx, candidate);
   if (await hasSamsungProjectionEvidence(ctx, candidate)) return true;
   return (await probe(ctx, candidate, authority)).verified;
+}
+
+/** Positive live reads of a compiled card, per isolate: not stored, so no queue or read path waits on them. */
+const readyUntil = new Map<string, number>();
+
+/**
+ * Whether the Samsung card of a compiled (schema 2) candidate is usable now: the template state is
+ * read live and mode-aware (Live needs a launched card, Test also takes one still in testing mode).
+ * Nothing is stored; a caller that needs it before an effect (publish, offer, update) asks here.
+ */
+export async function samsungCardReady(
+  ctx: ServiceContext,
+  candidate: ProjectionCandidate,
+): Promise<boolean> {
+  const projection = candidate.projection;
+  if (
+    projection.provider !== 'samsung' ||
+    projection.schema !== 2 ||
+    !walletProviderEnabled('samsung', candidate.mode)
+  )
+    return false;
+  const key = `${candidate.id}|${candidate.candidateHash}|${candidate.accountEpoch}`;
+  const now = ctx.clock.now();
+  if ((readyUntil.get(key) ?? 0) > now) return true;
+  ctx = snapshotWalletCredentialContext(ctx);
+  try {
+    await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
+    const scope = { orgId: candidate.orgId, mode: candidate.mode, provider: 'samsung' as const };
+    const account = await readConfiguredWalletProviderCredentials(ctx, scope, {
+      accountId: candidate.accountId,
+      authorityEpoch: candidate.accountEpoch,
+    });
+    if (
+      account?.provider !== 'samsung' ||
+      account.accountId !== candidate.accountId ||
+      account.authorityEpoch !== candidate.accountEpoch ||
+      (await providerIdentityHash(account, identityCardType(projection))) !==
+        candidate.providerIdentityHash
+    )
+      return false;
+    const credentials = await validateSamsungCredentials(account.credentials, now, projection.type);
+    await probeSamsungActiveTemplate(credentials, {
+      cardType: projection.type,
+      mode: candidate.mode,
+      now,
+      requestId: ctx.ids.id().replaceAll('-', ''),
+    });
+    readyUntil.set(key, Math.min(now + MAX_EVIDENCE_AGE_MS, credentials.validUntil));
+    return true;
+  } catch {
+    // Never log upstream errors, credentials, identifiers, tokens, or response bodies.
+    ctx.log.warn('wallet.verification_failed', { code: 'WALLET_VERIFY_FAILED' });
+    return false;
+  }
 }

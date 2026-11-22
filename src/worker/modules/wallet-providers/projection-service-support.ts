@@ -24,6 +24,7 @@ import {
   type WalletProviderCredentialSnapshot,
 } from './account-service.ts';
 import {
+  identityCardType,
   type NativeProjection,
   type NativeProvider,
   NativeProviderSchema,
@@ -210,12 +211,8 @@ export async function verifiedCandidate(
     account.provider !== candidate.provider ||
     account.accountId !== candidate.accountId ||
     account.authorityEpoch !== candidate.accountEpoch ||
-    (await providerIdentityHash(
-      account,
-      candidate.projection.schema === 1 && candidate.projection.provider === 'samsung'
-        ? candidate.projection.cardType
-        : undefined,
-    )) !== candidate.providerIdentityHash
+    (await providerIdentityHash(account, identityCardType(candidate.projection))) !==
+      candidate.providerIdentityHash
   )
     return false;
   if (candidate.projection.schema === 2)

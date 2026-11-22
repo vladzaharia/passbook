@@ -49,7 +49,7 @@ const retirementCtes = `WITH retirement_base AS MATERIALIZED (
   WHERE i.id = ? AND i.org_id = ? AND i.mode = ? AND i.provider = 'samsung'
     AND op.version = ? AND op.kind = 'revoke' AND op.state = 'succeeded'
     AND i.lifecycle IN ('revoked', 'retired') AND candidate.provider_identity_hash = ?
-    AND EXISTS (SELECT 1 FROM wallet_provider_projection_evidence_history evidence
+    AND (json_extract(candidate.projection_json, '$.schema') = 2 OR EXISTS (SELECT 1 FROM wallet_provider_projection_evidence_history evidence
       WHERE evidence.candidate_id = candidate.id AND evidence.org_id = i.org_id AND evidence.mode = i.mode
         AND evidence.account_id = i.account_id AND evidence.account_revision = candidate.provider_account_revision
         AND evidence.provider_identity_hash = candidate.provider_identity_hash
@@ -59,7 +59,7 @@ const retirementCtes = `WITH retirement_base AS MATERIALIZED (
         AND evidence.card_sub_type = json_extract(candidate.projection_json, '$.cardSubType')
         AND evidence.country_code = json_extract(candidate.projection_json, '$.countryCode')
         AND evidence.testing_mode_off = 'Y'
-        AND evidence.verified_at <= original.created_at AND original.created_at < evidence.expires_at)
+        AND evidence.verified_at <= original.created_at AND original.created_at < evidence.expires_at))
     AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations busy
       WHERE busy.instance_id = i.id AND busy.state IN ('claimed', 'uncertain'))
     AND ${samsungOperationKeysetSql}
@@ -111,7 +111,7 @@ const retirementCtes = `WITH retirement_base AS MATERIALIZED (
             AND historical_config.org_id = base.org_id AND historical_config.mode = base.mode
             AND historical_config.provider = 'samsung' AND historical_config.kind = 'configure'
             AND historical_config.revision = historical.account_revision)
-        AND EXISTS (SELECT 1 FROM wallet_provider_projection_evidence_history historical_evidence
+        AND (json_extract(historical_candidate.projection_json, '$.schema') = 2 OR EXISTS (SELECT 1 FROM wallet_provider_projection_evidence_history historical_evidence
           WHERE historical_evidence.candidate_id = historical_candidate.id
             AND historical_evidence.org_id = base.org_id AND historical_evidence.mode = base.mode
             AND historical_evidence.account_id = base.account_id
@@ -124,7 +124,7 @@ const retirementCtes = `WITH retirement_base AS MATERIALIZED (
             AND historical_evidence.country_code = json_extract(historical_candidate.projection_json, '$.countryCode')
             AND historical_evidence.testing_mode_off = 'Y'
             AND historical_evidence.verified_at <= historical_release.created_at
-            AND historical_release.created_at < historical_evidence.expires_at))
+            AND historical_release.created_at < historical_evidence.expires_at)))
 ), retirement_scope AS MATERIALIZED (
   SELECT base.* FROM retirement_base base
   WHERE NOT EXISTS (SELECT 1 FROM invalid_historical historical
@@ -222,7 +222,7 @@ export async function putSamsungTombstone(
           AND historical_credential.account_id = retirement.account_id
           AND historical_credential.org_id = retirement.org_id
           AND historical_credential.mode = retirement.mode AND historical_credential.provider = 'samsung'
-        JOIN wallet_provider_projection_evidence_history history ON history.candidate_id = historical_candidate.id
+        LEFT JOIN wallet_provider_projection_evidence_history history ON history.candidate_id = historical_candidate.id
           AND history.org_id = retirement.org_id AND history.mode = retirement.mode
           AND history.account_id = retirement.account_id AND history.account_revision = historical.account_revision
           AND history.provider_identity_hash = historical_candidate.provider_identity_hash
@@ -233,6 +233,7 @@ export async function putSamsungTombstone(
           AND history.country_code = json_extract(historical_candidate.projection_json, '$.countryCode')
           AND history.testing_mode_off = 'Y' AND history.verified_at <= historical_release.created_at
           AND historical_release.created_at < history.expires_at
+        WHERE json_extract(historical_candidate.projection_json, '$.schema') = 2 OR history.id IS NOT NULL
       )
       INSERT INTO wallet_samsung_tombstones
       (ref_hash, org_id, mode, account_id, account_revision, candidate_id, release_id,

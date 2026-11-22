@@ -25,6 +25,8 @@ export async function setupSamsungCallbacks(
   options: {
     promoted?: boolean;
     reference?: boolean;
+    /** `2` serves a compiled card: its release has no evidence row. */
+    samsungSchema?: 1 | 2;
     holderEmail?: string;
     source?: OfferFixtureSource;
     db?: D1Database;
@@ -35,6 +37,7 @@ export async function setupSamsungCallbacks(
   const fixture = await setupWalletOfferKit({
     google: 'absent',
     samsung: 'published',
+    ...(options.samsungSchema ? { samsungSchema: options.samsungSchema } : {}),
     holderEmail: options.holderEmail,
     source: options.source,
     db: options.db,

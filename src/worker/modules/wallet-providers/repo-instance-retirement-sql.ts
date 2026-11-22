@@ -41,7 +41,7 @@ export function samsungRetirementProjectionSql(i: string): string {
     JOIN template_candidates retirement_candidate ON retirement_candidate.id = retirement_release.candidate_id
     JOIN template_approvals retirement_approval ON retirement_approval.id = retirement_release.approval_id
       AND retirement_approval.candidate_id = retirement_candidate.id
-    JOIN wallet_provider_projection_evidence_history retirement_evidence
+    LEFT JOIN wallet_provider_projection_evidence_history retirement_evidence
       ON retirement_evidence.candidate_id = retirement_candidate.id
     WHERE (retirement_release.id = ${i}.identity_projection_release_id
       AND retirement_release.org_id = ${i}.org_id AND retirement_release.mode = ${i}.mode
@@ -56,9 +56,9 @@ export function samsungRetirementProjectionSql(i: string): string {
         OR retirement_approval.reviewer_id != retirement_candidate.version_author_id)
       AND retirement_release.credential_keyset_commitment = ${i}.credential_keyset_commitment
       AND retirement_candidate.credential_keyset_commitment = ${i}.credential_keyset_commitment
-      AND retirement_approval.credential_keyset_commitment = ${i}.credential_keyset_commitment
-      AND retirement_evidence.credential_keyset_commitment = ${i}.credential_keyset_commitment)
-      AND (retirement_evidence.org_id = ${i}.org_id AND retirement_evidence.mode = ${i}.mode
+      AND retirement_approval.credential_keyset_commitment = ${i}.credential_keyset_commitment)
+      AND (json_extract(retirement_candidate.projection_json, '$.schema') = 2 OR (retirement_evidence.credential_keyset_commitment = ${i}.credential_keyset_commitment
+      AND retirement_evidence.org_id = ${i}.org_id AND retirement_evidence.mode = ${i}.mode
       AND retirement_evidence.account_id = ${i}.account_id
       AND retirement_evidence.account_revision = retirement_candidate.provider_account_revision
       AND retirement_evidence.candidate_hash = retirement_candidate.candidate_hash
@@ -68,7 +68,7 @@ export function samsungRetirementProjectionSql(i: string): string {
       AND retirement_evidence.country_code = json_extract(retirement_candidate.projection_json, '$.countryCode')
       AND retirement_evidence.testing_mode_off = 'Y'
       AND retirement_evidence.verified_at <= retirement_release.created_at
-      AND retirement_release.created_at < retirement_evidence.expires_at))`;
+      AND retirement_release.created_at < retirement_evidence.expires_at)))`;
 }
 
 /** All aliases are trusted repository SQL identifiers. */

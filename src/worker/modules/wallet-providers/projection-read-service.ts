@@ -86,8 +86,10 @@ async function approvedProjection(
   )
     return null;
   if (!publishableSchema(candidate.provider, candidate.projection.schema)) return null;
+  // A compiled card has no stored evidence; update and offer paths read its card live instead.
   if (
     candidate.provider === 'samsung' &&
+    candidate.projection.schema === 1 &&
     !(await ensureSamsungProjectionEvidence(ctx, candidate.id, candidate.candidateHash))
   )
     return null;

@@ -199,14 +199,18 @@ describe('schema 1 and the Google publish path', () => {
   });
 
   it('keeps the final release trigger on the schema and Samsung-evidence rules', async () => {
-    // The database is built from every migration, so this is the final trigger. The CASE on the
-    // schema and both Samsung-only guards are what 0082 changed from 0038.
+    // The database is built from every migration, so this is the final trigger. Schema 2 is
+    // accepted for both providers and needs no evidence; schema 1 stays Samsung's, with evidence.
     const trigger = await S.env.DB.prepare(
       "SELECT sql FROM sqlite_master WHERE type = 'trigger' AND name = 'template_provider_releases_insert'",
     ).first<{ sql: string }>();
     const sql = (trigger?.sql ?? '').replace(/\s+/g, ' ');
-    expect(sql).toContain("CASE c.provider WHEN 'google' THEN 2 ELSE 1 END");
-    expect(sql.split("NEW.provider = 'samsung' AND NOT EXISTS (").length - 1).toBe(2);
+    expect(sql).toContain(
+      "(json_extract(c.projection_json, '$.schema') = 2 OR (c.provider = 'samsung' AND json_extract(c.projection_json, '$.schema') = 1))",
+    );
+    const evidenceGuard =
+      "NEW.provider = 'samsung' AND NOT EXISTS (SELECT 1 FROM template_candidates s2 WHERE s2.id = NEW.candidate_id AND json_extract(s2.projection_json, '$.schema') = 2) AND NOT EXISTS (";
+    expect(sql.split(evidenceGuard).length - 1).toBe(2);
     expect(sql).toContain("THEN RAISE(ABORT, 'invalid provider release approval or source')");
   });
 });

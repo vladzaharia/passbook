@@ -1,5 +1,7 @@
+import { getRelease } from '../templates/repo-releases.ts';
 import { getSamsungRefreshTarget } from './callbacks-ref.ts';
 import { markWalletClaimUncertain } from './instance.ts';
+import { getProjectionCandidate } from './repo-projection-store.ts';
 import {
   beginSamsungSyncTarget,
   ensureSamsungSyncTargets,
@@ -8,6 +10,7 @@ import {
 } from './repo-sync-targets.ts';
 import { sendSamsungRuntimeUpdate, type WalletRetirementClaim } from './runtime.ts';
 import { SamsungNotificationError } from './samsung.ts';
+import { samsungCardReady } from './samsung-verification.ts';
 import { classifyWalletSyncFailure } from './sync-errors.ts';
 import type {
   WalletSyncOperationBinding,
@@ -15,6 +18,17 @@ import type {
   WalletSyncRunResult,
 } from './sync-operation-context.ts';
 import { completeWalletSyncOperation as complete } from './sync-operation-retirement.ts';
+
+async function samsungUpdateReady(
+  ctx: WalletSyncOperationExecution['ctx'],
+  op: WalletSyncOperationExecution['op'],
+): Promise<boolean> {
+  const release = await getRelease(ctx.env.DB, op.projectionReleaseId);
+  const candidate = release?.candidateId
+    ? await getProjectionCandidate(ctx.env.DB, release.candidateId)
+    : null;
+  return candidate !== null && samsungCardReady(ctx, candidate);
+}
 
 export async function runSamsungWalletProviderOperation(
   execution: WalletSyncOperationExecution,
@@ -37,9 +51,21 @@ export async function runSamsungWalletProviderOperation(
   if (
     !target ||
     target.countryCodes.length === 0 ||
-    binding.original.projection.provider !== 'samsung' ||
-    binding.original.projection.schema !== 1
+    binding.original.projection.provider !== 'samsung'
   ) {
+    return (await complete(ctx, claim, op, {
+      kind: 'failure',
+      reason: 'unavailable',
+      retryable: true,
+    })) === 'completed'
+      ? 'deferred'
+      : 'uncertain';
+  }
+  const projection = binding.original.projection;
+  const cardType = projection.schema === 1 ? projection.cardType : projection.type;
+  // A compiled card's state lives at Samsung, not in a stored row: read it before an update. A
+  // revoke is sent regardless, since the door has already denied the pass.
+  if (op.kind !== 'revoke' && projection.schema === 2 && !(await samsungUpdateReady(ctx, op))) {
     return (await complete(ctx, claim, op, {
       kind: 'failure',
       reason: 'unavailable',
@@ -64,7 +90,7 @@ export async function runSamsungWalletProviderOperation(
     try {
       await sendSamsungRuntimeUpdate(ctx, binding.scope, {
         cc2: item.countryCode,
-        type: binding.original.projection.cardType,
+        type: cardType,
         refId: target.refId,
         state: op.kind === 'revoke' ? 'DELETED' : 'UPDATED',
         attempt,

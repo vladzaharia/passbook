@@ -9,6 +9,7 @@ import {
   readConfiguredWalletProviderCredentials,
 } from './account-service.ts';
 import {
+  identityCardType,
   type NativeProjection,
   type ProjectionV2,
   type ProjectionV2Request,
@@ -99,12 +100,7 @@ export async function buildProjectionCandidate(
     accountId: account.accountId,
     accountRevision: account.revision,
     accountEpoch: account.authorityEpoch,
-    providerIdentityHash: await providerIdentityHash(
-      account,
-      projection.schema === 1 && projection.provider === 'samsung'
-        ? projection.cardType
-        : undefined,
-    ),
+    providerIdentityHash: await providerIdentityHash(account, identityCardType(projection)),
     projection,
   };
   candidate.candidateHash = await candidateHash(projectionCandidateEnvelope(candidate));

@@ -39,11 +39,23 @@ const mocks = vi.hoisted(() => ({
   beginTarget: vi.fn(),
   finishTarget: vi.fn(),
   orgReason: vi.fn(),
+  ready: vi.fn(),
+  release: vi.fn(),
+  candidate: vi.fn(),
 }));
 // These cases run on a fake database; the org layer answers from `mocks.orgReason` (null: enrolled).
 vi.mock('./provider-policy.ts', async (original) => ({
   ...(await original<typeof import('./provider-policy.ts')>()),
   walletProviderDisabledReason: (...args: unknown[]) => mocks.orgReason(...args),
+}));
+vi.mock('./samsung-verification.ts', () => ({ samsungCardReady: mocks.ready }));
+vi.mock('../templates/repo-releases.ts', async (original) => ({
+  ...(await original<typeof import('../templates/repo-releases.ts')>()),
+  getRelease: mocks.release,
+}));
+vi.mock('./repo-projection-store.ts', async (original) => ({
+  ...(await original<typeof import('./repo-projection-store.ts')>()),
+  getProjectionCandidate: mocks.candidate,
 }));
 vi.mock('./instance.ts', () => ({
   claimWalletOperation: mocks.claim,
@@ -576,6 +588,80 @@ describe('wallet provider operation fences', () => {
     expect(mocks.finishTarget).not.toHaveBeenCalled();
     expect(mocks.uncertain).toHaveBeenCalledOnce();
     expect(mocks.complete).not.toHaveBeenCalled();
+  });
+
+  describe('Samsung compiled cards', () => {
+    const compiled = (kind: 'upsert' | 'revoke') => {
+      const samsung: WalletOperation = { ...operation, provider: 'samsung', kind };
+      mocks.getOperation.mockResolvedValue(claimed(samsung));
+      mocks.target.mockResolvedValue({ refId: 'r'.repeat(32), countryCodes: ['US'] });
+      mocks.metadata.mockResolvedValue({
+        id: 'native-1',
+        generation: 1,
+        orgId: 'org-1',
+        mode: 'live',
+        provider: 'samsung',
+        accountId: 'account-1',
+        templateId: 'template-1',
+        version: 'v1',
+        sourceReleaseId: 'apple-1',
+        accountRevision: 4,
+        adapterRevision: 1,
+        policyRevision: 1,
+        providerIdentityHash: 'a'.repeat(64),
+        projection: { schema: 2, provider: 'samsung', type: 'ticket' },
+      });
+      mocks.release.mockResolvedValue({ id: 'native-1', candidateId: 'candidate-1' });
+      mocks.candidate.mockResolvedValue({ id: 'candidate-1' });
+      mocks.listTargets.mockResolvedValue([{ countryCode: 'US', state: 'pending', attempts: 0 }]);
+      mocks.beginTarget.mockResolvedValue(1);
+      mocks.finishTarget.mockResolvedValue(true);
+      return samsung;
+    };
+
+    it('sends the update with the compiled type once the card is live', async () => {
+      const samsung = compiled('upsert');
+      mocks.ready.mockResolvedValue(true);
+      mocks.listTargets
+        .mockResolvedValueOnce([{ countryCode: 'US', state: 'pending', attempts: 0 }])
+        .mockResolvedValueOnce([{ countryCode: 'US', state: 'pending', attempts: 0 }])
+        .mockResolvedValue([{ countryCode: 'US', state: 'succeeded', attempts: 1 }]);
+      expect(await runWalletProviderOperation(ctx, samsung)).toBe('completed');
+      expect(mocks.samsung).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({ type: 'ticket', state: 'UPDATED', cc2: 'US' }),
+      );
+    });
+
+    it('defers an update while the card is not live, without calling Samsung', async () => {
+      const samsung = compiled('upsert');
+      mocks.ready.mockResolvedValue(false);
+      expect(await runWalletProviderOperation(ctx, samsung)).toBe('deferred');
+      expect(mocks.samsung).not.toHaveBeenCalled();
+      expect(mocks.complete).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          result: { kind: 'failure', reason: 'unavailable', retryable: true },
+        }),
+      );
+    });
+
+    it('sends a revoke without reading the card: the door already denied the pass', async () => {
+      const samsung = compiled('revoke');
+      mocks.ready.mockResolvedValue(false);
+      mocks.listTargets
+        .mockResolvedValueOnce([{ countryCode: 'US', state: 'pending', attempts: 0 }])
+        .mockResolvedValueOnce([{ countryCode: 'US', state: 'pending', attempts: 0 }])
+        .mockResolvedValue([{ countryCode: 'US', state: 'succeeded', attempts: 1 }]);
+      await runWalletProviderOperation(ctx, samsung);
+      expect(mocks.ready).not.toHaveBeenCalled();
+      expect(mocks.samsung).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({ type: 'ticket', state: 'DELETED' }),
+      );
+    });
   });
 
   it('keeps Samsung installation unknown and does not consume a claim without a region', async () => {

@@ -54,6 +54,7 @@ import {
   NativeProjectionSchema,
   normalizeNativeProjection,
 } from './projection-contract.ts';
+import { computeProjectionPins } from './projection-pins.ts';
 import {
   approveProjectionCandidate,
   createProjectionCandidate,
@@ -649,48 +650,36 @@ describe('native projection approval', () => {
     ).toEqual({ changes: 1 });
   }, 30_000);
 
-  it('refuses a Samsung schema 2 release in the database, even with verified evidence', async () => {
+  it('accepts a Samsung schema 2 release with no evidence row, and keeps the rule for schema 1', async () => {
     const test = await setup();
-    // Without an organization app link Samsung's report is Blocked, so there is no schema 2
-    // candidate to publish; the service says so, and the database refuses the row anyway.
-    await expect(
-      createProjectionCandidate(test.ctx, test.author, test.templateId, {
-        ...test.scope,
-        version: test.version,
-        sourceReleaseId: test.source.id,
-        projection: { schema: 2, provider: 'samsung', approvedOmissions: [] },
-      }),
-    ).rejects.toMatchObject({ code: 'WALLET_PROJECTION_BLOCKED' });
-
-    // Verified evidence and a review do not help: flip a schema 1 candidate to schema 2 in place.
-    const candidate = await nativeCandidate(test);
-    const approval = await nativeApproval(test, candidate);
+    const version = await getVersion(env.DB, test.templateId, test.version);
+    if (!version) throw new Error('Test version is missing.');
+    const { pins } = await computeProjectionPins(test.ctx, 'samsung', version);
+    const compiled = await createProjectionCandidate(test.ctx, test.author, test.templateId, {
+      ...test.scope,
+      version: test.version,
+      sourceReleaseId: test.source.id,
+      projection: { schema: 2, provider: 'samsung', approvedOmissions: pins.approvedOmissions },
+    });
+    const compiledApproval = await nativeApproval(test, compiled);
     expect(
-      await ensureSamsungProjectionEvidence(test.ctx, candidate.id, candidate.candidateHash),
-    ).toBe(true);
-    // Candidates are immutable by trigger; lift those triggers for the one in-place edit, then restore.
-    const triggers = (
-      await env.DB.prepare(
-        "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND tbl_name = 'template_candidates' AND sql LIKE '%BEFORE UPDATE%'",
-      ).all<{ name: string; sql: string }>()
-    ).results;
-    const setSchema = (schema: number) =>
-      run(
+      await first(
         env.DB,
-        "UPDATE template_candidates SET projection_json = json_set(projection_json, '$.schema', ?) WHERE id = ?",
-        [schema, candidate.id],
-      );
-    for (const trigger of triggers) await run(env.DB, `DROP TRIGGER ${trigger.name}`);
-    try {
-      await setSchema(2);
-      await expect(insertDirectProjectionRelease(test, candidate, approval)).rejects.toThrow(
-        'invalid provider release approval or source',
-      );
-      await setSchema(1);
-    } finally {
-      for (const trigger of triggers) await run(env.DB, trigger.sql);
-    }
-    expect(await insertDirectProjectionRelease(test, candidate, approval)).toEqual({ changes: 1 });
+        'SELECT 1 AS n FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
+        [compiled.id],
+      ),
+    ).toBeNull();
+    expect(await insertDirectProjectionRelease(test, compiled, compiledApproval)).toEqual({
+      changes: 1,
+    });
+
+    // A schema 1 candidate still needs verified card state: with none, the database refuses it.
+    const second = await setup();
+    const fieldMapped = await nativeCandidate(second);
+    const approval = await nativeApproval(second, fieldMapped);
+    await expect(insertDirectProjectionRelease(second, fieldMapped, approval)).rejects.toThrow(
+      'invalid provider release approval or source',
+    );
   });
 
   it('rechecks the Apple source and provider account snapshots on direct release inserts', async () => {

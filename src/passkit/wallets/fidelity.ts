@@ -85,17 +85,19 @@ export interface ReportInput {
   wallets?: WalletsManifest;
   /** The version's creation time, so a report never depends on the clock. */
   now: Date;
+  /** Compiler-specific options (Samsung's `portalUrl`), the same for every view. */
+  compile?: object;
 }
 
 export function fidelityReport(input: ReportInput): FidelityReport {
-  const { target, compiler, views, wallets, now } = input;
+  const { target, compiler, views, wallets, now, compile } = input;
   const config = wallets?.[target];
   const base = { schema: 1 as const, target, compilerRevision: compiler.revision };
   if (config?.type === 'off') return { ...base, type: 'off', status: { kind: 'off' }, items: [] };
 
   const required: readonly string[] = wallets?.required ?? [];
   const omit: readonly string[] = config?.omit ?? [];
-  const results = views.map((view) => compiler.compile(view, { now, omit }));
+  const results = views.map((view) => compiler.compile(view, { ...compile, now, omit }));
 
   const seen = new Set<string>();
   const items: ReportItem[] = [];
