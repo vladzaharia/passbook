@@ -7,7 +7,15 @@ import { formatDateTime } from '@/web/lib/format.ts';
 import { useMode } from '@/web/lib/mode.ts';
 import { useOrgScope } from '@/web/lib/org-filter.tsx';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
-import { Button, DataTable, EmptyState, ErrorState, LoadMore, StatusPill } from '@/web/ui/index.ts';
+import {
+  Badge,
+  Button,
+  DataTable,
+  EmptyState,
+  ErrorState,
+  LoadMore,
+  StatusPill,
+} from '@/web/ui/index.ts';
 import { ScanFilters } from './scans/filters.tsx';
 import {
   actionText,
@@ -95,7 +103,10 @@ function ScopedScansTab({ search, mode }: { search: ScanningSearch; mode: Mode }
       accessorKey: 'outcome',
       header: 'Result',
       cell: ({ row }) => (
-        <StatusPill status={scanStatusKey(row.original.outcome, row.original.undoneAt)} />
+        <span className="inline-flex flex-wrap items-center gap-1">
+          <StatusPill status={scanStatusKey(row.original.outcome, row.original.undoneAt)} />
+          {row.original.late ? <Badge>Late</Badge> : null}
+        </span>
       ),
     },
     {

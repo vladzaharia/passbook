@@ -13,6 +13,7 @@ import type {
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { type DeviceInfo, MAC_REVEAL_SCRIPT } from '../../shared/device.ts';
 import { escapeHtml } from '../../shared/html.ts';
+import { BUNDLE_SAVE_PATH, DROP_SCRIPT, PASS_SAVE_PATH } from '../../shared/pass-offline.ts';
 import type { PassView } from '../../shared/pass-view/index.ts';
 import { PassCardStage } from '../../web/pass-card/index.tsx';
 import cardBase from '../../web/pass-card/pass-card-base.css?raw';
@@ -28,12 +29,15 @@ import { HolderHeading } from '../../web/portal/holder-heading.tsx';
 import holderPassCss from '../../web/portal/holder-pass.css?raw';
 import { HolderPassView, type HolderSupport } from '../../web/portal/holder-pass-view.tsx';
 import { PassDetails } from '../../web/portal/pass-details.tsx';
+import savePhoneCss from '../../web/portal/save-phone.css?raw';
+import { doorPathOf } from '../../web/portal/save-phone.tsx';
 import artBase from '../../web/ui/art/art.css?raw';
 import artWallet from '../../web/ui/art/art-wallet.css?raw';
 import common from '../../web/ui/art/scenes/common.css?raw';
 import nudge from '../../web/ui/art/scenes/nudge.css?raw';
 import rest from '../../web/ui/art/scenes/rest.css?raw';
 import tear from '../../web/ui/art/scenes/tear.css?raw';
+import tuck from '../../web/ui/art/scenes/tuck.css?raw';
 import walletStates from '../../web/ui/art/wallet-states.css?raw';
 import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, hostedPage, type PageAction, REPLAY_SCRIPT } from './hosted.ts';
@@ -49,8 +53,8 @@ import { THEME_CSS } from './theme.ts';
  * loses the hosted pages' padding: the header and main pad themselves, like AppShell. Without
  * script, pressing the badge dips the card in CSS (the portal sets `dip`).
  */
-const ART = [artBase, artWallet, walletStates, rest, common, nudge, tear].join('\n');
-export const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${ART}\n${holderPassCss}\n${addCss}\n${RIBBON_CSS}
+const ART = [artBase, artWallet, walletStates, rest, common, nudge, tear, tuck].join('\n');
+export const PAGE_CSS = `${THEME_CSS}${holderCss}${cardBase}\n${cardPoster}\n${cardText}\n${stageCss}\n${stageMotion}\n${stageSeg}\n${ART}\n${holderPassCss}\n${savePhoneCss}\n${addCss}\n${RIBBON_CSS}
 ${ORG_SHELL_CSS}
 body{padding:0}
 @media (prefers-reduced-motion:no-preference){.wl-holder:has([data-awb]:active) .pc-lift{animation:pc-dip 420ms cubic-bezier(.2,0,0,1)}}`;
@@ -89,7 +93,9 @@ export interface PassPageProps {
   publicUrl: string;
   /** The holder's page in the portal (sign-in first when needed): a row of the other ways, only
    * with a holder email (resend). */
-  portalHref: string;
+  portalHref?: string;
+  /** A bundle's member page: the way back to the bundle. */
+  backHref?: string;
   voided: boolean;
   /** The org removed the pass from Wallet; its note, if it wrote one. */
   removal?: { message: string | null } | null;
@@ -130,6 +136,16 @@ function PassBody(props: PassPageProps) {
       <OrgBar orgName={props.orgName} brand={props.brand} />
       <TestRibbon mode={props.mode} what="pass" />
       <main className="mx-auto w-full max-w-5xl flex-1 px-safe pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        {props.backHref ? (
+          <p className="mb-2 text-sm">
+            <a
+              href={props.backHref}
+              className="text-fg-muted underline underline-offset-4 hover:text-fg-strong"
+            >
+              {HOLDER_COPY.allPassesLink}
+            </a>
+          </p>
+        ) : null}
         <HolderHeading heading={headingOf(props)} bare />
         <HolderPassView
           pass={
@@ -156,7 +172,9 @@ function PassBody(props: PassPageProps) {
           publicUrl={props.publicUrl}
           support={props.support}
           endedOn={props.endedOn ?? null}
-          {...(props.resend ? { resend: props.resend, portalHref: props.portalHref } : {})}
+          {...(props.resend && props.portalHref
+            ? { resend: props.resend, portalHref: props.portalHref }
+            : {})}
           {...(props.signin ? { signin: props.signin } : {})}
           {...(props.notice ? { notice: props.notice } : {})}
           details={
@@ -194,6 +212,11 @@ export function renderPassPage(props: PassPageProps): string {
   // The tab says what the pass is, as the portal's does; never the holder.
   const title = headingOf(props).title;
   const tilt = active ? '<script src="/pass-tilt.js" defer></script>' : '';
+  // Save to this phone and dropping a copy once the pass ended; both are no-ops without a host.
+  const door = doorPathOf(props.publicUrl);
+  const save = door
+    ? `<script src="${door.startsWith('/b/') ? BUNDLE_SAVE_PATH : PASS_SAVE_PATH}" defer></script>`
+    : '';
   // A Mac agent may be an iPad: the Mac's badge shows only once the browser says it is a Mac.
   const mac =
     props.device.device === 'mac'
@@ -208,7 +231,7 @@ export function renderPassPage(props: PassPageProps): string {
           ? HOLDER_COPY.previewWallets
           : HOLDER_COPY.previewActive
         : HOLDER_COPY.expired;
-  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}${mac}</body></html>`;
+  return `${documentStart(props.theme)}<meta name="robots" content="noindex, nofollow, noarchive"><meta name="referrer" content="no-referrer">${previewHead(props.orgLabel, line)}<title>${escapeHtml(title)}</title>${tilt}${save}${REPLAY_SCRIPT}<style nonce="${props.nonce}">${PAGE_CSS}${brandCss(props.brand)}</style></head><body>${renderToStaticMarkup(<PassBody {...props} />)}${mac}</body></html>`;
 }
 
 /** The dead link's one way on: the login, which says the link did not work. Sends no mail. */
@@ -226,7 +249,11 @@ const DEAD_LINK_ACTION: PageAction = {
 export function renderNotFoundPage(
   nonce: string,
   theme?: PageTheme,
-  { what = 'pass', replay = true }: { what?: 'pass' | 'bundle'; replay?: boolean } = {},
+  {
+    what = 'pass',
+    replay = true,
+    drop = false,
+  }: { what?: 'pass' | 'bundle'; replay?: boolean; drop?: boolean } = {},
 ): string {
   return hostedPage({
     nonce,
@@ -236,5 +263,7 @@ export function renderNotFoundPage(
     lede: escapeHtml(HOLDER_COPY.deadLinkLine),
     body: actionHtml(DEAD_LINK_ACTION),
     replay,
+    // A retired /p link also retires this phone's saved copy of it (DROP_SCRIPT).
+    ...(drop ? { after: `<script nonce="${nonce}">${DROP_SCRIPT}</script>` } : {}),
   });
 }

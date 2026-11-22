@@ -44,9 +44,11 @@ export async function rosterSig(
 const short = (hex: string) => hex.slice(0, 32);
 
 /**
- * What one pass puts on the list: up to three hashes (scan code, barcode message, printed code),
- * one status and one state. Never a name, a title, an input or a template. The barcode hash is on
- * the list because a ticket's barcode is often its number; that makes it only as private as the number.
+ * What one pass puts on the list: up to two hashes (scan code, printed code), one status and one
+ * state. Never a name, a title, an input or a template. The barcode message's own hash is left off:
+ * the roster cannot tell a random token from a member number, and an unkeyed hash of a number is
+ * brute-forced offline from a stolen door. Only the scan code (128 random bits) and the printed
+ * code are checked offline; a barcode that is the scan code is covered by the first.
  */
 async function entriesOf(row: RosterRow, inside: boolean, day: boolean): Promise<Entry[]> {
   const status: Entry['status'] =
@@ -57,7 +59,6 @@ async function entriesOf(row: RosterRow, inside: boolean, day: boolean): Promise
         : 'active';
   const hashes = new Set<string>();
   if (row.scan_code) hashes.add(short(await sha256Hex(row.scan_code)));
-  if (row.barcode_hash) hashes.add(short(row.barcode_hash));
   if (row.print_hash) hashes.add(row.print_hash);
   const state: Entry['state'] = inside ? 'in' : null;
   return [...hashes].map((h) => ({ h, status, state, ...(day ? { day: true } : {}) }));

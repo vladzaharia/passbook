@@ -39,18 +39,16 @@ describe('the menu sheet', () => {
     expect(root.querySelector<HTMLElement>('[data-menu-spaces]')?.hidden).toBe(true);
   });
 
-  it('names the sandbox and offers Keys only with Admin', () => {
+  it('names the sandbox and links its Workbench and Keys', () => {
     const root = sheet();
     fillMenuSheet(root, { spaces: [all[0], all[3]], sandbox: 'a96a2c79' });
     const box = root.querySelector('[data-menu-sandbox]');
     expect(box?.querySelector('h4')?.textContent).toBe('Sandbox a96a2c79');
     expect([...(box?.querySelectorAll('a') ?? [])].map((a) => a.textContent)).toEqual([
       'Workbench',
+      'Keys',
     ]);
-    fillMenuSheet(root, { spaces: all, sandbox: 'a96a2c79' });
-    expect(
-      [...(root.querySelectorAll('[data-menu-sandbox] a') ?? [])].map((a) => a.textContent),
-    ).toEqual(['Workbench', 'Keys']);
+    expect(box?.querySelectorAll('a')[1]?.getAttribute('href')).toBe('/developers/keys');
   });
 
   it('turns the Sign in slot into Polaris ID for an email-link session', () => {

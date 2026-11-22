@@ -45,12 +45,13 @@ export const HOLDER_COPY = {
   /** The org's support contacts under the add block. */
   help: 'Help',
   /** /b's quiet way to the holder's page (H7 moves it): through sign-in. */
-  openInPortal: 'Open in My passes',
   /** /p's other ways, a pass with a holder email: the holder's page in the portal, through sign-in. */
   myPassesRow: 'My passes',
   /** The wallet choice: the way that fits this device, then the rest (a list's accessible name). */
   otherWays: 'Other ways',
   showBarcode: 'Show barcode',
+  allPassesLink: 'All passes',
+  allPasses: (n: number) => `All passes (${n})`,
   /** The barcode page's tab and link preview: the pass title can be a holder's name. */
   barcodeTitle: 'Barcode',
   /** The paper channel: a link to the print page. */
@@ -61,10 +62,18 @@ export const HOLDER_COPY = {
   presentUnavailable: 'Barcode unavailable',
   presentUnavailableLine: (org: string) => `Ask ${org || 'the organization'} for help.`,
   backToPass: 'Back to pass',
-  saveOffline: 'Save for offline',
+  /** Save to this phone: the lead, its states, the home-screen sheet and the door view. */
   saveToPhone: 'Save to this phone',
-  savedOffline: 'Saved on this device',
-  removeSaved: 'Remove from this device',
+  saving: 'Saving',
+  onThisPhone: 'On this phone',
+  worksOffline: 'Works offline',
+  showAtDoor: 'Show at the door',
+  removeFromPhone: 'Remove from this phone',
+  homeScreenTitle: 'Add to Home screen',
+  homeStepTap: 'Tap',
+  homeStepMenu: 'the browser menu',
+  homeStepChoose: 'Choose Add to Home screen',
+  done: 'Done',
   connectToRefresh: 'Connect to refresh this pass.',
   saveOfflineFailed: 'Could not save. Try again.',
   /** The pass email, under the Apple badge: it reads the same on any phone. */

@@ -32,7 +32,6 @@ import { recentFor, summaryFor } from './history.ts';
 import { publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
 import { withParentHint } from './occupancy/parent-hint.ts';
-import { touchOnlineAt } from './repo-roster.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { actTag, resolveTag } from './resolve-tag.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
@@ -83,12 +82,9 @@ register(
     response: ScanSessionSchema,
   },
   async (c) => {
-    const { dayStart, pending } = c.req.valid('query');
+    const { dayStart } = c.req.valid('query');
     const actor = scanActorOf(c);
     const ctx = serviceContext(c);
-    // Online with nothing waiting to sync: no queued read may be dated before now (batch.ts).
-    if (pending === 0 && actor.principal === 'scanner' && actor.scanner)
-      await touchOnlineAt(ctx.env.DB, actor.scanner.id, actor.orgId, ctx.clock.now());
     const session = await buildSession(ctx, actor, dayStart);
     const auth = c.var.auth;
     if (auth?.kind === 'session' || (auth?.kind === 'scanner' && auth.transport === 'cookie'))

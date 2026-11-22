@@ -18,6 +18,7 @@ import { fixtureToken } from '../../../../test/helpers/tokens.ts';
 import { sha1Hex } from '../../../passkit/sign/index.ts';
 import type { InMemoryTemplateRegistry } from '../../../passkit/template/in-memory-registry.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
+import { DROP_SCRIPT } from '../../../shared/pass-offline.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { qrDataUri } from '../../../web/portal/holder-qr.tsx';
 import { createApp } from '../../app.ts';
@@ -157,15 +158,16 @@ async function presentationHtml(res: Response, secrets: string[]): Promise<strin
   expect(res.headers.get('cache-control')).toContain('no-store');
   const html = await res.text();
   expect(html).toMatch(/<!doctype html>/i);
-  // A script only comes with the offline-save control, once and nonced; it carries no credential.
-  expect(html.match(/<script\b/gi)?.length ?? 0).toBe(html.includes('data-offline') ? 1 : 0);
-  if (html.includes('data-offline')) expect(html).toMatch(/<script nonce="[^"]+">/);
+  // A script only comes with the door view's saved-note, once and nonced; it carries no credential.
+  expect(html.match(/<script\b/gi)?.length ?? 0).toBe(html.includes('data-door-saved') ? 1 : 0);
+  if (html.includes('data-door-saved')) expect(html).toMatch(/<script nonce="[^"]+">/);
   const body = bodyOf(html);
   for (const secret of secrets) expect(body).not.toContain(secret);
   // The pass title can be a holder's name: the tab, the link preview and the manifest stay neutral.
   expect(html).toContain('<title>Barcode · ');
   expect(html).toContain('<meta property="og:title" content="Barcode">');
-  expect(html).not.toContain('rel="manifest"');
+  // No page links a manifest: a shortcut opens the saved door view in the browser, not as an app.
+  expect(html.match(/rel=["']?manifest\b/gi) ?? []).toEqual([]);
   return html;
 }
 
@@ -576,7 +578,13 @@ describe('presentation barcode', () => {
     for (const path of ['/p/short/barcode', `/p/${'z'.repeat(43)}/barcode`, oldPath]) {
       const res = await publicGet(path);
       expect(res.status).toBe(404);
-      expect(await res.clone().text()).not.toMatch(/<script\b/i);
+      // Only the nonced drop script, byte for byte (static; it names no token).
+      const scripts = [
+        ...(await res.clone().text()).matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi),
+      ];
+      expect(scripts.length).toBe(1);
+      expect(scripts[0]?.[1]).toMatch(/^ nonce="[^"]+"$/);
+      expect(scripts[0]?.[2]).toBe(DROP_SCRIPT);
       await expectDenied(res, [PRIMARY, SECONDARY, LEGACY, SCAN_CODE]);
     }
     const html = await presentationHtml(
@@ -608,7 +616,7 @@ describe('presentation barcode', () => {
     expect(html).toContain('Scan with your iPhone camera.');
   });
 
-  it('offers Save for offline on the bearer page only, with one nonced script and no credential in it', async () => {
+  it('offers the saved note and wake lock on the bearer door view only, with one nonced script and no credential in it', async () => {
     const pass = await passWith({ json: primaryJson });
     const res = await publicGet(await publicPath(pass));
     const html = await res.text();
@@ -616,8 +624,9 @@ describe('presentation barcode', () => {
       res.headers.get('content-security-policy') ?? '',
     )?.[1];
     expect(nonce).toBeTruthy();
-    expect(html).toContain('data-offline');
-    expect(html).toContain('Save for offline');
+    expect(html).toContain('data-door-saved');
+    expect(html).toContain('Works offline');
+    expect(html).not.toContain('Save for offline');
     expect(html.match(/<script\b/g)).toHaveLength(1);
     expect(html).toContain(`<script nonce="${nonce}">`);
     const script = /<script[^>]*>([\s\S]*?)<\/script>/.exec(html)?.[1] ?? '';
@@ -626,19 +635,60 @@ describe('presentation barcode', () => {
     expect(res.headers.get('cache-control')).toContain('no-store');
     // The signed-in holder's page is not a bearer link: nothing to save.
     const owner = await (await ownerGet(ownerPath(pass))).text();
-    expect(owner).not.toContain('data-offline');
+    expect(owner).not.toContain('data-door-saved');
+    expect(owner).not.toContain('rel="manifest"');
     expect(owner).not.toMatch(/<script\b/);
   });
 
-  it("hands the saved copy the pass's own expiry", async () => {
+  it('sends the pass expiry as a header and keeps the token out of the saved page', async () => {
     const pass = await passWith({
       json: { ...primaryJson, expirationDate: '2099-01-01T00:00:00Z' },
     });
-    expect((await presentationForPass(ctx, pass)).expiresAt).toBe(
-      Date.parse('2099-01-01T00:00:00Z'),
-    );
-    const html = await (await publicGet(await publicPath(pass))).text();
-    expect(html).toContain(`data-expires="${Date.parse('2099-01-01T00:00:00Z')}"`);
+    const door = await publicPath(pass);
+    const token = door.split('/')[2] as string;
+    const res = await publicGet(door);
+    expect(res.headers.get('x-pass-expires-at')).toBe(String(Date.parse('2099-01-01T00:00:00Z')));
+    const html = await res.text();
+    expect(html).not.toContain(token);
+    expect(html).not.toContain('data-expires');
+    expect(html).toContain('href="./"');
+    // The way back lands on the pass page.
+    const back = await publicGet(`/p/${token}/`);
+    expect(back.status).toBe(308);
+    expect(back.headers.get('location')).toBe(`/p/${token}`);
+    expect((await publicGet('/p/short/')).status).toBe(404);
+  });
+
+  it('has no door-view manifest', async () => {
+    const pass = await passWith({ json: primaryJson });
+    const res = await publicGet(`${await publicPath(pass)}/manifest.webmanifest`);
+    expect(res.headers.get('content-type') ?? '').not.toContain('manifest');
+  });
+
+  it('drops the saved copy from the 404 page of a retired pass or door link, with no token in it', async () => {
+    const pass = await passWith({ json: primaryJson });
+    const old = await publicPath(pass);
+    await rotateLink(ctx, { type: 'user', id: user.id }, pass.id, null);
+    for (const path of [old, old.replace('/barcode', '')]) {
+      const res = await publicGet(path);
+      expect(res.status).toBe(404);
+      const html = await res.text();
+      const nonce = /script-src 'self' 'nonce-([^']+)'/.exec(
+        res.headers.get('content-security-policy') ?? '',
+      )?.[1];
+      expect(html).toContain(`<script nonce="${nonce}">`);
+      expect(html).toContain("caches.delete('barcode:'");
+      expect(html).not.toContain(old.split('/')[2] as string);
+    }
+  });
+
+  it('serves the worker and the save controls as static scripts that name no pass', async () => {
+    for (const path of ['/p/sw.js', '/p/save.js']) {
+      const res = await publicGet(path);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('content-type')).toContain('text/javascript');
+      expect(await res.text()).not.toMatch(/[A-Za-z0-9_-]{43}/);
+    }
   });
 
   it('serves the barcode page worker from /p/sw.js, which no token can reach', async () => {

@@ -97,82 +97,6 @@ describe('org settings inheritance', () => {
     expect(screen.getByText('Up to 100')).toBeInTheDocument();
   });
 
-  it('disables the NFC tag switch while the platform switch is off', async () => {
-    await setup({
-      'nfc.tags': {
-        value: { enabled: false },
-        default: { enabled: false },
-        blockedByPlatform: true,
-      },
-    });
-    expect(
-      await screen.findByLabelText(
-        'Disabled. Off for the platform. Copies stay as they are. Change it in Platform settings.',
-      ),
-    ).toHaveTextContent('Disabled');
-    // The platform blocks tags, not printing.
-    expect(screen.queryByText(/printing/i)).toBeNull();
-    expect(screen.queryByRole('switch', { name: 'Linked NFC allowed' })).toBeNull();
-    expect(screen.queryByText('Off for this organization')).toBeNull();
-  });
-
-  it('locks the NFC tag switch while the plan does not include NFC, with the reason in the tooltip', async () => {
-    await setup({
-      'nfc.tags': { value: { enabled: true }, default: { enabled: true }, blockedByPlan: true },
-    });
-    expect(
-      await screen.findByLabelText(
-        'Not available. Not included for this organization. Ask PassBook to turn it on. Copies stay as they are.',
-      ),
-    ).toHaveTextContent('Not available');
-    expect(screen.queryByRole('switch', { name: 'Linked NFC allowed' })).toBeNull();
-  });
-
-  it('locks every channel the plan does not include, and leaves the others switchable', async () => {
-    await setup({
-      'nfc.tags': { value: { enabled: true }, default: { enabled: true }, blockedByPlan: true },
-      'channels.blocked': { value: [], default: [], planBlocked: ['google', 'paper', 'nfc'] },
-    });
-    expect(await screen.findByRole('switch', { name: 'Apple Wallet allowed' })).toBeEnabled();
-    expect(screen.getByRole('switch', { name: 'Samsung Wallet allowed' })).toBeEnabled();
-    for (const name of ['Google Wallet allowed', 'Paper allowed', 'Linked NFC allowed'])
-      expect(screen.queryByRole('switch', { name })).toBeNull();
-    expect(
-      screen.getAllByLabelText(
-        'Not available. Not included for this organization. Ask PassBook to turn it on. Copies stay as they are.',
-      ),
-    ).toHaveLength(3);
-  });
-
-  it('leaves the NFC tag switch usable when the platform switch is on', async () => {
-    await setup({ 'nfc.tags': { value: { enabled: false }, default: { enabled: false } } });
-    expect(await screen.findByRole('switch', { name: 'Linked NFC allowed' })).toBeEnabled();
-    expect(screen.queryByText('Not available')).toBeNull();
-  });
-
-  it('blocks a channel for the organization and turns NFC tags on', async () => {
-    const bodies: unknown[] = [];
-    await setup(
-      {
-        'nfc.tags': { value: { enabled: false }, default: { enabled: false } },
-        'channels.blocked': { value: ['paper'], default: [] },
-      },
-      (put) => bodies.push(put),
-    );
-    const user = userEvent.setup();
-    await user.click(await screen.findByRole('switch', { name: 'Apple Wallet allowed' }));
-    await waitFor(() =>
-      expect(bodies[0]).toMatchObject({
-        scope: 'org:o1',
-        values: { 'channels.blocked': ['paper', 'apple'] },
-      }),
-    );
-    await user.click(screen.getByRole('switch', { name: 'Linked NFC allowed' }));
-    await waitFor(() =>
-      expect(bodies[1]).toMatchObject({ values: { 'nfc.tags': { enabled: true } } }),
-    );
-  });
-
   it('keeps platform-only settings off the organization page', async () => {
     await setup({ 'email.buddy': { value: false, default: false } });
     await screen.findByLabelText('Emails per day').catch(() => undefined);
@@ -180,7 +104,7 @@ describe('org settings inheritance', () => {
     expect(screen.queryByLabelText('Magic-link sign-in')).toBeNull();
   });
 
-  it('shows created, id and the signing identity with a link to Wallet accounts', async () => {
+  it('shows created, id and the signing identity with a link to Brand and channels', async () => {
     await renderApp('/admin/o/o1/settings', {
       session: 'admin',
       memberships: [membershipFixture('o1')],
@@ -210,7 +134,7 @@ describe('org settings inheritance', () => {
       },
     });
     const link = await screen.findByRole('link', { name: /Acme signer, expires/ });
-    expect(link).toHaveAttribute('href', '/admin/o/o1/wallet-accounts');
+    expect(link).toHaveAttribute('href', '/admin/o/o1/brand#channels');
     expect(screen.getAllByText('o1').length).toBeGreaterThan(0);
     expect(screen.getByText('Created')).toBeInTheDocument();
   });

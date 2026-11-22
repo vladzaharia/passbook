@@ -215,20 +215,24 @@ function Changelog({ site }: { site: Site }) {
   );
 }
 
+/** A signed-in developer gets the Workbench in `#workbench`; the island then hides the marketing home. */
 export function HomeView({ site }: { site: Site }) {
   return (
     <>
-      <Hero />
-      <Tiles />
-      <section className="sect">
-        <div className="two">
-          <Sandbox />
-          <div className="stack g4">
-            <Guides />
-            <Changelog site={site} />
+      <div id="workbench" className="wb-slot" data-island="workbench" />
+      <div data-home-marketing="">
+        <Hero />
+        <Tiles />
+        <section className="sect">
+          <div className="two">
+            <Sandbox />
+            <div className="stack g4">
+              <Guides />
+              <Changelog site={site} />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </>
   );
 }

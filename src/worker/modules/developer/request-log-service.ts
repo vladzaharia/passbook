@@ -42,7 +42,7 @@ export async function orgOfCaller(
   return sandbox.org_id;
 }
 
-const entryOf = (r: Omit<LogRow, 'request_body' | 'response_body'>): Entry => ({
+export const entryOf = (r: Omit<LogRow, 'request_body' | 'response_body'>): Entry => ({
   id: r.id,
   requestId: r.request_id,
   at: r.at,

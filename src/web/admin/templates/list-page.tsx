@@ -26,6 +26,7 @@ import { useRecentUploads, useTemplatePages } from './api.ts';
 import { originLabel, TemplateGallery, TemplateStill } from './gallery.tsx';
 import { styleList } from './labels.ts';
 import { RecentUploads, uploadsNeedAttention } from './recent-uploads.tsx';
+import { ReviewInbox } from './review-inbox.tsx';
 import type { TemplateListSearch } from './search.ts';
 
 const ALL = 'all';
@@ -214,6 +215,7 @@ export function TemplatesListPage({
           ) : undefined
         }
       />
+      <ReviewInbox />
       {canAuthor && uploadsFirst ? <RecentUploads orgId={orgId} className="mt-0 mb-6" /> : null}
       {list.isError ? (
         <ErrorState

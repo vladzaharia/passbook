@@ -142,7 +142,7 @@ test('the org brand leads holder pages, and the mark follows its level', async (
   await admin.dispose();
 });
 
-test('admin sets the brand from org settings', async ({ browser }) => {
+test('admin sets the brand from Brand and channels', async ({ browser }) => {
   const orgId = readSeed().org.id;
   const admin = await apiAs('admin');
   const q = `?orgId=${encodeURIComponent(orgId)}`;
@@ -151,13 +151,19 @@ test('admin sets the brand from org settings', async ({ browser }) => {
   await admin.dispose();
   const ctx = await browser.newContext({ storageState: 'e2e/.auth/admin.json' });
   const page = await ctx.newPage();
-  await page.goto(`/admin/o/${orgId}/settings`);
-  await expect(page.getByRole('heading', { name: 'Brand', exact: true })).toBeVisible();
-  await expect(page.getByRole('img', { name: /web logo/ })).toBeVisible();
-  await expect(page.getByRole('radio', { name: /None/ })).toBeDisabled();
-  await page.getByRole('radio', { name: /Small/ }).check();
-  await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByText('Brand saved.')).toBeVisible();
+  await page.goto(`/admin/o/${orgId}/brand`);
+  await expect(page.getByRole('heading', { name: 'Brand and channels', level: 1 })).toBeVisible();
+  const brand = page.getByRole('region', { name: 'Brand', exact: true });
+  await expect(brand.getByRole('radio', { name: /None/ })).toBeDisabled();
+  await brand.getByRole('radio', { name: /Small/ }).check();
+  await page.getByRole('button', { name: 'Review', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByText('PassBook mark')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  // The bar's "Saved" and the toast are both brief; the saved level is the durable proof.
+  await expect(brand.getByRole('radio', { name: /Small/ })).toBeChecked();
+  await expect(page.getByRole('region', { name: 'Unsaved changes' })).toBeHidden();
   await shoot(page, 'admin-brand');
   await ctx.close();
 });

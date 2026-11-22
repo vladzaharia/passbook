@@ -101,6 +101,12 @@
     "fix": "Request only scopes your own key or role holds.",
     "retryable": false
   },
+  "API_KEY_SCOPE_EXCEEDS_SANDBOX": {
+    "title": "Scope not available in a sandbox",
+    "when": "A sandbox key asked for, or holds, key minting, a terminal scope or scanning setup. issues names them.",
+    "fix": "Request only sandbox scopes. A key that already holds one cannot be rolled: create a new key.",
+    "retryable": false
+  },
   "API_KEY_TERMINALS_REQUIRED": {
     "title": "Terminals required",
     "when": "A key with the scans:write scope was created without terminals.",
@@ -219,6 +225,12 @@
     "title": "Blueprint not scannable",
     "when": "Scan setup was requested on a blueprint instead of a template.",
     "fix": "Create a template from the blueprint with POST /api/v1/templates/{id}/use, then set up scanning on it.",
+    "retryable": false
+  },
+  "BRAND_ASSET_NOT_FOUND": {
+    "title": "Upload not staged",
+    "when": "The pass-setup save names an image sha that was never staged for that slot, or that expired after 24 hours.",
+    "fix": "Stage the PNG again with POST /api/v1/orgs/{orgId}/brand-assets and name the new sha.",
     "retryable": false
   },
   "BRAND_IMAGE_NOT_FOUND": {
@@ -1157,6 +1169,12 @@
     "fix": "Create a key with the scope the operation lists under security.",
     "retryable": false
   },
+  "MODE_LIVE_REQUIRED": {
+    "title": "Live key required",
+    "when": "A Test key tried to change channels, support, email or the name of an organization that also has Live passes. A Test key may change the brand kit only.",
+    "fix": "Use a live key for this change.",
+    "retryable": false
+  },
   "MODE_MISMATCH": {
     "title": "Mode mismatch",
     "when": "The request mixes test and live objects, for example a test pass with a live connection.",
@@ -1407,6 +1425,18 @@
     "title": "Pass removed",
     "when": "The pass was removed from the holder's wallet.",
     "fix": "Restore it with POST /api/v1/passes/{id}/restore, then send the request again.",
+    "retryable": false
+  },
+  "PASS_SETUP_CHANGED": {
+    "title": "Setup changed",
+    "when": "Another request changed the organization's setup, or its wallet account, after your read.",
+    "fix": "Fetch it again with GET /api/v1/orgs/{orgId}/pass-setup and send your change with the new revision.",
+    "retryable": true
+  },
+  "PASS_SETUP_EMPTY": {
+    "title": "Nothing to change",
+    "when": "The pass-setup change has no brand or channels entry.",
+    "fix": "Send at least one field in brand or channels.",
     "retryable": false
   },
   "PASS_TRANSFER_NOT_FOUND": {
@@ -2609,6 +2639,12 @@
     "fix": "Ask the author to request review of this version, then review it again.",
     "retryable": false
   },
+  "TEMPLATE_REVIEW_SUPERSEDED": {
+    "title": "Review request replaced",
+    "when": "A newer version of the template has an open request, so this one was replaced.",
+    "fix": "Review the newer version listed in the message.",
+    "retryable": false
+  },
   "TEMPLATE_REVIEW_REQUIRED": {
     "title": "Review required",
     "when": "Another reviewer must approve this version before it is released in Live.",
@@ -3303,6 +3339,36 @@
     "title": "Pass changed",
     "when": "A pass moved since the bulk run's snapshot; the run skips it and counts it under PASS_CHANGED.",
     "fix": "Start a new run for the passes that are left.",
+    "retryable": false
+  },
+  "STAFF_PIN_RESET_NOT_REQUIRED": {
+    "title": "PIN does not need replacing",
+    "when": "The signed-in person's PIN is not flagged for a reset.",
+    "fix": "Nothing to do; keep using the current PIN.",
+    "retryable": false
+  },
+  "STAFF_PIN_TAKEN": {
+    "title": "PIN in use",
+    "when": "Another active staff member has that PIN, so the person cannot be re-enabled with it.",
+    "fix": "Reset the PIN, then try again.",
+    "retryable": false
+  },
+  "STAFF_SIGN_IN_REQUIRED": {
+    "title": "Sign in first",
+    "when": "A new PIN was sent before any staff member signed in on this scanner.",
+    "fix": "Sign in with POST /scan/staff, then send the new PIN.",
+    "retryable": false
+  },
+  "STAFF_PIN_ADMIN_RESET": {
+    "title": "Admin reset needed",
+    "when": "A Manager whose PIN is shared asked for a new PIN themselves. Only an admin resets a Manager's PIN.",
+    "fix": "Ask an admin to reset the PIN in the Staff tab.",
+    "retryable": false
+  },
+  "STAFF_PIN_RESET_REQUIRED": {
+    "title": "New PIN needed",
+    "when": "The signed-in person has a shared PIN and has not taken the new one the server sets.",
+    "fix": "Call POST /scan/staff/pin, or sign out.",
     "retryable": false
   }
 }

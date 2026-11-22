@@ -41,6 +41,7 @@ import { resolvedRowOf } from './auth-store.ts';
 import { captureScanEpochs } from './authority-checks.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { API_KEY_TOKEN, type KeyTerminal, keyTerminalOf } from './guard-api-key.ts';
+import { pinResetExempt, pinResetRequired } from './guard-pin-reset.ts';
 import { getScanner, scannerEpochsOf, unbindStaff } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import type { ScanStaffRow } from './repo-staff.ts';
@@ -77,7 +78,9 @@ type Credential = { scanner: ScannerAuth; key?: KeyTerminal } | { admin: Session
 /** Terminal bearer or a till's API key, else the device cookie, else a user session. */
 async function credentialOf(c: Context<AppBindings>): Promise<Credential> {
   const { scanners, sessions } = c.var.stores;
-  const meta = { ipPrefix: ipPrefix(c.req.header('cf-connecting-ip')) };
+  // An upload is not a contact: it never moves the floor the server holds queued reads to (batch.ts).
+  const upload = c.req.method === 'POST' && /\/(?:batch|device)$/.test(c.req.path);
+  const meta = { ipPrefix: ipPrefix(c.req.header('cf-connecting-ip')), contact: !upload };
   const header = c.req.header('authorization');
   if (header) {
     const token = /^Bearer\s+(\S+)$/i.exec(header)?.[1];
@@ -282,6 +285,9 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
         }
       }
       withRole(actor, actor.settings.staffSignIn ? actor.staff : null);
+      // A person who has not taken the new PIN the server set may only fetch it, sign out or look at the session.
+      if (actor.staff?.pinResetRequired && !pinResetExempt(c.req.method, c.req.path))
+        throw pinResetRequired();
     }
     await captureScanEpochs(ctx.env.DB, actor, scannerEpochs, pendingStaff?.pinHash);
     if (actor.role === null && !options.staffOptional)
@@ -310,7 +316,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       if (!parent) throw unauthenticated();
       // A manager signs in while closed, to open early.
       if (
-        !c.req.path.endsWith('/staff') &&
+        !/\/staff(?:\/pin)?$/.test(c.req.path) &&
         !(
           sessionWindow(parent, ctx.clock.now()).open ||
           (await retriesCommitted(c, ctx.env.DB, actor))

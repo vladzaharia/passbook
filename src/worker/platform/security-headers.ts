@@ -1,4 +1,5 @@
 import { createMiddleware } from 'hono/factory';
+import { SAVE_POLICY } from '../../shared/pass-offline.ts';
 import type { AppBindings } from './context.ts';
 
 /** Shared with public/_headers; security-headers.test.ts fails when the two drift. */
@@ -54,12 +55,13 @@ export function developersContentSecurityPolicy(options: { turnstile?: boolean }
 export const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
 /** The Trusted Types policy the widget loaders create (src/web/lib/turnstile-script.ts, public/join.js). */
 export const TURNSTILE_POLICY = 'passbook-turnstile';
-/** The policy for a same-origin worker script address (src/web/lib/trusted-worker-url.ts, src/shared/pass-offline.ts). */
+/** The policy for a same-origin worker script address (src/web/lib/trusted-worker-url.ts: the scanner). */
 export const WORKER_POLICY = 'passbook-worker';
 
 /**
  * Trusted Types: script may not reach a DOM sink with a string. Each page makes only the policies it
- * needs; the Turnstile loader, and the worker script address of /scan and the pass page's offline save.
+ * needs; the Turnstile loader, and the worker script address of /scan, and `passbook-save` (admits only /p/sw.js) for
+ * save to this phone on /p and /b and in the app.
  */
 function trustedTypesPolicy(names: string[]): string {
   return `trusted-types ${names.length ? names.join(' ') : "'none'"}`;
@@ -90,7 +92,8 @@ export function contentSecurityPolicy(
     "require-trusted-types-for 'script'",
     trustedTypesPolicy([
       ...(options.turnstile ? [TURNSTILE_POLICY] : []),
-      ...(options.scan || options.offline ? [WORKER_POLICY] : []),
+      ...(options.scan ? [WORKER_POLICY] : []),
+      ...(options.offline ? [SAVE_POLICY] : []),
     ]),
     'upgrade-insecure-requests',
   ].join('; ');

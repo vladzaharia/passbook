@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 
 const org = {
@@ -24,6 +25,7 @@ const entry = (key: string, value: unknown) => ({
   source: 'org',
 });
 const handlers = {
+  '/api/v1/orgs/o1/pass-setup': () => json(viewOf(readyFacts())),
   '/api/v1/orgs/o1': () => json(org),
   '/api/v1/orgs/o1/workspace': () => json(org),
   '/api/v1/wallet-providers/accounts': (url: URL) =>
@@ -52,13 +54,14 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('PassEmailPreview', () => {
   it('follows the unsaved support contacts once typing settles, and only valid ones', async () => {
-    await renderApp('/admin/orgs/o1?view=workspace&orgId=o1', {
+    await renderApp('/admin/o/o1/brand', {
       session: 'admin',
       memberships: [membershipFixture('o1')],
       handlers,
     });
     const ui = userEvent.setup();
-    const email = await screen.findByLabelText('Support email');
+    const email = await screen.findByLabelText(/^Support email/);
+    await ui.click(screen.getByRole('radio', { name: 'Email' }));
     expect(email).toHaveValue('help@acme.test');
     // Saved values are the Worker's own: the frame asks for nothing else.
     expect(src()).toMatch(/\/email-preview\?buddy=0&v=\d+$/);
@@ -69,7 +72,7 @@ describe('PassEmailPreview', () => {
     expect(src()).toMatch(/\?buddy=0&v=\d+$/);
     await ui.type(email, '.test');
     await waitFor(() => expect(src()).toContain('?buddy=0&supportEmail=desk@acme.test&v='));
-    await ui.type(screen.getByLabelText('Support URL'), 'https://acme.test/help');
+    await ui.type(screen.getByLabelText('Support link'), 'https://acme.test/help');
     await waitFor(() => expect(src()).toContain('&supportUrl=https://acme.test/help&'));
     // Cleared, as Save would clear it.
     await ui.clear(email);
@@ -78,11 +81,12 @@ describe('PassEmailPreview', () => {
 
   it('lays the email out at a phone width and scales it into a narrow column', async () => {
     const width = vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(352);
-    await renderApp('/admin/orgs/o1?view=workspace&orgId=o1', {
+    await renderApp('/admin/o/o1/brand', {
       session: 'admin',
       memberships: [membershipFixture('o1')],
       handlers,
     });
+    await userEvent.click(await screen.findByRole('radio', { name: 'Email' }));
     await screen.findByTitle('Sample pass email');
     expect(frame().style.width).toBe('390px');
     expect(Number(/scale\(([\d.]+)\)/.exec(frame().style.transform)?.[1])).toBeCloseTo(
@@ -94,11 +98,12 @@ describe('PassEmailPreview', () => {
 
   it('uses the width it has, up to the email column, unscaled', async () => {
     vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(600);
-    await renderApp('/admin/orgs/o1?view=workspace&orgId=o1', {
+    await renderApp('/admin/o/o1/brand', {
       session: 'admin',
       memberships: [membershipFixture('o1')],
       handlers,
     });
+    await userEvent.click(await screen.findByRole('radio', { name: 'Email' }));
     await screen.findByTitle('Sample pass email');
     expect(frame().style.width).toBe('512px');
     expect(frame().style.transform).toBe('');

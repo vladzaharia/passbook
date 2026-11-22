@@ -28,6 +28,7 @@ const item = (id: string, state: BundlePageItem['state'], detail: string): Bundl
     assets,
     ...(state === 'voided' ? { stateWord: 'Voided' } : {}),
   }),
+  href: `/b/t/${id}/open`,
   downloadHref: `/b/t/${id}/pass.pkpass`,
   barcodeHref: `/b/t/${id}/barcode`,
 });
@@ -57,14 +58,15 @@ describe('/b with a voided pass', () => {
     expect(text(html)).toContain('2 passes · 1 voided');
   });
 
-  it('shows the voided card as Voided, never Active, with who to ask', () => {
-    expect(text(html)).toContain('No longer valid. Contact Northwind');
+  it('keeps the voided pass as a dim peek named Voided, counted under the title', () => {
+    expect(html).toContain('data-dim');
+    expect(html).toContain('Maya Chen, Tier: Pro, Voided');
     expect(text(html).match(/Status\s+Active/g)?.length).toBe(1);
   });
 
   it('names each pass by its tier so same-titled passes read apart', () => {
     expect(text(html)).toContain('Maya Chen Tier: Plus');
-    expect(text(html)).toContain('Maya Chen Tier: Pro');
+    expect(html).toContain('Maya Chen, Tier: Pro, Voided');
   });
 
   it('asks the org for a new pass when it has no contact', () => {
@@ -111,5 +113,31 @@ describe('native wallet links in a bundle', () => {
   it('shows no wallet link for a voided pass', () => {
     const html = render([{ ...walletOf('a'), state: 'voided' }]);
     expect(html).not.toContain('/wallet/google');
+  });
+});
+
+describe('/b as a stack', () => {
+  const html = render([
+    item('a', 'active', 'Tier: Plus'),
+    item('b', 'active', 'Tier: Pro'),
+    item('c', 'active', 'Tier: Max'),
+  ]);
+
+  it('fronts the first pass and lays the rest as plain-link peeks', () => {
+    expect(html.match(/class="wl-stack-front"/g)).toHaveLength(1);
+    expect(html).toContain('<a class="wl-peek" href="/b/t/b/open"');
+    expect(html).toContain('<a class="wl-peek" href="/b/t/c/open"');
+    expect(html).not.toContain('href="/b/t/a/open"');
+  });
+
+  it('counts once: All passes (3) on the badge, none under the title, no My passes link', () => {
+    expect(text(html)).toContain('All passes (3)');
+    expect(text(html).match(/3 passes/g)).toBeNull();
+    expect(text(html)).not.toContain('My passes');
+    expect(text(html)).not.toContain('Open in');
+  });
+
+  it('adds no script for the stack', () => {
+    expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);
   });
 });

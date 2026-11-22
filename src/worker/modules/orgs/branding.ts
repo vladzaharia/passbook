@@ -58,6 +58,23 @@ async function derive2x(
   return (await images.resize?.(bytes, w, h)) ?? null;
 }
 
+/** The @3x and @2x of an upload, checked against the pass image rules; the @2x is derived when absent and possible. */
+export async function checkedImagePair(
+  images: ImageTools,
+  slot: Slot,
+  upload: { x3: string; x2?: string | undefined },
+) {
+  const x3 = decode(upload.x3);
+  const size = checkImage(slot, 3, x3);
+  const x2 = upload.x2 ? decode(upload.x2) : await derive2x(images, x3, size);
+  if (x2) {
+    const small = checkImage(slot, 2, x2);
+    if (Math.abs(small.w - (size.w * 2) / 3) > 1 || Math.abs(small.h - (size.h * 2) / 3) > 1)
+      throw new ValidationError('The @2x image must be two thirds of the @3x.', [], 'IMAGE_SCALE');
+  }
+  return { x3, x2, size };
+}
+
 async function saveBranding(
   ctx: ServiceContext,
   actor: Actor,
@@ -108,14 +125,7 @@ export async function putBrandingImage(
 ): Promise<OrgDto> {
   const current = await requireOrg(ctx, orgId);
   const row = { ...current, config_revision: upload.configRevision ?? current.config_revision };
-  const x3 = decode(upload.x3);
-  const size = checkImage(slot, 3, x3);
-  const x2 = upload.x2 ? decode(upload.x2) : await derive2x(images, x3, size);
-  if (x2) {
-    const small = checkImage(slot, 2, x2);
-    if (Math.abs(small.w - (size.w * 2) / 3) > 1 || Math.abs(small.h - (size.h * 2) / 3) > 1)
-      throw new ValidationError('The @2x image must be two thirds of the @3x.', [], 'IMAGE_SCALE');
-  }
+  const { x3, x2, size } = await checkedImagePair(images, slot, upload);
   // Stage immutable objects before publishing their reference in the fenced org update.
   // A failed or revoked request cannot overwrite images currently used by passes.
   const storageVersion = await sha256Hex(ctx.ids.token());

@@ -42,6 +42,8 @@ export interface MyPassRow {
   personalization: string;
   /** 1 when a device registered the pass. */
   registered: number;
+  /** 1 for an ended pass not yet attached to the account: listed, never written. */
+  read_only: number;
 }
 
 // pass_versions keeps the built pass.json for recent versions; it is what the card renders. `version`
@@ -55,29 +57,48 @@ const SELECT = `
          COALESCE((SELECT pv.pass_json FROM pass_versions pv
                    WHERE pv.pass_id = p.id AND pv.version <= p.version AND pv.pass_json IS NOT NULL
                    ORDER BY pv.version DESC LIMIT 1), p.pending_pass_json) AS pass_json,
-         EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id) AS registered
+         EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id) AS registered,
+         (p.owner_user_id IS NULL) AS read_only
   FROM passes p
   JOIN templates t ON t.id = p.template_id
   JOIN orgs o ON o.id = p.org_id`;
 
-const NO_PENDING_TRANSFER = `NOT EXISTS (SELECT 1 FROM pass_credential_transfers transfer
+export const NO_PENDING_TRANSFER = `NOT EXISTS (SELECT 1 FROM pass_credential_transfers transfer
   WHERE transfer.pass_id = p.id AND transfer.state = 'pending')`;
+
+/**
+ * An ended pass (voided; removed once its removal is published) waiting for this account's verified
+ * address: listed read-only, never attached or written. Not purged, not a joined card (a stranger's
+ * typed address), not contested by another account. Three parameters: the user, three times.
+ */
+const ENDED_WAITING = `(p.owner_user_id IS NULL AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
+  AND p.status = 'voided' AND (p.removed_at IS NULL OR p.removal_published_generation = p.lifecycle_generation)
+  AND EXISTS (SELECT 1 FROM user_emails e JOIN users u ON u.id = e.user_id
+    WHERE e.user_id = ? AND u.status = 'active' AND e.email = p.holder_email)
+  AND NOT EXISTS (SELECT 1 FROM users u2 JOIN user_emails e2 ON e2.user_id = u2.id
+    WHERE u2.id != ? AND u2.status = 'active' AND e2.email = p.holder_email)
+  AND NOT EXISTS (SELECT 1 FROM pass_attach_blocks b WHERE b.pass_id = p.id AND b.user_id = ?)
+  AND NOT EXISTS (SELECT 1 FROM join_marks j WHERE j.pass_id = p.id)
+  AND ${NO_PENDING_TRANSFER})`;
+const OWNED = `(p.owner_user_id = ? AND p.deleted_at IS NULL AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER})`;
+/** What My passes shows: the owned passes, and the ended ones waiting for the address. */
+const LISTED = `(${OWNED} OR ${ENDED_WAITING})`;
+const listedBinds = (userId: string) => [userId, userId, userId, userId];
 
 export const listMyPasses = (db: Db, userId: string, cursor: string | undefined, limit: number) =>
   all<MyPassRow>(
     db,
-    `${SELECT} WHERE p.owner_user_id = ? AND p.deleted_at IS NULL AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}
-      ${cursor ? 'AND p.id < ?' : ''} ORDER BY p.id DESC LIMIT ?`,
-    cursor ? [userId, cursor, limit + 1] : [userId, limit + 1],
+    `${SELECT} WHERE ${LISTED} ${cursor ? 'AND p.id < ?' : ''} ORDER BY p.id DESC LIMIT ?`,
+    cursor ? [...listedBinds(userId), cursor, limit + 1] : [...listedBinds(userId), limit + 1],
   );
 
+/** Owned passes only: every write (refresh, remove, help) starts here. */
 export const getMyPass = (db: Db, userId: string, passId: string) =>
-  first<MyPassRow>(
-    db,
-    `${SELECT} WHERE p.owner_user_id = ? AND p.id = ? AND p.deleted_at IS NULL
-    AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}`,
-    [userId, passId],
-  );
+  first<MyPassRow>(db, `${SELECT} WHERE ${OWNED} AND p.id = ?`, [userId, passId]);
+
+/** The detail read: owned, or ended and waiting for this account. */
+export const getMyPassListed = (db: Db, userId: string, passId: string) =>
+  first<MyPassRow>(db, `${SELECT} WHERE ${LISTED} AND p.id = ?`, [...listedBinds(userId), passId]);
 
 /** Fence the whole page and its status notices in one final D1 snapshot. */
 export async function portfolioSnapshot(db: Db, userId: string, ids: readonly string[]) {
@@ -85,8 +106,8 @@ export async function portfolioSnapshot(db: Db, userId: string, ids: readonly st
     stmt(
       db,
       `${SELECT} JOIN json_each(?) expected ON expected.value = p.id
-      WHERE p.owner_user_id = ? AND p.deleted_at IS NULL AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}`,
-      [JSON.stringify(ids), userId],
+      WHERE ${LISTED}`,
+      [JSON.stringify(ids), ...listedBinds(userId)],
     ),
     stmt(
       db,
@@ -139,13 +160,22 @@ export const getMyRemoval = (db: Db, userId: string, transferId: string) =>
     [transferId, userId],
   );
 
+/** False when there is no such email, or it is the account's last one (never none to sign in with). */
 export async function removeEmail(db: Db, userId: string, email: string): Promise<boolean> {
-  const { changes } = await run(db, 'DELETE FROM user_emails WHERE user_id = ? AND email = ?', [
-    userId,
-    email,
-  ]);
+  const { changes } = await run(
+    db,
+    `DELETE FROM user_emails WHERE user_id = ? AND email = ?
+     AND (SELECT COUNT(*) FROM user_emails WHERE user_id = ?) > 1`,
+    [userId, email, userId],
+  );
   return changes > 0;
 }
+
+export const hasEmail = async (db: Db, userId: string, email: string) =>
+  (await first(db, 'SELECT 1 FROM user_emails WHERE user_id = ? AND email = ?', [
+    userId,
+    email,
+  ])) !== null;
 
 /** Sign-in emails go to `email`, which must be one of the user's verified addresses. */
 export async function setPrimaryEmail(
@@ -171,75 +201,3 @@ export async function hasActiveMembership(db: Db, userId: string): Promise<boole
     ])) !== null
   );
 }
-
-// A pass already in someone's Wallet leaves the Add all bundle (re-adding stays per pass).
-const NOT_IN_WALLET = 'NOT EXISTS (SELECT 1 FROM registrations r WHERE r.pass_id = p.id)';
-
-export interface BundleRow {
-  id: string;
-  org_id: string;
-  mode: 'live' | 'test';
-  template_id: string;
-  template_version: string;
-  object_key: string;
-  object_size: number | null;
-  version: number;
-  revision: number;
-  credential_generation: number;
-  lifecycle_generation: number;
-  link_generation: number;
-}
-
-const BUNDLE_WHERE = `p.owner_user_id = ? AND p.status = 'active' AND p.deleted_at IS NULL
-  AND p.removed_at IS NULL AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}
-  AND ${NOT_IN_WALLET}`;
-const ACTIVE_ORG = "JOIN orgs AS o ON o.id = p.org_id AND o.status = 'active'";
-
-/** Every pass Add all would bundle, newest first: the snapshot's ordered ids. */
-export const listBundleCandidates = (db: Db, userId: string) =>
-  all<Pick<BundleRow, 'id' | 'org_id' | 'mode' | 'template_id' | 'template_version'>>(
-    db,
-    `SELECT p.id, p.org_id, p.mode, p.template_id, p.template_version
-     FROM passes AS p ${ACTIVE_ORG} WHERE ${BUNDLE_WHERE} ORDER BY p.id DESC`,
-    [userId],
-  );
-
-/** One part, by id range from the snapshot: a pass leaving the set never shifts its neighbours. */
-export const listBundlePasses = (
-  db: Db,
-  userId: string,
-  range: { first: string; after: string | null },
-  limit: number,
-) =>
-  all<BundleRow>(
-    db,
-    `SELECT p.id, p.org_id, p.mode, p.template_id, p.template_version, p.object_key, p.object_size, p.version, p.revision,
-       p.credential_generation, p.lifecycle_generation, p.link_generation
-     FROM passes AS p ${ACTIVE_ORG}
-     WHERE ${BUNDLE_WHERE} AND p.id <= ? ${range.after === null ? '' : 'AND p.id > ?'}
-     ORDER BY p.id DESC LIMIT ?`,
-    [userId, range.first, ...(range.after === null ? [] : [range.after]), limit],
-  );
-
-/** Recheck each archive entry after its object read and before any bytes are emitted. */
-export const bundlePassIsCurrent = async (db: Db, userId: string, row: BundleRow) =>
-  (await first(
-    db,
-    `SELECT 1 FROM passes AS p ${ACTIVE_ORG} WHERE p.id = ? AND p.owner_user_id = ?
-    AND p.object_key = ? AND p.object_size IS ? AND p.version = ? AND p.revision = ?
-    AND p.credential_generation = ? AND p.lifecycle_generation = ? AND p.link_generation = ?
-    AND p.status = 'active' AND p.deleted_at IS NULL AND p.removed_at IS NULL
-    AND p.test_data_quarantined = 0 AND ${NO_PENDING_TRANSFER}
-    AND ${NOT_IN_WALLET}`,
-    [
-      row.id,
-      userId,
-      row.object_key,
-      row.object_size,
-      row.version,
-      row.revision,
-      row.credential_generation,
-      row.lifecycle_generation,
-      row.link_generation,
-    ],
-  )) !== null;

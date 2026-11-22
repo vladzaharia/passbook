@@ -281,6 +281,9 @@ describe('mintable scopes', () => {
     expect([...MINTABLE_SCOPES]).toEqual([
       ...Object.keys(LEGACY_SCOPE_CAPABILITY),
       'brand:manage',
+      'org:read',
+      'org:write',
+      'wallet:write',
       'scanning:write',
       'scan-setup:read',
       'scanning:admin',

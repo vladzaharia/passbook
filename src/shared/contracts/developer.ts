@@ -102,6 +102,11 @@ export const RequestLogQuerySchema = z.object({
   /** Matches anywhere in the path. */
   path: z.string().min(1).max(200).optional(),
   method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).optional(),
+  source: z
+    .enum(['key', 'try', 'all'])
+    .default('all')
+    .describe('key: calls with a sandbox key; try: Run here; all: both.'),
+  after: IdSchema.optional().describe('Only calls newer than this log id: the listener cursor.'),
   cursor: z.string().max(512).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });

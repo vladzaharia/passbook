@@ -295,6 +295,7 @@ describe('createScanApi', () => {
         'setRole',
         'signOut',
         'signOutPerson',
+        'staffNewPin',
         'staffSearch',
         'staffSignIn',
         'staffSignOut',

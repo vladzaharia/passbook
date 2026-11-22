@@ -78,6 +78,7 @@ const installed = (c: Credential): Record<string, SetValue> => ({
   paired_label: c.label,
   expires_at: c.expiresAt,
   last_seen_at: c.now,
+  contact_at: c.now,
   revoked_at: null,
   updated_at: maxNow(c.now),
   staff_id: null,

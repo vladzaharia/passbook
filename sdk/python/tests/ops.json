@@ -2718,6 +2718,382 @@
   }
  },
  {
+  "id": "pass-setup.postOrgsByOrgIdBrandAssets",
+  "call": "orgs.stage_brand_asset",
+  "http": "POST",
+  "path": "/api/v1/orgs/{orgId}/brand-assets",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "slot": "logo",
+   "png": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "slot": "logo",
+   "sha": "x",
+   "version": "x",
+   "w": 0,
+   "h": 0,
+   "expiresAt": 0
+  }
+ },
+ {
+  "id": "pass-setup.getOrgsByOrgIdPassSetup",
+  "call": "orgs.retrieve_pass_setup",
+  "http": "GET",
+  "path": "/api/v1/orgs/{orgId}/pass-setup",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "orgId": "x",
+   "mode": "live",
+   "revision": "x",
+   "passCount": 0,
+   "brand": {
+    "name": {
+     "value": "x",
+     "source": "passbook"
+    },
+    "logo": {
+     "value": {
+      "sha": "x",
+      "w": 0,
+      "h": 0
+     },
+     "source": "passbook",
+     "templatesOwn": 0
+    },
+    "icon": {
+     "value": {
+      "sha": "x",
+      "w": 0,
+      "h": 0
+     },
+     "source": "passbook",
+     "templatesOwn": 0
+    },
+    "webLogo": {
+     "value": {
+      "sha": "x",
+      "w": 0,
+      "h": 0
+     },
+     "source": "passbook",
+     "sameAsLogo": false
+    },
+    "passColors": {
+     "value": {
+      "background": "x",
+      "foreground": "x",
+      "label": "x"
+     },
+     "source": "passbook",
+     "templatesOwn": 0
+    },
+    "logoHasName": {
+     "value": false,
+     "source": "passbook"
+    },
+    "accent": {
+     "value": "x",
+     "source": "passbook"
+    },
+    "mark": {
+     "chosen": "full",
+     "effective": "full",
+     "allowed": [
+      "full"
+     ]
+    },
+    "support": {
+     "email": {
+      "value": "x",
+      "source": "passbook"
+     },
+     "url": {
+      "value": "x",
+      "source": "passbook"
+     }
+    },
+    "email": {
+     "fromName": {
+      "value": "x",
+      "source": "passbook"
+     },
+     "buddy": false
+    }
+   },
+   "channels": {},
+   "apple": {
+    "identity": {
+     "id": "x",
+     "provider": "apple",
+     "orgId": "x",
+     "label": "x",
+     "identifier": "x",
+     "kind": "platform",
+     "status": "provisioning",
+     "notBefore": 0,
+     "notAfter": 0,
+     "rotation": "auto",
+     "nextRotationAt": 0,
+     "issuing": false,
+     "isDefault": false,
+     "passCount": 0,
+     "createdAt": 0
+    },
+    "sharedIdentifier": "x",
+    "push": "unknown",
+    "run": {
+     "id": "x",
+     "orgId": "x",
+     "kind": "provision",
+     "targetType": "identity",
+     "targetId": "x",
+     "state": "queued",
+     "step": "x",
+     "attempt": 0,
+     "waitingFor": "x",
+     "errorCode": "x",
+     "createdAt": 0,
+     "updatedAt": 0,
+     "finishedAt": 0
+    },
+    "managedAllowed": false,
+    "passesOnShared": 0
+   },
+   "templates": [
+    {
+     "id": "x",
+     "name": "x",
+     "ownBrand": [
+      "colors"
+     ],
+     "placeholders": [
+      "logo"
+     ],
+     "channels": {}
+    }
+   ],
+   "checks": [
+    {
+     "code": "BRAND_LOGO",
+     "level": "error",
+     "area": "brand",
+     "message": "x",
+     "fix": {
+      "action": "upload_logo"
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "pass-setup.patchOrgsByOrgIdPassSetup",
+  "call": "orgs.update_pass_setup",
+  "http": "PATCH",
+  "path": "/api/v1/orgs/{orgId}/pass-setup",
+  "pathParams": [
+   {
+    "name": "orgId",
+    "py": "org_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "expectedRevision": "x"
+  },
+  "binary": false,
+  "idempotent": true,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "dryRun": false,
+   "view": {
+    "orgId": "x",
+    "mode": "live",
+    "revision": "x",
+    "passCount": 0,
+    "brand": {
+     "name": {
+      "value": "x",
+      "source": "passbook"
+     },
+     "logo": {
+      "value": {
+       "sha": "x",
+       "w": 0,
+       "h": 0
+      },
+      "source": "passbook",
+      "templatesOwn": 0
+     },
+     "icon": {
+      "value": {
+       "sha": "x",
+       "w": 0,
+       "h": 0
+      },
+      "source": "passbook",
+      "templatesOwn": 0
+     },
+     "webLogo": {
+      "value": {
+       "sha": "x",
+       "w": 0,
+       "h": 0
+      },
+      "source": "passbook",
+      "sameAsLogo": false
+     },
+     "passColors": {
+      "value": {
+       "background": "x",
+       "foreground": "x",
+       "label": "x"
+      },
+      "source": "passbook",
+      "templatesOwn": 0
+     },
+     "logoHasName": {
+      "value": false,
+      "source": "passbook"
+     },
+     "accent": {
+      "value": "x",
+      "source": "passbook"
+     },
+     "mark": {
+      "chosen": "full",
+      "effective": "full",
+      "allowed": [
+       "full"
+      ]
+     },
+     "support": {
+      "email": {
+       "value": "x",
+       "source": "passbook"
+      },
+      "url": {
+       "value": "x",
+       "source": "passbook"
+      }
+     },
+     "email": {
+      "fromName": {
+       "value": "x",
+       "source": "passbook"
+      },
+      "buddy": false
+     }
+    },
+    "channels": {},
+    "apple": {
+     "identity": {
+      "id": "x",
+      "provider": "apple",
+      "orgId": "x",
+      "label": "x",
+      "identifier": "x",
+      "kind": "platform",
+      "status": "provisioning",
+      "notBefore": 0,
+      "notAfter": 0,
+      "rotation": "auto",
+      "nextRotationAt": 0,
+      "issuing": false,
+      "isDefault": false,
+      "passCount": 0,
+      "createdAt": 0
+     },
+     "sharedIdentifier": "x",
+     "push": "unknown",
+     "run": {
+      "id": "x",
+      "orgId": "x",
+      "kind": "provision",
+      "targetType": "identity",
+      "targetId": "x",
+      "state": "queued",
+      "step": "x",
+      "attempt": 0,
+      "waitingFor": "x",
+      "errorCode": "x",
+      "createdAt": 0,
+      "updatedAt": 0,
+      "finishedAt": 0
+     },
+     "managedAllowed": false,
+     "passesOnShared": 0
+    },
+    "templates": [
+     {
+      "id": "x",
+      "name": "x",
+      "ownBrand": [
+       "colors"
+      ],
+      "placeholders": [
+       "logo"
+      ],
+      "channels": {}
+     }
+    ],
+    "checks": [
+     {
+      "code": "BRAND_LOGO",
+      "level": "error",
+      "area": "brand",
+      "message": "x",
+      "fix": {
+       "action": "upload_logo"
+      }
+     }
+    ]
+   },
+   "diff": [
+    {
+     "field": "brand.name"
+    }
+   ],
+   "impact": {
+    "passesToUpdate": 0,
+    "channelStops": [
+     {
+      "channel": "mobile",
+      "templates": 0,
+      "passes": 0
+     }
+    ],
+    "enrolments": [
+     "google"
+    ]
+   }
+  }
+ },
+ {
   "id": "pass-imports.getPassImports",
   "call": "pass_imports.list",
   "http": "GET",

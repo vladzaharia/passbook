@@ -8,7 +8,7 @@ import { insideRow } from './inside/inside-fake.test-support.ts';
 import { LiveScreen } from './live/live-screen.tsx';
 import { fixtureOutcome } from './machine/fixture-data.test-support.ts';
 
-export const MONITOR_DESK_CASES = ['off', 'signed-out', 'signed-in', 'manager'] as const;
+export const MONITOR_DESK_CASES = ['off', 'signed-out', 'signed-in', 'manager', 'reset'] as const;
 export type MonitorDeskCase = (typeof MONITOR_DESK_CASES)[number];
 
 const SCAN = '01900000-0000-7000-8000-0000000000aa';
@@ -36,7 +36,12 @@ function sessionOf(mode: MonitorDeskCase): ScanSession {
   const scanner = base.scanner;
   return {
     ...base,
-    staff: mode === 'signed-in' || mode === 'manager' ? staff : null,
+    staff:
+      mode === 'reset'
+        ? { ...staff, role: 'desk' as const, pinResetRequired: true as const }
+        : mode === 'signed-in' || mode === 'manager'
+          ? staff
+          : null,
     staffList: mode === 'signed-out' ? [staff] : null,
     scanner: scanner
       ? {
@@ -68,6 +73,7 @@ const api = {
   overrideNote: async () => undefined,
   undo: async () => fixtureOutcome('ok'),
   staffSignOut: async () => sessionFixture(),
+  staffNewPin: async () => ({ pin: '497205', session: sessionFixture() }),
 } as unknown as ScanApi;
 
 /** The staff monitor beside the Desk actions setting: off, on and signed out, on and signed in. */

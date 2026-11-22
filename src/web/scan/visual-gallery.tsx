@@ -22,7 +22,7 @@ import { lookFromUrl, recentRows, TINT, withCard, withKind } from './visual-hand
 import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx';
 import { OFFLINE_SCENARIOS, OfflineVisual } from './visual-offline.tsx';
 import { OPERATOR_CASES, OperatorVisual } from './visual-operator.tsx';
-import { StaffVisual } from './visual-staff.tsx';
+import { PinResetVisual, StaffVisual } from './visual-staff.tsx';
 import { TAG_SCENARIOS, TagVisual } from './visual-tags.tsx';
 import { TRAY_CASES, TrayVisual } from './visual-trays.tsx';
 import './visual-gallery.css';
@@ -258,6 +258,7 @@ export function ScanVisualGallery() {
     );
   if (surface === 'photo') return <PhotoVisual />;
   if (surface === 'hardware') return <HardwareVisual />;
+  if (surface === 'pin-reset') return <PinResetVisual />;
   if (surface === 'staff') return <StaffVisual by={params.get('by') ?? 'pin'} />;
   if (surface === 'closed') return <ClosedVisual who={params.get('who') ?? 'manager'} />;
   if (surface === 'monitor' && params.has('desk'))

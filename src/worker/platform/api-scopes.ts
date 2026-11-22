@@ -77,7 +77,7 @@ const presetScope = (scope: TenantScope) =>
 /**
  * The seven role presets as scope bundles: a role holds each org scope whose capability the role's
  * membership grants, so a preset never exceeds the role and a scope added later reaches role tokens
- * with no edit here. A token holding a role is evaluated against this at every request.
+ * with no edit here. The bundle is written onto a key at mint; a role label is not evaluated again later.
  */
 export const ROLE_PRESETS: Record<OrgRole, TenantScope[]> = Object.fromEntries(
   OrgRoleSchema.options.map((role) => [

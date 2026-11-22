@@ -22,7 +22,10 @@ describe('role presets', () => {
         'connections:read',
         'connections:write',
         'webhooks:manage',
+        'wallet:write',
         'api-keys:write',
+        'org:read',
+        'org:write',
         'brand:manage',
       ],
       integration_admin: [
@@ -30,11 +33,13 @@ describe('role presets', () => {
         'connections:read',
         'connections:write',
         'webhooks:manage',
+        'wallet:write',
         'api-keys:write',
+        'org:read',
       ],
-      template_author: ['templates:read'],
-      template_reviewer: ['templates:read'],
-      template_publisher: ['templates:read'],
+      template_author: ['templates:read', 'org:read'],
+      template_reviewer: ['templates:read', 'org:read'],
+      template_publisher: ['templates:read', 'org:read'],
       pass_operator: [
         'passes:read',
         'passes:write',
@@ -43,6 +48,7 @@ describe('role presets', () => {
         'messages:write',
         'scans:read',
         'scan-setup:read',
+        'org:read',
       ],
       read_only: [
         'passes:read',
@@ -50,6 +56,7 @@ describe('role presets', () => {
         'scans:read',
         'scan-setup:read',
         'connections:read',
+        'org:read',
       ],
     });
   });
@@ -82,7 +89,11 @@ describe('role presets', () => {
     expect(ROLE_PRESETS.read_only.filter((s) => /:(write|manage|publish|review)$/.test(s))).toEqual(
       [],
     );
-    expect(ROLE_PRESETS.template_author).toEqual(['templates:read']);
+    expect(ROLE_PRESETS.template_author).toEqual(['templates:read', 'org:read']);
+    // Only org_admin changes the org's setup; integration_admin turns wallet accounts on and nothing else there.
+    expect(ROLE_PRESETS.integration_admin).not.toContain('org:write');
+    expect(ROLE_PRESETS.pass_operator).not.toContain('org:write');
+    expect(ROLE_PRESETS.pass_operator).not.toContain('wallet:write');
     expect(ROLE_PRESETS.pass_operator).toEqual(
       expect.arrayContaining(['passes:write', 'holders:write']),
     );
@@ -97,6 +108,7 @@ describe('role presets', () => {
     expect(effectiveScopes(['passes:read', 'templates:read'], ['template_author'])).toEqual([
       'passes:read',
       'templates:read',
+      'org:read',
     ]);
     expect(effectiveScopes(['passes:read'], [])).toEqual(['passes:read']);
   });

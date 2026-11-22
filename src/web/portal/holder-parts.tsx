@@ -127,14 +127,3 @@ export function Help({ support }: { support: HolderSupport }) {
     </p>
   );
 }
-
-/** /b's quiet way to the holder's page: muted until pointed at. Signed out, sign-in comes first. */
-export function PortalLink({ href }: { href: string }) {
-  return (
-    <p className="text-sm">
-      <a href={href} className="text-fg-muted underline underline-offset-4 hover:text-fg-strong">
-        {HOLDER_COPY.openInPortal}
-      </a>
-    </p>
-  );
-}

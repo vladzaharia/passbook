@@ -146,6 +146,11 @@
   },
   {
     "role": "org",
+    "path": "/admin/o/{orgId}/brand",
+    "name": "admin-brand"
+  },
+  {
+    "role": "org",
     "path": "/admin/o/{orgId}/wallet-accounts",
     "name": "admin-wallet-accounts"
   },

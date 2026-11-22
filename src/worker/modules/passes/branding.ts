@@ -136,7 +136,7 @@ export function setPlaceholderHashes(hashes: ReadonlySet<string> | null): void {
 }
 
 /** Logo and icon slots that still hold a blueprint's file; a blueprint's own passes always do. */
-function placeholderSlots(
+export function placeholderSlots(
   templateId: string,
   assets: readonly { slot: string; sha1: string }[],
   sourceHashes: ReadonlySet<string>,

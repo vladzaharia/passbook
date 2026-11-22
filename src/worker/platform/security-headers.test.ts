@@ -30,7 +30,7 @@ function staticBlock(): Map<string, string> {
 
 const TURNSTILE = ' https://challenges.cloudflare.com';
 /** The static SPA always may load Turnstile, so it names the policy the Worker's default leaves at none. */
-const STATIC_TT = 'trusted-types passbook-turnstile';
+const STATIC_TT = 'trusted-types passbook-turnstile passbook-save';
 const WORKER_TT = "trusted-types 'none'";
 
 describe('security header parity', () => {
@@ -136,7 +136,10 @@ describe('the scanner document and its decoder worker', () => {
       .map((d) =>
         d
           .replace(TURNSTILE, '')
-          .replace(`${STATIC_TT} passbook-worker`, 'trusted-types passbook-worker'),
+          .replace(
+            'trusted-types passbook-turnstile passbook-worker',
+            'trusted-types passbook-worker',
+          ),
       );
     const code = scanContentSecurityPolicy()
       .split(';')
@@ -166,14 +169,14 @@ describe('the scanner document and its decoder worker', () => {
 });
 
 describe('trusted types on the pass pages', () => {
-  it('lets the barcode page make the worker policy and no other page', async () => {
+  it('lets the pass pages make the save policy and no other page', async () => {
     const app = new Hono<AppBindings>();
     app.use('*', securityHeaders);
     app.get('*', (c) => c.text('ok'));
     for (const path of ['/p/abc/barcode', '/b/abc/barcode']) {
       const csp = (await app.request(path)).headers.get('content-security-policy') ?? '';
       expect(csp, path).toContain(
-        "require-trusted-types-for 'script'; trusted-types passbook-worker;",
+        "require-trusted-types-for 'script'; trusted-types passbook-save;",
       );
     }
     const other = (await app.request('/auth/magic')).headers.get('content-security-policy') ?? '';
@@ -208,7 +211,9 @@ describe('join page CSP', () => {
 
   it('leaves every other directive as the default policy', () => {
     const strip = (v: string) =>
-      v.replaceAll(` ${TURNSTILE_ORIGIN}`, '').replace(STATIC_TT, WORKER_TT);
+      v
+        .replaceAll(` ${TURNSTILE_ORIGIN}`, '')
+        .replace('trusted-types passbook-turnstile', WORKER_TT);
     expect(strip(contentSecurityPolicy('n', { turnstile: true }))).toBe(contentSecurityPolicy('n'));
     expect(contentSecurityPolicy()).not.toContain(TURNSTILE_ORIGIN);
   });

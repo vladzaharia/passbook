@@ -7,6 +7,7 @@ import { createOfflineController, type OfflineController } from '../offline/cont
 import { createQueueStore, type QueueRow } from '../offline/queue-store.ts';
 import { createRosterStore, type RosterEntry, type RosterMeta } from '../offline/roster.ts';
 import { registerShell } from '../offline/sw-shell.ts';
+import { registerSync } from '../offline/sync-gate.ts';
 import type { KeyValue, LocalStores } from '../offline/wipe.ts';
 
 /** The roster's scope on the device: the scanning session and its config revision. */
@@ -47,6 +48,7 @@ export function connectOffline(a: {
       status: (s) => store.dispatch({ type: 'offline.status', ...s }),
     },
   });
+  registerSync(() => controller.syncNow());
   void controller.start();
   void registerShell();
   return controller;

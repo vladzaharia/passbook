@@ -217,9 +217,23 @@ describe('syncing queued reads', () => {
     const now = kit.clock.now();
     const midnight = now - (now % DAY);
     const late = midnight - 10 * 60_000;
+    // The list is served before the read, as on a real door; only a listed read keeps its own date.
+    // (The test clock starts at pairing: the door was last seen before the list was served, as on a real door.)
+    await run(kit.env.DB, 'UPDATE scanners SET contact_at = ? WHERE id = ?', [
+      midnight - 30 * 60_000,
+      scanner.id,
+    ]);
+    kit.clock.set(midnight - 20 * 60_000);
+    const roster = await rosterOf(scanner.headers);
     kit.clock.set(midnight + 5 * 60_000);
     const [only] = (
-      await batchOf(await batch(scanner.headers, [item(pass.scanCode ?? '', { clientTs: late })]))
+      await batchOf(
+        await batch(
+          scanner.headers,
+          [item(pass.scanCode ?? '', { clientTs: late, door: 'listed' })],
+          roster,
+        ),
+      )
     ).items;
     expect(only?.outcome.kind).toBe('ok');
     const today = await out(await act(scanner.headers, { code: pass.scanCode, method: 'camera' }));
@@ -285,7 +299,7 @@ describe('syncing queued reads', () => {
     ).not.toHaveLength(0);
   });
 
-  it('a read dated before the last clean online contact is a conflict, never admitted', async () => {
+  it('a read dated before the last clean online contact is taken at server time and marked late', async () => {
     const { tpl, scanner, headers } = await door();
     const pass = await kit.scanPass(tpl);
     const now = kit.clock.now();
@@ -299,46 +313,166 @@ describe('syncing queued reads', () => {
         await batch(headers, [item(pass.scanCode ?? '', { clientTs: now - 3_600_000 })]),
       )
     ).items;
-    expect(only).toMatchObject({ conflict: true, outcome: { kind: 'heads_up', reason: 'ended' } });
-    expect(await rowsOf('SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toHaveLength(0);
+    expect(only?.outcome.kind).toBe('ok');
+    expect(
+      await rowsOf(
+        'SELECT late, client_ts, recorded_ts FROM scan_offline_reads WHERE pass_id = ?',
+        [pass.id],
+      ),
+    ).toEqual([{ late: 1, client_ts: now - 3_600_000, recorded_ts: now }]);
+    expect(await rowsOf('SELECT at FROM scans WHERE pass_id = ?', [pass.id])).toEqual([
+      { at: now },
+    ]);
   });
 
-  it('a clean session poll sets the floor; one with reads queued does not', async () => {
-    const { scanner, headers } = await door();
-    const floor = () =>
-      rowsOf('SELECT online_at FROM scan_offline_state WHERE scanner_id = ?', [scanner.id]);
-    await kit.get(headers, '/session?pending=3');
-    expect(await floor()).toEqual([]);
-    await kit.get(headers, '/session?pending=0');
-    expect(await floor()).toEqual([{ online_at: kit.clock.now() }]);
-  });
-
-  it('an honest door that scans online before its queue drains keeps every queued read', async () => {
+  it('a read dated before the list it carries was cut is taken at server time and marked late', async () => {
     const { tpl, scanner, headers } = await door();
-    const floor = () =>
-      rowsOf('SELECT online_at FROM scan_offline_state WHERE scanner_id = ?', [scanner.id]);
-    // Last clean contact, then an outage of two hours with ten reads taken.
-    await kit.get(headers, '/session?pending=0');
-    const clean = kit.clock.now();
-    kit.clock.advance(2 * 3_600_000);
-    const queued = [];
-    for (let i = 0; i < 10; i++) {
-      const p = await kit.scanPass(tpl);
-      queued.push(item(p.scanCode ?? '', { clientTs: clean + (i + 1) * 60_000 }));
+    const pass = await kit.scanPass(tpl);
+    const roster = await rosterOf(headers);
+    const read = item(pass.scanCode ?? '', { clientTs: roster.asOf - 3_600_000, door: 'listed' });
+    const [only] = (await batchOf(await batch(headers, [read], roster))).items;
+    expect(only?.outcome.kind).toBe('ok');
+    expect(
+      await rowsOf('SELECT late, recorded_ts FROM scan_offline_reads WHERE scanner_id = ?', [
+        scanner.id,
+      ]),
+    ).toEqual([{ late: 1, recorded_ts: kit.clock.now() }]);
+  });
+
+  it('a read inside the offline window keeps its own date and is not late', async () => {
+    const { tpl, headers } = await door();
+    const pass = await kit.scanPass(tpl);
+    const roster = await rosterOf(headers);
+    kit.clock.advance(600_000);
+    const at = roster.asOf + 120_000;
+    await batch(headers, [item(pass.scanCode ?? '', { clientTs: at, door: 'listed' })], roster);
+    expect(
+      await rowsOf('SELECT late, client_ts FROM scan_offline_reads WHERE pass_id = ?', [pass.id]),
+    ).toEqual([{ late: 0, client_ts: at }]);
+  });
+
+  it('the floor is the last request the door made before the upload, as the server stamped it', async () => {
+    const { tpl, scanner, headers } = await door();
+    const pass = await kit.scanPass(tpl);
+    const now = kit.clock.now();
+    // Last seen 10 minutes ago (the server's own stamp): a read dated 20 minutes ago is back-dated, a read dated 8 is not.
+    await run(kit.env.DB, 'UPDATE scanners SET contact_at = ? WHERE id = ?', [
+      now - 10 * 60_000,
+      scanner.id,
+    ]);
+    kit.clock.set(now - 20 * 60_000);
+    const roster = await rosterOf(headers);
+    kit.clock.set(now);
+    await run(kit.env.DB, 'UPDATE scanners SET contact_at = ? WHERE id = ?', [
+      now - 10 * 60_000,
+      scanner.id,
+    ]);
+    const early = item(pass.scanCode ?? '', {
+      clientTs: now - 20 * 60_000 + 60_000,
+      door: 'listed',
+    });
+    await batch(headers, [early], roster);
+    expect(
+      await rowsOf('SELECT late FROM scan_offline_reads WHERE idempotency_key = ?', [
+        early.idempotencyKey,
+      ]),
+    ).toEqual([{ late: 1 }]);
+  });
+
+  describe('the floor is a server-written contact, never an upload', () => {
+    const contactOf = async (id: string) =>
+      (await rowsOf('SELECT contact_at FROM scanners WHERE id = ?', [id]))[0]?.contact_at;
+    async function outage() {
+      const { tpl, scanner, headers } = await door();
+      const roster = await rosterOf(headers);
+      const t0 = kit.clock.now();
+      await run(kit.env.DB, 'UPDATE scanners SET contact_at = ? WHERE id = ?', [t0, scanner.id]);
+      kit.clock.advance(3_600_000);
+      const reads = [];
+      for (let i = 0; i < 4; i++) {
+        const p = await kit.scanPass(tpl);
+        reads.push(item(p.scanCode ?? '', { clientTs: t0 + (i + 1) * 60_000, door: 'listed' }));
+      }
+      return { tpl, scanner, headers, roster, t0, reads };
     }
-    // Back online: it scans one person online, and polls with the queue still waiting.
+    const lateCount = async (keys: string[]) =>
+      (
+        await rowsOf(
+          'SELECT COUNT(*) AS n FROM scan_offline_reads WHERE late = 1 AND idempotency_key IN (SELECT value FROM json_each(?))',
+          [JSON.stringify(keys)],
+        )
+      )[0]?.n;
+
+    it('has no read late in a two-chunk upload after a one-hour outage', async () => {
+      const { scanner, headers, roster, t0, reads } = await outage();
+      const keys = reads.map((r) => r.idempotencyKey);
+      const one = await batchOf(await batch(headers, reads.slice(0, 2), roster));
+      const two = await batchOf(await batch(headers, reads.slice(2), roster));
+      expect([...one.items, ...two.items].map((i) => i.outcome.kind)).toEqual(Array(4).fill('ok'));
+      expect(await lateCount(keys)).toBe(0);
+      expect(await contactOf(scanner.id)).toBe(t0);
+    });
+
+    it('is not moved by POST /device sent just before the upload', async () => {
+      const { scanner, headers, roster, t0, reads } = await outage();
+      await kit.post(headers, '/device', {});
+      expect(await contactOf(scanner.id)).toBe(t0);
+      const sent = await batchOf(await batch(headers, reads, roster));
+      expect(sent.items.map((i) => i.outcome.kind)).toEqual(Array(4).fill('ok'));
+      expect(await lateCount(reads.map((r) => r.idempotencyKey))).toBe(0);
+    });
+
+    it('is moved by a session poll, and a device that only uploads gains nothing', async () => {
+      const { tpl, scanner, headers, roster, t0, reads } = await outage();
+      // Uploads only: reads dated before the last contact stay late however many batches it sends.
+      const before = item((await kit.scanPass(tpl)).scanCode ?? '', {
+        clientTs: t0 - 30 * 60_000,
+        door: 'listed',
+      });
+      await batch(headers, [before], roster);
+      await batch(headers, [], roster);
+      expect(await lateCount([before.idempotencyKey])).toBe(1);
+      expect(await contactOf(scanner.id)).toBe(t0);
+      // A session poll is a contact: the floor moves to now.
+      await kit.get(headers, '/session');
+      expect(await contactOf(scanner.id)).toBe(kit.clock.now());
+      const polled = await batchOf(await batch(headers, reads, roster));
+      expect(polled.items.map((i) => i.outcome.kind)).toEqual(Array(4).fill('ok'));
+      expect(await lateCount(reads.map((r) => r.idempotencyKey))).toBe(4);
+    });
+  });
+
+  it('a door that sends its queue first keeps every listed read; once the server has seen the door in between, the reads are taken at sync time', async () => {
+    const { tpl, scanner, headers } = await door();
+    const roster = await rosterOf(headers);
+    kit.clock.advance(2 * 3_600_000);
+    const queued = async () => {
+      const reads = [];
+      for (let i = 0; i < 3; i++) {
+        const p = await kit.scanPass(tpl);
+        reads.push(
+          item(p.scanCode ?? '', { clientTs: roster.asOf + (i + 1) * 60_000, door: 'listed' }),
+        );
+      }
+      return reads;
+    };
+    const lateOf = (key: string) =>
+      rowsOf('SELECT late FROM scan_offline_reads WHERE idempotency_key = ?', [key]);
+    const first = await queued();
+    const sent = await batchOf(await batch(headers, first, roster));
+    expect(sent.items.map((i) => i.outcome.kind)).toEqual(['ok', 'ok', 'ok']);
+    expect(await lateOf(first[0]?.idempotencyKey ?? '')).toEqual([{ late: 0 }]);
+    // The server saw the door after the reads were dated: they are still admitted, at server time, marked late.
+    const second = await queued();
     const live = await kit.scanPass(tpl);
     expect((await act(headers, { code: live.scanCode ?? '', method: 'camera' })).status).toBe(200);
-    await kit.get(headers, '/session?pending=10');
-    expect(await floor()).toEqual([{ online_at: clean }]);
-    const { items } = await batchOf(await batch(headers, queued));
-    expect(items.map((i) => i.outcome.kind)).toEqual(Array(10).fill('ok'));
-    expect(items.some((i) => i.conflict)).toBe(false);
-    await kit.get(headers, '/session?pending=0');
-    expect(await floor()).toEqual([{ online_at: kit.clock.now() }]);
+    const after = await batchOf(await batch(headers, second, roster));
+    expect(after.items.map((i) => i.outcome.kind)).toEqual(['ok', 'ok', 'ok']);
+    expect(await lateOf(second[0]?.idempotencyKey ?? '')).toEqual([{ late: 1 }]);
+    expect(scanner.id).toBeTruthy();
   });
 
-  it('a modified client claiming dates before its last clean contact is refused', async () => {
+  it('a modified client claiming dates before its last clean contact gains no earlier date', async () => {
     const { tpl, headers } = await door();
     const pass = await kit.scanPass(tpl);
     await kit.get(headers, '/session?pending=0');
@@ -349,8 +483,10 @@ describe('syncing queued reads', () => {
         await batch(headers, [item(pass.scanCode ?? '', { clientTs: clean - 3_600_000 })]),
       )
     ).items;
-    expect(only).toMatchObject({ conflict: true, outcome: { kind: 'heads_up', reason: 'ended' } });
-    expect(await rowsOf('SELECT 1 FROM scans WHERE pass_id = ?', [pass.id])).toHaveLength(0);
+    expect(only?.outcome.kind).toBe('ok');
+    expect(await rowsOf('SELECT at FROM scans WHERE pass_id = ?', [pass.id])).toEqual([
+      { at: kit.clock.now() },
+    ]);
   });
 
   it('labels a scan its first run left unlabelled when the batch is sent again', async () => {

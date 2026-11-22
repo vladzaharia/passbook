@@ -9,7 +9,7 @@ import {
   bundlePassIsCurrent,
   listBundleCandidates,
   listBundlePasses,
-} from './repo.ts';
+} from './repo-bundle.ts';
 
 /** Each object is checked again after its R2 read, before the archive emits its bytes. */
 function packageMyPasses(ctx: ServiceContext, userId: string, rows: readonly BundleRow[]) {
@@ -23,7 +23,7 @@ function packageMyPasses(ctx: ServiceContext, userId: string, rows: readonly Bun
           const object = await ctx.env.BUCKET.get(row.object_key);
           if (!object) throw new NotFoundError('A pass file is missing.', 'PASS_FILE_MISSING');
           const bytes = new Uint8Array(await object.arrayBuffer());
-          if (!(await bundlePassIsCurrent(ctx.env.DB, userId, row))) {
+          if (!(await bundlePassIsCurrent(ctx.env.DB, userId, ctx.clock.now(), row))) {
             throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
           }
           return bytes;
@@ -72,7 +72,7 @@ const TOKEN_ID = /^[A-Za-z0-9-]{1,64}$/;
  * only leave their own part and no other pass moves into or out of a part.
  */
 export async function bundleSnapshot(ctx: ServiceContext, userId: string) {
-  const ids = await appleIds(ctx, await listBundleCandidates(ctx.env.DB, userId));
+  const ids = await appleIds(ctx, await listBundleCandidates(ctx.env.DB, userId, ctx.clock.now()));
   const starts = ids.filter((_, index) => index % MY_PASSES_BUNDLE_SIZE === 0);
   if (ids.length === 0) return null;
   return { token: starts.join(','), count: ids.length, parts: starts.length };
@@ -102,6 +102,7 @@ export async function myPassesBundle(
     await listBundlePasses(
       ctx.env.DB,
       userId,
+      ctx.clock.now(),
       { first, after: starts[part] ?? null },
       MY_PASSES_BUNDLE_SIZE,
     ),

@@ -137,6 +137,7 @@ export const EPOCH_TABLES: EpochTable[] = [
     volatile: [
       'name',
       'last_seen_at',
+      'contact_at',
       'last_ip_prefix',
       'paired_label',
       'pair_expires_at',
@@ -152,7 +153,16 @@ export const EPOCH_TABLES: EpochTable[] = [
   {
     table: 'scan_staff',
     epochs: { auth_epoch: ['role', 'pin_hash', 'pin_set_at', 'disabled_at', 'org_id'] },
-    volatile: ['name', 'updated_at', 'pin_mac_version'],
+    volatile: [
+      'name',
+      'updated_at',
+      'pin_mac_version',
+      'pin_tag',
+      'pin_reset_required',
+      'pin_issued_at',
+      'pin_issued_binding',
+      'pin_issue_repeats',
+    ],
     fixed: ['id', 'created_at', 'created_by'],
   },
   {

@@ -1,11 +1,17 @@
 import { HOLDER_COPY } from './copy/holder.ts';
 
 /**
- * Offline copy of one pass's barcode page. The page is a bearer credential, so the copy is narrow:
- * - opt-in: only the Save button writes it, and Remove (or a 404/410 from the server) deletes it;
- * - one cache per token, named by a hash of it (`barcode:<sha256>`), so no token string sits in Cache
- *   Storage, holding the page's own HTML under one fixed key and nothing else;
- * - the copy is shown offline for at most 30 days, and never past the pass's own expiry;
+ * Save to this phone: an offline copy of one pass's door view (/p/<token>/barcode). The page is a
+ * bearer credential, so the copy is narrow:
+ * - opt-in: only "Save to this phone" on the pass page writes it, and "Remove from this phone" (or
+ *   a 404/410 from the server, or the pass page itself finding the pass ended, or a dead
+ *   /p link's 404 page) deletes it; signing out of the portal deletes them all;
+ * - one cache per token, named by a hash of it (`barcode:<sha256>`), holding the page's own HTML
+ *   under one fixed key and nothing else. The page carries no token (relative links only), so no
+ *   token string sits in Cache Storage, in a name, a key or a body. The hash is a name, not a
+ *   protection: any same-origin script can list the caches and read the barcode;
+ * - the copy is shown offline for at most 7 days, and never past the pass's own expiry (sent as
+ *   the x-pass-expires-at header);
  * - the server's answer wins: network first, and only a failed network, 408, 429 or a 5xx falls back
  *   to the copy. Any redirect or other 4xx (404, 410, a host policy 421, a 403) deletes it;
  * - the worker is registered with the page's own path as scope and answers only a navigation to
@@ -13,28 +19,40 @@ import { HOLDER_COPY } from './copy/holder.ts';
  * The door still verifies on the server; a saved copy of a voided pass is refused there.
  */
 export const PASS_SW_PATH = '/p/sw.js';
+/** The Trusted Types policy save.js makes (security-headers.ts allows it on /p, /b and the app). */
+export const SAVE_POLICY = 'passbook-save';
+/** The pass page's and the portal's save controls (one source: this file). */
+export const PASS_SAVE_PATH = '/p/save.js';
 
 /** How long a saved copy may be shown, counted from the last time the server confirmed it. */
-export const SAVED_MAX_DAYS = 30;
+export const SAVED_MAX_DAYS = 7;
 
-/** Shared by the worker and the page: the cache name, its one key, and how a copy is written. */
+/** The header the door view sends with the pass's own expiry (ms), when it has one. */
+export const EXPIRES_HEADER = 'x-pass-expires-at';
+
+/** Shared by the worker and the page scripts: the cache's one key, its name, and how a copy is written. */
 const HELPERS = `const KEY = location.origin + '/p/saved';
 const hashOf = async (token) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))), (b) => b.toString(16).padStart(2, '0')).join('');
 async function keep(name, res) {
   const text = await res.text();
-  const expires = /data-expires="(\\d+)"/.exec(text);
   const headers = new Headers(res.headers);
   headers.delete('content-length');
   headers.delete('content-encoding');
   headers.set('x-saved-at', String(Date.now()));
-  headers.set('x-expires-at', expires ? expires[1] : '0');
+  headers.set('x-expires-at', res.headers.get('${EXPIRES_HEADER}') || '0');
   await (await caches.open(name)).put(KEY, new Response(text, { status: 200, headers }));
 }
 `;
 
 const EXPIRED_PAGE = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${HOLDER_COPY.connectToRefresh}</title><p style="font:16px system-ui;margin:2rem">${HOLDER_COPY.connectToRefresh}</p>`;
 
-export const PASS_SW_SOURCE = `${HELPERS}const PAGE = /^\\/p\\/([A-Za-z0-9_-]{16,128})\\/barcode$/;
+/**
+ * One worker, one save script and one door script per family of door views: a pass's own
+ * /p/<token>/barcode (key: the token) and a bundle member's /b/<bundle token>/<pass id>/barcode (key:
+ * both, so a rotated bundle or another member never shares a cache). `pattern` is a regexp literal;
+ * `key` an expression over its match `m` (worker), over `path` (save script) or over `location.pathname`.
+ */
+const swSource = (pattern: string, key: string) => `${HELPERS}const PAGE = ${pattern};
 const MAX = ${SAVED_MAX_DAYS} * 864e5;
 const EXPIRED = ${JSON.stringify(EXPIRED_PAGE)};
 self.addEventListener('install', () => self.skipWaiting());
@@ -44,7 +62,7 @@ self.addEventListener('fetch', (e) => {
   if (req.method !== 'GET' || req.mode !== 'navigate') return;
   const url = new URL(req.url);
   const m = url.origin === location.origin ? PAGE.exec(url.pathname) : null;
-  if (m) e.respondWith(serve(req, m[1]));
+  if (m) e.respondWith(serve(req, ${key}));
 });
 async function drop(name) {
   await caches.delete(name);
@@ -57,10 +75,10 @@ async function saved(name) {
   const expires = Number(hit.headers.get('x-expires-at')) || Infinity;
   if (Date.now() < Math.min(at + MAX, expires)) return hit;
   await drop(name);
-  return new Response(EXPIRED, { status: 503, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+  return new Response(EXPIRED, { status: 503, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': "default-src 'none'; frame-ancestors 'none'", 'x-content-type-options': 'nosniff' } });
 }
-async function serve(req, token) {
-  const name = 'barcode:' + (await hashOf(token));
+async function serve(req, key) {
+  const name = 'barcode:' + (await hashOf(key));
   if (!(await caches.has(name))) return fetch(req);
   let res;
   try {
@@ -78,53 +96,189 @@ async function serve(req, token) {
 }
 `;
 
-/** The page's Save / Remove controls; hidden until the script confirms the browser can do it. */
-export const OFFLINE_SCRIPT = `${HELPERS}(async () => {
-  const box = document.querySelector('[data-offline]');
-  if (!box || !('serviceWorker' in navigator) || !('caches' in window)) return;
-  const path = location.pathname;
-  const name = 'barcode:' + (await hashOf(path.split('/')[2]));
-  // The page's CSP requires Trusted Types: one policy that admits only the worker's address.
-  const swUrl = window.trustedTypes
-    ? window.trustedTypes.createPolicy('passbook-worker', {
-        createScriptURL: (u) => {
-          if (u !== '${PASS_SW_PATH}') throw new TypeError('Unexpected script address.');
-          return u;
-        },
-      }).createScriptURL('${PASS_SW_PATH}')
-    : '${PASS_SW_PATH}';
-  const [save, drop, state, fail] = ['save', 'drop', 'state', 'fail'].map((k) => box.querySelector('[data-' + k + ']'));
-  const show = (on) => {
-    save.hidden = on;
-    drop.hidden = !on;
-    state.hidden = !on;
+const P_PATTERN = String.raw`/^\/p\/([A-Za-z0-9_-]{16,128})\/barcode$/`;
+const B_PATTERN = String.raw`/^\/b\/([A-Za-z0-9_-]{43})\/([0-9a-f-]{36})\/barcode$/`;
+const P_KEY = "path.split('/')[2]";
+const B_KEY = "path.split('/')[2] + '/' + path.split('/')[3]";
+
+export const PASS_SW_SOURCE = swSource(P_PATTERN, 'm[1]');
+
+/** A bundle member's door view is saved under the bundle's own worker, never a member's pass link. */
+export const BUNDLE_SW_PATH = '/b/sw.js';
+export const BUNDLE_SAVE_PATH = '/b/save.js';
+export const BUNDLE_SW_SOURCE = swSource(B_PATTERN, "m[1] + '/' + m[2]");
+
+/**
+ * The save controls, served at /p/save.js for the pass page and the portal alike. `mount(root)`
+ * wires every `[data-save-phone]` host in root; the host's `data-save` is idle (absent), busy,
+ * saved or failed, and CSS does the rest. Only the door view's own path is ever registered or
+ * fetched, and only when it is on this origin. A host marked `data-save-ended` (a pass that no
+ * longer works) drops any saved copy instead.
+ */
+const saveSource = (swPath: string, pattern: string, key: string) => `(() => {
+  if (window.PassSave) return;
+${HELPERS}  const TOKEN = ${pattern};
+  const can = () => 'serviceWorker' in navigator && 'caches' in window && !!(window.crypto && crypto.subtle);
+  const pathOf = (href) => {
+    try {
+      const u = new URL(href, location.href);
+      return u.origin === location.origin && TOKEN.test(u.pathname) ? u.pathname : null;
+    } catch {
+      return null;
+    }
   };
-  const clear = async () => {
-    await caches.delete(name);
+  // The page's CSP requires Trusted Types: one policy that admits only the worker's address.
+  let policy;
+  const swUrl = () => {
+    if (!window.trustedTypes) return '${swPath}';
+    policy ??= window.trustedTypes.createPolicy('${SAVE_POLICY}', {
+      createScriptURL: (u) => {
+        if (u !== '${swPath}') throw new TypeError('Unexpected script address.');
+        return u;
+      },
+    });
+    return policy.createScriptURL('${swPath}');
+  };
+  const nameOf = async (path) => 'barcode:' + (await hashOf(${key}));
+  const clear = async (path) => {
+    await caches.delete(await nameOf(path));
     const reg = await navigator.serviceWorker.getRegistration(path);
     if (reg) await reg.unregister();
   };
-  box.hidden = false;
-  caches.has(name).then(show, () => {});
-  save.addEventListener('click', async () => {
-    save.disabled = true;
-    fail.hidden = true;
+  const save = async (path) => {
     try {
-      await navigator.serviceWorker.register(swUrl, { scope: path });
-      await navigator.serviceWorker.ready;
+      // Not serviceWorker.ready: it waits on the worker for this page's URL, and this page is not
+      // in the door view's scope.
+      const reg = await navigator.serviceWorker.register(swUrl(), { scope: path });
+      const worker = reg.installing || reg.waiting || reg.active;
+      if (worker && worker.state !== 'activated') {
+        await new Promise((resolve, reject) => {
+          worker.addEventListener('statechange', () => {
+            if (worker.state === 'activated') resolve();
+            else if (worker.state === 'redundant') reject(new Error('worker'));
+          });
+        });
+      }
       const res = await fetch(path, { cache: 'no-store' });
       if (!res.ok || res.redirected) throw new Error('save');
-      await keep(name, res);
-      show(true);
-    } catch {
-      await clear();
-      fail.hidden = false;
+      await keep(await nameOf(path), res);
+    } catch (e) {
+      await clear(path);
+      throw e;
     }
-    save.disabled = false;
+  };
+  const replay = (host) => {
+    const buddy = host.querySelector('[data-when="saved"] [data-scene="tuck"]');
+    if (!buddy || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    buddy.removeAttribute('data-run');
+    buddy.getBoundingClientRect();
+    buddy.setAttribute('data-run', '');
+  };
+  const sheet = (host, open) => {
+    const dlg = host.querySelector('[data-save-sheet]');
+    if (!dlg) return;
+    if (!open) return dlg.close ? dlg.close() : dlg.removeAttribute('open');
+    if (dlg.showModal) dlg.showModal();
+    else dlg.setAttribute('open', '');
+  };
+  const mount = (root) => {
+    for (const host of (root || document).querySelectorAll('[data-save-phone]:not([data-save-ready])')) {
+      const path = pathOf(host.getAttribute('data-save-phone'));
+      if (!path || !can()) continue;
+      host.setAttribute('data-save-ready', '');
+      nameOf(path).then((name) => caches.has(name)).then((on) => {
+        if (on) host.setAttribute('data-save', 'saved');
+      }, () => {});
+      host.addEventListener('click', async (e) => {
+        const el = e.target && e.target.closest ? e.target : null;
+        const act = el && el.closest('[data-save-do],[data-save-drop],[data-save-done]');
+        if (!act || !host.contains(act)) return;
+        e.preventDefault();
+        if (act.hasAttribute('data-save-done')) return sheet(host, false);
+        if (host.getAttribute('data-save') === 'busy') return;
+        if (act.hasAttribute('data-save-drop')) {
+          await clear(path);
+          host.removeAttribute('data-save');
+          return;
+        }
+        host.setAttribute('data-save', 'busy');
+        try {
+          await save(path);
+          host.setAttribute('data-save', 'saved');
+          replay(host);
+          sheet(host, true);
+        } catch {
+          // Nothing was kept (save() cleared it); the failed state says so.
+          host.setAttribute('data-save', 'failed');
+        }
+      });
+    }
+    for (const host of (root || document).querySelectorAll('[data-save-ended]')) {
+      const path = pathOf(host.getAttribute('data-save-ended'));
+      if (path && can()) clear(path).catch(() => {});
+    }
+  };
+  // Sign-out: every saved copy and its worker go, whatever pass it was.
+  const clearAll = async () => {
+    for (const name of await caches.keys()) if (name.startsWith('barcode:')) await caches.delete(name);
+    for (const reg of await navigator.serviceWorker.getRegistrations()) {
+      if (TOKEN.test(new URL(reg.scope).pathname)) await reg.unregister();
+    }
+  };
+  window.PassSave = { mount, clearAll };
+  // A sign-out form (Switch account) posts only after this phone's saved passes are cleared.
+  document.addEventListener('submit', (e) => {
+    const form = e.target;
+    const action = form && form.getAttribute ? form.getAttribute('action') || '' : '';
+    if (!/^\\/auth\\/logout(\\?|$)/.test(action)) return;
+    e.preventDefault();
+    Promise.race([clearAll(), new Promise((r) => setTimeout(r, 1500))]).catch(() => {}).then(() => form.submit());
   });
-  drop.addEventListener('click', async () => {
-    await clear();
-    show(false);
-  });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => mount(document));
+  else mount(document);
+})();
+`;
+
+export const PASS_SAVE_SOURCE = saveSource(PASS_SW_PATH, P_PATTERN, P_KEY);
+export const BUNDLE_SAVE_SOURCE = saveSource(BUNDLE_SW_PATH, B_PATTERN, B_KEY);
+
+/**
+ * The door view's own script: shows "Works offline" when this device holds a saved copy, keeps the
+ * screen awake where the browser has Screen Wake Lock. Nothing here touches the network.
+ */
+const doorScript = (key: string) => `(() => {
+${HELPERS}  const note = document.querySelector('[data-door-saved]');
+  if (note && 'caches' in window && window.crypto && crypto.subtle) {
+    hashOf(${key})
+      .then((h) => caches.has('barcode:' + h))
+      .then((on) => { note.hidden = !on; }, () => {});
+  }
+  if ('wakeLock' in navigator) {
+    const hold = () => navigator.wakeLock.request('screen').catch(() => {});
+    hold();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') hold();
+    });
+  }
+})();
+`;
+
+export const DOOR_SCRIPT = doorScript("location.pathname.split('/')[2]");
+export const BUNDLE_DOOR_SCRIPT = doorScript(
+  "location.pathname.split('/')[2] + '/' + location.pathname.split('/')[3]",
+);
+
+/**
+ * On the 404 page of a /p/<token> or /p/<token>/barcode link (rotated, voided, ended): drops that
+ * token's saved copy and its worker, so the phone stops showing a code the server has retired.
+ */
+export const DROP_SCRIPT = `(() => {
+${HELPERS}  const m = /^\\/p\\/([A-Za-z0-9_-]{16,128})(\\/barcode)?$/.exec(location.pathname);
+  if (!m || !('caches' in window) || !window.crypto || !crypto.subtle) return;
+  hashOf(m[1])
+    .then((h) => caches.delete('barcode:' + h))
+    .then(() => navigator.serviceWorker && navigator.serviceWorker.getRegistration('/p/' + m[1] + '/barcode'))
+    .then((reg) => reg && reg.unregister())
+    .catch(() => {});
 })();
 `;

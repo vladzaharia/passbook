@@ -759,6 +759,34 @@ class OrgsResource:
         self._core = core
         self.entitlements = OrgsEntitlementsResource(core)
 
+    def retrieve_pass_setup(
+        self,
+        org_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.OrgsRetrievePassSetupResult:
+        """Read an organization's brand, channels and accounts in the caller's mode `GET /api/v1/orgs/{orgId}/pass-setup`"""
+        return self._core.request("GET", f"/api/v1/orgs/{_p(org_id)}/pass-setup", result=m.OrgsRetrievePassSetupResult, **opts)
+
+    def stage_brand_asset(
+        self,
+        org_id: str,
+        body: m.OrgsStageBrandAssetBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.OrgsStageBrandAssetResult:
+        """Stage a logo, icon or web logo PNG; a later pass-setup save names it by its sha `POST /api/v1/orgs/{orgId}/brand-assets`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(org_id)}/brand-assets", body=body, result=m.OrgsStageBrandAssetResult, **opts)
+
+    def update_pass_setup(
+        self,
+        org_id: str,
+        body: m.OrgsUpdatePassSetupBody | _Dict[str, _Any],
+        *,
+        dry_run: _Literal["true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.OrgsUpdatePassSetupResult:
+        """Change an organization's brand and which channels it allows; dryRun answers with the impact (Idempotency-Key on an apply) `PATCH /api/v1/orgs/{orgId}/pass-setup`"""
+        return self._core.request("PATCH", f"/api/v1/orgs/{_p(org_id)}/pass-setup", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.OrgsUpdatePassSetupResult, **opts)
+
 
 class PassImportsMappingsResource:
     def __init__(self, core: Core) -> None:

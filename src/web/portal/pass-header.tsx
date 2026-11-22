@@ -84,15 +84,17 @@ export function PassHeader({
         pass && !panel ? (
           <>
             {off ? null : <RefreshButton passId={pass.id} pass={pass} />}
-            <PassMoreMenu
-              page
-              passId={pass.id}
-              help={!off}
-              passTitle={holderPassName(pass, authed?.user)}
-              inWallet={pass.inWallet}
-              publicUrl={off ? null : publicUrlOf(pass.pageUrl ?? pass.downloadUrl)}
-              onRemoved={() => void navigate({ to: '/', replace: true })}
-            />
+            {pass.readOnly ? null : (
+              <PassMoreMenu
+                page
+                passId={pass.id}
+                help={!off}
+                passTitle={holderPassName(pass, authed?.user)}
+                inWallet={pass.inWallet}
+                publicUrl={off ? null : publicUrlOf(pass.pageUrl ?? pass.downloadUrl)}
+                onRemoved={() => void navigate({ to: '/', replace: true })}
+              />
+            )}
           </>
         ) : undefined
       }
