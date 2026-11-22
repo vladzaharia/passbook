@@ -2701,6 +2701,14 @@
     "note": "A flagged staff member gets a new random PIN, returned once with the session, from POST /scan/staff/pin. They never choose it."
   },
   {
+    "key": "POST /api/v1/scan/tags/bind 200.opensDefault: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanTagsBind",
+    "op": "POST /api/v1/scan/tags/bind",
+    "change": "200.opensDefault: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scanners 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.postScanners",
