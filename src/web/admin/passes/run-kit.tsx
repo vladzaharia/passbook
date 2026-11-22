@@ -149,7 +149,7 @@ export function UndoPanel({
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-md border border-border p-4">
       {lead}
-      <p className="min-w-0 flex-1 text-sm text-fg-muted">{children}</p>
+      <p className="min-w-0 flex-1 basis-48 text-sm text-fg-muted">{children}</p>
       <div className="flex flex-wrap items-center gap-2">{actions}</div>
     </div>
   );

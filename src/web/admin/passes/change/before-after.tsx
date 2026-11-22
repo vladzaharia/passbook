@@ -4,6 +4,7 @@ import type { z } from 'zod';
 import type { ChangeRunPreviewSchema } from '@/shared/contracts/broadcasts-change.ts';
 import { cn } from '../../../lib/cn.ts';
 import { IconButton, SegmentedControl, Skeleton } from '../../../ui/index.ts';
+import { CHANGE_COPY as C } from './copy.ts';
 import './change.css';
 
 type Preview = z.infer<typeof ChangeRunPreviewSchema>;
@@ -29,7 +30,16 @@ export function BeforeAfter({
   const sample = samples[at];
   if (!preview)
     return waiting ? (
-      <Skeleton className="h-64" />
+      <div
+        role="status"
+        aria-label={C.loadingSample}
+        className="grid gap-3 rounded-2xl border border-border bg-surface-raised p-4 shadow-elevation-2"
+      >
+        <Skeleton className="h-5 w-2/3" />
+        <Skeleton className="h-14" />
+        <Skeleton className="h-14" />
+        <p className="text-xs text-fg-muted">{C.loadingSample}</p>
+      </div>
     ) : (
       <p className="text-sm text-fg-muted">{empty}</p>
     );

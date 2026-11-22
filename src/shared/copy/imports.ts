@@ -94,12 +94,14 @@ export const IMPORT_COPY = {
     parse: (ok: number, total: number) => `${ok} of ${total} parse`,
     valuesLeft: (n: number) =>
       `${n} ${n === 1 ? 'value' : 'values'} left; those rows will need a fix`,
-    checkRows: (n: number | null) => (n === null ? 'Check' : `Check ${n} rows`),
+    checkRows: (n: number | null) =>
+      n === null ? 'Check' : `Check ${n} ${n === 1 ? 'row' : 'rows'}`,
     columnFor: (label: string) => `Column for ${label}`,
     joinWith: (label: string) => `Second column for ${label}`,
     assignColumn: (column: string) => `Use ${column} for`,
     valuesOf: (label: string) => `${label} values`,
     valueTo: (value: string) => `Option for ${value}`,
+    alsoWritten: (others: string[]) => `Also written ${others.join(', ')}`,
     dateFormat: (label: string) => `Date format for ${label}`,
   },
   source: {
