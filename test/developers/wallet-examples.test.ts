@@ -1,14 +1,12 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import openapi from '../../docs/api/openapi.v1.json';
 import { walletProviderEnabled } from '../../src/worker/modules/wallet-providers/provider-policy.ts';
-import { examplesOf } from './example-lint.ts';
-import { darkWalletFailures } from './example-wallet.ts';
-import type { Doc } from './openapi-diff.ts';
+import { examplesOf } from '../../tools/lib/example-lint.ts';
+import { darkWalletFailures } from '../../tools/lib/example-wallet.ts';
+import type { Doc } from '../../tools/lib/openapi-diff.ts';
 
-const doc = JSON.parse(
-  readFileSync(resolve(import.meta.dirname, '../../docs/api/openapi.v1.json'), 'utf8'),
-) as Doc;
+// Runs in the worker project: provider-policy.ts is the one place that decides whether a provider is released.
+const doc = openapi as unknown as Doc;
 
 describe('wallet examples', () => {
   it('show no provider at work that walletProviderEnabled keeps dark', () => {
