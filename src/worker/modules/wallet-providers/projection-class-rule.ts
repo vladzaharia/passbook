@@ -15,6 +15,9 @@ import { canonicalJson } from '../templates/package/hash.ts';
  */
 export const CLASS_RULE_REVISION = 1;
 
+/** Compiles the review spends on the probes of one candidate; an input past it is unchecked, which blocks. */
+export const MAX_PROBE_COMPILES = 64;
+
 const DAY = 86_400_000;
 const ISO = /^\d{4}-\d{2}-\d{2}(?:T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?)?$/;
 const CLASS_KEY_INPUT = /\binput(?:\.([A-Za-z0-9_]+)|\[\s*['"]([^'"]+)['"]\s*\])/g;
@@ -116,9 +119,11 @@ export function withClassRule(
       const base = canonicalJson(result.classBody);
       const varies: string[] = [];
       const unchecked: string[] = [];
+      let compiles = 0;
       for (const probe of probes) {
         let built = 0;
         for (const make of probe.views) {
+          if (compiles >= MAX_PROBE_COMPILES) break;
           let other: WalletPassView;
           try {
             other = make();
@@ -126,6 +131,7 @@ export function withClassRule(
             continue;
           }
           built += 1;
+          compiles += 1;
           if (canonicalJson(compiler.compile(other, options).classBody) !== base) {
             varies.push(probe.input);
             break;

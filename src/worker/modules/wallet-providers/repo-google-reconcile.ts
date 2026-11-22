@@ -13,12 +13,13 @@ export function listStaleGoogleClassInstances(
     templateId: string;
     version: string;
     generation: number;
+    after?: string | undefined;
   },
   limit: number,
-): Promise<{ instanceId: string }[]> {
+): Promise<{ instanceId: string; classIdHash: string }[]> {
   return all(
     db,
-    `SELECT MIN(i.id) AS instanceId
+    `SELECT MIN(i.id) AS instanceId, b.class_id_hash AS classIdHash
     FROM wallet_google_callback_bindings b
     JOIN wallet_provider_instances i ON i.id = b.instance_id AND i.provider = 'google'
       AND i.lifecycle = 'active' AND i.retirement_requested_at IS NULL AND i.org_id = ? AND i.mode = ?
@@ -26,9 +27,9 @@ export function listStaleGoogleClassInstances(
     JOIN passes pass ON pass.id = i.pass_id AND pass.org_id = i.org_id AND pass.mode = i.mode
       AND pass.template_id = r.template_id AND pass.template_version = ?
     LEFT JOIN wallet_google_classes c ON c.class_id_hash = b.class_id_hash
-    WHERE c.class_id_hash IS NULL OR c.release_generation < ?
+    WHERE (c.class_id_hash IS NULL OR c.release_generation < ?) AND b.class_id_hash > ?
     GROUP BY b.class_id_hash ORDER BY b.class_id_hash LIMIT ?`,
-    [p.orgId, p.mode, p.templateId, p.generation, p.version, p.generation, limit],
+    [p.orgId, p.mode, p.templateId, p.generation, p.version, p.generation, p.after ?? '', limit],
   );
 }
 
