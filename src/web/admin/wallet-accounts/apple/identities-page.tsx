@@ -126,10 +126,11 @@ export function IdentitiesPanel() {
       {attention ? (
         <Callout
           className="mb-6"
+          actionsAside
           tone={attention.tone}
           title={`${attention.identity.label}: certificate ${
             attention.reason === 'expiring' && attention.days !== null
-              ? expiryPhrase(attention.days)
+              ? `${expiryPhrase(attention.days)}, ${formatDay(attention.identity.notAfter, '')}`
               : ATTENTION_COPY[attention.reason]
           }`}
           actions={

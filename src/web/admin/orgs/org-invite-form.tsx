@@ -44,7 +44,7 @@ export function InviteForm({ pending, onInvite }: { pending: boolean; onInvite: 
       onValid={save}
       className="flex flex-col gap-3 border-t border-border pt-3"
     >
-      <h4 className="text-sm font-semibold text-fg-strong">Invite a member</h4>
+      <h3 className="text-sm font-semibold text-fg-strong">Invite a member</h3>
       <FormField label="Email" error={check.errors.email}>
         {(props) => (
           <Input

@@ -91,7 +91,6 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
     />
   );
   const showPass = <ShowPassRow state={live} title={name ?? 'Pass'} />;
-
   return (
     <>
       <PageHeader
@@ -114,7 +113,8 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
           ((at === 'template' || at === 'details' || at === 'holder') && !orgId) ||
           ((at === 'template' || at === 'details') && !canReadTemplates) ||
           (at === 'template' &&
-            (eligible.isPending ||
+            (!templateId ||
+              eligible.isPending ||
               (eligible.isFetching && !eligible.isFetchingNextPage) ||
               (eligible.isError && !eligible.isFetchNextPageError))) ||
           ((at === 'details' || at === 'holder') && !releaseReady)

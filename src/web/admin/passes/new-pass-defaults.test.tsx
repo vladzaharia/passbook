@@ -141,6 +141,7 @@ describe('new pass organization selection', () => {
       },
     });
     expect(await screen.findByRole('radio', { name: /Copper card/ })).not.toBeChecked();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
     await waitFor(() => expect(passRequests.length).toBeGreaterThan(0));
     expect(
       passRequests.every(

@@ -186,7 +186,7 @@ export function WizardAside({
           <EntityArt name={ENTITY.connection.art} size="sm" />
           <p className="text-xs text-fg-muted">
             {!connector
-              ? null
+              ? 'Pick a connector'
               : step === 1
                 ? 'Test shows a sample record here.'
                 : step === 2

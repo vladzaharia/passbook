@@ -27,6 +27,11 @@ describe('platform retention page', () => {
       },
     });
     expect(await screen.findByRole('heading', { name: 'Retention', level: 1 })).toBeInTheDocument();
+    expect(screen.queryByText(/Windows are in/)).toBeNull();
+    expect(screen.getByRole('link', { name: 'Retention windows' })).toHaveAttribute(
+      'href',
+      '/admin/platform/settings',
+    );
     expect(await screen.findByText(/7 deleted, 30-day window/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Download receipt, Photos/ })).toBeInTheDocument();
   });

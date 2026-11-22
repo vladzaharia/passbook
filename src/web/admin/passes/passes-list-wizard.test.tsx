@@ -503,16 +503,10 @@ describe('new pass wizard', () => {
       handlers: wizardHandlers(() => json(passDetail({ id: 'p9' }), 201), posts),
     });
     const entries = router.history.length;
-    // Without a template, Next stays on the Template step, says why and focuses the first tile.
-    // Wait for the tiles: before they load there is nothing to focus.
+    // Without a template Next is disabled: nothing to advance with.
     await screen.findByRole('radio', { name: /Copper card/ });
-    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
     expect(screen.getByRole('heading', { name: 'Template' })).toBeInTheDocument();
-    expect(screen.getByText('Choose a template.')).toBeInTheDocument();
-    await waitFor(() =>
-      expect(document.activeElement).toBe(screen.getByRole('radio', { name: /Copper card/ })),
-    );
-    expect(await screen.findByText('1 field needs attention')).toBeInTheDocument();
     await toDetails(user);
     // Details with a required field empty: focus moves to it.
     await user.click(screen.getByRole('button', { name: 'Next' }));

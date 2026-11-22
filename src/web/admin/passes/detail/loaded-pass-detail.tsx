@@ -5,7 +5,7 @@ import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { ChannelStage } from '../../../channel-previews/channel-stage.tsx';
 import { previewSource } from '../../../channel-previews/source.ts';
 import { entityLabel } from '../../../lib/entity-label.ts';
-import { formatDateTime } from '../../../lib/format.ts';
+import { formatDateTime, formatDay } from '../../../lib/format.ts';
 import { useLasting, useMintedOnArrival } from '../../../lib/motion.ts';
 import { sessionQuery } from '../../../lib/session.ts';
 import {
@@ -69,9 +69,7 @@ function lastSent(p: PassDetailDto): string[] {
         : 'Email sending';
   return [
     ...(mail ? [mail] : []),
-    ...(published && p.version > 1
-      ? [`Published v${published.version} ${formatDateTime(published.createdAt)}`]
-      : []),
+    ...(published && p.version > 1 ? [`Published ${formatDay(published.createdAt)}`] : []),
   ];
 }
 

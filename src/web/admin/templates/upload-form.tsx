@@ -20,7 +20,7 @@ import {
   Input,
   PageHeader,
   Select,
-  Skeleton,
+  SkeletonDetail,
 } from '../../ui/index.ts';
 import { markCreated } from '../passes/created.tsx';
 import { useImportStatus, useTemplate, useUploadTemplate } from './api.ts';
@@ -142,7 +142,7 @@ export function UploadForm({
     return (
       <>
         <PageHeader title="Template" />
-        <Skeleton className="h-24 w-full" />
+        <SkeletonDetail label="Loading template" />
       </>
     );
   }

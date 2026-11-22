@@ -21,8 +21,7 @@ export const RETENTION_COPY = {
   download: 'Download',
   verified: 'Verified',
   unverified: 'Not verified',
-  auditNote: (days: number) =>
-    `Entries are kept ${days} days. Held records are kept until the hold is released.`,
+  auditNote: (days: number) => `Kept ${days} days unless held.`,
   readOnlyWindows: 'Only an organization admin can change these.',
 } as const;
 

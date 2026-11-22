@@ -1,7 +1,13 @@
 import { useRef } from 'react';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useSession } from '../../lib/session.ts';
-import { DetailNotFound, EmptyState, ErrorState, PageHeader, Skeleton } from '../../ui/index.ts';
+import {
+  DetailNotFound,
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  SkeletonDetail,
+} from '../../ui/index.ts';
 import { useTemplate } from './api.ts';
 import { UploadForm } from './upload-form.tsx';
 
@@ -33,7 +39,7 @@ export function TemplateUploadPage({
     return (
       <>
         {header}
-        <Skeleton className="h-24 w-full" />
+        <SkeletonDetail label="Loading template" />
       </>
     );
   }
@@ -61,7 +67,7 @@ export function TemplateUploadPage({
     return (
       <>
         {header}
-        <Skeleton className="h-24 w-full" />
+        <SkeletonDetail label="Loading template" />
       </>
     );
   }
