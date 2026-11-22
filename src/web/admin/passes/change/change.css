@@ -5,18 +5,9 @@
   border-radius: var(--pk-radius-md, 0.5rem);
 }
 
-/* The run's ring of countdown and the foil on the bar that carries the buddy. */
-.wl-foil-bar > div {
-  background: linear-gradient(90deg, #0f766e, #7c3aed 55%, #d4a017);
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .wl-changed {
     animation: wl-change-pulse 1200ms var(--wl-ease-out) 2;
-  }
-  .wl-foil-bar > div {
-    background-size: 200% 100%;
-    animation: wl-foil 2400ms linear infinite;
   }
   .wl-sheen {
     animation: wl-sheen 900ms var(--wl-ease-out) 1;
@@ -35,11 +26,6 @@
   to {
     outline-offset: 2px;
     outline-color: var(--pk-accent);
-  }
-}
-@keyframes wl-foil {
-  to {
-    background-position: -200% 0;
   }
 }
 @keyframes wl-sheen {

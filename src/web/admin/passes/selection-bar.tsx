@@ -9,7 +9,7 @@ import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
 import { errorMessage, isApiError, UserMessageError } from '../../lib/errors.ts';
 import { formatCount } from '../../lib/format.ts';
-import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
+import { BELOW_WIDE, useMediaQuery } from '../../lib/media.ts';
 import { sessionQuery } from '../../lib/session.ts';
 import {
   Button,
@@ -76,7 +76,8 @@ export function SelectionBar({
   const [channels, setChannels] = useState(false);
   const emailKey = useRef<{ fp: string; key: string }>({ fp: '', key: newKey() });
   const barRef = useBottomBar<HTMLElement>();
-  const compact = useMediaQuery(BELOW_LG);
+  // Eight actions need about 1300 px; below 1536 the rest go in More so the bar stays one row.
+  const compact = useMediaQuery(BELOW_WIDE);
   const ids = picked.map((p) => p.id);
   const n = all?.count ?? ids.length;
   // Counted from the rows on screen; for all matching the server skips what cannot change.

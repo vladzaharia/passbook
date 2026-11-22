@@ -153,4 +153,24 @@ describe('Change wizard', () => {
       await screen.findByText('Only a Test key can do this. Use a person for Live.'),
     ).toBeInTheDocument();
   });
+
+  it('runs a Select all matching filter with the template, the filters and the reviewed count', async () => {
+    leaveSelection('org1', {
+      kind: 'filter',
+      filter: { templateId: 'tpl1', q: 'ann' },
+      count: 2,
+      templateIds: ['tpl1'],
+    });
+    const sent: Record<string, unknown>[] = [];
+    setup((body) => {
+      sent.push(body);
+      return json(run(), 201);
+    });
+    const user = userEvent.setup();
+    await fillFirstStep(user);
+    await user.click(await screen.findByRole('button', { name: 'Next', exact: true }));
+    await user.click(await screen.findByRole('button', { name: 'Change 2 passes' }));
+    await waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0]?.target).toEqual({ templateIds: ['tpl1'], q: 'ann', expectCount: 2 });
+  });
 });
