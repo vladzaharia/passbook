@@ -56,7 +56,7 @@ export function VersionsPanel({
       <Card>
         <CardHeader title="Saved versions" />
         <CardBody>
-          {rollout ? <div className="mb-4 border-b border-border pb-4">{rollout}</div> : null}
+          {rollout}
           <ListRows label="Versions">
             {newestFirst.map((v) => {
               const n = versionNumber(template, v.version);

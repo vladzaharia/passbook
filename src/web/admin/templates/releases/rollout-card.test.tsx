@@ -11,47 +11,61 @@ afterEach(() => vi.unstubAllGlobals());
 
 const rollout = (over: Partial<TemplateRollout> = {}): TemplateRollout => ({
   releaseVersion: 'version-2',
+  releaseId: 'rel-2',
+  fromVersion: 'version-1',
   total: 10,
   onRelease: 4,
   remaining: 6,
-  failed: [],
+  updating: [{ version: 'version-1', count: 6 }],
   failedCount: 0,
+  failed: [],
   startedAt: 1,
   runId: null,
   running: false,
-  tell: { path: 'change', text: null, until: 2 },
+  stalled: false,
+  changes: [],
+  tell: { text: 'Gym has a new design.', until: 2, key: 'rollout-tell:rel-2' },
   ...over,
 });
 
 const TEMPLATE = {
   id: 't1',
+  name: 'Gym',
   versions: [
     { version: 'version-1', createdAt: 1 },
     { version: 'version-2', createdAt: 2 },
   ],
 } as unknown as ComponentProps<typeof RolloutCard>['template'];
-const scope = (canTell: boolean) =>
-  ({
-    orgId: 'org-1',
-    membership: { capabilities: canTell ? ['messages:manage', 'passes:operate'] : [] },
-  }) as unknown as ComponentProps<typeof RolloutCard>['scope'];
 
-function mount(canTell = true) {
+const scope = (caps: string[]) =>
+  ({ orgId: 'org-1', membership: { capabilities: caps } }) as unknown as ComponentProps<
+    typeof RolloutCard
+  >['scope'];
+
+function mount(caps = ['messages:manage']) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(
+  return render(
     <QueryClientProvider client={client}>
-      <RolloutCard template={TEMPLATE} scope={scope(canTell)} />
+      <RolloutCard template={TEMPLATE} scope={scope(caps)} />
     </QueryClientProvider>,
   );
 }
 
 describe('rollout card', () => {
-  it('shows progress and Tell holders starts a notifying latest-design run', async () => {
-    const posted: unknown[] = [];
+  it('splits passes by version and Tell holders sends one message to the passes on the release', async () => {
+    const posted: { body: unknown; key: string | null }[] = [];
+    const previews: unknown[] = [];
     stubFetch({
       '/api/v1/templates/t1/rollout': () => json(rollout()),
+      '/api/v1/broadcasts/preview': (_url, init) => {
+        previews.push(JSON.parse(String(init?.body)));
+        return json({ targeted: 4, onDevice: 3, overBudget: 0, limit: 5 });
+      },
       '/api/v1/broadcasts': (_url, init) => {
-        posted.push(JSON.parse(String(init?.body)));
+        posted.push({
+          body: JSON.parse(String(init?.body)),
+          key: new Headers(init?.headers).get('idempotency-key'),
+        });
         return json({}, 201);
       },
     });
@@ -61,62 +75,62 @@ describe('rollout card', () => {
       'aria-valuenow',
       '4',
     );
-    expect(screen.getByText('Updating 6')).toBeInTheDocument();
+    expect(screen.getByText('v2 · 4')).toBeInTheDocument();
+    expect(screen.getByText('v1 · 6')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Tell holders' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Tell 6 holders' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Tell 4 holders' }));
     await waitFor(() => expect(posted).toHaveLength(1));
-    expect(posted[0]).toMatchObject({
-      kind: 'change',
+    expect(previews[0]).toMatchObject({ target: { templateIds: ['t1'], version: 'version-2' } });
+    expect(posted[0]?.key).toBe('rollout-tell:rel-2');
+    expect(posted[0]?.body).toMatchObject({
+      kind: 'message',
       notify: true,
-      target: { templateIds: ['t1'] },
-      patch: { $design: true },
+      clearAfter: 7 * 24 * 3_600_000,
+      patch: { message: 'Gym has a new design.' },
+      target: { templateIds: ['t1'], version: 'version-2' },
     });
   });
 
-  it('after passes moved, Tell holders sends the message text', async () => {
-    const posted: unknown[] = [];
+  it('shows the lock-screen counter and who is still updating', async () => {
     stubFetch({
-      '/api/v1/templates/t1/rollout': () =>
-        json(
-          rollout({
-            onRelease: 10,
-            remaining: 0,
-            tell: { path: 'message', text: 'Gym has a new design.', until: 2 },
-          }),
-        ),
-      '/api/v1/broadcasts': (_url, init) => {
-        posted.push(JSON.parse(String(init?.body)));
-        return json({}, 201);
-      },
+      '/api/v1/templates/t1/rollout': () => json(rollout()),
+      '/api/v1/broadcasts/preview': () =>
+        json({ targeted: 4, onDevice: 3, overBudget: 0, limit: 5 }),
     });
     mount();
     await userEvent.click(await screen.findByRole('button', { name: 'Tell holders' }));
-    const text = screen.getByRole('textbox', { name: /Message/ });
-    expect(text).toHaveValue('Gym has a new design.');
-    await userEvent.click(screen.getByRole('button', { name: 'Tell 10 holders' }));
-    await waitFor(() => expect(posted).toHaveLength(1));
-    expect(posted[0]).toMatchObject({
-      kind: 'message',
-      notify: true,
-      patch: { message: 'Gym has a new design.' },
-      target: { templateIds: ['t1'] },
-    });
+    expect(await screen.findByText(/21\/120/)).toBeInTheDocument();
+    expect(screen.getByText(/3 on a phone/)).toBeInTheDocument();
+    expect(screen.getByText(/6 passes are still updating/)).toBeInTheDocument();
   });
 
-  it('hides Tell holders once the offer has ended', async () => {
-    stubFetch({ '/api/v1/templates/t1/rollout': () => json(rollout({ tell: null })) });
-    mount();
-    expect(await screen.findByText('Updating passes to v2')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Tell holders' })).toBeNull();
-  });
-
-  it('counts passes that cannot update and hides Tell holders without the capability', async () => {
+  it('renders nothing once every pass is on the release and holders were told', async () => {
     stubFetch({
       '/api/v1/templates/t1/rollout': () =>
-        json(rollout({ onRelease: 7, remaining: 3, failedCount: 3 })),
+        json(rollout({ onRelease: 10, remaining: 0, updating: [], tell: null })),
     });
-    mount(false);
-    expect(await screen.findByText("Can't update 3")).toBeInTheDocument();
+    const { container } = mount();
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+  });
+
+  it('counts passes that cannot update, hides Tell holders without messages:manage, no list without passes:read', async () => {
+    stubFetch({
+      '/api/v1/templates/t1/rollout': () =>
+        json(rollout({ onRelease: 7, remaining: 3, updating: [], failedCount: 3, failed: [] })),
+    });
+    mount([]);
+    expect(await screen.findByText("3 passes can't move to v2")).toBeInTheDocument();
+    expect(screen.getByText("Can't update · 3")).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Tell holders' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /that can't update/ })).toBeNull();
+  });
+
+  it('says so when no rebuild started', async () => {
+    stubFetch({
+      '/api/v1/templates/t1/rollout': () =>
+        json(rollout({ remaining: 6, updating: [], failedCount: 6, stalled: true, tell: null })),
+    });
+    mount();
+    expect(await screen.findByText(/The rebuild did not start/)).toBeInTheDocument();
   });
 });

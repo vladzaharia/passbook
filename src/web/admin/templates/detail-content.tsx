@@ -30,6 +30,7 @@ import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
 import { PreviewToggle, type PreviewView } from './preview-toggle.tsx';
 import { ReleaseStrip } from './releases/release-strip.tsx';
+import { RolloutBanner } from './releases/rollout-banner.tsx';
 import { RolloutCard } from './releases/rollout-card.tsx';
 import { TemplateReleasesPanel } from './releases/template-releases-panel.tsx';
 import { useReleaseControls } from './releases/use-release-controls.tsx';
@@ -196,6 +197,7 @@ export function TemplateDetailContent({
         onReview={() => void navigate({ to: '.', search: { tab: 'versions' }, replace: true })}
         tryPending={controls.trying}
       />
+      <RolloutBanner template={t} scope={scope} />
       {state && !archived ? (
         <ReleaseStrip
           state={state}

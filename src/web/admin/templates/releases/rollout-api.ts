@@ -10,7 +10,13 @@ import { api } from '../../../lib/api.ts';
 const key = (templateId: string, orgId: string, mode: Mode) =>
   ['admin', 'template-rollout', templateId, orgId, mode] as const;
 
-/** Polls while passes are still moving. */
+/** Holders hear the message for a week, then it clears. */
+export const TELL_CLEAR_MS = 7 * 24 * 3_600_000;
+
+/**
+ * Polls every 15 s, and only while passes are moving or a first rebuild is still due. Once a rebuild
+ * has run (or stalled) and finished, nothing changes on its own, so it stops.
+ */
 export function useRollout(templateId: string, orgId: string, mode: Mode, enabled: boolean) {
   return useQuery({
     enabled,
@@ -19,43 +25,45 @@ export function useRollout(templateId: string, orgId: string, mode: Mode, enable
       api.get(
         `/api/v1/templates/${encodeURIComponent(templateId)}/rollout`,
         TemplateRolloutSchema,
-        {
-          headers: { [MODE_HEADER]: mode },
-          query: { orgId, mode },
-          signal,
-        },
+        { headers: { [MODE_HEADER]: mode }, query: { orgId, mode }, signal },
       ),
     staleTime: 0,
     refetchInterval: (q) => {
       const d = q.state.data;
-      return d && (d.running || d.remaining > d.failedCount) ? 5000 : false;
+      if (!d || d.stalled) return false;
+      return d.running || (d.runId === null && d.remaining > d.failedCount) ? 15_000 : false;
     },
   });
 }
 
-type Tell = NonNullable<TemplateRollout['tell']>;
-
 /**
- * Tell holders: before passes move, a latest-design change run that notifies; after, a message to the
- * template's passes with `text`. Both are the ordinary create, so its checks apply.
+ * Tell holders: a message to the passes that are on the release now, cleared after a week. One send
+ * per release: the server's key is the release's.
  */
-export function useTellHolders(templateId: string, orgId: string, mode: Mode) {
+export function useTellHolders(
+  templateId: string,
+  orgId: string,
+  mode: Mode,
+  version: string,
+  name: string,
+) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ tell, text, idem }: { tell: Tell; text: string; idem: string }) =>
+    mutationFn: ({ tell, text }: { tell: NonNullable<TemplateRollout['tell']>; text: string }) =>
       api.post(
         '/api/v1/broadcasts',
         BroadcastSchema,
         {
           orgId,
-          name: 'Template update',
+          kind: 'message',
+          name: name.slice(0, 80),
+          notify: true,
           send: 'now',
-          target: { templateIds: [templateId] },
-          ...(tell.path === 'change'
-            ? { kind: 'change', notify: true, patch: { $design: true } }
-            : { kind: 'message', notify: true, patch: { message: text } }),
+          clearAfter: TELL_CLEAR_MS,
+          target: { templateIds: [templateId], version },
+          patch: { message: text },
         },
-        { headers: { [MODE_HEADER]: mode, 'idempotency-key': idem } },
+        { headers: { [MODE_HEADER]: mode, 'idempotency-key': tell.key } },
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: key(templateId, orgId, mode) }),
   });
