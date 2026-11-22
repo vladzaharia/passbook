@@ -39,9 +39,9 @@ export function TestResult({ outcome, className }: { outcome?: TestOutcome; clas
     <span
       role="status"
       className={cn(
-        'inline-flex min-w-0 items-center gap-2 text-sm',
-        outcome ? 'min-h-6' : 'sr-only',
-        className,
+        'inline-flex min-w-0 max-w-full items-center gap-2 text-sm',
+        // Idle it is only a live region: the caller's width must not reach the hidden span.
+        outcome ? ['min-h-6', className] : 'sr-only',
       )}
     >
       {outcome ? (

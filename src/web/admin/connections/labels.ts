@@ -10,6 +10,7 @@ const ERROR_MESSAGE: Record<string, string> = {
   TIMEOUT: 'The source did not respond in time. Check the source URL in Configuration.',
   INVALID_PAYLOAD: 'The source returned data that does not match the mapping.',
   CONFIG: 'The connection configuration is invalid. Check Configuration.',
+  RECORD_ERRORS: 'Some rows failed. Fix them in the source; the next sync retries them.',
 };
 
 export function errorMessage(code: string | null | undefined): string | null {

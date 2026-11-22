@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sessionQuery } from '../lib/session.ts';
 import { json, renderApp, sessionFixture, stubFetch } from '../lib/test-utils.tsx';
-import { PrincipalBoundary } from './__root.tsx';
+import { PrincipalBoundary, RootPending, Route } from './__root.tsx';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -147,5 +147,19 @@ describe('principal boundary', () => {
     });
     expect(await screen.findByText('Second User')).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText('Add email')).toHaveValue(''));
+  });
+});
+
+describe('root pending hold', () => {
+  it('is a neutral busy page, announced as Loading', () => {
+    render(<RootPending />);
+    const hold = screen.getByRole('status');
+    expect(hold).toHaveAttribute('aria-busy', 'true');
+    expect(hold).toHaveTextContent('Loading');
+  });
+
+  it('waits 150 ms before showing it', () => {
+    expect(Route.options.pendingComponent).toBe(RootPending);
+    expect(Route.options.pendingMs).toBe(150);
   });
 });

@@ -251,11 +251,17 @@ export function TemplateStep({
           </div>
         </fieldset>
       ))}
-      <p className="text-sm">
-        <Link to="/admin/blueprints" className="text-accent-fg underline-offset-2 hover:underline">
-          Browse blueprints
-        </Link>
-      </p>
+      {/* Enters with the rows, so it does not sit alone while they rise. */}
+      <div className={cn(arrived && 'wl-stagger')}>
+        <p className="text-sm" style={{ '--i': i } as CSSProperties}>
+          <Link
+            to="/admin/blueprints"
+            className="text-accent-fg underline-offset-2 hover:underline"
+          >
+            Browse blueprints
+          </Link>
+        </p>
+      </div>
     </ChoiceGroup>
   );
 }

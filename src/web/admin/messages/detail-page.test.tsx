@@ -654,7 +654,7 @@ describe('Message detail', () => {
     expect(syncUrl.searchParams.get('tab')).toBe('sync');
     if (syncUrl.searchParams.has('orgId'))
       expect(syncUrl.searchParams.get('orgId')).toBe(messageOrg.id);
-    expect(screen.getByText('Not sent as alert (daily limit)')).toBeInTheDocument();
+    expect(screen.getByText('Quiet')).toBeInTheDocument();
   });
 
   it('names a change by the template label, not its key', async () => {

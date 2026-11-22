@@ -52,6 +52,7 @@ export const IMPORT_COPY = {
     submit: 'Check',
     checking: 'Checking rows',
     noColumn: 'No column',
+    emptyFields: (n: number) => `${n} ${n === 1 ? 'field' : 'fields'} with no column`,
     matchBy: 'Match by',
     exact: 'Exact',
     similar: 'Similar name',

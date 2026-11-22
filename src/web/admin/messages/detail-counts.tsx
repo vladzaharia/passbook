@@ -18,8 +18,11 @@ function Stat({
   filter,
   current,
   id,
+  hint,
 }: {
   label: string;
+  /** The longer name, for a hover. */
+  hint?: string;
   value: number;
   /** The Passes list this count opens: undefined for none, null for every pass. */
   filter?: ItemOutcome | null;
@@ -30,7 +33,9 @@ function Stat({
   const active = filter !== undefined && (filter ?? undefined) === current;
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
-      <dt className="text-xs text-fg-muted">{label}</dt>
+      <dt className="text-xs text-fg-muted" title={hint}>
+        {label}
+      </dt>
       <dd className="m-0">
         {filter === undefined ? (
           <span className="text-fg-strong">{number}</span>
@@ -70,7 +75,7 @@ export function Counts({ b, outcome }: { b: BroadcastDto; outcome: ItemOutcome |
         {act ? (
           <>
             <BroadcastProgress broadcast={b} />
-            <dl className="m-0 grid grid-cols-2 gap-4 sm:grid-cols-5">
+            <dl className="m-0 grid grid-cols-3 gap-4 sm:grid-cols-5">
               <Stat id={b.id} label="Targeted" value={c.targeted} filter={null} current={outcome} />
               <Stat
                 id={b.id}
@@ -86,7 +91,12 @@ export function Counts({ b, outcome }: { b: BroadcastDto; outcome: ItemOutcome |
                 filter="unchanged"
                 current={outcome}
               />
-              <Stat id={b.id} label="Not sent as alert (daily limit)" value={c.overBudget} />
+              <Stat
+                id={b.id}
+                label="Quiet"
+                hint="Not sent as an alert: the daily limit was reached"
+                value={c.overBudget}
+              />
               <Stat id={b.id} label="Failed" value={c.failed} filter="failed" current={outcome} />
             </dl>
           </>

@@ -97,6 +97,16 @@ describe('gallery groups and search', () => {
     ).toEqual(['Stamp card', 'Balance card']);
   });
 
+  it('keeps two columns on a phone', async () => {
+    await renderApp('/admin/blueprints', {
+      session: 'admin',
+      ...access,
+      handlers: catalog(CATALOG),
+    });
+    const list = await screen.findByRole('list', { name: 'Get people in' });
+    expect(list.className).toMatch(/(^|\s)grid-cols-2(\s|$)/);
+  });
+
   it('finds a blueprint by an alias, and says when nothing matches', async () => {
     const user = userEvent.setup();
     await renderApp('/admin/blueprints', {

@@ -203,6 +203,13 @@
   background: rgb(127 127 127 / 0.15);
   width: calc(var(--u) * 110);
 }
+/* While the encoder loads the tile is a neutral block, not a white box on a dark pass. */
+.pc-barcode:has(> .pc-barcode-pending) {
+  background: rgb(127 127 127 / 0.15);
+}
+.pc-barcode:has(> .pc-barcode-pending) > .pc-barcode-pending {
+  background: none;
+}
 .pc-barcode-svg {
   display: block;
   height: calc(var(--u) * 60);

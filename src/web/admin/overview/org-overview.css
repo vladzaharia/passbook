@@ -9,8 +9,8 @@
   }
 }
 @keyframes wl-glow {
-  50% {
-    opacity: 0.55;
+  from {
+    opacity: 0;
   }
 }
 
@@ -58,6 +58,6 @@
     animation-delay: calc(var(--i, 0) * 60ms);
   }
   .wl-notadded::before {
-    animation: wl-glow 4.8s ease-in-out infinite;
+    animation: wl-glow 1.2s var(--wl-ease-out) 1 backwards;
   }
 }

@@ -206,6 +206,8 @@ describe('login page', () => {
     const card = container.querySelector('.wl-login-flipper');
     expect(card?.querySelectorAll('[data-side]')).toHaveLength(2);
     expect(card?.querySelector('[aria-busy="true"]')).not.toBeNull();
+    // The face turned away is a paragraph: the page has one h1.
+    expect(container.querySelectorAll('h1')).toHaveLength(1);
   });
 
   it('renders the Turnstile widget with the site key', async () => {
