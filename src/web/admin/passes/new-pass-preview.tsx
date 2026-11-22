@@ -216,7 +216,15 @@ export function StagePreview({
  * Below 1024 the wizard has no aside: Details and Review offer the card as a compact row with
  * Show pass, as the pass detail page does on phones.
  */
-export function ShowPassRow({ state, title }: { state: LivePreviewState; title: string }) {
+export function ShowPassRow({
+  state,
+  title,
+  transitionName,
+}: {
+  state: LivePreviewState;
+  title: string;
+  transitionName?: string | undefined;
+}) {
   const wide = useMediaQuery('(min-width: 1024px)');
   const [open, setOpen] = useState(false);
   if (wide) return null;
@@ -231,6 +239,7 @@ export function ShowPassRow({ state, title }: { state: LivePreviewState; title: 
             assetBaseUrl={state.preview.assetBaseUrl}
             assetNames={state.preview.assetNames}
             still
+            {...(transitionName ? { transitionName } : {})}
           />
         </div>
         <p className="min-w-0 flex-1 truncate text-sm font-medium text-fg-strong">{title}</p>

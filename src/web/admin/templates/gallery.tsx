@@ -161,7 +161,7 @@ export function TemplateGallery({
           <div
             className={cn(
               'flex min-w-0 items-center gap-3 border-t border-border px-4 py-3',
-              arrival === 'rise' && 'wl-rise [animation-delay:calc(min(var(--i),6)*60ms+160ms)]',
+              arrival === 'rise' && 'wl-rise [--wl-delay:calc(min(var(--i),6)*60ms+160ms)]',
             )}
           >
             {t.orgId ? (

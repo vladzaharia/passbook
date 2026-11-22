@@ -49,7 +49,8 @@ and end by 4.3 s after that (`replay.test.tsx` checks every scene).
 | `--wl-ease-out` | `pk-ease-enter` | Entrances |
 | `--wl-ease-in` | `pk-ease-exit` | Exits |
 | `--wl-ease-move` | `pk-ease-standard` | Moves within a page |
-| `--wl-ease-spring` | `pk-ease-spring` (4% overshoot) | Cards, flip, indicators, art pops |
+| `--wl-ease-spring` | `pk-ease-spring` (4% overshoot) | Indicators, art pops |
+| `--wl-ease-card` | Same 4% overshoot as the spring, 90% reached at 39% of the time | Deal, flip, shared-card morph (the stage is the one place a spring must be seen) |
 | `--wl-ease-bounce` | `linear()`, 13% overshoot | Stamps, seals, success checks, celebrations |
 | `--wl-rise` | 8 px | Entrance rise |
 | `--wl-slide` | 16 px | Route and step slide by direction |
@@ -81,7 +82,7 @@ and end by 4.3 s after that (`replay.test.tsx` checks every scene).
 | Buttons, icon buttons | Press .98 in 80 ms; hover colour 120 ms; dark primary glows on hover | Loading keeps the width and the icon (busy verbs) |
 | Switch, checkbox | Thumb slides on spring 200 ms and stretches 1.25× toward its travel while pressed; the tick draws, short stroke (90 ms) then long (150 ms), only when it changes after mount | Never on load |
 | Copy, saved | Icon swaps to a check (300 ms bounce), back after 1.5 s | Same label |
-| Toasts | Sonner's slide. Icon: success is the buddy's face, pops (300 ms bounce) and winks at 380 ms (200 ms), or a check while a page buddy is in view; info fades (160 ms), error shakes (240 ms) | Copy unchanged |
+| Toasts | Sonner's slide. Icon: success is the buddy's face, pops (300 ms bounce, scale only, from 120 ms when the slide has made the toast 50% opaque) and winks at 380 ms (200 ms), or a check while a page buddy is in view; info fades (160 ms from 120 ms), error shakes (240 ms from 120 ms) | Copy unchanged |
 | Skeleton → content | Skeleton after 150 ms (`pk-delay-skeleton`), same shape and height; handoff: skeleton fades 120 ms while content rises 4 px in 200 ms | No layout shift |
 | Numbers | Count from the last value shown this session (first visit from 0), 600 ms ease-out, tabular-nums | `CountUp`; nothing counts 0 → 0 |
 | Status change | One ring pulse in the pill's tone (scale 1 → 1.6, fade, 640 ms) | Only when the value changes on screen |
@@ -396,7 +397,9 @@ One per screen. The wordmark says hello once per browser session in the SPA and 
    Copy stays as terse as the reference: the fun is all in the motion.
 9. **Celebrations.** Milestones only, from data: an org's first pass, a template import with zero
    issues, a connection's first successful sync. Six foil sparks (2×6 px) fly 14 px out from the
-   target with rotation and fade (640 ms, 40 ms apart), once. One per screen, never on lists.
+   target with rotation and fade (640 ms, 40 ms apart), once, above the thing they celebrate: the
+   pass card's centre for a first pass, the cheering buddy's head for an import. One per screen,
+   never on lists.
 10. **Upload template assembles.** The drop zone holds the `template` art: drag-over lifts its
     pieces 4 px, each server step lands the next piece (360 ms spring), success stamps the seal
     (420 ms bounce) and deals the sample still into the report column; a failure slides the

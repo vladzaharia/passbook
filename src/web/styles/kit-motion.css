@@ -183,14 +183,26 @@
   width: auto;
   height: auto;
 }
+/* The slide fades the toast in over ~200 ms, so the icon waits for it: a pop at 30% opacity is not
+   seen. The pop is scale only (the toast carries the opacity). */
+[data-sonner-toast][data-type] [data-icon] {
+  --wl-toast-icon-delay: 120ms;
+}
+@keyframes wl-pop-in {
+  from {
+    transform: scale(0.6);
+  }
+}
 [data-sonner-toast][data-type="success"] [data-icon] {
-  animation: wl-check 300ms var(--wl-ease-bounce) backwards;
+  animation:
+    wl-fade-in 80ms linear var(--wl-toast-icon-delay) backwards,
+    wl-pop-in 300ms var(--wl-ease-bounce) var(--wl-toast-icon-delay) backwards;
 }
 [data-sonner-toast][data-type="info"] [data-icon] {
-  animation: wl-fade-in 160ms var(--wl-ease-out) backwards;
+  animation: wl-fade-in 160ms var(--wl-ease-out) var(--wl-toast-icon-delay) backwards;
 }
 [data-sonner-toast][data-type="error"] [data-icon] {
-  animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move);
+  animation: wl-shake var(--wl-dur-shake) var(--wl-ease-move) var(--wl-toast-icon-delay);
 }
 
 /* Fixed bars that arrive from the bottom edge (SaveBar, WizardBar) and leave the same way. */

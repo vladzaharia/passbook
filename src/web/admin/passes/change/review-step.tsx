@@ -117,7 +117,8 @@ export function ReviewStep({
         <h3 className="text-sm font-semibold text-fg-strong">{C.review.samples}</h3>
         <SampleDiffs samples={p.samples.slice(0, 5)} />
       </section>
-      <Card>
+      <Card data-art-host="" className="wl-buddy-room relative">
+        <Buddy scene="peek" size="sm" at="end" />
         <CardHeader title={C.review.summary} />
         <CardBody>
           <dl className="grid gap-3 text-sm">
@@ -145,9 +146,6 @@ export function ReviewStep({
           </dl>
         </CardBody>
       </Card>
-      <div className="flex justify-end" aria-hidden>
-        <Buddy scene="peek" size="sm" />
-      </div>
     </div>
   );
 }
