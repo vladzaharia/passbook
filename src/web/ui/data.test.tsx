@@ -490,6 +490,14 @@ describe('FileDrop', () => {
   const file = (name: string, size = 3, type = '') =>
     new File([new Uint8Array(size)], name, { type });
 
+  it('shows the hint inside the drop zone', () => {
+    const { container } = render(
+      <FileDrop onFiles={() => {}} label="Choose photos" hint="JPG or PNG, up to 5 MB" />,
+    );
+    const zone = container.querySelector('.wl-file-drop');
+    expect(zone).toHaveTextContent('JPG or PNG, up to 5 MB');
+  });
+
   it('accepts a matching file and resets the input', async () => {
     const user = userEvent.setup();
     const onFiles = vi.fn();

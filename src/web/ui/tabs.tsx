@@ -54,7 +54,10 @@ const textOf = (node: ReactNode): string =>
         ? textOf(node.props.children)
         : '';
 
-/** Below 640 five or more tabs become a Select named by the list's aria-label; else a scrolling strip. */
+/**
+ * Below 640 five or more tabs become a Select named by the list's aria-label; else a scrolling
+ * strip: tabs snap to centre, the active one is kept in view, chevrons page it (44 px on touch).
+ */
 export function TabsList({ className, children, ...props }: ComponentProps<typeof Primitive.List>) {
   const state = useContext(TabsContext);
   const phone = useMediaQuery(PHONE);
@@ -144,7 +147,7 @@ function Strip({ className, children, ...props }: ComponentProps<typeof Primitiv
           label={side === 'start' ? 'Earlier tabs' : 'More tabs'}
           size="sm"
           tabIndex={-1}
-          className="pointer-events-auto size-6"
+          className="pointer-events-auto size-6 pointer-coarse:size-11"
           icon={side === 'start' ? <ChevronLeft aria-hidden /> : <ChevronRight aria-hidden />}
           onClick={() => page(side === 'start' ? -1 : 1)}
         />
@@ -163,7 +166,7 @@ function Strip({ className, children, ...props }: ComponentProps<typeof Primitiv
       <Primitive.List
         ref={ref}
         className={cn(
-          'relative flex gap-1 overflow-x-auto border-b border-border [scrollbar-width:none]',
+          'relative flex snap-x snap-proximity gap-1 overflow-x-auto border-b border-border [scrollbar-width:none]',
           className,
         )}
         {...props}
@@ -199,7 +202,7 @@ export function TabsTrigger({
         onBlur?.(e);
       }}
       className={cn(
-        'relative -mb-px min-h-9 shrink-0 border-b-2 border-transparent px-3 text-sm text-fg-muted wl-colors pointer-coarse:min-h-11',
+        'relative -mb-px min-h-9 shrink-0 snap-center border-b-2 border-transparent px-3 text-sm text-fg-muted wl-colors pointer-coarse:min-h-11',
         'hover:text-fg-strong data-[state=active]:text-fg-strong',
         'outline-none focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus',
         // Radix focuses the trigger on pointer down; only keyboard focus shows the ring.
