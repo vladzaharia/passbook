@@ -56,7 +56,7 @@ export const FULL_CSS = `.pp-sheet{--org:#333;--org-fg:#fff;--org-label:#ddd;--i
 .pp-foot .pp-meta{font-size:calc(var(--mm) * 2.3989);color:var(--muted)}
 .pp-foot{position:relative}
 .pp-foot .pp-buddy{position:absolute;right:calc(var(--mm) * 6);bottom:100%;margin-bottom:calc(var(--mm) * -1.1)}
-.pp-fold{position:absolute;font-size:calc(var(--mm) * 1.905);color:var(--rule);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:calc(var(--mm) * 1)}
+.pp-fold{position:absolute;font-size:calc(var(--mm) * 1.905);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:calc(var(--mm) * 1)}
 .pp-fold.pp-h{top:calc(calc(var(--mm) * var(--half)) - calc(var(--mm) * 0.15))}
 .pp-fold.pp-h::before{content:"";width:calc(var(--mm) * 4);border-top:calc(var(--mm) * 0.3) dashed var(--rule)}
 .pp-fold.pp-h.pp-l{left:calc(var(--mm) * 7)}.pp-fold.pp-h.pp-r{right:calc(var(--mm) * 7);flex-direction:row-reverse}

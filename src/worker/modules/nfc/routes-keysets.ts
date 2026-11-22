@@ -20,7 +20,7 @@ import { ipPrefix } from '../../platform/ip.ts';
 import { register } from '../../platform/openapi.ts';
 import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { peekBody, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, tenantAuthorityOf } from '../passes/http.ts';
 import { credentialOnce, withoutSecrets } from '../scan/credential-once.ts';
@@ -232,7 +232,17 @@ export function registerKeysetRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void 
       method: 'post',
       path: '/keysets/{id}/import',
       summary: 'Import supplier-personalised tags (dry run or add)',
-      auth: WRITE,
+      // Replacing own-key tags' keys hands the caller their taps: a session needs a recent sign-in, as on rotate.
+      auth: {
+        ...WRITE,
+        stepUp: {
+          maxAgeSec: STEP_UP_SECONDS,
+          when: async (c) => {
+            const b = await peekBody(c);
+            return b.replace === true && b.dryRun !== true;
+          },
+        },
+      },
       params: IdParam,
       body: ImportTagsSchema,
       response: TagImportResultSchema,

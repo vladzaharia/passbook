@@ -12,5 +12,6 @@ export async function statusHtml(ctx: ServiceContext, shell: string): Promise<st
     ctx.log.warn('status.public_failed', { code: 'STATUS_PUBLIC_FAILED', error });
     return null;
   });
-  return shell.replace(STATUS_SLOT, renderToStaticMarkup(<StatusBody status={status} />));
+  // A function replacement keeps `$&`, `$'` and `$` + backtick in a note literal.
+  return shell.replace(STATUS_SLOT, () => renderToStaticMarkup(<StatusBody status={status} />));
 }

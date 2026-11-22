@@ -20,12 +20,12 @@ import {
   stepValidate,
 } from '../modules/identities/provision-steps.ts';
 import { getManagedState } from '../modules/identities/repo-provision.ts';
-import { enterStep, finishRun, parkRun } from '../modules/identities/repo-runs.ts';
+import { enterStep, finishRun, handleOwner, parkRun } from '../modules/identities/repo-runs.ts';
 import { stepRevoke } from '../modules/identities/revoke-run.ts';
 import type { IdentityProvisionParams } from '../modules/identities/run-start.ts';
 import type { Clock } from '../platform/clock.ts';
 import type { AppEnv } from '../platform/env.ts';
-import { AppError, NotFoundError, UnavailableError } from '../platform/errors.ts';
+import { AppError, ConflictError, NotFoundError, UnavailableError } from '../platform/errors.ts';
 import { createJobContext, type ServiceContext } from '../platform/service-context.ts';
 
 export type { IdentityProvisionParams };
@@ -143,14 +143,23 @@ async function resolvePassType(ctx: ServiceContext, rpc: AppleRpc, runId: string
     return recordPassType(ctx, runId, found);
   }
   if (!ref.handle) throw new UnavailableError('The run has no handle.', 'IDENTITY_RUN_INCOMPLETE');
-  const _identifier = passTypeOf(ref.handle);
+  const identifier = passTypeOf(ref.handle);
   const orgName = await orgNameOf(ctx, run.target_id);
-  return recordPassType(
-    ctx,
-    runId,
-    await rpc.createPassType(ref.handle, `${orgName} (PassBook)`, runId),
-    'created',
-  );
+  const created = await rpc.createPassType(ref.handle, `${orgName} (PassBook)`, runId);
+  // The provisioner knows no owners: an existing pass type must be the one this org reserved.
+  const reserved = await handleOwner(ctx.env.DB, ref.handle);
+  if (created.identifier !== identifier || reserved?.orgId !== run.target_id) {
+    ctx.log.error('identity.pass_type_mismatch', {
+      runId,
+      code: 'IDENTITY_PASS_TYPE_MISMATCH',
+      outcome: created.outcome,
+    });
+    throw new ConflictError(
+      'Apple returned a pass type this organization did not reserve.',
+      'IDENTITY_PASS_TYPE_MISMATCH',
+    );
+  }
+  return recordPassType(ctx, runId, created, 'created');
 }
 
 /** List first: a certificate already issued for this CSR's key (an earlier attempt) is adopted, never ordered twice. */

@@ -116,7 +116,8 @@ export const Route = createFileRoute('/admin/')({
     // A member whose role has no overview opens the first section it does have.
     const to =
       scope?.kind === 'org' && membership && !canAccessAdminPath(target.to, false, membership)
-        ? (firstAllowedPath(scope, false, membership) ?? target.to)
+        ? ((await import('../../lib/nav.ts')).firstAllowedPath(scope, false, membership) ??
+          target.to)
         : target.to;
     throw redirect({ to, search: target.search, replace: true });
   },

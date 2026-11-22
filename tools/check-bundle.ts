@@ -7,7 +7,7 @@ import { gzipSync } from 'node:zlib';
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist/client');
 
-/** Console entry: 221.8 kB measured (tooltip loads after first paint); the account menu and its Radix chunks load after first paint.
+/** Console entry: 184.8 kB measured (tooltip loads after first paint); the account menu and its Radix chunks load after first paint.
  * Scanning pages, pass inspection, tables and search controls remain lazy. Route search schemas import
  * only light contract files (pass-list-status.ts), never the pass, scan or template contracts. */
 export const BUDGET_BYTES = 230_000;

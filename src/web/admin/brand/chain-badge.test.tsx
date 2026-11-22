@@ -3,22 +3,25 @@ import { expect, it } from 'vitest';
 import type { ChannelLevel } from '@/shared/contracts/channels.ts';
 import { ChainBadge } from './chain-badge.tsx';
 
-const levels = [
-  { level: 'platform', state: 'ok' },
-  { level: 'plan', state: 'off' },
-  { level: 'org', state: 'ok' },
-  { level: 'template', state: 'ok' },
-] as unknown as ChannelLevel[];
+const level = (l: ChannelLevel['level'], state: ChannelLevel['state']): ChannelLevel => ({
+  level: l,
+  state,
+  canChange: false,
+});
 
-it('quiets the levels after the stopping one without opacity', () => {
-  render(<ChainBadge levels={levels} />);
-  const items = screen.getAllByRole('listitem');
-  const after = items.slice(2).map((li) => li.querySelector('[data-level]') as HTMLElement);
-  for (const pill of after) {
-    expect(pill).toHaveAttribute('data-after');
-    expect(pill.className).not.toMatch(/opacity/);
-    expect(pill.className).toContain('text-fg-muted');
-  }
-  expect(items[0]?.querySelector('[data-level]')).not.toHaveAttribute('data-after');
-  expect(document.body.innerHTML).not.toMatch(/opacity-45/);
+it('quiets the levels past the stop to an outline, not a faded colour', () => {
+  render(
+    <ChainBadge
+      levels={[
+        level('passbook', 'locked'),
+        level('plan', 'ok'),
+        level('org', 'ok'),
+        level('template', 'ok'),
+      ]}
+    />,
+  );
+  const chain = screen.getByRole('list', { name: 'Chain' });
+  const pills = [...chain.querySelectorAll<HTMLElement>('[data-level]')];
+  expect(pills.map((p) => p.dataset.after)).toEqual([undefined, 'true', 'true', 'true']);
+  for (const p of pills) expect(p.className).not.toMatch(/opacity-/);
 });

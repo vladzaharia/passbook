@@ -30,6 +30,10 @@ export interface PassTypeRef {
   identifier: string;
   name: string | null;
 }
+/** `existing`: already allowlisted here, no Apple call. `adopted`: Apple already had it (an earlier attempt). */
+export interface CreatedPassType extends PassTypeRef {
+  outcome: 'created' | 'existing' | 'adopted';
+}
 export interface CertificateInfo {
   ascId: string;
   certificateType: string;
@@ -54,7 +58,7 @@ export interface CallRow {
 
 /** The RPC surface of the `apple-provisioner` Worker, and nothing else. `runId` is the caller's workflow run, for the ledger. */
 export interface AppleRpc {
-  createPassType(handle: string, name: string, runId?: string): Promise<PassTypeRef>;
+  createPassType(handle: string, name: string, runId?: string): Promise<CreatedPassType>;
   createCertificate(
     passTypeAscId: string,
     csrDer: Uint8Array,

@@ -36,12 +36,16 @@ export async function logRefusal(
   at: number,
   reason: string,
 ): Promise<void> {
-  await db
+  // Refusals count against the per-minute budget too, so a looping caller cannot grow the table.
+  const res = await db
     .prepare(
-      "INSERT INTO asc_calls (call_id, phase, method, target, caller, status, at) VALUES (?, 'refused', ?, ?, ?, ?, ?)",
+      `INSERT INTO asc_calls (call_id, phase, method, target, caller, status, at)
+       SELECT ?1, 'refused', ?2, ?3, ?4, ?5, ?6
+       WHERE (SELECT count(*) FROM asc_calls WHERE phase = 'refused' AND method = ?2 AND at > ?6 - ${MINUTE}) < ${LIMITS.perMinute}`,
     )
     .bind(crypto.randomUUID(), method, target, caller, reason.slice(0, 200), at)
     .run();
+  if (res.meta.changes === 0) alert('warn', 'provisioner.refusals_capped', { method });
 }
 
 /**

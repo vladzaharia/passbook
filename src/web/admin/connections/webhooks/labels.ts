@@ -1,4 +1,5 @@
 import type { WebhookEventType } from '@/shared/contracts/webhooks.ts';
+import { entityLabel } from '../../../lib/entity-label.ts';
 
 export const EVENT_LABEL: Record<WebhookEventType, string> = {
   'pass.issued': 'Issued',
@@ -91,4 +92,9 @@ export const OVERLAP_OPTIONS = [
 /** A failed delivery always reads as something: an unknown code is a plain "Failed". */
 export function failureLabel(status: number | null, code: string | null): string {
   return responseLabel(status, code) || 'Failed';
+}
+
+/** The pass a delivery is about: its own id from the issuer, else the tail of the PassBook id. */
+export function passLabel(d: { externalId: string | null; passId: string }): string {
+  return entityLabel(d.externalId, `Pass ${d.passId.slice(-6)}`);
 }

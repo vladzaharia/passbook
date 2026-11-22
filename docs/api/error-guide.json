@@ -947,6 +947,12 @@
     "fix": "Start a new run.",
     "retryable": false
   },
+  "IDENTITY_PASS_TYPE_MISMATCH": {
+    "title": "Pass type mismatch",
+    "when": "Apple returned a pass type that is not the one reserved for this organization's handle.",
+    "fix": "Contact support; the run stopped before any certificate was ordered.",
+    "retryable": false
+  },
   "IDENTITY_RUN_INCOMPLETE": {
     "title": "Run incomplete",
     "when": "The run is missing data a step needs.",

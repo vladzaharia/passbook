@@ -80,6 +80,25 @@ describe('the public status', () => {
     expect(status.overall).toBe('outage');
   });
 
+  it('keeps `$` replacement patterns in a note literal', async () => {
+    const now = rk.kit.clock.now();
+    await run(rk.kit.env.DB, 'DELETE FROM status_incidents');
+    const note = "Fees in $` and $' and $& and $$ apply.";
+    await run(
+      rk.kit.env.DB,
+      `INSERT INTO status_incidents (id, title, note, component, impact, started_at) VALUES ('dollar', 't', ?, NULL, 'notice', ?)`,
+      [note, now - 1000],
+    );
+    clearPublicStatusMemo(rk.kit.env.DB);
+    const html = await statusHtml(
+      rk.kit.ctx,
+      `<head><title>Shell</title></head><main>${STATUS_SLOT}</main>`,
+    );
+    // React escapes the quote; the dollar sequences must come through as typed.
+    expect(html).toContain('Fees in $` and $&#x27; and $&amp; and $$ apply.');
+    expect(html.match(/<head>/g)).toHaveLength(1);
+  });
+
   it('answers a failed read with a one-line page, not an error', async () => {
     const broken = {
       ...rk.kit.ctx,

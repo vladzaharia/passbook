@@ -55,6 +55,14 @@ describe('print page document', () => {
     expect(staff).not.toContain('data-act="void"');
   });
 
+  it('says when the ticket holds characters the fonts cannot draw', () => {
+    const d = design();
+    const base = ready(d) as Extract<PrintPageModel, { state: 'ready' }>;
+    expect(renderPrintPage({ ...props, model: base })).not.toContain('data-lossy');
+    const model = { ...base, content: { ...base.content, holder: 'Nguyễn Thị Hương' } };
+    expect(renderPrintPage({ ...props, model })).toContain('data-lossy');
+  });
+
   it('asks the holder to make the ticket when no print exists, and says why when it cannot', () => {
     const empty = renderPrintPage({
       ...props,

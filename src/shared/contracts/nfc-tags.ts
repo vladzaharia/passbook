@@ -168,6 +168,9 @@ export type Tag = z.infer<typeof TagSchema>;
 export const TagListQuerySchema = z.object({
   orgId: IdSchema,
   status: TagStateSchema.optional(),
+  /** With `status=spare`: only the spares this pass's policy takes, assigned as `binding` (default `pass`). */
+  passId: IdSchema.optional(),
+  binding: TagScopeSchema.optional(),
   q: z.string().trim().max(80).optional(),
   cursor: z.string().max(200).optional(),
   limit: z.coerce.number().int().min(1).max(100).optional(),

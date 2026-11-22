@@ -1905,6 +1905,18 @@
     "resource": "platform.status",
     "method": "listWorkflowRuns"
   },
+  "status.getStatusIncidents": {
+    "resource": "platform.status",
+    "method": "listIncidents"
+  },
+  "status.postStatusIncidents": {
+    "resource": "platform.status",
+    "method": "openIncident"
+  },
+  "status.postStatusIncidentsByIdResolve": {
+    "resource": "platform.status",
+    "method": "resolveIncident"
+  },
   "templates.deleteTemplatesById": {
     "resource": "templates",
     "method": "delete"
