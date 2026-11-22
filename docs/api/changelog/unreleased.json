@@ -760,6 +760,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "POST /api/v1/api-keys roles: scanning:admin no longer in a role",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "roles: scanning:admin no longer in a role",
+    "note": "Role presets no longer include scanning:admin, so an org_admin role token mints in test mode. Name scanning:admin in scopes (live, one org, expiry required)."
+  },
+  {
     "key": "POST /api/v1/identities 201.handle: field added",
     "class": "additive",
     "operationId": "identities.postIdentities",

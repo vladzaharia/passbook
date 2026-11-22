@@ -43,7 +43,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
 | `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
 | `api-keys:write` | child keys of the calling key: mint, list, read, rotate, retire, revoke; rotate itself. A service key only (see Child keys) |
-| `scanning:admin` | `POST /scanning-sessions/setup` with staff and paired devices: PINs and pairing codes come back once. Org-bound, live keys only, rate limited. Only `org_admin` can mint it |
+| `scanning:admin` | `POST /scanning-sessions/setup` with staff and paired devices: PINs and pairing codes come back once. Org-bound, live keys only, rate limited. Only `org_admin` can mint it, and only by naming it in `scopes`: no role includes it |
 | `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |
 | `scan-setup:read` | `GET /scan-setups` and `GET /scan-setups/{id}`: read the org's managed scanner and screen setups. Needs `scanning:read` to delegate. Reaches nothing else; another org's setup is a 404 |
 
@@ -70,7 +70,7 @@ Rollout: a key made before 1 December 2026 that is sent from a browser still wor
 
 **Roles.** `roles` holds role presets: `org_admin`, `integration_admin`, `template_author`, `template_reviewer`,
 `template_publisher`, `pass_operator`, `read_only`. The role's scopes are copied into the key's `scopes` when it is made and the role stays as a label: a bundle that gains a scope later never reaches an existing key. A creator can give a role only if every scope in it is within their own roles
-(`403 API_KEY_SCOPE_EXCEEDS_CREATOR`). The terminal scope `scans:write` is never in a role.
+(`403 API_KEY_SCOPE_EXCEEDS_CREATOR`). The terminal scope `scans:write` and the credential scope `scanning:admin` are never in a role: name `scanning:admin` in `scopes`.
 
 **Expiry and retirement.** `expiresAt` is fixed when the key is made. `POST /api-keys/{id}/retire` with
 `{"orgId": ..., "retireAt": <ms>}` ends the key at that instant, once, never after `expiresAt`

@@ -67,12 +67,17 @@ export function scopeExercises(scope: ApiScope, capability: OrgCapability): bool
   return scopeCapability[scope] === capability || ALSO_READS[scope] === capability;
 }
 
+/** Scopes that mint or reset device credentials. A key holds one only when it is named in `scopes`, never through a role. */
+export const CREDENTIAL_SCOPES: readonly ApiScope[] = ['scanning:admin'];
+
 /**
  * Org scopes a role stands for: those a route accepts (`MINTABLE_SCOPES`), so a role token never holds a scope
- * nobody reviewed, and never `scans:write`, a terminal's scope (bound to its terminals).
+ * nobody reviewed, and never `scans:write`, a terminal's scope (bound to its terminals), never a credential scope.
  */
 const presetScope = (scope: TenantScope) =>
-  !NOT_TENANT_AUTHORITY.includes(scope) && (MINTABLE_SCOPES as readonly string[]).includes(scope);
+  !NOT_TENANT_AUTHORITY.includes(scope) &&
+  !CREDENTIAL_SCOPES.includes(scope) &&
+  (MINTABLE_SCOPES as readonly string[]).includes(scope);
 
 /**
  * The seven role presets as scope bundles: a role holds each org scope whose capability the role's
