@@ -1,81 +1,113 @@
 import { Link } from '@tanstack/react-router';
 import { ChevronRight, Link2, Plus, Upload, X } from 'lucide-react';
-import { type ReactNode, useCallback, useState } from 'react';
+import { type CSSProperties, type ReactNode, useCallback, useEffect, useId, useState } from 'react';
 import type { MetricsOverview } from '@/shared/contracts/metrics.ts';
 import { cn } from '@/web/lib/cn.ts';
-import { useChangeCount } from '@/web/lib/motion.ts';
-import { Buddy, Button, IconButton, Skeleton, Tick } from '@/web/ui/index.ts';
+import { Buddy, Button, Celebrate, IconButton, Skeleton, Tick } from '@/web/ui/index.ts';
 import { useTemplate, useTemplates } from '../templates/api.ts';
 import { nextAction } from '../templates/releases/next-action.ts';
-import { currentStep, PATH_STEPS, type PathStep, stepDone } from './first-pass-state.ts';
+import { currentStep, PATH_STEPS, progress, stepDone } from './first-pass-state.ts';
 import { FirstPassTiles } from './first-pass-tiles.tsx';
 import './first-pass.css';
 
-const KEY = 'wallet-first-pass-next-dismissed';
+const dismissKey = (orgId: string) => `wallet-first-pass-next-dismissed:${orgId}`;
+const seenKey = (orgId: string) => `wallet-first-pass-seen:${orgId}`;
 
-function readDismissed(): boolean {
+function read(key: string): string | null {
   try {
-    return localStorage.getItem(KEY) === '1';
+    return localStorage.getItem(key);
   } catch {
-    // Storage blocked: the Next row shows until the page is left.
-    return false;
+    // Storage blocked: nothing remembered, so nothing replays and the row shows until the page is left.
+    return null;
+  }
+}
+function write(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // See read; the page still works.
   }
 }
 
-/** Per viewer: once closed, this browser shows the charts alone. */
-export function useNextRowDismissed(): [boolean, () => void] {
-  const [dismissed, setDismissed] = useState(readDismissed);
+/** Per viewer and organization: once closed, this browser shows that organization's charts alone. */
+export function useNextRowDismissed(orgId: string | undefined): [boolean, () => void] {
+  const key = orgId ? dismissKey(orgId) : undefined;
+  const [dismissed, setDismissed] = useState(() => (key ? read(key) === '1' : false));
   const dismiss = useCallback(() => {
     setDismissed(true);
-    try {
-      localStorage.setItem(KEY, '1');
-    } catch {
-      // See readDismissed; it stays closed for this page.
-    }
-  }, []);
+    if (key) write(key, '1');
+  }, [key]);
   return [dismissed, dismiss];
 }
 
-function Mark({ index, state }: { index: number; state: 'done' | 'now' | 'later' }) {
-  const changed = useChangeCount(state === 'done');
+/**
+ * Steps finish on other pages, so the change is found on return: the progress last seen here is
+ * kept per organization. Returns it when the path has moved since (and the page has to show it),
+ * else null; the row's first appearance returns 3 of 3 the same way.
+ */
+function useSeenProgress(orgId: string, now: number): number | null {
+  const [from] = useState(() => {
+    const seen = Number(read(seenKey(orgId)));
+    return read(seenKey(orgId)) !== null && now > seen ? seen : null;
+  });
+  useEffect(() => write(seenKey(orgId), String(now)), [orgId, now]);
+  return from;
+}
+
+function Mark({
+  index,
+  state,
+  fresh,
+}: {
+  index: number;
+  state: 'done' | 'now' | 'later';
+  fresh: boolean;
+}) {
   return (
     <span
       aria-hidden
       className={cn(
-        'fp-mark inline-flex size-9 items-center justify-center rounded-full border text-sm font-semibold tabular-nums',
+        'fp-mark relative inline-flex size-9 items-center justify-center rounded-full border text-sm font-semibold tabular-nums',
         state === 'done' && 'border-accent bg-accent text-accent-on',
+        state === 'done' && fresh && 'wl-step-done',
         state === 'now' && 'border-accent bg-accent-subtle text-fg-strong',
         state === 'later' && 'border-border-strong bg-surface-raised text-fg-muted',
       )}
     >
-      {state === 'done' ? <Tick key={changed} draw={changed > 0} className="size-4" /> : index + 1}
+      {state === 'done' ? <Tick draw={fresh} className="size-4" /> : index + 1}
     </span>
   );
 }
 
 /** Three steps on one line: done ones check, the current one is ringed, later ones wait. */
-function Track({ setup }: { setup: MetricsOverview['setup'] }) {
+function Track({ setup, from }: { setup: MetricsOverview['setup']; from: number | null }) {
   const at = currentStep(setup);
   return (
     <ol className="fp-track m-0 grid list-none grid-cols-3 p-0">
       {PATH_STEPS.map((s, i) => {
-        const state = stepDone(setup, s.id) ? 'done' : s.id === at ? 'now' : 'later';
+        const done = stepDone(setup, s.id);
+        const state = done ? 'done' : s.id === at ? 'now' : 'later';
+        // A step finished since the last visit draws itself, and its connector grows after it.
+        const fresh = done && from !== null && i >= from;
         return (
           <li
             key={s.id}
             data-state={state}
             aria-current={state === 'now' ? 'step' : undefined}
-            className="fp-step flex flex-col items-center gap-2 text-center"
+            className="fp-step relative flex flex-col items-center gap-2 text-center"
           >
-            <Mark index={i} state={state} />
+            {i > 0 && stepDone(setup, PATH_STEPS[i - 1]?.id ?? 'blueprint') ? (
+              <span aria-hidden className="fp-seg" data-fresh={fresh || undefined} />
+            ) : null}
+            <Mark index={i} state={state} fresh={fresh} />
             <span
               className={cn(
-                'text-sm font-medium',
+                'relative text-sm font-medium',
                 state === 'later' ? 'text-fg-muted' : 'text-fg-strong',
               )}
             >
               {s.label}
-              {state === 'done' ? <span className="sr-only"> (done)</span> : null}
+              {done ? <span className="sr-only"> (done)</span> : null}
             </span>
           </li>
         );
@@ -109,19 +141,31 @@ function TemplateStep({ orgId }: { orgId: string }) {
   const action = nextAction(detail.data?.release?.next, draft);
   return (
     <Button asChild iconEnd={<ChevronRight aria-hidden />}>
-      <Link to="/admin/o/$orgId/templates/$templateId" params={{ orgId, templateId: own.id }}>
+      <Link
+        to="/admin/o/$orgId/templates/$templateId"
+        params={{ orgId, templateId: own.id }}
+        search={action.kind === 'try' ? { try: '1' } : {}}
+      >
         {action.kind === 'pass' || action.kind === 'wait' ? 'Open template' : action.label}
       </Link>
     </Button>
   );
 }
 
-/** The seated buddy on a card edge. One per screen; decorative. */
-function Seat({ children, label }: { children: ReactNode; label: string }) {
+/** The seated buddy on a card edge. One per screen; decorative. It cheers when the path moved. */
+function Seat({
+  children,
+  labelledBy,
+  cheer,
+}: {
+  children: ReactNode;
+  labelledBy: string;
+  cheer: boolean;
+}) {
   return (
-    <section aria-label={label} className="fp-card relative mt-[4.5rem]">
+    <section aria-labelledby={labelledBy} className="fp-card relative mt-[4.5rem]">
       <div aria-hidden>
-        <Buddy mood="happy" />
+        <Buddy mood="happy" {...(cheer ? { scene: 'cheer' as const, immediate: true } : {})} />
       </div>
       {children}
     </section>
@@ -136,12 +180,16 @@ export function FirstPassCard({
   orgId: string;
   setup: MetricsOverview['setup'];
 }) {
-  const at: PathStep | null = currentStep(setup);
+  const at = currentStep(setup);
+  const from = useSeenProgress(orgId, progress(setup));
+  const title = useId();
   return (
-    <Seat label="First pass">
+    <Seat labelledBy={title} cheer={from !== null}>
       <div className="flex flex-col gap-6 px-4 pt-10 pb-6 sm:px-8">
-        <h2 className="text-center text-lg font-semibold text-fg-strong">First pass</h2>
-        <Track setup={setup} />
+        <h2 id={title} className="text-center text-lg font-semibold text-fg-strong">
+          First pass
+        </h2>
+        <Track setup={setup} from={from} />
         {at === 'blueprint' ? (
           <>
             <FirstPassTiles orgId={orgId} />
@@ -175,13 +223,16 @@ function NextTile({ icon, children }: { icon: ReactNode; children: ReactNode }) 
   );
 }
 
-/** Once the path is done: the three next things, in a card the viewer can close. */
+/** Once the path is done: the payoff, the three next things, in a card the viewer can close. */
 export function NextRow({ orgId, onDismiss }: { orgId: string; onDismiss: () => void }) {
   const { own } = useOwnTemplate(orgId, true);
+  // Arriving here from an unfinished path is the moment: the buddy cheers, sparks fly once.
+  const from = useSeenProgress(orgId, 3);
+  const title = useId();
   const tile =
     'fp-next block rounded-lg border border-border bg-surface-raised p-3 wl-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus';
   return (
-    <Seat label="Next">
+    <Seat labelledBy={title} cheer={from !== null}>
       <div className="relative px-4 pt-10 pb-6 sm:px-8">
         <IconButton
           label="Close"
@@ -190,14 +241,36 @@ export function NextRow({ orgId, onDismiss }: { orgId: string; onDismiss: () => 
           className="absolute top-3 right-3"
           onClick={onDismiss}
         />
-        <h2 className="mb-5 text-center text-lg font-semibold text-fg-strong">
+        <h2
+          id={title}
+          className="relative mx-auto mb-3 w-fit text-center text-lg font-semibold text-fg-strong"
+        >
           First pass is live
+          <Celebrate when={from !== null} radius={90} />
         </h2>
-        <div className="grid gap-3 md:grid-cols-3">
-          <Link to="/admin/o/$orgId/passes/new" params={{ orgId }} className={tile}>
+        <ul className="m-0 mb-5 flex list-none flex-wrap justify-center gap-x-5 gap-y-1 p-0 text-sm text-fg-muted">
+          {PATH_STEPS.map((step) => (
+            <li key={step.id} className="flex items-center gap-1.5">
+              <Tick className="size-4 text-accent-fg" />
+              {step.done}
+            </li>
+          ))}
+        </ul>
+        <div className="wl-deal grid gap-3 md:grid-cols-3">
+          <Link
+            to="/admin/o/$orgId/passes/new"
+            params={{ orgId }}
+            className={tile}
+            style={{ '--i': 0 } as CSSProperties}
+          >
             <NextTile icon={<Plus className="size-4" />}>New pass</NextTile>
           </Link>
-          <Link to="/admin/o/$orgId/passes/import" params={{ orgId }} className={tile}>
+          <Link
+            to="/admin/o/$orgId/passes/import"
+            params={{ orgId }}
+            className={tile}
+            style={{ '--i': 1 } as CSSProperties}
+          >
             <NextTile icon={<Upload className="size-4" />}>Import</NextTile>
           </Link>
           {own ? (
@@ -205,6 +278,7 @@ export function NextRow({ orgId, onDismiss }: { orgId: string; onDismiss: () => 
               to="/admin/o/$orgId/templates/$templateId"
               params={{ orgId, templateId: own.id }}
               className={tile}
+              style={{ '--i': 2 } as CSSProperties}
             >
               <NextTile icon={<Link2 className="size-4" />}>Join link</NextTile>
             </Link>

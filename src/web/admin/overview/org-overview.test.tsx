@@ -9,8 +9,9 @@ import { resetShownCounts } from './count.ts';
 import { audit, memoryStorage, orgActivity, overview } from './overview-fixtures.ts';
 
 const READER: OrgCapability[] = ['org:read', 'passes:read'];
-const member = (capabilities: OrgCapability[] = [...READER, 'audit:read', 'passes:operate']) =>
-  membershipFixture('o1', { orgName: 'Northwind', capabilities });
+const member = (
+  capabilities: OrgCapability[] = [...READER, 'audit:read', 'passes:operate', 'templates:author'],
+) => membershipFixture('o1', { orgName: 'Northwind', capabilities });
 
 const emptySetup = {
   orgs: 1,
@@ -226,7 +227,7 @@ describe('organization overview', () => {
       selectedOrg: 'o1',
       handlers: handlers(orgActivity(), doneSetup),
     });
-    const next = await screen.findByRole('region', { name: 'Next' });
+    const next = await screen.findByRole('region', { name: 'First pass is live' });
     expect(within(next).getByRole('link', { name: 'New pass' })).toHaveAttribute(
       'href',
       '/admin/o/o1/passes/new',
@@ -234,7 +235,7 @@ describe('organization overview', () => {
     expect(within(next).getByRole('link', { name: 'Import' })).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'First pass' })).toBeNull();
     await user.click(within(next).getByRole('button', { name: 'Close' }));
-    expect(screen.queryByRole('region', { name: 'Next' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'First pass is live' })).toBeNull();
   });
 
   it('shows the Next row in a mode with no passes once the first pass is released', async () => {
@@ -244,7 +245,37 @@ describe('organization overview', () => {
       selectedOrg: 'o1',
       handlers: handlers(orgActivity({ templates: [] }), doneSetup),
     });
-    expect(await screen.findByRole('region', { name: 'Next' })).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'First pass is live' })).toBeInTheDocument();
+  });
+
+  it('shows the path only to a member who can author templates', async () => {
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [member([...READER, 'passes:operate'])],
+      selectedOrg: 'o1',
+      handlers: handlers(orgActivity({ templates: [] })),
+    });
+    expect(await screen.findByText('No passes yet')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'First pass' })).toBeNull();
+  });
+
+  it('keeps the Next row closed per organization', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [member()],
+      selectedOrg: 'o1',
+      handlers: handlers(orgActivity(), doneSetup),
+    });
+    await user.click(
+      within(await screen.findByRole('region', { name: 'First pass is live' })).getByRole(
+        'button',
+        {
+          name: 'Close',
+        },
+      ),
+    );
+    expect(localStorage.getItem('wallet-first-pass-next-dismissed:o1')).toBe('1');
   });
 
   it('shows no first-pass path in a developer sandbox', async () => {

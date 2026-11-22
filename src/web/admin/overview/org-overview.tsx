@@ -124,7 +124,7 @@ export function OrgOverviewPage({
   const busy = useDelayed(activity.isPlaceholderData && activity.isFetching, 150);
   const empty = data !== undefined && data.templates.length === 0;
   const sandbox = membership?.testOnly === true;
-  const [dismissed, dismiss] = useNextRowDismissed();
+  const [dismissed, dismiss] = useNextRowDismissed(orgId);
   const setup = useOrgSetup(orgId, principal, !dismissed && !sandbox);
   const shownRange = activity.isPlaceholderData ? (data?.range ?? range) : range;
   const countScope = JSON.stringify(['org', principal ?? null, orgId ?? null, mode]);
@@ -132,7 +132,9 @@ export function OrgOverviewPage({
   // A sandbox is set up by the quickstart and never holds a wallet pass: nothing to walk through.
   const step = setup.data && !sandbox ? currentStep(setup.data.setup) : undefined;
   const path =
-    orgId && setup.data && step ? <FirstPassCard orgId={orgId} setup={setup.data.setup} /> : null;
+    orgId && caps.includes('templates:author') && setup.data && step ? (
+      <FirstPassCard orgId={orgId} setup={setup.data.setup} />
+    ) : null;
   const next =
     orgId && canOperate && step === null && !dismissed ? (
       <NextRow orgId={orgId} onDismiss={dismiss} />

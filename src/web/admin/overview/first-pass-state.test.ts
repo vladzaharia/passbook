@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { currentStep, stepDone } from './first-pass-state.ts';
+import { currentStep, progress, stepDone } from './first-pass-state.ts';
 
 const setup = (over: Record<string, number> = {}) => ({
   orgs: 1,
@@ -20,17 +20,24 @@ it.each([
   [{ assignedTemplates: 1, passes: 1, approvedTemplates: 1 }, 'try'],
   [{ assignedTemplates: 1, walletPasses: 1 }, 'release'],
   [{ assignedTemplates: 1, walletPasses: 1, releasedTemplates: 1 }, null],
+  [{ assignedTemplates: 1, releasedTemplates: 1 }, null],
 ])('puts %j on step %s', (counts, step) => {
   expect(currentStep(setup(counts))).toBe(step);
 });
 
-it('checks the steps before the current one, and all of them when done', () => {
-  const s = setup({ assignedTemplates: 1 });
-  expect(['blueprint', 'try', 'release'].map((id) => stepDone(s, id as never))).toEqual([
+it('checks each step by its own count', () => {
+  const ids = ['blueprint', 'try', 'release'] as const;
+  expect(ids.map((id) => stepDone(setup({ assignedTemplates: 1 }), id))).toEqual([
     true,
     false,
     false,
   ]);
-  const all = setup({ assignedTemplates: 1, walletPasses: 1, releasedTemplates: 1 });
-  expect(stepDone(all, 'release')).toBe(true);
+  expect(
+    ids.map((id) => stepDone(setup({ assignedTemplates: 1, releasedTemplates: 1 }), id)),
+  ).toEqual([true, false, true]);
+});
+
+it('counts progress', () => {
+  expect(progress(setup())).toBe(0);
+  expect(progress(setup({ assignedTemplates: 1, walletPasses: 1 }))).toBe(2);
 });

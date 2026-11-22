@@ -22,9 +22,6 @@
   height: 1px;
   background: var(--pk-border-strong);
 }
-.fp-step > * {
-  position: relative;
-}
 .fp-next-icon {
   background: var(--pk-accent-subtle);
   color: var(--pk-accent);
@@ -49,5 +46,28 @@
   }
   .fp-link:hover .fp-still {
     transform: none;
+  }
+}
+/* A done step's connector: the line from the step before. It grows once when the step finished since the last visit. */
+.fp-seg {
+  position: absolute;
+  top: 1.125rem;
+  right: 50%;
+  width: 100%;
+  height: 1px;
+  background: var(--pk-accent);
+  transform-origin: left center;
+}
+.fp-seg[data-fresh] {
+  animation: fp-grow var(--wl-dur-card) var(--wl-ease-spring) 120ms backwards;
+}
+@keyframes fp-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fp-seg[data-fresh] {
+    animation: none;
   }
 }

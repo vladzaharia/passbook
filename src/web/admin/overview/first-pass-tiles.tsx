@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { type CSSProperties, useMemo } from 'react';
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { Skeleton } from '@/web/ui/index.ts';
@@ -22,12 +22,22 @@ function Tile({
   blueprint,
   orgId,
   index,
+  onReady,
 }: {
   blueprint: TemplateSummaryDto;
   orgId: string;
   index: number;
+  onReady: () => void;
 }) {
   const preview = useBlueprintPreview(blueprint.id);
+  const told = useRef(false);
+  const here = preview.data !== undefined || preview.isError;
+  useEffect(() => {
+    if (here && !told.current) {
+      told.current = true;
+      onReady();
+    }
+  }, [here, onReady]);
   return (
     <li style={{ '--i': index } as CSSProperties} className="fp-tile">
       <Link
@@ -74,10 +84,32 @@ export function FirstPassTiles({ orgId }: { orgId: string }) {
         ))}
       </div>
     );
+  return <Deal tiles={tiles} orgId={orgId} />;
+}
+
+/** The tiles hold their place unseen until their art is in (or 600 ms), then deal in together. */
+function Deal({ tiles, orgId }: { tiles: TemplateSummaryDto[]; orgId: string }) {
+  const [count, setCount] = useState(0);
+  const [late, setLate] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setLate(true), 600);
+    return () => clearTimeout(t);
+  }, []);
+  const [ready, setReady] = useState(false);
+  const go = ready || late || count >= tiles.length;
+  useEffect(() => {
+    if (go) setReady(true);
+  }, [go]);
+  const onReady = useRef(() => setCount((n) => n + 1)).current;
   return (
-    <ul className="wl-deal m-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 xl:grid-cols-6">
+    <ul
+      className={cn(
+        'm-0 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 xl:grid-cols-6',
+        ready ? 'wl-deal' : 'invisible',
+      )}
+    >
       {tiles.map((b, i) => (
-        <Tile key={b.id} blueprint={b} orgId={orgId} index={i} />
+        <Tile key={b.id} blueprint={b} orgId={orgId} index={i} onReady={onReady} />
       ))}
     </ul>
   );
