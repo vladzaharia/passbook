@@ -6,8 +6,8 @@ import {
   ScanTagInspectRequestSchema,
   ScanTagInspectResponseSchema,
 } from '../../../shared/contracts/nfc-tags.ts';
-import type { AppBindings } from '../../platform/context.ts';
 import { atLeast } from '../../platform/api-version.ts';
+import type { AppBindings } from '../../platform/context.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
