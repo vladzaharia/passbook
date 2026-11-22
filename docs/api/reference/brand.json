@@ -1,0 +1,14 @@
+{
+  "brand.getBrand": {
+    "description": "The organization's brand kit: accent colour, mark level and web logo."
+  },
+  "brand.patchBrand": {
+    "description": "Sets the accent colour and the mark level. Send only the fields to change."
+  },
+  "brand.putBrandWebLogo": {
+    "description": "Uploads the web logo as a PNG body, at most 1024 by 512 px and 512 KB. It replaces the current logo."
+  },
+  "brand.deleteBrandWebLogo": {
+    "description": "Removes the web logo. The brand kit keeps its other settings."
+  }
+}
