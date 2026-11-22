@@ -2,6 +2,7 @@ import { AppError } from './errors.ts';
 
 export type AuthorityMisuse =
   | 'GRANT_NOT_JOB'
+  | 'GRANT_PURPOSE_NOT_ALLOWED'
   | 'GRANT_BAD_PURPOSE'
   | 'GRANT_BAD_PRINCIPAL'
   | 'GRANT_FOREIGN_STATEMENT'

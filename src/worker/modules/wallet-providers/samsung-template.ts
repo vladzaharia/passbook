@@ -11,8 +11,9 @@ const MAX_RESPONSE_BYTES = 64 * 1024;
 
 interface SamsungTemplateProbeInput {
   cardType: string;
-  subType: string;
-  countryCode: string;
+  /** Compared only when given: a compiled card has no pinned sub type or market. */
+  subType?: string;
+  countryCode?: string;
   mode: 'live' | 'test';
   now: number;
   /** Trace id from the caller's `ctx.ids`, up to 32 characters. */
@@ -27,8 +28,8 @@ interface SamsungTemplateProbeInput {
 interface SamsungTemplateEvidence {
   cardId: string;
   cardType: string;
-  subType: string;
-  countryCode: string;
+  subType: string | undefined;
+  countryCode: string | undefined;
   state: string;
   testingModeOff: 'Y' | 'N';
   verifiedAt: number;
@@ -145,10 +146,10 @@ export async function probeSamsungActiveTemplate(
     !input ||
     typeof input.cardType !== 'string' ||
     !/^[a-z]{1,16}$/.test(input.cardType) ||
-    typeof input.subType !== 'string' ||
-    !/^[a-z]{1,16}$/.test(input.subType) ||
-    typeof input.countryCode !== 'string' ||
-    !/^[A-Z]{2}$/.test(input.countryCode) ||
+    (input.subType !== undefined &&
+      (typeof input.subType !== 'string' || !/^[a-z]{1,16}$/.test(input.subType))) ||
+    (input.countryCode !== undefined &&
+      (typeof input.countryCode !== 'string' || !/^[A-Z]{2}$/.test(input.countryCode))) ||
     (input.mode !== 'live' && input.mode !== 'test') ||
     typeof input.requestId !== 'string' ||
     !/^[A-Za-z0-9_-]{1,32}$/.test(input.requestId)
@@ -192,8 +193,8 @@ export async function probeSamsungActiveTemplate(
   if (
     template.cardId !== account.cardId ||
     template.cardType !== input.cardType ||
-    template.subType !== input.subType ||
-    template.countryCode !== input.countryCode ||
+    (input.subType !== undefined && template.subType !== input.subType) ||
+    (input.countryCode !== undefined && template.countryCode !== input.countryCode) ||
     !(launched || (input.mode === 'test' && sandboxCard))
   )
     throw new SamsungTemplateError('not_eligible');

@@ -13,6 +13,7 @@ import { dirname, join, relative, sep } from 'node:path';
 import type { BehaviorRegistry } from '../../src/passkit/behaviors/registry.ts';
 import type { BakedTemplate } from '../../src/worker/modules/templates/baked-types.ts';
 import { analyzePackage } from '../../src/worker/modules/templates/package/analyze.ts';
+import { syncTree } from './sync-tree.ts';
 
 export interface BakedOptions {
   /** Directory holding one folder per template. Folders starting with `_` are skipped. */
@@ -50,9 +51,25 @@ export async function collectBaked(options: BakedOptions): Promise<BakedTemplate
   const log = options.log ?? (() => {});
   const out: BakedTemplate[] = [];
   const failures: string[] = [];
-  const staticRoot = join(options.publicDir, 'templates');
+  const finalRoot = join(options.publicDir, 'templates');
+  const staticRoot = join(options.publicDir, `.templates-next-${process.pid}`);
   rmSync(staticRoot, { recursive: true, force: true });
+  try {
+    return await collectInto(options, staticRoot, log, out, failures, finalRoot);
+  } catch (error) {
+    rmSync(staticRoot, { recursive: true, force: true });
+    throw error;
+  }
+}
 
+async function collectInto(
+  options: BakedOptions,
+  staticRoot: string,
+  log: (line: string) => void,
+  out: BakedTemplate[],
+  failures: string[],
+  finalRoot: string,
+): Promise<BakedTemplate[]> {
   for (const slug of packageDirs(options.templatesDir)) {
     const dir = join(options.templatesDir, slug);
     const input = new Map<string, Uint8Array>();
@@ -112,6 +129,7 @@ export async function collectBaked(options: BakedOptions): Promise<BakedTemplate
   }
   if (failures.length) throw new Error(`Template packages are invalid:\n${failures.join('\n')}`);
   if (out.length > 0) writeFileSync(join(staticRoot, '.gitignore'), '*\n');
+  syncTree(staticRoot, finalRoot);
   return out;
 }
 

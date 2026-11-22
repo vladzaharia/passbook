@@ -18,7 +18,9 @@ export function samsungProjectionEvidencePredicateSql(
 ): string {
   if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(candidateAlias)) throw new Error('Invalid candidate alias.');
   const c = candidateAlias;
-  return `EXISTS (WITH samsung_evidence_clock(now_ms) AS (VALUES (${nowSql}))
+  // A compiled (schema 2) card carries no stored evidence: the runtimes probe it live.
+  return `((${c}.provider = 'samsung' AND json_valid(${c}.projection_json)
+    AND json_extract(${c}.projection_json, '$.schema') = 2) OR EXISTS (WITH samsung_evidence_clock(now_ms) AS (VALUES (${nowSql}))
     SELECT 1 FROM wallet_provider_projection_evidence ev CROSS JOIN samsung_evidence_clock
     WHERE (${c}.provider = 'samsung' AND ev.candidate_id = ${c}.id
       AND ev.org_id = ${c}.org_id AND ev.mode = ${c}.mode
@@ -45,7 +47,7 @@ export function samsungProjectionEvidencePredicateSql(
           AND (eh.candidate_hash = ev.candidate_hash AND eh.card_type = ev.card_type
             AND eh.card_sub_type = ev.card_sub_type AND eh.country_code = ev.country_code)
           AND (eh.testing_mode_off = ev.testing_mode_off AND eh.verified_at = ev.verified_at
-            AND eh.expires_at = ev.expires_at)))`;
+            AND eh.expires_at = ev.expires_at))))`;
 }
 
 /**

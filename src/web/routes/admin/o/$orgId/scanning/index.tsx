@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { lazy, Suspense } from 'react';
+import { SkeletonDetail } from '../../../../../ui/index.ts';
 
 const ScanningPage = lazy(() =>
   import('../../../../../admin/scanning/scanning-page.tsx').then((m) => ({
@@ -11,7 +12,7 @@ import { scanningSearchSchema } from '../../../../../admin/scanning/search.ts';
 
 function ScanningRoute() {
   return (
-    <Suspense fallback={<p role="status">Loading scanning…</p>}>
+    <Suspense fallback={<SkeletonDetail label="Loading scanning" />}>
       <ScanningPage search={Route.useSearch()} />
     </Suspense>
   );

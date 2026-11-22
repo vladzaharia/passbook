@@ -7,10 +7,17 @@ const OrgSettingsListSchema = SettingsListSchema.omit({ oidc: true });
 
 export const settingsKey = (scope: string) => ['settings', scope] as const;
 
-export function useSettings(scope: 'platform'): UseQueryResult<z.infer<typeof SettingsListSchema>>;
-export function useSettings(scope: string): UseQueryResult<z.infer<typeof OrgSettingsListSchema>>;
-export function useSettings(scope: string) {
+export function useSettings(
+  scope: 'platform',
+  enabled?: boolean,
+): UseQueryResult<z.infer<typeof SettingsListSchema>>;
+export function useSettings(
+  scope: string,
+  enabled?: boolean,
+): UseQueryResult<z.infer<typeof OrgSettingsListSchema>>;
+export function useSettings(scope: string, enabled = true) {
   return useQuery({
+    enabled,
     queryKey: settingsKey(scope),
     queryFn: ({ signal }) =>
       api.get(

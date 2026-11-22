@@ -23,6 +23,7 @@ const TABLES: Record<WalletQueuePurpose, readonly string[]> = {
     'wallet_provider_instance_operations',
     'wallet_provider_instance_outcomes',
     'wallet_provider_sync_targets',
+    'wallet_google_revocation_confirmations',
   ],
   reconcile: ['wallet_provider_instances', 'wallet_provider_instance_operations'],
   retire: ['wallet_provider_instances', 'wallet_provider_instance_operations'],
@@ -46,7 +47,7 @@ export function walletQueueGrant(
   const always = ALWAYS.includes(purpose);
   return jobGrant(ctx, {
     purpose: `org_mode.job.wallet.${purpose}`,
-    job: 'wallet-sync',
+    job: ctx.jobName ?? 'wallet-sync',
     orgId: scope.orgId,
     mode: scope.mode,
     ...(always ? { inactiveOk: true as const, closedOk: true as const } : {}),

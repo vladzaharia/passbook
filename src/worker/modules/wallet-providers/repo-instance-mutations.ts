@@ -116,7 +116,7 @@ export async function insertInstance(
         (id, pass_id, org_id, mode, provider, account_id, identity_projection_release_id,
          credential_generation, channel_epoch, credential_keyset_commitment, desired_version, desired_operation_id, created_at, updated_at, card_type)
       SELECT i.id, i.pass_id, i.org_id, i.mode, i.provider, i.account_id, i.identity_projection_release_id,
-        i.credential_generation, i.channel_epoch, i.credential_keyset_commitment, 1, i.desired_operation_id, ?, ?, (SELECT json_extract(c.projection_json, '$.cardType') FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = i.identity_projection_release_id) FROM i, op
+        i.credential_generation, i.channel_epoch, i.credential_keyset_commitment, 1, i.desired_operation_id, ?, ?, (SELECT CASE WHEN c.provider = 'samsung' THEN COALESCE(json_extract(c.projection_json, '$.cardType'), json_extract(c.projection_json, '$.type')) END FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = i.identity_projection_release_id) FROM i, op
       WHERE ${walletInstanceOperationCurrentSql('i', 'op', '?')}
         AND ${slotFreeSql}
         ${channelEpoch === 1 ? '' : successorGuardSql}
@@ -154,7 +154,7 @@ export async function insertInstance(
       db,
       `UPDATE wallet_provider_instances AS target SET lifecycle = 'active', account_id = ?,
         identity_projection_release_id = ?, desired_version = 1, desired_operation_id = ?, updated_at = ?,
-        card_type = (SELECT json_extract(c.projection_json, '$.cardType') FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = ?)
+        card_type = (SELECT CASE WHEN c.provider = 'samsung' THEN COALESCE(json_extract(c.projection_json, '$.cardType'), json_extract(c.projection_json, '$.type')) END FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id WHERE r.id = ?)
       WHERE target.id = ? AND target.lifecycle = 'ready' AND target.credential_keyset_commitment = ${pinnedKeysetSql}
         AND EXISTS (
         SELECT 1 FROM wallet_provider_instance_operations op WHERE op.id = ? AND op.instance_id = target.id

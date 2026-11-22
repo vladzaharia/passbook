@@ -34400,9 +34400,12 @@
           "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -35163,9 +35166,12 @@
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       },
@@ -45071,6 +45077,7 @@
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PLATFORM_CREDENTIAL_MISSING",
+          "WALLET_PREPARING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
@@ -45337,6 +45344,7 @@
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PLATFORM_CREDENTIAL_MISSING",
+          "WALLET_PREPARING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
@@ -45603,6 +45611,7 @@
           "WALLET_MODE_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PLATFORM_CREDENTIAL_MISSING",
+          "WALLET_PREPARING",
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
@@ -129807,7 +129816,11 @@
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
           "SAMSUNG_UNAUTHENTICATED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       },
@@ -129867,7 +129880,11 @@
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
           "SAMSUNG_UNAUTHENTICATED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -130358,10 +130375,18 @@
         "security": [],
         "x-public": true,
         "x-codes": [
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "LINK_NOT_FOUND",
           "NOT_FOUND",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -130412,7 +130437,11 @@
         "x-codes": [
           "NOT_FOUND",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -130582,8 +130611,11 @@
           "PASS_VERSION_MISSING",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -130815,8 +130847,11 @@
           "PASS_VERSION_MISSING",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -130942,8 +130977,11 @@
           "PASS_VERSION_MISSING",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -131128,11 +131166,19 @@
         "security": [],
         "x-public": true,
         "x-codes": [
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "LINK_NOT_FOUND",
           "NOT_FOUND",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -131342,8 +131388,11 @@
           "PASS_VERSION_MISSING",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }

@@ -53,6 +53,12 @@
   background: var(--pk-surface-raised);
   border: 1px solid var(--pk-border-subtle);
 }
+@media (pointer: coarse) {
+  .cl-filters label,
+  .cl-area {
+    min-height: 44px;
+  }
+}
 .cl-text {
   min-width: 0;
   overflow-wrap: anywhere;

@@ -29,10 +29,10 @@ export function WalletNotes({ previews }: { previews: WalletPreviews }) {
       <div className="card-b notes-grid">
         {out ? (
           (['google', 'samsung'] as const).map((t) => (
-            <section key={t} aria-label={`${t === 'google' ? 'Google' : 'Samsung'} Wallet`}>
-              <h4 className="strong sm">{t === 'google' ? 'Google Wallet' : 'Samsung Wallet'}</h4>
+            <div key={t}>
+              <h2 className="strong sm">{t === 'google' ? 'Google Wallet' : 'Samsung Wallet'}</h2>
               <FidelityNotes report={out[t].report} />
-            </section>
+            </div>
           ))
         ) : (
           <p className="muted sm">Reading…</p>

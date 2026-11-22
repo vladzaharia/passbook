@@ -396,13 +396,20 @@ describe('existing provider instance runtime', () => {
       channelEpoch: 1,
     });
     const calls: { url: string; method: string; body: unknown }[] = [];
+    // Google holds the object: a PUT replaces it, a GET reads it back.
+    let held: Record<string, unknown> = {
+      id: old.objectId,
+      classId: old.classId,
+      state: 'ACTIVE',
+      barcode: { type: 'QR_CODE', value: 'SECRET' },
+    };
     vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
       const target = String(url);
       const method = init?.method ?? 'GET';
       calls.push({
         url: target,
         method,
-        body: method === 'PATCH' ? JSON.parse(String(init?.body)) : null,
+        body: method === 'PUT' ? JSON.parse(String(init?.body)) : null,
       });
       if (target === 'https://oauth2.googleapis.com/token')
         return Response.json({
@@ -410,8 +417,8 @@ describe('existing provider instance runtime', () => {
           token_type: 'Bearer',
           expires_in: 3600,
         });
-      if (method === 'GET') return Response.json({ id: old.objectId, classId: old.classId });
-      return new Response('private provider response', { status: 200 });
+      if (method === 'PUT') held = JSON.parse(String(init?.body));
+      return Response.json(held);
     });
     const retirement: WalletRetirementClaim = {
       instanceId: f.instanceId,
@@ -451,8 +458,25 @@ describe('existing provider instance runtime', () => {
       }),
       expect.objectContaining({
         url: `https://walletobjects.googleapis.com/walletobjects/v1/genericObject/${old.objectId}`,
-        method: 'PATCH',
-        body: { state: 'INACTIVE' },
+        method: 'PUT',
+        // The barcode is gone and one message says why; the rest of the object is kept.
+        body: {
+          id: old.objectId,
+          classId: old.classId,
+          state: 'INACTIVE',
+          messages: [
+            {
+              id: f.operationId,
+              header: 'Pass status',
+              body: 'This pass is no longer valid.',
+              messageType: 'TEXT',
+            },
+          ],
+        },
+      }),
+      expect.objectContaining({
+        url: `https://walletobjects.googleapis.com/walletobjects/v1/genericObject/${old.objectId}`,
+        method: 'GET',
       }),
     ]);
     expect(JSON.stringify(f.responses)).not.toContain('private provider response');
@@ -460,7 +484,7 @@ describe('existing provider instance runtime', () => {
     await expect(inactivateGoogleRuntimeObject(f.kit.ctx, f.scope, input)).rejects.toMatchObject({
       code: 'account_unavailable',
     });
-    expect(calls).toHaveLength(3);
+    expect(calls).toHaveLength(4);
   }, 30_000);
 
   it('sends provider calls to the mock when both URLs are loopback, and only then', async () => {
@@ -480,6 +504,11 @@ describe('existing provider instance runtime', () => {
         channelEpoch: 1,
       });
       const urls: string[] = [];
+      let held: Record<string, unknown> = {
+        id: old.objectId,
+        classId: old.classId,
+        state: 'ACTIVE',
+      };
       vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
         urls.push(String(url));
         if (String(url).endsWith('/token'))
@@ -488,9 +517,8 @@ describe('existing provider instance runtime', () => {
             token_type: 'Bearer',
             expires_in: 3600,
           });
-        if ((init?.method ?? 'GET') === 'GET')
-          return Response.json({ id: old.objectId, classId: old.classId });
-        return new Response('{}', { status: 200 });
+        if (init?.method === 'PUT') held = JSON.parse(String(init.body));
+        return Response.json(held);
       });
       const ctx = {
         ...f.kit.ctx,
@@ -516,11 +544,10 @@ describe('existing provider instance runtime', () => {
       const object = `/walletobjects/v1/genericObject/${old.objectId}`;
       expect(urls).toEqual(
         origin === mockUrl
-          ? [`${mockUrl}/token`, `${mockUrl}${object}`, `${mockUrl}${object}`]
+          ? [`${mockUrl}/token`, ...[1, 2, 3].map(() => `${mockUrl}${object}`)]
           : [
               'https://oauth2.googleapis.com/token',
-              `https://walletobjects.googleapis.com${object}`,
-              `https://walletobjects.googleapis.com${object}`,
+              ...[1, 2, 3].map(() => `https://walletobjects.googleapis.com${object}`),
             ],
       );
       vi.unstubAllGlobals();
@@ -540,6 +567,7 @@ describe('existing provider instance runtime', () => {
     });
     let tokens = 0;
     let patchStatus = 200;
+    let held: Record<string, unknown> = { id: old.objectId, classId: old.classId, state: 'ACTIVE' };
     vi.stubGlobal('fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
       if (String(url) === 'https://oauth2.googleapis.com/token')
         return Response.json({
@@ -547,9 +575,11 @@ describe('existing provider instance runtime', () => {
           token_type: 'Bearer',
           expires_in: 3600,
         });
-      if ((init?.method ?? 'GET') === 'GET')
-        return Response.json({ id: old.objectId, classId: old.classId });
-      return new Response('{}', { status: patchStatus });
+      if (init?.method === 'PUT') {
+        if (patchStatus !== 200) return new Response('{}', { status: patchStatus });
+        held = JSON.parse(String(init.body));
+      }
+      return Response.json(held);
     });
     const input = {
       releaseId: f.releaseId,

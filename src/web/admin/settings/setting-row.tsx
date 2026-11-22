@@ -122,8 +122,11 @@ export function SettingRow({
   const description = helpText ?? field.help;
   // The browser's zone is offered, never saved on its own.
   const browserZone = field.kind === 'zone' && value === '' && !disabled ? localZone() : null;
+  // A hint and its source read as one line when nothing else sits beside the source.
+  const inlineMeta =
+    field.kind !== 'boolean' && Boolean(description && meta && !onReset && !browserZone);
   const details =
-    meta || onReset || browserZone ? (
+    !inlineMeta && (meta || onReset || browserZone) ? (
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-fg-muted">
         {meta}
         {browserZone ? (
@@ -178,6 +181,7 @@ export function SettingRow({
   const help = description ? (
     <p id={helpId} className="text-xs text-fg-muted">
       {description}
+      {inlineMeta ? <> {meta}</> : null}
     </p>
   ) : null;
   const control = (

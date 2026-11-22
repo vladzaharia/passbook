@@ -140,7 +140,7 @@ export function walletInstanceProofSql(
               AND original.credential_keyset_commitment = ${op}.credential_keyset_commitment
               AND candidate.credential_keyset_commitment = ${op}.credential_keyset_commitment
               AND approval.credential_keyset_commitment = ${op}.credential_keyset_commitment))
-            AND ((${i}.provider != 'samsung' OR EXISTS (
+            AND ((${i}.provider != 'samsung' OR json_extract(candidate.projection_json, '$.schema') = 2 OR EXISTS (
               SELECT 1 FROM wallet_provider_projection_evidence_history evidence
               WHERE ((evidence.candidate_id = candidate.id AND evidence.org_id = ${i}.org_id
                   AND evidence.mode = ${i}.mode AND evidence.account_id = ${i}.account_id)

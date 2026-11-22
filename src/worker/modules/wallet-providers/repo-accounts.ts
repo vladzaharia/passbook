@@ -253,7 +253,7 @@ export function findSamsungTombstoneCredential(
       e.credential_id, NULL AS revoked_at,
       e.created_at AS updated_at, c.kek_version, c.iv, c.wrapped_dek, c.ciphertext,
       t.provider_identity_hash, t.credential_version_id AS pin_version_id,
-      json_extract(candidate.projection_json, '$.cardType') AS card_type
+      COALESCE(json_extract(candidate.projection_json, '$.cardType'), json_extract(candidate.projection_json, '$.type')) AS card_type
     FROM wallet_samsung_tombstones t
     JOIN wallet_provider_accounts a ON a.id = t.account_id AND a.org_id = t.org_id
       AND a.mode = t.mode AND a.provider = 'samsung'
@@ -274,7 +274,7 @@ export function findSamsungTombstoneCredential(
       AND approval.credential_keyset_commitment = t.credential_keyset_commitment
     WHERE t.ref_hash = ? AND t.org_id = ? AND t.mode = ? AND t.account_id = ? AND t.account_revision = ?
       AND t.credential_keyset_commitment = ${pinnedKeysetSql}
-      AND EXISTS (SELECT 1 FROM wallet_provider_projection_evidence_history h
+      AND (json_extract(candidate.projection_json, '$.schema') = 2 OR EXISTS (SELECT 1 FROM wallet_provider_projection_evidence_history h
         WHERE h.candidate_id = candidate.id AND h.org_id = t.org_id AND h.mode = t.mode
           AND h.account_id = t.account_id AND h.account_revision = t.account_revision
           AND h.credential_keyset_commitment = t.credential_keyset_commitment
@@ -282,7 +282,7 @@ export function findSamsungTombstoneCredential(
           AND h.card_type = json_extract(candidate.projection_json, '$.cardType')
           AND h.card_sub_type = json_extract(candidate.projection_json, '$.cardSubType')
           AND h.country_code = json_extract(candidate.projection_json, '$.countryCode')
-          AND h.testing_mode_off = 'Y' AND h.verified_at <= r.created_at AND r.created_at < h.expires_at)`,
+          AND h.testing_mode_off = 'Y' AND h.verified_at <= r.created_at AND r.created_at < h.expires_at))`,
     [input.refHash, input.orgId, input.mode, input.accountId, input.accountRevision],
   );
 }

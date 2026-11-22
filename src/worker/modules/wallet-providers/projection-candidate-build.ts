@@ -9,6 +9,7 @@ import {
   readConfiguredWalletProviderCredentials,
 } from './account-service.ts';
 import {
+  identityCardType,
   type NativeProjection,
   type ProjectionV2,
   type ProjectionV2Request,
@@ -24,6 +25,7 @@ import {
   type ProjectionScope,
   projectionCandidateEnvelope,
 } from './repo-projection-store.ts';
+import { samsungTypeHasCard } from './samsung-cards.ts';
 
 /**
  * Schema 2: the server compiles the version. The author names the omissions it has (and may send
@@ -33,8 +35,9 @@ async function pinnedProjection(
   ctx: ServiceContext,
   version: VersionRow,
   named: ProjectionV2Request | ProjectionV2,
+  orgId: string,
 ): Promise<ProjectionV2> {
-  const { pins, report } = await computeProjectionPins(ctx, named.provider, version);
+  const { pins, report } = await computeProjectionPins(ctx, named.provider, version, 'dry', orgId);
   if (unreleasable(report))
     throw new ConflictError(statusLabel(report.status), 'WALLET_PROJECTION_BLOCKED');
   const omissions = [...new Set(named.approvedOmissions)].sort();
@@ -65,7 +68,8 @@ export async function buildProjectionCandidate(
   });
   if (!source) throw changed();
   let projection: NativeProjection;
-  if (named.schema === 2) projection = await pinnedProjection(ctx, source.version, named);
+  if (named.schema === 2)
+    projection = await pinnedProjection(ctx, source.version, named, scope.orgId);
   else {
     projection = named;
     assertProjectionSource(projection, source.version);
@@ -79,6 +83,15 @@ export async function buildProjectionCandidate(
     accountRevision: readiness.revision,
   });
   if (!account || account.provider !== scope.provider) throw changed();
+  if (
+    projection.schema === 2 &&
+    account.provider === 'samsung' &&
+    !samsungTypeHasCard(account.credentials, projection.type)
+  )
+    throw new ConflictError(
+      `Blocked: Samsung ${projection.type} card not approved.`,
+      'WALLET_PROJECTION_BLOCKED',
+    );
   const policy = projectionPolicy(scope.provider);
   const candidate: ProjectionCandidate = {
     ...scope,
@@ -99,12 +112,7 @@ export async function buildProjectionCandidate(
     accountId: account.accountId,
     accountRevision: account.revision,
     accountEpoch: account.authorityEpoch,
-    providerIdentityHash: await providerIdentityHash(
-      account,
-      projection.schema === 1 && projection.provider === 'samsung'
-        ? projection.cardType
-        : undefined,
-    ),
+    providerIdentityHash: await providerIdentityHash(account, identityCardType(projection)),
     projection,
   };
   candidate.candidateHash = await candidateHash(projectionCandidateEnvelope(candidate));

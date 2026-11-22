@@ -15,6 +15,7 @@ export type { SamsungCompileOptions, SamsungType } from './context.ts';
 export type { SamsungCardData, SamsungCardMeta, SamsungState } from './envelope.ts';
 export { samsungCardBody } from './envelope.ts';
 export { SAMSUNG_LIMITS } from './limits.ts';
+export { samsungPortalUrl } from './portal.ts';
 
 /** Joins the release candidate digest. Bump it with any change to compiled output. */
 export const SAMSUNG_COMPILER_REVISION = 2;

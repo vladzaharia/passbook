@@ -16,6 +16,7 @@ import {
 import {
   isSystemAuthored,
   SYSTEM_AUTHOR,
+  SYSTEM_AUTHORED_PROVIDERS,
   SYSTEM_REVIEWER,
   systemAuthority,
 } from './projection-system-authority.ts';
@@ -61,7 +62,8 @@ export async function runSystemProjection(
 async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promise<void> {
   ctx = pinProjectionContext(ctx);
   const { orgId, mode, provider, templateId } = job;
-  if (!publishableSchema(provider, 2)) return skipped(ctx, job, 'provider not open');
+  if (!SYSTEM_AUTHORED_PROVIDERS.includes(provider) || !publishableSchema(provider, 2))
+    return skipped(ctx, job, 'provider not open');
   const scope: ProjectionScope = { orgId, mode, provider, templateId };
   const credentialKeysetCommitment = await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
   const db = ctx.env.DB;
@@ -74,7 +76,7 @@ async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promi
   if (!candidate) {
     const version = await getVersion(db, templateId, job.version);
     if (!version) return skipped(ctx, job, 'version missing');
-    const { pins, report } = await computeProjectionPins(ctx, provider, version);
+    const { pins, report } = await computeProjectionPins(ctx, provider, version, 'dry', orgId);
     if (unreleasable(report)) return skipped(ctx, job, report.status.kind);
     const author = systemAuthority('author', orgId, mode);
     candidate = await buildProjectionCandidate(

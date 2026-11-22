@@ -169,7 +169,8 @@ describe('the sandbox test terminal', () => {
     const s = await sandbox();
     const org = await makeOrg(kit.f);
     const owner = await kit.member(org.id, ['org_admin']);
-    const secret = `wlt_${kit.f.ids.token(6)}_${kit.f.ids.token()}`;
+    const prefix = kit.f.ids.token(6);
+    const secret = `wlt_${prefix}_${kit.f.ids.token()}`;
     await run(
       kit.env.DB,
       `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_by, created_at, kind)
@@ -177,7 +178,7 @@ describe('the sandbox test terminal', () => {
       [
         kit.f.ids.id(),
         org.id,
-        secret.split('_')[1],
+        prefix,
         await sha256Hex(secret),
         JSON.stringify(['passes:write', 'passes:read']),
         owner.userId,

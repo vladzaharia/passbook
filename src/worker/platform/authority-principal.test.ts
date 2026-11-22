@@ -5,6 +5,7 @@ import { codeOf, count, db, refusal } from './authority-ext-fixtures.ts';
 import type { Principal } from './authority-principal.ts';
 import { setupGrant } from './authority-test-fixtures.ts';
 import { first, run } from './db.ts';
+import { createJobContext } from './service-context.ts';
 
 const entry = (orgId: string | null, action: string) => ({
   at: 1,
@@ -176,6 +177,12 @@ describe('users.access_revision and deferred membership principals', () => {
     expect(build(route)).toBe('GRANT_BAD_PRINCIPAL');
     expect(build(ctx)).toBeNull();
     expect(build(route, { allowRequestContext: true })).toBeNull();
+    // A job context narrowed to some purposes (the first tap's) is no job context for a deferred grant.
+    const narrowed = {
+      ...ctx,
+      job: createJobContext(ctx.env, 'x', { allowedPurposes: ['org_mode.job.wallet.record'] }).job,
+    };
+    expect(build(narrowed)).toBe('GRANT_BAD_PRINCIPAL');
     const session = { ...deferred(), via: 'session', sessionIdHash: 'h' } as unknown as Principal;
     expect(
       codeOf(() => grant(route, { purpose: 'org_mode.test.ue', principal: session })),
