@@ -40,9 +40,17 @@ describe('import with auto mapping', () => {
     );
     expect(commit.status).toBe(200);
     expect(commit.json.state).toBe('committing');
-    // The commit workflow does not run here, so the import is busy and cannot be undone yet.
+    // The workflow runs once the commit has answered: the import ends done with its passes.
+    const done = await call('GET', `/pass-imports/${made.json.id}`);
+    expect(done.json.state).toBe('done');
+    expect(done.json.progress).toMatchObject({ created: 3, failed: 0 });
+    const listed = await call('GET', '/passes?status=active');
+    expect(listed.json.items.length).toBeGreaterThanOrEqual(4);
+    // Undo removes what the import created and the answer reads back done.
     const undo = await call('POST', `/pass-imports/${made.json.id}/undo`, {});
-    expect([undo.status, undo.json.code]).toEqual([409, 'IMPORT_BUSY']);
+    expect(undo.status).toBe(200);
+    const after = await call('GET', `/pass-imports/${made.json.id}`);
+    expect(after.json.undo.state).toBe('done');
   });
 
   it('leaves state mapping with no plan when no column fits, and asks for a date format when two fit', async () => {

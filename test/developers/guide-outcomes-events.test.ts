@@ -112,9 +112,8 @@ describe('bulk import', () => {
       fence('bulk-import', 'pass-imports.postPassImportsByIdCommit'),
     );
     expect(commit.status).toBeLessThan(300);
-    // The workflow that makes the passes does not run in this test: the import is committing, not done.
     const state = await call('GET', `/pass-imports/${made.json.id}`);
-    expect(['committing', 'done']).toContain(state.json.state);
+    expect(state.json.state).toBe('done');
 
     const pass = await makePass('bulk-1');
     const ok = await call('POST', '/passes/bulk', { action: 'void', ids: [pass.id] });

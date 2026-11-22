@@ -174,8 +174,17 @@ function formatDate(value: Json, o: Record<string, Json>): Json | undefined {
     case 'epoch-s':
       return Math.floor(ms / 1000);
     default:
-      return date.toISOString();
+      // A written offset is the wall clock the pass shows; UTC would shift it.
+      return kept(value, o) ?? date.toISOString();
   }
+}
+
+const OFFSET_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?[+-]\d{2}:\d{2}$/;
+function kept(value: Json, o: Record<string, Json>): string | undefined {
+  const input = o.input ?? 'auto';
+  if (typeof value !== 'string' || (input !== 'auto' && input !== 'iso')) return undefined;
+  const text = value.trim();
+  return OFFSET_ISO.test(text) && !/[+-]00:00$/.test(text) ? text : undefined;
 }
 
 /** `record` is the whole source record; only `join` reads it. */
