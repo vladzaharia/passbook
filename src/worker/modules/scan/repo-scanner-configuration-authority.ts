@@ -16,11 +16,13 @@ export async function assertAdminConfigurationAuthority(
   db: Db,
   orgId: string,
   credential: AdminConfigurationClaim,
+  /** A key answers only where the caller opts in: its flows are revoke, mode move and the device update. */
+  options: { key?: true } = {},
 ): Promise<void> {
   const { authority, userId, now } = credential;
   const holds =
     authority?.kind === 'api_key'
-      ? authority.scope === 'scanning:write' && authority.keyId === userId
+      ? options.key === true && authority.scope === 'scanning:write' && authority.keyId === userId
       : authority?.kind === 'session' &&
         authority.userId === userId &&
         authority.capability === 'scanning:manage';

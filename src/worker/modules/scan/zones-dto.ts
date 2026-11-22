@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanZone } from '../../../shared/contracts/scan-access.ts';
+import { scopeExercises } from '../../platform/api-scopes.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -20,7 +21,8 @@ export function assertAuthority(
 ): void {
   if (
     authority.orgId !== orgId ||
-    (authority.kind === 'session' && authority.capability !== capability)
+    (authority.kind === 'session' && authority.capability !== capability) ||
+    (authority.kind === 'api_key' && !scopeExercises(authority.scope, capability))
   )
     throw new ForbiddenError();
 }

@@ -1,5 +1,10 @@
 import { type Grant, type GrantedStatement, grant } from '../../platform/authority.ts';
-import { type Check, epochIs, templateUsableSql } from '../../platform/authority-checks.ts';
+import {
+  type Check,
+  epochIs,
+  rawCheck,
+  templateUsableSql,
+} from '../../platform/authority-checks.ts';
 import { tenantCheck } from '../../platform/authority-cond.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import type { DenialOptions } from '../../platform/errors.ts';
@@ -43,7 +48,7 @@ export const SETUP_APPLY = 'org_mode.scan.setup.apply';
 export type KeyAdminAuthority = Extract<TenantPassWrite, { kind: 'api_key' }>;
 
 /** The scan admin grants a key may hold: the writes of a template's scan setup, and the one-call setup (which refuses zones and staff for a key). */
-const KEY_PURPOSES: ReadonlySet<string> = new Set([
+export const KEY_PURPOSES: ReadonlySet<string> = new Set([
   'org_mode.scan.event.create',
   'org_mode.scan.event.archive',
   'org_mode.scan.event.update',
@@ -78,16 +83,23 @@ export function grantAuthorityOf(
   const admin = authority.scope === 'scanning:admin';
   if (
     (purpose !== undefined && !KEY_PURPOSES.has(purpose)) ||
-    // `scanning:admin` (staff PINs, pairing codes) serves the one-call setup only, for an org-bound live key.
-    (admin &&
-      (purpose !== SETUP_APPLY || authority.keyOrgId !== orgId || authority.mode !== 'live')) ||
+    // Every scan admin purpose is org-bound: a platform key (no org of its own) never writes one.
+    authority.keyOrgId !== orgId ||
+    // `scanning:admin` (staff PINs, pairing codes) serves the one-call setup only, for a live key.
+    (admin && (purpose !== SETUP_APPLY || authority.mode !== 'live')) ||
     (!admin && authority.scope !== 'scanning:write') ||
-    // Zones and a scanner's mode move belong to the org, not a mode: only a live key writes them.
-    (purpose?.startsWith('org.scan.') === true && authority.mode !== 'live') ||
     authority.keyId !== actorId ||
     authority.orgId !== orgId
   )
     throw new ForbiddenError();
+  // Zones and a scanner's mode move belong to the org, not a mode: only a live key writes them.
+  if (purpose?.startsWith('org.scan.') === true && authority.mode !== 'live')
+    throw new ForbiddenError(
+      purpose.startsWith('org.scan.zone.')
+        ? 'Zones need a live key.'
+        : 'Moving a scanner between live and test needs a live key.',
+      purpose.startsWith('org.scan.zone.') ? 'SCAN_ZONE_LIVE_ONLY' : 'SCAN_MODE_LIVE_ONLY',
+    );
   return authority;
 }
 
@@ -156,10 +168,15 @@ export function adminGrant(
   tables: readonly string[] = SCAN_ADMIN_TABLES,
 ): Grant {
   const admin = grantAuthorityOf(authority, userId, orgId, purpose);
+  // The live-only rule is also part of the write: the actor row's mode is the key's own, read at commit.
+  const live =
+    admin.kind === 'api_key' && purpose.startsWith('org.scan.')
+      ? [rawCheck('actor', "a.mode = 'live'")]
+      : [];
   return grant(ctx, {
     purpose,
     principal: tenantPrincipal(admin),
-    checks: [...capabilityChecks(admin), ...checks],
+    checks: [...capabilityChecks(admin), ...live, ...checks],
     tables: [...tables],
     ...(codes ? { codes } : {}),
     ...(target ? { target } : {}),

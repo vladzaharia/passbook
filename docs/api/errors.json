@@ -3854,6 +3854,15 @@
       ]
     },
     {
+      "code": "SCAN_MODE_LIVE_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCAN_MODE_MISMATCH",
       "statuses": [
         403,
@@ -4141,6 +4150,15 @@
       ],
       "modules": [
         "passes"
+      ]
+    },
+    {
+      "code": "SCAN_ZONE_LIVE_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
       ]
     },
     {

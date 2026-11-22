@@ -51,7 +51,7 @@ const LIVE_ONLY = new Set(['scan-zones.postScanZones']);
 function failures(id: string, calls: Call[]): string[] {
   if (calls.length === 0) return [`${id}: made no request`];
   return calls
-    .filter((c) => !reached(c) && !(LIVE_ONLY.has(id) && c.status === 403))
+    .filter((c) => !reached(c) && !(LIVE_ONLY.has(id) && c.code === 'SCAN_ZONE_LIVE_ONLY'))
     .map((c) => `${id}: ${c.method} ${c.path} ${c.status} ${c.code} ${c.detail ?? ''}`);
 }
 

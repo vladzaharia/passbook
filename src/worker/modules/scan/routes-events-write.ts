@@ -39,7 +39,7 @@ async function writer(
   const ctx = serviceContext(c);
   const auth = c.var.auth as SessionAuth | ApiKeyAuth | undefined;
   if (auth?.kind === 'api_key') {
-    if (auth.orgId !== null && auth.orgId !== orgId) throw missing();
+    if (auth.orgId !== orgId) throw missing();
     const authority = await tenantAuthorityOf(ctx, auth, orgId, capability);
     if (authority.kind !== 'api_key') throw new ForbiddenError();
     return { ctx, auth, actorId: auth.keyId, authority };

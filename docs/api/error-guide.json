@@ -2051,6 +2051,18 @@
     "fix": "Use a new key for a different setup.",
     "retryable": false
   },
+  "SCAN_ZONE_LIVE_ONLY": {
+    "title": "Live key needed",
+    "when": "Zones are shared with live mode, so a test key cannot make or change them.",
+    "fix": "Use a live key.",
+    "retryable": false
+  },
+  "SCAN_MODE_LIVE_ONLY": {
+    "title": "Live key needed",
+    "when": "Moving a scanner between live and test changes its organization, so a test key cannot do it.",
+    "fix": "Use a live key.",
+    "retryable": false
+  },
   "SCAN_SETUP_LIVE_ONLY": {
     "title": "Live key needed",
     "when": "Places and staff are shared with live mode, so a test key cannot make them.",

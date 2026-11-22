@@ -173,6 +173,12 @@ export function withSessionRow<A extends ScanReadAuthority>(
   };
 }
 
+export interface KeyReadAuthority extends ScanReadAuthority {
+  /** Marks a key's read fence: it is `relaxed`, so no write guard (`underAuthority*`) accepts it. */
+  readonly keyRead: true;
+  readonly relaxed: true;
+}
+
 /**
  * The read fence of an org-bound key that holds `scan-setup:read` (or `scanning:write`, for the answer to its own write) for its org: the key row is live, holds
  * the scope (by its scopes or a role's preset) and its org is active, re-derived inside each statement.
@@ -181,7 +187,7 @@ export function withSessionRow<A extends ScanReadAuthority>(
 export function keyScanReadAuthority(
   authority: Extract<TenantPassWrite, { kind: 'api_key' }>,
   now: number,
-): StrictReadAuthority {
+): KeyReadAuthority {
   if (
     authority.keyOrgId === null ||
     (authority.scope !== 'scan-setup:read' && authority.scope !== 'scanning:write')
@@ -198,6 +204,7 @@ export function keyScanReadAuthority(
     params,
     ok: 'EXISTS (SELECT 1 FROM actor_ok)',
     tenant: (alias, table) => tenantFilter(alias, table, 'org_mode'),
-    relaxed: false,
+    keyRead: true,
+    relaxed: true,
   };
 }

@@ -1430,5 +1430,13 @@
     "op": "PUT /api/v1/templates/{id}/manifest",
     "change": "200.release: field added",
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
+  },
+  {
+    "key": "PATCH /api/v1/scanners/{id} 200.staff.name: now nullable",
+    "class": "additive",
+    "operationId": "scanners.patchScannersById",
+    "op": "PATCH /api/v1/scanners/{id}",
+    "change": "200.staff.name: now nullable",
+    "note": "An API key gets staff and admin ids, not names: staff.name (scanners) and adminUser.name (scan setups) are null for a key."
   }
 ]

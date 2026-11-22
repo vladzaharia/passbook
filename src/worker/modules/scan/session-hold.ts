@@ -5,10 +5,12 @@ import type {
   SessionHoldRequestSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { rowIs } from '../../platform/authority-checks.ts';
+import { bump } from '../../platform/counters.ts';
 import {
   BadRequestError,
   ConflictError,
   ForbiddenError,
+  RateLimitedError,
   ValidationError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -38,6 +40,8 @@ import {
 type HoldRequest = z.infer<typeof SessionHoldRequestSchema>;
 type OpenNow = z.infer<typeof ScanSessionOpenNowSchema>;
 type HoldAction = 'close' | 'open' | 'clear';
+
+const HOLDS_PER_MINUTE = 10;
 
 const AUDIT_ACTION = {
   close: 'scanning.session_closed',
@@ -101,6 +105,10 @@ export async function holdScanningSession(
   countAuthority: SessionReadAuthority,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
+  // Each change kicks every device of the session: ten a minute is more than a person needs.
+  const minute = ctx.clock.now() - (ctx.clock.now() % 60_000);
+  if ((await bump(ctx.env.DB, `scan:hold:${id}`, minute)) > HOLDS_PER_MINUTE)
+    throw new RateLimitedError(Math.ceil((minute + 60_000 - ctx.clock.now()) / 1000));
   const row = await loadScanningSession(ctx, id, authority.mode, authority.orgId);
   if (input.revision !== undefined && input.revision !== row.updated_at)
     throw new ConflictError(
@@ -132,7 +140,10 @@ export async function holdScanningSession(
       action: AUDIT_ACTION[input.action],
       targetType: 'scanning_session',
       targetId: id,
-      detail: { by: 'user', ...(hold ? { until: hold.until } : {}) },
+      detail: {
+        by: authority.kind === 'api_key' ? 'api_key' : 'user',
+        ...(hold ? { until: hold.until } : {}),
+      },
     }),
   );
   await g.commit();

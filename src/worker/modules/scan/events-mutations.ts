@@ -40,9 +40,6 @@ import {
 import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
 import { newCapture } from './setup-capture.ts';
 
-const modeMismatch = (what: string) =>
-  new ValidationError(`${what} is in a different mode.`, [], 'SCAN_MODE_MISMATCH');
-
 export async function createEvent(
   ctx: ServiceContext,
   userId: string,
@@ -224,7 +221,9 @@ export async function assignScanners(
   const found = await scannersInOrg(db, row.orgId, ids);
   if (found.length !== ids.length)
     throw new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND');
-  if (found.some((s) => s.mode !== row.mode)) throw modeMismatch('A scanner');
+  // Another mode's scanner is as good as unknown: no existence oracle within the org.
+  if (found.some((s) => s.mode !== row.mode))
+    throw new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND');
   if (found.some((s) => s.deviceRole !== 'scan'))
     throw new ValidationError('Only scanning devices take an event.', [], 'SCANNER_CANNOT_SCAN');
   await Promise.all(ids.map((scannerId) => assertStandaloneSession(ctx, row.orgId, scannerId)));

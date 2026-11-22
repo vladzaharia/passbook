@@ -93,7 +93,14 @@ export async function scanningSessionDetailForAuthority(
   ]);
   const deviceViews = await sessionDeviceViews(ctx, row, session, scope, devices);
   // A key reads the rules and devices; the activity feed is the console's (GET /scans for a key).
-  if (countAuthority.key) return { ...session, zoneIds, devices: deviceViews, activity: [] };
+  // Keys get ids, not the admin's name.
+  if (countAuthority.key)
+    return {
+      ...session,
+      zoneIds,
+      devices: deviceViews.map((d) => ({ ...d, adminName: null })),
+      activity: [],
+    };
   const role = countAuthority.tenant ? tenantScanRole(countAuthority.tenant) : null;
   if (!role) throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
   // A scope that resolves to nothing has no provable activity; the session stays viewable to fix it.

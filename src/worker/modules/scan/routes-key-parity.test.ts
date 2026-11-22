@@ -259,3 +259,100 @@ describe('scanner mode move by scanning:write key', () => {
     expect(await audit('scanner.mode_change', device.id)).toEqual({ t: 'api_key', a: k.id });
   });
 });
+
+describe('review fixes', () => {
+  it('refuses a platform key on every write route and reads nothing', async () => {
+    const session = await fixture.parent('Platform key');
+    const device = await fixture.device(session.id, 'Platform device');
+    const org = await keyOf(['scanning:write']);
+    const zone = (await (
+      await send('POST', '/scan-zones', org.headers, {
+        orgId: orgId(),
+        key: 'plat-z',
+        name: 'Plat',
+      })
+    ).json()) as { id: string };
+    const event = (await (
+      await send('POST', '/scan-events', org.headers, {
+        orgId: orgId(),
+        name: 'Plat gala',
+        templateIds: [await eventTemplate(fixture.kit, 'Plat ticket')],
+        opensAt: 1_795_129_200_000,
+        closesAt: 1_795_212_000_000,
+        timeZone: 'UTC',
+      })
+    ).json()) as { id: string };
+    const platform = await makeApiKey(fixture.kit.fx, {
+      orgId: null,
+      kind: 'platform',
+      scopes: ['scanning:write', 'scan-setup:read'],
+    });
+    const h = platform.headers;
+    const eventBody = {
+      orgId: orgId(),
+      name: 'Plat gala 2',
+      templateIds: [await eventTemplate(fixture.kit, 'Plat ticket 2')],
+      opensAt: 1_795_129_200_000,
+      closesAt: 1_795_212_000_000,
+      timeZone: 'UTC',
+    };
+    const s = session.id;
+    const calls: [string, string, unknown?][] = [
+      ['POST', '/scan-events', eventBody],
+      ['PATCH', `/scan-events/${event.id}`, { name: 'X' }],
+      ['POST', `/scan-events/${event.id}/archive`],
+      ['POST', `/scan-events/${event.id}/scanners`, { scannerIds: [] }],
+      ['POST', '/scan-zones', { orgId: orgId(), key: 'plat-x', name: 'X' }],
+      ['PATCH', `/scan-zones/${zone.id}`, { name: 'X' }],
+      ['POST', `/scan-zones/${zone.id}/archive`],
+      ['POST', `/scan-zones/${zone.id}/restore`],
+      ['POST', `/scan-zones/visits/${event.id}/reset`],
+      ['PATCH', `/scanning-sessions/${s}`, { name: 'X' }],
+      ['POST', `/scanning-sessions/${s}/hold`, { action: 'clear' }],
+      ['PATCH', `/scanning-sessions/${s}/devices/${device.id}`, { name: 'X' }],
+      ['PATCH', `/scanners/${device.id}`, { name: 'X' }],
+      ['POST', `/scanners/${device.id}/revoke`],
+      ['POST', `/scanners/${device.id}/mode`, { mode: 'test' }],
+    ];
+    for (const [method, path, body] of calls) {
+      const res = await send(method, path, h, body);
+      expect([403, 404], `${method} ${path}`).toContain(res.status);
+    }
+    for (const path of [`/scanning-sessions/${s}`, `/scan-events/${event.id}`]) {
+      const res = await send('GET', path, h);
+      expect([403, 404], path).toContain(res.status);
+    }
+    const lists = await send('GET', `/scan-zones?orgId=${orgId()}`, h);
+    expect(((await lists.json()) as { items?: unknown[] }).items ?? []).toEqual([]);
+  });
+
+  it('names its own code when a test key writes a zone', async () => {
+    const test = await keyOf(['scanning:write'], 'test');
+    const res = await send('POST', '/scan-zones', test.headers, {
+      orgId: orgId(),
+      key: 'test-z',
+      name: 'T',
+    });
+    const body = (await res.json()) as { code: string; detail?: string };
+    expect(body, JSON.stringify(body)).toMatchObject({ code: 'SCAN_ZONE_LIVE_ONLY' });
+    expect(res.status).toBe(403);
+  });
+
+  it('limits holds to ten a minute per session and audits the key as the actor', async () => {
+    const session = await fixture.parent('Hold limit');
+    const k = await keyOf(['scanning:write']);
+    const hold = () =>
+      send('POST', `/scanning-sessions/${session.id}/hold`, k.headers, { action: 'clear' });
+    for (let i = 0; i < 10; i++) expect((await hold()).status).toBe(200);
+    expect((await hold()).status).toBe(429);
+  });
+
+  it('withholds names from a key: the admin name on devices', async () => {
+    const session = await fixture.parent('No names');
+    await fixture.device(session.id, 'No names device');
+    const read = await keyOf(['scan-setup:read']);
+    const one = await send('GET', `/scanning-sessions/${session.id}`, read.headers);
+    const body = (await one.json()) as { devices: { adminName: string | null }[] };
+    expect(body.devices.every((d) => d.adminName === null)).toBe(true);
+  });
+});

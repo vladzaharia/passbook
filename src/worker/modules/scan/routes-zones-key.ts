@@ -42,7 +42,7 @@ async function caller(
   const ctx = serviceContext(c);
   const auth = c.var.auth as SessionAuth | ApiKeyAuth | undefined;
   if (auth?.kind === 'api_key') {
-    if (auth.orgId !== null && auth.orgId !== orgId) throw missing();
+    if (auth.orgId !== orgId) throw missing();
     return {
       ctx,
       auth,

@@ -6,7 +6,13 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
-import { adminActorOf, adminGrant, audited, scannerEpoch, sessionEpoch } from './repo-admin-grant.ts';
+import {
+  adminActorOf,
+  adminGrant,
+  audited,
+  scannerEpoch,
+  sessionEpoch,
+} from './repo-admin-grant.ts';
 import { assertAdminConfigurationAuthority } from './repo-scanner-configuration-authority.ts';
 import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
 import { addScannerMode } from './repo-scanners.ts';
@@ -35,12 +41,17 @@ export async function changeMode(
   const db = ctx.env.DB;
   const row = await loadScanner(ctx, id, authority.mode);
   if (row.mode === input.mode) {
-    await assertAdminConfigurationAuthority(db, row.orgId, {
-      kind: 'admin',
-      userId,
-      authority,
-      now: ctx.clock.now(),
-    });
+    await assertAdminConfigurationAuthority(
+      db,
+      row.orgId,
+      {
+        kind: 'admin',
+        userId,
+        authority,
+        now: ctx.clock.now(),
+      },
+      { key: true },
+    );
     return scannerView(ctx, id);
   }
   await assertStandaloneSession(ctx, row.orgId, id);

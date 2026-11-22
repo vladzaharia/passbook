@@ -3542,7 +3542,7 @@ export type ScanSetupsListResult = {
     expiresAt: number | null;
     staff: {
       id: string;
-      name: string;
+      name: string | null;
     } | null;
     today: number;
     createdAt: number;
@@ -3550,7 +3550,7 @@ export type ScanSetupsListResult = {
     adminSession?: boolean;
     adminUser: {
       id: string;
-      name: string;
+      name: string | null;
     } | null;
     watch: {
       scannerIds?: Array<string>;
@@ -3589,7 +3589,7 @@ export type ScanSetupsRetrieveResult = {
   expiresAt: number | null;
   staff: {
     id: string;
-    name: string;
+    name: string | null;
   } | null;
   today: number;
   createdAt: number;
@@ -3597,7 +3597,7 @@ export type ScanSetupsRetrieveResult = {
   adminSession?: boolean;
   adminUser: {
     id: string;
-    name: string;
+    name: string | null;
   } | null;
   watch: {
     scannerIds?: Array<string>;

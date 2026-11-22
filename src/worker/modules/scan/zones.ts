@@ -58,7 +58,16 @@ export async function listZones(
   const start = query.cursor ? shown.findIndex((r) => r.id === query.cursor) + 1 : 0;
   const page = shown.slice(start, start + query.limit);
   return {
-    items: page.map((r) => toDto(r, rows, plans.get(r.id) ?? [], checked.get(r.id) ?? [], clock)),
+    // The count is the caller's mode: the stored count spans both.
+    items: page.map((r) =>
+      toDto(
+        { ...r, sessions: checked.get(r.id)?.length ?? 0 },
+        rows,
+        plans.get(r.id) ?? [],
+        checked.get(r.id) ?? [],
+        clock,
+      ),
+    ),
     nextCursor: start + query.limit < shown.length ? (page.at(-1)?.id ?? null) : null,
   };
 }

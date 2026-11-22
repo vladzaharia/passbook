@@ -22,7 +22,8 @@ export const ScanWatchSchema = z.strictObject({
 export const ScannerSetupSchema = ScannerSchema.extend({
   sessionId: IdSchema.optional(),
   adminSession: z.boolean().default(false),
-  adminUser: z.object({ id: IdSchema, name: z.string() }).nullable(),
+  /** `name` is null for an API key: keys get ids, not member names. */
+  adminUser: z.object({ id: IdSchema, name: z.string().nullable() }).nullable(),
   watch: ScanWatchSchema.nullable(),
 });
 export type ScannerSetup = z.infer<typeof ScannerSetupSchema>;

@@ -13,6 +13,7 @@ import { currentUserId, methodScope, modeOf } from '../../platform/auth.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSessionOrApiKey, tenantAuthorityOf } from '../passes/http.ts';
+import { withoutNames } from './key-names.ts';
 import { loadScanner } from './scanner-views.ts';
 import { startAdminSetup } from './scanning-sessions.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
@@ -38,10 +39,14 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const mode = modeOf(c.var.auth);
+    const page = await readableScanningPage(
+      ctx,
+      authOf(c),
+      c.req.valid('query'),
+      (query, authority) => listSetups(ctx, mode, query, authority),
+    );
     return c.json(
-      await readableScanningPage(ctx, authOf(c), c.req.valid('query'), (query, authority) =>
-        listSetups(ctx, mode, query, authority),
-      ),
+      authOf(c).kind === 'api_key' ? { ...page, items: page.items.map(withoutNames) } : page,
     );
   },
 );
@@ -121,7 +126,8 @@ register(
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
     await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:read');
-    return c.json(scopedScanningView(await setupView(ctx, row.id), row.orgId));
+    const view = scopedScanningView(await setupView(ctx, row.id), row.orgId);
+    return c.json(authOf(c).kind === 'api_key' ? withoutNames(view) : view);
   },
 );
 register(

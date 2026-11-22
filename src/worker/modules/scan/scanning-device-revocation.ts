@@ -21,12 +21,17 @@ export async function revokeScanner(
   const db = ctx.env.DB;
   const row = await loadScanner(ctx, id, authority.mode);
   if (row.revokedAt !== null) {
-    await assertAdminConfigurationAuthority(db, row.orgId, {
-      kind: 'admin',
-      userId,
-      authority,
-      now: ctx.clock.now(),
-    });
+    await assertAdminConfigurationAuthority(
+      db,
+      row.orgId,
+      {
+        kind: 'admin',
+        userId,
+        authority,
+        now: ctx.clock.now(),
+      },
+      { key: true },
+    );
     return scannerView(ctx, id);
   }
   // Revoking is absolute, not derived from a read: configuration drift never blocks it.

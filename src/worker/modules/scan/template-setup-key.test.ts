@@ -8,7 +8,7 @@ import { ROLE_PRESETS } from '../../platform/api-scopes.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createScannerStore } from './auth-store.ts';
-import { grantAuthorityOf } from './repo-admin-grant.ts';
+import { grantAuthorityOf, KEY_PURPOSES } from './repo-admin-grant.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { eventTemplate } from './template-setup-test-fixtures.ts';
 
@@ -151,28 +151,78 @@ describe('which scan admin grants a key may hold', () => {
     mode: 'live' as const,
   });
 
-  it('allows only the writes of a template scan setup', () => {
-    for (const purpose of [
-      'org_mode.scan.event.create',
-      'org_mode.scan.event.archive',
-      'org_mode.scan.session.create',
-      'org_mode.scan.session.update',
-    ])
+  // Pinned: adding a purpose here is a security decision, so it must change this list too.
+  const ALLOWED = [
+    'org.scan.scanner.mode',
+    'org.scan.zone.create',
+    'org.scan.zone.update',
+    'org_mode.scan.device.update',
+    'org_mode.scan.event.archive',
+    'org_mode.scan.event.assign',
+    'org_mode.scan.event.create',
+    'org_mode.scan.event.update',
+    'org_mode.scan.scanner.revoke',
+    'org_mode.scan.scanner.update',
+    'org_mode.scan.session.create',
+    'org_mode.scan.session.hold',
+    'org_mode.scan.session.update',
+    'org_mode.scan.setup.apply',
+    'org_mode.scan.visits.reset',
+  ];
+
+  it('holds exactly the expected purposes, each granted to a live scanning:write key of the org', () => {
+    expect([...KEY_PURPOSES].sort()).toEqual(ALLOWED);
+    for (const purpose of ALLOWED)
       expect(grantAuthorityOf(key('scanning:write'), 'k1', 'o1', purpose)).toMatchObject({
         keyId: 'k1',
       });
   });
 
-  it('refuses a key every other scan admin grant: pairing, PINs, admin sessions, zones, scanners', () => {
+  it('refuses a key every credential purpose: pairing, PINs, admin sessions, staff, tags, scanner creation', () => {
     for (const purpose of [
       'org_mode.scan.pair',
-      'org_mode.scan.setup.admin_session',
-      'org.scan.staff.pin',
-      'org_mode.scan.scanner.create',
-      'org_mode.scan.zone.create',
+      'org_mode.scan.pairing.create',
+      'org_mode.scan.pairing.here',
+      'org_mode.scan.pairing.redeem',
       'org_mode.scan.pairing.token',
+      'org_mode.scan.pairing.unpair',
+      'org_mode.scan.setup.admin_session',
+      'org_mode.scan.setup.create',
+      'org_mode.scan.setup.update',
+      'org_mode.scan.scanner.create',
+      'org.scan.staff.create',
+      'org.scan.staff.pin',
+      'org.scan.staff.pin_reset',
+      'org.scan.staff.update',
+      'org_mode.scan.staff.bind',
+      'org_mode.scan.staff.unbind',
+      'org_mode.scan.tag.bind',
+      'org_mode.scan.tag.enroll',
+      'org_mode.scan.tag.unbind',
     ])
-      expect(() => grantAuthorityOf(key('scanning:write'), 'k1', 'o1', purpose), purpose).toThrow();
+      for (const scope of ['scanning:write', 'scanning:admin'])
+        expect(() => grantAuthorityOf(key(scope), 'k1', 'o1', purpose), purpose).toThrow();
+  });
+
+  it('binds every purpose to the key org: a platform key is refused', () => {
+    for (const purpose of ALLOWED)
+      expect(
+        () => grantAuthorityOf({ ...key('scanning:write'), keyOrgId: null }, 'k1', 'o1', purpose),
+        purpose,
+      ).toThrow();
+  });
+
+  it('needs a live key for org.scan.* purposes, with its own codes', () => {
+    const test = { ...key('scanning:write'), mode: 'test' as const };
+    expect(() => grantAuthorityOf(test, 'k1', 'o1', 'org.scan.zone.create')).toThrow(
+      expect.objectContaining({ code: 'SCAN_ZONE_LIVE_ONLY' }),
+    );
+    expect(() => grantAuthorityOf(test, 'k1', 'o1', 'org.scan.scanner.mode')).toThrow(
+      expect.objectContaining({ code: 'SCAN_MODE_LIVE_ONLY' }),
+    );
+    expect(grantAuthorityOf(test, 'k1', 'o1', 'org_mode.scan.event.create')).toMatchObject({
+      keyId: 'k1',
+    });
   });
 
   it('refuses another scope, another key id or another org, whatever the purpose', () => {

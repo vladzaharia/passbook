@@ -509,7 +509,7 @@ export type CreatedScanner = {
   expiresAt: number | null;
   staff: {
     id: string;
-    name: string;
+    name: string | null;
   } | null;
   today: number;
   createdAt: number;
@@ -3416,7 +3416,7 @@ export type Scanner = {
   expiresAt: number | null;
   staff: {
     id: string;
-    name: string;
+    name: string | null;
   } | null;
   today: number;
   createdAt: number;

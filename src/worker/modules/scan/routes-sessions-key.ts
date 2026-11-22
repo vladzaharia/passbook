@@ -91,7 +91,7 @@ export function registerSessionReads(router: Router): void {
       const mode = modeOf(auth);
       const row = await loadScanningSession(ctx, c.req.valid('param').id, mode);
       if (auth.kind === 'api_key') {
-        if (auth.orgId !== null && auth.orgId !== row.org_id)
+        if (auth.orgId !== row.org_id)
           throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
         const authority = await tenantAuthorityOf(ctx, auth, row.org_id, 'scanning:read');
         if (authority.kind !== 'api_key') throw new ForbiddenError();
@@ -136,7 +136,7 @@ async function writer(c: C, id: string) {
   if (auth.kind !== 'session' && auth.kind !== 'api_key') throw new UnauthenticatedError();
   const row = await loadScanningSession(ctx, id, modeOf(auth));
   if (auth.kind === 'api_key') {
-    if (auth.orgId !== null && auth.orgId !== row.org_id)
+    if (auth.orgId !== row.org_id)
       throw new NotFoundError('Scanning session not found.', 'SCANNING_SESSION_NOT_FOUND');
     const authority = await tenantAuthorityOf(ctx, auth, row.org_id, 'scanning:manage');
     return {
