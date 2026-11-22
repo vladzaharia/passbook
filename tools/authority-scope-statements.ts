@@ -54,8 +54,9 @@ export function stripComments(source: string, cx?: Cx): Stripped {
     }
     if (ch === '/' && next === '*') {
       const end = source.indexOf('*/', i + 2);
+      const skipped = source.slice(i, end === -1 ? source.length : end + 2);
       i = end === -1 ? source.length : end + 1;
-      text += ' ';
+      text += ` ${'\n'.repeat(skipped.split('\n').length - 1)}`;
       continue;
     }
     if (ch === "'" || ch === '"') {
@@ -232,7 +233,7 @@ function concatenatedTail(stripped: Stripped, from: number): string {
 export function describeStatement(
   stripped: Stripped,
   from: number,
-): { text: string; holder: string | null; exported: boolean } {
+): { text: string; holder: string | null; exported: boolean; calls: string[] } {
   const literal = stripped.literals.find(([start, end]) => start <= from && from < end);
   const end = literal ? literal[1] - 1 : Math.min(stripped.text.length, from + 400);
   const semicolon = stripped.text.indexOf(';', from);
@@ -240,7 +241,15 @@ export function describeStatement(
   const raw = stripped.text.slice(from, cut ? semicolon : end);
   let text = expand(stripped, raw, from, 0);
   if (literal && !cut) text += expand(stripped, concatenatedTail(stripped, literal[1]), from, 0);
-  return { text, ...holderOf(stripped, from) };
+  return { text, calls: uninlinedCalls(text), ...holderOf(stripped, from) };
+}
+
+/**
+ * Interpolated calls left in an expanded statement. A call's SQL is not in the text that is hashed, so
+ * a pin over it would survive any change to it: the caller must fail instead of trusting the pin.
+ */
+export function uninlinedCalls(expanded: string): string[] {
+  return [...expanded.matchAll(/\$\{\s*([\w$.]+)\(/g)].map((m) => m[1] ?? '');
 }
 
 /** The `const NAME = <literal | { ... } | [ ... ]>` that holds a statement, when no `;` lies between. */

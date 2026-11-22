@@ -7,6 +7,8 @@ import {
   ScanTagInspectResponseSchema,
 } from '../../../shared/contracts/nfc-tags.ts';
 import type { AppBindings } from '../../platform/context.ts';
+import { atLeast } from '../../platform/api-version.ts';
+import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
@@ -42,8 +44,20 @@ export function registerScanTagRoutes(scanRoutes: OpenAPIHono<AppBindings>): voi
       body: ScanTagBindRequestSchema,
       response: ScanTagBindResultSchema,
     },
-    async (c) =>
-      c.json(await bindOnScanner(serviceContext(c), scanActorOf(c), c.req.valid('json'))),
+    async (c) => {
+      try {
+        return c.json(await bindOnScanner(serviceContext(c), scanActorOf(c), c.req.valid('json')));
+      } catch (error) {
+        // 409 until a client pins PassBook-Version 2026-11-22 (docs/api/versions.json).
+        if (
+          error instanceof ValidationError &&
+          error.code === 'IDEMPOTENCY_KEY_REUSED' &&
+          !atLeast(c, '2026-11-22')
+        )
+          throw new ConflictError(error.message, 'IDEMPOTENCY_KEY_REUSED');
+        throw error;
+      }
+    },
   );
 
   register(

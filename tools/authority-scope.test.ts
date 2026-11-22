@@ -14,6 +14,7 @@ import {
   scanJobContext,
   scanTree,
   UNTENANTED_CHECK_ALLOWLIST,
+  uninlinedWriteCalls,
   untenantedChecks,
 } from './authority-scope.ts';
 import { scanBans } from './authority-scope-bans.ts';
@@ -205,6 +206,33 @@ describe('authority-scope', () => {
     const interp = (e: string) => `run(db, \`DELETE FROM sessions WHERE $\{${e}}\`)`;
     expect(rawWriteStatements(interp('a'))).not.toEqual(rawWriteStatements(interp('b')));
     expect(rawWriteStatements(interp(' a '))).toEqual(rawWriteStatements(interp('a')));
+  });
+
+  it('pins the connection write through the imported predicate constant', () => {
+    const rel = 'src/worker/modules/passes/repo-connection-state.ts';
+    const ctx = 'src/worker/modules/passes/repo-connection-context.ts';
+    const files = new Map(treeFiles());
+    const findings = (map: Map<string, string>) =>
+      scanFile(rel, map.get(rel) ?? '', owners, map).filter((f) => f.rule === 'raw-guarded-write');
+    expect(findings(files)).toEqual([]);
+    const source = files.get(ctx) ?? '';
+    expect(source).toContain('const connectionPassPredicate = `org_id = ? AND mode = ?');
+    const dropped = new Map(files).set(
+      ctx,
+      source.replace('`org_id = ? AND mode = ?', '`mode = ?'),
+    );
+    expect(findings(dropped)).toHaveLength(1);
+  });
+
+  it('fails a pinned statement that calls a function the pin cannot see into', () => {
+    const rel = 'src/worker/modules/auth/repo-sessions.ts';
+    const text = new Map(treeFiles()).get(rel) ?? '';
+    expect(uninlinedWriteCalls(text)).toEqual([]);
+    const called = `${text}\nrun(db, \`DELETE FROM sessions WHERE $\{scopeSql(x)}\`, []);`;
+    expect(uninlinedWriteCalls(called)).toEqual(['sessions:scopeSql']);
+    expect(
+      scanFile(rel, called, owners).filter((f) => f.detail.includes('scopeSql()')),
+    ).toHaveLength(1);
   });
 
   it('pins a concatenated tail and a constant run from a new call site', () => {

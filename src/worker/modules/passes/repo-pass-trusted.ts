@@ -7,6 +7,7 @@ import { batch, first, stmt } from '../../platform/db.ts';
 import type { Pass } from './repo-map.ts';
 import {
   type RefreshSnapshot,
+  refreshConnectionFence,
   refreshParams,
   refreshPredicate,
   validRefreshEpochs,
@@ -53,10 +54,11 @@ export async function claimRefresh(
   windowMs: number,
 ): Promise<boolean> {
   if (!validRefreshEpochs(snapshot)) return false;
+  const fence = refreshConnectionFence(snapshot);
   const row = await first<{ id: string }>(
     db,
     `UPDATE passes SET refresh_requested_at = ?
-     WHERE id = ? AND ${refreshPredicate}
+     WHERE id = ? AND ${refreshPredicate} ${fence}
        AND (refresh_requested_at IS NULL OR refresh_requested_at <= ?)
      RETURNING id`,
     [now, snapshot.passId, ...refreshParams(snapshot), now - windowMs],

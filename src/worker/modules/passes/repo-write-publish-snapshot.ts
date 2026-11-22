@@ -3,6 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from './http.ts';
 import {
   type ConnectionPassContext,
+  connectionPassFences,
   connectionPassParams,
   connectionPassPredicate,
   validConnectionPassContext,
@@ -202,7 +203,7 @@ export async function matchesPublishSnapshot(
     db,
     `SELECT id FROM passes WHERE id = ? AND version = ? AND ${publishSnapshotPredicate}
       ${releaseFence ? `AND ${releaseFence.sql}` : ''}
-      ${connectionContext ? `AND ${connectionPassPredicate(connectionContext)}` : ''}
+      ${connectionContext ? `AND ${connectionPassPredicate} ${connectionPassFences(connectionContext)}` : ''}
       ${authority ? `AND ${tenantPassWriteSql(authority)}` : ''}
       ${requireRemovalClaim ? `AND ${removalClaimPredicate}` : ''}`,
     [

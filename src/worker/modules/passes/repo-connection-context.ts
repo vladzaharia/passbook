@@ -36,33 +36,35 @@ export interface ConnectionPassContext {
   };
 }
 
-/** SQL and parameters shared by every final connector-owned write. */
-export const connectionPassPredicate = (context: ConnectionPassContext): string => {
-  const proof = context.retainedReleaseProof ? 'AND (release_id = ? AND template_version = ?)' : '';
-  const binding = context.retainedBinding
-    ? 'AND (passes.template_id = ? AND passes.release_id IS ? AND passes.template_version = ?)'
-    : '';
-  const rowVersion = context.expectedRowVersion === undefined ? '' : 'AND row_version = ?';
-  return `org_id = ? AND mode = ? AND mode = 'live'
-  AND status = ? AND version = ? ${rowVersion} AND deleted_at IS NULL AND removed_at IS NULL AND test_data_quarantined = 0
+/** The terms every final connector-owned write holds, a literal so the reviewed pin hashes them. */
+export const connectionPassPredicate = `org_id = ? AND mode = ? AND mode = 'live'
+  AND status = ? AND version = ? AND deleted_at IS NULL AND removed_at IS NULL AND test_data_quarantined = 0
   AND connection_id = ? AND external_ref = ? AND owner_user_id IS ? AND link_generation = ?
   AND identity_id = ? AND credential_generation = ? AND lifecycle_generation = ?
   AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = passes.id AND t.state = 'pending')
-  ${proof}
-  ${binding}
   AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = passes.org_id AND o.status = 'active')
   AND EXISTS (SELECT 1 FROM connections c WHERE c.id = passes.connection_id
     AND c.org_id = passes.org_id AND c.enabled = 1 AND c.generation = ?
     AND c.mode = ?)`;
-};
 
+/** Only the fences the context carries; append after `connectionPassPredicate`. */
+export function connectionPassFences(context: ConnectionPassContext): string {
+  return [
+    context.expectedRowVersion === undefined ? '' : 'AND row_version = ?',
+    context.retainedReleaseProof ? 'AND (release_id = ? AND template_version = ?)' : '',
+    context.retainedBinding
+      ? 'AND (passes.template_id = ? AND passes.release_id IS ? AND passes.template_version = ?)'
+      : '',
+  ].join(' ');
+}
+
+/** Binds of `connectionPassPredicate`, then of `connectionPassFences`. */
 export function connectionPassParams(context: ConnectionPassContext): SqlValue[] {
   return [
     context.orgId,
     context.mode,
     context.status,
     context.expectedVersion,
-    ...(context.expectedRowVersion === undefined ? [] : [context.expectedRowVersion]),
     context.connectionId,
     context.externalRef,
     context.ownerUserId,
@@ -70,6 +72,9 @@ export function connectionPassParams(context: ConnectionPassContext): SqlValue[]
     context.identityId,
     context.credentialGeneration,
     context.lifecycleGeneration,
+    context.generation,
+    context.expectedConnectionMode,
+    ...(context.expectedRowVersion === undefined ? [] : [context.expectedRowVersion]),
     ...(context.retainedReleaseProof
       ? [context.retainedReleaseProof.id, context.retainedReleaseProof.version]
       : []),
@@ -80,8 +85,6 @@ export function connectionPassParams(context: ConnectionPassContext): SqlValue[]
           context.retainedBinding.templateVersion,
         ]
       : []),
-    context.generation,
-    context.expectedConnectionMode,
   ];
 }
 function validConnectionBinding(binding: unknown): boolean {

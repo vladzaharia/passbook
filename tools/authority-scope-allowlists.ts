@@ -20,6 +20,21 @@ export interface RawWriteEntry {
 }
 
 /**
+ * Calls a pinned statement may interpolate although the pin cannot see their SQL: bind-marker lists, and
+ * generators that were pinned before the check existed. A call not named here for its file fails the lint.
+ * Put a term that must stay (an org or mode filter) in a literal constant, never behind a call.
+ */
+export const PINNED_CALL_ALLOWLIST: Record<string, string[]> = {
+  'src/worker/modules/delivery/repo-outbox-processing.ts': ['placeholders'],
+  'src/worker/modules/passes/repo-ops-retention.ts': ['providerRetirementCompleteSql'],
+  'src/worker/modules/passes/repo-transfer-asset-gc.ts': ['prior'],
+  'src/worker/modules/retention/repo-sweep.ts': ['IN_IDS'],
+  'src/worker/modules/sandbox/repo.ts': ['ids.map'],
+  'src/worker/modules/scan/repo-counts.ts': ['effectiveReleaseIdSql'],
+  'src/worker/modules/webhooks/repo-retention.ts': ['IN_ROWS'],
+};
+
+/**
  * Files whose remaining raw writes to a guarded table are reviewed and intended. Each needs a reason that
  * names why no grant principal exists or applies. Everything else is a finding.
  */
@@ -138,7 +153,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'passes:a565c31165b3',
       'passes:a978e7f9948b',
       'passes:a978e7f9948b@use',
-      'passes:c76312f4fe8f',
+      'passes:47b01e0ecaeb',
       'passes:d60295b23550',
       'passes:d60295b23550@use',
       'token_remac_marks:b15f0832d2e7',
@@ -148,7 +163,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/passes/repo-connection-state.ts': {
     reason:
       'sync_error_code is volatile bookkeeping stamped by connection sync behind a full pass and release snapshot',
-    writes: ['passes:2b567467d2d7'],
+    writes: ['passes:b30f1cdd3ba3'],
   },
   'src/worker/modules/passes/repo-history-assets.ts': {
     reason:

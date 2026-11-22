@@ -3,6 +3,7 @@ import type { ConnectionMode } from '../../../shared/contracts/connections.ts';
 import { first } from '../../platform/db.ts';
 import {
   type ConnectionPassContext,
+  connectionPassFences,
   connectionPassParams,
   connectionPassPredicate,
   validConnectionPassContext,
@@ -69,7 +70,7 @@ export async function matchesConnectionPass(
   if (!validConnectionPassContext(context)) return false;
   const row = await first<{ id: string }>(
     db,
-    `SELECT id FROM passes WHERE id = ? AND ${connectionPassPredicate(context)}`,
+    `SELECT id FROM passes WHERE id = ? AND ${connectionPassPredicate} ${connectionPassFences(context)}`,
     [context.passId, ...connectionPassParams(context)],
   );
   return row !== null;

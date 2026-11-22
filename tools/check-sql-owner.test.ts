@@ -20,17 +20,45 @@ describe('check-sql-owner', () => {
     expect(replaceOnIdentities('src/worker/modules/a/repo.ts', 'INSERT INTO x')).toBeNull();
   });
 
-  it('flags a "? IS NULL OR" predicate in worker code, across lines, but not tests', () => {
-    const one = "first(db, 'SELECT 1 FROM t WHERE (? IS NULL OR org_id = ?)', [a, a])";
-    const split = 'WHERE x = ?\n  AND (?\n   IS NULL\n   OR org_id = ?)';
-    expect(optionalBindPredicate('src/worker/modules/a/repo.ts', one)).toMatch(/IS NULL OR/);
-    expect(optionalBindPredicate('src/worker/modules/a/repo.ts', split)).toMatch(/IS NULL OR/);
-    expect(optionalBindPredicate('src/worker/modules/a/repo.test.ts', one)).toBeNull();
-    expect(optionalBindPredicate('src/web/a.ts', one)).toBeNull();
+  it('flags a bound parameter that switches a filter off, with file:line', () => {
+    const rel = 'src/worker/modules/a/repo.ts';
+    const flagged = (sql: string) => optionalBindPredicate(rel, `const q = \`${sql}\`;`);
+    for (const sql of [
+      'WHERE (? IS NULL OR org_id = ?)',
+      'WHERE x = ? AND (org_id = ? OR ? IS NULL)',
+      'WHERE (NULL IS ? OR a = ?)',
+      'WHERE (?3 IS NULL OR a = ?3)',
+      'WHERE a = ? AND ? = NULL',
+      'WHERE a = COALESCE(?, a)',
+      'WHERE a = IFNULL(?, a)',
+      'WHERE ISNULL(?)',
+      "WHERE (? = '' OR a = ?)",
+      'WHERE CASE WHEN ? THEN 1 END',
+      'WHERE NOT (? IS NOT NULL AND a = ?)',
+      'WHERE x = ?\n  AND (?\n   IS NULL\n   OR org_id = ?)',
+    ])
+      expect(flagged(sql), sql).toHaveLength(1);
+    expect(flagged('WHERE a = ?\n AND (? IS NULL OR b = ?)')[0]).toMatch(/^src\/.*repo\.ts:2 /);
   });
 
-  it('allows a nullable column check', () => {
-    const text = "'WHERE (pass_id IS NULL OR pass_id = ?)'";
-    expect(optionalBindPredicate('src/worker/modules/a/repo.ts', text)).toBeNull();
+  it('ignores comments, tests, fixtures and nullable-column checks', () => {
+    const rel = 'src/worker/modules/a/repo.ts';
+    const sql = "q('WHERE (? IS NULL OR org_id = ?)')";
+    expect(optionalBindPredicate(rel, `// ${sql}\n/* ${sql} */`)).toEqual([]);
+    expect(optionalBindPredicate(rel, `/*\n${sql}\n*/\nconst a = \`? IS NULL\`;`)[0]).toContain(
+      ':4 ',
+    );
+    expect(optionalBindPredicate('src/worker/modules/a/repo.test.ts', sql)).toEqual([]);
+    expect(optionalBindPredicate('src/worker/modules/a/x-test-support.ts', sql)).toEqual([]);
+    expect(optionalBindPredicate('src/worker/modules/a/x-fixtures.ts', sql)).toEqual([]);
+    expect(optionalBindPredicate('src/web/a.ts', sql)).toEqual([]);
+    expect(optionalBindPredicate(rel, "'WHERE (pass_id IS NULL OR pass_id = ?)'")).toEqual([]);
+  });
+
+  it('allows the reviewed SET values only up to their count', () => {
+    const rel = 'src/worker/platform/workflow-runs.ts';
+    const line = 'a = COALESCE(?, a)\n';
+    expect(optionalBindPredicate(rel, line.repeat(2))).toEqual([]);
+    expect(optionalBindPredicate(rel, line.repeat(3))).toHaveLength(1);
   });
 });

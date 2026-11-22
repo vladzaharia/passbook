@@ -241,7 +241,7 @@ management check and must not be used as a general tenant capability grant.
 
 ## Changes for existing clients
 
-Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog/`, one file per release date). `/api/v1` changes additively unless a dated `PassBook-Version` carries the change (`docs/api/versions.json`). Send `PassBook-Version: 2026-11-20` to opt in; without it behaviour is unchanged, and an unlisted date answers `422 API_VERSION_UNKNOWN`. `info.version` in the reference is the newest version date. A fix that stops a request from reaching more than it asked (a refused filter, say) ships to every client without a version and is listed as breaking in the changelog.
+Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog/`, one file per release date). `/api/v1` changes additively unless a dated `PassBook-Version` carries the change (`docs/api/versions.json`). Send `PassBook-Version: 2026-11-22` to opt in to every dated change (`2026-11-20` for the first only); without it behaviour is unchanged, and an unlisted date answers `422 API_VERSION_UNKNOWN`. `info.version` in the reference is the newest version date. A fix that stops a request from reaching more than it asked (a refused filter, say) ships to every client without a version and is listed as breaking in the changelog.
 
 - **Unreleased, managed Apple identities**: `GET /wallet-identities`, `POST /orgs/{orgId}/identities/apple`
   (202, `Idempotency-Key`, needs the `identity.managed` feature), `POST /identities/{id}/renew`,

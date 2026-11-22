@@ -32,11 +32,18 @@ export const refreshPredicate = `org_id = ? AND mode = ? AND status = ? AND vers
   AND credential_generation = ? AND lifecycle_generation = ?
   AND template_id = ? AND template_version = ? AND release_id IS ?
   AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = passes.id AND t.state = 'pending')
-  AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = passes.org_id AND o.status = 'active')
-  AND ((connection_id IS NULL AND external_ref IS NULL AND ? IS NULL AND ? IS NULL)
-    OR (mode = 'live' AND status = 'active' AND connection_id IS NOT NULL AND external_ref IS NOT NULL
-      AND EXISTS (SELECT 1 FROM connections c WHERE c.id = passes.connection_id
-        AND c.org_id = passes.org_id AND c.enabled = 1 AND c.generation = ? AND c.mode = ?)))`;
+  AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = passes.org_id AND o.status = 'active')`;
+
+/** A connector-bound pass must still be live, active and on its enabled connection; an unbound one has none. */
+export function refreshConnectionFence(snapshot: RefreshSnapshot): string {
+  if (snapshot.connectionId === null)
+    return snapshot.generation === null && snapshot.connectionMode === null
+      ? 'AND connection_id IS NULL AND external_ref IS NULL'
+      : 'AND 0';
+  return `AND mode = 'live' AND status = 'active' AND connection_id IS NOT NULL AND external_ref IS NOT NULL
+    AND EXISTS (SELECT 1 FROM connections c WHERE c.id = passes.connection_id
+      AND c.org_id = passes.org_id AND c.enabled = 1 AND c.generation = ? AND c.mode = ?)`;
+}
 
 export function refreshParams(snapshot: RefreshSnapshot): SqlValue[] {
   return [
@@ -54,10 +61,7 @@ export function refreshParams(snapshot: RefreshSnapshot): SqlValue[] {
     snapshot.templateId,
     snapshot.templateVersion,
     snapshot.releaseId,
-    snapshot.generation,
-    snapshot.connectionMode,
-    snapshot.generation,
-    snapshot.connectionMode,
+    ...(snapshot.connectionId === null ? [] : [snapshot.generation, snapshot.connectionMode]),
   ];
 }
 
