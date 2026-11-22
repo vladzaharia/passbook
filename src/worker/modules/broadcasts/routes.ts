@@ -15,7 +15,6 @@ import {
   SendBroadcastSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
-import { handleError } from '../../platform/error-handler.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
@@ -87,8 +86,6 @@ async function scopeOf(
 
 /** /api/v1/broadcasts: messages and scheduled changes for the passes a target matches. */
 export const broadcastsRoutes = createRouter();
-// A target key no filter takes is named by its own code; the app's handler renders everything else.
-broadcastsRoutes.onError((error, c) => handleError(unsupportedFilter(error) ?? error, c));
 guard(broadcastsRoutes, requireTenantSessionOrApiKey('messages:write'));
 
 register(
@@ -131,6 +128,7 @@ register(
     method: 'post',
     path: '/',
     codes: ['BROADCAST_UNSUPPORTED_FILTER'],
+    invalid: unsupportedFilter,
     summary: 'Save, send or schedule a message or change (Idempotency-Key)',
     body: CreateBroadcastBodySchema,
     status: 201,
@@ -183,6 +181,7 @@ register(
     method: 'post',
     path: '/preview',
     codes: ['BROADCAST_UNSUPPORTED_FILTER'],
+    invalid: unsupportedFilter,
     summary: 'Count the passes a target matches',
     body: ChangePreviewBodySchema,
     response: ChangeRunPreviewSchema,
@@ -262,6 +261,7 @@ register(
     method: 'patch',
     path: '/{id}',
     codes: ['BROADCAST_UNSUPPORTED_FILTER'],
+    invalid: unsupportedFilter,
     summary: 'Edit a draft or a scheduled message that has not started',
     params: IdParamSchema,
     body: UpdateBroadcastBodySchema,

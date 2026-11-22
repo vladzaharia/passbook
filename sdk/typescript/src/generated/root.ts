@@ -2,6 +2,7 @@
 import type { Core } from '../core.ts';
 import { ApiKeysResource } from './resources/api-keys.ts';
 import { BrandResource } from './resources/brand.ts';
+import { BroadcastsResource } from './resources/broadcasts.ts';
 import { BundlesResource } from './resources/bundles.ts';
 import { ConnectionsResource } from './resources/connections.ts';
 import { ConnectorsResource } from './resources/connectors.ts';
@@ -35,6 +36,7 @@ import { WebhookEndpointsResource } from './resources/webhook-endpoints.ts';
 export class Resources {
   readonly apiKeys: ApiKeysResource;
   readonly brand: BrandResource;
+  readonly broadcasts: BroadcastsResource;
   readonly bundles: BundlesResource;
   readonly connections: ConnectionsResource;
   readonly connectors: ConnectorsResource;
@@ -66,6 +68,7 @@ export class Resources {
   constructor(core: Core) {
     this.apiKeys = new ApiKeysResource(core);
     this.brand = new BrandResource(core);
+    this.broadcasts = new BroadcastsResource(core);
     this.bundles = new BundlesResource(core);
     this.connections = new ConnectionsResource(core);
     this.connectors = new ConnectorsResource(core);

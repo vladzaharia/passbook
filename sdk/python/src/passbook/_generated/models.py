@@ -68,6 +68,8 @@ __all__ = [
     "BroadcastTargetScan1",
     "BroadcastTargetScan2",
     "BroadcastUndo",
+    "BroadcastsCancelResult",
+    "BroadcastsCountRecipientsBody",
     "BroadcastsCountRecipientsParams",
     "BroadcastsCountRecipientsParamsTarget",
     "BroadcastsCountRecipientsParamsTargetMatchItem1",
@@ -76,6 +78,11 @@ __all__ = [
     "BroadcastsCountRecipientsParamsTargetMatchItem4",
     "BroadcastsCountRecipientsParamsTargetScan1",
     "BroadcastsCountRecipientsParamsTargetScan2",
+    "BroadcastsCountRecipientsResult",
+    "BroadcastsCountRecipientsResultBlockedItem",
+    "BroadcastsCountRecipientsResultSamplesItem",
+    "BroadcastsCountRecipientsResultSamplesItemChangesItem",
+    "BroadcastsCreateBody",
     "BroadcastsCreateParams",
     "BroadcastsCreateParamsTarget",
     "BroadcastsCreateParamsTargetMatchItem1",
@@ -84,7 +91,19 @@ __all__ = [
     "BroadcastsCreateParamsTargetMatchItem4",
     "BroadcastsCreateParamsTargetScan1",
     "BroadcastsCreateParamsTargetScan2",
+    "BroadcastsCreateResult",
+    "BroadcastsListResult",
+    "BroadcastsRecipientsListItem",
+    "BroadcastsRecipientsListResult",
+    "BroadcastsRecipientsListResultItemsItem",
+    "BroadcastsRetrieveResult",
+    "BroadcastsRetryResult",
+    "BroadcastsSendBody",
     "BroadcastsSendParams",
+    "BroadcastsSendResult",
+    "BroadcastsStopResult",
+    "BroadcastsUndoResult",
+    "BroadcastsUpdateBody",
     "BroadcastsUpdateParams",
     "BroadcastsUpdateParamsTarget",
     "BroadcastsUpdateParamsTargetMatchItem1",
@@ -93,6 +112,7 @@ __all__ = [
     "BroadcastsUpdateParamsTargetMatchItem4",
     "BroadcastsUpdateParamsTargetScan1",
     "BroadcastsUpdateParamsTargetScan2",
+    "BroadcastsUpdateResult",
     "BulkRun",
     "BulkRunsCurrentResult",
     "BulkRunsRetrieveResult",
@@ -1769,6 +1789,33 @@ class BroadcastsCountRecipientsParamsTargetScan1(_Model):
 class BroadcastsCountRecipientsParamsTargetScan2(_Model):
     noScanDays: int
 
+class BroadcastsCountRecipientsResult(_Model):
+    targeted: int
+    onDevice: int
+    overBudget: int
+    limit: int
+    samples: _List[BroadcastsCountRecipientsResultSamplesItem]
+    unchanged: int
+    blocked: _List[BroadcastsCountRecipientsResultBlockedItem]
+    notified: int
+    silent: int
+    estimated: bool | None = None
+
+class BroadcastsCountRecipientsResultBlockedItem(_Model):
+    code: str
+    count: int
+
+class BroadcastsCountRecipientsResultSamplesItem(_Model):
+    passId: str
+    title: str | None
+    changes: _List[BroadcastsCountRecipientsResultSamplesItemChangesItem]
+
+class BroadcastsCountRecipientsResultSamplesItemChangesItem(_Model):
+    key: str
+    label: str
+    from_: str | None = _Field(alias="from")
+    to: str | None
+
 class BroadcastsCreateParams(_Model):
     orgId: str
     kind: _Literal["message", "change"] | str
@@ -1819,6 +1866,28 @@ class BroadcastsCreateParamsTargetScan1(_Model):
 
 class BroadcastsCreateParamsTargetScan2(_Model):
     noScanDays: int
+
+class BroadcastsListResult(_Model):
+    items: _List[Broadcast]
+    nextCursor: str | None
+
+class BroadcastsRecipientsListItem(_Model):
+    passId: str
+    title: str | None
+    holderEmail: str | None
+    outcome: _Literal["updated", "unchanged", "failed"] | str
+    silent: bool
+
+class BroadcastsRecipientsListResult(_Model):
+    items: _List[BroadcastsRecipientsListResultItemsItem]
+    nextCursor: str | None
+
+class BroadcastsRecipientsListResultItemsItem(_Model):
+    passId: str
+    title: str | None
+    holderEmail: str | None
+    outcome: _Literal["updated", "unchanged", "failed"] | str
+    silent: bool
 
 class BroadcastsSendParams(_Model):
     at: int | None = None
@@ -9768,6 +9837,30 @@ BrandWebLogoDeleteResult = Org
 BrandWebLogoUploadBody = BrandWebLogoUploadParams
 
 BrandWebLogoUploadResult = Org
+
+BroadcastsCancelResult = Broadcast
+
+BroadcastsCountRecipientsBody = BroadcastsCountRecipientsParams
+
+BroadcastsCreateBody = BroadcastsCreateParams
+
+BroadcastsCreateResult = Broadcast
+
+BroadcastsRetrieveResult = Broadcast
+
+BroadcastsRetryResult = Broadcast
+
+BroadcastsSendBody = BroadcastsSendParams
+
+BroadcastsSendResult = Broadcast
+
+BroadcastsStopResult = Broadcast
+
+BroadcastsUndoResult = BroadcastUndo
+
+BroadcastsUpdateBody = BroadcastsUpdateParams
+
+BroadcastsUpdateResult = Broadcast
 
 BulkRunsCurrentResult = CurrentBulkRun
 

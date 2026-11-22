@@ -1,7 +1,7 @@
 import type { RouteConfig } from '@hono/zod-openapi';
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import type { Context, MiddlewareHandler } from 'hono';
-import type { ZodType, z } from 'zod';
+import type { ZodError, ZodType, z } from 'zod';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
 import { scopeExercises } from './api-scopes.ts';
 import { authorityUnproven, type RouteAuth, requireCaller } from './auth.ts';
@@ -52,6 +52,8 @@ export interface RouteSpec {
    * from the handler's call graph by `npm run gen`). Read by that tool, not at runtime.
    */
   codes?: readonly string[];
+  /** Names a validation failure of this route's request with its own error; undefined keeps the generic 422. */
+  invalid?: (error: ZodError) => AppError | undefined;
 }
 
 const publicHandlers = new WeakSet<object>();
@@ -188,7 +190,16 @@ export function register<S extends RouteSpec>(
     return response;
   };
   if (spec.public) publicHandlers.add(checked);
-  router.openapi(createRoute(config), checked as never);
+  const { invalid } = spec;
+  router.openapi(
+    createRoute(config),
+    checked as never,
+    invalid
+      ? (result) => {
+          if (!result.success) throw invalid(result.error) ?? result.error;
+        }
+      : undefined,
+  );
 }
 
 /** Applies a middleware to every route of a router. */

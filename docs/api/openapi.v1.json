@@ -76388,6 +76388,11 @@
         },
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -76395,6 +76400,8 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_REQUIRED",
           "ORG_TEST_ONLY",
@@ -76665,6 +76672,11 @@
         "description": "Saves, sends or schedules a message or a change run. A change sets inputs on many passes: one target (`templateIds` with filters, `passIds` up to 5,000, or the `importId` of an ended import), `patch` operations (`set`, `clear`, `shift`, `add`, or `$void` or `$design` alone) and an optional `message` for the lock screen (needs `notify`). `target.expectCount` is the count a preview showed: when the server's count differs by more than 2% the run does not start and the answer is 409 `SELECTION_CHANGED`. More than 20,000 passes is 422 `MATCH_TOO_BROAD`. Filters the target does not know are ignored. Needs `messages:write` and, for a change, `passes:write`. Send an `Idempotency-Key`; the same key and body returns the same run.",
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -76699,6 +76711,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_NOT_ENDED",
           "IMPORT_NOT_FOUND",
+          "INVALID_API_KEY",
           "MATCH_TOO_BROAD",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -76997,6 +77010,11 @@
         "description": "Counts the passes a target matches. With `patch` (and `notify`) it also previews a change: up to 20 sample passes with their field changes, passes already at the new values, passes it cannot change by reason, and how many holders would be told. Samples show each pass's own values, so a key needs passes:read. Counts and samples come from the 200 newest passes of the target and who is told is an estimate (`estimated`). It is the dry run of a change: it takes the same `target` and `patch` as `POST /broadcasts` and changes nothing. An input the template lacks gives empty `changes`; the run refuses it. Over 20,000 passes is 422 `MATCH_TOO_BROAD`.",
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -77014,6 +77032,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_NOT_ENDED",
           "IMPORT_NOT_FOUND",
+          "INVALID_API_KEY",
           "MATCH_TOO_BROAD",
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
@@ -77123,6 +77142,11 @@
         "description": "One message or change with its progress. A run's `state` goes `scheduled`, `sending`, then `sent`, `partial`, `failed` or `cancelled`; `counts` fills in as chunks finish.",
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -77131,6 +77155,8 @@
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -77195,6 +77221,11 @@
         },
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -77221,6 +77252,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_NOT_ENDED",
           "IMPORT_NOT_FOUND",
+          "INVALID_API_KEY",
           "MATCH_TOO_BROAD",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -77298,6 +77330,11 @@
         },
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -77309,6 +77346,7 @@
           "BROADCAST_TOO_FAR",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_MISMATCH",
           "NOT_FOUND",
@@ -77367,6 +77405,11 @@
         },
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -77376,6 +77419,7 @@
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_MISMATCH",
           "NOT_FOUND",
@@ -77446,6 +77490,11 @@
         },
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -77471,6 +77520,7 @@
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_NOT_ENDED",
           "IMPORT_NOT_FOUND",
+          "INVALID_API_KEY",
           "MATCH_TOO_BROAD",
           "MESSAGING_UNSUPPORTED",
           "MISSING_SCOPE",
@@ -77627,6 +77677,11 @@
         },
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -77635,6 +77690,7 @@
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
@@ -77699,6 +77755,11 @@
         "description": "Undoes a change run for 24 hours after it ends, as a silent background run. Each pass gets back the inputs the change touched, but only while they still hold the value the change set: a pass edited since keeps its edit, and any other input it holds. Nothing notifies. Asking again returns the same undo; one that ended on an error runs again. A run that is still sending must be stopped first. Read the result from GET /broadcasts/{id} on the returned `id`.",
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -77709,6 +77770,7 @@
           "BROADCAST_UNDO_EXPIRED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_MISMATCH",
           "NOT_FOUND",
@@ -77801,6 +77863,11 @@
         "description": "Stops a sending message or change after its current chunk of passes. The run ends cancelled with errorCode BROADCAST_STOPPED, and what it already changed stays (a change can still be undone). Asking twice is the same ask.",
         "security": [
           {
+            "apiKey": [
+              "messages:write"
+            ]
+          },
+          {
             "session": []
           }
         ],
@@ -77810,6 +77877,7 @@
           "BROADCAST_NOT_SENDING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "MISSING_SCOPE",
           "MODE_MISMATCH",
           "NOT_FOUND",

@@ -447,6 +447,10 @@ type BroadcastUndo struct {
 	Kept       int64  `json:"kept"`
 }
 
+type BroadcastsCancelResult = Broadcast
+
+type BroadcastsCountRecipientsBody = BroadcastsCountRecipientsParams
+
 type BroadcastsCountRecipientsParams struct {
 	OrgID   string                                `json:"orgId"`
 	Target  BroadcastsCountRecipientsParamsTarget `json:"target"`
@@ -500,6 +504,39 @@ type BroadcastsCountRecipientsParamsTargetScan1 struct {
 type BroadcastsCountRecipientsParamsTargetScan2 struct {
 	NoScanDays int64 `json:"noScanDays"`
 }
+
+type BroadcastsCountRecipientsResult struct {
+	Targeted   int64                                        `json:"targeted"`
+	OnDevice   int64                                        `json:"onDevice"`
+	OverBudget int64                                        `json:"overBudget"`
+	Limit      int64                                        `json:"limit"`
+	Samples    []BroadcastsCountRecipientsResultSamplesItem `json:"samples"`
+	Unchanged  int64                                        `json:"unchanged"`
+	Blocked    []BroadcastsCountRecipientsResultBlockedItem `json:"blocked"`
+	Notified   int64                                        `json:"notified"`
+	Silent     int64                                        `json:"silent"`
+	Estimated  *bool                                        `json:"estimated,omitempty"`
+}
+
+type BroadcastsCountRecipientsResultBlockedItem struct {
+	Code  string `json:"code"`
+	Count int64  `json:"count"`
+}
+
+type BroadcastsCountRecipientsResultSamplesItem struct {
+	PassID  string                                                  `json:"passId"`
+	Title   *string                                                 `json:"title"`
+	Changes []BroadcastsCountRecipientsResultSamplesItemChangesItem `json:"changes"`
+}
+
+type BroadcastsCountRecipientsResultSamplesItemChangesItem struct {
+	Key   string  `json:"key"`
+	Label string  `json:"label"`
+	From  *string `json:"from"`
+	To    *string `json:"to"`
+}
+
+type BroadcastsCreateBody = BroadcastsCreateParams
 
 type BroadcastsCreateParams struct {
 	OrgID      string                       `json:"orgId"`
@@ -560,9 +597,53 @@ type BroadcastsCreateParamsTargetScan2 struct {
 	NoScanDays int64 `json:"noScanDays"`
 }
 
+type BroadcastsCreateResult = Broadcast
+
+type BroadcastsListQuery struct {
+	Cursor   *string `json:"cursor,omitempty"`
+	Limit    *int64  `json:"limit,omitempty"`
+	State    *string `json:"state,omitempty"`
+	Origin   *string `json:"origin,omitempty"`
+	Kind     *string `json:"kind,omitempty"`
+	ParentID *string `json:"parentId,omitempty"`
+	RetryOf  *string `json:"retryOf,omitempty"`
+}
+
+type BroadcastsRecipientsListItem struct {
+	PassID      string  `json:"passId"`
+	Title       *string `json:"title"`
+	HolderEmail *string `json:"holderEmail"`
+	Outcome     string  `json:"outcome"`
+	Silent      bool    `json:"silent"`
+}
+
+type BroadcastsRecipientsListQuery struct {
+	Cursor  *string `json:"cursor,omitempty"`
+	Limit   *int64  `json:"limit,omitempty"`
+	Outcome *string `json:"outcome,omitempty"`
+}
+
+type BroadcastsRetrieveResult = Broadcast
+
+type BroadcastsRetryQuery struct {
+	ExpectCount *int64 `json:"expectCount,omitempty"`
+}
+
+type BroadcastsRetryResult = Broadcast
+
+type BroadcastsSendBody = BroadcastsSendParams
+
 type BroadcastsSendParams struct {
 	At *int64 `json:"at,omitempty"`
 }
+
+type BroadcastsSendResult = Broadcast
+
+type BroadcastsStopResult = Broadcast
+
+type BroadcastsUndoResult = BroadcastUndo
+
+type BroadcastsUpdateBody = BroadcastsUpdateParams
 
 type BroadcastsUpdateParams struct {
 	OrgID      string                       `json:"orgId"`
@@ -622,6 +703,8 @@ type BroadcastsUpdateParamsTargetScan1 struct {
 type BroadcastsUpdateParamsTargetScan2 struct {
 	NoScanDays int64 `json:"noScanDays"`
 }
+
+type BroadcastsUpdateResult = Broadcast
 
 type BulkRun struct {
 	ID            string           `json:"id"`
