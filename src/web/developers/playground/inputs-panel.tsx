@@ -30,12 +30,15 @@ export function InputsPanel(props: {
 }) {
   const { template, templates, values, mode, link } = props;
   const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(copyTimer.current), []);
   const own = templates.filter((t) => t.issuable);
   const starters = templates.filter((t) => !t.issuable);
   const copyLink = async () => {
     if (!(await copyToClipboard(location.href))) return;
     setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
+    clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setCopied(false), 1600);
   };
   return (
     <section className="edit" aria-label="Inputs">
