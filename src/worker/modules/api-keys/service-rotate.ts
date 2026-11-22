@@ -5,8 +5,14 @@ import { getKey, keyResources } from './repo.ts';
 import { createKey } from './repo-create.ts';
 import { terminalsOf } from './repo-family.ts';
 import type { ApiKeyRow } from './repo-row.ts';
+import { assertSandboxCeiling } from './sandbox-ceiling.ts';
 import { reachable } from './service.ts';
-import { assertScanningAdminKey, invalid, newSecret } from './service-create.ts';
+import {
+  assertOrgBoundScopes,
+  assertScanningAdminKey,
+  invalid,
+  newSecret,
+} from './service-create.ts';
 import type { ApiKeyDto } from './service-dto.ts';
 import { parseScopes, type Resources, toDto } from './service-dto.ts';
 
@@ -62,7 +68,10 @@ export async function rotateApiKey(
       .filter((r) => r.kind === 'pass_style')
       .map((r) => r.value) as Resources['passStyles'],
   };
+  // A key made before the ceiling held keeps no successor: make a new one.
+  await assertSandboxCeiling(ctx.env.DB, old.org_id, parseScopes(old.scopes));
   assertScanningAdminKey(parseScopes(old.scopes), old.kind, old.mode);
+  assertOrgBoundScopes(parseScopes(old.scopes), old.kind);
   const { prefix, label, secret, hash } = await newSecret(ctx, old.kind, old.mode);
   const row: ApiKeyRow = {
     ...old,

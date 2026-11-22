@@ -42,17 +42,7 @@ export async function bundleMembers(
   const binding = await bindBundle(ctx.env, snapshot, '');
   const bundleToken = await revealToken(ctx.env, 'bundle', bundle.id, bundle.org_id, bundle.token);
   const members = await Promise.all(
-    snapshot.passes.map(async (pass) => {
-      const model = await pageModel(ctx, pass);
-      const passToken = await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
-      const assets = Object.fromEntries(
-        Object.entries(model.assets).flatMap(([name, path]) => {
-          const own = bundleAssetPath(path, passToken, bundleToken, pass.id);
-          return own === null ? [] : [[name, own]];
-        }),
-      );
-      return { pass, model: { ...model, assets } };
-    }),
+    snapshot.passes.map((pass) => bundleMember(ctx, bundleToken, pass)),
   );
   const current = await bundleEmailSnapshot(ctx.env.DB, bundle.id);
   if (!current || !(await matchesBundle(ctx.env, current, binding))) throw notFound();
@@ -62,6 +52,23 @@ export async function bundleMembers(
     members.map((member) => member.pass),
   );
   return members;
+}
+
+/** A member's page model, its images under the bundle's own paths: no pass link in anything it holds. */
+export async function bundleMember(
+  ctx: ServiceContext,
+  bundleToken: string,
+  pass: Pass,
+): Promise<BundleMember> {
+  const model = await pageModel(ctx, pass);
+  const passToken = await revealToken(ctx.env, 'pass', pass.id, pass.orgId, pass.downloadToken);
+  const assets = Object.fromEntries(
+    Object.entries(model.assets).flatMap(([name, path]) => {
+      const own = bundleAssetPath(path, passToken, bundleToken, pass.id);
+      return own === null ? [] : [[name, own]];
+    }),
+  );
+  return { pass, model: { ...model, assets } };
 }
 
 /** A pass of this bundle (any state); anything else reads as a dead link. */

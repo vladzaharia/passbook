@@ -158,31 +158,22 @@ async function fromNameRefusal(ctx: ServiceContext, name: string): Promise<strin
   return checked.ok ? null : checked.error;
 }
 
-/** `null` resets a key to its default. Unknown keys and invalid values reject the whole request. */
-export async function updateSettings(
+/**
+ * The values of one save, checked: unknown keys, invalid values, and the platform and plan gates.
+ * `null` resets a key to its default (a delete). Nothing is written.
+ */
+export async function checkValues(
   ctx: ServiceContext,
-  actor: Actor,
-  input: { scope: string; values: Record<string, unknown>; configRevision?: number | undefined },
-  authority?: SettingsAuthority,
-  admin?: SettingsAdmin,
-): Promise<SettingEntry[]> {
-  const { scope } = input;
+  scope: string,
+  values: Record<string, unknown>,
+): Promise<{ upserts: Record<string, unknown>; deletes: string[] }> {
   const orgId = orgIdOfScope(scope);
-  if (
-    authority &&
-    (authority.kind !== 'session' ||
-      authority.orgId !== orgId ||
-      authority.capability !== 'org:manage' ||
-      actor.type !== 'user' ||
-      actor.id !== authority.userId)
-  )
-    throw new ForbiddenError();
   await assertScope(ctx, scope);
   const registry = registryFor(scope);
   const issues: { path: string; message: string; code?: string }[] = [];
   const upserts: Record<string, unknown> = {};
   const deletes: string[] = [];
-  for (const [key, raw] of Object.entries(input.values)) {
+  for (const [key, raw] of Object.entries(values)) {
     const def = registry.get(key);
     if (!def) {
       issues.push({ path: key, message: 'Unknown setting.', code: 'unknown_setting' });
@@ -210,6 +201,29 @@ export async function updateSettings(
   // The plan comes after the platform: a write the plan blocks is a 403 naming the feature, not a field error.
   const planned = plan === null ? null : planGateIssue(plan, upserts, deletes);
   if (planned) throw new FeatureNotIncludedError(planned.key, featureNotIncluded(planned.key));
+  return { upserts, deletes };
+}
+
+/** `null` resets a key to its default. Unknown keys and invalid values reject the whole request. */
+export async function updateSettings(
+  ctx: ServiceContext,
+  actor: Actor,
+  input: { scope: string; values: Record<string, unknown>; configRevision?: number | undefined },
+  authority?: SettingsAuthority,
+  admin?: SettingsAdmin,
+): Promise<SettingEntry[]> {
+  const { scope } = input;
+  const orgId = orgIdOfScope(scope);
+  if (
+    authority &&
+    (authority.kind !== 'session' ||
+      authority.orgId !== orgId ||
+      authority.capability !== 'org:manage' ||
+      actor.type !== 'user' ||
+      actor.id !== authority.userId)
+  )
+    throw new ForbiddenError();
+  const { upserts, deletes } = await checkValues(ctx, scope, input.values);
   // Bounds against the platform maximum, and the floors that delay a shortening (retention keys only).
   const retention = await planRetentionChange(ctx, scope, upserts, deletes);
   const [first] = retention.issues;

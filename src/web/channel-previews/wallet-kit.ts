@@ -35,7 +35,7 @@ export function compileWallets(
 ): WalletTargetOut {
   const manifest = source.manifest as unknown as TemplateManifest;
   const now = where.now ?? new Date();
-  const urls = assetUrlMap(source.assetBaseUrl, source.assetNames);
+  const urls = source.assetUrls ?? assetUrlMap(source.assetBaseUrl, source.assetNames);
   const previewOnly = new Set(manifest.previewOnlyAssets ?? []);
   const known = new Map(source.assets.map((a) => [a.name, a]));
   const shipped: ShippedAsset[] = source.assetNames

@@ -116,15 +116,17 @@ export function FrontPass(props: FrontPassProps) {
           ) : null}
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {off ? null : <RefreshIconButton refresh={refresh} className="@max-[20rem]:hidden" />}
-            <PassMoreMenu
-              passId={pass.id}
-              passTitle={name}
-              publicUrl={off ? null : publicUrl}
-              inWallet={pass.inWallet}
-              showQr={!qr}
-              {...(onRemoved ? { onRemoved } : {})}
-              {...(off ? {} : { refresh })}
-            />
+            {pass.readOnly ? null : (
+              <PassMoreMenu
+                passId={pass.id}
+                passTitle={name}
+                publicUrl={off ? null : publicUrl}
+                inWallet={pass.inWallet}
+                showQr={!qr}
+                {...(onRemoved ? { onRemoved } : {})}
+                {...(off ? {} : { refresh })}
+              />
+            )}
           </div>
         </div>
       </div>

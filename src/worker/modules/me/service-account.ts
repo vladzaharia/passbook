@@ -1,3 +1,4 @@
+import { ACCOUNT_COPY } from '../../../shared/copy/account.ts';
 import { knownEmail, strictEmail } from '../../../shared/email.ts';
 import { isStrongAmr } from '../../../shared/sign-in.ts';
 import type { Amr } from '../../platform/auth.ts';
@@ -58,6 +59,8 @@ export async function removeMyEmail(ctx: ServiceContext, userId: string, rawEmai
     throw new ConflictError('The primary email cannot be removed.', 'PRIMARY_EMAIL');
   }
   if (!(await repo.removeEmail(ctx.env.DB, userId, email))) {
+    if (await repo.hasEmail(ctx.env.DB, userId, email))
+      throw new ConflictError(ACCOUNT_COPY.addAnotherFirst, 'LAST_EMAIL');
     throw new NotFoundError('Email not found.', 'EMAIL_NOT_FOUND');
   }
   await recordAudit(ctx, {

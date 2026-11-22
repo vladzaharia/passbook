@@ -13,6 +13,8 @@ export interface BoundStaff {
   role: ScanRole;
   /** Monotonic staff revision, used to fence authorizations against changes. */
   updatedAt: number;
+  /** The person has not taken the new PIN the server set: nothing but the reset goes through. */
+  pinResetRequired: boolean;
 }
 
 /** True when a signed-in person's binding ran out: 15 minutes idle or 12 hours. */
@@ -37,6 +39,8 @@ export async function boundStaff(
     staff.id !== scanner.staffId ||
     staff.orgId !== scanner.orgId ||
     staff.disabledAt !== null ||
+    // A PIN set after this sign-in began (an admin reset, or the person's own) ends it everywhere else.
+    staff.pinSetAt > (scanner.staffSince ?? 0) ||
     bindingExpired(scanner, now)
   ) {
     await unbindStaff(ctx, scanner);
@@ -44,5 +48,11 @@ export async function boundStaff(
   }
   if ((scanner.staffSeenAt ?? 0) <= now - STAFF_TOUCH_EVERY_MS)
     await touchStaff(ctx.env.DB, scanner, now, STAFF_TOUCH_EVERY_MS);
-  return { id: staff.id, name: staff.name, role: staff.role, updatedAt: staff.updatedAt };
+  return {
+    id: staff.id,
+    name: staff.name,
+    role: staff.role,
+    updatedAt: staff.updatedAt,
+    pinResetRequired: staff.pinResetRequired,
+  };
 }

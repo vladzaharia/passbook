@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { cn } from '@/web/lib/cn.ts';
 import { FormField, Input } from '@/web/ui/index.ts';
 import { HEX, hexOf } from './branding.ts';
@@ -20,6 +21,7 @@ export function ColorField({
   error,
   help,
   empty,
+  tag,
 }: {
   label: string;
   value: string;
@@ -30,10 +32,25 @@ export function ColorField({
   onChange: (value: string) => void;
   error?: string | undefined;
   help?: string | undefined;
+  /** Beside the label: who set the value. */
+  tag?: ReactNode;
 }) {
   const set = HEX.test(value);
   return (
-    <FormField label={label} error={error} help={help}>
+    <FormField
+      label={
+        tag ? (
+          <span className="flex items-center justify-between gap-2">
+            {label}
+            {tag}
+          </span>
+        ) : (
+          label
+        )
+      }
+      error={error}
+      help={help}
+    >
       {(p) => (
         <div className="flex items-center gap-2">
           <span className="relative shrink-0">

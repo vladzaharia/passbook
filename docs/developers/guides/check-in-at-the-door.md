@@ -21,7 +21,7 @@ A till reads the code the pass's barcode carries. It is `passJson.barcodes[0].me
 
 ## Call the till
 
-A till call needs a key bound to a terminal, and names the terminal in `x-passbook-device`. Terminals belong to Scanning in an organization: a sandbox has none. Its key gets `422 DEVICE_REQUIRED` without the header and `404 TERMINAL_NOT_FOUND` with one. Run these with a till key from your organization.
+A till call needs a key bound to a terminal, and names the terminal in `x-passbook-device`. Terminals belong to Scanning in an organization, and a sandbox key never holds `scans:write`: its till calls get `403 MISSING_SCOPE`. Run these with a till key from your organization.
 
 {{show door-check-in}}
 

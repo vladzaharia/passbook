@@ -799,6 +799,33 @@ func newOrgsResource(c *core) *OrgsResource {
 	}
 }
 
+// RetrievePassSetup Read an organization's brand, channels and accounts in the caller's mode `GET /api/v1/orgs/{orgId}/pass-setup`
+func (r *OrgsResource) RetrievePassSetup(ctx context.Context, orgId string, opts ...RequestOption) (*OrgsRetrievePassSetupResult, error) {
+	var out OrgsRetrievePassSetupResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/orgs/" + pathEscape(orgId) + "/pass-setup"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// StageBrandAsset Stage a logo, icon or web logo PNG; a later pass-setup save names it by its sha `POST /api/v1/orgs/{orgId}/brand-assets`
+func (r *OrgsResource) StageBrandAsset(ctx context.Context, orgId string, body *OrgsStageBrandAssetBody, opts ...RequestOption) (*OrgsStageBrandAssetResult, error) {
+	var out OrgsStageBrandAssetResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/orgs/" + pathEscape(orgId) + "/brand-assets", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// UpdatePassSetup Change an organization's brand and which channels it allows; dryRun answers with the impact (Idempotency-Key on an apply) `PATCH /api/v1/orgs/{orgId}/pass-setup`
+func (r *OrgsResource) UpdatePassSetup(ctx context.Context, orgId string, body *OrgsUpdatePassSetupBody, query *OrgsUpdatePassSetupQuery, opts ...RequestOption) (*OrgsUpdatePassSetupResult, error) {
+	var out OrgsUpdatePassSetupResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/orgs/" + pathEscape(orgId) + "/pass-setup", query: queryValues(query), body: body, idempotent: true}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type PassImportsMappingsResource struct {
 	c *core
 }

@@ -1,5 +1,6 @@
 import { MINTABLE_SCOPES } from '@/shared/contracts/api-keys.ts';
-import { Checkbox, Label } from '@/web/ui/index.ts';
+import { presetsWithin } from '@/shared/developers-keys.ts';
+import { Button, Checkbox, Label } from '@/web/ui/index.ts';
 import { SCOPE_LABEL, useTerminals } from './queries.ts';
 
 export const SCOPES = MINTABLE_SCOPES;
@@ -28,6 +29,19 @@ export function ScopeRows({
           *
         </span>
       </legend>
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        {presetsWithin(offered).map((p) => (
+          <Button
+            key={p.id}
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => onChange([...p.scopes])}
+          >
+            {p.label}
+          </Button>
+        ))}
+      </div>
       <ul className="divide-y divide-border rounded-md border border-border-strong">
         {offered.map((s, i) => {
           const id = `scope-${s.replace(':', '-')}`;

@@ -71,7 +71,8 @@ export function SessionsSection() {
         {query.data ? (
           <div className="wl-sessions" data-leaving={leaving || undefined}>
             <SessionList
-              items={query.data.items}
+              items={[...query.data.items].sort((a, b) => Number(b.current) - Number(a.current))}
+              revokeLabel="Sign out"
               onRevoke={(id) => revoke.mutate(id)}
               {...(revoke.isPending && revoke.variables ? { revoking: revoke.variables } : {})}
             />

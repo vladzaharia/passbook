@@ -1,16 +1,10 @@
 import { Link } from '@tanstack/react-router';
-import type { z } from 'zod';
 import type { OrgMembership } from '@/shared/contracts/org-membership.ts';
-import type { OrgSummarySchema } from '@/shared/contracts/orgs.ts';
 import { isApiError } from '@/web/lib/errors.ts';
 import {
   Button,
   Callout,
-  Card,
-  CardBody,
-  CardHeader,
   detailError,
-  KeyValue,
   PageHeader,
   SaveBarGroup,
   SkeletonDetail,
@@ -20,30 +14,6 @@ import { OrgFacts } from './org-facts.tsx';
 import { OrgForm } from './org-form.tsx';
 import { OrgStatus } from './orgs-page.tsx';
 import { useOrgWorkspace } from './queries.ts';
-
-type Workspace = z.infer<typeof OrgSummarySchema>;
-
-function ReadOnlyBranding({ org }: { org: Workspace }) {
-  const colors = org.branding.passColors;
-  return (
-    <Card>
-      <CardHeader title="Pass branding" />
-      <CardBody>
-        <KeyValue
-          items={[
-            { label: 'Accent colour', value: org.branding.accent ?? 'Not set' },
-            { label: 'Background', value: colors?.background ?? 'Not set' },
-            { label: 'Foreground', value: colors?.foreground ?? 'Not set' },
-            { label: 'Label colour', value: colors?.label ?? 'Not set' },
-            { label: 'Logo', value: org.branding.logo ? 'Uploaded' : 'Not uploaded' },
-            { label: 'Icon', value: org.branding.icon ? 'Uploaded' : 'Not uploaded' },
-            { label: 'Logo includes name', value: org.branding.logoHasName ? 'Yes' : 'No' },
-          ]}
-        />
-      </CardBody>
-    </Card>
-  );
-}
 
 /** Mounted only after the URL and actual org:read membership have been validated. */
 export function OrgWorkspacePage({
@@ -57,7 +27,6 @@ export function OrgWorkspacePage({
 }) {
   const query = useOrgWorkspace(orgId);
   const canManage = membership.capabilities.includes('org:manage');
-  const canPreviewTemplates = membership.capabilities.includes('templates:read');
   if (query.isPending) {
     return (
       <>
@@ -120,17 +89,8 @@ export function OrgWorkspacePage({
           </Callout>
         ) : null}
         <OrgFacts org={org} />
-        {canManage ? (
-          <OrgForm org={org} canChooseIdentity={isAdmin} />
-        ) : (
-          <ReadOnlyBranding org={org} />
-        )}
-        <OrgSettingsSections
-          orgId={org.id}
-          version={org.updatedAt}
-          canManage={canManage}
-          canPreviewTemplates={canPreviewTemplates}
-        />
+        {canManage ? <OrgForm org={org} canChooseIdentity={isAdmin} /> : null}
+        <OrgSettingsSections orgId={org.id} canManage={canManage} />
       </div>
     </SaveBarGroup>
   );

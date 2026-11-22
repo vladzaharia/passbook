@@ -119,7 +119,7 @@ export interface ScannerStore {
   resolve(
     token: string,
     transport: 'cookie' | 'bearer',
-    meta?: { ipPrefix: string | null },
+    meta?: { ipPrefix: string | null; contact?: boolean },
   ): Promise<ScannerAuth | null>;
 }
 

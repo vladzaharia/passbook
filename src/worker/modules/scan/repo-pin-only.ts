@@ -43,6 +43,9 @@ export const pinOnlyGateStatements = (db: D1Database, orgId: string) => [
   ]),
 ];
 
+export const orgNameOf = (db: D1Database, orgId: string) =>
+  first<{ name: string }>(db, 'SELECT name FROM orgs WHERE id = ?', [orgId]);
+
 export const pinOnlyLockoutStatement = (db: D1Database, orgId: string, now: number) =>
   writeSystemValueStmt(db, LOCKOUT_KEY(orgId), { at: now }, now);
 

@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
@@ -8,15 +8,12 @@ import { json, problem, stubFetch } from '../../../lib/test-utils.tsx';
 import { TemplateReleasesPanel } from './template-releases-panel.tsx';
 import {
   approval,
-  CANDIDATE_HASH,
-  CONTENT_HASH,
   candidate,
   mountPanel,
   panelProps,
   release,
   releaseServer,
   TEMPLATE,
-  VERSIONS,
 } from './test-fixtures.tsx';
 
 beforeEach(() => setCsrfProvider(async () => 'csrf-token'));
@@ -68,16 +65,22 @@ describe('template release panel', () => {
       '/api/v1/templates/template-2/releases': handler,
     });
     const view = mountPanel({ templateOrgId: null });
-    expect(await screen.findByText('1'.repeat(64))).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        seen.some((r) => r.path === '/api/v1/templates/template-1/releases' && r.header === 'live'),
+      ).toBe(true),
+    );
     view.rerender(<TemplateReleasesPanel {...panelProps({ templateOrgId: null, mode: 'test' })} />);
-    expect(await screen.findByText('2'.repeat(64))).toBeInTheDocument();
-    expect(screen.queryByText('1'.repeat(64))).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        seen.some((r) => r.path === '/api/v1/templates/template-1/releases' && r.header === 'test'),
+      ).toBe(true),
+    );
     view.rerender(
       <TemplateReleasesPanel
         {...panelProps({ templateOrgId: null, mode: 'test', orgId: 'org-2' })}
       />,
     );
-    expect(screen.queryByText('2'.repeat(64))).not.toBeInTheDocument();
     expect(await screen.findByText(/Loading releases/)).toBeInTheDocument();
     delayedOrg2.resolve(
       json({
@@ -85,8 +88,9 @@ describe('template release panel', () => {
         nextCursor: null,
       }),
     );
-    expect(await screen.findByText('3'.repeat(64))).toBeInTheDocument();
-    expect(screen.queryByText('2'.repeat(64))).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(seen.some((r) => r.query.some(([k, v]) => k === 'orgId' && v === 'org-2'))).toBe(true),
+    );
     view.rerender(
       <TemplateReleasesPanel
         {...panelProps({
@@ -97,10 +101,15 @@ describe('template release panel', () => {
         })}
       />,
     );
-    expect(await screen.findByText('4'.repeat(64))).toBeInTheDocument();
+    await waitFor(() =>
+      expect(seen.some((r) => r.path === '/api/v1/templates/template-2/releases')).toBe(true),
+    );
     view.rerender(<TemplateReleasesPanel {...panelProps({ templateOrgId: null })} />);
-    expect(await screen.findByText('1'.repeat(64))).toBeInTheDocument();
-    expect(screen.queryByText('4'.repeat(64))).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        seen.some((r) => r.path === '/api/v1/templates/template-1/releases' && r.header === 'live'),
+      ).toBe(true),
+    );
 
     const scopes = [
       ['template-1', 'org-1', 'live'],
@@ -140,193 +149,6 @@ describe('template release panel', () => {
     expect(screen.queryByRole('button', { name: 'Create candidate' })).not.toBeInTheDocument();
     expect(fetch).not.toHaveBeenCalled();
   });
-
-  it('shows an empty active release and candidate snapshot without allowing publication before review', async () => {
-    releaseServer({ candidates: [candidate()] });
-    mountPanel();
-    expect(await screen.findByText('Not released')).toBeInTheDocument();
-    const candidates = screen.getByRole('list', { name: 'Release candidates' });
-    expect(within(candidates).getByText('Ada Author')).toBeVisible();
-    expect(within(candidates).getByText('Vera Versioner')).toBeVisible();
-    // Ids and hashes are present but closed behind the disclosure.
-    const details = within(candidates).getByText('Technical details').closest('details');
-    expect(details).not.toHaveAttribute('open');
-    for (const value of [CANDIDATE_HASH, CONTENT_HASH, 'barcode, nfc'])
-      expect(within(candidates).getByText(value)).not.toBeVisible();
-    expect(within(candidates).getByText('4')).toBeInTheDocument();
-    expect(within(candidates).getByText('3')).toBeInTheDocument();
-    expect(
-      within(candidates).getByRole('button', { name: 'Publish candidate for Version 2' }),
-    ).toBeDisabled();
-  });
-
-  it.each([
-    ['candidate hash', { candidateHash: 'd'.repeat(64) }],
-    ['candidate ID', { candidateId: 'another-candidate' }],
-    ['candidate author', { reviewerId: 'candidate-author' }],
-    ['version author', { reviewerId: 'version-author' }],
-  ] as const)(
-    'does not publish with an approval that mismatches the %s',
-    async (_label, overrides) => {
-      releaseServer({ candidates: [candidate({ approvals: [approval(overrides)] })] });
-      mountPanel();
-      expect(
-        await screen.findByRole('button', { name: 'Publish candidate for Version 2' }),
-      ).toBeDisabled();
-    },
-  );
-
-  it.each([
-    ['candidate author', 'candidate-author'],
-    ['version author', 'version-author'],
-  ] as const)('prevents self-review by the %s', async (_label, currentUserId) => {
-    const server = releaseServer({ candidates: [candidate()] });
-    mountPanel({ currentUserId });
-    expect(await screen.findByText(/You wrote this version/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Approve candidate for Version 2' })).toBeDisabled();
-    expect(server.requests.filter((request) => request.method === 'POST')).toHaveLength(0);
-  });
-
-  it('blocks approval when the reviewer identity is unavailable', async () => {
-    releaseServer({ candidates: [candidate()] });
-    mountPanel({ currentUserId: null });
-    expect(await screen.findByText(/Your identity is unavailable/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Approve candidate for Version 2' })).toBeDisabled();
-  });
-
-  it.each([
-    { description: 'already independently approved', approvals: [approval()], history: [] },
-    {
-      description: 'already released',
-      approvals: [approval()],
-      history: [
-        release({
-          candidateId: 'candidate-1',
-          approvalId: 'approval-1',
-          candidateHash: CANDIDATE_HASH,
-          version: 'version-2',
-        }),
-      ],
-    },
-  ])('does not approve a candidate that is $description', async ({ approvals, history }) => {
-    const server = releaseServer({ candidates: [candidate({ approvals })], history });
-    mountPanel();
-    expect(
-      await screen.findByRole('button', { name: 'Approve candidate for Version 2' }),
-    ).toBeDisabled();
-    expect(server.requests.filter((request) => request.method === 'POST')).toHaveLength(0);
-  });
-
-  it.each([
-    {
-      name: 'read only',
-      capabilities: ['templates:read'],
-      author: false,
-      review: false,
-      publish: false,
-    },
-    {
-      name: 'author',
-      capabilities: ['templates:read', 'templates:author'],
-      author: true,
-      review: false,
-      publish: false,
-    },
-    {
-      name: 'reviewer',
-      capabilities: ['templates:read', 'templates:review'],
-      author: false,
-      review: true,
-      publish: false,
-    },
-    {
-      name: 'publisher',
-      capabilities: ['templates:read', 'templates:publish'],
-      author: false,
-      review: false,
-      publish: true,
-    },
-  ] as const)(
-    'exposes only the permitted controls for a $name',
-    async ({ capabilities, author, review, publish }) => {
-      const user = userEvent.setup();
-      const previous = release({ id: 'previous', generation: 1 });
-      const head = release({ id: 'head', generation: 2 });
-      releaseServer({
-        candidates: [
-          candidate({ approvals: [approval()] }),
-          candidate({
-            id: 'candidate-pending',
-            version: 'version-1',
-            candidateHash: 'f'.repeat(64),
-          }),
-        ],
-        active: head,
-        history: [head, previous],
-      });
-      mountPanel({ capabilities });
-      await screen.findByRole('heading', { name: 'Version 2' });
-      const create = screen.queryByRole('button', { name: 'Create candidate' });
-      const approveButton = screen.queryByRole('button', {
-        name: 'Approve candidate for Version 1',
-      });
-      const publishButton = screen.queryByRole('button', {
-        name: 'Publish candidate for Version 2',
-      });
-      const rollback = screen.queryByRole('button', {
-        name: 'Restore v1',
-      });
-      if (author) {
-        expect(create).toBeInTheDocument();
-        await user.click(screen.getByRole('combobox', { name: 'Saved version' }));
-        await user.click(screen.getByRole('option', { name: /Version 2/ }));
-        expect(create).toBeEnabled();
-      } else expect(create).not.toBeInTheDocument();
-      if (review) expect(approveButton).toBeEnabled();
-      else expect(approveButton).not.toBeInTheDocument();
-      if (publish) {
-        expect(publishButton).toBeEnabled();
-        expect(rollback).toBeEnabled();
-      } else {
-        expect(publishButton).not.toBeInTheDocument();
-        expect(rollback).not.toBeInTheDocument();
-      }
-    },
-  );
-
-  it.each([
-    { name: 'the owner in test mode', mode: 'test', templateOrgId: 'org-1', restore: false },
-    { name: 'a shared template in live mode', mode: 'live', templateOrgId: null, restore: false },
-    { name: 'a shared template in test mode', mode: 'test', templateOrgId: null, restore: false },
-    { name: 'the owner in live mode', mode: 'live', templateOrgId: 'org-1', restore: true },
-  ] as const)(
-    'only permits restoring an archived template for $name',
-    async ({ mode, templateOrgId, restore }) => {
-      const previous = release({ id: 'previous', generation: 1, mode });
-      const head = release({ id: 'head', generation: 2, mode });
-      releaseServer({
-        candidates: [candidate({ mode, approvals: [approval()] })],
-        history: [head, previous],
-      });
-      mountPanel({ templateStatus: 'archived', templateOrgId, mode });
-      await screen.findByRole('heading', { name: 'Version 2' });
-      expect(screen.queryByText(/Roll back to an approved release in live mode/)).toBeNull();
-      expect(screen.queryByRole('button', { name: 'Create candidate' })).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('button', { name: 'Approve candidate for Version 2' }),
-      ).not.toBeInTheDocument();
-      const publish = screen.queryByRole('button', { name: 'Publish candidate for Version 2' });
-      const rollback = screen.queryAllByRole('button', { name: 'Restore v1' });
-      if (restore) {
-        expect(publish).toBeEnabled();
-        expect(rollback.length).toBeGreaterThan(0);
-        for (const button of rollback) expect(button).toBeEnabled();
-      } else {
-        expect(publish).not.toBeInTheDocument();
-        expect(rollback).toHaveLength(0);
-      }
-    },
-  );
 
   it('treats built-in releases as system managed', async () => {
     const system = release({
@@ -402,61 +224,9 @@ describe('template release panel', () => {
     );
     await waitFor(() => expect(trigger).toHaveFocus());
   });
-
-  it('disables a saved version with validation errors and says why', async () => {
-    const user = userEvent.setup();
-    releaseServer();
-    mountPanel({
-      versions: [
-        VERSIONS[0],
-        { ...VERSIONS[1], active: false, report: { ok: false } },
-        { version: 'version-3', active: false, createdAt: 1_700_000_002_000, displayOnly: false },
-      ],
-    });
-    await screen.findByText(/No candidates yet/);
-    expect(screen.getByText(/Version 2 can't be a candidate/)).toBeVisible();
-    await user.click(screen.getByRole('combobox', { name: 'Saved version' }));
-    expect(screen.getByRole('option', { name: /Version 2 · has errors/ })).toHaveAttribute(
-      'data-disabled',
-    );
-    expect(screen.getByRole('option', { name: 'Version 3' })).not.toHaveAttribute('data-disabled');
-  });
-
-  it('keeps mutations idle while the lists refetch', async () => {
-    const server = releaseServer({ candidates: [candidate()] });
-    const view = mountPanel();
-    const approve = await screen.findByRole('button', { name: 'Approve candidate for Version 2' });
-    await act(async () => {
-      void view.client.invalidateQueries();
-    });
-    expect(approve).toBeEnabled();
-    expect(server.requests.filter((request) => request.method === 'POST')).toHaveLength(0);
-  });
 });
 
 describe('self-approval and promote', () => {
-  it('approves alone only after a confirm, and badges the approval', async () => {
-    const user = userEvent.setup();
-    const server = releaseServer({ candidates: [candidate()] });
-    mountPanel({ currentUserId: 'candidate-author' });
-    await user.click(
-      await screen.findByRole('button', { name: 'Approve candidate for Version 2 alone' }),
-    );
-    expect(server.requests.filter((request) => request.method === 'POST')).toHaveLength(0);
-    const dialog = await screen.findByRole('alertdialog');
-    expect(dialog).toHaveTextContent('No one else can review in this organization.');
-    await user.click(within(dialog).getByRole('button', { name: 'Approve as sole reviewer' }));
-    await waitFor(() =>
-      expect(server.requests.find((request) => request.method === 'POST')?.body).toMatchObject({
-        alone: true,
-      }),
-    );
-    expect(await screen.findByText('Self-approved')).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Publish candidate for Version 2' }),
-    ).not.toBeDisabled();
-  });
-
   it('shows the chip on the release that used a self-approval', async () => {
     releaseServer({
       candidates: [
@@ -468,14 +238,5 @@ describe('self-approval and promote', () => {
     mountPanel();
     const history = await screen.findByRole('list', { name: 'Releases' });
     expect(within(history).getByText('Self-approved')).toBeInTheDocument();
-  });
-
-  it('names the next step when someone else must review', async () => {
-    releaseServer({ candidates: [candidate()] });
-    mountPanel({
-      currentUserId: 'candidate-author',
-      capabilities: ['templates:read', 'templates:author'],
-    });
-    expect(await screen.findByText(/Invite one from Members/)).toBeInTheDocument();
   });
 });

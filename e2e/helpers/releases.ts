@@ -34,7 +34,11 @@ const modeHeaders = (mode: ReleaseMode) => ({ 'x-passbook-mode': mode });
 const templatePath = (templateId: string) => `/api/v1/templates/${encodeURIComponent(templateId)}`;
 
 /** Obtain a distinct, invited reviewer; the caller must dispose the returned client. */
-export async function templateReviewer(admin: Api, orgId: string): Promise<Api> {
+export async function templateReviewer(
+  admin: Api,
+  orgId: string,
+  roles: ('template_reviewer' | 'template_publisher')[] = ['template_reviewer'],
+): Promise<Api> {
   const reviewer = await apiAs('reviewer');
   try {
     const [authorSession, reviewerSession, memberships] = await Promise.all([
@@ -52,7 +56,7 @@ export async function templateReviewer(admin: Api, orgId: string): Promise<Api> 
     let membership = memberships.items.find(
       (item) => item.orgId === orgId && item.revokedAt === null,
     );
-    if (!membership) membership = await addOrgMember(admin, orgId, reviewer, ['template_reviewer']);
+    if (!membership) membership = await addOrgMember(admin, orgId, reviewer, roles);
     if (
       !membership.roles.includes('template_reviewer') ||
       !membership.capabilities.includes('templates:review')

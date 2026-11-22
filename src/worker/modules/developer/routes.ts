@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DeveloperHomeSchema } from '../../../shared/contracts/developer-home.ts';
 import {
   CreateDeveloperSandboxSchema,
   CreatedDeveloperSandboxSchema,
@@ -15,6 +16,7 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { verifyTurnstile } from '../auth/turnstile.ts';
+import { developerHome } from './home.ts';
 import { developerLogRoutes } from './routes-logs.ts';
 import { closeOwnSandbox, createSandbox, getSandbox } from './service.ts';
 import { mintTryToken, revokeTryTokens } from './try-token.ts';
@@ -44,6 +46,26 @@ register(
     return c.json({
       access: hasDeveloperAccess(auth.roles) ? ('yes' as const) : ('none' as const),
     });
+  },
+);
+
+register(
+  developerRoutes,
+  'developer',
+  {
+    method: 'get',
+    path: '/home',
+    summary:
+      'Your workbench: sandbox, quickstart track, usage, keys, latest calls, webhooks, passes and Live orgs',
+    operationId: 'developer.getHome',
+    auth: { human: true, developer: true },
+    response: DeveloperHomeSchema,
+  },
+  async (c) => {
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    c.header('cache-control', 'no-store');
+    return c.json(await developerHome(serviceContext(c), auth));
   },
 );
 

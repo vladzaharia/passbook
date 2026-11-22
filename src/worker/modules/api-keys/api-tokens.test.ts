@@ -116,9 +116,9 @@ describe('roles', () => {
     const { key } = await mint('org_admin', { scopes: [], roles: ['template_author'] });
     const auth = await createApiKeyStore(h.env, h.clock).resolve(key.secret);
     // A role holds the scopes a route accepts; a scope gained later reaches the role then.
-    expect(auth?.scopes).toEqual(['templates:read']);
+    expect(auth?.scopes).toEqual(['templates:read', 'org:read']);
     // The bundle is written onto the key at mint; the role is only a label.
-    expect(JSON.parse(String((await row(key.id))?.scopes))).toEqual(['templates:read']);
+    expect(JSON.parse(String((await row(key.id))?.scopes))).toEqual(['templates:read', 'org:read']);
     expect((key as CreatedKey & { roles: string[] }).roles).toEqual(['template_author']);
     const headers = { authorization: `Bearer ${key.secret}` };
     expect((await h.call('/api/v1/templates', { headers })).status).toBe(200);
@@ -150,6 +150,7 @@ describe('a role is a label on the scopes written at mint', () => {
     expect([...key.scopes].sort()).toEqual([
       'holders:write',
       'messages:write',
+      'org:read',
       'passes:read',
       'passes:write',
       'scan-setup:read',

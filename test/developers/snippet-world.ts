@@ -1,3 +1,5 @@
+import { MINTABLE_SCOPES } from '../../src/shared/contracts/api-keys.ts';
+import { SANDBOX_KEY_SCOPES } from '../../src/shared/contracts/developer-home.ts';
 import { BLUEPRINT_ID, EXAMPLE_IDS } from '../../src/web/developers/model/ids.ts';
 import { createApp } from '../../src/worker/app.ts';
 import { createApiKeyStore } from '../../src/worker/modules/api-keys/service.ts';
@@ -31,9 +33,15 @@ const SCOPES = [
   'connections:write',
   'webhooks:manage',
   'api-keys:write',
+  'org:write',
   'scans:read',
   'scans:write',
 ];
+
+/** A sandbox key holds no key minting, terminal scope or scanning setup (SANDBOX_KEY_SCOPES). */
+const OVER_CEILING = new Set<string>(
+  MINTABLE_SCOPES.filter((s) => !(SANDBOX_KEY_SCOPES as readonly string[]).includes(s)),
+);
 
 export interface Call {
   method: string;
@@ -74,7 +82,9 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
       org.id,
       prefix,
       await sha256Hex(secret),
-      JSON.stringify(SCOPES),
+      JSON.stringify(
+        options.kind === 'developer' ? SCOPES.filter((s) => !OVER_CEILING.has(s)) : SCOPES,
+      ),
       owner.userId,
       kit.clock.now(),
     ],

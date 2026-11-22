@@ -110,3 +110,10 @@
     transform: translateY(70px);
   }
 }
+
+/* Beside My passes' stack (master-detail): the stack holds the card, so one column at any width. */
+.wl-holder[data-panel] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: none;
+  grid-template-areas: "add" "more" "details" "help";
+}

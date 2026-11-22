@@ -26,6 +26,8 @@ export interface PreviewSource {
   assetBaseUrl: string;
   /** Files the preview can load, from the dry run or the pass. */
   assetNames: readonly string[];
+  /** Explicit URLs by file name (a staged image as a data URL); they replace assetBaseUrl + name. */
+  assetUrls?: Record<string, string> | undefined;
   manifest: Record<string, unknown>;
   /** The version's own files; a name not listed is a per-pass file and never reaches a wallet. */
   assets: readonly PreviewAsset[];

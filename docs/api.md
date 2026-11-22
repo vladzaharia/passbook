@@ -42,6 +42,9 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `connections:write` | scoped connection changes and actions; setting `autoCreate`, `autoEmail`, `defaultTemplateId`, `mapping` or `onMissing` also needs `passes:write` |
 | `webhooks:manage` | read and manage outbound webhook endpoints, deliveries, replay and test events (see Outbound webhooks). Neither `connections:*` nor `passes:*` scopes reach these routes, and this scope reaches nothing else |
 | `brand:manage` | read and edit the org's brand kit (`/api/v1/brand`): web logo, accent, mark level. Reaches nothing else |
+| `org:read` | read the org's pass setup (`GET /orgs/{orgId}/pass-setup`) and features. Any console member can mint it. Org-bound keys |
+| `org:write` | change the org's pass setup (`PATCH /orgs/{orgId}/pass-setup`, `POST /orgs/{orgId}/brand-assets`): name, brand, support, email, allowed channels. Only `org_admin` can mint it |
+| `wallet:write` | turn a Google or Samsung account on for a channel that is already allowed (`PATCH /orgs/{orgId}/pass-setup`). Allowing or blocking a channel needs `org:write`. Needs `integrations:manage` to delegate |
 | `api-keys:write` | child keys of the calling key: mint, list, read, rotate, retire, revoke; rotate itself. A service key only (see Child keys) |
 | `scanning:admin` | `POST /scanning-sessions/setup` with staff and paired devices: PINs and pairing codes come back once. Org-bound, live keys only, rate limited. Only `org_admin` can mint it |
 | `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |
@@ -1009,20 +1012,22 @@ Session only: no API key reaches these routes (an export hands over every holder
 Send the `configRevision` you read; a save from older values is a `409`. SVG, JPEG and animated PNG are refused with
 `422`. The logo is served without a session at its content-addressed path, so a changed logo is a new URL.
 
-## Pass setup (planned)
+## Pass setup
 
-One read and one write for an org's brand, support, email and channels, with each wallet's account and Apple ID. The contract is `src/shared/contracts/pass-setup.ts`; the routes are not mounted yet.
+One read and one write for an org's brand, support, email and channels, with each wallet's account and Apple ID. The contract is `src/shared/contracts/pass-setup.ts`.
 
 | Call | Does |
 | --- | --- |
-| `GET /orgs/{orgId}/pass-setup` | the view in the caller's mode: `brand`, `channels`, `apple`, `templates`, `checks`, `revision`, `passCount`. `org:read` |
-| `PATCH /orgs/{orgId}/pass-setup` | `expectedRevision` plus any of `brand` and `channels` (`allowed` or `blocked`). `?dryRun=true` answers `{ dryRun, view, diff, impact }` and writes nothing. A session needs `org:manage`; a key `org:write`, or `brand:manage` for a body with `brand` only |
-| `POST /orgs/{orgId}/brand-assets` | stage a PNG (`slot`: `logo`, `icon`, `webLogo`); answers `{ slot, sha, w, h, expiresAt }`. Name it in a PATCH as `{ "sha": "…" }` to commit it |
+| `GET /orgs/{orgId}/pass-setup` | the view in the caller's mode: `brand`, `channels`, `apple`, `templates`, `checks`, `revision`, `passCount`. `org:read`, or `brand:manage` |
+| `PATCH /orgs/{orgId}/pass-setup` | `expectedRevision` plus any of `brand` and `channels` (`allowed` or `blocked`). `?dryRun=true` answers `{ dryRun, view, diff, impact }` and writes nothing. A session needs `org:manage`; a key `org:write`, or `brand:manage` for a body of logo, icon, web logo, colours, `logoHasName`, accent and `mark` only (`403 MISSING_SCOPE` otherwise). `wallet:write` (or a member with `integrations:manage`) may send only `channels` entries that allow Google or Samsung when that channel is already allowed, to turn a ready account on; it cannot allow or block a channel. A Test key changes the brand kit only (`403 MODE_LIVE_REQUIRED`) unless the org is a sandbox; a platform key cannot call it. An apply reads `Idempotency-Key`; a dry run needs none |
+| `POST /orgs/{orgId}/brand-assets` | stage a PNG (`slot`: `logo`, `icon`, `webLogo`); answers `{ slot, sha, version, w, h, expiresAt }`. Name it in a PATCH as `{ "sha": "…", "version": "…" }` (both from the answer; a web logo needs the sha only) to commit it |
 
 - **Values.** Each brand value is `{ value, source }`: `source` is `passbook` (default or placeholder) or `org`. Logo, icon and pass colours add `templatesOwn`, the templates that keep their own. `null` in a PATCH clears a value.
 - **Chain.** Each channel has `levels`, in order `passbook`, `plan`, `org`, `template`, each with `state` (`ok`, `partial`, `off`, `needs`, `locked`), `reason` and `canChange`. The first level that is not `ok` or `partial` stops the channel. `plan` is an entitlement refusal; elsewhere the API still reports its `source` as `platform`. `on` means no level down to the org stops it.
 - **Checks.** Each has `code`, `level` (`error`, `warn`, `info`), `area`, `message`, optional `channel` and `templateIds`, and `fix` (`action`, `target`). Warnings and errors are to-dos; info rows are suggestions. Codes: `BRAND_LOGO`, `BRAND_ICON`, `BRAND_COLORS`, `BRAND_CONTRAST`, `ACCENT_CONTRAST`, `SUPPORT_MISSING`, `APPLE_SHARED_ID`, `APPLE_ID_FAILED`, `APPLE_ID_EXPIRING`, `APPLE_PUSH`, `WALLET_ACCOUNT`, `NO_CHANNEL`, `TEMPLATE_BRAND_OWN`. Fix actions are stable ids such as `upload_logo`, `start_apple_managed` and `setup_wallet_account`.
-- **Stale saves.** A PATCH with an old `expectedRevision` is `409 PASS_SETUP_CHANGED`: read again and resend.
+- **Stale saves.** A PATCH with an old `expectedRevision` is `409 PASS_SETUP_CHANGED`: read again and resend. An empty body is `422 PASS_SETUP_EMPTY`.
+- **Allowed.** `allowed` takes the channel out of the org's block list; `blocked` adds it. Blocking is a kill switch: copies and enrolments stay. For Google and Samsung, `allowed` also turns the enrolment on in the same write when the platform has released the provider, the plan includes it and the account's source and check are ready; a key then also needs `wallet:write`. Otherwise the account stays off and `checks` carries `WALLET_ACCOUNT`.
+- **Images.** `POST /orgs/{orgId}/brand-assets` stores the PNG and queues it for deletion after 24 hours; a PATCH that names its `sha` keeps it. An unknown or expired `sha` is `422 BRAND_ASSET_NOT_FOUND`. At most 100 staged or superseded uploads wait per org (`429`).
 
 ## Other
 

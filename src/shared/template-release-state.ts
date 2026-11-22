@@ -104,7 +104,8 @@ function nextOf(
   if (!caller.author && !caller.review && !caller.publish) return null;
   if (!draft) return live === null && caller.author ? 'design' : null;
   const canTry = caller.author && caller.review && caller.publish;
-  if (live === null && test?.version !== draft.version && canTry) return 'try';
+  if (live === null && test?.version !== draft.version && canTry && review.state !== 'approved')
+    return 'try';
   if (alone) return 'release';
   if (review.state === 'approved') return caller.publish ? 'release' : 'wait';
   if (review.state === 'open') {

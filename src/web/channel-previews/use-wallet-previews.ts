@@ -34,7 +34,7 @@ export function useWalletPreviews(source: PreviewSource | null, enabled = true):
       live = false;
     };
   }, [enabled, kit]);
-  const { passJson, assetBaseUrl, assetNames, manifest, assets, input } = source ?? {};
+  const { passJson, assetBaseUrl, assetNames, assetUrls, manifest, assets, input } = source ?? {};
   return useMemo<WalletPreviews>(() => {
     if (failed) return { state: 'error' };
     if (!kit || !passJson || !assetBaseUrl || !assetNames || !manifest || !assets || !input)
@@ -42,11 +42,19 @@ export function useWalletPreviews(source: PreviewSource | null, enabled = true):
     try {
       return {
         state: 'ready',
-        out: kit.compileWallets({ passJson, assetBaseUrl, assetNames, manifest, assets, input }),
+        out: kit.compileWallets({
+          passJson,
+          assetBaseUrl,
+          assetNames,
+          assetUrls,
+          manifest,
+          assets,
+          input,
+        }),
       };
     } catch {
       // A draft the compilers cannot read (a half-edited wallets block) shows the error line.
       return { state: 'error' };
     }
-  }, [kit, failed, passJson, assetBaseUrl, assetNames, manifest, assets, input]);
+  }, [kit, failed, passJson, assetBaseUrl, assetNames, assetUrls, manifest, assets, input]);
 }

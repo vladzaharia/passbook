@@ -30,6 +30,10 @@ export interface OrgCounts {
 const COLUMNS =
   'id, slug, name, status, default_identity_id, branding, created_at, updated_at, config_revision, personal_user_id, kind';
 
+/** The org row as a batch statement, to read it in one transaction with the org's settings. */
+export const orgRowStmt = (db: D1Database, id: string) =>
+  stmt(db, `SELECT ${COLUMNS} FROM orgs WHERE id = ? AND status != 'deleted'`, [id]);
+
 export function getOrgRow(db: D1Database, id: string): Promise<OrgRow | null> {
   return first<OrgRow>(db, `SELECT ${COLUMNS} FROM orgs WHERE id = ? AND status != 'deleted'`, [
     id,

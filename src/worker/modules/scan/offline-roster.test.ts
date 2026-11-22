@@ -1,7 +1,8 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { TEST_NOW } from '../../../../test/helpers/index.ts';
-import { all, run } from '../../platform/db.ts';
-import { act, kit, setupActionFixture } from './act-test-fixtures.ts';
+import { run } from '../../platform/db.ts';
+import { sha256Hex } from '../../platform/ids.ts';
+import { act, CHECK_IN, kit, setupActionFixture } from './act-test-fixtures.ts';
 import { hashOf, LIST, rosterOf, ticketTemplate } from './offline-test-fixtures.ts';
 import { codeOf } from './test-kit.ts';
 
@@ -34,18 +35,23 @@ describe('the offline roster', () => {
       expect(text).not.toContain(secret);
   });
 
-  it('carries the barcode hash too, so a ticket number scans', async () => {
-    const tpl = await ticketTemplate();
-    const pass = await kit.scanPass(tpl);
-    const door = await kit.scanner({ templateIds: [tpl], settings: LIST });
-    const rows = await all<{ barcode_hash: string }>(
-      kit.env.DB,
-      'SELECT barcode_hash FROM passes WHERE id = ?',
-      [pass.id],
+  it('leaves the barcode message hash off, so a stolen door cannot brute-force member numbers', async () => {
+    const tpl = await kit.scanTemplate(
+      'Member',
+      { actions: [CHECK_IN] },
+      { barcode: '{{inputs.memberName}}' },
     );
-    const barcode = rows[0]?.barcode_hash ?? '';
-    expect(barcode).toHaveLength(64);
-    expect((await rosterOf(door.headers)).entries.map((e) => e.h)).toContain(barcode.slice(0, 32));
+    const pass = await kit.scanPass(tpl, { memberName: '0012345' });
+    const door = await kit.scanner({ templateIds: [tpl], settings: LIST });
+    // A first publication writes the hash of the barcode message: here a member number.
+    const barcode = (await sha256Hex('0012345')).slice(0, 32);
+    await run(kit.env.DB, 'UPDATE passes SET barcode_hash = ? WHERE id = ?', [
+      await sha256Hex('0012345'),
+      pass.id,
+    ]);
+    const hashes = (await rosterOf(door.headers)).entries.map((e) => e.h);
+    expect(hashes).not.toContain(barcode);
+    expect(hashes).toContain(await hashOf(pass.scanCode ?? ''));
   });
 
   it('marks voided passes and passes already in', async () => {

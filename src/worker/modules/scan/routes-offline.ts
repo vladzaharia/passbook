@@ -10,6 +10,7 @@ import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { syncBatch } from './batch.ts';
 import { requireScanActor, scanActorOf } from './guard.ts';
+import { touchRosterAt } from './repo-roster.ts';
 import { rosterFor } from './roster.ts';
 
 /** Offline check-in, device API: `/api/v1/scan/roster` and `/batch`. A paired door only; no API key reaches them. */
@@ -33,14 +34,13 @@ export function registerScanOfflineRoutes(scanRoutes: OpenAPIHono<AppBindings>):
     },
     async (c) => {
       const { cursor, since, updatedSince } = c.req.valid('query');
-      return c.json(
-        await rosterFor(
-          serviceContext(c),
-          scanActorOf(c),
-          cursor ?? null,
-          updatedSince ?? since ?? null,
-        ),
-      );
+      const ctx = serviceContext(c);
+      const actor = scanActorOf(c);
+      const roster = await rosterFor(ctx, actor, cursor ?? null, updatedSince ?? since ?? null);
+      // Kept by the server: a listed read cannot be dated before the list it was made on.
+      if (actor.principal === 'scanner' && actor.scanner)
+        await touchRosterAt(ctx.env.DB, actor.scanner.id, actor.orgId, ctx.clock.now());
+      return c.json(roster);
     },
   );
 

@@ -43,6 +43,7 @@ const bundle = (mode?: 'live' | 'test') =>
         view,
         title: 'A',
         state: 'active',
+        href: '/b/t/a/open',
         downloadHref: '/b/t/a/pass.pkpass',
         barcodeHref: '/b/t/a/barcode',
       },

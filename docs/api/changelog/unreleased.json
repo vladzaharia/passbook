@@ -88,6 +88,14 @@
     "note": "Deletes a saved column mapping by name."
   },
   {
+    "key": "DELETE /api/v1/scan/staff 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.deleteScanStaff",
@@ -158,6 +166,14 @@
     "op": "GET /api/v1/developer/access",
     "change": "new operation",
     "note": "GET /developer/access answers yes, none or email, with signInUrl for an email session."
+  },
+  {
+    "key": "GET /api/v1/developer/home new operation",
+    "class": "additive",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "new operation",
+    "note": "GET /developer/home: your sandbox, quickstart track, usage, keys, calls, webhooks, passes, Live orgs. GET /developer/logs takes source and after."
   },
   {
     "key": "GET /api/v1/developer/resolve new operation",
@@ -288,6 +304,22 @@
     "note": "Reads one provisioning run and its steps."
   },
   {
+    "key": "GET /api/v1/me/passes 200.items[].readOnly: field added",
+    "class": "additive",
+    "operationId": "me.getMePasses",
+    "op": "GET /api/v1/me/passes",
+    "change": "200.items[].readOnly: field added",
+    "note": "readOnly marks an ended pass that is listed before it is attached to the account: no refresh, remove or download."
+  },
+  {
+    "key": "GET /api/v1/me/passes/{id} 200.readOnly: field added",
+    "class": "additive",
+    "operationId": "me.getMePassesById",
+    "op": "GET /api/v1/me/passes/{id}",
+    "change": "200.readOnly: field added",
+    "note": "readOnly marks an ended pass that is listed before it is attached to the account: no refresh, remove or download."
+  },
+  {
     "key": "GET /api/v1/metrics/overview 200.setup.releasedTemplates: field added",
     "class": "additive",
     "operationId": "metrics.getMetricsOverview",
@@ -376,6 +408,14 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "GET /api/v1/orgs/{orgId}/pass-setup new operation",
+    "class": "additive",
+    "operationId": "pass-setup.getOrgsByOrgIdPassSetup",
+    "op": "GET /api/v1/orgs/{orgId}/pass-setup",
+    "change": "new operation",
+    "note": "Read an organization's brand, channels and accounts in one call, with the chain of levels that stops each channel. Needs org:read or brand:manage."
+  },
+  {
     "key": "GET /api/v1/orgs/{orgId}/wallet-accounts/google/managed new operation",
     "class": "additive",
     "operationId": "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleManaged",
@@ -456,12 +496,36 @@
     "note": "New entitlement identity.managed gates managed Apple identities."
   },
   {
+    "key": "GET /api/v1/scan-staff 200.items[].pinLockedToday: field added",
+    "class": "additive",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "200.items[].pinLockedToday: field added",
+    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
+  },
+  {
+    "key": "GET /api/v1/scan-staff 200.items[].pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "200.items[].pinResetRequired: field added",
+    "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
+  },
+  {
     "key": "GET /api/v1/scan-staff 200.pinOnlyOff: field added",
     "class": "additive",
     "operationId": "scan-staff.getScanStaff",
     "op": "GET /api/v1/scan-staff",
     "change": "200.pinOnlyOff: field added",
     "note": "The staff list says pinOnlyOff: true while PIN-only sign-in is off after repeated wrong PINs."
+  },
+  {
+    "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
   },
   {
     "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.hardware: field added",
@@ -478,6 +542,14 @@
     "op": "GET /api/v1/scanning-sessions/{id}",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "GET /api/v1/scans/{id} 200.late: field added",
+    "class": "additive",
+    "operationId": "scans.getScansById",
+    "op": "GET /api/v1/scans/{id}",
+    "change": "200.late: field added",
+    "note": "Scans report late: an offline read dated before its scanner's last contact or list, counted at the time it synced."
   },
   {
     "key": "GET /api/v1/session 200|0.consoleGroupRequired: field added",
@@ -616,6 +688,14 @@
     "note": "Lists wallet identities across Apple and Google."
   },
   {
+    "key": "GET /b/{token}/{passId} new operation",
+    "class": "additive",
+    "operationId": "public.getBByTokenByPassId",
+    "op": "GET /b/{token}/{passId}",
+    "change": "new operation",
+    "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
+  },
+  {
     "key": "PATCH /api/v1/brand 200.kind: field added",
     "class": "additive",
     "operationId": "brand.patchBrand",
@@ -712,6 +792,30 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PATCH /api/v1/orgs/{orgId}/pass-setup new operation",
+    "class": "additive",
+    "operationId": "pass-setup.patchOrgsByOrgIdPassSetup",
+    "op": "PATCH /api/v1/orgs/{orgId}/pass-setup",
+    "change": "new operation",
+    "note": "Change brand, support and allowed channels in one write; ?dryRun=true shows the diff. Needs org:write; brand:manage for the kit; wallet:write for accounts."
+  },
+  {
+    "key": "PATCH /api/v1/scan-staff/{id} 200.pinLockedToday: field added",
+    "class": "additive",
+    "operationId": "scan-staff.patchScanStaffById",
+    "op": "PATCH /api/v1/scan-staff/{id}",
+    "change": "200.pinLockedToday: field added",
+    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
+  },
+  {
+    "key": "PATCH /api/v1/scan-staff/{id} 200.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan-staff.patchScanStaffById",
+    "op": "PATCH /api/v1/scan-staff/{id}",
+    "change": "200.pinResetRequired: field added",
+    "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsById",
@@ -758,6 +862,14 @@
     "op": "PATCH /api/v1/users/{id}",
     "change": "200.lastRoles[]: enum value \"developer\" added",
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
+  },
+  {
+    "key": "POST /api/v1/api-keys 403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
+    "class": "additive",
+    "operationId": "api-keys.createApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
+    "note": "A sandbox key may not hold api-keys:write, scans:write or scanning:admin, at mint or roll: 403, scopes in issues."
   },
   {
     "key": "POST /api/v1/identities 201.handle: field added",
@@ -936,6 +1048,14 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "POST /api/v1/orgs/{orgId}/brand-assets new operation",
+    "class": "additive",
+    "operationId": "pass-setup.postOrgsByOrgIdBrandAssets",
+    "op": "POST /api/v1/orgs/{orgId}/brand-assets",
+    "change": "new operation",
+    "note": "Stage a logo, icon or web logo PNG; it answers the sha and version a pass-setup save names. Unused uploads are deleted later. Needs org:write or brand:manage."
+  },
+  {
     "key": "POST /api/v1/orgs/{orgId}/identities/apple new operation",
     "class": "additive",
     "operationId": "identity-runs.postOrgsByOrgIdIdentitiesApple",
@@ -1064,6 +1184,38 @@
     "note": "Starts a service account key rotation."
   },
   {
+    "key": "POST /api/v1/scan-staff 201.staff.pinLockedToday: field added",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaff",
+    "op": "POST /api/v1/scan-staff",
+    "change": "201.staff.pinLockedToday: field added",
+    "note": "Staff report pinLockedToday: 50 wrong PINs named them today, so named sign-in is locked until tomorrow or an admin unlocks it."
+  },
+  {
+    "key": "POST /api/v1/scan-staff 201.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaff",
+    "op": "POST /api/v1/scan-staff",
+    "change": "201.staff.pinResetRequired: field added",
+    "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/{id}/unlock-pin new operation",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffByIdUnlockPin",
+    "op": "POST /api/v1/scan-staff/{id}/unlock-pin",
+    "change": "new operation",
+    "note": "Admins lift a staff member's daily PIN lock with POST /scan-staff/{id}/unlock-pin."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/reset-untagged new operation",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffResetUntagged",
+    "op": "POST /api/v1/scan-staff/reset-untagged",
+    "change": "new operation",
+    "note": "Admins ask everyone whose PIN predates PIN tags for a new PIN with POST /scan-staff/reset-untagged."
+  },
+  {
     "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.postScanDevice",
@@ -1078,6 +1230,14 @@
     "op": "POST /api/v1/scan/device",
     "change": "body.capabilities.hardware: optional input field added",
     "note": "Devices may report found hardware by kind, count and state; names and ids are refused."
+  },
+  {
+    "key": "POST /api/v1/scan/pair 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
   },
   {
     "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.hardware: field added",
@@ -1096,6 +1256,14 @@
     "note": "The pairing preview names the session the device joins."
   },
   {
+    "key": "POST /api/v1/scan/role 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
     "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.postScanRole",
@@ -1104,12 +1272,28 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",
+    "class": "additive",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.staff.pinResetRequired: field added",
+    "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
+  },
+  {
     "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.postScanStaff",
     "op": "POST /api/v1/scan/staff",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin new operation",
+    "class": "additive",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "new operation",
+    "note": "A flagged staff member gets a new random PIN, returned once with the session, from POST /scan/staff/pin. They never choose it."
   },
   {
     "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.hardware: field added",
