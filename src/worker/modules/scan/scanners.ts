@@ -11,14 +11,16 @@ import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { admitsJson } from './admits.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
+import { credentialKeyOf } from './key-credentials.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
-import { createPairing } from './pairing.ts';
+import { createPairing, hashPairCode, newPairCode, PAIR_TTL_MS } from './pairing.ts';
 import { TERMINAL_TTL_MS } from './pairing-token.ts';
 import {
   adminActorOf,
   adminGrant,
   audited,
+  createdByOf,
   eventsOpen,
   scannerEpoch,
   scopeTemplatesUsable,
@@ -45,6 +47,9 @@ export async function createScanner(
   input: z.infer<typeof CreateScannerSchema>,
   origin: string,
   authority: TenantPassWrite,
+  ip: string | null = null,
+  /** Called right after the commit: what follows reads, and a failure there keeps a code's charge. */
+  committed: () => void = () => {},
 ) {
   const db = ctx.env.DB;
   if (!(await orgIsActive(db, input.orgId)))
@@ -55,6 +60,15 @@ export async function createScanner(
     await checkAccepts(ctx, input.orgId, mode, { eventId: settings.checkIn.eventId });
   const now = ctx.clock.now();
   const id = ctx.ids.id();
+  // A `scanning:admin` key gets a device's code in the same batch; a write key gets none.
+  const key = authority.kind === 'api_key';
+  const issue = key && authority.scope === 'scanning:admin' && input.kind === 'device';
+  if (issue) credentialKeyOf(authority, input.orgId, userId, 'scanning:admin');
+  const code = issue ? newPairCode() : null;
+  const pair =
+    code === null
+      ? null
+      : { hash: await hashPairCode(ctx.env, code), expiresAt: now + PAIR_TTL_MS };
   const g = adminGrant(
     ctx,
     'org_mode.scan.scanner.create',
@@ -77,30 +91,60 @@ export async function createScanner(
     settings: JSON.stringify(settings),
     timeZone: input.timeZone,
     expiresAt: input.kind === 'terminal' ? now + TERMINAL_TTL_MS : null,
-    createdBy: userId,
+    createdBy: createdByOf(authority, userId),
     now,
+    ...(pair ? { pair } : {}),
   });
   addScannerTemplates(g, id, accepts.templateIds);
-  addEnrollment(ctx, g, id, userId, { ...input, deviceRole: 'scan' }, settings);
+  addEnrollment(
+    ctx,
+    g,
+    id,
+    createdByOf(authority, userId),
+    { ...input, deviceRole: 'scan' },
+    settings,
+  );
   g.add(
     audited(g, ctx, {
       orgId: input.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId, ip),
       action: 'scanner.create',
       targetType: 'scanner',
       targetId: id,
       detail: { kind: input.kind, mode, accepts: accepts.eventId ? 'event' : 'templates' },
     }),
   );
+  if (pair)
+    g.add(
+      audited(g, ctx, {
+        orgId: input.orgId,
+        ...adminActorOf(authority, userId, ip),
+        action: 'scanner.pairing_create',
+        targetType: 'scanner',
+        targetId: id,
+        detail: { expiresAt: pair.expiresAt },
+      }),
+    );
   try {
     await g.commit();
   } catch (error) {
     nameTaken(error);
   }
-  const row = await loadScanner(ctx, id);
+  committed();
   const pairing =
-    input.kind === 'device' ? await createPairing(ctx, userId, row, origin, authority) : null;
+    code !== null && pair
+      ? { code, url: `${origin}/scan#pair=${code}`, expiresAt: pair.expiresAt }
+      : key || input.kind !== 'device'
+        ? null
+        : await createPairing(
+            ctx,
+            userId,
+            await loadScanner(ctx, id),
+            origin,
+            authority,
+            false,
+            ip,
+          );
   return { ...(await scannerView(ctx, id)), pairing };
 }
 

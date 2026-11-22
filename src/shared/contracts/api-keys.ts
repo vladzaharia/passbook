@@ -32,11 +32,13 @@ export const MINTABLE_SCOPES = [
   'scanning:write',
   'scan-setup:read',
   'scanning:admin',
+  'nfc:keys',
   'api-keys:write',
 ] as const satisfies readonly z.infer<typeof ApiScopeSchema>[];
 /** Scopes that mint or reset device credentials: named in `scopes` only, never through a role or a parent key, live and one org. */
 export const CREDENTIAL_SCOPES = [
   'scanning:admin',
+  'nfc:keys',
 ] as const satisfies readonly (typeof MINTABLE_SCOPES)[number][];
 export const MintableScopeSchema = z.enum(MINTABLE_SCOPES);
 

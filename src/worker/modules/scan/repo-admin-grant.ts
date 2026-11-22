@@ -14,7 +14,10 @@ import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
+import { ADMIN_KEY_PURPOSES, SETUP_APPLY, WRITE_KEY_PURPOSES } from './repo-admin-purposes.ts';
 import { tagged } from './setup-check-merge.ts';
+
+export { SETUP_APPLY };
 
 export type AdminAuthority = Extract<TenantPassWrite, { kind: 'session' }>;
 
@@ -42,36 +45,16 @@ export function adminAuthorityOf(
 
 export const adminPrincipal = (authority: AdminAuthority): Principal => tenantPrincipal(authority);
 
-export const SETUP_APPLY = 'org_mode.scan.setup.apply';
-
 /** An API key that holds `scanning:write` for this org (the scan setup of a template). */
 export type KeyAdminAuthority = Extract<TenantPassWrite, { kind: 'api_key' }>;
 
-/** The scan admin grants a key may hold: the writes of a template's scan setup, and the one-call setup (which refuses zones and staff for a key). */
-export const KEY_PURPOSES: ReadonlySet<string> = new Set([
-  'org_mode.scan.event.create',
-  'org_mode.scan.event.archive',
-  'org_mode.scan.event.update',
-  'org_mode.scan.session.create',
-  'org_mode.scan.session.update',
-  'org_mode.scan.session.hold',
-  'org_mode.scan.device.update',
-  'org_mode.scan.event.assign',
-  'org_mode.scan.scanner.update',
-  'org_mode.scan.scanner.revoke',
-  'org_mode.scan.visits.reset',
-  SETUP_APPLY,
-  'org.scan.zone.create',
-  'org.scan.zone.update',
-  'org.scan.scanner.mode',
-]);
-
 /**
  * Who a scan admin grant acts as: the console session (`adminAuthorityOf`), or a key whose verified
- * scope is `scanning:write`, for the purposes in `KEY_PURPOSES` only (pairing, staff PINs and admin
- * sessions stay human). `actorId` is the user id or the key id; the grant re-derives the scope
- * from the key's own row (scopes, roles, expiry, retirement) at commit. Without a `purpose` a key
- * is accepted only to read a target (`loadManageEvent`): the write that follows names its own.
+ * scope is `scanning:write` (the purposes in `WRITE_KEY_PURPOSES`) or `scanning:admin` (live, bound
+ * to one org, the purposes in `ADMIN_KEY_PURPOSES`). `actorId` is the user id or the key id; the grant
+ * re-derives the scope from the key's own row (scopes, roles, expiry, retirement) at commit. Without
+ * a `purpose` a key is accepted only to read a target (`loadManageEvent`): the write that follows
+ * names its own.
  */
 export function grantAuthorityOf(
   authority: TenantPassWrite | null | undefined,
@@ -82,11 +65,11 @@ export function grantAuthorityOf(
   if (authority?.kind !== 'api_key') return adminAuthorityOf(authority, actorId, orgId);
   const admin = authority.scope === 'scanning:admin';
   if (
-    (purpose !== undefined && !KEY_PURPOSES.has(purpose)) ||
+    (purpose !== undefined && !(admin ? ADMIN_KEY_PURPOSES : WRITE_KEY_PURPOSES).has(purpose)) ||
     // Every scan admin purpose is org-bound: a platform key (no org of its own) never writes one.
     authority.keyOrgId !== orgId ||
-    // `scanning:admin` (staff PINs, pairing codes) serves the one-call setup only, for a live key.
-    (admin && (purpose !== SETUP_APPLY || authority.mode !== 'live')) ||
+    // Door credentials are for a live key only.
+    (admin && authority.mode !== 'live') ||
     (!admin && authority.scope !== 'scanning:write') ||
     authority.keyId !== actorId ||
     authority.orgId !== orgId
@@ -103,9 +86,17 @@ export function grantAuthorityOf(
   return authority;
 }
 
-/** The audit actor of a scan admin write: the user, or the key. */
-export const adminActorOf = (authority: TenantPassWrite, actorId: string) =>
-  ({ actorType: authority.kind === 'api_key' ? 'api_key' : 'user', actorId }) as const;
+/** The audit actor of a scan admin write: the user, or the key. A credential write adds the caller's IP prefix. */
+export const adminActorOf = (
+  authority: TenantPassWrite,
+  actorId: string,
+  ipPrefix?: string | null,
+) =>
+  ({
+    actorType: authority.kind === 'api_key' ? 'api_key' : 'user',
+    actorId,
+    ...(ipPrefix ? { ipPrefix } : {}),
+  }) as const;
 
 /** `created_by` references a user: a key leaves it empty and is named by the audit row instead. */
 export const createdByOf = (authority: TenantPassWrite, actorId: string): string | null =>
@@ -171,9 +162,10 @@ export function adminGrant(
   tables: readonly string[] = SCAN_ADMIN_TABLES,
 ): Grant {
   const admin = grantAuthorityOf(authority, userId, orgId, purpose);
-  // The live-only rule is also part of the write: the actor row's mode is the key's own, read at commit.
+  // The live-only rule is also part of the write: the actor row's mode is the key's own, read at commit (org-wide rows, and every admin key).
   const live =
-    admin.kind === 'api_key' && purpose.startsWith('org.scan.')
+    admin.kind === 'api_key' &&
+    (purpose.startsWith('org.scan.') || admin.scope === 'scanning:admin')
       ? [rawCheck('actor', "a.mode = 'live'")]
       : [];
   return grant(ctx, {

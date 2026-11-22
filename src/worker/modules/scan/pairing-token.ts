@@ -6,13 +6,14 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { deviceLabel } from './dto-console.ts';
-import { adminGrant, audited, PAIRING_TABLES } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited, PAIRING_TABLES } from './repo-admin-grant.ts';
 import { DEVICE_MAX_MS } from './repo-device.ts';
 import { clearDeviceDayPart } from './repo-pin-tag.ts';
 import { type ConsoleScannerRow, scannerSlot } from './repo-scanners.ts';
 import {
   addAdminCredential,
   type Credential,
+  requireCredentialAuthority,
   requirePairingAuthority,
 } from './repo-scanners-pair.ts';
 import { setupMeta } from './repo-setups.ts';
@@ -42,12 +43,13 @@ export const addRestoreAudit = (
   ctx: ServiceContext,
   userId: string,
   scanner: ConsoleScannerRow,
+  authority: TenantPassWrite,
+  ip: string | null = null,
 ) =>
   g.add(
     audited(g, ctx, {
       orgId: scanner.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId, ip),
       action: 'scanner.restore',
       targetType: 'scanner',
       targetId: scanner.id,
@@ -145,15 +147,14 @@ export async function pairHere(
     g.add(
       audited(g, ctx, {
         orgId: scanner.orgId,
-        actorType: 'user',
-        actorId: userId,
+        ...adminActorOf(authority, userId),
         action: 'scanner.pair',
         targetType: 'scanner',
         targetId: scanner.id,
         detail: { via: 'console' },
       }),
     );
-    if (restored) addRestoreAudit(g, ctx, userId, scanner);
+    if (restored) addRestoreAudit(g, ctx, userId, scanner, authority);
     await g.commit().catch(nameTaken);
     return { token: c.token, csrfSecret: c.csrfSecret, expiresAt: c.expiresAt };
   });
@@ -166,8 +167,9 @@ export async function replaceTerminalToken(
   scanner: ConsoleScannerRow,
   authority: TenantPassWrite,
   restore = false,
+  ip: string | null = null,
 ): Promise<{ token: string; expiresAt: number }> {
-  requirePairingAuthority(authority, userId, scanner.orgId);
+  requireCredentialAuthority(authority, userId, scanner.orgId);
   if (scanner.kind !== 'terminal')
     throw new ValidationError('Only tills use a token.', [], 'SCANNER_NOT_TERMINAL');
   const restored = restoring(scanner, restore);
@@ -191,14 +193,14 @@ export async function replaceTerminalToken(
     g.add(
       audited(g, ctx, {
         orgId: scanner.orgId,
-        actorType: 'user',
-        actorId: userId,
+        ...adminActorOf(authority, userId, ip),
         action: 'scanner.token_replace',
         targetType: 'scanner',
         targetId: scanner.id,
+        detail: { expiresAt: c.expiresAt },
       }),
     );
-    if (restored) addRestoreAudit(g, ctx, userId, scanner);
+    if (restored) addRestoreAudit(g, ctx, userId, scanner, authority, ip);
     await g.commit().catch(nameTaken);
     return { token: c.token, expiresAt: c.expiresAt };
   });
