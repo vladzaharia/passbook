@@ -162,6 +162,9 @@ export type HoldVerb =
 
 /** The dock verbs of a hold, before Done. A turnaround hold offers Tap in or Tap out. */
 export function holdVerbs(o: ScanOutcome): HoldVerb[] {
+  // OC4: a voided or ended pass that is inside can only leave.
+  if (o.kind === 'refused' && o.exitAllowed)
+    return [{ kind: 'turn', direction: 'out', label: SCAN_COPY.actions.checkOut }];
   if (o.kind !== 'heads_up') return [];
   const t = o.occupancy?.turnaround;
   if (t) {

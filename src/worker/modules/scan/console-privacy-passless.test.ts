@@ -21,6 +21,17 @@ import { grantScanMembership, key, ORIGIN } from './test-kit.ts';
 setupPrivacyKit();
 
 describe('scan console and feed privacy', () => {
+  it('shows passState on a redacted row, as it shows reason (OC4)', async () => {
+    const scanner = await kit.scanner({ templateIds: [templateId] });
+    const row = await seedScan({ scanner, passId: null });
+    await run(kit.env.DB, "UPDATE scans SET pass_state = 'voided' WHERE id = ?", [row.id]);
+    const history = await page(`?orgId=${kit.org.id}`);
+    expect(history.items.find((i) => i.id === row.id)).toMatchObject({
+      passId: null,
+      passState: 'voided',
+    });
+  });
+
   it('retains a strictly passless unsigned legacy no-event no-match only as a minimal row', async () => {
     const scanner = await kit.scanner({ templateIds: [templateId] });
     const legacy = await seedScan({ scanner, passId: null });

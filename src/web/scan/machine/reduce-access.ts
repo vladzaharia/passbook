@@ -16,7 +16,8 @@ export const RESOLVE_WINDOW_MS = 60_000;
 /** Tap in or Tap out on a hold: the same scan under a new key with the direction named. */
 export function turn(s: MachineState, ev: Of<'turn'>, env: Env): Out {
   const l = s.loop;
-  if (l.s !== 'verdict' || l.outcome.kind !== 'heads_up') return same(s);
+  const exit = l.s === 'verdict' && l.outcome.kind === 'refused' && l.outcome.exitAllowed;
+  if (l.s !== 'verdict' || (l.outcome.kind !== 'heads_up' && !exit)) return same(s);
   const draft: DirectionDraft = {
     actionId: l.outcome.action?.id ?? 'auto',
     amount: null,

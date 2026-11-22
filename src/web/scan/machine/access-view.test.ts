@@ -157,6 +157,13 @@ describe('direction pill, beat and holds', () => {
       { kind: 'turn', direction: 'in', label: SCAN_COPY.actions.tapIn },
     ]);
   });
+  it('a refused inactive pass that is inside offers only Check out', () => {
+    const refused = fixtureOutcome('refused', 'voided', { exitAllowed: true });
+    expect(holdVerbs(refused)).toEqual([
+      { kind: 'turn', direction: 'out', label: SCAN_COPY.actions.checkOut },
+    ]);
+    expect(holdVerbs(fixtureOutcome('refused', 'voided'))).toEqual([]);
+  });
   it('a repeat says Let in again; a first entry says Let in anyway', () => {
     const zone = heldIn({ occupancy: { ...heldIn().occupancy!, turnaround: null } });
     expect(holdVerbs(zone)).toEqual([{ kind: 'letIn', label: 'Let in again' }]);

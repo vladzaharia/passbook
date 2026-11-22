@@ -3,14 +3,16 @@ import type { ResolvedScanAction } from '../../../shared/scan-defaults.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { accessGateStop, waiveOf } from './access.ts';
 import { executeApprovedAction } from './act-approval.ts';
-import { stoppedAuditPass } from './act-attempt-audit.ts';
+import { stoppedAuditPass, stoppedPassFence } from './act-attempt-audit.ts';
 import { chooseAction } from './act-choose.ts';
 import { type ActRequest, claimOf } from './act-claim.ts';
 import {
+  admitsCheckIn,
   checkOverride,
+  commitsExit,
   invalid,
   type Override,
-  pickAction,
+  pickFor,
   StaleScanAuthority,
 } from './act-override.ts';
 import { planActionReads } from './act-read-plan.ts';
@@ -23,7 +25,6 @@ import type { ScanActor } from './guard.ts';
 import { knownPhotoUrl, type PreparedPhotoGrant } from './member-photo.ts';
 import { unknownOutcome } from './outcome.ts';
 import { invalidAttemptAuthority } from './repo-act-attempt-authority.ts';
-import { passSnapshotFence } from './repo-act-pass-fence.ts';
 import { scanTemplateSnapshotPredicate } from './repo-live-template-snapshot.ts';
 import type { Candidate } from './repo-lookup.ts';
 import type { Found, Stop } from './resolve.ts';
@@ -93,10 +94,8 @@ export async function attempt(
     {
       candidateRead: { candidates },
       prepareReads: reads.prepare,
-      admits: (found) => {
-        const picked = pickAction(actor, found.scan, req.actionId);
-        return !picked || picked === 'choose' || picked.kind === 'check_in';
-      },
+      admits: (found) => admitsCheckIn(actor, found, req),
+      commitsExit: (found) => commitsExit(actor, found, req),
     },
   );
   invalidFound = evaluated.found;
@@ -167,32 +166,24 @@ export async function attempt(
     }
     const auditPass = stoppedAuditPass(evaluated, credentials);
     const pass = evaluated.pass ?? auditPass;
-    const policy = evaluated.auditPassSnapshot ?? evaluated;
     const scopedTemplate = evaluated.found?.pass.templateId ?? auditPass?.templateId;
     const preparedPassFence = evaluated.found
       ? (reads.plan?.current()?.passFence ?? reads.passFence)
       : null;
     if (evaluated.found && !preparedPassFence) throw raced();
     const passFence = pass
-      ? (preparedPassFence ??
-        (await passSnapshotFence(
-          ctx.env.DB,
-          pass,
-          evaluated.found?.checkInRules,
-          evaluated.connectionGeneration,
-          evaluated.found?.activeVersion ?? policy.activeTemplateVersion ?? undefined,
-          evaluated.found?.orgRevision ?? policy.orgRevision,
-          evaluated.found?.templateRevision ?? policy.templateRevision,
-          ctx.clock.now(),
-          ctx.env,
-          evaluated.found ?? policy,
-          evaluated.found?.liveCandidate?.templateSnapshot?.raw ??
-            evaluated.auditCandidate?.templateSnapshot?.raw,
-        )))
+      ? (preparedPassFence ?? (await stoppedPassFence(ctx, evaluated, pass)))
       : null;
     if (pass && !passFence) throw raced();
     const named = evaluated.found?.scan.actions.find((a) => a.id === req.actionId);
-    const action = named ?? (evaluated.found ? defaultAction(actor, evaluated.found.scan) : null);
+    const picked = evaluated.found ? pickFor(actor, evaluated.found, req) : null;
+    const action =
+      named ??
+      (picked && picked !== 'choose'
+        ? picked
+        : evaluated.found
+          ? defaultAction(actor, evaluated.found.scan)
+          : null);
     return {
       outcome: await finishStop(
         {
@@ -232,7 +223,7 @@ export async function attempt(
       found.activePolicy,
     );
   reads.bind(actor, found);
-  const picked = pickAction(actor, found.scan, req.actionId);
+  const picked = pickFor(actor, found, req);
   if (picked === 'choose')
     return chooseAction({
       ctx,
