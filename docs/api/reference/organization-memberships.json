@@ -14,7 +14,7 @@
           "capabilities": ["org:read"],
           "createdAt": 1794362400000,
           "revokedAt": null,
-          "userName": "Marcus Webb",
+          "userName": "Sam Rivera",
           "userEmail": "sam@example.com"
         },
         {
@@ -29,8 +29,8 @@
           "capabilities": ["org:read"],
           "createdAt": 1795399200000,
           "revokedAt": null,
-          "userName": "Lena Fischer",
-          "userEmail": "sam@example.com"
+          "userName": "Priya Nair",
+          "userEmail": "priya@example.com"
         }
       ],
       "nextCursor": null
