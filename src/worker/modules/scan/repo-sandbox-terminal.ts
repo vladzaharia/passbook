@@ -1,6 +1,6 @@
 import { SANDBOX_TEMPLATE_NAME, SANDBOX_TERMINAL_NAME } from '../../../shared/copy/developer.ts';
 import type { ApiKeyAuth, SessionAuth } from '../../platform/auth.ts';
-import { first, run } from '../../platform/db.ts';
+import { first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
