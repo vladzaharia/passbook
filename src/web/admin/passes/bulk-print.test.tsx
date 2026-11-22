@@ -71,7 +71,7 @@ describe('BulkPrintAction', () => {
     m.get
       .mockResolvedValueOnce({ state: 'running' })
       .mockResolvedValueOnce({ state: 'ready', count: 2, lossy: false, skipped: 0 });
-    const fetchMock = vi.fn(async () => new Response('pdf'));
+    const fetchMock = vi.fn(async (_url: string) => new Response('pdf'));
     vi.stubGlobal('fetch', fetchMock);
     vi.stubGlobal(
       'URL',
