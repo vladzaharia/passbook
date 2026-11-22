@@ -112,7 +112,7 @@ export async function googleFetch(
 }
 
 /**
- * Google's refusal of a fourth notifying message in 24 h (design-google-messages 7). Google
+ * Google's refusal of a fourth notifying message in 24 h (docs/design/wallet-providers/google-messages.md section 7). Google
  * documents no status for it, so any of 400, 403 or 429 whose JSON error names QuotaExceeded counts.
  */
 export function isGoogleNotifyQuota(status: number, body: string): boolean {

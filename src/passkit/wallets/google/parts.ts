@@ -161,7 +161,7 @@ export function locationsOf(ctx: Ctx): GoogleLatLong[] | undefined {
   return points.length > 0 ? points.slice(0, MAX_LOCATIONS) : undefined;
 }
 
-/** What Google has no slot for. */
+/** What Google has no slot for, and what it words itself (the change alert). */
 export function unsupportedParts(ctx: Ctx): void {
   const { view } = ctx;
   if (view.relevance.beacons.length > 0)

@@ -8,7 +8,7 @@ import { providerNotifiedSince } from './repo-notify-budget.ts';
 /**
  * Notifying messages a pass may get a day, per native wallet. Apple's own limit is the platform
  * setting `push.budgetPerDay`. Google allows 3 notifying messages per object per 24 h
- * (design-google-messages 1). Samsung has no notifying call, so it has no budget.
+ * (docs/design/wallet-providers/google-messages.md section 1). Samsung has no notifying call, so it has no budget.
  */
 export const PROVIDER_NOTIFY_LIMIT = { google: 3 } as const;
 
@@ -25,16 +25,14 @@ export async function providerBudgets(
   pass: Pass,
 ): Promise<Partial<Record<'google', PushBudgetDto>>> {
   const out: Partial<Record<'google', PushBudgetDto>> = {};
+  if (!(await removalWallets(ctx, pass)).includes('google')) return out;
   const since = ctx.clock.now() - BUDGET_WINDOW_MS;
-  for (const wallet of await removalWallets(ctx, pass)) {
-    if (wallet !== 'google') continue;
-    const { used, oldest } = await providerNotifiedSince(ctx.env.DB, pass.id, wallet, since);
-    out[wallet] = {
-      used,
-      limit: PROVIDER_NOTIFY_LIMIT[wallet],
-      resetsAt: oldest === null ? null : oldest + BUDGET_WINDOW_MS,
-    };
-  }
+  const { used, oldest } = await providerNotifiedSince(ctx.env.DB, pass.id, 'google', since);
+  out.google = {
+    used,
+    limit: PROVIDER_NOTIFY_LIMIT.google,
+    resetsAt: oldest === null ? null : oldest + BUDGET_WINDOW_MS,
+  };
   return out;
 }
 

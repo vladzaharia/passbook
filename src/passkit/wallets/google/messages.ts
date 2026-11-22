@@ -1,5 +1,5 @@
 /**
- * Google change messages (design-google-messages 4): the one message an update sends, derived from
+ * Google change messages (docs/design/wallet-providers/google-messages.md section 4): the one message an update sends, derived from
  * the stored pass versions, and the `messages` array PassBook writes on every object upsert.
  */
 import type { PassJson } from '../../types.ts';
@@ -37,7 +37,7 @@ export function googleChangeMessage(
   versions: readonly PassJson[],
 ): { header: string; body: string } | null {
   const target = versions[versions.length - 1];
-  if (versions.length < 2 || !target) return null;
+  if (versions.length < 2 || !target || target.voided === true) return null;
   const all = versions.map(fieldsOf);
   const last = all[all.length - 1] ?? [];
   // Per key, the latest version where it notified.
@@ -55,8 +55,8 @@ export function googleChangeMessage(
   for (const f of last) {
     const hit = notified.get(f.key);
     if (!hit || !same(hit, f)) continue;
-    const text = sanitizeText(fill(hit.changeMessage ?? '', bodyOf(hit)));
-    if (text) texts.push(text);
+    const text = sanitizeText(fill(hit.changeMessage ?? '', bodyOf(f)));
+    if (text && !texts.includes(text)) texts.push(text);
   }
   if (texts.length === 0) return null;
   const org = typeof target.organizationName === 'string' ? target.organizationName : '';
@@ -76,7 +76,7 @@ export function withMessageHistory<T extends GoogleObjectCommon>(
   if (voided) return { ...objectBody, messages: [voidedMessage] };
   const messages: GoogleMessage[] = history
     .filter((m) => m.settledAt > now - HISTORY_WINDOW_MS)
-    .sort((a, b) => b.settledAt - a.settledAt)
+    .sort((a, b) => b.settledAt - a.settledAt || (a.id < b.id ? 1 : a.id > b.id ? -1 : 0))
     .slice(0, MAX_HISTORY)
     .reverse()
     .map((m) => ({ id: m.id, header: m.header, body: m.body, messageType: 'TEXT' }));

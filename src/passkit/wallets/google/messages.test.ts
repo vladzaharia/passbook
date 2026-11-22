@@ -172,3 +172,86 @@ describe('withMessageHistory', () => {
     expect(out.map((m) => m.id)).toEqual(['voided']);
   });
 });
+
+describe('googleChangeMessage edge cases', () => {
+  it('is null for a voided target', () => {
+    const v1 = pass([tier('Silver')]);
+    const v2 = { ...pass([tier('Gold')]), voided: true } as PassJson;
+    expect(googleChangeMessage([v1, v2])).toBeNull();
+  });
+
+  it('lists a field once when a poster carries it in two dictionaries', () => {
+    const f = (v: string) => tier(v, 'Your tier is now %@.');
+    const poster = (v: string) =>
+      ({
+        ...pass([f(v)]),
+        posterGeneric: { primaryFields: [f(v)] },
+      }) as unknown as PassJson;
+    expect(googleChangeMessage([poster('Silver'), poster('Gold')])?.body).toBe(
+      'Your tier is now Gold.',
+    );
+  });
+
+  it('lists identical lines once across different keys (Henry fields)', () => {
+    const f = (key: string, v: string): F => ({ key, value: v, changeMessage: 'Now %@' });
+    const msg = googleChangeMessage([
+      pass([f('status', 'a'), f('club', 'a')]),
+      pass([f('status', 'b'), f('club', 'b')]),
+    ]);
+    expect(msg?.body).toBe('Now b');
+  });
+
+  it("words a date as the target's style shows it", () => {
+    const date = (style: string): F => ({
+      key: 'd',
+      value: '2026-12-02T10:00:00Z',
+      dateStyle: style,
+      changeMessage: 'Moved to %@',
+    });
+    const short = googleChangeMessage([
+      pass([date('PKDateStyleShort')]),
+      pass([date('PKDateStyleShort')]),
+    ]);
+    expect(short).toBeNull();
+    const target = pass([{ ...date('PKDateStyleFull'), changeMessage: 'Moved to %@' }]);
+    const base = pass([{ ...date('PKDateStyleShort'), value: '2026-12-01T10:00:00Z' }]);
+    const full = googleChangeMessage([base, target])?.body;
+    const medium = googleChangeMessage([
+      pass([{ ...date('PKDateStyleMedium'), value: '2026-12-01T10:00:00Z' }]),
+      pass([date('PKDateStyleMedium')]),
+    ])?.body;
+    expect(full).not.toBe(medium);
+    expect(full).toMatch(/December/u);
+  });
+
+  it('gives no message for a field that moves silently and then back', () => {
+    const a = (v: string, m?: string): F => ({
+      key: 'a',
+      value: v,
+      ...(m ? { changeMessage: m } : {}),
+    });
+    const v1 = pass([a('1')]);
+    const v2 = pass([a('2', 'A is %@')]);
+    const v3 = pass([a('3')]);
+    const v4 = pass([a('2')]);
+    expect(googleChangeMessage([v1, v2, v3, v4])).toBeNull();
+  });
+});
+
+describe('withMessageHistory ordering', () => {
+  it('breaks settledAt ties on id, stable under shuffled input', () => {
+    const history = Array.from({ length: 11 }, (_, i) => ({ ...msg(i, 1), settledAt: NOW - DAY }));
+    const shuffled = [...history].reverse();
+    const a = withMessageHistory(base, history, false, NOW).messages ?? [];
+    const b = withMessageHistory(base, shuffled, false, NOW).messages ?? [];
+    expect(a).toEqual(b);
+    expect(a).toHaveLength(9);
+  });
+
+  it('drops a message exactly 30 days old and keeps one just inside', () => {
+    const edge = { ...msg(1, 30), settledAt: NOW - 30 * DAY };
+    const inside = { ...msg(2, 30), settledAt: NOW - 30 * DAY + 1 };
+    const out = withMessageHistory(base, [edge, inside], false, NOW).messages ?? [];
+    expect(out.map((m) => m.id)).toEqual(['pbm_2']);
+  });
+});
