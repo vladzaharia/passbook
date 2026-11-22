@@ -25,7 +25,7 @@ describe('the key box', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Copy .env' }));
     expect(writeText).toHaveBeenCalledWith(`PASSBOOK_KEY=${SECRET}\nPASSBOOK_TEMPLATE_ID=tpl-1\n`);
     expect(container.textContent).not.toContain(SECRET);
-    expect(container.textContent).toContain('pbp_test_…amDQ');
+    expect(container.textContent).toContain('pbp_test_…demo');
     expect(screen.getByText('Key hidden')).toBeTruthy();
   });
 

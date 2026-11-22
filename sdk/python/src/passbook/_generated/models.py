@@ -1087,8 +1087,13 @@ __all__ = [
     "PlatformRetentionReceiptsListResponse",
     "PlatformRetentionReceiptsListResponseItemsItem",
     "PlatformSettingsRetrieveImpactResponse",
+    "PlatformStatusListIncidentsResponse",
+    "PlatformStatusListIncidentsResponseItemsItem",
     "PlatformStatusListWorkflowRunsResponse",
     "PlatformStatusListWorkflowRunsResponseItemsItem",
+    "PlatformStatusOpenIncidentParams",
+    "PlatformStatusOpenIncidentResponse",
+    "PlatformStatusResolveIncidentResponse",
     "PlatformStatusRetrieveResponse",
     "PlatformStatusRetrieveResponseBuild",
     "PlatformStatusRetrieveResponseComponentsItem",
@@ -5081,6 +5086,7 @@ class NfcKeysetsDisableResponseVersionsItem(_Model):
 class NfcKeysetsImportTagsParams(_Model):
     csv: str
     dryRun: bool
+    replace: bool | None = None
 
 class NfcKeysetsImportTagsResponse(_Model):
     dryRun: bool
@@ -5093,7 +5099,7 @@ class NfcKeysetsImportTagsResponse(_Model):
 class NfcKeysetsImportTagsResponseProblemsItem(_Model):
     line: int
     uid: str | None
-    reason: _Literal["bad_uid", "bad_key", "weak_key", "dup_file", "dup_key", "meta_key", "exists"] | str
+    reason: _Literal["bad_uid", "bad_key", "weak_key", "dup_file", "dup_key", "meta_key", "exists", "not_on_keyset"] | str
 
 class NfcKeysetsListItem(_Model):
     id: str
@@ -8486,6 +8492,19 @@ class PlatformRetentionReceiptsListResponseItemsItem(_Model):
 class PlatformSettingsRetrieveImpactResponse(_Model):
     emailOnlyUsers: int
 
+class PlatformStatusListIncidentsResponse(_Model):
+    items: _List[PlatformStatusListIncidentsResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformStatusListIncidentsResponseItemsItem(_Model):
+    id: str
+    title: str
+    note: str
+    component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str
+    impact: _Literal["notice", "degraded", "outage"] | str
+    startedAt: int
+    resolvedAt: int | None
+
 class PlatformStatusListWorkflowRunsResponse(_Model):
     items: _List[PlatformStatusListWorkflowRunsResponseItemsItem]
     nextCursor: str | None
@@ -8499,6 +8518,30 @@ class PlatformStatusListWorkflowRunsResponseItemsItem(_Model):
     startedAt: int
     finishedAt: int | None
     errorCode: str | None
+
+class PlatformStatusOpenIncidentParams(_Model):
+    title: str
+    note: str
+    component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str = None
+    impact: _Literal["notice", "degraded", "outage"] | str
+
+class PlatformStatusOpenIncidentResponse(_Model):
+    id: str
+    title: str
+    note: str
+    component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str
+    impact: _Literal["notice", "degraded", "outage"] | str
+    startedAt: int
+    resolvedAt: int | None
+
+class PlatformStatusResolveIncidentResponse(_Model):
+    id: str
+    title: str
+    note: str
+    component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str
+    impact: _Literal["notice", "degraded", "outage"] | str
+    startedAt: int
+    resolvedAt: int | None
 
 class PlatformStatusRetrieveResponse(_Model):
     overall: _Literal["failing", "degraded", "not_configured", "configured", "not_in_use", "verified"] | str

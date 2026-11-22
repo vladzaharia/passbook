@@ -3,5 +3,6 @@ curl -X POST "https://passbook.mobile/api/v1/nfc/keysets/0193a1b2-7c00-7000-8000
   -H "Content-Type: application/json" \
   -d '{
   "csv": "name,email,tier\nAda Example,ada@example.com,Day pass\n",
-  "dryRun": false
+  "dryRun": false,
+  "replace": false
 }'

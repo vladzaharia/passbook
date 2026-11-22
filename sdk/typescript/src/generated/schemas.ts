@@ -3158,6 +3158,7 @@ export type NfcKeysetsDisableResponse = {
 export type NfcKeysetsImportTagsParams = {
   csv: string;
   dryRun: boolean;
+  replace?: boolean;
 };
 
 export type NfcKeysetsImportTagsResponse = {
@@ -3168,7 +3169,7 @@ export type NfcKeysetsImportTagsResponse = {
   problems: Array<{
     line: number;
     uid: string | null;
-    reason: "bad_uid" | "bad_key" | "weak_key" | "dup_file" | "dup_key" | "meta_key" | "exists";
+    reason: "bad_uid" | "bad_key" | "weak_key" | "dup_file" | "dup_key" | "meta_key" | "exists" | "not_on_keyset";
   }>;
   moreProblems: number;
 };
@@ -6920,6 +6921,19 @@ export type PlatformSettingsRetrieveImpactResponse = {
   emailOnlyUsers: number;
 };
 
+export type PlatformStatusListIncidentsResponse = {
+  items: Array<{
+    id: string;
+    title: string;
+    note: string;
+    component: "api" | "apple_push" | "email" | "webhooks" | "google" | "samsung" | null;
+    impact: "notice" | "degraded" | "outage";
+    startedAt: number;
+    resolvedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
 export type PlatformStatusListWorkflowRunsResponse = {
   items: Array<{
     instanceId: string;
@@ -6932,6 +6946,33 @@ export type PlatformStatusListWorkflowRunsResponse = {
     errorCode: string | null;
   }>;
   nextCursor: string | null;
+};
+
+export type PlatformStatusOpenIncidentParams = {
+  title: string;
+  note: string;
+  component?: "api" | "apple_push" | "email" | "webhooks" | "google" | "samsung" | null;
+  impact: "notice" | "degraded" | "outage";
+};
+
+export type PlatformStatusOpenIncidentResponse = {
+  id: string;
+  title: string;
+  note: string;
+  component: "api" | "apple_push" | "email" | "webhooks" | "google" | "samsung" | null;
+  impact: "notice" | "degraded" | "outage";
+  startedAt: number;
+  resolvedAt: number | null;
+};
+
+export type PlatformStatusResolveIncidentResponse = {
+  id: string;
+  title: string;
+  note: string;
+  component: "api" | "apple_push" | "email" | "webhooks" | "google" | "samsung" | null;
+  impact: "notice" | "degraded" | "outage";
+  startedAt: number;
+  resolvedAt: number | null;
 };
 
 export type PlatformStatusRetrieveResponse = {

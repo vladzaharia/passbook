@@ -9,6 +9,7 @@ result = pb.nfc.keysets.import_tags(
     {
         "csv": "name,email,tier\nAda Example,ada@example.com,Day pass\n",
         "dryRun": False,
+        "replace": False,
     },
 )
 print(result)

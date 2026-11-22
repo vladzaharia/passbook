@@ -3905,8 +3905,9 @@ type NfcKeysetsDisableResult = NfcKeysetsDisableResponse
 type NfcKeysetsImportTagsBody = NfcKeysetsImportTagsParams
 
 type NfcKeysetsImportTagsParams struct {
-	CSV    string `json:"csv"`
-	DryRun bool   `json:"dryRun"`
+	CSV     string `json:"csv"`
+	DryRun  bool   `json:"dryRun"`
+	Replace *bool  `json:"replace,omitempty"`
 }
 
 type NfcKeysetsImportTagsResponse struct {
@@ -8032,6 +8033,21 @@ type PlatformSettingsRetrieveImpactResponse struct {
 	EmailOnlyUsers int64 `json:"emailOnlyUsers"`
 }
 
+type PlatformStatusListIncidentsResponse struct {
+	Items      []PlatformStatusListIncidentsResponseItemsItem `json:"items"`
+	NextCursor *string                                        `json:"nextCursor"`
+}
+
+type PlatformStatusListIncidentsResponseItemsItem struct {
+	ID         string  `json:"id"`
+	Title      string  `json:"title"`
+	Note       string  `json:"note"`
+	Component  *string `json:"component"`
+	Impact     string  `json:"impact"`
+	StartedAt  int64   `json:"startedAt"`
+	ResolvedAt *int64  `json:"resolvedAt"`
+}
+
 type PlatformStatusListWorkflowRunsResponse struct {
 	Items      []PlatformStatusListWorkflowRunsResponseItemsItem `json:"items"`
 	NextCursor *string                                           `json:"nextCursor"`
@@ -8046,6 +8062,33 @@ type PlatformStatusListWorkflowRunsResponseItemsItem struct {
 	StartedAt  int64   `json:"startedAt"`
 	FinishedAt *int64  `json:"finishedAt"`
 	ErrorCode  *string `json:"errorCode"`
+}
+
+type PlatformStatusOpenIncidentParams struct {
+	Title     string  `json:"title"`
+	Note      string  `json:"note"`
+	Component *string `json:"component,omitempty"`
+	Impact    string  `json:"impact"`
+}
+
+type PlatformStatusOpenIncidentResponse struct {
+	ID         string  `json:"id"`
+	Title      string  `json:"title"`
+	Note       string  `json:"note"`
+	Component  *string `json:"component"`
+	Impact     string  `json:"impact"`
+	StartedAt  int64   `json:"startedAt"`
+	ResolvedAt *int64  `json:"resolvedAt"`
+}
+
+type PlatformStatusResolveIncidentResponse struct {
+	ID         string  `json:"id"`
+	Title      string  `json:"title"`
+	Note       string  `json:"note"`
+	Component  *string `json:"component"`
+	Impact     string  `json:"impact"`
+	StartedAt  int64   `json:"startedAt"`
+	ResolvedAt *int64  `json:"resolvedAt"`
 }
 
 type PlatformStatusRetrieveResponse struct {
