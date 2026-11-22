@@ -4,7 +4,7 @@ import { fence, guideApi, snippetBody } from './guide-api.ts';
 
 /** The sandbox claims of the door, events, go-live and bulk guides, each proven by the API. */
 describe('check in at the door', () => {
-  it('sets and reads the rules, finds the code in the pass detail, and has no till scope in a sandbox', async () => {
+  it('sets and reads the rules, finds the code in the pass detail, and keeps a sandbox key off every terminal but its own', async () => {
     const { call, makePass } = await guideApi();
     const pass = await makePass('door-1');
     const rules = snippetBody('check-in-rules');
@@ -22,14 +22,15 @@ describe('check in at the door', () => {
       clientTs: Date.now(),
     };
     const bare = await call('POST', '/scan/resolve', till);
-    expect([bare.status, bare.json.code]).toEqual([403, 'MISSING_SCOPE']);
+    expect([bare.status, bare.json.code]).toEqual([422, 'DEVICE_REQUIRED']);
     const act = await call(
       'POST',
       '/scan/actions',
       { ...till, actionId: 'auto' },
       { 'x-passbook-device': 'door-1' },
     );
-    expect([act.status, act.json.code]).toEqual([403, 'MISSING_SCOPE']);
+    // Only the sandbox's own terminal (guide-outcomes-door.test.ts) opens to a sandbox key.
+    expect([act.status, act.json.code]).toEqual([404, 'TERMINAL_NOT_FOUND']);
   });
 });
 
