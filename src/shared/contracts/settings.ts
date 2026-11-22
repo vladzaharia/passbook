@@ -92,6 +92,13 @@ export const PlatformSettingsSchema = z.object({
 export const OrgSettingsSchema = z.object({
   /** The org's clock for day boundaries (zone Clear at, hours) where no zone or event has its own. Unset: UTC. */
   'org.timeZone': TimeZoneSchema.optional(),
+  /** The organization's own site; holder links to "visit the org" use it. Unset: the holder account page. */
+  'org.website': z
+    .string()
+    .max(2048)
+    .refine(isHttpsUrl, 'Use an https URL without credentials.')
+    .transform((value) => new URL(value).href)
+    .optional(),
   'branding.accent': z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/)

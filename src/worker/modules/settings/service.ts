@@ -10,6 +10,7 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
+import { isIpLiteral, platformHostsOf } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
@@ -151,6 +152,14 @@ export async function listSettings(ctx: ServiceContext, scope: string): Promise<
     : inherit(entries, await getPlatformSettings(ctx), await entitlementsOf(ctx, orgId));
 }
 
+/** Private, local and platform hosts are no org website. Mirrors the host rules of `assertSafeUrl`, without its UNSAFE_URL code. */
+function websiteRefusal(ctx: ServiceContext, url: string): string | null {
+  const host = new URL(url).hostname.toLowerCase().replace(/\.+$/, '');
+  const local = !host.includes('.') || /\.(local|internal|localhost)$/.test(host);
+  const platform = platformHostsOf(ctx.env).some((p) => host === p || host.endsWith(`.${p}`));
+  return isIpLiteral(host) || local || platform ? 'Use a public https address.' : null;
+}
+
 /** The schema checks the name against "PassBook"; this also checks the platform's current sender name. */
 async function fromNameRefusal(ctx: ServiceContext, name: string): Promise<string | null> {
   const platform = await getPlatformSettings(ctx);
@@ -185,9 +194,11 @@ export async function checkValues(
         ? null
         : key === 'email.fromName'
           ? await fromNameRefusal(ctx, parsed.data as string)
-          : key === 'support.email' && isPlatformAddress(ctx.env, parsed.data as string)
-            ? 'Use an address on your own domain.'
-            : null;
+          : key === 'org.website'
+            ? websiteRefusal(ctx, parsed.data as string)
+            : key === 'support.email' && isPlatformAddress(ctx.env, parsed.data as string)
+              ? 'Use an address on your own domain.'
+              : null;
       if (refused) issues.push({ path: key, message: refused });
       else if (parsed.success) upserts[key] = parsed.data;
       else issues.push({ path: key, message: parsed.error.issues[0]?.message ?? 'Invalid value.' });

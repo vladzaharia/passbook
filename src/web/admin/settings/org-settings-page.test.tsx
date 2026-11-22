@@ -177,3 +177,22 @@ describe('org time zone', () => {
     );
   });
 });
+
+describe('org website', () => {
+  it('refuses an http address with one sentence and saves an https one', async () => {
+    const puts: unknown[] = [];
+    await setup({ 'org.website': { value: null } }, (put) => puts.push(put));
+    const user = userEvent.setup();
+    const input = await screen.findByLabelText('Website');
+    await user.type(input, 'http://gym.example');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('Use an https URL without credentials.')).toBeInTheDocument();
+    expect(puts).toEqual([]);
+    await user.clear(input);
+    await user.type(input, 'https://gym.example');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(puts).toEqual([{ scope: 'org:o1', values: { 'org.website': 'https://gym.example' } }]),
+    );
+  });
+});
