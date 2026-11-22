@@ -1,12 +1,13 @@
 /** The scenarios of the tag gallery: assign states, door results and their readers. */
-import type { TagReader } from './assign/tag-reader.ts';
 import type { ScanTag } from './assign/types.ts';
 import { grant } from './machine/access-fixtures.test-support.ts';
-import { type AssignState, TAG_OFFLINE } from './machine/assign-state.ts';
+import { TAG_OFFLINE } from './machine/assign-state.ts';
 import { fixtureDisplay } from './machine/fixtures.test-support.ts';
 import type { ScanOutcome } from './machine/types.ts';
+import { moreAssigns } from './visual-tags-more.ts';
 import {
   ANDROID,
+  type Assign,
   base,
   ENROLL,
   IPHONE,
@@ -18,15 +19,11 @@ import {
   WEB,
 } from './visual-tags-shared.ts';
 
+export type { Assign } from './visual-tags-shared.ts';
 export { ANDROID, IPHONE, NOW, USB, WEB };
 
-export interface Assign {
-  a: AssignState;
-  reader: TagReader;
-  knownName?: string | null;
-  manager?: boolean;
-}
 export const assigns: Record<string, Assign> = {
+  ...moreAssigns,
   'assign-tag-android': { a: base(), reader: ANDROID },
   'assign-tag-iphone': { a: base(), reader: IPHONE },
   'assign-tag-web': { a: base(), reader: WEB },

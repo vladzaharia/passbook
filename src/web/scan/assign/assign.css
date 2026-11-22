@@ -306,3 +306,7 @@
   font: 600 14px / 18px var(--pk-font-sans);
   cursor: pointer;
 }
+.scan-assign-banner-act:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}

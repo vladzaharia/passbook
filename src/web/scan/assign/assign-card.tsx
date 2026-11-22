@@ -1,6 +1,7 @@
 import { CircleAlert, Loader2, Search } from 'lucide-react';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import type { AssignState } from '../machine/assign-state.ts';
+import { ApprovalSheet } from '../result/approval-sheet.tsx';
 import { VerdictGlyph } from '../result/verdict-glyph.tsx';
 import { fill } from '../ui/copy.ts';
 import { ConfirmBody } from './assign-confirm.tsx';
@@ -75,6 +76,15 @@ function Headline({ a, ctx }: { a: AssignState; ctx: AssignCardContext }) {
   }
 }
 
+const noteText = (kind: NonNullable<AssignState['note']>['kind']) =>
+  kind === 'is_pass'
+    ? SCAN_TAG_COPY.tag.isPass
+    : kind === 'is_tag'
+      ? SCAN_TAG_COPY.pass.isTag
+      : kind === 'person_off'
+        ? TAG_EXTRA_COPY.personOff
+        : TAG_EXTRA_COPY.typePass;
+
 /** The step's card body. The dock carries the verbs. */
 function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: AssignCardHandlers }) {
   const c = SCAN_TAG_COPY;
@@ -83,6 +93,16 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
     return (
       <>
         <StepHeader a={a} />
+        {a.note ? (
+          <p
+            className="scan-assign-note"
+            data-tone="amber"
+            role="status"
+            data-testid="scan-assign-note"
+          >
+            {noteText(a.note.kind)}
+          </p>
+        ) : null}
         <ConfirmBody a={a} manager={ctx.manager} managers={ctx.managers} code={ctx.code} on={on} />
       </>
     );
@@ -140,7 +160,7 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
           role="status"
           data-testid="scan-assign-note"
         >
-          {a.note.kind === 'is_pass' ? c.tag.isPass : c.pass.isTag}
+          {noteText(a.note.kind)}
         </p>
       ) : null}
       {a.banner ? (
@@ -155,6 +175,16 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
             </button>
           ) : null}
         </div>
+      ) : null}
+      {a.pin?.open && a.step === 'pass' && !ctx.manager ? (
+        <ApprovalSheet
+          managers={ctx.managers}
+          code={ctx.code}
+          action={TAG_EXTRA_COPY.pinFor}
+          note={a.pin.note}
+          onApprove={on.approve}
+          onCancel={on.closePin}
+        />
       ) : null}
       {a.waiting ? (
         <p className="scan-assign-wait" role="status">

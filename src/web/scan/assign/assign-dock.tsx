@@ -68,10 +68,12 @@ export function AssignDock({
       return (
         <>
           {cancel}
-          <DockButton primary variant="filled" onClick={on.lookUp}>
-            <Search aria-hidden size={20} />
-            {TAG_EXTRA_COPY.look}
-          </DockButton>
+          {a.banner === 'ambiguous' ? null : (
+            <DockButton primary variant="filled" onClick={on.lookUp}>
+              <Search aria-hidden size={20} />
+              {TAG_EXTRA_COPY.look}
+            </DockButton>
+          )}
         </>
       );
     case 'confirm': {

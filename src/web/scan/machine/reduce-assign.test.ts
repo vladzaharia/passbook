@@ -4,6 +4,7 @@ import {
   bindResultOf,
   cardReadEvent,
   inspectOf,
+  passReadEvent,
   run,
   tagOf,
   tagReadEvent,
@@ -564,5 +565,101 @@ describe('what the tag opens by default', () => {
       at(600),
     );
     expect(done.cmds).toContainEqual({ c: 'beat', beat: 'link' });
+  });
+});
+
+describe('a pass picked in Look up', () => {
+  const failEvent = (key: string, over: Record<string, unknown>) =>
+    ({ type: 'assign.failed', key, code: null, status: 0, network: false, ...over }) as const;
+  const picked = () => {
+    const t = tagged();
+    const r = run(t.state, [300, passReadEvent()]);
+    return { ...r, bind: assignCmd(r.cmds, 'assign.bind') };
+  };
+  it('previews by pass id, and records no check-in', () => {
+    const r = picked();
+    expect(r.bind.body).toMatchObject({ preview: true, card: { passId: expect.any(String) } });
+    expect(r.cmds.some((c) => c.c === 'act' || c.c === 'resolve')).toBe(false);
+  });
+  it('a pass id asks a non-manager for the PIN on the pass step, not a blank confirm', () => {
+    const r = picked();
+    const f = step(
+      r.state,
+      failEvent(r.bind.key, { code: 'TAG_APPROVAL_REQUIRED', status: 403 }),
+      at(400),
+    );
+    expect(assignOf(f.state)).toMatchObject({
+      step: 'pass',
+      busy: null,
+      preview: null,
+      pin: { open: true },
+    });
+    expect(f.cmds.some((c) => c.c === 'act')).toBe(false);
+  });
+  it('the PIN sends the same preview with the approval, then the confirm step opens', () => {
+    const r = picked();
+    const f = step(
+      r.state,
+      failEvent(r.bind.key, { code: 'TAG_APPROVAL_REQUIRED', status: 403 }),
+      at(400),
+    );
+    const ok = step(f.state, { type: 'assign.approve', staffId: 'm1', pin: '1234' }, at(500));
+    const cmd = assignCmd(ok.cmds, 'assign.bind');
+    expect(cmd.body).toMatchObject({ preview: true, approval: { staffId: 'm1', pin: '1234' } });
+    expect(assignOf(ok.state)?.busy).toBe('preview');
+    const done = step(
+      ok.state,
+      { type: 'assign.previewed', key: cmd.key, result: bindResultOf() },
+      at(600),
+    );
+    expect(assignOf(done.state)).toMatchObject({ step: 'confirm', pin: null });
+    expect(done.cmds.some((c) => c.c === 'act')).toBe(false);
+  });
+  it('a wrong PIN keeps the sheet open on the pass step', () => {
+    const r = picked();
+    const f = step(
+      r.state,
+      failEvent(r.bind.key, { code: 'TAG_APPROVAL_REQUIRED', status: 403 }),
+      at(400),
+    );
+    const ok = step(f.state, { type: 'assign.approve', pin: '0000' }, at(500));
+    const cmd = assignCmd(ok.cmds, 'assign.bind');
+    const bad = step(
+      ok.state,
+      failEvent(cmd.key, { code: 'PIN_INVALID', status: 403, triesLeft: 2 }),
+      at(600),
+    );
+    expect(assignOf(bad.state)).toMatchObject({ step: 'pass', pin: { open: true } });
+  });
+  it('closing the sheet leaves the pass step', () => {
+    const r = picked();
+    const f = step(
+      r.state,
+      failEvent(r.bind.key, { code: 'TAG_APPROVAL_REQUIRED', status: 403 }),
+      at(400),
+    );
+    const c = step(f.state, { type: 'assign.pin', open: false }, at(450));
+    expect(assignOf(c.state)).toMatchObject({ step: 'pass', pin: null });
+  });
+});
+
+describe('a person scope the binder may not use', () => {
+  const failEvent = (key: string, over: Record<string, unknown>) =>
+    ({ type: 'assign.failed', key, code: null, status: 0, network: false, ...over }) as const;
+  it.each([
+    ['TAG_ASSIGN_FORBIDDEN', 'person_off'],
+    ['TAG_TYPE_SCOPE', 'type_pass'],
+  ] as const)('%s returns to confirm on this pass, with the reason', (code, kind) => {
+    const c = confirming();
+    const user = step(c.state, { type: 'assign.scope', scope: 'user' }, at(500));
+    const bind = step(user.state, { type: 'assign.bind' }, at(510));
+    const cmd = assignCmd(bind.cmds, 'assign.bind');
+    const f = step(bind.state, failEvent(cmd.key, { code, status: 403 }), at(600));
+    expect(assignOf(f.state)).toMatchObject({
+      step: 'confirm',
+      scope: 'pass',
+      busy: null,
+      note: { kind },
+    });
   });
 });

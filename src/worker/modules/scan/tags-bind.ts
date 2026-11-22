@@ -175,6 +175,11 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     if (decision?.status === 'replaced')
       warnings.push(active?.scope === 'user' ? 'replaces_user_tag' : 'replaces_pass_tag');
     if (tag?.lostAt != null && !warnings.includes('lost')) warnings.push('lost');
+    const userOk = (p: typeof policy) =>
+      ownerAccount &&
+      p?.type?.scopes !== 'pass' &&
+      rights.assignAll !== 'never' &&
+      (manager || ROLE_RANK[rights.role] >= ROLE_RANK[rights.assignAll]);
     const result = (
       status: BindResult['status'],
       bindingId: string | null,
@@ -194,9 +199,9 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
           }
         : {}),
       bindingId,
-      card: summary,
+      card: status === 'already_bound' ? { ...summary, photoUrl: null } : summary,
       ownerAccount,
-      opensDefault: opensDefault(candidate),
+      opensDefault: opensDefault(candidate, userOk(policy)),
       skipped,
       warnings,
       lostAt: tag?.lostAt ?? null,

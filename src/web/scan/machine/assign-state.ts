@@ -40,7 +40,7 @@ export type AssignBanner =
   | 'not_accepted'
   | 'ambiguous';
 /** The amber lines that do not change the step. */
-export type AssignNote = 'is_pass' | 'is_tag';
+export type AssignNote = 'is_pass' | 'is_tag' | 'person_off' | 'type_pass';
 
 export type AssignErrorKind =
   | 'lost'

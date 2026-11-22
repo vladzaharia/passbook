@@ -32,6 +32,8 @@ export interface TagUi {
   dock: ReactNode | null;
   tint: 'green' | 'amber' | 'red' | 'slate' | null;
   pose: 'pair' | 'aim' | null;
+  /** Look up in assign mode: the picked pass goes to the tag card. Null outside it. */
+  lookupPass: ((passId: string) => void) | null;
   /** The tag beside the violet pass once a tag is read. */
   prop: ReactNode | null;
   strip: StripEntry | null;
@@ -258,6 +260,8 @@ export function useTagUi({
     ) : null,
     tint: tone ? TINT[tone] : null,
     pose: a ? (a.step === 'pass' ? 'aim' : 'pair') : null,
+    lookupPass:
+      a && a.step === 'pass' ? (passId) => runtime.emit({ method: 'manual', passId }) : null,
     prop: a?.tag ? <TagProp struck={tone === 'refused'} /> : null,
     strip: stripEntry,
     onUndo: strip?.bindingId ? () => dispatch({ type: 'assign.undo' }) : null,

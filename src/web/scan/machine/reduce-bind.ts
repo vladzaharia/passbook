@@ -56,7 +56,7 @@ export function bind(s: MachineState, ev: Of<'assign.bind'>, env: Env): Out {
 
 export function pin(s: MachineState, ev: Of<'assign.pin'>, env: Env): Out {
   const a = s.assign;
-  if (a?.step !== 'confirm') return same(s);
+  if (a?.step !== 'confirm' && a?.step !== 'pass') return same(s);
   return put(s, { ...a, pin: ev.open ? { open: true, move: ev.move ?? false } : null }, env);
 }
 
@@ -72,7 +72,9 @@ export function approve(s: MachineState, ev: Of<'assign.approve'>, env: Env): Ou
     approval: { ...(ev.staffId ? { staffId: ev.staffId } : {}), pin: ev.pin },
   };
   const { approval: _pin, ...kept } = body;
-  return put(s, { ...a, key, busy: 'bind', retry: { c: 'assign.bind', key, body: kept } }, env, [
+  // A pass picked by id asks for the PIN at the preview: the same preview again, with the approval.
+  const busy = last.body.preview ? 'preview' : 'bind';
+  return put(s, { ...a, key, busy, retry: { c: 'assign.bind', key, body: kept } }, env, [
     send({ c: 'assign.bind', key, body }),
   ]);
 }

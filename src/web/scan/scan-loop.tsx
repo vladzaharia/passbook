@@ -295,6 +295,7 @@ export function ScanLoop({
       {tags.layer}
       <ScanOverlays
         allowPeople={scanner?.settings.lookup ?? true}
+        onPass={tags.lookupPass}
         sessionTotals={session.staff?.role === 'manager' && Boolean(session.workspace)}
         orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
         timeZone={session.event?.timeZone}

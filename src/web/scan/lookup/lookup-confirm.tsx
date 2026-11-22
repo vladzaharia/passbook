@@ -22,7 +22,8 @@ export function LookupConfirm({
   picked: ScanOutcome;
   busy: boolean;
   onBack: () => void;
-  onCheckIn: (card: ScanCard, actionId: string) => void;
+  /** Absent in assign mode: the sheet picks a pass for a tag, it never checks one in. */
+  onCheckIn?: (card: ScanCard, actionId: string) => void;
   orgId?: string | undefined;
   timeZone?: string | undefined;
 }) {
@@ -66,7 +67,7 @@ export function LookupConfirm({
           })}
         </Callout>
       ) : null}
-      {card && action ? (
+      {card && action && onCheckIn ? (
         <Button
           className="scan-lookup-commit"
           disabled={busy}

@@ -50,3 +50,10 @@ export const ANDROID: TagReader = { kind: 'continuous', needsStart: false };
 export const IPHONE: TagReader = { kind: 'sheet', needsStart: false };
 export const WEB: TagReader = { kind: 'webnfc', needsStart: true };
 export const USB: TagReader = { kind: 'wedge', needsStart: false };
+
+export interface Assign {
+  a: AssignState;
+  reader: TagReader;
+  knownName?: string | null;
+  manager?: boolean;
+}

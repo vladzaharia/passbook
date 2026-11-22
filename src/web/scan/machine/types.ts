@@ -18,6 +18,7 @@ export type { FailCode, PinNote, ScanInput };
 export type Card = ScanCard;
 export type Counts = ScanCounts;
 
+/** A Manager's PIN approval. */
 export interface Approval {
   /** Absent: the PIN is matched against the org's managers. */
   staffId?: string;
@@ -212,30 +213,9 @@ export type ScanEvent =
 
 export type Tone = 'ok' | 'reward' | 'heads_up' | 'refused' | 'system' | 'undo' | 'read';
 
-/** The buddy's beats (BM section 8). `cut` stops the current beat at once. */
-export type BuddyBeat =
-  | 'hop'
-  | 'dip'
-  | 'fan'
-  | 'stash'
-  | 'stamp'
-  | 'sparkle'
-  | 'coins'
-  | 'nod'
-  | 'punch'
-  | 'rewind'
-  | 'wrist'
-  | 'tilt'
-  | 'shake'
-  | 'cloud'
-  | 'plug'
-  | 'wait'
-  | 'lock'
-  | 'look'
-  | 'pair'
-  | 'link'
-  | 'hello'
-  | 'tug';
+export type { BuddyBeat } from './types-beats.ts';
+
+import type { BuddyBeat } from './types-beats.ts';
 
 export type Cmd =
   | { c: 'resolve'; key: string; input: ScanInput }

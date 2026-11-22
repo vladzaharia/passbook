@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import '../../lib/test-utils.tsx';
@@ -43,6 +43,31 @@ describe('the assign card', () => {
     expect(banner.textContent).toContain('More than one pass');
     fireEvent.click(within(banner).getByRole('button', { name: 'Look up' }));
     expect(lookUp).toHaveBeenCalledTimes(1);
+  });
+  it('the ambiguous screen has one Look up: the banner, not the dock', () => {
+    show('assign-pass-ambiguous');
+    expect(screen.getAllByRole('button', { name: 'Look up' })).toHaveLength(1);
+    cleanup();
+    show('assign-pass');
+    expect(screen.getAllByRole('button', { name: 'Look up' })).toHaveLength(1);
+  });
+  it('a pass picked by id asks a Desk for the PIN on the pass step', () => {
+    show('assign-pass-pin');
+    expect(screen.getByTestId('scan-approval')).toBeTruthy();
+    expect(screen.queryByTestId('scan-assign-info')).toBeNull();
+  });
+  it('a refused person scope says why, on this pass', () => {
+    show('assign-confirm-person-off');
+    expect(screen.getByTestId('scan-assign-note').textContent).toContain(
+      "can't assign to a person",
+    );
+    expect((screen.getByRole('radio', { name: /This pass/ }) as HTMLInputElement).checked).toBe(
+      true,
+    );
+  });
+  it('the done card shows the holder photo', () => {
+    show('assign-done-photo');
+    expect(document.querySelector('.scan-assign-photo')).toBeTruthy();
   });
   it('other banners have no Look up button', () => {
     show('assign-pass-banner');

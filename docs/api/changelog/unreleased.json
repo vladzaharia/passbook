@@ -2610,7 +2610,7 @@
     "operationId": "scan.postScanTagsBind",
     "op": "POST /api/v1/scan/tags/bind",
     "change": "200.opensDefault: field added",
-    "note": "opensDefault says what the template's tag opens when nobody chooses: user for a staff template, pass otherwise."
+    "note": "opensDefault says what a new tag opens when nobody chooses: user for a staff template where this scanner and tag type may bind a person, pass otherwise."
   },
   {
     "key": "POST /api/v1/scanners 200.staff.name: now nullable",
