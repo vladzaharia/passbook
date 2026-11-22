@@ -1,3 +1,20 @@
+import { PREVIEW_PASS_IDENTITY } from '../../../shared/copy/developer.ts';
+
+/**
+ * The wallet identity a pass is built under. A sandbox's passes are built with the preview identity (they
+ * sign nothing) though the row stores the platform's; `si` is the pass's identity row.
+ */
+export const walletIdentityColumn = (
+  column: 'pass_type_identifier' | 'team_identifier',
+  pass = 'p',
+): string => {
+  const preview =
+    PREVIEW_PASS_IDENTITY[
+      column === 'pass_type_identifier' ? 'passTypeIdentifier' : 'teamIdentifier'
+    ];
+  return `(CASE WHEN EXISTS (SELECT 1 FROM developer_sandboxes ds WHERE ds.org_id=${pass}.org_id) THEN '${preview}' ELSE si.${column} END)`;
+};
+
 export interface WalletIdentitySql {
   /** Trusted SQL expressions; bind placeholders in the order they appear below. */
   passAlias?: string;
@@ -30,8 +47,8 @@ function walletPredicateSql(input: WalletIdentitySql, statusSql: string): string
       ${input.walletTemplateVersionSql ? `AND wallet.template_version IS ${input.walletTemplateVersionSql}` : ''}
       ${input.personalizationSql ? `AND wallet.personalization IS ${input.personalizationSql}` : ''})
     AND (1
-      ${input.passTypeIdentifierSql ? `AND si.pass_type_identifier=${input.passTypeIdentifierSql}` : ''}
-      ${input.teamIdentifierSql ? `AND si.team_identifier=${input.teamIdentifierSql}` : ''}
+      ${input.passTypeIdentifierSql ? `AND ${walletIdentityColumn('pass_type_identifier', pass)}=${input.passTypeIdentifierSql}` : ''}
+      ${input.teamIdentifierSql ? `AND ${walletIdentityColumn('team_identifier', pass)}=${input.teamIdentifierSql}` : ''}
       ${input.identityRevisionSql ? `AND si.revision=${input.identityRevisionSql}` : ''})
     AND CASE WHEN json_valid(wallet.pass_json) THEN
       ((json_type(wallet.pass_json)='object'
@@ -40,10 +57,10 @@ function walletPredicateSql(input: WalletIdentitySql, statusSql: string): string
           AND json_extract(wallet.pass_json,'$.serialNumber')=${pass}.serial)
         AND (json_type(wallet.pass_json,'$.passTypeIdentifier')='text'
           AND length(json_extract(wallet.pass_json,'$.passTypeIdentifier'))>0
-          AND json_extract(wallet.pass_json,'$.passTypeIdentifier')=si.pass_type_identifier))
+          AND json_extract(wallet.pass_json,'$.passTypeIdentifier')=${walletIdentityColumn('pass_type_identifier', pass)}))
       AND ((json_type(wallet.pass_json,'$.teamIdentifier')='text'
           AND length(json_extract(wallet.pass_json,'$.teamIdentifier'))>0
-          AND json_extract(wallet.pass_json,'$.teamIdentifier')=si.team_identifier)
+          AND json_extract(wallet.pass_json,'$.teamIdentifier')=${walletIdentityColumn('team_identifier', pass)})
         AND (json_type(wallet.pass_json,'$.voided') IS NULL
           OR json_type(wallet.pass_json,'$.voided') IN ('true','false')))
       AND (json_type(wallet.pass_json,'$.expirationDate') IS NULL OR (

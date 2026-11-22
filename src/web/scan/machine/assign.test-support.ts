@@ -23,6 +23,15 @@ export const cardReadEvent = (code = 'CARD-0001', ms = 0): ScanEvent => ({
   input: fixtureInput({ code, method: 'camera', sig: `c:${code}`, id: nextId(), at: at(ms) }),
 });
 
+/** A pass picked in Look up: a pass id, which always needs a Manager PIN. */
+export const passReadEvent = (
+  passId = '01900000-0000-7000-8000-0000000000aa',
+  ms = 0,
+): ScanEvent => ({
+  type: 'read',
+  input: fixtureInput({ passId, method: 'manual', sig: `p:${passId}`, id: nextId(), at: at(ms) }),
+});
+
 export const inspectOf = (over: Partial<InspectResult> = {}): InspectResult => ({
   state: 'new',
   hint: 'F7A1',

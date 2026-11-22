@@ -45,7 +45,25 @@
     scale: 1.12 1.2;
   }
 }
+@keyframes wl-b-link-dip {
+  0% {
+    translate: 0 0;
+  }
+  45% {
+    translate: 0 3px;
+  }
+  100% {
+    translate: 0 0;
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
+  /* link: the tag clicks onto the pass (assign.css's tag prop flies in). The pass dips, then a hop. */
+  .wl-buddy[data-beat="link"][data-run] [data-part="c2"] {
+    animation: wl-b-link-dip 200ms var(--art-sp) calc(var(--wl-beat-at) + 320ms) backwards;
+  }
+  .wl-buddy[data-beat="link"][data-run] [data-part="joy"] {
+    animation: wl-s-cheer-joy 550ms var(--art-mv) var(--wl-beat-at) backwards;
+  }
   .wl-buddy[data-beat="nod"][data-run] [data-trunk] {
     animation: wl-b-yes 550ms ease-in-out var(--wl-beat-at) backwards;
   }

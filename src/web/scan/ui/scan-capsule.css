@@ -77,9 +77,11 @@
   font-weight: 500;
 }
 .scan-capsule-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--sd-muted);
   font-size: 13px;
   line-height: 16px;
@@ -87,6 +89,9 @@
   white-space: nowrap;
 }
 .scan-dot {
+  display: inline-block;
+  margin-inline-end: 6px;
+  vertical-align: 0.5px;
   width: 8px;
   height: 8px;
   border-radius: 50%;

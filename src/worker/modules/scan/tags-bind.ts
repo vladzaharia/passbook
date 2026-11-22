@@ -30,6 +30,7 @@ import { scanWriteGrant } from './scan-write-grant.ts';
 import { scannerRefusal } from './scanner-credential-lost.ts';
 import { skippedTitles } from './tag-assurance.ts';
 import { approve, replay, requestHash, TAG_UNDO_MS } from './tags-bind-replay.ts';
+import { opensDefault, tagCardPhoto } from './tags-card.ts';
 import { cardPass, tagRights } from './tags-inspect.ts';
 import { assertReadMatches, identifyRead, sunUsedMeanwhile } from './tags-sun.ts';
 
@@ -122,7 +123,7 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     subtitle: pass.displaySubtitle,
     templateName: card.templateName,
     holderName: card.holderName,
-    photoUrl: null,
+    photoUrl: await tagCardPhoto(ctx, actor, candidate),
   };
   const skipped =
     req.binding === 'user' && pass.ownerUserId
@@ -174,6 +175,11 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
     if (decision?.status === 'replaced')
       warnings.push(active?.scope === 'user' ? 'replaces_user_tag' : 'replaces_pass_tag');
     if (tag?.lostAt != null && !warnings.includes('lost')) warnings.push('lost');
+    const userOk = (p: typeof policy) =>
+      ownerAccount &&
+      p?.type?.scopes !== 'pass' &&
+      rights.assignAll !== 'never' &&
+      (manager || ROLE_RANK[rights.role] >= ROLE_RANK[rights.assignAll]);
     const result = (
       status: BindResult['status'],
       bindingId: string | null,
@@ -193,8 +199,9 @@ async function run(ctx: ServiceContext, actor: ScanActor, req: BindRequest): Pro
           }
         : {}),
       bindingId,
-      card: summary,
+      card: status === 'already_bound' ? { ...summary, photoUrl: null } : summary,
       ownerAccount,
+      opensDefault: opensDefault(candidate, userOk(policy)),
       skipped,
       warnings,
       lostAt: tag?.lostAt ?? null,

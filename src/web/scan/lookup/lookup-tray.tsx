@@ -20,12 +20,13 @@ export function LookupTray({
   api,
   onCheckIn,
   onCode,
+  onPass,
   allowPeople = true,
   orgId,
   timeZone,
   onClose,
 }: LookupPanelProps & { onClose: () => void }) {
-  const lookup = useLookup(api, open, allowPeople, onCode);
+  const lookup = useLookup(api, open, allowPeople, onCode, onPass);
   const { q, picked, busy, seconds, error, result } = lookup;
   const [letters, setLetters] = useState(false);
   const field = useRef<HTMLInputElement>(null);
@@ -76,7 +77,7 @@ export function LookupTray({
             picked={picked}
             busy={busy}
             onBack={lookup.back}
-            onCheckIn={onCheckIn}
+            {...(onPass ? {} : { onCheckIn })}
             orgId={orgId}
             timeZone={timeZone}
           />

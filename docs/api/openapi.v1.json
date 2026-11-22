@@ -106192,6 +106192,13 @@
                     "ownerAccount": {
                       "type": "boolean"
                     },
+                    "opensDefault": {
+                      "type": "string",
+                      "enum": [
+                        "pass",
+                        "user"
+                      ]
+                    },
                     "skipped": {
                       "type": "array",
                       "items": {
@@ -106277,6 +106284,10 @@
           "FEATURE_NOT_INCLUDED",
           "FORBIDDEN",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "INVALID_API_KEY",
           "LINEAGE_CHANGED",
           "ORG_ACCESS_CHANGED",
@@ -106320,6 +106331,7 @@
           "TAG_UID_RANDOM",
           "TAG_UNREADABLE",
           "TAG_USE_MISMATCH",
+          "TEMPLATE_NOT_FOUND",
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"

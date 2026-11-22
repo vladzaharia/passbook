@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import { SANDBOX_TERMINAL_ALIAS } from '../../../shared/copy/developer.ts';
 import { API_KEY_LABEL } from '../../platform/api-key-token.ts';
 import { keyCaller, type ScannerAuth } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -10,11 +11,18 @@ import {
   UnauthenticatedError,
   ValidationError,
 } from '../../platform/errors.ts';
+import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { scannerExpired } from './auth-store.ts';
-import { apiKeyActs, keyBoundTo, orgAccessRevisionOf } from './repo-api-key.ts';
+import {
+  apiKeyActs,
+  keyBoundTo,
+  orgAccessRevisionOf,
+  sandboxTerminalIdOf,
+} from './repo-api-key.ts';
 import { getScanner, type ScannerRow } from './repo-device.ts';
+import { ensureSandboxTerminal } from './repo-sandbox-terminal.ts';
 
 export const DEVICE_HEADER = 'x-passbook-device';
 export const API_KEY_TOKEN = API_KEY_LABEL;
@@ -29,6 +37,8 @@ export interface KeyTerminal {
   row: ScannerRow;
   /** The org's `access_revision` as the key was admitted. */
   orgRevision: number;
+  /** A sandbox key (no `scans:write`): it acts only in Test, which the commit checks again. */
+  sandbox: boolean;
 }
 
 /**
@@ -42,7 +52,13 @@ export async function keyTerminalOf(c: Context<AppBindings>, token: string): Pro
     noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
     throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
   }
-  if (!key.scopes.includes('scans:write')) {
+  // A sandbox key never holds `scans:write`; it reaches only the sandbox terminal (keyActsAsTerminalSql).
+  const sandboxKey =
+    key.mode === 'test' &&
+    key.orgId !== null &&
+    key.orgKind === 'developer' &&
+    key.scopes.includes('passes:write');
+  if (!key.scopes.includes('scans:write') && !sandboxKey) {
     reportDenied(c, 'MISSING_SCOPE', key);
     noteKeyRefused(c, { code: 'MISSING_SCOPE', keyId: key.keyId, scope: 'scans:write' });
     throw new ForbiddenError('The API key lacks the scans:write scope.', 'MISSING_SCOPE');
@@ -55,12 +71,24 @@ export async function keyTerminalOf(c: Context<AppBindings>, token: string): Pro
     reportDenied(c, 'FORBIDDEN', key);
     throw new ForbiddenError('An API key cannot call this route.', 'API_KEY_ROUTE');
   }
-  const scannerId = c.req.header(DEVICE_HEADER)?.trim();
-  if (!scannerId) {
+  const named = c.req.header(DEVICE_HEADER)?.trim();
+  if (!named) {
     reportDenied(c, 'FORBIDDEN', key);
     throw new ValidationError(`Name the terminal in ${DEVICE_HEADER}.`, [], 'DEVICE_REQUIRED');
   }
   const db = c.env.DB;
+  let scannerId = named;
+  if (sandboxKey && named === SANDBOX_TERMINAL_ALIAS) {
+    // A sandbox made before its terminal existed gets it on first use.
+    let id = await sandboxTerminalIdOf(db, key.orgId, serviceContext(c).clock.now());
+    // The scan rate limits come after this guard, so the write has its own: 30 attempts a minute per key.
+    if (id === null) {
+      await enforceRateLimit(c.env, 'RL_SCAN_PAIR', `RL_SCAN_PAIR:sandbox-terminal:${key.keyId}`);
+      await ensureSandboxTerminal(serviceContext(c), key, key.orgId);
+      id = await sandboxTerminalIdOf(db, key.orgId, serviceContext(c).clock.now());
+    }
+    scannerId = id ?? named;
+  }
   const row = await getScanner(db, scannerId);
   // One answer for every way the header can be wrong: unknown, another org or mode, removed, expired
   // or not one of this key's terminals.
@@ -91,7 +119,14 @@ export async function keyTerminalOf(c: Context<AppBindings>, token: string): Pro
     scannerKind: 'terminal',
     deviceRole: 'scan',
   };
-  return { keyId: key.keyId, auth, row, orgRevision };
+  return { keyId: key.keyId, auth, row, orgRevision, sandbox: !key.scopes.includes('scans:write') };
+}
+
+/** The actor a key's call acts as: the key, the org revision it was admitted at, and whether it is a sandbox key. */
+export function keyActor(actor: ScanActor, key: KeyTerminal): void {
+  actor.apiKeyId = key.keyId;
+  actor.apiKeyOrgRevision = key.orgRevision;
+  actor.apiKeySandbox = key.sandbox;
 }
 
 /** A key never approves and never overrides, whatever the terminal's own settings say. */
