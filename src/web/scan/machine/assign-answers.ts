@@ -1,6 +1,7 @@
 /** What the server's answers do to the assign loop: the next step, or the error to show. */
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import type { BindResult } from '../assign/types.ts';
+import { PASS_BANNERS, SCOPE_NOTES } from './assign-codes.ts';
 import {
   ASSIGN_TIMING,
   type AssignError,
@@ -75,6 +76,7 @@ function alreadyHere(s: MachineState, a: AssignState, r: BindResult, env: Env): 
       ...a,
       busy: null,
       key: null,
+      approved: null,
       preview: r,
       step: 'error',
       error: {
@@ -104,9 +106,10 @@ export function previewed(s: MachineState, ev: Of<'assign.previewed'>, env: Env)
       key: null,
       preview: r,
       step: 'confirm',
-      scope: 'pass',
+      scope: r.ownerAccount && r.opensDefault === 'user' ? 'user' : 'pass',
       banner: null,
       note: null,
+      pin: null,
     },
     env,
     [
@@ -139,7 +142,7 @@ export function bound(s: MachineState, ev: Of<'assign.bound'>, env: Env): Out {
     env,
     [
       { c: 'sound', tone: 'ok' },
-      { c: 'beat', beat: 'hop' },
+      { c: 'beat', beat: 'link' },
       {
         c: 'announce',
         text: `${r.status === 'moved' ? SCAN_TAG_COPY.ok.moved : SCAN_TAG_COPY.ok.assigned}. ${name}.${r.undoUntil ? ' Undo available.' : ''}`,
@@ -169,15 +172,6 @@ export function undone(s: MachineState, ev: Of<'assign.undone'>, env: Env): Out 
   return same(s);
 }
 
-const PASS_BANNERS: Record<string, AssignState['banner']> = {
-  PASS_NOT_FOUND: 'not_found',
-  TAG_PASS_VOIDED: 'voided',
-  TAG_PASS_REMOVED: 'removed',
-  TAG_PASS_EXPIRED: 'expired',
-  TAG_PASS_NOT_ACCEPTED: 'not_accepted',
-  TAG_CARD_AMBIGUOUS: 'ambiguous',
-};
-
 export function failed(s: MachineState, ev: Of<'assign.failed'>, env: Env): Out {
   const a = s.assign;
   const stripUndo = !a && s.assignStrip?.undoKey === ev.key;
@@ -194,7 +188,7 @@ export function failed(s: MachineState, ev: Of<'assign.failed'>, env: Env): Out 
     );
   if (!a || a.key !== ev.key || !a.busy) return same(s);
   const busy = a.busy;
-  const idle: AssignState = { ...a, busy: null, key: null };
+  const idle: AssignState = { ...a, busy: null, key: null, approved: null };
   const code = ev.code ?? '';
   const web = a.tag?.read.source === 'webnfc';
   const error = (e: AssignError, step: AssignState['step'] = 'error'): Out =>
@@ -227,7 +221,7 @@ export function failed(s: MachineState, ev: Of<'assign.failed'>, env: Env): Out 
     });
   const banner = PASS_BANNERS[code];
   if (banner && busy === 'preview')
-    return commit(s, { ...idle, step: 'pass', card: null, banner }, env, [
+    return commit(s, { ...idle, step: 'pass', card: null, banner, pin: null }, env, [
       { c: 'sound', tone: 'refused' },
       { c: 'beat', beat: 'shake' },
     ]);
@@ -236,10 +230,25 @@ export function failed(s: MachineState, ev: Of<'assign.failed'>, env: Env): Out 
       s,
       {
         ...idle,
-        step: 'confirm',
+        // A pass picked by id needs the PIN before there is anything to confirm: ask on the pass step.
+        step: busy === 'preview' ? 'pass' : 'confirm',
         pin: { open: true, move: a.retry?.c === 'assign.bind' && a.retry.body.move === true },
       },
       env,
+    );
+  // The preselected person scope was not allowed here: back to the pass, with the reason.
+  const refusedScope = busy === 'bind' && a.scope === 'user' ? SCOPE_NOTES[code] : undefined;
+  if (refusedScope)
+    return commit(
+      s,
+      {
+        ...idle,
+        step: 'confirm',
+        scope: 'pass',
+        note: { kind: refusedScope, until: env.now + ASSIGN_TIMING.IDLE },
+      },
+      env,
+      refuse,
     );
   if (code === 'TAG_HELD_BY_OTHER') {
     if (busy === 'complete') return commit(s, { ...idle, step: 'tag', waiting: true }, env);

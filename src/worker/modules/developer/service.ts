@@ -13,6 +13,7 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { authorizeApiKeys } from '../api-keys/access.ts';
 import { createApiKey } from '../api-keys/service-create.ts';
+import { ensureSandboxTerminal } from '../scan/repo-sandbox-terminal.ts';
 import { approveCandidate, publishRelease } from '../templates/releases.ts';
 import { createCandidate } from '../templates/releases-create.ts';
 import { useBlueprint as forkBlueprint } from '../templates/use-blueprint.ts';
@@ -55,6 +56,8 @@ export async function mintSandboxKey(
     scopes: KEY_SCOPES,
     expiresAt: now + KEY_TTL_MS,
   });
+  // A sandbox made before the terminal existed gets it when its key is made or rolled.
+  await ensureSandboxTerminal(ctx, test, orgId);
   return {
     id: key.id,
     name: key.name,
@@ -219,6 +222,7 @@ export async function createSandbox(
       await authorizeWebhooks(ctx, test, row.org_id, 'integrations:manage'),
     );
     await tick('capture');
+    await ensureSandboxTerminal(ctx, test, row.org_id);
     const prior = await sandboxKeyOf(db, row.org_id, session.userId, SANDBOX_KEY_NAME);
     if (prior) return { ...dto(row, templateId), key: null, previousKey: prior };
     const key = await mintSandboxKey(ctx, test, row.org_id);

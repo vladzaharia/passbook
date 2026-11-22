@@ -1,8 +1,11 @@
-import { CircleAlert, Loader2 } from 'lucide-react';
+import { CircleAlert, Loader2, Search } from 'lucide-react';
+import { type CSSProperties, useEffect, useRef } from 'react';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import type { AssignState } from '../machine/assign-state.ts';
+import { ApprovalSheet } from '../result/approval-sheet.tsx';
 import { VerdictGlyph } from '../result/verdict-glyph.tsx';
 import { fill } from '../ui/copy.ts';
+import { useVisibleViewport } from '../ui/tray.tsx';
 import { ConfirmBody } from './assign-confirm.tsx';
 import { bannerLine, errorLine } from './assign-lines.ts';
 import { Identity, OpensLine, StepHeader } from './assign-steps.tsx';
@@ -50,6 +53,8 @@ export interface AssignCardHandlers {
   label(label: string): void;
   approve(staffId: string | undefined, pin: string): void;
   closePin(): void;
+  /** Opens the Look up sheet: a pick there becomes the pass. */
+  lookUp(): void;
 }
 
 function Headline({ a, ctx }: { a: AssignState; ctx: AssignCardContext }) {
@@ -73,6 +78,15 @@ function Headline({ a, ctx }: { a: AssignState; ctx: AssignCardContext }) {
   }
 }
 
+const noteText = (kind: NonNullable<AssignState['note']>['kind']) =>
+  kind === 'is_pass'
+    ? SCAN_TAG_COPY.tag.isPass
+    : kind === 'is_tag'
+      ? SCAN_TAG_COPY.pass.isTag
+      : kind === 'person_off'
+        ? TAG_EXTRA_COPY.personOff
+        : TAG_EXTRA_COPY.typePass;
+
 /** The step's card body. The dock carries the verbs. */
 function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: AssignCardHandlers }) {
   const c = SCAN_TAG_COPY;
@@ -81,6 +95,16 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
     return (
       <>
         <StepHeader a={a} />
+        {a.note ? (
+          <p
+            className="scan-assign-note"
+            data-tone="amber"
+            role="status"
+            data-testid="scan-assign-note"
+          >
+            {noteText(a.note.kind)}
+          </p>
+        ) : null}
         <ConfirmBody a={a} manager={ctx.manager} managers={ctx.managers} code={ctx.code} on={on} />
       </>
     );
@@ -100,7 +124,11 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
         </>
       ) : name ? (
         <>
-          <Identity name={name} meta={ctx.knownName ? a.preview?.card.templateName : null} />
+          <Identity
+            name={name}
+            meta={ctx.knownName ? a.preview?.card.templateName : null}
+            photoUrl={a.preview?.card.photoUrl}
+          />
           <p className="scan-assign-sub">{fill(c.assigningTo, { name })}</p>
         </>
       ) : null}
@@ -134,7 +162,7 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
           role="status"
           data-testid="scan-assign-note"
         >
-          {a.note.kind === 'is_pass' ? c.tag.isPass : c.pass.isTag}
+          {noteText(a.note.kind)}
         </p>
       ) : null}
       {a.banner ? (
@@ -142,7 +170,23 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
           <CircleAlert aria-hidden size={18} />
           <b>{bannerLine(a.banner).headline}</b>
           {bannerLine(a.banner).sub}
+          {a.banner === 'ambiguous' ? (
+            <button type="button" className="scan-assign-banner-act" onClick={on.lookUp}>
+              <Search aria-hidden size={16} />
+              {TAG_EXTRA_COPY.look}
+            </button>
+          ) : null}
         </div>
+      ) : null}
+      {a.pin?.open && a.step === 'pass' && !ctx.manager ? (
+        <ApprovalSheet
+          managers={ctx.managers}
+          code={ctx.code}
+          action={TAG_EXTRA_COPY.pinFor}
+          note={a.pin.note}
+          onApprove={on.approve}
+          onCancel={on.closePin}
+        />
       ) : null}
       {a.waiting ? (
         <p className="scan-assign-wait" role="status">
@@ -173,6 +217,21 @@ export function AssignCard({
 }) {
   const tone = toneOf(a);
   const wait = useRetryWait(a.error);
+  const card = useRef<HTMLElement>(null);
+  const view = useVisibleViewport();
+  // The Manager PIN form and its error line scroll into the card, above the on-screen keyboard.
+  const pinNote = a.pin?.note;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new PIN error line or keyboard height must scroll the form into view again
+  useEffect(() => {
+    if (!a.pin?.open) return;
+    // After layout: the card is still rising and the form may be below its edge.
+    const frame = requestAnimationFrame(() =>
+      card.current
+        ?.querySelector('[data-testid="scan-approval"]')
+        ?.scrollIntoView({ block: 'end' }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [a.pin?.open, pinNote, view.inset]);
   const line =
     a.step === 'error' && a.error
       ? errorLine(a.error, { org: ctx.org, wait })
@@ -186,6 +245,12 @@ export function AssignCard({
   const done = a.step === 'done' ? a.result : null;
   return (
     <section
+      ref={card}
+      style={
+        view.inset > 0 && view.height
+          ? ({ '--assign-room': `${view.height - 96}px` } as CSSProperties)
+          : undefined
+      }
       className="scan-result scan-assign"
       data-kind={tone}
       data-step={a.step}
@@ -229,6 +294,7 @@ export function AssignCard({
             <Identity
               name={done.card.holderName ?? done.card.title}
               meta={done.card.templateName}
+              photoUrl={done.card.photoUrl}
             />
             <div className="scan-assign-link">
               <TagChip

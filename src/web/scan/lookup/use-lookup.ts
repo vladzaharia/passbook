@@ -17,6 +17,8 @@ export function useLookup(
   open: boolean,
   allowPeople: boolean,
   onCode: (code: string) => void,
+  /** Assign mode: a picked person is the pass for the tag; nothing is checked in. */
+  onPass?: (passId: string) => void,
 ) {
   const [q, setQ] = useState('');
   const [result, setResult] = useState<Results | null>(null);
@@ -110,12 +112,15 @@ export function useLookup(
     void run(async (signal) => {
       const found = await resolve({ code: query }, signal);
       if (signal.aborted) return;
-      if (found.reason !== 'not_found') {
+      // A code that names several passes must not go round again as a code: search by name instead.
+      const several = onPass !== undefined && found.reason === 'ambiguous';
+      if (found.reason !== 'not_found' && !several) {
         onCode(query);
         return;
       }
       if (!searchable(query)) {
-        setPicked(found);
+        if (several) setError('More than one pass. Search by name.');
+        else setPicked(found);
         return;
       }
       const rows = await api.lookup({ q: query }, { signal });
@@ -123,7 +128,9 @@ export function useLookup(
       setResult(rows);
       if (rows.items.length === 1 && !rows.more) {
         const row = rows.items[0];
-        if (row) {
+        if (row && onPass) {
+          onPass(row.passId);
+        } else if (row) {
           const selected = await resolve({ passId: row.passId }, signal);
           if (!signal.aborted) setPicked(selected);
         }
@@ -149,6 +156,10 @@ export function useLookup(
     },
     pick(passId: string) {
       if (retryAt || selecting) return;
+      if (onPass) {
+        onPass(passId);
+        return;
+      }
       void run(async (signal) => {
         const selected = await resolve({ passId }, signal);
         if (!signal.aborted) setPicked(selected);

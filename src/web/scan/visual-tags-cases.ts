@@ -1,59 +1,29 @@
 /** The scenarios of the tag gallery: assign states, door results and their readers. */
-import type { TagReader } from './assign/tag-reader.ts';
-import type { BindResult, ScanTag, TagEnrollment } from './assign/types.ts';
+import type { ScanTag } from './assign/types.ts';
 import { grant } from './machine/access-fixtures.test-support.ts';
-import { type AssignState, TAG_OFFLINE } from './machine/assign-state.ts';
+import { TAG_OFFLINE } from './machine/assign-state.ts';
 import { fixtureDisplay } from './machine/fixtures.test-support.ts';
-import { fresh } from './machine/reduce-assign.ts';
 import type { ScanOutcome } from './machine/types.ts';
+import { moreAssigns } from './visual-tags-more.ts';
+import {
+  ANDROID,
+  type Assign,
+  base,
+  ENROLL,
+  IPHONE,
+  NOW,
+  PHOTO,
+  PREVIEW,
+  READ,
+  USB,
+  WEB,
+} from './visual-tags-shared.ts';
 
-export const NOW = 1_762_000_000_000;
-const ENROLL: TagEnrollment = {
-  id: '01900000-0000-7000-8000-0000000000bb',
-  holderName: 'Maya Okafor',
-  passTitle: 'HQ access',
-  scope: 'user',
-  requestedByName: 'Ana R.',
-  expiresAt: Date.now() + 102_000,
-};
-const PREVIEW: BindResult = {
-  status: 'preview',
-  hint: '7F3A',
-  assurance: 'basic',
-  scope: 'pass',
-  bindingId: null,
-  card: {
-    passId: '01900000-0000-7000-8000-0000000000aa',
-    title: 'HQ access',
-    subtitle: null,
-    templateName: 'Staff · HQ access',
-    holderName: 'Maya Okafor',
-    photoUrl: null,
-  },
-  ownerAccount: true,
-  skipped: [],
-  warnings: [],
-  lostAt: null,
-  undoUntil: null,
-};
-const READ = {
-  read: { uid: '04a2b37f3a', tech: 'a' as const, source: 'native' as const },
-  sig: 't:x',
-};
-const base = (over: Partial<AssignState> = {}): AssignState => ({ ...fresh('menu', NOW), ...over });
+export type { Assign } from './visual-tags-shared.ts';
+export { ANDROID, IPHONE, NOW, USB, WEB };
 
-export const ANDROID: TagReader = { kind: 'continuous', needsStart: false };
-export const IPHONE: TagReader = { kind: 'sheet', needsStart: false };
-export const WEB: TagReader = { kind: 'webnfc', needsStart: true };
-export const USB: TagReader = { kind: 'wedge', needsStart: false };
-
-export interface Assign {
-  a: AssignState;
-  reader: TagReader;
-  knownName?: string | null;
-  manager?: boolean;
-}
 export const assigns: Record<string, Assign> = {
+  ...moreAssigns,
   'assign-tag-android': { a: base(), reader: ANDROID },
   'assign-tag-iphone': { a: base(), reader: IPHONE },
   'assign-tag-web': { a: base(), reader: WEB },
@@ -87,6 +57,24 @@ export const assigns: Record<string, Assign> = {
         lostAt: null,
         boundAt: null,
         boundByName: null,
+      },
+    }),
+    reader: ANDROID,
+  },
+  'assign-pass-ambiguous': {
+    a: base({ step: 'pass', banner: 'ambiguous', tag: READ }),
+    reader: ANDROID,
+  },
+  'assign-confirm-photo': {
+    a: base({
+      step: 'confirm',
+      scope: 'user',
+      tag: READ,
+      card: { code: 'C1', method: 'camera' },
+      preview: {
+        ...PREVIEW,
+        opensDefault: 'user',
+        card: { ...PREVIEW.card, photoUrl: PHOTO },
       },
     }),
     reader: ANDROID,
@@ -131,6 +119,7 @@ export const assigns: Record<string, Assign> = {
   'assign-done': {
     a: base({
       step: 'done',
+      tag: READ,
       label: 'Blue fob',
       result: { ...PREVIEW, status: 'bound', bindingId: 'b1', undoUntil: NOW + 600_000 },
     }),

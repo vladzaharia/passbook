@@ -206,6 +206,27 @@ describe('new pass organization selection', () => {
     expect(batchRequests).toHaveLength(0);
   });
 
+  it('hides the organization step when the scope names it: four steps, no Back to a step it skipped', async () => {
+    await renderApp('/admin/passes/new', {
+      session: 'admin',
+      memberships: [henry],
+      selectedOrg: ORG.id,
+      handlers: {
+        '/api/v1/passes': () => json({ items: [], nextCursor: null }),
+        '/api/v1/templates/eligible': () => json({ items: [eligibleTemplate()], nextCursor: null }),
+        '/api/v1/templates/previews': previewsHandler,
+      },
+    });
+    await screen.findByRole('radio', { name: /Copper card/ });
+    expect(screen.getByText('Step 1 of 4')).toBeInTheDocument();
+    expect(screen.queryByText('Organization')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    await userEvent.click(screen.getByRole('radio', { name: /Copper card/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByText('Step 2 of 4')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled();
+  });
+
   it('explains missing template-read permission instead of loading indefinitely', async () => {
     const templateRequests: URL[] = [];
     await renderApp('/admin/passes/new', {
@@ -223,7 +244,8 @@ describe('new pass organization selection', () => {
     expect(
       await screen.findByText('You need permission to view templates for this organization.'),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Back' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Cancel' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
     expect(templateRequests).toHaveLength(0);
   });

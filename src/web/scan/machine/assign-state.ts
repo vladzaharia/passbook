@@ -40,7 +40,7 @@ export type AssignBanner =
   | 'not_accepted'
   | 'ambiguous';
 /** The amber lines that do not change the step. */
-export type AssignNote = 'is_pass' | 'is_tag';
+export type AssignNote = 'is_pass' | 'is_tag' | 'person_off' | 'type_pass';
 
 export type AssignErrorKind =
   | 'lost'
@@ -91,6 +91,11 @@ export interface AssignState {
   waiting: boolean;
   /** The Manager PIN sheet: open, and what the last PIN got. */
   pin: { open: boolean; note?: PinNote; move: boolean } | null;
+  /**
+   * A Manager's approval of a pass picked by id, kept in memory from the approved preview to the
+   * next bind, then wiped (bind, back, refusal, cancel, time-out). Never stored or persisted.
+   */
+  approved: BindBodyIn['approval'] | null;
   /** Reaches the 2 minute time-out; every input pushes it. */
   idleAt: number;
   /** The bind key and body the last Try again resends. */

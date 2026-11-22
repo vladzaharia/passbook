@@ -11,6 +11,8 @@ import { needsSessionRefetch } from './boot/use-scan-session.ts';
 import { loopCard } from './loop-card.tsx';
 import { LoopMenu } from './loop-menu.tsx';
 import { capsuleStateOf, loopScreen, tagExtraActions, tintDismisses } from './loop-screen.tsx';
+import { assignOf } from './machine/assign-view.ts';
+import { escapeEvent } from './machine/escape-key.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
 import { LazyOperatorPanel } from './operator/lazy-operator-panel.tsx';
@@ -74,11 +76,13 @@ export function ScanLoop({
   };
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !s.overlay) dispatch({ type: 'dismiss' });
+      if (event.key !== 'Escape') return;
+      const next = escapeEvent(Boolean(s.overlay), Boolean(assignOf(s)?.pin?.open));
+      if (next) dispatch(next);
     };
     window.addEventListener('keydown', onEscape);
     return () => window.removeEventListener('keydown', onEscape);
-  }, [s.overlay, dispatch]);
+  }, [s, dispatch]);
   const [cameraChoice, setCameraChoice] = useState<CameraChoice>('back');
   const requestedRev = useRef(0);
   useEffect(() => {
@@ -227,6 +231,7 @@ export function ScanLoop({
           size="xl-scan"
           mood={view.buddy.mood === 'neutral' ? 'flat' : view.buddy.mood}
           pose={tags.pose ?? view.buddy.pose}
+          {...(tags.prop ? { prop: tags.prop } : {})}
           beat={view.buddy.beat ?? undefined}
           card={view.buddy.card}
           immediate
@@ -294,6 +299,7 @@ export function ScanLoop({
       {tags.layer}
       <ScanOverlays
         allowPeople={scanner?.settings.lookup ?? true}
+        onPass={tags.lookupPass}
         sessionTotals={session.staff?.role === 'manager' && Boolean(session.workspace)}
         orgId={session.principal === 'admin' ? session.admin?.orgs[0]?.id : undefined}
         timeZone={session.event?.timeZone}
