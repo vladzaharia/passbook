@@ -96,8 +96,25 @@ test('a new org tries its blueprint on a phone, then releases it to holders', as
     await expect(
       page.getByText(/Release this template in Live to turn on the join link/),
     ).toHaveCount(0);
+    // The header counts Live passes and names the Test pass the Try made.
+    await expect(page.getByText('· 1 in Test')).toBeVisible();
+    // One count for Brand and channels: the sidebar after a release reads what Overview will.
+    const todo = async () =>
+      ((await page.getByRole('link', { name: /Brand and channels/ }).textContent()) ?? '').replace(
+        /\D/g,
+        '',
+      );
+    const onTemplate = await todo();
     await shoot(page, 'journey1-released');
     await page.goto(`/admin/o/${org.id}`);
+    await expect(page.getByRole('region', { name: 'First pass' })).toBeVisible();
+    expect(await todo()).toBe(onTemplate);
+    await expect(
+      page.getByRole('link', { name: 'Template version released to Live' }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('link', { name: 'Template version released to Test' }).first(),
+    ).toBeVisible();
     await shoot(page, 'journey1-overview');
   } finally {
     await api.dispose();
@@ -181,11 +198,16 @@ test('a team asks for review, a reviewer approves and releases, and the author s
     await page.goto(`/admin/o/${org.id}/templates`);
     const inbox = page.getByRole('region', { name: /Needs your review/ });
     await expect(inbox).toContainText('Team pass');
+    await expect(page.getByText('Needs review', { exact: true })).toBeVisible();
     await shoot(page, 'journey2-reviewer-inbox');
     await inbox.getByRole('link', { name: /Review/ }).click();
     const review = page.getByRole('dialog', { name: `Review v1` });
     await expect(review).toBeVisible();
     await expect(review.getByRole('button', { name: 'Approve and release' })).toBeVisible();
+    // A first release shows the pass, as the release dialog does, and no empty fields.
+    await expect(review.getByText('First release')).toBeVisible();
+    await expect(review.getByText('Back: Note')).toHaveCount(0);
+    await expect(review).not.toContainText('rgb(');
     await shoot(page, 'journey2-review-dialog');
     await review.getByRole('button', { name: 'Approve and release' }).click();
     await expect(page.getByText('Released v1').first()).toBeVisible();
