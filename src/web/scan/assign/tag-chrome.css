@@ -160,6 +160,31 @@ button.scan-tag-flag {
   }
 }
 
+/* A tall step (the Manager PIN form under a long confirm) scrolls inside the card, and the card
+   keeps to the room above the on-screen keyboard (--assign-room, set from the visual viewport). */
+.scan-assign {
+  max-height: min(100%, var(--assign-room, 100%));
+}
+.scan-assign .scan-assign-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* The form's last row clears the card's rounded edge when scrolled to the end. */
+  padding-block-end: 20px;
+  scroll-padding-block-end: 20px;
+}
+
+/* A short landscape screen: while the Manager PIN form is open it takes the dock's room (the form has
+   its own Cancel), so the field and its error line are whole. */
+@media (max-height: 500px) {
+  body:has(.scan-assign .scan-approval) .scan-dock {
+    display: none;
+  }
+  .scan-card-layer:has(.scan-assign .scan-approval) {
+    padding-block-end: 16px;
+  }
+}
+
 /* Tablet: the assign card scales up, and a text-only refusal centres a larger tag in its right half. */
 @media (min-width: 640px) and (max-width: 1023px) {
   .scan-assign {

@@ -1,9 +1,11 @@
 import { CircleAlert, Loader2, Search } from 'lucide-react';
+import { type CSSProperties, useEffect, useRef } from 'react';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import type { AssignState } from '../machine/assign-state.ts';
 import { ApprovalSheet } from '../result/approval-sheet.tsx';
 import { VerdictGlyph } from '../result/verdict-glyph.tsx';
 import { fill } from '../ui/copy.ts';
+import { useVisibleViewport } from '../ui/tray.tsx';
 import { ConfirmBody } from './assign-confirm.tsx';
 import { bannerLine, errorLine } from './assign-lines.ts';
 import { Identity, OpensLine, StepHeader } from './assign-steps.tsx';
@@ -215,6 +217,21 @@ export function AssignCard({
 }) {
   const tone = toneOf(a);
   const wait = useRetryWait(a.error);
+  const card = useRef<HTMLElement>(null);
+  const view = useVisibleViewport();
+  // The Manager PIN form and its error line scroll into the card, above the on-screen keyboard.
+  const pinNote = a.pin?.note;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new PIN error line or keyboard height must scroll the form into view again
+  useEffect(() => {
+    if (!a.pin?.open) return;
+    // After layout: the card is still rising and the form may be below its edge.
+    const frame = requestAnimationFrame(() =>
+      card.current
+        ?.querySelector('[data-testid="scan-approval"]')
+        ?.scrollIntoView({ block: 'end' }),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [a.pin?.open, pinNote, view.inset]);
   const line =
     a.step === 'error' && a.error
       ? errorLine(a.error, { org: ctx.org, wait })
@@ -228,6 +245,12 @@ export function AssignCard({
   const done = a.step === 'done' ? a.result : null;
   return (
     <section
+      ref={card}
+      style={
+        view.inset > 0 && view.height
+          ? ({ '--assign-room': `${view.height - 96}px` } as CSSProperties)
+          : undefined
+      }
       className="scan-result scan-assign"
       data-kind={tone}
       data-step={a.step}
