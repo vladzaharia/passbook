@@ -3,139 +3,139 @@
     "response": {
       "source": "analytics_engine",
       "range": "24h",
-      "bucketMs": 1764000000000,
-      "unavailable": ["example"],
+      "bucketMs": 1848,
+      "unavailable": ["unavailable"],
       "totals": {
-        "passes": 1,
-        "activePasses": 1,
-        "voidedPasses": 1,
-        "holders": 1,
-        "devices": 1,
-        "issued": 1,
-        "updated": 1,
-        "downloads": 1,
-        "registrations": 1,
-        "refreshes": 1,
-        "pushes": 1,
-        "pushFailures": 1,
-        "emails": 1,
-        "emailFailures": 1,
-        "emailUnknown": 1,
-        "syncRuns": 1,
-        "signIns": 1,
-        "scans": 1,
-        "scanRefused": 1
+        "passes": 37,
+        "activePasses": 37,
+        "voidedPasses": 10,
+        "holders": 3,
+        "devices": 4,
+        "issued": 32,
+        "updated": 10,
+        "downloads": 38,
+        "registrations": 20,
+        "refreshes": 2,
+        "pushes": 28,
+        "pushFailures": 0,
+        "emails": 19,
+        "emailFailures": 0,
+        "emailUnknown": 24,
+        "syncRuns": 6,
+        "signIns": 11,
+        "scans": 32,
+        "scanRefused": 0
       },
       "series": {
         "issued": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "updated": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "downloads": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "registrations": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "refreshes": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "pushes": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "pushFailures": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "emails": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "emailFailures": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "emailUnknown": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "syncRuns": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "signIns": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "scans": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ]
       },
       "setup": {
-        "orgs": 1,
-        "assignedTemplates": 1,
-        "passes": 1,
-        "approvedTemplates": 1,
-        "releasedTemplates": 1,
-        "walletPasses": 1,
-        "passEmailsSent": 1,
-        "latestPassId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "scanners": 1
+        "orgs": 12,
+        "assignedTemplates": 33,
+        "passes": 37,
+        "approvedTemplates": 28,
+        "releasedTemplates": 12,
+        "walletPasses": 7,
+        "passEmailsSent": 17,
+        "latestPassId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "scanners": 27
       },
       "directory": {
-        "users": 1,
-        "walletAccounts": 10
+        "users": 31,
+        "walletAccounts": 23
       },
       "live": [
         {
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "name": "Ada Example",
-          "arrived": 1,
-          "expected": 1,
-          "ratePerMin": 1
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "name": "Day pass",
+          "arrived": 4,
+          "expected": 10,
+          "ratePerMin": 19
         }
       ],
       "recent": [
         {
-          "at": 1764000000000,
-          "action": "example",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "targetId": "0193a1b2-7c00-7000-8000-0000000000a4"
+          "at": 12,
+          "action": "action",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "targetId": "0193a1b2-7c00-7000-8000-d08db361dbb2"
         }
       ]
     }
@@ -144,139 +144,139 @@
     "response": {
       "source": "analytics_engine",
       "range": "24h",
-      "bucketMs": 1764000000000,
-      "unavailable": ["example"],
+      "bucketMs": 1848,
+      "unavailable": ["unavailable"],
       "totals": {
-        "passes": 1,
-        "activePasses": 1,
-        "voidedPasses": 1,
-        "holders": 1,
-        "devices": 1,
-        "issued": 1,
-        "updated": 1,
-        "downloads": 1,
-        "registrations": 1,
-        "refreshes": 1,
-        "pushes": 1,
-        "pushFailures": 1,
-        "emails": 1,
-        "emailFailures": 1,
-        "emailUnknown": 1,
-        "syncRuns": 1,
-        "signIns": 1,
-        "scans": 1,
-        "scanRefused": 1
+        "passes": 37,
+        "activePasses": 37,
+        "voidedPasses": 10,
+        "holders": 3,
+        "devices": 4,
+        "issued": 32,
+        "updated": 10,
+        "downloads": 38,
+        "registrations": 20,
+        "refreshes": 2,
+        "pushes": 28,
+        "pushFailures": 0,
+        "emails": 19,
+        "emailFailures": 0,
+        "emailUnknown": 24,
+        "syncRuns": 6,
+        "signIns": 11,
+        "scans": 32,
+        "scanRefused": 0
       },
       "series": {
         "issued": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "updated": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "downloads": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "registrations": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "refreshes": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "pushes": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "pushFailures": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "emails": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "emailFailures": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "emailUnknown": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "syncRuns": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "signIns": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "scans": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ]
       },
       "setup": {
-        "orgs": 1,
-        "assignedTemplates": 1,
-        "passes": 1,
-        "approvedTemplates": 1,
-        "releasedTemplates": 1,
-        "walletPasses": 1,
-        "passEmailsSent": 1,
-        "latestPassId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "scanners": 1
+        "orgs": 12,
+        "assignedTemplates": 33,
+        "passes": 37,
+        "approvedTemplates": 28,
+        "releasedTemplates": 12,
+        "walletPasses": 7,
+        "passEmailsSent": 17,
+        "latestPassId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "scanners": 27
       },
       "directory": {
-        "users": 1,
-        "walletAccounts": 10
+        "users": 31,
+        "walletAccounts": 23
       },
       "live": [
         {
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "name": "Ada Example",
-          "arrived": 1,
-          "expected": 1,
-          "ratePerMin": 1
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "name": "Day pass",
+          "arrived": 4,
+          "expected": 10,
+          "ratePerMin": 19
         }
       ],
       "recent": [
         {
-          "at": 1764000000000,
-          "action": "example",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "targetId": "0193a1b2-7c00-7000-8000-0000000000a4"
+          "at": 12,
+          "action": "action",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "targetId": "0193a1b2-7c00-7000-8000-51bada0b27c4"
         }
       ]
     }
@@ -284,43 +284,57 @@
   "metrics.getMetricsActivity": {
     "response": {
       "range": "24h",
-      "bucketMs": 1764000000000,
+      "bucketMs": 1848,
       "totals": {
-        "issued": 1,
-        "added": 1,
-        "removed": 1,
-        "scans": 1,
-        "redemptions": 1,
-        "inWallet": 1,
-        "notAdded": 1
+        "issued": 32,
+        "added": 37,
+        "removed": 7,
+        "scans": 32,
+        "redemptions": 25,
+        "inWallet": 17,
+        "notAdded": 22
       },
       "series": {
         "issued": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ],
         "scans": [
           {
-            "t": 1,
-            "v": 1
+            "t": 32,
+            "v": 39
           }
         ]
       },
       "templates": [
         {
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "name": "Ada Example",
-          "issued": 1,
-          "added": 1,
-          "removed": 1,
-          "scans": 1,
-          "redemptions": 1,
-          "inWallet": 1,
-          "notAdded": 1
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "issued": 32,
+          "added": 37,
+          "removed": 7,
+          "scans": 32,
+          "redemptions": 25,
+          "inWallet": 17,
+          "notAdded": 22
         }
       ]
+    }
+  },
+  "metrics.getMetricsPlatformDeveloper": {
+    "response": {
+      "windowDays": 36,
+      "sandboxes": 8,
+      "viewed": 37,
+      "called": 8,
+      "passed": 37,
+      "previewed": 39,
+      "completion": 34,
+      "ttfpP50Ms": 1101,
+      "ttfpP90Ms": 1541,
+      "ttfpSamples": 28
     }
   }
 }

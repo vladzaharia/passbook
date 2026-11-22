@@ -1,5 +1,16 @@
 // Examples written by hand for the operations people read first. The generator applies them over the sampled ones.
-import { API, IDS, IMPORT_PLAN, MEMBERS_CSV, PASS, TEMPLATE } from './example-world.ts';
+import {
+  API,
+  IDS,
+  IMPORT_PLAN,
+  KEY_PREFIX,
+  keySecret,
+  MEMBERS_CSV,
+  NEW_KEY_PREFIX,
+  PASS,
+  T,
+  TEMPLATE,
+} from './example-world.ts';
 
 const create = {
   templateId: IDS.template,
@@ -15,6 +26,21 @@ const importSource = { kind: 'file', name: 'members.csv', csv: MEMBERS_CSV };
 export const HEADLINE: Record<string, unknown> = {
   'passes.postPasses request': create,
   'passes.postPasses response': { ...PASS, email: { outcome: 'queued', cap: 'org' } },
+  'templates.getTemplatesByIdReleasesImpact response': {
+    fromVersion: '2',
+    toVersion: '3',
+    passes: { count: 128, capped: false },
+    diff: {
+      fields: [
+        { label: 'Valid until', kind: 'changed', from: 'Dec 31, 2026', to: 'Mar 31, 2027' },
+        { label: 'Visits', kind: 'added', from: null, to: '10' },
+      ],
+      images: [{ label: 'Logo', kind: 'changed', from: 'logo-v2.png', to: 'logo-v3.png' }],
+      barcode: [],
+      colors: [{ label: 'Background', kind: 'changed', from: '#0b2545', to: '#112a4a' }],
+    },
+    more: { fields: 0, images: 0, barcode: 0, colors: 0 },
+  },
   'pass-imports.postPassImports request': {
     templateId: IDS.template,
     source: importSource,
@@ -62,4 +88,36 @@ export const SCAN_ANSWERS = new Set([
   'scan.postScanResolve',
   'scan.postScanActions',
   'scan.postScanScansByScanIdUndo',
+]);
+
+type Obj = Record<string, unknown>;
+/** A rotation answers with the new key (new id, prefix and secret) and the old one, now retiring. */
+export function rotateAnswer(v: Obj): Obj {
+  const key = (v.key ?? {}) as Obj;
+  const previous = (v.previous ?? {}) as Obj;
+  return {
+    ...v,
+    key: {
+      ...key,
+      id: IDS.key2,
+      prefix: NEW_KEY_PREFIX,
+      secretPrefix: `pb_test_${NEW_KEY_PREFIX}`,
+      secret: keySecret(NEW_KEY_PREFIX),
+      rotatedFrom: IDS.key,
+      lastUsedAt: null,
+      createdAt: T.now,
+    },
+    previous: {
+      ...previous,
+      id: IDS.key,
+      prefix: KEY_PREFIX,
+      secretPrefix: `pb_test_${KEY_PREFIX}`,
+      retireAt: T.later,
+    },
+  };
+}
+
+export const ROTATIONS = new Set([
+  'api-keys.postApiKeysByIdRotate',
+  'api-keys.postApiKeysMeRotate',
 ]);

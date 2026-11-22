@@ -1,5 +1,6 @@
 // Content rules for the examples in the committed OpenAPI document: a schema-valid example can still be filler.
 // Pure: no I/O. Run by check-openapi; the generator (tools/gen-reference-examples.ts) reruns until it is clean.
+import { IDS } from './example-world.ts';
 import type { Doc } from './openapi-diff.ts';
 
 type Json = Record<string, unknown>;
@@ -13,10 +14,47 @@ const FILLERS = new Set([
   'string',
   'example-key',
   'abc123',
-  'AB12CD34',
-  'ABCD',
+  'ab12cd34',
+  'abcd',
   'a1b2c3d4',
+  'foo',
+  'bar',
+  'baz',
+  'todo',
+  'tbd',
+  'n/a',
+  'changeme',
+  'lorem ipsum',
 ]);
+/** Words that mark text nobody wrote for this example. */
+const FILLER_WORDS =
+  /lorem|ipsum|\bfoo\b|\bTODO\b|\bTBD\b|changeme|\b(?:john|jane) doe\b|placeholder/i;
+/** Shapes secret scanners (gitleaks, GitHub) report. Our own secrets use test-mode prefixes only. */
+const SECRET_SHAPES: [RegExp, string][] = [
+  [/ya29\./, 'a Google OAuth token'],
+  [/\bsk_live_/, 'a live secret key'],
+  [/\bAKIA[0-9A-Z]{16}\b/, 'an AWS access key'],
+  [/\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\./, 'a JWT'],
+  [/\bpb[po]?_live_/, 'a live-prefixed key'],
+  [/\bgh[pousr]_[A-Za-z0-9]{36}/, 'a GitHub token'],
+  [/\bxox[baprs]-/, 'a Slack token'],
+  [/whsec_(?!demo)/, 'a webhook secret that is not marked demo'],
+  [/-----BEGIN [A-Z ]*PRIVATE KEY-----[^-]{40,}-----END/, 'a whole PEM key'],
+];
+const WORLD_IDS = new Set(Object.values(IDS));
+/** The entity a key names: `templateId` and `template` are `template`; every actor key is a `user`. */
+const entityOf = (key: string): string =>
+  /^(?:createdBy|updatedBy|startedBy|endedBy|requestedBy|actorId|ownerUserId|hostUserId|userId|approvedBy)$/.test(
+    key,
+  )
+    ? 'user'
+    : key === 'id'
+      ? 'self'
+      : key
+          .replace(/Ids?$/, '')
+          .replace(/^.*(?=[A-Z])/, '')
+          .toLowerCase();
+
 /** Where a person's name is the right content. */
 const PERSON =
   /input|personali[sz]ation|holder|host|visitor|member|person|staff|user|people|owner|invitee|sample|primaryFields|secondaryFields|auxiliaryFields|passJson|csv|subtitle|ownerName|rows/i;
@@ -52,7 +90,6 @@ export function examplesOf(doc: Doc): Example[] {
   for (const [path, item] of Object.entries(doc.paths ?? {}))
     for (const [method, raw] of Object.entries(item)) {
       const op = obj(raw);
-      if (!Array.isArray(op.security) || !op.security.some((s) => 'apiKey' in obj(s))) continue;
       const id = String(op.operationId ?? `${method} ${path}`);
       const req = obj(obj(obj(op.requestBody).content)['application/json']);
       if (req.example !== undefined)
@@ -128,7 +165,7 @@ export function exampleFailures(doc: Doc, examples: Example[] = examplesOf(doc))
       if (Array.isArray(v)) for (const [i, x] of v.entries()) mapKeys(x, `${at}[${i}]`);
       else if (v && typeof v === 'object')
         for (const [k, x] of Object.entries(v)) {
-          if (FILLERS.has(k)) bad(`the key "${k}" is filler`, `${at}.${k}`);
+          if (FILLERS.has(k.toLowerCase())) bad(`the key "${k}" is filler`, `${at}.${k}`);
           mapKeys(x, `${at}.${k}`);
         }
     };
@@ -142,7 +179,13 @@ export function exampleFailures(doc: Doc, examples: Example[] = examplesOf(doc))
       }
       if (typeof v === 'string') {
         if (FOREIGN.test(v)) bad(`"${v.slice(0, 40)}" is from another sample world`, at);
-        if (FILLERS.has(v) && !(v === 'string' && leaf.key === 'type')) bad(`"${v}" is filler`, at);
+        if (FILLERS.has(v.toLowerCase()) && !(v === 'string' && leaf.key === 'type'))
+          bad(`"${v}" is filler`, at);
+        if (FILLER_WORDS.test(v)) bad(`"${v.slice(0, 40)}" is filler text`, at);
+        for (const [re, what] of SECRET_SHAPES)
+          if (re.test(v)) bad(`"${v.slice(0, 24)}…" looks like ${what}`, at);
+        if (UUID.test(v) && /0{8,}[0-9a-f]{0,4}$/.test(v.slice(24)) && !WORLD_IDS.has(v))
+          bad(`"${v}" is a zero-padded id`, at);
         if (/Ada/.test(v) && RESOURCE_NAME.test(leaf.key) && !PERSON.test(ex.op + at))
           bad(`person name "${v}" in a field that is not a person`, at);
         if (
@@ -179,7 +222,41 @@ export function exampleFailures(doc: Doc, examples: Example[] = examplesOf(doc))
         bad(`time ${v} is not a plausible millisecond time`, at);
     }
   }
+  for (const ex of examples)
+    for (const m of objectFailures(ex.value, '')) out.push(`${ex.where}${m}`);
   for (const [value, ops] of patterned)
     if (ops.size >= 4) out.push(`"${value}" is a regex sample reused by ${ops.size} operations`);
+  return out;
+}
+
+/** Rules that read one object at a time: ids under two entities, filler numbers, a secret that does not match its prefix. */
+function objectFailures(value: unknown, at: string): string[] {
+  const out: string[] = [];
+  if (Array.isArray(value)) {
+    for (const [i, v] of value.entries()) out.push(...objectFailures(v, `${at}[${i}]`));
+    return out;
+  }
+  if (!value || typeof value !== 'object') return out;
+  const o = value as Json;
+  const owner = new Map<string, string>();
+  const numbers: number[] = [];
+  for (const [k, v] of Object.entries(o)) {
+    if (typeof v === 'string' && UUID.test(v)) {
+      const seen = owner.get(v);
+      if (seen && seen !== entityOf(k))
+        out.push(`${at}.${k}: the id ${v} is also the ${seen} id in this object`);
+      else owner.set(v, entityOf(k));
+    }
+    if (typeof v === 'number' && Number.isInteger(v) && v < 1_000_000_000_000) numbers.push(v);
+  }
+  if (numbers.length >= 3 && (numbers.every((n) => n === 1) || numbers.every((n) => n === 3)))
+    out.push(`${at}: every number is ${numbers[0]}, which reads as filler`);
+  if (typeof o.secret === 'string' && typeof o.prefix === 'string') {
+    const head = typeof o.secretPrefix === 'string' ? o.secretPrefix : o.prefix;
+    if (!o.secret.startsWith(head)) out.push(`${at}.secret: does not start with "${head}"`);
+    if (o.secretPrefix === o.prefix)
+      out.push(`${at}.prefix: equals secretPrefix; the prefix is the part after the label`);
+  }
+  for (const [k, v] of Object.entries(o)) out.push(...objectFailures(v, `${at}.${k}`));
   return out;
 }

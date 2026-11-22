@@ -21,13 +21,19 @@
             "holderEmail": {
               "from": "Booking sheet",
               "transform": {
-                "kind": "enum"
+                "kind": "enum",
+                "options": {
+                  "tier": {}
+                }
               }
             },
             "externalId": {
               "from": "Booking sheet",
               "transform": {
-                "kind": "enum"
+                "kind": "enum",
+                "options": {
+                  "tier": {}
+                }
               }
             },
             "match": "externalId",
@@ -105,13 +111,19 @@
             "holderEmail": {
               "from": "Booking sheet",
               "transform": {
-                "kind": "enum"
+                "kind": "enum",
+                "options": {
+                  "tier": {}
+                }
               }
             },
             "externalId": {
               "from": "Booking sheet",
               "transform": {
-                "kind": "enum"
+                "kind": "enum",
+                "options": {
+                  "tier": {}
+                }
               }
             },
             "match": "externalId",
@@ -150,13 +162,19 @@
             "holderEmail": {
               "from": "Booking sheet",
               "transform": {
-                "kind": "enum"
+                "kind": "enum",
+                "options": {
+                  "tier": {}
+                }
               }
             },
             "externalId": {
               "from": "Booking sheet",
               "transform": {
-                "kind": "enum"
+                "kind": "enum",
+                "options": {
+                  "tier": {}
+                }
               }
             },
             "match": "externalId",
@@ -178,17 +196,17 @@
     "request": {},
     "response": {
       "state": "done",
-      "removed": 3,
-      "restored": 3,
-      "keptTotal": 3,
+      "removed": 7,
+      "restored": 10,
+      "keptTotal": 38,
       "kept": [
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "code": "NW7K2Q"
         }
       ],
-      "emailsCancelled": 3,
-      "unrevertable": 3
+      "emailsCancelled": 2,
+      "unrevertable": 24
     }
   },
   "pass-imports.postPassImports": {
@@ -1025,9 +1043,9 @@
       "cursor": "c1.4812"
     },
     "response": {
-      "sent": 3,
-      "skipped": 3,
-      "alreadyQueued": 3,
+      "sent": 4,
+      "skipped": 7,
+      "alreadyQueued": 9,
       "nextCursor": "c1.4812"
     }
   },
@@ -1036,11 +1054,11 @@
       "cursor": "c1.4812"
     },
     "response": {
-      "removed": 1,
+      "removed": 7,
       "skipped": [
         {
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "code": "AB12CD34"
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "code": "NW7K2Q"
         }
       ],
       "nextCursor": "c1.4812"

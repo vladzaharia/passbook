@@ -2,7 +2,7 @@
   "scan-display.getScanDisplayPreview": {
     "response": {
       "scope": {
-        "example": {}
+        "tier": {}
       }
     }
   }

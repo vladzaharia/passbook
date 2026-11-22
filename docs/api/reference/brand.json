@@ -8,7 +8,7 @@
       "webLogo": {
         "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
         "w": 3,
-        "h": 3
+        "h": 6
       },
       "supportEmail": "help@example.com",
       "supportUrl": "https://northwind.example.com/help",
@@ -45,17 +45,17 @@
         "logo": {
           "sha": "76ddbccd3066d76d79a11e41eee0c55d4550554ad257b2d06c985b0739d6d333",
           "w": 3,
-          "h": 3
+          "h": 6
         },
         "icon": {
           "sha": "c38853bdc6d7199e5755bab7202ba2c3d949f9f9b5c77b6f5febca5a73d76c10",
           "w": 3,
-          "h": 3
+          "h": 6
         },
         "web": {
           "sha": "452350cd3440d27ebe01b0f44c5749b89f68e13cb347380686c08ed263996181",
           "w": 3,
-          "h": 3
+          "h": 6
         },
         "mark": "full",
         "logoHasName": false
@@ -63,7 +63,7 @@
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
       "configRevision": 3,
-      "passesToUpdate": 3
+      "passesToUpdate": 27
     }
   },
   "brand.putBrandWebLogo": {
@@ -92,17 +92,17 @@
         "logo": {
           "sha": "9eb0df0903d95ec8963f49cf65ef7612f4584259cdc1cc6243abb1a1e0c94dcd",
           "w": 3,
-          "h": 3
+          "h": 6
         },
         "icon": {
           "sha": "fff81619f81e865d07e69d04e077388d801197402e22f5f2afe200e1e7b971be",
           "w": 3,
-          "h": 3
+          "h": 6
         },
         "web": {
           "sha": "4ab32c22a84a1dade2ec7906391ef75f423c7a5f44783d78c51668a0fc14cddc",
           "w": 3,
-          "h": 3
+          "h": 6
         },
         "mark": "full",
         "logoHasName": false
@@ -110,7 +110,7 @@
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
       "configRevision": 3,
-      "passesToUpdate": 3
+      "passesToUpdate": 27
     }
   },
   "brand.deleteBrandWebLogo": {
@@ -135,17 +135,17 @@
         "logo": {
           "sha": "a2eca5f008dda14828485ac9ace182cf94bf09c0af2eabd74b049f29710e933f",
           "w": 3,
-          "h": 3
+          "h": 6
         },
         "icon": {
           "sha": "4c019c52ed2bb5b26b702fb0655334d66702939a23c284901eded266e66f21bb",
           "w": 3,
-          "h": 3
+          "h": 6
         },
         "web": {
           "sha": "289b2c4d4e96f0ff4fb1532d054b42af55d5f35025e8212d8bef06626b6fb566",
           "w": 3,
-          "h": 3
+          "h": 6
         },
         "mark": "full",
         "logoHasName": false
@@ -153,7 +153,7 @@
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
       "configRevision": 3,
-      "passesToUpdate": 3
+      "passesToUpdate": 27
     }
   }
 }

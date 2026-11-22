@@ -18,7 +18,7 @@
               "createdAt": 1794322800000,
               "stateAt": 1795521600000,
               "revokedAt": null,
-              "tags": 3
+              "tags": 13
             }
           ]
         }
@@ -52,7 +52,7 @@
           "createdAt": 1794322800000,
           "stateAt": 1795521600000,
           "revokedAt": null,
-          "tags": 3
+          "tags": 13
         }
       ]
     }
@@ -81,7 +81,7 @@
           "createdAt": 1794322800000,
           "stateAt": 1795521600000,
           "revokedAt": null,
-          "tags": 3
+          "tags": 13
         }
       ]
     }
@@ -103,7 +103,7 @@
           "createdAt": 1794322800000,
           "stateAt": 1795521600000,
           "revokedAt": null,
-          "tags": 3
+          "tags": 13
         }
       ]
     }
@@ -125,7 +125,7 @@
           "createdAt": 1794322800000,
           "stateAt": 1795521600000,
           "revokedAt": null,
-          "tags": 3
+          "tags": 13
         }
       ]
     }
@@ -136,8 +136,8 @@
       "toKeysetId": "0193a1b2-7c00-7000-8000-000000000041"
     },
     "response": {
-      "moved": 3,
-      "ownKey": 3,
+      "moved": 37,
+      "ownKey": 17,
       "keyset": {
         "id": "0193a1b2-7c00-7000-8000-000000000041",
         "name": "Gym doors",
@@ -153,7 +153,7 @@
             "createdAt": 1794322800000,
             "stateAt": 1795521600000,
             "revokedAt": null,
-            "tags": 3
+            "tags": 13
           }
         ]
       }
@@ -167,17 +167,17 @@
     },
     "response": {
       "dryRun": false,
-      "rows": 3,
-      "ok": 3,
-      "added": 3,
+      "rows": 7,
+      "ok": 38,
+      "added": 37,
       "problems": [
         {
-          "line": 3,
+          "line": 9,
           "uid": "04A3B2C1D5E680",
           "reason": "bad_uid"
         }
       ],
-      "moreProblems": 3
+      "moreProblems": 39
     }
   },
   "nfc-keysets.postNfcKeysetsByIdDisable": {
@@ -197,7 +197,7 @@
           "createdAt": 1794322800000,
           "stateAt": 1795521600000,
           "revokedAt": null,
-          "tags": 3
+          "tags": 13
         }
       ]
     }

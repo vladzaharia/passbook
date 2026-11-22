@@ -3,20 +3,20 @@
     "description": "A dry run of the next sync over the last 30 days of records, at most 200: what it would create, update, leave unchanged, skip or reject. New records wait (`counts.waiting`) while the template has no approved release (`releaseBlocked`). It reads the source and the connection's passes and writes nothing: no cursor moves and no run is recorded. `columns` lists the source's fields with up to three sample cells and, for a field with few distinct values, those values and their counts. Needs connections:read and passes:read.",
     "response": {
       "ok": true,
-      "records": 3,
+      "records": 35,
       "counts": {
-        "create": 3,
-        "update": 3,
-        "unchanged": 3,
-        "skipped": 3,
+        "create": 15,
+        "update": 38,
+        "unchanged": 11,
+        "skipped": 7,
         "errors": 0,
-        "waiting": 3
+        "waiting": 11
       },
       "releaseBlocked": "no_release",
       "window": {
-        "days": 3,
+        "days": 18,
         "limit": 25,
-        "since": 3,
+        "since": 1794322800000,
         "excluded": 3
       },
       "samples": [
@@ -42,7 +42,7 @@
           ]
         }
       ],
-      "durationMs": 3
+      "durationMs": 1240
     }
   },
   "connections.getConnectionsByIdWebhookFailures": {
@@ -54,9 +54,9 @@
           "eventRef": "event:open-climbing",
           "generation": 3,
           "connectionMode": "webhook",
-          "state": "pending",
+          "state": "failed",
           "errorCode": null,
-          "uncertainItems": 3,
+          "uncertainItems": 31,
           "receivedAt": 1795521600000,
           "updatedAt": 1795359600000
         }
@@ -74,7 +74,7 @@
     "description": "Marks an uncertain webhook resolved after you have checked the source system.",
     "response": {
       "ok": true,
-      "resolved": 3,
+      "resolved": 38,
       "state": "failed"
     }
   },
@@ -93,7 +93,7 @@
             "range": "Members!A:E"
           },
           "hasCredential": true,
-          "hasWebhookSecret": true,
+          "hasWebhookSecret": false,
           "mapping": {
             "name": {
               "from": "Name"
@@ -112,15 +112,15 @@
           "onMissing": "keep",
           "voidWhen": [
             {
-              "from": "Booking sheet",
+              "from": "Tier",
               "op": "in",
-              "values": ["Day pass"]
+              "values": ["Refunded"]
             }
           ],
-          "webhookPrevUntil": 1798124400000,
+          "webhookPrevUntil": null,
           "mode": "poll",
           "intervalSeconds": 300,
-          "maxConcurrency": 3,
+          "maxConcurrency": 29,
           "requestsPerMinute": 60,
           "enabled": true,
           "health": "healthy",
@@ -131,10 +131,10 @@
           "lastSuccessAt": 1795521600000,
           "lastErrorCode": null,
           "lastErrorAt": null,
-          "webhookUrl": "https://hooks.example.com/passbook",
+          "webhookUrl": null,
           "createdAt": 1794322800000,
           "updatedAt": 1795359600000,
-          "passCount": 12
+          "passCount": 16
         }
       ],
       "nextCursor": "c1.4812"
@@ -151,9 +151,9 @@
         "range": "Members!A:E"
       },
       "secrets": {
-        "sheetsToken": "ya29.5cf1a0a365e2f9095ee3a707eb4bb0d8260657b6"
+        "sheetsToken": "••••3f9c"
       },
-      "webhookSecret": "whsec_571d4d450b1de2be7856efd7cafc8701",
+      "webhookSecret": "whsec_demo571d4d450b1de2be7856efd7cafc",
       "mapping": {
         "name": {
           "from": "Name"
@@ -177,7 +177,7 @@
         "range": "Members!A:E"
       },
       "hasCredential": true,
-      "hasWebhookSecret": true,
+      "hasWebhookSecret": false,
       "mapping": {
         "name": {
           "from": "Name"
@@ -196,15 +196,15 @@
       "onMissing": "keep",
       "voidWhen": [
         {
-          "from": "Booking sheet",
+          "from": "Tier",
           "op": "in",
-          "values": ["Day pass"]
+          "values": ["Refunded"]
         }
       ],
-      "webhookPrevUntil": 1798124400000,
+      "webhookPrevUntil": null,
       "mode": "poll",
       "intervalSeconds": 300,
-      "maxConcurrency": 3,
+      "maxConcurrency": 29,
       "requestsPerMinute": 60,
       "enabled": true,
       "health": "healthy",
@@ -215,10 +215,9 @@
       "lastSuccessAt": 1795521600000,
       "lastErrorCode": null,
       "lastErrorAt": null,
-      "webhookUrl": "https://hooks.example.com/passbook",
+      "webhookUrl": null,
       "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
-      "webhookSecret": "whsec_571d4d450b1de2be7856efd7cafc8701"
+      "updatedAt": 1795359600000
     }
   },
   "connections.getConnectionsSummary": {
@@ -226,7 +225,7 @@
     "response": {
       "total": 128,
       "byHealth": {
-        "healthy": 3
+        "healthy": 30
       },
       "attention": [
         {
@@ -253,7 +252,7 @@
         "range": "Members!A:E"
       },
       "hasCredential": true,
-      "hasWebhookSecret": true,
+      "hasWebhookSecret": false,
       "mapping": {
         "name": {
           "from": "Name"
@@ -272,15 +271,15 @@
       "onMissing": "keep",
       "voidWhen": [
         {
-          "from": "Booking sheet",
+          "from": "Tier",
           "op": "in",
-          "values": ["Day pass"]
+          "values": ["Refunded"]
         }
       ],
-      "webhookPrevUntil": 1798124400000,
+      "webhookPrevUntil": null,
       "mode": "poll",
       "intervalSeconds": 300,
-      "maxConcurrency": 3,
+      "maxConcurrency": 29,
       "requestsPerMinute": 60,
       "enabled": true,
       "health": "healthy",
@@ -291,7 +290,7 @@
       "lastSuccessAt": 1795521600000,
       "lastErrorCode": null,
       "lastErrorAt": null,
-      "webhookUrl": "https://hooks.example.com/passbook",
+      "webhookUrl": null,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
       "runs": [
@@ -300,23 +299,23 @@
           "trigger": "schedule",
           "startedAt": 1794322800000,
           "finishedAt": 1795521600000,
-          "outcome": "running",
-          "recordsSeen": 3,
-          "passesChanged": 3,
-          "passesCreated": 3,
-          "passesVoided": 3,
-          "recordsFailed": 3,
+          "outcome": "unchanged",
+          "recordsSeen": 29,
+          "passesChanged": 16,
+          "passesCreated": 19,
+          "passesVoided": 4,
+          "recordsFailed": 31,
           "errorCode": null,
           "errorDetail": null,
           "httpStatus": 200,
-          "durationMs": 3
+          "durationMs": 1240
         }
       ],
       "metrics": {
-        "p50Ms": 3,
-        "p95Ms": 3,
-        "errorRate": 3,
-        "passCount": 12
+        "p50Ms": 1435,
+        "p95Ms": 926,
+        "errorRate": 22,
+        "passCount": 16
       }
     }
   },
@@ -329,7 +328,7 @@
         "range": "Members!A:E"
       },
       "secrets": {
-        "sheetsToken": "ya29.fb90204b82135d002e703a9f596d0c121e293bc0"
+        "sheetsToken": "••••3f9c"
       }
     },
     "response": {
@@ -343,7 +342,7 @@
         "range": "Members!A:E"
       },
       "hasCredential": true,
-      "hasWebhookSecret": true,
+      "hasWebhookSecret": false,
       "mapping": {
         "name": {
           "from": "Name"
@@ -362,15 +361,15 @@
       "onMissing": "keep",
       "voidWhen": [
         {
-          "from": "Booking sheet",
+          "from": "Tier",
           "op": "in",
-          "values": ["Day pass"]
+          "values": ["Refunded"]
         }
       ],
-      "webhookPrevUntil": 1798124400000,
+      "webhookPrevUntil": null,
       "mode": "poll",
       "intervalSeconds": 300,
-      "maxConcurrency": 3,
+      "maxConcurrency": 29,
       "requestsPerMinute": 60,
       "enabled": true,
       "health": "healthy",
@@ -381,10 +380,9 @@
       "lastSuccessAt": 1795521600000,
       "lastErrorCode": null,
       "lastErrorAt": null,
-      "webhookUrl": "https://hooks.example.com/passbook",
+      "webhookUrl": null,
       "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
-      "webhookSecret": "whsec_59bd19d02690b6086c1f0b8c31c681bd"
+      "updatedAt": 1795359600000
     }
   },
   "connections.deleteConnectionsById": {
@@ -403,7 +401,7 @@
         "range": "Members!A:E"
       },
       "secrets": {
-        "sheetsToken": "ya29.07b655bbd0c4f2a4a40f18285549a2a81d813168"
+        "sheetsToken": "••••3f9c"
       },
       "mapping": {
         "name": {
@@ -418,36 +416,36 @@
       },
       "voidWhen": [
         {
-          "from": "Booking sheet",
+          "from": "Tier",
           "op": "in",
-          "values": ["Day pass"]
+          "values": ["Refunded"]
         }
       ]
     },
     "response": {
       "ok": true,
-      "detail": "The pass has already been used today.",
-      "durationMs": 3,
+      "detail": "Read 3 rows from the sheet.",
+      "durationMs": 1240,
       "sample": [
         {
           "pointer": "/input/tier",
           "preview": "Day pass"
         }
       ],
-      "records": 3,
+      "records": 35,
       "counts": {
-        "create": 3,
-        "update": 3,
-        "unchanged": 3,
-        "skipped": 3,
+        "create": 15,
+        "update": 38,
+        "unchanged": 11,
+        "skipped": 7,
         "errors": 0,
-        "waiting": 3
+        "waiting": 11
       },
       "releaseBlocked": "no_release",
       "window": {
-        "days": 3,
+        "days": 18,
         "limit": 25,
-        "since": 3,
+        "since": 1794322800000,
         "excluded": 3
       },
       "samples": [
@@ -479,8 +477,8 @@
     "description": "Tests the saved connection against its source.",
     "response": {
       "ok": true,
-      "detail": "The pass has already been used today.",
-      "durationMs": 3,
+      "detail": "Read 3 rows from the sheet.",
+      "durationMs": 1240,
       "sample": [
         {
           "pointer": "/input/tier",
@@ -505,16 +503,16 @@
           "trigger": "schedule",
           "startedAt": 1794322800000,
           "finishedAt": 1795521600000,
-          "outcome": "running",
-          "recordsSeen": 3,
-          "passesChanged": 3,
-          "passesCreated": 3,
-          "passesVoided": 3,
-          "recordsFailed": 3,
+          "outcome": "unchanged",
+          "recordsSeen": 29,
+          "passesChanged": 16,
+          "passesCreated": 19,
+          "passesVoided": 4,
+          "recordsFailed": 31,
           "errorCode": null,
           "errorDetail": null,
           "httpStatus": 200,
-          "durationMs": 3
+          "durationMs": 1240
         }
       ],
       "nextCursor": "c1.4812"
@@ -533,7 +531,7 @@
         "range": "Members!A:E"
       },
       "hasCredential": true,
-      "hasWebhookSecret": true,
+      "hasWebhookSecret": false,
       "mapping": {
         "name": {
           "from": "Name"
@@ -552,15 +550,15 @@
       "onMissing": "keep",
       "voidWhen": [
         {
-          "from": "Booking sheet",
+          "from": "Tier",
           "op": "in",
-          "values": ["Day pass"]
+          "values": ["Refunded"]
         }
       ],
-      "webhookPrevUntil": 1798124400000,
+      "webhookPrevUntil": null,
       "mode": "poll",
       "intervalSeconds": 300,
-      "maxConcurrency": 3,
+      "maxConcurrency": 29,
       "requestsPerMinute": 60,
       "enabled": true,
       "health": "healthy",
@@ -571,10 +569,9 @@
       "lastSuccessAt": 1795521600000,
       "lastErrorCode": null,
       "lastErrorAt": null,
-      "webhookUrl": "https://hooks.example.com/passbook",
+      "webhookUrl": null,
       "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
-      "webhookSecret": "whsec_fce251621e0fe56c79f85670fdd2a08f"
+      "updatedAt": 1795359600000
     }
   },
   "connections.deleteConnectionsByIdWebhookSecretPrevious": {
@@ -590,7 +587,7 @@
         "range": "Members!A:E"
       },
       "hasCredential": true,
-      "hasWebhookSecret": true,
+      "hasWebhookSecret": false,
       "mapping": {
         "name": {
           "from": "Name"
@@ -609,15 +606,15 @@
       "onMissing": "keep",
       "voidWhen": [
         {
-          "from": "Booking sheet",
+          "from": "Tier",
           "op": "in",
-          "values": ["Day pass"]
+          "values": ["Refunded"]
         }
       ],
-      "webhookPrevUntil": 1798124400000,
+      "webhookPrevUntil": null,
       "mode": "poll",
       "intervalSeconds": 300,
-      "maxConcurrency": 3,
+      "maxConcurrency": 29,
       "requestsPerMinute": 60,
       "enabled": true,
       "health": "healthy",
@@ -628,9 +625,14 @@
       "lastSuccessAt": 1795521600000,
       "lastErrorCode": null,
       "lastErrorAt": null,
-      "webhookUrl": "https://hooks.example.com/passbook",
+      "webhookUrl": null,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000
+    }
+  },
+  "connections.postHooksConnectionsById": {
+    "response": {
+      "accepted": true
     }
   }
 }

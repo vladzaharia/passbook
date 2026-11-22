@@ -4,21 +4,21 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "slug": "example",
-          "name": "Ada Example",
+          "slug": "northwind-climbing",
+          "name": "Northwind Climbing",
           "status": "active",
           "personal": false,
           "personalOwner": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000a2",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "name": "Sam Rivera"
           },
-          "createdAt": 1764000000000,
+          "createdAt": 1794322800000,
           "counts": {
-            "passes": 1,
-            "templates": 1,
-            "connections": 1,
-            "apiKeys": 1,
-            "members": 1
+            "passes": 37,
+            "templates": 21,
+            "connections": 37,
+            "apiKeys": 31,
+            "members": 10
           },
           "countsCapped": false
         }
@@ -28,120 +28,123 @@
   },
   "orgs.postOrgs": {
     "request": {
-      "slug": "example",
-      "name": "Ada Example",
-      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
       "branding": {
-        "accent": "#1a73e8"
-      }
+        "accent": "#ffc400",
+        "supportEmail": "help@example.com"
+      },
+      "preset": "standard"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "example",
-      "name": "Ada Example",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
       "kind": "standard",
-      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
       "branding": {
-        "accent": "#1a73e8",
-        "supportEmail": "ada@example.com",
-        "supportUrl": "https://passbook.mobile/p/abc123",
+        "accent": "#ffc400",
+        "supportEmail": "help@example.com",
+        "supportUrl": "https://northwind.example.com/help",
         "passColors": {
-          "background": "#1a73e8",
-          "foreground": "#1a73e8",
-          "label": "#1a73e8"
+          "background": "#112a4a",
+          "foreground": "#ffffff",
+          "label": "#ffffff"
         },
         "logo": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "1f2ef69962ec9a8a14ab30795c4333b829fda7944fc7fcdcc4ce85964f870cc8",
+          "w": 3,
+          "h": 6
         },
         "icon": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "8be6208cb899441bebbb79fc1f72f952df6b9439a9f50083c7b1deb1701cc957",
+          "w": 3,
+          "h": 6
         },
         "web": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "0f5d96cefe4d8d1a4fe8ff231635d5640b88298de125406f96e84b6dff0d1af2",
+          "w": 3,
+          "h": 6
         },
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "configRevision": 1,
-      "passesToUpdate": 1
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "configRevision": 3,
+      "passesToUpdate": 27
     }
   },
   "orgs.getOrgsById": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "example",
-      "name": "Ada Example",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
       "personalOwner": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "name": "Ada Example"
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Sam Rivera"
       },
-      "createdAt": 1764000000000,
+      "createdAt": 1794322800000,
       "counts": {
-        "passes": 1,
-        "templates": 1,
-        "connections": 1,
-        "apiKeys": 1,
-        "members": 1
+        "passes": 37,
+        "templates": 21,
+        "connections": 37,
+        "apiKeys": 31,
+        "members": 10
       },
       "countsCapped": false
     }
   },
   "orgs.patchOrgsById": {
     "request": {
-      "slug": "example",
-      "name": "Ada Example"
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "example",
-      "name": "Ada Example",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
       "kind": "standard",
-      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
       "branding": {
-        "accent": "#1a73e8",
-        "supportEmail": "ada@example.com",
-        "supportUrl": "https://passbook.mobile/p/abc123",
+        "accent": "#ffc400",
+        "supportEmail": "help@example.com",
+        "supportUrl": "https://northwind.example.com/help",
         "passColors": {
-          "background": "#1a73e8",
-          "foreground": "#1a73e8",
-          "label": "#1a73e8"
+          "background": "#112a4a",
+          "foreground": "#ffffff",
+          "label": "#ffffff"
         },
         "logo": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "6357667f8c5c2192e496733117f6bbaeaa6cbf234c5d10817a21141db9d8b65f",
+          "w": 3,
+          "h": 6
         },
         "icon": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "93dfdc99ec07b388208364a64ee9cb886229fc1c57a78e99895e3a70a7ce0197",
+          "w": 3,
+          "h": 6
         },
         "web": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "5b4d7ec65e2458415b5ced8b322fe29ec0dcd9bd89a65d8f4b089860e244e3f1",
+          "w": 3,
+          "h": 6
         },
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "configRevision": 1,
-      "passesToUpdate": 1
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "configRevision": 3,
+      "passesToUpdate": 27
     }
   },
   "orgs.deleteOrgsById": {
@@ -155,166 +158,166 @@
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "example",
-      "name": "Ada Example",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
       "personalOwner": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "name": "Ada Example"
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Sam Rivera"
       },
-      "createdAt": 1764000000000,
+      "createdAt": 1794322800000,
       "counts": {
-        "passes": 1,
-        "templates": 1,
-        "connections": 1,
-        "apiKeys": 1,
-        "members": 1
+        "passes": 37,
+        "templates": 21,
+        "connections": 37,
+        "apiKeys": 31,
+        "members": 10
       },
       "countsCapped": false
     }
   },
   "orgs.putOrgsByIdBrandingBySlot": {
     "request": {
-      "x3": "example",
-      "x2": "example",
-      "configRevision": 1
+      "x3": "x3",
+      "x2": "x2",
+      "configRevision": 3
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "example",
-      "name": "Ada Example",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
       "kind": "standard",
-      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
       "branding": {
-        "accent": "#1a73e8",
-        "supportEmail": "ada@example.com",
-        "supportUrl": "https://passbook.mobile/p/abc123",
+        "accent": "#ffc400",
+        "supportEmail": "help@example.com",
+        "supportUrl": "https://northwind.example.com/help",
         "passColors": {
-          "background": "#1a73e8",
-          "foreground": "#1a73e8",
-          "label": "#1a73e8"
+          "background": "#112a4a",
+          "foreground": "#ffffff",
+          "label": "#ffffff"
         },
         "logo": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "773ea1e2737b14ea46e2afa09a052b52fdc3d84336c4cca5449e3b8f812c4da0",
+          "w": 3,
+          "h": 6
         },
         "icon": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "6bced4eda46d34c34943350f50cc97557f514d9e7e7525d25ff9efda79e70fc0",
+          "w": 3,
+          "h": 6
         },
         "web": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "ab51731d265793a2ea4111a465a9ce0f07895049dfc3d1feacbec63a88129f34",
+          "w": 3,
+          "h": 6
         },
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "configRevision": 1,
-      "passesToUpdate": 1
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "configRevision": 3,
+      "passesToUpdate": 27
     }
   },
   "orgs.getOrgsByIdWorkspace": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "example",
-      "name": "Ada Example",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
       "kind": "standard",
-      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
       "branding": {
-        "accent": "#1a73e8",
-        "supportEmail": "ada@example.com",
-        "supportUrl": "https://passbook.mobile/p/abc123",
+        "accent": "#ffc400",
+        "supportEmail": "help@example.com",
+        "supportUrl": "https://northwind.example.com/help",
         "passColors": {
-          "background": "#1a73e8",
-          "foreground": "#1a73e8",
-          "label": "#1a73e8"
+          "background": "#112a4a",
+          "foreground": "#ffffff",
+          "label": "#ffffff"
         },
         "logo": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "cc3b57ce1ac8f50b24eb5748d0abe49396fb74eb7768d94e0d456958127fc019",
+          "w": 3,
+          "h": 6
         },
         "icon": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "fbdc3a6fd48f5e316ebab60d74cce6ac521efa5542622cdba7a4a882b0ee37dd",
+          "w": 3,
+          "h": 6
         },
         "web": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "a1572ea75f80752a3e44eaeba5b2f8fdf6b8eaa4918d3f460438a7a879e81f9c",
+          "w": 3,
+          "h": 6
         },
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "configRevision": 1,
-      "passesToUpdate": 1,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "configRevision": 3,
+      "passesToUpdate": 27,
       "counts": {
-        "passes": 1,
-        "templates": 1,
-        "connections": 1,
-        "apiKeys": 1,
-        "members": 1
+        "passes": 37,
+        "templates": 21,
+        "connections": 37,
+        "apiKeys": 31,
+        "members": 10
       },
       "countsCapped": false,
       "personalOwner": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a3",
-        "name": "Ada Example"
+        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "name": "Sam Rivera"
       }
     }
   },
   "orgs.deleteOrgsByIdBrandingBySlot": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "example",
-      "name": "Ada Example",
+      "slug": "northwind-climbing",
+      "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
       "kind": "standard",
-      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
       "branding": {
-        "accent": "#1a73e8",
-        "supportEmail": "ada@example.com",
-        "supportUrl": "https://passbook.mobile/p/abc123",
+        "accent": "#ffc400",
+        "supportEmail": "help@example.com",
+        "supportUrl": "https://northwind.example.com/help",
         "passColors": {
-          "background": "#1a73e8",
-          "foreground": "#1a73e8",
-          "label": "#1a73e8"
+          "background": "#112a4a",
+          "foreground": "#ffffff",
+          "label": "#ffffff"
         },
         "logo": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "9c5aeed66e9457350b4134b06badfdcc433090663bc966f47d6e88f0e76fbe95",
+          "w": 3,
+          "h": 6
         },
         "icon": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "4550293246349298a59f676905d6c4aca071fbbf6620f0a64efc6fbc93829271",
+          "w": 3,
+          "h": 6
         },
         "web": {
-          "sha": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-          "w": 1,
-          "h": 1
+          "sha": "5b25a0ebc4614ea5da770165cfef41f96cb3c24efbc7d7e9e50334f971dd6913",
+          "w": 3,
+          "h": 6
         },
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "configRevision": 1,
-      "passesToUpdate": 1
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "configRevision": 3,
+      "passesToUpdate": 27
     }
   }
 }

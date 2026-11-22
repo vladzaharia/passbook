@@ -5,18 +5,18 @@
         {
           "mode": "live",
           "provider": "google",
-          "accountId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "accountId": "0193a1b2-7c00-7000-8000-bb07b66550ce",
           "source": "platform",
           "platformAvailable": false,
-          "state": "absent",
-          "enrolmentRevision": 1,
+          "state": "off",
+          "enrolmentRevision": 3,
           "prerequisites": {
             "check": false,
             "roundTrip": false
           },
           "hold": {
-            "at": 1764000000000,
-            "reason": "example"
+            "at": 12,
+            "reason": "Left the gym early; refund issued at the desk."
           },
           "issuance": {
             "state": "disabled",
@@ -30,23 +30,23 @@
   "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider": {
     "request": {
       "source": "platform",
-      "expectedRevision": 1
+      "expectedRevision": 3
     },
     "response": {
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "accountId": "0193a1b2-7c00-7000-8000-3291ea9eb556",
       "source": "platform",
       "platformAvailable": false,
-      "state": "absent",
-      "enrolmentRevision": 1,
+      "state": "off",
+      "enrolmentRevision": 3,
       "prerequisites": {
         "check": false,
         "roundTrip": false
       },
       "hold": {
-        "at": 1764000000000,
-        "reason": "example"
+        "at": 12,
+        "reason": "Left the gym early; refund issued at the desk."
       },
       "issuance": {
         "state": "disabled",
@@ -56,23 +56,23 @@
   },
   "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable": {
     "request": {
-      "expectedRevision": 1
+      "expectedRevision": 3
     },
     "response": {
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "accountId": "0193a1b2-7c00-7000-8000-38f2b2edade6",
       "source": "platform",
       "platformAvailable": false,
-      "state": "absent",
-      "enrolmentRevision": 1,
+      "state": "off",
+      "enrolmentRevision": 3,
       "prerequisites": {
         "check": false,
         "roundTrip": false
       },
       "hold": {
-        "at": 1764000000000,
-        "reason": "example"
+        "at": 12,
+        "reason": "Left the gym early; refund issued at the desk."
       },
       "issuance": {
         "state": "disabled",
@@ -82,23 +82,23 @@
   },
   "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderDisable": {
     "request": {
-      "expectedRevision": 1
+      "expectedRevision": 3
     },
     "response": {
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "accountId": "0193a1b2-7c00-7000-8000-af3148b2513e",
       "source": "platform",
       "platformAvailable": false,
-      "state": "absent",
-      "enrolmentRevision": 1,
+      "state": "off",
+      "enrolmentRevision": 3,
       "prerequisites": {
         "check": false,
         "roundTrip": false
       },
       "hold": {
-        "at": 1764000000000,
-        "reason": "example"
+        "at": 12,
+        "reason": "Left the gym early; refund issued at the desk."
       },
       "issuance": {
         "state": "disabled",
@@ -108,23 +108,23 @@
   },
   "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke": {
     "request": {
-      "expectedRevision": 1
+      "expectedRevision": 3
     },
     "response": {
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "accountId": "0193a1b2-7c00-7000-8000-be696cf031d0",
       "source": "platform",
       "platformAvailable": false,
-      "state": "absent",
-      "enrolmentRevision": 1,
+      "state": "off",
+      "enrolmentRevision": 3,
       "prerequisites": {
         "check": false,
         "roundTrip": false
       },
       "hold": {
-        "at": 1764000000000,
-        "reason": "example"
+        "at": 12,
+        "reason": "Left the gym early; refund issued at the desk."
       },
       "issuance": {
         "state": "disabled",

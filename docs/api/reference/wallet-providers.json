@@ -17,7 +17,7 @@
           "installation": "unknown",
           "reported": {
             "event": "saved",
-            "at": 3
+            "at": 12
           },
           "issuance": {
             "state": "disabled",
@@ -37,7 +37,7 @@
           "installation": "unknown",
           "reported": {
             "event": "saved",
-            "at": 3
+            "at": 12
           },
           "issuance": {
             "state": "disabled",
@@ -50,14 +50,14 @@
   "wallet-providers.postWalletProvidersAccountsVerify": {
     "response": {
       "verified": false,
-      "verifiedAt": 1764000000000,
-      "expiresAt": 1764000000000
+      "verifiedAt": 1795521600000,
+      "expiresAt": 1798124400000
     },
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "candidateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "candidateHash": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
+      "candidateHash": "19be0d5aeb3bd6a9f2a030101d47d4fd9ef476a5809f7e6b376f9b06821b8711"
     }
   },
   "wallet-providers.getWalletProvidersAccounts": {
@@ -65,15 +65,15 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "revision": 1,
-      "state": "absent",
+      "accountId": "0193a1b2-7c00-7000-8000-6110aee99d1e",
+      "revision": 3,
+      "state": "configured",
       "externalApprovalVerified": false,
       "issuance": {
         "state": "disabled",
         "reason": "not_released"
       },
-      "updatedAt": 1764000000000
+      "updatedAt": 1795359600000
     }
   },
   "wallet-providers.putWalletProvidersAccounts": {
@@ -81,11 +81,11 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "google",
-      "expectedRevision": 1,
+      "expectedRevision": 3,
       "credentials": {
-        "issuerId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "issuerId": "0193a1b2-7c00-7000-8000-0b89e58da58a",
         "serviceAccountEmail": "ada@example.com",
-        "privateKeyPem": "example-key",
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
         "scopes": ["https://www.googleapis.com/auth/wallet_object.issuer"]
       }
     },
@@ -93,15 +93,15 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "revision": 1,
-      "state": "absent",
+      "accountId": "0193a1b2-7c00-7000-8000-8be9e1a1350a",
+      "revision": 3,
+      "state": "configured",
       "externalApprovalVerified": false,
       "issuance": {
         "state": "disabled",
         "reason": "not_released"
       },
-      "updatedAt": 1764000000000
+      "updatedAt": 1795359600000
     }
   },
   "wallet-providers.postWalletProvidersAccountsRevoke": {
@@ -109,21 +109,21 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "google",
-      "expectedRevision": 1
+      "expectedRevision": 3
     },
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "revision": 1,
-      "state": "absent",
+      "accountId": "0193a1b2-7c00-7000-8000-151cfa908069",
+      "revision": 3,
+      "state": "configured",
       "externalApprovalVerified": false,
       "issuance": {
         "state": "disabled",
         "reason": "not_released"
       },
-      "updatedAt": 1764000000000
+      "updatedAt": 1795359600000
     }
   }
 }

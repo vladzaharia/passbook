@@ -7,8 +7,8 @@
         "code": "NW7K2Q",
         "method": "camera"
       },
-      "clientTs": 3,
-      "dayStart": 3,
+      "clientTs": 18,
+      "dayStart": 34,
       "scope": {
         "setupId": "0193a1b2-7c00-7000-8000-4759fe6c0ab9",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
@@ -69,20 +69,20 @@
             "lock": "role",
             "reason": null,
             "amount": {
-              "fixed": 3
+              "fixed": 27
             },
             "confirm": false,
-            "confirmAbove": 3,
-            "cooldownRemainingMs": 3,
+            "confirmAbove": 23,
+            "cooldownRemainingMs": 1715,
             "armable": "sticky",
             "rewardLabel": "Free day pass",
             "input": {
               "type": "string",
               "label": "Day pass",
-              "min": 3,
-              "max": 3,
-              "step": 3,
-              "maxLength": 3,
+              "min": 12,
+              "max": 2,
+              "step": 39,
+              "maxLength": 20,
               "enum": ["adult"]
             }
           }
@@ -109,7 +109,8 @@
               {
                 "id": "0193a1b2-7c00-7000-8000-000000000043",
                 "text": "The gym closes a",
-                "tone": "neutral"
+                "tone": "neutral",
+                "icon": "user"
               }
             ]
           },
@@ -138,7 +139,7 @@
         "lastScans": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 3,
+            "at": 12,
             "actionLabel": "Admit",
             "outcome": "ok",
             "scannerName": "Front desk",
@@ -149,7 +150,7 @@
           "id": "0193a1b2-7c00-7000-8000-000000000032",
           "name": "Family bundle",
           "size": 24576,
-          "checkedIn": 3,
+          "checkedIn": 34,
           "members": [
             {
               "initials": "AE",
@@ -205,11 +206,11 @@
           "direction": "in",
           "auto": false,
           "state": "in",
-          "since": 3,
+          "since": 1794322800000,
           "via": "api",
-          "stayMs": 3,
-          "inNow": 3,
-          "capacity": 3,
+          "stayMs": 1290,
+          "inNow": 8,
+          "capacity": 38,
           "turnaround": null,
           "parent": {
             "id": "0193a1b2-7c00-7000-8000-000000000043",
@@ -225,7 +226,7 @@
       },
       "previous": {
         "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-        "at": 3,
+        "at": 12,
         "scannerName": "Front desk",
         "staffName": "Sam Rivera",
         "actionLabel": "Admit",
@@ -239,18 +240,18 @@
         "name": "Day pass",
         "style": "generic"
       },
-      "at": 3,
-      "cooldownRemainingMs": 3,
+      "at": 12,
+      "cooldownRemainingMs": 1715,
       "value": {
         "input": "tier",
         "label": "Day pass",
         "before": {},
         "after": {},
-        "goal": 3,
+        "goal": 6,
         "format": "number",
         "currency": "USD",
         "counter": false,
-        "need": 3
+        "need": 13
       },
       "flags": [],
       "channel": "mobile",
@@ -258,8 +259,8 @@
       "approvals": false,
       "group": {
         "total": 128,
-        "done": 3,
-        "already": 3,
+        "done": 39,
+        "already": 26,
         "refused": 0,
         "members": [
           {
@@ -273,7 +274,7 @@
         "id": "0193a1b2-7c00-7000-8000-000000000032",
         "name": "Family bundle",
         "size": 24576,
-        "checkedIn": 3,
+        "checkedIn": 34,
         "members": [
           {
             "initials": "AE",
@@ -284,17 +285,17 @@
       },
       "inBundle": false,
       "counts": {
-        "today": 3,
+        "today": 7,
         "event": {
-          "arrived": 3,
-          "inside": 3,
-          "expected": 3,
-          "capacity": 3
+          "arrived": 4,
+          "inside": 16,
+          "expected": 10,
+          "capacity": 38
         },
         "place": {
           "name": "Day pass",
-          "inNow": 3,
-          "capacity": 3
+          "inNow": 8,
+          "capacity": 38
         },
         "byType": [
           {
@@ -303,8 +304,8 @@
             "count": 12
           }
         ],
-        "asOf": 3,
-        "configRev": 3
+        "asOf": 26,
+        "configRev": 11
       },
       "milestone": null,
       "undoUntil": null,
@@ -331,7 +332,7 @@
         "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 3
+          "at": 12
         },
         "timeZone": "America/Los_Angeles"
       },
@@ -360,11 +361,11 @@
         "direction": "in",
         "auto": false,
         "state": "in",
-        "since": 3,
+        "since": 1794322800000,
         "via": "api",
-        "stayMs": 3,
-        "inNow": 3,
-        "capacity": 3,
+        "stayMs": 1290,
+        "inNow": 8,
+        "capacity": 38,
         "turnaround": null,
         "parent": {
           "id": "0193a1b2-7c00-7000-8000-000000000043",
@@ -430,8 +431,8 @@
         "code": "NW7K2Q",
         "method": "camera"
       },
-      "clientTs": 3,
-      "dayStart": 3,
+      "clientTs": 18,
+      "dayStart": 34,
       "scope": {
         "setupId": "0193a1b2-7c00-7000-8000-bcf079ceb0e2",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
@@ -439,7 +440,7 @@
         "timeZone": "America/Los_Angeles"
       },
       "actionId": "admit",
-      "amount": 3
+      "amount": 14
     },
     "response": {
       "checkIn": {
@@ -494,20 +495,20 @@
             "lock": "role",
             "reason": null,
             "amount": {
-              "fixed": 3
+              "fixed": 27
             },
             "confirm": false,
-            "confirmAbove": 3,
-            "cooldownRemainingMs": 3,
+            "confirmAbove": 23,
+            "cooldownRemainingMs": 1715,
             "armable": "sticky",
             "rewardLabel": "Free day pass",
             "input": {
               "type": "string",
               "label": "Day pass",
-              "min": 3,
-              "max": 3,
-              "step": 3,
-              "maxLength": 3,
+              "min": 12,
+              "max": 2,
+              "step": 39,
+              "maxLength": 20,
               "enum": ["adult"]
             }
           }
@@ -534,7 +535,8 @@
               {
                 "id": "0193a1b2-7c00-7000-8000-000000000043",
                 "text": "The gym closes a",
-                "tone": "neutral"
+                "tone": "neutral",
+                "icon": "user"
               }
             ]
           },
@@ -563,7 +565,7 @@
         "lastScans": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 3,
+            "at": 12,
             "actionLabel": "Admit",
             "outcome": "ok",
             "scannerName": "Front desk",
@@ -574,7 +576,7 @@
           "id": "0193a1b2-7c00-7000-8000-000000000032",
           "name": "Family bundle",
           "size": 24576,
-          "checkedIn": 3,
+          "checkedIn": 34,
           "members": [
             {
               "initials": "AE",
@@ -630,11 +632,11 @@
           "direction": "in",
           "auto": false,
           "state": "in",
-          "since": 3,
+          "since": 1794322800000,
           "via": "api",
-          "stayMs": 3,
-          "inNow": 3,
-          "capacity": 3,
+          "stayMs": 1290,
+          "inNow": 8,
+          "capacity": 38,
           "turnaround": null,
           "parent": {
             "id": "0193a1b2-7c00-7000-8000-000000000043",
@@ -650,7 +652,7 @@
       },
       "previous": {
         "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-        "at": 3,
+        "at": 12,
         "scannerName": "Front desk",
         "staffName": "Sam Rivera",
         "actionLabel": "Admit",
@@ -664,18 +666,18 @@
         "name": "Day pass",
         "style": "generic"
       },
-      "at": 3,
-      "cooldownRemainingMs": 3,
+      "at": 12,
+      "cooldownRemainingMs": 1715,
       "value": {
         "input": "tier",
         "label": "Day pass",
         "before": {},
         "after": {},
-        "goal": 3,
+        "goal": 6,
         "format": "number",
         "currency": "USD",
         "counter": false,
-        "need": 3
+        "need": 13
       },
       "flags": [],
       "channel": "mobile",
@@ -683,8 +685,8 @@
       "approvals": false,
       "group": {
         "total": 128,
-        "done": 3,
-        "already": 3,
+        "done": 39,
+        "already": 26,
         "refused": 0,
         "members": [
           {
@@ -698,7 +700,7 @@
         "id": "0193a1b2-7c00-7000-8000-000000000032",
         "name": "Family bundle",
         "size": 24576,
-        "checkedIn": 3,
+        "checkedIn": 34,
         "members": [
           {
             "initials": "AE",
@@ -709,17 +711,17 @@
       },
       "inBundle": false,
       "counts": {
-        "today": 3,
+        "today": 7,
         "event": {
-          "arrived": 3,
-          "inside": 3,
-          "expected": 3,
-          "capacity": 3
+          "arrived": 4,
+          "inside": 16,
+          "expected": 10,
+          "capacity": 38
         },
         "place": {
           "name": "Day pass",
-          "inNow": 3,
-          "capacity": 3
+          "inNow": 8,
+          "capacity": 38
         },
         "byType": [
           {
@@ -728,8 +730,8 @@
             "count": 12
           }
         ],
-        "asOf": 3,
-        "configRev": 3
+        "asOf": 26,
+        "configRev": 11
       },
       "milestone": null,
       "undoUntil": null,
@@ -756,7 +758,7 @@
         "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 3
+          "at": 12
         },
         "timeZone": "America/Los_Angeles"
       },
@@ -785,11 +787,11 @@
         "direction": "in",
         "auto": false,
         "state": "in",
-        "since": 3,
+        "since": 1794322800000,
         "via": "api",
-        "stayMs": 3,
-        "inNow": 3,
-        "capacity": 3,
+        "stayMs": 1290,
+        "inNow": 8,
+        "capacity": 38,
         "turnaround": null,
         "parent": {
           "id": "0193a1b2-7c00-7000-8000-000000000043",
@@ -915,20 +917,20 @@
             "lock": "role",
             "reason": null,
             "amount": {
-              "fixed": 3
+              "fixed": 27
             },
             "confirm": false,
-            "confirmAbove": 3,
-            "cooldownRemainingMs": 3,
+            "confirmAbove": 23,
+            "cooldownRemainingMs": 1715,
             "armable": "sticky",
             "rewardLabel": "Free day pass",
             "input": {
               "type": "string",
               "label": "Day pass",
-              "min": 3,
-              "max": 3,
-              "step": 3,
-              "maxLength": 3,
+              "min": 12,
+              "max": 2,
+              "step": 39,
+              "maxLength": 20,
               "enum": ["adult"]
             }
           }
@@ -955,7 +957,8 @@
               {
                 "id": "0193a1b2-7c00-7000-8000-000000000043",
                 "text": "The gym closes a",
-                "tone": "neutral"
+                "tone": "neutral",
+                "icon": "user"
               }
             ]
           },
@@ -984,7 +987,7 @@
         "lastScans": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 3,
+            "at": 12,
             "actionLabel": "Admit",
             "outcome": "ok",
             "scannerName": "Front desk",
@@ -995,7 +998,7 @@
           "id": "0193a1b2-7c00-7000-8000-000000000032",
           "name": "Family bundle",
           "size": 24576,
-          "checkedIn": 3,
+          "checkedIn": 34,
           "members": [
             {
               "initials": "AE",
@@ -1051,11 +1054,11 @@
           "direction": "in",
           "auto": false,
           "state": "in",
-          "since": 3,
+          "since": 1794322800000,
           "via": "api",
-          "stayMs": 3,
-          "inNow": 3,
-          "capacity": 3,
+          "stayMs": 1290,
+          "inNow": 8,
+          "capacity": 38,
           "turnaround": null,
           "parent": {
             "id": "0193a1b2-7c00-7000-8000-000000000043",
@@ -1071,7 +1074,7 @@
       },
       "previous": {
         "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-        "at": 3,
+        "at": 12,
         "scannerName": "Front desk",
         "staffName": "Sam Rivera",
         "actionLabel": "Admit",
@@ -1085,18 +1088,18 @@
         "name": "Day pass",
         "style": "generic"
       },
-      "at": 3,
-      "cooldownRemainingMs": 3,
+      "at": 12,
+      "cooldownRemainingMs": 1715,
       "value": {
         "input": "tier",
         "label": "Day pass",
         "before": {},
         "after": {},
-        "goal": 3,
+        "goal": 6,
         "format": "number",
         "currency": "USD",
         "counter": false,
-        "need": 3
+        "need": 13
       },
       "flags": [],
       "channel": "mobile",
@@ -1104,8 +1107,8 @@
       "approvals": false,
       "group": {
         "total": 128,
-        "done": 3,
-        "already": 3,
+        "done": 39,
+        "already": 26,
         "refused": 0,
         "members": [
           {
@@ -1119,7 +1122,7 @@
         "id": "0193a1b2-7c00-7000-8000-000000000032",
         "name": "Family bundle",
         "size": 24576,
-        "checkedIn": 3,
+        "checkedIn": 34,
         "members": [
           {
             "initials": "AE",
@@ -1130,17 +1133,17 @@
       },
       "inBundle": false,
       "counts": {
-        "today": 3,
+        "today": 7,
         "event": {
-          "arrived": 3,
-          "inside": 3,
-          "expected": 3,
-          "capacity": 3
+          "arrived": 4,
+          "inside": 16,
+          "expected": 10,
+          "capacity": 38
         },
         "place": {
           "name": "Day pass",
-          "inNow": 3,
-          "capacity": 3
+          "inNow": 8,
+          "capacity": 38
         },
         "byType": [
           {
@@ -1149,8 +1152,8 @@
             "count": 12
           }
         ],
-        "asOf": 3,
-        "configRev": 3
+        "asOf": 26,
+        "configRev": 11
       },
       "milestone": null,
       "undoUntil": null,
@@ -1177,7 +1180,7 @@
         "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 3
+          "at": 12
         },
         "timeZone": "America/Los_Angeles"
       },
@@ -1206,11 +1209,11 @@
         "direction": "in",
         "auto": false,
         "state": "in",
-        "since": 3,
+        "since": 1794322800000,
         "via": "api",
-        "stayMs": 3,
-        "inNow": 3,
-        "capacity": 3,
+        "stayMs": 1290,
+        "inNow": 8,
+        "capacity": 38,
         "turnaround": null,
         "parent": {
           "id": "0193a1b2-7c00-7000-8000-000000000043",
@@ -1266,6 +1269,4484 @@
           "refused": "expired"
         }
       }
+    }
+  },
+  "scan.getScanActivity": {
+    "description": "The latest 20 events of the scanning session, newest first. With `problems=1` it lists the latest 50 problems instead. A capped list: it has no cursor.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-6482995efc7f",
+          "at": 12,
+          "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
+          "deviceName": "Front desk tablet",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "title": "Day pass",
+          "outcome": "ok",
+          "direction": "in",
+          "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+          "reason": null,
+          "staff": "Sam Rivera",
+          "method": "camera",
+          "undoable": false,
+          "groupSize": 24576
+        }
+      ]
+    }
+  },
+  "scan.getScanScans": {
+    "description": "This scanner's latest scans, newest first, at most 20; `limit` asks for fewer. A capped list: it has no cursor.",
+    "response": {
+      "items": [
+        {
+          "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+          "at": 12,
+          "outcome": "ok",
+          "reason": null,
+          "actionLabel": "Admit",
+          "title": "Day pass",
+          "value": {
+            "input": "tier",
+            "label": "Day pass",
+            "before": {},
+            "after": {},
+            "goal": 6,
+            "format": "number",
+            "currency": "USD",
+            "counter": false,
+            "need": 13
+          },
+          "undoable": false
+        }
+      ]
+    }
+  },
+  "scan.postScanPairPreview": {
+    "request": {
+      "code": "NW7K2Q ok ok"
+    },
+    "response": {
+      "scannerName": "Front desk",
+      "sessionName": "Day pass",
+      "orgName": "Northwind Climbing",
+      "mode": "live"
+    }
+  },
+  "scan.postScanPair": {
+    "request": {
+      "code": "NW7K2Q ok ok"
+    },
+    "response": {
+      "workspace": {
+        "session": {
+          "id": "0193a1b2-7c00-7000-8000-000000000091",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "mode": "live",
+          "name": "Evening shift",
+          "status": "active",
+          "accepts": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["generic"],
+              "confirmBasic": "staff"
+            },
+            "customer": {
+              "welcome": "The gym closes at 18:00 on 24 December.",
+              "refusedLine": "Left the gym early; refund issued at the",
+              "greet": false,
+              "showReady": false,
+              "showDraft": false
+            }
+          },
+          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "timeZone": "America/Los_Angeles",
+          "hours": {
+            "mon": ["09:00-21:00"],
+            "tue": ["09:00-21:00"],
+            "wed": ["09:00-21:00"],
+            "thu": ["09:00-21:00"],
+            "fri": ["09:00-21:00"],
+            "sat": ["09:00-21:00"],
+            "sun": ["09:00-21:00"],
+            "dates": {
+              "2026-12-24": ["09:00-21:00"]
+            }
+          },
+          "hoursInvalid": true,
+          "hold": {
+            "state": "open",
+            "until": 21
+          },
+          "window": {
+            "open": false,
+            "by": "always",
+            "opensAt": 1795521600000,
+            "closesAt": 1795521600000
+          },
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000,
+          "deviceCount": 24,
+          "onlineCount": 27,
+          "today": 7
+        },
+        "device": {
+          "id": "0193a1b2-7c00-7000-8000-000000000012",
+          "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
+          "name": "Front desk tablet",
+          "surface": "auto",
+          "effectiveSurface": "phone",
+          "overrides": {
+            "flow": "auto",
+            "reader": "barcode",
+            "direction": "in",
+            "lookup": false,
+            "showPhoto": false
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["generic"],
+              "confirmBasic": "staff"
+            }
+          },
+          "capabilities": {
+            "width": 320,
+            "height": 100,
+            "touch": false,
+            "camera": "available",
+            "keyboard": false,
+            "nativeBarcode": false,
+            "native": {
+              "platform": "ios",
+              "appVersion": "1.4.2",
+              "camera": {
+                "available": false,
+                "permission": "prompt"
+              },
+              "keyboard": {
+                "supported": false,
+                "connected": false,
+                "connectionObservable": false
+              },
+              "nfc": {
+                "available": false,
+                "reading": false,
+                "continuous": false,
+                "formats": ["ndef"]
+              },
+              "haptics": false,
+              "vas": {
+                "deviceSupported": false,
+                "available": false,
+                "reader": "proximityReader",
+                "reason": "Left the gym early; refund issued at the desk."
+              },
+              "externalReader": {
+                "mode": "keyboard",
+                "connected": false
+              },
+              "customerDisplay": {
+                "supported": false,
+                "available": false,
+                "active": true
+              },
+              "layout": {
+                "posture": "folded",
+                "division": {
+                  "x": 38,
+                  "y": 19,
+                  "width": 320,
+                  "height": 100
+                }
+              }
+            },
+            "hardware": [
+              {
+                "kind": "camera",
+                "count": 12,
+                "builtIn": false,
+                "connected": false,
+                "state": "active"
+              }
+            ],
+            "surfaces": ["phone"],
+            "preferred": "phone"
+          },
+          "reportedAt": 1795521600000,
+          "paired": false,
+          "online": false,
+          "revoked": false,
+          "lastSeenAt": 1795521600000,
+          "updatedAt": 1795359600000,
+          "signIn": "paired",
+          "adminName": "Sam Rivera"
+        }
+      },
+      "principal": "scanner",
+      "state": "ready",
+      "branding": {
+        "accent": "#ffc400",
+        "logo": {
+          "sha": "e36091c036a254a6c8fcf080fd9d8f8aa735cd30aa9c591d1b421353fb89d56f",
+          "w": 3,
+          "h": 6
+        }
+      },
+      "scanner": {
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
+        "name": "Front desk",
+        "kind": "device",
+        "deviceRole": "scan",
+        "mode": "live",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgName": "Northwind Climbing",
+        "timeZone": "America/Los_Angeles",
+        "settings": {
+          "checkIn": {
+            "mode": "single",
+            "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+            "validFrom": 1795532400000,
+            "validUntil": 1798124400000,
+            "durationMinutes": 90,
+            "durationFrom": "first_scan",
+            "days": 18
+          },
+          "direction": "in",
+          "showPhoto": false,
+          "acceptAllTemplates": false,
+          "flow": "auto",
+          "defaultActionId": "admit",
+          "roleWithoutSignIn": "door",
+          "staffSignIn": false,
+          "letInAgain": "anyone",
+          "reader": "barcode",
+          "lookup": false,
+          "offline": false,
+          "whenOffline": "stop",
+          "dailyAmount": 30,
+          "deskActions": false,
+          "hardLimit": false,
+          "approvals": "managers",
+          "tags": {
+            "assign": "desk",
+            "assignAll": "desk",
+            "level": "off",
+            "types": ["scan"],
+            "confirmBasic": "staff"
+          }
+        }
+      },
+      "admin": {
+        "name": "Sam Rivera",
+        "orgs": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "name": "Sam Rivera"
+          }
+        ]
+      },
+      "event": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "name": "Open climbing",
+        "opensAt": 1795521600000,
+        "closesAt": 1795521600000,
+        "timeZone": "America/Los_Angeles",
+        "reentry": false,
+        "note": "Photo ID checked at the desk."
+      },
+      "templates": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "style": "generic",
+          "formats": ["qr"],
+          "actions": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
+              "label": "Day pass",
+              "kind": "check_in"
+            }
+          ]
+        }
+      ],
+      "formats": ["qr"],
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "name": "Sam Rivera",
+        "role": "door",
+        "pinResetRequired": true
+      },
+      "staffList": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Sam Rivera",
+          "role": "door"
+        }
+      ],
+      "staffTruncated": false,
+      "approvals": false,
+      "csrfToken": "csrfToken",
+      "undoWindowMinutes": 2,
+      "counts": {
+        "today": 7,
+        "event": {
+          "arrived": 4,
+          "inside": 16,
+          "expected": 10,
+          "capacity": 38
+        },
+        "place": {
+          "name": "Day pass",
+          "inNow": 8,
+          "capacity": 38
+        },
+        "byType": [
+          {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "count": 12
+          }
+        ],
+        "asOf": 26,
+        "configRev": 11
+      }
+    }
+  },
+  "scan.getScanSession": {
+    "response": {
+      "workspace": {
+        "session": {
+          "id": "0193a1b2-7c00-7000-8000-000000000091",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "mode": "live",
+          "name": "Evening shift",
+          "status": "active",
+          "accepts": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["generic"],
+              "confirmBasic": "staff"
+            },
+            "customer": {
+              "welcome": "The gym closes at 18:00 on 24 December.",
+              "refusedLine": "Left the gym early; refund issued at the",
+              "greet": false,
+              "showReady": false,
+              "showDraft": false
+            }
+          },
+          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "timeZone": "America/Los_Angeles",
+          "hours": {
+            "mon": ["09:00-21:00"],
+            "tue": ["09:00-21:00"],
+            "wed": ["09:00-21:00"],
+            "thu": ["09:00-21:00"],
+            "fri": ["09:00-21:00"],
+            "sat": ["09:00-21:00"],
+            "sun": ["09:00-21:00"],
+            "dates": {
+              "2026-12-24": ["09:00-21:00"]
+            }
+          },
+          "hoursInvalid": true,
+          "hold": {
+            "state": "open",
+            "until": 21
+          },
+          "window": {
+            "open": false,
+            "by": "always",
+            "opensAt": 1795521600000,
+            "closesAt": 1795521600000
+          },
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000,
+          "deviceCount": 24,
+          "onlineCount": 27,
+          "today": 7
+        },
+        "device": {
+          "id": "0193a1b2-7c00-7000-8000-000000000012",
+          "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
+          "name": "Front desk tablet",
+          "surface": "auto",
+          "effectiveSurface": "phone",
+          "overrides": {
+            "flow": "auto",
+            "reader": "barcode",
+            "direction": "in",
+            "lookup": false,
+            "showPhoto": false
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["generic"],
+              "confirmBasic": "staff"
+            }
+          },
+          "capabilities": {
+            "width": 320,
+            "height": 100,
+            "touch": false,
+            "camera": "available",
+            "keyboard": false,
+            "nativeBarcode": false,
+            "native": {
+              "platform": "ios",
+              "appVersion": "1.4.2",
+              "camera": {
+                "available": false,
+                "permission": "prompt"
+              },
+              "keyboard": {
+                "supported": false,
+                "connected": false,
+                "connectionObservable": false
+              },
+              "nfc": {
+                "available": false,
+                "reading": false,
+                "continuous": false,
+                "formats": ["ndef"]
+              },
+              "haptics": false,
+              "vas": {
+                "deviceSupported": false,
+                "available": false,
+                "reader": "proximityReader",
+                "reason": "Left the gym early; refund issued at the desk."
+              },
+              "externalReader": {
+                "mode": "keyboard",
+                "connected": false
+              },
+              "customerDisplay": {
+                "supported": false,
+                "available": false,
+                "active": true
+              },
+              "layout": {
+                "posture": "folded",
+                "division": {
+                  "x": 38,
+                  "y": 19,
+                  "width": 320,
+                  "height": 100
+                }
+              }
+            },
+            "hardware": [
+              {
+                "kind": "camera",
+                "count": 12,
+                "builtIn": false,
+                "connected": false,
+                "state": "active"
+              }
+            ],
+            "surfaces": ["phone"],
+            "preferred": "phone"
+          },
+          "reportedAt": 1795521600000,
+          "paired": false,
+          "online": false,
+          "revoked": false,
+          "lastSeenAt": 1795521600000,
+          "updatedAt": 1795359600000,
+          "signIn": "paired",
+          "adminName": "Sam Rivera"
+        }
+      },
+      "principal": "scanner",
+      "state": "ready",
+      "branding": {
+        "accent": "#ffc400",
+        "logo": {
+          "sha": "616f1cc43b89061c75e1cbe9927b046251d9fa78b0f2c1f756371fdb65920bde",
+          "w": 3,
+          "h": 6
+        }
+      },
+      "scanner": {
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
+        "name": "Front desk",
+        "kind": "device",
+        "deviceRole": "scan",
+        "mode": "live",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgName": "Northwind Climbing",
+        "timeZone": "America/Los_Angeles",
+        "settings": {
+          "checkIn": {
+            "mode": "single",
+            "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+            "validFrom": 1795532400000,
+            "validUntil": 1798124400000,
+            "durationMinutes": 90,
+            "durationFrom": "first_scan",
+            "days": 18
+          },
+          "direction": "in",
+          "showPhoto": false,
+          "acceptAllTemplates": false,
+          "flow": "auto",
+          "defaultActionId": "admit",
+          "roleWithoutSignIn": "door",
+          "staffSignIn": false,
+          "letInAgain": "anyone",
+          "reader": "barcode",
+          "lookup": false,
+          "offline": false,
+          "whenOffline": "stop",
+          "dailyAmount": 30,
+          "deskActions": false,
+          "hardLimit": false,
+          "approvals": "managers",
+          "tags": {
+            "assign": "desk",
+            "assignAll": "desk",
+            "level": "off",
+            "types": ["scan"],
+            "confirmBasic": "staff"
+          }
+        }
+      },
+      "admin": {
+        "name": "Sam Rivera",
+        "orgs": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "name": "Sam Rivera"
+          }
+        ]
+      },
+      "event": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "name": "Open climbing",
+        "opensAt": 1795521600000,
+        "closesAt": 1795521600000,
+        "timeZone": "America/Los_Angeles",
+        "reentry": false,
+        "note": "Photo ID checked at the desk."
+      },
+      "templates": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "style": "generic",
+          "formats": ["qr"],
+          "actions": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
+              "label": "Day pass",
+              "kind": "check_in"
+            }
+          ]
+        }
+      ],
+      "formats": ["qr"],
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "name": "Sam Rivera",
+        "role": "door",
+        "pinResetRequired": true
+      },
+      "staffList": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Sam Rivera",
+          "role": "door"
+        }
+      ],
+      "staffTruncated": false,
+      "approvals": false,
+      "csrfToken": "csrfToken",
+      "undoWindowMinutes": 2,
+      "counts": {
+        "today": 7,
+        "event": {
+          "arrived": 4,
+          "inside": 16,
+          "expected": 10,
+          "capacity": 38
+        },
+        "place": {
+          "name": "Day pass",
+          "inNow": 8,
+          "capacity": 38
+        },
+        "byType": [
+          {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "count": 12
+          }
+        ],
+        "asOf": 26,
+        "configRev": 11
+      }
+    }
+  },
+  "scan.getScanStaff": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass",
+          "role": "door"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "scan.postScanStaff": {
+    "request": {
+      "staffId": "0193a1b2-7c00-7000-8000-000000000022",
+      "pin": "762787"
+    },
+    "response": {
+      "workspace": {
+        "session": {
+          "id": "0193a1b2-7c00-7000-8000-000000000091",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "mode": "live",
+          "name": "Evening shift",
+          "status": "active",
+          "accepts": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["generic"],
+              "confirmBasic": "staff"
+            },
+            "customer": {
+              "welcome": "The gym closes at 18:00 on 24 December.",
+              "refusedLine": "Left the gym early; refund issued at the",
+              "greet": false,
+              "showReady": false,
+              "showDraft": false
+            }
+          },
+          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "timeZone": "America/Los_Angeles",
+          "hours": {
+            "mon": ["09:00-21:00"],
+            "tue": ["09:00-21:00"],
+            "wed": ["09:00-21:00"],
+            "thu": ["09:00-21:00"],
+            "fri": ["09:00-21:00"],
+            "sat": ["09:00-21:00"],
+            "sun": ["09:00-21:00"],
+            "dates": {
+              "2026-12-24": ["09:00-21:00"]
+            }
+          },
+          "hoursInvalid": true,
+          "hold": {
+            "state": "open",
+            "until": 21
+          },
+          "window": {
+            "open": false,
+            "by": "always",
+            "opensAt": 1795521600000,
+            "closesAt": 1795521600000
+          },
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000,
+          "deviceCount": 24,
+          "onlineCount": 27,
+          "today": 7
+        },
+        "device": {
+          "id": "0193a1b2-7c00-7000-8000-000000000012",
+          "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
+          "name": "Front desk tablet",
+          "surface": "auto",
+          "effectiveSurface": "phone",
+          "overrides": {
+            "flow": "auto",
+            "reader": "barcode",
+            "direction": "in",
+            "lookup": false,
+            "showPhoto": false
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["generic"],
+              "confirmBasic": "staff"
+            }
+          },
+          "capabilities": {
+            "width": 320,
+            "height": 100,
+            "touch": false,
+            "camera": "available",
+            "keyboard": false,
+            "nativeBarcode": false,
+            "native": {
+              "platform": "ios",
+              "appVersion": "1.4.2",
+              "camera": {
+                "available": false,
+                "permission": "prompt"
+              },
+              "keyboard": {
+                "supported": false,
+                "connected": false,
+                "connectionObservable": false
+              },
+              "nfc": {
+                "available": false,
+                "reading": false,
+                "continuous": false,
+                "formats": ["ndef"]
+              },
+              "haptics": false,
+              "vas": {
+                "deviceSupported": false,
+                "available": false,
+                "reader": "proximityReader",
+                "reason": "Left the gym early; refund issued at the desk."
+              },
+              "externalReader": {
+                "mode": "keyboard",
+                "connected": false
+              },
+              "customerDisplay": {
+                "supported": false,
+                "available": false,
+                "active": true
+              },
+              "layout": {
+                "posture": "folded",
+                "division": {
+                  "x": 38,
+                  "y": 19,
+                  "width": 320,
+                  "height": 100
+                }
+              }
+            },
+            "hardware": [
+              {
+                "kind": "camera",
+                "count": 12,
+                "builtIn": false,
+                "connected": false,
+                "state": "active"
+              }
+            ],
+            "surfaces": ["phone"],
+            "preferred": "phone"
+          },
+          "reportedAt": 1795521600000,
+          "paired": false,
+          "online": false,
+          "revoked": false,
+          "lastSeenAt": 1795521600000,
+          "updatedAt": 1795359600000,
+          "signIn": "paired",
+          "adminName": "Sam Rivera"
+        }
+      },
+      "principal": "scanner",
+      "state": "ready",
+      "branding": {
+        "accent": "#ffc400",
+        "logo": {
+          "sha": "165b8f6efba8d7a558b7b2aa59015320e627f27be8abeef4da80f54312aa8575",
+          "w": 3,
+          "h": 6
+        }
+      },
+      "scanner": {
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
+        "name": "Front desk",
+        "kind": "device",
+        "deviceRole": "scan",
+        "mode": "live",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgName": "Northwind Climbing",
+        "timeZone": "America/Los_Angeles",
+        "settings": {
+          "checkIn": {
+            "mode": "single",
+            "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+            "validFrom": 1795532400000,
+            "validUntil": 1798124400000,
+            "durationMinutes": 90,
+            "durationFrom": "first_scan",
+            "days": 18
+          },
+          "direction": "in",
+          "showPhoto": false,
+          "acceptAllTemplates": false,
+          "flow": "auto",
+          "defaultActionId": "admit",
+          "roleWithoutSignIn": "door",
+          "staffSignIn": false,
+          "letInAgain": "anyone",
+          "reader": "barcode",
+          "lookup": false,
+          "offline": false,
+          "whenOffline": "stop",
+          "dailyAmount": 30,
+          "deskActions": false,
+          "hardLimit": false,
+          "approvals": "managers",
+          "tags": {
+            "assign": "desk",
+            "assignAll": "desk",
+            "level": "off",
+            "types": ["scan"],
+            "confirmBasic": "staff"
+          }
+        }
+      },
+      "admin": {
+        "name": "Sam Rivera",
+        "orgs": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "name": "Sam Rivera"
+          }
+        ]
+      },
+      "event": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "name": "Open climbing",
+        "opensAt": 1795521600000,
+        "closesAt": 1795521600000,
+        "timeZone": "America/Los_Angeles",
+        "reentry": false,
+        "note": "Photo ID checked at the desk."
+      },
+      "templates": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "style": "generic",
+          "formats": ["qr"],
+          "actions": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
+              "label": "Day pass",
+              "kind": "check_in"
+            }
+          ]
+        }
+      ],
+      "formats": ["qr"],
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "name": "Sam Rivera",
+        "role": "door",
+        "pinResetRequired": true
+      },
+      "staffList": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Sam Rivera",
+          "role": "door"
+        }
+      ],
+      "staffTruncated": false,
+      "approvals": false,
+      "csrfToken": "csrfToken",
+      "undoWindowMinutes": 2,
+      "counts": {
+        "today": 7,
+        "event": {
+          "arrived": 4,
+          "inside": 16,
+          "expected": 10,
+          "capacity": 38
+        },
+        "place": {
+          "name": "Day pass",
+          "inNow": 8,
+          "capacity": 38
+        },
+        "byType": [
+          {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "count": 12
+          }
+        ],
+        "asOf": 26,
+        "configRev": 11
+      }
+    }
+  },
+  "scan.deleteScanStaff": {
+    "response": {
+      "workspace": {
+        "session": {
+          "id": "0193a1b2-7c00-7000-8000-000000000091",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "mode": "live",
+          "name": "Evening shift",
+          "status": "active",
+          "accepts": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["generic"],
+              "confirmBasic": "staff"
+            },
+            "customer": {
+              "welcome": "The gym closes at 18:00 on 24 December.",
+              "refusedLine": "Left the gym early; refund issued at the",
+              "greet": false,
+              "showReady": false,
+              "showDraft": false
+            }
+          },
+          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "timeZone": "America/Los_Angeles",
+          "hours": {
+            "mon": ["09:00-21:00"],
+            "tue": ["09:00-21:00"],
+            "wed": ["09:00-21:00"],
+            "thu": ["09:00-21:00"],
+            "fri": ["09:00-21:00"],
+            "sat": ["09:00-21:00"],
+            "sun": ["09:00-21:00"],
+            "dates": {
+              "2026-12-24": ["09:00-21:00"]
+            }
+          },
+          "hoursInvalid": true,
+          "hold": {
+            "state": "open",
+            "until": 21
+          },
+          "window": {
+            "open": false,
+            "by": "always",
+            "opensAt": 1795521600000,
+            "closesAt": 1795521600000
+          },
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000,
+          "deviceCount": 24,
+          "onlineCount": 27,
+          "today": 7
+        },
+        "device": {
+          "id": "0193a1b2-7c00-7000-8000-000000000012",
+          "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
+          "name": "Front desk tablet",
+          "surface": "auto",
+          "effectiveSurface": "phone",
+          "overrides": {
+            "flow": "auto",
+            "reader": "barcode",
+            "direction": "in",
+            "lookup": false,
+            "showPhoto": false
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["generic"],
+              "confirmBasic": "staff"
+            }
+          },
+          "capabilities": {
+            "width": 320,
+            "height": 100,
+            "touch": false,
+            "camera": "available",
+            "keyboard": false,
+            "nativeBarcode": false,
+            "native": {
+              "platform": "ios",
+              "appVersion": "1.4.2",
+              "camera": {
+                "available": false,
+                "permission": "prompt"
+              },
+              "keyboard": {
+                "supported": false,
+                "connected": false,
+                "connectionObservable": false
+              },
+              "nfc": {
+                "available": false,
+                "reading": false,
+                "continuous": false,
+                "formats": ["ndef"]
+              },
+              "haptics": false,
+              "vas": {
+                "deviceSupported": false,
+                "available": false,
+                "reader": "proximityReader",
+                "reason": "Left the gym early; refund issued at the desk."
+              },
+              "externalReader": {
+                "mode": "keyboard",
+                "connected": false
+              },
+              "customerDisplay": {
+                "supported": false,
+                "available": false,
+                "active": true
+              },
+              "layout": {
+                "posture": "folded",
+                "division": {
+                  "x": 38,
+                  "y": 19,
+                  "width": 320,
+                  "height": 100
+                }
+              }
+            },
+            "hardware": [
+              {
+                "kind": "camera",
+                "count": 12,
+                "builtIn": false,
+                "connected": false,
+                "state": "active"
+              }
+            ],
+            "surfaces": ["phone"],
+            "preferred": "phone"
+          },
+          "reportedAt": 1795521600000,
+          "paired": false,
+          "online": false,
+          "revoked": false,
+          "lastSeenAt": 1795521600000,
+          "updatedAt": 1795359600000,
+          "signIn": "paired",
+          "adminName": "Sam Rivera"
+        }
+      },
+      "principal": "scanner",
+      "state": "ready",
+      "branding": {
+        "accent": "#ffc400",
+        "logo": {
+          "sha": "31c9ad15775b9926dd7df70d90d4d50a051ce03046ca28e4470163fb44739c26",
+          "w": 3,
+          "h": 6
+        }
+      },
+      "scanner": {
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
+        "name": "Front desk",
+        "kind": "device",
+        "deviceRole": "scan",
+        "mode": "live",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgName": "Northwind Climbing",
+        "timeZone": "America/Los_Angeles",
+        "settings": {
+          "checkIn": {
+            "mode": "single",
+            "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+            "validFrom": 1795532400000,
+            "validUntil": 1798124400000,
+            "durationMinutes": 90,
+            "durationFrom": "first_scan",
+            "days": 18
+          },
+          "direction": "in",
+          "showPhoto": false,
+          "acceptAllTemplates": false,
+          "flow": "auto",
+          "defaultActionId": "admit",
+          "roleWithoutSignIn": "door",
+          "staffSignIn": false,
+          "letInAgain": "anyone",
+          "reader": "barcode",
+          "lookup": false,
+          "offline": false,
+          "whenOffline": "stop",
+          "dailyAmount": 30,
+          "deskActions": false,
+          "hardLimit": false,
+          "approvals": "managers",
+          "tags": {
+            "assign": "desk",
+            "assignAll": "desk",
+            "level": "off",
+            "types": ["scan"],
+            "confirmBasic": "staff"
+          }
+        }
+      },
+      "admin": {
+        "name": "Sam Rivera",
+        "orgs": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "name": "Sam Rivera"
+          }
+        ]
+      },
+      "event": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "name": "Open climbing",
+        "opensAt": 1795521600000,
+        "closesAt": 1795521600000,
+        "timeZone": "America/Los_Angeles",
+        "reentry": false,
+        "note": "Photo ID checked at the desk."
+      },
+      "templates": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "style": "generic",
+          "formats": ["qr"],
+          "actions": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
+              "label": "Day pass",
+              "kind": "check_in"
+            }
+          ]
+        }
+      ],
+      "formats": ["qr"],
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "name": "Sam Rivera",
+        "role": "door",
+        "pinResetRequired": true
+      },
+      "staffList": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Sam Rivera",
+          "role": "door"
+        }
+      ],
+      "staffTruncated": false,
+      "approvals": false,
+      "csrfToken": "csrfToken",
+      "undoWindowMinutes": 2,
+      "counts": {
+        "today": 7,
+        "event": {
+          "arrived": 4,
+          "inside": 16,
+          "expected": 10,
+          "capacity": 38
+        },
+        "place": {
+          "name": "Day pass",
+          "inNow": 8,
+          "capacity": 38
+        },
+        "byType": [
+          {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "count": 12
+          }
+        ],
+        "asOf": 26,
+        "configRev": 11
+      }
+    }
+  },
+  "scan.postScanStaffPin": {
+    "response": {
+      "pin": "221349",
+      "session": {
+        "workspace": {
+          "session": {
+            "id": "0193a1b2-7c00-7000-8000-000000000091",
+            "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "orgName": "Northwind Climbing",
+            "mode": "live",
+            "name": "Evening shift",
+            "status": "active",
+            "accepts": {
+              "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+              "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+            },
+            "settings": {
+              "checkIn": {
+                "mode": "single",
+                "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+                "validFrom": 1795532400000,
+                "validUntil": 1798124400000,
+                "durationMinutes": 90,
+                "durationFrom": "first_scan",
+                "days": 18
+              },
+              "direction": "in",
+              "showPhoto": false,
+              "acceptAllTemplates": false,
+              "flow": "auto",
+              "defaultActionId": "admit",
+              "roleWithoutSignIn": "door",
+              "staffSignIn": false,
+              "letInAgain": "anyone",
+              "reader": "barcode",
+              "lookup": false,
+              "offline": false,
+              "whenOffline": "stop",
+              "dailyAmount": 30,
+              "deskActions": false,
+              "hardLimit": false,
+              "approvals": "managers",
+              "tags": {
+                "assign": "desk",
+                "assignAll": "desk",
+                "level": "off",
+                "types": ["generic"],
+                "confirmBasic": "staff"
+              },
+              "customer": {
+                "welcome": "The gym closes at 18:00 on 24 December.",
+                "refusedLine": "Left the gym early; refund issued at the",
+                "greet": false,
+                "showReady": false,
+                "showDraft": false
+              }
+            },
+            "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+            "timeZone": "America/Los_Angeles",
+            "hours": {
+              "mon": ["09:00-21:00"],
+              "tue": ["09:00-21:00"],
+              "wed": ["09:00-21:00"],
+              "thu": ["09:00-21:00"],
+              "fri": ["09:00-21:00"],
+              "sat": ["09:00-21:00"],
+              "sun": ["09:00-21:00"],
+              "dates": {
+                "2026-12-24": ["09:00-21:00"]
+              }
+            },
+            "hoursInvalid": true,
+            "hold": {
+              "state": "open",
+              "until": 21
+            },
+            "window": {
+              "open": false,
+              "by": "always",
+              "opensAt": 1795521600000,
+              "closesAt": 1795521600000
+            },
+            "createdAt": 1794322800000,
+            "updatedAt": 1795359600000,
+            "deviceCount": 24,
+            "onlineCount": 27,
+            "today": 7
+          },
+          "device": {
+            "id": "0193a1b2-7c00-7000-8000-000000000012",
+            "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
+            "name": "Front desk tablet",
+            "surface": "auto",
+            "effectiveSurface": "phone",
+            "overrides": {
+              "flow": "auto",
+              "reader": "barcode",
+              "direction": "in",
+              "lookup": false,
+              "showPhoto": false
+            },
+            "settings": {
+              "checkIn": {
+                "mode": "single",
+                "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+                "validFrom": 1795532400000,
+                "validUntil": 1798124400000,
+                "durationMinutes": 90,
+                "durationFrom": "first_scan",
+                "days": 18
+              },
+              "direction": "in",
+              "showPhoto": false,
+              "acceptAllTemplates": false,
+              "flow": "auto",
+              "defaultActionId": "admit",
+              "roleWithoutSignIn": "door",
+              "staffSignIn": false,
+              "letInAgain": "anyone",
+              "reader": "barcode",
+              "lookup": false,
+              "offline": false,
+              "whenOffline": "stop",
+              "dailyAmount": 30,
+              "deskActions": false,
+              "hardLimit": false,
+              "approvals": "managers",
+              "tags": {
+                "assign": "desk",
+                "assignAll": "desk",
+                "level": "off",
+                "types": ["generic"],
+                "confirmBasic": "staff"
+              }
+            },
+            "capabilities": {
+              "width": 320,
+              "height": 100,
+              "touch": false,
+              "camera": "available",
+              "keyboard": false,
+              "nativeBarcode": false,
+              "native": {
+                "platform": "ios",
+                "appVersion": "1.4.2",
+                "camera": {
+                  "available": false,
+                  "permission": "prompt"
+                },
+                "keyboard": {
+                  "supported": false,
+                  "connected": false,
+                  "connectionObservable": false
+                },
+                "nfc": {
+                  "available": false,
+                  "reading": false,
+                  "continuous": false,
+                  "formats": ["ndef"]
+                },
+                "haptics": false,
+                "vas": {
+                  "deviceSupported": false,
+                  "available": false,
+                  "reader": "proximityReader",
+                  "reason": "Left the gym early; refund issued at the desk."
+                },
+                "externalReader": {
+                  "mode": "keyboard",
+                  "connected": false
+                },
+                "customerDisplay": {
+                  "supported": false,
+                  "available": false,
+                  "active": true
+                },
+                "layout": {
+                  "posture": "folded",
+                  "division": {
+                    "x": 38,
+                    "y": 19,
+                    "width": 320,
+                    "height": 100
+                  }
+                }
+              },
+              "hardware": [
+                {
+                  "kind": "camera",
+                  "count": 12,
+                  "builtIn": false,
+                  "connected": false,
+                  "state": "active"
+                }
+              ],
+              "surfaces": ["phone"],
+              "preferred": "phone"
+            },
+            "reportedAt": 1795521600000,
+            "paired": false,
+            "online": false,
+            "revoked": false,
+            "lastSeenAt": 1795521600000,
+            "updatedAt": 1795359600000,
+            "signIn": "paired",
+            "adminName": "Sam Rivera"
+          }
+        },
+        "principal": "scanner",
+        "state": "ready",
+        "branding": {
+          "accent": "#ffc400",
+          "logo": {
+            "sha": "1ee4551756545761f79daa861dddb41873742eca60bade638892532e0401c8e9",
+            "w": 3,
+            "h": 6
+          }
+        },
+        "scanner": {
+          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "name": "Front desk",
+          "kind": "device",
+          "deviceRole": "scan",
+          "mode": "live",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "timeZone": "America/Los_Angeles",
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["scan"],
+              "confirmBasic": "staff"
+            }
+          }
+        },
+        "admin": {
+          "name": "Sam Rivera",
+          "orgs": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+              "name": "Sam Rivera"
+            }
+          ]
+        },
+        "event": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "name": "Open climbing",
+          "opensAt": 1795521600000,
+          "closesAt": 1795521600000,
+          "timeZone": "America/Los_Angeles",
+          "reentry": false,
+          "note": "Photo ID checked at the desk."
+        },
+        "templates": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "style": "generic",
+            "formats": ["qr"],
+            "actions": [
+              {
+                "id": "0193a1b2-7c00-7000-8000-000000000073",
+                "label": "Day pass",
+                "kind": "check_in"
+              }
+            ]
+          }
+        ],
+        "formats": ["qr"],
+        "staff": {
+          "id": "0193a1b2-7c00-7000-8000-000000000022",
+          "name": "Sam Rivera",
+          "role": "door",
+          "pinResetRequired": true
+        },
+        "staffList": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-000000000091",
+            "name": "Sam Rivera",
+            "role": "door"
+          }
+        ],
+        "staffTruncated": false,
+        "approvals": false,
+        "csrfToken": "csrfToken",
+        "undoWindowMinutes": 2,
+        "counts": {
+          "today": 7,
+          "event": {
+            "arrived": 4,
+            "inside": 16,
+            "expected": 10,
+            "capacity": 38
+          },
+          "place": {
+            "name": "Evening shift",
+            "inNow": 8,
+            "capacity": 38
+          },
+          "byType": [
+            {
+              "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+              "name": "Evening shift",
+              "count": 12
+            }
+          ],
+          "asOf": 26,
+          "configRev": 11
+        }
+      }
+    }
+  },
+  "scan.getScanRollCall": {
+    "response": {
+      "rollCall": {
+        "id": "0193a1b2-7c00-7000-8000-000000000072",
+        "placeNames": ["Main hall"],
+        "startedAt": 1794322800000,
+        "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
+        "endedAt": 1795521600000,
+        "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
+        "rev": 24,
+        "serverNow": 17,
+        "counts": {
+          "total": 128,
+          "present": 34,
+          "out": 13,
+          "unconfirmed": 21,
+          "notConfirmedOut": 24,
+          "late": 16,
+          "inNow": 8,
+          "tappedIn": 7
+        },
+        "people": [
+          {
+            "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "holder": "Ada Example",
+            "plan": "Day pass",
+            "host": "host",
+            "place": "zone:main-hall",
+            "placeName": "Main hall",
+            "since": 1794322800000,
+            "basis": "in_now",
+            "presence": "in",
+            "late": false,
+            "mark": {
+              "status": "present",
+              "by": "Sam Rivera",
+              "at": 12
+            },
+            "notConfirmedOut": false
+          }
+        ]
+      }
+    }
+  },
+  "scan.postScanRollCall": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000043",
+      "placeNames": ["Main hall"],
+      "startedAt": 1794322800000,
+      "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "endedAt": 1795521600000,
+      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "rev": 24,
+      "serverNow": 17,
+      "counts": {
+        "total": 128,
+        "present": 34,
+        "out": 13,
+        "unconfirmed": 21,
+        "notConfirmedOut": 24,
+        "late": 16,
+        "inNow": 8,
+        "tappedIn": 7
+      },
+      "people": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "plan": "Day pass",
+          "host": "host",
+          "place": "zone:main-hall",
+          "placeName": "Main hall",
+          "since": 1794322800000,
+          "basis": "in_now",
+          "presence": "in",
+          "late": false,
+          "mark": {
+            "status": "present",
+            "by": "Sam Rivera",
+            "at": 12
+          },
+          "notConfirmedOut": false
+        }
+      ]
+    }
+  },
+  "scan.getScanRollCallById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000043",
+      "placeNames": ["Main hall"],
+      "startedAt": 1794322800000,
+      "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "endedAt": 1795521600000,
+      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "rev": 24,
+      "serverNow": 17,
+      "counts": {
+        "total": 128,
+        "present": 34,
+        "out": 13,
+        "unconfirmed": 21,
+        "notConfirmedOut": 24,
+        "late": 16,
+        "inNow": 8,
+        "tappedIn": 7
+      },
+      "people": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "plan": "Day pass",
+          "host": "host",
+          "place": "zone:main-hall",
+          "placeName": "Main hall",
+          "since": 1794322800000,
+          "basis": "in_now",
+          "presence": "in",
+          "late": false,
+          "mark": {
+            "status": "present",
+            "by": "Sam Rivera",
+            "at": 12
+          },
+          "notConfirmedOut": false
+        }
+      ]
+    }
+  },
+  "scan.postScanRollCallByIdMarks": {
+    "request": {
+      "marks": [
+        {
+          "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "status": "present",
+          "at": 12
+        }
+      ]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000043",
+      "placeNames": ["Main hall"],
+      "startedAt": 1794322800000,
+      "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "endedAt": 1795521600000,
+      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "rev": 24,
+      "serverNow": 17,
+      "counts": {
+        "total": 128,
+        "present": 34,
+        "out": 13,
+        "unconfirmed": 21,
+        "notConfirmedOut": 24,
+        "late": 16,
+        "inNow": 8,
+        "tappedIn": 7
+      },
+      "people": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "plan": "Day pass",
+          "host": "host",
+          "place": "zone:main-hall",
+          "placeName": "Main hall",
+          "since": 1794322800000,
+          "basis": "in_now",
+          "presence": "in",
+          "late": false,
+          "mark": {
+            "status": "present",
+            "by": "Sam Rivera",
+            "at": 12
+          },
+          "notConfirmedOut": false
+        }
+      ],
+      "results": [
+        {
+          "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "status": "applied",
+          "code": "NW7K2Q"
+        }
+      ]
+    }
+  },
+  "scan.postScanRollCallByIdEnd": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000043",
+      "placeNames": ["Main hall"],
+      "startedAt": 1794322800000,
+      "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "endedAt": 1795521600000,
+      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "rev": 24,
+      "serverNow": 17,
+      "counts": {
+        "total": 128,
+        "present": 34,
+        "out": 13,
+        "unconfirmed": 21,
+        "notConfirmedOut": 24,
+        "late": 16,
+        "inNow": 8,
+        "tappedIn": 7
+      },
+      "people": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "plan": "Day pass",
+          "host": "host",
+          "place": "zone:main-hall",
+          "placeName": "Main hall",
+          "since": 1794322800000,
+          "basis": "in_now",
+          "presence": "in",
+          "late": false,
+          "mark": {
+            "status": "present",
+            "by": "Sam Rivera",
+            "at": 12
+          },
+          "notConfirmedOut": false
+        }
+      ]
+    }
+  },
+  "scan.postScanMarkOut": {
+    "request": {
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-d26499f1845f",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "place": "zone:main-hall",
+      "scope": {
+        "setupId": "0193a1b2-7c00-7000-8000-3084d97a9a9d",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "timeZone": "America/Los_Angeles"
+      }
+    },
+    "response": {
+      "checkIn": {
+        "mode": "single",
+        "direction": "in",
+        "inside": false,
+        "enteredAt": 1795521600000,
+        "firstAt": 1795521600000,
+        "validFrom": 1795532400000,
+        "validUntil": 1798124400000
+      },
+      "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+      "kind": "ok",
+      "reason": null,
+      "replay": false,
+      "action": {
+        "id": "0193a1b2-7c00-7000-8000-000000000073",
+        "label": "Day pass",
+        "kind": "check_in"
+      },
+      "card": {
+        "checkIn": {
+          "mode": "single",
+          "direction": "in",
+          "inside": false,
+          "enteredAt": 1795521600000,
+          "firstAt": 1795521600000,
+          "validFrom": 1795532400000,
+          "validUntil": 1798124400000
+        },
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "version": 3,
+        "mode": "live",
+        "title": "Day pass",
+        "subtitle": "Ada Example",
+        "template": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "style": "generic"
+        },
+        "status": "active",
+        "validFrom": 1795532400000,
+        "validUntil": 1798124400000,
+        "flags": [
+          {
+            "label": "Day pass",
+            "tone": "warning",
+            "stop": false
+          }
+        ],
+        "values": [
+          {
+            "input": "tier",
+            "label": "Day pass",
+            "before": {},
+            "after": {},
+            "goal": 6,
+            "format": "number",
+            "currency": "USD",
+            "counter": false,
+            "need": 13
+          }
+        ],
+        "actions": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-000000000073",
+            "label": "Day pass",
+            "kind": "check_in",
+            "available": false,
+            "lock": "role",
+            "reason": null,
+            "amount": {
+              "fixed": 27
+            },
+            "confirm": false,
+            "confirmAbove": 23,
+            "cooldownRemainingMs": 1715,
+            "armable": "sticky",
+            "rewardLabel": "Free day pass",
+            "input": {
+              "type": "string",
+              "label": "Day pass",
+              "min": 12,
+              "max": 2,
+              "step": 39,
+              "maxLength": 20,
+              "enum": ["adult"]
+            }
+          }
+        ],
+        "display": {
+          "v": 1,
+          "screen": "ok",
+          "templateVersion": "3",
+          "variant": "default",
+          "identity": {
+            "holder": "Ada Example",
+            "initials": "AE",
+            "photo": {
+              "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+              "alt": "Northwind logo"
+            }
+          },
+          "header": {
+            "icon": "user",
+            "title": "Day pass",
+            "titleLines": 1,
+            "meta": "Northwind",
+            "chips": [
+              {
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes a",
+                "tone": "neutral",
+                "icon": "user"
+              }
+            ]
+          },
+          "panels": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "kind": "membership",
+              "title": "Day pass",
+              "icon": "user",
+              "tone": "neutral",
+              "rows": [
+                {
+                  "type": "heading",
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "text": "The gym closes at 18:00 ",
+                  "detail": "The pass has already bee"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "staff": "Sam Rivera",
+            "refused": "expired"
+          }
+        },
+        "lastScans": [
+          {
+            "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+            "at": 12,
+            "actionLabel": "Admit",
+            "outcome": "ok",
+            "scannerName": "Front desk",
+            "undoable": false
+          }
+        ],
+        "bundle": {
+          "id": "0193a1b2-7c00-7000-8000-000000000032",
+          "name": "Family bundle",
+          "size": 24576,
+          "checkedIn": 34,
+          "members": [
+            {
+              "initials": "AE",
+              "checkedIn": false,
+              "refusedReason": "expired"
+            }
+          ]
+        },
+        "door": {
+          "state": "in"
+        },
+        "access": {
+          "plan": {
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "label": "Day pass",
+            "kind": "always"
+          },
+          "zone": {
+            "id": "0193a1b2-7c00-7000-8000-000000000081",
+            "name": "Main hall"
+          },
+          "closesAt": 1795521600000,
+          "nextOpenAt": 1795521600000,
+          "visits": {
+            "used": 128,
+            "limit": 25
+          },
+          "visit": false,
+          "timeZone": "America/Los_Angeles"
+        },
+        "tag": {
+          "hint": "B82F",
+          "assurance": "basic",
+          "system": "uid",
+          "typeName": "Wristband 14",
+          "scope": "pass",
+          "count": 8,
+          "passes": [
+            {
+              "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+              "templateName": "Day pass",
+              "state": "used",
+              "reason": "Left the gym early; refund issued at the desk."
+            }
+          ]
+        },
+        "occupancy": {
+          "place": {
+            "kind": "zone",
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "name": "Day pass"
+          },
+          "direction": "in",
+          "auto": false,
+          "state": "in",
+          "since": 1794322800000,
+          "via": "api",
+          "stayMs": 1290,
+          "inNow": 8,
+          "capacity": 38,
+          "turnaround": null,
+          "parent": {
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "name": "Day pass"
+          }
+        },
+        "passView": {
+          "passJson": {},
+          "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+          "assetGrant": "logo",
+          "assetNames": ["Day pass"]
+        }
+      },
+      "previous": {
+        "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+        "at": 12,
+        "scannerName": "Front desk",
+        "staffName": "Sam Rivera",
+        "actionLabel": "Admit",
+        "override": false
+      },
+      "event": {
+        "name": "Open climbing",
+        "startsAt": 1795521600000
+      },
+      "template": {
+        "name": "Day pass",
+        "style": "generic"
+      },
+      "at": 12,
+      "cooldownRemainingMs": 1715,
+      "value": {
+        "input": "tier",
+        "label": "Day pass",
+        "before": {},
+        "after": {},
+        "goal": 6,
+        "format": "number",
+        "currency": "USD",
+        "counter": false,
+        "need": 13
+      },
+      "flags": ["flag"],
+      "channel": "mobile",
+      "overridable": false,
+      "approvals": false,
+      "group": {
+        "total": 128,
+        "done": 39,
+        "already": 26,
+        "refused": 0,
+        "members": [
+          {
+            "name": "Sam Rivera",
+            "state": "done",
+            "reason": "Left the gym early; refund issued at the desk."
+          }
+        ]
+      },
+      "bundle": {
+        "id": "0193a1b2-7c00-7000-8000-000000000032",
+        "name": "Family bundle",
+        "size": 24576,
+        "checkedIn": 34,
+        "members": [
+          {
+            "initials": "AE",
+            "checkedIn": false,
+            "refusedReason": "expired"
+          }
+        ]
+      },
+      "inBundle": false,
+      "counts": {
+        "today": 7,
+        "event": {
+          "arrived": 4,
+          "inside": 16,
+          "expected": 10,
+          "capacity": 38
+        },
+        "place": {
+          "name": "Day pass",
+          "inNow": 8,
+          "capacity": 38
+        },
+        "byType": [
+          {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "count": 12
+          }
+        ],
+        "asOf": 26,
+        "configRev": 11
+      },
+      "milestone": null,
+      "undoUntil": null,
+      "access": {
+        "plan": {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "label": "Day pass",
+          "kind": "always"
+        },
+        "zone": {
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "name": "Main hall"
+        },
+        "closesAt": 1795521600000,
+        "nextOpenAt": 1795521600000,
+        "visits": {
+          "used": 128,
+          "limit": 25
+        },
+        "visit": false,
+        "timeZone": "America/Los_Angeles"
+      },
+      "admit": {
+        "type": "generic",
+        "rule": {
+          "kind": "until",
+          "at": 12
+        },
+        "timeZone": "America/Los_Angeles"
+      },
+      "tag": {
+        "hint": "6094",
+        "assurance": "basic",
+        "system": "uid",
+        "typeName": "Wristband 14",
+        "scope": "pass",
+        "count": 8,
+        "passes": [
+          {
+            "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "templateName": "Day pass",
+            "state": "used",
+            "reason": "Left the gym early; refund issued at the desk."
+          }
+        ]
+      },
+      "occupancy": {
+        "place": {
+          "kind": "zone",
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass"
+        },
+        "direction": "in",
+        "auto": false,
+        "state": "in",
+        "since": 1794322800000,
+        "via": "api",
+        "stayMs": 1290,
+        "inNow": 8,
+        "capacity": 38,
+        "turnaround": null,
+        "parent": {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass"
+        }
+      },
+      "display": {
+        "v": 1,
+        "screen": "ok",
+        "templateVersion": "3",
+        "variant": "default",
+        "identity": {
+          "holder": "Ada Example",
+          "initials": "AE",
+          "photo": {
+            "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+            "alt": "Northwind logo"
+          }
+        },
+        "header": {
+          "icon": "user",
+          "title": "Day pass",
+          "titleLines": 1,
+          "meta": "Northwind",
+          "chips": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "text": "The gym closes a",
+              "tone": "neutral",
+              "icon": "user"
+            }
+          ]
+        },
+        "panels": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "kind": "membership",
+            "title": "Day pass",
+            "icon": "user",
+            "tone": "neutral",
+            "rows": [
+              {
+                "type": "heading",
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes at 18:00 ",
+                "detail": "The pass has already bee"
+              }
+            ]
+          }
+        ],
+        "notes": {
+          "staff": "Sam Rivera",
+          "refused": "expired"
+        }
+      }
+    }
+  },
+  "scan.postScanOverrides": {
+    "request": {
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0de3558ca9f0",
+      "overrideOf": "overrideOf",
+      "approval": {
+        "staffId": "0193a1b2-7c00-7000-8000-000000000022",
+        "pin": "667129"
+      },
+      "note": "forgot_out",
+      "scope": {
+        "setupId": "0193a1b2-7c00-7000-8000-7514571cd6d3",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "timeZone": "America/Los_Angeles"
+      }
+    },
+    "response": {
+      "checkIn": {
+        "mode": "single",
+        "direction": "in",
+        "inside": false,
+        "enteredAt": 1795521600000,
+        "firstAt": 1795521600000,
+        "validFrom": 1795532400000,
+        "validUntil": 1798124400000
+      },
+      "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+      "kind": "ok",
+      "reason": null,
+      "replay": false,
+      "action": {
+        "id": "0193a1b2-7c00-7000-8000-000000000073",
+        "label": "Day pass",
+        "kind": "check_in"
+      },
+      "card": {
+        "checkIn": {
+          "mode": "single",
+          "direction": "in",
+          "inside": false,
+          "enteredAt": 1795521600000,
+          "firstAt": 1795521600000,
+          "validFrom": 1795532400000,
+          "validUntil": 1798124400000
+        },
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "version": 3,
+        "mode": "live",
+        "title": "Day pass",
+        "subtitle": "Ada Example",
+        "template": {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "style": "generic"
+        },
+        "status": "active",
+        "validFrom": 1795532400000,
+        "validUntil": 1798124400000,
+        "flags": [
+          {
+            "label": "Day pass",
+            "tone": "warning",
+            "stop": false
+          }
+        ],
+        "values": [
+          {
+            "input": "tier",
+            "label": "Day pass",
+            "before": {},
+            "after": {},
+            "goal": 6,
+            "format": "number",
+            "currency": "USD",
+            "counter": false,
+            "need": 13
+          }
+        ],
+        "actions": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-000000000073",
+            "label": "Day pass",
+            "kind": "check_in",
+            "available": false,
+            "lock": "role",
+            "reason": null,
+            "amount": {
+              "fixed": 27
+            },
+            "confirm": false,
+            "confirmAbove": 23,
+            "cooldownRemainingMs": 1715,
+            "armable": "sticky",
+            "rewardLabel": "Free day pass",
+            "input": {
+              "type": "string",
+              "label": "Day pass",
+              "min": 12,
+              "max": 2,
+              "step": 39,
+              "maxLength": 20,
+              "enum": ["adult"]
+            }
+          }
+        ],
+        "display": {
+          "v": 1,
+          "screen": "ok",
+          "templateVersion": "3",
+          "variant": "default",
+          "identity": {
+            "holder": "Ada Example",
+            "initials": "AE",
+            "photo": {
+              "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+              "alt": "Northwind logo"
+            }
+          },
+          "header": {
+            "icon": "user",
+            "title": "Day pass",
+            "titleLines": 1,
+            "meta": "Northwind",
+            "chips": [
+              {
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes a",
+                "tone": "neutral",
+                "icon": "user"
+              }
+            ]
+          },
+          "panels": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "kind": "membership",
+              "title": "Day pass",
+              "icon": "user",
+              "tone": "neutral",
+              "rows": [
+                {
+                  "type": "heading",
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "text": "The gym closes at 18:00 ",
+                  "detail": "The pass has already bee"
+                }
+              ]
+            }
+          ],
+          "notes": {
+            "staff": "Sam Rivera",
+            "refused": "expired"
+          }
+        },
+        "lastScans": [
+          {
+            "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+            "at": 12,
+            "actionLabel": "Admit",
+            "outcome": "ok",
+            "scannerName": "Front desk",
+            "undoable": false
+          }
+        ],
+        "bundle": {
+          "id": "0193a1b2-7c00-7000-8000-000000000032",
+          "name": "Family bundle",
+          "size": 24576,
+          "checkedIn": 34,
+          "members": [
+            {
+              "initials": "AE",
+              "checkedIn": false,
+              "refusedReason": "expired"
+            }
+          ]
+        },
+        "door": {
+          "state": "in"
+        },
+        "access": {
+          "plan": {
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "label": "Day pass",
+            "kind": "always"
+          },
+          "zone": {
+            "id": "0193a1b2-7c00-7000-8000-000000000081",
+            "name": "Main hall"
+          },
+          "closesAt": 1795521600000,
+          "nextOpenAt": 1795521600000,
+          "visits": {
+            "used": 128,
+            "limit": 25
+          },
+          "visit": false,
+          "timeZone": "America/Los_Angeles"
+        },
+        "tag": {
+          "hint": "4BDF",
+          "assurance": "basic",
+          "system": "uid",
+          "typeName": "Wristband 14",
+          "scope": "pass",
+          "count": 8,
+          "passes": [
+            {
+              "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+              "templateName": "Day pass",
+              "state": "used",
+              "reason": "Left the gym early; refund issued at the desk."
+            }
+          ]
+        },
+        "occupancy": {
+          "place": {
+            "kind": "zone",
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "name": "Day pass"
+          },
+          "direction": "in",
+          "auto": false,
+          "state": "in",
+          "since": 1794322800000,
+          "via": "api",
+          "stayMs": 1290,
+          "inNow": 8,
+          "capacity": 38,
+          "turnaround": null,
+          "parent": {
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "name": "Day pass"
+          }
+        },
+        "passView": {
+          "passJson": {},
+          "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+          "assetGrant": "logo",
+          "assetNames": ["Day pass"]
+        }
+      },
+      "previous": {
+        "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+        "at": 12,
+        "scannerName": "Front desk",
+        "staffName": "Sam Rivera",
+        "actionLabel": "Admit",
+        "override": false
+      },
+      "event": {
+        "name": "Open climbing",
+        "startsAt": 1795521600000
+      },
+      "template": {
+        "name": "Day pass",
+        "style": "generic"
+      },
+      "at": 12,
+      "cooldownRemainingMs": 1715,
+      "value": {
+        "input": "tier",
+        "label": "Day pass",
+        "before": {},
+        "after": {},
+        "goal": 6,
+        "format": "number",
+        "currency": "USD",
+        "counter": false,
+        "need": 13
+      },
+      "flags": ["flag"],
+      "channel": "mobile",
+      "overridable": false,
+      "approvals": false,
+      "group": {
+        "total": 128,
+        "done": 39,
+        "already": 26,
+        "refused": 0,
+        "members": [
+          {
+            "name": "Sam Rivera",
+            "state": "done",
+            "reason": "Left the gym early; refund issued at the desk."
+          }
+        ]
+      },
+      "bundle": {
+        "id": "0193a1b2-7c00-7000-8000-000000000032",
+        "name": "Family bundle",
+        "size": 24576,
+        "checkedIn": 34,
+        "members": [
+          {
+            "initials": "AE",
+            "checkedIn": false,
+            "refusedReason": "expired"
+          }
+        ]
+      },
+      "inBundle": false,
+      "counts": {
+        "today": 7,
+        "event": {
+          "arrived": 4,
+          "inside": 16,
+          "expected": 10,
+          "capacity": 38
+        },
+        "place": {
+          "name": "Day pass",
+          "inNow": 8,
+          "capacity": 38
+        },
+        "byType": [
+          {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "count": 12
+          }
+        ],
+        "asOf": 26,
+        "configRev": 11
+      },
+      "milestone": null,
+      "undoUntil": null,
+      "access": {
+        "plan": {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "label": "Day pass",
+          "kind": "always"
+        },
+        "zone": {
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "name": "Main hall"
+        },
+        "closesAt": 1795521600000,
+        "nextOpenAt": 1795521600000,
+        "visits": {
+          "used": 128,
+          "limit": 25
+        },
+        "visit": false,
+        "timeZone": "America/Los_Angeles"
+      },
+      "admit": {
+        "type": "generic",
+        "rule": {
+          "kind": "until",
+          "at": 12
+        },
+        "timeZone": "America/Los_Angeles"
+      },
+      "tag": {
+        "hint": "01E7",
+        "assurance": "basic",
+        "system": "uid",
+        "typeName": "Wristband 14",
+        "scope": "pass",
+        "count": 8,
+        "passes": [
+          {
+            "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "templateName": "Day pass",
+            "state": "used",
+            "reason": "Left the gym early; refund issued at the desk."
+          }
+        ]
+      },
+      "occupancy": {
+        "place": {
+          "kind": "zone",
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass"
+        },
+        "direction": "in",
+        "auto": false,
+        "state": "in",
+        "since": 1794322800000,
+        "via": "api",
+        "stayMs": 1290,
+        "inNow": 8,
+        "capacity": 38,
+        "turnaround": null,
+        "parent": {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass"
+        }
+      },
+      "display": {
+        "v": 1,
+        "screen": "ok",
+        "templateVersion": "3",
+        "variant": "default",
+        "identity": {
+          "holder": "Ada Example",
+          "initials": "AE",
+          "photo": {
+            "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+            "alt": "Northwind logo"
+          }
+        },
+        "header": {
+          "icon": "user",
+          "title": "Day pass",
+          "titleLines": 1,
+          "meta": "Northwind",
+          "chips": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "text": "The gym closes a",
+              "tone": "neutral",
+              "icon": "user"
+            }
+          ]
+        },
+        "panels": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "kind": "membership",
+            "title": "Day pass",
+            "icon": "user",
+            "tone": "neutral",
+            "rows": [
+              {
+                "type": "heading",
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes at 18:00 ",
+                "detail": "The pass has already bee"
+              }
+            ]
+          }
+        ],
+        "notes": {
+          "staff": "Sam Rivera",
+          "refused": "expired"
+        }
+      }
+    }
+  },
+  "scan.postScanOverridesByScanIdNote": {
+    "request": {
+      "note": "forgot_out"
+    }
+  },
+  "scan.getScanVisitors": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "name": "Day pass",
+          "hostName": "Sam Rivera",
+          "windowFrom": 1795532400000,
+          "windowUntil": 1798124400000,
+          "note": "Photo ID checked at the desk.",
+          "status": "expected",
+          "statusAt": 1795521600000,
+          "autoOut": false,
+          "hasEmail": true
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "scan.postScanSignOut": {
+    "request": {
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-5dcb97b9a794",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "tag": "returned"
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "stayMs": 1290,
+      "tag": "returned"
+    }
+  },
+  "scan.postScanRole": {
+    "request": {
+      "role": "customer"
+    },
+    "response": {
+      "workspace": {
+        "session": {
+          "id": "0193a1b2-7c00-7000-8000-000000000091",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "mode": "live",
+          "name": "Evening shift",
+          "status": "active",
+          "accepts": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["generic"],
+              "confirmBasic": "staff"
+            },
+            "customer": {
+              "welcome": "The gym closes at 18:00 on 24 December.",
+              "refusedLine": "Left the gym early; refund issued at the",
+              "greet": false,
+              "showReady": false,
+              "showDraft": false
+            }
+          },
+          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "timeZone": "America/Los_Angeles",
+          "hours": {
+            "mon": ["09:00-21:00"],
+            "tue": ["09:00-21:00"],
+            "wed": ["09:00-21:00"],
+            "thu": ["09:00-21:00"],
+            "fri": ["09:00-21:00"],
+            "sat": ["09:00-21:00"],
+            "sun": ["09:00-21:00"],
+            "dates": {
+              "2026-12-24": ["09:00-21:00"]
+            }
+          },
+          "hoursInvalid": true,
+          "hold": {
+            "state": "open",
+            "until": 21
+          },
+          "window": {
+            "open": false,
+            "by": "always",
+            "opensAt": 1795521600000,
+            "closesAt": 1795521600000
+          },
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000,
+          "deviceCount": 24,
+          "onlineCount": 27,
+          "today": 7
+        },
+        "device": {
+          "id": "0193a1b2-7c00-7000-8000-000000000012",
+          "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
+          "name": "Front desk tablet",
+          "surface": "auto",
+          "effectiveSurface": "phone",
+          "overrides": {
+            "flow": "auto",
+            "reader": "barcode",
+            "direction": "in",
+            "lookup": false,
+            "showPhoto": false
+          },
+          "settings": {
+            "checkIn": {
+              "mode": "single",
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
+              "durationFrom": "first_scan",
+              "days": 18
+            },
+            "direction": "in",
+            "showPhoto": false,
+            "acceptAllTemplates": false,
+            "flow": "auto",
+            "defaultActionId": "admit",
+            "roleWithoutSignIn": "door",
+            "staffSignIn": false,
+            "letInAgain": "anyone",
+            "reader": "barcode",
+            "lookup": false,
+            "offline": false,
+            "whenOffline": "stop",
+            "dailyAmount": 30,
+            "deskActions": false,
+            "hardLimit": false,
+            "approvals": "managers",
+            "tags": {
+              "assign": "desk",
+              "assignAll": "desk",
+              "level": "off",
+              "types": ["generic"],
+              "confirmBasic": "staff"
+            }
+          },
+          "capabilities": {
+            "width": 320,
+            "height": 100,
+            "touch": false,
+            "camera": "available",
+            "keyboard": false,
+            "nativeBarcode": false,
+            "native": {
+              "platform": "ios",
+              "appVersion": "1.4.2",
+              "camera": {
+                "available": false,
+                "permission": "prompt"
+              },
+              "keyboard": {
+                "supported": false,
+                "connected": false,
+                "connectionObservable": false
+              },
+              "nfc": {
+                "available": false,
+                "reading": false,
+                "continuous": false,
+                "formats": ["ndef"]
+              },
+              "haptics": false,
+              "vas": {
+                "deviceSupported": false,
+                "available": false,
+                "reader": "proximityReader",
+                "reason": "Left the gym early; refund issued at the desk."
+              },
+              "externalReader": {
+                "mode": "keyboard",
+                "connected": false
+              },
+              "customerDisplay": {
+                "supported": false,
+                "available": false,
+                "active": true
+              },
+              "layout": {
+                "posture": "folded",
+                "division": {
+                  "x": 38,
+                  "y": 19,
+                  "width": 320,
+                  "height": 100
+                }
+              }
+            },
+            "hardware": [
+              {
+                "kind": "camera",
+                "count": 12,
+                "builtIn": false,
+                "connected": false,
+                "state": "active"
+              }
+            ],
+            "surfaces": ["phone"],
+            "preferred": "phone"
+          },
+          "reportedAt": 1795521600000,
+          "paired": false,
+          "online": false,
+          "revoked": false,
+          "lastSeenAt": 1795521600000,
+          "updatedAt": 1795359600000,
+          "signIn": "paired",
+          "adminName": "Sam Rivera"
+        }
+      },
+      "principal": "scanner",
+      "state": "ready",
+      "branding": {
+        "accent": "#ffc400",
+        "logo": {
+          "sha": "e7c5a26acb525a02d6076e280ade20ead986b58031b832c25b6cedc6456d968f",
+          "w": 3,
+          "h": 6
+        }
+      },
+      "scanner": {
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
+        "name": "Front desk",
+        "kind": "device",
+        "deviceRole": "scan",
+        "mode": "live",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgName": "Northwind Climbing",
+        "timeZone": "America/Los_Angeles",
+        "settings": {
+          "checkIn": {
+            "mode": "single",
+            "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+            "validFrom": 1795532400000,
+            "validUntil": 1798124400000,
+            "durationMinutes": 90,
+            "durationFrom": "first_scan",
+            "days": 18
+          },
+          "direction": "in",
+          "showPhoto": false,
+          "acceptAllTemplates": false,
+          "flow": "auto",
+          "defaultActionId": "admit",
+          "roleWithoutSignIn": "door",
+          "staffSignIn": false,
+          "letInAgain": "anyone",
+          "reader": "barcode",
+          "lookup": false,
+          "offline": false,
+          "whenOffline": "stop",
+          "dailyAmount": 30,
+          "deskActions": false,
+          "hardLimit": false,
+          "approvals": "managers",
+          "tags": {
+            "assign": "desk",
+            "assignAll": "desk",
+            "level": "off",
+            "types": ["scan"],
+            "confirmBasic": "staff"
+          }
+        }
+      },
+      "admin": {
+        "name": "Sam Rivera",
+        "orgs": [
+          {
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "name": "Sam Rivera"
+          }
+        ]
+      },
+      "event": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "name": "Open climbing",
+        "opensAt": 1795521600000,
+        "closesAt": 1795521600000,
+        "timeZone": "America/Los_Angeles",
+        "reentry": false,
+        "note": "Photo ID checked at the desk."
+      },
+      "templates": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "style": "generic",
+          "formats": ["qr"],
+          "actions": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
+              "label": "Day pass",
+              "kind": "check_in"
+            }
+          ]
+        }
+      ],
+      "formats": ["qr"],
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "name": "Sam Rivera",
+        "role": "door",
+        "pinResetRequired": true
+      },
+      "staffList": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Sam Rivera",
+          "role": "door"
+        }
+      ],
+      "staffTruncated": false,
+      "approvals": false,
+      "csrfToken": "csrfToken",
+      "undoWindowMinutes": 2,
+      "counts": {
+        "today": 7,
+        "event": {
+          "arrived": 4,
+          "inside": 16,
+          "expected": 10,
+          "capacity": 38
+        },
+        "place": {
+          "name": "Day pass",
+          "inNow": 8,
+          "capacity": 38
+        },
+        "byType": [
+          {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "name": "Day pass",
+            "count": 12
+          }
+        ],
+        "asOf": 26,
+        "configRev": 11
+      }
+    }
+  },
+  "scan.postScanTagsInspect": {
+    "request": {
+      "tag": {
+        "uid": "04A3B2C1D5E680",
+        "uidRandom": false,
+        "tech": "a",
+        "source": "native"
+      }
+    },
+    "response": {
+      "state": "new",
+      "hint": "4E00",
+      "assurance": "basic",
+      "bound": {
+        "scope": "pass",
+        "passTitle": "Day pass",
+        "holderName": "Sam Rivera"
+      },
+      "lostAt": 1795521600000,
+      "boundAt": 1795521600000,
+      "boundByName": "Day pass"
+    }
+  },
+  "scan.postScanTagsBind": {
+    "request": {
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-744adb47d1ba",
+      "tag": {
+        "uid": "04A3B2C1D5E680",
+        "uidRandom": false,
+        "tech": "a",
+        "source": "native"
+      },
+      "card": {
+        "code": "NW7K2Q",
+        "method": "camera"
+      },
+      "preview": false,
+      "binding": "pass",
+      "typeId": "0193a1b2-7c00-7000-8000-55abc187f4ff"
+    },
+    "response": {
+      "status": "preview",
+      "hint": "E23E",
+      "assurance": "basic",
+      "scope": "pass",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-000000000043",
+        "name": "Day pass",
+        "use": "member"
+      },
+      "bindingId": "0193a1b2-7c00-7000-8000-66dbb7184ff5",
+      "card": {
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "title": "Day pass",
+        "subtitle": "Ada Example",
+        "templateName": "Day pass",
+        "holderName": "Sam Rivera",
+        "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8"
+      },
+      "ownerAccount": false,
+      "skipped": ["skipped"],
+      "warnings": ["replaces_pass_tag"],
+      "lostAt": 1795521600000,
+      "undoUntil": null
+    }
+  },
+  "scan.postScanTagsBindingsByBindingIdUndo": {
+    "response": {
+      "status": "undone",
+      "bindingId": "0193a1b2-7c00-7000-8000-86a9bff39f27"
+    }
+  },
+  "scan.postScanSessionOpenNow": {
+    "request": {
+      "until": 21,
+      "approval": {
+        "staffId": "0193a1b2-7c00-7000-8000-000000000022",
+        "pin": "146364"
+      }
+    },
+    "response": {
+      "window": {
+        "open": false,
+        "by": "always",
+        "opensAt": 1795521600000,
+        "closesAt": 1795521600000
+      }
+    }
+  },
+  "scan.getScanTagEnrollmentsPending": {
+    "response": {
+      "enrollment": {
+        "id": "0193a1b2-7c00-7000-8000-000000000043",
+        "holderName": "Sam Rivera",
+        "passTitle": "Day pass",
+        "scope": "pass",
+        "requestedByName": "Sam Rivera",
+        "expiresAt": 1798124400000
+      }
+    }
+  },
+  "scan.postScanTagEnrollmentsByIdComplete": {
+    "request": {
+      "tag": {
+        "uid": "04A3B2C1D5E680",
+        "uidRandom": false,
+        "tech": "a",
+        "source": "native"
+      }
+    },
+    "response": {
+      "status": "done",
+      "hint": "DFF0",
+      "scope": "pass",
+      "bindingId": "0193a1b2-7c00-7000-8000-fc50f5dd5134"
+    }
+  },
+  "scan.postScanTagEnrollmentsByIdDecline": {
+    "response": {
+      "status": "declined"
+    }
+  },
+  "scan.getScanRoster": {
+    "response": {
+      "entries": [
+        {
+          "h": "8893d06a3faf43681946ec0a8b3936e7",
+          "status": "active",
+          "state": "in",
+          "day": false
+        }
+      ],
+      "cursor": "c1.4812",
+      "asOf": 26,
+      "validUntil": 1798124400000,
+      "sig": "sig"
+    }
+  },
+  "scan.postScanBatch": {
+    "request": {
+      "items": [
+        {
+          "idempotencyKey": "0193a1b2-7c00-7000-8000-df88aebe5699",
+          "code": "NW7K2Q",
+          "method": "camera",
+          "clientTs": 18,
+          "direction": "in",
+          "override": false
+        }
+      ],
+      "roster": {
+        "asOf": 26,
+        "validUntil": 1798124400000,
+        "sig": "sig"
+      }
+    },
+    "response": {
+      "items": [
+        {
+          "idempotencyKey": "0193a1b2-7c00-7000-8000-df88aebe5699",
+          "outcome": {
+            "checkIn": {
+              "mode": "single",
+              "direction": "in",
+              "inside": false,
+              "enteredAt": 1795521600000,
+              "firstAt": 1795521600000,
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000
+            },
+            "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+            "kind": "ok",
+            "reason": null,
+            "replay": false,
+            "action": {
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
+              "label": "Day pass",
+              "kind": "check_in"
+            },
+            "card": {
+              "checkIn": {
+                "mode": "single",
+                "direction": "in",
+                "inside": false,
+                "enteredAt": 1795521600000,
+                "firstAt": 1795521600000,
+                "validFrom": 1795532400000,
+                "validUntil": 1798124400000
+              },
+              "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+              "version": 3,
+              "mode": "live",
+              "title": "Day pass",
+              "subtitle": "Ada Example",
+              "template": {
+                "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+                "name": "Day pass",
+                "style": "generic"
+              },
+              "status": "active",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "flags": [
+                {
+                  "label": "Day pass",
+                  "tone": "warning",
+                  "stop": false
+                }
+              ],
+              "values": [
+                {
+                  "input": "tier",
+                  "label": "Day pass",
+                  "before": {},
+                  "after": {},
+                  "goal": 6,
+                  "format": "number",
+                  "currency": "USD",
+                  "counter": false,
+                  "need": 13
+                }
+              ],
+              "actions": [
+                {
+                  "id": "0193a1b2-7c00-7000-8000-000000000073",
+                  "label": "Day pass",
+                  "kind": "check_in",
+                  "available": false,
+                  "lock": "role",
+                  "reason": null,
+                  "amount": {
+                    "fixed": 27
+                  },
+                  "confirm": false,
+                  "confirmAbove": 23,
+                  "cooldownRemainingMs": 1715,
+                  "armable": "sticky",
+                  "rewardLabel": "Free day pass",
+                  "input": {
+                    "type": "string",
+                    "label": "Day pass",
+                    "min": 12,
+                    "max": 2,
+                    "step": 39,
+                    "maxLength": 20,
+                    "enum": ["adult"]
+                  }
+                }
+              ],
+              "display": {
+                "v": 1,
+                "screen": "ok",
+                "templateVersion": "3",
+                "variant": "default",
+                "identity": {
+                  "holder": "Ada Example",
+                  "initials": "AE",
+                  "photo": {
+                    "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+                    "alt": "Northwind logo"
+                  }
+                },
+                "header": {
+                  "icon": "user",
+                  "title": "Day pass",
+                  "titleLines": 1,
+                  "meta": "Northwind",
+                  "chips": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-000000000043",
+                      "text": "The gym closes a",
+                      "tone": "neutral",
+                      "icon": "user"
+                    }
+                  ]
+                },
+                "panels": [
+                  {
+                    "id": "0193a1b2-7c00-7000-8000-000000000043",
+                    "kind": "membership",
+                    "title": "Day pass",
+                    "icon": "user",
+                    "tone": "neutral",
+                    "rows": [
+                      {
+                        "type": "heading",
+                        "id": "0193a1b2-7c00-7000-8000-000000000043",
+                        "text": "The gym closes at 18:00 ",
+                        "detail": "The pass has already bee"
+                      }
+                    ]
+                  }
+                ],
+                "notes": {
+                  "staff": "Sam Rivera",
+                  "refused": "expired"
+                }
+              },
+              "lastScans": [
+                {
+                  "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+                  "at": 12,
+                  "actionLabel": "Admit",
+                  "outcome": "ok",
+                  "scannerName": "Front desk",
+                  "undoable": false
+                }
+              ],
+              "bundle": {
+                "id": "0193a1b2-7c00-7000-8000-000000000032",
+                "name": "Family bundle",
+                "size": 24576,
+                "checkedIn": 34,
+                "members": [
+                  {
+                    "initials": "AE",
+                    "checkedIn": false,
+                    "refusedReason": "expired"
+                  }
+                ]
+              },
+              "door": {
+                "state": "in"
+              },
+              "access": {
+                "plan": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "label": "Day pass",
+                  "kind": "always"
+                },
+                "zone": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000081",
+                  "name": "Main hall"
+                },
+                "closesAt": 1795521600000,
+                "nextOpenAt": 1795521600000,
+                "visits": {
+                  "used": 128,
+                  "limit": 25
+                },
+                "visit": false,
+                "timeZone": "America/Los_Angeles"
+              },
+              "tag": {
+                "hint": "9DCB",
+                "assurance": "basic",
+                "system": "uid",
+                "typeName": "Wristband 14",
+                "scope": "pass",
+                "count": 8,
+                "passes": [
+                  {
+                    "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                    "templateName": "Day pass",
+                    "state": "used",
+                    "reason": "Left the gym early; refund issued at the desk."
+                  }
+                ]
+              },
+              "occupancy": {
+                "place": {
+                  "kind": "zone",
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "name": "Day pass"
+                },
+                "direction": "in",
+                "auto": false,
+                "state": "in",
+                "since": 1794322800000,
+                "via": "api",
+                "stayMs": 1290,
+                "inNow": 8,
+                "capacity": 38,
+                "turnaround": null,
+                "parent": {
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "name": "Day pass"
+                }
+              },
+              "passView": {
+                "passJson": {},
+                "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+                "assetGrant": "logo",
+                "assetNames": ["Day pass"]
+              }
+            },
+            "previous": {
+              "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+              "at": 12,
+              "scannerName": "Front desk",
+              "staffName": "Sam Rivera",
+              "actionLabel": "Admit",
+              "override": false
+            },
+            "event": {
+              "name": "Open climbing",
+              "startsAt": 1795521600000
+            },
+            "template": {
+              "name": "Day pass",
+              "style": "generic"
+            },
+            "at": 12,
+            "cooldownRemainingMs": 1715,
+            "value": {
+              "input": "tier",
+              "label": "Day pass",
+              "before": {},
+              "after": {},
+              "goal": 6,
+              "format": "number",
+              "currency": "USD",
+              "counter": false,
+              "need": 13
+            },
+            "flags": ["flag"],
+            "channel": "mobile",
+            "overridable": false,
+            "approvals": false,
+            "group": {
+              "total": 128,
+              "done": 39,
+              "already": 26,
+              "refused": 0,
+              "members": [
+                {
+                  "name": "Sam Rivera",
+                  "state": "done",
+                  "reason": "Left the gym early; refund issued at the desk."
+                }
+              ]
+            },
+            "bundle": {
+              "id": "0193a1b2-7c00-7000-8000-000000000032",
+              "name": "Family bundle",
+              "size": 24576,
+              "checkedIn": 34,
+              "members": [
+                {
+                  "initials": "AE",
+                  "checkedIn": false,
+                  "refusedReason": "expired"
+                }
+              ]
+            },
+            "inBundle": false,
+            "counts": {
+              "today": 7,
+              "event": {
+                "arrived": 4,
+                "inside": 16,
+                "expected": 10,
+                "capacity": 38
+              },
+              "place": {
+                "name": "Day pass",
+                "inNow": 8,
+                "capacity": 38
+              },
+              "byType": [
+                {
+                  "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+                  "name": "Day pass",
+                  "count": 12
+                }
+              ],
+              "asOf": 26,
+              "configRev": 11
+            },
+            "milestone": null,
+            "undoUntil": null,
+            "access": {
+              "plan": {
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "label": "Day pass",
+                "kind": "always"
+              },
+              "zone": {
+                "id": "0193a1b2-7c00-7000-8000-000000000081",
+                "name": "Main hall"
+              },
+              "closesAt": 1795521600000,
+              "nextOpenAt": 1795521600000,
+              "visits": {
+                "used": 128,
+                "limit": 25
+              },
+              "visit": false,
+              "timeZone": "America/Los_Angeles"
+            },
+            "admit": {
+              "type": "generic",
+              "rule": {
+                "kind": "until",
+                "at": 12
+              },
+              "timeZone": "America/Los_Angeles"
+            },
+            "tag": {
+              "hint": "8193",
+              "assurance": "basic",
+              "system": "uid",
+              "typeName": "Wristband 14",
+              "scope": "pass",
+              "count": 8,
+              "passes": [
+                {
+                  "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+                  "templateName": "Day pass",
+                  "state": "used",
+                  "reason": "Left the gym early; refund issued at the desk."
+                }
+              ]
+            },
+            "occupancy": {
+              "place": {
+                "kind": "zone",
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "name": "Day pass"
+              },
+              "direction": "in",
+              "auto": false,
+              "state": "in",
+              "since": 1794322800000,
+              "via": "api",
+              "stayMs": 1290,
+              "inNow": 8,
+              "capacity": 38,
+              "turnaround": null,
+              "parent": {
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "name": "Day pass"
+              }
+            },
+            "display": {
+              "v": 1,
+              "screen": "ok",
+              "templateVersion": "3",
+              "variant": "default",
+              "identity": {
+                "holder": "Ada Example",
+                "initials": "AE",
+                "photo": {
+                  "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+                  "alt": "Northwind logo"
+                }
+              },
+              "header": {
+                "icon": "user",
+                "title": "Day pass",
+                "titleLines": 1,
+                "meta": "Northwind",
+                "chips": [
+                  {
+                    "id": "0193a1b2-7c00-7000-8000-000000000043",
+                    "text": "The gym closes a",
+                    "tone": "neutral",
+                    "icon": "user"
+                  }
+                ]
+              },
+              "panels": [
+                {
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "kind": "membership",
+                  "title": "Day pass",
+                  "icon": "user",
+                  "tone": "neutral",
+                  "rows": [
+                    {
+                      "type": "heading",
+                      "id": "0193a1b2-7c00-7000-8000-000000000043",
+                      "text": "The gym closes at 18:00 ",
+                      "detail": "The pass has already bee"
+                    }
+                  ]
+                }
+              ],
+              "notes": {
+                "staff": "Sam Rivera",
+                "refused": "expired"
+              }
+            }
+          },
+          "conflict": false
+        }
+      ]
+    }
+  },
+  "scan.postScanPassesByPassIdPhoto": {
+    "request": {
+      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
+      "includeInPass": false
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+      "includeInPass": false,
+      "walletSupported": false,
+      "updatedAt": 1795359600000
+    }
+  },
+  "scan.getScanPassesByPassIdHistory": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "at": 12,
+          "event": "scanned",
+          "reason": null,
+          "label": "Day pass",
+          "place": "place",
+          "staff": "Sam Rivera",
+          "amount": 14
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "scan.getScanPassesByPassIdNotes": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "at": 12,
+          "body": "The gym closes at 18:00 on 24 December.",
+          "by": "Sam Rivera",
+          "own": false,
+          "edited": false
+        }
+      ]
+    }
+  },
+  "scan.postScanPassesByPassIdNotes": {
+    "request": {
+      "body": "The gym closes at 18:00 on 24 December.",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-1001108cb011"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000043",
+      "at": 12,
+      "body": "The gym closes at 18:00 on 24 December.",
+      "by": "Sam Rivera",
+      "own": false,
+      "edited": false
+    }
+  },
+  "scan.patchScanPassesByPassIdNotesByNoteId": {
+    "request": {
+      "body": "The gym closes at 18:00 on 24 December.",
+      "scope": {
+        "setupId": "0193a1b2-7c00-7000-8000-ba551c5ccf37",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "timeZone": "America/Los_Angeles"
+      }
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000043",
+      "at": 12,
+      "body": "The gym closes at 18:00 on 24 December.",
+      "by": "Sam Rivera",
+      "own": false,
+      "edited": false
+    }
+  },
+  "scan.deleteScanPassesByPassIdNotesByNoteId": {
+    "response": {
+      "ok": true
+    }
+  },
+  "scan.getScanDevices": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "name": "Day pass",
+          "surface": "phone",
+          "online": false,
+          "lastSeenAt": 1795521600000,
+          "self": false
+        }
+      ]
+    }
+  },
+  "scan.postScanDevice": {
+    "request": {
+      "capabilities": {
+        "width": 320,
+        "height": 100,
+        "touch": false,
+        "camera": "available",
+        "keyboard": false,
+        "nativeBarcode": false,
+        "native": {
+          "platform": "ios",
+          "appVersion": "1.4.2",
+          "camera": {
+            "available": false,
+            "permission": "prompt"
+          },
+          "keyboard": {
+            "supported": false,
+            "connected": false,
+            "connectionObservable": false
+          },
+          "nfc": {
+            "available": false,
+            "reading": false,
+            "continuous": false,
+            "formats": ["ndef"]
+          },
+          "haptics": false,
+          "vas": {
+            "deviceSupported": false,
+            "available": false,
+            "reader": "proximityReader",
+            "reason": "Left the gym early; refund issued at the desk."
+          },
+          "externalReader": {
+            "mode": "keyboard",
+            "connected": false
+          },
+          "customerDisplay": {
+            "supported": false,
+            "available": false,
+            "active": true
+          },
+          "layout": {
+            "posture": "folded",
+            "division": {
+              "x": 38,
+              "y": 19,
+              "width": 320,
+              "height": 100
+            }
+          }
+        },
+        "hardware": [
+          {
+            "kind": "camera",
+            "count": 12,
+            "builtIn": false,
+            "connected": false,
+            "state": "active"
+          }
+        ],
+        "surfaces": ["phone"],
+        "preferred": "phone"
+      },
+      "scope": {
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "setupId": "0193a1b2-7c00-7000-8000-6a0c8550bcda",
+        "timeZone": "America/Los_Angeles"
+      }
+    },
+    "response": {
+      "session": {
+        "id": "0193a1b2-7c00-7000-8000-000000000091",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgName": "Northwind Climbing",
+        "mode": "live",
+        "name": "Evening shift",
+        "status": "active",
+        "accepts": {
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        },
+        "settings": {
+          "checkIn": {
+            "mode": "single",
+            "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+            "validFrom": 1795532400000,
+            "validUntil": 1798124400000,
+            "durationMinutes": 90,
+            "durationFrom": "first_scan",
+            "days": 18
+          },
+          "direction": "in",
+          "showPhoto": false,
+          "acceptAllTemplates": false,
+          "flow": "auto",
+          "defaultActionId": "admit",
+          "roleWithoutSignIn": "door",
+          "staffSignIn": false,
+          "letInAgain": "anyone",
+          "reader": "barcode",
+          "lookup": false,
+          "offline": false,
+          "whenOffline": "stop",
+          "dailyAmount": 30,
+          "deskActions": false,
+          "hardLimit": false,
+          "approvals": "managers",
+          "tags": {
+            "assign": "desk",
+            "assignAll": "desk",
+            "level": "off",
+            "types": ["generic"],
+            "confirmBasic": "staff"
+          },
+          "customer": {
+            "welcome": "The gym closes at 18:00 on 24 December.",
+            "refusedLine": "Left the gym early; refund issued at the",
+            "greet": false,
+            "showReady": false,
+            "showDraft": false
+          }
+        },
+        "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+        "timeZone": "America/Los_Angeles",
+        "hours": {
+          "mon": ["09:00-21:00"],
+          "tue": ["09:00-21:00"],
+          "wed": ["09:00-21:00"],
+          "thu": ["09:00-21:00"],
+          "fri": ["09:00-21:00"],
+          "sat": ["09:00-21:00"],
+          "sun": ["09:00-21:00"],
+          "dates": {
+            "2026-12-24": ["09:00-21:00"]
+          }
+        },
+        "hoursInvalid": true,
+        "hold": {
+          "state": "open",
+          "until": 21
+        },
+        "window": {
+          "open": false,
+          "by": "always",
+          "opensAt": 1795521600000,
+          "closesAt": 1795521600000
+        },
+        "createdAt": 1794322800000,
+        "updatedAt": 1795359600000,
+        "deviceCount": 24,
+        "onlineCount": 27,
+        "today": 7
+      },
+      "device": {
+        "id": "0193a1b2-7c00-7000-8000-000000000012",
+        "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
+        "name": "Front desk tablet",
+        "surface": "auto",
+        "effectiveSurface": "phone",
+        "overrides": {
+          "flow": "auto",
+          "reader": "barcode",
+          "direction": "in",
+          "lookup": false,
+          "showPhoto": false
+        },
+        "settings": {
+          "checkIn": {
+            "mode": "single",
+            "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+            "validFrom": 1795532400000,
+            "validUntil": 1798124400000,
+            "durationMinutes": 90,
+            "durationFrom": "first_scan",
+            "days": 18
+          },
+          "direction": "in",
+          "showPhoto": false,
+          "acceptAllTemplates": false,
+          "flow": "auto",
+          "defaultActionId": "admit",
+          "roleWithoutSignIn": "door",
+          "staffSignIn": false,
+          "letInAgain": "anyone",
+          "reader": "barcode",
+          "lookup": false,
+          "offline": false,
+          "whenOffline": "stop",
+          "dailyAmount": 30,
+          "deskActions": false,
+          "hardLimit": false,
+          "approvals": "managers",
+          "tags": {
+            "assign": "desk",
+            "assignAll": "desk",
+            "level": "off",
+            "types": ["generic"],
+            "confirmBasic": "staff"
+          }
+        },
+        "capabilities": {
+          "width": 320,
+          "height": 100,
+          "touch": false,
+          "camera": "available",
+          "keyboard": false,
+          "nativeBarcode": false,
+          "native": {
+            "platform": "ios",
+            "appVersion": "1.4.2",
+            "camera": {
+              "available": false,
+              "permission": "prompt"
+            },
+            "keyboard": {
+              "supported": false,
+              "connected": false,
+              "connectionObservable": false
+            },
+            "nfc": {
+              "available": false,
+              "reading": false,
+              "continuous": false,
+              "formats": ["ndef"]
+            },
+            "haptics": false,
+            "vas": {
+              "deviceSupported": false,
+              "available": false,
+              "reader": "proximityReader",
+              "reason": "Left the gym early; refund issued at the desk."
+            },
+            "externalReader": {
+              "mode": "keyboard",
+              "connected": false
+            },
+            "customerDisplay": {
+              "supported": false,
+              "available": false,
+              "active": true
+            },
+            "layout": {
+              "posture": "folded",
+              "division": {
+                "x": 38,
+                "y": 19,
+                "width": 320,
+                "height": 100
+              }
+            }
+          },
+          "hardware": [
+            {
+              "kind": "camera",
+              "count": 12,
+              "builtIn": false,
+              "connected": false,
+              "state": "active"
+            }
+          ],
+          "surfaces": ["phone"],
+          "preferred": "phone"
+        },
+        "reportedAt": 1795521600000,
+        "paired": false,
+        "online": false,
+        "revoked": false,
+        "lastSeenAt": 1795521600000,
+        "updatedAt": 1795359600000,
+        "signIn": "paired",
+        "adminName": "Sam Rivera"
+      }
+    }
+  },
+  "scan.getScanSummary": {
+    "response": {
+      "from": 23,
+      "to": 39,
+      "total": 128,
+      "ok": 38,
+      "headsUp": 33,
+      "refused": 0,
+      "undone": 4,
+      "byAction": [
+        {
+          "actionId": "admit",
+          "label": "Day pass",
+          "count": 12,
+          "amount": 14
+        }
+      ],
+      "firstAt": 1795521600000,
+      "lastAt": 1795521600000,
+      "scope": "device",
+      "timeZone": "America/Los_Angeles",
+      "byHour": [
+        {
+          "start": 37,
+          "label": "Day pass",
+          "count": 12,
+          "refused": 0
+        }
+      ],
+      "byValue": [
+        {
+          "kind": "add",
+          "count": 12,
+          "amount": 14
+        }
+      ],
+      "byReason": [
+        {
+          "reason": "Left the gym early; refund issued at the desk.",
+          "count": 12
+        }
+      ],
+      "byType": [
+        {
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "count": 12
+        }
+      ],
+      "byStaff": [
+        {
+          "staffId": "0193a1b2-7c00-7000-8000-000000000022",
+          "name": "Sam Rivera",
+          "count": 12,
+          "overrides": 28,
+          "refused": 0
+        }
+      ],
+      "overrides": {
+        "count": 12,
+        "latest": [
+          {
+            "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+            "at": 12,
+            "staffName": "Sam Rivera",
+            "approvedBy": "Sam Rivera",
+            "reason": "Left the gym early; refund issued at the desk."
+          }
+        ]
+      }
+    }
+  },
+  "scan.getScanStats": {
+    "response": {
+      "today": 7,
+      "event": {
+        "arrived": 4,
+        "inside": 16,
+        "expected": 10,
+        "capacity": 38
+      },
+      "place": {
+        "name": "Day pass",
+        "inNow": 8,
+        "capacity": 38
+      },
+      "byType": [
+        {
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Day pass",
+          "count": 12
+        }
+      ],
+      "asOf": 26,
+      "configRev": 11
+    }
+  },
+  "scan.postScanLookup": {
+    "request": {
+      "q": "ada",
+      "scope": {
+        "setupId": "0193a1b2-7c00-7000-8000-7fa0406f3e94",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "timeZone": "America/Los_Angeles"
+      }
+    },
+    "response": {
+      "items": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "title": "Day pass",
+          "subtitle": "Ada Example",
+          "templateName": "Day pass",
+          "status": "active",
+          "maskedEmail": "ada@example.com",
+          "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+          "doorState": "in",
+          "lastScanAt": 1795521600000,
+          "channelsOff": false
+        }
+      ],
+      "more": false
+    }
+  },
+  "scan.getScanLive": {
+    "response": {
+      "cursor": "c1.4812",
+      "rows": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-9c363d1b3be8",
+          "at": 12,
+          "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
+          "scannerName": "Front desk",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+          "kind": "ok",
+          "direction": "in",
+          "label": "Day pass",
+          "presented": false,
+          "occupancy": {
+            "place": {
+              "kind": "zone",
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "name": "Day pass"
+            },
+            "direction": "in",
+            "auto": false,
+            "state": "in",
+            "since": 1794322800000,
+            "via": "api",
+            "stayMs": 1290,
+            "inNow": 8,
+            "capacity": 38,
+            "turnaround": null,
+            "parent": {
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "name": "Day pass"
+            }
+          },
+          "places": [
+            {
+              "name": "Day pass",
+              "inNow": 8,
+              "capacity": 38,
+              "place": "zone:main-hall",
+              "rev": 24
+            }
+          ],
+          "outCause": "stay",
+          "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+          "overrideOf": "overrideOf",
+          "resolvedBy": {
+            "staff": "Sam Rivera",
+            "device": "iPhone 15"
+          },
+          "replaces": "replaces",
+          "customer": {
+            "v": 1,
+            "screen": "ok",
+            "ref": "booking_8841",
+            "at": 12,
+            "where": "where",
+            "band": {
+              "headline": "headline",
+              "sub": "sub"
+            },
+            "greet": "greet",
+            "chips": [
+              {
+                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "text": "The gym closes a",
+                "tone": "neutral",
+                "icon": "user"
+              }
+            ],
+            "panel": {
+              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "kind": "membership",
+              "title": "Day pass",
+              "icon": "user",
+              "tone": "neutral",
+              "rows": [
+                {
+                  "type": "heading",
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "text": "The gym closes at 18:00 ",
+                  "detail": "The pass has already bee"
+                }
+              ]
+            },
+            "lines": [
+              {
+                "icon": "user",
+                "text": "The gym closes at 18:00 on 24 December."
+              }
+            ],
+            "milestone": null,
+            "test": false,
+            "welcome": "The gym closes at 18:00 on 24 December."
+          }
+        }
+      ],
+      "welcome": "The gym closes at 18:00 on 24 December.",
+      "places": [
+        {
+          "name": "Day pass",
+          "inNow": 8,
+          "capacity": 38,
+          "place": "zone:main-hall",
+          "rev": 24
+        }
+      ]
+    }
+  },
+  "scan.getScanLiveInside": {
+    "response": {
+      "items": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+          "plan": "Day pass",
+          "type": "generic",
+          "host": "host",
+          "place": "zone:main-hall",
+          "placeName": "Main hall",
+          "parentName": "Day pass",
+          "since": 1794322800000,
+          "dueAt": 1795521600000,
+          "via": "api",
+          "flags": ["long_stay"]
+        }
+      ],
+      "count": 12,
+      "rev": 24,
+      "places": [
+        {
+          "name": "Day pass",
+          "inNow": 8,
+          "capacity": 38,
+          "place": "zone:main-hall",
+          "rev": 24
+        }
+      ],
+      "nextCursor": "c1.4812"
     }
   }
 }

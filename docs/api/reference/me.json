@@ -1,0 +1,391 @@
+{
+  "me.getMePasses": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "title": "Day pass",
+          "subtitle": "Ada Example",
+          "templateName": "Day pass",
+          "orgName": "Northwind Climbing",
+          "status": "active",
+          "mode": "live",
+          "modifiedAt": 1795359600000,
+          "voidedAt": null,
+          "removedAt": null,
+          "removalMessage": "removalMessage",
+          "lastRefreshedAt": 1795521600000,
+          "refreshRequestedAt": 1795521600000,
+          "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
+          "pageUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+          "walletOffers": [
+            {
+              "provider": "google",
+              "href": "href",
+              "installation": "unknown"
+            }
+          ],
+          "walletIssuance": {
+            "google": {
+              "state": "disabled",
+              "reason": "not_released"
+            },
+            "samsung": {
+              "state": "disabled",
+              "reason": "not_released"
+            }
+          },
+          "presentationEligible": false,
+          "channels": {
+            "mobile": {
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
+            },
+            "apple": {
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
+            },
+            "google": {
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
+            },
+            "samsung": {
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
+            },
+            "paper": {
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
+            },
+            "nfc": {
+              "on": false,
+              "source": "pass",
+              "reason": "not_released",
+              "retiredCause": "pass"
+            }
+          },
+          "holderPrint": false,
+          "passJson": {
+            "formatVersion": 1,
+            "passTypeIdentifier": "pass.mobile.passbook.northwind",
+            "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+            "organizationName": "Northwind Climbing",
+            "description": "Day pass",
+            "backgroundColor": "rgb(17, 42, 74)",
+            "foregroundColor": "rgb(255, 255, 255)",
+            "labelColor": "rgb(255, 196, 0)",
+            "generic": {
+              "primaryFields": [
+                {
+                  "key": "name",
+                  "label": "Guest",
+                  "value": "Ada Example"
+                }
+              ],
+              "secondaryFields": [
+                {
+                  "key": "tier",
+                  "label": "Pass",
+                  "value": "Day pass"
+                }
+              ],
+              "auxiliaryFields": [
+                {
+                  "key": "validUntil",
+                  "label": "Valid until",
+                  "value": "2026-12-31"
+                }
+              ]
+            }
+          },
+          "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+          "assetNames": ["Day pass"],
+          "tags": [
+            {
+              "id": "0193a1b2-7c00-7000-8000-000000000082",
+              "label": "Wristband 14",
+              "hint": "D335",
+              "scope": "pass",
+              "boundAt": 1795521600000,
+              "lostAt": 1795521600000
+            }
+          ],
+          "inWallet": false,
+          "readOnly": false,
+          "support": {
+            "email": "ada@example.com",
+            "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+            "platform": true
+          }
+        }
+      ],
+      "nextCursor": "c1.4812",
+      "pendingRemovals": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "transferId": "0193a1b2-7c00-7000-8000-fe1cd478fab2"
+        }
+      ],
+      "reissueRequired": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "orgName": "Northwind Climbing",
+          "title": "Day pass",
+          "support": {
+            "email": "ada@example.com",
+            "url": "https://northwind.example.com/p/xK3v9QmT2Lw8"
+          }
+        }
+      ],
+      "bundle": {
+        "token": "9d1bb889813fe4b3c36f6babef523ed2",
+        "count": 12,
+        "parts": 25
+      }
+    }
+  },
+  "me.getMePassesById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
+      "templateName": "Day pass",
+      "orgName": "Northwind Climbing",
+      "status": "active",
+      "mode": "live",
+      "modifiedAt": 1795359600000,
+      "voidedAt": null,
+      "removedAt": null,
+      "removalMessage": "removalMessage",
+      "lastRefreshedAt": 1795521600000,
+      "refreshRequestedAt": 1795521600000,
+      "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
+      "pageUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+      "walletOffers": [
+        {
+          "provider": "google",
+          "href": "href",
+          "installation": "unknown"
+        }
+      ],
+      "walletIssuance": {
+        "google": {
+          "state": "disabled",
+          "reason": "not_released"
+        },
+        "samsung": {
+          "state": "disabled",
+          "reason": "not_released"
+        }
+      },
+      "presentationEligible": false,
+      "channels": {
+        "mobile": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredCause": "pass"
+        },
+        "apple": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredCause": "pass"
+        },
+        "google": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredCause": "pass"
+        },
+        "samsung": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredCause": "pass"
+        },
+        "paper": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredCause": "pass"
+        },
+        "nfc": {
+          "on": false,
+          "source": "pass",
+          "reason": "not_released",
+          "retiredCause": "pass"
+        }
+      },
+      "holderPrint": false,
+      "passJson": {
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.mobile.passbook.northwind",
+        "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+        "organizationName": "Northwind Climbing",
+        "description": "Day pass",
+        "backgroundColor": "rgb(17, 42, 74)",
+        "foregroundColor": "rgb(255, 255, 255)",
+        "labelColor": "rgb(255, 196, 0)",
+        "generic": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ],
+          "secondaryFields": [
+            {
+              "key": "tier",
+              "label": "Pass",
+              "value": "Day pass"
+            }
+          ],
+          "auxiliaryFields": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "value": "2026-12-31"
+            }
+          ]
+        }
+      },
+      "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+      "assetNames": ["Day pass"],
+      "tags": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000082",
+          "label": "Wristband 14",
+          "hint": "4522",
+          "scope": "pass",
+          "boundAt": 1795521600000,
+          "lostAt": 1795521600000
+        }
+      ],
+      "inWallet": false,
+      "readOnly": false,
+      "support": {
+        "email": "ada@example.com",
+        "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+        "platform": true
+      }
+    }
+  },
+  "me.deleteMePassesById": {
+    "response": {
+      "transferId": "0193a1b2-7c00-7000-8000-0cc606e8ee52",
+      "state": "completed"
+    }
+  },
+  "me.postMePassesByIdRefresh": {
+    "response": {
+      "accepted": true,
+      "requestedAt": 1795521600000,
+      "cooldownSeconds": 16
+    }
+  },
+  "me.postMePassesByIdResend": {
+    "response": {
+      "ok": true
+    }
+  },
+  "me.postMePassesByIdLostPhone": {
+    "response": {
+      "transferId": "0193a1b2-7c00-7000-8000-252b8f18d5c4",
+      "state": "completed"
+    }
+  },
+  "me.getMePassRemovalsById": {
+    "response": {
+      "transferId": "0193a1b2-7c00-7000-8000-bae4c959e7aa",
+      "state": "completed"
+    }
+  },
+  "me.postMeTagsByIdLost": {
+    "response": {
+      "ok": true
+    }
+  },
+  "me.getMeEmails": {
+    "response": {
+      "items": [
+        {
+          "email": "ada@example.com",
+          "verifiedAt": 1795521600000,
+          "verifiedVia": "magic_link",
+          "primary": false
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "me.postMeEmails": {
+    "request": {
+      "email": "ada@example.com"
+    },
+    "response": {
+      "ok": true
+    }
+  },
+  "me.deleteMeEmailsByEmail": {
+    "response": {
+      "items": [
+        {
+          "email": "ada@example.com",
+          "verifiedAt": 1795521600000,
+          "verifiedVia": "magic_link",
+          "primary": false
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "me.postMeEmailsByEmailPrimary": {
+    "response": {
+      "items": [
+        {
+          "email": "ada@example.com",
+          "verifiedAt": 1795521600000,
+          "verifiedVia": "magic_link",
+          "primary": false
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "me.getMeSessions": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "createdAt": 1794322800000,
+          "lastSeenAt": 1795521600000,
+          "userAgent": "userAgent",
+          "current": false
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "me.postMeSessionsRevokeAll": {
+    "response": {
+      "ok": true
+    }
+  },
+  "me.deleteMeSessionsById": {
+    "response": {
+      "ok": true
+    }
+  }
+}

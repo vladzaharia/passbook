@@ -4,25 +4,23 @@
       "items": [
         {
           "scope": "platform",
-          "key": "example-key",
+          "key": "tier",
           "value": {},
           "default": {},
           "source": "org",
-          "ceiling": 1,
-          "blockedByPlatform": false,
-          "blockedByPlan": false,
+          "ceiling": 24,
           "planBlocked": ["mobile"],
-          "updatedAt": 1764000000000,
-          "updatedBy": "example"
+          "updatedAt": 1795359600000,
+          "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
         }
       ],
-      "configRevision": 1,
+      "configRevision": 3,
       "oidc": {
-        "issuer": "example",
-        "platformAdminGroup": "example",
-        "adminGroup": "example",
-        "developerGroup": "example",
-        "userGroup": "example",
+        "issuer": "issuer",
+        "platformAdminGroup": "platformAdminGroup",
+        "adminGroup": "adminGroup",
+        "developerGroup": "developerGroup",
+        "userGroup": "userGroup",
         "consoleGroupRequired": false
       },
       "released": {
@@ -35,33 +33,31 @@
     "request": {
       "scope": "platform",
       "values": {
-        "example": {}
+        "tier": {}
       },
-      "configRevision": 1
+      "configRevision": 3
     },
     "response": {
       "items": [
         {
           "scope": "platform",
-          "key": "example-key",
+          "key": "tier",
           "value": {},
           "default": {},
           "source": "org",
-          "ceiling": 1,
-          "blockedByPlatform": false,
-          "blockedByPlan": false,
+          "ceiling": 24,
           "planBlocked": ["mobile"],
-          "updatedAt": 1764000000000,
-          "updatedBy": "example"
+          "updatedAt": 1795359600000,
+          "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
         }
       ],
-      "configRevision": 1,
+      "configRevision": 3,
       "oidc": {
-        "issuer": "example",
-        "platformAdminGroup": "example",
-        "adminGroup": "example",
-        "developerGroup": "example",
-        "userGroup": "example",
+        "issuer": "issuer",
+        "platformAdminGroup": "platformAdminGroup",
+        "adminGroup": "adminGroup",
+        "developerGroup": "developerGroup",
+        "userGroup": "userGroup",
         "consoleGroupRequired": false
       },
       "released": {
@@ -72,13 +68,13 @@
   },
   "settings.getSettingsImpact": {
     "response": {
-      "emailOnlyUsers": 1
+      "emailOnlyUsers": 33
     }
   },
   "settings.getSettingsReplyTo": {
     "response": {
-      "address": "example",
-      "state": "none"
+      "address": "address",
+      "state": "confirmed"
     }
   },
   "settings.postSettingsReplyToResend": {
@@ -86,18 +82,18 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
     },
     "response": {
-      "address": "example",
-      "state": "none"
+      "address": "address",
+      "state": "confirmed"
     }
   },
   "settings.postSettingsReplyToConfirm": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "token": "AB12CD34xxxxxxxx"
+      "token": "7ed38937e3e04a38987efbe66780cb15"
     },
     "response": {
-      "address": "example",
-      "state": "none"
+      "address": "address",
+      "state": "confirmed"
     }
   }
 }

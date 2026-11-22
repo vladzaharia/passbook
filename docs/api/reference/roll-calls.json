@@ -9,17 +9,17 @@
         "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
         "endedAt": 1795521600000,
         "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
-        "rev": 3,
-        "serverNow": 3,
+        "rev": 24,
+        "serverNow": 17,
         "counts": {
           "total": 128,
-          "present": 3,
-          "out": 3,
-          "unconfirmed": 3,
-          "notConfirmedOut": 3,
-          "late": 3,
-          "inNow": 3,
-          "tappedIn": 3
+          "present": 34,
+          "out": 13,
+          "unconfirmed": 21,
+          "notConfirmedOut": 24,
+          "late": 16,
+          "inNow": 8,
+          "tappedIn": 7
         },
         "people": [
           {
@@ -29,14 +29,14 @@
             "host": "host",
             "place": "zone:main-hall",
             "placeName": "Main hall",
-            "since": 3,
+            "since": 1794322800000,
             "basis": "in_now",
             "presence": "in",
             "late": false,
             "mark": {
               "status": "present",
               "by": "Sam Rivera",
-              "at": 3
+              "at": 12
             },
             "notConfirmedOut": false
           }
@@ -53,17 +53,17 @@
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "rev": 3,
-      "serverNow": 3,
+      "rev": 24,
+      "serverNow": 17,
       "counts": {
         "total": 128,
-        "present": 3,
-        "out": 3,
-        "unconfirmed": 3,
-        "notConfirmedOut": 3,
-        "late": 3,
-        "inNow": 3,
-        "tappedIn": 3
+        "present": 34,
+        "out": 13,
+        "unconfirmed": 21,
+        "notConfirmedOut": 24,
+        "late": 16,
+        "inNow": 8,
+        "tappedIn": 7
       },
       "people": [
         {
@@ -73,14 +73,14 @@
           "host": "host",
           "place": "zone:main-hall",
           "placeName": "Main hall",
-          "since": 3,
+          "since": 1794322800000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 3
+            "at": 12
           },
           "notConfirmedOut": false
         }
@@ -96,17 +96,17 @@
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "rev": 3,
-      "serverNow": 3,
+      "rev": 24,
+      "serverNow": 17,
       "counts": {
         "total": 128,
-        "present": 3,
-        "out": 3,
-        "unconfirmed": 3,
-        "notConfirmedOut": 3,
-        "late": 3,
-        "inNow": 3,
-        "tappedIn": 3
+        "present": 34,
+        "out": 13,
+        "unconfirmed": 21,
+        "notConfirmedOut": 24,
+        "late": 16,
+        "inNow": 8,
+        "tappedIn": 7
       },
       "people": [
         {
@@ -116,14 +116,14 @@
           "host": "host",
           "place": "zone:main-hall",
           "placeName": "Main hall",
-          "since": 3,
+          "since": 1794322800000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 3
+            "at": 12
           },
           "notConfirmedOut": false
         }
@@ -138,7 +138,7 @@
           "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "status": "present",
-          "at": 3
+          "at": 12
         }
       ]
     },
@@ -149,17 +149,17 @@
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "rev": 3,
-      "serverNow": 3,
+      "rev": 24,
+      "serverNow": 17,
       "counts": {
         "total": 128,
-        "present": 3,
-        "out": 3,
-        "unconfirmed": 3,
-        "notConfirmedOut": 3,
-        "late": 3,
-        "inNow": 3,
-        "tappedIn": 3
+        "present": 34,
+        "out": 13,
+        "unconfirmed": 21,
+        "notConfirmedOut": 24,
+        "late": 16,
+        "inNow": 8,
+        "tappedIn": 7
       },
       "people": [
         {
@@ -169,14 +169,14 @@
           "host": "host",
           "place": "zone:main-hall",
           "placeName": "Main hall",
-          "since": 3,
+          "since": 1794322800000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 3
+            "at": 12
           },
           "notConfirmedOut": false
         }
@@ -200,17 +200,17 @@
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "rev": 3,
-      "serverNow": 3,
+      "rev": 24,
+      "serverNow": 17,
       "counts": {
         "total": 128,
-        "present": 3,
-        "out": 3,
-        "unconfirmed": 3,
-        "notConfirmedOut": 3,
-        "late": 3,
-        "inNow": 3,
-        "tappedIn": 3
+        "present": 34,
+        "out": 13,
+        "unconfirmed": 21,
+        "notConfirmedOut": 24,
+        "late": 16,
+        "inNow": 8,
+        "tappedIn": 7
       },
       "people": [
         {
@@ -220,14 +220,14 @@
           "host": "host",
           "place": "zone:main-hall",
           "placeName": "Main hall",
-          "since": 3,
+          "since": 1794322800000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 3
+            "at": 12
           },
           "notConfirmedOut": false
         }

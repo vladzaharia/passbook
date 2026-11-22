@@ -3,20 +3,20 @@
     "response": {
       "overall": "failing",
       "build": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "tag": "example",
-        "timestamp": "example"
+        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "tag": "tag",
+        "timestamp": "timestamp"
       },
       "components": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
           "kind": "database",
-          "label": "Ada Example",
+          "label": "Day pass",
           "state": "failing",
-          "detail": "example",
-          "checkedAt": 1764000000000,
+          "detail": "The pass has already been used today.",
+          "checkedAt": 1795521600000,
           "data": {
-            "example": "example"
+            "tier": "Day pass"
           }
         }
       ]
@@ -26,14 +26,14 @@
     "response": {
       "items": [
         {
-          "instanceId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "instanceId": "0193a1b2-7c00-7000-8000-83548b1a0435",
           "kind": "template_import",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "status": "queued",
-          "startedAt": 1764000000000,
-          "finishedAt": 1764000000000,
-          "errorCode": "AB12CD34"
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "targetId": "0193a1b2-7c00-7000-8000-dc02f80774cc",
+          "status": "complete",
+          "startedAt": 1794322800000,
+          "finishedAt": 1795521600000,
+          "errorCode": null
         }
       ],
       "nextCursor": "c1.4812"

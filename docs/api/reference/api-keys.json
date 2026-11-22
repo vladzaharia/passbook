@@ -5,10 +5,10 @@
       "id": "0193a1b2-7c00-7000-8000-000000000021",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Server integration",
-      "prefix": "pb_live_8Qw3",
-      "secretPrefix": "pb_live_8Qw3",
+      "prefix": "k3Qx9Zt2",
+      "secretPrefix": "pb_test_k3Qx9Zt2",
       "scopes": ["passes:read"],
-      "mode": "live",
+      "mode": "test",
       "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
       "createdByName": "Sam Rivera",
       "createdAt": 1794322800000,
@@ -33,7 +33,7 @@
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration"
       },
-      "childCount": 12
+      "childCount": 24
     }
   },
   "api-keys.getApiKeysByIdActivity": {
@@ -42,9 +42,9 @@
       "lastUsedAt": 1795521600000,
       "lastIpPrefix": "lastIpPrefix",
       "summary": {
-        "since": 3,
-        "calls": 3,
-        "denied": 3,
+        "since": 1794322800000,
+        "calls": 8,
+        "denied": 18,
         "actions": [
           {
             "action": "action",
@@ -55,8 +55,8 @@
       },
       "recent": [
         {
-          "id": 3,
-          "at": 3,
+          "id": 14,
+          "at": 12,
           "action": "action",
           "outcome": "allowed",
           "targetType": "targetType",
@@ -73,7 +73,7 @@
       "id": "0193a1b2-7c00-7000-8000-000000000021",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Server integration",
-      "prefix": "pb_live_8Qw3",
+      "prefix": "k3Qx9Zt2",
       "scopes": ["passes:read"],
       "mode": "live",
       "createdAt": 1794322800000,
@@ -98,21 +98,21 @@
     "description": "Replace a key. The new secret works at once and is shown once; the old key keeps working for `overlapHours`, then stops. Send an `Idempotency-Key` to retry safely.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "overlapHours": 3
+      "overlapHours": 2
     },
     "response": {
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-000000000021",
+        "id": "0193a1b2-7c00-7000-8000-000000000024",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "name": "Server integration",
-        "prefix": "pb_live_8Qw3",
-        "secretPrefix": "pb_live_8Qw3",
+        "prefix": "p7Wm4Hn8",
+        "secretPrefix": "pb_test_p7Wm4Hn8",
         "scopes": ["passes:read"],
-        "mode": "live",
+        "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
-        "createdAt": 1794322800000,
-        "lastUsedAt": 1795521600000,
+        "createdAt": 1795532400000,
+        "lastUsedAt": null,
         "expiresAt": 1798124400000,
         "revokedAt": null,
         "kind": "service",
@@ -123,17 +123,17 @@
         "passStyles": ["generic"],
         "rateTier": "standard",
         "parentKeyId": null,
-        "rotatedFrom": null,
-        "secret": "pb_live_0ffa36c23393a1bfc11771f22d1260ff"
+        "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000021",
+        "secret": "pb_test_p7Wm4Hn8_b270a237a93e4b689f92b5550e9fab2c11b9749fedf"
       },
       "previous": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "name": "Server integration",
-        "prefix": "pb_live_8Qw3",
-        "secretPrefix": "pb_live_8Qw3",
+        "prefix": "k3Qx9Zt2",
+        "secretPrefix": "pb_test_k3Qx9Zt2",
         "scopes": ["passes:read"],
-        "mode": "live",
+        "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
         "createdAt": 1794322800000,
@@ -142,7 +142,7 @@
         "revokedAt": null,
         "kind": "service",
         "roles": ["org_admin"],
-        "retireAt": null,
+        "retireAt": 1796137200000,
         "ipAllow": ["203.0.113.0/24"],
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "passStyles": ["generic"],
@@ -155,21 +155,21 @@
   "api-keys.postApiKeysMeRotate": {
     "description": "Replace the key this request used. The new secret works at once and is shown once; the old key keeps working for `overlapHours`, then stops. Send an `Idempotency-Key` to retry safely.",
     "request": {
-      "overlapHours": 3
+      "overlapHours": 2
     },
     "response": {
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-000000000021",
+        "id": "0193a1b2-7c00-7000-8000-000000000024",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "name": "Server integration",
-        "prefix": "pb_live_8Qw3",
-        "secretPrefix": "pb_live_8Qw3",
+        "prefix": "p7Wm4Hn8",
+        "secretPrefix": "pb_test_p7Wm4Hn8",
         "scopes": ["passes:read"],
-        "mode": "live",
+        "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
-        "createdAt": 1794322800000,
-        "lastUsedAt": 1795521600000,
+        "createdAt": 1795532400000,
+        "lastUsedAt": null,
         "expiresAt": 1798124400000,
         "revokedAt": null,
         "kind": "service",
@@ -180,17 +180,17 @@
         "passStyles": ["generic"],
         "rateTier": "standard",
         "parentKeyId": null,
-        "rotatedFrom": null,
-        "secret": "pb_live_cd2c6d2b050c774c90b65461fffe0f04"
+        "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000021",
+        "secret": "pb_test_p7Wm4Hn8_b270a237a93e4b689f92b5550e9fab2c11b9749fedf"
       },
       "previous": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "name": "Server integration",
-        "prefix": "pb_live_8Qw3",
-        "secretPrefix": "pb_live_8Qw3",
+        "prefix": "k3Qx9Zt2",
+        "secretPrefix": "pb_test_k3Qx9Zt2",
         "scopes": ["passes:read"],
-        "mode": "live",
+        "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
         "createdAt": 1794322800000,
@@ -199,7 +199,7 @@
         "revokedAt": null,
         "kind": "service",
         "roles": ["org_admin"],
-        "retireAt": null,
+        "retireAt": 1796137200000,
         "ipAllow": ["203.0.113.0/24"],
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "passStyles": ["generic"],
@@ -223,10 +223,10 @@
           "id": "0193a1b2-7c00-7000-8000-000000000021",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "name": "Server integration",
-          "prefix": "pb_live_8Qw3",
-          "secretPrefix": "pb_live_8Qw3",
+          "prefix": "k3Qx9Zt2",
+          "secretPrefix": "pb_test_k3Qx9Zt2",
           "scopes": ["passes:read"],
-          "mode": "live",
+          "mode": "test",
           "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
           "createdByName": "Sam Rivera",
           "createdAt": 1794322800000,
@@ -245,7 +245,7 @@
         }
       ],
       "nextCursor": "c1.4812",
-      "revokedCount": 12
+      "revokedCount": 33
     }
   },
   "api-keys.postApiKeys": {
@@ -261,10 +261,10 @@
       "id": "0193a1b2-7c00-7000-8000-000000000021",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Server integration",
-      "prefix": "pb_live_8Qw3",
-      "secretPrefix": "pb_live_8Qw3",
+      "prefix": "k3Qx9Zt2",
+      "secretPrefix": "pb_test_k3Qx9Zt2",
       "scopes": ["passes:read"],
-      "mode": "live",
+      "mode": "test",
       "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
       "createdByName": "Sam Rivera",
       "createdAt": 1794322800000,
@@ -280,7 +280,7 @@
       "rateTier": "standard",
       "parentKeyId": null,
       "rotatedFrom": null,
-      "secret": "pb_live_41b64533eb33ecd0063c86491d3a34fa"
+      "secret": "pb_test_k3Qx9Zt2_3eae7039cab36f88b5186a04713dc9433236b56f68f"
     }
   }
 }

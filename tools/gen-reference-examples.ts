@@ -5,7 +5,14 @@
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { validateAgainst } from '../test/helpers/openapi-validate.ts';
-import { HEADLINE, HEADLINE_VARIANTS, SCAN_ANSWERS, scanAnswer } from './lib/example-headline.ts';
+import {
+  HEADLINE,
+  HEADLINE_VARIANTS,
+  ROTATIONS,
+  rotateAnswer,
+  SCAN_ANSWERS,
+  scanAnswer,
+} from './lib/example-headline.ts';
 import { type Example, exampleFailures, examplesOf } from './lib/example-lint.ts';
 import { type Ctx, kindOfOp, sample } from './lib/example-sampler.ts';
 
@@ -46,7 +53,7 @@ const setField = (id: string, field: string, value: unknown): void => {
 // biome-ignore lint/suspicious/noExplicitAny: the OpenAPI document is untyped JSON here
 for (const [, item] of Object.entries<Record<string, any>>(doc.paths))
   for (const op of Object.values(item)) {
-    if (!op?.operationId || !op.security?.some((s: object) => 'apiKey' in s)) continue;
+    if (!op?.operationId) continue;
     const id = op.operationId as string;
     const tag = id.split('.')[0] as string;
     const make = (field: 'request' | 'response', schema: object) => {
@@ -54,6 +61,8 @@ for (const [, item] of Object.entries<Record<string, any>>(doc.paths))
       if (have.has(where) && !bad.has(where) && !all) return;
       const ctx: Ctx = { doc, kind: kindOfOp(tag), op: id, request: field === 'request', unknown };
       let value = sample(ctx, schema, 'body', '', ctx.kind, 0);
+      if (field === 'response' && ROTATIONS.has(id))
+        value = rotateAnswer(value as Record<string, unknown>);
       if (field === 'response' && SCAN_ANSWERS.has(id))
         value = scanAnswer(value as Record<string, unknown>);
       const ex: Example = { where, value, schema, op: id };

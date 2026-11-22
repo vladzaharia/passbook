@@ -3,19 +3,19 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "kind": "provision",
           "targetType": "identity",
-          "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "state": "queued",
-          "step": "example",
+          "targetId": "0193a1b2-7c00-7000-8000-51958dbe3aca",
+          "state": "succeeded",
+          "step": "mapping",
           "attempt": 1,
-          "waitingFor": "example",
-          "errorCode": "AB12CD34",
-          "createdAt": 1764000000000,
-          "updatedAt": 1764000000000,
-          "finishedAt": 1764000000000
+          "waitingFor": "approval",
+          "errorCode": null,
+          "createdAt": 1794322800000,
+          "updatedAt": 1795359600000,
+          "finishedAt": 1795521600000
         }
       ],
       "nextCursor": "c1.4812"
@@ -23,73 +23,73 @@
   },
   "identity-runs.getIdentityRunsById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "provision",
       "targetType": "identity",
-      "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "state": "queued",
-      "step": "example",
+      "targetId": "0193a1b2-7c00-7000-8000-28b41a6d1a88",
+      "state": "succeeded",
+      "step": "mapping",
       "attempt": 1,
-      "waitingFor": "example",
-      "errorCode": "AB12CD34",
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "finishedAt": 1764000000000
+      "waitingFor": "approval",
+      "errorCode": null,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "finishedAt": 1795521600000
     }
   },
   "identity-runs.postIdentityRunsByIdRetry": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "provision",
       "targetType": "identity",
-      "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "state": "queued",
-      "step": "example",
+      "targetId": "0193a1b2-7c00-7000-8000-e0a10815b3f1",
+      "state": "succeeded",
+      "step": "mapping",
       "attempt": 1,
-      "waitingFor": "example",
-      "errorCode": "AB12CD34",
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "finishedAt": 1764000000000
+      "waitingFor": "approval",
+      "errorCode": null,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "finishedAt": 1795521600000
     }
   },
   "identity-runs.postIdentityRunsByIdCancel": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "provision",
       "targetType": "identity",
-      "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "state": "queued",
-      "step": "example",
+      "targetId": "0193a1b2-7c00-7000-8000-709dc480c274",
+      "state": "succeeded",
+      "step": "mapping",
       "attempt": 1,
-      "waitingFor": "example",
-      "errorCode": "AB12CD34",
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "finishedAt": 1764000000000
+      "waitingFor": "approval",
+      "errorCode": null,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "finishedAt": 1795521600000
     }
   },
   "identity-runs.postOrgsByOrgIdIdentitiesApple": {
     "request": {
-      "handle": "example"
+      "handle": "northwind"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "provision",
       "targetType": "identity",
-      "targetId": "0193a1b2-7c00-7000-8000-0000000000a3",
-      "state": "queued",
-      "step": "example",
+      "targetId": "0193a1b2-7c00-7000-8000-0695c3d9ba70",
+      "state": "succeeded",
+      "step": "mapping",
       "attempt": 1,
-      "waitingFor": "example",
-      "errorCode": "AB12CD34",
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "finishedAt": 1764000000000
+      "waitingFor": "approval",
+      "errorCode": null,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "finishedAt": 1795521600000
     }
   }
 }

@@ -3,15 +3,15 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "passLabel": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-37b8d2fe882b",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "passLabel": "passLabel",
           "placedByKind": "org",
-          "placedByLabel": "Ada Example",
-          "reason": "example",
-          "createdAt": 1764000000000,
-          "releasedAt": 1764000000000,
-          "releasedByLabel": "Ada Example",
+          "placedByLabel": "placedByLabel",
+          "reason": "Left the gym early; refund issued at the desk.",
+          "createdAt": 1794322800000,
+          "releasedAt": 1795521600000,
+          "releasedByLabel": "releasedByLabel",
           "canRelease": true
         }
       ],
@@ -20,8 +20,8 @@
   },
   "retention.postOrgsByOrgIdRetentionHolds": {
     "request": {
-      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "reason": "example"
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "reason": "Left the gym early; refund issued at the desk."
     },
     "response": {
       "ok": true
@@ -36,14 +36,14 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "cls": "example",
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "cls": "cls",
           "kind": "sweep",
-          "ranAt": 1764000000000,
-          "cutoffAt": 1764000000000,
-          "policyDays": 1,
-          "deleted": 1,
-          "anonymised": 1,
+          "ranAt": 1795521600000,
+          "cutoffAt": 1795521600000,
+          "policyDays": 35,
+          "deleted": 27,
+          "anonymised": 19,
           "verified": false
         }
       ],
@@ -53,21 +53,21 @@
   "retention.getOrgsByOrgIdRetentionReceiptsByReceiptIdDownload": {
     "response": {
       "receipt": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "cls": "example",
+        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "cls": "cls",
         "kind": "sweep",
-        "ranAt": 1764000000000,
-        "cutoffAt": 1764000000000,
-        "policyDays": 1,
-        "deleted": 1,
-        "anonymised": 1,
+        "ranAt": 1795521600000,
+        "cutoffAt": 1795521600000,
+        "policyDays": 35,
+        "deleted": 27,
+        "anonymised": 19,
         "verified": false,
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "seq": 1,
-        "prevMac": "example",
-        "mac": "example",
-        "refsDigest": "example",
-        "requestId": "0193a1b2-7c00-7000-8000-0000000000a3"
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "seq": 2,
+        "prevMac": "prevMac",
+        "mac": "mac",
+        "refsDigest": "refsDigest",
+        "requestId": "0193a1b2-7c00-7000-8000-8a466ac8eb12"
       }
     }
   },
@@ -75,15 +75,15 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "passLabel": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-874751e896b9",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "passLabel": "passLabel",
           "placedByKind": "org",
-          "placedByLabel": "Ada Example",
-          "reason": "example",
-          "createdAt": 1764000000000,
-          "releasedAt": 1764000000000,
-          "releasedByLabel": "Ada Example",
+          "placedByLabel": "placedByLabel",
+          "reason": "Left the gym early; refund issued at the desk.",
+          "createdAt": 1794322800000,
+          "releasedAt": 1795521600000,
+          "releasedByLabel": "releasedByLabel",
           "canRelease": true
         }
       ],
@@ -92,8 +92,8 @@
   },
   "retention.postPlatformOrgsByOrgIdRetentionHolds": {
     "request": {
-      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "reason": "example"
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "reason": "Left the gym early; refund issued at the desk."
     },
     "response": {
       "ok": true
@@ -108,14 +108,14 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "cls": "example",
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "cls": "cls",
           "kind": "sweep",
-          "ranAt": 1764000000000,
-          "cutoffAt": 1764000000000,
-          "policyDays": 1,
-          "deleted": 1,
-          "anonymised": 1,
+          "ranAt": 1795521600000,
+          "cutoffAt": 1795521600000,
+          "policyDays": 35,
+          "deleted": 27,
+          "anonymised": 19,
           "verified": false
         }
       ],
@@ -125,21 +125,21 @@
   "retention.getPlatformOrgsByOrgIdRetentionReceiptsByReceiptIdDownload": {
     "response": {
       "receipt": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "cls": "example",
+        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "cls": "cls",
         "kind": "sweep",
-        "ranAt": 1764000000000,
-        "cutoffAt": 1764000000000,
-        "policyDays": 1,
-        "deleted": 1,
-        "anonymised": 1,
+        "ranAt": 1795521600000,
+        "cutoffAt": 1795521600000,
+        "policyDays": 35,
+        "deleted": 27,
+        "anonymised": 19,
         "verified": false,
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "seq": 1,
-        "prevMac": "example",
-        "mac": "example",
-        "refsDigest": "example",
-        "requestId": "0193a1b2-7c00-7000-8000-0000000000a3"
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "seq": 2,
+        "prevMac": "prevMac",
+        "mac": "mac",
+        "refsDigest": "refsDigest",
+        "requestId": "0193a1b2-7c00-7000-8000-3f387215eb53"
       }
     }
   },
@@ -147,14 +147,14 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "cls": "example",
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "cls": "cls",
           "kind": "sweep",
-          "ranAt": 1764000000000,
-          "cutoffAt": 1764000000000,
-          "policyDays": 1,
-          "deleted": 1,
-          "anonymised": 1,
+          "ranAt": 1795521600000,
+          "cutoffAt": 1795521600000,
+          "policyDays": 35,
+          "deleted": 27,
+          "anonymised": 19,
           "verified": false
         }
       ],
@@ -164,21 +164,21 @@
   "retention.getPlatformRetentionReceiptsByReceiptIdDownload": {
     "response": {
       "receipt": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "cls": "example",
+        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "cls": "cls",
         "kind": "sweep",
-        "ranAt": 1764000000000,
-        "cutoffAt": 1764000000000,
-        "policyDays": 1,
-        "deleted": 1,
-        "anonymised": 1,
+        "ranAt": 1795521600000,
+        "cutoffAt": 1795521600000,
+        "policyDays": 35,
+        "deleted": 27,
+        "anonymised": 19,
         "verified": false,
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-        "seq": 1,
-        "prevMac": "example",
-        "mac": "example",
-        "refsDigest": "example",
-        "requestId": "0193a1b2-7c00-7000-8000-0000000000a3"
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "seq": 2,
+        "prevMac": "prevMac",
+        "mac": "mac",
+        "refsDigest": "refsDigest",
+        "requestId": "0193a1b2-7c00-7000-8000-e68355b46ed8"
       }
     }
   }

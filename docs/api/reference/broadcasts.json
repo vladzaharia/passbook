@@ -4,8 +4,8 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000042",
       "parentId": "0193a1b2-7c00-7000-8000-3ce3679141b7",
-      "restorable": 3,
-      "kept": 3
+      "restorable": 27,
+      "kept": 14
     }
   },
   "broadcasts.postBroadcastsByIdStop": {
@@ -16,7 +16,7 @@
       "mode": "live",
       "kind": "message",
       "name": "Holiday hours",
-      "state": "draft",
+      "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false,
@@ -38,21 +38,21 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 3,
+      "at": 12,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-0796d9bf4812",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 3
+        "at": 12
       },
       "counts": {
-        "targeted": 3,
-        "updated": 3,
-        "unchanged": 3,
-        "overBudget": 3,
-        "failed": 3
+        "targeted": 16,
+        "updated": 10,
+        "unchanged": 11,
+        "overBudget": 39,
+        "failed": 28
       },
       "errorCode": null,
       "createdAt": 1794322800000,
@@ -75,9 +75,9 @@
       "message": "The gym closes at 18:00 on 24 December."
     },
     "response": {
-      "targeted": 3,
-      "onDevice": 3,
-      "overBudget": 3,
+      "targeted": 16,
+      "onDevice": 11,
+      "overBudget": 39,
       "limit": 25,
       "samples": [
         {
@@ -93,15 +93,15 @@
           ]
         }
       ],
-      "unchanged": 3,
+      "unchanged": 11,
       "blocked": [
         {
           "code": "NW7K2Q",
           "count": 12
         }
       ],
-      "notified": 3,
-      "silent": 3,
+      "notified": 17,
+      "silent": 6,
       "estimated": false
     }
   },
@@ -112,7 +112,7 @@
       "kind": "message",
       "name": "Holiday hours",
       "notify": false,
-      "send": "draft",
+      "send": "now",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false
@@ -127,7 +127,7 @@
       "mode": "live",
       "kind": "message",
       "name": "Holiday hours",
-      "state": "draft",
+      "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false,
@@ -149,21 +149,21 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 3,
+      "at": 12,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-b82d6382833f",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 3
+        "at": 12
       },
       "counts": {
-        "targeted": 3,
-        "updated": 3,
-        "unchanged": 3,
-        "overBudget": 3,
-        "failed": 3
+        "targeted": 16,
+        "updated": 10,
+        "unchanged": 11,
+        "overBudget": 39,
+        "failed": 28
       },
       "errorCode": null,
       "createdAt": 1794322800000,
@@ -179,7 +179,7 @@
       "mode": "live",
       "kind": "message",
       "name": "Holiday hours",
-      "state": "draft",
+      "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false,
@@ -201,21 +201,21 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 3,
+      "at": 12,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-d6f7651d382a",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 3
+        "at": 12
       },
       "counts": {
-        "targeted": 3,
-        "updated": 3,
-        "unchanged": 3,
-        "overBudget": 3,
-        "failed": 3
+        "targeted": 16,
+        "updated": 10,
+        "unchanged": 11,
+        "overBudget": 39,
+        "failed": 28
       },
       "errorCode": null,
       "createdAt": 1794322800000,
@@ -233,7 +233,7 @@
           "mode": "live",
           "kind": "message",
           "name": "Holiday hours",
-          "state": "draft",
+          "state": "sent",
           "target": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
             "onDevice": false,
@@ -255,21 +255,21 @@
             "healthy": {}
           },
           "notify": false,
-          "at": 3,
+          "at": 12,
           "clearAfter": 1798124400000,
           "parentId": "0193a1b2-7c00-7000-8000-1abf523adc00",
           "message": "The gym closes at 18:00 on 24 December.",
           "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
           "followUp": {
             "id": "0193a1b2-7c00-7000-8000-000000000042",
-            "at": 3
+            "at": 12
           },
           "counts": {
-            "targeted": 3,
-            "updated": 3,
-            "unchanged": 3,
-            "overBudget": 3,
-            "failed": 3
+            "targeted": 16,
+            "updated": 10,
+            "unchanged": 11,
+            "overBudget": 39,
+            "failed": 28
           },
           "errorCode": null,
           "createdAt": 1794322800000,
@@ -287,7 +287,7 @@
       "kind": "message",
       "name": "Holiday hours",
       "notify": false,
-      "send": "draft",
+      "send": "now",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false
@@ -302,7 +302,7 @@
       "mode": "live",
       "kind": "message",
       "name": "Holiday hours",
-      "state": "draft",
+      "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false,
@@ -324,21 +324,21 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 3,
+      "at": 12,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-e8d417b45162",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 3
+        "at": 12
       },
       "counts": {
-        "targeted": 3,
-        "updated": 3,
-        "unchanged": 3,
-        "overBudget": 3,
-        "failed": 3
+        "targeted": 16,
+        "updated": 10,
+        "unchanged": 11,
+        "overBudget": 39,
+        "failed": 28
       },
       "errorCode": null,
       "createdAt": 1794322800000,
@@ -349,7 +349,7 @@
   "broadcasts.postBroadcastsByIdSend": {
     "description": "Sends a draft now or at a time.",
     "request": {
-      "at": 3
+      "at": 12
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000042",
@@ -357,7 +357,7 @@
       "mode": "live",
       "kind": "message",
       "name": "Holiday hours",
-      "state": "draft",
+      "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false,
@@ -379,21 +379,21 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 3,
+      "at": 12,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-42e8b5697d27",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 3
+        "at": 12
       },
       "counts": {
-        "targeted": 3,
-        "updated": 3,
-        "unchanged": 3,
-        "overBudget": 3,
-        "failed": 3
+        "targeted": 16,
+        "updated": 10,
+        "unchanged": 11,
+        "overBudget": 39,
+        "failed": 28
       },
       "errorCode": null,
       "createdAt": 1794322800000,
@@ -409,7 +409,7 @@
       "mode": "live",
       "kind": "message",
       "name": "Holiday hours",
-      "state": "draft",
+      "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false,
@@ -431,21 +431,21 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 3,
+      "at": 12,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-e17050b9d657",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 3
+        "at": 12
       },
       "counts": {
-        "targeted": 3,
-        "updated": 3,
-        "unchanged": 3,
-        "overBudget": 3,
-        "failed": 3
+        "targeted": 16,
+        "updated": 10,
+        "unchanged": 11,
+        "overBudget": 39,
+        "failed": 28
       },
       "errorCode": null,
       "createdAt": 1794322800000,
@@ -454,14 +454,14 @@
     }
   },
   "broadcasts.postBroadcastsByIdRetry": {
-    "description": "Sends a failed or canceled message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size.",
+    "description": "Sends a failed or canceled (state `cancelled`) message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size.",
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000042",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
       "name": "Holiday hours",
-      "state": "draft",
+      "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false,
@@ -483,21 +483,21 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 3,
+      "at": 12,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-4cb271bc325f",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 3
+        "at": 12
       },
       "counts": {
-        "targeted": 3,
-        "updated": 3,
-        "unchanged": 3,
-        "overBudget": 3,
-        "failed": 3
+        "targeted": 16,
+        "updated": 10,
+        "unchanged": 11,
+        "overBudget": 39,
+        "failed": 28
       },
       "errorCode": null,
       "createdAt": 1794322800000,

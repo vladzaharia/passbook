@@ -123,7 +123,7 @@
           "validUntil": 1798124400000,
           "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 3
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
@@ -133,11 +133,11 @@
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 3,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -146,11 +146,11 @@
           "assignAll": "desk",
           "level": "off",
           "types": ["generic"],
-          "confirmBasic": "none"
+          "confirmBasic": "staff"
         }
       },
       "timeZone": "America/Los_Angeles",
-      "status": "not_paired",
+      "status": "paired",
       "online": false,
       "pairedAt": null,
       "pairedLabel": "Front desk tablet",
@@ -160,7 +160,7 @@
         "id": "0193a1b2-7c00-7000-8000-000000000022",
         "name": "Sam Rivera"
       },
-      "today": 3,
+      "today": 7,
       "createdAt": 1794322800000
     }
   },
@@ -185,7 +185,7 @@
           "validUntil": 1798124400000,
           "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 3
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
@@ -195,11 +195,11 @@
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 3,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -208,11 +208,11 @@
           "assignAll": "desk",
           "level": "off",
           "types": ["generic"],
-          "confirmBasic": "none"
+          "confirmBasic": "staff"
         }
       },
       "timeZone": "America/Los_Angeles",
-      "status": "not_paired",
+      "status": "paired",
       "online": false,
       "pairedAt": null,
       "pairedLabel": "Front desk tablet",
@@ -222,7 +222,7 @@
         "id": "0193a1b2-7c00-7000-8000-000000000022",
         "name": "Sam Rivera"
       },
-      "today": 3,
+      "today": 7,
       "createdAt": 1794322800000
     }
   },
@@ -251,7 +251,7 @@
           "validUntil": 1798124400000,
           "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 3
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
@@ -261,11 +261,11 @@
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 3,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -274,11 +274,11 @@
           "assignAll": "desk",
           "level": "off",
           "types": ["generic"],
-          "confirmBasic": "none"
+          "confirmBasic": "staff"
         }
       },
       "timeZone": "America/Los_Angeles",
-      "status": "not_paired",
+      "status": "paired",
       "online": false,
       "pairedAt": null,
       "pairedLabel": "Front desk tablet",
@@ -288,7 +288,7 @@
         "id": "0193a1b2-7c00-7000-8000-000000000022",
         "name": "Sam Rivera"
       },
-      "today": 3,
+      "today": 7,
       "createdAt": 1794322800000
     }
   },
@@ -329,7 +329,7 @@
           "validUntil": 1798124400000,
           "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 3
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
@@ -339,11 +339,11 @@
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 3,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -352,11 +352,11 @@
           "assignAll": "desk",
           "level": "off",
           "types": ["generic"],
-          "confirmBasic": "none"
+          "confirmBasic": "staff"
         }
       },
       "timeZone": "America/Los_Angeles",
-      "status": "not_paired",
+      "status": "paired",
       "online": false,
       "pairedAt": null,
       "pairedLabel": "Front desk tablet",
@@ -366,7 +366,7 @@
         "id": "0193a1b2-7c00-7000-8000-000000000022",
         "name": "Sam Rivera"
       },
-      "today": 3,
+      "today": 7,
       "createdAt": 1794322800000,
       "pairing": {
         "code": "NW7K2Q",
@@ -386,17 +386,17 @@
   "scanners.getScannersByIdPairing": {
     "description": "Polls a pairing to see whether the device has paired.",
     "response": {
-      "state": "waiting",
+      "state": "paired",
       "device": {
         "label": "Front desk tablet",
-        "at": 3
+        "at": 12
       }
     }
   },
   "scanners.postScannersByIdToken": {
     "description": "Makes a till token, shown once. It replaces the old one.",
     "response": {
-      "token": "pb_live_9346be99e663beb4926569e31119a812",
+      "token": "9346be99e663beb4926569e31119a812",
       "expiresAt": 1798124400000
     }
   },
@@ -423,7 +423,7 @@
               "validUntil": 1798124400000,
               "durationMinutes": 90,
               "durationFrom": "first_scan",
-              "days": 3
+              "days": 18
             },
             "direction": "in",
             "showPhoto": false,
@@ -433,11 +433,11 @@
             "roleWithoutSignIn": "door",
             "staffSignIn": false,
             "letInAgain": "anyone",
-            "reader": "none",
+            "reader": "barcode",
             "lookup": false,
             "offline": false,
             "whenOffline": "stop",
-            "dailyAmount": 3,
+            "dailyAmount": 30,
             "deskActions": false,
             "hardLimit": false,
             "approvals": "managers",
@@ -446,11 +446,11 @@
               "assignAll": "desk",
               "level": "off",
               "types": ["generic"],
-              "confirmBasic": "none"
+              "confirmBasic": "staff"
             }
           },
           "timeZone": "America/Los_Angeles",
-          "status": "not_paired",
+          "status": "paired",
           "online": false,
           "pairedAt": null,
           "pairedLabel": "Front desk tablet",
@@ -460,7 +460,7 @@
             "id": "0193a1b2-7c00-7000-8000-000000000022",
             "name": "Sam Rivera"
           },
-          "today": 3,
+          "today": 7,
           "createdAt": 1794322800000,
           "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
           "adminSession": false,
@@ -501,7 +501,7 @@
           "validUntil": 1798124400000,
           "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 3
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
@@ -511,11 +511,11 @@
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 3,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -524,11 +524,11 @@
           "assignAll": "desk",
           "level": "off",
           "types": ["generic"],
-          "confirmBasic": "none"
+          "confirmBasic": "staff"
         }
       },
       "timeZone": "America/Los_Angeles",
-      "status": "not_paired",
+      "status": "paired",
       "online": false,
       "pairedAt": null,
       "pairedLabel": "Front desk tablet",
@@ -538,7 +538,7 @@
         "id": "0193a1b2-7c00-7000-8000-000000000022",
         "name": "Sam Rivera"
       },
-      "today": 3,
+      "today": 7,
       "createdAt": 1794322800000,
       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
       "adminSession": false,
@@ -578,7 +578,7 @@
               "validUntil": 1798124400000,
               "durationMinutes": 90,
               "durationFrom": "first_scan",
-              "days": 3
+              "days": 18
             },
             "direction": "in",
             "showPhoto": false,
@@ -588,11 +588,11 @@
             "roleWithoutSignIn": "door",
             "staffSignIn": false,
             "letInAgain": "anyone",
-            "reader": "none",
+            "reader": "barcode",
             "lookup": false,
             "offline": false,
             "whenOffline": "stop",
-            "dailyAmount": 3,
+            "dailyAmount": 30,
             "deskActions": false,
             "hardLimit": false,
             "approvals": "managers",
@@ -601,7 +601,7 @@
               "assignAll": "desk",
               "level": "off",
               "types": ["generic"],
-              "confirmBasic": "none"
+              "confirmBasic": "staff"
             },
             "customer": {
               "welcome": "The gym closes at 18:00 on 24 December.",
@@ -628,7 +628,7 @@
           "hoursInvalid": true,
           "hold": {
             "state": "open",
-            "until": 3
+            "until": 21
           },
           "window": {
             "open": false,
@@ -638,9 +638,9 @@
           },
           "createdAt": 1794322800000,
           "updatedAt": 1795359600000,
-          "deviceCount": 12,
-          "onlineCount": 12,
-          "today": 3
+          "deviceCount": 24,
+          "onlineCount": 27,
+          "today": 7
         }
       ],
       "nextCursor": "c1.4812"
@@ -667,7 +667,7 @@
           "validUntil": 1798124400000,
           "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 3
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
@@ -677,11 +677,11 @@
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 3,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -690,7 +690,7 @@
           "assignAll": "desk",
           "level": "off",
           "types": ["generic"],
-          "confirmBasic": "none"
+          "confirmBasic": "staff"
         },
         "customer": {
           "welcome": "The gym closes at 18:00 on 24 December.",
@@ -717,7 +717,7 @@
       "hoursInvalid": true,
       "hold": {
         "state": "open",
-        "until": 3
+        "until": 21
       },
       "window": {
         "open": false,
@@ -727,9 +727,9 @@
       },
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
-      "deviceCount": 12,
-      "onlineCount": 12,
-      "today": 3,
+      "deviceCount": 24,
+      "onlineCount": 27,
+      "today": 7,
       "devices": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000012",
@@ -739,7 +739,7 @@
           "effectiveSurface": "phone",
           "overrides": {
             "flow": "auto",
-            "reader": "none",
+            "reader": "barcode",
             "direction": "in",
             "lookup": false,
             "showPhoto": false
@@ -752,7 +752,7 @@
               "validUntil": 1798124400000,
               "durationMinutes": 90,
               "durationFrom": "first_scan",
-              "days": 3
+              "days": 18
             },
             "direction": "in",
             "showPhoto": false,
@@ -762,11 +762,11 @@
             "roleWithoutSignIn": "door",
             "staffSignIn": false,
             "letInAgain": "anyone",
-            "reader": "none",
+            "reader": "barcode",
             "lookup": false,
             "offline": false,
             "whenOffline": "stop",
-            "dailyAmount": 3,
+            "dailyAmount": 30,
             "deskActions": false,
             "hardLimit": false,
             "approvals": "managers",
@@ -775,14 +775,14 @@
               "assignAll": "desk",
               "level": "off",
               "types": ["generic"],
-              "confirmBasic": "none"
+              "confirmBasic": "staff"
             }
           },
           "capabilities": {
             "width": 320,
             "height": 100,
             "touch": false,
-            "camera": "unknown",
+            "camera": "available",
             "keyboard": false,
             "nativeBarcode": false,
             "native": {
@@ -790,7 +790,7 @@
               "appVersion": "1.4.2",
               "camera": {
                 "available": false,
-                "permission": "unknown"
+                "permission": "prompt"
               },
               "keyboard": {
                 "supported": false,
@@ -800,6 +800,7 @@
               "nfc": {
                 "available": false,
                 "reading": false,
+                "continuous": false,
                 "formats": ["ndef"]
               },
               "haptics": false,
@@ -819,10 +820,10 @@
                 "active": true
               },
               "layout": {
-                "posture": "unknown",
+                "posture": "folded",
                 "division": {
-                  "x": 3,
-                  "y": 3,
+                  "x": 38,
+                  "y": 19,
                   "width": 320,
                   "height": 100
                 }
@@ -853,7 +854,7 @@
       "activity": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000031",
-          "at": 3,
+          "at": 12,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -899,7 +900,7 @@
           "validUntil": 1798124400000,
           "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 3
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
@@ -909,11 +910,11 @@
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 3,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -922,7 +923,7 @@
           "assignAll": "desk",
           "level": "off",
           "types": ["generic"],
-          "confirmBasic": "none"
+          "confirmBasic": "staff"
         },
         "customer": {
           "welcome": "The gym closes at 18:00 on 24 December.",
@@ -949,7 +950,7 @@
       "hoursInvalid": true,
       "hold": {
         "state": "open",
-        "until": 3
+        "until": 21
       },
       "window": {
         "open": false,
@@ -959,9 +960,9 @@
       },
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
-      "deviceCount": 12,
-      "onlineCount": 12,
-      "today": 3,
+      "deviceCount": 24,
+      "onlineCount": 27,
+      "today": 7,
       "devices": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000012",
@@ -971,7 +972,7 @@
           "effectiveSurface": "phone",
           "overrides": {
             "flow": "auto",
-            "reader": "none",
+            "reader": "barcode",
             "direction": "in",
             "lookup": false,
             "showPhoto": false
@@ -984,7 +985,7 @@
               "validUntil": 1798124400000,
               "durationMinutes": 90,
               "durationFrom": "first_scan",
-              "days": 3
+              "days": 18
             },
             "direction": "in",
             "showPhoto": false,
@@ -994,11 +995,11 @@
             "roleWithoutSignIn": "door",
             "staffSignIn": false,
             "letInAgain": "anyone",
-            "reader": "none",
+            "reader": "barcode",
             "lookup": false,
             "offline": false,
             "whenOffline": "stop",
-            "dailyAmount": 3,
+            "dailyAmount": 30,
             "deskActions": false,
             "hardLimit": false,
             "approvals": "managers",
@@ -1007,14 +1008,14 @@
               "assignAll": "desk",
               "level": "off",
               "types": ["generic"],
-              "confirmBasic": "none"
+              "confirmBasic": "staff"
             }
           },
           "capabilities": {
             "width": 320,
             "height": 100,
             "touch": false,
-            "camera": "unknown",
+            "camera": "available",
             "keyboard": false,
             "nativeBarcode": false,
             "native": {
@@ -1022,7 +1023,7 @@
               "appVersion": "1.4.2",
               "camera": {
                 "available": false,
-                "permission": "unknown"
+                "permission": "prompt"
               },
               "keyboard": {
                 "supported": false,
@@ -1032,6 +1033,7 @@
               "nfc": {
                 "available": false,
                 "reading": false,
+                "continuous": false,
                 "formats": ["ndef"]
               },
               "haptics": false,
@@ -1051,10 +1053,10 @@
                 "active": true
               },
               "layout": {
-                "posture": "unknown",
+                "posture": "folded",
                 "division": {
-                  "x": 3,
-                  "y": 3,
+                  "x": 38,
+                  "y": 19,
                   "width": 320,
                   "height": 100
                 }
@@ -1085,7 +1087,7 @@
       "activity": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000031",
-          "at": 3,
+          "at": 12,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -1127,7 +1129,7 @@
           "validUntil": 1798124400000,
           "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 3
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
@@ -1137,11 +1139,11 @@
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 3,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -1150,7 +1152,7 @@
           "assignAll": "desk",
           "level": "off",
           "types": ["generic"],
-          "confirmBasic": "none"
+          "confirmBasic": "staff"
         },
         "customer": {
           "welcome": "The gym closes at 18:00 on 24 December.",
@@ -1177,7 +1179,7 @@
       "hoursInvalid": true,
       "hold": {
         "state": "open",
-        "until": 3
+        "until": 21
       },
       "window": {
         "open": false,
@@ -1187,9 +1189,9 @@
       },
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
-      "deviceCount": 12,
-      "onlineCount": 12,
-      "today": 3,
+      "deviceCount": 24,
+      "onlineCount": 27,
+      "today": 7,
       "devices": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000012",
@@ -1199,7 +1201,7 @@
           "effectiveSurface": "phone",
           "overrides": {
             "flow": "auto",
-            "reader": "none",
+            "reader": "barcode",
             "direction": "in",
             "lookup": false,
             "showPhoto": false
@@ -1212,7 +1214,7 @@
               "validUntil": 1798124400000,
               "durationMinutes": 90,
               "durationFrom": "first_scan",
-              "days": 3
+              "days": 18
             },
             "direction": "in",
             "showPhoto": false,
@@ -1222,11 +1224,11 @@
             "roleWithoutSignIn": "door",
             "staffSignIn": false,
             "letInAgain": "anyone",
-            "reader": "none",
+            "reader": "barcode",
             "lookup": false,
             "offline": false,
             "whenOffline": "stop",
-            "dailyAmount": 3,
+            "dailyAmount": 30,
             "deskActions": false,
             "hardLimit": false,
             "approvals": "managers",
@@ -1235,14 +1237,14 @@
               "assignAll": "desk",
               "level": "off",
               "types": ["generic"],
-              "confirmBasic": "none"
+              "confirmBasic": "staff"
             }
           },
           "capabilities": {
             "width": 320,
             "height": 100,
             "touch": false,
-            "camera": "unknown",
+            "camera": "available",
             "keyboard": false,
             "nativeBarcode": false,
             "native": {
@@ -1250,7 +1252,7 @@
               "appVersion": "1.4.2",
               "camera": {
                 "available": false,
-                "permission": "unknown"
+                "permission": "prompt"
               },
               "keyboard": {
                 "supported": false,
@@ -1260,6 +1262,7 @@
               "nfc": {
                 "available": false,
                 "reading": false,
+                "continuous": false,
                 "formats": ["ndef"]
               },
               "haptics": false,
@@ -1279,10 +1282,10 @@
                 "active": true
               },
               "layout": {
-                "posture": "unknown",
+                "posture": "folded",
                 "division": {
-                  "x": 3,
-                  "y": 3,
+                  "x": 38,
+                  "y": 19,
                   "width": 320,
                   "height": 100
                 }
@@ -1313,7 +1316,7 @@
       "activity": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000031",
-          "at": 3,
+          "at": 12,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -1337,7 +1340,7 @@
       "surface": "auto",
       "overrides": {
         "flow": "auto",
-        "reader": "none"
+        "reader": "barcode"
       }
     },
     "response": {
@@ -1348,7 +1351,7 @@
       "effectiveSurface": "phone",
       "overrides": {
         "flow": "auto",
-        "reader": "none",
+        "reader": "barcode",
         "direction": "in",
         "lookup": false,
         "showPhoto": false
@@ -1361,7 +1364,7 @@
           "validUntil": 1798124400000,
           "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 3
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
@@ -1371,11 +1374,11 @@
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 3,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -1384,14 +1387,14 @@
           "assignAll": "desk",
           "level": "off",
           "types": ["generic"],
-          "confirmBasic": "none"
+          "confirmBasic": "staff"
         }
       },
       "capabilities": {
         "width": 320,
         "height": 100,
         "touch": false,
-        "camera": "unknown",
+        "camera": "available",
         "keyboard": false,
         "nativeBarcode": false,
         "native": {
@@ -1399,7 +1402,7 @@
           "appVersion": "1.4.2",
           "camera": {
             "available": false,
-            "permission": "unknown"
+            "permission": "prompt"
           },
           "keyboard": {
             "supported": false,
@@ -1429,10 +1432,10 @@
             "active": true
           },
           "layout": {
-            "posture": "unknown",
+            "posture": "folded",
             "division": {
-              "x": 3,
-              "y": 3,
+              "x": 38,
+              "y": 19,
               "width": 320,
               "height": 100
             }
@@ -1467,7 +1470,7 @@
       "surface": "auto",
       "overrides": {
         "flow": "auto",
-        "reader": "none"
+        "reader": "barcode"
       }
     },
     "response": {
@@ -1478,7 +1481,7 @@
       "effectiveSurface": "phone",
       "overrides": {
         "flow": "auto",
-        "reader": "none",
+        "reader": "barcode",
         "direction": "in",
         "lookup": false,
         "showPhoto": false
@@ -1491,7 +1494,7 @@
           "validUntil": 1798124400000,
           "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 3
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
@@ -1501,11 +1504,11 @@
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 3,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -1514,14 +1517,14 @@
           "assignAll": "desk",
           "level": "off",
           "types": ["generic"],
-          "confirmBasic": "none"
+          "confirmBasic": "staff"
         }
       },
       "capabilities": {
         "width": 320,
         "height": 100,
         "touch": false,
-        "camera": "unknown",
+        "camera": "available",
         "keyboard": false,
         "nativeBarcode": false,
         "native": {
@@ -1529,7 +1532,7 @@
           "appVersion": "1.4.2",
           "camera": {
             "available": false,
-            "permission": "unknown"
+            "permission": "prompt"
           },
           "keyboard": {
             "supported": false,
@@ -1559,10 +1562,10 @@
             "active": true
           },
           "layout": {
-            "posture": "unknown",
+            "posture": "folded",
             "division": {
-              "x": 3,
-              "y": 3,
+              "x": 38,
+              "y": 19,
               "width": 320,
               "height": 100
             }
@@ -1597,39 +1600,39 @@
   },
   "scanners.getScannersById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Ada Example",
+      "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
       },
       "settings": {
         "checkIn": {
           "mode": "single",
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
-          "validFrom": 1,
-          "validUntil": 1,
-          "durationMinutes": 1,
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "validFrom": 1795532400000,
+          "validUntil": 1798124400000,
+          "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 1
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
         "acceptAllTemplates": false,
         "flow": "auto",
-        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "defaultActionId": "admit",
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 1,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -1637,62 +1640,62 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["example"],
-          "confirmBasic": "none"
+          "types": ["generic"],
+          "confirmBasic": "staff"
         }
       },
-      "timeZone": "example",
-      "status": "not_paired",
+      "timeZone": "America/Los_Angeles",
+      "status": "paired",
       "online": false,
-      "pairedAt": 1764000000000,
-      "pairedLabel": "Ada Example",
-      "lastSeenAt": 1764000000000,
-      "expiresAt": 1764000000000,
+      "pairedAt": null,
+      "pairedLabel": "Front desk tablet",
+      "lastSeenAt": 1795521600000,
+      "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
-        "name": "Ada Example"
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "name": "Sam Rivera"
       },
-      "today": 1,
-      "createdAt": 1764000000000
+      "today": 7,
+      "createdAt": 1794322800000
     }
   },
   "scanners.getScanners": {
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "kind": "device",
           "deviceRole": "scan",
-          "name": "Ada Example",
+          "name": "Front desk",
           "accepts": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
-            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
           },
           "settings": {
             "checkIn": {
               "mode": "single",
-              "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
-              "validFrom": 1,
-              "validUntil": 1,
-              "durationMinutes": 1,
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
               "durationFrom": "first_scan",
-              "days": 1
+              "days": 18
             },
             "direction": "in",
             "showPhoto": false,
             "acceptAllTemplates": false,
             "flow": "auto",
-            "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+            "defaultActionId": "admit",
             "roleWithoutSignIn": "door",
             "staffSignIn": false,
             "letInAgain": "anyone",
-            "reader": "none",
+            "reader": "barcode",
             "lookup": false,
             "offline": false,
             "whenOffline": "stop",
-            "dailyAmount": 1,
+            "dailyAmount": 30,
             "deskActions": false,
             "hardLimit": false,
             "approvals": "managers",
@@ -1700,23 +1703,23 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["example"],
-              "confirmBasic": "none"
+              "types": ["generic"],
+              "confirmBasic": "staff"
             }
           },
-          "timeZone": "example",
-          "status": "not_paired",
+          "timeZone": "America/Los_Angeles",
+          "status": "paired",
           "online": false,
-          "pairedAt": 1764000000000,
-          "pairedLabel": "Ada Example",
-          "lastSeenAt": 1764000000000,
-          "expiresAt": 1764000000000,
+          "pairedAt": null,
+          "pairedLabel": "Front desk tablet",
+          "lastSeenAt": 1795521600000,
+          "expiresAt": 1798124400000,
           "staff": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000a7",
-            "name": "Ada Example"
+            "id": "0193a1b2-7c00-7000-8000-000000000022",
+            "name": "Sam Rivera"
           },
-          "today": 1,
-          "createdAt": 1764000000000
+          "today": 7,
+          "createdAt": 1794322800000
         }
       ],
       "nextCursor": "c1.4812"
@@ -1724,52 +1727,55 @@
   },
   "scanners.postScannersByIdSamplePass": {
     "response": {
-      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "templateId": "0193a1b2-7c00-7000-8000-0000000000a2"
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
     }
   },
   "scanners.postScanSetups": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
+      "name": "Front desk",
       "kind": "device",
       "deviceRole": "scan",
-      "timeZone": "example"
+      "accepts": {
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1"
+      },
+      "timeZone": "America/Los_Angeles"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Ada Example",
+      "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
       },
       "settings": {
         "checkIn": {
           "mode": "single",
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
-          "validFrom": 1,
-          "validUntil": 1,
-          "durationMinutes": 1,
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "validFrom": 1795532400000,
+          "validUntil": 1798124400000,
+          "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 1
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
         "acceptAllTemplates": false,
         "flow": "auto",
-        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "defaultActionId": "admit",
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 1,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -1777,82 +1783,85 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["example"],
-          "confirmBasic": "none"
+          "types": ["generic"],
+          "confirmBasic": "staff"
         }
       },
-      "timeZone": "example",
-      "status": "not_paired",
+      "timeZone": "America/Los_Angeles",
+      "status": "paired",
       "online": false,
-      "pairedAt": 1764000000000,
-      "pairedLabel": "Ada Example",
-      "lastSeenAt": 1764000000000,
-      "expiresAt": 1764000000000,
+      "pairedAt": null,
+      "pairedLabel": "Front desk tablet",
+      "lastSeenAt": 1795521600000,
+      "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
-        "name": "Ada Example"
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "name": "Sam Rivera"
       },
-      "today": 1,
-      "createdAt": 1764000000000,
-      "sessionId": "0193a1b2-7c00-7000-8000-0000000000a8",
+      "today": 7,
+      "createdAt": 1794322800000,
+      "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
       "adminSession": false,
       "adminUser": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a9",
-        "name": "Ada Example"
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
+        "name": "Sam Rivera"
       },
       "watch": {
-        "scannerIds": ["0193a1b2-7c00-7000-8000-0000000000aa"],
+        "scannerIds": ["0193a1b2-7c00-7000-8000-000000000031"],
         "allOrg": false,
-        "sessionIds": ["0193a1b2-7c00-7000-8000-0000000000ab"],
-        "eventId": "0193a1b2-7c00-7000-8000-0000000000ac",
-        "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000ad"]
+        "sessionIds": ["0193a1b2-7c00-7000-8000-000000000091"],
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"]
       },
       "pairing": {
-        "code": "AB12CD34",
-        "url": "https://passbook.mobile/p/abc123",
-        "expiresAt": 1764000000000
+        "code": "NW7K2Q",
+        "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+        "expiresAt": 1798124400000
       }
     }
   },
   "scanners.patchScanSetupsById": {
     "request": {
-      "name": "Ada Example",
-      "deviceRole": "scan"
+      "name": "Front desk",
+      "deviceRole": "scan",
+      "accepts": {
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1"
+      }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Ada Example",
+      "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
       },
       "settings": {
         "checkIn": {
           "mode": "single",
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
-          "validFrom": 1,
-          "validUntil": 1,
-          "durationMinutes": 1,
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "validFrom": 1795532400000,
+          "validUntil": 1798124400000,
+          "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 1
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
         "acceptAllTemplates": false,
         "flow": "auto",
-        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "defaultActionId": "admit",
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 1,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -1860,87 +1869,90 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["example"],
-          "confirmBasic": "none"
+          "types": ["generic"],
+          "confirmBasic": "staff"
         }
       },
-      "timeZone": "example",
-      "status": "not_paired",
+      "timeZone": "America/Los_Angeles",
+      "status": "paired",
       "online": false,
-      "pairedAt": 1764000000000,
-      "pairedLabel": "Ada Example",
-      "lastSeenAt": 1764000000000,
-      "expiresAt": 1764000000000,
+      "pairedAt": null,
+      "pairedLabel": "Front desk tablet",
+      "lastSeenAt": 1795521600000,
+      "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a7",
-        "name": "Ada Example"
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "name": "Sam Rivera"
       },
-      "today": 1,
-      "createdAt": 1764000000000,
-      "sessionId": "0193a1b2-7c00-7000-8000-0000000000a8",
+      "today": 7,
+      "createdAt": 1794322800000,
+      "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
       "adminSession": false,
       "adminUser": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a9",
-        "name": "Ada Example"
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
+        "name": "Sam Rivera"
       },
       "watch": {
-        "scannerIds": ["0193a1b2-7c00-7000-8000-0000000000aa"],
+        "scannerIds": ["0193a1b2-7c00-7000-8000-000000000031"],
         "allOrg": false,
-        "sessionIds": ["0193a1b2-7c00-7000-8000-0000000000ab"],
-        "eventId": "0193a1b2-7c00-7000-8000-0000000000ac",
-        "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000ad"]
+        "sessionIds": ["0193a1b2-7c00-7000-8000-000000000091"],
+        "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"]
       }
     }
   },
   "scanners.postScanningSessions": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Ada Example",
-      "timeZone": "example",
+      "name": "Front desk",
+      "timeZone": "America/Los_Angeles",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a2"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a3"]
-      },
-      "settings": {
-        "checkIn": {
-          "mode": "single"
-        }
-      }
-    },
-    "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a2",
-      "orgName": "Ada Example",
-      "mode": "live",
-      "name": "Ada Example",
-      "status": "active",
-      "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000a3"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000a4"]
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
       },
       "settings": {
         "checkIn": {
           "mode": "single",
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000a5",
-          "validFrom": 1,
-          "validUntil": 1,
-          "durationMinutes": 1,
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1"
+        },
+        "direction": "in"
+      },
+      "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgName": "Northwind Climbing",
+      "mode": "live",
+      "name": "Front desk",
+      "status": "active",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "validFrom": 1795532400000,
+          "validUntil": 1798124400000,
+          "durationMinutes": 90,
           "durationFrom": "first_scan",
-          "days": 1
+          "days": 18
         },
         "direction": "in",
         "showPhoto": false,
         "acceptAllTemplates": false,
         "flow": "auto",
-        "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+        "defaultActionId": "admit",
         "roleWithoutSignIn": "door",
         "staffSignIn": false,
         "letInAgain": "anyone",
-        "reader": "none",
+        "reader": "barcode",
         "lookup": false,
         "offline": false,
         "whenOffline": "stop",
-        "dailyAmount": 1,
+        "dailyAmount": 30,
         "deskActions": false,
         "hardLimit": false,
         "approvals": "managers",
@@ -1948,57 +1960,57 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["example"],
-          "confirmBasic": "none"
+          "types": ["generic"],
+          "confirmBasic": "staff"
         },
         "customer": {
-          "welcome": "example",
-          "refusedLine": "example",
+          "welcome": "The gym closes at 18:00 on 24 December.",
+          "refusedLine": "Left the gym early; refund issued at the",
           "greet": false,
           "showReady": false,
           "showDraft": false
         }
       },
-      "zoneIds": ["0193a1b2-7c00-7000-8000-0000000000a7"],
-      "timeZone": "example",
+      "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+      "timeZone": "America/Los_Angeles",
       "hours": {
-        "mon": ["09:00-17:00"],
-        "tue": ["09:00-17:00"],
-        "wed": ["09:00-17:00"],
-        "thu": ["09:00-17:00"],
-        "fri": ["09:00-17:00"],
-        "sat": ["09:00-17:00"],
-        "sun": ["09:00-17:00"],
+        "mon": ["09:00-21:00"],
+        "tue": ["09:00-21:00"],
+        "wed": ["09:00-21:00"],
+        "thu": ["09:00-21:00"],
+        "fri": ["09:00-21:00"],
+        "sat": ["09:00-21:00"],
+        "sun": ["09:00-21:00"],
         "dates": {
-          "example": ["09:00-17:00"]
+          "2026-12-24": ["09:00-21:00"]
         }
       },
       "hoursInvalid": true,
       "hold": {
         "state": "open",
-        "until": 1
+        "until": 21
       },
       "window": {
         "open": false,
         "by": "always",
-        "opensAt": 1764000000000,
-        "closesAt": 1764000000000
+        "opensAt": 1795521600000,
+        "closesAt": 1795521600000
       },
-      "createdAt": 1764000000000,
-      "updatedAt": 1764000000000,
-      "deviceCount": 10,
-      "onlineCount": 10,
-      "today": 1,
+      "createdAt": 1794322800000,
+      "updatedAt": 1795359600000,
+      "deviceCount": 24,
+      "onlineCount": 27,
+      "today": 7,
       "devices": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a8",
-          "sessionId": "0193a1b2-7c00-7000-8000-0000000000a9",
-          "name": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-000000000012",
+          "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
+          "name": "Front desk tablet",
           "surface": "auto",
           "effectiveSurface": "phone",
           "overrides": {
             "flow": "auto",
-            "reader": "none",
+            "reader": "barcode",
             "direction": "in",
             "lookup": false,
             "showPhoto": false
@@ -2006,26 +2018,26 @@
           "settings": {
             "checkIn": {
               "mode": "single",
-              "eventId": "0193a1b2-7c00-7000-8000-0000000000aa",
-              "validFrom": 1,
-              "validUntil": 1,
-              "durationMinutes": 1,
+              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+              "validFrom": 1795532400000,
+              "validUntil": 1798124400000,
+              "durationMinutes": 90,
               "durationFrom": "first_scan",
-              "days": 1
+              "days": 18
             },
             "direction": "in",
             "showPhoto": false,
             "acceptAllTemplates": false,
             "flow": "auto",
-            "defaultActionId": "0193a1b2-7c00-7000-8000-00000000",
+            "defaultActionId": "admit",
             "roleWithoutSignIn": "door",
             "staffSignIn": false,
             "letInAgain": "anyone",
-            "reader": "none",
+            "reader": "barcode",
             "lookup": false,
             "offline": false,
             "whenOffline": "stop",
-            "dailyAmount": 1,
+            "dailyAmount": 30,
             "deskActions": false,
             "hardLimit": false,
             "approvals": "managers",
@@ -2033,23 +2045,23 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["example"],
-              "confirmBasic": "none"
+              "types": ["generic"],
+              "confirmBasic": "staff"
             }
           },
           "capabilities": {
-            "width": 1,
-            "height": 1,
+            "width": 320,
+            "height": 100,
             "touch": false,
-            "camera": "unknown",
+            "camera": "available",
             "keyboard": false,
             "nativeBarcode": false,
             "native": {
               "platform": "ios",
-              "appVersion": "example",
+              "appVersion": "1.4.2",
               "camera": {
                 "available": false,
-                "permission": "unknown"
+                "permission": "prompt"
               },
               "keyboard": {
                 "supported": false,
@@ -2059,6 +2071,7 @@
               "nfc": {
                 "available": false,
                 "reading": false,
+                "continuous": false,
                 "formats": ["ndef"]
               },
               "haptics": false,
@@ -2066,7 +2079,7 @@
                 "deviceSupported": false,
                 "available": false,
                 "reader": "proximityReader",
-                "reason": "example"
+                "reason": "Left the gym early; refund issued at the desk."
               },
               "externalReader": {
                 "mode": "keyboard",
@@ -2075,130 +2088,215 @@
               "customerDisplay": {
                 "supported": false,
                 "available": false,
-                "active": false
+                "active": true
               },
               "layout": {
-                "posture": "unknown",
+                "posture": "folded",
                 "division": {
-                  "x": 1,
-                  "y": 1,
-                  "width": 1,
-                  "height": 1
+                  "x": 38,
+                  "y": 19,
+                  "width": 320,
+                  "height": 100
                 }
               }
             },
             "hardware": [
               {
                 "kind": "camera",
-                "count": 10,
+                "count": 12,
                 "builtIn": false,
                 "connected": false,
-                "state": "ready"
+                "state": "active"
               }
             ],
             "surfaces": ["phone"],
             "preferred": "phone"
           },
-          "reportedAt": 1764000000000,
+          "reportedAt": 1795521600000,
           "paired": false,
           "online": false,
           "revoked": false,
-          "lastSeenAt": 1764000000000,
-          "updatedAt": 1764000000000,
+          "lastSeenAt": 1795521600000,
+          "updatedAt": 1795359600000,
           "signIn": "paired",
-          "adminName": "Ada Example"
+          "adminName": "Sam Rivera"
         }
       ],
       "activity": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000ac",
-          "at": 1764000000000,
-          "deviceId": "0193a1b2-7c00-7000-8000-0000000000ad",
-          "deviceName": "Ada Example",
-          "passId": "0193a1b2-7c00-7000-8000-0000000000ae",
-          "title": "Ada Example",
+          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "at": 12,
+          "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
+          "deviceName": "Front desk tablet",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "title": "Front desk",
           "outcome": "ok",
           "direction": "in",
-          "scanId": "0193a1b2-7c00-7000-8000-0000000000af",
-          "reason": "not_found",
-          "staff": "example",
+          "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+          "reason": null,
+          "staff": "Sam Rivera",
           "method": "camera",
           "undoable": false,
-          "groupSize": 2
+          "groupSize": 24576
         }
       ]
     }
   },
   "scanners.getScanningSessionsByIdSummary": {
     "response": {
-      "from": 1,
-      "to": 1,
-      "total": 10,
-      "ok": 1,
-      "headsUp": 1,
-      "refused": 1,
-      "undone": 1,
+      "from": 23,
+      "to": 39,
+      "total": 128,
+      "ok": 38,
+      "headsUp": 33,
+      "refused": 0,
+      "undone": 4,
       "byAction": [
         {
-          "actionId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "label": "Ada Example",
-          "count": 10,
-          "amount": 1
+          "actionId": "admit",
+          "label": "Front desk",
+          "count": 12,
+          "amount": 14
         }
       ],
-      "firstAt": 1764000000000,
-      "lastAt": 1764000000000,
+      "firstAt": 1795521600000,
+      "lastAt": 1795521600000,
       "scope": "device",
-      "timeZone": "example",
+      "timeZone": "America/Los_Angeles",
       "byHour": [
         {
-          "start": 1,
-          "label": "Ada Example",
-          "count": 10,
-          "refused": 1
+          "start": 37,
+          "label": "Front desk",
+          "count": 12,
+          "refused": 0
         }
       ],
       "byValue": [
         {
           "kind": "add",
-          "count": 10,
-          "amount": 1
+          "count": 12,
+          "amount": 14
         }
       ],
       "byReason": [
         {
-          "reason": "example",
-          "count": 10
+          "reason": "Left the gym early; refund issued at the desk.",
+          "count": 12
         }
       ],
       "byType": [
         {
-          "templateId": "0193a1b2-7c00-7000-8000-0000000000a2",
-          "name": "Ada Example",
-          "count": 10
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "name": "Front desk",
+          "count": 12
         }
       ],
       "byStaff": [
         {
-          "staffId": "0193a1b2-7c00-7000-8000-0000000000a3",
-          "name": "Ada Example",
-          "count": 10,
-          "overrides": 1,
-          "refused": 1
+          "staffId": "0193a1b2-7c00-7000-8000-000000000022",
+          "name": "Sam Rivera",
+          "count": 12,
+          "overrides": 28,
+          "refused": 0
         }
       ],
       "overrides": {
-        "count": 10,
+        "count": 12,
         "latest": [
           {
-            "scanId": "0193a1b2-7c00-7000-8000-0000000000a4",
-            "at": 1764000000000,
-            "staffName": "Ada Example",
-            "approvedBy": "example",
-            "reason": "example"
+            "scanId": "0193a1b2-7c00-7000-8000-000000000043",
+            "at": 12,
+            "staffName": "Sam Rivera",
+            "approvedBy": "Sam Rivera",
+            "reason": "Left the gym early; refund issued at the desk."
           }
         ]
       }
+    }
+  },
+  "scanners.postScannersByIdPairHere": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "device",
+      "deviceRole": "scan",
+      "name": "Front desk",
+      "accepts": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+      },
+      "settings": {
+        "checkIn": {
+          "mode": "single",
+          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "validFrom": 1795532400000,
+          "validUntil": 1798124400000,
+          "durationMinutes": 90,
+          "durationFrom": "first_scan",
+          "days": 18
+        },
+        "direction": "in",
+        "showPhoto": false,
+        "acceptAllTemplates": false,
+        "flow": "auto",
+        "defaultActionId": "admit",
+        "roleWithoutSignIn": "door",
+        "staffSignIn": false,
+        "letInAgain": "anyone",
+        "reader": "barcode",
+        "lookup": false,
+        "offline": false,
+        "whenOffline": "stop",
+        "dailyAmount": 30,
+        "deskActions": false,
+        "hardLimit": false,
+        "approvals": "managers",
+        "tags": {
+          "assign": "desk",
+          "assignAll": "desk",
+          "level": "off",
+          "types": ["generic"],
+          "confirmBasic": "staff"
+        }
+      },
+      "timeZone": "America/Los_Angeles",
+      "status": "paired",
+      "online": false,
+      "pairedAt": null,
+      "pairedLabel": "Front desk tablet",
+      "lastSeenAt": 1795521600000,
+      "expiresAt": 1798124400000,
+      "staff": {
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "name": "Sam Rivera"
+      },
+      "today": 7,
+      "createdAt": 1794322800000
+    }
+  },
+  "scanners.postScanSetupsAdminSession": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "timeZone": "America/Los_Angeles"
+    },
+    "response": {
+      "setupId": "0193a1b2-7c00-7000-8000-97649ee38d19",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "timeZone": "America/Los_Angeles"
+    }
+  },
+  "scanners.postScanningSessionsJoin": {
+    "request": {
+      "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
+      "deviceKey": "0193a1b2-7c00-7000-8000-000000000021"
+    },
+    "response": {
+      "setupId": "0193a1b2-7c00-7000-8000-d4d465ea65bc",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "timeZone": "America/Los_Angeles"
     }
   }
 }

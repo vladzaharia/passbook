@@ -12,7 +12,7 @@
           "blockedUserIds": ["0193a1b2-7c00-7000-8000-000000000011"],
           "transfer": {
             "transferId": "0193a1b2-7c00-7000-8000-8f6ad34e44bc",
-            "state": "pending"
+            "state": "completed"
           },
           "reissueRequired": false,
           "updatedAt": 1795359600000
@@ -32,7 +32,7 @@
       "blockedUserIds": ["0193a1b2-7c00-7000-8000-000000000011"],
       "transfer": {
         "transferId": "0193a1b2-7c00-7000-8000-62731760715a",
-        "state": "pending"
+        "state": "completed"
       },
       "reissueRequired": false,
       "updatedAt": 1795359600000
@@ -53,7 +53,7 @@
       "blockedUserIds": ["0193a1b2-7c00-7000-8000-000000000011"],
       "transfer": {
         "transferId": "0193a1b2-7c00-7000-8000-f35819b88ca3",
-        "state": "pending"
+        "state": "completed"
       },
       "reissueRequired": false,
       "updatedAt": 1795359600000
@@ -80,7 +80,7 @@
           "blockedUserIds": ["0193a1b2-7c00-7000-8000-000000000011"],
           "transfer": {
             "transferId": "0193a1b2-7c00-7000-8000-2fc693ec4501",
-            "state": "pending"
+            "state": "completed"
           },
           "reissueRequired": false,
           "updatedAt": 1795359600000
@@ -104,7 +104,7 @@
       "blockedUserIds": ["0193a1b2-7c00-7000-8000-000000000011"],
       "transfer": {
         "transferId": "0193a1b2-7c00-7000-8000-91008c16e6d8",
-        "state": "pending"
+        "state": "completed"
       },
       "reissueRequired": false,
       "updatedAt": 1795359600000
@@ -124,7 +124,7 @@
       "blockedUserIds": ["0193a1b2-7c00-7000-8000-000000000011"],
       "transfer": {
         "transferId": "0193a1b2-7c00-7000-8000-6be24c5bbf26",
-        "state": "pending"
+        "state": "completed"
       },
       "reissueRequired": false,
       "updatedAt": 1795359600000

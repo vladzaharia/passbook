@@ -4,7 +4,7 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "id": "0193a1b2-7c00-7000-8000-053478282bf0",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "kind": "pass",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -21,7 +21,7 @@
   "sandbox.getTestInboxById": {
     "description": "One captured email with its HTML and text.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "id": "0193a1b2-7c00-7000-8000-9e5aec0e262e",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "pass",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -32,7 +32,7 @@
       "createdAt": 1794322800000,
       "html": "html",
       "text": "The gym closes at 18:00 on 24 December.",
-      "forwarding": "none"
+      "forwarding": "sent"
     }
   }
 }

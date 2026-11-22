@@ -25,9 +25,9 @@
           },
           "defaults": {
             "intervalSeconds": 300,
-            "maxConcurrency": 3,
+            "maxConcurrency": 29,
             "requestsPerMinute": 60,
-            "timeoutMs": 3
+            "timeoutMs": 1491
           },
           "recipes": [
             {
@@ -36,7 +36,8 @@
               "pasteSecret": false,
               "outputFields": {
                 "tier": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "A day pass for the climbing gym, scanned at the front desk."
                 }
               },
               "mapping": {
@@ -53,8 +54,9 @@
               "holderEmailField": "/Holder email",
               "voidWhen": [
                 {
-                  "from": "Booking sheet",
-                  "op": "in"
+                  "from": "Tier",
+                  "op": "in",
+                  "values": ["Refunded"]
                 }
               ]
             }
@@ -88,9 +90,9 @@
       },
       "defaults": {
         "intervalSeconds": 300,
-        "maxConcurrency": 3,
+        "maxConcurrency": 29,
         "requestsPerMinute": 60,
-        "timeoutMs": 3
+        "timeoutMs": 1491
       },
       "recipes": [
         {
@@ -117,9 +119,9 @@
           "holderEmailField": "/Holder email",
           "voidWhen": [
             {
-              "from": "Booking sheet",
+              "from": "Tier",
               "op": "in",
-              "values": ["Day pass"]
+              "values": ["Refunded"]
             }
           ]
         }

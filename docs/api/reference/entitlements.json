@@ -8,7 +8,7 @@
       "items": [
         {
           "key": "api",
-          "value": 3,
+          "value": 15,
           "source": "preset"
         }
       ]
@@ -17,27 +17,27 @@
   "entitlements.getPlatformOrgsByIdEntitlements": {
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "preset": "example",
-      "presetLabel": "Ada Example",
-      "revision": 1,
-      "updatedAt": 1764000000000,
+      "preset": "standard",
+      "presetLabel": "presetLabel",
+      "revision": 3,
+      "updatedAt": 1795359600000,
       "items": [
         {
           "key": "api",
-          "value": 1,
-          "presetValue": 1,
+          "value": 15,
+          "presetValue": 20,
           "source": "preset",
-          "note": "example",
-          "expiresAt": 1764000000000
+          "note": "Photo ID checked at the desk.",
+          "expiresAt": 1798124400000
         }
       ],
       "presets": [
         {
-          "preset": "example",
-          "label": "Ada Example",
-          "orgCount": 10,
+          "preset": "standard",
+          "label": "Day pass",
+          "orgCount": 8,
           "values": {
-            "example": 1
+            "tier": 8
           }
         }
       ]
@@ -45,38 +45,39 @@
   },
   "entitlements.putPlatformOrgsByIdEntitlements": {
     "request": {
-      "expectedRevision": 1,
-      "preset": "example",
+      "expectedRevision": 3,
+      "preset": "standard",
       "overrides": {
-        "example": {
-          "value": 1,
-          "note": "example"
+        "tier": {
+          "value": 15,
+          "note": "Photo ID checked at the desk.",
+          "expiresAt": 1798124400000
         }
       }
     },
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "preset": "example",
-      "presetLabel": "Ada Example",
-      "revision": 1,
-      "updatedAt": 1764000000000,
+      "preset": "standard",
+      "presetLabel": "presetLabel",
+      "revision": 3,
+      "updatedAt": 1795359600000,
       "items": [
         {
           "key": "api",
-          "value": 1,
-          "presetValue": 1,
+          "value": 15,
+          "presetValue": 20,
           "source": "preset",
-          "note": "example",
-          "expiresAt": 1764000000000
+          "note": "Photo ID checked at the desk.",
+          "expiresAt": 1798124400000
         }
       ],
       "presets": [
         {
-          "preset": "example",
-          "label": "Ada Example",
-          "orgCount": 10,
+          "preset": "standard",
+          "label": "Day pass",
+          "orgCount": 8,
           "values": {
-            "example": 1
+            "tier": 8
           }
         }
       ]

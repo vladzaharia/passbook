@@ -1,0 +1,299 @@
+{
+  "developer.getLogs": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "requestId": "0193a1b2-7c00-7000-8000-dbe949fceb62",
+          "at": 12,
+          "method": "method",
+          "route": "route",
+          "path": "input.tier",
+          "query": "query",
+          "status": 7,
+          "code": "NW7K2Q",
+          "durationMs": 1240,
+          "keyId": "0193a1b2-7c00-7000-8000-000000000021",
+          "mode": "live",
+          "via": "try",
+          "client": "client",
+          "hasBodies": true
+        }
+      ],
+      "nextCursor": "c1.4812",
+      "capped": "hour"
+    }
+  },
+  "developer.getLog": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "requestId": "0193a1b2-7c00-7000-8000-716455de049a",
+      "at": 12,
+      "method": "method",
+      "route": "route",
+      "path": "input.tier",
+      "query": "query",
+      "status": 7,
+      "code": "NW7K2Q",
+      "durationMs": 1240,
+      "keyId": "0193a1b2-7c00-7000-8000-000000000021",
+      "mode": "live",
+      "via": "try",
+      "client": "client",
+      "hasBodies": true,
+      "requestBody": "requestBody",
+      "responseBody": "responseBody",
+      "bodiesExpireAt": 1795521600000
+    }
+  },
+  "developer.getRail": {
+    "response": {
+      "mode": "live",
+      "scopes": ["passes:read"],
+      "tier": "standard",
+      "limitPerMinute": 60,
+      "callsLastHour": 11,
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
+        "name": "Server integration",
+        "prefix": "whsec_demo"
+      }
+    }
+  },
+  "developer.getResolve": {
+    "response": {
+      "kind": "request",
+      "href": "href",
+      "label": "Day pass"
+    }
+  },
+  "developer.getAccess": {
+    "response": {
+      "access": "yes",
+      "signInUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8"
+    }
+  },
+  "developer.getHome": {
+    "response": {
+      "now": 7,
+      "state": "open",
+      "sandbox": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgSlug": "orgSlug",
+        "name": "Day pass",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "mode": "test",
+        "previewOnly": true,
+        "createdAt": 1794322800000,
+        "closedAt": 1795521600000,
+        "closeReason": "idle",
+        "reopenUntil": 1798124400000,
+        "limits": {
+          "passes": 37,
+          "templates": 21,
+          "endpoints": 13,
+          "keys": 39
+        }
+      },
+      "progress": {
+        "startedAt": 1794322800000,
+        "restartedAt": 1795521600000,
+        "sandboxAt": 1795521600000,
+        "keyCallAt": 1795521600000,
+        "passAt": 1795521600000,
+        "changeAt": 1795521600000,
+        "webhookAt": 1795521600000,
+        "doneAt": 1795521600000,
+        "doneMs": 992,
+        "next": "sandbox"
+      },
+      "usage": {
+        "calls24h": 38,
+        "errors24h": 0,
+        "captures24h": 22,
+        "passes": 37,
+        "series": {
+          "from": 23,
+          "calls": [26],
+          "errors": [13]
+        }
+      },
+      "keys": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000021",
+          "name": "Server integration",
+          "secretPrefix": "whsec_demo",
+          "scopes": ["passes:read"],
+          "createdAt": 1794322800000,
+          "expiresAt": 1798124400000,
+          "lastUsedAt": 1795521600000,
+          "retireAt": null,
+          "sandboxKey": false
+        }
+      ],
+      "calls": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "requestId": "0193a1b2-7c00-7000-8000-0a8b002ca006",
+          "at": 12,
+          "method": "method",
+          "route": "route",
+          "path": "input.tier",
+          "query": "query",
+          "status": 7,
+          "code": "NW7K2Q",
+          "durationMs": 1240,
+          "keyId": "0193a1b2-7c00-7000-8000-000000000021",
+          "mode": "live",
+          "via": "try",
+          "client": "client",
+          "hasBodies": true
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000061",
+          "target": "capture",
+          "url": "https://hooks.example.com/passbook",
+          "status": "active",
+          "eventTypes": ["eventType"],
+          "lastAt": 1795521600000,
+          "lastOk": false
+        }
+      ],
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "title": "Day pass",
+          "subtitle": "Ada Example",
+          "status": "active",
+          "version": 3,
+          "createdAt": 1794322800000,
+          "modifiedAt": 1795359600000,
+          "previewUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8"
+        }
+      ],
+      "liveOrgs": [
+        {
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Day pass",
+          "slug": "day-pass",
+          "roles": ["org_admin"],
+          "canMintLive": true
+        }
+      ]
+    }
+  },
+  "developer.postSandbox": {
+    "request": {
+      "turnstileToken": "turnstileToken",
+      "viewedAt": 1795521600000
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgSlug": "orgSlug",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "previewOnly": true,
+      "createdAt": 1794322800000,
+      "closedAt": 1795521600000,
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
+        "name": "Server integration",
+        "secret": "whsec_demo002aa94bc847c36aef03c721b31d",
+        "mode": "test",
+        "expiresAt": 1798124400000
+      },
+      "previousKey": null
+    }
+  },
+  "developer.getSandbox": {
+    "response": {
+      "sandbox": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgSlug": "orgSlug",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "previewOnly": true,
+        "createdAt": 1794322800000,
+        "closedAt": 1795521600000
+      },
+      "turnstileSiteKey": "turnstileSiteKey"
+    }
+  },
+  "developer.deleteSandbox": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgSlug": "orgSlug",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "previewOnly": true,
+      "createdAt": 1794322800000,
+      "closedAt": 1795521600000
+    }
+  },
+  "developer.postSandboxReset": {
+    "request": {
+      "turnstileToken": "turnstileToken"
+    },
+    "response": {
+      "sandbox": {
+        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "orgSlug": "orgSlug",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "previewOnly": true,
+        "createdAt": 1794322800000,
+        "closedAt": 1795521600000
+      },
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
+        "name": "Server integration",
+        "secret": "whsec_demo3bfe98ab18b381f43e2f85180c99",
+        "mode": "test",
+        "expiresAt": 1798124400000
+      },
+      "deleted": {
+        "passes": 37,
+        "captures": 32,
+        "calls": 8,
+        "other": 26
+      },
+      "kept": 14,
+      "more": false,
+      "resetsLeft": 3
+    }
+  },
+  "developer.postSandboxReopen": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgSlug": "orgSlug",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "previewOnly": true,
+      "createdAt": 1794322800000,
+      "closedAt": 1795521600000,
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
+        "name": "Server integration",
+        "secret": "whsec_demo1a6dad10dd6d550a11c1486e9e06",
+        "mode": "test",
+        "expiresAt": 1798124400000
+      },
+      "previousKey": null
+    }
+  },
+  "developer.postTryToken": {
+    "response": {
+      "token": "pb_test_k3Qx9Zt2_3eae7039cab36f88b5186a04713dc9433236b56f68f",
+      "expiresAt": 1798124400000
+    }
+  },
+  "developer.deleteTryToken": {
+    "response": {
+      "ok": true
+    }
+  }
+}

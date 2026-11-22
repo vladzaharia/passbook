@@ -5,7 +5,7 @@
       "items": [
         {
           "occupancy": "off",
-          "capacity": 3,
+          "capacity": 38,
           "maxStayMinutes": 15,
           "hardLimit": false,
           "clearAt": "04:00",
@@ -16,9 +16,9 @@
           "parentId": "0193a1b2-7c00-7000-8000-02e051ce892a",
           "timeZone": "America/Los_Angeles",
           "effectiveTimeZone": "America/Los_Angeles",
-          "sort": 3,
+          "sort": 11,
           "depth": 3,
-          "sessions": 3,
+          "sessions": 34,
           "checkedAt": [
             {
               "id": "0193a1b2-7c00-7000-8000-000000000081",
@@ -33,7 +33,7 @@
               "label": "Main hall"
             }
           ],
-          "inNow": 3,
+          "inNow": 8,
           "archivedAt": null
         }
       ],
@@ -44,7 +44,7 @@
     "description": "Creates a zone.",
     "request": {
       "occupancy": "off",
-      "capacity": 3,
+      "capacity": 38,
       "maxStayMinutes": 15,
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "key": "tier",
@@ -52,7 +52,7 @@
     },
     "response": {
       "occupancy": "off",
-      "capacity": 3,
+      "capacity": 38,
       "maxStayMinutes": 15,
       "hardLimit": false,
       "clearAt": "04:00",
@@ -63,9 +63,9 @@
       "parentId": "0193a1b2-7c00-7000-8000-da4db099ff6f",
       "timeZone": "America/Los_Angeles",
       "effectiveTimeZone": "America/Los_Angeles",
-      "sort": 3,
+      "sort": 11,
       "depth": 3,
-      "sessions": 3,
+      "sessions": 34,
       "checkedAt": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000081",
@@ -80,7 +80,7 @@
           "label": "Main hall"
         }
       ],
-      "inNow": 3,
+      "inNow": 8,
       "archivedAt": null
     }
   },
@@ -88,12 +88,12 @@
     "description": "Edits a zone.",
     "request": {
       "occupancy": "off",
-      "capacity": 3,
+      "capacity": 38,
       "maxStayMinutes": 15
     },
     "response": {
       "occupancy": "off",
-      "capacity": 3,
+      "capacity": 38,
       "maxStayMinutes": 15,
       "hardLimit": false,
       "clearAt": "04:00",
@@ -104,9 +104,9 @@
       "parentId": "0193a1b2-7c00-7000-8000-60b007bcf07b",
       "timeZone": "America/Los_Angeles",
       "effectiveTimeZone": "America/Los_Angeles",
-      "sort": 3,
+      "sort": 11,
       "depth": 3,
-      "sessions": 3,
+      "sessions": 34,
       "checkedAt": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000081",
@@ -121,7 +121,7 @@
           "label": "Main hall"
         }
       ],
-      "inNow": 3,
+      "inNow": 8,
       "archivedAt": null
     }
   },
@@ -129,7 +129,7 @@
     "description": "Archives a zone and the zones below it.",
     "response": {
       "occupancy": "off",
-      "capacity": 3,
+      "capacity": 38,
       "maxStayMinutes": 15,
       "hardLimit": false,
       "clearAt": "04:00",
@@ -140,9 +140,9 @@
       "parentId": "0193a1b2-7c00-7000-8000-3f15685e3cc7",
       "timeZone": "America/Los_Angeles",
       "effectiveTimeZone": "America/Los_Angeles",
-      "sort": 3,
+      "sort": 11,
       "depth": 3,
-      "sessions": 3,
+      "sessions": 34,
       "checkedAt": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000081",
@@ -157,7 +157,7 @@
           "label": "Main hall"
         }
       ],
-      "inNow": 3,
+      "inNow": 8,
       "archivedAt": null
     }
   },
@@ -165,7 +165,7 @@
     "description": "Restores a zone and the zones below it.",
     "response": {
       "occupancy": "off",
-      "capacity": 3,
+      "capacity": 38,
       "maxStayMinutes": 15,
       "hardLimit": false,
       "clearAt": "04:00",
@@ -176,9 +176,9 @@
       "parentId": "0193a1b2-7c00-7000-8000-6cd02b708732",
       "timeZone": "America/Los_Angeles",
       "effectiveTimeZone": "America/Los_Angeles",
-      "sort": 3,
+      "sort": 11,
       "depth": 3,
-      "sessions": 3,
+      "sessions": 34,
       "checkedAt": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000081",
@@ -193,7 +193,7 @@
           "label": "Main hall"
         }
       ],
-      "inNow": 3,
+      "inNow": 8,
       "archivedAt": null
     }
   },
@@ -208,30 +208,30 @@
     "response": {
       "items": [
         {
-          "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "holder": "example",
-          "photoUrl": "https://passbook.mobile/p/abc123",
-          "plan": "example",
-          "type": "example",
-          "host": "example",
-          "place": "zone:main",
-          "placeName": "Ada Example",
-          "parentName": "Ada Example",
-          "since": 1,
-          "dueAt": 1764000000000,
-          "via": "example",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+          "plan": "Day pass",
+          "type": "generic",
+          "host": "host",
+          "place": "zone:main-hall",
+          "placeName": "Main hall",
+          "parentName": "Main hall",
+          "since": 1794322800000,
+          "dueAt": 1795521600000,
+          "via": "api",
           "flags": ["long_stay"]
         }
       ],
-      "count": 10,
-      "rev": 1,
+      "count": 12,
+      "rev": 24,
       "places": [
         {
-          "name": "Ada Example",
-          "inNow": 1,
-          "capacity": 10,
-          "place": "zone:main",
-          "rev": 1
+          "name": "Main hall",
+          "inNow": 8,
+          "capacity": 38,
+          "place": "zone:main-hall",
+          "rev": 24
         }
       ],
       "nextCursor": "c1.4812"
@@ -239,8 +239,8 @@
   },
   "scan-zones.postScanZonesByIdMarkOut": {
     "request": {
-      "passId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "place": "zone:main"
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "place": "zone:main-hall"
     }
   }
 }

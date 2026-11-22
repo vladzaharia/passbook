@@ -43,6 +43,7 @@ export const IDS: Record<string, string> = {
   serial: id(0xc2),
   action: id(0x73),
   member: id(0x11),
+  key2: id(0x24),
 };
 
 /** A tag or a key name (singular, lower-case) to the kind of resource whose id it holds. */
@@ -151,6 +152,14 @@ export const TEXT = {
   timeZone: 'America/Los_Angeles',
   locale: 'en-US',
 };
+
+/** An API key's lookup prefix (8 characters) and its test-mode secret: `pb_test_<prefix>_<43 characters>`. */
+export const KEY_PREFIX = 'k3Qx9Zt2';
+export const NEW_KEY_PREFIX = 'p7Wm4Hn8';
+export const keySecret = (prefix: string): string =>
+  `pb_test_${prefix}_${hex(`secret${prefix}`, 43)}`;
+/** A webhook signing secret, marked demo so it is plainly not a working one. */
+export const webhookSecret = (seed: string): string => `whsec_demo${hex(seed, 28)}`;
 
 /** Stable fake hex of `len` digits from a seed, so no two fields share a sample. */
 export function hex(seed: string, len: number): string {

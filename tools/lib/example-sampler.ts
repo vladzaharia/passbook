@@ -4,7 +4,9 @@ import {
   CANON,
   hex,
   IDS,
+  KEY_PREFIX,
   KIND_OF_TAG,
+  keySecret,
   NAMES,
   ORG,
   ORG_SLUG,
@@ -12,6 +14,7 @@ import {
   T,
   TEMPLATE,
   TEXT,
+  webhookSecret,
 } from './example-world.ts';
 
 // biome-ignore lint/suspicious/noExplicitAny: schemas and samples are untyped JSON
@@ -128,13 +131,14 @@ function stringFor(key: string, kind: string, ctx: Ctx): string | undefined {
     ],
     [
       /^(secret|webhookSecret|newSecret)$/,
-      () =>
-        ctx.kind === 'key'
-          ? `pb_live_${hex(`${ctx.op}${k}`, 32)}`
-          : `whsec_${hex(`${ctx.op}${k}`, 32)}`,
+      () => (ctx.kind === 'key' ? keySecret(KEY_PREFIX) : webhookSecret(`${ctx.op}${k}`)),
     ],
-    [/^(secretPrefix|prefix)$/, () => (ctx.kind === 'key' ? 'pb_live_8Qw3' : 'whsec_4f9a')],
-    [/^(token|apiKey|rawKey)$/, () => `pb_live_${hex(`${ctx.op}${k}`, 32)}`],
+    [/^secretPrefix$/, () => (ctx.kind === 'key' ? `pb_test_${KEY_PREFIX}` : 'whsec_demo')],
+    [/^prefix$/, () => (ctx.kind === 'key' ? KEY_PREFIX : 'whsec_demo')],
+    [
+      /^(token|apiKey|rawKey)$/,
+      () => (/Try/.test(ctx.op) ? keySecret(KEY_PREFIX) : hex(`${ctx.op}${k}`, 32)),
+    ],
     [/^(privateKeyPem|keyPem|pem)$/, '-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----'],
     [
       /^(certificatePem|publicKeyPem)$/,
@@ -156,7 +160,9 @@ function stringFor(key: string, kind: string, ctx: Ctx): string | undefined {
         k === 'note'
           ? TEXT.note
           : k === 'detail' || k === 'errorDetail'
-            ? TEXT.detail
+            ? /onnection/.test(ctx.op)
+              ? 'Read 3 rows from the sheet.'
+              : TEXT.detail
             : k === 'subject'
               ? 'Your day pass'
               : TEXT.message,
@@ -243,9 +249,9 @@ function contextString(key: string, kind: string, path: string, ctx: Ctx): strin
     case 'flags':
       return 'urgent';
     case 'value':
-      return 'Day pass';
+      return /voidWhen/.test(path) ? 'Refunded' : 'Day pass';
     case 'values':
-      return 'Day pass';
+      return /voidWhen/.test(path) ? 'Refunded' : 'Day pass';
     case 'key':
       return 'tier';
     case 'ref':
@@ -267,7 +273,11 @@ function contextString(key: string, kind: string, path: string, ctx: Ctx): strin
     case 'to':
       return 'ada@example.com';
     case 'from':
-      return /email|rule|broadcast/i.test(ctx.op) ? 'hello@example.com' : 'Booking sheet';
+      return /voidWhen/.test(path)
+        ? 'Tier'
+        : /email|rule|broadcast/i.test(ctx.op)
+          ? 'hello@example.com'
+          : 'Booking sheet';
     case 'end':
       return '2026-12-31';
     case 'sendAt':
@@ -330,14 +340,16 @@ function contextString(key: string, kind: string, path: string, ctx: Ctx): strin
     case 'releaseBlocked':
       return 'no_release';
     case 'sheetsToken':
-      return `ya29.${hex(`${ctx.op}${path}`, 40)}`;
+      return '••••3f9c';
     case 'types':
     case 'type_':
       return 'wristband';
+    case 'keyId':
+      return 'A1B2C3D4E5';
     case 'uid':
       return '04A3B2C1D5E680';
     case 'undoes':
-      return IDS.scan;
+      return `0193a1b2-7c00-7000-8000-${hex(`${ctx.op}undoes`, 12)}`;
     case 'urlMasked':
       return 'https://hooks.example.com/…';
     case 'assetName':
@@ -370,12 +382,34 @@ function nameField(key: string, kind: string, path: string): string | undefined 
   return nameFor(key, kind);
 }
 
-const PREFER = ['healthy', 'active', 'ok', 'done', 'ready', 'live', 'succeeded', 'standard'];
+const PREFER = [
+  'healthy',
+  'active',
+  'ok',
+  'done',
+  'succeeded',
+  'success',
+  'completed',
+  'complete',
+  'finished',
+  'sent',
+  'delivered',
+  'paired',
+  'ready',
+  'live',
+  'standard',
+];
+/** States that say a thing has not happened yet; an everyday example is past them. */
+const UNSETTLED =
+  /^(pending|running|queued|claimed|scheduled|draft|not_paired|unknown|none|retry|blocked|absent)$/;
 function pickEnum(values: unknown[], key: string): unknown {
   if (values.includes(null) && /^(reason|milestone|turnaround)$/.test(key)) return null;
   if (values.includes('')) return '';
   if (key === 'screen') return 'ok';
-  return PREFER.find((p) => values.includes(p)) ?? values.find((x) => x !== null) ?? values[0];
+  const settled = values.find((x) => typeof x === 'string' && !UNSETTLED.test(x));
+  return (
+    PREFER.find((p) => values.includes(p)) ?? settled ?? values.find((x) => x !== null) ?? values[0]
+  );
 }
 
 /** Fields that describe a resource gone wrong or retired; an everyday example leaves them empty. */
@@ -420,7 +454,7 @@ export function sample(
     case 'null':
       return null;
     case 'array': {
-      if (depth > 6) return [];
+      if (depth > 8) return [];
       if (s.prefixItems)
         return s.prefixItems.map((it: Json, i: number) =>
           sample(ctx, it, key, `${path}[${i}]`, subKind, depth + 1),
@@ -465,6 +499,13 @@ function object(
   const out: Json = {};
   const canon = ctx.request ? {} : (CANON.find((c) => c.has.every((k) => k in props))?.value ?? {});
   const required: string[] = s.required ?? [];
+  // A row whose `id` would equal one of its own foreign keys (a release holds `templateId`) is its own kind.
+  const foreign = new Set(
+    Object.keys(props)
+      .filter((k) => k.endsWith('Id'))
+      .map((k) => KIND_KEYS[k.slice(0, -2)]),
+  );
+  const idKind = foreign.has(kind) ? ownKindOf(ctx.op) : kind;
   let optional = 0;
   const cap = ctx.request ? (depth === 0 ? 3 : 2) : 14;
   for (const [k, v] of Object.entries<Json>(props)) {
@@ -479,11 +520,15 @@ function object(
     }
     if (!required.includes(k) && !(k in canon) && Object.keys(canon).length) continue;
     if (!required.includes(k) && !(k in canon)) {
-      if (v.deprecated || optional >= cap || depth > 4) continue;
+      if (v.deprecated || optional >= cap || depth > 8) continue;
       optional++;
     }
-    out[k] = k in canon ? canon[k] : sample(ctx, v, k, `${path}.${k}`, kind, depth + 1);
+    out[k] =
+      k in canon
+        ? canon[k]
+        : sample(ctx, v, k, `${path}.${k}`, k === 'id' ? idKind : kind, depth + 1);
   }
+  fixState(out, props);
   if (!Object.keys(props).length) {
     const extra = s.additionalProperties;
     const mapKey =
@@ -527,18 +572,23 @@ function str(ctx: Ctx, s: Json, key: string, path: string, kind: string): string
         ? 'help@example.com'
         : 'ada@example.com';
   if (f === 'uri' || f === 'url') return `${SITE}/p/xK3v9QmT2Lw8`;
+  const uuidPattern =
+    (!s.pattern || s.pattern.startsWith('^[0-9a-fA-F]{8}-')) && (!s.maxLength || s.maxLength >= 36);
   if (
-    f === 'uuid' ||
-    /^id$|Id$|^serial$|^serialNumber$|^(createdBy|updatedBy|startedBy|endedBy|requestedBy)$/.test(
-      key,
-    )
+    uuidPattern &&
+    (f === 'uuid' ||
+      /^id$|Id$|^serial$|^serialNumber$|^(createdBy|updatedBy|startedBy|endedBy|requestedBy)$/.test(
+        key,
+      ))
   ) {
     const base = key.replace(/Id$/, '');
     const k =
       KIND_KEYS[base] ??
       KIND_KEYS[base.replace(/^.*(?=[A-Z])/, '').replace(/^./, (c) => c.toLowerCase())] ??
       (/^id$/.test(key) ? kind : undefined);
-    const hit = k ? IDS[k] : undefined;
+    // A source, previous or parent id names another row of the same kind, never this one.
+    const hit =
+      k && !/^(source|previous|parent|prior|original|base|undoes)/.test(key) ? IDS[k] : undefined;
     return hit ?? `0193a1b2-7c00-7000-8000-${hex(`${ctx.op}${path}`, 12)}`;
   }
   const name = nameField(key, kind, path);
@@ -582,6 +632,9 @@ const PATTERNS: [string, (seed: string) => string][] = [
   ['^[a-z0-9]{8}$', (s) => hex(s, 8)],
   ['^[0-9a-fA-F]{32}$', (s) => hex(s, 32)],
   ['^([01]\\d|2[0-3]):[0-5]\\d$', () => '04:00'],
+  ['^[0-9]{1,32}$', () => '3388000000022843210'],
+  ['^[A-Za-z0-9_-]{43}$', (s) => hex(s, 43)],
+  ['^[0-9a-f]{32}$', (s) => hex(s, 32)],
   ['^\\d{6}$', (s) => String(100000 + (parseInt(hex(s, 5), 16) % 899999))],
 ];
 function byPattern(pattern: string, seed: string): string | undefined {
@@ -603,7 +656,7 @@ function byPattern(pattern: string, seed: string): string | undefined {
 }
 
 function num(s: Json, key: string): number {
-  let v = 3;
+  let v = 2 + (Number.parseInt(hex(key, 4), 16) % 38);
   if (/validFrom$|^windowFrom$|From$/.test(key)) v = T.validFrom;
   else if (/validUntil$|Until$|After$|^notAfter$|expiresAt$|^expires/.test(key))
     v = /breaker/.test(key) ? T.soon : /undo/.test(key) ? T.soon : T.validUntil;
@@ -614,12 +667,15 @@ function num(s: Json, key: string): number {
   else if (/^height$/.test(key)) v = 100;
   else if (/size|bytes/i.test(key)) v = 24576;
   else if (/PerMinute$/.test(key)) v = 60;
+  else if (/Ms$/.test(key)) v = 800 + (Number.parseInt(hex(key, 4), 16) % 1200);
+  else if (/^attempts?$/.test(key)) v = 1;
+  else if (/^since$/.test(key)) v = T.created;
   else if (/Status$/.test(key)) v = 200;
   else if (/limit/i.test(key)) v = 25;
   else if (/durationMinutes/.test(key)) v = 90;
   else if (/intervalSeconds/.test(key)) v = 300;
   else if (/failures|count|errors|refused|devices|registrations/i.test(key))
-    v = /failures|errors|refused/i.test(key) ? 0 : 12;
+    v = /failures|errors|refused/i.test(key) ? 0 : 4 + (Number.parseInt(hex(key, 4), 16) % 30);
   else if (/^version$|Version$|generation|revision/i.test(key)) v = 3;
   else if (/total|passCount|used/.test(key)) v = 128;
   if (typeof s.minimum === 'number' && v < s.minimum) v = s.minimum;
@@ -630,3 +686,24 @@ function num(s: Json, key: string): number {
 }
 
 export const kindOfOp = (tag: string): string => KIND_OF_TAG[tag] ?? 'pass';
+
+/** What a row's own id is called when its kind is also one of its foreign keys; `row` gets a fresh id. */
+function ownKindOf(op: string): string {
+  if (/Release/.test(op)) return 'release';
+  if (/Candidate/.test(op)) return 'candidate';
+  if (/Print/.test(op)) return 'print';
+  if (/Event/.test(op)) return 'event';
+  return 'row';
+}
+
+/** Fields that must agree with each other after sampling. */
+function fixState(out: Json, props: Json): void {
+  if ('prefix' in props && 'secretPrefix' in props && 'mode' in out) out.mode = 'test';
+  if ('webhookUrl' in props && 'mode' in out) {
+    const inbound = out.mode === 'webhook' || out.mode === 'hybrid';
+    out.webhookUrl = inbound ? `${API}/hooks/connections/${IDS.connection}` : null;
+    if ('hasWebhookSecret' in out) out.hasWebhookSecret = inbound;
+    if ('webhookPrevUntil' in out) out.webhookPrevUntil = null;
+    if (!inbound) delete out.webhookSecret;
+  }
+}

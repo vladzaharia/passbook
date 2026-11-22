@@ -20,7 +20,7 @@
             "input": "tier"
           },
           "offset": {
-            "amount": 3,
+            "amount": 14,
             "unit": "day",
             "when": "before"
           },
@@ -33,8 +33,8 @@
           "state": "on",
           "pausedCode": "RULE_CREATOR_REVOKED",
           "nextCheckAt": 1795521600000,
-          "sent": 3,
-          "skipped": 3,
+          "sent": 4,
+          "skipped": 7,
           "createdAt": 1794322800000,
           "updatedAt": 1795359600000,
           "version": 3
@@ -60,7 +60,7 @@
         "input": "tier"
       },
       "offset": {
-        "amount": 3,
+        "amount": 14,
         "unit": "day",
         "when": "before"
       },
@@ -86,7 +86,7 @@
         "input": "tier"
       },
       "offset": {
-        "amount": 3,
+        "amount": 14,
         "unit": "day",
         "when": "before"
       },
@@ -99,8 +99,8 @@
       "state": "on",
       "pausedCode": "RULE_CREATOR_REVOKED",
       "nextCheckAt": 1795521600000,
-      "sent": 3,
-      "skipped": 3,
+      "sent": 4,
+      "skipped": 7,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
       "version": 3
@@ -125,7 +125,7 @@
         "input": "tier"
       },
       "offset": {
-        "amount": 3,
+        "amount": 14,
         "unit": "day",
         "when": "before"
       },
@@ -138,8 +138,8 @@
       "state": "on",
       "pausedCode": "RULE_CREATOR_REVOKED",
       "nextCheckAt": 1795521600000,
-      "sent": 3,
-      "skipped": 3,
+      "sent": 4,
+      "skipped": 7,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
       "version": 3
@@ -162,7 +162,7 @@
         "input": "tier"
       },
       "offset": {
-        "amount": 3,
+        "amount": 14,
         "unit": "day",
         "when": "before"
       },
@@ -189,7 +189,7 @@
         "input": "tier"
       },
       "offset": {
-        "amount": 3,
+        "amount": 14,
         "unit": "day",
         "when": "before"
       },
@@ -202,8 +202,8 @@
       "state": "on",
       "pausedCode": "RULE_CREATOR_REVOKED",
       "nextCheckAt": 1795521600000,
-      "sent": 3,
-      "skipped": 3,
+      "sent": 4,
+      "skipped": 7,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
       "version": 3
@@ -234,7 +234,7 @@
         "input": "tier"
       },
       "offset": {
-        "amount": 3,
+        "amount": 14,
         "unit": "day",
         "when": "before"
       },
@@ -247,8 +247,8 @@
       "state": "on",
       "pausedCode": "RULE_CREATOR_REVOKED",
       "nextCheckAt": 1795521600000,
-      "sent": 3,
-      "skipped": 3,
+      "sent": 4,
+      "skipped": 7,
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
       "version": 3
@@ -259,12 +259,12 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000052",
+          "id": "0193a1b2-7c00-7000-8000-5120022e8ccb",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "kind": "message",
           "name": "Renewal reminder",
-          "state": "draft",
+          "state": "sent",
           "target": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
             "onDevice": false,
@@ -286,21 +286,21 @@
             "healthy": {}
           },
           "notify": false,
-          "at": 3,
+          "at": 12,
           "clearAfter": 1798124400000,
           "parentId": "0193a1b2-7c00-7000-8000-da3c0125d33e",
           "message": "The gym closes at 18:00 on 24 December.",
           "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
           "followUp": {
             "id": "0193a1b2-7c00-7000-8000-000000000052",
-            "at": 3
+            "at": 12
           },
           "counts": {
-            "targeted": 3,
-            "updated": 3,
-            "unchanged": 3,
-            "overBudget": 3,
-            "failed": 3
+            "targeted": 16,
+            "updated": 10,
+            "unchanged": 11,
+            "overBudget": 39,
+            "failed": 28
           },
           "errorCode": null,
           "createdAt": 1794322800000,
@@ -328,7 +328,7 @@
         "input": "tier"
       },
       "offset": {
-        "amount": 3,
+        "amount": 14,
         "unit": "day",
         "when": "before"
       },
@@ -354,12 +354,12 @@
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000052",
+      "id": "0193a1b2-7c00-7000-8000-08164885d0ea",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
       "name": "Renewal reminder",
-      "state": "draft",
+      "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "onDevice": false,
@@ -381,21 +381,21 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 3,
+      "at": 12,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-7f797b34da16",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000052",
-        "at": 3
+        "at": 12
       },
       "counts": {
-        "targeted": 3,
-        "updated": 3,
-        "unchanged": 3,
-        "overBudget": 3,
-        "failed": 3
+        "targeted": 16,
+        "updated": 10,
+        "unchanged": 11,
+        "overBudget": 39,
+        "failed": 28
       },
       "errorCode": null,
       "createdAt": 1794322800000,

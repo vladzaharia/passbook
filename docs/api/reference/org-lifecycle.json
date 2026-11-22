@@ -3,8 +3,8 @@
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "status": "active",
-      "closedAt": 1764000000000,
-      "purgeAfter": 1,
+      "closedAt": 1795521600000,
+      "purgeAfter": 1798124400000,
       "purging": false,
       "purged": false,
       "held": false,
@@ -13,13 +13,13 @@
   },
   "org-lifecycle.postOrgsByOrgIdClose": {
     "request": {
-      "confirmSlug": "example"
+      "confirmSlug": "northwind-climbing"
     },
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "status": "active",
-      "closedAt": 1764000000000,
-      "purgeAfter": 1,
+      "closedAt": 1795521600000,
+      "purgeAfter": 1798124400000,
       "purging": false,
       "purged": false,
       "held": false,
@@ -30,8 +30,8 @@
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "status": "active",
-      "closedAt": 1764000000000,
-      "purgeAfter": 1,
+      "closedAt": 1795521600000,
+      "purgeAfter": 1798124400000,
       "purging": false,
       "purged": false,
       "held": false,
@@ -42,16 +42,16 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "state": "queued",
-          "createdAt": 1764000000000,
-          "finishedAt": 1764000000000,
-          "expiresAt": 1764000000000,
-          "bytes": 1,
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "state": "ready",
+          "createdAt": 1794322800000,
+          "finishedAt": 1795521600000,
+          "expiresAt": 1798124400000,
+          "bytes": 24576,
           "entities": {
-            "example": 1
+            "tier": 8
           },
-          "errorCode": "AB12CD34"
+          "errorCode": null
         }
       ],
       "nextCursor": "c1.4812"
@@ -59,33 +59,33 @@
   },
   "org-lifecycle.postOrgsByOrgIdExports": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "state": "queued",
-      "createdAt": 1764000000000,
-      "finishedAt": 1764000000000,
-      "expiresAt": 1764000000000,
-      "bytes": 1,
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "state": "ready",
+      "createdAt": 1794322800000,
+      "finishedAt": 1795521600000,
+      "expiresAt": 1798124400000,
+      "bytes": 24576,
       "entities": {
-        "example": 1
+        "tier": 8
       },
-      "errorCode": "AB12CD34"
+      "errorCode": null
     }
   },
   "org-lifecycle.postOrgsByOrgIdExportsByExportIdLink": {
     "response": {
-      "url": "https://passbook.mobile/p/abc123",
-      "expiresAt": 1764000000000
+      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+      "expiresAt": 1798124400000
     }
   },
   "org-lifecycle.getPlatformClosedOrgs": {
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "slug": "example",
-          "name": "Ada Example",
-          "closedAt": 1764000000000,
-          "purgeAfter": 1,
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "slug": "day-pass",
+          "name": "Day pass",
+          "closedAt": 1795521600000,
+          "purgeAfter": 1798124400000,
           "purging": false,
           "held": false
         }
