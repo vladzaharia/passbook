@@ -1495,15 +1495,13 @@
     {
       "code": "IDEMPOTENCY_KEY_REUSED",
       "statuses": [
-        409,
         422
       ],
       "modules": [
         "delivery",
         "passes",
         "platform",
-        "scan",
-        "templates"
+        "scan"
       ]
     },
     {

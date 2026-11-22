@@ -30,12 +30,26 @@ export function sqlOutsideRepo(rel: string, text: string): string | null {
   return SQL.test(text) ? `${rel} contains SQL outside a repo file` : null;
 }
 
+// `(? IS NULL OR col = ?)` defeats index use and lets a bound null switch a tenant filter off.
+const OPTIONAL_BIND = /\?\s+IS\s+NULL\s+OR\b/i;
+
+export function optionalBindPredicate(rel: string, text: string): string | null {
+  if (/\.test\.tsx?$/.test(rel) || !rel.startsWith('src/worker/')) return null;
+  return OPTIONAL_BIND.test(text)
+    ? `${rel} has a "? IS NULL OR" predicate; build the WHERE from the filters that are present`
+    : null;
+}
+
 if (import.meta.main) {
   const problems: string[] = [];
   for (const file of sources(join(root, 'src/worker'))) {
     const rel = relative(root, file);
     const text = readFileSync(file, 'utf8');
-    for (const found of [sqlOutsideRepo(rel, text), replaceOnIdentities(rel, text)])
+    for (const found of [
+      sqlOutsideRepo(rel, text),
+      replaceOnIdentities(rel, text),
+      optionalBindPredicate(rel, text),
+    ])
       if (found) problems.push(found);
   }
   if (problems.length > 0) {

@@ -32,7 +32,7 @@ describe('a retried bind', () => {
     const k = key();
     await f.bind(s, { idempotencyKey: k, card, tag: f.read() });
     const other = await f.bind(s, { idempotencyKey: k, card, tag: f.read() });
-    expect(other.status).toBe(409);
+    expect(other.status).toBe(422);
     expect(await json(other)).toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED' });
   });
 });

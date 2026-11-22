@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { replaceOnIdentities, sqlOutsideRepo } from './check-sql-owner.ts';
+import { optionalBindPredicate, replaceOnIdentities, sqlOutsideRepo } from './check-sql-owner.ts';
 
 describe('check-sql-owner', () => {
   it('flags SQL in a service and allows it in repo files', () => {
@@ -18,5 +18,19 @@ describe('check-sql-owner', () => {
     expect(replaceOnIdentities('src/worker/modules/identities/repo.ts', text)).toMatch(/replaces/);
     expect(replaceOnIdentities('src/worker/modules/identities/repo.test.ts', text)).toBeNull();
     expect(replaceOnIdentities('src/worker/modules/a/repo.ts', 'INSERT INTO x')).toBeNull();
+  });
+
+  it('flags a "? IS NULL OR" predicate in worker code, across lines, but not tests', () => {
+    const one = "first(db, 'SELECT 1 FROM t WHERE (? IS NULL OR org_id = ?)', [a, a])";
+    const split = 'WHERE x = ?\n  AND (?\n   IS NULL\n   OR org_id = ?)';
+    expect(optionalBindPredicate('src/worker/modules/a/repo.ts', one)).toMatch(/IS NULL OR/);
+    expect(optionalBindPredicate('src/worker/modules/a/repo.ts', split)).toMatch(/IS NULL OR/);
+    expect(optionalBindPredicate('src/worker/modules/a/repo.test.ts', one)).toBeNull();
+    expect(optionalBindPredicate('src/web/a.ts', one)).toBeNull();
+  });
+
+  it('allows a nullable column check', () => {
+    const text = "'WHERE (pass_id IS NULL OR pass_id = ?)'";
+    expect(optionalBindPredicate('src/worker/modules/a/repo.ts', text)).toBeNull();
   });
 });

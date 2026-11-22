@@ -2421,6 +2421,14 @@
     "note": "A flagged staff member gets a new random PIN, returned once with the session, from POST /scan/staff/pin. They never choose it."
   },
   {
+    "key": "POST /api/v1/scan/tags/bind 409.IDEMPOTENCY_KEY_REUSED: now 422",
+    "class": "notable",
+    "operationId": "scan.postScanTagsBind",
+    "op": "POST /api/v1/scan/tags/bind",
+    "change": "409.IDEMPOTENCY_KEY_REUSED: now 422",
+    "note": "The same Idempotency-Key with another body answers 422 IDEMPOTENCY_KEY_REUSED, as on every other route; it was 409."
+  },
+  {
     "key": "POST /api/v1/scanners 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.postScanners",
@@ -2563,6 +2571,14 @@
     "op": "POST /api/v1/templates/{id}/preview",
     "change": "200.warnings[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "POST /api/v1/templates/{id}/release 409.IDEMPOTENCY_KEY_REUSED: now 422",
+    "class": "notable",
+    "operationId": "templates.postTemplatesByIdRelease",
+    "op": "POST /api/v1/templates/{id}/release",
+    "change": "409.IDEMPOTENCY_KEY_REUSED: now 422",
+    "note": "The same Idempotency-Key with another body answers 422 IDEMPOTENCY_KEY_REUSED, as on every other route; it was 409."
   },
   {
     "key": "POST /api/v1/templates/{id}/release new operation",
