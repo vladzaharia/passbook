@@ -3,7 +3,9 @@ import { TEST_NOW } from '../../../../test/helpers/index.ts';
 import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
 import type { Pass } from '../passes/repo-map.ts';
+import { accessTemplate } from './access-test-fixtures.ts';
 import { act, kit, out, setupActionFixture } from './act-test-fixtures.ts';
+import { placeRow, scanAt, trackedZone, zoneDoor } from './occupancy-scan-test-fixtures.ts';
 import { codeOf, key } from './test-kit.ts';
 
 // OC4 on the read-first paths: /resolve and the choose flow keep answering a voided pass as voided
@@ -118,5 +120,28 @@ describe('OC4 read-first paths', () => {
       kind: 'refused',
       reason: 'voided',
     });
+  });
+});
+
+describe('OC4 on a zone-only Both desk', () => {
+  it('resolve offers the check-out for a voided pass that is inside, and it commits', async () => {
+    const tpl = await accessTemplate();
+    const gym = await trackedZone();
+    const desk = await zoneDoor(tpl, [gym], 'both');
+    const pass = await kit.scanPass(tpl, { plan: 'gold' });
+    expect((await scanAt(desk, pass, 'in')).kind).toBe('ok');
+    await void_(pass);
+    const res = await kit.post(desk.headers, '/resolve', {
+      idempotencyKey: key(),
+      input: codeOf(pass),
+      clientTs: kit.clock.now(),
+    });
+    expect((await res.json()) as ScanOutcome).toMatchObject({
+      kind: 'refused',
+      reason: 'voided',
+      exitAllowed: true,
+    });
+    expect(await scanAt(desk, pass, 'out')).toMatchObject({ kind: 'ok' });
+    expect(await placeRow(pass.id, gym)).toMatchObject({ state: 'out' });
   });
 });

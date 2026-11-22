@@ -7,7 +7,7 @@ import { commitCheckInSuccess } from './act-check-in-success.ts';
 import type { ActRequest } from './act-claim.ts';
 import { gateWasHeld, type HeldGateSnapshot } from './act-gate-preflight.ts';
 import { finishHeldGate } from './act-held.ts';
-import { type Override, StaleScanAuthority } from './act-override.ts';
+import { assertTapOut, type Override, StaleScanAuthority } from './act-override.ts';
 import type { ActionHistoryPreflight, ActionPreflight } from './act-preflight.ts';
 import { ScanAttemptRaced } from './act-stale-refusal.ts';
 import { deferTermStart } from './act-term-stamp.ts';
@@ -153,8 +153,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     action.kind === 'check_in'
       ? (place?.direction ?? found.admission?.state.direction ?? ('in' as const))
       : ('used' as const);
-  // OC4: a relaxed fence is only for a tap-out.
-  if (found.inactive && state !== 'out') throw new StaleScanAuthority();
+  assertTapOut(found, state);
   const seed = {
     ...gate,
     // At an event place the entry statement holds capacity itself, with the exact reason.

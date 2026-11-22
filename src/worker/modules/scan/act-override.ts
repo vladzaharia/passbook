@@ -210,6 +210,11 @@ type PickReq = { actionId: string; direction?: 'in' | 'out' | undefined };
 export const pickFor = (actor: ScanActor, found: Found, req: PickReq) =>
   pickAction(actor, found.scan, req.actionId, tapsOut(req, found));
 
+/** OC4: the relaxed pass fence of an inactive Found is only ever committed as a tap-out. */
+export function assertTapOut(found: Found, state: string): void {
+  if (found.inactive && state !== 'out') throw new StaleScanAuthority();
+}
+
 /** False when the request runs a value action: admission, presence and capacity are a check-in's. */
 export function admitsCheckIn(actor: ScanActor, found: Found, req: PickReq): boolean {
   const picked = pickFor(actor, found, req);

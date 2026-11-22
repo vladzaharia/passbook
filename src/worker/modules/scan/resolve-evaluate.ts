@@ -42,7 +42,7 @@ export interface EvaluationReadPlan {
 
 export interface EvaluationOptions {
   candidateRead?: { candidates: Candidate[] | null };
-  prepareReads?: (found: Found) => Promise<EvaluationReadPlan>;
+  prepareReads?: (found: Found) => Promise<EvaluationReadPlan | undefined>;
   /** False when the request runs a value action: admission, presence and capacity are a check-in's. */
   admits?: (found: Found) => boolean;
   /** OC4: true only when the caller will commit a tap-out of this Found (an act with a concrete check-in action). */
