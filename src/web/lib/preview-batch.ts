@@ -1,5 +1,5 @@
 import type { z } from 'zod';
-import { PreviewBatchSchema, type PreviewResponseSchema } from '@/shared/contracts/templates.ts';
+import type { PreviewResponseSchema } from '@/shared/contracts/templates.ts';
 import { api } from './api.ts';
 import { ApiError } from './errors.ts';
 
@@ -76,6 +76,8 @@ async function flushOrg(batch: Batch): Promise<void> {
     for (let i = 0; i < ids.length && !controller.signal.aborted; i += MAX_IDS) {
       const slice = ids.slice(i, i + MAX_IDS);
       try {
+        // Loaded on the first preview, so the entry (session.ts clears batches) skips the template contracts.
+        const { PreviewBatchSchema } = await import('@/shared/contracts/templates.ts');
         const { items } = await api.get('/api/v1/templates/previews', PreviewBatchSchema, {
           query: { ids: slice.join(','), orgId },
           signal: controller.signal,
