@@ -136,6 +136,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" removed",
+    "class": "breaking",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"nfc:keys\" removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysMe",
@@ -278,6 +286,14 @@
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].client: field added",
     "note": "client names the tool that made the call (curl, an SDK), read from its user agent; null when it sent none."
+  },
+  {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"nfc:keys\" removed",
+    "class": "breaking",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"nfc:keys\" removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/developer/home new operation",
@@ -744,6 +760,14 @@
     "note": "The staff list says pinOnlyOff: true while PIN-only sign-in is off after repeated wrong PINs."
   },
   {
+    "key": "GET /api/v1/scan-staff parameter query:orgId now required",
+    "class": "breaking",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "parameter query:orgId now required",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.getScanSession",
@@ -846,6 +870,14 @@
     "op": "GET /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "GET /api/v1/status/incidents new operation",
+    "class": "additive",
+    "operationId": "status.getStatusIncidents",
+    "op": "GET /api/v1/status/incidents",
+    "change": "new operation",
+    "note": "Lists the incident notes on the public status page. Platform admins only."
   },
   {
     "key": "GET /api/v1/template-reviews new operation",
@@ -1277,6 +1309,14 @@
     "op": "PATCH /api/v1/scan-staff/{id}",
     "change": "200.pinResetRequired: field added",
     "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
+  },
+  {
+    "key": "PATCH /api/v1/scan-staff/{id} parameter query:orgId now required",
+    "class": "breaking",
+    "operationId": "scan-staff.patchScanStaffById",
+    "op": "PATCH /api/v1/scan-staff/{id}",
+    "change": "parameter query:orgId now required",
+    "note": ""
   },
   {
     "key": "PATCH /api/v1/scanners/{id} 200.staff.name: now nullable",
@@ -2061,6 +2101,14 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
+    "key": "POST /api/v1/nfc/keysets parameter query:orgId now required",
+    "class": "breaking",
+    "operationId": "nfc-keysets.postNfcKeysets",
+    "op": "POST /api/v1/nfc/keysets",
+    "change": "parameter query:orgId now required",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/nfc/passes/{passId}/tags/assign new operation",
     "class": "additive",
     "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
@@ -2325,6 +2373,14 @@
     "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
   },
   {
+    "key": "POST /api/v1/scan-staff/{id}/reset-pin parameter query:orgId now required",
+    "class": "breaking",
+    "operationId": "scan-staff.postScanStaffByIdResetPin",
+    "op": "POST /api/v1/scan-staff/{id}/reset-pin",
+    "change": "parameter query:orgId now required",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan-staff/{id}/unlock-pin new operation",
     "class": "additive",
     "operationId": "scan-staff.postScanStaffByIdUnlockPin",
@@ -2499,6 +2555,22 @@
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "new operation",
     "note": "Set up scanning in one call: places, events, staff, sessions and devices."
+  },
+  {
+    "key": "POST /api/v1/status/incidents new operation",
+    "class": "additive",
+    "operationId": "status.postStatusIncidents",
+    "op": "POST /api/v1/status/incidents",
+    "change": "new operation",
+    "note": "Opens an incident note on the public status page. Platform admins only."
+  },
+  {
+    "key": "POST /api/v1/status/incidents/{id}/resolve new operation",
+    "class": "additive",
+    "operationId": "status.postStatusIncidentsByIdResolve",
+    "op": "POST /api/v1/status/incidents/{id}/resolve",
+    "change": "new operation",
+    "note": "Resolves an incident note; it stays on the page for 14 days."
   },
   {
     "key": "POST /api/v1/templates/{id}/archive 200.openReview: field added",

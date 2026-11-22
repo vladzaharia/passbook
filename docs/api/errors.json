@@ -2044,6 +2044,15 @@
       ]
     },
     {
+      "code": "INCIDENT_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "status"
+      ]
+    },
+    {
       "code": "INTENT_ITEM_RECORDED",
       "statuses": [
         409

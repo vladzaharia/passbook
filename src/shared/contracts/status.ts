@@ -76,6 +76,14 @@ export const PublicIncidentSchema = z.object({
   startedAt: TimestampSchema,
   resolvedAt: TimestampSchema.nullable(),
 });
+/** A platform admin opens a note; the page shows it until it is resolved (then 14 days more). */
+export const OpenIncidentSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  note: z.string().trim().min(1).max(600),
+  component: PublicComponentIdSchema.nullable().default(null),
+  impact: PublicIncidentSchema.shape.impact,
+});
+export const IncidentListSchema = z.object({ items: z.array(PublicIncidentSchema) });
 export const PublicStatusSchema = z.object({
   overall: z.enum(['operational', 'degraded', 'outage']),
   components: z.array(
