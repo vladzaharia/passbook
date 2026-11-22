@@ -164,3 +164,22 @@ describe('read-only fields', () => {
     );
   });
 });
+
+describe('inline links on touch', () => {
+  const read2 = (path: string) => readFileSync(path, 'utf8');
+
+  it('grow to a real 44 px box, wide as well as tall, so a one-letter name is still a target', () => {
+    const src = read2('src/web/ui/row-link.tsx');
+    for (const name of ['ROW_LINK', 'COUNT_LINK', 'META_LINK']) {
+      const decl = src.slice(
+        src.indexOf(`const ${name}`),
+        src.indexOf(';', src.indexOf(`const ${name}`)),
+      );
+      expect(decl, name).toContain('pointer-coarse:min-w-11');
+    }
+  });
+
+  it('give the template origin link a min height the base rule skips', () => {
+    expect(read2('src/web/admin/templates/detail-header.tsx')).toContain('pointer-coarse:min-h-11');
+  });
+});

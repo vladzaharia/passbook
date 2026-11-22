@@ -1,3 +1,4 @@
+import type { GoogleType } from '../../../passkit/wallets/google/types.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { snapshotWalletCredentialContext } from './account-service.ts';
@@ -7,12 +8,17 @@ import { createGoogleSaveOffer, type GoogleSaveOffer } from './google-offer.ts';
 import type { GoogleGenericProjection } from './google-projection.ts';
 import {
   type GoogleWalletRestContext,
-  inactivateGoogleGenericObject,
   patchGoogleGenericClass,
   patchGoogleGenericObject,
   upsertGoogleGenericClass,
   upsertGoogleGenericObject,
 } from './google-rest.ts';
+import {
+  patchGoogleObjectBody,
+  revokeGoogleObject,
+  upsertGoogleClass,
+  upsertGoogleObject,
+} from './google-rest-typed.ts';
 import {
   copyRuntimeScope,
   type RuntimeRetirementPurpose,
@@ -25,7 +31,14 @@ import {
 } from './runtime-core.ts';
 import type { WalletRuntimeResponseSink, WalletRuntimeResponseStage } from './runtime-response.ts';
 
-interface GoogleRuntimeClassInput {
+/** A typed class partition. Absent `type` is the original Generic path (schema 1 releases). */
+interface GoogleRuntimePartition {
+  type?: GoogleType;
+  /** `googleClassKeyDigest` of the pass's `google.classKey`; absent means `default`. */
+  classKey?: string;
+}
+
+interface GoogleRuntimeClassInput extends GoogleRuntimePartition {
   releaseId: string;
   projection: GoogleGenericProjection;
   /** Persist every raw provider response encrypted before resolving. */
@@ -40,7 +53,7 @@ interface GoogleRuntimeObjectInput extends GoogleRuntimeClassInput {
   channelEpoch: number;
 }
 
-interface GoogleRuntimeObjectIdentity {
+interface GoogleRuntimeObjectIdentity extends GoogleRuntimePartition {
   releaseId: string;
   passId: string;
   credentialGeneration: number;
@@ -49,6 +62,8 @@ interface GoogleRuntimeObjectIdentity {
 }
 
 interface GoogleRuntimeInactivateInput extends GoogleRuntimeObjectIdentity {
+  /** The hash of the class the instance was issued under (its callback binding); the revoke keeps to it. */
+  classIdHash?: string;
   onProviderResponse: WalletRuntimeResponseSink;
   retirement: WalletRetirementClaim;
 }
@@ -58,6 +73,27 @@ interface GoogleRuntimeOfferInput extends GoogleRuntimeObjectIdentity {
   lifetimeSeconds?: number;
 }
 
+const ISSUANCE = { kind: 'issuance' } as const;
+
+/** The one message a revoked object carries (architecture 6.1, Void). */
+const REVOKED_MESSAGE = 'This pass is no longer valid.';
+
+const partition = ({ type, classKey }: GoogleRuntimePartition): GoogleRuntimePartition => ({
+  ...(type === undefined ? {} : { type }),
+  ...(classKey === undefined ? {} : { classKey }),
+});
+
+/** The object's identity under a verified scope; a partition makes it a typed class's object. */
+const objectScope = (s: WalletRuntimeScope, i: GoogleRuntimeObjectIdentity) => ({
+  tenantId: s.orgId,
+  mode: s.mode,
+  releaseId: i.releaseId,
+  passId: i.passId,
+  credentialGeneration: i.credentialGeneration,
+  channelEpoch: i.channelEpoch,
+  ...partition(i),
+});
+
 /** Hashes provider IDs without exposing the stable HMAC key or the raw identifiers. */
 export async function googleRuntimeIdHashes(
   ctx: ServiceContext,
@@ -66,18 +102,11 @@ export async function googleRuntimeIdHashes(
 ): Promise<{ classIdHash: string; objectIdHash: string }> {
   ctx = snapshotWalletCredentialContext(ctx);
   const scope = copyRuntimeScope(inputScope);
-  const { account, hmacKey } = await runtimeGoogleAccount(ctx, scope);
-  const call = runtimeExecution(ctx, scope, 'google', input.assertCurrent);
+  const { account, hmacKey } = await runtimeGoogleAccount(ctx, scope, ISSUANCE);
+  const call = runtimeExecution(ctx, scope, 'google', input.assertCurrent, undefined, ISSUANCE);
   return call.finish(async () => {
     if (input.assertCurrent) await input.assertCurrent();
-    const ids = await googleObjectIds(account.issuerId, hmacKey, {
-      tenantId: scope.orgId,
-      mode: scope.mode,
-      releaseId: input.releaseId,
-      passId: input.passId,
-      credentialGeneration: input.credentialGeneration,
-      channelEpoch: input.channelEpoch,
-    });
+    const ids = await googleObjectIds(account.issuerId, hmacKey, objectScope(scope, input));
     const [classIdHash, objectIdHash] = await Promise.all([
       sha256Hex(ids.classId),
       sha256Hex(ids.objectId),
@@ -94,27 +123,16 @@ export async function createGoogleRuntimeOffer(
 ): Promise<GoogleSaveOffer> {
   ctx = snapshotWalletCredentialContext(ctx);
   const scope = copyRuntimeScope(inputScope);
-  const { account, hmacKey } = await runtimeGoogleAccount(ctx, scope);
-  const call = runtimeExecution(ctx, scope, 'google', input.assertCurrent);
+  const { account, hmacKey } = await runtimeGoogleAccount(ctx, scope, ISSUANCE);
+  const call = runtimeExecution(ctx, scope, 'google', input.assertCurrent, undefined, ISSUANCE);
   return call.finish(async () => {
     if (input.assertCurrent) await input.assertCurrent();
-    return createGoogleSaveOffer(
-      account,
-      hmacKey,
-      {
-        tenantId: scope.orgId,
-        mode: scope.mode,
-        releaseId: input.releaseId,
-        passId: input.passId,
-        credentialGeneration: input.credentialGeneration,
-        channelEpoch: input.channelEpoch,
-      },
-      {
-        origins: input.origins,
-        issuedAt: Math.floor(ctx.clock.now() / 1000),
-        lifetimeSeconds: input.lifetimeSeconds,
-      },
-    );
+    return createGoogleSaveOffer(account, hmacKey, objectScope(scope, input), {
+      origins: input.origins,
+      issuedAt: Math.floor(ctx.clock.now() / 1000),
+      lifetimeSeconds: input.lifetimeSeconds,
+      ...(input.type === undefined ? {} : { type: input.type }),
+    });
   });
 }
 
@@ -130,18 +148,15 @@ async function withGoogleRest<T>(
   ctx = snapshotWalletCredentialContext(ctx);
   if (typeof onProviderResponse !== 'function') throw new WalletRuntimeError('provider_failure');
   const scope = copyRuntimeScope(inputScope);
-  const { account, hmacKey, credentialVersionId } = await runtimeGoogleAccount(
-    ctx,
-    scope,
-    retirement,
-  );
+  const purpose = retirement ?? ISSUANCE;
+  const { account, hmacKey, credentialVersionId } = await runtimeGoogleAccount(ctx, scope, purpose);
   const call = runtimeExecution(
     ctx,
     scope,
     'google',
     assertCurrent,
     { stage, sink: onProviderResponse },
-    retirement,
+    purpose,
   );
   return call.finish(async () => {
     const token = await getGoogleAccessToken(account, {
@@ -172,20 +187,31 @@ export async function upsertGoogleRuntimeClass(
   ctx: ServiceContext,
   scope: WalletRuntimeScope,
   input: GoogleRuntimeClassInput,
-): Promise<void> {
+): Promise<'ok' | 'drift'> {
   ctx = snapshotWalletCredentialContext(ctx);
-  await withGoogleRest(
+  return withGoogleRest(
     ctx,
     scope,
     input.assertCurrent,
     'google-class',
     input.onProviderResponse,
-    (rest, s) =>
-      upsertGoogleGenericClass(
+    async (rest, s) => {
+      if (input.type === undefined) {
+        await upsertGoogleGenericClass(
+          rest,
+          { tenantId: s.orgId, releaseId: input.releaseId },
+          input.projection,
+        );
+        return 'ok';
+      }
+      const result = await upsertGoogleClass(
         rest,
-        { tenantId: s.orgId, releaseId: input.releaseId },
+        input.type,
+        { tenantId: s.orgId, releaseId: input.releaseId, ...partition(input) },
         input.projection,
-      ),
+      );
+      return result === 'drift' ? 'drift' : 'ok';
+    },
   );
 }
 
@@ -223,21 +249,13 @@ export async function upsertGoogleRuntimeObject(
     'google-object',
     input.onProviderResponse,
     (rest, s) =>
-      upsertGoogleGenericObject(
-        rest,
-        {
-          tenantId: s.orgId,
-          mode: s.mode,
-          releaseId: input.releaseId,
-          passId: input.passId,
-          credentialGeneration: input.credentialGeneration,
-          channelEpoch: input.channelEpoch,
-        },
-        input.projection,
-      ),
+      input.type === undefined
+        ? upsertGoogleGenericObject(rest, objectScope(s, input), input.projection)
+        : upsertGoogleObject(rest, input.type, objectScope(s, input), input.projection),
   );
 }
 
+/** The one runtime entry that PATCHes an existing object; change messages (GM2) send through it. */
 export async function patchGoogleRuntimeObject(
   ctx: ServiceContext,
   scope: WalletRuntimeScope,
@@ -251,18 +269,9 @@ export async function patchGoogleRuntimeObject(
     'google-object',
     input.onProviderResponse,
     (rest, s) =>
-      patchGoogleGenericObject(
-        rest,
-        {
-          tenantId: s.orgId,
-          mode: s.mode,
-          releaseId: input.releaseId,
-          passId: input.passId,
-          credentialGeneration: input.credentialGeneration,
-          channelEpoch: input.channelEpoch,
-        },
-        input.projection,
-      ),
+      input.type === undefined
+        ? patchGoogleGenericObject(rest, objectScope(s, input), input.projection)
+        : patchGoogleObjectBody(rest, input.type, objectScope(s, input), input.projection),
   );
 }
 
@@ -270,7 +279,7 @@ export async function inactivateGoogleRuntimeObject(
   ctx: ServiceContext,
   scope: WalletRuntimeScope,
   input: GoogleRuntimeInactivateInput,
-): Promise<void> {
+): Promise<'inactive' | 'absent'> {
   ctx = snapshotWalletCredentialContext(ctx);
   scope = copyRuntimeScope(scope);
   const {
@@ -289,21 +298,20 @@ export async function inactivateGoogleRuntimeObject(
     credentialGeneration,
     channelEpoch,
   });
-  await withGoogleRest(
+  return withGoogleRest(
     ctx,
     scope,
     assertCurrent,
     'google-object',
     onProviderResponse,
     (rest, s) =>
-      inactivateGoogleGenericObject(rest, {
-        tenantId: s.orgId,
-        mode: s.mode,
-        releaseId,
-        passId,
-        credentialGeneration,
-        channelEpoch,
-      }),
+      revokeGoogleObject(
+        rest,
+        input.type ?? 'generic',
+        objectScope(s, input),
+        { id: claim.operationId, header: 'Pass status', body: REVOKED_MESSAGE },
+        input.classIdHash,
+      ),
     retirement,
   );
 }

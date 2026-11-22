@@ -155,6 +155,13 @@
   pre.src {
     font-size: 12px;
   }
+  /* A phone shows the whole line: wrapped, with a hanging indent, instead of cut at the edge. */
+  pre.src .ln {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    padding-inline-start: 32px;
+    text-indent: -16px;
+  }
   .op {
     padding-block: 28px 8px;
   }

@@ -3,6 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import {
+  readConfiguredWalletProviderCredentials,
   readSamsungPromotedRefreshCredentials,
   readWalletProviderRetirementCredentials,
   snapshotWalletCredentialContext,
@@ -71,7 +72,19 @@ export interface RuntimeRefreshPurpose extends SamsungRuntimeRefresh {
   inbound: boolean;
 }
 
-export type RuntimeCredentialPurpose = RuntimeRetirementPurpose | RuntimeRefreshPurpose;
+/**
+ * Google creating or updating a class or object, minting a save link or deriving ids: the scope's
+ * release must still be the current approved one, and the enrolment must still issue. Which operation
+ * may act is fenced by the caller's `assertCurrent`.
+ */
+export interface RuntimeIssuancePurpose {
+  kind: 'issuance';
+}
+
+export type RuntimeCredentialPurpose =
+  | RuntimeRetirementPurpose
+  | RuntimeRefreshPurpose
+  | RuntimeIssuancePurpose;
 
 /** A provider call may have reached the provider even if the final account fence fails. */
 export class WalletRuntimeError extends Error {
@@ -177,6 +190,28 @@ async function snapshot(
         claimHash: purpose.claimHash,
         ...purpose.target,
       });
+    } else if (purpose.kind === 'issuance') {
+      if (
+        provider !== 'google' ||
+        !(await isCurrentApprovedProjection(ctx, {
+          orgId: scope.orgId,
+          mode: scope.mode,
+          provider,
+          accountId: scope.accountId,
+          accountRevision: scope.accountRevision,
+          accountEpoch: scope.accountEpoch,
+          providerIdentityHash: scope.providerIdentityHash,
+          releaseId: scope.providerReleaseId,
+        }))
+      )
+        throw runtimeAccountUnavailable();
+      account = await readConfiguredWalletProviderCredentials(
+        ctx,
+        { orgId: scope.orgId, mode: scope.mode, provider },
+        scope.accountEpoch === undefined
+          ? { accountId: scope.accountId, accountRevision: scope.accountRevision }
+          : { accountId: scope.accountId, authorityEpoch: scope.accountEpoch },
+      );
     } else {
       if (
         provider !== 'samsung' ||
@@ -243,7 +278,7 @@ export async function runtimeCredentialCurrent(
 export async function runtimeGoogleAccount(
   ctx: ServiceContext,
   scope: WalletRuntimeScope,
-  retirement?: RuntimeRetirementPurpose,
+  purpose?: RuntimeCredentialPurpose,
 ): Promise<{
   account: GoogleValidatedAccount;
   hmacKey: Uint8Array;
@@ -251,7 +286,7 @@ export async function runtimeGoogleAccount(
 }> {
   ctx = snapshotWalletCredentialContext(ctx);
   scope = copyRuntimeScope(scope);
-  const value = await snapshot(ctx, scope, 'google', retirement);
+  const value = await snapshot(ctx, scope, 'google', purpose);
   try {
     const account = await validateGoogleAccount(value.credentials);
     return {

@@ -12,6 +12,7 @@ import { handleForkUpdate } from '../modules/templates/fork-updates-job.ts';
 import { handleCredentialCheck } from '../modules/wallet-providers/account-check-job.ts';
 import { handleCredentialMigrate } from '../modules/wallet-providers/credential-migrate-job.ts';
 import { handleEnrolmentHold } from '../modules/wallet-providers/enrolment-hold-job.ts';
+import { handleGoogleArt } from '../modules/wallet-providers/google-art-job.ts';
 import {
   handleGoogleIssuer,
   handleGoogleKeyRotate,
@@ -40,6 +41,7 @@ export const JOB_HANDLERS: { [K in JobKind]: JobHandler<K> } = {
   'wallet.google_issuer': handleGoogleIssuer,
   'wallet.google_key_rotate': handleGoogleKeyRotate,
   'wallet.credential_check': handleCredentialCheck,
+  'wallet.google_art': handleGoogleArt,
   'wallet.projection_system': handleProjectionSystem,
   'channel.apple_bump': handleAppleBump,
   'channel.capability': handleCapabilityChange,
@@ -80,6 +82,8 @@ export function runJob(job: Job, ctx: ServiceContext): Promise<void> {
     case 'wallet.google_key_rotate':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'wallet.credential_check':
+      return JOB_HANDLERS[job.kind](job, ctx);
+    case 'wallet.google_art':
       return JOB_HANDLERS[job.kind](job, ctx);
     case 'wallet.projection_system':
       return JOB_HANDLERS[job.kind](job, ctx);

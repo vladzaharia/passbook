@@ -3,7 +3,7 @@ export type WalletRuntimeResponseStage = 'google-class' | 'google-object' | 'sam
 /** Server-only sensitive response. Persist encrypted immediately; never log or return its body. */
 export interface WalletRuntimeProviderResponse {
   stage: WalletRuntimeResponseStage;
-  method: 'GET' | 'POST' | 'PATCH';
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT';
   status: number;
   body: Uint8Array;
 }
@@ -16,7 +16,7 @@ const MAX_RESPONSE_BYTES = 64 * 1024;
 export async function captureRuntimeResponse(
   response: Response,
   stage: WalletRuntimeResponseStage,
-  method: 'GET' | 'POST' | 'PATCH',
+  method: 'GET' | 'POST' | 'PATCH' | 'PUT',
   sink: WalletRuntimeResponseSink,
 ): Promise<Response> {
   const reader = response.body?.getReader();

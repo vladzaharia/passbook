@@ -1,14 +1,11 @@
 import type { EffectiveChannels } from '../../../shared/contracts/channels.ts';
 import { revealToken } from '../../platform/capability-token.ts';
-import { baseUrl } from '../../platform/env.ts';
-import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordCopy } from '../channels/gate.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { passForToken } from '../public/service.ts';
 import { ensureSamsungFetchRef } from './callbacks-ref.ts';
-import { registerGoogleCallbackBinding } from './google-callback-binding.ts';
 import {
   consumeWalletOfferRef,
   createWalletInstanceAndOffer,
@@ -23,23 +20,21 @@ import {
   offerPassSnapshot,
   offerStillCurrent,
 } from './offers-eligibility.ts';
-import { channelOffSuccessor, instanceMatches } from './offers-instance.ts';
+import { googleSaveLocation } from './offers-google.ts';
+import {
+  channelOffSuccessor,
+  instanceMatches,
+  walletOfferNotFound as notFound,
+} from './offers-instance.ts';
 import { type NativeProvider, projectionPolicy } from './projection-contract.ts';
 import { assertWalletProviderEnabled, walletProviderEnabled } from './provider-policy.ts';
-import {
-  createGoogleRuntimeOffer,
-  createSamsungRuntimeOffer,
-  WalletRuntimeError,
-} from './runtime.ts';
+import { createSamsungRuntimeOffer, WalletRuntimeError } from './runtime.ts';
 
 export interface WalletOffer {
   provider: 'google' | 'samsung';
   href: string;
   installation: 'unknown';
 }
-
-const notFound = () =>
-  new NotFoundError('This wallet offer is not available.', 'WALLET_OFFER_NOT_FOUND');
 
 /** Lists only capability links. Provider tokens are not created until a holder follows one. */
 export async function listWalletOffers(
@@ -168,35 +163,14 @@ export async function issueWalletOffer(
     };
     let location: string;
     if (provider === 'google' && eligible.approved.projection.provider === 'google') {
-      // Reference-only saves must never create or overwrite an object from a stale JWT.
-      // A successful current sync is the authority that the object was provisioned.
-      if (operation.state !== 'succeeded') throw notFound();
-      await registerGoogleCallbackBinding(ctx, eligible.runtimeScope, {
-        instanceId: instance.id,
-        passId: pass.id,
-        releaseId: instance.identityProjectionReleaseId,
-        credentialGeneration: instance.credentialGeneration,
-        channelEpoch: instance.channelEpoch,
-        operationVersion: operation.version,
-      });
-      const lifetimeSeconds = Math.min(900, Math.floor((expiresAt - ctx.clock.now()) / 1000) - 1);
-      if (lifetimeSeconds < 1) throw notFound();
-      const signed = await createGoogleRuntimeOffer(ctx, eligible.runtimeScope, {
-        releaseId: instance.identityProjectionReleaseId,
-        passId: pass.id,
-        credentialGeneration: instance.credentialGeneration,
-        channelEpoch: instance.channelEpoch,
-        origins: [new URL(baseUrl(ctx.env)).origin],
-        lifetimeSeconds,
+      location = await googleSaveLocation(ctx, {
+        pass,
+        eligible,
+        instance,
+        operation,
+        expiresAt,
         assertCurrent,
       });
-      if (
-        !signed.url.startsWith('https://pay.google.com/gp/v/save/') ||
-        signed.expiresAt * 1000 > expiresAt ||
-        signed.expiresAt * 1000 <= ctx.clock.now()
-      )
-        throw notFound();
-      location = signed.url;
     } else if (provider === 'samsung') {
       location = `/p/wallet/samsung/${ref}`;
     } else throw notFound();

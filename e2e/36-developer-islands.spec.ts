@@ -151,7 +151,11 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     .getByRole('link', { name: /hooks\.example\.com/ })
     .first()
     .click();
-  await expect(page.getByRole('main').getByText('Test', { exact: true }).first()).toBeVisible();
+  // The list page can match the text before the endpoint opens: wait for its URL, then read the table row.
+  await page.waitForURL(/\/connections\/.*[0-9a-f]{8}-[0-9a-f]{4}-/);
+  await expect(
+    page.getByRole('main').getByRole('row').filter({ hasText: 'Test' }).first(),
+  ).toBeVisible();
   await shots(page, 'admin-webhook-deliveries');
 
   // D10: the playground offers the sandbox instead of asking to sign in.

@@ -4244,6 +4244,10 @@
     "PASS_FILE_MISSING"
   ],
   "public get /{token}/wallet/{provider}": [
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "LINK_NOT_FOUND",
     "TEMPLATE_NOT_FOUND",
     "TEMPLATE_VERSION_CONTENT_CONFLICT",
@@ -4292,6 +4296,10 @@
     "PASS_FILE_MISSING"
   ],
   "public get /{token}/{passId}/wallet/{provider}": [
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "LINK_NOT_FOUND",
     "TEMPLATE_NOT_FOUND",
     "TEMPLATE_VERSION_CONTENT_CONFLICT",
