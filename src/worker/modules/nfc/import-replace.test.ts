@@ -19,9 +19,9 @@ const K2 = '0f1e2d3c4b5a69788796a5b4c3d2e1f0';
 const K3 = '5a4b3c2d1e0f90817263544536271809';
 const META = 'c3'.repeat(16);
 
-async function keyset(name: string, t: Awaited<ReturnType<typeof f.org>>) {
+async function keyset(name: string, t: Awaited<ReturnType<typeof f.org>>, metaKey = META) {
   const authority = await t.admin.authority();
-  const made = await createKeyset(ctx(), authority, { name, perTag: true, metaKey: META });
+  const made = await createKeyset(ctx(), authority, { name, perTag: true, metaKey });
   return { authority, made };
 }
 
@@ -98,7 +98,7 @@ describe('replace tag keys by import', () => {
   it('lists tags that are new, on another keyset, or hold no key of their own, and adds nothing', async () => {
     const t = await f.org();
     const { authority, made } = await keyset('Supplier', t);
-    const other = await keyset('Other', t);
+    const other = await keyset('Other', t, '3c'.repeat(16));
     await importTags(ctx(), other.authority, other.made.id, {
       csv: `04bb0000000012,${K1}`,
       dryRun: false,
@@ -136,5 +136,14 @@ describe('replace tag keys by import', () => {
         replace: true,
       }),
     ).rejects.toMatchObject({ code: 'KEYSET_DISABLED' });
+    // The table itself no longer allows a new key on a disabled keyset, or on a tag with no key of its own.
+    const row = await stored(t.org.id, '04bb0000000021');
+    await expect(
+      run(
+        db(),
+        "UPDATE nfc_tag_sun SET iv = x'01', ciphertext = x'02', wrapped_dek = x'03' WHERE tag_id = ?",
+        [row?.tag_id ?? ''],
+      ),
+    ).rejects.toThrow('tag_sun_fixed');
   });
 });
