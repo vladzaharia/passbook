@@ -21,6 +21,12 @@ export function assetMap(assetBaseUrl: string, names?: readonly string[]): Recor
 }
 
 /** The kit toggle speaks '27' | 'legacy'; the pass view speaks 'ios27' | 'legacy'. */
+/**
+ * A new pass's card glides in from the wizard's preview (the view transition) and deals in over
+ * --wl-dur-card (480 ms): the sparks wait for it to land, so they burst where it settles.
+ */
+export const CARD_LANDS_MS = 520;
+
 export const viewTarget = (t: PassTarget) => (t === '27' ? 'ios27' : 'legacy');
 
 export function usePassView(
@@ -182,7 +188,7 @@ export function PassPreviewPanel({
             <PassPreview {...preview} face={face} target={shown} flippable />
           </div>
         </div>
-        <Celebrate when={celebrate} size="lg" />
+        <Celebrate when={celebrate} size="lg" delay={CARD_LANDS_MS} />
       </div>
       <div
         className={cn(

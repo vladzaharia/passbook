@@ -204,6 +204,16 @@ describe('every boot state', () => {
     expect(today.container.textContent).toBe('Today 42');
   });
 
+  it('names an idle loop with one h1, and leaves a card its own', () => {
+    const { container, rerender } = render(view({ s: 'loop' }));
+    const h1 = container.querySelectorAll('h1');
+    expect(h1).toHaveLength(1);
+    expect(h1[0]).toHaveClass('sr-only');
+    expect(h1[0]).toHaveTextContent('Front door');
+    rerender(view({ s: 'loop' }, { card: <h1>Checked in</h1> }));
+    expect(container.querySelectorAll('h1')).toHaveLength(1);
+  });
+
   it('keeps one shell: a single main landmark with two persistent live regions', () => {
     const { container } = render(view({ s: 'loop' }));
     expect(container.querySelectorAll('main')).toHaveLength(1);

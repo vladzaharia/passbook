@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   browserProbeEnv,
   facingOf,
+  featureAllowed,
   type ProbeEnv,
   probeHardware,
   WATCH_DEBOUNCE_MS,
@@ -195,6 +196,21 @@ describe('browserProbeEnv', () => {
       doc.permissionsPolicy = undefined;
       nav.usb = undefined;
       nav.hid = undefined;
+    }
+  });
+
+  it('reads the policy from featurePolicy, the name Chromium exposes', () => {
+    const doc = document as unknown as { featurePolicy?: unknown };
+    const nav = navigator as unknown as { usb?: unknown };
+    nav.usb = { getDevices: vi.fn() };
+    doc.featurePolicy = { allowsFeature: (name: string) => name !== 'usb' };
+    try {
+      expect(featureAllowed('usb')).toBe(false);
+      expect(featureAllowed('serial')).toBe(true);
+      expect(browserProbeEnv(false).usb).toBeUndefined();
+    } finally {
+      doc.featurePolicy = undefined;
+      nav.usb = undefined;
     }
   });
 });
