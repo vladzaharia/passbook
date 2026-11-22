@@ -1,9 +1,10 @@
 import { createRootRouteWithContext, Outlet, useRouterState } from '@tanstack/react-router';
-import { Fragment, lazy, type ReactNode, Suspense } from 'react';
+import { Fragment, lazy, type ReactNode } from 'react';
 import { isAdminPath, isKnownPortalPath, isPublicPath, requireSession } from '../lib/guards.ts';
 import { RouteAnnouncer, SkipLink } from '../lib/route-focus.tsx';
 import type { RouterContext } from '../lib/router-context.ts';
 import { useSession } from '../lib/session.ts';
+import { ChunkBoundary } from '../ui/layout/chunk-boundary.tsx';
 import { StandaloneError } from '../ui/layout/lazy-error-pages.tsx';
 import { Skeleton } from '../ui/skeleton.tsx';
 import { StepUpGate } from '../ui/step-up-gate.tsx';
@@ -38,9 +39,9 @@ function RootComponent() {
       {isAdminPath(pathname) ? (
         <Outlet />
       ) : (
-        <Suspense fallback={<RootPending />}>
+        <ChunkBoundary fallback={<RootPending />}>
           {isPublicPath(pathname) ? <BareLayout /> : <PortalLayout />}
-        </Suspense>
+        </ChunkBoundary>
       )}
     </PrincipalBoundary>
   );

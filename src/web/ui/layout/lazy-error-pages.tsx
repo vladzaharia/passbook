@@ -1,5 +1,6 @@
 import type { ErrorComponentProps } from '@tanstack/react-router';
-import { lazy, Suspense } from 'react';
+import { lazy } from 'react';
+import { ChunkBoundary } from './chunk-boundary.tsx';
 
 const Pages = {
   NotFound: lazy(() => import('./error-pages.tsx').then((m) => ({ default: m.NotFoundPage }))),
@@ -10,24 +11,24 @@ const Pages = {
 /** The error and 404 pages (buddy art, copy, icons) load as one chunk on first use, not with the entry. */
 export function NotFoundPage() {
   return (
-    <Suspense fallback={null}>
+    <ChunkBoundary>
       <Pages.NotFound />
-    </Suspense>
+    </ChunkBoundary>
   );
 }
 
 export function RouteError(props: ErrorComponentProps) {
   return (
-    <Suspense fallback={null}>
+    <ChunkBoundary>
       <Pages.Route {...props} />
-    </Suspense>
+    </ChunkBoundary>
   );
 }
 
 export function StandaloneError(props: ErrorComponentProps) {
   return (
-    <Suspense fallback={null}>
+    <ChunkBoundary>
       <Pages.Standalone {...props} />
-    </Suspense>
+    </ChunkBoundary>
   );
 }
