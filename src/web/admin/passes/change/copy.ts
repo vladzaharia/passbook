@@ -8,6 +8,7 @@ export const CHANGE_COPY = {
   steps: { change: 'Change', holders: 'Tell holders', review: 'Review' },
   passes: (c: number) => n(c, 'pass', 'passes'),
   noSelection: 'Pick passes to change first.',
+  loadingSample: 'Loading a sample pass',
   toList: 'Back to passes',
   kinds: { fields: 'Set fields', design: 'Latest design', void: 'Void' },
   kindHelp: {
