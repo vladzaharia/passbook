@@ -189,7 +189,8 @@ describe.each(ROUTES)('$name: who may call', (route) => {
 
   it('refuses scanning:write and scan-setup:read with MISSING_SCOPE', async () => {
     const s = await target();
-    for (const k of [keys.write, keys.read])
+    // nfc:keys is a credential scope of its own: it opens no pairing or token.
+    for (const k of [keys.write, keys.read, keys.nfc])
       await expectProblem(await call(s.id, k.headers), 403, 'MISSING_SCOPE');
     expect(await t.keyAudit(s.id, route.action)).toHaveLength(0);
   });

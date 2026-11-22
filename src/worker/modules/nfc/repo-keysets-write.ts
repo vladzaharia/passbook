@@ -1,5 +1,5 @@
 import { type Grant, grant } from '../../platform/authority.ts';
-import { type Check, exactlyOne, rowIs } from '../../platform/authority-checks.ts';
+import { type Check, exactlyOne, rawCheck, rowIs } from '../../platform/authority-checks.ts';
 import { exists, type GrantCond } from '../../platform/authority-cond.ts';
 import { entitled } from '../../platform/authority-entitled.ts';
 import { ne } from '../../platform/authority-expr.ts';
@@ -10,8 +10,18 @@ import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 
 type Session = Extract<TenantPassWrite, { kind: 'session' }>;
-/** A keyset change is a console action: the captured session holds scanning:manage. */
-export type KeysetAuthority = Session & { capability: 'scanning:manage' };
+type Key = Extract<TenantPassWrite, { kind: 'api_key' }>;
+/**
+ * A keyset change is a console session holding scanning:manage, or a live key of this org holding
+ * `nfc:keys`. `ip` is the caller's network prefix, for the audit row.
+ */
+export type KeysetAuthority = (
+  | (Session & { capability: 'scanning:manage' })
+  | (Key & { scope: 'nfc:keys' })
+) & { ip?: string | null };
+
+/** The user or key id: what the audit row names and `created_by` holds (no foreign key). */
+export const keysetActorId = (a: KeysetAuthority) => (a.kind === 'api_key' ? a.keyId : a.userId);
 
 export type KeysetPurpose =
   `org_mode.nfc.keyset.${'create' | 'rotate' | 'retire_key' | 'revoke_key' | 'reenrol' | 'import' | 'disable'}`;
@@ -26,7 +36,12 @@ export function keysetGrant(
   return grant(ctx, {
     purpose,
     principal: tenantPrincipal(a),
-    checks: [...capabilityChecks(a), ...checks],
+    // A key's mode is its own, read at commit: keyset keys are live only.
+    checks: [
+      ...capabilityChecks(a),
+      ...(a.kind === 'api_key' ? [rawCheck('actor', "a.mode = 'live'")] : []),
+      ...checks,
+    ],
     codes: { lineage: 'KEYSET_CHANGED', stale: 'KEYSET_CHANGED' },
     tables: [...tables],
   });
@@ -50,8 +65,9 @@ export const audited = (
     ctx,
     {
       orgId: a.orgId,
-      actorType: 'user',
-      actorId: a.userId,
+      actorType: a.kind === 'api_key' ? 'api_key' : 'user',
+      actorId: keysetActorId(a),
+      ...(a.ip ? { ipPrefix: a.ip } : {}),
       action,
       targetType: 'tag_keyset',
       targetId: keysetId,
@@ -105,7 +121,7 @@ export function createKeysetGrant(ctx: ServiceContext, a: KeysetAuthority, k: Ne
   g.insertSelect(
     'nfc_tag_keysets',
     ['id', 'name', 'slug', 'diversify', 'per_tag', 'created_at', 'created_by'],
-    [k.id, k.name, k.slug, k.diversify ? 1 : 0, k.perTag ? 1 : 0, now, a.userId],
+    [k.id, k.name, k.slug, k.diversify ? 1 : 0, k.perTag ? 1 : 0, now, keysetActorId(a)],
   );
   g.insertJoined('nfc_tag_keys', {
     parents: { keyset_id: k.id },

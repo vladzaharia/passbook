@@ -71,6 +71,7 @@ export function credentialKeysFixture() {
       admin: await key(['scanning:admin']),
       write: await key(['scanning:write']),
       read: await key(['scan-setup:read']),
+      nfc: await key(['nfc:keys']),
       platform: await key(['scanning:admin'], { orgId: null, kind: 'platform' }),
       otherOrg: await makeApiKey(fixture.kit.fx, {
         orgId: other.id,

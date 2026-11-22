@@ -83,3 +83,31 @@ export async function charged<T>(
     throw error;
   }
 }
+
+/** Keyset writes a key makes in a day: create, rotate, retire, revoke, re-enrol, disable and import adds. */
+const NFC_WRITES_PER_DAY = 30;
+
+/**
+ * `run` (a keyset write) under a key's daily budget: charged first, refunded when it throws, 429 over the
+ * limit. A console session has no budget.
+ */
+export async function chargedKeysetWrite<T>(
+  ctx: ServiceContext,
+  authority: TenantPassWrite,
+  run: () => Promise<T>,
+): Promise<T> {
+  if (authority.kind !== 'api_key') return run();
+  const now = ctx.clock.now();
+  const day = window(now, DAY);
+  const key = `nfc-keys:writes:${authority.keyId}`;
+  if ((await bump(ctx.env.DB, key, day)) > NFC_WRITES_PER_DAY) {
+    await bump(ctx.env.DB, key, day, -1);
+    throw new RateLimitedError(Math.max(1, Math.ceil((day + DAY - now) / 1000)));
+  }
+  try {
+    return await run();
+  } catch (error) {
+    await bump(ctx.env.DB, key, day, -1);
+    throw error;
+  }
+}

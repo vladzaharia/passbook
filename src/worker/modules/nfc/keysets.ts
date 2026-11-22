@@ -44,11 +44,25 @@ const SLUG_TRIES = 3;
 export type KeysetView = z.infer<typeof TagKeysetViewSchema>;
 export type MadeKeyset = KeysetView & { keys: Keys | null };
 
-/** The captured console session holds scanning:manage for this org. */
-export function keysetAuthorityOf(authority: TenantPassWrite): KeysetAuthority {
-  if (authority.kind !== 'session' || authority.capability !== 'scanning:manage')
-    throw new ForbiddenError();
-  return { ...authority, capability: 'scanning:manage' };
+/**
+ * The captured console session holds scanning:manage for this org, or the key is a live `nfc:keys` key
+ * bound to it (platform keys, test keys and other scopes are refused).
+ */
+export function keysetAuthorityOf(
+  authority: TenantPassWrite,
+  ip: string | null = null,
+): KeysetAuthority {
+  if (authority.kind === 'api_key') {
+    if (
+      authority.scope !== 'nfc:keys' ||
+      authority.keyOrgId !== authority.orgId ||
+      authority.mode !== 'live'
+    )
+      throw new ForbiddenError();
+    return { ...authority, scope: 'nfc:keys', ip };
+  }
+  if (authority.capability !== 'scanning:manage') throw new ForbiddenError();
+  return { ...authority, capability: 'scanning:manage', ip };
 }
 
 const notFound = () => new NotFoundError('Keyset not found.', 'KEYSET_NOT_FOUND');
