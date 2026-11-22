@@ -5,7 +5,6 @@ import { isStepUp } from '../lib/step-up.ts';
 import { useTheme } from '../lib/theme.tsx';
 import { BuddyFace } from './art/face.tsx';
 import { useBuddyOnScreen } from './art/presence.ts';
-import { TOUCH_HIT } from './button.tsx';
 
 /**
  * Success wears the buddy in miniature (it pops in and winks once, or posts a letter). A view
@@ -50,7 +49,8 @@ export function Toaster() {
           // A Button md: 36 px, 44 on touch.
           actionButton:
             '!bg-accent !text-accent-on !h-9 pointer-coarse:!h-11 !px-4 !text-sm !rounded-md',
-          closeButton: `!left-auto !right-2 !top-2 !size-7 !transform-none !rounded-md !border-0 !bg-transparent !text-fg-muted hover:!bg-state-hover-tint hover:!text-fg-strong [&>svg]:size-4 ${TOUCH_HIT}`,
+          closeButton:
+            '!left-auto !right-2 !top-2 !size-7 pointer-coarse:!size-11 !transform-none !rounded-md !border-0 !bg-transparent !text-fg-muted hover:!bg-state-hover-tint hover:!text-fg-strong [&>svg]:size-4',
         },
       }}
     />

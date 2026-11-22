@@ -19,7 +19,7 @@ describe('StatusIcon', () => {
     media(true);
     render(<StatusIcon status="waiting" />);
     const icon = screen.getByRole('button');
-    expect(icon.className).toContain('pointer-coarse:before:size-11');
+    expect(icon.className).toContain('pointer-coarse:size-11');
     await userEvent.setup().click(icon);
     expect(await screen.findByRole('dialog')).toHaveTextContent(
       icon.getAttribute('aria-label') ?? '',

@@ -8,11 +8,6 @@
     transform: scaleX(0);
   }
 }
-@keyframes wl-glow {
-  50% {
-    opacity: 0.55;
-  }
-}
 
 .wl-wallet-bar {
   display: flex;
@@ -58,6 +53,6 @@
     animation-delay: calc(var(--i, 0) * 60ms);
   }
   .wl-notadded::before {
-    animation: wl-glow 4.8s ease-in-out infinite;
+    animation: wl-fade 600ms var(--wl-ease-out) backwards;
   }
 }

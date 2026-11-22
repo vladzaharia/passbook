@@ -10,6 +10,8 @@ export interface FileDropProps {
   multiple?: boolean;
   maxBytes?: number;
   label?: ReactNode;
+  /** One line under the label, inside the drop zone: accepted types, size limit. */
+  hint?: ReactNode;
   disabled?: boolean;
   /** The entity's art (sm) in place of the upload glyph: certificate, template. */
   art?: ArtName;
@@ -39,6 +41,7 @@ export function FileDrop({
   multiple,
   maxBytes,
   label = 'Drop files or choose',
+  hint,
   disabled,
   art,
   invalid,
@@ -93,6 +96,7 @@ export function FileDrop({
         >
           {label}
         </label>
+        {hint ? <p className="text-xs text-fg-muted">{hint}</p> : null}
         <input
           ref={input}
           id={id}

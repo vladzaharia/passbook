@@ -174,7 +174,7 @@ export function TemplateGallery({
                 to="/admin/templates/$templateId"
                 params={{ templateId: t.id }}
                 search={{ orgId }}
-                className="block truncate text-sm font-medium text-fg-strong after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
+                className="block truncate text-sm font-medium text-fg-strong pointer-coarse:-my-3 pointer-coarse:py-3 after:absolute after:inset-0 after:content-[''] focus-visible:outline-none"
               >
                 {displayName(t)}
               </Link>

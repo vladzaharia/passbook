@@ -99,6 +99,24 @@ describe('DataTable', () => {
     expect(screen.queryByText('toolbar')).toBeNull();
   });
 
+  it('keeps the toolbar beside a load error with no rows', () => {
+    render(
+      <DataTable
+        caption="Passes"
+        columns={COLUMNS}
+        data={[]}
+        toolbar={<search>toolbar</search>}
+        error={
+          <ErrorState error={new ApiError({ status: 500, code: 'internal' })} onRetry={() => {}} />
+        }
+        empty={<EmptyState art="passes" title="No passes yet" />}
+      />,
+    );
+    expect(screen.getByText('toolbar')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /retry|try again/i })).toBeInTheDocument();
+    expect(screen.queryByText('No passes yet')).toBeNull();
+  });
+
   it('keeps rows on a refetch, then dims them and runs the rail after 150 ms', async () => {
     const { container } = render(
       <DataTable caption="Passes" columns={COLUMNS} data={ROWS} getRowId={(r) => r.id} fetching />,
@@ -471,6 +489,14 @@ describe('DiffViewer', () => {
 describe('FileDrop', () => {
   const file = (name: string, size = 3, type = '') =>
     new File([new Uint8Array(size)], name, { type });
+
+  it('shows the hint inside the drop zone', () => {
+    const { container } = render(
+      <FileDrop onFiles={() => {}} label="Choose photos" hint="JPG or PNG, up to 5 MB" />,
+    );
+    const zone = container.querySelector('.wl-file-drop');
+    expect(zone).toHaveTextContent('JPG or PNG, up to 5 MB');
+  });
 
   it('accepts a matching file and resets the input', async () => {
     const user = userEvent.setup();

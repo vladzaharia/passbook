@@ -18,10 +18,6 @@ import { Spinner } from './spinner.tsx';
 
 export { buttonVariants } from './button-variants.ts';
 
-/** A 44 × 44 hit area around a smaller control on touch screens. */
-export const TOUCH_HIT =
-  "pointer-coarse:before:absolute pointer-coarse:before:top-1/2 pointer-coarse:before:left-1/2 pointer-coarse:before:size-11 pointer-coarse:before:-translate-1/2 pointer-coarse:before:content-['']";
-
 /**
  * Pending loops for the leading icon (docs/design/motion-and-expression.md "Action verbs"):
  * spin (RefreshCw), pulse (Zap), bob (Upload). They run under reduced motion: they carry state.

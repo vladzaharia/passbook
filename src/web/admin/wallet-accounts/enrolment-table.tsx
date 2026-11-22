@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 import type {
   PlatformWalletEnrolment,
@@ -11,6 +10,7 @@ import {
   EmptyState,
   ErrorState,
   LoadMore,
+  RowLink,
   StatusPill,
   toast,
 } from '@/web/ui/index.ts';
@@ -48,13 +48,9 @@ export function EnrolmentTable({ provider }: { provider: WalletProvider }) {
       header: 'Organization',
       id: 'org',
       cell: ({ row }) => (
-        <Link
-          to="/admin/platform/orgs/$orgId"
-          params={{ orgId: row.original.orgId }}
-          className="font-medium text-fg-strong hover:underline"
-        >
+        <RowLink to="/admin/platform/orgs/$orgId" params={{ orgId: row.original.orgId }}>
           {row.original.orgName}
-        </Link>
+        </RowLink>
       ),
     },
     {
