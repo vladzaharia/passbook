@@ -28,7 +28,7 @@ import {
 } from './scanning-sessions.ts';
 
 const read = { uid: '04A1B2C3D4E5F6', tech: 'a', source: 'native' } as const;
-const key = '01890f47-39d5-7d5c-8a3e-0e8f2b1c9d11';
+const key = '01890f47-0000-7000-8000-000000000001';
 
 describe('TagRead', () => {
   it('takes a UID of 4, 7 or 10 bytes, or an NDEF record', () => {

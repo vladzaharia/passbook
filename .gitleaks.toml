@@ -1,6 +1,9 @@
 # Secret scanning for the whole tree (CI runs `gitleaks dir .`). The default rules stay on.
 # The only allowlist is by shape: the demo values our API examples use, which are documented in
 # tools/lib/example-world.ts and cannot authenticate (the example key's tail is 42 characters, not 43).
+# Three more shapes are false positives of the key rule, matched on the finding's own text: an identifier or
+# annotation (`p12.privateKeyPem`, `KEY_ALG_RSA_2048`, a version slug such as `wallet-completion-v1`) and a public
+# EC key (SPKI base64), which is public by definition. There are no path rules and no per-finding ignores.
 title = "PassBook"
 
 [extend]
@@ -14,6 +17,10 @@ regexes = [
   '''pb_test_(?:k3Qx9Zt2|p7Wm4Hn8)''',
   '''c0ffee00c0ffee00c0ffee00c0ffee01''',
   '''ApiKeyRotationKey\d''',
+  '''^[a-z0-9]+\.privateKeyPem$''',
+  '''^KEY_ALG_[A-Z0-9_]+$''',
+  '''^[a-z]+(?:-[a-z]+)*-v\d+$''',
+  '''^MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE[A-Za-z0-9+/=]+$''',
   '''0193a1b2-7c00-7000-8000-0000000000aa''',
   '''demo-token-northwind-[0-9a-f]{22}''',
   '''00112233445566778899aabbccddeeff''',

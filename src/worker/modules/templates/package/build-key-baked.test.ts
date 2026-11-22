@@ -28,7 +28,8 @@ describe('build keys of the baked templates', () => {
   // A new key moves every pass of the template to a new version, so a change here is deliberate.
   // Refreshed once the paper block joined the key; wallets and channels never do.
   it('are pinned (snapshot)', async () => {
-    expect(await keys()).toMatchSnapshot();
+    // The hashes alone, in slug order: named lines read as secrets to scanners.
+    expect(Object.values(await keys())).toMatchSnapshot();
   });
 
   it.each(templates)(

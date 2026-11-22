@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EnvBox } from './sandbox-step.tsx';
 
-const SECRET = 'pbp_test_Ab12CdEf34GhIj56KlMn78OpQrSt90amDQ';
+const SECRET = 'pbp_test_demo0001_demo-demo-demo-demo';
 
 afterEach(() => {
   vi.useRealTimers();
