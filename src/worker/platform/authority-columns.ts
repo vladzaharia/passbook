@@ -138,6 +138,7 @@ export const EPOCH_TABLES: EpochTable[] = [
     volatile: [
       'name',
       'last_seen_at',
+      'contact_at',
       'last_ip_prefix',
       'paired_label',
       'pair_expires_at',

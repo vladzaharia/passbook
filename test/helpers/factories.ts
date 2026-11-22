@@ -641,8 +641,8 @@ export async function makeScanner(
   await run(
     f.env.DB,
     `INSERT INTO scanners (id, org_id, mode, kind, device_role, name, event_id, settings, time_zone, token_prefix, token_hash,
-       csrf_secret, paired_at, expires_at, last_seen_at, staff_id, staff_since, staff_seen_at, created_at, updated_at, revoked_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'UTC', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       csrf_secret, paired_at, expires_at, last_seen_at, contact_at, staff_id, staff_since, staff_seen_at, created_at, updated_at, revoked_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'UTC', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       options.orgId,
@@ -661,6 +661,7 @@ export async function makeScanner(
       csrf,
       now,
       options.expiresAt === undefined ? now + 180 * 86_400_000 : options.expiresAt,
+      options.lastSeenAt === undefined ? now : options.lastSeenAt,
       options.lastSeenAt === undefined ? now : options.lastSeenAt,
       options.staffId ?? null,
       options.staffId ? (options.staffSince ?? now) : null,

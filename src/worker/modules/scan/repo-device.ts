@@ -30,6 +30,8 @@ export interface ScannerRow {
   pairedAt: number | null;
   expiresAt: number | null;
   lastSeenAt: number | null;
+  /** The last request that was not an upload (`POST /batch`, `POST /device`), stamped by the server: the floor for a queued read. */
+  contactAt: number | null;
   revokedAt: number | null;
   staffId: string | null;
   staffSince: number | null;
@@ -55,6 +57,7 @@ interface Raw {
   paired_at: number | null;
   expires_at: number | null;
   last_seen_at: number | null;
+  contact_at: number | null;
   revoked_at: number | null;
   staff_id: string | null;
   staff_since: number | null;
@@ -66,7 +69,7 @@ interface Raw {
 }
 
 const COLUMNS = `id, org_id, mode, kind, device_role, name, event_id, settings, time_zone, token_prefix, token_hash,
-  csrf_secret, paired_at, expires_at, last_seen_at, revoked_at, staff_id, staff_since, staff_seen_at, updated_at,
+  csrf_secret, paired_at, expires_at, last_seen_at, contact_at, revoked_at, staff_id, staff_since, staff_seen_at, updated_at,
   credential_epoch, config_epoch,
   EXISTS(SELECT 1 FROM scanners screen WHERE screen.org_id=scanners.org_id AND screen.mode=scanners.mode
     AND screen.device_role!='scan' AND screen.revoked_at IS NULL AND screen.token_hash IS NOT NULL) AS has_screens`;
@@ -92,6 +95,7 @@ const toRow = (r: Raw): ScannerRow => ({
   pairedAt: r.paired_at,
   expiresAt: r.expires_at,
   lastSeenAt: r.last_seen_at,
+  contactAt: r.contact_at,
   revokedAt: r.revoked_at,
   staffId: r.staff_id,
   staffSince: r.staff_since,
@@ -132,12 +136,16 @@ export async function touchScanner(
   now: number,
   ipPrefix: string | null,
   everyMs: number,
+  /** False for an upload: it stamps the device as seen but never moves `contact_at`. */
+  contact = true,
 ): Promise<void> {
   await run(
     db,
-    `UPDATE scanners SET last_seen_at = ?, last_ip_prefix = ?
-     WHERE id = ? AND (last_seen_at IS NULL OR last_seen_at <= ?)`,
-    [now, ipPrefix, id, now - everyMs],
+    `UPDATE scanners SET last_seen_at = ?, last_ip_prefix = ?,
+       contact_at = CASE WHEN ? = 1 THEN ? ELSE contact_at END
+     WHERE id = ? AND (last_seen_at IS NULL OR last_seen_at <= ?
+       OR (? = 1 AND (contact_at IS NULL OR contact_at <= ?)))`,
+    [now, ipPrefix, contact ? 1 : 0, now, id, now - everyMs, contact ? 1 : 0, now - everyMs],
   );
 }
 

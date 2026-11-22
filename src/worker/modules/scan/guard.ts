@@ -78,7 +78,9 @@ type Credential = { scanner: ScannerAuth; key?: KeyTerminal } | { admin: Session
 /** Terminal bearer or a till's API key, else the device cookie, else a user session. */
 async function credentialOf(c: Context<AppBindings>): Promise<Credential> {
   const { scanners, sessions } = c.var.stores;
-  const meta = { ipPrefix: ipPrefix(c.req.header('cf-connecting-ip')) };
+  // An upload is not a contact: it never moves the floor the server holds queued reads to (batch.ts).
+  const upload = c.req.method === 'POST' && /\/(?:batch|device)$/.test(c.req.path);
+  const meta = { ipPrefix: ipPrefix(c.req.header('cf-connecting-ip')), contact: !upload };
   const header = c.req.header('authorization');
   if (header) {
     const token = /^Bearer\s+(\S+)$/i.exec(header)?.[1];
