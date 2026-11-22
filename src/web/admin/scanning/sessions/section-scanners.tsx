@@ -7,6 +7,7 @@ import type { ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
 import { api } from '@/web/lib/api.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { Badge, Button, Callout, Input, RadioGroup, Select, toast } from '@/web/ui/index.ts';
+import { issued } from '../scanner-api.ts';
 import { PinList, type PinRow, roleLabel } from '../setup/pin-list.tsx';
 import type { SessionStaff } from './session-live.ts';
 import { RowEditor, SetupRow } from './setup-row.tsx';
@@ -63,7 +64,7 @@ function AddPerson({
       { name: name.trim(), role },
       {
         onSuccess: (r) =>
-          onCreated({ id: r.staff.id, name: r.staff.name, role: r.staff.role, pin: r.pin }),
+          onCreated({ id: r.staff.id, name: r.staff.name, role: r.staff.role, pin: issued(r.pin) }),
       },
     );
   return (

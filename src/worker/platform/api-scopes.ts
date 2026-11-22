@@ -37,6 +37,7 @@ export const scopeCapability: Record<TenantScope, OrgCapability> = {
   'scan-setup:read': 'scanning:read',
   'scan-setup:write': 'scanning:manage',
   'scanning:admin': 'scanning:manage',
+  'nfc:keys': 'scanning:manage',
   'nfc:read': 'passes:read',
   'nfc:write': 'passes:operate',
   'connections:read': 'integrations:read',

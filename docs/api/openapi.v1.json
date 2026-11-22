@@ -10362,6 +10362,7 @@
                 "scan-setup:read",
                 "scan-setup:write",
                 "scanning:admin",
+                "nfc:keys",
                 "nfc:read",
                 "nfc:write",
                 "wallet:read",
@@ -10508,6 +10509,7 @@
                         "scan-setup:read",
                         "scan-setup:write",
                         "scanning:admin",
+                        "nfc:keys",
                         "nfc:read",
                         "nfc:write",
                         "wallet:read",
@@ -10739,6 +10741,7 @@
                         "scan-setup:read",
                         "scan-setup:write",
                         "scanning:admin",
+                        "nfc:keys",
                         "nfc:read",
                         "nfc:write",
                         "wallet:read",
@@ -10968,6 +10971,7 @@
                     "scan-setup:read",
                     "scan-setup:write",
                     "scanning:admin",
+                    "nfc:keys",
                     "nfc:read",
                     "nfc:write",
                     "wallet:read",
@@ -11201,6 +11205,7 @@
                 "scan-setup:read",
                 "scan-setup:write",
                 "scanning:admin",
+                "nfc:keys",
                 "nfc:read",
                 "nfc:write",
                 "wallet:read",
@@ -11611,6 +11616,7 @@
                 "scan-setup:read",
                 "scan-setup:write",
                 "scanning:admin",
+                "nfc:keys",
                 "nfc:read",
                 "nfc:write",
                 "wallet:read",
@@ -19342,7 +19348,8 @@
                         "string",
                         "null"
                       ],
-                      "pattern": "^\\d{6}$"
+                      "pattern": "^\\d{6}$",
+                      "description": "Null only on an Idempotency-Key replay."
                     }
                   },
                   "required": [
@@ -28156,6 +28163,7 @@
                 "scanning:write",
                 "scan-setup:read",
                 "scanning:admin",
+                "nfc:keys",
                 "api-keys:write"
               ]
             },
@@ -36934,6 +36942,7 @@
                           "scan-setup:read",
                           "scan-setup:write",
                           "scanning:admin",
+                          "nfc:keys",
                           "nfc:read",
                           "nfc:write",
                           "wallet:read",
@@ -37561,6 +37570,7 @@
                                 "scan-setup:read",
                                 "scan-setup:write",
                                 "scanning:admin",
+                                "nfc:keys",
                                 "nfc:read",
                                 "nfc:write",
                                 "wallet:read",
@@ -38133,11 +38143,11 @@
           "ACTOR_CHANGED",
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -38629,11 +38639,11 @@
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -38852,11 +38862,11 @@
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -97472,13 +97482,13 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_MODE_MISMATCH",
           "API_KEY_NOT_FOUND",
           "API_KEY_NOT_ROTATABLE",
           "API_KEY_REQUIRED",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
           "FORBIDDEN",
@@ -97630,12 +97640,12 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_MODE_MISMATCH",
           "API_KEY_NOT_FOUND",
           "API_KEY_NOT_ROTATABLE",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
           "FORBIDDEN",
@@ -98144,6 +98154,7 @@
                                 "scan-setup:read",
                                 "scan-setup:write",
                                 "scanning:admin",
+                                "nfc:keys",
                                 "nfc:read",
                                 "nfc:write",
                                 "wallet:read",
@@ -98445,11 +98456,11 @@
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -109384,6 +109395,105 @@
       }
     },
     "/api/v1/scanners": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "apiKey": [
+              "scanning:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-feature": "scanning.devices",
+        "summary": "Create a scanner (a device comes with a pairing code)",
+        "tags": [
+          "scanners"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScannersCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedScanner"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scanners.postScanners",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "create"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ADMITS_TOO_MANY",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "SCANNER_ADMIN_ROLE",
+          "SCANNER_ADMIN_USER",
+          "SCANNER_NAME_TAKEN",
+          "SCANNER_NOT_FOUND",
+          "SCANNER_NOT_PAIRABLE",
+          "SCANNER_REVOKED",
+          "SCANNER_ROLE_INVALID",
+          "SCANNER_SETUP_EXISTS",
+          "SCANNER_WATCH_INVALID",
+          "SCANNER_WATCH_NOT_FOUND",
+          "SCANNING_SESSION_CHANGED",
+          "SCANNING_SESSION_NOT_FOUND",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_MODE_LIVE_ONLY",
+          "SCAN_STAFF_CHANGED",
+          "SCAN_ZONE_LIVE_ONLY",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION",
+          "ZONE_ARCHIVED",
+          "ZONE_EVENT_SESSION",
+          "ZONE_NOT_FOUND"
+        ]
+      },
       "get": {
         "summary": "List scanners",
         "tags": [
@@ -109519,93 +109629,21 @@
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
-      },
-      "post": {
-        "summary": "Create a scanner (a device comes with a pairing code)",
-        "tags": [
-          "scanners"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ScannersCreateParams"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatedScanner"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scanners.postScanners",
-        "x-sdk": {
-          "resource": "scanners",
-          "method": "create"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "ADMITS_TOO_MANY",
-          "EVENT_NOT_FOUND",
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "ORG_FORBIDDEN",
-          "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "SCANNER_ADMIN_ROLE",
-          "SCANNER_ADMIN_USER",
-          "SCANNER_NAME_TAKEN",
-          "SCANNER_NOT_FOUND",
-          "SCANNER_NOT_PAIRABLE",
-          "SCANNER_REVOKED",
-          "SCANNER_ROLE_INVALID",
-          "SCANNER_SETUP_EXISTS",
-          "SCANNER_WATCH_INVALID",
-          "SCANNER_WATCH_NOT_FOUND",
-          "SCANNING_SESSION_CHANGED",
-          "SCANNING_SESSION_NOT_FOUND",
-          "SCAN_CONFIG_CHANGED",
-          "SCAN_MODE_LIVE_ONLY",
-          "SCAN_STAFF_CHANGED",
-          "SCAN_ZONE_LIVE_ONLY",
-          "TEMPLATE_ARCHIVED",
-          "TEMPLATE_NOT_FOUND",
-          "UNAUTHENTICATED",
-          "USER_NOT_FOUND",
-          "VALIDATION",
-          "ZONE_ARCHIVED",
-          "ZONE_EVENT_SESSION",
-          "ZONE_NOT_FOUND"
-        ]
       }
     },
     "/api/v1/scanners/{id}/pairing": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-feature": "scanning.devices",
         "summary": "A new pairing code (replaces any live one)",
         "tags": [
           "scanners"
@@ -109642,10 +109680,18 @@
                   "type": "object",
                   "properties": {
                     "code": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "Null only on an Idempotency-Key replay."
                     },
                     "url": {
-                      "type": "string"
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "Null only on an Idempotency-Key replay."
                     },
                     "expiresAt": {
                       "type": "integer",
@@ -109677,15 +109723,15 @@
           "resource": "scanners.pairing",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -109702,6 +109748,16 @@
         ]
       },
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "scan-setup:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Poll a pairing",
         "tags": [
           "scanners"
@@ -109778,21 +109834,127 @@
           "resource": "scanners.pairing",
           "method": "retrieve"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "SCANNER_NOT_FOUND",
           "SCANNING_SESSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/scanners/{id}/token": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-feature": "scanning.devices",
+        "summary": "A till token, shown once (replaces the old one)",
+        "tags": [
+          "scanners"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true"
+              ]
+            },
+            "required": false,
+            "name": "restore",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "Null only on an Idempotency-Key replay."
+                    },
+                    "expiresAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "expiresAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scanners.postScannersByIdToken",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "rotateToken"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "SCANNER_NAME_TAKEN",
+          "SCANNER_NOT_FOUND",
+          "SCANNER_NOT_TERMINAL",
+          "SCANNER_REVOKED",
+          "SCANNING_SESSION_NOT_FOUND",
+          "SCAN_MODE_LIVE_ONLY",
+          "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -109872,100 +110034,6 @@
           "SCANNER_NAME_TAKEN",
           "SCANNER_NOT_FOUND",
           "SCANNER_NOT_PAIRABLE",
-          "SCANNER_REVOKED",
-          "SCANNING_SESSION_NOT_FOUND",
-          "SCAN_MODE_LIVE_ONLY",
-          "SCAN_ZONE_LIVE_ONLY",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/scanners/{id}/token": {
-      "post": {
-        "summary": "A till token, shown once (replaces the old one)",
-        "tags": [
-          "scanners"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "true"
-              ]
-            },
-            "required": false,
-            "name": "restore",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "token": {
-                      "type": "string"
-                    },
-                    "expiresAt": {
-                      "type": "integer",
-                      "minimum": 0
-                    }
-                  },
-                  "required": [
-                    "token",
-                    "expiresAt"
-                  ]
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scanners.postScannersByIdToken",
-        "x-sdk": {
-          "resource": "scanners",
-          "method": "rotateToken"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "NOT_FOUND",
-          "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "SCANNER_NAME_TAKEN",
-          "SCANNER_NOT_FOUND",
-          "SCANNER_NOT_TERMINAL",
           "SCANNER_REVOKED",
           "SCANNING_SESSION_NOT_FOUND",
           "SCAN_MODE_LIVE_ONLY",
@@ -110879,6 +110947,9 @@
           "ADMITS_TOO_MANY",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
@@ -112221,6 +112292,9 @@
           "ADMITS_TOO_MANY",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
@@ -112624,6 +112698,118 @@
         ]
       }
     },
+    "/api/v1/scanning-sessions/{id}/devices": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "apiKey": [
+              "scanning:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-feature": "scanning.devices",
+        "summary": "Add a device to a scanning session",
+        "tags": [
+          "scanners"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanningSessionsDevicesCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedScanningDevice"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scanners.postScanningSessionsByIdDevices",
+        "x-sdk": {
+          "resource": "scanningSessions.devices",
+          "method": "create"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ADMITS_TOO_MANY",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "SCANNER_ADMIN_ROLE",
+          "SCANNER_ADMIN_USER",
+          "SCANNER_NAME_TAKEN",
+          "SCANNER_NOT_FOUND",
+          "SCANNER_NOT_PAIRABLE",
+          "SCANNER_REVOKED",
+          "SCANNER_ROLE_INVALID",
+          "SCANNER_SETUP_EXISTS",
+          "SCANNER_WATCH_INVALID",
+          "SCANNER_WATCH_NOT_FOUND",
+          "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_SESSION_CHANGED",
+          "SCANNING_SESSION_NOT_FOUND",
+          "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_SCOPE_INVALID",
+          "SCAN_MODE_LIVE_ONLY",
+          "SCAN_ZONE_LIVE_ONLY",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/scanning-sessions/join": {
       "post": {
         "summary": "Join a scanning session as an administrator device",
@@ -112819,102 +113005,6 @@
           "SCAN_STAFF_CHANGED",
           "SCAN_SUMMARY_SESSION_FORBIDDEN",
           "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/scanning-sessions/{id}/devices": {
-      "post": {
-        "summary": "Add a device to a scanning session",
-        "tags": [
-          "scanners"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ScanningSessionsDevicesCreateParams"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatedScanningDevice"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scanners.postScanningSessionsByIdDevices",
-        "x-sdk": {
-          "resource": "scanningSessions.devices",
-          "method": "create"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "ADMITS_TOO_MANY",
-          "EVENT_NOT_FOUND",
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "NOT_FOUND",
-          "ORG_FORBIDDEN",
-          "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "SCANNER_ADMIN_ROLE",
-          "SCANNER_ADMIN_USER",
-          "SCANNER_NAME_TAKEN",
-          "SCANNER_NOT_FOUND",
-          "SCANNER_NOT_PAIRABLE",
-          "SCANNER_REVOKED",
-          "SCANNER_ROLE_INVALID",
-          "SCANNER_SETUP_EXISTS",
-          "SCANNER_WATCH_INVALID",
-          "SCANNER_WATCH_NOT_FOUND",
-          "SCANNING_DEVICE_NOT_FOUND",
-          "SCANNING_SESSION_CHANGED",
-          "SCANNING_SESSION_NOT_FOUND",
-          "SCANNING_SESSION_PAUSED",
-          "SCANNING_SESSION_SCOPE_INVALID",
-          "SCAN_MODE_LIVE_ONLY",
-          "SCAN_ZONE_LIVE_ONLY",
-          "TEMPLATE_ARCHIVED",
-          "TEMPLATE_NOT_FOUND",
-          "UNAUTHENTICATED",
-          "USER_NOT_FOUND",
           "VALIDATION"
         ]
       }
@@ -115005,7 +115095,6 @@
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "SCAN_CONFIG_CHANGED",
@@ -116117,6 +116206,16 @@
     },
     "/api/v1/scan-staff": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "List an organization’s staff",
         "tags": [
           "scan-staff"
@@ -116126,9 +116225,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 64
+              "maxLength": 64,
+              "description": "Optional for an org-bound key, which acts in its own organization."
             },
-            "required": true,
+            "required": false,
+            "description": "Optional for an org-bound key, which acts in its own organization.",
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -116212,16 +116313,14 @@
           "resource": "scanStaff",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "SCAN_CONFIG_CHANGED",
@@ -116232,6 +116331,16 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Create a staff member and reveal their PIN once",
         "tags": [
           "scan-staff"
@@ -116258,8 +116367,12 @@
                       "$ref": "#/components/schemas/ScanStaff"
                     },
                     "pin": {
-                      "type": "string",
-                      "pattern": "^\\d{6}$"
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^\\d{6}$",
+                      "description": "Null only on an Idempotency-Key replay."
                     }
                   },
                   "required": [
@@ -116286,15 +116399,15 @@
           "resource": "scanStaff",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
@@ -116313,6 +116426,16 @@
     },
     "/api/v1/scan-staff/{id}": {
       "patch": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Update or disable a staff member",
         "tags": [
           "scan-staff"
@@ -116332,9 +116455,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 64
+              "maxLength": 64,
+              "description": "Optional for an org-bound key, which acts in its own organization."
             },
-            "required": true,
+            "required": false,
+            "description": "Optional for an org-bound key, which acts in its own organization.",
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -116377,17 +116502,15 @@
           "resource": "scanStaff",
           "method": "update"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "SCAN_CONFIG_CHANGED",
@@ -116397,6 +116520,109 @@
           "SCAN_ZONE_LIVE_ONLY",
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_TAKEN",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/scan-staff/{id}/reset-pin": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Replace a staff PIN and reveal it once",
+        "tags": [
+          "scan-staff"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Optional for an org-bound key, which acts in its own organization."
+            },
+            "required": false,
+            "description": "Optional for an org-bound key, which acts in its own organization.",
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pin": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^\\d{6}$",
+                      "description": "Null only on an Idempotency-Key replay."
+                    }
+                  },
+                  "required": [
+                    "pin"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scan-staff.postScanStaffByIdResetPin",
+        "x-sdk": {
+          "resource": "scanStaff",
+          "method": "resetPin"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "SCAN_MODE_LIVE_ONLY",
+          "SCAN_STAFF_NOT_FOUND",
+          "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -116547,92 +116773,6 @@
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "SCAN_MODE_LIVE_ONLY",
-          "SCAN_ZONE_LIVE_ONLY",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/scan-staff/{id}/reset-pin": {
-      "post": {
-        "summary": "Replace a staff PIN and reveal it once",
-        "tags": [
-          "scan-staff"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "orgId",
-            "in": "query",
-            "x-platform-only": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "pin": {
-                      "type": "string",
-                      "pattern": "^\\d{6}$"
-                    }
-                  },
-                  "required": [
-                    "pin"
-                  ]
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scan-staff.postScanStaffByIdResetPin",
-        "x-sdk": {
-          "resource": "scanStaff",
-          "method": "resetPin"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "NOT_FOUND",
-          "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "SCAN_MODE_LIVE_ONLY",
-          "SCAN_STAFF_NOT_FOUND",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -116924,7 +117064,6 @@
           "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
-          "ORG_REQUIRED",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
@@ -127784,6 +127923,16 @@
     },
     "/api/v1/nfc/keysets": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "List tag keysets",
         "tags": [
           "nfc-keysets"
@@ -127793,9 +127942,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 64
+              "maxLength": 64,
+              "description": "Optional for an org-bound key, which acts in its own organization."
             },
-            "required": true,
+            "required": false,
+            "description": "Optional for an org-bound key, which acts in its own organization.",
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -127947,15 +128098,12 @@
           "resource": "nfc.keysets",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
@@ -127965,6 +128113,16 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "x-feature": {
           "key": "nfc",
           "atLeast": "secure"
@@ -127978,9 +128136,11 @@
             "schema": {
               "type": "string",
               "minLength": 1,
-              "maxLength": 64
+              "maxLength": 64,
+              "description": "Optional for an org-bound key, which acts in its own organization."
             },
-            "required": true,
+            "required": false,
+            "description": "Optional for an org-bound key, which acts in its own organization.",
             "name": "orgId",
             "in": "query",
             "x-platform-only": true
@@ -128136,21 +128296,21 @@
           "resource": "nfc.keysets",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_KEY_INVALID",
           "KEYSET_KEY_REUSED",
           "KEYSET_KEY_WEAK",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
@@ -128162,6 +128322,16 @@
     },
     "/api/v1/nfc/keysets/{id}/rotate": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Rotate a keyset to a new key version",
         "tags": [
           "nfc-keysets"
@@ -128328,11 +128498,6 @@
           "resource": "nfc.keysets",
           "method": "rotate"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -128341,12 +128506,17 @@
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_KEY_INVALID",
           "KEYSET_KEY_REUSED",
           "KEYSET_KEY_WEAK",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -128359,6 +128529,16 @@
     },
     "/api/v1/nfc/keysets/{id}/keys/{version}/retire": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Retire an old key version",
         "tags": [
           "nfc-keysets"
@@ -128504,19 +128684,16 @@
           "resource": "nfc.keysets",
           "method": "retireKey"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_KEY_NOT_FOUND",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -128528,6 +128705,16 @@
     },
     "/api/v1/nfc/keysets/{id}/keys/{version}/revoke": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Revoke a key version: tags on it must be written again",
         "tags": [
           "nfc-keysets"
@@ -128673,19 +128860,16 @@
           "resource": "nfc.keysets",
           "method": "revokeKey"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_KEY_NOT_FOUND",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -128697,6 +128881,16 @@
     },
     "/api/v1/nfc/keysets/{id}/reenrol": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Move the tags of a keyset to another keyset",
         "tags": [
           "nfc-keysets"
@@ -128860,18 +129054,15 @@
           "resource": "nfc.keysets",
           "method": "reenroll"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -128883,6 +129074,16 @@
     },
     "/api/v1/nfc/keysets/{id}/import": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Import supplier-personalised tags (dry run or add)",
         "tags": [
           "nfc-keysets"
@@ -129002,11 +129203,6 @@
           "resource": "nfc.keysets",
           "method": "importTags"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -129015,8 +129211,10 @@
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -129028,6 +129226,16 @@
     },
     "/api/v1/nfc/keysets/{id}/disable": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Disable a keyset",
         "tags": [
           "nfc-keysets"
@@ -129163,18 +129371,15 @@
           "resource": "nfc.keysets",
           "method": "disable"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",

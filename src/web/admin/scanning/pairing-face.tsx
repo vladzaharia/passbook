@@ -10,7 +10,9 @@ import './pairing.css';
 import { PAIRING_POLL_MS, useNewPairing, usePairHere, usePairingState } from './scanner-api.ts';
 import { formatCode, formatCountdown, pairingUrl } from './scanners/labels.ts';
 
-export type Pairing = z.infer<typeof ScannerPairingSchema>;
+type Issued = z.infer<typeof ScannerPairingSchema>;
+/** A pairing with its code: what the call that made it returns. */
+export type Pairing = { [K in keyof Issued]: NonNullable<Issued[K]> };
 
 export interface PairingFaceProps {
   scanner: { id: string; name: string; mode: Mode };
