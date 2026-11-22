@@ -17,12 +17,12 @@ import {
   SavedImportMappingsResultSchema,
 } from '../../shared/contracts/pass-imports.ts';
 import { PassFilterSchema } from '../../shared/contracts/pass-selection.ts';
-import { PassViewListSchema } from '../../shared/contracts/pass-views.ts';
 import {
   PassSetupResultSchema,
   PassSetupSchema,
   StagedBrandAssetSchema,
 } from '../../shared/contracts/pass-setup.ts';
+import { PassViewListSchema } from '../../shared/contracts/pass-views.ts';
 import {
   PassDetailSchema,
   PassDeviceSchema,
