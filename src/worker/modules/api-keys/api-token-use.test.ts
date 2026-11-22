@@ -298,7 +298,7 @@ describe('a key refused at the route gate', () => {
       .map((l) => JSON.parse(l) as Record<string, unknown>)
       .filter((l) => l.event === 'auth.key_refused');
     expect(logs.map((l) => l.code)).toEqual(['INVALID_API_KEY', 'MISSING_SCOPE']);
-    expect(logs[0]).toMatchObject({ keyPrefix: k.secret.split('_')[1] });
+    expect(logs[0]).toMatchObject({ keyPrefix: k.secret.slice(4, 12) });
     expect(logs[1]).toMatchObject({ keyId: k.id, scope: 'passes:read' });
     // The token itself is never logged.
     expect(seen.join()).not.toContain(k.secret.slice(-12));
