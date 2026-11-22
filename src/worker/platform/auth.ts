@@ -288,7 +288,8 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     if (sessionKind === 'tenant') assertConsoleGroup(c, session);
     if (sessionKind === 'admin') requireAdminRole(c, session);
     // After the role check: a person who could not do this anyway is not sent through a passkey prompt.
-    if (stepUp) assertStepUp(c, session, stepUp.maxAgeSec);
+    if (stepUp && (!stepUp.when || (await stepUp.when(c))))
+      assertStepUp(c, session, stepUp.maxAgeSec);
     if (sessionKind !== 'plain') {
       const principal = { ...session, mode: modeFromRequest(c) };
       if (capability) capabilityState.set(principal, { capability, proven: false });
@@ -299,7 +300,8 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     return next();
   });
   knownGuards.add(guard);
-  if (stepUp) declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: false });
+  if (stepUp)
+    declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: stepUp.when !== undefined });
   return declareSignIn(guard, level);
 }
 

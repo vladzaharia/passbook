@@ -1441,7 +1441,7 @@ export type NfcKeysetsImportTagsResult = {
   problems: Array<{
     line: number;
     uid: string | null;
-    reason: "bad_uid" | "bad_key" | "weak_key" | "dup_file" | "dup_key" | "meta_key" | "exists";
+    reason: "bad_uid" | "bad_key" | "weak_key" | "dup_file" | "dup_key" | "meta_key" | "exists" | "not_on_keyset";
   }>;
   moreProblems: number;
 };

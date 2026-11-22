@@ -3734,6 +3734,7 @@ class NfcKeysetsDisableResultVersionsItem(_Model):
 class NfcKeysetsImportTagsParams(_Model):
     csv: str
     dryRun: bool
+    replace: bool | None = None
 
 class NfcKeysetsImportTagsResult(_Model):
     dryRun: bool
@@ -3746,7 +3747,7 @@ class NfcKeysetsImportTagsResult(_Model):
 class NfcKeysetsImportTagsResultProblemsItem(_Model):
     line: int
     uid: str | None
-    reason: _Literal["bad_uid", "bad_key", "weak_key", "dup_file", "dup_key", "meta_key", "exists"] | str
+    reason: _Literal["bad_uid", "bad_key", "weak_key", "dup_file", "dup_key", "meta_key", "exists", "not_on_keyset"] | str
 
 class NfcKeysetsListItem(_Model):
     id: str

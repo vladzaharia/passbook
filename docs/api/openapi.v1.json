@@ -32757,6 +32757,9 @@
           },
           "dryRun": {
             "type": "boolean"
+          },
+          "replace": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -128982,7 +128985,8 @@
                               "dup_file",
                               "dup_key",
                               "meta_key",
-                              "exists"
+                              "exists",
+                              "not_on_keyset"
                             ]
                           }
                         },
@@ -129029,6 +129033,10 @@
         },
         "description": "Imports supplier-personalised tags. Run it as a dry run first, then add.",
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
@@ -129044,6 +129052,7 @@
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]

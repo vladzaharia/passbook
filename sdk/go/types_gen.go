@@ -2542,8 +2542,9 @@ type NfcKeysetsDisableResultVersionsItem struct {
 type NfcKeysetsImportTagsBody = NfcKeysetsImportTagsParams
 
 type NfcKeysetsImportTagsParams struct {
-	CSV    string `json:"csv"`
-	DryRun bool   `json:"dryRun"`
+	CSV     string `json:"csv"`
+	DryRun  bool   `json:"dryRun"`
+	Replace *bool  `json:"replace,omitempty"`
 }
 
 type NfcKeysetsImportTagsResult struct {

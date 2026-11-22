@@ -9,7 +9,8 @@ export type ImportProblemReason =
   | 'dup_file'
   | 'dup_key'
   | 'meta_key'
-  | 'exists';
+  | 'exists'
+  | 'not_on_keyset';
 
 export interface ImportRow {
   line: number;
