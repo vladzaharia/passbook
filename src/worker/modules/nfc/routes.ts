@@ -26,19 +26,10 @@ import {
   updateTag,
 } from './tags-admin.ts';
 
-/** Tags bound to passes and people: /api/v1/nfc. Console sessions only; API keys have no tag routes. */
+/** Tags bound to passes and people: /api/v1/nfc. Console sessions only, except the keyset routes, which also take an `nfc:keys` key. */
 export const nfcRoutes = createRouter();
 // Unknown paths stay a 404 problem; every tag route needs a console session.
-for (const path of [
-  '/passes/*',
-  '/tags',
-  '/tags/*',
-  '/bindings/*',
-  '/scanners',
-  '/users/*',
-  '/keysets',
-  '/keysets/*',
-])
+for (const path of ['/passes/*', '/tags', '/tags/*', '/bindings/*', '/scanners', '/users/*'])
   nfcRoutes.use(path, requireTenantSession);
 nfcRoutes.use('*', limitBody(8 * 1024));
 

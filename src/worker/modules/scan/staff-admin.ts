@@ -2,9 +2,7 @@ import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanStaffSchema, UpdateScanStaffSchema } from '../../../shared/contracts/scanners.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
-import { epochIs } from '../../platform/authority-checks.ts';
 import { bump } from '../../platform/counters.ts';
-import { macKeyVersion } from '../../platform/crypto.ts';
 import {
   AppError,
   ForbiddenError,
@@ -14,17 +12,9 @@ import {
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
-import { adminGrant, audited } from './repo-admin-grant.ts';
+import { adminGrant } from './repo-admin-grant.ts';
 import { pinOnlyOff } from './repo-pin-only.ts';
-import { clearNamedDayStatement } from './repo-pin-tag.ts';
-import {
-  addStaffPinRotate,
-  addStaffUpdate,
-  addUnbindStaffEverywhere,
-  getStaff,
-  getStaffBase,
-  type ScanStaffRow,
-} from './repo-staff.ts';
+import { getStaff, getStaffBase, type ScanStaffRow } from './repo-staff.ts';
 import {
   decodeStaffCursor,
   encodeStaffCursor,
@@ -34,9 +24,7 @@ import {
 } from './repo-staff-page.ts';
 import { newCapture } from './setup-capture.ts';
 import { staffViews } from './staff-admin-views.ts';
-import { hashPin } from './staff-pin.ts';
-import { pinTag } from './staff-pin-hash.ts';
-import { newUniquePin } from './staff-pin-unique.ts';
+import { commitPinReset, commitStaffUpdate } from './staff-admin-writes.ts';
 import {
   type CreateStaff,
   planStaff,
@@ -192,79 +180,18 @@ export async function updateStaff(
   mode: Mode,
   input: UpdateStaff,
 ) {
-  const { orgId, id } = observed;
-  assertAuthority(authority, session, orgId, mode, 'scanning:manage');
-  const userId = authority.userId;
-  const now = ctx.clock.now();
-  const action =
-    input.disabled === true
-      ? 'scan_staff.disable'
-      : input.disabled === false
-        ? 'scan_staff.enable'
-        : 'scan_staff.update';
-  const g = adminGrant(ctx, 'org.scan.staff.update', userId, authority, orgId, [], STAFF_CODES, id);
-  addStaffUpdate(g, id, input, now);
-  if (input.disabled === true) addUnbindStaffEverywhere(g, id, now);
-  g.add(
-    audited(g, ctx, {
-      orgId,
-      actorType: 'user',
-      actorId: userId,
-      action,
-      targetType: 'scan_staff',
-      targetId: id,
-    }),
-  );
-  try {
-    await g.commit();
-  } catch (error) {
-    staffMutationError(error);
-  }
-  return committedStaff(ctx, session, authority, id);
+  assertAuthority(authority, session, observed.orgId, mode, 'scanning:manage');
+  await commitStaffUpdate(ctx, authority.userId, authority, observed, input);
+  return committedStaff(ctx, session, authority, observed.id);
 }
 
-/**
- * The new PIN is returned only here; the stored credential is its staff-specific HMAC. The reset
- * signs the person out of every device in the same batch, so their next scan asks for the new PIN.
- * Session CSRF and the credential keyset are immutable and checked once at the request, not here.
- */
+/** The new PIN is returned only here; see `commitPinReset`. */
 export async function resetStaffPin(
   ctx: ServiceContext,
   session: SessionAuth,
   authority: StaffAuthority,
   staff: ScanStaffRow,
 ) {
-  const { orgId, id } = staff;
-  const { userId, mode } = authority;
-  assertAuthority(authority, session, orgId, mode, 'scanning:manage');
-  // Never the old PIN (under either root mid-rotation), and unique among the org's active staff.
-  const pin = await newUniquePin(ctx, orgId, id, staff.pinHash);
-  const pinHash = await hashPin(ctx.env, id, pin);
-  const now = ctx.clock.now();
-  const g = adminGrant(
-    ctx,
-    'org.scan.staff.pin_reset',
-    userId,
-    authority,
-    orgId,
-    staff.authEpoch === undefined ? [] : [epochIs('scan_staff', id, 'auth_epoch', staff.authEpoch)],
-    STAFF_CODES,
-    id,
-  );
-  addStaffPinRotate(g, id, pinHash, await pinTag(ctx.env, orgId, pin), macKeyVersion(ctx.env), now);
-  addUnbindStaffEverywhere(g, id, now);
-  g.add(
-    audited(g, ctx, {
-      orgId,
-      actorType: 'user',
-      actorId: userId,
-      action: 'scan_staff.pin_reset',
-      targetType: 'scan_staff',
-      targetId: id,
-    }),
-  );
-  await g.commit();
-  // The person starts the day clean: an admin reset also lifts the daily lock.
-  await clearNamedDayStatement(ctx.env.DB, id).run();
-  return { pin };
+  assertAuthority(authority, session, staff.orgId, authority.mode, 'scanning:manage');
+  return { pin: await commitPinReset(ctx, authority.userId, authority, staff) };
 }

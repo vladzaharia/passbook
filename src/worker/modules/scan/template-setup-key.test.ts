@@ -8,7 +8,8 @@ import { ROLE_PRESETS } from '../../platform/api-scopes.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createScannerStore } from './auth-store.ts';
-import { grantAuthorityOf, KEY_PURPOSES } from './repo-admin-grant.ts';
+import { grantAuthorityOf } from './repo-admin-grant.ts';
+import { ADMIN_KEY_PURPOSES, WRITE_KEY_PURPOSES } from './repo-admin-purposes.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
 import { eventTemplate } from './template-setup-test-fixtures.ts';
 
@@ -152,7 +153,7 @@ describe('which scan admin grants a key may hold', () => {
   });
 
   // Pinned: adding a purpose here is a security decision, so it must change this list too.
-  const ALLOWED = [
+  const WRITE_ALLOWED = [
     'org.scan.scanner.mode',
     'org.scan.zone.create',
     'org.scan.zone.update',
@@ -161,53 +162,91 @@ describe('which scan admin grants a key may hold', () => {
     'org_mode.scan.event.assign',
     'org_mode.scan.event.create',
     'org_mode.scan.event.update',
+    'org_mode.scan.scanner.create',
     'org_mode.scan.scanner.revoke',
     'org_mode.scan.scanner.update',
     'org_mode.scan.session.create',
     'org_mode.scan.session.hold',
     'org_mode.scan.session.update',
     'org_mode.scan.setup.apply',
+    'org_mode.scan.setup.create',
     'org_mode.scan.visits.reset',
   ];
+  const ADMIN_ALLOWED = [
+    'org.scan.staff.create',
+    'org.scan.staff.pin_reset',
+    'org.scan.staff.update',
+    'org_mode.scan.pairing.create',
+    'org_mode.scan.pairing.token',
+    'org_mode.scan.scanner.create',
+    'org_mode.scan.setup.apply',
+    'org_mode.scan.setup.create',
+  ];
+  const ADMIN_ONLY = ADMIN_ALLOWED.filter((p) => !WRITE_ALLOWED.includes(p));
+  const NEVER = [
+    'org_mode.scan.pair',
+    'org_mode.scan.pairing.here',
+    'org_mode.scan.pairing.redeem',
+    'org_mode.scan.pairing.unpair',
+    'org_mode.scan.setup.admin_session',
+    'org_mode.scan.setup.update',
+    'org.scan.staff.pin',
+    'org_mode.scan.staff.bind',
+    'org_mode.scan.staff.unbind',
+    'org_mode.scan.tag.bind',
+    'org_mode.scan.tag.enroll',
+    'org_mode.scan.tag.unbind',
+    'org_mode.nfc.keyset.create',
+  ];
 
-  it('holds exactly the expected purposes, each granted to a live scanning:write key of the org', () => {
-    expect([...KEY_PURPOSES].sort()).toEqual(ALLOWED);
-    for (const purpose of ALLOWED)
+  it('holds exactly the expected purposes, each granted to a live key of the scope in the org', () => {
+    expect([...WRITE_KEY_PURPOSES].sort()).toEqual(WRITE_ALLOWED);
+    expect([...ADMIN_KEY_PURPOSES].sort()).toEqual(ADMIN_ALLOWED);
+    for (const purpose of WRITE_ALLOWED)
       expect(grantAuthorityOf(key('scanning:write'), 'k1', 'o1', purpose)).toMatchObject({
+        keyId: 'k1',
+      });
+    for (const purpose of ADMIN_ALLOWED)
+      expect(grantAuthorityOf(key('scanning:admin'), 'k1', 'o1', purpose)).toMatchObject({
         keyId: 'k1',
       });
   });
 
-  it('refuses a key every credential purpose: pairing, PINs, admin sessions, staff, tags, scanner creation', () => {
-    for (const purpose of [
-      'org_mode.scan.pair',
-      'org_mode.scan.pairing.create',
-      'org_mode.scan.pairing.here',
-      'org_mode.scan.pairing.redeem',
-      'org_mode.scan.pairing.token',
-      'org_mode.scan.pairing.unpair',
-      'org_mode.scan.setup.admin_session',
-      'org_mode.scan.setup.create',
-      'org_mode.scan.setup.update',
-      'org_mode.scan.scanner.create',
-      'org.scan.staff.create',
-      'org.scan.staff.pin',
-      'org.scan.staff.pin_reset',
-      'org.scan.staff.update',
-      'org_mode.scan.staff.bind',
-      'org_mode.scan.staff.unbind',
-      'org_mode.scan.tag.bind',
-      'org_mode.scan.tag.enroll',
-      'org_mode.scan.tag.unbind',
-    ])
+  it('a write key makes no code and no staff; an admin key does not edit zones or events', () => {
+    for (const purpose of ADMIN_ONLY)
+      expect(() => grantAuthorityOf(key('scanning:write'), 'k1', 'o1', purpose), purpose).toThrow();
+    for (const purpose of WRITE_ALLOWED.filter((p) => !ADMIN_ALLOWED.includes(p)))
+      expect(() => grantAuthorityOf(key('scanning:admin'), 'k1', 'o1', purpose), purpose).toThrow();
+  });
+
+  it('refuses both scopes every purpose that stays with a person: pair here, redeem, unpair, admin sessions, tags, NFC', () => {
+    for (const purpose of NEVER)
       for (const scope of ['scanning:write', 'scanning:admin'])
         expect(() => grantAuthorityOf(key(scope), 'k1', 'o1', purpose), purpose).toThrow();
   });
 
   it('binds every purpose to the key org: a platform key is refused', () => {
-    for (const purpose of ALLOWED)
+    for (const [scope, list] of [
+      ['scanning:write', WRITE_ALLOWED],
+      ['scanning:admin', ADMIN_ALLOWED],
+    ] as const)
+      for (const purpose of list)
+        expect(
+          () => grantAuthorityOf({ ...key(scope), keyOrgId: null }, 'k1', 'o1', purpose),
+          purpose,
+        ).toThrow();
+  });
+
+  it('refuses an admin key in test mode for every admin purpose', () => {
+    for (const purpose of ADMIN_ALLOWED)
       expect(
-        () => grantAuthorityOf({ ...key('scanning:write'), keyOrgId: null }, 'k1', 'o1', purpose),
+        () =>
+          grantAuthorityOf(
+            { ...key('scanning:admin'), mode: 'test' as const },
+            'k1',
+            'o1',
+            purpose,
+          ),
         purpose,
       ).toThrow();
   });
@@ -221,6 +260,10 @@ describe('which scan admin grants a key may hold', () => {
       expect.objectContaining({ code: 'SCAN_MODE_LIVE_ONLY' }),
     );
     expect(grantAuthorityOf(test, 'k1', 'o1', 'org_mode.scan.event.create')).toMatchObject({
+      keyId: 'k1',
+    });
+    // A write key makes a device or scanner with no code in either mode.
+    expect(grantAuthorityOf(test, 'k1', 'o1', 'org_mode.scan.scanner.create')).toMatchObject({
       keyId: 'k1',
     });
   });
