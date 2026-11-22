@@ -104,6 +104,15 @@ export const JobSchema = z.discriminatedUnion('kind', [
     credentialId: z.string().min(1).max(64),
     checkId: z.string().min(1).max(80),
   }),
+  /** A Google release was published: bring the classes of its template's earlier releases up to it. */
+  z.object({
+    kind: z.literal('wallet.google_reconcile'),
+    orgId: z.string().min(1).max(64),
+    mode: ModeSchema,
+    templateId: z.string().min(1).max(64),
+    version: z.string().min(1).max(64),
+    generation: z.number().int().positive(),
+  }),
   /** A claim found a release's wallet art missing: cut and store it again, as publication did. */
   z.object({ kind: z.literal('wallet.google_art'), candidateId: z.string().min(1).max(64) }),
   /** Apple flipped for a pass: republish (force) so devices fetch the voided or live copy. */

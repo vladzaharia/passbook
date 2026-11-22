@@ -3,7 +3,7 @@ import { type Clock, systemClock } from './clock.ts';
 import type { AppBindings } from './context.ts';
 import type { AppEnv } from './env.ts';
 import { createIds, type Ids } from './ids.ts';
-import { hasJobAuthority, type JobAuthority, withJobAuthority } from './job-authority.ts';
+import { hasFullJobAuthority, type JobAuthority, withJobAuthority } from './job-authority.ts';
 import { createLogger, type Logger } from './log.ts';
 
 /**
@@ -76,7 +76,7 @@ export function createDetachedContext(env: AppEnv, options: ContextOptions = {})
 
 /** True for a context built by `createJobContext`; the brand cannot be forged outside this module. */
 export const isJobContext = (ctx: { job?: JobAuthority | undefined }): boolean =>
-  hasJobAuthority(ctx);
+  hasFullJobAuthority(ctx);
 
 /** Queue, cron and workflow entry points only (`tools/authority-scope.ts` lints other callers). */
 export function createJobContext(

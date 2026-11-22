@@ -169,6 +169,8 @@ export const BLOCK_CODES = [
   'IDENTITY_TOO_LONG',
   'REQUIRED_ROLE_EMPTY',
   'TYPE_UNSATISFIED',
+  /** A Google class field moves with pass data, or could not be checked (CW9b). */
+  'CLASS_FIELDS_VARY',
 ] as const;
 export type BlockCode = (typeof BLOCK_CODES)[number];
 /** A pass-level failure: the pass is not offered for this target (architecture 4.2). */

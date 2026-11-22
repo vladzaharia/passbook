@@ -12,13 +12,20 @@ ALTER TABLE wallet_google_callback_bindings ADD COLUMN class_key TEXT
   CHECK(class_key IS NULL OR (class_type IS NOT NULL AND length(class_key) = 64 AND class_key NOT GLOB '*[^0-9a-f]*'));
 
 -- The release that last wrote a Google class. A class is written once per release: a newer release of the
--- same template may rewrite the body (once), and the same release never rewrites it (CW9b).
+-- same template may rewrite the body (once), and the same release never rewrites it (CW9b). The row follows
+-- its release: a purge of the release removes it. `pending_*` is the compare-and-set that lets exactly one
+-- operation send a rewrite; `body_digest` is the body Google was last given. Generation 0 is a class that
+-- existed before it was recorded.
 CREATE TABLE wallet_google_classes (
   class_id_hash TEXT PRIMARY KEY CHECK(length(class_id_hash) = 64 AND class_id_hash NOT GLOB '*[^0-9a-f]*'),
-  release_id TEXT NOT NULL,
-  release_generation INTEGER NOT NULL CHECK(release_generation > 0),
+  release_id TEXT NOT NULL REFERENCES template_releases(id) ON DELETE CASCADE,
+  release_generation INTEGER NOT NULL CHECK(release_generation >= 0),
+  body_digest TEXT CHECK(body_digest IS NULL OR (length(body_digest) = 64 AND body_digest NOT GLOB '*[^0-9a-f]*')),
+  pending_generation INTEGER CHECK(pending_generation IS NULL OR pending_generation > 0),
+  pending_at INTEGER,
   written_at INTEGER NOT NULL
 );
+CREATE INDEX wallet_google_classes_release ON wallet_google_classes(release_id);
 
 -- What each recorded response answered: the confirming read of a revoke must be a GET of the object.
 ALTER TABLE wallet_provider_instance_outcomes ADD COLUMN method TEXT;

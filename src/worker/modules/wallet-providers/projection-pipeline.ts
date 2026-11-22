@@ -6,6 +6,7 @@ import { samsungCompiler } from '../../../passkit/wallets/samsung/index.ts';
 import type { WalletCompiler } from '../../../passkit/wallets/types.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
+import { CLASS_RULE_REVISION } from './projection-class-rule.ts';
 import type { NativeProvider } from './projection-contract.ts';
 
 export const COMPILERS: Record<NativeProvider, WalletCompiler> = {
@@ -39,6 +40,8 @@ export async function pipelineRevision(provider: NativeProvider): Promise<string
     canonicalJson({
       compiler: COMPILERS[provider].revision,
       fidelity: FIDELITY_REVISION,
+      // The class field rule joins a Google report (CW9b): a changed rule re-opens review, like a compiler change.
+      ...(provider === 'google' ? { rule: CLASS_RULE_REVISION } : {}),
       static: await staticPin(provider),
     }),
   );

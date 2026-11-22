@@ -10,7 +10,7 @@ import { canonicalJson } from '../templates/package/hash.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
 import type { VersionRow } from '../templates/repo.ts';
 import { prepareProjectionArt, sizeShipped, type WalletArt } from './projection-art.ts';
-import { perturbSample, withClassRule } from './projection-class-rule.ts';
+import { classProbes, withClassRule } from './projection-class-rule.ts';
 import type { NativeProvider, ProjectionV2 } from './projection-contract.ts';
 import { COMPILERS, pipelineRevision } from './projection-pipeline.ts';
 
@@ -67,17 +67,19 @@ export async function computeProjectionPins(
   // is blocked here, at review, not discovered as drift.
   const reviewed =
     provider === 'google'
-      ? withClassRule(compiler, () => {
-          const input = perturbSample(template.manifest.sample, wallets?.google?.classKey);
-          const other = previewPlan(
-            ctx.env,
-            template,
-            input,
-            template.passJson.organizationName,
-            now,
-          );
-          return viewOf(other, input);
-        })
+      ? withClassRule(
+          compiler,
+          classProbes(
+            template.manifest.inputs,
+            template.manifest.sample,
+            wallets?.google?.classKey,
+            (input) =>
+              viewOf(
+                previewPlan(ctx.env, template, input, template.passJson.organizationName, now),
+                input,
+              ),
+          ),
+        )
       : compiler;
   const report = fidelityReport({
     target: provider,

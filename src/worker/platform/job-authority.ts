@@ -29,6 +29,11 @@ export function withJobAuthority<T extends object>(
   return { ...ctx, job: own };
 }
 
+/** A job context with no purpose narrowing: the only kind that may mint deferred grants and creates. */
+export function hasFullJobAuthority(ctx: { job?: JobAuthority | undefined }): boolean {
+  return ctx.job === token;
+}
+
 export function hasJobAuthority(ctx: { job?: JobAuthority | undefined }): boolean {
   return ctx.job === token || (ctx.job !== undefined && narrowed.has(ctx.job));
 }
