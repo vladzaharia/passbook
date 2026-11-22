@@ -18,6 +18,35 @@ describe('redaction', () => {
     expect(out.ok).toBe('yes');
   });
 
+  it('redacts PIN and NFC key fields at any depth, and leaves look-alikes', () => {
+    const out = JSON.stringify(
+      redact({
+        pin: '123456',
+        staff_pin: '234567',
+        body: { approval: { newPin: '345678' }, list: [{ pinHash: 'h4sh' }] },
+        nfc: { fileKey: 'ff00', metaKey: 'aa11', keys: ['k1'], ownKey: 'k2', tapKeys: 'k3' },
+        shipping: 'ok',
+        mapping: 'ok',
+        keysetId: 'ks-1',
+      }),
+    );
+    for (const secret of ['123456', '234567', '345678', 'h4sh', 'ff00', 'aa11', 'k1', 'k2', 'k3'])
+      expect(out).not.toContain(secret);
+    expect(out).toContain('"shipping":"ok"');
+    expect(out).toContain('"mapping":"ok"');
+    expect(out).toContain('ks-1');
+  });
+
+  it('redacts scanner tokens in strings and nested values', () => {
+    const token = `wls_abcd1234_${'A'.repeat(43)}`;
+    expect(redactString(`Cookie: __Host-wallet_scan=${token}`)).toBe(
+      'Cookie: __Host-wallet_scan=wls_[redacted]',
+    );
+    const out = JSON.stringify(redact({ note: token, deep: { list: [`got ${token}`] } }));
+    expect(out).not.toContain('abcd1234');
+    expect(out).toContain('wls_[redacted]');
+  });
+
   it('redacts capability URLs, keys, emails and PEM blocks in strings', () => {
     expect(redactString('GET /p/abcdefghijklmnopqrstuv/pass.pkpass')).toBe(
       'GET /p/[redacted]/pass.pkpass',

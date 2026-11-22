@@ -10,14 +10,17 @@ export interface Logger {
 }
 
 const SENSITIVE_KEY =
-  /(authorization|cookie|token|secret|password|passphrase|private|credential|signature|csrf|api[-_]?key|session|bearer|email|personalization|userinfo|pushtoken|push_token|auth_token|download|scan[-_]?code|barcode)/i;
+  /(authorization|cookie|token|secret|password|passphrase|private|credential|signature|csrf|api[-_]?key|session|bearer|email|personalization|userinfo|pushtoken|push_token|auth_token|download|scan[-_]?code|barcode|(?:file|meta|own|tap|diversify|master|app|aes|hmac)[-_]?keys?|^keys$|key[-_]?material)/i;
 
-/** Capability URLs: /p/, /b/, /j/ and /preview/ values, ?t= and ?sig= values, ApplePass/Bearer headers, API keys (`wlt_`, `pb_`, `pbp_`, `pbo_`) and try tokens (`pbtry_`), PEM blocks. */
+/** Staff and unlock PINs (`pin`, `newPin`, `staff_pin`, `pinHash`). Kept apart so `shipping` or `mapping` stay readable. */
+const PIN_KEY = /(?:^|[^a-zA-Z])(?:[pP]in|PIN)(?:[^a-z]|$)|[a-z]Pin(?:[^a-z]|$)/;
+
+/** Capability URLs: /p/, /b/, /j/ and /preview/ values, ?t= and ?sig= values, ApplePass/Bearer headers, API keys (`wlt_`, `pb_`, `pbp_`, `pbo_`), scanner tokens (`wls_`) and try tokens (`pbtry_`), PEM blocks. */
 const VALUE_PATTERNS: [RegExp, string][] = [
   [/(\/(?:[pbj]|preview)\/)[A-Za-z0-9_.-]{16,}/g, '$1[redacted]'],
   [/([?&](?:t|token|code|key|state|sig|exp)=)[^&\s]+/gi, '$1[redacted]'],
   [/(ApplePass|Bearer)\s+[A-Za-z0-9._~+/=-]+/g, '$1 [redacted]'],
-  [/(wlt|pbp|pbo)_[A-Za-z0-9_-]+/g, '$1_[redacted]'],
+  [/(wlt|wls|pbp|pbo)_[A-Za-z0-9_-]+/g, '$1_[redacted]'],
   [/pbtry_[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?/g, 'pbtry_[redacted]'],
   [/pb_(?:live|test)_[A-Za-z0-9_-]+/g, 'pb_[redacted]'],
   [/-----BEGIN [A-Z ]+-----[\s\S]*?-----END [A-Z ]+-----/g, '[redacted pem]'],
@@ -75,7 +78,10 @@ export function redact(value: unknown, depth = 0, options: RedactOptions = {}): 
     return value.slice(0, 50).map((item) => redact(item, depth + 1, options));
   const out: Record<string, unknown> = {};
   for (const [key, item] of Object.entries(value)) {
-    out[key] = SENSITIVE_KEY.test(key) ? '[redacted]' : redact(item, depth + 1, options);
+    out[key] =
+      SENSITIVE_KEY.test(key) || PIN_KEY.test(key)
+        ? '[redacted]'
+        : redact(item, depth + 1, options);
   }
   return out;
 }
