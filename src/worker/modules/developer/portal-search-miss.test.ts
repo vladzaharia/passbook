@@ -116,17 +116,36 @@ describe('POST /developers/search-miss', () => {
   });
 
   it('limits a network, counting an IPv6 /64 as one, and leaves another network alone', async () => {
-    const from = (ip: string) => post({ term: 'refund' }, { 'cf-connecting-ip': ip });
-    // The limit is 120 per 60 s window. Send until the first 429, in quick batches, so a slow run
-    // that crosses a window boundary still reaches the limit instead of counting 130 across two windows.
-    let limited = false;
-    for (let sent = 0; sent < 600 && !limited; sent += 20) {
-      const batch = await Promise.all(
-        Array.from({ length: 20 }, (_, i) => from(`2001:db8:aaaa:bbbb:${sent + i}::1`)),
+    // A counting stand-in for RL_PUBLIC (120 per window, no clock), so the count never depends on
+    // how the real limiter's 60 s window falls during a slow run.
+    const counts = new Map<string, number>();
+    const limiterEnv = {
+      ...env,
+      RL_PUBLIC: {
+        limit: async ({ key }: { key: string }) => {
+          const n = (counts.get(key) ?? 0) + 1;
+          counts.set(key, n);
+          return { success: n <= 120 };
+        },
+      },
+    } as unknown as AppEnv;
+    const from = (ip: string) =>
+      app.request(
+        `${ORIGIN}/developers/search-miss`,
+        {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            origin: ORIGIN,
+            'cf-connecting-ip': ip,
+          },
+          body: JSON.stringify({ term: 'refund' }),
+        },
+        limiterEnv,
       );
-      limited = batch.some((r) => r.status === 429);
-    }
-    expect(limited).toBe(true);
+    const statuses: number[] = [];
+    for (let i = 0; i < 130; i++) statuses.push((await from(`2001:db8:aaaa:bbbb:${i}::1`)).status);
+    expect(statuses.filter((s) => s === 429)).toHaveLength(10);
     expect((await from('2001:db8:aaaa:bbbb:ffff::9')).status).toBe(429);
     expect((await from('2001:db8:cccc:dddd::1')).status).toBe(204);
   });
