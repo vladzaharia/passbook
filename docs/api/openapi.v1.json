@@ -28330,6 +28330,50 @@
           "token"
         ]
       },
+      "PlatformStatusOpenIncidentParams": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "component": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "api",
+              "apple_push",
+              "email",
+              "webhooks",
+              "google",
+              "samsung",
+              null
+            ],
+            "default": null
+          },
+          "impact": {
+            "type": "string",
+            "enum": [
+              "notice",
+              "degraded",
+              "outage"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "note",
+          "impact"
+        ]
+      },
       "TerminalResolveParams": {
         "type": "object",
         "properties": {
@@ -32756,6 +32800,9 @@
             "maxLength": 60000
           },
           "dryRun": {
+            "type": "boolean"
+          },
+          "replace": {
             "type": "boolean"
           }
         },
@@ -39176,6 +39223,7 @@
           "resource": "orgs.entitlements",
           "method": "retrieve"
         },
+        "description": "The features and limits of the organization's plan, and how much of each it has used.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -42745,6 +42793,7 @@
           "resource": "brand",
           "method": "retrieve"
         },
+        "description": "The organization's brand kit: accent colour, mark level and web logo.",
         "security": [
           {
             "apiKey": [
@@ -42824,6 +42873,7 @@
           "resource": "brand",
           "method": "update"
         },
+        "description": "Sets the accent colour and the mark level. Send only the fields to change.",
         "security": [
           {
             "apiKey": [
@@ -42907,6 +42957,7 @@
           "resource": "brand.webLogo",
           "method": "upload"
         },
+        "description": "Uploads the web logo as a PNG body, at most 1024 by 512 px and 512 KB. It replaces the current logo.",
         "security": [
           {
             "apiKey": [
@@ -42988,6 +43039,7 @@
           "resource": "brand.webLogo",
           "method": "delete"
         },
+        "description": "Removes the web logo. The brand kit keeps its other settings.",
         "security": [
           {
             "apiKey": [
@@ -50777,6 +50829,7 @@
           "resource": "templateImports",
           "method": "list"
         },
+        "description": "Recent template imports of this mode, newest first.",
         "security": [
           {
             "apiKey": [
@@ -50977,6 +51030,7 @@
           "resource": "templateImports",
           "method": "retrieve"
         },
+        "description": "The status of one template import: its state, and the report when it has failed.",
         "security": [
           {
             "apiKey": [
@@ -51229,6 +51283,7 @@
           "resource": "templates",
           "method": "listPreviews"
         },
+        "description": "Sample previews of several templates in one call. Pass the template ids in the query.",
         "security": [
           {
             "apiKey": [
@@ -51504,6 +51559,7 @@
           "resource": "templates",
           "method": "listEligible"
         },
+        "description": "Release-backed templates an organization can use. Only templates with an approved release appear.",
         "security": [
           {
             "apiKey": [
@@ -52167,6 +52223,7 @@
           "resource": "templates",
           "method": "preview"
         },
+        "description": "Renders the pass.json a template would produce for `input`, without issuing a pass.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -52607,6 +52664,7 @@
           "resource": "templates.versions",
           "method": "retrieve"
         },
+        "description": "One version of a template with its validation report.",
         "security": [
           {
             "apiKey": [
@@ -52718,6 +52776,7 @@
           "resource": "templates.versions",
           "method": "downloadAsset"
         },
+        "description": "The bytes of one image in a template version.",
         "security": [
           {
             "apiKey": [
@@ -53566,6 +53625,7 @@
           "resource": "templates.channels",
           "method": "retrieve"
         },
+        "description": "The template's channel policy and what it allows now, in this mode.",
         "security": [
           {
             "apiKey": [
@@ -54697,6 +54757,7 @@
           "resource": "templates.channels",
           "method": "listRuns"
         },
+        "description": "The latest runs that applied saved channel changes to passes, in this mode.",
         "security": [
           {
             "apiKey": [
@@ -55252,6 +55313,7 @@
           "resource": "templates",
           "method": "retrieveStampsImpact"
         },
+        "description": "What changing the stamp goal does to the template's live passes. Read it before saving the change.",
         "security": [
           {
             "apiKey": [
@@ -55348,6 +55410,7 @@
           "resource": "blueprints",
           "method": "use"
         },
+        "description": "Makes a template in an organization from a blueprint. The blueprint is not changed.",
         "x-sign-in": "idp",
         "x-codes": [
           "ASSETS_INVALID",
@@ -55782,6 +55845,7 @@
           "resource": "templates",
           "method": "setUpScanning"
         },
+        "description": "Sets up scanning for a template: its events and a session. Runs once per template.",
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
@@ -56036,6 +56100,7 @@
           "resource": "templates",
           "method": "downloadPackage"
         },
+        "description": "The active version, or the unpublished draft, as an uploadable zip.",
         "security": [
           {
             "apiKey": [
@@ -56350,6 +56415,7 @@
           "resource": "templates.candidates",
           "method": "list"
         },
+        "description": "Lists the release candidates of a template.",
         "security": [
           {
             "apiKey": [
@@ -56618,6 +56684,7 @@
           "resource": "templates.candidates",
           "method": "create"
         },
+        "description": "Creates a release candidate from the template's current draft.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -57041,6 +57108,7 @@
           "resource": "templates.candidates",
           "method": "approve"
         },
+        "description": "Approves a release candidate. A key can approve only in Test; Live approval is for a person.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -57487,6 +57555,7 @@
           "resource": "templates.releases",
           "method": "list"
         },
+        "description": "Lists the releases of a template, newest first.",
         "security": [
           {
             "apiKey": [
@@ -57727,6 +57796,7 @@
           "resource": "templates.releases",
           "method": "create"
         },
+        "description": "Publishes an approved release. A key can publish only in Test.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -58070,6 +58140,7 @@
           "resource": "templates.releases",
           "method": "retrieveImpact"
         },
+        "description": "What publishing or rolling back to a version changes, and for how many passes.",
         "security": [
           {
             "apiKey": [
@@ -60745,6 +60816,7 @@
           "resource": "passes.connection",
           "method": "update"
         },
+        "description": "Binds a pass to a connection ref, or unbinds it. A bound pass takes its fields from the connection.",
         "security": [
           {
             "apiKey": [
@@ -61040,6 +61112,7 @@
           "resource": "passes",
           "method": "refresh"
         },
+        "description": "Rebuilds the pass from its connection and pushes the change to devices.",
         "security": [
           {
             "apiKey": [
@@ -61217,6 +61290,7 @@
           "resource": "passes.versions",
           "method": "retrieve"
         },
+        "description": "A retained version of a pass, for rendering.",
         "security": [
           {
             "apiKey": [
@@ -61342,6 +61416,7 @@
           "resource": "passes.versions",
           "method": "diff"
         },
+        "description": "The fields that differ between two retained versions of a pass.",
         "security": [
           {
             "apiKey": [
@@ -61730,6 +61805,7 @@
           "resource": "passes.assets",
           "method": "list"
         },
+        "description": "The per-pass image overrides of a pass.",
         "security": [
           {
             "apiKey": [
@@ -61844,6 +61920,7 @@
           "resource": "passes.assets",
           "method": "upload"
         },
+        "description": "Uploads an image override for one pass as a PNG body.",
         "security": [
           {
             "apiKey": [
@@ -61974,6 +62051,7 @@
           "resource": "passes.assets",
           "method": "delete"
         },
+        "description": "Removes an image override. The pass goes back to the template's image.",
         "security": [
           {
             "apiKey": [
@@ -62122,6 +62200,7 @@
           "resource": "passes.memberPhoto",
           "method": "retrieve"
         },
+        "description": "The member photo settings of a pass.",
         "security": [
           {
             "apiKey": [
@@ -62244,6 +62323,7 @@
           "resource": "passes.memberPhoto",
           "method": "upload"
         },
+        "description": "Uploads a member photo for a pass.",
         "security": [
           {
             "apiKey": [
@@ -62407,6 +62487,7 @@
           "resource": "passes.memberPhoto",
           "method": "update"
         },
+        "description": "Sets whether the photo is included in the Wallet pass.",
         "security": [
           {
             "apiKey": [
@@ -62556,6 +62637,7 @@
           "resource": "passes.memberPhoto",
           "method": "delete"
         },
+        "description": "Removes the member photo.",
         "security": [
           {
             "apiKey": [
@@ -62660,6 +62742,7 @@
           "resource": "passes.memberPhoto",
           "method": "download"
         },
+        "description": "The member photo bytes. The photo is private and needs a key with access to the pass.",
         "security": [
           {
             "apiKey": [
@@ -62766,6 +62849,7 @@
           "resource": "passes",
           "method": "matchPhotos"
         },
+        "description": "Matches photo file names to passes by external ID or serial. It reads names only and changes nothing.",
         "security": [
           {
             "apiKey": [
@@ -63043,6 +63127,7 @@
           "resource": "passes.checkInRules",
           "method": "retrieve"
         },
+        "description": "The check-in rules of a pass.",
         "security": [
           {
             "apiKey": [
@@ -63333,6 +63418,7 @@
           "resource": "passes.checkInRules",
           "method": "update"
         },
+        "description": "Sets the check-in rules of a pass.",
         "security": [
           {
             "apiKey": [
@@ -63423,6 +63509,7 @@
           "resource": "passes.stamps",
           "method": "apply"
         },
+        "description": "Adds stamps to a stamp card, or redeems its reward.",
         "security": [
           {
             "apiKey": [
@@ -63546,6 +63633,7 @@
           "resource": "passes",
           "method": "renew"
         },
+        "description": "Renews the term of a pass.",
         "security": [
           {
             "apiKey": [
@@ -63833,6 +63921,7 @@
           "resource": "passes",
           "method": "bulkReissue"
         },
+        "description": "Rebuilds the passes of a template in your org and pushes them to devices. A key needs `passes:write`.",
         "security": [
           {
             "apiKey": [
@@ -64067,6 +64156,7 @@
           "resource": "passes",
           "method": "bulkUpdateChannels"
         },
+        "description": "Turns channels on, off or back to the template for up to 100 passes in one call.",
         "security": [
           {
             "apiKey": [
@@ -64949,6 +65039,7 @@
           "resource": "passes.channels",
           "method": "retrieve"
         },
+        "description": "A pass's channels: effective state, source and overrides.",
         "security": [
           {
             "apiKey": [
@@ -65798,6 +65889,7 @@
           "resource": "passes.channels",
           "method": "update"
         },
+        "description": "Overrides channels for one pass. A `null` value returns that channel to its template.",
         "security": [
           {
             "apiKey": [
@@ -65943,6 +66035,7 @@
           "resource": "printJobs",
           "method": "create"
         },
+        "description": "Prints up to 50 passes of one org into one PDF. A job renders it; poll the job.",
         "security": [
           {
             "apiKey": [
@@ -66068,6 +66161,7 @@
           "resource": "printJobs",
           "method": "retrieve"
         },
+        "description": "The state of a bulk print job.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -66143,6 +66237,7 @@
           "resource": "printJobs",
           "method": "downloadPdf"
         },
+        "description": "The combined PDF of a finished bulk print job.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -66260,6 +66355,7 @@
           "resource": "passes.prints",
           "method": "create"
         },
+        "description": "Prints a ticket. An earlier print of the same pass is voided.",
         "security": [
           {
             "apiKey": [
@@ -66395,6 +66491,7 @@
           "resource": "passes.prints",
           "method": "list"
         },
+        "description": "A pass's prints, newest first. Codes are never listed.",
         "security": [
           {
             "apiKey": [
@@ -66525,6 +66622,7 @@
           "resource": "passes.prints",
           "method": "void"
         },
+        "description": "Voids a printed ticket so its code stops working.",
         "security": [
           {
             "apiKey": [
@@ -66592,6 +66690,7 @@
           "resource": "passes.prints",
           "method": "retrievePage"
         },
+        "description": "The print page of the active print, for staff.",
         "security": [
           {
             "apiKey": [
@@ -66663,6 +66762,7 @@
           "resource": "passes.prints",
           "method": "downloadPdf"
         },
+        "description": "The PDF of the active print, for staff.",
         "security": [
           {
             "apiKey": [
@@ -66744,6 +66844,7 @@
           "resource": "passes.prints",
           "method": "downloadAsset"
         },
+        "description": "A template image used by the print page, for staff.",
         "security": [
           {
             "apiKey": [
@@ -66990,6 +67091,7 @@
           "resource": "passes.activity",
           "method": "list"
         },
+        "description": "The sync log and activity of a pass, newest first.",
         "security": [
           {
             "apiKey": [
@@ -67221,6 +67323,7 @@
           "resource": "passes.devices",
           "method": "list"
         },
+        "description": "The devices of a pass with their sync status.",
         "security": [
           {
             "apiKey": [
@@ -70217,6 +70320,7 @@
           "resource": "passImports",
           "method": "list"
         },
+        "description": "Recent imports of this mode, newest first.",
         "security": [
           {
             "apiKey": [
@@ -71328,6 +71432,7 @@
           "resource": "passImports",
           "method": "delete"
         },
+        "description": "Discards a draft import that is not committing.",
         "security": [
           {
             "apiKey": [
@@ -73765,6 +73870,7 @@
           "resource": "passImports.rows",
           "method": "list"
         },
+        "description": "The rows of an import, 100 a page.",
         "security": [
           {
             "apiKey": [
@@ -73846,6 +73952,7 @@
           "resource": "passImports",
           "method": "downloadErrors"
         },
+        "description": "The rows that failed the check, as CSV with a Problem column.",
         "security": [
           {
             "apiKey": [
@@ -73934,6 +74041,7 @@
           "resource": "passImports",
           "method": "downloadResults"
         },
+        "description": "What happened to each row, as CSV with the pass and its links.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -74211,6 +74319,7 @@
           "resource": "passImports",
           "method": "sendEmails"
         },
+        "description": "Sends now the mail of created passes that were not emailed, including held mail ahead of its wait. 50 a call; a repeat emails nobody twice.",
         "security": [
           {
             "apiKey": [
@@ -74448,6 +74557,7 @@
           "resource": "bundles",
           "method": "list"
         },
+        "description": "Lists bundles.",
         "security": [
           {
             "apiKey": [
@@ -74607,6 +74717,7 @@
           "resource": "bundles",
           "method": "create"
         },
+        "description": "Creates a bundle of up to 10 passes with one link.",
         "security": [
           {
             "apiKey": [
@@ -74792,6 +74903,7 @@
           "resource": "bundles",
           "method": "retrieve"
         },
+        "description": "One bundle.",
         "security": [
           {
             "apiKey": [
@@ -74873,6 +74985,7 @@
           "resource": "bundles",
           "method": "delete"
         },
+        "description": "Deletes the bundle and revokes its link. The passes are kept.",
         "security": [
           {
             "apiKey": [
@@ -74969,6 +75082,7 @@
           "resource": "bundles",
           "method": "sendEmail"
         },
+        "description": "Emails the bundle link. Send an `Idempotency-Key` to retry safely.",
         "security": [
           {
             "apiKey": [
@@ -75156,6 +75270,7 @@
           "resource": "bundles",
           "method": "rotateLink"
         },
+        "description": "Replaces the bundle link. The old link stops working.",
         "security": [
           {
             "apiKey": [
@@ -76556,6 +76671,7 @@
           "resource": "broadcasts",
           "method": "list"
         },
+        "description": "Lists messages and scheduled changes.",
         "security": [
           {
             "apiKey": [
@@ -77389,6 +77505,7 @@
           "resource": "broadcasts",
           "method": "update"
         },
+        "description": "Edits a draft, or a scheduled message that has not started.",
         "security": [
           {
             "apiKey": [
@@ -77498,6 +77615,7 @@
           "resource": "broadcasts",
           "method": "send"
         },
+        "description": "Sends a draft now or at a time.",
         "security": [
           {
             "apiKey": [
@@ -77573,6 +77691,7 @@
           "resource": "broadcasts",
           "method": "cancel"
         },
+        "description": "Cancels a draft or a scheduled message.",
         "security": [
           {
             "apiKey": [
@@ -77658,6 +77777,7 @@
           "resource": "broadcasts",
           "method": "retry"
         },
+        "description": "Sends a failed or cancelled message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size.",
         "security": [
           {
             "apiKey": [
@@ -77845,6 +77965,7 @@
           "resource": "broadcasts.recipients",
           "method": "list"
         },
+        "description": "The passes a message reached: updated, unchanged or failed.",
         "security": [
           {
             "apiKey": [
@@ -78429,6 +78550,7 @@
           "resource": "messageRules",
           "method": "list"
         },
+        "description": "Lists automatic messages.",
         "security": [
           {
             "apiKey": [
@@ -78770,6 +78892,7 @@
           "resource": "messageRules",
           "method": "create"
         },
+        "description": "Creates an automatic message.",
         "security": [
           {
             "apiKey": [
@@ -79131,6 +79254,7 @@
           "resource": "messageRules",
           "method": "retrieve"
         },
+        "description": "One automatic message.",
         "security": [
           {
             "apiKey": [
@@ -79486,6 +79610,7 @@
           "resource": "messageRules",
           "method": "update"
         },
+        "description": "Saves an automatic message. Saving resumes a paused one.",
         "security": [
           {
             "apiKey": [
@@ -79581,6 +79706,7 @@
           "resource": "messageRules",
           "method": "delete"
         },
+        "description": "Deletes an automatic message and cancels its runs that have not started.",
         "security": [
           {
             "apiKey": [
@@ -79928,6 +80054,7 @@
           "resource": "messageRules",
           "method": "pause"
         },
+        "description": "Pauses an automatic message. Save it to resume.",
         "security": [
           {
             "apiKey": [
@@ -80037,6 +80164,7 @@
           "resource": "messageRules.runs",
           "method": "list"
         },
+        "description": "The messages an automatic message sent.",
         "security": [
           {
             "apiKey": [
@@ -80140,6 +80268,7 @@
           "resource": "messageRules",
           "method": "countDue"
         },
+        "description": "Counts the passes due each of the next 14 days.",
         "security": [
           {
             "apiKey": [
@@ -80232,6 +80361,7 @@
           "resource": "messageRules",
           "method": "sendTest"
         },
+        "description": "Sends the text now to one pass.",
         "security": [
           {
             "apiKey": [
@@ -80463,6 +80593,7 @@
           "resource": "holders",
           "method": "list"
         },
+        "description": "Lists holder assignments.",
         "security": [
           {
             "apiKey": [
@@ -80618,6 +80749,7 @@
           "resource": "holders",
           "method": "retrieve"
         },
+        "description": "A holder assignment and any pending transfer.",
         "security": [
           {
             "apiKey": [
@@ -80772,6 +80904,7 @@
           "resource": "holders",
           "method": "assign"
         },
+        "description": "Sets the holder email of an unowned pass.",
         "security": [
           {
             "apiKey": [
@@ -80983,6 +81116,7 @@
           "resource": "holders",
           "method": "bulkAssign"
         },
+        "description": "Assigns up to 100 holders in one call.",
         "security": [
           {
             "apiKey": [
@@ -81176,6 +81310,7 @@
           "resource": "holders",
           "method": "reassign"
         },
+        "description": "Stages a holder reassignment. The new holder confirms it.",
         "security": [
           {
             "apiKey": [
@@ -81368,6 +81503,7 @@
           "resource": "holders",
           "method": "unassign"
         },
+        "description": "Stages removal of the holder.",
         "security": [
           {
             "apiKey": [
@@ -81486,6 +81622,7 @@
           "resource": "holders",
           "method": "clearBlock"
         },
+        "description": "Allows a user to be attached to a pass again.",
         "security": [
           {
             "apiKey": [
@@ -81729,6 +81866,7 @@
           "resource": "visitors",
           "method": "list"
         },
+        "description": "Lists the visitors of a day.",
         "security": [
           {
             "apiKey": [
@@ -81863,6 +82001,7 @@
           "resource": "visitors",
           "method": "create"
         },
+        "description": "Invites a visitor: a visitor pass with a host.",
         "security": [
           {
             "apiKey": [
@@ -82038,6 +82177,7 @@
           "resource": "visitors",
           "method": "listHosts"
         },
+        "description": "The people who can host a visitor: the organization's members.",
         "security": [
           {
             "apiKey": [
@@ -82187,6 +82327,7 @@
           "resource": "visitors",
           "method": "checkOut"
         },
+        "description": "Checks a visitor out.",
         "security": [
           {
             "apiKey": [
@@ -82334,6 +82475,7 @@
           "resource": "visitors",
           "method": "cancel"
         },
+        "description": "Cancels a visit and voids its pass.",
         "security": [
           {
             "apiKey": [
@@ -82434,6 +82576,7 @@
           "resource": "visitors",
           "method": "sendHostEmail"
         },
+        "description": "Sends the host their arrival email again.",
         "security": [
           {
             "apiKey": [
@@ -82544,6 +82687,7 @@
           "resource": "holders",
           "method": "offboard"
         },
+        "description": "Offboards a person: voids or removes their passes and lets go of their tags.",
         "security": [
           {
             "apiKey": [
@@ -82735,6 +82879,7 @@
           "resource": "deliveries",
           "method": "list"
         },
+        "description": "The outbox entries for a pass: each email or push and whether it was sent.",
         "security": [
           {
             "apiKey": [
@@ -83039,6 +83184,7 @@
           "resource": "connections.webhookFailures",
           "method": "list"
         },
+        "description": "Lists retained webhook status for a connection.",
         "security": [
           {
             "apiKey": [
@@ -83131,6 +83277,7 @@
           "resource": "connections.webhookFailures",
           "method": "replay"
         },
+        "description": "Replays a retained webhook.",
         "security": [
           {
             "apiKey": [
@@ -83262,6 +83409,7 @@
           "resource": "connections.webhookFailures",
           "method": "resolve"
         },
+        "description": "Marks an uncertain webhook resolved after you have checked the source system.",
         "security": [
           {
             "apiKey": [
@@ -83706,6 +83854,7 @@
           "resource": "connections",
           "method": "list"
         },
+        "description": "Lists connections.",
         "security": [
           {
             "apiKey": [
@@ -84061,6 +84210,7 @@
           "resource": "connections",
           "method": "create"
         },
+        "description": "Creates a connection.",
         "security": [
           {
             "apiKey": [
@@ -84224,6 +84374,7 @@
           "resource": "connections",
           "method": "retrieveSummary"
         },
+        "description": "A health summary across connections.",
         "security": [
           {
             "apiKey": [
@@ -84728,6 +84879,7 @@
           "resource": "connections",
           "method": "retrieve"
         },
+        "description": "A connection with its runs and metrics.",
         "security": [
           {
             "apiKey": [
@@ -85097,6 +85249,7 @@
           "resource": "connections",
           "method": "update"
         },
+        "description": "Updates a connection.",
         "security": [
           {
             "apiKey": [
@@ -85200,6 +85353,7 @@
           "resource": "connections",
           "method": "delete"
         },
+        "description": "Deletes a connection.",
         "security": [
           {
             "apiKey": [
@@ -85483,6 +85637,7 @@
           "resource": "connections",
           "method": "testConfig"
         },
+        "description": "Tests an unsaved configuration without saving it.",
         "security": [
           {
             "apiKey": [
@@ -85598,6 +85753,7 @@
           "resource": "connections",
           "method": "test"
         },
+        "description": "Tests the saved connection against its source.",
         "security": [
           {
             "apiKey": [
@@ -85698,6 +85854,7 @@
           "resource": "connections",
           "method": "sync"
         },
+        "description": "Syncs now instead of waiting for the schedule.",
         "security": [
           {
             "apiKey": [
@@ -85930,6 +86087,7 @@
           "resource": "connections.runs",
           "method": "list"
         },
+        "description": "Lists the runs of a connection.",
         "security": [
           {
             "apiKey": [
@@ -86303,6 +86461,7 @@
           "resource": "connections",
           "method": "rotateWebhookSecret"
         },
+        "description": "Generates a new webhook secret. It is shown once.",
         "security": [
           {
             "apiKey": [
@@ -86681,6 +86840,7 @@
           "resource": "connections",
           "method": "revokePreviousWebhookSecret"
         },
+        "description": "Stops accepting the previous webhook secret now.",
         "security": [
           {
             "apiKey": [
@@ -87038,6 +87198,7 @@
           "resource": "connectors",
           "method": "list"
         },
+        "description": "Lists connector types.",
         "security": [
           {
             "apiKey": [
@@ -87362,6 +87523,7 @@
           "resource": "connectors",
           "method": "retrieve"
         },
+        "description": "One connector type with its settings.",
         "security": [
           {
             "apiKey": [
@@ -95327,6 +95489,7 @@
           "resource": "passes",
           "method": "retrieveProviderStatus"
         },
+        "description": "The local provider instance status of a pass.",
         "security": [
           {
             "apiKey": [
@@ -97874,6 +98037,7 @@
           "resource": "apiKeys",
           "method": "revoke"
         },
+        "description": "Revokes a key for an authorized organization, or a platform-wide key with `orgId=null`.",
         "security": [
           {
             "apiKey": [
@@ -98380,6 +98544,7 @@
           "resource": "apiKeys",
           "method": "list"
         },
+        "description": "Lists keys for an authorized organization, or platform-wide keys with `orgId=null`.",
         "security": [
           {
             "apiKey": [
@@ -98447,6 +98612,7 @@
           "resource": "apiKeys",
           "method": "create"
         },
+        "description": "Creates an organization or platform API key. The secret is shown once.",
         "security": [
           {
             "apiKey": [
@@ -100467,6 +100633,363 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/status/incidents": {
+      "get": {
+        "summary": "Incident notes on the public status page",
+        "tags": [
+          "status"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "note": {
+                            "type": "string"
+                          },
+                          "component": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "api",
+                              "apple_push",
+                              "email",
+                              "webhooks",
+                              "google",
+                              "samsung",
+                              null
+                            ]
+                          },
+                          "impact": {
+                            "type": "string",
+                            "enum": [
+                              "notice",
+                              "degraded",
+                              "outage"
+                            ]
+                          },
+                          "startedAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "resolvedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "note",
+                          "component",
+                          "impact",
+                          "startedAt",
+                          "resolvedAt"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "status.getStatusIncidents",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "listIncidents"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "post": {
+        "summary": "Open an incident note on the public status page",
+        "tags": [
+          "status"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformStatusOpenIncidentParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "component": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "api",
+                        "apple_push",
+                        "email",
+                        "webhooks",
+                        "google",
+                        "samsung",
+                        null
+                      ]
+                    },
+                    "impact": {
+                      "type": "string",
+                      "enum": [
+                        "notice",
+                        "degraded",
+                        "outage"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "resolvedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "note",
+                    "component",
+                    "impact",
+                    "startedAt",
+                    "resolvedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "status.postStatusIncidents",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "openIncident"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/status/incidents/{id}/resolve": {
+      "post": {
+        "summary": "Resolve an incident note",
+        "tags": [
+          "status"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "component": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "api",
+                        "apple_push",
+                        "email",
+                        "webhooks",
+                        "google",
+                        "samsung",
+                        null
+                      ]
+                    },
+                    "impact": {
+                      "type": "string",
+                      "enum": [
+                        "notice",
+                        "degraded",
+                        "outage"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "resolvedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "note",
+                    "component",
+                    "impact",
+                    "startedAt",
+                    "resolvedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "status.postStatusIncidentsByIdResolve",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "resolveIncident"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INCIDENT_NOT_FOUND",
+          "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -107980,6 +108503,7 @@
           "resource": "terminal",
           "method": "resolve"
         },
+        "description": "Reads a code and says what it is, without acting on it.",
         "security": [
           {
             "apiKey": [
@@ -108059,6 +108583,7 @@
           "resource": "terminal",
           "method": "act"
         },
+        "description": "Scans a code and acts on it.",
         "security": [
           {
             "apiKey": [
@@ -108627,6 +109152,7 @@
           "resource": "terminal.scans",
           "method": "undo"
         },
+        "description": "Undoes a check-in.",
         "security": [
           {
             "apiKey": [
@@ -108767,6 +109293,7 @@
           "resource": "scanners",
           "method": "update"
         },
+        "description": "Edits a scanner.",
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
@@ -108927,6 +109454,7 @@
           "resource": "scanners",
           "method": "revoke"
         },
+        "description": "Removes a scanner from use.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109012,6 +109540,7 @@
           "resource": "scanners",
           "method": "setMode"
         },
+        "description": "Moves a scanner live, or to test mode.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109095,6 +109624,7 @@
           "resource": "scanners",
           "method": "create"
         },
+        "description": "Creates a scanner. A device comes with a pairing code.",
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
@@ -109365,6 +109895,7 @@
           "resource": "scanners.pairing",
           "method": "create"
         },
+        "description": "Makes a new pairing code. It replaces any live one.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109476,6 +110007,7 @@
           "resource": "scanners.pairing",
           "method": "retrieve"
         },
+        "description": "Polls a pairing to see whether the device has paired.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109577,6 +110109,7 @@
           "resource": "scanners",
           "method": "rotateToken"
         },
+        "description": "Makes a till token, shown once. It replaces the old one.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -110207,6 +110740,7 @@
           "resource": "scanSetups",
           "method": "list"
         },
+        "description": "Lists managed scanner and screen setups.",
         "security": [
           {
             "apiKey": [
@@ -111074,6 +111608,7 @@
           "resource": "scanSetups",
           "method": "retrieve"
         },
+        "description": "A scanner setup and its view settings.",
         "security": [
           {
             "apiKey": [
@@ -111864,6 +112399,7 @@
           "resource": "scanningSessions",
           "method": "list"
         },
+        "description": "Lists scanning sessions.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -112024,6 +112560,7 @@
           "resource": "scanningSessions",
           "method": "retrieve"
         },
+        "description": "A session's rules and devices.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -112107,6 +112644,7 @@
           "resource": "scanningSessions",
           "method": "update"
         },
+        "description": "Updates the rules shared by a session's devices.",
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
@@ -112212,6 +112750,7 @@
           "resource": "scanningSessions",
           "method": "overrideHours"
         },
+        "description": "Closes the session now, opens it now, or goes back to the session hours.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -112315,6 +112854,7 @@
           "resource": "scanningSessions.devices",
           "method": "update"
         },
+        "description": "Configures one device of a session.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -112411,6 +112951,7 @@
           "resource": "scanningSessions.devices",
           "method": "create"
         },
+        "description": "Adds a device to a scanning session.",
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
@@ -114729,6 +115270,7 @@
           "resource": "scanEvents",
           "method": "list"
         },
+        "description": "Lists scan events.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -114798,6 +115340,7 @@
           "resource": "scanEvents",
           "method": "create"
         },
+        "description": "Creates a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
           "EVENT_MATCH_INPUT",
@@ -114880,6 +115423,7 @@
           "resource": "scanEvents",
           "method": "retrieve"
         },
+        "description": "One scan event.",
         "x-sign-in": "idp",
         "x-codes": [
           "EVENT_NOT_FOUND",
@@ -114962,6 +115506,7 @@
           "resource": "scanEvents",
           "method": "update"
         },
+        "description": "Edits a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
           "EVENT_MATCH_INPUT",
@@ -115045,6 +115590,7 @@
           "resource": "scanEvents",
           "method": "archive"
         },
+        "description": "Archives a scan event. Its scanners are detached.",
         "x-sign-in": "idp",
         "x-codes": [
           "EVENT_IN_USE",
@@ -115132,6 +115678,7 @@
           "resource": "scanEvents",
           "method": "attachScanners"
         },
+        "description": "Moves scanners onto a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
           "EVENT_ARCHIVED",
@@ -115955,6 +116502,7 @@
           "resource": "scanStaff",
           "method": "list"
         },
+        "description": "Lists an organization's scanner staff.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -116041,6 +116589,7 @@
           "resource": "scanStaff",
           "method": "create"
         },
+        "description": "Creates a staff member and reveals their PIN once.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -116144,6 +116693,7 @@
           "resource": "scanStaff",
           "method": "update"
         },
+        "description": "Updates or disables a staff member.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -116248,6 +116798,7 @@
           "resource": "scanStaff",
           "method": "resetPin"
         },
+        "description": "Replaces a staff PIN and reveals the new one once.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -116698,6 +117249,7 @@
           "resource": "scanZones",
           "method": "list"
         },
+        "description": "Lists zones.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -116936,6 +117488,7 @@
           "resource": "scanZones",
           "method": "create"
         },
+        "description": "Creates a zone.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -117195,6 +117748,7 @@
           "resource": "scanZones",
           "method": "update"
         },
+        "description": "Edits a zone.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -117444,6 +117998,7 @@
           "resource": "scanZones",
           "method": "archive"
         },
+        "description": "Archives a zone and the zones below it.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -117693,6 +118248,7 @@
           "resource": "scanZones",
           "method": "restore"
         },
+        "description": "Restores a zone and the zones below it.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -117788,6 +118344,7 @@
           "resource": "scanZones",
           "method": "resetVisits"
         },
+        "description": "Resets a pass's visits to a zone.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -118770,6 +119327,7 @@
           "resource": "scans",
           "method": "list"
         },
+        "description": "Lists scans for admins, or the scan feed for a key with `scans:read`.",
         "security": [
           {
             "apiKey": [
@@ -119431,6 +119989,7 @@
           "resource": "rollCalls",
           "method": "retrieveOpen"
         },
+        "description": "The open roll call.",
         "security": [
           {
             "apiKey": [
@@ -119770,6 +120329,7 @@
           "resource": "rollCalls",
           "method": "create"
         },
+        "description": "Starts a roll call, or joins the open one.",
         "security": [
           {
             "apiKey": [
@@ -120124,6 +120684,7 @@
           "resource": "rollCalls",
           "method": "retrieve"
         },
+        "description": "One roll call.",
         "security": [
           {
             "apiKey": [
@@ -120520,6 +121081,7 @@
           "resource": "rollCalls",
           "method": "mark"
         },
+        "description": "Confirms people present or out.",
         "security": [
           {
             "apiKey": [
@@ -120872,6 +121434,7 @@
           "resource": "rollCalls",
           "method": "end"
         },
+        "description": "Ends a roll call.",
         "security": [
           {
             "apiKey": [
@@ -122492,6 +123055,28 @@
             },
             "required": false,
             "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "passId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pass",
+                "user"
+              ]
+            },
+            "required": false,
+            "name": "binding",
             "in": "query"
           },
           {
@@ -126931,6 +127516,7 @@
           "resource": "nfc.tagTypes",
           "method": "list"
         },
+        "description": "The tag types of an organization.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -127117,6 +127703,7 @@
           "resource": "nfc.tagTypes",
           "method": "create"
         },
+        "description": "Creates a tag type.",
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
@@ -127323,6 +127910,7 @@
           "resource": "nfc.tagTypes",
           "method": "update"
         },
+        "description": "Changes a tag type. Send the version you read.",
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
@@ -127530,6 +128118,7 @@
           "resource": "nfc.tagTypes",
           "method": "archive"
         },
+        "description": "Archives a tag type. Its tags keep working.",
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
@@ -127740,6 +128329,7 @@
           "resource": "nfc.keysets",
           "method": "list"
         },
+        "description": "Lists tag keysets.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -127938,6 +128528,7 @@
           "resource": "nfc.keysets",
           "method": "create"
         },
+        "description": "Creates a tag keyset.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -128140,6 +128731,7 @@
           "resource": "nfc.keysets",
           "method": "rotate"
         },
+        "description": "Rotates a keyset to a new key version.",
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -128326,6 +128918,7 @@
           "resource": "nfc.keysets",
           "method": "retireKey"
         },
+        "description": "Retires an old key version.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -128502,6 +129095,7 @@
           "resource": "nfc.keysets",
           "method": "revokeKey"
         },
+        "description": "Revokes a key version. Tags on it must be written again.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -128696,6 +129290,7 @@
           "resource": "nfc.keysets",
           "method": "reenroll"
         },
+        "description": "Moves the tags of a keyset to another keyset.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -128800,7 +129395,8 @@
                               "dup_file",
                               "dup_key",
                               "meta_key",
-                              "exists"
+                              "exists",
+                              "not_on_keyset"
                             ]
                           }
                         },
@@ -128845,7 +129441,12 @@
           "resource": "nfc.keysets",
           "method": "importTags"
         },
+        "description": "Imports supplier-personalised tags. Run it as a dry run first, then add.",
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
@@ -128861,6 +129462,7 @@
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -129013,6 +129615,7 @@
           "resource": "nfc.keysets",
           "method": "disable"
         },
+        "description": "Disables a keyset.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",

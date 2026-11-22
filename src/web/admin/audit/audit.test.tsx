@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { actionLabel } from '@/web/lib/actions.ts';
-import {
-  auditHref,
-  auditSearchFor,
-  dayToMs,
-  msToDay,
-  parseAuditSearch,
-  rangeLabel,
-} from './audit-search.ts';
+import { rangeLabel } from './audit-range.ts';
+import { auditHref, auditSearchFor, dayToMs, msToDay, parseAuditSearch } from './audit-search.ts';
 import { actorRef, targetRef } from './labels.ts';
 import { describeDetail, REDACTED, redact } from './redact.ts';
 

@@ -2,7 +2,7 @@ import type { Context } from 'hono';
 import { API_KEY_LABEL } from '../../platform/api-key-token.ts';
 import { keyCaller, type ScannerAuth } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { reportDenied } from '../../platform/denied.ts';
+import { noteKeyRefused, reportDenied } from '../../platform/denied.ts';
 import {
   type AppError,
   ForbiddenError,
@@ -38,9 +38,13 @@ export interface KeyTerminal {
  */
 export async function keyTerminalOf(c: Context<AppBindings>, token: string): Promise<KeyTerminal> {
   const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
-  if (!key) throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+  if (!key) {
+    noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
+    throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+  }
   if (!key.scopes.includes('scans:write')) {
     reportDenied(c, 'MISSING_SCOPE', key);
+    noteKeyRefused(c, { code: 'MISSING_SCOPE', keyId: key.keyId, scope: 'scans:write' });
     throw new ForbiddenError('The API key lacks the scans:write scope.', 'MISSING_SCOPE');
   }
   if (key.orgId === null) {

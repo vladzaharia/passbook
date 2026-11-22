@@ -1,7 +1,10 @@
 import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
 
-const alias = { '@': new URL('./src', import.meta.url).pathname };
+const alias = {
+  '@': new URL('./src', import.meta.url).pathname,
+  '@passbook/sdk': new URL('./sdk/typescript/src/index.ts', import.meta.url).pathname,
+};
 // Coverage instrumentation (istanbul in workerd, v8 in node) makes tests 2–3× slower on CI runners.
 const timeout = process.argv.includes('--coverage') ? 90_000 : 30_000;
 

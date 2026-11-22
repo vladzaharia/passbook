@@ -1,6 +1,6 @@
 // The largest predicates the wallet-provider code emits, prepared on miniflare D1 with their depth and
-// term count measured. D1's own limit is lower than the local engine's: the remote check stays an
-// owner or deploy-time item (review-wa6a-merge.md, open question).
+// term count measured. Local workerd D1 enforces the same expression-depth limit (100) as remote D1, so a
+// statement that prepares here prepares there (review-authority-lows.md).
 import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { Binds } from '../../platform/authority-principal.ts';

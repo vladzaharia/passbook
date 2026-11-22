@@ -5,7 +5,7 @@ import { compileGooglePass, projectionGoogleType } from './google-compile.ts';
 import { markWalletClaimUncertain } from './instance.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { renderGoogleProjection } from './render-projection.ts';
-import { getGoogleBindingClass } from './repo-google-callback.ts';
+import { getGoogleBindingClass, hadSucceededUpsert } from './repo-google-class.ts';
 import { readPassSnapshot } from './repo-instance.ts';
 import {
   inactivateGoogleRuntimeObject,
@@ -49,6 +49,12 @@ export async function runGoogleWalletProviderOperation(
         ...(issued ? { classIdHash: issued.classIdHash } : {}),
         retirement,
       });
+      // Anomalous: an object we wrote is gone. It settles (a link cannot recreate it), but it is not routine.
+      if (confirmed === 'absent' && (await hadSucceededUpsert(ctx.env.DB, op.instanceId)))
+        ctx.log.warn('wallet.google_revoke_absent_after_upsert', {
+          code: 'WALLET_GOOGLE_REVOKE_ABSENT_AFTER_UPSERT',
+          orgId: op.orgId,
+        });
     } else {
       const pass = await readPassSnapshot(ctx.env.DB, op);
       if (!pass?.issuingReleaseId || binding.original.projection.provider !== 'google') {
@@ -149,6 +155,10 @@ export async function runGoogleWalletProviderOperation(
         const classResult = await upsertGoogleRuntimeClass(ctx, binding.scope, {
           releaseId: op.identityProjectionReleaseId,
           ...partition,
+          writer: {
+            releaseId: approved.release.id,
+            releaseGeneration: approved.release.generation,
+          },
           projection: { ...compiled.classBody, ...callback },
           assertCurrent,
           onProviderResponse,

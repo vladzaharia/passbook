@@ -2,6 +2,7 @@ import type { GoogleType } from '../../../passkit/wallets/google/types.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { snapshotWalletCredentialContext } from './account-service.ts';
+import { upsertClassForRelease } from './google-class-release.ts';
 import { googleObjectIds } from './google-ids.ts';
 import { dropGoogleAccessToken, getGoogleAccessToken } from './google-oauth.ts';
 import { createGoogleSaveOffer, type GoogleSaveOffer } from './google-offer.ts';
@@ -19,6 +20,7 @@ import {
   upsertGoogleClass,
   upsertGoogleObject,
 } from './google-rest-typed.ts';
+import type { GoogleClassWrite } from './repo-google-class.ts';
 import {
   copyRuntimeScope,
   type RuntimeRetirementPurpose,
@@ -40,6 +42,8 @@ interface GoogleRuntimePartition {
 
 interface GoogleRuntimeClassInput extends GoogleRuntimePartition {
   releaseId: string;
+  /** The approved release compiling this body; a typed class is rewritten only for a newer one. */
+  writer?: GoogleClassWrite;
   projection: GoogleGenericProjection;
   /** Persist every raw provider response encrypted before resolving. */
   onProviderResponse: WalletRuntimeResponseSink;
@@ -204,11 +208,19 @@ export async function upsertGoogleRuntimeClass(
         );
         return 'ok';
       }
-      const result = await upsertGoogleClass(
+      const scope = { tenantId: s.orgId, releaseId: input.releaseId, ...partition(input) };
+      if (!input.writer) {
+        const { result } = await upsertGoogleClass(rest, input.type, scope, input.projection);
+        return result === 'drift' ? 'drift' : 'ok';
+      }
+      const result = await upsertClassForRelease(
         rest,
+        ctx.env.DB,
+        ctx.clock.now(),
         input.type,
-        { tenantId: s.orgId, releaseId: input.releaseId, ...partition(input) },
+        scope,
         input.projection,
+        input.writer,
       );
       return result === 'drift' ? 'drift' : 'ok';
     },

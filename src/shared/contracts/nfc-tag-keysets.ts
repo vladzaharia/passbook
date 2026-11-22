@@ -46,24 +46,37 @@ export const ReenrolledTagKeysetSchema = z.object({
 
 export const TAG_IMPORT_MAX_ROWS = 500;
 export const TAG_IMPORT_MAX_CHARS = 60_000;
-/** A CSV of supplier-personalised tags: `uid` and `key` per line, a header line optional. */
+/**
+ * A CSV of supplier-personalised tags: `uid` and `key` per line, a header line optional. With `replace`,
+ * each line gives a new key for a tag already on this keyset (after a leak); other lines are problems.
+ */
 export const ImportTagsSchema = z.strictObject({
   csv: z.string().min(1).max(TAG_IMPORT_MAX_CHARS),
   dryRun: z.boolean(),
+  replace: z.boolean().optional(),
 });
 export const TagImportProblemSchema = z.object({
   /** 1-based line of the file. */
   line: z.number().int().positive(),
   /** The tag ID as read, never the key. */
   uid: z.string().max(40).nullable(),
-  reason: z.enum(['bad_uid', 'bad_key', 'weak_key', 'dup_file', 'dup_key', 'meta_key', 'exists']),
+  reason: z.enum([
+    'bad_uid',
+    'bad_key',
+    'weak_key',
+    'dup_file',
+    'dup_key',
+    'meta_key',
+    'exists',
+    'not_on_keyset',
+  ]),
 });
 export const TagImportResultSchema = z.object({
   dryRun: z.boolean(),
   rows: z.number().int().nonnegative(),
-  /** Rows that are, or on a dry run would be, added. */
+  /** Rows that are, or on a dry run would be, added (or re-keyed). */
   ok: z.number().int().nonnegative(),
-  /** Added now: 0 on a dry run. */
+  /** Added or re-keyed now: 0 on a dry run. */
   added: z.number().int().nonnegative(),
   problems: z.array(TagImportProblemSchema).max(50),
   /** More problems than listed. */

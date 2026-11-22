@@ -15,7 +15,7 @@ beforeAll(() => {
 const makeEnv = installKeysetTestEnv();
 
 /** The revoke finishes; `read` is the status of the last response the attempt recorded (the read back). */
-async function revoked(confirmed: 'inactive' | 'absent' | undefined, read = 200) {
+async function revoked(confirmed: 'inactive' | 'absent' | undefined, read = 200, method = 'GET') {
   const f = await runtimeGoogleLegacyFixture({ db: (await makeEnv()).DB });
   const db = f.kit.env.DB;
   const claim = {
@@ -35,6 +35,8 @@ async function revoked(confirmed: 'inactive' | 'absent' | undefined, read = 200)
     body: new TextEncoder().encode('{}'),
     reason: read < 400 ? 'ok' : 'provider_error',
     httpStatus: read,
+    method,
+    stage: 'google-object',
   });
   const state = await completeWalletOperation(ctx, {
     ...claim,
@@ -93,6 +95,8 @@ describe('Google retirement', () => {
     // Claims "inactive" over a 404, and "absent" over a 200: the database refuses the pair.
     await expect(revoked('inactive', 404)).rejects.toThrow(/read back/);
     await expect(revoked('absent', 200)).rejects.toThrow(/read back/);
+    // A PUT acknowledged with 200 is not a read of the object.
+    await expect(revoked('inactive', 200, 'PUT')).rejects.toThrow(/read back/);
   });
 
   it('keeps the evidence until the instance settles, and never edits it', async () => {

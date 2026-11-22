@@ -14,10 +14,18 @@ export async function keysetFixture() {
   const { kit } = f;
   const app = createApp({ stores: (env) => createAuthStores(env, kit.clock), clock: kit.clock });
 
-  async function member(orgId: string, roles: Parameters<typeof grantScanMembership>[3]) {
+  async function member(
+    orgId: string,
+    roles: Parameters<typeof grantScanMembership>[3],
+    authTime?: number,
+  ) {
     const user = await makeUser(kit.fx);
     await grantScanMembership(kit.fx, orgId, user.id, roles);
-    const session = await makeSession(kit.fx, { userId: user.id, roles: ['user'] });
+    const session = await makeSession(kit.fx, {
+      userId: user.id,
+      roles: ['user'],
+      ...(authTime === undefined ? {} : { authTime }),
+    });
     const resolved = await resolveSession(kit.env, kit.clock, session.cookieValue);
     if (!resolved) throw new Error('The member session did not resolve.');
     return {
@@ -53,11 +61,11 @@ export async function keysetFixture() {
     );
 
   /** An org with an admin (scanning:manage) and a pass operator (scanning:read only). */
-  async function org() {
+  async function org(adminAuthTime?: number) {
     const { org: row } = await f.org();
     return {
       org: row,
-      admin: await member(row.id, ['org_admin']),
+      admin: await member(row.id, ['org_admin'], adminAuthTime),
       operator: await member(row.id, ['pass_operator']),
     };
   }

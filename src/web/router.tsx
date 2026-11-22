@@ -6,7 +6,7 @@ import { viewTransitionOption } from './lib/motion.ts';
 import { guardOfflineChunks } from './lib/offline-routes.ts';
 import { parseSearch, stringifySearch } from './lib/search-codec.ts';
 import { routeTree } from './routeTree.gen.ts';
-import { NotFoundPage, RouteError } from './ui/layout/error-pages.tsx';
+import { NotFoundPage, RouteError } from './ui/layout/lazy-error-pages.tsx';
 import { SessionEnded } from './ui/session-ended.tsx';
 
 function InnerWrap({ children }: { children: ReactNode }) {

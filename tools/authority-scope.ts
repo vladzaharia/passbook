@@ -449,9 +449,12 @@ export function scanBrandImport(rel: string, text: string): Finding[] {
   // write lint, not from who may mint authority.
   for (const [factory, importer] of Object.entries(JOB_FACTORY_IMPORTERS))
     if (
-      !rel.startsWith('src/worker/jobs/') &&
+      rel !== `src/worker/jobs/${factory}.ts` &&
       ![importer].flat().includes(rel) &&
-      new RegExp(`from\\s+'[^']*jobs/${factory}(?:\\.ts)?'`).test(text)
+      // `import`, `export ... from` (a re-export) and a dynamic `import()` all name the module the same way.
+      new RegExp(`(?:from\\s+|import\\s*\\(\\s*)'(?:[^']*jobs/|\\./)${factory}(?:\\.ts)?'`).test(
+        text,
+      )
     )
       found.push({
         rule: 'job-authority-import',

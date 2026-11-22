@@ -276,3 +276,60 @@ describe('rate tier', () => {
     ).toEqual({ t: null });
   });
 });
+
+describe('a key refused at the route gate', () => {
+  it('logs a stable code on the one request.done line: the prefix of an unknown key, the id of a known key without the scope', async () => {
+    const k = await makeApiKey(f(), { orgId: org.id, scopes: ['passes:write'] });
+    const seen: string[] = [];
+    const spy = vi
+      .spyOn(console, 'info')
+      .mockImplementation((line) => void seen.push(String(line)));
+    try {
+      await expectProblem(
+        await listPasses(bearer(`${k.secret.slice(0, -1)}${k.secret.endsWith('A') ? 'B' : 'A'}`)),
+        401,
+        'INVALID_API_KEY',
+      );
+      await expectProblem(await listPasses(bearer(k.secret)), 403, 'MISSING_SCOPE');
+    } finally {
+      spy.mockRestore();
+    }
+    const logs = seen
+      .map((l) => JSON.parse(l) as Record<string, unknown>)
+      .filter((l) => l.event === 'request.done' && l.code !== undefined);
+    expect(seen.filter((l) => l.includes('auth.key_refused'))).toEqual([]);
+    expect(logs.map((l) => l.code)).toEqual(['INVALID_API_KEY', 'MISSING_SCOPE']);
+    expect(logs[0]).toMatchObject({ keyPrefix: k.secret.slice(4, 12) });
+    expect(logs[1]).toMatchObject({ keyId: k.id, scope: 'passes:read' });
+    // The token itself is never logged.
+    expect(seen.join()).not.toContain(k.secret.slice(-12));
+  });
+});
+
+describe('a key refused by the other key guards', () => {
+  it('adds the same code to request.done: /me and the try-token logs', async () => {
+    const seen: string[] = [];
+    const spy = vi
+      .spyOn(console, 'info')
+      .mockImplementation((line) => void seen.push(String(line)));
+    const bad = 'Bearer pb_live_ABCDEFGH_0123456789012345678901234567890123456789012';
+    try {
+      expect(
+        (await h.call('/api/v1/api-keys/me', { headers: { authorization: bad } })).status,
+      ).toBe(401);
+      const logs = await h.call('/api/v1/developer/logs', {
+        headers: { authorization: 'Bearer pbtry_nope.nope' },
+      });
+      expect(logs.status).toBe(401);
+    } finally {
+      spy.mockRestore();
+    }
+    const done = seen
+      .map((l) => JSON.parse(l) as Record<string, unknown>)
+      .filter((l) => l.event === 'request.done' && l.code === 'INVALID_API_KEY');
+    expect(done.map((l) => l.route).sort()).toEqual(
+      ['/api/v1/api-keys/me', '/api/v1/developer/logs'].sort(),
+    );
+    expect(done.find((l) => l.route === '/api/v1/api-keys/me')?.keyPrefix).toBe('ABCDEFGH');
+  });
+});

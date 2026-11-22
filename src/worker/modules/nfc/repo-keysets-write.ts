@@ -28,7 +28,7 @@ export type KeysetAuthority = (
 export const keysetActorId = (a: KeysetAuthority) => (a.kind === 'api_key' ? a.keyId : a.userId);
 
 export type KeysetPurpose =
-  `org_mode.nfc.keyset.${'create' | 'rotate' | 'retire_key' | 'revoke_key' | 'reenrol' | 'import' | 'disable'}`;
+  `org_mode.nfc.keyset.${'create' | 'rotate' | 'retire_key' | 'revoke_key' | 'reenrol' | 'import' | 'rekey' | 'disable'}`;
 
 export function keysetGrant(
   ctx: ServiceContext,

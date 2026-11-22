@@ -11,6 +11,19 @@ ALTER TABLE wallet_google_callback_bindings ADD COLUMN class_type TEXT
 ALTER TABLE wallet_google_callback_bindings ADD COLUMN class_key TEXT
   CHECK(class_key IS NULL OR (class_type IS NOT NULL AND length(class_key) = 64 AND class_key NOT GLOB '*[^0-9a-f]*'));
 
+-- The release that last wrote a Google class. A class is written once per release: a newer release of the
+-- same template may rewrite the body (once), and the same release never rewrites it (CW9b).
+CREATE TABLE wallet_google_classes (
+  class_id_hash TEXT PRIMARY KEY CHECK(length(class_id_hash) = 64 AND class_id_hash NOT GLOB '*[^0-9a-f]*'),
+  release_id TEXT NOT NULL,
+  release_generation INTEGER NOT NULL CHECK(release_generation > 0),
+  written_at INTEGER NOT NULL
+);
+
+-- What each recorded response answered: the confirming read of a revoke must be a GET of the object.
+ALTER TABLE wallet_provider_instance_outcomes ADD COLUMN method TEXT;
+ALTER TABLE wallet_provider_instance_outcomes ADD COLUMN stage TEXT;
+
 -- `inactive`: Google served the object back inactive and without a barcode. `absent`: Google has no such
 -- object (a 404), so no replayed save link can show one. Either way the stored response of the confirming
 -- read is referenced, so the evidence can be checked against what Google said.
@@ -35,6 +48,7 @@ WHEN NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations op
     AND op.kind = 'revoke' AND op.state IN ('claimed', 'uncertain') AND i.provider = 'google'
     AND op.credential_keyset_commitment = NEW.credential_keyset_commitment
     AND i.credential_keyset_commitment = NEW.credential_keyset_commitment
+    AND o.method = 'GET' AND o.stage = 'google-object'
     AND o.http_status = CASE NEW.outcome WHEN 'inactive' THEN 200 ELSE 404 END)
 BEGIN SELECT RAISE(ABORT, 'google revocation confirmation needs a claimed revoke and its read back'); END;
 CREATE TRIGGER wallet_google_revocation_confirmations_immutable BEFORE UPDATE ON wallet_google_revocation_confirmations

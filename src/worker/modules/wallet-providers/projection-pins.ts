@@ -1,3 +1,5 @@
+import type { PlannedPass } from '../../../passkit/build.ts';
+import type { Personalization } from '../../../passkit/types.ts';
 import { fidelityReport, omissionKeys, reportHash } from '../../../passkit/wallets/fidelity.ts';
 import { samsungPortalUrl } from '../../../passkit/wallets/samsung/index.ts';
 import type { FidelityReport, WalletPassView } from '../../../passkit/wallets/types.ts';
@@ -10,6 +12,7 @@ import { canonicalJson } from '../templates/package/hash.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
 import type { VersionRow } from '../templates/repo.ts';
 import { prepareProjectionArt, sizeShipped, type WalletArt } from './projection-art.ts';
+import { perturbSample, withClassRule } from './projection-class-rule.ts';
 import type { NativeProvider, ProjectionV2 } from './projection-contract.ts';
 import { COMPILERS, pipelineRevision } from './projection-pipeline.ts';
 
@@ -49,24 +52,38 @@ export async function computeProjectionPins(
     now,
   );
   const art = await prepareProjectionArt(ctx, registry, template, provider, plan.assets, mode);
-  const view = resolveWalletView(
-    { ...plan, assets: sizeShipped(plan.assets, art) },
-    template.manifest,
-    {
+  const viewOf = (planned: PlannedPass, input: Personalization) =>
+    resolveWalletView({ ...planned, assets: sizeShipped(planned.assets, art) }, template.manifest, {
       now,
       locales: [],
-      input: template.manifest.sample,
+      input,
       assets: template.assets.map((asset) => {
         const size = art.sizes.get(asset.name);
         return size ? { ...asset, ...size } : asset;
       }),
       assetUrl: (name) => art.urls.get(name),
-    },
-  );
+    });
+  const view = viewOf(plan, template.manifest.sample);
   const wallets = template.manifest.wallets;
+  // A class holds one body for every pass of its key (L2): a design whose class fields move with pass data
+  // is blocked here, at review, not discovered as drift.
+  const reviewed =
+    provider === 'google'
+      ? withClassRule(compiler, () => {
+          const input = perturbSample(template.manifest.sample, wallets?.google?.classKey);
+          const other = previewPlan(
+            ctx.env,
+            template,
+            input,
+            template.passJson.organizationName,
+            now,
+          );
+          return viewOf(other, input);
+        })
+      : compiler;
   const report = fidelityReport({
     target: provider,
-    compiler,
+    compiler: reviewed,
     views: [view],
     now,
     wallets,
