@@ -44,105 +44,120 @@ async function expectWithinViewport(page: Page, selector: string) {
   expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1);
 }
 
-test('scanner and operator pass layouts stay readable at phone, tablet and desk sizes', async ({
-  page,
-}) => {
-  // Reason: every size x scheme x surface takes a screenshot and an axe pass; ~85 s measured, over the 90 s default's margin.
-  test.setTimeout(180_000);
-  await serveVisualLogo(page);
-  for (const surface of ['scanner', 'operator']) {
-    for (const pass of passes) {
-      for (const viewport of viewports) {
-        await page.setViewportSize({ width: viewport.width, height: viewport.height });
-        await page.emulateMedia({ colorScheme: viewport.scheme, reducedMotion: 'no-preference' });
-        await page.goto(`/scan?visual=1&surface=${surface}&pass=${pass}`);
-        const card = page.getByTestId('scan-result');
-        // Machine load only: the gallery fetches ~150 chunks cold (none is the on-demand schema import), which outlasts 5 s on a busy runner.
-        await expect(card).toBeVisible({ timeout: 20_000 });
-        await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
-        // A verdict keeps the buddy; the card stops above its seat so they never overlap.
-        // On a short screen (height <= 650) the seat is not drawn at all.
-        if (viewport.height > 650)
-          await expect(page.locator('.scan-buddy-seat')).toHaveCSS('opacity', '1');
-        const cardBox = await card.boundingBox();
-        const seatBox = await page.locator('.scan-buddy-seat').boundingBox();
-        expect(cardBox).not.toBeNull();
-        if (viewport.height > 650) expect(seatBox).not.toBeNull();
-        if (cardBox && seatBox)
-          expect(cardBox.y + cardBox.height).toBeLessThanOrEqual(seatBox.y + 1);
-        await expectWithinViewport(page, '.scan-result');
-        await expectNoHorizontalOverflow(page);
-        // A handheld's glance card keeps the verdict, who and one fact: the details are in the pass sheet.
-        const glance = surface === 'scanner' && viewport.width < 640;
-        if (pass === 'generic' && viewport.height <= 650 && !glance) {
-          const body = page.locator('.scan-result-body');
-          for (const value of ['Saturday eve', 'Gallery wing']) {
-            const field = page.getByText(value, { exact: true });
-            await field.scrollIntoViewIfNeeded();
-            await expect(field).toBeInViewport({ ratio: 1 });
-          }
-          await body.evaluate((element) => {
-            element.scrollTop = 0;
-          });
-        }
-        if (pass === 'identity' && viewport.height <= 650) {
-          // The verdict word is the headline; its line sits below it without overlap.
-          const title = await page.locator('.scan-result-band h1').boundingBox();
-          const sub = await page.locator('.scan-result-band p').first().boundingBox();
-          expect(title).not.toBeNull();
-          expect(sub).not.toBeNull();
-          if (title && sub) expect(sub.y).toBeGreaterThanOrEqual(title.y + title.height - 1);
-        }
-        if (surface === 'operator' && viewport.width >= 900) {
-          const resultBox = await card.boundingBox();
-          const lookupBox = await page.getByRole('region', { name: 'Find a pass' }).boundingBox();
-          expect(resultBox).not.toBeNull();
-          expect(lookupBox).not.toBeNull();
-          if (resultBox && lookupBox)
-            expect(resultBox.x).toBeGreaterThanOrEqual(lookupBox.x + lookupBox.width - 1);
-        }
-        if (surface === 'operator') {
-          // Under 900px the panel steps aside while a result shows, so the card never overlays it.
-          const panel = page.getByRole('complementary', { name: 'Operator view' });
-          if (viewport.width >= 900) await expect(panel).toBeVisible();
-          else await expect(panel).toBeHidden();
-          await expect(page.getByRole('region', { name: 'Session activity' })).toBeHidden();
-        }
-        await page.screenshot({
-          path: `test-results/scan-visual-${surface}-${pass}-${viewport.width}x${viewport.height}.png`,
-        });
-      }
-      await page.setViewportSize({ width: 390, height: 844 });
-      await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
-      await page.goto(`/scan?visual=1&surface=${surface}&pass=${pass}`);
-      await page.getByRole('button', { name: /^View pass$|\. Details$/ }).click();
-      const preview = page.locator('.scan-pass-sheet');
-      await expect(preview).toBeVisible();
-      await expect
-        .poll(async () => (await preview.boundingBox())?.x ?? Infinity)
-        .toBeLessThanOrEqual(1);
-      // The sheet slides up; wait for it to rest before measuring.
-      await expect
-        .poll(async () => {
-          const box = await preview.boundingBox();
-          return box ? box.y + box.height : Infinity;
-        })
-        .toBeLessThanOrEqual(845);
-      await expectWithinViewport(page, '.scan-pass-sheet');
-      await page.getByRole('button', { name: 'Show pass', exact: true }).click();
-      await expect(page.locator('.pc-root')).toHaveAttribute('data-face', 'front');
-      await expectNoHorizontalOverflow(page);
-      await page.screenshot({
-        path: `test-results/scan-visual-${surface}-${pass}-wallet-front.png`,
-      });
-      await page.getByRole('button', { name: 'Details', exact: true }).click();
-      await expect(page.locator('.pc-root')).toHaveAttribute('data-face', 'back');
-      await page.screenshot({
-        path: `test-results/scan-visual-${surface}-${pass}-wallet-back.png`,
-      });
+type Surface = 'scanner' | 'operator';
+type Viewport = (typeof viewports)[number];
+
+async function checkLayout(page: Page, surface: Surface, pass: string, viewport: Viewport) {
+  await page.setViewportSize({ width: viewport.width, height: viewport.height });
+  await page.emulateMedia({ colorScheme: viewport.scheme, reducedMotion: 'no-preference' });
+  await page.goto(`/scan?visual=1&surface=${surface}&pass=${pass}`);
+  const card = page.getByTestId('scan-result');
+  // Machine load only: the gallery fetches ~150 chunks cold (none is the on-demand schema import), which outlasts 5 s on a busy runner.
+  await expect(card).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+  // A verdict keeps the buddy; the card stops above its seat so they never overlap.
+  // On a short screen (height <= 650) the seat is not drawn at all.
+  if (viewport.height > 650)
+    await expect(page.locator('.scan-buddy-seat')).toHaveCSS('opacity', '1');
+  const cardBox = await card.boundingBox();
+  const seatBox = await page.locator('.scan-buddy-seat').boundingBox();
+  expect(cardBox).not.toBeNull();
+  if (viewport.height > 650) expect(seatBox).not.toBeNull();
+  if (cardBox && seatBox) expect(cardBox.y + cardBox.height).toBeLessThanOrEqual(seatBox.y + 1);
+  await expectWithinViewport(page, '.scan-result');
+  await expectNoHorizontalOverflow(page);
+  // A handheld's glance card keeps the verdict, who and one fact: the details are in the pass sheet.
+  const glance = surface === 'scanner' && viewport.width < 640;
+  if (pass === 'generic' && viewport.height <= 650 && !glance) {
+    const body = page.locator('.scan-result-body');
+    for (const value of ['Saturday eve', 'Gallery wing']) {
+      const field = page.getByText(value, { exact: true });
+      await field.scrollIntoViewIfNeeded();
+      await expect(field).toBeInViewport({ ratio: 1 });
     }
+    await body.evaluate((element) => {
+      element.scrollTop = 0;
+    });
   }
-});
+  if (pass === 'identity' && viewport.height <= 650) {
+    // The verdict word is the headline; its line sits below it without overlap.
+    const title = await page.locator('.scan-result-band h1').boundingBox();
+    const sub = await page.locator('.scan-result-band p').first().boundingBox();
+    expect(title).not.toBeNull();
+    expect(sub).not.toBeNull();
+    if (title && sub) expect(sub.y).toBeGreaterThanOrEqual(title.y + title.height - 1);
+  }
+  if (surface === 'operator' && viewport.width >= 900) {
+    const resultBox = await card.boundingBox();
+    const lookupBox = await page.getByRole('region', { name: 'Find a pass' }).boundingBox();
+    expect(resultBox).not.toBeNull();
+    expect(lookupBox).not.toBeNull();
+    if (resultBox && lookupBox)
+      expect(resultBox.x).toBeGreaterThanOrEqual(lookupBox.x + lookupBox.width - 1);
+  }
+  if (surface === 'operator') {
+    // Under 900px the panel steps aside while a result shows, so the card never overlays it.
+    const panel = page.getByRole('complementary', { name: 'Operator view' });
+    if (viewport.width >= 900) await expect(panel).toBeVisible();
+    else await expect(panel).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Session activity' })).toBeHidden();
+  }
+  await page.screenshot({
+    path: `test-results/scan-visual-${surface}-${pass}-${viewport.width}x${viewport.height}.png`,
+  });
+}
+
+async function checkWalletSheet(page: Page, surface: Surface, pass: string) {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
+  await page.goto(`/scan?visual=1&surface=${surface}&pass=${pass}`);
+  await page.getByRole('button', { name: /^View pass$|\. Details$/ }).click();
+  const preview = page.locator('.scan-pass-sheet');
+  await expect(preview).toBeVisible();
+  await expect
+    .poll(async () => (await preview.boundingBox())?.x ?? Infinity)
+    .toBeLessThanOrEqual(1);
+  // The sheet slides up; wait for it to rest before measuring.
+  await expect
+    .poll(async () => {
+      const box = await preview.boundingBox();
+      return box ? box.y + box.height : Infinity;
+    })
+    .toBeLessThanOrEqual(845);
+  await expectWithinViewport(page, '.scan-pass-sheet');
+  await page.getByRole('button', { name: 'Show pass', exact: true }).click();
+  await expect(page.locator('.pc-root')).toHaveAttribute('data-face', 'front');
+  await expectNoHorizontalOverflow(page);
+  await page.screenshot({
+    path: `test-results/scan-visual-${surface}-${pass}-wallet-front.png`,
+  });
+  await page.getByRole('button', { name: 'Details', exact: true }).click();
+  await expect(page.locator('.pc-root')).toHaveAttribute('data-face', 'back');
+  await page.screenshot({
+    path: `test-results/scan-visual-${surface}-${pass}-wallet-back.png`,
+  });
+}
+
+// One test per size, and one per surface for the wallet sheet: each stays well inside the default
+// timeout, and a failure names its size.
+for (const viewport of viewports) {
+  test(`scanner and operator pass layouts stay readable at ${viewport.width}x${viewport.height}`, async ({
+    page,
+  }) => {
+    await serveVisualLogo(page);
+    for (const surface of ['scanner', 'operator'] as const)
+      for (const pass of passes) await checkLayout(page, surface, pass, viewport);
+  });
+}
+
+for (const surface of ['scanner', 'operator'] as const) {
+  test(`${surface} pass details sheet fits a phone and flips to the wallet back`, async ({
+    page,
+  }) => {
+    await serveVisualLogo(page);
+    for (const pass of passes) await checkWalletSheet(page, surface, pass);
+  });
+}
 
 test('scan details remain reachable on compact screens', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 640 });

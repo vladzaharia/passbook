@@ -40,6 +40,50 @@ describe('deliveries', () => {
     expect(within(table).getAllByText('ORD-7').length).toBeGreaterThan(0);
   });
 
+  it('shows no verdict in Response for a pending or cancelled delivery without an answer', async () => {
+    const calls: Calls[] = [];
+    const state = {
+      endpoints: [endpoint()],
+      deliveries: [
+        delivery({ eventId: 'ev2', state: 'pending', lastStatus: null, lastError: null }),
+        delivery({ eventId: 'ev3', state: 'cancelled', lastStatus: null, lastError: null }),
+      ],
+    };
+    await open(calls, hooks(calls, state));
+    const table = await screen.findByRole('table', { name: 'Deliveries' });
+    expect(within(table).getByText('Pending')).toBeVisible();
+    expect(within(table).getByText('Cancelled')).toBeVisible();
+    expect(within(table).queryByText('Failed')).toBeNull();
+  });
+
+  it('offers Replay only once something was delivered or failed', async () => {
+    const calls: Calls[] = [];
+    const none = { endpoints: [endpoint({ lastSuccessAt: null, lastFailureAt: null })] };
+    await open(calls, hooks(calls, none));
+    await screen.findByRole('table', { name: 'Deliveries' });
+    expect(screen.queryByRole('button', { name: 'Replay' })).toBeNull();
+  });
+
+  it('says Disabled once: the pill, not also a banner title', async () => {
+    const calls: Calls[] = [];
+    const off = { endpoints: [endpoint({ status: 'disabled', disabledAt: 1, failingSince: 0 })] };
+    await open(calls, hooks(calls, off));
+    await screen.findByRole('table', { name: 'Deliveries' });
+    expect(screen.getAllByText('Disabled')).toHaveLength(1);
+    expect(screen.getByText(/Fix the endpoint, then resume/)).toBeVisible();
+  });
+
+  it('names a pass without an issuer id by the tail of its PassBook id', async () => {
+    const calls: Calls[] = [];
+    const state = {
+      endpoints: [endpoint()],
+      deliveries: [delivery({ externalId: null, passId: 'p1234567890' })],
+    };
+    await open(calls, hooks(calls, state));
+    const table = await screen.findByRole('table', { name: 'Deliveries' });
+    expect(within(table).getByRole('link', { name: 'Pass 567890' })).toBeVisible();
+  });
+
   it('lists a test send tagged Test beside the deliveries, only under All', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];

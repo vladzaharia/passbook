@@ -151,7 +151,7 @@ describe('what the lines say', () => {
     const l = line('guest_visits_used', {
       access: accessInfo({ visits: { used: 2, limit: 3 } }),
     });
-    expect(l?.sub).toBe('Used 2 of 3 visits.');
+    expect(l?.sub).toBe('Used 2 of 3.');
   });
 
   it('dates a sub without the year or the time, unless it is another year', () => {
