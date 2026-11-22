@@ -1,6 +1,4 @@
 import {
-  CreatedScannerSchema,
-  CreateScannerSchema,
   IdParamSchema,
   ScannerListQuerySchema,
   ScannerListSchema,
@@ -11,7 +9,7 @@ import { currentUserId, modeOf } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
+import { authOf, requireTenantSession } from '../passes/http.ts';
 import { pairHere } from './pairing-token.ts';
 import { setScannerCookie } from './routes-pair.ts';
 import {
@@ -22,7 +20,6 @@ import {
 import { registerScannerWrites } from './routes-scanners-key.ts';
 import { createSamplePass } from './sample-pass.ts';
 import { listScanners, loadScanner, scannerView } from './scanner-views.ts';
-import { createScanner } from './scanners.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
 import { scannerAuthority } from './target-authority.ts';
 
@@ -35,7 +32,7 @@ guard(scannersRoutes, requireTenantSession);
 scannersRoutes.use('*', limitBody(64 * 1024));
 
 const TAG = 'scanners';
-const originOf = (url: string) => new URL(url).origin;
+const _originOf = (url: string) => new URL(url).origin;
 
 register(
   scannersRoutes,
@@ -54,37 +51,6 @@ register(
       await readableScanningPage(ctx, authOf(c), c.req.valid('query'), (query, authority) =>
         listScanners(ctx, mode, query, authority),
       ),
-    );
-  },
-);
-register(
-  scannersRoutes,
-  TAG,
-  {
-    method: 'post',
-    path: '/',
-    summary: 'Create a scanner (a device comes with a pairing code)',
-    body: CreateScannerSchema,
-    status: 201,
-    response: CreatedScannerSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const input = c.req.valid('json');
-    const authority = await tenantAuthorityOf(ctx, authOf(c), input.orgId, 'scanning:manage');
-    return c.json(
-      scopedScanningView(
-        await createScanner(
-          ctx,
-          currentUserId(c),
-          modeOf(c.var.auth),
-          input,
-          originOf(c.req.url),
-          authority,
-        ),
-        input.orgId,
-      ),
-      201,
     );
   },
 );

@@ -59,6 +59,7 @@ export async function createScanningDevice(
   origin: string,
   authority: TenantPassWrite,
   admin?: { userId: string; deviceKey: string },
+  ip: string | null = null,
 ) {
   const parent = await loadScanningSession(ctx, sessionId);
   const capture = newCapture({
@@ -67,8 +68,12 @@ export async function createScanningDevice(
     orgId: parent.org_id,
     mode: parent.mode,
     origin,
+    ip,
   });
-  const { plan, scope } = await planScanningDevice(ctx, parent, input, capture, admin, false);
+  // A key makes the code in the same batch (`scanning:admin` only); a write key makes none.
+  const key = authority.kind === 'api_key';
+  const pairNow = key && authority.scope === 'scanning:admin';
+  const { plan, scope } = await planScanningDevice(ctx, parent, input, capture, admin, pairNow);
   const g = adminGrant(
     ctx,
     'org_mode.scan.setup.create',
@@ -85,13 +90,11 @@ export async function createScanningDevice(
   } catch (error) {
     setupConflict(error);
   }
-  const pairing = await issuePairing(ctx, capture, plan.input, made.id);
+  const pairing = key ? made.pairing : await issuePairing(ctx, capture, plan.input, made.id);
   const row = await scanningDeviceRow(ctx.env.DB, parent.org_id, made.id);
   if (!row) throw new NotFoundError('Device not found.', 'SCANNING_DEVICE_NOT_FOUND');
-  return {
-    ...deviceDto(row, ctx.clock.now(), projectedDeviceSettings(parent, row, scope)),
-    pairing,
-  };
+  const view = deviceDto(row, ctx.clock.now(), projectedDeviceSettings(parent, row, scope));
+  return { ...(key ? { ...view, adminName: null } : view), pairing };
 }
 export async function updateScanningDevice(
   ctx: ServiceContext,

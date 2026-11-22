@@ -1,22 +1,27 @@
 import { z } from 'zod';
 import {
+  CreatedScannerSchema,
+  CreateScannerSchema,
   IdParamSchema,
   ScannerPairingSchema,
   ScannerPairingStateSchema,
   TerminalTokenSchema,
 } from '../../../shared/contracts/index.ts';
 import { currentUserId, modeOf } from '../../platform/auth.ts';
-import { UnauthenticatedError } from '../../platform/errors.ts';
+import { NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { ipPrefix } from '../../platform/ip.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { clientIp } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { authOf, type C } from '../passes/http.ts';
+import { authOf, type C, tenantAuthorityOf } from '../passes/http.ts';
 import { credentialOnce } from './credential-once.ts';
 import { charged } from './key-credentials.ts';
+import { withoutNames } from './key-names.ts';
 import { createPairing, pairingState } from './pairing.ts';
 import { replaceTerminalToken } from './pairing-token.ts';
 import { loadScanner } from './scanner-views.ts';
+import { createScanner } from './scanners.ts';
+import { scopedScanningView } from './scanning-workspace.ts';
 import { scannerAuthority } from './target-authority.ts';
 
 type Router = ReturnType<typeof createRouter>;
@@ -34,7 +39,8 @@ const ADMIN = {
 const READ = { scope: 'scan-setup:read', capability: 'scanning:read' } as const;
 
 /**
- * The scanner and its caller: a console session by membership, or an org-bound key under its own
+ * The scanner and its caller (the org check is `scannerAuthority`, which 404s every key whose org
+ * differs, platform keys included: keep it, never `tenantAuthorityOf` alone): a console session by membership, or an org-bound key under its own
  * principal. The scanner loads in the caller's mode, and a key of another org (or a platform key)
  * finds no such scanner, the same answer as a missing id.
  */
@@ -60,6 +66,56 @@ export function registerScannerCredentials(router: Router): void {
     'scanners',
     {
       method: 'post',
+      path: '/',
+      summary: 'Create a scanner (a device comes with a pairing code)',
+      auth: { ...ADMIN, scope: ['scanning:admin', 'scanning:write'] },
+      body: CreateScannerSchema,
+      status: 201,
+      response: CreatedScannerSchema,
+    },
+    async (c) => {
+      const ctx = serviceContext(c);
+      const auth = authOf(c);
+      if (auth.kind !== 'session' && auth.kind !== 'api_key') throw new UnauthenticatedError();
+      const input = c.req.valid('json');
+      if (auth.kind === 'api_key' && auth.orgId !== input.orgId)
+        throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
+      const authority = await tenantAuthorityOf(ctx, auth, input.orgId, 'scanning:manage');
+      const actorId = auth.kind === 'api_key' ? auth.keyId : currentUserId(c);
+      const origin = new URL(c.req.url).origin;
+      const code =
+        authority.kind === 'api_key' &&
+        authority.scope === 'scanning:admin' &&
+        input.kind === 'device';
+      return credentialOnce(c, ctx, {
+        orgId: input.orgId,
+        body: input,
+        status: 201,
+        execute: async () =>
+          charged(ctx, authority, code ? 1 : 0, async () => {
+            const made = await createScanner(
+              ctx,
+              actorId,
+              modeOf(auth),
+              input,
+              origin,
+              authority,
+              ipPrefix(clientIp(c)),
+            );
+            return scopedScanningView(
+              auth.kind === 'api_key' ? withoutNames(made) : made,
+              input.orgId,
+            );
+          }),
+        redact: (v) => ({ ...v, pairing: null }),
+      });
+    },
+  );
+  register(
+    router,
+    'scanners',
+    {
+      method: 'post',
       path: '/{id}/pairing',
       summary: 'A new pairing code (replaces any live one)',
       auth: ADMIN,
@@ -79,7 +135,7 @@ export function registerScannerCredentials(router: Router): void {
           charged(t.ctx, t.authority, 1, () =>
             createPairing(t.ctx, t.actorId, t.row, origin, t.authority, restore, t.ip),
           ),
-        redact: (p) => ({ ...p, code: null, url: null }),
+        redact: (p) => ({ code: null, url: null, expiresAt: p.expiresAt }),
       });
     },
   );
@@ -123,7 +179,7 @@ export function registerScannerCredentials(router: Router): void {
           charged(t.ctx, t.authority, 1, () =>
             replaceTerminalToken(t.ctx, t.actorId, t.row, t.authority, restore, t.ip),
           ),
-        redact: (r) => ({ ...r, token: null }),
+        redact: (r) => ({ token: null, expiresAt: r.expiresAt }),
       });
     },
   );
