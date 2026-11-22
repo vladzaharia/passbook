@@ -11,6 +11,7 @@ import {
   getIncident,
   type IncidentRow,
   insertIncidentStmt,
+  RESOLVED_AT_CONDITION,
   resolveIncidentStmt,
 } from './repo-public.ts';
 
@@ -83,7 +84,7 @@ export async function resolveIncident(
         targetType: 'status_incident',
         targetId: id,
       },
-      'EXISTS (SELECT 1 FROM status_incidents WHERE id = ? AND resolved_at = ?)',
+      RESOLVED_AT_CONDITION,
       [id, at],
     ),
   ]);

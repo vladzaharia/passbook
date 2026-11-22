@@ -48,3 +48,7 @@ export const resolveIncidentStmt = (db: D1Database, id: string, at: number) =>
     at,
     id,
   ]);
+
+/** Binds `[id, at]`: true while the note's resolved time is `at`, so an audit row follows only the call that resolved it. */
+export const RESOLVED_AT_CONDITION =
+  'EXISTS (SELECT 1 FROM status_incidents WHERE id = ? AND resolved_at = ?)';
