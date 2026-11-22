@@ -26,6 +26,8 @@ export interface Pending {
   op: string;
   change: string;
   note: string;
+  /** A breaking change that ships to every client without a PassBook-Version: a fix that stops a request reaching more than it asked. */
+  unversioned?: boolean;
 }
 
 /** docs/api/versions.json. `migration` says what a client pinned to an older date must change. */
@@ -90,6 +92,12 @@ export function versionFailures(next: Versions, base: Versions | null): string[]
 
 export const hasNewVersion = (next: Versions, base: Versions | null): boolean =>
   next.versions.some((v) => !(base?.versions ?? []).some((b) => b.date === v.date));
+
+/** The breaking changes no `unversioned` entry of unreleased.json covers. */
+export const versionedBreaks = (broken: string[], pending: Pending[]): string[] => {
+  const free = new Set(pending.filter((p) => p.unversioned).map((p) => p.key));
+  return broken.filter((b) => !free.has(b));
+};
 
 /** The dated file a release writes. Refuses while a note is missing. */
 export function stamp(pending: Pending[], date: string, into?: DatedFile): DatedFile {

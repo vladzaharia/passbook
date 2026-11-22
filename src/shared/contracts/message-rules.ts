@@ -89,6 +89,7 @@ export const RuleStateSchema = z.enum(['on', 'paused']);
 export const RulePausedCodeSchema = z.enum([
   'RULE_CREATOR_REVOKED',
   'RULE_INPUT_MISSING',
+  'RULE_TEMPLATE_CHANGED',
   'RULE_TARGET_INVALID',
   'ORG_INACTIVE',
 ]);

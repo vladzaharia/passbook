@@ -432,6 +432,22 @@
     "note": "readOnly marks an ended pass that is listed before it is attached to the account: no refresh, remove or download."
   },
   {
+    "key": "GET /api/v1/message-rules 200.items[].pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
+    "class": "notable",
+    "operationId": "message-rules.getMessageRules",
+    "op": "GET /api/v1/message-rules",
+    "change": "200.items[].pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
+    "note": "A rule pauses with RULE_TEMPLATE_CHANGED when its template content no longer matches its release."
+  },
+  {
+    "key": "GET /api/v1/message-rules/{id} 200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
+    "class": "notable",
+    "operationId": "message-rules.getMessageRulesById",
+    "op": "GET /api/v1/message-rules/{id}",
+    "change": "200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
+    "note": "A rule pauses with RULE_TEMPLATE_CHANGED when its template content no longer matches its release."
+  },
+  {
     "key": "GET /api/v1/message-rules/{id}/runs 200.items[].message: field added",
     "class": "additive",
     "operationId": "message-rules.getMessageRulesByIdRuns",
@@ -1053,7 +1069,8 @@
     "operationId": "broadcasts.patchBroadcastsById",
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target: unknown keys now refused",
-    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in."
+    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "PATCH /api/v1/broadcasts/{id} body.target.expectCount: optional input field added",
@@ -1077,7 +1094,8 @@
     "operationId": "broadcasts.patchBroadcastsById",
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.match[]|0: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "PATCH /api/v1/broadcasts/{id} body.target.match[]|1: unknown keys now refused",
@@ -1085,7 +1103,8 @@
     "operationId": "broadcasts.patchBroadcastsById",
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.match[]|1: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "PATCH /api/v1/broadcasts/{id} body.target.match[]|2: unknown keys now refused",
@@ -1093,7 +1112,8 @@
     "operationId": "broadcasts.patchBroadcastsById",
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.match[]|2: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "PATCH /api/v1/broadcasts/{id} body.target.match[]|3: unknown keys now refused",
@@ -1101,7 +1121,8 @@
     "operationId": "broadcasts.patchBroadcastsById",
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.match[]|3: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "PATCH /api/v1/broadcasts/{id} body.target.passIds: optional input field added",
@@ -1117,7 +1138,8 @@
     "operationId": "broadcasts.patchBroadcastsById",
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.scan|0: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "PATCH /api/v1/broadcasts/{id} body.target.scan|1: unknown keys now refused",
@@ -1125,7 +1147,8 @@
     "operationId": "broadcasts.patchBroadcastsById",
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.scan|1: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "PATCH /api/v1/broadcasts/{id} body.target.version: optional input field added",
@@ -1381,7 +1404,8 @@
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
     "change": "body.target: unknown keys now refused",
-    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in."
+    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts body.target.expectCount: optional input field added",
@@ -1405,7 +1429,8 @@
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
     "change": "body.target.match[]|0: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts body.target.match[]|1: unknown keys now refused",
@@ -1413,7 +1438,8 @@
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
     "change": "body.target.match[]|1: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts body.target.match[]|2: unknown keys now refused",
@@ -1421,7 +1447,8 @@
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
     "change": "body.target.match[]|2: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts body.target.match[]|3: unknown keys now refused",
@@ -1429,7 +1456,8 @@
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
     "change": "body.target.match[]|3: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts body.target.passIds: optional input field added",
@@ -1445,7 +1473,8 @@
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
     "change": "body.target.scan|0: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts body.target.scan|1: unknown keys now refused",
@@ -1453,7 +1482,8 @@
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
     "change": "body.target.scan|1: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts body.target.version: optional input field added",
@@ -1661,7 +1691,8 @@
     "operationId": "broadcasts.postBroadcastsPreview",
     "op": "POST /api/v1/broadcasts/preview",
     "change": "body.target: unknown keys now refused",
-    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in."
+    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts/preview body.target.expectCount: optional input field added",
@@ -1685,7 +1716,8 @@
     "operationId": "broadcasts.postBroadcastsPreview",
     "op": "POST /api/v1/broadcasts/preview",
     "change": "body.target.match[]|0: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts/preview body.target.match[]|1: unknown keys now refused",
@@ -1693,7 +1725,8 @@
     "operationId": "broadcasts.postBroadcastsPreview",
     "op": "POST /api/v1/broadcasts/preview",
     "change": "body.target.match[]|1: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts/preview body.target.match[]|2: unknown keys now refused",
@@ -1701,7 +1734,8 @@
     "operationId": "broadcasts.postBroadcastsPreview",
     "op": "POST /api/v1/broadcasts/preview",
     "change": "body.target.match[]|2: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts/preview body.target.match[]|3: unknown keys now refused",
@@ -1709,7 +1743,8 @@
     "operationId": "broadcasts.postBroadcastsPreview",
     "op": "POST /api/v1/broadcasts/preview",
     "change": "body.target.match[]|3: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts/preview body.target.passIds: optional input field added",
@@ -1725,7 +1760,8 @@
     "operationId": "broadcasts.postBroadcastsPreview",
     "op": "POST /api/v1/broadcasts/preview",
     "change": "body.target.scan|0: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts/preview body.target.scan|1: unknown keys now refused",
@@ -1733,7 +1769,8 @@
     "operationId": "broadcasts.postBroadcastsPreview",
     "op": "POST /api/v1/broadcasts/preview",
     "change": "body.target.scan|1: unknown keys now refused",
-    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts/preview body.target.version: optional input field added",
@@ -1990,6 +2027,22 @@
     "op": "POST /api/v1/identity-runs/{id}/retry",
     "change": "new operation",
     "note": "Retries a failed or cancelled provisioning run."
+  },
+  {
+    "key": "POST /api/v1/message-rules 201.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
+    "class": "notable",
+    "operationId": "message-rules.postMessageRules",
+    "op": "POST /api/v1/message-rules",
+    "change": "201.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
+    "note": "A rule pauses with RULE_TEMPLATE_CHANGED when its template content no longer matches its release."
+  },
+  {
+    "key": "POST /api/v1/message-rules/{id}/pause 200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
+    "class": "notable",
+    "operationId": "message-rules.postMessageRulesByIdPause",
+    "op": "POST /api/v1/message-rules/{id}/pause",
+    "change": "200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
+    "note": "A rule pauses with RULE_TEMPLATE_CHANGED when its template content no longer matches its release."
   },
   {
     "key": "POST /api/v1/message-rules/{id}/test 201.message: field added",
@@ -2750,6 +2803,14 @@
     "op": "PUT /api/v1/identities/{id}/push-key",
     "change": "200.status: field added",
     "note": "Identities report kind, status, handle, issuing, rotation and nextRotationAt."
+  },
+  {
+    "key": "PUT /api/v1/message-rules/{id} 200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
+    "class": "notable",
+    "operationId": "message-rules.putMessageRulesById",
+    "op": "PUT /api/v1/message-rules/{id}",
+    "change": "200.pausedCode: enum value \"RULE_TEMPLATE_CHANGED\" added",
+    "note": "A rule pauses with RULE_TEMPLATE_CHANGED when its template content no longer matches its release."
   },
   {
     "key": "PUT /api/v1/orgs/{id}/branding/{slot} 200.kind: field added",

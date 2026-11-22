@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "PassBook API",
-    "version": "2026-11-22"
+    "version": "2026-11-20"
   },
   "servers": [
     {
@@ -76669,7 +76669,7 @@
           "resource": "broadcasts",
           "method": "create"
         },
-        "description": "Saves, sends or schedules a message or a change run. A change sets inputs on many passes: one target (`templateIds` with filters, `passIds` up to 5,000, or the `importId` of an ended import), `patch` operations (`set`, `clear`, `shift`, `add`, or `$void` or `$design` alone) and an optional `message` for the lock screen (needs `notify`). `target.expectCount` is the count a preview showed: when the server's count differs by more than 2% the run does not start and the answer is 409 `SELECTION_CHANGED`. More than 20,000 passes is 422 `MATCH_TOO_BROAD`. Filters the target does not know are ignored. Needs `messages:write` and, for a change, `passes:write`. Send an `Idempotency-Key`; the same key and body returns the same run.",
+        "description": "Saves, sends or schedules a message or a change run. A change sets inputs on many passes: one target (`templateIds` with filters, `passIds` up to 5,000, or the `importId` of an ended import), `patch` operations (`set`, `clear`, `shift`, `add`, or `$void` or `$design` alone) and an optional `message` for the lock screen (needs `notify`). `target.expectCount` is the count a preview showed: when the server's count differs by more than 2% the run does not start and the answer is 409 `SELECTION_CHANGED`. More than 20,000 passes is 422 `MATCH_TOO_BROAD`. A target key it does not define is 422 `BROADCAST_UNSUPPORTED_FILTER`, never ignored. Needs `messages:write` and, for a change, `passes:write`. Send an `Idempotency-Key`; the same key and body returns the same run.",
         "security": [
           {
             "apiKey": [
@@ -78171,6 +78171,7 @@
                             "enum": [
                               "RULE_CREATOR_REVOKED",
                               "RULE_INPUT_MISSING",
+                              "RULE_TEMPLATE_CHANGED",
                               "RULE_TARGET_INVALID",
                               "ORG_INACTIVE",
                               null
@@ -78525,6 +78526,7 @@
                       "enum": [
                         "RULE_CREATOR_REVOKED",
                         "RULE_INPUT_MISSING",
+                        "RULE_TEMPLATE_CHANGED",
                         "RULE_TARGET_INVALID",
                         "ORG_INACTIVE",
                         null
@@ -78886,6 +78888,7 @@
                       "enum": [
                         "RULE_CREATOR_REVOKED",
                         "RULE_INPUT_MISSING",
+                        "RULE_TEMPLATE_CHANGED",
                         "RULE_TARGET_INVALID",
                         "ORG_INACTIVE",
                         null
@@ -79241,6 +79244,7 @@
                       "enum": [
                         "RULE_CREATOR_REVOKED",
                         "RULE_INPUT_MISSING",
+                        "RULE_TEMPLATE_CHANGED",
                         "RULE_TARGET_INVALID",
                         "ORG_INACTIVE",
                         null
@@ -79683,6 +79687,7 @@
                       "enum": [
                         "RULE_CREATOR_REVOKED",
                         "RULE_INPUT_MISSING",
+                        "RULE_TEMPLATE_CHANGED",
                         "RULE_TARGET_INVALID",
                         "ORG_INACTIVE",
                         null

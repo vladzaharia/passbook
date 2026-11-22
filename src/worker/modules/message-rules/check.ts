@@ -96,15 +96,24 @@ export async function checkRule(
       templateIds,
       rule.anchor,
       rule.offset,
+      true,
     );
   } catch (error) {
     if (!(error instanceof AppError) || error.status >= 500) throw error;
+    // No release in the mode and no active passes: nothing is due yet, and the rule keeps its place.
+    if (error.code === 'TEMPLATE_NOT_FOUND') {
+      ctx.log.info('message_rule.no_template', { ruleId: row.id, code: error.code });
+      await setNextCheck(db, row.id, version, Math.max(nextCheckAt(rule, now), now + 1000));
+      return;
+    }
+    const code =
+      error.code === 'TEMPLATE_CONTENT_CHANGED' ? 'RULE_TEMPLATE_CHANGED' : 'RULE_INPUT_MISSING';
     ctx.log.warn('message_rule.paused', {
       ruleId: row.id,
       orgId: row.org_id,
-      code: 'RULE_INPUT_MISSING',
+      code,
     });
-    await pauseWithCode(db, row.id, 'RULE_INPUT_MISSING', now);
+    await pauseWithCode(db, row.id, code, now);
     return;
   }
   // Day rules send only inside their day; a missed day stays unsent so the text is never wrong.

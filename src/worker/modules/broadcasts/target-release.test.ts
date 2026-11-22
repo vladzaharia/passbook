@@ -101,4 +101,29 @@ describe('a template with no current release', () => {
     expect((await create('change', tpl.id, { gate: { set: 'B' } })).status).toBe(201);
     expect((await create('message', tpl.id, { message: 'Hi' })).status).toBe(201);
   });
+
+  it('reads the newest version by its own creation, not the newest pass, and skips removed passes', async () => {
+    const { kit, create } = await setup();
+    const tpl = await kit.versioned();
+    // The older pass holds v2 (the newer version, with gate2); the newest pass was rolled back to v1.
+    const a = await kit.makePass({ templateId: tpl.id, mode: 'test', gate: 'A' });
+    kit.clock.advance(1000);
+    const b = await kit.makePass({ templateId: tpl.id, mode: 'test', gate: 'B' });
+    await run(kit.env.DB, "UPDATE passes SET template_version = 'v1' WHERE id = ?", [b.id]);
+    await run(kit.env.DB, "UPDATE templates SET status = 'archived' WHERE id = ?", [tpl.id]);
+    expect((await create('change', tpl.id, { gate2: { set: 'X' } }, 'test')).status).toBe(201);
+    // Removed passes do not count: with the only v2 pass removed, v1 is what is held.
+    await run(kit.env.DB, 'UPDATE passes SET removed_at = 1 WHERE id = ?', [a.id]);
+    await expectProblem(
+      await create('change', tpl.id, { gate2: { set: 'X' } }, 'test'),
+      422,
+      'BROADCAST_UNKNOWN_INPUT',
+    );
+    await run(kit.env.DB, 'UPDATE passes SET removed_at = 1 WHERE id = ?', [b.id]);
+    await expectProblem(
+      await create('change', tpl.id, { gate: { set: 'X' } }, 'test'),
+      404,
+      'TEMPLATE_NOT_FOUND',
+    );
+  });
 });

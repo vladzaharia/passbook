@@ -27,10 +27,11 @@ export async function checkRuleTemplates(
   templateIds: readonly string[],
   anchor: RuleAnchor,
   offset: RuleOffset,
+  light = false,
 ): Promise<AnchorInputKind> {
   const kinds = new Set<AnchorInputKind>();
   for (const templateId of templateIds) {
-    const { manifest } = (await resolveModeTemplate(ctx, orgId, templateId, mode)).template;
+    const { manifest } = (await resolveModeTemplate(ctx, orgId, templateId, mode, light)).template;
     if (!manifest.messaging)
       throw new ValidationError(
         `${manifest.name} has no message field.`,

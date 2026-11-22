@@ -4,11 +4,6 @@
       "date": "2026-11-20",
       "summary": "POST /roll-calls answers 201 when it starts a roll call.",
       "migration": "Send PassBook-Version: 2026-11-20 to opt in. POST /roll-calls then returns 201, not 200. Without the header nothing changes."
-    },
-    {
-      "date": "2026-11-22",
-      "summary": "A message or change target refuses a key it does not define, with 422 BROADCAST_UNSUPPORTED_FILTER.",
-      "migration": "Remove keys the target does not define (status, holderEmail, externalId, connectionId, templateId, a stray field in match or scan). The refusal applies to every client, with or without the PassBook-Version header: a dropped filter would widen a run past what was asked."
     }
   ]
 }

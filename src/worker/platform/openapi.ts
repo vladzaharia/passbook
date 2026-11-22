@@ -87,17 +87,18 @@ function checkDeclaration(spec: RouteSpec): void {
   }
 }
 
+/** The router's hook for a failed validation: the ZodError reaches the error handler (422). */
+const throwInvalid = (result: { success: boolean; error?: ZodError }): void => {
+  if (!result.success && result.error) throw result.error;
+};
+
 /**
  * Router whose validation failures surface as problem+json (422). Request bodies are capped at
  * DEFAULT_BODY_BYTES; a module with larger uploads passes `{ bodyLimit: false }` and applies
  * `defaultBodyLimit(pathOfTheUpload)` plus its own cap.
  */
 export function createRouter(options: { bodyLimit?: boolean } = {}): OpenAPIHono<AppBindings> {
-  const router = new OpenAPIHono<AppBindings>({
-    defaultHook: (result) => {
-      if (!result.success) throw result.error;
-    },
-  });
+  const router = new OpenAPIHono<AppBindings>({ defaultHook: throwInvalid });
   if (options.bodyLimit !== false) router.use('*', defaultBodyLimit());
   return router;
 }
@@ -196,7 +197,11 @@ export function register<S extends RouteSpec>(
     checked as never,
     invalid
       ? (result) => {
-          if (!result.success) throw invalid(result.error) ?? result.error;
+          if (!result.success) {
+            const named = invalid(result.error);
+            if (named) throw named;
+          }
+          throwInvalid(result);
         }
       : undefined,
   );

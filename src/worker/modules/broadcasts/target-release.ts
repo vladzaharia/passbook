@@ -4,6 +4,7 @@ import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { activeRelease, type TemplateRelease } from '../templates/releases.ts';
+import { getActiveRelease } from '../templates/repo-releases.ts';
 import { heldTemplateVersion } from './repo-selection.ts';
 
 /**
@@ -16,8 +17,18 @@ export async function resolveModeTemplate(
   orgId: string,
   templateId: string,
   mode: Mode,
+  /** Read the head's version without verifying its stored content (a scheduled check that only needs the manifest). */
+  light = false,
 ): Promise<{ template: ResolvedTemplate; release: TemplateRelease | null }> {
-  const release = await activeRelease(ctx, templateId, orgId, mode, 'apple');
+  if (light) {
+    const head = await getActiveRelease(ctx.env.DB, { templateId, orgId, mode, provider: 'apple' });
+    if (head)
+      return {
+        template: await resolveTemplate(ctx, orgId, templateId, head.version),
+        release: null,
+      };
+  }
+  const release = light ? null : await activeRelease(ctx, templateId, orgId, mode, 'apple');
   if (release)
     return { template: await resolveTemplate(ctx, orgId, templateId, release.version), release };
   const held = await heldTemplateVersion(ctx.env.DB, orgId, templateId, mode);

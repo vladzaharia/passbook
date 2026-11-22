@@ -3287,7 +3287,7 @@ class MessageRulesCreateResult(_Model):
     clearAfter: int | None
     on: bool | None = None
     state: _Literal["on", "paused"] | str
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TEMPLATE_CHANGED", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3341,7 +3341,7 @@ class MessageRulesListItem(_Model):
     clearAfter: int | None
     on: bool | None = None
     state: _Literal["on", "paused"] | str
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TEMPLATE_CHANGED", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3396,7 +3396,7 @@ class MessageRulesListResultItemsItem(_Model):
     clearAfter: int | None
     on: bool | None = None
     state: _Literal["on", "paused"] | str
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TEMPLATE_CHANGED", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3447,7 +3447,7 @@ class MessageRulesPauseResult(_Model):
     clearAfter: int | None
     on: bool | None = None
     state: _Literal["on", "paused"] | str
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TEMPLATE_CHANGED", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3498,7 +3498,7 @@ class MessageRulesRetrieveResult(_Model):
     clearAfter: int | None
     on: bool | None = None
     state: _Literal["on", "paused"] | str
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TEMPLATE_CHANGED", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
@@ -3598,7 +3598,7 @@ class MessageRulesUpdateResult(_Model):
     clearAfter: int | None
     on: bool | None = None
     state: _Literal["on", "paused"] | str
-    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
+    pausedCode: _Literal["RULE_CREATOR_REVOKED", "RULE_INPUT_MISSING", "RULE_TEMPLATE_CHANGED", "RULE_TARGET_INVALID", "ORG_INACTIVE", None] | str
     nextCheckAt: int | None
     sent: int
     skipped: int
