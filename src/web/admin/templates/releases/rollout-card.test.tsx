@@ -75,8 +75,12 @@ describe('rollout card', () => {
       'aria-valuenow',
       '4',
     );
-    expect(screen.getByText('v2 · 4')).toBeInTheDocument();
-    expect(screen.getByText('v1 · 6')).toBeInTheDocument();
+    const bar = screen.getByRole('progressbar', { name: 'Passes on the release' });
+    const segments = [...bar.querySelectorAll('[data-segment]')];
+    expect(segments.map((s) => s.getAttribute('data-segment'))).toEqual(['release', 'version-1']);
+    expect(segments.map((s) => (s as HTMLElement).style.flexGrow)).toEqual(['4', '6']);
+    const legend = screen.getAllByRole('listitem').map((li) => li.textContent);
+    expect(legend).toEqual(['v2 · 4', 'v1 · 6']);
     await userEvent.click(screen.getByRole('button', { name: 'Tell holders' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Tell 4 holders' }));
     await waitFor(() => expect(posted).toHaveLength(1));
@@ -120,7 +124,9 @@ describe('rollout card', () => {
     });
     mount([]);
     expect(await screen.findByText("3 passes can't move to v2")).toBeInTheDocument();
-    expect(screen.getByText("Can't update · 3")).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toContain(
+      "Can't update · 3",
+    );
     expect(screen.queryByRole('button', { name: 'Tell holders' })).toBeNull();
     expect(screen.queryByRole('button', { name: /that can't update/ })).toBeNull();
   });

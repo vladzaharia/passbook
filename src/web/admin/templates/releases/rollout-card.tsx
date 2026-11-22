@@ -6,10 +6,11 @@ import { formatCount } from '../../../lib/format.ts';
 import { useMode } from '../../../lib/mode.ts';
 import type { useOrgScope } from '../../../lib/org-filter.tsx';
 import { Buddy } from '../../../ui/art/index.ts';
-import { Badge, Button, ErrorState, ListRow, ListRows, ProgressBar } from '../../../ui/index.ts';
+import { Button, ErrorState, ListRow, ListRows } from '../../../ui/index.ts';
 import { vOf } from '../versions.ts';
 import { PlanSummary } from './plan-summary.tsx';
 import { useRollout } from './rollout-api.ts';
+import { OLD_VERSION_FILLS, RolloutBar } from './rollout-bar.tsx';
 import { TellHolders } from './rollout-tell.tsx';
 
 export type RolloutTemplate = Pick<
@@ -97,28 +98,20 @@ function RolloutBody({
       <p role="status" className="text-sm text-fg-muted">
         <b className="text-fg-strong">{formatCount(r.onRelease)}</b> of {formatCount(r.total)}
       </p>
-      <ProgressBar
-        label="Passes on the release"
+      <RolloutBar
         value={r.onRelease}
-        max={r.total}
-        valueText={`${formatCount(r.onRelease)} of ${formatCount(r.total)} passes`}
-        tone={r.failedCount > 0 ? 'warning' : done ? 'success' : 'accent'}
+        total={r.total}
+        segments={[
+          { key: 'release', label: version, count: r.onRelease, fill: 'bg-success' },
+          ...r.updating.map((u, i) => ({
+            key: u.version,
+            label: name(u.version),
+            count: u.count,
+            fill: OLD_VERSION_FILLS[Math.min(i, OLD_VERSION_FILLS.length - 1)] ?? 'bg-fg-muted',
+          })),
+          { key: 'left', label: "Can't update", count: r.failedCount, fill: 'bg-warning' },
+        ]}
       />
-      <div className="flex flex-wrap gap-2">
-        {r.onRelease > 0 ? (
-          <Badge tone="success">
-            {version} · {formatCount(r.onRelease)}
-          </Badge>
-        ) : null}
-        {r.updating.map((u) => (
-          <Badge key={u.version} tone="neutral">
-            {name(u.version)} · {formatCount(u.count)}
-          </Badge>
-        ))}
-        {r.failedCount > 0 ? (
-          <Badge tone="warning">Can't update · {formatCount(r.failedCount)}</Badge>
-        ) : null}
-      </div>
       {r.stalled ? (
         <p className="text-sm text-fg-muted">
           The rebuild did not start. These passes will not move on their own.
