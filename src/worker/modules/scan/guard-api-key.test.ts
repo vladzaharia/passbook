@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
 import { ScanOutcomeSchema } from '../../../shared/contracts/scan.ts';
 import { first, run } from '../../platform/db.ts';
@@ -207,5 +207,38 @@ describe('undo through a key', () => {
     kit.clock.advance(2 * 3_600_000);
     const late = await undo(k.headers, id);
     expect([late.status, await t.outcomeCode(late)]).toEqual([403, 'SCAN_UNDO_FORBIDDEN']);
+  });
+});
+
+describe('a refused terminal key', () => {
+  it('adds its code to request.done: the prefix of an unknown key, the id of a key without the scope', async () => {
+    const pass = await kit.scanPass(t.templateId);
+    const noScope = await t.till({ scopes: ['scans:read', 'passes:write'] });
+    const k = await t.till();
+    const seen: string[] = [];
+    const spy = vi.spyOn(console, 'info').mockImplementation((l) => void seen.push(String(l)));
+    try {
+      const unknown = await t.call(
+        {
+          ...k.headers,
+          authorization: 'Bearer pb_live_ABCDEFGH_0123456789012345678901234567890123456789012',
+        },
+        '/actions',
+        t.request(pass.id),
+      );
+      expect(unknown.status).toBe(401);
+      expect((await t.call(noScope.headers, '/actions', t.request(pass.id))).status).toBe(403);
+    } finally {
+      spy.mockRestore();
+    }
+    const done = seen
+      .map((l) => JSON.parse(l) as Record<string, unknown>)
+      .filter((l) => l.event === 'request.done' && l.code !== undefined);
+    expect(done[0]).toMatchObject({ code: 'INVALID_API_KEY', keyPrefix: 'ABCDEFGH' });
+    expect(done[1]).toMatchObject({
+      code: 'MISSING_SCOPE',
+      keyId: noScope.apiKey.id,
+      scope: 'scans:write',
+    });
   });
 });
