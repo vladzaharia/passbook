@@ -206,3 +206,21 @@ a.lrow:hover {
     font-size: 12px;
   }
 }
+
+/* Coarse pointers: small links and the bar's controls keep their look; an invisible box reaches 44 px around them. */
+@media (pointer: coarse) {
+  [data-menubar] .btn,
+  [data-menubar] a[href="/developers"],
+  .qs-happened .card-h a,
+  .recipes a {
+    position: relative;
+  }
+  [data-menubar] .btn::after,
+  [data-menubar] a[href="/developers"]::after,
+  .qs-happened .card-h a::after,
+  .recipes a::after {
+    content: "";
+    position: absolute;
+    inset: -7px -4px;
+  }
+}
