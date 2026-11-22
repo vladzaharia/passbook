@@ -1,6 +1,6 @@
 import { credentialAad } from '../../platform/crypto.ts';
 import { tagKeyKind, versionKind } from '../nfc/keyset-seal.ts';
-import { googleMessageAad } from '../wallet-providers/google-message-seal.ts';
+import { googleMessageAad } from '../wallet-providers/google-message-aad.ts';
 
 export type PlaceTable =
   | 'credentials'
