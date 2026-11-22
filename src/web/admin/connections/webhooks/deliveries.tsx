@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { WebhookDeliverySchema, WebhookEndpointStatus } from '@/shared/contracts/webhooks.ts';
 import { TEST_TAG, type TestRow, testRowOf } from '@/shared/webhook-test-rows.ts';
-import { entityLabel } from '../../../lib/entity-label.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import type { DataColumnDef } from '../../../ui/data-table-meta.ts';
 import {
@@ -19,7 +18,14 @@ import {
 } from '../../../ui/index.ts';
 import { type DeliveryFilter, useDeliveries, useEndpointActions, useTestSends } from './api.ts';
 import { DeliverySheet } from './delivery-sheet.tsx';
-import { DELIVERY_STATE_LABEL, DELIVERY_STATUS, EVENT_LABEL, failureLabel } from './labels.ts';
+import {
+  DELIVERY_STATE_LABEL,
+  DELIVERY_STATUS,
+  EVENT_LABEL,
+  failureLabel,
+  passLabel,
+  responseLabel,
+} from './labels.ts';
 import { queuedLine, replayError } from './replay-errors.ts';
 
 type Delivery = z.infer<typeof WebhookDeliverySchema>;
@@ -113,7 +119,7 @@ export function Deliveries({
             title={d.externalId ?? undefined}
             className="text-xs font-normal"
           >
-            {entityLabel(d.externalId, 'Open pass')}
+            {passLabel(d)}
           </RowLink>
         ),
     },
@@ -152,8 +158,11 @@ export function Deliveries({
           <span className="text-fg-subtle">—</span>
         ) : d.state === 'delivered' ? (
           `HTTP ${d.lastStatus ?? 200}`
-        ) : (
+        ) : d.state === 'failed' ? (
           failureLabel(d.lastStatus, d.lastError)
+        ) : (
+          // A pending or cancelled delivery has no verdict: say what came back, or nothing.
+          responseLabel(d.lastStatus, d.lastError) || <span className="text-fg-subtle">—</span>
         ),
     },
     ...(canManage
@@ -184,7 +193,7 @@ export function Deliveries({
     {
       id: 'time',
       header: 'Last attempt',
-      meta: { nowrap: true, stackHidden: true },
+      meta: { nowrap: true },
       cell: ({ row: { original: d } }) =>
         isTest(d) ? (
           formatDateTime(d.at)
