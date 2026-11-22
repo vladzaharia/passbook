@@ -91,25 +91,31 @@ export function useTryFlow(input: {
   }, [attempt, client, email, mutateAsync, orgId, sample, templateId, version]);
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
-  return { phase, retry };
+  return { phase, retry, attempt };
 }
 
-/** True once a device has registered the pass; polls until then, then stops after five minutes. */
+/**
+ * True once a device has registered the pass. Polls every 2 s from when the pass exists; after
+ * five minutes it stops and says so (`gaveUp`), and `again` starts another five.
+ */
 export function useOnPhone(passId: string | undefined) {
-  const since = useRef(Date.now());
+  const [gaveUp, setGaveUp] = useState(false);
   const devices = useQuery({
     queryKey: ['admin', 'passes', 'devices', passId, 'try'],
-    enabled: passId !== undefined,
+    enabled: passId !== undefined && !gaveUp,
     queryFn: ({ signal }) =>
       api.get(`/api/v1/passes/${passId}/devices`, PassDevicesSchema, { headers: TEST, signal }),
-    refetchInterval: (q) =>
-      q.state.data?.devices.some((d) => d.registeredAt !== null && d.unregisteredAt === null) ||
-      Date.now() - since.current > GIVE_UP_MS
-        ? false
-        : POLL_MS,
+    refetchInterval: (q) => (registered(q.state.data) ? false : POLL_MS),
   });
-  const on =
-    devices.data?.devices.some((d) => d.registeredAt !== null && d.unregisteredAt === null) ??
-    false;
-  return { on, gaveUp: !on && Date.now() - since.current > GIVE_UP_MS };
+  const on = registered(devices.data);
+  useEffect(() => {
+    if (passId === undefined || on || gaveUp) return;
+    const t = setTimeout(() => setGaveUp(true), GIVE_UP_MS);
+    return () => clearTimeout(t);
+  }, [passId, on, gaveUp]);
+  return { on, gaveUp: gaveUp && !on, again: () => setGaveUp(false) };
 }
+
+const registered = (
+  d: { devices: { registeredAt: number | null; unregisteredAt: number | null }[] } | undefined,
+) => d?.devices.some((x) => x.registeredAt !== null && x.unregisteredAt === null) ?? false;

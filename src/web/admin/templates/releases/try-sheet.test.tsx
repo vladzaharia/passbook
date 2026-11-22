@@ -67,7 +67,9 @@ it('releases to Test, makes a sample pass for the admin with no email, and waits
   const { calls } = await open(() => json({ version: 1, devices: [], removal: null }));
   await user.click(await screen.findByRole('button', { name: 'Try on my phone' }));
   const sheet = await screen.findByRole('dialog', { name: 'Try on my phone' });
-  expect(await within(sheet).findByText('Waiting for your phone')).toBeInTheDocument();
+  await waitFor(() =>
+    expect(sheet.querySelector('p[role=status]')).toHaveTextContent('Waiting for your phone'),
+  );
   const [release, pass] = calls.map((c) => ({
     body: JSON.parse(String(c.init?.body)) as Record<string, unknown>,
     headers: new Headers(c.init?.headers),
@@ -82,8 +84,8 @@ it('releases to Test, makes a sample pass for the admin with no email, and waits
   });
   expect(pass?.headers.get('x-passbook-mode')).toBe('test');
   expect(pass?.headers.get('idempotency-key')).toBeTruthy();
-  // Release stays off until the phone has registered.
-  expect(within(sheet).getByRole('button', { name: 'Release v2' })).toBeDisabled();
+  // Release is never blocked: it leads once the phone is on, and is there before.
+  expect(within(sheet).getByRole('button', { name: 'Release v2' })).toBeEnabled();
 });
 
 it('cheers when the phone registers and offers Release', async () => {
@@ -107,7 +109,9 @@ it('cheers when the phone registers and offers Release', async () => {
   );
   await user.click(await screen.findByRole('button', { name: 'Try on my phone' }));
   const sheet = await screen.findByRole('dialog', { name: 'Try on my phone' });
-  expect(await within(sheet).findByText('On your phone')).toBeInTheDocument();
+  await waitFor(() =>
+    expect(sheet.querySelector('p[role=status]')).toHaveTextContent('On your phone'),
+  );
   await waitFor(() =>
     expect(within(sheet).getByRole('button', { name: 'Release v2' })).toBeEnabled(),
   );
