@@ -1,7 +1,13 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { persistTemplate } from '../../../../test/helpers/index.ts';
 import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import { createApp } from '../../app.ts';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
+import { runBroadcast } from '../../workflows/broadcast.ts';
+import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { TINY_PNG } from '../passes/pass-test-fixtures.ts';
+import { getPass } from '../passes/repo-read-pass.ts';
+import { startDueBroadcasts } from './start.ts';
 import { type BroadcastAuth, type BroadcastKit, broadcastAuth, broadcastKit } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
@@ -99,5 +105,68 @@ describe('a message to the passes on one version', () => {
       (await post('/broadcasts', body({ kind: 'change', patch: { gate: 'A' } }, { version: 'v1' })))
         .status,
     ).toBe(422);
+  });
+
+  it('still clears a told pass that moved to another version within the week', async () => {
+    const step = {
+      do: async (_n: string, a: unknown, b?: unknown) =>
+        await ((typeof a === 'function' ? a : b) as () => Promise<unknown>)(),
+    } as unknown as Parameters<typeof runBroadcast>[3];
+    const exec = async (id: string) => {
+      const instance = kit.broadcast.created.at(-1);
+      expect(instance?.id).toBe(`broadcast-${id}`);
+      await runBroadcast(
+        kit.env,
+        instance?.id ?? '',
+        { broadcastId: id },
+        step,
+        undefined,
+        kit.clock,
+      );
+      await kit.settle();
+    };
+    const told = await kit.makePass();
+    await run(kit.env.DB, "UPDATE passes SET status = 'voided' WHERE id != ? AND template_id = ?", [
+      told.id,
+      kit.messaging.id,
+    ]);
+    const res = await post('/broadcasts', {
+      orgId: kit.org.id,
+      kind: 'message',
+      target: { templateIds: [kit.messaging.id], version: told.templateVersion },
+      patch: { message: 'Gym has a new design.' },
+      clearAfter: 7 * 86_400_000,
+    });
+    expect(res.status).toBe(201);
+    const sent = (await res.json()) as { id: string };
+    await exec(sent.id);
+    expect((await getPass(kit.env.DB, told.id, null))?.personalization.message).toBe(
+      'Gym has a new design.',
+    );
+    // The pass moves to a newer, different release before the clear is due.
+    const base = await kit.registry.resolve(kit.messaging.id);
+    const newer = kit.registry.add({
+      id: kit.messaging.id,
+      version: 'newer',
+      orgId: base.orgId,
+      origin: base.origin,
+      manifest: base.manifest,
+      passJson: { ...base.passJson, description: 'A newer design' },
+      assets: { 'icon.png': TINY_PNG },
+    });
+    await persistTemplate(kit.fx, newer, { registry: kit.registry });
+    await run(kit.env.DB, 'UPDATE passes SET template_version = ? WHERE id = ?', [
+      'newer',
+      told.id,
+    ]);
+    kit.clock.advance(7 * 86_400_000 + 60_000);
+    await startDueBroadcasts(jobCtxOf(kit));
+    const follow = await first<{ id: string }>(
+      kit.env.DB,
+      'SELECT id FROM broadcasts WHERE parent_id = ?',
+      [sent.id],
+    );
+    await exec(follow?.id ?? '');
+    expect((await getPass(kit.env.DB, told.id, null))?.personalization.message ?? '').toBe('');
   });
 });

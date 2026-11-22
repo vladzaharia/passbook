@@ -103,13 +103,12 @@ async function scheduleClear(ctx: ServiceContext, row: BroadcastRow): Promise<vo
     kind: 'message',
     name: `Clear: ${row.name}`.slice(0, 80),
     state: 'scheduled',
-    // A rule run clears only the passes it updated, not the window it targeted.
-    target: row.rule_id
-      ? {
-          templateIds: BroadcastTargetSchema.parse(JSON.parse(row.target)).templateIds,
-          sentBy: row.id,
-        }
-      : JSON.parse(row.target),
+    // Clears the passes this run updated, not what its target matches later: a pass that has moved to
+    // another version since (or no longer fits a filter) still loses the text.
+    target: {
+      templateIds: BroadcastTargetSchema.parse(JSON.parse(row.target)).templateIds,
+      sentBy: row.id,
+    },
     patch: { message: '' },
     notify: false,
     at,
