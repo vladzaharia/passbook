@@ -23,7 +23,7 @@ A till reads the code the pass's barcode carries. It is `passJson.barcodes[0].me
 
 A till call needs a key and names the terminal in `x-passbook-device`.
 
-- **Sandbox:** your key scans as the Sandbox terminal. It needs no pairing and no `scans:write`, and it acts in Test only. Send `x-passbook-device: sandbox`.
+- **Sandbox:** your key scans as the Sandbox terminal. It needs no pairing and no `scans:write`, and it acts in Test only. Any Test key of the sandbox with `passes:write` scans as it. Send `x-passbook-device: sandbox`.
 - **Your organization:** use a key with `scans:write` bound to one of its terminals. Make terminals in Scanning and send the terminal's id.
 
 {{show door-check-in}}

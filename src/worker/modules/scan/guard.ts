@@ -40,7 +40,7 @@ import { managedAdminActor } from './admin-setup.ts';
 import { resolvedRowOf } from './auth-store.ts';
 import { captureScanEpochs } from './authority-checks.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
-import { API_KEY_TOKEN, type KeyTerminal, keyTerminalOf } from './guard-api-key.ts';
+import { API_KEY_TOKEN, type KeyTerminal, keyActor, keyTerminalOf } from './guard-api-key.ts';
 import { pinResetExempt, pinResetRequired } from './guard-pin-reset.ts';
 import { getScanner, scannerEpochsOf, unbindStaff } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
@@ -198,11 +198,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
         ? await scanScannerCsrfProof(ctx.env, scanner.id, csrfSecret)
         : null;
       pendingStaff = scope.staff;
-      if (key) {
-        actor.apiKeyId = key.keyId;
-        actor.apiKeyOrgRevision = key.orgRevision;
-        if (key.sandbox) actor.apiKeySandbox = true;
-      }
+      if (key) keyActor(actor, key);
       c.set('auth', auth);
       withRole(actor, null);
       c.set('scanActor', actor);

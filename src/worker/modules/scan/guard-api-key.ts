@@ -115,6 +115,13 @@ export async function keyTerminalOf(c: Context<AppBindings>, token: string): Pro
   return { keyId: key.keyId, auth, row, orgRevision, sandbox: !key.scopes.includes('scans:write') };
 }
 
+/** The actor a key's call acts as: the key, the org revision it was admitted at, and whether it is a sandbox key. */
+export function keyActor(actor: ScanActor, key: KeyTerminal): void {
+  actor.apiKeyId = key.keyId;
+  actor.apiKeyOrgRevision = key.orgRevision;
+  actor.apiKeySandbox = key.sandbox;
+}
+
 /** A key never approves and never overrides, whatever the terminal's own settings say. */
 export function refuseKeyApproval(
   actor: ScanActor,
