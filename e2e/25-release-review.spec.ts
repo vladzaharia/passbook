@@ -19,13 +19,20 @@ const shown = { useInnerText: true } as const;
 /** Moves the new-pass wizard to the details step, choosing the org first when it is not already chosen. */
 async function toDetails(page: Page, orgName: string, templateName: string) {
   const name = page.getByRole('textbox', { name: 'Name', exact: true });
-  const org = page.getByRole('main').getByText(orgName, { exact: true }).first();
+  // The org radio, not its name: the page's breadcrumb carries the org name as a link to Overview.
+  const org = page.getByRole('radio', { name: orgName });
   const template = page.getByText(templateName, { exact: true }).first();
+  const next = page.getByRole('button', { name: 'Next' });
   // The steps load before they show: wait for the org or the template tile, never click through a skeleton.
   await expect(template.or(org).first()).toBeVisible();
-  if (!(await template.isVisible())) await org.click();
+  if (!(await template.isVisible())) {
+    await org.click();
+    await expect(next).toBeEnabled();
+    await next.click();
+  }
   await template.click();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(next).toBeEnabled();
+  await next.click();
   await expect(name).toBeVisible();
 }
 
