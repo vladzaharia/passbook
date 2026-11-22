@@ -1,4 +1,13 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -121,5 +130,70 @@ describe('collectBaked', () => {
     expect(await collectBaked({ templatesDir: templatesDir(), publicDir: publicDir() })).toEqual(
       [],
     );
+  });
+});
+
+describe('collectBaked static output', () => {
+  const mtimes = (root: string): Record<string, number> => {
+    const out: Record<string, number> = {};
+    for (const e of readdirSync(root, { recursive: true, withFileTypes: true }))
+      if (e.isFile()) {
+        const p = join(e.parentPath, e.name);
+        out[p] = statSync(p).mtimeMs;
+      }
+    return out;
+  };
+
+  it('a second run changes no mtimes', async () => {
+    writePackage('starter-generic', basicPackage());
+    await collectBaked({ templatesDir: templatesDir(), publicDir: publicDir() });
+    const before = mtimes(join(publicDir(), 'templates'));
+    await new Promise((r) => setTimeout(r, 20));
+    await collectBaked({ templatesDir: templatesDir(), publicDir: publicDir() });
+    expect(mtimes(join(publicDir(), 'templates'))).toEqual(before);
+    expect(readdirSync(publicDir())).toEqual(['templates']);
+  });
+
+  it('readers never see a missing file during a rebuild', async () => {
+    writePackage('starter-generic', basicPackage());
+    const [first] = await collectBaked({ templatesDir: templatesDir(), publicDir: publicDir() });
+    const known = join(
+      publicDir(),
+      'templates',
+      'starter-generic',
+      first?.version ?? '',
+      'icon.png',
+    );
+    let running = true;
+    let misses = 0;
+    const reader = (async () => {
+      while (running) {
+        if (!existsSync(known)) misses++;
+        await new Promise((r) => setImmediate(r));
+      }
+    })();
+    for (let i = 0; i < 15; i++)
+      await collectBaked({ templatesDir: templatesDir(), publicDir: publicDir() });
+    running = false;
+    await reader;
+    expect(misses).toBe(0);
+  });
+
+  it('keeps the old tree when a build fails', async () => {
+    writePackage('starter-generic', basicPackage());
+    const [first] = await collectBaked({ templatesDir: templatesDir(), publicDir: publicDir() });
+    const known = join(
+      publicDir(),
+      'templates',
+      'starter-generic',
+      first?.version ?? '',
+      'icon.png',
+    );
+    writePackage('broken', new Map([['pass.json', new TextEncoder().encode('{')]]));
+    await expect(
+      collectBaked({ templatesDir: templatesDir(), publicDir: publicDir() }),
+    ).rejects.toThrow();
+    expect(existsSync(known)).toBe(true);
+    expect(readdirSync(publicDir())).toEqual(['templates']);
   });
 });
