@@ -100,6 +100,7 @@ export const IMPORT_COPY = {
     assignColumn: (column: string) => `Use ${column} for`,
     valuesOf: (label: string) => `${label} values`,
     valueTo: (value: string) => `Option for ${value}`,
+    alsoWritten: (others: string[]) => `Also written ${others.join(', ')}`,
     dateFormat: (label: string) => `Date format for ${label}`,
   },
   source: {
