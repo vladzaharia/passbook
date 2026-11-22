@@ -3,6 +3,7 @@ import { TAG_IMPORT_MAX_CHARS } from '@/shared/contracts/nfc-tag-keysets.ts';
 import { KEYSET_COPY } from '@/shared/copy/tag-keysets.ts';
 import { rekeyTagsConfirm } from '@/web/lib/confirms.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
+import { pluralize } from '@/web/lib/format.ts';
 import {
   Button,
   Callout,
@@ -79,7 +80,7 @@ export function ImportDialog({
     setError('');
     try {
       const done = await run({ csv, dryRun: false, ...(replace ? { replace: true } : {}) });
-      toast.success(fill(replace ? C.replaced : C.added, { n: done.added }));
+      toast.success(fill(replace ? C.replaced : C.added, { tags: pluralize(done.added, 'tag') }));
       onClose();
     } catch (cause) {
       setError(errorMessage(cause));
@@ -104,7 +105,7 @@ export function ImportDialog({
               disabled={!result || result.ok === 0}
               onClick={() => (replace ? setConfirming(true) : void add())}
             >
-              {fill(replace ? C.replaceGo : C.go, { n: result?.ok ?? 0 })}
+              {fill(replace ? C.replaceGo : C.go, { tags: pluralize(result?.ok ?? 0, 'tag') })}
             </Button>
           </>
         }
@@ -147,7 +148,10 @@ function Findings({ result, replace }: { result: ImportResult; replace: boolean 
   return (
     <div className="grid gap-3" aria-live="polite">
       <p className="text-sm font-medium text-fg-strong">
-        {fill(replace ? C.replaceReady : C.ready, { ok: result.ok, rows: result.rows })}
+        {fill(replace ? C.replaceReady : C.ready, {
+          ok: result.ok,
+          rows: pluralize(result.rows, 'row'),
+        })}
       </p>
       {bad > 0 ? (
         <div className="max-h-64 overflow-auto rounded-md border border-border">

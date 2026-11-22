@@ -10,6 +10,11 @@ describe('rekeyedTags', () => {
     expect(screen.getByText('25 tags re-keyed')).toBeInTheDocument();
     expect(screen.getByText('and 23 more')).toBeInTheDocument();
   });
+  it('uses the singular for one tag', () => {
+    const tags = rekeyedTags('tag_keyset.rekeyed', { count: 1, tagIds: ['a'] });
+    if (tags) render(<RekeyedTags tags={tags} />);
+    expect(screen.getByText('1 tag re-keyed')).toBeInTheDocument();
+  });
   it('ignores other actions', () => {
     expect(rekeyedTags('tag.assign', { count: 1 })).toBeNull();
   });

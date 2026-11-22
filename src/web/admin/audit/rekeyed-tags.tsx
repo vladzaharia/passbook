@@ -1,3 +1,5 @@
+import { pluralize } from '@/web/lib/format.ts';
+
 /** Tag ids a replace import re-keyed: a short list, then "and N more". Null for any other entry. */
 export function rekeyedTags(action: string, detail: unknown) {
   if (action !== 'tag_keyset.rekeyed' || typeof detail !== 'object' || detail === null) return null;
@@ -11,7 +13,7 @@ export function RekeyedTags({ tags }: { tags: NonNullable<ReturnType<typeof reke
   return (
     <section aria-label="Tags re-keyed" className="flex flex-col gap-2">
       <h3 className="text-sm font-semibold text-fg-strong">
-        {tags.total === 1 ? '1 tag re-keyed' : `${tags.total} tags re-keyed`}
+        {pluralize(tags.total, 'tag')} re-keyed
       </h3>
       <ul className="flex flex-col gap-1">
         {tags.ids.map((id) => (

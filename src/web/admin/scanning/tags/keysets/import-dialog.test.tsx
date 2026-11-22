@@ -106,10 +106,20 @@ describe('Import tags', () => {
     expect(within(dialog).getByRole('button', { name: 'Import 0 tags' })).toBeDisabled();
   });
 
+  it('says 1 tag, not 1 tags', async () => {
+    const { user, dialog, upload } = await openImport((d) =>
+      json(d ? { ...dry, rows: 1, ok: 1, problems: [] } : { ...real, added: 1 }),
+    );
+    await upload();
+    expect(await within(dialog).findByText('1 of 1 row ready')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Import 1 tag' }));
+    expect(await screen.findByText('1 tag imported')).toBeInTheDocument();
+  });
+
   it('cannot import when no row is ready', async () => {
     const { dialog, upload } = await openImport(() => json({ ...dry, ok: 0, rows: 1 }));
     await upload();
-    expect(await within(dialog).findByText('0 of 1 rows ready')).toBeInTheDocument();
+    expect(await within(dialog).findByText('0 of 1 row ready')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Import 0 tags' })).toBeDisabled();
   });
 
