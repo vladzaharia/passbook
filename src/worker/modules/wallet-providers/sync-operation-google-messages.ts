@@ -73,6 +73,7 @@ function classify(error: unknown): { kind: Failure; status: number | null } {
     if (error.code === 'unauthorized' && error.staleToken) return { kind: 'stale', status };
     if (
       error.code === 'bad_request' ||
+      error.code === 'invalid_input' ||
       error.code === 'unauthorized' ||
       error.code === 'forbidden' ||
       error.code === 'not_found' ||
@@ -116,11 +117,20 @@ export async function prepareGoogleMessages(
       });
     } catch (error) {
       if (execution.fenceLost) throw error;
-      blocked = true;
-      ctx.log.warn('wallet.google_message_unconfirmed', {
-        code: 'WALLET_GOOGLE_MESSAGE_UNCONFIRMED',
-        orgId: op.orgId,
-      });
+      if (error instanceof GoogleWalletError && error.code === 'not_found') {
+        await settleGoogleMessage(ctx, claim, op, {
+          id: open.id,
+          state: 'unknown',
+          reason: 'unconfirmed',
+          httpStatus: null,
+          targetVersion: open.targetVersion,
+        });
+      } else blocked = true;
+      if (blocked)
+        ctx.log.warn('wallet.google_message_unconfirmed', {
+          code: 'WALLET_GOOGLE_MESSAGE_UNCONFIRMED',
+          orgId: op.orgId,
+        });
     }
   }
   const rows = await listDeliveredGoogleMessages(
@@ -295,7 +305,11 @@ async function confirm(
     else await m.settle('unknown', 'unconfirmed', null);
   } catch (error) {
     if (execution.fenceLost) throw error;
-    // The row stays `sending`; the next run reads the object before it writes.
+    // No object means no message either; any other failed read leaves the row `sending` for the next run.
+    if (error instanceof GoogleWalletError && error.code === 'not_found') {
+      await m.settle('unknown', 'unconfirmed', null);
+      return;
+    }
     ctx.log.warn('wallet.google_message_unconfirmed', {
       code: 'WALLET_GOOGLE_MESSAGE_UNCONFIRMED',
       orgId: op.orgId,

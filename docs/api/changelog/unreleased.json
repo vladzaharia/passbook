@@ -709,7 +709,7 @@
     "operationId": "passes.getPassesByIdEvents",
     "op": "GET /api/v1/passes/{id}/events",
     "change": "200.items[].kind: enum value \"wallet.messaged\" added",
-    "note": ""
+    "note": "A Google Wallet change message settled: notified, shown on the card only, refused or not confirmed."
   },
   {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",

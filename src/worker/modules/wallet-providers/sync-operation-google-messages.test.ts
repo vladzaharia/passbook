@@ -28,8 +28,7 @@ describe('a notifying edit', () => {
     const mark = t.mock.requests.length;
     await t.edit('Updated Member');
     expect(t.calls(mark)).toEqual(['PATCH genericObject', 'POST genericObject/addMessage']);
-    const patch = t.mock.requests.slice(mark).find((r) => r.method === 'PATCH');
-    expect((patch?.body as { messages: unknown[] }).messages).toEqual([]);
+    expect(t.patchedMessages(mark)).toEqual([]);
     expect(t.messages()).toMatchObject([
       { messageType: 'TEXT_AND_NOTIFY', body: 'Member is now Updated Member' },
     ]);
@@ -132,10 +131,7 @@ describe('a message whose transport is unknown', () => {
       'POST genericObject/addMessage',
     ]);
     expect(await t.ledger()).toMatchObject([{ state: 'notified' }, { state: 'notified' }]);
-    const patch = t.mock.requests.slice(mark).find((r) => r.method === 'PATCH');
-    expect((patch?.body as { messages: { messageType: string }[] }).messages).toMatchObject([
-      { messageType: 'TEXT' },
-    ]);
+    expect(t.patchedMessages(mark)).toMatchObject([{ messageType: 'TEXT' }]);
     expect(t.sent()).toHaveLength(2);
   });
 });

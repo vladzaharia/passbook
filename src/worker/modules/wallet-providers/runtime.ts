@@ -6,9 +6,7 @@ export {
   type WalletRuntimeScope,
 } from './runtime-core.ts';
 export {
-  addGoogleRuntimeMessage,
   createGoogleRuntimeOffer,
-  findGoogleRuntimeMessage,
   googleRuntimeIdHashes,
   inactivateGoogleRuntimeObject,
   patchGoogleRuntimeClass,
@@ -16,6 +14,7 @@ export {
   upsertGoogleRuntimeClass,
   upsertGoogleRuntimeObject,
 } from './runtime-google.ts';
+export { addGoogleRuntimeMessage, findGoogleRuntimeMessage } from './runtime-google-message.ts';
 export type { WalletRuntimeProviderResponse } from './runtime-response.ts';
 export {
   createSamsungRuntimeOffer,

@@ -193,7 +193,6 @@ export async function runGoogleWalletProviderOperation(
             ctx.clock.now(),
           ) as unknown as GoogleGenericProjection,
         });
-        await assertCurrent();
         // Object first, message second: a message failure never fails the write it describes.
         await sendGoogleMessage(execution, binding.scope, messageIdentity, prepared);
         return complete(ctx, claim, op, { kind: 'success' });

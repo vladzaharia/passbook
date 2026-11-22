@@ -15,14 +15,6 @@ afterEach(() => {
 });
 
 const system = { type: 'system', id: null } as const;
-const patched = (t: Awaited<ReturnType<typeof messageKit>>, mark: number) =>
-  t.mock.requests
-    .slice(mark)
-    .filter((r) => r.method === 'PATCH')
-    .at(-1)?.body as {
-    messages: { messageType: string }[];
-  };
-
 describe('the object history', () => {
   it('an unvoid drops the voided message from the card and sends no new one', async () => {
     const t = await messageKit(restore);
@@ -33,7 +25,7 @@ describe('the object history', () => {
     const mark = t.mock.requests.length;
     await setPassStatus(t.jobCtx, system, t.f.pass.id, 'active', null);
     await t.drain();
-    expect(patched(t, mark).messages).toEqual([]);
+    expect(t.patchedMessages(mark)).toEqual([]);
     expect(t.messages()).toEqual([]);
     expect(t.sent()).toEqual([]);
   });
@@ -46,9 +38,9 @@ describe('the object history', () => {
     }
     const mark = t.mock.requests.length;
     await t.edit('Name 12');
-    const body = patched(t, mark);
-    expect(body.messages).toHaveLength(9);
-    expect(body.messages.every((m) => m.messageType === 'TEXT')).toBe(true);
+    const sent = t.patchedMessages(mark);
+    expect(sent).toHaveLength(9);
+    expect(sent.every((m) => m.messageType === 'TEXT')).toBe(true);
     expect(t.messages()).toHaveLength(10);
   });
 });

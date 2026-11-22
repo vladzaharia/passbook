@@ -20,7 +20,6 @@ import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { drainWalletProviderSync } from './sync.ts';
 
 export const messagesEnv = installKeysetTestEnv();
-export type MessageKit = Awaited<ReturnType<typeof messageKit>>;
 
 /** Google, as the mock: provider hosts map onto it, nothing else leaves the test. */
 function routeFetchToMock(mock: ReturnType<typeof createMockWallets>): void {
@@ -140,6 +139,14 @@ export async function messageKit(restore: (() => void)[]) {
           (r) =>
             `${r.method} ${r.path.split('/')[3]}${r.path.endsWith('/addMessage') ? '/addMessage' : ''}`,
         ),
+    /** The `messages` the last object PATCH since `mark` carried. */
+    patchedMessages: (mark: number) => {
+      const body = mock.requests
+        .slice(mark)
+        .filter((r) => r.method === 'PATCH')
+        .at(-1)?.body as { messages?: { id: string; messageType: string }[] } | undefined;
+      return body?.messages ?? [];
+    },
     /** The messageType of every addMessage the mock saw, in order. */
     sent: () =>
       mock.requests
