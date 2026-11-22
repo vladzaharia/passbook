@@ -199,10 +199,12 @@ class BroadcastsResource:
         state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | None = None,
         origin: _Literal["manual", "rule"] | None = None,
         kind: _Literal["message", "change"] | None = None,
+        parent_id: str | None = None,
+        retry_of: str | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.Broadcast]:
         """List messages and scheduled changes `GET /api/v1/broadcasts`"""
-        return self._core.paginate("GET", "/api/v1/broadcasts", query={"cursor": cursor, "limit": limit, "state": state, "origin": origin, "kind": kind}, result=m.BroadcastsListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", "/api/v1/broadcasts", query={"cursor": cursor, "limit": limit, "state": state, "origin": origin, "kind": kind, "parentId": parent_id, "retryOf": retry_of}, result=m.BroadcastsListResult, cursor_param="cursor", **opts)
 
     def retrieve(
         self,

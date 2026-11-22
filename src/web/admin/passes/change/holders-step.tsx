@@ -66,6 +66,7 @@ export function HoldersStep({
               <button
                 key={label}
                 type="button"
+                aria-label={C.holders.insert(label)}
                 className="rounded-full border border-border bg-surface-sunken px-2.5 py-0.5 text-xs text-fg hover:border-accent"
                 onClick={() => w.setMessage(`${w.message}{${label}}`.slice(0, MESSAGE_MAX))}
               >

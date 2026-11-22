@@ -15,7 +15,9 @@ export function Estimate({
       <p className="font-medium text-fg-strong">
         {C.holders.estimate(preview.notified, preview.silent)}
       </p>
-      {preview.estimated ? <p className="text-fg-muted">{C.holders.from200}</p> : null}
+      {preview.estimated && preview.targeted > 200 ? (
+        <p className="text-fg-muted">{C.holders.from200}</p>
+      ) : null}
       {preview.overBudget > 0 ? (
         <Callout tone="info">{C.holders.budget(preview.overBudget)}</Callout>
       ) : null}

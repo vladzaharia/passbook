@@ -155,52 +155,6 @@ export const getBroadcast = (db: D1Database, id: string, scope: ScopeArg) =>
     [id, scopeOrg(scope), scopeOrg(scope), readMode(scope), readMode(scope)],
   );
 
-export interface BroadcastListFilter {
-  orgId: string;
-  mode: Mode;
-  state?: BroadcastState | undefined;
-  /** Default `manual`: leaves out the runs of automatic messages. */
-  origin?: 'manual' | 'rule' | undefined;
-  kind?: BroadcastKind | undefined;
-  /** Only the runs of this automatic message. */
-  ruleId?: string | undefined;
-  cursor?: string | undefined;
-  limit: number;
-}
-
-export async function listBroadcasts(
-  db: D1Database,
-  f: BroadcastListFilter,
-): Promise<{ rows: BroadcastRow[]; nextCursor: string | null }> {
-  const where = ['org_id = ?', 'mode = ?'];
-  const params: (string | number)[] = [f.orgId, f.mode];
-  if (f.state) {
-    where.push('state = ?');
-    params.push(f.state);
-  }
-  if (f.kind) {
-    where.push('kind = ?');
-    params.push(f.kind);
-  }
-  where.push(f.origin === 'rule' ? 'rule_id IS NOT NULL' : 'rule_id IS NULL');
-  if (f.ruleId) {
-    where.push('rule_id = ?');
-    params.push(f.ruleId);
-  }
-  if (f.cursor) {
-    where.push('id < ?');
-    params.push(f.cursor);
-  }
-  const rows = await all<BroadcastRow>(
-    db,
-    `SELECT * FROM broadcasts WHERE ${where.join(' AND ')} ORDER BY id DESC LIMIT ?`,
-    [...params, f.limit + 1],
-  );
-  const page = rows.slice(0, f.limit);
-  const last = page.at(-1);
-  return { rows: page, nextCursor: rows.length > f.limit && last ? last.id : null };
-}
-
 /** Moves a broadcast between states only if it is still in `from`. True when this caller won. */
 export async function casState(
   db: D1Database,

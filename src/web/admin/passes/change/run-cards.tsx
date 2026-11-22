@@ -28,21 +28,25 @@ export function RunningCard({
   stopping,
   onStop,
   stopBusy,
+  starting = false,
 }: {
   b: BroadcastDto;
+  /** Booked to start now: the minute cron has not picked it up yet. */
+  starting?: boolean;
   stopping: boolean;
   onStop?: (() => void) | undefined;
   stopBusy: boolean;
 }) {
   const total = Math.max(b.counts.targeted, 1);
-  const done = Math.min(handledOf(b), total);
+  // Booked to start now: nothing has run, whatever the counters were last read as.
+  const done = starting ? 0 : Math.min(handledOf(b), total);
   return (
     <Card>
       <CardBody className="flex flex-col gap-5 p-6">
         <RunProgress
           done={done}
           total={total}
-          text={C.run.running(done, b.counts.targeted)}
+          text={starting ? C.run.starting : C.run.running(done, b.counts.targeted)}
           aside={<p className="text-sm text-fg-muted">{stopping ? C.run.stopping : C.run.leave}</p>}
         />
         <Counters b={b} />

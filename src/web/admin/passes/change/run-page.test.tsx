@@ -26,14 +26,22 @@ const change = (over: Parameters<typeof broadcast>[0] = {}) =>
     ...over,
   });
 
-function setup(run: ReturnType<typeof change>, extra: Record<string, () => Response> = {}) {
+function setup(
+  run: ReturnType<typeof change>,
+  extra: Record<string, () => Response> = {},
+  follow: { parentId?: ReturnType<typeof change>; retryOf?: ReturnType<typeof change> } = {},
+) {
   return renderApp('/admin/o/org1/passes/change/r1', {
     session: 'admin',
     memberships: [membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug })],
     selectedOrg: ORG.id,
     handlers: {
       '/api/v1/broadcasts/r1': () => json(run),
-      '/api/v1/broadcasts': () => json({ items: [run], nextCursor: null }),
+      // The undo run (parentId) and the resume (retryOf) are looked up by filter.
+      '/api/v1/broadcasts': (url) => {
+        const hit = url.searchParams.has('parentId') ? follow.parentId : follow.retryOf;
+        return json({ items: hit ? [hit] : [], nextCursor: null });
+      },
       ...extra,
     },
   });
@@ -86,12 +94,85 @@ describe('Change run page', () => {
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Resume 3 passes' }));
     expect(
-      (await screen.findAllByText('This run can’t be resumed. Start a new change.')).length,
-    ).toBeGreaterThan(0);
+      await screen.findByText('This run can’t be resumed. Start a new change.'),
+    ).toBeInTheDocument();
   });
 
   it('says the undo window has passed', async () => {
     setup(change({ finishedAt: Date.now() - 25 * 3_600_000 }));
     expect(await screen.findByText('The undo window has passed.')).toBeInTheDocument();
+  });
+
+  it('reads a run booked for now as starting, not scheduled', async () => {
+    setup(change({ state: 'scheduled', at: Date.now() + 5_000, finishedAt: null }));
+    expect(await screen.findByText('Starting')).toBeInTheDocument();
+    expect(screen.queryByText(/^Starts /)).not.toBeInTheDocument();
+  });
+
+  it('cancels a change booked for later, after a confirm', async () => {
+    const cancelled: string[] = [];
+    setup(change({ state: 'scheduled', at: Date.now() + 86_400_000, finishedAt: null }), {
+      '/api/v1/broadcasts/r1/cancel': () => {
+        cancelled.push('r1');
+        return json(change({ state: 'cancelled' }));
+      },
+    });
+    const user = userEvent.setup();
+    expect(await screen.findByText(/^Starts /)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to passes' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await user.click(await screen.findByRole('button', { name: 'Cancel change' }));
+    await waitFor(() => expect(cancelled).toEqual(['r1']));
+  });
+
+  it('says why a failed run stopped', async () => {
+    setup(
+      change({
+        state: 'failed',
+        errorCode: 'MATCH_TOO_BROAD',
+        counts: { targeted: 0, updated: 0, unchanged: 0, overBudget: 0, failed: 0 },
+      }),
+    );
+    expect(
+      await screen.findByText('More than 20,000 passes match. Narrow the filter.'),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the undo as progress while it runs, then what it kept', async () => {
+    const undoRun = change({
+      id: 'u1',
+      parentId: 'r1',
+      state: 'sending',
+      counts: { targeted: 10, updated: 3, unchanged: 0, overBudget: 0, failed: 0 },
+    });
+    setup(change(), {}, { parentId: undoRun });
+    expect(await screen.findByText('Undoing: 3 of 10')).toBeInTheDocument();
+  });
+
+  it('words an undo that stopped, and does not call the change undone', async () => {
+    const undoRun = change({
+      id: 'u1',
+      parentId: 'r1',
+      state: 'failed',
+      counts: { targeted: 2, updated: 1, unchanged: 0, overBudget: 0, failed: 1 },
+    });
+    setup(change(), {}, { parentId: undoRun });
+    expect(await screen.findByText('The undo stopped. Restored 1.')).toBeInTheDocument();
+    expect(screen.queryByText('Change undone')).not.toBeInTheDocument();
+  });
+
+  it('links to the run that resumed this one instead of offering Resume again', async () => {
+    const child = change({ id: 'r2', state: 'sending' });
+    setup(
+      change({
+        state: 'cancelled',
+        errorCode: 'BROADCAST_STOPPED',
+        counts: { targeted: 5, updated: 2, unchanged: 0, overBudget: 0, failed: 0 },
+      }),
+      {},
+      { retryOf: child },
+    );
+    expect(await screen.findByRole('link', { name: 'Open the resumed run' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Resume/ })).not.toBeInTheDocument();
   });
 });

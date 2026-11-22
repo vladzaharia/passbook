@@ -5,7 +5,7 @@ import {
   ChangeRunPreviewSchema,
 } from '@/shared/contracts/broadcasts-change.ts';
 import { api } from '../../../lib/api.ts';
-import { broadcastKeys, broadcastQuery } from '../../messages/api.ts';
+import { broadcastKeys } from '../../messages/api.ts';
 
 const path = (id: string) => `/api/v1/broadcasts/${encodeURIComponent(id)}`;
 
@@ -79,18 +79,21 @@ export function useChangeActions() {
   };
 }
 
-export { broadcastQuery };
-
-/** The undo run of a change (a silent child), if it was undone; polls while it works. */
-export function useUndoRun(parentId: string, orgId: string, enabled: boolean) {
+/** The run that follows a change: its undo (`parentId`) or its resume (`retryOf`), if there is one. */
+export function useFollowRun(
+  kind: 'parentId' | 'retryOf',
+  runId: string,
+  orgId: string,
+  enabled: boolean,
+) {
   return useQuery({
-    queryKey: [...broadcastKeys.detail(parentId), 'undo-run'],
+    queryKey: [...broadcastKeys.detail(runId), kind],
     queryFn: async ({ signal }) => {
       const page = await api.get('/api/v1/broadcasts', BroadcastListSchema, {
-        query: { orgId, kind: 'change', limit: 50 },
+        query: { orgId, kind: 'change', [kind]: runId, limit: 1 },
         signal,
       });
-      return page.items.find((b) => b.parentId === parentId) ?? null;
+      return page.items[0] ?? null;
     },
     enabled,
     refetchInterval: (query) => (query.state.data?.state === 'sending' ? 2000 : false),

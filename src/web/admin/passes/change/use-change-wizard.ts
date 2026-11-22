@@ -18,21 +18,31 @@ import { SETTABLE } from './value-control.tsx';
 export type Start = 'now' | 'later';
 
 /** The wizard's state, its server preview and the run it starts. */
-export function useChangeWizard(orgId: string, selection: ChangeSelection, initial: ChangeKind) {
+export function useChangeWizard(
+  orgId: string,
+  selection: ChangeSelection,
+  initial: ChangeKind,
+  tell = false,
+) {
   const navigate = useNavigate();
   const templateIds = templatesOf(selection);
   const details = useQueries({
     queries: templateIds.map((id) => templateDetailQuery(id, orgId)),
   });
-  const loaded = details.flatMap((d) => (d.data ? [d.data] : []));
+  // A new array every render would recompute the fields and restart the debounce for good.
+  const loadedKey = details.map((d) => d.dataUpdatedAt).join();
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keyed on when the details were read
   const fields = useMemo(
-    () => commonFields(loaded).filter((f) => SETTABLE.has(f.widget)),
-    [loaded],
+    () =>
+      commonFields(details.flatMap((d) => (d.data ? [d.data] : []))).filter((f) =>
+        SETTABLE.has(f.widget),
+      ),
+    [loadedKey],
   );
   const [step, setStep] = useState(0);
   const [kind, setKind] = useState<ChangeKind>(initial);
   const [rows, setRows] = useState<FieldRow[]>([]);
-  const [notify, setNotify] = useState(false);
+  const [notify, setNotify] = useState(tell && initial === 'design');
   const [message, setMessage] = useState('');
   const [start, setStart] = useState<Start>('now');
   const [at, setAt] = useState<DateTimeValue>({ local: '', zone: localZone() });
@@ -44,17 +54,34 @@ export function useChangeWizard(orgId: string, selection: ChangeSelection, initi
   const patch = patchOf(kind, rows);
   const tellable = kind !== 'void';
   const text = notify && kind === 'fields' ? message.trim() : '';
-  const body: ChangeBody | undefined = patch
-    ? {
-        orgId,
-        target: targetOf(selection),
-        patch,
-        notify: tellable && notify,
-        ...(text ? { message: text } : {}),
-      }
-    : undefined;
-  const settled = useDebounced(body, 400);
+  const target = targetOf(selection);
+  const body: ChangeBody | undefined =
+    patch && target
+      ? {
+          orgId,
+          target,
+          patch,
+          notify: tellable && notify,
+          ...(text ? { message: text } : {}),
+        }
+      : undefined;
+  const bodyKey = body ? fingerprint(body) : '';
+  const settledKey = useDebounced(bodyKey, 400);
+  const settled = useMemo<ChangeBody | undefined>(
+    () => (settledKey ? (JSON.parse(settledKey) as ChangeBody) : undefined),
+    [settledKey],
+  );
   const preview = useChangePreview(settled);
+  /** The preview answers the patch on screen, not an earlier one. */
+  const fresh = settledKey === bodyKey && !preview.isPlaceholderData && !preview.isFetching;
+  const chooseKind = (next: ChangeKind) => {
+    setKind(next);
+    if (next === 'void') {
+      setNotify(false);
+      // A void has no holders step: a start time picked there would hide behind it.
+      setStart('now');
+    }
+  };
   const atMs =
     start === 'later' && at.local ? Date.parse(localToIso(at.local, at.zone) ?? '') : NaN;
   const whenOk = start === 'now' || Number.isFinite(atMs);
@@ -87,7 +114,7 @@ export function useChangeWizard(orgId: string, selection: ChangeSelection, initi
     step,
     setStep,
     kind,
-    setKind,
+    chooseKind,
     rows,
     setRows,
     notify,
@@ -101,7 +128,9 @@ export function useChangeWizard(orgId: string, selection: ChangeSelection, initi
     patch,
     tellable,
     preview,
+    fresh,
     whenOk,
+    startMs: Number.isFinite(atMs) ? atMs : null,
     refusal,
     setRefusal,
     drift,

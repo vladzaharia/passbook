@@ -4,6 +4,8 @@ import { CHANGE_COPY as C } from './copy.ts';
 /** One terse sentence for a refused change call: what happened and what to do. */
 export function refusalText(error: unknown): string {
   if (isApiError(error)) {
+    // A change that cannot be undone says so itself: it names the rollback.
+    if (error.code === 'BROADCAST_NOT_UNDOABLE') return error.message;
     const known = C.refusal[error.code];
     if (known) return known;
     // The plan cap and the sandbox quota arrive worded for people.
@@ -15,3 +17,7 @@ export function refusalText(error: unknown): string {
 
 export const isDrift = (error: unknown): boolean =>
   isApiError(error) && error.code === 'SELECTION_CHANGED';
+
+/** Why a failed run stopped, from its error code; null when the code is not one a person can act on. */
+export const runFailure = (code: string | null): string | null =>
+  code ? (C.refusal[code] ?? null) : null;

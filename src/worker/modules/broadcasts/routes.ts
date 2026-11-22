@@ -110,6 +110,8 @@ register(
         state: q.state,
         origin: q.origin,
         kind: q.kind,
+        parentId: q.parentId,
+        retryOf: q.retryOf,
         cursor: q.cursor,
         limit: q.limit,
       }),

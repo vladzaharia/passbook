@@ -40,6 +40,13 @@ export const PassSelectionSchema = z.union([
 ]);
 export type PassSelection = z.infer<typeof PassSelectionSchema>;
 
+/** A change run starts a minute or a day after its count: passes issued meanwhile may move it by this much. */
+export const CHANGE_RUN_DRIFT = 0.02;
+
+/** True when a change run's count moved more than 2% from the one the admin confirmed. */
+export const changeRunDrifted = (expectCount: number, count: number): boolean =>
+  Math.abs(count - expectCount) > Math.max(0, expectCount * CHANGE_RUN_DRIFT);
+
 /** Any change in the count refuses the run: the admin confirms the new number first. */
 export const selectionDrifted = (expectCount: number, count: number): boolean =>
   expectCount !== count;

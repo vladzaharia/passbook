@@ -28,7 +28,8 @@ export function RunningCard({ imp }: { imp: PassImportDto }) {
         <RunProgress
           done={done}
           total={total}
-          text={left ? `${text} · ${left}` : text}
+          text={text}
+          meta={left}
           aside={<p className="text-sm text-fg-muted">{C.run.leave}</p>}
         />
         <Counters imp={imp} />

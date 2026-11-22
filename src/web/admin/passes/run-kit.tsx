@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { type ReactNode, useRef } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { Buddy, Card, CardBody, Celebrate, CountUp, ProgressBar } from '../../ui/index.ts';
@@ -8,11 +8,14 @@ export function RunProgress({
   done,
   total,
   text,
+  meta,
   aside,
 }: {
   done: number;
   total: number;
   text: string;
+  /** Muted, beside the count: time left. */
+  meta?: ReactNode;
   /** Right of the count: "You can leave this page." */
   aside?: ReactNode;
 }) {
@@ -22,6 +25,7 @@ export function RunProgress({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p aria-live="polite" className="text-base font-semibold tabular-nums text-fg-strong">
           {text}
+          {meta ? <span className="font-normal text-fg-muted"> · {meta}</span> : null}
         </p>
         {aside}
       </div>
@@ -56,7 +60,11 @@ export function RunStats({ stats }: { stats: readonly RunStat[] }) {
   return (
     <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       {stats.map((s) => (
-        <div key={s.label} className="rounded-md border border-border bg-surface-sunken p-3">
+        <div
+          key={s.label}
+          className="flex flex-col-reverse rounded-md border border-border bg-surface-sunken p-3"
+        >
+          <dt className="text-xs text-fg-muted">{s.label}</dt>
           <dd
             className={cn(
               'text-2xl font-semibold text-fg-strong',
@@ -65,7 +73,6 @@ export function RunStats({ stats }: { stats: readonly RunStat[] }) {
           >
             <CountUp value={s.value} />
           </dd>
-          <dt className="text-xs text-fg-muted">{s.label}</dt>
         </div>
       ))}
     </dl>
@@ -106,7 +113,11 @@ export function RunDone({
               failed ? 'bg-danger' : 'bg-success',
             )}
           >
-            <Check aria-hidden className="size-4" />
+            {failed ? (
+              <X aria-hidden className="size-4" />
+            ) : (
+              <Check aria-hidden className="size-4" />
+            )}
           </span>
           {title}
         </p>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterSelection, targetOf } from './selection.ts';
+import { filterRefusal, filterSelection, targetOf } from './selection.ts';
 
 describe('filter selection', () => {
   it('runs a template filter with the filters a run reads', () => {
@@ -12,15 +12,15 @@ describe('filter selection', () => {
     expect(s && targetOf(s)).toEqual({ templateIds: ['t1'], q: 'ann', onDevice: true });
   });
 
-  it('runs an import filter as the import', () => {
+  it('runs an import filter as the import with the list filters kept', () => {
     const s = filterSelection({ importId: 'i1', q: 'x' }, ['t1'], 5);
-    expect(s && targetOf(s)).toEqual({ importId: 'i1' });
+    expect(s && targetOf(s)).toEqual({ importId: 'i1', q: 'x' });
   });
 
-  it('takes the one template of the rows when the filter names none', () => {
-    expect(filterSelection({ q: 'a' }, ['t9'], 3)).not.toBeNull();
-    expect(filterSelection({ q: 'a' }, ['t1', 't2'], 3)).toBeNull();
-    expect(filterSelection({ q: 'a' }, [], 3)).toBeNull();
+  it('never guesses the template from the rows on screen', () => {
+    expect(filterSelection({ q: 'a' }, ['t9'], 3)).toBeNull();
+    expect(filterSelection({ importId: 'i1' }, [], 3)).toBeNull();
+    expect(filterRefusal({ q: 'a' })).toBe('Filter by one template to change all matching.');
   });
 
   it('refuses what a run cannot read', () => {

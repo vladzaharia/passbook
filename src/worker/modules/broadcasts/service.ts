@@ -1,7 +1,7 @@
 import type { BroadcastDto } from '../../../shared/contracts/broadcasts.ts';
 import type { CreateBroadcastBody } from '../../../shared/contracts/broadcasts-change.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { selectionDrifted } from '../../../shared/contracts/pass-selection.ts';
+import { changeRunDrifted } from '../../../shared/contracts/pass-selection.ts';
 import { batch } from '../../platform/db.ts';
 import { entitlementsOf } from '../../platform/entitlements.ts';
 import {
@@ -31,6 +31,7 @@ import {
 } from './guards.ts';
 import * as repo from './repo.ts';
 import { DAY_LIMIT_KEY, manualBroadcastsToday } from './repo-day-limit.ts';
+import { type BroadcastListFilter, listBroadcasts } from './repo-list-broadcasts.ts';
 import {
   chosenTargetsStmts,
   resumableCount,
@@ -79,7 +80,7 @@ export async function insertBroadcast(
   if (resume) {
     // A resumed run takes what its parent left: the count the admin saw is that remainder.
     const left = (await resumableCount(ctx.env.DB, resume.parentId, body.orgId, mode)).left;
-    if (seen !== undefined && selectionDrifted(seen, left))
+    if (seen !== undefined && changeRunDrifted(seen, left))
       throw new ConflictError(
         `${left} passes are left, not ${seen}. Review it again.`,
         'SELECTION_CHANGED',
@@ -259,9 +260,9 @@ export async function getBroadcastDto(
 
 export async function listBroadcastDtos(
   ctx: ServiceContext,
-  filter: repo.BroadcastListFilter,
+  filter: BroadcastListFilter,
 ): Promise<{ items: BroadcastDto[]; nextCursor: string | null }> {
-  const { rows, nextCursor } = await repo.listBroadcasts(ctx.env.DB, filter);
+  const { rows, nextCursor } = await listBroadcasts(ctx.env.DB, filter);
   const counts = await repo.countItems(
     ctx.env.DB,
     rows.map((r) => r.id),

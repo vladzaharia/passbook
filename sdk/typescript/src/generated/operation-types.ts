@@ -127,6 +127,8 @@ export type BroadcastsListQuery = {
   state?: "draft" | "scheduled" | "sending" | "sent" | "partial" | "failed" | "cancelled";
   origin?: "manual" | "rule";
   kind?: "message" | "change";
+  parentId?: string;
+  retryOf?: string;
 };
 
 /** Response of `broadcasts.list`. */
