@@ -40,6 +40,22 @@ describe('deliveries', () => {
     expect(within(table).getAllByText('ORD-7').length).toBeGreaterThan(0);
   });
 
+  it('shows no verdict in Response for a pending or cancelled delivery without an answer', async () => {
+    const calls: Calls[] = [];
+    const state = {
+      endpoints: [endpoint()],
+      deliveries: [
+        delivery({ eventId: 'ev2', state: 'pending', lastStatus: null, lastError: null }),
+        delivery({ eventId: 'ev3', state: 'cancelled', lastStatus: null, lastError: null }),
+      ],
+    };
+    await open(calls, hooks(calls, state));
+    const table = await screen.findByRole('table', { name: 'Deliveries' });
+    expect(within(table).getByText('Pending')).toBeVisible();
+    expect(within(table).getByText('Cancelled')).toBeVisible();
+    expect(within(table).queryByText('Failed')).toBeNull();
+  });
+
   it('lists a test send tagged Test beside the deliveries, only under All', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];
