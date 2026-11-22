@@ -126,7 +126,9 @@ export const SCAN_OK = {
     display: DISPLAY,
     // The pass JSON minus barcode and serial, and a short-lived grant for its images (scan/assets.ts).
     passView: {
-      passJson: { ...TEMPLATE.passJson, serialNumber: undefined },
+      passJson: Object.fromEntries(
+        Object.entries(TEMPLATE.passJson).filter(([k]) => k !== 'serialNumber'),
+      ),
       assetBaseUrl: `/api/v1/scan/passes/${IDS.pass}/assets/`,
       assetGrant: `demo-token-northwind-${hex('asset-grant', 22)}`,
       assetNames: ['icon.png', 'icon@2x.png', 'logo.png'],

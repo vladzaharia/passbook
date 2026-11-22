@@ -6,7 +6,6 @@
 import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
-import { isDeepStrictEqual } from 'node:util';
 import { validateAgainst } from '../test/helpers/openapi-validate.ts';
 import { HEADLINE, HEADLINE_VARIANTS, ROTATIONS, rotateAnswer } from './lib/example-headline.ts';
 import { type Example, exampleFailures } from './lib/example-lint.ts';
@@ -98,7 +97,10 @@ fail(
 );
 if (!check) problems.push(...exampleFailures(doc, written));
 fail(problems, 'example(s) that fail the lint or the schema');
-const changed = Object.keys(files).filter((f) => !isDeepStrictEqual(files[f], disk[f]));
+// Compared as JSON, as written: a key whose value is undefined is not in the file.
+const changed = Object.keys(files).filter(
+  (f) => JSON.stringify(files[f]) !== JSON.stringify(disk[f]),
+);
 if (check)
   fail(
     changed.map((f) => `docs/api/reference/${f}`),
