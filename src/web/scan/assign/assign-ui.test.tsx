@@ -1,10 +1,11 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import '../../lib/test-utils.tsx';
 import { type TAG_SCENARIOS, TagVisual } from '../visual-tags.tsx';
+import { infoLine } from './assign-confirm.tsx';
 import { flagText, noneLine } from './tag-lines.ts';
 
 const show = (scenario: (typeof TAG_SCENARIOS)[number]) =>
@@ -35,6 +36,107 @@ describe('the assign card', () => {
   it('shows a banner and keeps the step', () => {
     show('assign-pass-banner');
     expect(screen.getByTestId('scan-assign-banner').textContent).toContain('Voided');
+  });
+  it('an ambiguous card offers Look up by name, and it opens the sheet', () => {
+    const lookUp = vi.fn();
+    render(<TagVisual scenario="assign-pass-ambiguous" onLookUp={lookUp} />);
+    const banner = screen.getByTestId('scan-assign-banner');
+    expect(banner.textContent).toContain('More than one pass');
+    fireEvent.click(within(banner).getByRole('button', { name: 'Look up' }));
+    expect(lookUp).toHaveBeenCalledTimes(1);
+  });
+  it('the ambiguous screen has one Look up: the banner, not the dock', () => {
+    show('assign-pass-ambiguous');
+    expect(screen.getAllByRole('button', { name: 'Look up' })).toHaveLength(1);
+    cleanup();
+    show('assign-pass');
+    expect(screen.getAllByRole('button', { name: 'Look up' })).toHaveLength(1);
+  });
+  it('a pass picked by id asks a Desk for the PIN on the pass step', () => {
+    show('assign-pass-pin');
+    expect(screen.getByTestId('scan-approval')).toBeTruthy();
+    expect(screen.queryByTestId('scan-assign-info')).toBeNull();
+  });
+  it('a refused person scope says why, on this pass', () => {
+    show('assign-confirm-person-off');
+    expect(screen.getByTestId('scan-assign-note').textContent).toContain(
+      "can't assign to a person",
+    );
+    expect((screen.getByRole('radio', { name: /This pass/ }) as HTMLInputElement).checked).toBe(
+      true,
+    );
+  });
+  it('the done card shows the holder photo', () => {
+    show('assign-done-photo');
+    expect(document.querySelector('.scan-assign-photo')).toBeTruthy();
+  });
+  it('a held tag with a blanked holder (another template) is not called lost', () => {
+    show('assign-pin-other-template');
+    expect(screen.getByText(/Moving this tag from another pass to Maya Okafor/)).toBeTruthy();
+    expect(screen.queryByText(/lost tag/)).toBeNull();
+    expect(screen.getByText(/It works with another pass now\./)).toBeTruthy();
+  });
+  it('a tag new at the read and held at the bind is not called lost', () => {
+    show('assign-pin-new-then-held');
+    expect(screen.getByText(/Moving this tag from another pass to Maya Okafor/)).toBeTruthy();
+    expect(screen.queryByText(/lost tag/)).toBeNull();
+  });
+  it('staff sign-in shows the move line beside the named manager', () => {
+    show('assign-pin-staff');
+    expect(
+      screen.getByText('Moving this tag from Leo Park to Maya Okafor needs a manager.'),
+    ).toBeTruthy();
+    expect(screen.getByTestId('scan-approval').textContent).toContain('Manager');
+  });
+  it('a really lost tag says so', () => {
+    show('assign-pin-lost');
+    expect(screen.getByText(/Moving this lost tag to Maya Okafor/)).toBeTruthy();
+  });
+  it('the move PIN says whose tag it takes, in one line', () => {
+    show('assign-confirm-other-pin');
+    expect(screen.getByText(/Moving this tag from Leo Park to Maya Okafor/)).toBeTruthy();
+    cleanup();
+    show('assign-confirm-lost-pin');
+    expect(screen.getByText(/Moving this lost tag to Maya Okafor/)).toBeTruthy();
+  });
+  it('while the PIN form is open the dock has no Ask a manager', () => {
+    show('assign-confirm-lost-pin');
+    expect(screen.queryByRole('button', { name: 'Ask a manager' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+  });
+  it('a tag held by a pass with no holder name does not read "someone\'s"', () => {
+    const a = {
+      preview: { warnings: ['held_by_other'], card: { holderName: 'Ben', title: 'x' } },
+      inspected: { bound: { scope: 'pass', passTitle: 'Old Holder', holderName: null } },
+    } as unknown as Parameters<typeof infoLine>[0];
+    expect(infoLine(a)?.text).toBe('It works with Old Holder now. A manager can move it to Ben.');
+  });
+  it('other banners have no Look up button', () => {
+    show('assign-pass-banner');
+    expect(within(screen.getByTestId('scan-assign-banner')).queryByRole('button')).toBeNull();
+  });
+  it('confirm shows the holder photo, and initials when it fails to load', () => {
+    show('assign-confirm-photo');
+    const photo = document.querySelector<HTMLImageElement>('.scan-assign-photo');
+    expect(photo?.getAttribute('src')).toContain('data:image/svg+xml');
+    fireEvent.error(photo as HTMLImageElement);
+    expect(document.querySelector('.scan-assign-photo')).toBeNull();
+    expect(document.querySelector('.scan-assign-initials')).toBeTruthy();
+  });
+  it('confirm without a photo shows initials', () => {
+    show('assign-confirm');
+    expect(document.querySelector('.scan-assign-photo')).toBeNull();
+    expect(document.querySelector('.scan-assign-initials')).toBeTruthy();
+  });
+  it('the tag prop sits beside the buddy once a tag is read, and the done card plays link', () => {
+    show('assign-done');
+    expect(document.querySelector('.wl-buddy-prop .scan-tag-prop')).toBeTruthy();
+    expect(document.querySelector('.wl-buddy')?.getAttribute('data-beat')).toBe('link');
+    expect(document.querySelector('.scan-tag-chain')).toBeTruthy();
+  });
+  it('no tag read, no prop', () => {
+    show('assign-tag-android');
+    expect(document.querySelector('.scan-tag-prop')).toBeNull();
   });
   it('confirm offers the person only with an account, and the Works with label', () => {
     show('assign-confirm');

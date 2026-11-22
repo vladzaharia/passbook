@@ -230,7 +230,6 @@ function RecordView({
             desk={desk}
             name={who?.name ?? ''}
             held={held}
-            action={o.action?.label}
           />
         ) : null}
       </article>

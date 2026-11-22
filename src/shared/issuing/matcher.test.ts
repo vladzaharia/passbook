@@ -262,7 +262,10 @@ describe('date detection', () => {
   it('reads month-first dates when a day is past 12', () => {
     const f = dates(['01/15/2026', '02/03/2026', '12/31/2026']);
     expect(f.date).toEqual({ format: 'mdy', choices: [], parsed: 3, total: 3 });
-    expect(f.entry?.transform).toEqual({ kind: 'date', options: { input: 'mdy', output: 'iso' } });
+    expect(f.entry?.transform).toEqual({
+      kind: 'date',
+      options: { input: 'mdy', output: 'iso', keepOffset: true },
+    });
   });
 
   it('reads day-first dates', () => {

@@ -21,7 +21,10 @@ A till reads the code the pass's barcode carries. It is `passJson.barcodes[0].me
 
 ## Call the till
 
-A till call needs a key bound to a terminal, and names the terminal in `x-passbook-device`. Terminals belong to Scanning in an organization, and a sandbox key never holds `scans:write`: its till calls get `403 MISSING_SCOPE`. Run these with a till key from your organization.
+A till call needs a key and names the terminal in `x-passbook-device`.
+
+- **Sandbox:** your key scans as the Sandbox terminal. It needs no pairing and no `scans:write`, and it acts in Test only. Any Test key of the sandbox with `passes:write` scans as it. Send `x-passbook-device: sandbox`.
+- **Your organization:** use a key with `scans:write` bound to one of its terminals. Make terminals in Scanning and send the terminal's id.
 
 {{show door-check-in}}
 
@@ -33,4 +36,4 @@ A till call needs a key bound to a terminal, and names the terminal in `x-passbo
 
 ## Result
 
-The rules read back as you set them. Open the pass's `downloadUrl`: the test preview shows the pass the till would read.
+The rules read back as you set them. The pass counts as admitted once; a second scan is refused. Open the pass's `downloadUrl`: the test preview shows the pass the till would read.

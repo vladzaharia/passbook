@@ -191,7 +191,16 @@ function suggestionOf(
     return {
       ...base,
       date,
-      entry: input ? { from, transform: { kind: 'date', options: { input, output } } } : null,
+      entry: input
+        ? {
+            from,
+            // A time written with an offset keeps it: a pass that ignores the time zone shows the written clock.
+            transform: {
+              kind: 'date',
+              options: { input, output, ...(output === 'iso' ? { keepOffset: true } : {}) },
+            },
+          }
+        : null,
     };
   }
   return { ...base, entry: { from } };

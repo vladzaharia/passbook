@@ -25,14 +25,12 @@ export function PinDialog({
   desk,
   name,
   held,
-  action,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   desk: PinDesk;
   name: string;
   held: string | null;
-  action: string | undefined;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -51,7 +49,6 @@ export function PinDialog({
           managers={desk.managers}
           code={desk.code}
           desk={desk.approvals === 'desk'}
-          action={action}
           note={desk.note}
           onApprove={desk.onApprove}
           onCancel={() => onOpenChange(false)}

@@ -25,8 +25,8 @@
   --wl-field: var(--pk-surface-raised);
   --wl-field-disabled: transparent;
   --wl-field-readonly: transparent;
-  /* Placeholders hint a format at about 3.8:1, well under the value's contrast. */
-  --wl-placeholder: #646b7d;
+  /* Placeholders hint a format at about 6.5:1 on dark and 5.8:1 on light (4.5:1 minimum), below the value's contrast. */
+  --wl-placeholder: #8f98ad;
   /* Org monogram when the org has no accent. */
   --wl-org-fallback: #475569;
   /* Filled buttons lighten on hover in dark and darken in light, away from their text. */
@@ -57,7 +57,7 @@
     --wl-field: var(--pk-surface-raised);
     --wl-field-disabled: var(--pk-surface-sunken);
     --wl-field-readonly: var(--pk-surface-sunken);
-    --wl-placeholder: #858b9a;
+    --wl-placeholder: #5d667b;
     --wl-hover-mix: black;
   }
 }
@@ -88,7 +88,7 @@
   --wl-field: var(--pk-surface-raised);
   --wl-field-disabled: var(--pk-surface-sunken);
   --wl-field-readonly: var(--pk-surface-sunken);
-  --wl-placeholder: #858b9a;
+  --wl-placeholder: #5d667b;
 }
 
 /* Increase Contrast: muted text moves toward the body text and hairlines take the strong edge. */

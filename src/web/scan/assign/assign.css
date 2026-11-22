@@ -283,3 +283,33 @@
   stroke-width: 3.5;
   stroke-linecap: round;
 }
+.scan-assign-photo {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  object-fit: cover;
+  background: var(--sd-fill-gray);
+}
+.scan-assign-banner-act {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-block-start: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid currentColor;
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: 600 14px / 18px var(--pk-font-sans);
+  cursor: pointer;
+}
+.scan-assign-banner-act:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.scan-assign-field input::placeholder {
+  font-weight: 400;
+}

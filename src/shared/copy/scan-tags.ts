@@ -26,14 +26,20 @@ export const SCAN_TAG_COPY = {
   assigningTo: 'Assigning to {name}',
   lendingTo: 'Lending to {name}',
   confirm: {
-    name: 'Name',
-    namePlaceholder: 'Name, optional',
+    name: 'Name (optional)',
+    namePlaceholder: 'Blue fob',
     forms: ['Card', 'Fob', 'Sticker', 'Wristband'],
     moveOwn: [
       'It works with {pass} now. Assigning moves it.',
       "It works with all of {name}'s passes now. Assigning changes that.",
     ],
     moveOther: "It works with {holder}'s {pass} now. A manager can move it to {name}.",
+    moveOtherPass: 'It works with {pass} now. A manager can move it to {name}.',
+    /** The PIN sheet's line for a move. */
+    pinAssign: 'Assigning a tag to {name}',
+    pinMove: 'Moving this tag from {from} to {to}',
+    pinMoveLost: 'Moving this lost tag to {to}',
+    pinMoveOther: 'Moving this tag from another pass to {to}',
     basic: 'Basic tags can be copied.',
     assign: 'Assign',
     move: 'Move tag',

@@ -62,7 +62,7 @@ State `mapping` and no `plan` mean a required field found no column. `mapping.mi
 Two date formats can fit one column (`03/04/2030` is March 4 or April 3). That field's `date.choices` names them and its `entry` is null, so rows report `Starts is required`. Name the format in the plan:
 
 ```json
-"startsAt": { "from": "/Starts", "transform": { "kind": "date", "options": { "input": "mdy", "output": "iso" } } }
+"startsAt": { "from": "/Starts", "transform": { "kind": "date", "options": { "input": "mdy", "output": "iso", "keepOffset": true } } }
 ```
 
 An unknown option in an enum column fails the row with the labels to pick from, for example `Status must be Active or Suspended.`
@@ -90,7 +90,8 @@ Put the corrected value under the spreadsheet row and the column pointer in `ove
           "kind": "date",
           "options": {
             "input": "iso",
-            "output": "iso"
+            "output": "iso",
+            "keepOffset": true
           }
         }
       },
@@ -100,7 +101,8 @@ Put the corrected value under the spreadsheet row and the column pointer in `ove
           "kind": "date",
           "options": {
             "input": "iso",
-            "output": "iso"
+            "output": "iso",
+            "keepOffset": true
           }
         }
       },

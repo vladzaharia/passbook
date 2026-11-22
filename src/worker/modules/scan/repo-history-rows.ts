@@ -18,7 +18,7 @@ export const HISTORY_COLUMNS = `s.id, s.org_id, s.mode, s.at, s.outcome, s.reaso
     s.staff_id AS raw_staff_id, s.api_key_id, s.undone_by AS raw_undone_by, s.presence_scope, s.pass_version,
     e.id AS event_id, e.name AS event_name, sc.id AS scanner_id, sc.name AS scanner_name,
     st.id AS staff_id, st.name AS staff_name, ap.name AS approver_name, s.method, s.amount,
-    s.before_value, s.after_value, s.override_of, s.offline,
+    s.before_value, s.after_value, s.override_of, s.offline, s.pass_state,
     EXISTS (SELECT 1 FROM scan_offline_reads r WHERE r.scan_id = s.id AND r.org_id = s.org_id AND r.late = 1) AS late,
     s.actor_type, s.actor_id, s.undone_at,
     u.id AS undone_by, undo_target.id AS undoes,

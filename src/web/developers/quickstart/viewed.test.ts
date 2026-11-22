@@ -4,16 +4,26 @@ import { beacon } from './beacon.ts';
 import { markViewed, readViewedAt } from './viewed.ts';
 
 afterEach(() => {
-  sessionStorage.clear();
+  localStorage.clear();
   vi.unstubAllGlobals();
 });
 
 describe('the page-view time', () => {
   it('is the first view of the session; a reload keeps it', () => {
     expect(readViewedAt()).toBeUndefined();
-    expect(markViewed(1_000)).toBe(1_000);
-    expect(markViewed(9_000)).toBe(1_000);
-    expect(readViewedAt()).toBe(1_000);
+    const t = Date.now() - 1_000;
+    expect(markViewed(t)).toBe(t);
+    expect(markViewed(t + 500)).toBe(t);
+    expect(readViewedAt()).toBe(t);
+  });
+
+  it('survives a new tab (local storage) but not a day', () => {
+    const t = Date.now() - 5_000;
+    markViewed(t);
+    expect(sessionStorage.getItem('pb.developers.quickstart.viewedAt')).toBeNull();
+    expect(readViewedAt()).toBe(t);
+    localStorage.setItem('pb.developers.quickstart.viewedAt', String(Date.now() - 25 * 3_600_000));
+    expect(readViewedAt()).toBeUndefined();
   });
 
   it('is absent, not an error, when storage is blocked', () => {
@@ -25,7 +35,8 @@ describe('the page-view time', () => {
   });
 
   it('rides on sandbox create, and only there', async () => {
-    markViewed(5_000);
+    const at = Date.now() - 5_000;
+    markViewed(at);
     const fetchFn = vi.fn(async () =>
       Response.json({ id: 's', orgSlug: 'dev-x', templateId: 't', key: null }, { status: 201 }),
     );
@@ -38,7 +49,7 @@ describe('the page-view time', () => {
       ),
     );
     expect(Object.keys(body).sort()).toEqual(['turnstileToken', 'viewedAt']);
-    expect(body.viewedAt).toBe(5_000);
+    expect(body.viewedAt).toBe(at);
   });
 });
 

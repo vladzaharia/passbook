@@ -158,7 +158,8 @@ const endedOutcome = (at: number): ScanOutcome => ({
 /**
  * `POST /batch`: a device's queued reads, oldest first, each through the same `act` as an online scan
  * under its own idempotency key. First scan wins across every door, online or not: a read that loses
- * (pass voided, already in elsewhere, not found) is recorded as such and returned as a `conflict`.
+ * (pass voided, already in elsewhere, not found) is recorded as such and returned as a `conflict`. An
+ * exit never loses for the pass's state (OC4).
  *  - Stop refuses the whole batch.
  *  - A read stamped over 5 minutes ahead is clamped to now; one older than the roster's life is
  *    recorded as `ended` and changes nothing.

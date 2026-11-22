@@ -78,7 +78,7 @@ function stepsOf(blocks: Block[]): Step[] {
 }
 
 const failed = (c: Call) => c.status >= 300;
-/** Refusals that are the test's doing: its stubbed import workflow never finishes, so a second commit is busy. */
+/** Refusals the guide itself shows and the test expects. */
 const EXPECTED: Record<string, string[]> = { 'bulk-import': ['IMPORT_BUSY'] };
 
 describe('guides', () => {

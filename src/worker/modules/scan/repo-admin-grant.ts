@@ -62,6 +62,29 @@ export function grantAuthorityOf(
   orgId: string,
   purpose?: string,
 ): AdminAuthority | KeyAdminAuthority {
+  const admin = modeFreeAuthorityOf(authority, actorId, orgId, purpose);
+  // Zones and a scanner's mode move belong to the org, not a mode: only a live key writes them.
+  if (
+    admin.kind === 'api_key' &&
+    purpose?.startsWith('org.scan.') === true &&
+    admin.mode !== 'live'
+  )
+    throw new ForbiddenError(
+      purpose.startsWith('org.scan.zone.')
+        ? 'Zones need a live key.'
+        : 'Moving a scanner between live and test needs a live key.',
+      purpose.startsWith('org.scan.zone.') ? 'SCAN_ZONE_LIVE_ONLY' : 'SCAN_MODE_LIVE_ONLY',
+    );
+  return admin;
+}
+
+/** `grantAuthorityOf` without the live-only rule, for a purpose that is per mode (`org_mode.*`). */
+export function modeFreeAuthorityOf(
+  authority: TenantPassWrite | null | undefined,
+  actorId: string,
+  orgId: string,
+  purpose?: string,
+): AdminAuthority | KeyAdminAuthority {
   if (authority?.kind !== 'api_key') return adminAuthorityOf(authority, actorId, orgId);
   const admin = authority.scope === 'scanning:admin';
   if (
@@ -75,14 +98,6 @@ export function grantAuthorityOf(
     authority.orgId !== orgId
   )
     throw new ForbiddenError();
-  // Zones and a scanner's mode move belong to the org, not a mode: only a live key writes them.
-  if (purpose?.startsWith('org.scan.') === true && authority.mode !== 'live')
-    throw new ForbiddenError(
-      purpose.startsWith('org.scan.zone.')
-        ? 'Zones need a live key.'
-        : 'Moving a scanner between live and test needs a live key.',
-      purpose.startsWith('org.scan.zone.') ? 'SCAN_ZONE_LIVE_ONLY' : 'SCAN_MODE_LIVE_ONLY',
-    );
   return authority;
 }
 

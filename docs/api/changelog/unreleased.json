@@ -864,6 +864,14 @@
     "note": "Scans report late: an offline read dated before its scanner's last contact or list, counted at the time it synced."
   },
   {
+    "key": "GET /api/v1/scans/{id} 200.passState: field added",
+    "class": "additive",
+    "operationId": "scans.getScansById",
+    "op": "GET /api/v1/scans/{id}",
+    "change": "200.passState: field added",
+    "note": "Scans report passState (voided, expired or suspended) when a tap-out was recorded for a pass in that state."
+  },
+  {
     "key": "GET /api/v1/session 200|0.consoleGroupRequired: field added",
     "class": "additive",
     "operationId": "session.getSession",
@@ -2565,6 +2573,22 @@
     "note": "Admins ask everyone whose PIN predates PIN tags for a new PIN with POST /scan-staff/reset-untagged."
   },
   {
+    "key": "POST /api/v1/scan/actions 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanActions",
+    "op": "POST /api/v1/scan/actions",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/batch 200.items[].outcome.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanBatch",
+    "op": "POST /api/v1/scan/batch",
+    "change": "200.items[].outcome.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
     "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.postScanDevice",
@@ -2579,6 +2603,22 @@
     "op": "POST /api/v1/scan/device",
     "change": "body.capabilities.hardware: optional input field added",
     "note": "Devices may report found hardware by kind, count and state; names and ids are refused."
+  },
+  {
+    "key": "POST /api/v1/scan/mark-out 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanMarkOut",
+    "op": "POST /api/v1/scan/mark-out",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/overrides 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanOverrides",
+    "op": "POST /api/v1/scan/overrides",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
     "key": "POST /api/v1/scan/pair 200.staff.pinResetRequired: field added",
@@ -2605,6 +2645,14 @@
     "note": "The pairing preview names the session the device joins."
   },
   {
+    "key": "POST /api/v1/scan/resolve 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanResolve",
+    "op": "POST /api/v1/scan/resolve",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
     "key": "POST /api/v1/scan/role 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.postScanRole",
@@ -2619,6 +2667,14 @@
     "op": "POST /api/v1/scan/role",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/scans/{scanId}/undo 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scan.postScanScansByScanIdUndo",
+    "op": "POST /api/v1/scan/scans/{scanId}/undo",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
     "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",
@@ -2651,6 +2707,14 @@
     "op": "POST /api/v1/scan/tags/bind",
     "change": "409.IDEMPOTENCY_KEY_REUSED: now 422",
     "note": "Pinned to 2026-11-22, a reused key answers 422, not 409; the SDKs raise ValidationError, not ConflictError."
+  },
+  {
+    "key": "POST /api/v1/scan/tags/bind 200.opensDefault: field added",
+    "class": "additive",
+    "operationId": "scan.postScanTagsBind",
+    "op": "POST /api/v1/scan/tags/bind",
+    "change": "200.opensDefault: field added",
+    "note": "opensDefault says what a new tag opens when nobody chooses: user for a staff template where this scanner and tag type may bind a person, pass otherwise."
   },
   {
     "key": "POST /api/v1/scanners 200.staff.name: now nullable",
@@ -2779,6 +2843,14 @@
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "new operation",
     "note": "Set up scanning in one call: places, events, staff, sessions and devices."
+  },
+  {
+    "key": "POST /api/v1/scans/{id}/undo 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scans.postScansByIdUndo",
+    "op": "POST /api/v1/scans/{id}/undo",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
     "key": "POST /api/v1/status/incidents new operation",

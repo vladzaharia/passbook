@@ -34,6 +34,7 @@ export function ScanOverlays({
   extraActions,
   allowPeople,
   sessionTotals,
+  onPass,
 }: {
   sheet: boolean;
   panel: ScanPanel;
@@ -53,6 +54,8 @@ export function ScanOverlays({
   extraActions?: Action[];
   allowPeople: boolean;
   sessionTotals: boolean;
+  /** Assign mode: Look up picks a pass for the tag instead of checking it in. */
+  onPass?: ((passId: string) => void) | null;
 }) {
   const { state } = useScanMachine();
   // The queue line's View must open with no connection: the sheet's chunk is fetched while there is one.
@@ -74,6 +77,14 @@ export function ScanOverlays({
               open(false);
               runtime.checkIn(card, actionId);
             }}
+            {...(onPass
+              ? {
+                  onPass: (passId: string) => {
+                    open(false);
+                    onPass(passId);
+                  },
+                }
+              : {})}
             onCode={(code) => {
               open(false);
               runtime.emit({ method: 'manual', code });

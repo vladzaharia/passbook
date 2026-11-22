@@ -42,6 +42,7 @@ export const fresh = (source: AssignState['source'], now: number): AssignState =
   request: null,
   waiting: false,
   pin: null,
+  approved: null,
   idleAt: now + ASSIGN_TIMING.IDLE,
   retry: null,
 });
@@ -230,6 +231,7 @@ export function back(s: MachineState, env: Env): Out {
       scope: 'pass',
       label: '',
       pin: null,
+      approved: null,
     },
     env,
     [{ c: 'focus', target: 'card-heading' }],
