@@ -3,14 +3,15 @@ import type { OpenIncidentSchema, PublicIncidentSchema } from '../../../shared/c
 import type { Actor } from '../../platform/context.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditActor, recordAudit } from '../audit/service.ts';
+import { auditStmt, auditStmtWhere } from '../audit/repo.ts';
+import { auditActor } from '../audit/service.ts';
 import { clearPublicStatusMemo } from './public.ts';
 import {
+  adminIncidents,
   getIncident,
   type IncidentRow,
-  incidents,
-  insertIncident,
-  resolveIncidentRow,
+  insertIncidentStmt,
+  resolveIncidentStmt,
 } from './repo-public.ts';
 
 type Incident = z.infer<typeof PublicIncidentSchema>;
@@ -27,9 +28,9 @@ const toDto = (n: IncidentRow): Incident => ({
   resolvedAt: n.resolved_at,
 });
 
-/** The notes the public page lists: open ones and those resolved in the last 14 days. */
+/** Every open note and those resolved in the last 14 days. */
 export async function listIncidents(ctx: ServiceContext): Promise<{ items: Incident[] }> {
-  const rows = await incidents(ctx.env.DB, ctx.clock.now() - 14 * DAY);
+  const rows = await adminIncidents(ctx.env.DB, ctx.clock.now() - 14 * DAY);
   return { items: rows.map(toDto) };
 }
 
@@ -46,15 +47,18 @@ export async function openIncident(
     impact: input.impact,
     started_at: ctx.clock.now(),
   };
-  await insertIncident(ctx.env.DB, row);
+  // One batch: a note never goes live without its audit row, and a retry after a failure cannot duplicate it.
+  await ctx.env.DB.batch([
+    insertIncidentStmt(ctx.env.DB, row),
+    auditStmt(ctx.env.DB, ctx, {
+      ...auditActor(actor),
+      action: 'status.incident.open',
+      targetType: 'status_incident',
+      targetId: row.id,
+      detail: { component: row.component, impact: row.impact },
+    }),
+  ]);
   clearPublicStatusMemo(ctx.env.DB);
-  await recordAudit(ctx, {
-    ...auditActor(actor),
-    action: 'status.incident.open',
-    targetType: 'status_incident',
-    targetId: row.id,
-    detail: { component: row.component, impact: row.impact },
-  });
   return toDto({ ...row, resolved_at: null });
 }
 
@@ -65,16 +69,24 @@ export async function resolveIncident(
 ): Promise<Incident> {
   const existing = await getIncident(ctx.env.DB, id);
   if (!existing) throw new NotFoundError('Incident not found.', 'INCIDENT_NOT_FOUND');
-  // A second resolve changes nothing, so it keeps the first time and writes no second audit row.
-  if (await resolveIncidentRow(ctx.env.DB, id, ctx.clock.now())) {
-    clearPublicStatusMemo(ctx.env.DB);
-    await recordAudit(ctx, {
-      ...auditActor(actor),
-      action: 'status.incident.resolve',
-      targetType: 'status_incident',
-      targetId: id,
-    });
-  }
+  // One batch. `changes()` is the UPDATE's row count, so a second resolve changes nothing and writes no audit
+  // row, and a failed audit rolls the resolve back so a retry still audits it.
+  await ctx.env.DB.batch([
+    resolveIncidentStmt(ctx.env.DB, id, ctx.clock.now()),
+    auditStmtWhere(
+      ctx.env.DB,
+      ctx,
+      {
+        ...auditActor(actor),
+        action: 'status.incident.resolve',
+        targetType: 'status_incident',
+        targetId: id,
+      },
+      'changes() > 0',
+      [],
+    ),
+  ]);
+  clearPublicStatusMemo(ctx.env.DB);
   const after = await getIncident(ctx.env.DB, id);
   return toDto(after ?? existing);
 }

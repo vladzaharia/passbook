@@ -42,21 +42,21 @@ export function reportDenied(
 }
 
 /**
- * Logs a key refused at the route gate (401 INVALID_API_KEY, 403 MISSING_SCOPE) with a stable code. Anyone can
- * send an unknown key, so that case carries only the non-secret lookup prefix, never the token, and it is not
- * audited (see `reportDenied`); a known key carries its id.
+ * Notes a key refused at the route gate (401 INVALID_API_KEY, 403 MISSING_SCOPE) on the request, so the one
+ * `request.done` line the 4xx already writes carries a stable code (a second line would double the log volume
+ * of an unauthenticated flood). An unknown key carries only the non-secret lookup prefix, never the token; it
+ * is not audited (see `reportDenied`). A known key carries its id.
  */
-export function logKeyRefused(
+export function noteKeyRefused(
   c: Context<AppBindings>,
   refusal:
     | { code: 'INVALID_API_KEY'; token: string }
     | { code: 'MISSING_SCOPE'; keyId: string; scope: string | null },
 ): void {
-  const route = c.req.matchedRoutes.findLast((r) => r.method !== 'ALL')?.path ?? c.req.routePath;
-  serviceContext(c).log.info(
-    'auth.key_refused',
+  c.set(
+    'refusal',
     refusal.code === 'INVALID_API_KEY'
-      ? { code: refusal.code, keyPrefix: apiKeyPrefixOf(refusal.token), route }
-      : { code: refusal.code, keyId: refusal.keyId, scope: refusal.scope, route },
+      ? { code: refusal.code, keyPrefix: apiKeyPrefixOf(refusal.token) }
+      : { code: refusal.code, keyId: refusal.keyId, scope: refusal.scope },
   );
 }

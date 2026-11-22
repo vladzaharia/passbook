@@ -1,4 +1,4 @@
-import { all, first, run } from '../../platform/db.ts';
+import { all, first, stmt } from '../../platform/db.ts';
 
 export interface IncidentRow {
   id: string;
@@ -25,22 +25,26 @@ export const getIncident = (db: D1Database, id: string) =>
     [id],
   );
 
-export const insertIncident = (
-  db: D1Database,
-  row: Omit<IncidentRow, 'resolved_at'> & { resolved_at?: null },
-) =>
-  run(
+/** The admin list: every open note first (an old one must stay resolvable), then the recent resolved ones. */
+export const adminIncidents = (db: D1Database, since: number) =>
+  all<IncidentRow>(
+    db,
+    `SELECT id, title, note, component, impact, started_at, resolved_at FROM status_incidents
+     WHERE resolved_at IS NULL OR resolved_at >= ?
+     ORDER BY resolved_at IS NULL DESC, started_at DESC LIMIT 100`,
+    [since],
+  );
+
+export const insertIncidentStmt = (db: D1Database, row: Omit<IncidentRow, 'resolved_at'>) =>
+  stmt(
     db,
     `INSERT INTO status_incidents (id, title, note, component, impact, started_at) VALUES (?, ?, ?, ?, ?, ?)`,
     [row.id, row.title, row.note, row.component, row.impact, row.started_at],
   );
 
-/** Only an open note resolves, so a second resolve keeps the first time. Returns whether a row changed. */
-export async function resolveIncidentRow(db: D1Database, id: string, at: number): Promise<boolean> {
-  const res = await run(
-    db,
-    'UPDATE status_incidents SET resolved_at = ? WHERE id = ? AND resolved_at IS NULL',
-    [at, id],
-  );
-  return res.changes > 0;
-}
+/** Only an open note resolves, so a second resolve keeps the first time and changes no row. */
+export const resolveIncidentStmt = (db: D1Database, id: string, at: number) =>
+  stmt(db, 'UPDATE status_incidents SET resolved_at = ? WHERE id = ? AND resolved_at IS NULL', [
+    at,
+    id,
+  ]);

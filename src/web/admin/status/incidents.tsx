@@ -74,7 +74,7 @@ function OpenIncidentDialog({
         component: f.component === 'all' ? null : (f.component as never),
         impact: f.impact,
       });
-      toast.success('Note is on the public page');
+      toast.success('Note published. The public page updates within 30 s');
       setF(EMPTY);
       close();
     } catch (cause) {

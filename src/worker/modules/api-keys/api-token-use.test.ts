@@ -278,7 +278,7 @@ describe('rate tier', () => {
 });
 
 describe('a key refused at the route gate', () => {
-  it('logs a stable code: the prefix of an unknown key, the id of a known key without the scope', async () => {
+  it('logs a stable code on the one request.done line: the prefix of an unknown key, the id of a known key without the scope', async () => {
     const k = await makeApiKey(f(), { orgId: org.id, scopes: ['passes:write'] });
     const seen: string[] = [];
     const spy = vi
@@ -296,7 +296,8 @@ describe('a key refused at the route gate', () => {
     }
     const logs = seen
       .map((l) => JSON.parse(l) as Record<string, unknown>)
-      .filter((l) => l.event === 'auth.key_refused');
+      .filter((l) => l.event === 'request.done' && l.code !== undefined);
+    expect(seen.filter((l) => l.includes('auth.key_refused'))).toEqual([]);
     expect(logs.map((l) => l.code)).toEqual(['INVALID_API_KEY', 'MISSING_SCOPE']);
     expect(logs[0]).toMatchObject({ keyPrefix: k.secret.slice(4, 12) });
     expect(logs[1]).toMatchObject({ keyId: k.id, scope: 'passes:read' });

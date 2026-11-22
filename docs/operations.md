@@ -623,7 +623,7 @@ Public status incident notes are rows of `status_incidents`. Platform admins ope
 
 `component` is `api`, `apple_push`, `email`, `webhooks`, `google`, `samsung` or none (the whole service); `impact` is `notice`, `degraded` or `outage` (an open degraded or outage note moves the page's overall state). A resolved note stays listed for 14 days.
 
-Refused API keys are logged as `auth.key_refused` with `code` `INVALID_API_KEY` (the key's 8-character prefix, never the token) or `MISSING_SCOPE` (key id and the scope it lacked).
+A refused API key adds fields to its `request.done` line: `code` `INVALID_API_KEY` (the key's 8-character prefix, never the token) or `MISSING_SCOPE` (key id and the scope it lacked).
 
 ### Console sign-in strength
 

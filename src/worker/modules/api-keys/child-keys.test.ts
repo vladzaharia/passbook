@@ -368,6 +368,41 @@ describe('the database refuses a child wider than its parent', () => {
     expect(await reach(p.id)).toEqual([a.id]);
     expect(await reach(kid)).toEqual([a.id]);
   });
+
+  // The style clause of 0195 (pres/psty): a child naming no styles is held to its parent's style limit.
+  it('a limited child naming nothing reaches only templates inside its parent`s style limit', async () => {
+    const ok = makeTemplate({ id: `ok-${f().ids.id()}`, orgId: org.id }).resolved;
+    const bad = makeTemplate({ id: `bad-${f().ids.id()}`, orgId: org.id }).resolved;
+    await persistTemplate(f(), ok);
+    await persistTemplate(f(), bad);
+    await run(h.env.DB, 'UPDATE templates SET styles = ? WHERE id = ?', ['["generic"]', ok.id]);
+    await run(h.env.DB, 'UPDATE templates SET styles = ? WHERE id = ?', [
+      '["generic","coupon"]',
+      bad.id,
+    ]);
+    const p = await makeApiKey(f(), {
+      orgId: org.id,
+      scopes: ['passes:read', 'api-keys:write'],
+      passStyles: ['generic'],
+    });
+    const kid = f().ids.id();
+    await run(
+      h.env.DB,
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, restricted, parent_key_id)
+       VALUES (?, ?, 'c', ?, ?, '["passes:read"]', 'live', ?, 'service', 1, ?)`,
+      [kid, org.id, kid.slice(-8), `h${kid}`, h.clock.now(), p.id],
+    );
+    const reach = async (key: string) =>
+      (
+        await all<{ id: string }>(
+          h.env.DB,
+          'SELECT id FROM key_templates WHERE key_id = ? AND id IN (?, ?)',
+          [key, ok.id, bad.id],
+        )
+      ).map((r) => r.id);
+    expect(await reach(p.id)).toEqual([ok.id]);
+    expect(await reach(kid)).toEqual([ok.id]);
+  });
 });
 
 describe('a limited parent, through the service', () => {
