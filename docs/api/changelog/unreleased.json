@@ -240,6 +240,14 @@
     "note": "GET /developer/access answers yes, none or email, with signInUrl for an email session."
   },
   {
+    "key": "GET /api/v1/developer/home 200.calls[].client: field added",
+    "class": "additive",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.calls[].client: field added",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/developer/home new operation",
     "class": "additive",
     "operationId": "developer.getHome",
