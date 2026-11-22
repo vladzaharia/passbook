@@ -13,6 +13,7 @@ import {
 import { useMemo, useRef, useState } from 'react';
 import type { EventGroup, PassEventDto } from '@/shared/contracts/events.ts';
 import type { PassDetailDto } from '@/shared/contracts/passes.ts';
+import { pluralize } from '@/web/lib/format.ts';
 import { cn } from '../../../lib/cn.ts';
 import { useInsertHighlight } from '../../../lib/motion.ts';
 import {
@@ -159,7 +160,7 @@ function Row({ row, now, isNew }: { row: SyncRow; now: number; isNew: boolean })
               onClick={() => setOpen((o) => !o)}
               className="mt-1 inline-flex items-center gap-1 rounded-sm text-xs text-fg-muted hover:text-fg-strong focus-visible:outline-2 focus-visible:outline-focus pointer-coarse:min-h-11"
             >
-              {open ? 'Hide' : 'Show'} {row.events.length} events
+              {open ? 'Hide' : 'Show'} {pluralize(row.events.length, 'event')}
               <ChevronDown
                 aria-hidden
                 className={cn('wl-chevron size-3.5', open && 'rotate-180')}

@@ -24,4 +24,11 @@ describe('scanner labels', () => {
     expect(formatCountdown(5_000)).toBe('0:05');
     expect(formatCountdown(-40)).toBe('0:00');
   });
+
+  it('counts watched scanners in the singular and plural', () => {
+    const watch = (scannerIds: string[]) =>
+      s({ deviceRole: 'monitor', watch: { allOrg: false, scannerIds } as never });
+    expect(acceptsText(watch(['a']))).toBe('1 scanner');
+    expect(acceptsText(watch(['a', 'b']))).toBe('2 scanners');
+  });
 });

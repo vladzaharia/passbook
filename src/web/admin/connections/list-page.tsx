@@ -137,7 +137,7 @@ export function ConnectionsListPage({
             to="/admin/passes"
             search={{ connectionId: row.original.id }}
             onClick={showLive}
-            aria-label={`${row.original.passCount} passes from ${row.original.name}`}
+            aria-label={`${row.original.passCount} ${row.original.passCount === 1 ? 'pass' : 'passes'} from ${row.original.name}`}
           />
         ),
       },
