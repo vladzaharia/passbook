@@ -4,7 +4,10 @@
     "request": {
       "url": "https://hooks.example.com/passbook",
       "description": "Order system",
-      "eventTypes": ["pass.issued", "pass.scanned"]
+      "eventTypes": [
+        "pass.issued",
+        "pass.scanned"
+      ]
     },
     "response": {
       "endpoint": {
@@ -14,7 +17,10 @@
         "url": "https://hooks.example.com/passbook",
         "urlMasked": "https://hooks.example.com/…",
         "description": "Order system",
-        "eventTypes": ["pass.issued", "pass.scanned"],
+        "eventTypes": [
+          "pass.issued",
+          "pass.scanned"
+        ],
         "templateIds": null,
         "apiVersion": "2026-12-01",
         "status": "active",
@@ -55,7 +61,10 @@
           "url": "https://hooks.example.com/passbook",
           "urlMasked": "https://hooks.example.com/…",
           "description": "Order system",
-          "eventTypes": ["pass.issued", "pass.scanned"],
+          "eventTypes": [
+            "pass.issued",
+            "pass.scanned"
+          ],
           "templateIds": null,
           "apiVersion": "2026-12-01",
           "status": "active",
@@ -82,7 +91,10 @@
       "url": "https://hooks.example.com/passbook",
       "urlMasked": "https://hooks.example.com/…",
       "description": "Order system",
-      "eventTypes": ["pass.issued", "pass.scanned"],
+      "eventTypes": [
+        "pass.issued",
+        "pass.scanned"
+      ],
       "templateIds": null,
       "apiVersion": "2026-12-01",
       "status": "active",
@@ -109,7 +121,10 @@
       "url": "https://hooks.example.com/passbook",
       "urlMasked": "https://hooks.example.com/…",
       "description": "Order system",
-      "eventTypes": ["pass.issued", "pass.scanned"],
+      "eventTypes": [
+        "pass.issued",
+        "pass.scanned"
+      ],
       "templateIds": null,
       "apiVersion": "2026-12-01",
       "status": "paused",
@@ -226,7 +241,10 @@
   "webhooks.postWebhookEndpointsCapture": {
     "description": "Returns the capture endpoint of your sandbox, making it if there is none. A capture endpoint stores the signed requests PassBook would send, so you can read and verify them; it sends nothing and takes nothing from outside. Sandbox orgs in Test mode only. The signing `secret` is shown once, on creation; later calls return `secret: null`.",
     "request": {
-      "eventTypes": ["pass.issued", "pass.updated"]
+      "eventTypes": [
+        "pass.issued",
+        "pass.updated"
+      ]
     },
     "response": {
       "endpoint": {
@@ -236,7 +254,11 @@
         "url": "https://capture.invalid/",
         "urlMasked": "capture.invalid",
         "description": "Test capture endpoint",
-        "eventTypes": ["pass.issued", "pass.updated", "pass.scanned"],
+        "eventTypes": [
+          "pass.issued",
+          "pass.updated",
+          "pass.scanned"
+        ],
         "templateIds": null,
         "apiVersion": "2026-12-01",
         "status": "active",
@@ -336,6 +358,7 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "type": "webhook.test",
           "ok": true,
           "status": 200,
           "errorCode": null,

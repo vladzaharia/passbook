@@ -21,6 +21,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { actorOf } from '../../platform/context.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
@@ -60,10 +61,14 @@ function assertLive(c: C): void {
 /** /api/v1/connections */
 export const connectionsRoutes = createRouter();
 registerConnectionPreviewRoute(connectionsRoutes);
+// The preview route (above) takes read scopes on a POST; this guard documents the rest.
 guard(
   connectionsRoutes,
-  requireTenantSessionOrApiKey(
-    methodScope({ read: 'connections:read', write: 'connections:write' }),
+  declareKeyAccess(
+    requireTenantSessionOrApiKey(
+      methodScope({ read: 'connections:read', write: 'connections:write' }),
+    ),
+    { read: ['connections:read'], write: ['connections:write'], only: /^(?!.*\/preview$)/ },
   ),
 );
 // A new webhook secret is a credential: a recent sign-in, for a person (not a key).

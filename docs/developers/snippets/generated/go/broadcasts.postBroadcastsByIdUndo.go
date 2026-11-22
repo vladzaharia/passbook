@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -16,12 +15,7 @@ func main() {
 		panic(err)
 	}
 
-	var body passbook.BroadcastsUndoBody
-	if err := json.Unmarshal([]byte(`{}`), &body); err != nil {
-		panic(err)
-	}
-
-	result, err := pb.Broadcasts.Undo(ctx, "0193a1b2-7c00-7000-8000-0000000000e1", &body)
+	result, err := pb.Broadcasts.Undo(ctx, "0193a1b2-7c00-7000-8000-0000000000e1")
 	if err != nil {
 		panic(err)
 	}
