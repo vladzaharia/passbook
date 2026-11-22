@@ -3259,13 +3259,13 @@
   },
   "MATCH_TOO_BROAD": {
     "title": "Too many passes match",
-    "when": "A selection by filter matches more than 20,000 passes.",
+    "when": "A selection by filter or import matches more than 20,000 passes. Change runs check this when previewed and when made.",
     "fix": "Narrow the filter and send the request again.",
     "retryable": false
   },
   "SELECTION_CHANGED": {
     "title": "Selection changed",
-    "when": "The passes the request matches now differ from expectCount (a change run allows 2%).",
+    "when": "The passes the request matches now differ from expectCount. A change run allows 2%, because it starts a moment after it is made; a bulk run allows none.",
     "fix": "Check the new count, then send it as expectCount.",
     "retryable": false
   },

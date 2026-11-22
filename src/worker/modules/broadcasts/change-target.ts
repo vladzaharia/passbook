@@ -1,7 +1,7 @@
 import { BROADCAST_MAX_TEMPLATES } from '../../../shared/contracts/broadcasts.ts';
 import type { CreateBroadcastBody } from '../../../shared/contracts/broadcasts-change.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { selectionDrifted } from '../../../shared/contracts/pass-selection.ts';
+import { changeRunDrifted, PASS_SELECTION_MAX } from '../../../shared/contracts/pass-selection.ts';
 import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { targetFilter } from './apply.ts';
@@ -74,15 +74,27 @@ export async function prepareTarget(
       'BROADCAST_TOO_MANY_TEMPLATES',
     );
   const prepared: PreparedBody = { ...body, target: { ...target, templateIds } };
-  if (target.expectCount !== undefined) {
+  // A filter or an import is counted here; the explicit ids are already bounded by the schema.
+  if (!target.passIds || target.expectCount !== undefined) {
     const count = await countSelection(ctx, mode, prepared);
-    if (selectionDrifted(target.expectCount, count))
+    assertNotTooBroad(count);
+    if (target.expectCount !== undefined && changeRunDrifted(target.expectCount, count))
       throw new ConflictError(
         `The selection is now ${count} passes, not ${target.expectCount}. Review it again.`,
         'SELECTION_CHANGED',
       );
   }
   return prepared;
+}
+
+/** A run takes at most 20,000 passes: preview and create refuse more, so none fails at its start. */
+export function assertNotTooBroad(count: number): void {
+  if (count > PASS_SELECTION_MAX)
+    throw new ValidationError(
+      `More than ${PASS_SELECTION_MAX.toLocaleString('en-US')} passes match. Narrow the filter.`,
+      [],
+      'MATCH_TOO_BROAD',
+    );
 }
 
 /** Live passes the stored selection matches now. */

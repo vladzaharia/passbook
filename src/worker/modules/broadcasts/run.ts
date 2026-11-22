@@ -2,7 +2,7 @@ import {
   type BroadcastState,
   BroadcastTargetSchema,
 } from '../../../shared/contracts/broadcasts.ts';
-import { selectionDrifted } from '../../../shared/contracts/pass-selection.ts';
+import { changeRunDrifted } from '../../../shared/contracts/pass-selection.ts';
 import { jobGrant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -79,7 +79,7 @@ export async function startedBroadcast(
     ? await countRevertable(ctx.env.DB, stored.revertOf, row.org_id, row.mode)
     : await countTargeted(ctx.env.DB, filter, ctx.clock.now());
   // The admin confirmed a count; a selection that moved since (a schedule, a retry) applies nothing.
-  if (stored.expectCount !== undefined && selectionDrifted(stored.expectCount, targeted))
+  if (stored.expectCount !== undefined && changeRunDrifted(stored.expectCount, targeted))
     return refuse('SELECTION_CHANGED');
   await setTargeted(ctx.env.DB, broadcastId, targeted);
   await finishRun(ctx.env.DB, instanceId, 'running', ctx.clock.now());

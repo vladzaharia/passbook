@@ -164,6 +164,10 @@ export interface BroadcastListFilter {
   kind?: BroadcastKind | undefined;
   /** Only the runs of this automatic message. */
   ruleId?: string | undefined;
+  /** Only the undo run of this change. */
+  parentId?: string | undefined;
+  /** Only the run that resumed this change. */
+  retryOf?: string | undefined;
   cursor?: string | undefined;
   limit: number;
 }
@@ -186,6 +190,14 @@ export async function listBroadcasts(
   if (f.ruleId) {
     where.push('rule_id = ?');
     params.push(f.ruleId);
+  }
+  if (f.parentId) {
+    where.push('parent_id = ?');
+    params.push(f.parentId);
+  }
+  if (f.retryOf) {
+    where.push('retry_of = ?');
+    params.push(f.retryOf);
   }
   if (f.cursor) {
     where.push('id < ?');

@@ -30,6 +30,9 @@ function targetWhere(filter: TargetFilter, now: number) {
   const { where, params } = passFilterSql({ ...criteria, excludeRemoved: true, status: 'active' });
   where.push('org_id = ?', 'mode = ?');
   params.push(orgId, mode);
+  // The passes list hides a pass whose credential is moving to another holder: a run cannot reach it either.
+  where.push(`NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
+    WHERE t.pass_id = passes.id AND t.state = 'pending')`);
   if (filter.scan) {
     if ('eventId' in filter.scan) {
       where.push(`${filter.scan.checkedIn ? '' : 'NOT '}EXISTS (

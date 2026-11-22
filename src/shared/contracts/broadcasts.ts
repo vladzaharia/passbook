@@ -223,6 +223,10 @@ export const BroadcastListQuerySchema = PageQuerySchema.extend({
   origin: z.enum(['manual', 'rule']).default('manual'),
   /** Only messages, or only field changes (the console's Messages list hides changes by default). */
   kind: BroadcastKindSchema.optional(),
+  /** Only the undo run of this change. */
+  parentId: IdSchema.optional(),
+  /** Only the run that resumed this change. */
+  retryOf: IdSchema.optional(),
 });
 export const BroadcastListSchema = pageOf(BroadcastSchema);
 

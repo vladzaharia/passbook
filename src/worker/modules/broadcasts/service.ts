@@ -1,7 +1,7 @@
 import type { BroadcastDto } from '../../../shared/contracts/broadcasts.ts';
 import type { CreateBroadcastBody } from '../../../shared/contracts/broadcasts-change.ts';
 import type { Mode } from '../../../shared/contracts/common.ts';
-import { selectionDrifted } from '../../../shared/contracts/pass-selection.ts';
+import { changeRunDrifted } from '../../../shared/contracts/pass-selection.ts';
 import { batch } from '../../platform/db.ts';
 import { entitlementsOf } from '../../platform/entitlements.ts';
 import {
@@ -79,7 +79,7 @@ export async function insertBroadcast(
   if (resume) {
     // A resumed run takes what its parent left: the count the admin saw is that remainder.
     const left = (await resumableCount(ctx.env.DB, resume.parentId, body.orgId, mode)).left;
-    if (seen !== undefined && selectionDrifted(seen, left))
+    if (seen !== undefined && changeRunDrifted(seen, left))
       throw new ConflictError(
         `${left} passes are left, not ${seen}. Review it again.`,
         'SELECTION_CHANGED',
