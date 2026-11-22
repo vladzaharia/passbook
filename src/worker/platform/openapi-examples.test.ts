@@ -3,8 +3,8 @@ import { fakeAuth } from '../../../test/helpers/index.ts';
 import { validateAgainst } from '../../../test/helpers/openapi-validate.ts';
 import { exampleFailures, examplesOf } from '../../../tools/lib/example-lint.ts';
 import { createApp } from '../app.ts';
-import { buildOpenApiDocument } from './openapi-document.ts';
 import { apiKeyPrefixOf } from './api-key-token.ts';
+import { buildOpenApiDocument } from './openapi-document.ts';
 import { REFERENCE } from './openapi-reference.ts';
 
 type Media = { schema?: object };

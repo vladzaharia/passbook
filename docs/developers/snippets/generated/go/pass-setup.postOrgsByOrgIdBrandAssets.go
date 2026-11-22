@@ -20,7 +20,7 @@ func main() {
 	if err := json.Unmarshal([]byte(`{
   "slot": "logo",
   "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
-  "x2": "x2"
+  "x2": "logo@2x.png"
 }`), &body); err != nil {
 		panic(err)
 	}

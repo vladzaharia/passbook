@@ -9,7 +9,7 @@ result = pb.orgs.stage_brand_asset(
     {
         "slot": "logo",
         "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
-        "x2": "x2",
+        "x2": "logo@2x.png",
     },
 )
 print(result)

@@ -3,7 +3,6 @@ import {
   API,
   CANON,
   hex,
-  pem,
   IDS,
   KEY_PREFIX,
   KIND_OF_TAG,
@@ -11,6 +10,7 @@ import {
   NAMES,
   ORG,
   ORG_SLUG,
+  pem,
   SITE,
   T,
   TEMPLATE,
@@ -799,7 +799,8 @@ function fixState(out: Json, props: Json): void {
   for (const [k, v] of Object.entries(out))
     if (typeof v === 'number' && Number.isInteger(v) && v >= 2 && v < 1e12)
       seen.set(v, [...(seen.get(v) ?? []), k]);
-  for (const [v, keys] of seen) if (keys.length >= 3) keys.forEach((k, i) => (out[k] = v + i * 3));
+  for (const [v, keys] of seen)
+    if (keys.length >= 3) for (const [i, k] of keys.entries()) out[k] = v + i * 3;
   // A total is the sum of its parts.
   const parts = Object.keys(out).filter(
     (k) =>

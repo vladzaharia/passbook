@@ -12,7 +12,7 @@ curl -X POST "https://passbook.mobile/api/v1/connections" \
   "secrets": {
     "sheetsToken": "••••3f9c"
   },
-  "webhookSecret": "whsec_demo571d4d450b1de2be7856efd7cafc",
+  "webhookSecret": "whsec_demo_northwind_571d4d",
   "mapping": {
     "name": {
       "from": "Name"
