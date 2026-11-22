@@ -5,7 +5,7 @@ import {
   ChangeRunPreviewSchema,
 } from '@/shared/contracts/broadcasts-change.ts';
 import { api } from '../../../lib/api.ts';
-import { broadcastKeys, broadcastQuery } from '../../messages/api.ts';
+import { broadcastKeys } from '../../messages/api.ts';
 
 const path = (id: string) => `/api/v1/broadcasts/${encodeURIComponent(id)}`;
 
@@ -78,8 +78,6 @@ export function useChangeActions() {
     }),
   };
 }
-
-export { broadcastQuery };
 
 /** The run that follows a change: its undo (`parentId`) or its resume (`retryOf`), if there is one. */
 export function useFollowRun(
