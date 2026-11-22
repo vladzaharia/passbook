@@ -1,4 +1,5 @@
-import { BadRequestError, ConflictError, ValidationError } from '../../platform/errors.ts';
+import { ConflictError, ValidationError } from '../../platform/errors.ts';
+import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -8,15 +9,11 @@ import { idempotencyRow, reclaimIdempotencyKey, settleIdempotencyKey } from './r
 const DONE = 'done:';
 
 /** The trimmed `Idempotency-Key` header, or undefined when absent. */
-export function idempotencyKeyOf(header: string | undefined): string | undefined {
-  const raw = header?.trim();
-  if (raw === undefined) return undefined;
-  if (raw.length < 1 || raw.length > 200)
-    throw new BadRequestError(
-      'Idempotency-Key must be 1 to 200 characters.',
-      'IDEMPOTENCY_KEY_INVALID',
-    );
-  return raw;
+export function idempotencyKeyOf(
+  header: string | undefined,
+  allowed: readonly string[] = [],
+): string | undefined {
+  return idempotencyKeyHeader(header, allowed);
 }
 
 const IN_PROGRESS_MS = 15 * 60_000;
@@ -66,7 +63,9 @@ export async function sendOnce<T>(
         'IDEMPOTENCY_KEY_REUSED',
       );
     if (existing.resource_id?.startsWith(DONE)) {
-      if (input.shared && !(await idempotencyRow(db, input.orgId, ownKey)))
+      // The claimant's own row counts only as a finished Tell claim of this same request.
+      const own = input.shared ? await idempotencyRow(db, input.orgId, ownKey) : null;
+      if (input.shared && !(own?.request_hash === hash && own.resource_id === `${DONE}{}`))
         throw new ConflictError('Holders were already told for this release.', 'TELL_ALREADY_SENT');
       return { replayed: true, value: JSON.parse(existing.resource_id.slice(DONE.length)) as T };
     }

@@ -1085,7 +1085,7 @@
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
     "change": "idempotency-key rollout-tell reserved",
-    "note": "Idempotency-Key values starting rollout-tell: are reserved for Tell holders; other uses are 422, a second sender 409."
+    "note": "Idempotency-Key prefixes broadcast-create:, bulk-send:, rollout-tell: are reserved on every route (422)."
   },
   {
     "key": "POST /api/v1/broadcasts optional parameter header:Idempotency-Key added",
@@ -1574,6 +1574,14 @@
     "op": "POST /api/v1/pass-imports/{id}/undo",
     "change": "new operation",
     "note": "Undoes an ended import for 24 hours: removes its unedited passes, restores the ones it updated, cancels held mail."
+  },
+  {
+    "key": "POST /api/v1/passes idempotency-key reserved prefixes",
+    "class": "notable",
+    "operationId": "passes.postPasses",
+    "op": "POST /api/v1/passes",
+    "change": "idempotency-key reserved prefixes",
+    "note": "Idempotency-Key cannot start with broadcast-create:, bulk-send: or rollout-tell: (422 IDEMPOTENCY_KEY_RESERVED)."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",

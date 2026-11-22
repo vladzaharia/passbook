@@ -23,7 +23,8 @@ export async function tellHoldersKey(
   if (body.kind !== 'message' || !body.target.version || !templateId || more.length > 0)
     throw reserved();
   const release = await activeRelease(ctx, templateId, body.orgId, mode, 'apple');
-  if (!release || key !== `${PREFIX}${release.id}`) throw reserved();
+  if (!release || key !== `${PREFIX}${release.id}` || body.target.version !== release.version)
+    throw reserved();
   return key;
 }
 

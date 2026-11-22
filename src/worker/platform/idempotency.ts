@@ -40,8 +40,28 @@ export function principalOf(auth: AuthContext): string {
   return `scanner:${auth.scannerId}`;
 }
 
+/**
+ * Key prefixes the server writes itself into `idempotency_keys`: the scopes of `sendOnce`, and Tell
+ * holders' shared reservation. A client key that starts with one could plant or block a server row.
+ */
+export const RESERVED_KEY_PREFIXES = ['broadcast-create:', 'bulk-send:', 'rollout-tell:'] as const;
+
+/** 422 `IDEMPOTENCY_KEY_RESERVED` for a client key that starts with an internal prefix (except `allowed`). */
+export function assertKeyNotReserved(key: string, allowed: readonly string[] = []): void {
+  const prefix = RESERVED_KEY_PREFIXES.find((p) => key.startsWith(p));
+  if (prefix && !allowed.includes(prefix))
+    throw new ValidationError(
+      `Idempotency-Key cannot start with "${prefix}": that prefix is reserved.`,
+      [],
+      'IDEMPOTENCY_KEY_RESERVED',
+    );
+}
+
 /** The trimmed `Idempotency-Key` header, or undefined when absent. */
-export function idempotencyKeyHeader(header: string | undefined): string | undefined {
+export function idempotencyKeyHeader(
+  header: string | undefined,
+  allowed: readonly string[] = [],
+): string | undefined {
   const raw = header?.trim();
   if (raw === undefined) return undefined;
   if (raw.length < 1 || raw.length > 200)
@@ -49,6 +69,7 @@ export function idempotencyKeyHeader(header: string | undefined): string | undef
       'Idempotency-Key must be 1 to 200 characters.',
       'IDEMPOTENCY_KEY_INVALID',
     );
+  assertKeyNotReserved(raw, allowed);
   return raw;
 }
 

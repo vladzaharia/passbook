@@ -6,7 +6,7 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
 import { BadRequestError, ConflictError, ValidationError } from '../../platform/errors.ts';
-import { idempotentJson, principalOf } from '../../platform/idempotency.ts';
+import { idempotencyKeyHeader, idempotentJson, principalOf } from '../../platform/idempotency.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { issuanceEmailOutcome } from '../delivery/issuance-outcome.ts';
 import { createPassIdempotent } from './create.ts';
@@ -61,12 +61,7 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
         );
       const ctx = svc(c);
       const authority = await tenantAuthorityOf(ctx, auth, orgId, 'passes:operate');
-      const key = c.req.header('idempotency-key')?.trim();
-      if (key !== undefined && (key.length < 1 || key.length > 200))
-        throw new BadRequestError(
-          'Idempotency-Key must be 1 to 200 characters.',
-          'IDEMPOTENCY_KEY_INVALID',
-        );
+      const key = idempotencyKeyHeader(c.req.header('idempotency-key'));
       const pinned = [body.templateVersion, body.releaseId, body.releaseGeneration];
       let review: { templateVersion: string; releaseId: string; releaseGeneration: number };
       if (auth.kind === 'api_key' && pinned.every((v) => v === undefined)) {

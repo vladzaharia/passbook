@@ -188,9 +188,13 @@ describe('a message to the passes on one version', () => {
         },
         kit.env,
       );
+    let version = 'v1';
+    beforeAll(async () => {
+      version = (await kit.makePass()).templateVersion;
+    });
     const tell = (text: string, extra: Record<string, unknown> = {}) => ({
       kind: 'message',
-      target: { templateIds: [kit.messaging.id], version: 'v1' },
+      target: { templateIds: [kit.messaging.id], version },
       patch: { message: text },
       ...extra,
     });
@@ -230,6 +234,38 @@ describe('a message to the passes on one version', () => {
       expect(sent).toEqual([{ id }]);
     });
 
+    it('does not honour a claimant row it did not write', async () => {
+      await kit.makePass();
+      const fresh = await broadcastAuth(kit, ORIGIN);
+      const other = await fresh.apiKey({ orgId: kit.org.id, scopes: ['messages:write'] });
+      const key = `rollout-tell:${await releaseId()}`;
+      const sent = await post2(fresh.admin(), key, tell('Tell once per release.'));
+      expect(sent.status).toBe(201);
+      // This principal's own row at the claimant key, written by something else (a pass create once could).
+      const keyRow = await first<{ id: string }>(
+        kit.env.DB,
+        'SELECT id FROM api_keys ORDER BY created_at DESC, id DESC LIMIT 1',
+      );
+      await run(
+        kit.env.DB,
+        `INSERT INTO idempotency_keys (org_id, key, request_hash, resource_id, created_at)
+         VALUES (?, ?, 'other-hash', 'a-pass-id', ?)`,
+        [kit.org.id, `broadcast-create:live:${keyRow?.id}:${key}`, kit.clock.now()],
+      );
+      const second = await post2(other, key, tell('Tell once per release.'));
+      expect(second.status).toBe(409);
+      expect(await second.json()).toMatchObject({ code: 'TELL_ALREADY_SENT' });
+    });
+
+    it('refuses a client key that borrows another internal prefix', async () => {
+      const fresh = await broadcastAuth(kit, ORIGIN);
+      for (const prefix of ['broadcast-create:', 'bulk-send:']) {
+        const res = await post2(fresh.admin(), `${prefix}live:x`, tell('x'));
+        expect(res.status).toBe(422);
+        expect(await res.json()).toMatchObject({ code: 'IDEMPOTENCY_KEY_RESERVED' });
+      }
+    });
+
     it('reserves the prefix: a wrong release, or a body that is not that message, is 422', async () => {
       const fresh = await broadcastAuth(kit, ORIGIN);
       const right = `rollout-tell:${await releaseId()}`;
@@ -248,9 +284,14 @@ describe('a message to the passes on one version', () => {
         patch: { gate: 'A' },
       });
       expect(change.status).toBe(422);
+      const otherVersion = await post2(fresh.admin(), right, {
+        ...tell('x'),
+        target: { templateIds: [kit.messaging.id], version: 'some-other-version' },
+      });
+      expect(otherVersion.status).toBe(422);
       const two = await post2(fresh.admin(), right, {
         ...tell('x'),
-        target: { templateIds: [kit.messaging.id, kit.plain.id], version: 'v1' },
+        target: { templateIds: [kit.messaging.id, kit.plain.id], version },
       });
       expect(two.status).toBe(422);
     });

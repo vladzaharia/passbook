@@ -148,7 +148,7 @@ register(
         },
         ...(body.kind === 'change' ? { limit: () => limitChanges(ctx, authority) } : {}),
       });
-    const key = idempotencyKeyOf(c.req.header('idempotency-key'));
+    const key = idempotencyKeyOf(c.req.header('idempotency-key'), ['rollout-tell:']);
     if (key === undefined) return c.json(await create(), 201);
     const tellKey = await tellHoldersKey(ctx, mode, body, key);
     const { value } = await sendOnce(

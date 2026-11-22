@@ -1407,8 +1407,6 @@
         400
       ],
       "modules": [
-        "delivery",
-        "passes",
         "platform"
       ]
     },
@@ -1427,7 +1425,8 @@
         422
       ],
       "modules": [
-        "broadcasts"
+        "broadcasts",
+        "platform"
       ]
     },
     {

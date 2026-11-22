@@ -745,7 +745,7 @@
   },
   "IDEMPOTENCY_KEY_RESERVED": {
     "title": "Idempotency-Key reserved",
-    "when": "The key starts with rollout-tell:, which only the console's Tell holders may use, for the template's active release.",
+    "when": "The key starts with broadcast-create:, bulk-send: or rollout-tell:, which the server uses itself (rollout-tell: only for Tell holders on the active release).",
     "fix": "Use another Idempotency-Key.",
     "retryable": false
   },

@@ -113,6 +113,42 @@ async function records(passId: string) {
   };
 }
 
+describe('reserved Idempotency-Key prefixes', () => {
+  const code = async (res: Response) => ((await res.json()) as { code: string }).code;
+
+  it('POST /passes refuses the keys the server writes itself', async () => {
+    const actor = await operator();
+    for (const prefix of ['broadcast-create:', 'bulk-send:', 'rollout-tell:']) {
+      const res = await issue(actor.session.headers, body(), `${prefix}live:anything`);
+      expect(res.status).toBe(422);
+      expect(await code(res)).toBe('IDEMPOTENCY_KEY_RESERVED');
+    }
+    // An ordinary key still works.
+    expect((await issue(actor.session.headers, body(), kit.fx.ids.token(12))).status).toBe(201);
+  });
+
+  it('POST /passes/bulk (email) refuses them too', async () => {
+    const actor = await operator();
+    for (const prefix of ['broadcast-create:', 'bulk-send:', 'rollout-tell:']) {
+      const res = await app.request(
+        `${ORIGIN}/api/v1/passes/bulk`,
+        {
+          method: 'POST',
+          headers: {
+            ...actor.session.headers,
+            ...originUnlessKey(actor.session.headers, ORIGIN),
+            'content-type': 'application/json',
+            'idempotency-key': `${prefix}x`,
+          },
+          body: JSON.stringify({ orgId: kit.org.id, action: 'send_email', ids: [kit.fx.ids.id()] }),
+        },
+        kit.env,
+      );
+      expect(await code(res)).toBe('IDEMPOTENCY_KEY_RESERVED');
+    }
+  });
+});
+
 describe('pass create as a grant', () => {
   it('creates through a session, with its event and audit in the same commit', async () => {
     const actor = await operator();

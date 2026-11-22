@@ -43,6 +43,8 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
     },
     async (c) => {
       const body = c.req.valid('json');
+      // Refused before anything is looked up: a reserved key never reaches the table.
+      const key = idempotencyKeyOf(c.req.header('idempotency-key'));
       if (body.orgId) assertOrg(c, body.orgId);
       const ctx = svc(c);
       const scope = passScopeOf(c);
@@ -85,7 +87,6 @@ export function registerBulkRoutes(passesRoutes: ReturnType<typeof createRouter>
         bulkPassAction(ctx, actorFor(c), body, authorizedScope, authority, selection, () => {
           queued = true;
         });
-      const key = idempotencyKeyOf(c.req.header('idempotency-key'));
       if (key === undefined || body.action !== 'send_email') return c.json(await run());
       const { value } = await sendOnce(
         ctx,
