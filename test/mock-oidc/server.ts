@@ -47,6 +47,13 @@ oidc.addUser({
   name: 'E2E Builder',
   groups: ['wallet_users', 'passbook_developers'],
 });
+// The D12 onboarding journey's person: nothing else signs in as them, so their one sandbox is always fresh.
+oidc.addUser({
+  sub: 'e2e-onboard',
+  email: 'onboard@example.test',
+  name: 'E2E Onboard',
+  groups: ['wallet_users', 'passbook_developers'],
+});
 // In the developer group but no organization: gets Developers and no Admin.
 oidc.addUser({
   sub: 'e2e-developer',
