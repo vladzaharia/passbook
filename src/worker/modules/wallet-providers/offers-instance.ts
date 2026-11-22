@@ -1,3 +1,4 @@
+import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { WalletInstance } from './instance.ts';
 import {
@@ -65,3 +66,6 @@ export function channelOffSuccessor(instance: WalletInstance): {
       : null;
   return { hold, epoch: instance.channelEpoch + 1 };
 }
+
+export const walletOfferNotFound = () =>
+  new NotFoundError('This wallet offer is not available.', 'WALLET_OFFER_NOT_FOUND');

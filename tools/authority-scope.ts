@@ -430,6 +430,7 @@ export const JOB_FACTORY_IMPORTERS: Record<string, string | string[]> = {
     'src/worker/modules/developer/repo-grants.ts',
     'src/worker/modules/developer/repo-grants-reset.ts',
   ],
+  'wallet-first-tap': 'src/worker/modules/wallet-providers/offers.ts',
   'webhook-ingress': [
     'src/worker/modules/connections/repo-grants.ts',
     'src/worker/modules/connections/webhooks.ts',

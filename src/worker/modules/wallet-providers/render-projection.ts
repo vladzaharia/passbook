@@ -271,10 +271,10 @@ export function renderSamsungProjection(
   };
 }
 
-/** Schema 2 is compiled by the typed runtimes (CW9b, CW10b); until they exist nothing renders it. */
+/** Schema 2 is compiled by the typed runtimes: Google's exists (CW9b); Samsung's is CW10b. */
 let compiledRuntime = false;
 
-/** Tests only: pretend the typed runtime exists, so a test of the offer path is not decided by it. */
+/** Tests only: pretend the Samsung typed runtime exists, so a test of the offer path is not decided by it. */
 export function setCompiledRuntimeForTest(ready: boolean): () => void {
   const previous = compiledRuntime;
   compiledRuntime = ready;
@@ -285,7 +285,7 @@ export function setCompiledRuntimeForTest(ready: boolean): () => void {
 
 /** Whether a materialized pass can be offered under this projection. */
 export function canRenderProjection(projection: NativeProjection, passJson: unknown): boolean {
-  if (projection.schema === 2) return compiledRuntime;
+  if (projection.schema === 2) return projection.provider === 'google' || compiledRuntime;
   return projection.provider === 'google'
     ? renderGoogleProjection(projection, passJson) !== null
     : canRenderSamsungProjection(projection, passJson);
