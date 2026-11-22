@@ -1,7 +1,7 @@
 import { SANDBOX_TERMINAL_NAME } from '../../../shared/copy/developer.ts';
 import { first } from '../../platform/db.ts';
 import { keyLive } from '../../platform/repo-api-key-sql.ts';
-import { keyActsAsTerminalSql } from './sandbox-terminal-sql.ts';
+import { keyActsAsTerminalSql } from './repo-sandbox-terminal-sql.ts';
 
 /** The key still acts as this terminal: not revoked or expired, in its org and mode, a till key bound to it or a sandbox key on the sandbox terminal. */
 export async function apiKeyActs(

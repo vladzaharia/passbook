@@ -31,7 +31,7 @@ import {
   ticketOf,
 } from './repo.ts';
 import { closeSandbox, insertSandbox } from './repo-grants.ts';
-import { ensureSandboxTerminal } from './sandbox-terminal.ts';
+import { ensureSandboxTerminal } from './repo-sandbox-terminal.ts';
 
 /** The quickstart's blueprint, and how long its test key lives. */
 const QUICKSTART_BLUEPRINT = 'baked:starter-event-ticket';

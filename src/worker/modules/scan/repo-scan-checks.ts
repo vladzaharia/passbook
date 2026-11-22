@@ -6,7 +6,7 @@ import { keyLive } from '../../platform/repo-api-key-sql.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import { channelEpochSql } from './repo-lookup.ts';
-import { keyActsAsTerminalSql } from './sandbox-terminal-sql.ts';
+import { keyActsAsTerminalSql } from './repo-sandbox-terminal-sql.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
 
 /** The SQL behind the scan grant checks (`authority-checks.ts`, `scan-pass-checks.ts`, `scan-write-grant.ts`). */

@@ -4,7 +4,7 @@ import { BLUEPRINT_ID, EXAMPLE_IDS } from '../../src/web/developers/model/ids.ts
 import { createApp } from '../../src/worker/app.ts';
 import { createApiKeyStore } from '../../src/worker/modules/api-keys/service.ts';
 import { createSessionStore } from '../../src/worker/modules/auth/sessions.ts';
-import { ensureSandboxTerminal } from '../../src/worker/modules/developer/sandbox-terminal.ts';
+import { ensureSandboxTerminal } from '../../src/worker/modules/developer/repo-sandbox-terminal.ts';
 import { alignPassIdentity } from '../../src/worker/modules/developer/sandbox-terminal-test-fixtures.ts';
 import { PLATFORM_IDENTITY_ID } from '../../src/worker/modules/identities/resolver.ts';
 import {
