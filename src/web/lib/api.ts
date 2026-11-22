@@ -120,7 +120,8 @@ export function createApiClient(deps: ApiClientDeps) {
     }
     const data = await readBody(res);
     if (!res.ok) {
-      const error = problemToError(res.status, data);
+      const wait = Number(res.headers.get('retry-after'));
+      const error = problemToError(res.status, data, wait > 0 ? wait : undefined);
       // One dialog for every sensitive action, whichever screen made the call.
       if (isStepUp(error)) requestStepUp(error.signInUrl);
       if (
