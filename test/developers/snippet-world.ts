@@ -254,21 +254,21 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
     typeof v === 'object' &&
     !Array.isArray(v) &&
     Object.keys(v).every((k) => DOCS_INPUTS.has(k));
-  const fit = (v: unknown): unknown => {
-    if (Array.isArray(v)) return v.map(fit);
+  const adapt = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(adapt);
     if (!v || typeof v !== 'object') return v;
-    const o = Object.fromEntries(Object.entries(v).map(([k, x]) => [k, fit(x)]));
+    const o = Object.fromEntries(Object.entries(v).map(([k, x]) => [k, adapt(x)]));
     if (isDocsInput(o.input) && Object.keys(o.input).length) o.input = sample;
     if (isDocsInput(o.patch) && 'validUntil' in o.patch) o.patch = { startsAt: sample.startsAt };
     if (o.kind === 'input' && o.input === 'validUntil') o.input = 'startsAt';
     return o;
   };
-  const fitInputs = (text: string): string =>
-    text.trimStart().startsWith('{') ? JSON.stringify(fit(JSON.parse(text))) : text;
+  const adaptInputs = (text: string): string =>
+    text.trimStart().startsWith('{') ? JSON.stringify(adapt(JSON.parse(text))) : text;
   const calls: Call[] = [];
   const fetchLike = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
     const url = new URL(swap(String(input instanceof Request ? input.url : input)));
-    const body = typeof init.body === 'string' ? fitInputs(swap(init.body)) : init.body;
+    const body = typeof init.body === 'string' ? adaptInputs(swap(init.body)) : init.body;
     const headers = new Headers(init.headers);
     // The pairing poll is a read (`scan-setup:read`): the sandbox key keeps it.
     const poll = (init.method ?? 'GET') === 'GET' && url.pathname.endsWith('/pairing');
