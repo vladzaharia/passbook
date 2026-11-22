@@ -337,6 +337,37 @@ describe('the database refuses a child wider than its parent', () => {
     await add('template', a.id);
     await add('pass_style', 'generic');
   });
+
+  // The child trigger only sees resource rows as they are inserted, so a limited child that names nothing was
+  // never compared with its parent. key_templates (0195) intersects the parent's limits at read time.
+  it('a limited child naming nothing reaches only its limited parent`s templates', async () => {
+    const a = makeTemplate({ id: `a-${f().ids.id()}`, orgId: org.id }).resolved;
+    const b = makeTemplate({ id: `b-${f().ids.id()}`, orgId: org.id }).resolved;
+    await persistTemplate(f(), a);
+    await persistTemplate(f(), b);
+    const p = await makeApiKey(f(), {
+      orgId: org.id,
+      scopes: ['passes:read', 'api-keys:write'],
+      templateIds: [a.id],
+    });
+    const kid = f().ids.id();
+    await run(
+      h.env.DB,
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_at, kind, restricted, parent_key_id)
+       VALUES (?, ?, 'c', ?, ?, '["passes:read"]', 'live', ?, 'service', 1, ?)`,
+      [kid, org.id, kid.slice(-8), `h${kid}`, h.clock.now(), p.id],
+    );
+    const reach = async (key: string) =>
+      (
+        await all<{ id: string }>(
+          h.env.DB,
+          'SELECT id FROM key_templates WHERE key_id = ? AND id IN (?, ?)',
+          [key, a.id, b.id],
+        )
+      ).map((r) => r.id);
+    expect(await reach(p.id)).toEqual([a.id]);
+    expect(await reach(kid)).toEqual([a.id]);
+  });
 });
 
 describe('a limited parent, through the service', () => {
