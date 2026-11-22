@@ -335,3 +335,15 @@ Merged from `product.md` section 6, `google-wallet.md` section 11, `samsung-wall
 4. One unified pass page serves all three wallets and recommends the right one for the device. Every eligible wallet stays reachable, and the browser barcode remains available for holders without a wallet. This replaces the separate "Apple on Android as a QR option" question.
 
 The remaining questions in section 9 take the proposed defaults unless the owner says otherwise. Console setup (Google issuer, Samsung partner account, certificates) and the Samsung support ticket stay owner tasks.
+
+## CW11 as built (2026-11-22)
+
+- **Q4 lazy:** a provider object exists only after the holder's first tap; reissue and the boundary recompile skip passes with no copy.
+- **Q5:** every settled operation logs `wallet.sync_lag` (`lagMs`); past 15 minutes it is a warning, `WALLET_SYNC_LAG_OVER`. The p95 is read from the logs.
+- **Q6:** an account whose credential last failed its check shows no badge (`offers-eligibility.ts`); the next passing check restores it.
+- **Q9:** `PUT /api/v1/platform/wallet-credentials/{id}/cards` names the Samsung card of one more type (loyalty, ticket, coupon) without the partner secrets; a named card never changes.
+- **Samsung states (6.1):** void and quarantine send `CANCELED`; removal, deletion, transfer and channel-off send `DELETED`; an update after a void sends `ACTIVE`; an update of an expired pass sends `EXPIRED`.
+- **Messages:** Google messages follow `google-messages.md` with one change: the ledger (`wallet_google_messages`, 0202) keeps no text; the object's own messages are read and trimmed to nine before each `addMessage`. Samsung records `wallet.messaged` with outcome `updated` ("Updated only").
+- **Boundaries:** the drain parks an instance's dirty row until its pass's next expiry or event date, and the operation key carries how many boundaries are behind it, so the recompile is a new operation with no edit.
+- **Uncertain:** one sweeper (`sync-uncertain.ts`) serves both providers.
+- **Samsung schema 1 retired:** only compiled candidates are created or released; 0202 rewrites the release trigger. The evidence tables stay as history.

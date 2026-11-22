@@ -30,11 +30,13 @@ function CardRow({ credential, type }: { credential: WalletCredential; type: str
 
   return (
     <li className="flex flex-wrap items-end justify-between gap-3">
-      <span className="text-sm font-medium capitalize text-fg-strong">{type}</span>
       {set ? (
-        <StatusPill status="set" tone="success">
-          Card set
-        </StatusPill>
+        <>
+          <span className="text-sm font-medium capitalize text-fg-strong">{type}</span>
+          <StatusPill status="set" tone="success">
+            Card set
+          </StatusPill>
+        </>
       ) : (
         <form className="flex flex-wrap items-end gap-2" onSubmit={submit}>
           <FormField

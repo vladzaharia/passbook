@@ -8,6 +8,7 @@ import { deletePass, unvoidPass, updatePass, voidPass } from '../passes/service.
 import { fixture, mock, restore, tokenOf } from './google-runtime-test-fixtures.ts';
 import { issueWalletOffer } from './offers.ts';
 import { markInstanceDirty } from './repo-google-reconcile.ts';
+import { providerNotifiedSince } from './repo-notify-budget.ts';
 import { drainWalletProviderSync } from './sync.ts';
 
 afterEach(() => {
@@ -86,6 +87,10 @@ describe('6.1 Google: message and broadcast', () => {
     expect(
       await all(f.kit.env.DB, "SELECT data FROM pass_events WHERE kind = 'wallet.messaged'"),
     ).toEqual([{ data: JSON.stringify({ provider: 'google', outcome: 'notified' }) }]);
+    // The budget the broadcast forecast reads is this ledger: one notification counted.
+    expect(await providerNotifiedSince(f.kit.env.DB, f.pass.id, 'google', 0)).toMatchObject({
+      used: 1,
+    });
     // A replay of the same operation, and a re-queue of the same pass version, send nothing again.
     const again = mock.requests.length;
     const instance = await first<{ id: string }>(

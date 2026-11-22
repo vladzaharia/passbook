@@ -177,7 +177,8 @@ beforeEach(async () => {
   ctx = {
     env: { ...(await testEnv()), KEK_V1: btoa('0123456789abcdef0123456789abcdef') },
     clock: { now: () => 100_000 },
-  } as ServiceContext;
+    log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  } as unknown as ServiceContext;
   const credentialKeysetCommitment = await credentialKeyset.ensureCredentialRefKeyset(
     ctx.env.DB,
     ctx.env,
