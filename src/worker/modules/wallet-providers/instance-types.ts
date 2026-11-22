@@ -125,7 +125,13 @@ export interface WalletClaimRef extends WalletOperationRef {
 }
 export type WalletClaimResult = 'claimed' | 'already_claimed' | 'not_claimable';
 export type WalletProviderResult =
-  | { kind: 'success'; httpStatus?: number; rawBody?: Uint8Array }
+  | {
+      kind: 'success';
+      httpStatus?: number;
+      rawBody?: Uint8Array;
+      /** A Google revoke whose inactive, barcode-less state was read back (G5): the replay boundary. */
+      confirmed?: true;
+    }
   | { kind: 'not_issued'; httpStatus?: never; rawBody?: never }
   | {
       kind: 'failure';

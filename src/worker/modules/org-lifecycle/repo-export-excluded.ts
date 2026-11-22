@@ -127,6 +127,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   wallet_google_callback_bindings: WALLET,
   wallet_google_callback_receipts: WALLET,
   wallet_google_callback_replays: WALLET,
+  wallet_google_revocation_confirmations: WALLET,
   wallet_projection_art: WALLET,
   wallet_projection_pause_checks: WALLET,
   wallet_provider_account_events: WALLET,

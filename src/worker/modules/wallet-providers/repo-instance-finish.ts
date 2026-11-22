@@ -95,6 +95,21 @@ export async function finishOperation(
         ],
       ),
     );
+  // Before the operation leaves `claimed`: the confirmation is only accepted for a claimed revoke.
+  const confirms = p.result.kind === 'success' && p.result.confirmed === true;
+  if (confirms)
+    g.include(
+      writePart(
+        `WITH ${PART_CURRENT_OPERATION}
+      INSERT INTO wallet_google_revocation_confirmations
+      (operation_id, instance_id, version, confirmed_at, credential_keyset_commitment)
+    SELECT op.id, op.instance_id, op.version, ?, op.credential_keyset_commitment
+    FROM wallet_provider_instance_operations op JOIN current_operation proven ON proven.id = op.id
+    WHERE proven.is_current = 1 AND op.kind = 'revoke' AND ${claimedWhere}
+    RETURNING operation_id`,
+        [...cte, p.now, ...claimedParams],
+      ),
+    );
   g.include(
     writePart(
       `WITH ${PART_CURRENT_OPERATION}
@@ -144,7 +159,7 @@ export async function finishOperation(
     );
   const committed = await commitWalletGrant(g);
   if (!('results' in committed)) return null;
-  if (committed.results[p.raw ? 1 : 0]?.results.length !== 1) return null;
+  if (committed.results[(p.raw ? 1 : 0) + (confirms ? 1 : 0)]?.results.length !== 1) return null;
   const stored = await first<{ state: WalletOperationState }>(
     db,
     `SELECT op.state FROM wallet_provider_instance_operations op

@@ -488,7 +488,7 @@ describe('wallet provider operation fences', () => {
     expect(mocks.instance).not.toHaveBeenCalled();
   });
 
-  it('holds Google retirement even after inactivation while replay safety is unproven', async () => {
+  it('hands a revoked Google instance to the repository, which retires it only once the revoke is confirmed', async () => {
     const revoke: WalletOperation = {
       ...operation,
       kind: 'revoke',
@@ -521,9 +521,12 @@ describe('wallet provider operation fences', () => {
       createdAt: 1,
       updatedAt: 99_000,
     } satisfies WalletInstance);
+    // The confirmation is checked in SQL (0198; retirement-google.test.ts): an unconfirmed revoke is refused there.
+    mocks.retire.mockResolvedValueOnce(false);
     expect(await finishWalletProviderRetirement(ctx, revoke)).toBe(false);
-    expect(mocks.instance).toHaveBeenCalledOnce();
-    expect(mocks.retire).not.toHaveBeenCalled();
+    mocks.retire.mockResolvedValueOnce(true);
+    expect(await finishWalletProviderRetirement(ctx, revoke)).toBe(true);
+    expect(mocks.retire).toHaveBeenCalledTimes(2);
   });
 
   it('fails closed rather than reassigning an existing Google class on projection change', async () => {

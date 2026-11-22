@@ -62,12 +62,12 @@ describe('retirement_settled_at', () => {
     for (const r of live) expect(r.retirement_settled_at).toBeNull();
   });
 
-  it('stays NULL for an issued Google instance, which cannot retire yet', async () => {
+  it('stays NULL for an issued Google instance whose revoke was never read back', async () => {
     const f = await runtimeGoogleLegacyFixture({ db: (await makeEnv()).DB });
     const db = f.kit.env.DB;
     const now = f.kit.clock.now();
-    // The fixture's instance is issued and revoking. 0043 refuses to retire an issued Google object until
-    // CW9b adds its replay guarantee, so the view and the column stay empty.
+    // The fixture's instance is issued and revoking. 0198 refuses to retire an issued Google object until
+    // its revoke was read back inactive (retirement-google.test.ts), so the view and the column stay empty.
     await run(db, "UPDATE wallet_provider_instances SET lifecycle = 'revoked' WHERE id = ?", [
       f.instanceId,
     ]);

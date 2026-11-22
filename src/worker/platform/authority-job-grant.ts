@@ -22,6 +22,8 @@ const WALLET_RECORD_TABLES = [
   'wallet_provider_instance_operations',
   'wallet_provider_instance_outcomes',
   'wallet_provider_sync_targets',
+  // A Google revoke read back inactive (0198): written with the result that completes it.
+  'wallet_google_revocation_confirmations',
 ] as const;
 const WALLET_RETIRE_TABLES = [
   'wallet_provider_instances',
