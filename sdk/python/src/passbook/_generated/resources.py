@@ -1612,6 +1612,47 @@ class ScanSetupsResource:
         return self._core.request("GET", f"/api/v1/scan-setups/{_p(id)}", result=m.ScanSetupsRetrieveResult, **opts)
 
 
+class ScanStaffResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        body: m.ScanStaffCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanStaffCreateResult:
+        """Create a staff member and reveal their PIN once `POST /api/v1/scan-staff`"""
+        return self._core.request("POST", "/api/v1/scan-staff", body=body, result=m.ScanStaffCreateResult, **opts)
+
+    def list(
+        self,
+        *,
+        q: str | None = None,
+        limit: int | None = None,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanStaff]:
+        """List an organization’s staff `GET /api/v1/scan-staff`"""
+        return self._core.paginate("GET", "/api/v1/scan-staff", query={"q": q, "limit": limit, "cursor": cursor}, result=m.ScanStaffListResult, cursor_param="cursor", **opts)
+
+    def reset_pin(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanStaffResetPinResult:
+        """Replace a staff PIN and reveal it once `POST /api/v1/scan-staff/{id}/reset-pin`"""
+        return self._core.request("POST", f"/api/v1/scan-staff/{_p(id)}/reset-pin", result=m.ScanStaffResetPinResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanStaffUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanStaffUpdateResult:
+        """Update or disable a staff member `PATCH /api/v1/scan-staff/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scan-staff/{_p(id)}", body=body, result=m.ScanStaffUpdateResult, **opts)
+
+
 class ScanZonesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1733,6 +1774,14 @@ class ScannersResource:
         self._core = core
         self.pairing = ScannersPairingResource(core)
 
+    def create(
+        self,
+        body: m.ScannersCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersCreateResult:
+        """Create a scanner (a device comes with a pairing code) `POST /api/v1/scanners`"""
+        return self._core.request("POST", "/api/v1/scanners", body=body, result=m.ScannersCreateResult, **opts)
+
     def revoke(
         self,
         id: str,
@@ -1773,6 +1822,15 @@ class ScannersResource:
 class ScanningSessionsDevicesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+
+    def create(
+        self,
+        id: str,
+        body: m.ScanningSessionsDevicesCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsDevicesCreateResult:
+        """Add a device to a scanning session `POST /api/v1/scanning-sessions/{id}/devices`"""
+        return self._core.request("POST", f"/api/v1/scanning-sessions/{_p(id)}/devices", body=body, result=m.ScanningSessionsDevicesCreateResult, **opts)
 
     def update(
         self,
@@ -2463,6 +2521,7 @@ class Resources:
         self.roll_calls = RollCallsResource(core)
         self.scan_events = ScanEventsResource(core)
         self.scan_setups = ScanSetupsResource(core)
+        self.scan_staff = ScanStaffResource(core)
         self.scan_zones = ScanZonesResource(core)
         self.terminal = TerminalResource(core)
         self.scanners = ScannersResource(core)

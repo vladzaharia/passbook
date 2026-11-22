@@ -1732,6 +1732,48 @@ func (r *ScanSetupsResource) Retrieve(ctx context.Context, id string, opts ...Re
 	return &out, nil
 }
 
+type ScanStaffResource struct {
+	c *core
+}
+
+func newScanStaffResource(c *core) *ScanStaffResource {
+	return &ScanStaffResource{
+		c: c,
+	}
+}
+
+// Create Create a staff member and reveal their PIN once `POST /api/v1/scan-staff`
+func (r *ScanStaffResource) Create(ctx context.Context, body *ScanStaffCreateBody, opts ...RequestOption) (*ScanStaffCreateResult, error) {
+	var out ScanStaffCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-staff", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List an organization’s staff `GET /api/v1/scan-staff`
+func (r *ScanStaffResource) List(ctx context.Context, query *ScanStaffListQuery, opts ...RequestOption) *Pager[ScanStaff] {
+	return newPager[ScanStaff](r.c, call{method: "GET", path: "/api/v1/scan-staff", query: queryValues(query)}, "cursor", opts)
+}
+
+// ResetPIN Replace a staff PIN and reveal it once `POST /api/v1/scan-staff/{id}/reset-pin`
+func (r *ScanStaffResource) ResetPIN(ctx context.Context, id string, opts ...RequestOption) (*ScanStaffResetPinResult, error) {
+	var out ScanStaffResetPinResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-staff/" + pathEscape(id) + "/reset-pin"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Update or disable a staff member `PATCH /api/v1/scan-staff/{id}`
+func (r *ScanStaffResource) Update(ctx context.Context, id string, body *ScanStaffUpdateBody, opts ...RequestOption) (*ScanStaffUpdateResult, error) {
+	var out ScanStaffUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scan-staff/" + pathEscape(id), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type ScanZonesResource struct {
 	c *core
 }
@@ -1881,6 +1923,15 @@ func newScannersResource(c *core) *ScannersResource {
 	}
 }
 
+// Create Create a scanner (a device comes with a pairing code) `POST /api/v1/scanners`
+func (r *ScannersResource) Create(ctx context.Context, body *ScannersCreateBody, opts ...RequestOption) (*ScannersCreateResult, error) {
+	var out ScannersCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Revoke Remove a scanner from use `POST /api/v1/scanners/{id}/revoke`
 func (r *ScannersResource) Revoke(ctx context.Context, id string, opts ...RequestOption) (*ScannersRevokeResult, error) {
 	var out ScannersRevokeResult
@@ -1925,6 +1976,15 @@ func newScanningSessionsDevicesResource(c *core) *ScanningSessionsDevicesResourc
 	return &ScanningSessionsDevicesResource{
 		c: c,
 	}
+}
+
+// Create Add a device to a scanning session `POST /api/v1/scanning-sessions/{id}/devices`
+func (r *ScanningSessionsDevicesResource) Create(ctx context.Context, id string, body *ScanningSessionsDevicesCreateBody, opts ...RequestOption) (*ScanningSessionsDevicesCreateResult, error) {
+	var out ScanningSessionsDevicesCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanning-sessions/" + pathEscape(id) + "/devices", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // Update Configure one device `PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}`
@@ -2580,6 +2640,7 @@ type Resources struct {
 	RollCalls        *RollCallsResource
 	ScanEvents       *ScanEventsResource
 	ScanSetups       *ScanSetupsResource
+	ScanStaff        *ScanStaffResource
 	ScanZones        *ScanZonesResource
 	Terminal         *TerminalResource
 	Scanners         *ScannersResource
@@ -2615,6 +2676,7 @@ func newResources(c *core) Resources {
 		RollCalls:        newRollCallsResource(c),
 		ScanEvents:       newScanEventsResource(c),
 		ScanSetups:       newScanSetupsResource(c),
+		ScanStaff:        newScanStaffResource(c),
 		ScanZones:        newScanZonesResource(c),
 		Terminal:         newTerminalResource(c),
 		Scanners:         newScannersResource(c),

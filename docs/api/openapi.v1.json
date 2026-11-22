@@ -18963,7 +18963,8 @@
                         "string",
                         "null"
                       ],
-                      "pattern": "^\\d{6}$"
+                      "pattern": "^\\d{6}$",
+                      "description": "Null only on an Idempotency-Key replay."
                     }
                   },
                   "required": [
@@ -37703,11 +37704,11 @@
           "ACTOR_CHANGED",
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -38199,11 +38200,11 @@
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -38422,11 +38423,11 @@
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -95370,13 +95371,13 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_MODE_MISMATCH",
           "API_KEY_NOT_FOUND",
           "API_KEY_NOT_ROTATABLE",
           "API_KEY_REQUIRED",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
           "FORBIDDEN",
@@ -95528,12 +95529,12 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_MODE_MISMATCH",
           "API_KEY_NOT_FOUND",
           "API_KEY_NOT_ROTATABLE",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
           "FORBIDDEN",
@@ -96343,11 +96344,11 @@
         "x-codes": [
           "API_KEY_CHILD_CANNOT_MINT",
           "API_KEY_CHILD_WIDER",
+          "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
-          "API_KEY_SCANNING_ADMIN_LIVE_ORG",
           "API_KEY_SCAN_ORG_REQUIRED",
           "API_KEY_SCOPE_EXCEEDS_CREATOR",
           "API_KEY_SCOPE_EXCEEDS_SANDBOX",
@@ -106914,6 +106915,243 @@
         ]
       }
     },
+    "/api/v1/scanners": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "apiKey": [
+              "scanning:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-feature": "scanning.devices",
+        "summary": "Create a scanner (a device comes with a pairing code)",
+        "tags": [
+          "scanners"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScannersCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedScanner"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scanners.postScanners",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "create"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ADMITS_TOO_MANY",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "SCANNER_ADMIN_ROLE",
+          "SCANNER_ADMIN_USER",
+          "SCANNER_NAME_TAKEN",
+          "SCANNER_NOT_FOUND",
+          "SCANNER_NOT_PAIRABLE",
+          "SCANNER_REVOKED",
+          "SCANNER_ROLE_INVALID",
+          "SCANNER_SETUP_EXISTS",
+          "SCANNER_WATCH_INVALID",
+          "SCANNER_WATCH_NOT_FOUND",
+          "SCANNING_SESSION_CHANGED",
+          "SCANNING_SESSION_NOT_FOUND",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_MODE_LIVE_ONLY",
+          "SCAN_STAFF_CHANGED",
+          "SCAN_ZONE_LIVE_ONLY",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION",
+          "ZONE_ARCHIVED",
+          "ZONE_EVENT_SESSION",
+          "ZONE_NOT_FOUND"
+        ]
+      },
+      "get": {
+        "summary": "List scanners",
+        "tags": [
+          "scanners"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "not_paired",
+                "paired",
+                "revoked"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "eventId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "required": false,
+            "name": "q",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Scanner"
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scanners.getScanners",
+        "x-sdk": {
+          "resource": "scanners",
+          "method": "list"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "SCANNING_SESSION_NOT_FOUND",
+          "SCAN_CONFIG_CHANGED",
+          "SCAN_STAFF_CHANGED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/scanners/{id}/pairing": {
       "post": {
         "security": [
@@ -106966,13 +107204,15 @@
                       "type": [
                         "string",
                         "null"
-                      ]
+                      ],
+                      "description": "Null only on an Idempotency-Key replay."
                     },
                     "url": {
                       "type": [
                         "string",
                         "null"
-                      ]
+                      ],
+                      "description": "Null only on an Idempotency-Key replay."
                     },
                     "expiresAt": {
                       "type": "integer",
@@ -107184,7 +107424,8 @@
                       "type": [
                         "string",
                         "null"
-                      ]
+                      ],
+                      "description": "Null only on an Idempotency-Key replay."
                     },
                     "expiresAt": {
                       "type": "integer",
@@ -107237,227 +107478,6 @@
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/scanners": {
-      "get": {
-        "summary": "List scanners",
-        "tags": [
-          "scanners"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 512
-            },
-            "required": false,
-            "name": "cursor",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 200,
-              "default": 50
-            },
-            "required": false,
-            "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": false,
-            "name": "orgId",
-            "in": "query",
-            "x-platform-only": true
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "not_paired",
-                "paired",
-                "revoked"
-              ]
-            },
-            "required": false,
-            "name": "status",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": false,
-            "name": "eventId",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "maxLength": 80
-            },
-            "required": false,
-            "name": "q",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Scanner"
-                      }
-                    },
-                    "nextCursor": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "items",
-                    "nextCursor"
-                  ]
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scanners.getScanners",
-        "x-sdk": {
-          "resource": "scanners",
-          "method": "list"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "ORG_FORBIDDEN",
-          "ORG_NOT_FOUND",
-          "ORG_REQUIRED",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "SCANNING_SESSION_NOT_FOUND",
-          "SCAN_CONFIG_CHANGED",
-          "SCAN_STAFF_CHANGED",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      },
-      "post": {
-        "summary": "Create a scanner (a device comes with a pairing code)",
-        "tags": [
-          "scanners"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ScannersCreateParams"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatedScanner"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scanners.postScanners",
-        "x-sdk": {
-          "resource": "scanners",
-          "method": "create"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "ADMITS_TOO_MANY",
-          "EVENT_NOT_FOUND",
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "ORG_FORBIDDEN",
-          "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "SCANNER_ADMIN_ROLE",
-          "SCANNER_ADMIN_USER",
-          "SCANNER_NAME_TAKEN",
-          "SCANNER_NOT_FOUND",
-          "SCANNER_NOT_PAIRABLE",
-          "SCANNER_REVOKED",
-          "SCANNER_ROLE_INVALID",
-          "SCANNER_SETUP_EXISTS",
-          "SCANNER_WATCH_INVALID",
-          "SCANNER_WATCH_NOT_FOUND",
-          "SCANNING_SESSION_CHANGED",
-          "SCANNING_SESSION_NOT_FOUND",
-          "SCAN_CONFIG_CHANGED",
-          "SCAN_MODE_LIVE_ONLY",
-          "SCAN_STAFF_CHANGED",
-          "SCAN_ZONE_LIVE_ONLY",
-          "TEMPLATE_ARCHIVED",
-          "TEMPLATE_NOT_FOUND",
-          "UNAUTHENTICATED",
-          "USER_NOT_FOUND",
-          "VALIDATION",
-          "ZONE_ARCHIVED",
-          "ZONE_EVENT_SESSION",
-          "ZONE_NOT_FOUND"
         ]
       }
     },
@@ -108448,6 +108468,9 @@
           "ADMITS_TOO_MANY",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
@@ -109790,6 +109813,9 @@
           "ADMITS_TOO_MANY",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
@@ -110193,6 +110219,118 @@
         ]
       }
     },
+    "/api/v1/scanning-sessions/{id}/devices": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "apiKey": [
+              "scanning:write"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-feature": "scanning.devices",
+        "summary": "Add a device to a scanning session",
+        "tags": [
+          "scanners"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScanningSessionsDevicesCreateParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedScanningDevice"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scanners.postScanningSessionsByIdDevices",
+        "x-sdk": {
+          "resource": "scanningSessions.devices",
+          "method": "create"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ADMITS_TOO_MANY",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "SCANNER_ADMIN_ROLE",
+          "SCANNER_ADMIN_USER",
+          "SCANNER_NAME_TAKEN",
+          "SCANNER_NOT_FOUND",
+          "SCANNER_NOT_PAIRABLE",
+          "SCANNER_REVOKED",
+          "SCANNER_ROLE_INVALID",
+          "SCANNER_SETUP_EXISTS",
+          "SCANNER_WATCH_INVALID",
+          "SCANNER_WATCH_NOT_FOUND",
+          "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_SESSION_CHANGED",
+          "SCANNING_SESSION_NOT_FOUND",
+          "SCANNING_SESSION_PAUSED",
+          "SCANNING_SESSION_SCOPE_INVALID",
+          "SCAN_MODE_LIVE_ONLY",
+          "SCAN_ZONE_LIVE_ONLY",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "USER_NOT_FOUND",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/scanning-sessions/join": {
       "post": {
         "summary": "Join a scanning session as an administrator device",
@@ -110388,102 +110526,6 @@
           "SCAN_STAFF_CHANGED",
           "SCAN_SUMMARY_SESSION_FORBIDDEN",
           "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/scanning-sessions/{id}/devices": {
-      "post": {
-        "summary": "Add a device to a scanning session",
-        "tags": [
-          "scanners"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ScanningSessionsDevicesCreateParams"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreatedScanningDevice"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scanners.postScanningSessionsByIdDevices",
-        "x-sdk": {
-          "resource": "scanningSessions.devices",
-          "method": "create"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "ADMITS_TOO_MANY",
-          "EVENT_NOT_FOUND",
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "NOT_FOUND",
-          "ORG_FORBIDDEN",
-          "ORG_NOT_FOUND",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "SCANNER_ADMIN_ROLE",
-          "SCANNER_ADMIN_USER",
-          "SCANNER_NAME_TAKEN",
-          "SCANNER_NOT_FOUND",
-          "SCANNER_NOT_PAIRABLE",
-          "SCANNER_REVOKED",
-          "SCANNER_ROLE_INVALID",
-          "SCANNER_SETUP_EXISTS",
-          "SCANNER_WATCH_INVALID",
-          "SCANNER_WATCH_NOT_FOUND",
-          "SCANNING_DEVICE_NOT_FOUND",
-          "SCANNING_SESSION_CHANGED",
-          "SCANNING_SESSION_NOT_FOUND",
-          "SCANNING_SESSION_PAUSED",
-          "SCANNING_SESSION_SCOPE_INVALID",
-          "SCAN_MODE_LIVE_ONLY",
-          "SCAN_ZONE_LIVE_ONLY",
-          "TEMPLATE_ARCHIVED",
-          "TEMPLATE_NOT_FOUND",
-          "UNAUTHENTICATED",
-          "USER_NOT_FOUND",
           "VALIDATION"
         ]
       }
@@ -113686,6 +113728,16 @@
     },
     "/api/v1/scan-staff": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "List an organization’s staff",
         "tags": [
           "scan-staff"
@@ -113781,16 +113833,14 @@
           "resource": "scanStaff",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "SCAN_CONFIG_CHANGED",
@@ -113801,6 +113851,16 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Create a staff member and reveal their PIN once",
         "tags": [
           "scan-staff"
@@ -113831,7 +113891,8 @@
                         "string",
                         "null"
                       ],
-                      "pattern": "^\\d{6}$"
+                      "pattern": "^\\d{6}$",
+                      "description": "Null only on an Idempotency-Key replay."
                     }
                   },
                   "required": [
@@ -113858,15 +113919,15 @@
           "resource": "scanStaff",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
@@ -113885,6 +113946,16 @@
     },
     "/api/v1/scan-staff/{id}": {
       "patch": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Update or disable a staff member",
         "tags": [
           "scan-staff"
@@ -113949,15 +114020,12 @@
           "resource": "scanStaff",
           "method": "update"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -113969,6 +114037,106 @@
           "SCAN_ZONE_LIVE_ONLY",
           "STAFF_NAME_TAKEN",
           "STAFF_PIN_TAKEN",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/scan-staff/{id}/reset-pin": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "scanning:admin"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Replace a staff PIN and reveal it once",
+        "tags": [
+          "scan-staff"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "pin": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^\\d{6}$",
+                      "description": "Null only on an Idempotency-Key replay."
+                    }
+                  },
+                  "required": [
+                    "pin"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "scan-staff.postScanStaffByIdResetPin",
+        "x-sdk": {
+          "resource": "scanStaff",
+          "method": "resetPin"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
+          "NOT_FOUND",
+          "ORG_FORBIDDEN",
+          "ORG_TEST_ONLY",
+          "RATE_LIMITED",
+          "SCAN_MODE_LIVE_ONLY",
+          "SCAN_STAFF_NOT_FOUND",
+          "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -114119,95 +114287,6 @@
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "SCAN_MODE_LIVE_ONLY",
-          "SCAN_ZONE_LIVE_ONLY",
-          "UNAUTHENTICATED",
-          "VALIDATION"
-        ]
-      }
-    },
-    "/api/v1/scan-staff/{id}/reset-pin": {
-      "post": {
-        "summary": "Replace a staff PIN and reveal it once",
-        "tags": [
-          "scan-staff"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "id",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 64
-            },
-            "required": true,
-            "name": "orgId",
-            "in": "query",
-            "x-platform-only": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Success",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "pin": {
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "pattern": "^\\d{6}$"
-                    }
-                  },
-                  "required": [
-                    "pin"
-                  ]
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Error",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        },
-        "operationId": "scan-staff.postScanStaffByIdResetPin",
-        "x-sdk": {
-          "resource": "scanStaff",
-          "method": "resetPin"
-        },
-        "security": [
-          {
-            "session": []
-          }
-        ],
-        "x-sign-in": "idp",
-        "x-codes": [
-          "FORBIDDEN",
-          "IDP_SIGN_IN_REQUIRED",
-          "NOT_FOUND",
-          "ORG_FORBIDDEN",
-          "ORG_TEST_ONLY",
-          "RATE_LIMITED",
-          "SCAN_MODE_LIVE_ONLY",
-          "SCAN_STAFF_NOT_FOUND",
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"

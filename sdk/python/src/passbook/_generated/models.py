@@ -984,8 +984,14 @@ __all__ = [
     "ScanSetupsUpdateParamsSettingsCheckIn",
     "ScanSetupsUpdateParamsSettingsTags",
     "ScanStaff",
+    "ScanStaffCreateBody",
     "ScanStaffCreateParams",
+    "ScanStaffCreateResult",
+    "ScanStaffListResult",
+    "ScanStaffResetPinResult",
+    "ScanStaffUpdateBody",
     "ScanStaffUpdateParams",
+    "ScanStaffUpdateResult",
     "ScanSummary",
     "ScanSummaryByActionItem",
     "ScanSummaryByHourItem",
@@ -1029,12 +1035,14 @@ __all__ = [
     "ScannerSettings",
     "ScannerSettingsCheckIn",
     "ScannerSettingsTags",
+    "ScannersCreateBody",
     "ScannersCreateParams",
     "ScannersCreateParamsAccepts1",
     "ScannersCreateParamsAccepts2",
     "ScannersCreateParamsSettings",
     "ScannersCreateParamsSettingsCheckIn",
     "ScannersCreateParamsSettingsTags",
+    "ScannersCreateResult",
     "ScannersPairingCreateResult",
     "ScannersPairingRetrieveResult",
     "ScannersRevokeResult",
@@ -1079,8 +1087,10 @@ __all__ = [
     "ScanningSessionsCreateParamsSettingsCheckIn",
     "ScanningSessionsCreateParamsSettingsCustomer",
     "ScanningSessionsCreateParamsSettingsTags",
+    "ScanningSessionsDevicesCreateBody",
     "ScanningSessionsDevicesCreateParams",
     "ScanningSessionsDevicesCreateParamsOverrides",
+    "ScanningSessionsDevicesCreateResult",
     "ScanningSessionsDevicesUpdateBody",
     "ScanningSessionsDevicesUpdateParams",
     "ScanningSessionsDevicesUpdateParamsOverrides",
@@ -7465,6 +7475,19 @@ class ScanStaffCreateParams(_Model):
     name: str
     role: _Literal["door", "desk", "manager"] | str
 
+class ScanStaffCreateResult(_Model):
+    staff: ScanStaff
+    pin: str | None
+
+class ScanStaffListResult(_Model):
+    items: _List[ScanStaff]
+    pinOnlyOff: _Literal[True] | None = None
+    hasMore: bool | None = None
+    nextCursor: str | None = None
+
+class ScanStaffResetPinResult(_Model):
+    pin: str | None
+
 class ScanStaffUpdateParams(_Model):
     name: str | None = None
     role: _Literal["door", "desk", "manager"] | str | None = None
@@ -9975,6 +9998,12 @@ ScanPrevious = _Dict[str, _Any] | None
 
 ScanSetupAnswer = ScanSetupAnswer1 | ScanSetupAnswer2
 
+ScanStaffCreateBody = ScanStaffCreateParams
+
+ScanStaffUpdateBody = ScanStaffUpdateParams
+
+ScanStaffUpdateResult = ScanStaff
+
 ScanTemplateRef = _Dict[str, _Any] | None
 
 ScanWorkspace = _Dict[str, _Any] | None
@@ -9982,6 +10011,10 @@ ScanWorkspace = _Dict[str, _Any] | None
 ScanZonesCreateBody = ScanZonesCreateParams
 
 ScanZonesUpdateBody = ScanZonesUpdateParams
+
+ScannersCreateBody = ScannersCreateParams
+
+ScannersCreateResult = CreatedScanner
 
 ScannersRevokeResult = Scanner
 
@@ -9992,6 +10025,10 @@ ScannersSetModeResult = Scanner
 ScannersUpdateBody = ScannersUpdateParams
 
 ScannersUpdateResult = Scanner
+
+ScanningSessionsDevicesCreateBody = ScanningSessionsDevicesCreateParams
+
+ScanningSessionsDevicesCreateResult = CreatedScanningDevice
 
 ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
 

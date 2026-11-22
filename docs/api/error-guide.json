@@ -101,10 +101,10 @@
     "fix": "Call this route from a paired scanner or a signed-in session.",
     "retryable": false
   },
-  "API_KEY_SCANNING_ADMIN_LIVE_ORG": {
-    "title": "scanning:admin is live and one org",
-    "when": "A test-mode key or a platform key asked for scanning:admin.",
-    "fix": "Make a live key of one organization.",
+  "API_KEY_CREDENTIAL_LIVE_ORG": {
+    "title": "Credential scopes are live and one org",
+    "when": "A test-mode key or a platform key asked for a credential scope (scanning:admin).",
+    "fix": "Mint the key in live mode, for that organization, with an expiry within 90 days.",
     "retryable": false
   },
   "API_KEY_SCAN_ORG_REQUIRED": {

@@ -56,6 +56,15 @@
       ]
     },
     {
+      "code": "API_KEY_CREDENTIAL_LIVE_ORG",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
       "code": "API_KEY_EXPIRY_REQUIRED",
       "statuses": [
         422
@@ -171,15 +180,6 @@
       ],
       "modules": [
         "scan"
-      ]
-    },
-    {
-      "code": "API_KEY_SCANNING_ADMIN_LIVE_ORG",
-      "statuses": [
-        422
-      ],
-      "modules": [
-        "api-keys"
       ]
     },
     {

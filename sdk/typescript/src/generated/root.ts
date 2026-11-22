@@ -20,6 +20,7 @@ import { PassViewsResource } from './resources/pass-views.ts';
 import { RollCallsResource } from './resources/roll-calls.ts';
 import { ScanEventsResource } from './resources/scan-events.ts';
 import { ScanSetupsResource } from './resources/scan-setups.ts';
+import { ScanStaffResource } from './resources/scan-staff.ts';
 import { ScanZonesResource } from './resources/scan-zones.ts';
 import { TerminalResource } from './resources/terminal.ts';
 import { ScannersResource } from './resources/scanners.ts';
@@ -54,6 +55,7 @@ export class Resources {
   readonly rollCalls: RollCallsResource;
   readonly scanEvents: ScanEventsResource;
   readonly scanSetups: ScanSetupsResource;
+  readonly scanStaff: ScanStaffResource;
   readonly scanZones: ScanZonesResource;
   readonly terminal: TerminalResource;
   readonly scanners: ScannersResource;
@@ -86,6 +88,7 @@ export class Resources {
     this.rollCalls = new RollCallsResource(core);
     this.scanEvents = new ScanEventsResource(core);
     this.scanSetups = new ScanSetupsResource(core);
+    this.scanStaff = new ScanStaffResource(core);
     this.scanZones = new ScanZonesResource(core);
     this.terminal = new TerminalResource(core);
     this.scanners = new ScannersResource(core);

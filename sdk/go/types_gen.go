@@ -6851,17 +6851,38 @@ type ScanStaff struct {
 	LastScan         map[string]any `json:"lastScan"`
 }
 
+type ScanStaffCreateBody = ScanStaffCreateParams
+
 type ScanStaffCreateParams struct {
 	OrgID string `json:"orgId"`
 	Name  string `json:"name"`
 	Role  string `json:"role"`
 }
 
+type ScanStaffCreateResult struct {
+	Staff ScanStaff `json:"staff"`
+	PIN   *string   `json:"pin"`
+}
+
+type ScanStaffListQuery struct {
+	Q      *string `json:"q,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+	Cursor *string `json:"cursor,omitempty"`
+}
+
+type ScanStaffResetPinResult struct {
+	PIN *string `json:"pin"`
+}
+
+type ScanStaffUpdateBody = ScanStaffUpdateParams
+
 type ScanStaffUpdateParams struct {
 	Name     *string `json:"name,omitempty"`
 	Role     *string `json:"role,omitempty"`
 	Disabled *bool   `json:"disabled,omitempty"`
 }
+
+type ScanStaffUpdateResult = ScanStaff
 
 type ScanSummary struct {
 	From      int64                     `json:"from"`
@@ -7230,6 +7251,8 @@ type ScannerSettingsTags struct {
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
 
+type ScannersCreateBody = ScannersCreateParams
+
 type ScannersCreateParams struct {
 	OrgID    string                        `json:"orgId"`
 	Name     string                        `json:"name"`
@@ -7285,6 +7308,8 @@ type ScannersCreateParamsSettingsTags struct {
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
+
+type ScannersCreateResult = CreatedScanner
 
 type ScannersPairingCreateQuery struct {
 	Restore *string `json:"restore,omitempty"`
@@ -7675,6 +7700,8 @@ type ScanningSessionsCreateParamsSettingsTags struct {
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
 
+type ScanningSessionsDevicesCreateBody = ScanningSessionsDevicesCreateParams
+
 type ScanningSessionsDevicesCreateParams struct {
 	Name      *string                                       `json:"name,omitempty"`
 	Surface   *string                                       `json:"surface,omitempty"`
@@ -7688,6 +7715,8 @@ type ScanningSessionsDevicesCreateParamsOverrides struct {
 	Lookup    *bool   `json:"lookup,omitempty"`
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
 }
+
+type ScanningSessionsDevicesCreateResult = CreatedScanningDevice
 
 type ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
 
