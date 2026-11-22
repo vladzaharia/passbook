@@ -11,6 +11,8 @@ import { orgAccessRevisionOf } from './repo-api-key.ts';
 import { addScannerInsert, addScannerRevoke } from './repo-scanners.ts';
 import { SCANNER_CODES } from './scanners.ts';
 
+const TERMINAL_TABLES = ['scanners', 'scanner_templates', 'developer_sandboxes'];
+
 type Held = { id: string; expires_at: number | null };
 
 const heldTerminal = (db: D1Database, orgId: string) =>
@@ -19,13 +21,6 @@ const heldTerminal = (db: D1Database, orgId: string) =>
     `SELECT s.id, s.expires_at FROM scanners s
      WHERE s.org_id = ? AND s.mode = 'test' AND s.kind = 'terminal' AND s.name = ? AND s.revoked_at IS NULL`,
     [orgId, SANDBOX_TERMINAL_NAME],
-  );
-
-const pin = (db: D1Database, orgId: string, id: string) =>
-  run(
-    db,
-    'UPDATE developer_sandboxes SET terminal_id = ? WHERE org_id = ? AND terminal_id IS NOT ?',
-    [id, orgId, id],
   );
 
 /** The authority of the caller: a console session by membership, or the sandbox key under its own scope. */
@@ -72,17 +67,15 @@ export async function ensureSandboxTerminal(
   const db = ctx.env.DB;
   const now = ctx.clock.now();
   try {
-    const open = await first<{ ok: number }>(
+    const open = await first<{ terminal_id: string | null }>(
       db,
-      'SELECT 1 AS ok FROM developer_sandboxes WHERE org_id = ? AND closed_at IS NULL',
+      'SELECT terminal_id FROM developer_sandboxes WHERE org_id = ? AND closed_at IS NULL',
       [orgId],
     );
     if (!open) return;
     const held = await heldTerminal(db, orgId);
-    if (held && (held.expires_at === null || held.expires_at > now)) {
-      await pin(db, orgId, held.id);
+    if (held && held.id === open.terminal_id && (held.expires_at === null || held.expires_at > now))
       return;
-    }
     const templateId =
       (
         await first<{ id: string }>(db, 'SELECT id FROM templates WHERE org_id = ? AND name = ?', [
@@ -103,8 +96,9 @@ export async function ensureSandboxTerminal(
       [...templatesUsable([templateId])],
       SCANNER_CODES,
       id,
+      TERMINAL_TABLES,
     );
-    // An expired terminal still holds the name: it goes in the same grant that makes the new one.
+    // One that is expired (or not the one the sandbox names) still holds the name: it goes in the same grant.
     if (held) addScannerRevoke(g, held.id, now);
     addScannerInsert(g, {
       id,
@@ -118,6 +112,10 @@ export async function ensureSandboxTerminal(
       now,
     });
     addScannerTemplates(g, id, [templateId]);
+    g.update('developer_sandboxes', {
+      set: { terminal_id: id },
+      where: { closed_at: null },
+    });
     g.add(
       audited(g, ctx, {
         orgId,
@@ -132,13 +130,10 @@ export async function ensureSandboxTerminal(
     try {
       await g.commit();
     } catch (error) {
-      // A racing call made it first: use theirs.
+      // A racing call made it first: theirs stands.
       const winner = await heldTerminal(db, orgId);
       if (!winner || winner.id === held?.id) throw error;
-      await pin(db, orgId, winner.id);
-      return;
     }
-    await pin(db, orgId, id);
   } catch (error) {
     ctx.log.error('developer.sandbox_terminal_failed', {
       orgId,
