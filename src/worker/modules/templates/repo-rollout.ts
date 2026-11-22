@@ -1,9 +1,5 @@
 import { all, first, run } from '../../platform/db.ts';
-import {
-  type ImpactInput,
-  MOVES_WITH_RELEASE,
-  versionJoins,
-} from './repo-release-impact.ts';
+import { type ImpactInput, MOVES_WITH_RELEASE, versionJoins } from './repo-release-impact.ts';
 
 /** Active passes of the org on the template, in the mode (quarantined test data is not a pass). */
 export async function countActivePasses(
