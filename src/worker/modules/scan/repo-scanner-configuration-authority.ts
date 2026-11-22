@@ -16,7 +16,7 @@ export async function assertAdminConfigurationAuthority(
   db: Db,
   orgId: string,
   credential: AdminConfigurationClaim,
-  /** A key answers only where the caller opts in: its flows are revoke, mode move and the device update. */
+  /** A key answers only where the caller opts in: its flows are revoke and the mode move. */
   options: { key?: true } = {},
 ): Promise<void> {
   const { authority, userId, now } = credential;

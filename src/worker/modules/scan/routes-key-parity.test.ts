@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { makeApiKey } from '../../../../test/helpers/index.ts';
 import { createApp } from '../../app.ts';
-import { first } from '../../platform/db.ts';
+import { all, first } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createScannerStore } from './auth-store.ts';
 import { scanningSessionsFixture } from './scanning-sessions-test-fixtures.ts';
@@ -338,21 +338,131 @@ describe('review fixes', () => {
     expect(res.status).toBe(403);
   });
 
-  it('limits holds to ten a minute per session and audits the key as the actor', async () => {
+  it('limits holds to ten a minute per caller, charges only holds that commit, and audits by api_key', async () => {
     const session = await fixture.parent('Hold limit');
     const k = await keyOf(['scanning:write']);
-    const hold = () =>
-      send('POST', `/scanning-sessions/${session.id}/hold`, k.headers, { action: 'clear' });
+    const path = `/scanning-sessions/${session.id}/hold`;
+    const hold = () => send('POST', path, k.headers, { action: 'clear' });
+    // A refused hold (the session is closed to nothing: nothing to open) costs no budget.
+    expect((await send('POST', path, k.headers, { action: 'open', until: 1 })).status).not.toBe(
+      200,
+    );
     for (let i = 0; i < 10; i++) expect((await hold()).status).toBe(200);
     expect((await hold()).status).toBe(429);
+    // The console has its own budget.
+    expect((await fixture.call('POST', path, { action: 'clear' })).status).toBe(200);
+    const row = await first<{ d: string }>(
+      fixture.kit.env.DB,
+      'SELECT detail AS d FROM audit_log WHERE action = ? AND target_id = ? AND actor_type = ?',
+      ['scanning.session_hold_cleared', session.id, 'api_key'],
+    );
+    expect(JSON.parse(row?.d ?? '{}')).toMatchObject({ by: 'api_key' });
   });
 
-  it('withholds names from a key: the admin name on devices', async () => {
+  it('withholds names from a key: admin device, device edit, admin setup', async () => {
     const session = await fixture.parent('No names');
-    await fixture.device(session.id, 'No names device');
+    const joined = await fixture.call('POST', '/scanning-sessions/join', {
+      sessionId: session.id,
+      deviceKey: crypto.randomUUID(),
+    });
+    expect(joined.status).toBe(200);
+    const setup = await fixture.call('POST', '/scan-setups/admin-session', {
+      orgId: orgId(),
+      timeZone: 'UTC',
+    });
+    expect(setup.status).toBe(200);
+    const asAdmin = (await (
+      await fixture.call('GET', `/scanning-sessions/${session.id}`)
+    ).json()) as { devices: { id: string; adminName: string | null }[] };
+    const admin = asAdmin.devices.find((d) => d.adminName !== null);
+    expect(admin, 'the console sees the admin name').toBeDefined();
     const read = await keyOf(['scan-setup:read']);
     const one = await send('GET', `/scanning-sessions/${session.id}`, read.headers);
     const body = (await one.json()) as { devices: { adminName: string | null }[] };
+    expect(body.devices.length).toBeGreaterThan(0);
     expect(body.devices.every((d) => d.adminName === null)).toBe(true);
+    const write = await keyOf(['scanning:write']);
+    const edit = await send(
+      'PATCH',
+      `/scanning-sessions/${session.id}/devices/${admin?.id}`,
+      write.headers,
+      { name: 'Renamed by key' },
+    );
+    expect(edit.status).toBe(200);
+    expect(((await edit.json()) as { adminName: string | null }).adminName).toBeNull();
+    const setups = await send('GET', `/scan-setups?orgId=${orgId()}`, read.headers);
+    const items = ((await setups.json()) as { items: { adminUser: { name: unknown } | null }[] })
+      .items;
+    expect(items.some((i) => i.adminUser !== null)).toBe(true);
+    for (const i of items) if (i.adminUser) expect(i.adminUser.name).toBeNull();
+  });
+
+  it('moves a scanner either way with a live key, and a test key never touches a live scanner', async () => {
+    const made = await fixture.call('POST', '/scanners', {
+      orgId: orgId(),
+      name: 'Round trip',
+      kind: 'device',
+      accepts: { templateIds: [await eventTemplate(fixture.kit, 'Round ticket')] },
+      timeZone: 'UTC',
+    });
+    const scanner = (await made.json()) as { id: string };
+    const path = `/scanners/${scanner.id}/mode`;
+    const live = await keyOf(['scanning:write']);
+    const test = await keyOf(['scanning:write'], 'test');
+    expect((await send('POST', path, live.headers, { mode: 'test' })).status).toBe(200);
+    expect((await send('POST', path, live.headers, { mode: 'live' })).status).toBe(200);
+    expect((await send('POST', path, test.headers, { mode: 'test' })).status).toBe(404);
+    expect((await send('POST', path, live.headers, { mode: 'test' })).status).toBe(200);
+    // A test scanner is reachable from a live key (to go live), not from a test key to touch live rows.
+    expect((await send('POST', path, test.headers, { mode: 'live' })).status).toBe(403);
+  });
+
+  it('refuses a platform key on the setup dry run, the apply and a template scan setup', async () => {
+    const platform = await makeApiKey(fixture.kit.fx, {
+      orgId: null,
+      kind: 'platform',
+      scopes: ['scanning:write'],
+    });
+    const template = await eventTemplate(fixture.kit, 'Platform setup ticket', {
+      scan: { actions: [{ id: 'enter', label: 'Let in', kind: 'check_in' }] },
+    });
+    // A session exists for the template, so nothing needs writing: the old path returned it unproved.
+    const org = await keyOf(['scanning:write']);
+    expect(
+      (
+        await send('POST', `/templates/${template}/scan-setup`, org.headers, {
+          orgId: orgId(),
+          timeZone: 'UTC',
+        })
+      ).status,
+    ).toBe(200);
+    const intent = {
+      orgId: orgId(),
+      preset: 'venue',
+      doors: [{ name: 'Platform door', admits: { templateIds: [template] } }],
+    };
+    const h = { ...platform.headers, 'idempotency-key': crypto.randomUUID() };
+    expect((await send('POST', '/scanning-sessions/setup?dryRun=true', h, intent)).status).toBe(
+      404,
+    );
+    expect((await send('POST', '/scanning-sessions/setup', h, intent)).status).toBe(404);
+    expect(
+      (
+        await send('POST', `/templates/${template}/scan-setup`, platform.headers, {
+          orgId: orgId(),
+          timeZone: 'UTC',
+        })
+      ).status,
+    ).toBe(404);
+    const setups = await send('GET', `/scan-setups?orgId=${orgId()}`, platform.headers);
+    expect(((await setups.json()) as { items?: unknown[] }).items ?? []).toEqual([]);
+    const [row] = await all<{ id: string }>(
+      fixture.kit.env.DB,
+      'SELECT id FROM scanners WHERE org_id = ? LIMIT 1',
+      [orgId()],
+    );
+    expect(
+      (await send('GET', `/scan-setups/${row?.id}`, platform.headers)).status,
+    ).toBeGreaterThanOrEqual(403);
   });
 });

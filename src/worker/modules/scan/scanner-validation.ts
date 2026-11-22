@@ -14,13 +14,6 @@ import { eventModeOf } from './repo-scanners.ts';
 import { countOrgTemplates } from './repo-scope.ts';
 import { readValidEventScopes } from './repo-scope-events.ts';
 
-const modeMismatch = () =>
-  new ValidationError(
-    'This event is in a different mode than the scanner.',
-    [],
-    'SCAN_MODE_MISMATCH',
-  );
-
 /** Checked admits, and the single-shape part a scanner row stores. */
 export interface CheckedAdmits {
   admits: Admits;
@@ -52,7 +45,8 @@ export async function checkAccepts(
     const event = await eventModeOf(db, orgId, id);
     if (!event || event.archived_at !== null)
       throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
-    if (event.mode !== mode) throw modeMismatch();
+    // Another mode's event is as good as unknown: no existence oracle within the org.
+    if (event.mode !== mode) throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');
   }
   const events = await readValidEventScopes(db, orgId, mode, stored);
   if (!events) throw new NotFoundError('Event not found.', 'EVENT_NOT_FOUND');

@@ -39,7 +39,8 @@ export async function changeMode(
   authority: TenantPassWrite,
 ) {
   const db = ctx.env.DB;
-  const row = await loadScanner(ctx, id, authority.mode);
+  // A live key moves a scanner either way (console parity); a test key is refused by its grant.
+  const row = await loadScanner(ctx, id, authority.kind === 'api_key' ? undefined : authority.mode);
   if (row.mode === input.mode) {
     await assertAdminConfigurationAuthority(
       db,
@@ -97,7 +98,7 @@ export async function changeMode(
     row.orgId,
     [
       scannerEpoch(id, row.configEpoch),
-      exactlyOne('scanners', { id, mode: authority.mode }, undefined, 'config'),
+      exactlyOne('scanners', { id, mode: row.mode }, undefined, 'config'),
       ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
     ],
     SCANNER_CODES,

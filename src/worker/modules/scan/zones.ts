@@ -58,10 +58,10 @@ export async function listZones(
   const start = query.cursor ? shown.findIndex((r) => r.id === query.cursor) + 1 : 0;
   const page = shown.slice(start, start + query.limit);
   return {
-    // The count is the caller's mode: the stored count spans both.
+    // The console keeps the count of every session that uses the zone; a key sees its own mode's.
     items: page.map((r) =>
       toDto(
-        { ...r, sessions: checked.get(r.id)?.length ?? 0 },
+        authority.kind === 'api_key' ? { ...r, sessions: checked.get(r.id)?.length ?? 0 } : r,
         rows,
         plans.get(r.id) ?? [],
         checked.get(r.id) ?? [],
@@ -97,7 +97,7 @@ export async function createZone(
   } catch (error) {
     mutationError(error);
   }
-  return committed(ctx, input.orgId, id, mode);
+  return committed(ctx, input.orgId, id, mode, authority.kind === 'api_key');
 }
 
 export async function updateZone(
@@ -220,7 +220,7 @@ export async function updateZone(
   } catch (error) {
     mutationError(error);
   }
-  return committed(ctx, orgId, id, mode);
+  return committed(ctx, orgId, id, mode, authority.kind === 'api_key');
 }
 
 export const archiveZone = (

@@ -63,6 +63,8 @@ export async function committed(
   orgId: string,
   id: string,
   mode: Mode,
+  /** A key's answer counts only its own mode's sessions, like its list. */
+  perMode = false,
 ): Promise<ScanZone> {
   const [rows, templates, checked, clock] = await Promise.all([
     orgZoneRows(ctx.env.DB, orgId),
@@ -72,5 +74,11 @@ export async function committed(
   ]);
   const row = rows.find((r) => r.id === id);
   if (!row) throw notFound();
-  return toDto(row, rows, plansByZone(rows, templates).get(id) ?? [], checked.get(id) ?? [], clock);
+  return toDto(
+    perMode ? { ...row, sessions: checked.get(id)?.length ?? 0 } : row,
+    rows,
+    plansByZone(rows, templates).get(id) ?? [],
+    checked.get(id) ?? [],
+    clock,
+  );
 }

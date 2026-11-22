@@ -61,7 +61,8 @@ for (const preset of PRESETS) {
 
       const scanner = await device.newPage();
       await pairScanner(scanner, code as string);
-      for (const digit of pin) await scanner.getByRole('button', { name: digit, exact: true }).click();
+      for (const digit of pin)
+        await scanner.getByRole('button', { name: digit, exact: true }).click();
       await scanner.getByTestId('scan-start').click();
 
       const memberId = uid('MEMBER').toUpperCase();
@@ -73,9 +74,14 @@ for (const preset of PRESETS) {
       await expect(scanner.getByTestId('scan-result')).toContainText('Checked in');
 
       // The same key and body replay: the same ids, no PINs.
-      const replay = await api.send('POST', '/api/v1/scanning-sessions/setup', request.postDataJSON(), {
-        'Idempotency-Key': key as string,
-      });
+      const replay = await api.send(
+        'POST',
+        '/api/v1/scanning-sessions/setup',
+        request.postDataJSON(),
+        {
+          'Idempotency-Key': key as string,
+        },
+      );
       expect(replay.replayed).toBe(true);
       expect(replay.sessions[0].id).toBe(made.sessions[0].id);
       expect(replay.staff.every((s: { pin?: string }) => !s.pin)).toBe(true);

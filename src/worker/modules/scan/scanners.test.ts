@@ -106,7 +106,7 @@ describe('create and list', () => {
     expect((await page(`?orgId=${orgId}&q=b`)).items.map((s) => s.name)).toEqual(['B']);
   });
 
-  it("another org's template or event is a 404; another mode's event is 422 SCAN_MODE_MISMATCH", async () => {
+  it("another org's template or event is a 404; another mode's event is a 404 too", async () => {
     const other = await makeOrg(f);
     const o = makeTemplate({ id: f.ids.id(), orgId: other.id });
     await persistTemplate(f, o.resolved, { registry: o.registry });
@@ -123,8 +123,8 @@ describe('create and list', () => {
     );
     const testEvent = await makeScanEvent(f, { orgId, mode: 'test', templateIds: [templateId] });
     const { res } = await create({ accepts: { eventId: testEvent.id } });
-    expect(res.status).toBe(422);
-    expect(await codeOf(res)).toBe('SCAN_MODE_MISMATCH');
+    expect(res.status).toBe(404);
+    expect(await codeOf(res)).toBe('EVENT_NOT_FOUND');
     const { res: ok, body } = await create({
       accepts: { eventId: (await makeScanEvent(f, { orgId, templateIds: [templateId] })).id },
     });
@@ -180,7 +180,7 @@ describe('create and list', () => {
 
     for (const [eventId, status, code] of [
       [foreign.id, 404, 'EVENT_NOT_FOUND'],
-      [wrongMode.id, 422, 'SCAN_MODE_MISMATCH'],
+      [wrongMode.id, 404, 'EVENT_NOT_FOUND'],
       [unapproved.id, 404, 'EVENT_NOT_FOUND'],
     ] as const) {
       const settings = { checkIn: { eventId } };

@@ -53,6 +53,9 @@ export async function setupTemplateScan(
 ): Promise<TemplateScanSetup> {
   const { orgId } = input;
   const db = ctx.env.DB;
+  // A key bound to another org (or to none) finds no such org.
+  if (auth.kind === 'api_key' && auth.orgId !== orgId)
+    throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   const authority = await tenantAuthorityOf(ctx, auth, orgId, 'scanning:manage');
   const template = await loadTemplate(ctx, orgId, templateId);
   const source = eventSource(template.manifest);

@@ -210,11 +210,13 @@ export async function updateScanningDevice(
   const nextSettings = projectedDeviceSettings(parent, next, scope);
   const scannerScope = await readScannerScope(ctx.env.DB, scanner, null);
   const conflict = await conflictsWithAllScope(ctx, scanner, scope, nextSettings);
-  return deviceDto(
+  const view = deviceDto(
     next,
     ctx.clock.now(),
     !scannerScope.valid || conflict ? { ...nextSettings, acceptAllTemplates: false } : nextSettings,
   );
+  // Keys get ids, not the admin's name.
+  return authority.kind === 'api_key' ? { ...view, adminName: null } : view;
 }
 export async function joinAdminScanningSession(
   ctx: ServiceContext,

@@ -1433,10 +1433,90 @@
   },
   {
     "key": "PATCH /api/v1/scanners/{id} 200.staff.name: now nullable",
-    "class": "additive",
+    "class": "notable",
     "operationId": "scanners.patchScannersById",
     "op": "PATCH /api/v1/scanners/{id}",
     "change": "200.staff.name: now nullable",
-    "note": "An API key gets staff and admin ids, not names: staff.name (scanners) and adminUser.name (scan setups) are null for a key."
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scanners/{id} 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.getScannersById",
+    "op": "GET /api/v1/scanners/{id}",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/revoke 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdRevoke",
+    "op": "POST /api/v1/scanners/{id}/revoke",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/mode 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdMode",
+    "op": "POST /api/v1/scanners/{id}/mode",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scanners 200.items[].staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.getScanners",
+    "op": "GET /api/v1/scanners",
+    "change": "200.items[].staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScanners",
+    "op": "POST /api/v1/scanners",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/pair-here 200.staff.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdPairHere",
+    "op": "POST /api/v1/scanners/{id}/pair-here",
+    "change": "200.staff.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scan-setups 200.items[].staff.name, items[].adminUser.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.getScanSetups",
+    "op": "GET /api/v1/scan-setups",
+    "change": "200.items[].staff.name, items[].adminUser.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scan-setups 200.staff.name, adminUser.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScanSetups",
+    "op": "POST /api/v1/scan-setups",
+    "change": "200.staff.name, adminUser.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scan-setups/{id} 200.staff.name, adminUser.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.getScanSetupsById",
+    "op": "GET /api/v1/scan-setups/{id}",
+    "change": "200.staff.name, adminUser.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "PATCH /api/v1/scan-setups/{id} 200.staff.name, adminUser.name: now nullable",
+    "class": "notable",
+    "operationId": "scanners.patchScanSetupsById",
+    "op": "PATCH /api/v1/scan-setups/{id}",
+    "change": "200.staff.name, adminUser.name: now nullable",
+    "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
   }
 ]

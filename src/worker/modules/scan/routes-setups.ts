@@ -10,6 +10,7 @@ import {
 } from '../../../shared/contracts/scan-setups.ts';
 import { ScannerListQuerySchema } from '../../../shared/contracts/scanners.ts';
 import { currentUserId, methodScope, modeOf } from '../../platform/auth.ts';
+import { NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authOf, requireTenantSessionOrApiKey, tenantAuthorityOf } from '../passes/http.ts';
@@ -39,6 +40,10 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const mode = modeOf(c.var.auth);
+    // Like every scanning route, a key is bound to its own org: a platform key reads none.
+    const caller = authOf(c);
+    if (caller.kind === 'api_key' && caller.orgId === null)
+      return c.json({ items: [], nextCursor: null });
     const page = await readableScanningPage(
       ctx,
       authOf(c),
@@ -125,6 +130,9 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
+    const caller = authOf(c);
+    if (caller.kind === 'api_key' && caller.orgId !== row.orgId)
+      throw new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND');
     await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:read');
     const view = scopedScanningView(await setupView(ctx, row.id), row.orgId);
     return c.json(authOf(c).kind === 'api_key' ? withoutNames(view) : view);

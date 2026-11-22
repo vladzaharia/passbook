@@ -32,11 +32,16 @@ const WRITE = {
  * The caller of a write on one scanner: a console session by membership, or an org-bound
  * `scanning:write` key under its own principal. A key of another org finds no such scanner.
  */
-async function writer(c: C, id: string) {
+async function writer(c: C, id: string, anyMode = false) {
   const ctx = serviceContext(c);
   const auth = authOf(c);
   if (auth.kind !== 'session' && auth.kind !== 'api_key') throw new UnauthenticatedError();
-  const row = await loadScanner(ctx, id, modeOf(auth));
+  // A live key moves a scanner between modes, so the mode route finds it in either; a test key sees only its own.
+  const row = await loadScanner(
+    ctx,
+    id,
+    anyMode && auth.kind === 'api_key' && auth.mode === 'live' ? undefined : modeOf(auth),
+  );
   if (auth.kind === 'api_key') {
     if (auth.orgId !== row.orgId)
       throw new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND');
@@ -110,7 +115,7 @@ export function registerScannerWrites(router: Router): void {
       response: ScannerSchema,
     },
     async (c) => {
-      const w = await writer(c, c.req.valid('param').id);
+      const w = await writer(c, c.req.valid('param').id, true);
       return c.json(
         scopedScanningView(
           named(

@@ -5,7 +5,7 @@ import type {
   SessionHoldRequestSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { rowIs } from '../../platform/authority-checks.ts';
-import { bump } from '../../platform/counters.ts';
+import { bump, read } from '../../platform/counters.ts';
 import {
   BadRequestError,
   ConflictError,
@@ -105,9 +105,11 @@ export async function holdScanningSession(
   countAuthority: SessionReadAuthority,
 ) {
   assertSessionWriteCountAuthority(userId, authority, countAuthority);
-  // Each change kicks every device of the session: ten a minute is more than a person needs.
+  // Each change kicks every device of the session: ten a minute per caller is more than a person
+  // needs. A key and the console each have their own budget; only a hold that commits spends it.
   const minute = ctx.clock.now() - (ctx.clock.now() % 60_000);
-  if ((await bump(ctx.env.DB, `scan:hold:${id}`, minute)) > HOLDS_PER_MINUTE)
+  const holdKey = `scan:hold:${id}:${userId}`;
+  if ((await read(ctx.env.DB, holdKey, minute)) >= HOLDS_PER_MINUTE)
     throw new RateLimitedError(Math.ceil((minute + 60_000 - ctx.clock.now()) / 1000));
   const row = await loadScanningSession(ctx, id, authority.mode, authority.orgId);
   if (input.revision !== undefined && input.revision !== row.updated_at)
@@ -147,6 +149,7 @@ export async function holdScanningSession(
     }),
   );
   await g.commit();
+  await bump(ctx.env.DB, holdKey, minute);
   await kickDevices(ctx, row);
   return scanningSessionDetailForAuthority(ctx, id, row.mode, countAuthority);
 }
