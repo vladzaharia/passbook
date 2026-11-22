@@ -42,6 +42,7 @@ const manifest = (messaging: boolean): TemplateManifest => ({
       message: { type: 'string', maxLength: 256 },
       // Bound to nothing: changing it never changes the rendered pass.
       note: { type: 'string', maxLength: 40 },
+      visits: { type: 'integer', minimum: 0 },
       expires: { type: 'string', format: 'date', title: 'Expires' },
       points: { type: 'integer', minimum: 0, title: 'Points' },
     },

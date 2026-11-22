@@ -126,3 +126,11 @@ export const stampedWrite = (db: D1Database, passId: string, runId: string, afte
 /** Whether the run wrote this pass after version `after`. */
 export const wroteBy = async (db: D1Database, passId: string, runId: string, after: number) =>
   (await stampedWrite(db, passId, runId, after)) !== null;
+
+/** The run whose write last set the pass, or null after any other write (`passes.write_ref`). */
+export const writeRefOf = async (db: D1Database, passId: string) =>
+  (
+    await first<{ write_ref: string | null }>(db, 'SELECT write_ref FROM passes WHERE id = ?', [
+      passId,
+    ])
+  )?.write_ref ?? null;

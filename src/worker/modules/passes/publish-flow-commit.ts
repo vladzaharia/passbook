@@ -57,6 +57,7 @@ export async function commitPublishArtifact(
         options.source && options.sourceRef
           ? `${options.source}:${options.sourceRef}`
           : (options.source ?? null),
+      writeRef: options.sourceRef,
       actorType: options.actor.type,
       actorId: options.actor.id,
       passJson: prepared.passJson,

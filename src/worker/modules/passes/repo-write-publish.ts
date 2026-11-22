@@ -36,6 +36,8 @@ export interface PublishWrite {
   cause: PassCause;
   /** Why beside the cause (scan, broadcast, ...); copied to pass_versions.source by the trigger. */
   source: string | null;
+  /** The change run whose write this is; any other write clears it (settle reads it). */
+  writeRef?: string | undefined;
   actorType: string | null;
   actorId: string | null;
   passJson: string;
@@ -119,6 +121,7 @@ export async function casPublish(ctx: ServiceContext, w: PublishWrite): Promise<
       pending_actor_id: w.actorId,
       pending_pass_json: w.passJson,
       pending_source: w.source,
+      write_ref: w.writeRef ?? null,
       barcode_hash: w.barcodeHash,
       lookup_hash: w.lookupHash,
       scan_code: w.rotation ? w.scanCode : coalesceTo(w.scanCode),
@@ -192,6 +195,8 @@ export async function casMeta(
     /** Required with authority, so its expiry is checked immediately before the batch. */
     clock?: Clock | undefined;
     extraChecks?: readonly Check[] | undefined;
+    /** The change run whose write this is; any other write clears it (settle reads it). */
+    writeRef?: string | undefined;
   },
 ): Promise<number | null> {
   if (!permitsPassMutation(set.authority)) return null;
@@ -225,6 +230,7 @@ export async function casMeta(
       barcode_hash: set.barcodeHash,
       lookup_hash: set.lookupHash,
       scan_code: coalesceTo(set.scanCode),
+      write_ref: set.writeRef ?? null,
       ...(set.connectionState ? { sync_error_code: set.connectionState.syncErrorCode } : {}),
     },
     extraChecks: set.extraChecks,
