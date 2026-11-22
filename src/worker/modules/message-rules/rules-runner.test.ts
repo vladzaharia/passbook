@@ -230,6 +230,27 @@ describe('lifecycle and back-pressure', () => {
     expect(await ruleRow(id)).toMatchObject({ state: 'paused', paused_code: 'RULE_INPUT_MISSING' });
   });
 
+  it('keeps its place, not pausing, while a template has no release and no active passes', async () => {
+    const id = await created({});
+    const bare = await kit.releasedIn([]);
+    await run(
+      kit.env.DB,
+      "UPDATE message_rules SET template_ids = ?, anchor_input = 'expires' WHERE id = ?",
+      [JSON.stringify([bare.id]), id],
+    );
+    await check(id);
+    const row = await ruleRow(id);
+    expect(row).toMatchObject({ state: 'on', paused_code: null });
+    expect(row?.next_check_at).toBeGreaterThan(kit.clock.now());
+  });
+
+  it('pauses, not reschedules, when its template was deleted', async () => {
+    const id = await created({});
+    await run(kit.env.DB, "UPDATE templates SET status = 'deleted' WHERE id = ?", [kit.dated.id]);
+    await check(id);
+    expect(await ruleRow(id)).toMatchObject({ state: 'paused', paused_code: 'RULE_INPUT_MISSING' });
+  });
+
   it('defers while its own run is still waiting', async () => {
     await kit.datedPass({ expiry: date(T0 + 7 * DAY) });
     const id = await created({});

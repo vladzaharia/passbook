@@ -9,13 +9,12 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { inputFields } from '../../../shared/issuing/fields.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { resolveTemplate } from '../passes/builder.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { assertWritableMode, type PassScope, type ScopeArg } from '../passes/scope.ts';
-import { activeRelease } from '../templates/releases.ts';
 import { opMisfit, tokensOf } from './change-ops.ts';
 import type { PreparedBody } from './change-target.ts';
 import * as repo from './repo.ts';
+import { resolveModeTemplate } from './target-release.ts';
 
 /** Authorized tenant and mode, pass-change scope, and the write authority to fence mutations. */
 export interface BroadcastScope extends PassScope {
@@ -37,6 +36,24 @@ export async function requireWritableBroadcast(ctx: ServiceContext, id: string, 
   return row;
 }
 
+/** Preview's half of `checkTemplates`: each targeted template is released in the mode, or held by active passes. */
+export async function checkTargetReleases(
+  ctx: ServiceContext,
+  body: PreparedBody,
+  mode: Mode,
+): Promise<void> {
+  const action = body.kind === 'change' ? changeActionOf(body.patch) : null;
+  for (const templateId of body.target.templateIds) {
+    const { template, release } = await resolveModeTemplate(ctx, body.orgId, templateId, mode);
+    if (action === 'design' && !release)
+      throw new ValidationError(
+        `${template.manifest.name} has no approved design to move to.`,
+        [],
+        'BROADCAST_NO_RELEASE',
+      );
+  }
+}
+
 /** Every targeted template must exist in the org and fit what the broadcast sets. */
 export async function checkTemplates(
   ctx: ServiceContext,
@@ -46,7 +63,15 @@ export async function checkTemplates(
   const action = body.kind === 'change' ? changeActionOf(body.patch) : null;
   const defined = new Set<string>();
   for (const templateId of body.target.templateIds) {
-    const { manifest } = await resolveTemplate(ctx, body.orgId, templateId);
+    const { template, release } = await resolveModeTemplate(ctx, body.orgId, templateId, mode);
+    const { manifest } = template;
+    // Latest design moves passes to the template's approved release: without one there is nothing to move to.
+    if (action === 'design' && !release)
+      throw new ValidationError(
+        `${manifest.name} has no approved design to move to.`,
+        [],
+        'BROADCAST_NO_RELEASE',
+      );
     for (const key of Object.keys(manifest.inputs.properties ?? {})) defined.add(key);
     if (body.kind === 'message') {
       if (!manifest.messaging)
@@ -58,13 +83,6 @@ export async function checkTemplates(
       continue;
     }
     if (action) {
-      // Latest design moves passes to the template's approved release: without one there is nothing to move to.
-      if (action === 'design' && !(await activeRelease(ctx, templateId, body.orgId, mode, 'apple')))
-        throw new ValidationError(
-          `${manifest.name} has no approved design to move to.`,
-          [],
-          'BROADCAST_NO_RELEASE',
-        );
       continue;
     }
     const known = new Set(Object.keys(manifest.inputs.properties ?? {}));

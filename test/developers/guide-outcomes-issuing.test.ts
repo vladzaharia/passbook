@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { run } from '../../src/worker/platform/db.ts';
 import { fence, guideApi, snippetBody } from './guide-api.ts';
-import { kit } from './snippet-world.ts';
 
 const TEMPLATE = '0193a1b2-7c00-7000-8000-0000000000b1';
 const ORG = '0193a1b2-7c00-7000-8000-0000000000a1';
@@ -91,8 +89,8 @@ describe('import with auto mapping', () => {
 });
 
 describe('change many passes', () => {
-  it('previews in a sandbox and refuses to start a run there', async () => {
-    const { call, world } = await guideApi();
+  it('previews and starts a run in a sandbox', async () => {
+    const { call } = await guideApi();
     const preview = await call(
       'POST',
       '/broadcasts/preview',
@@ -103,29 +101,15 @@ describe('change many passes', () => {
     expect(preview.json.samples[0].changes).toEqual([
       { key: 'venueName', label: 'Venue', from: 'Sample Hall', to: 'Pier 9' },
     ]);
-    // A template with only a Test release has no active version: the run is not found first.
     const body = snippetBody('change-run');
-    const first = await call('POST', '/broadcasts', body);
-    expect([first.status, first.json.code]).toEqual([404, 'TEMPLATE_NOT_FOUND']);
-    await run(
-      (await kit()).env.DB,
-      `UPDATE templates SET active_version = (SELECT version FROM template_versions
-         WHERE template_id = templates.id LIMIT 1) WHERE id = ?`,
-      [world.templateId],
-    );
-    const second = await call('POST', '/broadcasts', body);
-    expect([second.status, second.json.code]).toEqual([403, 'SANDBOX_QUOTA']);
+    const started = await call('POST', '/broadcasts', body);
+    expect(started.status).toBe(201);
+    expect(['scheduled', 'sending']).toContain(started.json.state);
+    expect((await call('GET', `/broadcasts/${started.json.id}`)).status).toBe(200);
   });
 
   it('starts with the preview count, refuses a drifted count, and cannot undo a running run', async () => {
-    const { call, world } = await guideApi({ sandbox: false });
-    // A run resolves the template's active version, which only a Live release sets.
-    await run(
-      (await kit()).env.DB,
-      `UPDATE templates SET active_version = (SELECT version FROM template_versions
-         WHERE template_id = templates.id LIMIT 1) WHERE id = ?`,
-      [world.templateId],
-    );
+    const { call } = await guideApi({ sandbox: false });
     const body = snippetBody('change-run') as { target: Record<string, unknown> };
     const drifted = await call('POST', '/broadcasts', {
       ...body,
@@ -145,14 +129,8 @@ describe('change many passes', () => {
     expect((await call('POST', `/broadcasts/${started.json.id}/stop`)).status).toBe(200);
   });
 
-  it('shifts dates, counts a filter it does not know, and refuses what a run cannot take', async () => {
-    const { call, world } = await guideApi({ sandbox: false });
-    await run(
-      (await kit()).env.DB,
-      `UPDATE templates SET active_version = (SELECT version FROM template_versions
-         WHERE template_id = templates.id LIMIT 1) WHERE id = ?`,
-      [world.templateId],
-    );
+  it('shifts dates and refuses a filter it does not know and what a run cannot take', async () => {
+    const { call } = await guideApi({ sandbox: false });
     const target = { templateIds: [TEMPLATE] };
     const shift = await call('POST', '/broadcasts/preview', {
       orgId: ORG,
@@ -164,13 +142,18 @@ describe('change many passes', () => {
       'endsAt',
     ]);
 
-    // Unknown target keys are dropped: the count is the same as without them.
-    const plain = await call('POST', '/broadcasts/preview', { orgId: ORG, target });
-    const dropped = await call('POST', '/broadcasts/preview', {
-      orgId: ORG,
-      target: { ...target, status: 'voided', holderEmail: 'nobody@example.com' },
-    });
-    expect(dropped.json.targeted).toBe(plain.json.targeted);
+    // A target key the run does not take is refused, never dropped.
+    for (const filter of ['status', 'holderEmail', 'externalId', 'connectionId']) {
+      const refusedFilter = await call('POST', '/broadcasts/preview', {
+        orgId: ORG,
+        target: { ...target, [filter]: 'x' },
+      });
+      expect([refusedFilter.status, refusedFilter.json.code]).toEqual([
+        422,
+        'BROADCAST_UNSUPPORTED_FILTER',
+      ]);
+      expect(refusedFilter.json.issues[0].path).toBe(`target.${filter}`);
+    }
 
     const text = await call('POST', '/broadcasts/preview', {
       orgId: ORG,

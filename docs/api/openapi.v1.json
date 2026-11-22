@@ -25379,7 +25379,8 @@
                     "required": [
                       "eventId",
                       "checkedIn"
-                    ]
+                    ],
+                    "additionalProperties": false
                   },
                   {
                     "type": "object",
@@ -25392,7 +25393,8 @@
                     },
                     "required": [
                       "noScanDays"
-                    ]
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -25422,7 +25424,8 @@
                       "required": [
                         "input",
                         "values"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -25441,7 +25444,8 @@
                       },
                       "required": [
                         "input"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -25468,7 +25472,8 @@
                       "required": [
                         "input",
                         "timeZone"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -25495,7 +25500,8 @@
                         "input",
                         "op",
                         "value"
-                      ]
+                      ],
+                      "additionalProperties": false
                     }
                   ]
                 },
@@ -25526,7 +25532,8 @@
                 "type": "integer",
                 "minimum": 0
               }
-            }
+            },
+            "additionalProperties": false
           },
           "patch": {
             "type": "object",
@@ -25598,7 +25605,8 @@
                     "required": [
                       "eventId",
                       "checkedIn"
-                    ]
+                    ],
+                    "additionalProperties": false
                   },
                   {
                     "type": "object",
@@ -25611,7 +25619,8 @@
                     },
                     "required": [
                       "noScanDays"
-                    ]
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -25641,7 +25650,8 @@
                       "required": [
                         "input",
                         "values"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -25660,7 +25670,8 @@
                       },
                       "required": [
                         "input"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -25687,7 +25698,8 @@
                       "required": [
                         "input",
                         "timeZone"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -25714,7 +25726,8 @@
                         "input",
                         "op",
                         "value"
-                      ]
+                      ],
+                      "additionalProperties": false
                     }
                   ]
                 },
@@ -25745,7 +25758,8 @@
                 "type": "integer",
                 "minimum": 0
               }
-            }
+            },
+            "additionalProperties": false
           },
           "patch": {
             "type": "object",
@@ -25854,7 +25868,8 @@
                     "required": [
                       "eventId",
                       "checkedIn"
-                    ]
+                    ],
+                    "additionalProperties": false
                   },
                   {
                     "type": "object",
@@ -25867,7 +25882,8 @@
                     },
                     "required": [
                       "noScanDays"
-                    ]
+                    ],
+                    "additionalProperties": false
                   }
                 ]
               },
@@ -25897,7 +25913,8 @@
                       "required": [
                         "input",
                         "values"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -25916,7 +25933,8 @@
                       },
                       "required": [
                         "input"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -25943,7 +25961,8 @@
                       "required": [
                         "input",
                         "timeZone"
-                      ]
+                      ],
+                      "additionalProperties": false
                     },
                     {
                       "type": "object",
@@ -25970,7 +25989,8 @@
                         "input",
                         "op",
                         "value"
-                      ]
+                      ],
+                      "additionalProperties": false
                     }
                   ]
                 },
@@ -26001,7 +26021,8 @@
                 "type": "integer",
                 "minimum": 0
               }
-            }
+            },
+            "additionalProperties": false
           },
           "patch": {
             "type": "object",
@@ -76799,7 +76820,7 @@
           "resource": "broadcasts",
           "method": "create"
         },
-        "description": "Saves, sends or schedules a message or a change run. A change sets inputs on many passes: one target (`templateIds` with filters, `passIds` up to 5,000, or the `importId` of an ended import), `patch` operations (`set`, `clear`, `shift`, `add`, or `$void` or `$design` alone) and an optional `message` for the lock screen (needs `notify`). `target.expectCount` is the count a preview showed: when the server's count differs by more than 2% the run does not start and the answer is 409 `SELECTION_CHANGED`. More than 20,000 passes is 422 `MATCH_TOO_BROAD`. Filters the target does not know are ignored. Needs `messages:write` and, for a change, `passes:write`. Send an `Idempotency-Key`; the same key and body returns the same run.",
+        "description": "Saves, sends or schedules a message or a change run. A change sets inputs on many passes: one target (`templateIds` with filters, `passIds` up to 5,000, or the `importId` of an ended import), `patch` operations (`set`, `clear`, `shift`, `add`, or `$void` or `$design` alone) and an optional `message` for the lock screen (needs `notify`). `target.expectCount` is the count a preview showed: when the server's count differs by more than 2% the run does not start and the answer is 409 `SELECTION_CHANGED`. More than 20,000 passes is 422 `MATCH_TOO_BROAD`. A target key it does not define is 422 `BROADCAST_UNSUPPORTED_FILTER`, never ignored. Needs `messages:write` and, for a change, `passes:write`. Send an `Idempotency-Key`; the same key and body returns the same run.",
         "security": [
           {
             "apiKey": [
@@ -76828,6 +76849,7 @@
           "BROADCAST_TOO_MANY_TEMPLATES",
           "BROADCAST_UNKNOWN_INPUT",
           "BROADCAST_UNKNOWN_TOKEN",
+          "BROADCAST_UNSUPPORTED_FILTER",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -77150,7 +77172,9 @@
         "x-sign-in": "idp",
         "x-codes": [
           "BROADCAST_EMPTY",
+          "BROADCAST_NO_RELEASE",
           "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNSUPPORTED_FILTER",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -77370,6 +77394,7 @@
           "BROADCAST_TOO_MANY_TEMPLATES",
           "BROADCAST_UNKNOWN_INPUT",
           "BROADCAST_UNKNOWN_TOKEN",
+          "BROADCAST_UNSUPPORTED_FILTER",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -78756,9 +78781,13 @@
           "RULE_INPUT_MISSING",
           "RULE_LIMIT",
           "RULE_NOT_FOUND",
+          "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
     },
@@ -79469,9 +79498,13 @@
           "RULE_LIMIT",
           "RULE_NOT_FOUND",
           "RULE_VERSION",
+          "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WALLET_PROJECTION_UNSUPPORTED"
         ]
       },
       "delete": {
@@ -80115,9 +80148,13 @@
           "RULE_HOURS_NEED_DATETIME",
           "RULE_INPUT_MISMATCH",
           "RULE_INPUT_MISSING",
+          "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
     },
@@ -80207,9 +80244,13 @@
           "RULE_INPUT_MISMATCH",
           "RULE_INPUT_MISSING",
           "RULE_NOT_FOUND",
+          "TEMPLATE_CONTENT_CHANGED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
-          "VALIDATION"
+          "VALIDATION",
+          "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
     },

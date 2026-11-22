@@ -4,7 +4,9 @@ import {
   coveredOps,
   hasNewVersion,
   mergePending,
+  type Pending,
   stamp,
+  versionedBreaks,
   versionFailures,
 } from './changelog.ts';
 import { type Change, changes, type Doc } from './openapi-diff.ts';
@@ -140,5 +142,26 @@ describe('versions', () => {
     expect(hasNewVersion({ versions: [v('2026-11-20')] }, { versions: [v('2026-11-20')] })).toBe(
       false,
     );
+  });
+  it('an unversioned entry covers only a request-side tightening', () => {
+    const pending = [
+      {
+        key: 'POST /a body.t: unknown keys now refused',
+        change: 'body.t: unknown keys now refused',
+        unversioned: true,
+      },
+      { key: 'POST /a body.u: field removed', change: 'body.u: field removed' },
+      { key: 'GET /b 200.x: field removed', change: '200.x: field removed', unversioned: true },
+    ] as Pending[];
+    expect(
+      versionedBreaks(
+        [
+          'POST /a body.t: unknown keys now refused',
+          'POST /a body.u: field removed',
+          'GET /b 200.x: field removed',
+        ],
+        pending,
+      ),
+    ).toEqual(['POST /a body.u: field removed', 'GET /b 200.x: field removed']);
   });
 });
