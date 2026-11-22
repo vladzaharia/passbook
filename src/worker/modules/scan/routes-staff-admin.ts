@@ -111,6 +111,10 @@ async function caller(c: C, write: boolean) {
   return { ctx, auth, actorId, ip: ipPrefix(clientIp(c)) };
 }
 
+/** By id, a platform key finds the person nowhere (`keyStaff`: the missing-staff 404), not an org error. */
+const staffOrgOf = (auth: AuthContext, given: string | undefined) =>
+  auth.kind === 'api_key' && auth.orgId === null ? (given ?? '') : orgOf(auth, given);
+
 /** A key finds staff only in its own org: another org, and a platform key, get the missing-staff 404. */
 async function keyStaff(k: Awaited<ReturnType<typeof caller>>, orgId: string, id: string) {
   const staff =
@@ -216,7 +220,7 @@ export function registerStaffAdmin(router: Router): void {
     },
     async (c) => {
       const k = await caller(c, true);
-      const orgId = orgOf(k.auth, c.req.valid('query').orgId);
+      const orgId = staffOrgOf(k.auth, c.req.valid('query').orgId);
       const { id } = c.req.valid('param');
       if (k.auth.kind === 'api_key') {
         const staff = await keyStaff(k, orgId, id);
@@ -252,7 +256,7 @@ export function registerStaffAdmin(router: Router): void {
     },
     async (c) => {
       const k = await caller(c, true);
-      const orgId = orgOf(k.auth, c.req.valid('query').orgId);
+      const orgId = staffOrgOf(k.auth, c.req.valid('query').orgId);
       const { id } = c.req.valid('param');
       const found =
         k.auth.kind === 'api_key'
