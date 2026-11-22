@@ -125,6 +125,7 @@ register(
   {
     method: 'post',
     path: '/',
+    codes: ['BROADCAST_UNSUPPORTED_FILTER'],
     summary: 'Save, send or schedule a message or change (Idempotency-Key)',
     body: CreateBroadcastBodySchema,
     status: 201,
@@ -173,6 +174,7 @@ register(
   {
     method: 'post',
     path: '/preview',
+    codes: ['BROADCAST_UNSUPPORTED_FILTER'],
     summary: 'Count the passes a target matches',
     body: ChangePreviewBodySchema,
     response: ChangeRunPreviewSchema,
@@ -251,6 +253,7 @@ register(
   {
     method: 'patch',
     path: '/{id}',
+    codes: ['BROADCAST_UNSUPPORTED_FILTER'],
     summary: 'Edit a draft or a scheduled message that has not started',
     params: IdParamSchema,
     body: UpdateBroadcastBodySchema,

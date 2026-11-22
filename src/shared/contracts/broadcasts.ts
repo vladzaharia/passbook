@@ -96,28 +96,8 @@ export const BroadcastTargetSchema = z.object({
   match: InputMatchSchema.optional(),
 });
 export type BroadcastTarget = z.infer<typeof BroadcastTargetSchema>;
-
-/** The code of a target field that filters nothing: it is refused, never dropped (`BROADCAST_UNSUPPORTED_FILTER`). */
-export const UNSUPPORTED_FILTER_CODE = 'BROADCAST_UNSUPPORTED_FILTER';
-
-/**
- * A body's target keeps the keys it does not know, so this can refuse them: a field that was dropped
- * would widen the run past what the sender asked for (a `status` filter counting every active pass).
- */
-export function refuseUnknownFilters(
-  target: object,
-  known: readonly string[],
-  ctx: z.RefinementCtx,
-): void {
-  for (const key of Object.keys(target))
-    if (!known.includes(key))
-      ctx.addIssue({
-        code: 'custom',
-        path: ['target', key],
-        message: `"${key}" is not a filter. Use ${known.join(', ')}.`,
-        params: { code: UNSUPPORTED_FILTER_CODE },
-      });
-}
+/** A body's target refuses a key it does not know (422 `BROADCAST_UNSUPPORTED_FILTER`): dropping it would widen the run. */
+export const BroadcastTargetBodySchema = BroadcastTargetSchema.strict();
 
 /** Input values. A `message` broadcast carries `{ message: text }`; an empty text clears it. */
 export const BroadcastPatchSchema = z
@@ -214,13 +194,10 @@ export function refineCreateBroadcast(body: CreateFacts, ctx: z.RefinementCtx): 
 export const CreateBroadcastSchema = z
   .object({
     ...createBroadcastFields,
-    target: BroadcastTargetSchema.loose(),
+    target: BroadcastTargetBodySchema,
     patch: BroadcastPatchSchema,
   })
-  .superRefine((body, ctx) => {
-    refuseUnknownFilters(body.target, Object.keys(BroadcastTargetSchema.shape), ctx);
-    refineCreateBroadcast(body, ctx);
-  });
+  .superRefine(refineCreateBroadcast);
 export type CreateBroadcastBody = z.infer<typeof CreateBroadcastSchema>;
 
 /** Saves new values over a draft or a scheduled message that has not started. Same rules as create. */

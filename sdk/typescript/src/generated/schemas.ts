@@ -355,7 +355,6 @@ export type BroadcastsCountRecipientsParams = {
     passIds?: Array<string>;
     importId?: string;
     expectCount?: number;
-    [key: string]: unknown;
   };
   patch?: Record<string, unknown>;
   notify?: boolean;
@@ -401,7 +400,6 @@ export type BroadcastsCreateParams = {
     passIds?: Array<string>;
     importId?: string;
     expectCount?: number;
-    [key: string]: unknown;
   };
   patch: Record<string, unknown>;
   message?: string;
@@ -450,7 +448,6 @@ export type BroadcastsUpdateParams = {
     passIds?: Array<string>;
     importId?: string;
     expectCount?: number;
-    [key: string]: unknown;
   };
   patch: Record<string, unknown>;
   message?: string;

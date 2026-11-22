@@ -6,7 +6,6 @@ import {
   createBroadcastFields,
   PassMatchSchema,
   refineCreateBroadcast,
-  refuseUnknownFilters,
 } from './broadcasts.ts';
 import { IdSchema, type Json, JsonSchema, PlainLineSchema } from './common.ts';
 import { FieldChangeSchema } from './issuing.ts';
@@ -29,7 +28,7 @@ export const ChangeRunTargetSchema = BroadcastTargetSchema.extend({
   /** The count the admin saw; the server re-counts and refuses a drift over 2% (`SELECTION_CHANGED`). */
   expectCount: n.optional(),
 })
-  .loose()
+  .strict()
   .refine(
     (t) => [t.templateIds, t.passIds, t.importId].filter((v) => v !== undefined).length === 1,
     'Target templates, pass ids or one import.',
@@ -104,7 +103,6 @@ export const CreateBroadcastBodySchema = z
     message: ChangeRunMessageSchema.optional(),
   })
   .superRefine((body, ctx) => {
-    refuseUnknownFilters(body.target, Object.keys(ChangeRunTargetSchema.shape), ctx);
     refineCreateBroadcast(body, ctx);
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: 'custom', path, message });
@@ -148,7 +146,6 @@ export const ChangePreviewBodySchema = z
     message: ChangeRunMessageSchema.optional(),
   })
   .superRefine((body, ctx) => {
-    refuseUnknownFilters(body.target, Object.keys(ChangeRunTargetSchema.shape), ctx);
     if (body.patch)
       for (const bad of changeOpsOf(body.patch).issues)
         ctx.addIssue({ code: 'custom', path: ['patch', bad.key], message: bad.message });

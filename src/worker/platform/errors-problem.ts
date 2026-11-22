@@ -38,13 +38,22 @@ const TITLES: Record<number, string> = {
   503: 'Service unavailable',
 };
 
+/** One issue per field; an unrecognized key is named in its path (`target.status`). */
 export function zodIssues(error: ZodError): FieldIssue[] {
-  return error.issues.map((issue) => ({
-    path: issue.path.map(String).join('.'),
-    message: issue.message,
-    code: issue.code,
-  }));
+  return error.issues.flatMap((issue): FieldIssue[] =>
+    issue.code === 'unrecognized_keys'
+      ? issue.keys.map((key) => ({
+          path: [...issue.path, key].map(String).join('.'),
+          message: `Unrecognized key: "${key}".`,
+          code: issue.code,
+        }))
+      : [{ path: issue.path.map(String).join('.'), message: issue.message, code: issue.code }],
+  );
 }
+
+/** A filter the target does not take: the problem says so by code, not as a general validation error. */
+const unsupportedFilter = (error: ZodError): boolean =>
+  error.issues.some((i) => i.code === 'unrecognized_keys' && i.path.at(-1) === 'target');
 
 export function toProblem(
   error: unknown,
@@ -65,11 +74,7 @@ export function toProblem(
     detail = error.message;
   } else if (error instanceof ZodError) {
     status = 422;
-    // A contract can name its refusal: a custom issue with `params.code` is the problem's code.
-    const named = error.issues.flatMap((i) =>
-      i.code === 'custom' && typeof i.params?.code === 'string' ? [i.params.code] : [],
-    )[0];
-    code = named ?? 'VALIDATION';
+    code = unsupportedFilter(error) ? 'BROADCAST_UNSUPPORTED_FILTER' : 'VALIDATION';
     detail = 'Invalid request.';
     issues = zodIssues(error);
   } else if (error instanceof HTTPException) {

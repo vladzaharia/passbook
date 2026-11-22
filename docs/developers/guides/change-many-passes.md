@@ -138,7 +138,7 @@ A filter or an import that matches more than 20,000 passes is 422 [MATCH_TOO_BRO
 
 ## Filters a run can't take
 
-The passes list filters more than a run does. A target key the run does not take is 422 `BROADCAST_UNSUPPORTED_FILTER` on preview and on run, and `issues` names the field (`target.status`), so a run never reaches more passes than you asked for.
+The passes list filters more than a run does. A target key the run does not take is 422 [BROADCAST_UNSUPPORTED_FILTER](/developers/errors/BROADCAST_UNSUPPORTED_FILTER) on preview and on run, and `issues` names the field (`target.status`), so a run never reaches more passes than you asked for.
 
 - `status`, `holderEmail`, `externalId`, `connectionId`: list the passes with them, then send the ids as `passIds`.
 - `templateId`: send `templateIds`.

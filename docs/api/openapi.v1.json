@@ -25143,7 +25143,7 @@
                 "minimum": 0
               }
             },
-            "additionalProperties": {}
+            "additionalProperties": false
           },
           "patch": {
             "type": "object",
@@ -25358,7 +25358,7 @@
                 "minimum": 0
               }
             },
-            "additionalProperties": {}
+            "additionalProperties": false
           },
           "patch": {
             "type": "object",
@@ -25610,7 +25610,7 @@
                 "minimum": 0
               }
             },
-            "additionalProperties": {}
+            "additionalProperties": false
           },
           "patch": {
             "type": "object",
@@ -76137,6 +76137,7 @@
           "BROADCAST_TOO_MANY_TEMPLATES",
           "BROADCAST_UNKNOWN_INPUT",
           "BROADCAST_UNKNOWN_TOKEN",
+          "BROADCAST_UNSUPPORTED_FILTER",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -76458,6 +76459,7 @@
         "x-codes": [
           "BROADCAST_EMPTY",
           "BROADCAST_TOO_MANY_TEMPLATES",
+          "BROADCAST_UNSUPPORTED_FILTER",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -76677,6 +76679,7 @@
           "BROADCAST_TOO_MANY_TEMPLATES",
           "BROADCAST_UNKNOWN_INPUT",
           "BROADCAST_UNKNOWN_TOKEN",
+          "BROADCAST_UNSUPPORTED_FILTER",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
