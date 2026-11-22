@@ -126,6 +126,9 @@ export function ScanAppView({
     const { s: _s, ...rest } = screen;
     body = <StartPanel {...rest} onStart={on.start ?? noop} onDirection={on.direction ?? noop} />;
   }
+  // A verdict, tag or boot card brings its own h1; an idle screen is named once, for screen readers.
+  if (screen.s === 'loop' && !card)
+    body = <h1 className="sr-only">{capsule?.name || 'Scanner'}</h1>;
   const showDock = screen.s === 'start' || screen.s === 'loop';
   return (
     <ScanShell

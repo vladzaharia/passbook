@@ -146,16 +146,25 @@ export async function probeHardware(env: ProbeEnv): Promise<Probe> {
   };
 }
 
-type PolicyDoc = Document & { permissionsPolicy?: { allowsFeature(name: string): boolean } };
+type Policy = { allowsFeature(name: string): boolean };
+type PolicyDoc = Document & { permissionsPolicy?: Policy; featurePolicy?: Policy };
 
-/** False when the page's Permissions-Policy blocks a feature: calling it would log a violation. */
-function allowed(feature: string): boolean {
+/**
+ * False when the page's Permissions-Policy blocks a feature: reading `navigator.usb` would log a
+ * violation. Chromium exposes the policy as `document.featurePolicy`; `permissionsPolicy` is the
+ * newer name. With neither, the feature is treated as blocked-unknown and allowed.
+ */
+export function featureAllowed(feature: string): boolean {
   try {
-    return (document as PolicyDoc).permissionsPolicy?.allowsFeature(feature) ?? true;
+    const doc = document as PolicyDoc;
+    const policy = doc.permissionsPolicy ?? doc.featurePolicy;
+    return policy?.allowsFeature(feature) ?? true;
   } catch {
     return true;
   }
 }
+
+const allowed = featureAllowed;
 
 /** The browser's own environment. */
 export function browserProbeEnv(canBuzz: boolean): ProbeEnv {
