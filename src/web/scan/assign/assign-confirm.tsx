@@ -19,11 +19,16 @@ export function infoLine(a: AssignState): { tone: 'info' | 'warn' | 'muted'; tex
   if (w.includes('held_by_other'))
     return {
       tone: 'warn',
-      text: fill(SCAN_TAG_COPY.confirm.moveOther, {
-        holder: bound?.holderName ?? 'someone',
-        pass: bound?.passTitle ?? 'pass',
-        name,
-      }),
+      text: bound?.holderName
+        ? fill(SCAN_TAG_COPY.confirm.moveOther, {
+            holder: bound.holderName,
+            pass: bound.passTitle ?? 'pass',
+            name,
+          })
+        : fill(SCAN_TAG_COPY.confirm.moveOtherPass, {
+            pass: bound?.passTitle ?? 'another pass',
+            name,
+          }),
     };
   if (w.includes('lost'))
     return {
@@ -44,6 +49,15 @@ export function infoLine(a: AssignState): { tone: 'info' | 'warn' | 'muted'; tex
   if (w.includes('basic_too_low')) return { tone: 'warn', text: TAG_EXTRA_COPY.basicLow };
   if (a.preview?.assurance === 'basic') return { tone: 'muted', text: SCAN_TAG_COPY.confirm.basic };
   return null;
+}
+
+/** What the Manager approves: a move says whose tag it takes, otherwise the assign. */
+function pinLine(a: AssignState, name: string): string {
+  if (!a.pin?.move) return fill(SCAN_TAG_COPY.confirm.pinAssign, { name });
+  const from = a.inspected?.bound?.holderName ?? a.inspected?.bound?.passTitle;
+  return from
+    ? fill(SCAN_TAG_COPY.confirm.pinMove, { from, to: name })
+    : fill(SCAN_TAG_COPY.confirm.pinMoveLost, { to: name });
 }
 
 export function ConfirmBody({
@@ -148,7 +162,7 @@ export function ConfirmBody({
         <ApprovalSheet
           managers={managers}
           code={code}
-          action={fill('Assigning a tag to {name}', { name })}
+          action={pinLine(a, name)}
           note={a.pin.note}
           onApprove={on.approve}
           onCancel={on.closePin}

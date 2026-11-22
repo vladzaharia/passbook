@@ -34,6 +34,11 @@ export const SCAN_TAG_COPY = {
       "It works with all of {name}'s passes now. Assigning changes that.",
     ],
     moveOther: "It works with {holder}'s {pass} now. A manager can move it to {name}.",
+    moveOtherPass: 'It works with {pass} now. A manager can move it to {name}.',
+    /** The PIN sheet's line for a move. */
+    pinAssign: 'Assigning a tag to {name}',
+    pinMove: 'Moves this tag from {from} to {to}',
+    pinMoveLost: 'Moves this lost tag to {to}',
     basic: 'Basic tags can be copied.',
     assign: 'Assign',
     move: 'Move tag',

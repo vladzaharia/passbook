@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import '../../lib/test-utils.tsx';
 import { type TAG_SCENARIOS, TagVisual } from '../visual-tags.tsx';
+import { infoLine } from './assign-confirm.tsx';
 import { flagText, noneLine } from './tag-lines.ts';
 
 const show = (scenario: (typeof TAG_SCENARIOS)[number]) =>
@@ -68,6 +69,25 @@ describe('the assign card', () => {
   it('the done card shows the holder photo', () => {
     show('assign-done-photo');
     expect(document.querySelector('.scan-assign-photo')).toBeTruthy();
+  });
+  it('the move PIN says whose tag it takes, in one line', () => {
+    show('assign-confirm-other-pin');
+    expect(screen.getByText(/Moves this tag from Leo Park to Maya Okafor/)).toBeTruthy();
+    cleanup();
+    show('assign-confirm-lost-pin');
+    expect(screen.getByText(/Moves this lost tag to Maya Okafor/)).toBeTruthy();
+  });
+  it('while the PIN form is open the dock has no Ask a manager', () => {
+    show('assign-confirm-lost-pin');
+    expect(screen.queryByRole('button', { name: 'Ask a manager' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+  });
+  it('a tag held by a pass with no holder name does not read "someone\'s"', () => {
+    const a = {
+      preview: { warnings: ['held_by_other'], card: { holderName: 'Ben', title: 'x' } },
+      inspected: { bound: { scope: 'pass', passTitle: 'Old Holder', holderName: null } },
+    } as unknown as Parameters<typeof infoLine>[0];
+    expect(infoLine(a)?.text).toBe('It works with Old Holder now. A manager can move it to Ben.');
   });
   it('other banners have no Look up button', () => {
     show('assign-pass-banner');

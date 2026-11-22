@@ -84,9 +84,12 @@ export function AssignDock({
         <>
           <DockButton onClick={on.back}>{TAG_EXTRA_COPY.back}</DockButton>
           {held && !manager ? (
-            <DockButton primary variant="filled" onClick={on.askManager}>
-              {TAG_EXTRA_COPY.askManager}
-            </DockButton>
+            // The form is open on the card: its own Continue is the one primary.
+            a.pin?.open ? null : (
+              <DockButton primary variant="filled" onClick={on.askManager}>
+                {TAG_EXTRA_COPY.askManager}
+              </DockButton>
+            )
           ) : (
             <DockButton primary variant="filled" onClick={() => on.bind(held)}>
               {move ? c.confirm.move : c.confirm.assign}

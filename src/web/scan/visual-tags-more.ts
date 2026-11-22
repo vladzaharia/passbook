@@ -55,4 +55,23 @@ export const moreAssigns: Record<string, Assign> = {
     }),
     reader: ANDROID,
   },
+  'assign-confirm-other-pin': {
+    a: base({
+      step: 'confirm',
+      tag: READ,
+      card: { code: 'C1', method: 'camera' },
+      inspected: {
+        state: 'bound',
+        hint: '7F3A',
+        assurance: 'basic',
+        bound: { scope: 'pass', passTitle: 'Pool day', holderName: 'Leo Park' },
+        lostAt: null,
+        boundAt: null,
+        boundByName: null,
+      },
+      preview: { ...PREVIEW, warnings: ['held_by_other'] },
+      pin: { open: true, move: true },
+    }),
+    reader: ANDROID,
+  },
 };

@@ -11,6 +11,7 @@ import { needsSessionRefetch } from './boot/use-scan-session.ts';
 import { loopCard } from './loop-card.tsx';
 import { LoopMenu } from './loop-menu.tsx';
 import { capsuleStateOf, loopScreen, tagExtraActions, tintDismisses } from './loop-screen.tsx';
+import { assignOf } from './machine/assign-view.ts';
 import type { ScanOutcome } from './machine/types.ts';
 import { useScanMachine } from './machine/use-scan-machine.ts';
 import { LazyOperatorPanel } from './operator/lazy-operator-panel.tsx';
@@ -74,11 +75,13 @@ export function ScanLoop({
   };
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !s.overlay) dispatch({ type: 'dismiss' });
+      if (event.key !== 'Escape' || s.overlay) return;
+      // The Manager PIN form closes first; a second Escape leaves the assign.
+      dispatch(assignOf(s)?.pin?.open ? { type: 'assign.pin', open: false } : { type: 'dismiss' });
     };
     window.addEventListener('keydown', onEscape);
     return () => window.removeEventListener('keydown', onEscape);
-  }, [s.overlay, dispatch]);
+  }, [s, dispatch]);
   const [cameraChoice, setCameraChoice] = useState<CameraChoice>('back');
   const requestedRev = useRef(0);
   useEffect(() => {
