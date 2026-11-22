@@ -2829,6 +2829,14 @@
     "note": "Set up scanning in one call: places, events, staff, sessions and devices."
   },
   {
+    "key": "POST /api/v1/scans/{id}/undo 200.exitAllowed: field added",
+    "class": "additive",
+    "operationId": "scans.postScansByIdUndo",
+    "op": "POST /api/v1/scans/{id}/undo",
+    "change": "200.exitAllowed: field added",
+    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
     "key": "POST /api/v1/status/incidents new operation",
     "class": "additive",
     "operationId": "status.postStatusIncidents",
@@ -2843,14 +2851,6 @@
     "op": "POST /api/v1/status/incidents/{id}/resolve",
     "change": "new operation",
     "note": "Resolves an incident note; it stays on the page for 14 days."
-  },
-  {
-    "key": "POST /api/v1/scans/{id}/undo 200.exitAllowed: field added",
-    "class": "additive",
-    "operationId": "scans.postScansByIdUndo",
-    "op": "POST /api/v1/scans/{id}/undo",
-    "change": "200.exitAllowed: field added",
-    "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
     "key": "POST /api/v1/templates/{id}/archive 200.openReview: field added",
