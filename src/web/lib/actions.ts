@@ -236,6 +236,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'tag_keyset.revoke_key': a('Tag keys revoked', ShieldAlert, 'danger'),
   'tag_keyset.reenrol': a('Tags moved to new keys', ArrowRightLeft, 'warning'),
   'tag_keyset.import': a('Tags imported', ImagePlus, 'success'),
+  'tag_keyset.rekey': a('Tag keys replaced', I.rotate, 'warning'),
   'tag_keyset.disable': a('Tag keys disabled', ShieldX, 'danger'),
   'template.activate': a('Template activated', CircleCheck, 'success'),
   'template.approved_alone': a('Template version self-approved', CircleCheck, 'warning'),

@@ -26,6 +26,29 @@ export async function existingRefs(
   return found;
 }
 
+/** The tags of this keyset that hold their own key, by ref: what a replace import may re-key. */
+export async function ownKeyTags(
+  db: D1Database,
+  orgId: string,
+  mode: Mode,
+  keysetId: string,
+  refs: string[],
+): Promise<Map<string, string>> {
+  const found = new Map<string, string>();
+  for (let i = 0; i < refs.length; i += 90) {
+    const part = refs.slice(i, i + 90);
+    const rows = await all<{ tag_ref: string; id: string }>(
+      db,
+      `SELECT t.tag_ref, t.id FROM nfc_tags t JOIN nfc_tag_sun s ON s.tag_id = t.id
+       WHERE t.org_id = ? AND t.mode = ? AND s.keyset_id = ? AND s.kek_version IS NOT NULL
+         AND t.tag_ref IN (${part.map(() => '?').join(', ')})`,
+      [orgId, mode, keysetId, ...part],
+    );
+    for (const r of rows) found.set(r.tag_ref, r.id);
+  }
+  return found;
+}
+
 export interface ImportedTag {
   tagId: string;
   ref: string;
@@ -100,4 +123,54 @@ export function importGrant(
     detail: { attempted: tags.length, version: keyset.version },
   });
   return { grant: g, inserts };
+}
+
+/**
+ * Replaces the sealed own key of tags already on a per-tag keyset, in one batch, on the active version
+ * `version`. Counters and bindings stay; a tag stops verifying until written with the new key. A tag that
+ * left the keyset meanwhile changes nothing, so its entry in `updates` comes back empty. Refused if the
+ * keyset was disabled or rotated.
+ */
+export function rekeyGrant(
+  ctx: ServiceContext,
+  a: KeysetAuthority,
+  keyset: { id: string; version: number },
+  tags: Pick<ImportedTag, 'tagId' | 'envelope'>[],
+): { grant: Grant; updates: GrantedStatement[] } {
+  const g = keysetGrant(
+    ctx,
+    'org_mode.nfc.keyset.rekey',
+    a,
+    [
+      rowIs('nfc_tag_keysets', keyset.id, { disabled_at: null, per_tag: 1 }),
+      exactlyOne(
+        'nfc_tag_keys',
+        { keyset_id: keyset.id, version: keyset.version, state: 'active' },
+        'keyset_id',
+      ),
+    ],
+    ['nfc_tags', 'nfc_tag_sun'],
+  );
+  const updates = tags.map((t) =>
+    g.joined('nfc_tag_sun', {
+      via: 'tag_id',
+      where: { tag_id: t.tagId, keyset_id: keyset.id },
+      set: {
+        key_version: keyset.version,
+        kek_version: t.envelope.kekVersion,
+        iv: t.envelope.iv,
+        wrapped_dek: t.envelope.wrappedDek,
+        ciphertext: t.envelope.ciphertext,
+      },
+      returning: ['tag_id'],
+    }),
+  );
+  audited(g, {
+    ctx,
+    a,
+    keysetId: keyset.id,
+    action: 'tag_keyset.rekey',
+    detail: { attempted: tags.length, version: keyset.version },
+  });
+  return { grant: g, updates };
 }

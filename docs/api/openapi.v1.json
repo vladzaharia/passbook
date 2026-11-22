@@ -32749,6 +32749,9 @@
           },
           "dryRun": {
             "type": "boolean"
+          },
+          "replace": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -128590,7 +128593,8 @@
                               "dup_file",
                               "dup_key",
                               "meta_key",
-                              "exists"
+                              "exists",
+                              "not_on_keyset"
                             ]
                           }
                         },
