@@ -42,6 +42,13 @@
 .wb-closed {
   flex-basis: 100%;
 }
+/* The reset confirm and the new key sit on their own row under the buttons. */
+.wb-act-slot {
+  flex-basis: 100%;
+}
+.wb-act-slot:empty {
+  display: none;
+}
 .wb-empty {
   align-items: center;
 }

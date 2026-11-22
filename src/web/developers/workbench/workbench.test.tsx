@@ -142,6 +142,54 @@ describe('after Reset', () => {
   });
 });
 
+describe('Reset and Reopen panels', () => {
+  const mockActions = async () => {
+    vi.doMock('../console/turnstile.ts', () => ({ verify: async () => 'token' }));
+    vi.doMock('../console/sandbox-actions.ts', async (orig) => ({
+      ...(await orig<typeof import('../console/sandbox-actions.ts')>()),
+      resetSandbox: async () => ({ secret: 'pbp_test_NEW', deleted: { passes: 0 }, resetsLeft: 2 }),
+      reopenSandbox: async () => ({ secret: 'pbp_test_REOPENED' }),
+    }));
+    vi.resetModules();
+    const { updateSession: set } = await import('../console/session.ts');
+    set({
+      kind: 'ready',
+      csrf: 'c',
+      siteKey: 'k',
+      sandbox: { id: 's', orgSlug: 'x', templateId: null },
+    });
+    return (await import('./workbench.tsx')).Workbench;
+  };
+  afterEach(() => {
+    vi.doUnmock('../console/turnstile.ts');
+    vi.doUnmock('../console/sandbox-actions.ts');
+  });
+
+  it('puts the Reset confirm on its own row below the buttons, not between them', async () => {
+    const Fresh = await mockActions();
+    const { container } = render(<Fresh home={homeProgressed} loadCalls={noCalls} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    const confirm = await screen.findByRole('region', { name: 'Reset this sandbox?' });
+    expect(container.querySelector('.wb-head-actions')?.contains(confirm)).toBe(false);
+    expect(container.querySelector('.wb-head')?.contains(confirm)).toBe(true);
+  });
+
+  it('keeps the new key on screen when the refreshed home flips the sandbox from closed to open', async () => {
+    const Fresh = await mockActions();
+    const onChanged = vi.fn();
+    const { rerender } = render(
+      <Fresh home={homeClosed} loadCalls={noCalls} onChanged={onChanged} />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Reopen' }));
+    await screen.findByText('Reopened. Your key was replaced.');
+    expect(onChanged).toHaveBeenCalledTimes(1);
+    rerender(<Fresh home={homeProgressed} loadCalls={noCalls} onChanged={onChanged} />);
+    expect(screen.getByText(/PASSBOOK_KEY=pbp_test_REOPENED/)).toBeTruthy();
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(screen.queryByText(/pbp_test_REOPENED/)).toBeNull();
+  });
+});
+
 describe('WorkbenchIsland', () => {
   it('reads the home once and renders it; a refusal says so', async () => {
     const fetchFn = vi.fn(async () => Response.json(homeFresh));

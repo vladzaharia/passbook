@@ -160,6 +160,8 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   await shots(page, '13-closed');
   await page.getByRole('button', { name: 'Reopen' }).click();
   await expect(page.getByText('Reopened. Your key was replaced.')).toBeVisible();
+  // The refresh that Reopen causes does not take the new key off the page.
+  await expect(page.getByText(/PASSBOOK_KEY=pbp_test_/)).toBeVisible();
   await shots(page, '14-reopened');
 });
 
