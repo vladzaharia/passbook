@@ -10,7 +10,7 @@ export interface RolloutSegment {
 }
 
 /** Colours of the versions still on their way, in order; the release is green and the left behind amber. */
-export const OLD_VERSION_FILLS = ['bg-accent', 'bg-info', 'bg-fg-muted'] as const;
+export const OLD_VERSION_FILLS = ['bg-fg-muted', 'bg-info', 'bg-accent'] as const;
 
 /**
  * One bar split by version: a labelled segment for the release, one for each version still moving and
