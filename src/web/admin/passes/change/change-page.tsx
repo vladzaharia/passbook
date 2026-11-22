@@ -1,6 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
-import { selectionMovedConfirm, voidConfirm } from '../../../lib/confirms.ts';
+import { voidConfirm } from '../../../lib/confirms.ts';
+import { selectionMovedConfirm } from '../../../lib/confirms-change.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { orgPath } from '../../../lib/scope.ts';
 import {

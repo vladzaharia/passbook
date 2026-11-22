@@ -31,6 +31,7 @@ import {
 } from './guards.ts';
 import * as repo from './repo.ts';
 import { DAY_LIMIT_KEY, manualBroadcastsToday } from './repo-day-limit.ts';
+import { type BroadcastListFilter, listBroadcasts } from './repo-list-broadcasts.ts';
 import {
   chosenTargetsStmts,
   resumableCount,
@@ -259,9 +260,9 @@ export async function getBroadcastDto(
 
 export async function listBroadcastDtos(
   ctx: ServiceContext,
-  filter: repo.BroadcastListFilter,
+  filter: BroadcastListFilter,
 ): Promise<{ items: BroadcastDto[]; nextCursor: string | null }> {
-  const { rows, nextCursor } = await repo.listBroadcasts(ctx.env.DB, filter);
+  const { rows, nextCursor } = await listBroadcasts(ctx.env.DB, filter);
   const counts = await repo.countItems(
     ctx.env.DB,
     rows.map((r) => r.id),
