@@ -225,6 +225,8 @@ export async function cancelBroadcast(
   scope: BroadcastScope,
 ): Promise<BroadcastDto> {
   const row = await requireWritableBroadcast(ctx, id, scope);
+  // A scheduled change is a bulk write: cancelling it needs what stopping or undoing it needs.
+  assertCanChange(scope, row.kind);
   const now = ctx.clock.now();
   const [cancelled] = await batch(ctx.env.DB, [
     repo.cancelBroadcastStmt(ctx.env.DB, id, scope.authority, now),

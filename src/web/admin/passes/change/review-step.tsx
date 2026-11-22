@@ -27,6 +27,10 @@ export const willChange = (p: Preview) => Math.max(0, p.targeted - p.unchanged -
 /** The tiles beyond 200 passes are scaled from the 200 newest. */
 export const SAMPLED_PASSES = 200;
 
+/** The counts are exact (200 passes or fewer) and nothing would change: Run has nothing to do. */
+export const exactNothing = (p: Preview) =>
+  !(p.estimated === true && p.targeted > SAMPLED_PASSES) && willChange(p) === 0;
+
 function Tile({ label, value, i }: { label: string; value: number; i: number }) {
   return (
     <div

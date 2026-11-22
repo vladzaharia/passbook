@@ -21,7 +21,7 @@ import { ChangeStep } from './change-step.tsx';
 import { CHANGE_COPY as C } from './copy.ts';
 import { HoldersStep } from './holders-step.tsx';
 import type { ChangeKind } from './model.ts';
-import { ReviewStep } from './review-step.tsx';
+import { exactNothing, ReviewStep } from './review-step.tsx';
 import { type ChangeSelection, canChangePasses, takeSelection, targetOf } from './selection.ts';
 import { useChangeWizard } from './use-change-wizard.ts';
 
@@ -86,7 +86,8 @@ function Wiz({
   /** The count the person selected is the one the run takes: a different one is confirmed first. */
   const run = () => {
     if (!p) return;
-    if (selection.kind === 'filter' && p.targeted !== selection.count) w.setDrift(p.targeted);
+    // Only a count that went up is news: a smaller one reads "N of M can change" on Review.
+    if (selection.kind === 'filter' && p.targeted > selection.count) w.setDrift(p.targeted);
     else void w.submit(p.targeted);
   };
   const next = () => {
@@ -129,7 +130,8 @@ function Wiz({
         }
         {...(reviewing && kind === 'void' ? { nextTone: 'danger' as const } : {})}
         nextDisabled={
-          (reviewing && (!p || !w.fresh || targeted === 0)) || (step === 1 && !w.whenOk)
+          (reviewing && (!p || !w.fresh || targeted === 0 || (p && exactNothing(p)))) ||
+          (step === 1 && !w.whenOk)
         }
         {...(hint ? { nextHint: hint } : {})}
         busy={w.submitting}

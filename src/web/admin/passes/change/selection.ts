@@ -33,6 +33,15 @@ export function leaveSelection(orgId: string, selection: ChangeSelection): void 
   }
 }
 
+/** Forget the hand-off once a run is made, so Back or a bookmark does not reopen it. */
+export function clearSelection(): void {
+  try {
+    sessionStorage.removeItem(KEY);
+  } catch {
+    // Storage blocked: nothing was stored.
+  }
+}
+
 export function takeSelection(orgId: string): ChangeSelection | undefined {
   try {
     const raw = sessionStorage.getItem(KEY);

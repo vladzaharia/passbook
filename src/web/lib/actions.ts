@@ -273,6 +273,8 @@ export const ACTIONS: Record<string, ActionEntry> = {
   ...SCAN_PIN_ACTIONS,
   ...BROADCAST_RUN_ACTIONS,
   ...DEVELOPER_ACTIONS,
+=======
+>>>>>>> 5645831f4
   'bundle.create': a('Bundle created', ENTITY.bundle.icon, 'success'),
   'bundle.delete': a('Bundle deleted', I.delete, 'danger'),
   'bundle.rotate_link': a('Bundle link rotated', I.rotate, 'info'),

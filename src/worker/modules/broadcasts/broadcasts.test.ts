@@ -435,7 +435,8 @@ describe('tenant, mode and scope isolation', () => {
     expect(
       (await post(`/broadcasts/${draft.id}/send`, only, { at: kit.clock.now() + 60_000 })).status,
     ).toBe(403);
-    expect((await post(`/broadcasts/${draft.id}/cancel`, only)).status).toBe(200);
+    expect((await post(`/broadcasts/${draft.id}/cancel`, only)).status).toBe(403);
+    expect((await post(`/broadcasts/${draft.id}/cancel`, both)).status).toBe(200);
   });
 
   it('needs the messages:write scope', async () => {

@@ -52,6 +52,8 @@ export function ChangeRunPage({ runId }: { runId: string }) {
     },
   });
   const b = found.data;
+  // A "Now" run waits for the minute cron: badge and card both say it is starting.
+  const soon = b?.state === 'scheduled' && (b.at ?? 0) - Date.now() <= START_GRACE_MS;
   const mine = b && orgId && b.orgId === orgId && b.kind === 'change' && b.parentId === null;
   const ended = Boolean(b && ENDED.has(b.state));
   const undoRun = useFollowRun('parentId', runId, orgId ?? '', Boolean(mine && ended));
@@ -72,7 +74,7 @@ export function ChangeRunPage({ runId }: { runId: string }) {
           <Badge
             tone={b.state === 'sent' ? 'success' : b.state === 'failed' ? 'danger' : 'neutral'}
           >
-            {C.run.states[b.state] ?? b.state}
+            {soon ? C.run.starting : (C.run.states[b.state] ?? b.state)}
           </Badge>
         ) : undefined
       }
@@ -109,7 +111,6 @@ export function ChangeRunPage({ runId }: { runId: string }) {
     (b.state === 'partial' || b.state === 'failed' || b.state === 'cancelled') &&
     b.errorCode !== 'SELECTION_CHANGED';
   const why = b.state === 'failed' ? runFailure(b.errorCode) : null;
-  const soon = b.state === 'scheduled' && (b.at ?? 0) - Date.now() <= START_GRACE_MS;
 
   async function run<T>(work: () => Promise<T>): Promise<T | undefined> {
     setRefusal(null);
@@ -160,7 +161,7 @@ export function ChangeRunPage({ runId }: { runId: string }) {
   else {
     const undone = undo?.state === 'sent';
     body = (
-      <DoneCard b={b} undone={undone}>
+      <DoneCard b={b} undone={undone} undoing={undo?.state === 'sending'}>
         {undo ? (
           undo.state === 'sending' ? (
             <RunProgress

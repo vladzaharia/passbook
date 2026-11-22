@@ -514,10 +514,8 @@ describe('API-key scope, organization and mode', () => {
     expect(await persisted()).toEqual(unchanged);
     expect(
       (await call('POST', `/broadcasts/${changed.id}/cancel`, onlyMessages.headers)).status,
-    ).toBe(200);
-    expect(
-      await first(kit.env.DB, 'SELECT state FROM broadcasts WHERE id = ?', [changed.id]),
-    ).toEqual({ state: 'cancelled' });
+    ).toBe(403);
+    expect(await persisted()).toEqual(unchanged);
   });
 
   it('pins org keys to their own organization and mode, including by-id access', async () => {
