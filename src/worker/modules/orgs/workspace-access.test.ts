@@ -404,7 +404,7 @@ describe('organization workspace authorization', () => {
       expect.arrayContaining([expect.objectContaining({ id: org.id })]),
     );
     const created = await call('POST', '', headers, {
-      slug: `workspace-${fx.ids.id().slice(-8)}`,
+      slug: `workspace-${fx.ids.id()}`,
       name: 'Lifecycle Org',
       addMe: false,
     });
@@ -429,7 +429,7 @@ describe('organization workspace authorization', () => {
     const audits = await auditState();
     for (const response of [
       await call('GET', '', headers),
-      await call('POST', '', headers, { slug: `denied-${fx.ids.id().slice(-8)}`, name: 'No' }),
+      await call('POST', '', headers, { slug: `denied-${fx.ids.id()}`, name: 'No' }),
       await call('DELETE', `/${org.id}`, headers),
       await call('POST', `/${org.id}/status`, headers, { status: 'suspended' }),
       await call('PATCH', `/${org.id}`, headers, { status: 'suspended' }),

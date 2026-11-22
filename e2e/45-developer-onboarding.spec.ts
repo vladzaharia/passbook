@@ -54,7 +54,7 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   await page.getByRole('button', { name: 'Next' }).click();
 
   // 3. curl from the runner: the page is listening for this key.
-  await expect(page.getByText(/Listening for pbp_test_…\w{4}/)).toBeVisible();
+  await expect(page.getByText(/Listening for pbp_test_…[\w-]{4}/)).toBeVisible();
   await shots(page, '03-listening');
   const tpl = await curl('GET', `/templates/${templateId}`, key);
   expect(tpl.status).toBe(200);

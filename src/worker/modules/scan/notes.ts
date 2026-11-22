@@ -13,7 +13,6 @@ import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { auditStmt } from '../audit/repo.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { isPassHeld } from '../retention/holds.ts';
@@ -28,6 +27,7 @@ import {
   readNotes,
   underCap,
 } from './repo-notes.ts';
+import { auditPassRead } from './repo-read-audit.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
 import { HISTORY_READ } from './repo-scan-history.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
@@ -100,15 +100,7 @@ export async function notesFor(
     limit: PASS_NOTE_CAP,
   });
   if (!read.authorized) throw await staleScanRead(ctx, actor);
-  await auditStmt(ctx.env.DB, ctx, {
-    orgId: actor.orgId,
-    actorType: actor.actor.type,
-    actorId: actor.actor.id,
-    action: 'scan.note.read',
-    targetType: 'pass',
-    targetId: passId,
-    detail: { count: read.rows.length },
-  }).run();
+  await auditPassRead(ctx, actor, passId, 'scan.note.read', read.rows.length);
   return { items: read.rows.map((row) => noteOf(actor, row)) };
 }
 

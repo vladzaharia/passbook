@@ -13,7 +13,7 @@ import {
 } from './auth.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
-import { reportDenied } from './denied.ts';
+import { noteKeyRefused, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 
 type Selector = ApiScope | ((c: Context<AppBindings>) => ApiScope);
@@ -72,11 +72,14 @@ export function legacyKeyOrAdmin(scope: Selector): MiddlewareHandler<AppBindings
     const key = bearer(c);
     if (key) {
       const auth = await c.var.stores.apiKeys.resolve(key);
-      if (!auth)
+      if (!auth) {
+        noteKeyRefused(c, { code: 'INVALID_API_KEY', token: key });
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+      }
       const needed = typeof scope === 'function' ? scope(c) : scope;
       if (!auth.scopes.includes(needed)) {
         reportDenied(c, 'MISSING_SCOPE', auth);
+        noteKeyRefused(c, { code: 'MISSING_SCOPE', keyId: auth.keyId, scope: needed });
         throw new ForbiddenError(`The API key lacks the ${needed} scope.`, 'MISSING_SCOPE');
       }
       c.set('auth', auth);
@@ -104,11 +107,14 @@ export function legacyTenantSessionOrApiKey(
       const token = bearer(c);
       if (!token) return legacyTenantSession(c, next);
       const auth = await c.var.stores.apiKeys.resolve(token);
-      if (!auth)
+      if (!auth) {
+        noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+      }
       const selected = scope.find((candidate) => auth.scopes.includes(candidate));
       if (!selected) {
         reportDenied(c, 'MISSING_SCOPE', auth);
+        noteKeyRefused(c, { code: 'MISSING_SCOPE', keyId: auth.keyId, scope: null });
         throw new ForbiddenError('The API key lacks a required scope.', 'MISSING_SCOPE');
       }
       const scoped = { ...auth };

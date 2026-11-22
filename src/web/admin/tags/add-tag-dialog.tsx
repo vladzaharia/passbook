@@ -188,7 +188,13 @@ export function AddTagDialog({
             }}
           />
         ) : (
-          <SparePanel orgId={target.orgId} value={spareId} onChange={setSpareId} />
+          <SparePanel
+            orgId={target.orgId}
+            passId={target.passId}
+            binding={scope === 'person' ? 'user' : 'pass'}
+            value={spareId}
+            onChange={setSpareId}
+          />
         )}
       </div>
     );
