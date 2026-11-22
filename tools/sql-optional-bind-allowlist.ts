@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noTemplateCurlyInString: SQL and source text matched as strings
 // Lines the SQL lint (tools/check-sql-owner.ts) reviewed, pinned by their normalized text.
 export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: string }[]> = {
   'src/worker/modules/auth/repo.ts': [
