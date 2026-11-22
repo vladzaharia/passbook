@@ -1,5 +1,5 @@
 import type { BroadcastOutcome } from '../../../shared/contracts/broadcasts.ts';
-import type { Mode } from '../../../shared/contracts/common.ts';
+import type { Json, Mode } from '../../../shared/contracts/common.ts';
 import { all, first } from '../../platform/db.ts';
 
 export interface ItemListRow {
@@ -127,12 +127,31 @@ export const stampedWrite = (db: D1Database, passId: string, runId: string, afte
 export const wroteBy = async (db: D1Database, passId: string, runId: string, after: number) =>
   (await stampedWrite(db, passId, runId, after)) !== null;
 
-/** The version a change run's own write to the pass produced (set by trigger 0188), or null while it has not written. */
-export const writtenVersion = async (db: D1Database, runId: string, passId: string) =>
-  (
-    await first<{ written_version: number | null }>(
-      db,
-      'SELECT written_version FROM broadcast_targets WHERE broadcast_id = ? AND pass_id = ?',
-      [runId, passId],
-    )
-  )?.written_version ?? null;
+export interface WrittenRow {
+  version: number;
+  prev: Record<string, Json>;
+  next: Record<string, Json>;
+}
+
+/** What the run's own write to the pass produced and replaced (stamped by trigger 0188), or null while it has not written. */
+export async function writtenBy(
+  db: D1Database,
+  runId: string,
+  passId: string,
+): Promise<WrittenRow | null> {
+  const row = await first<{ v: number | null; p: string | null; n: string | null }>(
+    db,
+    `SELECT written_version AS v, written_prev AS p, written_next AS n FROM broadcast_targets
+     WHERE broadcast_id = ? AND pass_id = ?`,
+    [runId, passId],
+  );
+  if (row?.v == null) return null;
+  return { version: row.v, prev: JSON.parse(row.p ?? '{}'), next: JSON.parse(row.n ?? '{}') };
+}
+
+/** An undo's own write to the pass, by the id the write left on it: the evidence for its crash recovery. */
+export const wroteLast = async (db: D1Database, passId: string, runId: string) =>
+  (await first<{ one: number }>(db, 'SELECT 1 AS one FROM passes WHERE id = ? AND write_ref = ?', [
+    passId,
+    runId,
+  ])) !== null;

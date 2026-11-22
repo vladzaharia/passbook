@@ -36,7 +36,7 @@ export interface PublishWrite {
   cause: PassCause;
   /** Why beside the cause (scan, broadcast, ...); copied to pass_versions.source by the trigger. */
   source: string | null;
-  /** The change run whose write this is; its target row records the version (see 0188). */
+  /** The run (change, action or undo) whose write this is; trigger 0188 stamps its target row. */
   writeRef?: string | undefined;
   actorType: string | null;
   actorId: string | null;
@@ -195,7 +195,7 @@ export async function casMeta(
     /** Required with authority, so its expiry is checked immediately before the batch. */
     clock?: Clock | undefined;
     extraChecks?: readonly Check[] | undefined;
-    /** The change run whose write this is; its target row records the version (see 0188). */
+    /** The run (change, action or undo) whose write this is; trigger 0188 stamps its target row. */
     writeRef?: string | undefined;
   },
 ): Promise<number | null> {

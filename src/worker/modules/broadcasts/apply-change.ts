@@ -17,9 +17,10 @@ import type { Pass } from '../passes/repo.ts';
 import { budgetOutcomes, providerBudgets } from '../wallet-providers/notify-budget.ts';
 import { actorOf } from './actor.ts';
 import { applyAction, type DesignCache } from './apply-action.ts';
+import { alreadyWritten, settlePending } from './change-intent.ts';
 import { fillTokens, resolveOps } from './change-ops.ts';
 import { type BroadcastRow, type ItemRow, setIntent } from './repo.ts';
-import { creatorLive } from './repo-creator.ts';
+import { creatorLive, notWrittenYet } from './repo-creator.ts';
 import { StoredBroadcastTargetSchema } from './stored-target.ts';
 
 /** A change run read once per chunk: the ops, and the text with its tokens. */
@@ -99,7 +100,7 @@ export async function applyChange(
   cache: FieldCache,
   pass: Pass,
   designs: DesignCache,
-): Promise<ItemRow> {
+): Promise<ItemRow | null> {
   if (plan.action) return applyAction(ctx, row, plan.action, designs, pass);
   const base = { passId: pass.id, silent: false };
   const template = await fieldsOf(ctx, cache, pass);
@@ -135,7 +136,10 @@ export async function applyChange(
       ...(plan.text
         ? { changeText: (next: Personalization) => textFor(plan, template, next) ?? '' }
         : {}),
-      extraChecks: [creatorLive(row, ctx.clock.now())],
+      extraChecks: [
+        creatorLive(row, ctx.clock.now()),
+        notWrittenYet(row.id, pass.id, pass.version),
+      ],
       mutate: (current) => {
         // The pass may have changed since selection; this reruns on each retry of the write.
         if (
@@ -154,12 +158,12 @@ export async function applyChange(
     const moved =
       seen.values && JSON.stringify(seen.values.from) !== JSON.stringify(seen.values.to);
     if (!result.changed) {
-      // An input no field renders is stored with no new version and no push: it reads unchanged, and
-      // its earlier values are kept so the undo still restores it.
+      // An input no field renders is stored with no new version and no push; it still counts as updated
+      // (as when settled after a crash), and its earlier values are kept so the undo restores it.
       if (moved)
         return {
           ...base,
-          outcome: 'unchanged',
+          outcome: 'updated',
           before: JSON.stringify(seen.values),
           version: result.pass.version,
         };
@@ -192,6 +196,12 @@ export async function applyChange(
     };
   } catch (error) {
     if (!(error instanceof AppError)) throw error;
+    // The write was refused because this run already wrote the pass (a newer attempt of this step):
+    // settle that write's item instead of recording a failure over it.
+    if (await alreadyWritten(ctx.env.DB, row.id, pass.id, pass.version)) {
+      await settlePending(ctx, row);
+      return null;
+    }
     ctx.log.warn('broadcast.pass_failed', {
       broadcastId: row.id,
       passId: pass.id,

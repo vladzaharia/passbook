@@ -10,7 +10,7 @@ import { actorOf } from './actor.ts';
 import { atValues } from './change-ops.ts';
 import { type BroadcastRow, casState, handledPassIds, type ItemRow, insertItems } from './repo.ts';
 import { creatorIsActive, creatorLive } from './repo-creator.ts';
-import { revertItems, wroteBy } from './repo-items.ts';
+import { revertItems, wroteBy, wroteLast } from './repo-items.ts';
 
 /** Passes per undo step: each is a read and a publish. */
 const REVERT_CHUNK = 10;
@@ -39,6 +39,10 @@ const changed = () =>
  * edit keeps the pass (and a pass edited elsewhere keeps its other inputs). Silent: no change message
  * fires. The write re-proves the undo's asker and fences on the pass itself.
  */
+/** An earlier try of this restore wrote the pass: a version it stamped, or (an unrendered input) its id left on the pass. */
+const restored = async (db: D1Database, passId: string, undoId: string) =>
+  (await wroteBy(db, passId, undoId, 0)) || (await wroteLast(db, passId, undoId));
+
 /**
  * Un-voids a pass the run voided, only while it is still voided at the version the run wrote
  * (any later write keeps it), and silently.
@@ -54,7 +58,7 @@ async function revertVoid(
   if (!pass || pass.mode !== undo.mode || pass.removedAt !== null || version === null)
     return { ...base, outcome: 'unchanged' };
   if (pass.status === 'active') {
-    const done = await wroteBy(ctx.env.DB, passId, undo.id, 0);
+    const done = await restored(ctx.env.DB, passId, undo.id);
     return { ...base, outcome: done ? 'updated' : 'unchanged' };
   }
   if (pass.version !== version) return { ...base, outcome: 'unchanged' };
@@ -125,7 +129,7 @@ async function revertOne(
   }
   if (atValues(pass.personalization, touched.from)) {
     // An earlier try of this restore published and died before its item: count it once.
-    const done = await wroteBy(ctx.env.DB, passId, undo.id, 0);
+    const done = await restored(ctx.env.DB, passId, undo.id);
     return { ...base, outcome: done ? 'updated' : 'unchanged' };
   }
   if (!atValues(pass.personalization, touched.to)) return { ...base, outcome: 'unchanged' };

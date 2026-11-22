@@ -1,13 +1,23 @@
--- A change run's write to a pass carries the run's id in `passes.write_ref`. The trigger below records,
--- in the same statement, the version that write produced on the run's own target row, so a settle after a
--- crash reads its own run's row: another run, or any other write, to the same pass cannot hide it.
--- Writes that are not a run's leave `write_ref` alone and never fire the trigger.
+-- A write by a run (change, action or undo) carries the run's id in `passes.write_ref`; no other write
+-- touches the column. It is a carrier for the trigger below, and an undo's crash recovery reads it.
+-- The trigger records, in the same statement as the write, the version it produced and the touched
+-- inputs before and after, on the run's own target row. A settle after a crash then reads its own row:
+-- another run's write, or any other write, to the same pass cannot hide it, and `before` is what the
+-- write really replaced. `written_*` are never cleared: settle accepts them only above the intent's version.
 ALTER TABLE passes ADD COLUMN write_ref TEXT;
 ALTER TABLE broadcast_targets ADD COLUMN written_version INTEGER;
+ALTER TABLE broadcast_targets ADD COLUMN written_prev TEXT;
+ALTER TABLE broadcast_targets ADD COLUMN written_next TEXT;
 CREATE TRIGGER change_run_write_landed
 AFTER UPDATE OF write_ref ON passes
 WHEN NEW.write_ref IS NOT NULL
 BEGIN
-  UPDATE broadcast_targets SET written_version = NEW.version
+  UPDATE broadcast_targets SET written_version = NEW.version,
+    written_prev = (SELECT json_group_object(k.key, OLD.personalization -> ('$."' || k.key || '"'))
+      FROM json_each(broadcast_targets.intent, '$.to') k
+      WHERE (OLD.personalization -> ('$."' || k.key || '"')) IS NOT NULL),
+    written_next = (SELECT json_group_object(k.key, NEW.personalization -> ('$."' || k.key || '"'))
+      FROM json_each(broadcast_targets.intent, '$.to') k
+      WHERE (NEW.personalization -> ('$."' || k.key || '"')) IS NOT NULL)
     WHERE broadcast_id = NEW.write_ref AND pass_id = NEW.id AND intent IS NOT NULL;
 END;
