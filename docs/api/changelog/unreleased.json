@@ -1085,7 +1085,7 @@
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
     "change": "idempotency-key rollout-tell reserved",
-    "note": "Idempotency-Key prefixes broadcast-create:, bulk-send:, rollout-tell: are reserved on every route (422)."
+    "note": "Idempotency-Key rollout-tell: is reserved for Tell holders on the active release: other uses are 422, a second sender 409."
   },
   {
     "key": "POST /api/v1/broadcasts optional parameter header:Idempotency-Key added",

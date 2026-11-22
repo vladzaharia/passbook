@@ -257,12 +257,11 @@ describe('a message to the passes on one version', () => {
       expect(await second.json()).toMatchObject({ code: 'TELL_ALREADY_SENT' });
     });
 
-    it('refuses a client key that borrows another internal prefix', async () => {
+    it('keeps other client keys working, whatever they start with', async () => {
       const fresh = await broadcastAuth(kit, ORIGIN);
       for (const prefix of ['broadcast-create:', 'bulk-send:']) {
-        const res = await post2(fresh.admin(), `${prefix}live:x`, tell('x'));
-        expect(res.status).toBe(422);
-        expect(await res.json()).toMatchObject({ code: 'IDEMPOTENCY_KEY_RESERVED' });
+        const res = await post2(fresh.admin(), `${prefix}live:x`, { ...tell('x'), send: 'draft' });
+        expect(res.status).toBe(201);
       }
     });
 

@@ -9,11 +9,8 @@ import { idempotencyRow, reclaimIdempotencyKey, settleIdempotencyKey } from './r
 const DONE = 'done:';
 
 /** The trimmed `Idempotency-Key` header, or undefined when absent. */
-export function idempotencyKeyOf(
-  header: string | undefined,
-  allowed: readonly string[] = [],
-): string | undefined {
-  return idempotencyKeyHeader(header, allowed);
+export function idempotencyKeyOf(header: string | undefined): string | undefined {
+  return idempotencyKeyHeader(header);
 }
 
 const IN_PROGRESS_MS = 15 * 60_000;

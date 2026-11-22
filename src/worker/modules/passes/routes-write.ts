@@ -6,7 +6,12 @@ import {
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
 import { BadRequestError, ConflictError, ValidationError } from '../../platform/errors.ts';
-import { idempotencyKeyHeader, idempotentJson, principalOf } from '../../platform/idempotency.ts';
+import {
+  assertKeyNotReserved,
+  idempotencyKeyHeader,
+  idempotentJson,
+  principalOf,
+} from '../../platform/idempotency.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { issuanceEmailOutcome } from '../delivery/issuance-outcome.ts';
 import { createPassIdempotent } from './create.ts';
@@ -62,6 +67,8 @@ export function registerWriteRoutes(passesRoutes: ReturnType<typeof createRouter
       const ctx = svc(c);
       const authority = await tenantAuthorityOf(ctx, auth, orgId, 'passes:operate');
       const key = idempotencyKeyHeader(c.req.header('idempotency-key'));
+      // This route stores the client key unprefixed, next to the keys the server writes itself.
+      if (key !== undefined) assertKeyNotReserved(key);
       const pinned = [body.templateVersion, body.releaseId, body.releaseGeneration];
       let review: { templateVersion: string; releaseId: string; releaseGeneration: number };
       if (auth.kind === 'api_key' && pinned.every((v) => v === undefined)) {

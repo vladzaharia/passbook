@@ -1,10 +1,11 @@
 import catalog from '../../../docs/api/errors.json' with { type: 'json' };
 
-type Param = { name: string; in: string };
+type Param = { name?: string; in?: string; $ref?: string };
 type Op = {
   tags?: string[];
   description?: string;
   summary?: string;
+  operationId?: string;
   security?: Record<string, unknown>[];
   'x-sign-in'?: string;
   'x-step-up'?: { maxAgeSec: number; conditional: boolean };
@@ -58,11 +59,18 @@ export function codesFor(path: string, op: Op): string[] {
   const own = new Set(bySecurity(op));
   if (op.requestBody || op.parameters?.length) own.add('VALIDATION');
   if (path.includes('{')) own.add('NOT_FOUND');
-  if (op.parameters?.some((p) => p.name === 'Idempotency-Key'))
+  // The parameter is added by reference (`withIdempotencyKey`), or inline where its text differs.
+  if (
+    op.parameters?.some((p) => p.name === 'Idempotency-Key' || p.$ref?.endsWith('/IdempotencyKey'))
+  )
     for (const c of [
       'IDEMPOTENCY_IN_PROGRESS',
       'IDEMPOTENCY_KEY_INVALID',
       'IDEMPOTENCY_KEY_REUSED',
+      ...(op.operationId === 'passes.postPasses' || op.operationId === 'broadcasts.postBroadcasts'
+        ? ['IDEMPOTENCY_KEY_RESERVED']
+        : []),
+      ...(op.operationId === 'broadcasts.postBroadcasts' ? ['TELL_ALREADY_SENT'] : []),
     ])
       own.add(c);
   if (/If-Match/.test(`${op.summary} ${op.description}`)) own.add('VERSION_CONFLICT');
