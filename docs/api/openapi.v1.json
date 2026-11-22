@@ -34337,9 +34337,12 @@
           "IDP_SIGN_IN_REQUIRED",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -35100,9 +35103,12 @@
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       },
@@ -129179,7 +129185,11 @@
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
           "SAMSUNG_UNAUTHENTICATED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       },
@@ -129239,7 +129249,11 @@
           "RATE_LIMITED",
           "SAMSUNG_FIELDS_INVALID",
           "SAMSUNG_UNAUTHENTICATED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -129738,7 +129752,10 @@
           "NOT_FOUND",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -129789,7 +129806,11 @@
         "x-codes": [
           "NOT_FOUND",
           "RATE_LIMITED",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -129959,8 +129980,11 @@
           "PASS_VERSION_MISSING",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -130192,8 +130216,11 @@
           "PASS_VERSION_MISSING",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -130319,8 +130346,11 @@
           "PASS_VERSION_MISSING",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
@@ -130513,8 +130543,11 @@
           "NOT_FOUND",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_OFFER_NOT_FOUND",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -130724,8 +130757,11 @@
           "PASS_VERSION_MISSING",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
           "TOKEN_SEAL_MISMATCH",
           "VALIDATION",
+          "WALLET_ART_MISMATCH",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
       }
