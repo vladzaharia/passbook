@@ -39170,6 +39170,7 @@
           "resource": "orgs.entitlements",
           "method": "retrieve"
         },
+        "description": "The features and limits of the organization's plan, and how much of each it has used.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -39183,8 +39184,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The features and limits of the organization's plan, and how much of each it has used."
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/pass-setup": {
@@ -42740,6 +42740,7 @@
           "resource": "brand",
           "method": "retrieve"
         },
+        "description": "The organization's brand kit: accent colour, mark level and web logo.",
         "security": [
           {
             "apiKey": [
@@ -42762,8 +42763,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The organization's brand kit: accent colour, mark level and web logo."
+        ]
       },
       "patch": {
         "summary": "Set the accent colour and mark level",
@@ -42820,6 +42820,7 @@
           "resource": "brand",
           "method": "update"
         },
+        "description": "Sets the accent colour and the mark level. Send only the fields to change.",
         "security": [
           {
             "apiKey": [
@@ -42844,8 +42845,7 @@
           "SETTINGS_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Sets the accent colour and the mark level. Send only the fields to change."
+        ]
       }
     },
     "/api/v1/brand/web-logo": {
@@ -42904,6 +42904,7 @@
           "resource": "brand.webLogo",
           "method": "upload"
         },
+        "description": "Uploads the web logo as a PNG body, at most 1024 by 512 px and 512 KB. It replaces the current logo.",
         "security": [
           {
             "apiKey": [
@@ -42985,6 +42986,7 @@
           "resource": "brand.webLogo",
           "method": "delete"
         },
+        "description": "Removes the web logo. The brand kit keeps its other settings.",
         "security": [
           {
             "apiKey": [
@@ -43008,8 +43010,7 @@
           "SETTINGS_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Removes the web logo. The brand kit keeps its other settings."
+        ]
       }
     },
     "/api/v1/orgs/{orgId}/wallet-accounts/google/managed": {
@@ -50772,6 +50773,7 @@
           "resource": "templateImports",
           "method": "list"
         },
+        "description": "Recent template imports of this mode, newest first.",
         "security": [
           {
             "apiKey": [
@@ -50794,8 +50796,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Recent template imports of this mode, newest first."
+        ]
       }
     },
     "/api/v1/templates/uploads/{id}": {
@@ -50973,6 +50974,7 @@
           "resource": "templateImports",
           "method": "retrieve"
         },
+        "description": "The status of one template import: its state, and the report when it has failed.",
         "security": [
           {
             "apiKey": [
@@ -50996,8 +50998,7 @@
           "UNAUTHENTICATED",
           "UPLOAD_NOT_FOUND",
           "VALIDATION"
-        ],
-        "description": "The status of one template import: its state, and the report when it has failed."
+        ]
       }
     },
     "/api/v1/templates/{id}/share": {
@@ -51226,6 +51227,7 @@
           "resource": "templates",
           "method": "listPreviews"
         },
+        "description": "Sample previews of several templates in one call. Pass the template ids in the query.",
         "security": [
           {
             "apiKey": [
@@ -51252,8 +51254,7 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Sample previews of several templates in one call. Pass the template ids in the query."
+        ]
       }
     },
     "/api/v1/templates/eligible": {
@@ -51502,6 +51503,7 @@
           "resource": "templates",
           "method": "listEligible"
         },
+        "description": "Release-backed templates an organization can use. Only templates with an approved release appear.",
         "security": [
           {
             "apiKey": [
@@ -51526,8 +51528,7 @@
           "TEMPLATE_PROVIDER_UNSUPPORTED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Release-backed templates an organization can use. Only templates with an approved release appear."
+        ]
       }
     },
     "/api/v1/templates/{id}": {
@@ -52166,6 +52167,7 @@
           "resource": "templates",
           "method": "preview"
         },
+        "description": "Renders the pass.json a template would produce for `input`, without issuing a pass.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -52183,8 +52185,7 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Renders the pass.json a template would produce for `input`, without issuing a pass."
+        ]
       }
     },
     "/api/v1/templates/{id}/input-schema": {
@@ -52607,6 +52608,7 @@
           "resource": "templates.versions",
           "method": "retrieve"
         },
+        "description": "One version of a template with its validation report.",
         "security": [
           {
             "apiKey": [
@@ -52633,8 +52635,7 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "One version of a template with its validation report."
+        ]
       }
     },
     "/api/v1/templates/{id}/versions/{version}/assets/{name}": {
@@ -52719,6 +52720,7 @@
           "resource": "templates.versions",
           "method": "downloadAsset"
         },
+        "description": "The bytes of one image in a template version.",
         "security": [
           {
             "apiKey": [
@@ -52747,8 +52749,7 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The bytes of one image in a template version."
+        ]
       }
     },
     "/api/v1/templates/{id}/channels": {
@@ -53568,6 +53569,7 @@
           "resource": "templates.channels",
           "method": "retrieve"
         },
+        "description": "The template's channel policy and what it allows now, in this mode.",
         "security": [
           {
             "apiKey": [
@@ -53591,8 +53593,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The template's channel policy and what it allows now, in this mode."
+        ]
       },
       "put": {
         "summary": "Set a template's channels to on, off or never; dryRun shows the effect",
@@ -54700,6 +54701,7 @@
           "resource": "templates.channels",
           "method": "listRuns"
         },
+        "description": "The latest runs that applied saved channel changes to passes, in this mode.",
         "security": [
           {
             "apiKey": [
@@ -54720,8 +54722,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The latest runs that applied saved channel changes to passes, in this mode."
+        ]
       }
     },
     "/api/v1/templates/{id}/channels/reset-passes": {
@@ -55256,6 +55257,7 @@
           "resource": "templates",
           "method": "retrieveStampsImpact"
         },
+        "description": "What changing the stamp goal does to the template's live passes. Read it before saving the change.",
         "security": [
           {
             "apiKey": [
@@ -55284,8 +55286,7 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "What changing the stamp goal does to the template's live passes. Read it before saving the change."
+        ]
       }
     },
     "/api/v1/templates/{id}/use": {
@@ -55353,6 +55354,7 @@
           "resource": "blueprints",
           "method": "use"
         },
+        "description": "Makes a template in an organization from a blueprint. The blueprint is not changed.",
         "x-sign-in": "idp",
         "x-codes": [
           "ASSETS_INVALID",
@@ -55388,8 +55390,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_INVALID"
-        ],
-        "description": "Makes a template in an organization from a blueprint. The blueprint is not changed."
+        ]
       }
     },
     "/api/v1/templates/{id}/use/check": {
@@ -55788,6 +55789,7 @@
           "resource": "templates",
           "method": "setUpScanning"
         },
+        "description": "Sets up scanning for a template: its events and a session. Runs once per template.",
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
@@ -55844,8 +55846,7 @@
           "ZONE_DEPTH",
           "ZONE_EVENT_SESSION",
           "ZONE_NOT_FOUND"
-        ],
-        "description": "Sets up scanning for a template: its events and a session. Runs once per template."
+        ]
       }
     },
     "/api/v1/templates/{id}/archive": {
@@ -56043,6 +56044,7 @@
           "resource": "templates",
           "method": "downloadPackage"
         },
+        "description": "The active version, or the unpublished draft, as an uploadable zip.",
         "security": [
           {
             "apiKey": [
@@ -56071,8 +56073,7 @@
           "TEMPLATE_VERSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The active version, or the unpublished draft, as an uploadable zip."
+        ]
       }
     },
     "/api/v1/templates/{id}/candidates": {
@@ -56358,6 +56359,7 @@
           "resource": "templates.candidates",
           "method": "list"
         },
+        "description": "Lists the release candidates of a template.",
         "security": [
           {
             "apiKey": [
@@ -56385,8 +56387,7 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists the release candidates of a template."
+        ]
       },
       "post": {
         "security": [
@@ -56627,6 +56628,7 @@
           "resource": "templates.candidates",
           "method": "create"
         },
+        "description": "Creates a release candidate from the template's current draft.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -56658,8 +56660,7 @@
           "WALLET_PROJECTION_BLOCKED",
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Creates a release candidate from the template's current draft."
+        ]
       }
     },
     "/api/v1/templates/{id}/candidates/promote": {
@@ -57051,6 +57052,7 @@
           "resource": "templates.candidates",
           "method": "approve"
         },
+        "description": "Approves a release candidate. A key can approve only in Test; Live approval is for a person.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -57083,8 +57085,7 @@
           "WALLET_PROJECTION_CONFLICT",
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Approves a release candidate. A key can approve only in Test; Live approval is for a person."
+        ]
       }
     },
     "/api/v1/templates/{id}/releases": {
@@ -57498,6 +57499,7 @@
           "resource": "templates.releases",
           "method": "list"
         },
+        "description": "Lists the releases of a template, newest first.",
         "security": [
           {
             "apiKey": [
@@ -57527,8 +57529,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Lists the releases of a template, newest first."
+        ]
       },
       "post": {
         "security": [
@@ -57739,6 +57740,7 @@
           "resource": "templates.releases",
           "method": "create"
         },
+        "description": "Publishes an approved release. A key can publish only in Test.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -57773,8 +57775,7 @@
           "WALLET_PROJECTION_NOT_FOUND",
           "WALLET_PROJECTION_SCHEMA",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Publishes an approved release. A key can publish only in Test."
+        ]
       }
     },
     "/api/v1/templates/{id}/releases/impact": {
@@ -58083,6 +58084,7 @@
           "resource": "templates.releases",
           "method": "retrieveImpact"
         },
+        "description": "What publishing or rolling back to a version changes, and for how many passes.",
         "security": [
           {
             "apiKey": [
@@ -58113,8 +58115,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "What publishing or rolling back to a version changes, and for how many passes."
+        ]
       }
     },
     "/api/v1/templates/{id}/rollout": {
@@ -60759,6 +60760,7 @@
           "resource": "passes.connection",
           "method": "update"
         },
+        "description": "Binds a pass to a connection ref, or unbinds it. A bound pass takes its fields from the connection.",
         "security": [
           {
             "apiKey": [
@@ -60796,8 +60798,7 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Binds a pass to a connection ref, or unbinds it. A bound pass takes its fields from the connection."
+        ]
       }
     },
     "/api/v1/passes/{id}/void": {
@@ -61055,6 +61056,7 @@
           "resource": "passes",
           "method": "refresh"
         },
+        "description": "Rebuilds the pass from its connection and pushes the change to devices.",
         "security": [
           {
             "apiKey": [
@@ -61081,8 +61083,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Rebuilds the pass from its connection and pushes the change to devices."
+        ]
       }
     },
     "/api/v1/passes/{id}/rotate-link": {
@@ -61233,6 +61234,7 @@
           "resource": "passes.versions",
           "method": "retrieve"
         },
+        "description": "A retained version of a pass, for rendering.",
         "security": [
           {
             "apiKey": [
@@ -61267,8 +61269,7 @@
           "VALIDATION",
           "VERSION_NOT_FOUND",
           "VERSION_PURGED"
-        ],
-        "description": "A retained version of a pass, for rendering."
+        ]
       }
     },
     "/api/v1/passes/{id}/diff": {
@@ -61359,6 +61360,7 @@
           "resource": "passes.versions",
           "method": "diff"
         },
+        "description": "The fields that differ between two retained versions of a pass.",
         "security": [
           {
             "apiKey": [
@@ -61747,6 +61749,7 @@
           "resource": "passes.assets",
           "method": "list"
         },
+        "description": "The per-pass image overrides of a pass.",
         "security": [
           {
             "apiKey": [
@@ -61769,8 +61772,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The per-pass image overrides of a pass."
+        ]
       }
     },
     "/api/v1/passes/{id}/assets/{name}": {
@@ -61862,6 +61864,7 @@
           "resource": "passes.assets",
           "method": "upload"
         },
+        "description": "Uploads an image override for one pass as a PNG body.",
         "security": [
           {
             "apiKey": [
@@ -61926,8 +61929,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Uploads an image override for one pass as a PNG body."
+        ]
       },
       "delete": {
         "summary": "Remove an image override",
@@ -61993,6 +61995,7 @@
           "resource": "passes.assets",
           "method": "delete"
         },
+        "description": "Removes an image override. The pass goes back to the template's image.",
         "security": [
           {
             "apiKey": [
@@ -62054,8 +62057,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Removes an image override. The pass goes back to the template's image."
+        ]
       }
     },
     "/api/v1/passes/{id}/member-photo": {
@@ -62142,6 +62144,7 @@
           "resource": "passes.memberPhoto",
           "method": "retrieve"
         },
+        "description": "The member photo settings of a pass.",
         "security": [
           {
             "apiKey": [
@@ -62169,8 +62172,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The member photo settings of a pass."
+        ]
       },
       "put": {
         "summary": "Upload a member photo",
@@ -62265,6 +62267,7 @@
           "resource": "passes.memberPhoto",
           "method": "upload"
         },
+        "description": "Uploads a member photo for a pass.",
         "security": [
           {
             "apiKey": [
@@ -62333,8 +62336,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Uploads a member photo for a pass."
+        ]
       },
       "patch": {
         "summary": "Set Wallet photo inclusion",
@@ -62429,6 +62431,7 @@
           "resource": "passes.memberPhoto",
           "method": "update"
         },
+        "description": "Sets whether the photo is included in the Wallet pass.",
         "security": [
           {
             "apiKey": [
@@ -62493,8 +62496,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Sets whether the photo is included in the Wallet pass."
+        ]
       },
       "delete": {
         "summary": "Remove a member photo",
@@ -62579,6 +62581,7 @@
           "resource": "passes.memberPhoto",
           "method": "delete"
         },
+        "description": "Removes the member photo.",
         "security": [
           {
             "apiKey": [
@@ -62642,8 +62645,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Removes the member photo."
+        ]
       }
     },
     "/api/v1/passes/{id}/member-photo/image": {
@@ -62684,6 +62686,7 @@
           "resource": "passes.memberPhoto",
           "method": "download"
         },
+        "description": "The member photo bytes. The photo is private and needs a key with access to the pass.",
         "security": [
           {
             "apiKey": [
@@ -62707,8 +62710,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The member photo bytes. The photo is private and needs a key with access to the pass."
+        ]
       }
     },
     "/api/v1/passes/photos/match": {
@@ -62791,6 +62793,7 @@
           "resource": "passes",
           "method": "matchPhotos"
         },
+        "description": "Matches photo file names to passes by external ID or serial. It reads names only and changes nothing.",
         "security": [
           {
             "apiKey": [
@@ -62813,8 +62816,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Matches photo file names to passes by external ID or serial. It reads names only and changes nothing."
+        ]
       }
     },
     "/api/v1/passes/{id}/check-in": {
@@ -63069,6 +63071,7 @@
           "resource": "passes.checkInRules",
           "method": "retrieve"
         },
+        "description": "The check-in rules of a pass.",
         "security": [
           {
             "apiKey": [
@@ -63096,8 +63099,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The check-in rules of a pass."
+        ]
       },
       "put": {
         "summary": "Set pass check-in rules",
@@ -63360,6 +63362,7 @@
           "resource": "passes.checkInRules",
           "method": "update"
         },
+        "description": "Sets the check-in rules of a pass.",
         "security": [
           {
             "apiKey": [
@@ -63392,8 +63395,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Sets the check-in rules of a pass."
+        ]
       }
     },
     "/api/v1/passes/{id}/stamps": {
@@ -63451,6 +63453,7 @@
           "resource": "passes.stamps",
           "method": "apply"
         },
+        "description": "Adds stamps to a stamp card, or redeems its reward.",
         "security": [
           {
             "apiKey": [
@@ -63516,8 +63519,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Adds stamps to a stamp card, or redeems its reward."
+        ]
       }
     },
     "/api/v1/passes/{id}/renew": {
@@ -63575,6 +63577,7 @@
           "resource": "passes",
           "method": "renew"
         },
+        "description": "Renews the term of a pass.",
         "security": [
           {
             "apiKey": [
@@ -63640,8 +63643,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Renews the term of a pass."
+        ]
       }
     },
     "/api/v1/passes/bulk": {
@@ -63863,6 +63865,7 @@
           "resource": "passes",
           "method": "bulkReissue"
         },
+        "description": "Rebuilds the passes of a template in your org and pushes them to devices. A key needs `passes:write`.",
         "security": [
           {
             "apiKey": [
@@ -64097,6 +64100,7 @@
           "resource": "passes",
           "method": "bulkUpdateChannels"
         },
+        "description": "Turns channels on, off or back to the template for up to 100 passes in one call.",
         "security": [
           {
             "apiKey": [
@@ -64160,8 +64164,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Turns channels on, off or back to the template for up to 100 passes in one call."
+        ]
       }
     },
     "/api/v1/passes/{id}/channels": {
@@ -64980,6 +64983,7 @@
           "resource": "passes.channels",
           "method": "retrieve"
         },
+        "description": "A pass's channels: effective state, source and overrides.",
         "security": [
           {
             "apiKey": [
@@ -65002,8 +65006,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "A pass's channels: effective state, source and overrides."
+        ]
       },
       "put": {
         "summary": "Override channels for one pass; null returns a channel to its template",
@@ -65830,6 +65833,7 @@
           "resource": "passes.channels",
           "method": "update"
         },
+        "description": "Overrides channels for one pass. A `null` value returns that channel to its template.",
         "security": [
           {
             "apiKey": [
@@ -65975,6 +65979,7 @@
           "resource": "printJobs",
           "method": "create"
         },
+        "description": "Prints up to 50 passes of one org into one PDF. A job renders it; poll the job.",
         "security": [
           {
             "apiKey": [
@@ -66001,8 +66006,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Prints up to 50 passes of one org into one PDF. A job renders it; poll the job."
+        ]
       }
     },
     "/api/v1/passes/bulk-print/{jobId}": {
@@ -66101,6 +66105,7 @@
           "resource": "printJobs",
           "method": "retrieve"
         },
+        "description": "The state of a bulk print job.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -66115,8 +66120,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The state of a bulk print job."
+        ]
       }
     },
     "/api/v1/passes/bulk-print/{jobId}/pdf": {
@@ -66177,6 +66181,7 @@
           "resource": "printJobs",
           "method": "downloadPdf"
         },
+        "description": "The combined PDF of a finished bulk print job.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -66191,8 +66196,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The combined PDF of a finished bulk print job."
+        ]
       }
     },
     "/api/v1/passes/{id}/prints": {
@@ -66295,6 +66299,7 @@
           "resource": "passes.prints",
           "method": "create"
         },
+        "description": "Prints a ticket. An earlier print of the same pass is voided.",
         "security": [
           {
             "apiKey": [
@@ -66323,8 +66328,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Prints a ticket. An earlier print of the same pass is voided."
+        ]
       },
       "get": {
         "summary": "A pass's prints, newest first; codes are never listed",
@@ -66431,6 +66435,7 @@
           "resource": "passes.prints",
           "method": "list"
         },
+        "description": "A pass's prints, newest first. Codes are never listed.",
         "security": [
           {
             "apiKey": [
@@ -66453,8 +66458,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "A pass's prints, newest first. Codes are never listed."
+        ]
       }
     },
     "/api/v1/passes/{id}/prints/{printId}/void": {
@@ -66562,6 +66566,7 @@
           "resource": "passes.prints",
           "method": "void"
         },
+        "description": "Voids a printed ticket so its code stops working.",
         "security": [
           {
             "apiKey": [
@@ -66588,8 +66593,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Voids a printed ticket so its code stops working."
+        ]
       }
     },
     "/api/v1/passes/{id}/print": {
@@ -66630,6 +66634,7 @@
           "resource": "passes.prints",
           "method": "retrievePage"
         },
+        "description": "The print page of the active print, for staff.",
         "security": [
           {
             "apiKey": [
@@ -66660,8 +66665,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The print page of the active print, for staff."
+        ]
       }
     },
     "/api/v1/passes/{id}/print/pdf": {
@@ -66702,6 +66706,7 @@
           "resource": "passes.prints",
           "method": "downloadPdf"
         },
+        "description": "The PDF of the active print, for staff.",
         "security": [
           {
             "apiKey": [
@@ -66733,8 +66738,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The PDF of the active print, for staff."
+        ]
       }
     },
     "/api/v1/passes/{id}/print/assets/{name}": {
@@ -66784,6 +66788,7 @@
           "resource": "passes.prints",
           "method": "downloadAsset"
         },
+        "description": "A template image used by the print page, for staff.",
         "security": [
           {
             "apiKey": [
@@ -66814,8 +66819,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "A template image used by the print page, for staff."
+        ]
       }
     },
     "/api/v1/passes/{id}/events": {
@@ -67031,6 +67035,7 @@
           "resource": "passes.activity",
           "method": "list"
         },
+        "description": "The sync log and activity of a pass, newest first.",
         "security": [
           {
             "apiKey": [
@@ -67055,8 +67060,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The sync log and activity of a pass, newest first."
+        ]
       }
     },
     "/api/v1/passes/{id}/devices": {
@@ -67263,6 +67267,7 @@
           "resource": "passes.devices",
           "method": "list"
         },
+        "description": "The devices of a pass with their sync status.",
         "security": [
           {
             "apiKey": [
@@ -67286,8 +67291,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The devices of a pass with their sync status."
+        ]
       }
     },
     "/api/v1/passes/{id}/remove": {
@@ -70260,6 +70264,7 @@
           "resource": "passImports",
           "method": "list"
         },
+        "description": "Recent imports of this mode, newest first.",
         "security": [
           {
             "apiKey": [
@@ -70283,8 +70288,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Recent imports of this mode, newest first."
+        ]
       }
     },
     "/api/v1/pass-imports/{id}": {
@@ -71372,6 +71376,7 @@
           "resource": "passImports",
           "method": "delete"
         },
+        "description": "Discards a draft import that is not committing.",
         "security": [
           {
             "apiKey": [
@@ -71398,8 +71403,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Discards a draft import that is not committing."
+        ]
       }
     },
     "/api/v1/pass-imports/{id}/check": {
@@ -73810,6 +73814,7 @@
           "resource": "passImports.rows",
           "method": "list"
         },
+        "description": "The rows of an import, 100 a page.",
         "security": [
           {
             "apiKey": [
@@ -73839,8 +73844,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The rows of an import, 100 a page."
+        ]
       }
     },
     "/api/v1/pass-imports/{id}/errors.csv": {
@@ -73892,6 +73896,7 @@
           "resource": "passImports",
           "method": "downloadErrors"
         },
+        "description": "The rows that failed the check, as CSV with a Problem column.",
         "security": [
           {
             "apiKey": [
@@ -73918,8 +73923,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The rows that failed the check, as CSV with a Problem column."
+        ]
       }
     },
     "/api/v1/pass-imports/{id}/results.csv": {
@@ -73981,6 +73985,7 @@
           "resource": "passImports",
           "method": "downloadResults"
         },
+        "description": "What happened to each row, as CSV with the pass and its links.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -73997,8 +74002,7 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "What happened to each row, as CSV with the pass and its links."
+        ]
       }
     },
     "/api/v1/pass-imports/{id}/remove-created": {
@@ -74259,6 +74263,7 @@
           "resource": "passImports",
           "method": "sendEmails"
         },
+        "description": "Sends now the mail of created passes that were not emailed, including held mail ahead of its wait. 50 a call; a repeat emails nobody twice.",
         "security": [
           {
             "apiKey": [
@@ -74307,8 +74312,7 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Sends now the mail of created passes that were not emailed, including held mail ahead of its wait. 50 a call; a repeat emails nobody twice."
+        ]
       }
     },
     "/api/v1/bundles": {
@@ -74497,6 +74501,7 @@
           "resource": "bundles",
           "method": "list"
         },
+        "description": "Lists bundles.",
         "security": [
           {
             "apiKey": [
@@ -74520,8 +74525,7 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists bundles."
+        ]
       },
       "post": {
         "summary": "Create a bundle of up to 10 passes",
@@ -74657,6 +74661,7 @@
           "resource": "bundles",
           "method": "create"
         },
+        "description": "Creates a bundle of up to 10 passes with one link.",
         "security": [
           {
             "apiKey": [
@@ -74702,8 +74707,7 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Creates a bundle of up to 10 passes with one link."
+        ]
       }
     },
     "/api/v1/bundles/{id}": {
@@ -74843,6 +74847,7 @@
           "resource": "bundles",
           "method": "retrieve"
         },
+        "description": "One bundle.",
         "security": [
           {
             "apiKey": [
@@ -74867,8 +74872,7 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "One bundle."
+        ]
       },
       "delete": {
         "summary": "Delete the bundle and revoke its link",
@@ -74925,6 +74929,7 @@
           "resource": "bundles",
           "method": "delete"
         },
+        "description": "Deletes the bundle and revokes its link. The passes are kept.",
         "security": [
           {
             "apiKey": [
@@ -74949,8 +74954,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Deletes the bundle and revokes its link. The passes are kept."
+        ]
       }
     },
     "/api/v1/bundles/{id}/send-email": {
@@ -75022,6 +75026,7 @@
           "resource": "bundles",
           "method": "sendEmail"
         },
+        "description": "Emails the bundle link. Send an `Idempotency-Key` to retry safely.",
         "security": [
           {
             "apiKey": [
@@ -75069,8 +75074,7 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Emails the bundle link. Send an `Idempotency-Key` to retry safely."
+        ]
       }
     },
     "/api/v1/bundles/{id}/rotate-link": {
@@ -75210,6 +75214,7 @@
           "resource": "bundles",
           "method": "rotateLink"
         },
+        "description": "Replaces the bundle link. The old link stops working.",
         "security": [
           {
             "apiKey": [
@@ -75235,8 +75240,7 @@
           "TOKEN_SEAL_MISMATCH",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Replaces the bundle link. The old link stops working."
+        ]
       }
     },
     "/api/v1/join-links/{templateId}": {
@@ -76611,6 +76615,7 @@
           "resource": "broadcasts",
           "method": "list"
         },
+        "description": "Lists messages and scheduled changes.",
         "security": [
           {
             "apiKey": [
@@ -76633,8 +76638,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists messages and scheduled changes."
+        ]
       },
       "post": {
         "summary": "Save, send or schedule a message or change (Idempotency-Key)",
@@ -77445,6 +77449,7 @@
           "resource": "broadcasts",
           "method": "update"
         },
+        "description": "Edits a draft, or a scheduled message that has not started.",
         "security": [
           {
             "apiKey": [
@@ -77554,6 +77559,7 @@
           "resource": "broadcasts",
           "method": "send"
         },
+        "description": "Sends a draft now or at a time.",
         "security": [
           {
             "apiKey": [
@@ -77581,8 +77587,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Sends a draft now or at a time."
+        ]
       }
     },
     "/api/v1/broadcasts/{id}/cancel": {
@@ -77630,6 +77635,7 @@
           "resource": "broadcasts",
           "method": "cancel"
         },
+        "description": "Cancels a draft or a scheduled message.",
         "security": [
           {
             "apiKey": [
@@ -77655,8 +77661,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Cancels a draft or a scheduled message."
+        ]
       }
     },
     "/api/v1/broadcasts/{id}/retry": {
@@ -77716,6 +77721,7 @@
           "resource": "broadcasts",
           "method": "retry"
         },
+        "description": "Sends a failed or cancelled message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size.",
         "security": [
           {
             "apiKey": [
@@ -77767,8 +77773,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Sends a failed or cancelled message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size."
+        ]
       }
     },
     "/api/v1/broadcasts/{id}/items": {
@@ -77904,6 +77909,7 @@
           "resource": "broadcasts.recipients",
           "method": "list"
         },
+        "description": "The passes a message reached: updated, unchanged or failed.",
         "security": [
           {
             "apiKey": [
@@ -77927,8 +77933,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The passes a message reached: updated, unchanged or failed."
+        ]
       }
     },
     "/api/v1/broadcasts/{id}/undo": {
@@ -78489,6 +78494,7 @@
           "resource": "messageRules",
           "method": "list"
         },
+        "description": "Lists automatic messages.",
         "security": [
           {
             "apiKey": [
@@ -78510,8 +78516,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists automatic messages."
+        ]
       },
       "post": {
         "summary": "Create an automatic message",
@@ -78831,6 +78836,7 @@
           "resource": "messageRules",
           "method": "create"
         },
+        "description": "Creates an automatic message.",
         "security": [
           {
             "apiKey": [
@@ -79192,6 +79198,7 @@
           "resource": "messageRules",
           "method": "retrieve"
         },
+        "description": "One automatic message.",
         "security": [
           {
             "apiKey": [
@@ -79215,8 +79222,7 @@
           "RULE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "One automatic message."
+        ]
       },
       "put": {
         "summary": "Save an automatic message; saving resumes a paused one",
@@ -79548,6 +79554,7 @@
           "resource": "messageRules",
           "method": "update"
         },
+        "description": "Saves an automatic message. Saving resumes a paused one.",
         "security": [
           {
             "apiKey": [
@@ -79586,8 +79593,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Saves an automatic message. Saving resumes a paused one."
+        ]
       },
       "delete": {
         "summary": "Delete an automatic message and cancel its runs that have not started",
@@ -79644,6 +79650,7 @@
           "resource": "messageRules",
           "method": "delete"
         },
+        "description": "Deletes an automatic message and cancels its runs that have not started.",
         "security": [
           {
             "apiKey": [
@@ -79667,8 +79674,7 @@
           "RULE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Deletes an automatic message and cancels its runs that have not started."
+        ]
       }
     },
     "/api/v1/message-rules/{id}/pause": {
@@ -79992,6 +79998,7 @@
           "resource": "messageRules",
           "method": "pause"
         },
+        "description": "Pauses an automatic message. Save it to resume.",
         "security": [
           {
             "apiKey": [
@@ -80015,8 +80022,7 @@
           "RULE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Pauses an automatic message. Save it to resume."
+        ]
       }
     },
     "/api/v1/message-rules/{id}/runs": {
@@ -80102,6 +80108,7 @@
           "resource": "messageRules.runs",
           "method": "list"
         },
+        "description": "The messages an automatic message sent.",
         "security": [
           {
             "apiKey": [
@@ -80125,8 +80132,7 @@
           "RULE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The messages an automatic message sent."
+        ]
       }
     },
     "/api/v1/message-rules/preview": {
@@ -80206,6 +80212,7 @@
           "resource": "messageRules",
           "method": "countDue"
         },
+        "description": "Counts the passes due each of the next 14 days.",
         "security": [
           {
             "apiKey": [
@@ -80240,8 +80247,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Counts the passes due each of the next 14 days."
+        ]
       }
     },
     "/api/v1/message-rules/{id}/test": {
@@ -80299,6 +80305,7 @@
           "resource": "messageRules",
           "method": "sendTest"
         },
+        "description": "Sends the text now to one pass.",
         "security": [
           {
             "apiKey": [
@@ -80337,8 +80344,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Sends the text now to one pass."
+        ]
       }
     },
     "/api/v1/holders": {
@@ -80531,6 +80537,7 @@
           "resource": "holders",
           "method": "list"
         },
+        "description": "Lists holder assignments.",
         "security": [
           {
             "apiKey": [
@@ -80553,8 +80560,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists holder assignments."
+        ]
       }
     },
     "/api/v1/holders/{id}": {
@@ -80687,6 +80693,7 @@
           "resource": "holders",
           "method": "retrieve"
         },
+        "description": "A holder assignment and any pending transfer.",
         "security": [
           {
             "apiKey": [
@@ -80710,8 +80717,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "A holder assignment and any pending transfer."
+        ]
       }
     },
     "/api/v1/holders/assign": {
@@ -80842,6 +80848,7 @@
           "resource": "holders",
           "method": "assign"
         },
+        "description": "Sets the holder email of an unowned pass.",
         "security": [
           {
             "apiKey": [
@@ -80904,8 +80911,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Sets the holder email of an unowned pass."
+        ]
       }
     },
     "/api/v1/holders/assign-bulk": {
@@ -81054,6 +81060,7 @@
           "resource": "holders",
           "method": "bulkAssign"
         },
+        "description": "Assigns up to 100 holders in one call.",
         "security": [
           {
             "apiKey": [
@@ -81116,8 +81123,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Assigns up to 100 holders in one call."
+        ]
       }
     },
     "/api/v1/holders/reassign": {
@@ -81248,6 +81254,7 @@
           "resource": "holders",
           "method": "reassign"
         },
+        "description": "Stages a holder reassignment. The new holder confirms it.",
         "security": [
           {
             "apiKey": [
@@ -81309,8 +81316,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Stages a holder reassignment. The new holder confirms it."
+        ]
       }
     },
     "/api/v1/holders/unassign": {
@@ -81441,6 +81447,7 @@
           "resource": "holders",
           "method": "unassign"
         },
+        "description": "Stages removal of the holder.",
         "security": [
           {
             "apiKey": [
@@ -81502,8 +81509,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Stages removal of the holder."
+        ]
       }
     },
     "/api/v1/holders/clear-block": {
@@ -81560,6 +81566,7 @@
           "resource": "holders",
           "method": "clearBlock"
         },
+        "description": "Allows a user to be attached to a pass again.",
         "security": [
           {
             "apiKey": [
@@ -81621,8 +81628,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Allows a user to be attached to a pass again."
+        ]
       }
     },
     "/api/v1/visitors": {
@@ -81804,6 +81810,7 @@
           "resource": "visitors",
           "method": "list"
         },
+        "description": "Lists the visitors of a day.",
         "security": [
           {
             "apiKey": [
@@ -81826,8 +81833,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists the visitors of a day."
+        ]
       },
       "post": {
         "summary": "Invite a visitor: a visitor pass with a host",
@@ -81939,6 +81945,7 @@
           "resource": "visitors",
           "method": "create"
         },
+        "description": "Invites a visitor: a visitor pass with a host.",
         "security": [
           {
             "apiKey": [
@@ -82017,8 +82024,7 @@
           "VISITOR_NOT_FOUND",
           "VISITOR_TEMPLATE_MISSING",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Invites a visitor: a visitor pass with a host."
+        ]
       }
     },
     "/api/v1/visitors/hosts": {
@@ -82115,6 +82121,7 @@
           "resource": "visitors",
           "method": "listHosts"
         },
+        "description": "The people who can host a visitor: the organization's members.",
         "security": [
           {
             "apiKey": [
@@ -82137,8 +82144,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The people who can host a visitor: the organization's members."
+        ]
       }
     },
     "/api/v1/visitors/{id}/check-out": {
@@ -82265,6 +82271,7 @@
           "resource": "visitors",
           "method": "checkOut"
         },
+        "description": "Checks a visitor out.",
         "security": [
           {
             "apiKey": [
@@ -82285,8 +82292,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Checks a visitor out."
+        ]
       }
     },
     "/api/v1/visitors/{id}/cancel": {
@@ -82413,6 +82419,7 @@
           "resource": "visitors",
           "method": "cancel"
         },
+        "description": "Cancels a visit and voids its pass.",
         "security": [
           {
             "apiKey": [
@@ -82433,8 +82440,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Cancels a visit and voids its pass."
+        ]
       }
     },
     "/api/v1/visitors/{id}/host-email": {
@@ -82514,6 +82520,7 @@
           "resource": "visitors",
           "method": "sendHostEmail"
         },
+        "description": "Sends the host their arrival email again.",
         "security": [
           {
             "apiKey": [
@@ -82545,8 +82552,7 @@
           "VISITOR_NOT_FOUND",
           "VISITOR_NOT_IN",
           "VISITOR_RESEND_LIMIT"
-        ],
-        "description": "Sends the host their arrival email again."
+        ]
       }
     },
     "/api/v1/offboard": {
@@ -82625,6 +82631,7 @@
           "resource": "holders",
           "method": "offboard"
         },
+        "description": "Offboards a person: voids or removes their passes and lets go of their tags.",
         "security": [
           {
             "apiKey": [
@@ -82816,6 +82823,7 @@
           "resource": "deliveries",
           "method": "list"
         },
+        "description": "The outbox entries for a pass: each email or push and whether it was sent.",
         "security": [
           {
             "apiKey": [
@@ -82839,8 +82847,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The outbox entries for a pass: each email or push and whether it was sent."
+        ]
       }
     },
     "/api/v1/connections/{id}/preview": {
@@ -83121,6 +83128,7 @@
           "resource": "connections.webhookFailures",
           "method": "list"
         },
+        "description": "Lists retained webhook status for a connection.",
         "security": [
           {
             "apiKey": [
@@ -83144,8 +83152,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists retained webhook status for a connection."
+        ]
       }
     },
     "/api/v1/connections/{id}/webhook-failures/{retentionId}/replay": {
@@ -83214,6 +83221,7 @@
           "resource": "connections.webhookFailures",
           "method": "replay"
         },
+        "description": "Replays a retained webhook.",
         "security": [
           {
             "apiKey": [
@@ -83262,8 +83270,7 @@
           "WEBHOOK_REFERENCE_MODE_CHANGED",
           "WEBHOOK_SNAPSHOT_UNAVAILABLE",
           "WEBHOOK_STALE_CONTEXT"
-        ],
-        "description": "Replays a retained webhook."
+        ]
       }
     },
     "/api/v1/connections/{id}/webhook-failures/{retentionId}/resolve": {
@@ -83346,6 +83353,7 @@
           "resource": "connections.webhookFailures",
           "method": "resolve"
         },
+        "description": "Marks an uncertain webhook resolved after you have checked the source system.",
         "security": [
           {
             "apiKey": [
@@ -83387,8 +83395,7 @@
           "WEBHOOK_NOT_FOUND",
           "WEBHOOK_RESOLVE_CONFLICT",
           "WEBHOOK_STILL_PENDING"
-        ],
-        "description": "Marks an uncertain webhook resolved after you have checked the source system."
+        ]
       }
     },
     "/api/v1/connections": {
@@ -83791,6 +83798,7 @@
           "resource": "connections",
           "method": "list"
         },
+        "description": "Lists connections.",
         "security": [
           {
             "apiKey": [
@@ -83812,8 +83820,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists connections."
+        ]
       },
       "post": {
         "summary": "Create a connection",
@@ -84147,6 +84154,7 @@
           "resource": "connections",
           "method": "create"
         },
+        "description": "Creates a connection.",
         "security": [
           {
             "apiKey": [
@@ -84192,8 +84200,7 @@
           "UNAUTHENTICATED",
           "UNSAFE_URL",
           "VALIDATION"
-        ],
-        "description": "Creates a connection."
+        ]
       }
     },
     "/api/v1/connections/summary": {
@@ -84311,6 +84318,7 @@
           "resource": "connections",
           "method": "retrieveSummary"
         },
+        "description": "A health summary across connections.",
         "security": [
           {
             "apiKey": [
@@ -84332,8 +84340,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "A health summary across connections."
+        ]
       }
     },
     "/api/v1/connections/{id}": {
@@ -84816,6 +84823,7 @@
           "resource": "connections",
           "method": "retrieve"
         },
+        "description": "A connection with its runs and metrics.",
         "security": [
           {
             "apiKey": [
@@ -84839,8 +84847,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "A connection with its runs and metrics."
+        ]
       },
       "patch": {
         "summary": "Update a connection",
@@ -85186,6 +85193,7 @@
           "resource": "connections",
           "method": "update"
         },
+        "description": "Updates a connection.",
         "security": [
           {
             "apiKey": [
@@ -85232,8 +85240,7 @@
           "UNAUTHENTICATED",
           "UNSAFE_URL",
           "VALIDATION"
-        ],
-        "description": "Updates a connection."
+        ]
       },
       "delete": {
         "summary": "Delete a connection",
@@ -85290,6 +85297,7 @@
           "resource": "connections",
           "method": "delete"
         },
+        "description": "Deletes a connection.",
         "security": [
           {
             "apiKey": [
@@ -85326,8 +85334,7 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Deletes a connection."
+        ]
       }
     },
     "/api/v1/connections/test-config": {
@@ -85574,6 +85581,7 @@
           "resource": "connections",
           "method": "testConfig"
         },
+        "description": "Tests an unsaved configuration without saving it.",
         "security": [
           {
             "apiKey": [
@@ -85605,8 +85613,7 @@
           "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Tests an unsaved configuration without saving it."
+        ]
       }
     },
     "/api/v1/connections/{id}/test": {
@@ -85690,6 +85697,7 @@
           "resource": "connections",
           "method": "test"
         },
+        "description": "Tests the saved connection against its source.",
         "security": [
           {
             "apiKey": [
@@ -85728,8 +85736,7 @@
           "UNSAFE_URL",
           "UPSTREAM",
           "VALIDATION"
-        ],
-        "description": "Tests the saved connection against its source."
+        ]
       }
     },
     "/api/v1/connections/{id}/sync": {
@@ -85791,6 +85798,7 @@
           "resource": "connections",
           "method": "sync"
         },
+        "description": "Syncs now instead of waiting for the schedule.",
         "security": [
           {
             "apiKey": [
@@ -85829,8 +85837,7 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Syncs now instead of waiting for the schedule."
+        ]
       }
     },
     "/api/v1/connections/{id}/runs": {
@@ -86024,6 +86031,7 @@
           "resource": "connections.runs",
           "method": "list"
         },
+        "description": "Lists the runs of a connection.",
         "security": [
           {
             "apiKey": [
@@ -86047,8 +86055,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists the runs of a connection."
+        ]
       }
     },
     "/api/v1/connections/{id}/webhook-secret": {
@@ -86398,6 +86405,7 @@
           "resource": "connections",
           "method": "rotateWebhookSecret"
         },
+        "description": "Generates a new webhook secret. It is shown once.",
         "security": [
           {
             "apiKey": [
@@ -86441,8 +86449,7 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Generates a new webhook secret. It is shown once."
+        ]
       }
     },
     "/api/v1/connections/{id}/webhook-secret/previous": {
@@ -86777,6 +86784,7 @@
           "resource": "connections",
           "method": "revokePreviousWebhookSecret"
         },
+        "description": "Stops accepting the previous webhook secret now.",
         "security": [
           {
             "apiKey": [
@@ -86813,8 +86821,7 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Stops accepting the previous webhook secret now."
+        ]
       }
     },
     "/api/v1/connectors": {
@@ -87135,6 +87142,7 @@
           "resource": "connectors",
           "method": "list"
         },
+        "description": "Lists connector types.",
         "security": [
           {
             "apiKey": [
@@ -87157,8 +87165,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists connector types."
+        ]
       }
     },
     "/api/v1/connectors/{type}": {
@@ -87460,6 +87467,7 @@
           "resource": "connectors",
           "method": "retrieve"
         },
+        "description": "One connector type with its settings.",
         "security": [
           {
             "apiKey": [
@@ -87484,8 +87492,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "One connector type with its settings."
+        ]
       }
     },
     "/api/v1/webhook-endpoints": {
@@ -95426,6 +95433,7 @@
           "resource": "passes",
           "method": "retrieveProviderStatus"
         },
+        "description": "The local provider instance status of a pass.",
         "security": [
           {
             "apiKey": [
@@ -95449,8 +95457,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The local provider instance status of a pass."
+        ]
       }
     },
     "/api/v1/users": {
@@ -97974,6 +97981,7 @@
           "resource": "apiKeys",
           "method": "revoke"
         },
+        "description": "Revokes a key for an authorized organization, or a platform-wide key with `orgId=null`.",
         "security": [
           {
             "apiKey": [
@@ -97998,8 +98006,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Revokes a key for an authorized organization, or a platform-wide key with `orgId=null`."
+        ]
       }
     },
     "/api/v1/api-keys/{id}/activity": {
@@ -98481,6 +98488,7 @@
           "resource": "apiKeys",
           "method": "list"
         },
+        "description": "Lists keys for an authorized organization, or platform-wide keys with `orgId=null`.",
         "security": [
           {
             "apiKey": [
@@ -98504,8 +98512,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists keys for an authorized organization, or platform-wide keys with `orgId=null`."
+        ]
       },
       "post": {
         "summary": "Create an organization or platform API key (secret shown once)",
@@ -98549,6 +98556,7 @@
           "resource": "apiKeys",
           "method": "create"
         },
+        "description": "Creates an organization or platform API key. The secret is shown once.",
         "security": [
           {
             "apiKey": [
@@ -108082,6 +108090,7 @@
           "resource": "terminal",
           "method": "resolve"
         },
+        "description": "Reads a code and says what it is, without acting on it.",
         "security": [
           {
             "apiKey": [
@@ -108161,6 +108170,7 @@
           "resource": "terminal",
           "method": "act"
         },
+        "description": "Scans a code and acts on it.",
         "security": [
           {
             "apiKey": [
@@ -108729,6 +108739,7 @@
           "resource": "terminal.scans",
           "method": "undo"
         },
+        "description": "Undoes a check-in.",
         "security": [
           {
             "apiKey": [
@@ -108869,6 +108880,7 @@
           "resource": "scanners",
           "method": "update"
         },
+        "description": "Edits a scanner.",
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
@@ -108905,8 +108917,7 @@
           "ZONE_ARCHIVED",
           "ZONE_EVENT_SESSION",
           "ZONE_NOT_FOUND"
-        ],
-        "description": "Edits a scanner."
+        ]
       },
       "get": {
         "summary": "Get a scanner",
@@ -109030,6 +109041,7 @@
           "resource": "scanners",
           "method": "revoke"
         },
+        "description": "Removes a scanner from use.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109046,8 +109058,7 @@
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Removes a scanner from use."
+        ]
       }
     },
     "/api/v1/scanners/{id}/mode": {
@@ -109116,6 +109127,7 @@
           "resource": "scanners",
           "method": "setMode"
         },
+        "description": "Moves a scanner live, or to test mode.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109137,8 +109149,7 @@
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Moves a scanner live, or to test mode."
+        ]
       }
     },
     "/api/v1/scanners": {
@@ -109200,6 +109211,7 @@
           "resource": "scanners",
           "method": "create"
         },
+        "description": "Creates a scanner. A device comes with a pairing code.",
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
@@ -109239,8 +109251,7 @@
           "ZONE_ARCHIVED",
           "ZONE_EVENT_SESSION",
           "ZONE_NOT_FOUND"
-        ],
-        "description": "Creates a scanner. A device comes with a pairing code."
+        ]
       },
       "get": {
         "summary": "List scanners",
@@ -109471,6 +109482,7 @@
           "resource": "scanners.pairing",
           "method": "create"
         },
+        "description": "Makes a new pairing code. It replaces any live one.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109493,8 +109505,7 @@
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Makes a new pairing code. It replaces any live one."
+        ]
       },
       "get": {
         "security": [
@@ -109583,6 +109594,7 @@
           "resource": "scanners.pairing",
           "method": "retrieve"
         },
+        "description": "Polls a pairing to see whether the device has paired.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109597,8 +109609,7 @@
           "SCANNING_SESSION_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Polls a pairing to see whether the device has paired."
+        ]
       }
     },
     "/api/v1/scanners/{id}/token": {
@@ -109685,6 +109696,7 @@
           "resource": "scanners",
           "method": "rotateToken"
         },
+        "description": "Makes a till token, shown once. It replaces the old one.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -109707,8 +109719,7 @@
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Makes a till token, shown once. It replaces the old one."
+        ]
       }
     },
     "/api/v1/scanners/{id}/pair-here": {
@@ -110316,6 +110327,7 @@
           "resource": "scanSetups",
           "method": "list"
         },
+        "description": "Lists managed scanner and screen setups.",
         "security": [
           {
             "apiKey": [
@@ -110342,8 +110354,7 @@
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists managed scanner and screen setups."
+        ]
       },
       "post": {
         "security": [
@@ -111184,6 +111195,7 @@
           "resource": "scanSetups",
           "method": "retrieve"
         },
+        "description": "A scanner setup and its view settings.",
         "security": [
           {
             "apiKey": [
@@ -111210,8 +111222,7 @@
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "A scanner setup and its view settings."
+        ]
       },
       "patch": {
         "security": [
@@ -111975,6 +111986,7 @@
           "resource": "scanningSessions",
           "method": "list"
         },
+        "description": "Lists scanning sessions.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -111991,8 +112003,7 @@
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists scanning sessions."
+        ]
       },
       "post": {
         "summary": "Create a shared scanning session",
@@ -112136,6 +112147,7 @@
           "resource": "scanningSessions",
           "method": "retrieve"
         },
+        "description": "A session's rules and devices.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -112152,8 +112164,7 @@
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "A session's rules and devices."
+        ]
       },
       "patch": {
         "security": [
@@ -112220,6 +112231,7 @@
           "resource": "scanningSessions",
           "method": "update"
         },
+        "description": "Updates the rules shared by a session's devices.",
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
@@ -112256,8 +112268,7 @@
           "ZONE_ARCHIVED",
           "ZONE_EVENT_SESSION",
           "ZONE_NOT_FOUND"
-        ],
-        "description": "Updates the rules shared by a session's devices."
+        ]
       }
     },
     "/api/v1/scanning-sessions/{id}/hold": {
@@ -112326,6 +112337,7 @@
           "resource": "scanningSessions",
           "method": "overrideHours"
         },
+        "description": "Closes the session now, opens it now, or goes back to the session hours.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -112350,8 +112362,7 @@
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Closes the session now, opens it now, or goes back to the session hours."
+        ]
       }
     },
     "/api/v1/scanning-sessions/{id}/devices/{deviceId}": {
@@ -112430,6 +112441,7 @@
           "resource": "scanningSessions.devices",
           "method": "update"
         },
+        "description": "Configures one device of a session.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -112452,8 +112464,7 @@
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Configures one device of a session."
+        ]
       }
     },
     "/api/v1/scanning-sessions/{id}/devices": {
@@ -112527,6 +112538,7 @@
           "resource": "scanningSessions.devices",
           "method": "create"
         },
+        "description": "Adds a device to a scanning session.",
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
@@ -112565,8 +112577,7 @@
           "UNAUTHENTICATED",
           "USER_NOT_FOUND",
           "VALIDATION"
-        ],
-        "description": "Adds a device to a scanning session."
+        ]
       }
     },
     "/api/v1/scanning-sessions/join": {
@@ -114846,6 +114857,7 @@
           "resource": "scanEvents",
           "method": "list"
         },
+        "description": "Lists scan events.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -114860,8 +114872,7 @@
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists scan events."
+        ]
       },
       "post": {
         "security": [
@@ -114916,6 +114927,7 @@
           "resource": "scanEvents",
           "method": "create"
         },
+        "description": "Creates a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
           "EVENT_MATCH_INPUT",
@@ -114998,6 +115010,7 @@
           "resource": "scanEvents",
           "method": "retrieve"
         },
+        "description": "One scan event.",
         "x-sign-in": "idp",
         "x-codes": [
           "EVENT_NOT_FOUND",
@@ -115013,8 +115026,7 @@
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "One scan event."
+        ]
       },
       "patch": {
         "security": [
@@ -115081,6 +115093,7 @@
           "resource": "scanEvents",
           "method": "update"
         },
+        "description": "Edits a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
           "EVENT_MATCH_INPUT",
@@ -115105,8 +115118,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Edits a scan event."
+        ]
       }
     },
     "/api/v1/scan-events/{id}/archive": {
@@ -115165,6 +115177,7 @@
           "resource": "scanEvents",
           "method": "archive"
         },
+        "description": "Archives a scan event. Its scanners are detached.",
         "x-sign-in": "idp",
         "x-codes": [
           "EVENT_IN_USE",
@@ -115183,8 +115196,7 @@
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Archives a scan event. Its scanners are detached."
+        ]
       }
     },
     "/api/v1/scan-events/{id}/scanners": {
@@ -115253,6 +115265,7 @@
           "resource": "scanEvents",
           "method": "attachScanners"
         },
+        "description": "Moves scanners onto a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
           "EVENT_ARCHIVED",
@@ -115280,8 +115293,7 @@
           "TEMPLATE_NOT_FOUND",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Moves scanners onto a scan event."
+        ]
       }
     },
     "/api/v1/scan-events/{id}/inside": {
@@ -116077,6 +116089,7 @@
           "resource": "scanStaff",
           "method": "list"
         },
+        "description": "Lists an organization's scanner staff.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -116092,8 +116105,7 @@
           "SCAN_STAFF_CURSOR",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists an organization's scanner staff."
+        ]
       },
       "post": {
         "security": [
@@ -116164,6 +116176,7 @@
           "resource": "scanStaff",
           "method": "create"
         },
+        "description": "Creates a staff member and reveals their PIN once.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -116186,8 +116199,7 @@
           "STAFF_PIN_TAKEN",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Creates a staff member and reveals their PIN once."
+        ]
       }
     },
     "/api/v1/scan-staff/{id}": {
@@ -116268,6 +116280,7 @@
           "resource": "scanStaff",
           "method": "update"
         },
+        "description": "Updates or disables a staff member.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -116372,6 +116385,7 @@
           "resource": "scanStaff",
           "method": "resetPin"
         },
+        "description": "Replaces a staff PIN and reveals the new one once.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -116391,8 +116405,7 @@
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Replaces a staff PIN and reveals the new one once."
+        ]
       }
     },
     "/api/v1/scan-staff/{id}/unlock-pin": {
@@ -116823,6 +116836,7 @@
           "resource": "scanZones",
           "method": "list"
         },
+        "description": "Lists zones.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -116835,8 +116849,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists zones."
+        ]
       },
       "post": {
         "security": [
@@ -117062,6 +117075,7 @@
           "resource": "scanZones",
           "method": "create"
         },
+        "description": "Creates a zone.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -117321,6 +117335,7 @@
           "resource": "scanZones",
           "method": "update"
         },
+        "description": "Edits a zone.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -117340,8 +117355,7 @@
           "ZONE_KEY_TAKEN",
           "ZONE_NAME_TAKEN",
           "ZONE_NOT_FOUND"
-        ],
-        "description": "Edits a zone."
+        ]
       }
     },
     "/api/v1/scan-zones/{id}/archive": {
@@ -117571,6 +117585,7 @@
           "resource": "scanZones",
           "method": "archive"
         },
+        "description": "Archives a zone and the zones below it.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -117590,8 +117605,7 @@
           "ZONE_KEY_TAKEN",
           "ZONE_NAME_TAKEN",
           "ZONE_NOT_FOUND"
-        ],
-        "description": "Archives a zone and the zones below it."
+        ]
       }
     },
     "/api/v1/scan-zones/{id}/restore": {
@@ -117821,6 +117835,7 @@
           "resource": "scanZones",
           "method": "restore"
         },
+        "description": "Restores a zone and the zones below it.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -117840,8 +117855,7 @@
           "ZONE_KEY_TAKEN",
           "ZONE_NAME_TAKEN",
           "ZONE_NOT_FOUND"
-        ],
-        "description": "Restores a zone and the zones below it."
+        ]
       }
     },
     "/api/v1/scan-zones/visits/{id}/reset": {
@@ -117917,6 +117931,7 @@
           "resource": "scanZones",
           "method": "resetVisits"
         },
+        "description": "Resets a pass's visits to a zone.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -117932,8 +117947,7 @@
           "SCAN_ZONE_LIVE_ONLY",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Resets a pass's visits to a zone."
+        ]
       }
     },
     "/api/v1/scan-zones/{id}/inside": {
@@ -118900,6 +118914,7 @@
           "resource": "scans",
           "method": "list"
         },
+        "description": "Lists scans for admins, or the scan feed for a key with `scans:read`.",
         "security": [
           {
             "apiKey": [
@@ -118926,8 +118941,7 @@
           "SCAN_STAFF_CHANGED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists scans for admins, or the scan feed for a key with `scans:read`."
+        ]
       }
     },
     "/api/v1/scans/export": {
@@ -119562,6 +119576,7 @@
           "resource": "rollCalls",
           "method": "retrieveOpen"
         },
+        "description": "The open roll call.",
         "security": [
           {
             "apiKey": [
@@ -119638,8 +119653,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "The open roll call."
+        ]
       },
       "post": {
         "summary": "Start a roll call, or join the open one",
@@ -119902,6 +119916,7 @@
           "resource": "rollCalls",
           "method": "create"
         },
+        "description": "Starts a roll call, or joins the open one.",
         "security": [
           {
             "apiKey": [
@@ -119981,8 +119996,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Starts a roll call, or joins the open one."
+        ]
       }
     },
     "/api/v1/roll-calls/{id}": {
@@ -120257,6 +120271,7 @@
           "resource": "rollCalls",
           "method": "retrieve"
         },
+        "description": "One roll call.",
         "security": [
           {
             "apiKey": [
@@ -120333,8 +120348,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "One roll call."
+        ]
       }
     },
     "/api/v1/roll-calls/{id}/marks": {
@@ -120654,6 +120668,7 @@
           "resource": "rollCalls",
           "method": "mark"
         },
+        "description": "Confirms people present or out.",
         "security": [
           {
             "apiKey": [
@@ -120731,8 +120746,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Confirms people present or out."
+        ]
       }
     },
     "/api/v1/roll-calls/{id}/end": {
@@ -121007,6 +121021,7 @@
           "resource": "rollCalls",
           "method": "end"
         },
+        "description": "Ends a roll call.",
         "security": [
           {
             "apiKey": [
@@ -121083,8 +121098,7 @@
           "VALIDATION",
           "VERSION_CONFLICT",
           "WALLET_PROJECTION_UNSUPPORTED"
-        ],
-        "description": "Ends a roll call."
+        ]
       }
     },
     "/api/v1/scan-display/preview": {
@@ -127067,6 +127081,7 @@
           "resource": "nfc.tagTypes",
           "method": "list"
         },
+        "description": "The tag types of an organization.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -127078,8 +127093,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "The tag types of an organization."
+        ]
       },
       "post": {
         "security": [
@@ -127254,6 +127268,7 @@
           "resource": "nfc.tagTypes",
           "method": "create"
         },
+        "description": "Creates a tag type.",
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
@@ -127284,8 +127299,7 @@
           "UNKNOWN_TEMPLATE",
           "VALIDATION",
           "VERSION_CONFLICT"
-        ],
-        "description": "Creates a tag type."
+        ]
       }
     },
     "/api/v1/nfc/tag-types/{id}": {
@@ -127461,6 +127475,7 @@
           "resource": "nfc.tagTypes",
           "method": "update"
         },
+        "description": "Changes a tag type. Send the version you read.",
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
@@ -127492,8 +127507,7 @@
           "UNKNOWN_TEMPLATE",
           "VALIDATION",
           "VERSION_CONFLICT"
-        ],
-        "description": "Changes a tag type. Send the version you read."
+        ]
       }
     },
     "/api/v1/nfc/tag-types/{id}/archive": {
@@ -127669,6 +127683,7 @@
           "resource": "nfc.tagTypes",
           "method": "archive"
         },
+        "description": "Archives a tag type. Its tags keep working.",
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
@@ -127699,8 +127714,7 @@
           "UNAUTHENTICATED",
           "VALIDATION",
           "VERSION_CONFLICT"
-        ],
-        "description": "Archives a tag type. Its tags keep working."
+        ]
       }
     },
     "/api/v1/nfc/keysets": {
@@ -127880,6 +127894,7 @@
           "resource": "nfc.keysets",
           "method": "list"
         },
+        "description": "Lists tag keysets.",
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -127892,8 +127907,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Lists tag keysets."
+        ]
       },
       "post": {
         "security": [
@@ -128079,6 +128093,7 @@
           "resource": "nfc.keysets",
           "method": "create"
         },
+        "description": "Creates a tag keyset.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -128281,6 +128296,7 @@
           "resource": "nfc.keysets",
           "method": "rotate"
         },
+        "description": "Rotates a keyset to a new key version.",
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -128467,6 +128483,7 @@
           "resource": "nfc.keysets",
           "method": "retireKey"
         },
+        "description": "Retires an old key version.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -128483,8 +128500,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Retires an old key version."
+        ]
       }
     },
     "/api/v1/nfc/keysets/{id}/keys/{version}/revoke": {
@@ -128644,6 +128660,7 @@
           "resource": "nfc.keysets",
           "method": "revokeKey"
         },
+        "description": "Revokes a key version. Tags on it must be written again.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -128660,8 +128677,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Revokes a key version. Tags on it must be written again."
+        ]
       }
     },
     "/api/v1/nfc/keysets/{id}/reenrol": {
@@ -128839,6 +128855,7 @@
           "resource": "nfc.keysets",
           "method": "reenroll"
         },
+        "description": "Moves the tags of a keyset to another keyset.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -128854,8 +128871,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Moves the tags of a keyset to another keyset."
+        ]
       }
     },
     "/api/v1/nfc/keysets/{id}/import": {
@@ -128989,6 +129005,7 @@
           "resource": "nfc.keysets",
           "method": "importTags"
         },
+        "description": "Imports supplier-personalised tags. Run it as a dry run first, then add.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -129007,8 +129024,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Imports supplier-personalised tags. Run it as a dry run first, then add."
+        ]
       }
     },
     "/api/v1/nfc/keysets/{id}/disable": {
@@ -129158,6 +129174,7 @@
           "resource": "nfc.keysets",
           "method": "disable"
         },
+        "description": "Disables a keyset.",
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -129173,8 +129190,7 @@
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
-        ],
-        "description": "Disables a keyset."
+        ]
       }
     },
     "/t/{slug}": {

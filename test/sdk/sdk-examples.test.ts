@@ -17,7 +17,20 @@ afterEach(() => {
 function useTestWorld() {
   vi.stubEnv('PASSBOOK_KEY', rig.key);
   vi.stubEnv('PASSBOOK_TEMPLATE_ID', rig.kit.template.id);
-  globalThis.fetch = rig.toApp;
+  // The example's sample fields are not the test template's; send the template's own.
+  globalThis.fetch = (input, init) =>
+    rig.toApp(
+      input,
+      init?.method === 'POST' && typeof init.body === 'string'
+        ? {
+            ...init,
+            body: JSON.stringify({
+              ...JSON.parse(init.body),
+              input: { memberName: 'Ada Example' },
+            }),
+          }
+        : init,
+    );
 }
 
 describe('sdk examples', () => {
