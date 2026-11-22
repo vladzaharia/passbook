@@ -20,7 +20,7 @@ export async function seedEndpoint(db: D1Database, seed: EndpointSeed): Promise<
     db,
     `INSERT INTO webhook_endpoints (id, org_id, mode, url, event_types, template_ids, api_version,
        status, disabled_at, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, '2026-12-01', ?, ?, 1, 1)`,
+     VALUES (?, ?, ?, ?, ?, ?, '2026-11-20', ?, ?, 1, 1)`,
     [
       id,
       seed.orgId,

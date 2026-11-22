@@ -5,7 +5,7 @@ import type { Island } from '../shell/islands.ts';
 import { fetchHome } from '../workbench/api.ts';
 import { KeysPage } from './keys-page.tsx';
 import './keys.css';
-import './keys-sheet.css';
+import '../ui/sheet.css';
 
 const note = (el: HTMLElement, text: string) => {
   const p = document.createElement('p');

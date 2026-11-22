@@ -511,7 +511,7 @@ class EventsResource:
         types: str | None = None,
         pass_id: str | None = None,
         limit: int | None = None,
-        api_version: _Literal["2026-12-01"] | None = None,
+        api_version: _Literal["2026-12-01", "2026-11-20"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.WebhookEvent]:
         """Event feed (cursor paging, ascending) `GET /api/v1/events`"""
@@ -521,7 +521,7 @@ class EventsResource:
         self,
         id: str,
         *,
-        api_version: _Literal["2026-12-01"] | None = None,
+        api_version: _Literal["2026-12-01", "2026-11-20"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.EventsRetrieveResult:
         """One event by id `GET /api/v1/events/{id}`"""
@@ -2103,11 +2103,25 @@ class WebhookEndpointsDeliveriesResource:
         return self._core.request("GET", f"/api/v1/webhook-endpoints/{_p(id)}/deliveries/{_p(event_id)}", result=m.WebhookEndpointsDeliveriesRetrieveResult, **opts)
 
 
+class WebhookEndpointsTestsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.WebhookEndpointsTestsListResult:
+        """Recent test sends of an endpoint, newest first `GET /api/v1/webhook-endpoints/{id}/tests`"""
+        return self._core.request("GET", f"/api/v1/webhook-endpoints/{_p(id)}/tests", result=m.WebhookEndpointsTestsListResult, **opts)
+
+
 class WebhookEndpointsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
         self.captures = WebhookEndpointsCapturesResource(core)
         self.deliveries = WebhookEndpointsDeliveriesResource(core)
+        self.tests = WebhookEndpointsTestsResource(core)
 
     def create(
         self,

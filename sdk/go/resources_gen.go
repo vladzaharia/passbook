@@ -2197,10 +2197,30 @@ func (r *WebhookEndpointsDeliveriesResource) Retrieve(ctx context.Context, id st
 	return &out, nil
 }
 
+type WebhookEndpointsTestsResource struct {
+	c *core
+}
+
+func newWebhookEndpointsTestsResource(c *core) *WebhookEndpointsTestsResource {
+	return &WebhookEndpointsTestsResource{
+		c: c,
+	}
+}
+
+// List Recent test sends of an endpoint, newest first `GET /api/v1/webhook-endpoints/{id}/tests`
+func (r *WebhookEndpointsTestsResource) List(ctx context.Context, id string, opts ...RequestOption) (*WebhookEndpointsTestsListResult, error) {
+	var out WebhookEndpointsTestsListResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/webhook-endpoints/" + pathEscape(id) + "/tests"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type WebhookEndpointsResource struct {
 	c          *core
 	Captures   *WebhookEndpointsCapturesResource
 	Deliveries *WebhookEndpointsDeliveriesResource
+	Tests      *WebhookEndpointsTestsResource
 }
 
 func newWebhookEndpointsResource(c *core) *WebhookEndpointsResource {
@@ -2208,6 +2228,7 @@ func newWebhookEndpointsResource(c *core) *WebhookEndpointsResource {
 		c:          c,
 		Captures:   newWebhookEndpointsCapturesResource(c),
 		Deliveries: newWebhookEndpointsDeliveriesResource(c),
+		Tests:      newWebhookEndpointsTestsResource(c),
 	}
 }
 

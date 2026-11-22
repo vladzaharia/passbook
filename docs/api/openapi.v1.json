@@ -28,7 +28,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -127,7 +128,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -210,7 +212,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -283,7 +286,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -352,7 +356,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -425,7 +430,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -491,7 +497,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -579,7 +586,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -675,7 +683,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -805,7 +814,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -909,7 +919,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -992,7 +1003,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -1094,7 +1106,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -1172,7 +1185,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -1248,7 +1262,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -1331,7 +1346,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -1400,7 +1416,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "createdAt": {
@@ -8964,7 +8981,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           },
           "status": {
@@ -9363,6 +9381,81 @@
         "required": [
           "items",
           "nextCursor"
+        ]
+      },
+      "WebhookTestAttemptPage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "pass.issued",
+                    "pass.updated",
+                    "pass.voided",
+                    "pass.unvoided",
+                    "pass.removed",
+                    "pass.restored",
+                    "pass.installed",
+                    "pass.uninstalled",
+                    "pass.scanned",
+                    "pass.scan_refused",
+                    "pass.scan_undone",
+                    "pass.channels_changed",
+                    "pass.printed",
+                    "pass.print_voided",
+                    "push.failed",
+                    "email.failed",
+                    "webhook.test"
+                  ]
+                },
+                "ok": {
+                  "type": "boolean"
+                },
+                "status": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "errorCode": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "durationMs": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "at": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "type",
+                "ok",
+                "status",
+                "errorCode",
+                "durationMs",
+                "at"
+              ]
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       },
       "WebhookDeliveryDetail": {
@@ -26677,7 +26770,8 @@
           "apiVersion": {
             "type": "string",
             "enum": [
-              "2026-12-01"
+              "2026-12-01",
+              "2026-11-20"
             ]
           }
         }
@@ -92545,6 +92639,105 @@
         ]
       }
     },
+    "/api/v1/webhook-endpoints/{id}/tests": {
+      "get": {
+        "summary": "Recent test sends of an endpoint, newest first",
+        "tags": [
+          "webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookTestAttemptPage"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+                      "ok": true,
+                      "status": 200,
+                      "errorCode": null,
+                      "durationMs": 12,
+                      "at": 1795153318000
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "webhooks.getWebhookEndpointsByIdTests",
+        "x-sdk": {
+          "resource": "webhookEndpoints.tests",
+          "method": "list"
+        },
+        "description": "The endpoint's recent test sends, newest first, up to 20: status, error code and timing. The request and its signature are not kept. Kept 7 days.",
+        "security": [
+          {
+            "apiKey": [
+              "webhooks:manage"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "CAPTURE_DEVELOPER_ONLY",
+          "CAPTURE_NOT_STORED",
+          "CAPTURE_TOO_LARGE",
+          "CAPTURE_URL_FIXED",
+          "DELIVERY_PENDING",
+          "EVENT_NOT_FOUND",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "NOT_A_CAPTURE_ENDPOINT",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "REPLAY_NOT_QUEUED",
+          "REPLAY_TOO_LARGE",
+          "RETENTION_RECEIPT_BUSY",
+          "SAMPLE_EVENT_LIVE",
+          "SECRET_UNAVAILABLE",
+          "UNAUTHENTICATED",
+          "UNKNOWN_TEMPLATE",
+          "UNSAFE_URL",
+          "VALIDATION",
+          "WEBHOOK_CAPTURE_NOT_FOUND",
+          "WEBHOOK_ENDPOINT_LIMIT",
+          "WEBHOOK_ENDPOINT_NOT_FOUND"
+        ]
+      }
+    },
     "/api/v1/webhook-endpoints/{id}/deliveries/{eventId}": {
       "get": {
         "summary": "One delivery with its attempts and payload",
@@ -92968,7 +93161,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "2026-12-01"
+                "2026-12-01",
+                "2026-11-20"
               ]
             },
             "required": false,
@@ -93083,7 +93277,8 @@
             "schema": {
               "type": "string",
               "enum": [
-                "2026-12-01"
+                "2026-12-01",
+                "2026-11-20"
               ]
             },
             "required": false,

@@ -40,6 +40,17 @@ describe('deliveries', () => {
     expect(within(table).getAllByText('ORD-7').length).toBeGreaterThan(0);
   });
 
+  it('lists a test send tagged Test beside the deliveries, only under All', async () => {
+    const user = userEvent.setup();
+    const calls: Calls[] = [];
+    await open(calls);
+    const table = await screen.findByRole('table', { name: 'Deliveries' });
+    expect(await within(table).findByText('Test')).toBeVisible();
+    expect(within(table).getByText('Sent')).toBeVisible();
+    await user.click(screen.getByRole('radio', { name: 'Failed' }));
+    await waitFor(() => expect(within(table).queryByText('Sent')).toBeNull());
+  });
+
   it('filters to failed deliveries through the API', async () => {
     const user = userEvent.setup();
     const calls: Calls[] = [];

@@ -852,7 +852,7 @@ The feed keeps events for `min(30 days, the platform events retention)`. A curso
 the oldest event without a notice. Delivered deliveries are kept 7 days; failed and cancelled ones as long as
 their event; attempts 30 days (test sends 7). Secrets are removed a day after they expire.
 
-`apiVersion` is a date, currently `2026-12-01`, and is pinned per endpoint until a manager patches it. A new
+`apiVersion` is a date, currently `2026-11-20`, and is pinned per endpoint until a manager patches it. A new
 type or a new optional `data` field is not a new version, so ignore unknown types and fields. A rename, a
 removal or a change of meaning gets a new version, and each version is supported for at least 12 months. The
 feed takes `?apiVersion=` and defaults to the newest.

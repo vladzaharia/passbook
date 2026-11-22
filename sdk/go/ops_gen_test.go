@@ -1740,4 +1740,11 @@ var generatedOps = []opCase{
 			return c.WebhookEndpoints.SendTest(ctx, "id1", &b)
 		},
 	},
+	{
+		"webhookEndpoints.tests.list", "GET", "/api/v1/webhook-endpoints/id1/tests", false,
+		"", `{"items":[{"id":"x","type":"pass.issued","ok":false,"status":0,"errorCode":"x","durationMs":0,"at":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.WebhookEndpoints.Tests.List(ctx, "id1")
+		},
+	},
 }

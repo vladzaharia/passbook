@@ -8,9 +8,9 @@ import {
   presetsWithin,
   SANDBOX_CEILING,
 } from '../../../shared/developers-keys.ts';
+import { Sheet } from '../ui/sheet.tsx';
+import { StepUp } from '../ui/step-up.tsx';
 import { type KeyApi, KeyError, type MintedKey } from './api.ts';
-import { Sheet } from './sheet.tsx';
-import { StepUp } from './step-up.tsx';
 
 const DAY = 86_400_000;
 const C = KEYS_COPY.sheet;

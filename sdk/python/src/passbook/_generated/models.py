@@ -1244,11 +1244,14 @@ __all__ = [
     "WebhookEndpointsSendTestBody",
     "WebhookEndpointsSendTestParams",
     "WebhookEndpointsSendTestResult",
+    "WebhookEndpointsTestsListResult",
     "WebhookEndpointsUpdateBody",
     "WebhookEndpointsUpdateParams",
     "WebhookEndpointsUpdateResult",
     "WebhookEvent",
     "WebhookPassRef",
+    "WebhookTestAttemptPage",
+    "WebhookTestAttemptPageItemsItem",
     "WebhookTestEvent",
     "WebhookTestEventData",
     "WebhookTestResult",
@@ -2778,7 +2781,7 @@ class DeliveriesListResultItemsItem(_Model):
 class EmailFailedEvent(_Model):
     id: str
     type: _Literal["email.failed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -3727,7 +3730,7 @@ class OrgsUpdatePassSetupParamsChannels(_Model):
 class PassChannelsChangedEvent(_Model):
     id: str
     type: _Literal["pass.channels_changed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -4629,7 +4632,7 @@ class PassImportsUndoParams(_Model):
 class PassInstalledEvent(_Model):
     id: str
     type: _Literal["pass.installed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -4646,7 +4649,7 @@ class PassInstalledEventData(_Model):
 class PassIssuedEvent(_Model):
     id: str
     type: _Literal["pass.issued"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -4666,7 +4669,7 @@ class PassPage(_Model):
 class PassPrintVoidedEvent(_Model):
     id: str
     type: _Literal["pass.print_voided"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -4681,7 +4684,7 @@ class PassPrintVoidedEventData(_Model):
 class PassPrintedEvent(_Model):
     id: str
     type: _Literal["pass.printed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -4697,7 +4700,7 @@ class PassPrintedEventData(_Model):
 class PassRemovedEvent(_Model):
     id: str
     type: _Literal["pass.removed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -4713,7 +4716,7 @@ class PassRemovedEventData(_Model):
 class PassRestoredEvent(_Model):
     id: str
     type: _Literal["pass.restored"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -4727,7 +4730,7 @@ class PassRestoredEventData(_Model):
 class PassScanRefusedEvent(_Model):
     id: str
     type: _Literal["pass.scan_refused"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -4746,7 +4749,7 @@ class PassScanRefusedEventData(_Model):
 class PassScanUndoneEvent(_Model):
     id: str
     type: _Literal["pass.scan_undone"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -4762,7 +4765,7 @@ class PassScanUndoneEventData(_Model):
 class PassScannedEvent(_Model):
     id: str
     type: _Literal["pass.scanned"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5254,7 +5257,7 @@ class PassSummaryMatchedItem(_Model):
 class PassUninstalledEvent(_Model):
     id: str
     type: _Literal["pass.uninstalled"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5272,7 +5275,7 @@ class PassUninstalledEventData(_Model):
 class PassUnvoidedEvent(_Model):
     id: str
     type: _Literal["pass.unvoided"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5286,7 +5289,7 @@ class PassUnvoidedEventData(_Model):
 class PassUpdatedEvent(_Model):
     id: str
     type: _Literal["pass.updated"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5332,7 +5335,7 @@ class PassViewsReplaceParamsItemsItem(_Model):
 class PassVoidedEvent(_Model):
     id: str
     type: _Literal["pass.voided"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -6060,7 +6063,7 @@ class ProblemIssuesItem(_Model):
 class PushFailedEvent(_Model):
     id: str
     type: _Literal["push.failed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -9016,7 +9019,7 @@ class WebhookEndpoint(_Model):
     description: str
     eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
     templateIds: _List[str] | None
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     status: _Literal["active", "paused", "disabled"] | str
     target: _Literal["url", "capture"] | str
     failingSince: int | None
@@ -9092,17 +9095,29 @@ class WebhookEndpointsUpdateParams(_Model):
     eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str] | None = None
     templateIds: _List[str] | None = None
     status: _Literal["active", "paused"] | str | None = None
-    apiVersion: _Literal["2026-12-01"] | str | None = None
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str | None = None
 
 class WebhookPassRef(_Model):
     id: str
     externalId: str | None
     templateId: str
 
+class WebhookTestAttemptPage(_Model):
+    items: _List[WebhookTestAttemptPageItemsItem]
+
+class WebhookTestAttemptPageItemsItem(_Model):
+    id: str
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
+    ok: bool
+    status: int | None
+    errorCode: str | None
+    durationMs: int
+    at: int
+
 class WebhookTestEvent(_Model):
     id: str
     type: _Literal["webhook.test"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -9460,6 +9475,8 @@ WebhookEndpointsRotateSecretBody = WebhookEndpointsRotateSecretParams
 WebhookEndpointsSendTestBody = WebhookEndpointsSendTestParams
 
 WebhookEndpointsSendTestResult = WebhookTestResult
+
+WebhookEndpointsTestsListResult = WebhookTestAttemptPage
 
 WebhookEndpointsUpdateBody = WebhookEndpointsUpdateParams
 

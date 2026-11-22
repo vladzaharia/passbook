@@ -1,6 +1,7 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
 import { IdParamSchema, IdSchema } from '../../../shared/contracts/common.ts';
+import { WebhookTestAttemptListSchema } from '../../../shared/contracts/webhook-tests.ts';
 import {
   WebhookDeliveryDetailSchema,
   WebhookDeliveryListQuerySchema,
@@ -13,6 +14,7 @@ import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { authorizeStoredEndpoint } from './access.ts';
 import * as replay from './service-replay.ts';
+import { listTests } from './service-test.ts';
 
 const DeliveryParamSchema = z.object({ id: IdSchema, eventId: IdSchema });
 
@@ -33,6 +35,23 @@ export function registerDeliveryRoutes(router: OpenAPIHono<AppBindings>): void {
       const id = c.req.valid('param').id;
       const access = await authorizeStoredEndpoint(ctx, c.var.auth, id, 'integrations:read');
       return c.json(await replay.deliveries(ctx, access, id, c.req.valid('query')));
+    },
+  );
+  register(
+    router,
+    'webhooks',
+    {
+      method: 'get',
+      path: '/{id}/tests',
+      summary: 'Recent test sends of an endpoint, newest first',
+      params: IdParamSchema,
+      response: WebhookTestAttemptListSchema,
+    },
+    async (c) => {
+      const ctx = serviceContext(c);
+      const id = c.req.valid('param').id;
+      const access = await authorizeStoredEndpoint(ctx, c.var.auth, id, 'integrations:read');
+      return c.json(await listTests(ctx, access, id));
     },
   );
   register(

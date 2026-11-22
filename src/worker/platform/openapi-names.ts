@@ -92,6 +92,7 @@ import {
   WebhookCaptureListSchema,
   WebhookCaptureSchema,
 } from '../../shared/contracts/webhook-captures.ts';
+import { WebhookTestAttemptListSchema } from '../../shared/contracts/webhook-tests.ts';
 import {
   EventFeedPageSchema,
   WebhookDeliveryDetailSchema,
@@ -173,6 +174,7 @@ const names = {
   WebhookDeliveryPage: WebhookDeliveryListSchema,
   WebhookDeliveryDetail: WebhookDeliveryDetailSchema,
   WebhookTestResult: WebhookTestResultSchema,
+  WebhookTestAttemptPage: WebhookTestAttemptListSchema,
   WebhookCapture: WebhookCaptureSchema,
   WebhookCapturePage: WebhookCaptureListSchema,
   CaptureEndpointCreated: CaptureEndpointCreatedSchema,

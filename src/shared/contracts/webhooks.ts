@@ -44,10 +44,11 @@ export const SubscribableEventTypeSchema = z.enum(
 );
 
 /** Additive changes need no new version; a rename, removal or change of meaning does. */
-export const WEBHOOK_API_VERSIONS = ['2026-12-01'] as const;
+/** Oldest first. `2026-12-01` was stamped before it matched a changelog date; endpoints that carry it keep it. */
+export const WEBHOOK_API_VERSIONS = ['2026-12-01', '2026-11-20'] as const;
 export const WebhookApiVersionSchema = z.enum(WEBHOOK_API_VERSIONS);
 export type WebhookApiVersion = z.infer<typeof WebhookApiVersionSchema>;
-export const LATEST_WEBHOOK_API_VERSION: WebhookApiVersion = '2026-12-01';
+export const LATEST_WEBHOOK_API_VERSION: WebhookApiVersion = '2026-11-20';
 
 export const WEBHOOK_ENDPOINT_LIMIT = 10;
 export const WEBHOOK_MAX_TEMPLATES = 20;

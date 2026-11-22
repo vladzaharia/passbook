@@ -30,7 +30,7 @@ describe('backfill', () => {
       description: '',
       eventTypes: ['pass.voided', 'pass.unvoided'],
       templateIds: null,
-      apiVersion: '2026-12-01',
+      apiVersion: '2026-11-20',
       createdBy: null,
       now: 1,
     });
