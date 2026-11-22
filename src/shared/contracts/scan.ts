@@ -293,8 +293,8 @@ export const ScanOutcomeSchema = z.object({
   flags: z.array(z.string()),
   /** The channel a `channel_off` refusal names. */
   channel: ChannelSchema.nullable().optional(),
-  /** A Manager PIN can unlock this heads-up. */
-  overridable: z.boolean(),
+  overridable: z.boolean(), // A Manager PIN can unlock this heads-up.
+  exitAllowed: z.boolean().optional(), // OC4: a voided or ended pass that is inside can only check out
   /** The org has active managers. */
   approvals: z.boolean(),
   group: z

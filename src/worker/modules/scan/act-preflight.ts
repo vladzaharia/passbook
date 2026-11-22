@@ -56,6 +56,7 @@ export function prepareCheckInReads(
     ctx.env,
     found,
     found.liveCandidate?.templateSnapshot?.raw,
+    found.inactive !== undefined,
   );
   if (!prepared) return null;
   // Admission, presence and capacity belong to a check-in; a value action reads only its gate.

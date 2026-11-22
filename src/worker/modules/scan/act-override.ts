@@ -183,15 +183,48 @@ export async function checkOverride(
   return captured;
 }
 
-/** Which action this request runs: named, the scanner's default, or `choose` for the desk. */
+/** A named tap-out of a voided or ended pass (OC4): the desk's Check out, which has no action to name. */
+const tapsOut = (actor: ScanActor, req: PickReq, found: Found): boolean =>
+  found.inactive !== undefined && (req.direction ?? actor.settings.direction) === 'out';
+
+/**
+ * Which action this request runs: named, the scanner's default, or `choose` for the desk. A tap-out
+ * (`exit`) never waits for a choice: it runs the check-in action.
+ */
 export function pickAction(
   actor: ScanActor,
   scan: ResolvedScanManifest,
   id: string,
+  exit = false,
 ): ResolvedScanAction | 'choose' | undefined {
-  if (id === 'auto')
+  if (id === 'auto') {
+    if (exit) return scan.actions.find((a) => a.kind === 'check_in');
     return actor.settings.flow === 'choose' ? 'choose' : (defaultAction(actor, scan) ?? undefined);
+  }
   return scan.actions.find((a) => a.id === id);
+}
+
+type PickReq = { actionId: string; direction?: 'in' | 'out' | undefined };
+
+/** The action this request runs on this Found. */
+export const pickFor = (actor: ScanActor, found: Found, req: PickReq) =>
+  pickAction(actor, found.scan, req.actionId, tapsOut(actor, req, found));
+
+/** OC4: the relaxed pass fence of an inactive Found is only ever committed as a tap-out. */
+export function assertTapOut(found: Found, state: string): void {
+  if (found.inactive && state !== 'out') throw new StaleScanAuthority();
+}
+
+/** False when the request runs a value action: admission, presence and capacity are a check-in's. */
+export function admitsCheckIn(actor: ScanActor, found: Found, req: PickReq): boolean {
+  const picked = pickFor(actor, found, req);
+  return !picked || picked === 'choose' || picked.kind === 'check_in';
+}
+
+/** OC4: only a concrete check-in action can commit a tap-out of a voided or ended pass. */
+export function commitsExit(actor: ScanActor, found: Found, req: PickReq): boolean {
+  const picked = pickFor(actor, found, req);
+  return !!picked && picked !== 'choose' && picked.kind === 'check_in';
 }
 
 export const approvalStop = (found: Found): Stop => ({

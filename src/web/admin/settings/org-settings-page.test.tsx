@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { ORG_WEBSITE_INVALID } from '@/shared/copy/org-website.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 import { localZone } from '@/web/lib/timezones.ts';
 
@@ -174,6 +175,25 @@ describe('org time zone', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() =>
       expect(puts[1]).toEqual({ scope: 'org:o1', values: { 'org.timeZone': null } }),
+    );
+  });
+});
+
+describe('org website', () => {
+  it('refuses an http address with one sentence and saves an https one', async () => {
+    const puts: unknown[] = [];
+    await setup({ 'org.website': { value: null } }, (put) => puts.push(put));
+    const user = userEvent.setup();
+    const input = await screen.findByLabelText('Website');
+    await user.type(input, 'http://gym.example');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText(ORG_WEBSITE_INVALID)).toBeInTheDocument();
+    expect(puts).toEqual([]);
+    await user.clear(input);
+    await user.type(input, 'https://gym.example');
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() =>
+      expect(puts).toEqual([{ scope: 'org:o1', values: { 'org.website': 'https://gym.example' } }]),
     );
   });
 });

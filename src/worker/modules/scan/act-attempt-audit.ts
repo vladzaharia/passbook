@@ -1,6 +1,8 @@
+import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { StaleScanAuthority } from './act-override.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
+import { passSnapshotFence } from './repo-act-pass-fence.ts';
 import type { Stop } from './resolve.ts';
 
 /** Retain an inactive pass for audit only when its captured candidate still matches. */
@@ -54,4 +56,23 @@ export function stoppedAuditPass(
     auditPass = candidate.pass;
   }
   return auditPass;
+}
+
+/** The pass fence of a stop that read no action: from the evaluated Found, or the audit snapshot. */
+export function stoppedPassFence(ctx: ServiceContext, evaluated: Stop, pass: Pass) {
+  const policy = evaluated.auditPassSnapshot ?? evaluated;
+  return passSnapshotFence(
+    ctx.env.DB,
+    pass,
+    evaluated.found?.checkInRules,
+    evaluated.connectionGeneration,
+    evaluated.found?.activeVersion ?? policy.activeTemplateVersion ?? undefined,
+    evaluated.found?.orgRevision ?? policy.orgRevision,
+    evaluated.found?.templateRevision ?? policy.templateRevision,
+    ctx.clock.now(),
+    ctx.env,
+    evaluated.found ?? policy,
+    evaluated.found?.liveCandidate?.templateSnapshot?.raw ??
+      evaluated.auditCandidate?.templateSnapshot?.raw,
+  );
 }
