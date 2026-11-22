@@ -42,7 +42,7 @@ const TINT = {
   ready: 'none',
 } as const;
 
-function useStaticStore() {
+export function useStaticStore() {
   const [store] = useState(() => {
     const state = initialState(Date.now());
     state.prefs.holdResults = true;

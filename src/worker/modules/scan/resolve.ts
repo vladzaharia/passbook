@@ -20,7 +20,7 @@ import { visibleIdentity, visibleSource } from './card-semantics.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
 import { cardPrivacy } from './dto-projection.ts';
 import type { ScanActor } from './guard.ts';
-import { scannerPassActive } from './member-photo.ts';
+import { scannerPassState } from './member-photo.ts';
 import type { FoundOccupancy } from './occupancy/admission.ts';
 import {
   type Candidate,
@@ -61,6 +61,13 @@ export interface Found extends ReleaseSnapshot, WalletSnapshot, CredentialTombst
   access?: FoundAccess;
   /** An Access card at a door with a tracked zone: where the scan counts and which way (SA §20.3). */
   occupancy?: FoundOccupancy;
+  /**
+   * Set only when `foundOf` was asked for a possible exit and the pass is voided or past its end.
+   * Such a Found may only commit a tap-out (OC4); evaluation refuses every other action on it.
+   */
+  inactive?: 'voided' | 'expired';
+  /** An Access card on hold that is tapping out (OC4): recorded on the scan, never a refusal. */
+  suspended?: boolean;
 }
 
 /** Everything a stop step knows: the pass and template only when a step got far enough to find them. */
@@ -84,6 +91,8 @@ export interface Stop
   flags: string[];
   /** The channel a `channel_off` refusal names. */
   channel?: Channel;
+  /** A refused inactive pass that is inside on a scanner that can tap out: the check-out is offered (OC4). */
+  exitAllowed?: boolean;
   found: Found | null;
   /** Internal ledger linkage for an inactive pass; never an output identity. */
   auditPassId?: string;
@@ -175,7 +184,9 @@ export async function foundOf(
   actor?: ScanActor,
   options?: {
     /** Only templates verified against the original candidate's live snapshot. */
-    verifiedTemplates: { pinned: ResolvedTemplate; active: ResolvedTemplate };
+    verifiedTemplates?: { pinned: ResolvedTemplate; active: ResolvedTemplate };
+    /** The scan may be a tap-out: a voided or ended pass comes back as `inactive` instead of null (OC4). */
+    exit?: boolean;
   },
 ): Promise<Found | null> {
   if (c.pass.connectionId !== null && c.connectionGeneration === null) return null;
@@ -200,7 +211,8 @@ export async function foundOf(
     const activePolicy = verified.active;
     const activeTemplate =
       c.displayTemplateVersion === c.activeTemplateVersion ? activePolicy : template;
-    if (!scannerPassActive(c, passJson, ctx.clock.now())) return null;
+    const state = scannerPassState(c, passJson, ctx.clock.now());
+    if (state === null || (state !== 'active' && !options?.exit)) return null;
     const rules = c.checkInRules ?? {};
     const scan = scanOf(template.manifest);
     const found: Found = {
@@ -248,8 +260,11 @@ export async function foundOf(
       },
       checkInRules: rules,
       ref: { name: template.manifest.name, style: styleOf(passJson) },
+      ...(state === 'active' ? {} : { inactive: state }),
     };
-    if (actor) {
+    // F8: an inactive pass discloses no identity, even to the tap-out that OC4 allows.
+    if (found.inactive) found.pass = { ...found.pass, displayTitle: null, displaySubtitle: null };
+    else if (actor) {
       const identity = visibleIdentity(found, actor);
       found.pass = {
         ...found.pass,
@@ -270,6 +285,7 @@ export async function foundOf(
  * it still holds the door, so it shows as a generic one rather than as no reason at all.
  */
 export function activeFlags(found: Found, actor?: ScanActor): { label: string; stop: boolean }[] {
+  if (found.inactive) return [];
   const privacy = actor ? cardPrivacy(found, actor) : null;
   const flags: { label: string; stop: boolean }[] = [];
   for (const f of found.scan.flags ?? []) {

@@ -55,6 +55,9 @@ export async function resolveObserved(
 ): Promise<ObservedEvaluation> {
   const evaluated = await evaluate(ctx, actor, req.input, undefined, credentials, {
     candidateRead,
+    // OC4: only an inactive pass reads its zone here, to offer the check-out; every other resolve pays nothing.
+    prepareReads: async (found) =>
+      found.inactive ? { stmts: [], finish: async () => undefined } : undefined,
   });
   if (evaluated.stop && evaluated.stale) return unknown();
   const photoFound = evaluated.found;

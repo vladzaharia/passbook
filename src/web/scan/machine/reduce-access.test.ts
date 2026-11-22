@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { accessBeat } from './access-events.ts';
 import { exit, grant, heldIn, heldOut } from './access-fixtures.test-support.ts';
-import { fixtureInput } from './fixture-data.test-support.ts';
+import { fixtureInput, fixtureOutcome } from './fixture-data.test-support.ts';
 import { states } from './fixtures.test-support.ts';
 import { answerOf, at, readOf, requestKey, resetIds, step } from './reduce.test-support.ts';
 import type { ScanState } from './types.ts';
@@ -45,6 +45,15 @@ describe('Tap in and Tap out', () => {
       expect(result.state.loop.s).toBe('applying');
     },
   );
+  it('Check out on a refused inactive pass sends the exit', () => {
+    const refused = shown(fixtureOutcome('refused', 'voided', { exitAllowed: true }));
+    const result = step(refused.state, { type: 'turn', direction: 'out' }, at(500));
+    expect(result.cmds.find((c) => c.c === 'act')).toMatchObject({
+      draft: { actionId: 'auto', direction: 'out' },
+    });
+    const plain = shown(fixtureOutcome('refused', 'voided'));
+    expect(step(plain.state, { type: 'turn', direction: 'out' }, at(500)).cmds).toEqual([]);
+  });
   it('does nothing when no hold is up', () => {
     const ok = shown(grant());
     expect(step(ok.state, { type: 'turn', direction: 'out' }, at(500)).cmds).toEqual([]);

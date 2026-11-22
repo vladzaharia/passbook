@@ -371,6 +371,41 @@ describe('settings api', () => {
     });
   });
 
+  it('validates the org website, normalizes it, audits it and keeps it per org', async () => {
+    const a = await makeOrg(fx);
+    const b = await makeOrg(fx);
+    await addMembership(a.id);
+    const put = (values: object) =>
+      call('PUT', '', { scope: `org:${a.id}`, values }, tenantUser.headers);
+    const ctx = createServiceContext(appEnv);
+    for (const bad of [
+      'javascript:alert(1)',
+      'data:text/html,x',
+      'http://gym.example',
+      'https://u:p@gym.example',
+      'https://localhost/',
+      'https://10.0.0.1/',
+      'https://intranet.internal/',
+      'https://gym.example/' + 'a'.repeat(2048),
+      '',
+      5,
+    ])
+      expect((await put({ 'org.website': bad })).status).toBe(422);
+    expect((await put({ 'org.website': 'HTTPS://Gym.Example' })).status).toBe(200);
+    expect((await getOrgSettings(ctx, a.id))['org.website']).toBe('https://gym.example/');
+    expect((await getOrgSettings(ctx, b.id))['org.website']).toBeUndefined();
+    const audit = await all<{ org_id: string; detail: string }>(
+      env.DB,
+      "SELECT org_id, detail FROM audit_log WHERE action = 'settings.update'",
+    );
+    expect(audit.map((r) => r.org_id)).toEqual([a.id]);
+    expect(JSON.parse(audit[0]?.detail ?? '{}')).toEqual({
+      changes: { 'org.website': { from: null, to: 'https://gym.example/' } },
+    });
+    expect((await put({ 'org.website': null })).status).toBe(200);
+    expect((await getOrgSettings(ctx, a.id))['org.website']).toBeUndefined();
+  });
+
   it('validates the org time zone, defaults to unset, audits it and resets with null', async () => {
     const org = await makeOrg(fx);
     await addMembership(org.id);
