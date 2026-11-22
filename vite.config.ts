@@ -149,6 +149,8 @@ const realNodeModules = existsSync(join(root, 'node_modules'))
 const nodeModulesAllow = realNodeModules === join(root, 'node_modules') ? [] : [realNodeModules];
 
 export default defineConfig(({ command }) => ({
+  // Worktrees symlink node_modules to one shared copy; the default node_modules/.vite would share the dep optimizer cache.
+  cacheDir: join(root, '.cache/vite'),
   publicDir: 'public',
   environments: {
     wallet: { build: { minify: true } },
