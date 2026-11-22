@@ -1,4 +1,5 @@
 import { Check, Ticket, User } from 'lucide-react';
+import { useState } from 'react';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import type { AssignState } from '../machine/assign-state.ts';
 import { fill } from '../ui/copy.ts';
@@ -58,16 +59,30 @@ export function Identity({
   meta,
   tile,
   heading,
+  photoUrl,
 }: {
   name: string;
   meta?: string | null;
   tile?: 'person' | 'pass';
+  /** The holder's photo, where the scanner may show it: the check that this is the right person. */
+  photoUrl?: string | null | undefined;
   /** The card's heading: focus lands here when the step has no band. */
   heading?: boolean;
 }) {
+  const [broken, setBroken] = useState<string | null>(null);
+  const photo = photoUrl && broken !== photoUrl ? photoUrl : null;
   return (
     <div className="scan-identity scan-assign-identity">
-      {tile === 'pass' ? (
+      {photo ? (
+        <img
+          className="scan-assign-photo"
+          src={photo}
+          alt=""
+          width={64}
+          height={64}
+          onError={() => setBroken(photo)}
+        />
+      ) : tile === 'pass' ? (
         <span className="scan-pass-tile" aria-hidden>
           <Ticket size={22} />
         </span>

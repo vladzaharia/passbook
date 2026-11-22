@@ -15,6 +15,8 @@ export interface LookupPanelProps {
   api: ScanApi;
   onCheckIn: (card: ScanCard, actionId: string) => void;
   onCode: (code: string) => void;
+  /** Assign mode: a picked person goes to the tag card, and Check in is not offered. */
+  onPass?: (passId: string) => void;
   allowPeople?: boolean;
   orgId?: string;
   timeZone?: string;
@@ -26,13 +28,14 @@ export function LookupPanel({
   api,
   onCheckIn,
   onCode,
+  onPass,
   allowPeople = true,
   orgId,
   timeZone,
   inline = false,
   onEditing,
 }: LookupPanelProps) {
-  const lookup = useLookup(api, open, allowPeople, onCode);
+  const lookup = useLookup(api, open, allowPeople, onCode, onPass);
   const { q, picked, busy, seconds, error, result } = lookup;
   const field = useRef<HTMLInputElement>(null);
   useEffect(() => {
@@ -62,7 +65,7 @@ export function LookupPanel({
           picked={picked}
           busy={busy}
           onBack={lookup.back}
-          onCheckIn={onCheckIn}
+          {...(onPass ? {} : { onCheckIn })}
           orgId={orgId}
           timeZone={timeZone}
         />

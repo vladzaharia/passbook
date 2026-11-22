@@ -1,0 +1,80 @@
+/* The tag prop and the link beat's chain glyph. Transform and opacity only. */
+/* The join: where the tag lands, up and left of where it rests (px in the buddy's own units). */
+.scan-tag-prop {
+  --join-x: -44px;
+  --join-y: -74px;
+  /* The buddy sits outside the card's tokens: the tag takes the kit's. */
+  --sd-accent: var(--pk-accent);
+  --sd-inset: var(--pk-surface-sunken);
+  --sd-strong: var(--pk-text-strong);
+  --sd-muted: var(--pk-text-muted);
+  --scan-card: var(--pk-surface-raised);
+  position: relative;
+  display: block;
+  line-height: 0;
+}
+.scan-tag-fob {
+  display: block;
+}
+.scan-tag-chain {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  inset-inline-start: calc(var(--join-x) - 2px);
+  inset-block-start: calc(var(--join-y) - 12px);
+  opacity: 0;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3.2;
+  filter: drop-shadow(0 0 1.5px rgb(4 32 28 / 0.9));
+  pointer-events: none;
+}
+@keyframes scan-link-fly {
+  0% {
+    translate: 0 0;
+    scale: 1;
+    opacity: 1;
+  }
+  75% {
+    translate: var(--join-x) var(--join-y);
+    scale: 0.5;
+    opacity: 1;
+  }
+  100% {
+    translate: var(--join-x) var(--join-y);
+    scale: 0.5;
+    opacity: 0;
+  }
+}
+@keyframes scan-link-chain {
+  0% {
+    scale: 0.4;
+    opacity: 0;
+  }
+  45% {
+    scale: 1;
+    opacity: 1;
+  }
+  100% {
+    scale: 0;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wl-buddy[data-beat="link"][data-run] .scan-tag-fob {
+    animation: scan-link-fly 320ms var(--art-mv, ease-out) var(--wl-beat-at, 150ms) both;
+  }
+  .wl-buddy[data-beat="link"][data-run] .scan-tag-chain {
+    animation: scan-link-chain 220ms var(--art-bo, ease-out) calc(var(--wl-beat-at, 150ms) + 320ms)
+      both;
+  }
+}
+/* Reduced motion: the tag is on the pass, with the chain as a still. */
+@media (prefers-reduced-motion: reduce) {
+  .wl-buddy[data-beat="link"] .scan-tag-fob {
+    opacity: 0;
+  }
+  .wl-buddy[data-beat="link"] .scan-tag-chain {
+    opacity: 1;
+  }
+}

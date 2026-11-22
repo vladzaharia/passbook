@@ -98,6 +98,8 @@ export function scanActorChecks(actor: ScanActor, input: ScanChecksInput): Check
       apiKeyActsCheck(actor.apiKeyId, actor.scanner.id, input.now),
       orgRevision(actor.apiKeyOrgRevision),
     );
+    // The sandbox branch of the key check names no mode; this pins it (a developer org holds no Live key).
+    if (actor.apiKeySandbox) checks.push(rawCheck('actor', "a.mode = 'test'"));
   }
   const read = input.read ?? {};
   const { scanner, scanningSession: session } = actor;

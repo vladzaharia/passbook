@@ -16,6 +16,10 @@ export const SANDBOX_HUMAN_ONLY_COPY = 'Sign in to make a sandbox.';
 export const SANDBOX_CHECK_COPY = 'Check failed. Reload and try again.';
 export const SANDBOX_TEMPLATE_NAME = 'Quickstart ticket';
 export const SANDBOX_KEY_NAME = 'Sandbox key';
+/** The one terminal a sandbox has: its key scans as it with no pairing and no `scans:write` (Test only). */
+export const SANDBOX_TERMINAL_NAME = 'Sandbox terminal';
+/** What a sandbox key sends in `x-passbook-device` to name it: no id to look up. */
+export const SANDBOX_TERMINAL_ALIAS = 'sandbox';
 export const SANDBOX_KEY_MISSING_COPY =
   'Your sandbox has no usable key. Roll or make one, then try again.';
 /** The path of a sandbox pass's TEST preview page; the segment after it is a MAC'd link (PX9). */
@@ -35,4 +39,10 @@ export const PREVIEW_PAGE_COPY = {
   expired: 'This link is older than 30 days. Open the pass in PassBook to copy a new one.',
   missingTitle: 'Preview not found',
   missing: 'This link is not valid. Open the pass in PassBook to copy it again.',
+} as const;
+
+/** The identity a preview-only pass validates against. It names no certificate and signs nothing. */
+export const PREVIEW_PASS_IDENTITY = {
+  passTypeIdentifier: 'pass.test.preview',
+  teamIdentifier: 'TESTPREVIE',
 } as const;

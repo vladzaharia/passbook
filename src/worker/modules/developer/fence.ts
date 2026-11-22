@@ -38,9 +38,3 @@ export const PREVIEW_CONTENT_TYPE = 'application/json';
 export function assertSignedObject(objectKey: string): void {
   if (objectKey.endsWith(PREVIEW_OBJECT_SUFFIX)) throw new PreviewOnlyError();
 }
-
-/** The identity a preview-only pass validates against. It names no certificate and signs nothing. */
-export const PREVIEW_PASS_IDENTITY = {
-  passTypeIdentifier: 'pass.test.preview',
-  teamIdentifier: 'TESTPREVIE',
-} as const;
