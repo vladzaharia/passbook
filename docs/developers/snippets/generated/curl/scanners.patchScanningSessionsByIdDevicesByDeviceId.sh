@@ -6,6 +6,6 @@ curl -X PATCH "https://passbook.mobile/api/v1/scanning-sessions/0193a1b2-7c00-70
   "surface": "auto",
   "overrides": {
     "flow": "auto",
-    "reader": "none"
+    "reader": "barcode"
   }
 }'

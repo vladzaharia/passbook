@@ -11,7 +11,7 @@ result = pb.scanning_sessions.devices.create(
         "surface": "auto",
         "overrides": {
             "flow": "auto",
-            "reader": "none",
+            "reader": "barcode",
         },
     },
 )

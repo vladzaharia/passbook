@@ -8,7 +8,7 @@ result = pb.scan_zones.update(
     "0193a1b2-7c00-7000-8000-0000000000e1",
     {
         "occupancy": "off",
-        "capacity": 3,
+        "capacity": 38,
         "maxStayMinutes": 15,
     },
 )

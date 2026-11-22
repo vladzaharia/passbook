@@ -13,8 +13,8 @@ result = pb.templates.reviews.request(
             "live",
         ],
         "expected": {
-            "live": 3,
-            "test": 3,
+            "live": 8,
+            "test": 39,
         },
     },
 )

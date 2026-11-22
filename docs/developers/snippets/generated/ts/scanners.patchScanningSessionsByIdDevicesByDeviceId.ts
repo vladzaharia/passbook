@@ -7,7 +7,7 @@ const result = await pb.scanningSessions.devices.update('0193a1b2-7c00-7000-8000
   surface: 'auto',
   overrides: {
     flow: 'auto',
-    reader: 'none',
+    reader: 'barcode',
   },
 });
 console.log(result);

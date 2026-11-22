@@ -20,7 +20,7 @@ curl -X PUT "https://passbook.mobile/api/v1/message-rules/0193a1b2-7c00-7000-800
     "input": "tier"
   },
   "offset": {
-    "amount": 3,
+    "amount": 14,
     "unit": "day",
     "when": "before"
   },

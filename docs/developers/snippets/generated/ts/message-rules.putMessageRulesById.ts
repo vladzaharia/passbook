@@ -21,7 +21,7 @@ const result = await pb.messageRules.update('0193a1b2-7c00-7000-8000-0000000000e
     input: 'tier',
   },
   offset: {
-    amount: 3,
+    amount: 14,
     unit: 'day',
     when: 'before',
   },

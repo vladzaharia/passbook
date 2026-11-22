@@ -5,6 +5,6 @@ curl -X POST "https://passbook.mobile/api/v1/nfc/tag-types" \
   "name": "Wristband 14",
   "use": "member",
   "scopes": "pass",
-  "perPass": 3,
-  "bindingDays": 3
+  "perPass": 4,
+  "bindingDays": 5
 }'

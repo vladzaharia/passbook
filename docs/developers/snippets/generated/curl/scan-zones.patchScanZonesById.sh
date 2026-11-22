@@ -3,6 +3,6 @@ curl -X PATCH "https://passbook.mobile/api/v1/scan-zones/0193a1b2-7c00-7000-8000
   -H "Content-Type: application/json" \
   -d '{
   "occupancy": "off",
-  "capacity": 3,
+  "capacity": 38,
   "maxStayMinutes": 15
 }'

@@ -10,7 +10,7 @@ const result = await pb.connections.testConfig({
     range: 'Members!A:E',
   },
   secrets: {
-    sheetsToken: 'ya29.07b655bbd0c4f2a4a40f18285549a2a81d813168',
+    sheetsToken: '••••3f9c',
   },
   mapping: {
     name: {
@@ -25,10 +25,10 @@ const result = await pb.connections.testConfig({
   },
   voidWhen: [
     {
-      from: 'Booking sheet',
+      from: 'Tier',
       op: 'in',
       values: [
-        'Day pass',
+        'Refunded',
       ],
     },
   ],

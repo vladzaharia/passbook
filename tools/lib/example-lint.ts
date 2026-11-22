@@ -251,11 +251,11 @@ function objectFailures(value: unknown, at: string): string[] {
   }
   if (numbers.length >= 3 && (numbers.every((n) => n === 1) || numbers.every((n) => n === 3)))
     out.push(`${at}: every number is ${numbers[0]}, which reads as filler`);
+  if (typeof o.prefix === 'string' && o.secretPrefix === o.prefix)
+    out.push(`${at}.prefix: equals secretPrefix; the prefix is the part after the label`);
   if (typeof o.secret === 'string' && typeof o.prefix === 'string') {
     const head = typeof o.secretPrefix === 'string' ? o.secretPrefix : o.prefix;
     if (!o.secret.startsWith(head)) out.push(`${at}.secret: does not start with "${head}"`);
-    if (o.secretPrefix === o.prefix)
-      out.push(`${at}.prefix: equals secretPrefix; the prefix is the part after the label`);
   }
   for (const [k, v] of Object.entries(o)) out.push(...objectFailures(v, `${at}.${k}`));
   return out;

@@ -6,7 +6,7 @@ const result = await pb.nfc.tagTypes.create({
   name: 'Wristband 14',
   use: 'member',
   scopes: 'pass',
-  perPass: 3,
-  bindingDays: 3,
+  perPass: 4,
+  bindingDays: 5,
 });
 console.log(result);

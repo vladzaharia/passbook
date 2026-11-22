@@ -21,8 +21,8 @@ func main() {
   "name": "Wristband 14",
   "use": "member",
   "scopes": "pass",
-  "perPass": 3,
-  "bindingDays": 3
+  "perPass": 4,
+  "bindingDays": 5
 }`), &body); err != nil {
 		panic(err)
 	}

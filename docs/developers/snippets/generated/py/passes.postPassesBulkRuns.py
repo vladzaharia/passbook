@@ -14,7 +14,7 @@ result = pb.bulk_runs.start(
                 "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
                 "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
             },
-            "expectCount": 12,
+            "expectCount": 18,
         },
     },
 )

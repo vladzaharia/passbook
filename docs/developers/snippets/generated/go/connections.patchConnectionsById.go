@@ -24,7 +24,7 @@ func main() {
     "range": "Members!A:E"
   },
   "secrets": {
-    "sheetsToken": "ya29.fb90204b82135d002e703a9f596d0c121e293bc0"
+    "sheetsToken": "••••3f9c"
   }
 }`), &body); err != nil {
 		panic(err)

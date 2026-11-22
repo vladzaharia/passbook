@@ -12,7 +12,7 @@ result = pb.scanning_sessions.devices.update(
         "surface": "auto",
         "overrides": {
             "flow": "auto",
-            "reader": "none",
+            "reader": "barcode",
         },
     },
 )

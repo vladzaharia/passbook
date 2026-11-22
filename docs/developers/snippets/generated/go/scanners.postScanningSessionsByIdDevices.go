@@ -22,7 +22,7 @@ func main() {
   "surface": "auto",
   "overrides": {
     "flow": "auto",
-    "reader": "none"
+    "reader": "barcode"
   }
 }`), &body); err != nil {
 		panic(err)

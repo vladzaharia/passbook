@@ -36,7 +36,7 @@ func main() {
     "input": "tier"
   },
   "offset": {
-    "amount": 3,
+    "amount": 14,
     "unit": "day",
     "when": "before"
   },

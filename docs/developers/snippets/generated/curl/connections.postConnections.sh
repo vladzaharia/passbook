@@ -10,9 +10,9 @@ curl -X POST "https://passbook.mobile/api/v1/connections" \
     "range": "Members!A:E"
   },
   "secrets": {
-    "sheetsToken": "ya29.5cf1a0a365e2f9095ee3a707eb4bb0d8260657b6"
+    "sheetsToken": "••••3f9c"
   },
-  "webhookSecret": "whsec_571d4d450b1de2be7856efd7cafc8701",
+  "webhookSecret": "whsec_demo571d4d450b1de2be7856efd7cafc",
   "mapping": {
     "name": {
       "from": "Name"

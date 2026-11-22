@@ -7,7 +7,7 @@ const result = await pb.templates.candidates.create('0193a1b2-7c00-7000-8000-000
   mode: 'test',
   provider: 'apple',
   version: '3',
-  sourceReleaseId: '0193a1b2-7c00-7000-8000-000000000013',
+  sourceReleaseId: '0193a1b2-7c00-7000-8000-942c94c71643',
   projection: {},
 });
 console.log(result);

@@ -24,7 +24,7 @@ result = pb.message_rules.count_due(
             "input": "tier",
         },
         "offset": {
-            "amount": 3,
+            "amount": 14,
             "unit": "day",
             "when": "before",
         },

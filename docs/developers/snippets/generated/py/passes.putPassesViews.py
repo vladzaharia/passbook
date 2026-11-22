@@ -8,7 +8,7 @@ result = pb.pass_views.replace(
     {
         "items": [
             {
-                "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+                "id": "northwind",
                 "name": "Day pass",
                 "filter": {
                     "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",

@@ -9,8 +9,8 @@ const result = await pb.templates.releases.release('0193a1b2-7c00-7000-8000-0000
     'live',
   ],
   expected: {
-    live: 3,
-    test: 3,
+    live: 8,
+    test: 39,
   },
 });
 console.log(result);

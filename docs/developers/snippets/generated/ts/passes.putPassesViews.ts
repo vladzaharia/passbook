@@ -5,7 +5,7 @@ const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 const result = await pb.passViews.replace({
   items: [
     {
-      id: '0193a1b2-7c00-7000-8000-0000000000c1',
+      id: 'northwind',
       name: 'Day pass',
       filter: {
         templateId: '0193a1b2-7c00-7000-8000-0000000000b1',
