@@ -4,26 +4,6 @@
   min-height: 32px;
   padding-inline: 12px;
 }
-@media (pointer: coarse) {
-  /* Page content only: the top bar keeps its own control height. */
-  .btn:not([data-menubar] .btn),
-  .btn.sm:not([data-menubar] .btn) {
-    min-height: 44px;
-  }
-  .foot-links a:not(.pill) {
-    min-height: 44px;
-    padding-block: 0.75rem;
-  }
-  /* The date pill keeps its look; its hit area reaches 44 px beyond it. */
-  .foot-links a.pill {
-    position: relative;
-  }
-  .foot-links a.pill::after {
-    content: "";
-    position: absolute;
-    inset: -10px -4px;
-  }
-}
 .btn.ghost {
   background: none;
   box-shadow: none;
@@ -207,20 +187,35 @@ a.lrow:hover {
   }
 }
 
-/* Coarse pointers: small links and the bar's controls keep their look; an invisible box reaches 44 px around them. */
+/* Coarse pointers: a control under 44 px becomes a real 44 px box, and a negative margin gives the extra height back so
+   nothing around it moves (the kit's rule, docs/design/ui-consistency.md). No pseudo-element hit areas. */
 @media (pointer: coarse) {
-  [data-menubar] .btn,
-  [data-menubar] a[href="/developers"],
-  .qs-happened .card-h a,
-  .recipes a {
-    position: relative;
+  .btn,
+  .btn.sm {
+    min-height: 44px;
+    min-width: 44px;
   }
-  [data-menubar] .btn::after,
-  [data-menubar] a[href="/developers"]::after,
-  .qs-happened .card-h a::after,
-  .recipes a::after {
-    content: "";
-    position: absolute;
-    inset: -7px -4px;
+  [data-menubar] .btn {
+    margin-block: -6px;
+  }
+  [data-menubar] a[href="/developers"],
+  [data-menubar] [data-island="account"] > a {
+    min-height: 44px;
+    margin-block: -6px;
+  }
+  .foot-links a {
+    min-width: 44px;
+    min-height: 44px;
+    padding-block: 0.75rem;
+  }
+  .qs-happened .card-h a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -14px;
+  }
+  .recipes a {
+    min-height: 44px;
+    margin-block: -7px;
   }
 }

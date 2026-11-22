@@ -164,11 +164,8 @@ export function Footer({ site }: { site: Site }) {
           {latest ? <span className="pill accent">{DEV_COPY.footer.whatsNew}</span> : null}
         </a>
         {site.versions[0] ? (
-          <a
-            className="pill neutral mono"
-            href={`${PATHS.changelog}#version-${site.versions[0].date}`}
-          >
-            {site.versions[0].date}
+          <a href={`${PATHS.changelog}#version-${site.versions[0].date}`}>
+            <span className="pill neutral mono">{site.versions[0].date}</span>
           </a>
         ) : null}
         <a href={PATHS.status}>{DEV_COPY.footer.status}</a>
