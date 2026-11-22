@@ -15,16 +15,29 @@ const RANGES: [number, number][] = [
   [0x2260, 0x2260],
   [0x2264, 0x2265],
 ];
-const covered = (cp: number) => RANGES.some(([a, b]) => cp >= a && cp <= b);
+/** What the print page adds in Noto Sans (src/web/paper/fallback-font.ts): Vietnamese, Greek. */
+const PAGE_RANGES: [number, number][] = [
+  [0x1e00, 0x1eff],
+  [0x370, 0x3ff],
+];
+const within = (ranges: [number, number][], cp: number) =>
+  ranges.some(([a, b]) => cp >= a && cp <= b);
 
-/** True when any string in the value holds a character the PDF fonts cannot draw as written. */
-export function hasUndrawable(value: unknown): boolean {
+/**
+ * True when any string in the value holds a character the fonts cannot draw as written. The PDF
+ * fonts are Rubik only; the `page` scope adds the print page's Noto Sans fallback.
+ */
+export function hasUndrawable(value: unknown, scope: 'pdf' | 'page' = 'pdf'): boolean {
+  const ranges = scope === 'page' ? [...RANGES, ...PAGE_RANGES] : RANGES;
   if (typeof value === 'string')
     return [...value.normalize('NFC')].some((c) => {
       const cp = c.codePointAt(0) ?? 0;
-      return cp > 0x20 && !covered(cp) && !covered(c.normalize('NFKC').codePointAt(0) ?? 0);
+      return (
+        cp > 0x20 && !within(ranges, cp) && !within(ranges, c.normalize('NFKC').codePointAt(0) ?? 0)
+      );
     });
-  if (Array.isArray(value)) return value.some(hasUndrawable);
-  if (value && typeof value === 'object') return Object.values(value).some(hasUndrawable);
+  if (Array.isArray(value)) return value.some((v) => hasUndrawable(v, scope));
+  if (value && typeof value === 'object')
+    return Object.values(value).some((v) => hasUndrawable(v, scope));
   return false;
 }

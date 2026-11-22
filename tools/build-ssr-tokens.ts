@@ -3,8 +3,10 @@
 //   @polaris-key/brand tokens.css, src/web/styles/wallet.css and motion.css, same selectors.
 // - src/generated/resolved-tokens.ts: those tokens resolved per theme (emails, theme-color).
 // - public/fonts/: the woff2 files the faces point at, copied from the brand package.
+// - public/fonts/noto/: the print sheet's Noto Sans subsets, from @fontsource-variable/noto-sans.
 import { copyFileSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { FALLBACK_FONTS } from '../src/web/paper/fallback-font.ts';
 import {
   FONT_SOURCE,
   fontSheet,
@@ -27,5 +29,13 @@ for (const stale of readdirSync(fonts, { withFileTypes: true }))
   if (stale.isFile() && !files.includes(stale.name)) rmSync(resolve(fonts, stale.name));
 for (const file of files)
   copyFileSync(resolve(root, dirname(FONT_SOURCE), file), resolve(fonts, file));
+
+const noto = resolve(fonts, 'noto');
+mkdirSync(noto, { recursive: true });
+for (const { file } of FALLBACK_FONTS)
+  copyFileSync(
+    resolve(root, 'node_modules/@fontsource-variable/noto-sans/files', file),
+    resolve(noto, file),
+  );
 
 console.log(`ssr tokens: ${files.length} font files, tokens and email tokens written`);
