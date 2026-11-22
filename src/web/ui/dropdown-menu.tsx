@@ -2,6 +2,7 @@ import * as Primitive from '@radix-ui/react-dropdown-menu';
 import { type ComponentProps, type PointerEvent, useCallback, useRef } from 'react';
 import { cn } from '../lib/cn.ts';
 import { inertOutside } from './inert-outside.ts';
+import { nameWrapper } from './popper-region.ts';
 
 export const DropdownMenu = Primitive.Root;
 export const DropdownMenuTrigger = Primitive.Trigger;
@@ -18,13 +19,7 @@ export function DropdownMenuContent({
   const mount = useCallback((node: HTMLDivElement | null) => {
     restore.current?.();
     restore.current = node ? inertOutside(node) : null;
-    // Radix's popper wrapper sits in the body outside every landmark; naming it a region keeps the
-    // menu inside one (axe `region`).
-    const wrapper = node?.parentElement;
-    if (wrapper?.hasAttribute('data-radix-popper-content-wrapper')) {
-      wrapper.setAttribute('role', 'region');
-      wrapper.setAttribute('aria-label', 'Menu');
-    }
+    nameWrapper(node, 'Menu');
   }, []);
   return (
     <Primitive.Portal>
