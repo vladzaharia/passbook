@@ -4,7 +4,9 @@
       "source": "analytics_engine",
       "range": "24h",
       "bucketMs": 1848,
-      "unavailable": ["not_configured"],
+      "unavailable": [
+        "not_configured"
+      ],
       "totals": {
         "passes": 37,
         "activePasses": 37,
@@ -145,7 +147,9 @@
       "source": "analytics_engine",
       "range": "24h",
       "bucketMs": 1848,
-      "unavailable": ["not_configured"],
+      "unavailable": [
+        "not_configured"
+      ],
       "totals": {
         "passes": 37,
         "activePasses": 37,

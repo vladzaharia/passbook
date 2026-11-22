@@ -56,7 +56,7 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318",
-        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a, v1=a3e00f9e0a5912d961d6b2898bb273356788b4bfbb41f9613489061d8cb59fa5"
+        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a, v1=ed74bc7e832ae03c1167d3305dea5186a9cfe945089ff9671661f04953d16b07"
       },
       "now": 1795153320
     },
@@ -67,7 +67,7 @@
       "expect": null,
       "sdk": "ok",
       "secrets": [
-        "whsec_vector_previous_fedcba987654321"
+        "whsec_vector_previous_fedcba9876543210"
       ],
       "headers": {
         "content-type": "application/json",
@@ -75,7 +75,7 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318",
-        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a, v1=a3e00f9e0a5912d961d6b2898bb273356788b4bfbb41f9613489061d8cb59fa5"
+        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a, v1=ed74bc7e832ae03c1167d3305dea5186a9cfe945089ff9671661f04953d16b07"
       },
       "now": 1795153320
     },
@@ -155,7 +155,7 @@
       },
       "sdk": "mismatch",
       "secrets": [
-        "whsec_vector_previous_fedcba987654321"
+        "whsec_vector_previous_fedcba9876543210"
       ],
       "headers": {
         "content-type": "application/json",

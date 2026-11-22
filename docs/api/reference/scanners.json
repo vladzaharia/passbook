@@ -112,8 +112,12 @@
       "deviceRole": "scan",
       "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -145,7 +149,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },
@@ -174,8 +180,12 @@
       "deviceRole": "scan",
       "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -207,7 +217,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },
@@ -240,8 +252,12 @@
       "deviceRole": "scan",
       "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -273,7 +289,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },
@@ -318,8 +336,12 @@
       "deviceRole": "scan",
       "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -351,7 +373,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },
@@ -412,8 +436,12 @@
           "deviceRole": "scan",
           "name": "Gear shop till",
           "accepts": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+            "templateIds": [
+              "0193a1b2-7c00-7000-8000-0000000000b1"
+            ],
+            "eventIds": [
+              "0193a1b2-7c00-7000-8000-0000000000e1"
+            ]
           },
           "settings": {
             "checkIn": {
@@ -445,7 +473,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -469,11 +499,17 @@
             "name": "Sam Rivera"
           },
           "watch": {
-            "scannerIds": ["0193a1b2-7c00-7000-8000-000000000031"],
+            "scannerIds": [
+              "0193a1b2-7c00-7000-8000-000000000031"
+            ],
             "allOrg": false,
-            "sessionIds": ["0193a1b2-7c00-7000-8000-000000000091"],
+            "sessionIds": [
+              "0193a1b2-7c00-7000-8000-000000000091"
+            ],
             "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
-            "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"]
+            "zoneIds": [
+              "0193a1b2-7c00-7000-8000-000000000081"
+            ]
           }
         }
       ],
@@ -490,8 +526,12 @@
       "deviceRole": "scan",
       "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -523,7 +563,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },
@@ -547,11 +589,17 @@
         "name": "Sam Rivera"
       },
       "watch": {
-        "scannerIds": ["0193a1b2-7c00-7000-8000-000000000031"],
+        "scannerIds": [
+          "0193a1b2-7c00-7000-8000-000000000031"
+        ],
         "allOrg": false,
-        "sessionIds": ["0193a1b2-7c00-7000-8000-000000000091"],
+        "sessionIds": [
+          "0193a1b2-7c00-7000-8000-000000000091"
+        ],
         "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
-        "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"]
+        "zoneIds": [
+          "0193a1b2-7c00-7000-8000-000000000081"
+        ]
       }
     }
   },
@@ -567,8 +615,12 @@
           "name": "Cafe counter",
           "status": "active",
           "accepts": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+            "templateIds": [
+              "0193a1b2-7c00-7000-8000-0000000000b1"
+            ],
+            "eventIds": [
+              "0193a1b2-7c00-7000-8000-0000000000e1"
+            ]
           },
           "settings": {
             "checkIn": {
@@ -600,7 +652,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             },
             "customer": {
@@ -611,18 +665,36 @@
               "showDraft": false
             }
           },
-          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "zoneIds": [
+            "0193a1b2-7c00-7000-8000-000000000081"
+          ],
           "timeZone": "America/Los_Angeles",
           "hours": {
-            "mon": ["09:00-21:00"],
-            "tue": ["09:00-21:00"],
-            "wed": ["09:00-21:00"],
-            "thu": ["09:00-21:00"],
-            "fri": ["09:00-21:00"],
-            "sat": ["09:00-21:00"],
-            "sun": ["09:00-21:00"],
+            "mon": [
+              "09:00-21:00"
+            ],
+            "tue": [
+              "09:00-21:00"
+            ],
+            "wed": [
+              "09:00-21:00"
+            ],
+            "thu": [
+              "09:00-21:00"
+            ],
+            "fri": [
+              "09:00-21:00"
+            ],
+            "sat": [
+              "09:00-21:00"
+            ],
+            "sun": [
+              "09:00-21:00"
+            ],
             "dates": {
-              "2026-12-24": ["09:00-21:00"]
+              "2026-12-24": [
+                "09:00-21:00"
+              ]
             }
           },
           "hoursInvalid": true,
@@ -653,8 +725,12 @@
       "name": "Front desk",
       "status": "active",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -686,7 +762,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         },
         "customer": {
@@ -697,18 +775,36 @@
           "showDraft": false
         }
       },
-      "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+      "zoneIds": [
+        "0193a1b2-7c00-7000-8000-000000000081"
+      ],
       "timeZone": "America/Los_Angeles",
       "hours": {
-        "mon": ["09:00-21:00"],
-        "tue": ["09:00-21:00"],
-        "wed": ["09:00-21:00"],
-        "thu": ["09:00-21:00"],
-        "fri": ["09:00-21:00"],
-        "sat": ["09:00-21:00"],
-        "sun": ["09:00-21:00"],
+        "mon": [
+          "09:00-21:00"
+        ],
+        "tue": [
+          "09:00-21:00"
+        ],
+        "wed": [
+          "09:00-21:00"
+        ],
+        "thu": [
+          "09:00-21:00"
+        ],
+        "fri": [
+          "09:00-21:00"
+        ],
+        "sat": [
+          "09:00-21:00"
+        ],
+        "sun": [
+          "09:00-21:00"
+        ],
         "dates": {
-          "2026-12-24": ["09:00-21:00"]
+          "2026-12-24": [
+            "09:00-21:00"
+          ]
         }
       },
       "hoursInvalid": true,
@@ -768,7 +864,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -795,7 +893,9 @@
                 "available": false,
                 "reading": false,
                 "continuous": false,
-                "formats": ["ndef"]
+                "formats": [
+                  "ndef"
+                ]
               },
               "haptics": false,
               "vas": {
@@ -832,7 +932,9 @@
                 "state": "active"
               }
             ],
-            "surfaces": ["phone"],
+            "surfaces": [
+              "phone"
+            ],
             "preferred": "phone"
           },
           "reportedAt": 1795521600000,
@@ -871,8 +973,12 @@
       "name": "Front desk",
       "timeZone": "America/Los_Angeles",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       }
     },
     "response": {
@@ -883,8 +989,12 @@
       "name": "Front desk",
       "status": "active",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -916,7 +1026,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         },
         "customer": {
@@ -927,18 +1039,36 @@
           "showDraft": false
         }
       },
-      "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+      "zoneIds": [
+        "0193a1b2-7c00-7000-8000-000000000081"
+      ],
       "timeZone": "America/Los_Angeles",
       "hours": {
-        "mon": ["09:00-21:00"],
-        "tue": ["09:00-21:00"],
-        "wed": ["09:00-21:00"],
-        "thu": ["09:00-21:00"],
-        "fri": ["09:00-21:00"],
-        "sat": ["09:00-21:00"],
-        "sun": ["09:00-21:00"],
+        "mon": [
+          "09:00-21:00"
+        ],
+        "tue": [
+          "09:00-21:00"
+        ],
+        "wed": [
+          "09:00-21:00"
+        ],
+        "thu": [
+          "09:00-21:00"
+        ],
+        "fri": [
+          "09:00-21:00"
+        ],
+        "sat": [
+          "09:00-21:00"
+        ],
+        "sun": [
+          "09:00-21:00"
+        ],
         "dates": {
-          "2026-12-24": ["09:00-21:00"]
+          "2026-12-24": [
+            "09:00-21:00"
+          ]
         }
       },
       "hoursInvalid": true,
@@ -998,7 +1128,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -1025,7 +1157,9 @@
                 "available": false,
                 "reading": false,
                 "continuous": false,
-                "formats": ["ndef"]
+                "formats": [
+                  "ndef"
+                ]
               },
               "haptics": false,
               "vas": {
@@ -1062,7 +1196,9 @@
                 "state": "active"
               }
             ],
-            "surfaces": ["phone"],
+            "surfaces": [
+              "phone"
+            ],
             "preferred": "phone"
           },
           "reportedAt": 1795521600000,
@@ -1109,8 +1245,12 @@
       "name": "Front desk",
       "status": "active",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -1142,7 +1282,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         },
         "customer": {
@@ -1153,18 +1295,36 @@
           "showDraft": false
         }
       },
-      "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+      "zoneIds": [
+        "0193a1b2-7c00-7000-8000-000000000081"
+      ],
       "timeZone": "America/Los_Angeles",
       "hours": {
-        "mon": ["09:00-21:00"],
-        "tue": ["09:00-21:00"],
-        "wed": ["09:00-21:00"],
-        "thu": ["09:00-21:00"],
-        "fri": ["09:00-21:00"],
-        "sat": ["09:00-21:00"],
-        "sun": ["09:00-21:00"],
+        "mon": [
+          "09:00-21:00"
+        ],
+        "tue": [
+          "09:00-21:00"
+        ],
+        "wed": [
+          "09:00-21:00"
+        ],
+        "thu": [
+          "09:00-21:00"
+        ],
+        "fri": [
+          "09:00-21:00"
+        ],
+        "sat": [
+          "09:00-21:00"
+        ],
+        "sun": [
+          "09:00-21:00"
+        ],
         "dates": {
-          "2026-12-24": ["09:00-21:00"]
+          "2026-12-24": [
+            "09:00-21:00"
+          ]
         }
       },
       "hoursInvalid": true,
@@ -1224,7 +1384,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -1251,7 +1413,9 @@
                 "available": false,
                 "reading": false,
                 "continuous": false,
-                "formats": ["ndef"]
+                "formats": [
+                  "ndef"
+                ]
               },
               "haptics": false,
               "vas": {
@@ -1288,7 +1452,9 @@
                 "state": "active"
               }
             ],
-            "surfaces": ["phone"],
+            "surfaces": [
+              "phone"
+            ],
             "preferred": "phone"
           },
           "reportedAt": 1795521600000,
@@ -1374,7 +1540,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },
@@ -1401,7 +1569,9 @@
             "available": false,
             "reading": false,
             "continuous": false,
-            "formats": ["ndef"]
+            "formats": [
+              "ndef"
+            ]
           },
           "haptics": false,
           "vas": {
@@ -1438,7 +1608,9 @@
             "state": "active"
           }
         ],
-        "surfaces": ["phone"],
+        "surfaces": [
+          "phone"
+        ],
         "preferred": "phone"
       },
       "reportedAt": 1795521600000,
@@ -1504,7 +1676,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },
@@ -1531,7 +1705,9 @@
             "available": false,
             "reading": false,
             "continuous": false,
-            "formats": ["ndef"]
+            "formats": [
+              "ndef"
+            ]
           },
           "haptics": false,
           "vas": {
@@ -1568,7 +1744,9 @@
             "state": "active"
           }
         ],
-        "surfaces": ["phone"],
+        "surfaces": [
+          "phone"
+        ],
         "preferred": "phone"
       },
       "reportedAt": 1795521600000,
@@ -1595,8 +1773,12 @@
       "deviceRole": "scan",
       "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -1628,7 +1810,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },
@@ -1658,8 +1842,12 @@
           "deviceRole": "scan",
           "name": "Front desk",
           "accepts": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+            "templateIds": [
+              "0193a1b2-7c00-7000-8000-0000000000b1"
+            ],
+            "eventIds": [
+              "0193a1b2-7c00-7000-8000-0000000000e1"
+            ]
           },
           "settings": {
             "checkIn": {
@@ -1691,7 +1879,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -1738,8 +1928,12 @@
       "deviceRole": "scan",
       "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -1771,7 +1965,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },
@@ -1795,11 +1991,17 @@
         "name": "Sam Rivera"
       },
       "watch": {
-        "scannerIds": ["0193a1b2-7c00-7000-8000-000000000031"],
+        "scannerIds": [
+          "0193a1b2-7c00-7000-8000-000000000031"
+        ],
         "allOrg": false,
-        "sessionIds": ["0193a1b2-7c00-7000-8000-000000000091"],
+        "sessionIds": [
+          "0193a1b2-7c00-7000-8000-000000000091"
+        ],
         "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
-        "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"]
+        "zoneIds": [
+          "0193a1b2-7c00-7000-8000-000000000081"
+        ]
       },
       "pairing": {
         "code": "NW7K2Q",
@@ -1824,8 +2026,12 @@
       "deviceRole": "scan",
       "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -1857,7 +2063,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },
@@ -1881,11 +2089,17 @@
         "name": "Sam Rivera"
       },
       "watch": {
-        "scannerIds": ["0193a1b2-7c00-7000-8000-000000000031"],
+        "scannerIds": [
+          "0193a1b2-7c00-7000-8000-000000000031"
+        ],
         "allOrg": false,
-        "sessionIds": ["0193a1b2-7c00-7000-8000-000000000091"],
+        "sessionIds": [
+          "0193a1b2-7c00-7000-8000-000000000091"
+        ],
         "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
-        "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"]
+        "zoneIds": [
+          "0193a1b2-7c00-7000-8000-000000000081"
+        ]
       }
     }
   },
@@ -1895,8 +2109,12 @@
       "name": "Front desk",
       "timeZone": "America/Los_Angeles",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -1905,7 +2123,9 @@
         },
         "direction": "in"
       },
-      "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"]
+      "zoneIds": [
+        "0193a1b2-7c00-7000-8000-000000000081"
+      ]
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-a00bb8ed379e",
@@ -1915,8 +2135,12 @@
       "name": "Front desk",
       "status": "active",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -1948,7 +2172,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         },
         "customer": {
@@ -1959,18 +2185,36 @@
           "showDraft": false
         }
       },
-      "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+      "zoneIds": [
+        "0193a1b2-7c00-7000-8000-000000000081"
+      ],
       "timeZone": "America/Los_Angeles",
       "hours": {
-        "mon": ["09:00-21:00"],
-        "tue": ["09:00-21:00"],
-        "wed": ["09:00-21:00"],
-        "thu": ["09:00-21:00"],
-        "fri": ["09:00-21:00"],
-        "sat": ["09:00-21:00"],
-        "sun": ["09:00-21:00"],
+        "mon": [
+          "09:00-21:00"
+        ],
+        "tue": [
+          "09:00-21:00"
+        ],
+        "wed": [
+          "09:00-21:00"
+        ],
+        "thu": [
+          "09:00-21:00"
+        ],
+        "fri": [
+          "09:00-21:00"
+        ],
+        "sat": [
+          "09:00-21:00"
+        ],
+        "sun": [
+          "09:00-21:00"
+        ],
         "dates": {
-          "2026-12-24": ["09:00-21:00"]
+          "2026-12-24": [
+            "09:00-21:00"
+          ]
         }
       },
       "hoursInvalid": true,
@@ -2030,7 +2274,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -2057,7 +2303,9 @@
                 "available": false,
                 "reading": false,
                 "continuous": false,
-                "formats": ["ndef"]
+                "formats": [
+                  "ndef"
+                ]
               },
               "haptics": false,
               "vas": {
@@ -2094,7 +2342,9 @@
                 "state": "active"
               }
             ],
-            "surfaces": ["phone"],
+            "surfaces": [
+              "phone"
+            ],
             "preferred": "phone"
           },
           "reportedAt": 1795521600000,
@@ -2208,8 +2458,12 @@
       "deviceRole": "scan",
       "name": "Front desk",
       "accepts": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "eventIds": [
+          "0193a1b2-7c00-7000-8000-0000000000e1"
+        ]
       },
       "settings": {
         "checkIn": {
@@ -2241,7 +2495,9 @@
           "assign": "desk",
           "assignAll": "desk",
           "level": "off",
-          "types": ["generic"],
+          "types": [
+            "generic"
+          ],
           "confirmBasic": "staff"
         }
       },

@@ -14,7 +14,9 @@
       "supportUrl": "https://northwind.example.com/help",
       "mark": "full",
       "markChosen": "full",
-      "markAllowed": ["full"],
+      "markAllowed": [
+        "full"
+      ],
       "configRevision": 3
     }
   },

@@ -9,7 +9,9 @@
           "default": "standard",
           "source": "org",
           "ceiling": 24,
-          "planBlocked": ["mobile"],
+          "planBlocked": [
+            "mobile"
+          ],
           "updatedAt": 1795359600000,
           "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
         }
@@ -46,7 +48,9 @@
           "default": "standard",
           "source": "org",
           "ceiling": 24,
-          "planBlocked": ["mobile"],
+          "planBlocked": [
+            "mobile"
+          ],
           "updatedAt": 1795359600000,
           "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
         }

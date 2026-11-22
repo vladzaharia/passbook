@@ -10,7 +10,7 @@ result = pb.templates.reviews.approve(
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "version": "3",
         "release": False,
-        "note": "Photo ID checked at the desk.",
+        "note": "Needs a harness fitting.",
     },
 )
 print(result)

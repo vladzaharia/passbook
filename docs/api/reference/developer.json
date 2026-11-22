@@ -49,7 +49,9 @@
   "developer.getRail": {
     "response": {
       "mode": "live",
-      "scopes": ["passes:read"],
+      "scopes": [
+        "passes:read"
+      ],
       "tier": "standard",
       "limitPerMinute": 60,
       "callsLastHour": 11,
@@ -115,8 +117,12 @@
         "passes": 37,
         "series": {
           "from": 23,
-          "calls": [26],
-          "errors": [13]
+          "calls": [
+            26
+          ],
+          "errors": [
+            13
+          ]
         }
       },
       "keys": [
@@ -124,7 +130,9 @@
           "id": "0193a1b2-7c00-7000-8000-5b22af792a32",
           "name": "Server integration",
           "secretPrefix": "pb_test_k3Qx9Zt2",
-          "scopes": ["passes:read"],
+          "scopes": [
+            "passes:read"
+          ],
           "createdAt": 1794322800000,
           "expiresAt": 1798124400000,
           "lastUsedAt": 1795521600000,
@@ -157,7 +165,9 @@
           "target": "capture",
           "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
           "status": "active",
-          "eventTypes": ["pass.issued"],
+          "eventTypes": [
+            "pass.issued"
+          ],
           "lastAt": 1795521600000,
           "lastOk": false
         }
@@ -180,7 +190,9 @@
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "name": "Northwind Climbing",
           "slug": "northwind-climbing",
-          "roles": ["org_admin"],
+          "roles": [
+            "org_admin"
+          ],
           "canMintLive": true
         }
       ]

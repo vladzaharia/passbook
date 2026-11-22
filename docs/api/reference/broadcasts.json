@@ -18,7 +18,9 @@
       "name": "Holiday hours",
       "state": "sent",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "onDevice": false,
         "holderState": "unassigned",
         "q": "ada",
@@ -29,7 +31,9 @@
         "match": [
           {
             "input": "tier",
-            "values": ["Day pass"]
+            "values": [
+              "Day pass"
+            ]
           }
         ],
         "version": "3"
@@ -65,7 +69,9 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "onDevice": false
       },
       "patch": {
@@ -114,7 +120,9 @@
       "notify": false,
       "send": "now",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "onDevice": false
       },
       "patch": {
@@ -129,7 +137,9 @@
       "name": "Holiday hours",
       "state": "sent",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "onDevice": false,
         "holderState": "unassigned",
         "q": "ada",
@@ -140,7 +150,9 @@
         "match": [
           {
             "input": "tier",
-            "values": ["Day pass"]
+            "values": [
+              "Day pass"
+            ]
           }
         ],
         "version": "3"
@@ -181,7 +193,9 @@
       "name": "Holiday hours",
       "state": "sent",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "onDevice": false,
         "holderState": "unassigned",
         "q": "ada",
@@ -192,7 +206,9 @@
         "match": [
           {
             "input": "tier",
-            "values": ["Day pass"]
+            "values": [
+              "Day pass"
+            ]
           }
         ],
         "version": "3"
@@ -235,7 +251,9 @@
           "name": "Maintenance closure",
           "state": "sent",
           "target": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+            "templateIds": [
+              "0193a1b2-7c00-7000-8000-0000000000b1"
+            ],
             "onDevice": false,
             "holderState": "unassigned",
             "q": "ada",
@@ -246,7 +264,9 @@
             "match": [
               {
                 "input": "tier",
-                "values": ["Day pass"]
+                "values": [
+                  "Day pass"
+                ]
               }
             ],
             "version": "3"
@@ -289,7 +309,9 @@
       "notify": false,
       "send": "now",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "onDevice": false
       },
       "patch": {
@@ -304,7 +326,9 @@
       "name": "Holiday hours",
       "state": "sent",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "onDevice": false,
         "holderState": "unassigned",
         "q": "ada",
@@ -315,7 +339,9 @@
         "match": [
           {
             "input": "tier",
-            "values": ["Day pass"]
+            "values": [
+              "Day pass"
+            ]
           }
         ],
         "version": "3"
@@ -359,7 +385,9 @@
       "name": "Holiday hours",
       "state": "sent",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "onDevice": false,
         "holderState": "unassigned",
         "q": "ada",
@@ -370,7 +398,9 @@
         "match": [
           {
             "input": "tier",
-            "values": ["Day pass"]
+            "values": [
+              "Day pass"
+            ]
           }
         ],
         "version": "3"
@@ -411,7 +441,9 @@
       "name": "Holiday hours",
       "state": "sent",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "onDevice": false,
         "holderState": "unassigned",
         "q": "ada",
@@ -422,7 +454,9 @@
         "match": [
           {
             "input": "tier",
-            "values": ["Day pass"]
+            "values": [
+              "Day pass"
+            ]
           }
         ],
         "version": "3"
@@ -463,7 +497,9 @@
       "name": "Holiday hours",
       "state": "sent",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "onDevice": false,
         "holderState": "unassigned",
         "q": "ada",
@@ -474,7 +510,9 @@
         "match": [
           {
             "input": "tier",
-            "values": ["Day pass"]
+            "values": [
+              "Day pass"
+            ]
           }
         ],
         "version": "3"

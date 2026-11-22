@@ -374,7 +374,7 @@ function contextString(key: string, kind: string, path: string, ctx: Ctx): strin
 }
 
 /** A name field: a person in person fields, a resource name elsewhere. */
-function nameField(key: string, kind: string, path: string, op: string): string | undefined {
+function nameField(key: string, path: string, op: string): string | undefined {
   if (!/[nN]ame$|^name$|^label$|^title$|^subtitle$/.test(key)) return undefined;
   if (
     /holder|member|owner|host|visitor|staff|admin|author|reviewer|createdBy|startedBy|endedBy|requestedBy/i.test(
@@ -690,7 +690,7 @@ function str(ctx: Ctx, s: Json, key: string, path: string, kind: string): string
       k && !/^(source|previous|parent|prior|original|base|undoes)/.test(key) ? IDS[k] : undefined;
     return hit ?? `0193a1b2-7c00-7000-8000-${hex(`${ctx.op}${path}`, 12)}`;
   }
-  const name = nameField(key, kind, path, ctx.op);
+  const name = nameField(key, path, ctx.op);
   if (name) return name;
   if (key === 'reason' && !s.enum && !/Apns/.test(ctx.op)) return nextReason();
   if (key === 'note' && !s.enum) return nextNote();

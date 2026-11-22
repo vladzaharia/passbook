@@ -5,7 +5,9 @@
       "saved": [
         {
           "name": "Expiring soon",
-          "columns": ["tier"],
+          "columns": [
+            "tier"
+          ],
           "plan": {
             "mapping": {
               "name": {
@@ -54,7 +56,9 @@
     "description": "Saves a named column mapping for a template. The same name replaces the earlier one; up to 20 are kept. Cell fixes are not saved.",
     "request": {
       "name": "Day pass",
-      "columns": ["tier"],
+      "columns": [
+        "tier"
+      ],
       "plan": {
         "mapping": {
           "name": {
@@ -95,7 +99,9 @@
       "saved": [
         {
           "name": "Expiring soon",
-          "columns": ["tier"],
+          "columns": [
+            "tier"
+          ],
           "plan": {
             "mapping": {
               "name": {
@@ -146,7 +152,9 @@
       "saved": [
         {
           "name": "Expiring soon",
-          "columns": ["tier"],
+          "columns": [
+            "tier"
+          ],
           "plan": {
             "mapping": {
               "name": {
@@ -283,27 +291,41 @@
         {
           "pointer": "/Holder email",
           "label": "Holder email",
-          "samples": ["ada@example.com", "grace@example.com"]
+          "samples": [
+            "ada@example.com",
+            "grace@example.com"
+          ]
         },
         {
           "pointer": "/Name",
           "label": "Name",
-          "samples": ["Ada Example", "Grace Okafor"]
+          "samples": [
+            "Ada Example",
+            "Grace Okafor"
+          ]
         },
         {
           "pointer": "/Tier",
           "label": "Tier",
-          "samples": ["Day pass"]
+          "samples": [
+            "Day pass"
+          ]
         },
         {
           "pointer": "/Valid until",
           "label": "Valid until",
-          "samples": ["2026-12-31", "2027-01-15"]
+          "samples": [
+            "2026-12-31",
+            "2027-01-15"
+          ]
         },
         {
           "pointer": "/Member ID",
           "label": "Member ID",
-          "samples": ["NW-1001", "NW-1002"]
+          "samples": [
+            "NW-1001",
+            "NW-1002"
+          ]
         }
       ],
       "plan": {
@@ -456,27 +478,41 @@
         {
           "pointer": "/Holder email",
           "label": "Holder email",
-          "samples": ["ada@example.com", "grace@example.com"]
+          "samples": [
+            "ada@example.com",
+            "grace@example.com"
+          ]
         },
         {
           "pointer": "/Name",
           "label": "Name",
-          "samples": ["Ada Example", "Grace Okafor"]
+          "samples": [
+            "Ada Example",
+            "Grace Okafor"
+          ]
         },
         {
           "pointer": "/Tier",
           "label": "Tier",
-          "samples": ["Day pass"]
+          "samples": [
+            "Day pass"
+          ]
         },
         {
           "pointer": "/Valid until",
           "label": "Valid until",
-          "samples": ["2026-12-31", "2027-01-15"]
+          "samples": [
+            "2026-12-31",
+            "2027-01-15"
+          ]
         },
         {
           "pointer": "/Member ID",
           "label": "Member ID",
-          "samples": ["NW-1001", "NW-1002"]
+          "samples": [
+            "NW-1001",
+            "NW-1002"
+          ]
         }
       ],
       "plan": {
@@ -597,27 +633,41 @@
         {
           "pointer": "/Holder email",
           "label": "Holder email",
-          "samples": ["ada@example.com", "grace@example.com"]
+          "samples": [
+            "ada@example.com",
+            "grace@example.com"
+          ]
         },
         {
           "pointer": "/Name",
           "label": "Name",
-          "samples": ["Ada Example", "Grace Okafor"]
+          "samples": [
+            "Ada Example",
+            "Grace Okafor"
+          ]
         },
         {
           "pointer": "/Tier",
           "label": "Tier",
-          "samples": ["Day pass"]
+          "samples": [
+            "Day pass"
+          ]
         },
         {
           "pointer": "/Valid until",
           "label": "Valid until",
-          "samples": ["2026-12-31", "2027-01-15"]
+          "samples": [
+            "2026-12-31",
+            "2027-01-15"
+          ]
         },
         {
           "pointer": "/Member ID",
           "label": "Member ID",
-          "samples": ["NW-1001", "NW-1002"]
+          "samples": [
+            "NW-1001",
+            "NW-1002"
+          ]
         }
       ],
       "plan": {
@@ -734,27 +784,41 @@
         {
           "pointer": "/Holder email",
           "label": "Holder email",
-          "samples": ["ada@example.com", "grace@example.com"]
+          "samples": [
+            "ada@example.com",
+            "grace@example.com"
+          ]
         },
         {
           "pointer": "/Name",
           "label": "Name",
-          "samples": ["Ada Example", "Grace Okafor"]
+          "samples": [
+            "Ada Example",
+            "Grace Okafor"
+          ]
         },
         {
           "pointer": "/Tier",
           "label": "Tier",
-          "samples": ["Day pass"]
+          "samples": [
+            "Day pass"
+          ]
         },
         {
           "pointer": "/Valid until",
           "label": "Valid until",
-          "samples": ["2026-12-31", "2027-01-15"]
+          "samples": [
+            "2026-12-31",
+            "2027-01-15"
+          ]
         },
         {
           "pointer": "/Member ID",
           "label": "Member ID",
-          "samples": ["NW-1001", "NW-1002"]
+          "samples": [
+            "NW-1001",
+            "NW-1002"
+          ]
         }
       ],
       "plan": {
@@ -873,27 +937,41 @@
             {
               "pointer": "/Holder email",
               "label": "Holder email",
-              "samples": ["ada@example.com", "grace@example.com"]
+              "samples": [
+                "ada@example.com",
+                "grace@example.com"
+              ]
             },
             {
               "pointer": "/Name",
               "label": "Name",
-              "samples": ["Ada Example", "Grace Okafor"]
+              "samples": [
+                "Ada Example",
+                "Grace Okafor"
+              ]
             },
             {
               "pointer": "/Tier",
               "label": "Tier",
-              "samples": ["Day pass"]
+              "samples": [
+                "Day pass"
+              ]
             },
             {
               "pointer": "/Valid until",
               "label": "Valid until",
-              "samples": ["2026-12-31", "2027-01-15"]
+              "samples": [
+                "2026-12-31",
+                "2027-01-15"
+              ]
             },
             {
               "pointer": "/Member ID",
               "label": "Member ID",
-              "samples": ["NW-1001", "NW-1002"]
+              "samples": [
+                "NW-1001",
+                "NW-1002"
+              ]
             }
           ],
           "plan": {

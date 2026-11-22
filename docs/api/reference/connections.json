@@ -33,7 +33,9 @@
         {
           "pointer": "/input/tier",
           "label": "Plan",
-          "samples": ["Day pass"],
+          "samples": [
+            "Day pass"
+          ],
           "values": [
             {
               "value": "Day pass",
@@ -114,7 +116,9 @@
             {
               "from": "Tier",
               "op": "in",
-              "values": ["Refunded"]
+              "values": [
+                "Refunded"
+              ]
             }
           ],
           "webhookPrevUntil": null,
@@ -198,7 +202,9 @@
         {
           "from": "Tier",
           "op": "in",
-          "values": ["Refunded"]
+          "values": [
+            "Refunded"
+          ]
         }
       ],
       "webhookPrevUntil": null,
@@ -273,7 +279,9 @@
         {
           "from": "Tier",
           "op": "in",
-          "values": ["Refunded"]
+          "values": [
+            "Refunded"
+          ]
         }
       ],
       "webhookPrevUntil": null,
@@ -363,7 +371,9 @@
         {
           "from": "Tier",
           "op": "in",
-          "values": ["Refunded"]
+          "values": [
+            "Refunded"
+          ]
         }
       ],
       "webhookPrevUntil": null,
@@ -418,7 +428,9 @@
         {
           "from": "Tier",
           "op": "in",
-          "values": ["Refunded"]
+          "values": [
+            "Refunded"
+          ]
         }
       ]
     },
@@ -462,7 +474,9 @@
         {
           "pointer": "/input/tier",
           "label": "Plan",
-          "samples": ["Day pass"],
+          "samples": [
+            "Day pass"
+          ],
           "values": [
             {
               "value": "Day pass",
@@ -552,7 +566,9 @@
         {
           "from": "Tier",
           "op": "in",
-          "values": ["Refunded"]
+          "values": [
+            "Refunded"
+          ]
         }
       ],
       "webhookPrevUntil": null,
@@ -608,7 +624,9 @@
         {
           "from": "Tier",
           "op": "in",
-          "values": ["Refunded"]
+          "values": [
+            "Refunded"
+          ]
         }
       ],
       "webhookPrevUntil": null,

@@ -6,6 +6,6 @@ const result = await pb.templates.reviews.approve('0193a1b2-7c00-7000-8000-00000
   orgId: '0193a1b2-7c00-7000-8000-0000000000a1',
   version: '3',
   release: false,
-  note: 'Photo ID checked at the desk.',
+  note: 'Needs a harness fitting.',
 });
 console.log(result);

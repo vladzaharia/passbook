@@ -7,7 +7,9 @@
         "name": "Sam Rivera",
         "primaryEmail": "sam@example.com"
       },
-      "roles": ["admin"],
+      "roles": [
+        "admin"
+      ],
       "csrfToken": "csrf_demo_northwind",
       "amr": "oidc",
       "consoleUntil": 1798124400000,

@@ -13,7 +13,7 @@ const result = await pb.scanningSessions.setup({
   ],
   doors: [
     {
-      name: 'Northwind Climbing',
+      name: 'Front desk',
       place: 'northwind',
       admits: {
         any: true,

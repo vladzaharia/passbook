@@ -415,7 +415,10 @@ function corpusFailures(examples: Example[]): string[] {
   const kindsOf = new Map<string, Set<string>>();
   const notes = new Map<string, number>();
   const visit = (v: unknown, path: string, key: string, ex: Example, schema: unknown): void => {
-    if (Array.isArray(v)) return void v.forEach((x) => visit(x, `${path}[]`, key, ex, schema));
+    if (Array.isArray(v)) {
+      for (const x of v) visit(x, `${path}[]`, key, ex, schema);
+      return;
+    }
     if (v && typeof v === 'object') {
       for (const [k, x] of Object.entries(v)) visit(x, `${path}.${k}`, k, ex, schema);
       return;

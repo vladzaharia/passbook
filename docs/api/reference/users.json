@@ -7,11 +7,15 @@
           "name": "Tomas Ortega",
           "primaryEmail": "ada@example.com",
           "status": "active",
-          "lastRoles": ["admin"],
+          "lastRoles": [
+            "admin"
+          ],
           "createdAt": 1794322800000,
           "lastLoginAt": 1795521600000,
           "passCount": 16,
-          "signInMethods": ["oidc"]
+          "signInMethods": [
+            "oidc"
+          ]
         }
       ],
       "nextCursor": "c1.4812"
@@ -23,10 +27,14 @@
       "name": "Sam Rivera",
       "primaryEmail": "ada@example.com",
       "status": "active",
-      "lastRoles": ["admin"],
+      "lastRoles": [
+        "admin"
+      ],
       "createdAt": 1794322800000,
       "lastLoginAt": 1795521600000,
-      "signInMethods": ["oidc"],
+      "signInMethods": [
+        "oidc"
+      ],
       "emails": [
         {
           "email": "ada@example.com",
@@ -40,7 +48,9 @@
           "subject": "Your day pass",
           "emailClaim": "ada@example.com",
           "emailVerified": false,
-          "groups": ["Access"],
+          "groups": [
+            "Access"
+          ],
           "lastUsedAt": 1795521600000
         }
       ],
@@ -48,7 +58,9 @@
         {
           "id": "0193a1b2-7c00-7000-8000-7ce02b71e45f",
           "amr": "oidc",
-          "roles": ["admin"],
+          "roles": [
+            "admin"
+          ],
           "createdAt": 1794322800000,
           "lastSeenAt": 1795521600000,
           "expiresAt": 1798124400000,
@@ -88,7 +100,9 @@
       "name": "Sam Rivera",
       "primaryEmail": "ada@example.com",
       "status": "active",
-      "lastRoles": ["admin"],
+      "lastRoles": [
+        "admin"
+      ],
       "createdAt": 1794322800000,
       "lastLoginAt": 1795521600000
     }
@@ -102,10 +116,14 @@
       "name": "Sam Rivera",
       "primaryEmail": "ada@example.com",
       "status": "active",
-      "lastRoles": ["admin"],
+      "lastRoles": [
+        "admin"
+      ],
       "createdAt": 1794322800000,
       "lastLoginAt": 1795521600000,
-      "signInMethods": ["oidc"],
+      "signInMethods": [
+        "oidc"
+      ],
       "emails": [
         {
           "email": "ada@example.com",
@@ -119,7 +137,9 @@
           "subject": "Your day pass",
           "emailClaim": "ada@example.com",
           "emailVerified": false,
-          "groups": ["Access"],
+          "groups": [
+            "Access"
+          ],
           "lastUsedAt": 1795521600000
         }
       ],
@@ -127,7 +147,9 @@
         {
           "id": "0193a1b2-7c00-7000-8000-8fbf12e63c02",
           "amr": "oidc",
-          "roles": ["admin"],
+          "roles": [
+            "admin"
+          ],
           "createdAt": 1794322800000,
           "lastSeenAt": 1795521600000,
           "expiresAt": 1798124400000,
@@ -164,10 +186,14 @@
       "name": "Sam Rivera",
       "primaryEmail": "ada@example.com",
       "status": "active",
-      "lastRoles": ["admin"],
+      "lastRoles": [
+        "admin"
+      ],
       "createdAt": 1794322800000,
       "lastLoginAt": 1795521600000,
-      "signInMethods": ["oidc"],
+      "signInMethods": [
+        "oidc"
+      ],
       "emails": [
         {
           "email": "ada@example.com",
@@ -181,7 +207,9 @@
           "subject": "Your day pass",
           "emailClaim": "ada@example.com",
           "emailVerified": false,
-          "groups": ["Access"],
+          "groups": [
+            "Access"
+          ],
           "lastUsedAt": 1795521600000
         }
       ],
@@ -189,7 +217,9 @@
         {
           "id": "0193a1b2-7c00-7000-8000-737380440d0c",
           "amr": "oidc",
-          "roles": ["admin"],
+          "roles": [
+            "admin"
+          ],
           "createdAt": 1794322800000,
           "lastSeenAt": 1795521600000,
           "expiresAt": 1798124400000,
@@ -226,10 +256,14 @@
       "name": "Sam Rivera",
       "primaryEmail": "ada@example.com",
       "status": "active",
-      "lastRoles": ["admin"],
+      "lastRoles": [
+        "admin"
+      ],
       "createdAt": 1794322800000,
       "lastLoginAt": 1795521600000,
-      "signInMethods": ["oidc"],
+      "signInMethods": [
+        "oidc"
+      ],
       "emails": [
         {
           "email": "ada@example.com",
@@ -243,7 +277,9 @@
           "subject": "Your day pass",
           "emailClaim": "ada@example.com",
           "emailVerified": false,
-          "groups": ["Access"],
+          "groups": [
+            "Access"
+          ],
           "lastUsedAt": 1795521600000
         }
       ],
@@ -251,7 +287,9 @@
         {
           "id": "0193a1b2-7c00-7000-8000-2153af24037f",
           "amr": "oidc",
-          "roles": ["admin"],
+          "roles": [
+            "admin"
+          ],
           "createdAt": 1794322800000,
           "lastSeenAt": 1795521600000,
           "expiresAt": 1798124400000,

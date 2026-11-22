@@ -5,5 +5,5 @@ curl -X POST "https://passbook.mobile/api/v1/templates/0193a1b2-7c00-7000-8000-0
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
   "version": "3",
   "release": false,
-  "note": "Photo ID checked at the desk."
+  "note": "Needs a harness fitting."
 }'

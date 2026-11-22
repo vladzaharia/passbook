@@ -3,7 +3,7 @@ curl -X POST "https://passbook.mobile/api/v1/templates/baked:starter-event-ticke
   -H "Content-Type: application/json" \
   -d '{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-  "name": "Northwind Climbing",
+  "name": "Day pass",
   "version": {
     "passJson": {
       "formatVersion": 1,
@@ -43,7 +43,7 @@ curl -X POST "https://passbook.mobile/api/v1/templates/baked:starter-event-ticke
     },
     "assets": [
       {
-        "name": "Northwind Climbing",
+        "name": "logo.png",
         "sha1": "e6997603809dcf7d34d188068c529a7808556809"
       }
     ]

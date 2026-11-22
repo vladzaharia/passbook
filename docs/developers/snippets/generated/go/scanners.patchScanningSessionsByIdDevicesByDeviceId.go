@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.ScanningSessionsDevicesUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "name": "Northwind Climbing",
+  "name": "Front desk",
   "surface": "auto",
   "overrides": {
     "flow": "auto",

@@ -19,7 +19,7 @@ func main() {
 	var body passbook.BlueprintsUseBody
 	if err := json.Unmarshal([]byte(`{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-  "name": "Northwind Climbing",
+  "name": "Day pass",
   "version": {
     "passJson": {
       "formatVersion": 1,
@@ -59,7 +59,7 @@ func main() {
     },
     "assets": [
       {
-        "name": "Northwind Climbing",
+        "name": "logo.png",
         "sha1": "e6997603809dcf7d34d188068c529a7808556809"
       }
     ]

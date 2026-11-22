@@ -83,7 +83,9 @@
               "max": 2,
               "step": 39,
               "maxLength": 20,
-              "enum": ["adult"]
+              "enum": [
+                "adult"
+              ]
             }
           }
         ],
@@ -221,7 +223,9 @@
           "passJson": {},
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
           "assetGrant": "logo",
-          "assetNames": ["logo.png"]
+          "assetNames": [
+            "logo.png"
+          ]
         }
       },
       "previous": {
@@ -510,7 +514,9 @@
               "max": 2,
               "step": 39,
               "maxLength": 20,
-              "enum": ["adult"]
+              "enum": [
+                "adult"
+              ]
             }
           }
         ],
@@ -648,7 +654,9 @@
           "passJson": {},
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
           "assetGrant": "logo",
-          "assetNames": ["logo.png"]
+          "assetNames": [
+            "logo.png"
+          ]
         }
       },
       "previous": {
@@ -933,7 +941,9 @@
               "max": 2,
               "step": 39,
               "maxLength": 20,
-              "enum": ["adult"]
+              "enum": [
+                "adult"
+              ]
             }
           }
         ],
@@ -1071,7 +1081,9 @@
           "passJson": {},
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
           "assetGrant": "logo",
-          "assetNames": ["logo.png"]
+          "assetNames": [
+            "logo.png"
+          ]
         }
       },
       "previous": {
@@ -1349,8 +1361,12 @@
           "name": "Sam Rivera",
           "status": "active",
           "accepts": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+            "templateIds": [
+              "0193a1b2-7c00-7000-8000-0000000000b1"
+            ],
+            "eventIds": [
+              "0193a1b2-7c00-7000-8000-0000000000e1"
+            ]
           },
           "settings": {
             "checkIn": {
@@ -1382,7 +1398,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             },
             "customer": {
@@ -1393,18 +1411,36 @@
               "showDraft": false
             }
           },
-          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "zoneIds": [
+            "0193a1b2-7c00-7000-8000-000000000081"
+          ],
           "timeZone": "America/Los_Angeles",
           "hours": {
-            "mon": ["09:00-21:00"],
-            "tue": ["09:00-21:00"],
-            "wed": ["09:00-21:00"],
-            "thu": ["09:00-21:00"],
-            "fri": ["09:00-21:00"],
-            "sat": ["09:00-21:00"],
-            "sun": ["09:00-21:00"],
+            "mon": [
+              "09:00-21:00"
+            ],
+            "tue": [
+              "09:00-21:00"
+            ],
+            "wed": [
+              "09:00-21:00"
+            ],
+            "thu": [
+              "09:00-21:00"
+            ],
+            "fri": [
+              "09:00-21:00"
+            ],
+            "sat": [
+              "09:00-21:00"
+            ],
+            "sun": [
+              "09:00-21:00"
+            ],
             "dates": {
-              "2026-12-24": ["09:00-21:00"]
+              "2026-12-24": [
+                "09:00-21:00"
+              ]
             }
           },
           "hoursInvalid": true,
@@ -1464,7 +1500,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -1491,7 +1529,9 @@
                 "available": false,
                 "reading": false,
                 "continuous": false,
-                "formats": ["ndef"]
+                "formats": [
+                  "ndef"
+                ]
               },
               "haptics": false,
               "vas": {
@@ -1528,7 +1568,9 @@
                 "state": "active"
               }
             ],
-            "surfaces": ["phone"],
+            "surfaces": [
+              "phone"
+            ],
             "preferred": "phone"
           },
           "reportedAt": 1795521600000,
@@ -1590,7 +1632,9 @@
             "assign": "desk",
             "assignAll": "desk",
             "level": "off",
-            "types": ["scan"],
+            "types": [
+              "scan"
+            ],
             "confirmBasic": "staff"
           }
         }
@@ -1618,7 +1662,9 @@
           "id": "0193a1b2-7c00-7000-8000-f83cacfb2efd",
           "name": "Day pass",
           "style": "generic",
-          "formats": ["qr"],
+          "formats": [
+            "qr"
+          ],
           "actions": [
             {
               "id": "0193a1b2-7c00-7000-8000-65f61b0d4693",
@@ -1628,7 +1674,9 @@
           ]
         }
       ],
-      "formats": ["qr"],
+      "formats": [
+        "qr"
+      ],
       "staff": {
         "id": "0193a1b2-7c00-7000-8000-89b65dae6ada",
         "name": "Sam Rivera",
@@ -1682,8 +1730,12 @@
           "name": "Sam Rivera",
           "status": "active",
           "accepts": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+            "templateIds": [
+              "0193a1b2-7c00-7000-8000-0000000000b1"
+            ],
+            "eventIds": [
+              "0193a1b2-7c00-7000-8000-0000000000e1"
+            ]
           },
           "settings": {
             "checkIn": {
@@ -1715,7 +1767,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             },
             "customer": {
@@ -1726,18 +1780,36 @@
               "showDraft": false
             }
           },
-          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "zoneIds": [
+            "0193a1b2-7c00-7000-8000-000000000081"
+          ],
           "timeZone": "America/Los_Angeles",
           "hours": {
-            "mon": ["09:00-21:00"],
-            "tue": ["09:00-21:00"],
-            "wed": ["09:00-21:00"],
-            "thu": ["09:00-21:00"],
-            "fri": ["09:00-21:00"],
-            "sat": ["09:00-21:00"],
-            "sun": ["09:00-21:00"],
+            "mon": [
+              "09:00-21:00"
+            ],
+            "tue": [
+              "09:00-21:00"
+            ],
+            "wed": [
+              "09:00-21:00"
+            ],
+            "thu": [
+              "09:00-21:00"
+            ],
+            "fri": [
+              "09:00-21:00"
+            ],
+            "sat": [
+              "09:00-21:00"
+            ],
+            "sun": [
+              "09:00-21:00"
+            ],
             "dates": {
-              "2026-12-24": ["09:00-21:00"]
+              "2026-12-24": [
+                "09:00-21:00"
+              ]
             }
           },
           "hoursInvalid": true,
@@ -1797,7 +1869,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -1824,7 +1898,9 @@
                 "available": false,
                 "reading": false,
                 "continuous": false,
-                "formats": ["ndef"]
+                "formats": [
+                  "ndef"
+                ]
               },
               "haptics": false,
               "vas": {
@@ -1861,7 +1937,9 @@
                 "state": "active"
               }
             ],
-            "surfaces": ["phone"],
+            "surfaces": [
+              "phone"
+            ],
             "preferred": "phone"
           },
           "reportedAt": 1795521600000,
@@ -1923,7 +2001,9 @@
             "assign": "desk",
             "assignAll": "desk",
             "level": "off",
-            "types": ["scan"],
+            "types": [
+              "scan"
+            ],
             "confirmBasic": "staff"
           }
         }
@@ -1951,7 +2031,9 @@
           "id": "0193a1b2-7c00-7000-8000-a75ae45ba05e",
           "name": "Day pass",
           "style": "generic",
-          "formats": ["qr"],
+          "formats": [
+            "qr"
+          ],
           "actions": [
             {
               "id": "0193a1b2-7c00-7000-8000-87a076624dfc",
@@ -1961,7 +2043,9 @@
           ]
         }
       ],
-      "formats": ["qr"],
+      "formats": [
+        "qr"
+      ],
       "staff": {
         "id": "0193a1b2-7c00-7000-8000-5587ae8cfb6f",
         "name": "Sam Rivera",
@@ -2031,8 +2115,12 @@
           "name": "Sam Rivera",
           "status": "active",
           "accepts": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+            "templateIds": [
+              "0193a1b2-7c00-7000-8000-0000000000b1"
+            ],
+            "eventIds": [
+              "0193a1b2-7c00-7000-8000-0000000000e1"
+            ]
           },
           "settings": {
             "checkIn": {
@@ -2064,7 +2152,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             },
             "customer": {
@@ -2075,18 +2165,36 @@
               "showDraft": false
             }
           },
-          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "zoneIds": [
+            "0193a1b2-7c00-7000-8000-000000000081"
+          ],
           "timeZone": "America/Los_Angeles",
           "hours": {
-            "mon": ["09:00-21:00"],
-            "tue": ["09:00-21:00"],
-            "wed": ["09:00-21:00"],
-            "thu": ["09:00-21:00"],
-            "fri": ["09:00-21:00"],
-            "sat": ["09:00-21:00"],
-            "sun": ["09:00-21:00"],
+            "mon": [
+              "09:00-21:00"
+            ],
+            "tue": [
+              "09:00-21:00"
+            ],
+            "wed": [
+              "09:00-21:00"
+            ],
+            "thu": [
+              "09:00-21:00"
+            ],
+            "fri": [
+              "09:00-21:00"
+            ],
+            "sat": [
+              "09:00-21:00"
+            ],
+            "sun": [
+              "09:00-21:00"
+            ],
             "dates": {
-              "2026-12-24": ["09:00-21:00"]
+              "2026-12-24": [
+                "09:00-21:00"
+              ]
             }
           },
           "hoursInvalid": true,
@@ -2146,7 +2254,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -2173,7 +2283,9 @@
                 "available": false,
                 "reading": false,
                 "continuous": false,
-                "formats": ["ndef"]
+                "formats": [
+                  "ndef"
+                ]
               },
               "haptics": false,
               "vas": {
@@ -2210,7 +2322,9 @@
                 "state": "active"
               }
             ],
-            "surfaces": ["phone"],
+            "surfaces": [
+              "phone"
+            ],
             "preferred": "phone"
           },
           "reportedAt": 1795521600000,
@@ -2272,7 +2386,9 @@
             "assign": "desk",
             "assignAll": "desk",
             "level": "off",
-            "types": ["scan"],
+            "types": [
+              "scan"
+            ],
             "confirmBasic": "staff"
           }
         }
@@ -2300,7 +2416,9 @@
           "id": "0193a1b2-7c00-7000-8000-36c0d1b363cb",
           "name": "Day pass",
           "style": "generic",
-          "formats": ["qr"],
+          "formats": [
+            "qr"
+          ],
           "actions": [
             {
               "id": "0193a1b2-7c00-7000-8000-21aab3624c44",
@@ -2310,7 +2428,9 @@
           ]
         }
       ],
-      "formats": ["qr"],
+      "formats": [
+        "qr"
+      ],
       "staff": {
         "id": "0193a1b2-7c00-7000-8000-897e8897c4bc",
         "name": "Sam Rivera",
@@ -2364,8 +2484,12 @@
           "name": "Sam Rivera",
           "status": "active",
           "accepts": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+            "templateIds": [
+              "0193a1b2-7c00-7000-8000-0000000000b1"
+            ],
+            "eventIds": [
+              "0193a1b2-7c00-7000-8000-0000000000e1"
+            ]
           },
           "settings": {
             "checkIn": {
@@ -2397,7 +2521,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             },
             "customer": {
@@ -2408,18 +2534,36 @@
               "showDraft": false
             }
           },
-          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "zoneIds": [
+            "0193a1b2-7c00-7000-8000-000000000081"
+          ],
           "timeZone": "America/Los_Angeles",
           "hours": {
-            "mon": ["09:00-21:00"],
-            "tue": ["09:00-21:00"],
-            "wed": ["09:00-21:00"],
-            "thu": ["09:00-21:00"],
-            "fri": ["09:00-21:00"],
-            "sat": ["09:00-21:00"],
-            "sun": ["09:00-21:00"],
+            "mon": [
+              "09:00-21:00"
+            ],
+            "tue": [
+              "09:00-21:00"
+            ],
+            "wed": [
+              "09:00-21:00"
+            ],
+            "thu": [
+              "09:00-21:00"
+            ],
+            "fri": [
+              "09:00-21:00"
+            ],
+            "sat": [
+              "09:00-21:00"
+            ],
+            "sun": [
+              "09:00-21:00"
+            ],
             "dates": {
-              "2026-12-24": ["09:00-21:00"]
+              "2026-12-24": [
+                "09:00-21:00"
+              ]
             }
           },
           "hoursInvalid": true,
@@ -2479,7 +2623,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -2506,7 +2652,9 @@
                 "available": false,
                 "reading": false,
                 "continuous": false,
-                "formats": ["ndef"]
+                "formats": [
+                  "ndef"
+                ]
               },
               "haptics": false,
               "vas": {
@@ -2543,7 +2691,9 @@
                 "state": "active"
               }
             ],
-            "surfaces": ["phone"],
+            "surfaces": [
+              "phone"
+            ],
             "preferred": "phone"
           },
           "reportedAt": 1795521600000,
@@ -2605,7 +2755,9 @@
             "assign": "desk",
             "assignAll": "desk",
             "level": "off",
-            "types": ["scan"],
+            "types": [
+              "scan"
+            ],
             "confirmBasic": "staff"
           }
         }
@@ -2633,7 +2785,9 @@
           "id": "0193a1b2-7c00-7000-8000-ea9bdd80f818",
           "name": "Day pass",
           "style": "generic",
-          "formats": ["qr"],
+          "formats": [
+            "qr"
+          ],
           "actions": [
             {
               "id": "0193a1b2-7c00-7000-8000-0bdcca68d1a9",
@@ -2643,7 +2797,9 @@
           ]
         }
       ],
-      "formats": ["qr"],
+      "formats": [
+        "qr"
+      ],
       "staff": {
         "id": "0193a1b2-7c00-7000-8000-5e5c74406de0",
         "name": "Sam Rivera",
@@ -2699,8 +2855,12 @@
             "name": "Sam Rivera",
             "status": "active",
             "accepts": {
-              "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-              "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+              "templateIds": [
+                "0193a1b2-7c00-7000-8000-0000000000b1"
+              ],
+              "eventIds": [
+                "0193a1b2-7c00-7000-8000-0000000000e1"
+              ]
             },
             "settings": {
               "checkIn": {
@@ -2732,7 +2892,9 @@
                 "assign": "desk",
                 "assignAll": "desk",
                 "level": "off",
-                "types": ["generic"],
+                "types": [
+                  "generic"
+                ],
                 "confirmBasic": "staff"
               },
               "customer": {
@@ -2743,18 +2905,36 @@
                 "showDraft": false
               }
             },
-            "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+            "zoneIds": [
+              "0193a1b2-7c00-7000-8000-000000000081"
+            ],
             "timeZone": "America/Los_Angeles",
             "hours": {
-              "mon": ["09:00-21:00"],
-              "tue": ["09:00-21:00"],
-              "wed": ["09:00-21:00"],
-              "thu": ["09:00-21:00"],
-              "fri": ["09:00-21:00"],
-              "sat": ["09:00-21:00"],
-              "sun": ["09:00-21:00"],
+              "mon": [
+                "09:00-21:00"
+              ],
+              "tue": [
+                "09:00-21:00"
+              ],
+              "wed": [
+                "09:00-21:00"
+              ],
+              "thu": [
+                "09:00-21:00"
+              ],
+              "fri": [
+                "09:00-21:00"
+              ],
+              "sat": [
+                "09:00-21:00"
+              ],
+              "sun": [
+                "09:00-21:00"
+              ],
               "dates": {
-                "2026-12-24": ["09:00-21:00"]
+                "2026-12-24": [
+                  "09:00-21:00"
+                ]
               }
             },
             "hoursInvalid": true,
@@ -2814,7 +2994,9 @@
                 "assign": "desk",
                 "assignAll": "desk",
                 "level": "off",
-                "types": ["generic"],
+                "types": [
+                  "generic"
+                ],
                 "confirmBasic": "staff"
               }
             },
@@ -2841,7 +3023,9 @@
                   "available": false,
                   "reading": false,
                   "continuous": false,
-                  "formats": ["ndef"]
+                  "formats": [
+                    "ndef"
+                  ]
                 },
                 "haptics": false,
                 "vas": {
@@ -2878,7 +3062,9 @@
                   "state": "active"
                 }
               ],
-              "surfaces": ["phone"],
+              "surfaces": [
+                "phone"
+              ],
               "preferred": "phone"
             },
             "reportedAt": 1795521600000,
@@ -2940,7 +3126,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["scan"],
+              "types": [
+                "scan"
+              ],
               "confirmBasic": "staff"
             }
           }
@@ -2968,7 +3156,9 @@
             "id": "0193a1b2-7c00-7000-8000-e569b0e5d39c",
             "name": "Day pass",
             "style": "generic",
-            "formats": ["qr"],
+            "formats": [
+              "qr"
+            ],
             "actions": [
               {
                 "id": "0193a1b2-7c00-7000-8000-e319d4a95d0b",
@@ -2978,7 +3168,9 @@
             ]
           }
         ],
-        "formats": ["qr"],
+        "formats": [
+          "qr"
+        ],
         "staff": {
           "id": "0193a1b2-7c00-7000-8000-8fac238360c5",
           "name": "Sam Rivera",
@@ -3026,7 +3218,9 @@
     "response": {
       "rollCall": {
         "id": "0193a1b2-7c00-7000-8000-605ac0d9de6e",
-        "placeNames": ["Front entrance"],
+        "placeNames": [
+          "Front entrance"
+        ],
         "startedAt": 1794322800000,
         "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
         "endedAt": 1795521600000,
@@ -3069,7 +3263,9 @@
   "scan.postScanRollCall": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-e9c4df9a7628",
-      "placeNames": ["Front entrance"],
+      "placeNames": [
+        "Front entrance"
+      ],
       "startedAt": 1794322800000,
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "endedAt": 1795521600000,
@@ -3111,7 +3307,9 @@
   "scan.getScanRollCallById": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-79d08daa53ee",
-      "placeNames": ["Front entrance"],
+      "placeNames": [
+        "Front entrance"
+      ],
       "startedAt": 1794322800000,
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "endedAt": 1795521600000,
@@ -3163,7 +3361,9 @@
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-d7ad6192339e",
-      "placeNames": ["Front entrance"],
+      "placeNames": [
+        "Front entrance"
+      ],
       "startedAt": 1794322800000,
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "endedAt": 1795521600000,
@@ -3213,7 +3413,9 @@
   "scan.postScanRollCallByIdEnd": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-862eaff85872",
-      "placeNames": ["Front entrance"],
+      "placeNames": [
+        "Front entrance"
+      ],
       "startedAt": 1794322800000,
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "endedAt": 1795521600000,
@@ -3349,7 +3551,9 @@
               "max": 2,
               "step": 39,
               "maxLength": 20,
-              "enum": ["adult"]
+              "enum": [
+                "adult"
+              ]
             }
           }
         ],
@@ -3487,7 +3691,9 @@
           "passJson": {},
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
           "assetGrant": "logo",
-          "assetNames": ["logo.png"]
+          "assetNames": [
+            "logo.png"
+          ]
         }
       },
       "previous": {
@@ -3519,7 +3725,9 @@
         "counter": false,
         "need": 13
       },
-      "flags": ["vip"],
+      "flags": [
+        "vip"
+      ],
       "channel": "mobile",
       "overridable": false,
       "exitAllowed": false,
@@ -3791,7 +3999,9 @@
               "max": 2,
               "step": 39,
               "maxLength": 20,
-              "enum": ["adult"]
+              "enum": [
+                "adult"
+              ]
             }
           }
         ],
@@ -3929,7 +4139,9 @@
           "passJson": {},
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
           "assetGrant": "logo",
-          "assetNames": ["logo.png"]
+          "assetNames": [
+            "logo.png"
+          ]
         }
       },
       "previous": {
@@ -3961,7 +4173,9 @@
         "counter": false,
         "need": 13
       },
-      "flags": ["vip"],
+      "flags": [
+        "vip"
+      ],
       "channel": "mobile",
       "overridable": false,
       "exitAllowed": false,
@@ -4183,8 +4397,12 @@
           "name": "Sam Rivera",
           "status": "active",
           "accepts": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-            "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+            "templateIds": [
+              "0193a1b2-7c00-7000-8000-0000000000b1"
+            ],
+            "eventIds": [
+              "0193a1b2-7c00-7000-8000-0000000000e1"
+            ]
           },
           "settings": {
             "checkIn": {
@@ -4216,7 +4434,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             },
             "customer": {
@@ -4227,18 +4447,36 @@
               "showDraft": false
             }
           },
-          "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+          "zoneIds": [
+            "0193a1b2-7c00-7000-8000-000000000081"
+          ],
           "timeZone": "America/Los_Angeles",
           "hours": {
-            "mon": ["09:00-21:00"],
-            "tue": ["09:00-21:00"],
-            "wed": ["09:00-21:00"],
-            "thu": ["09:00-21:00"],
-            "fri": ["09:00-21:00"],
-            "sat": ["09:00-21:00"],
-            "sun": ["09:00-21:00"],
+            "mon": [
+              "09:00-21:00"
+            ],
+            "tue": [
+              "09:00-21:00"
+            ],
+            "wed": [
+              "09:00-21:00"
+            ],
+            "thu": [
+              "09:00-21:00"
+            ],
+            "fri": [
+              "09:00-21:00"
+            ],
+            "sat": [
+              "09:00-21:00"
+            ],
+            "sun": [
+              "09:00-21:00"
+            ],
             "dates": {
-              "2026-12-24": ["09:00-21:00"]
+              "2026-12-24": [
+                "09:00-21:00"
+              ]
             }
           },
           "hoursInvalid": true,
@@ -4298,7 +4536,9 @@
               "assign": "desk",
               "assignAll": "desk",
               "level": "off",
-              "types": ["generic"],
+              "types": [
+                "generic"
+              ],
               "confirmBasic": "staff"
             }
           },
@@ -4325,7 +4565,9 @@
                 "available": false,
                 "reading": false,
                 "continuous": false,
-                "formats": ["ndef"]
+                "formats": [
+                  "ndef"
+                ]
               },
               "haptics": false,
               "vas": {
@@ -4362,7 +4604,9 @@
                 "state": "active"
               }
             ],
-            "surfaces": ["phone"],
+            "surfaces": [
+              "phone"
+            ],
             "preferred": "phone"
           },
           "reportedAt": 1795521600000,
@@ -4424,7 +4668,9 @@
             "assign": "desk",
             "assignAll": "desk",
             "level": "off",
-            "types": ["scan"],
+            "types": [
+              "scan"
+            ],
             "confirmBasic": "staff"
           }
         }
@@ -4452,7 +4698,9 @@
           "id": "0193a1b2-7c00-7000-8000-e8b181600568",
           "name": "Day pass",
           "style": "generic",
-          "formats": ["qr"],
+          "formats": [
+            "qr"
+          ],
           "actions": [
             {
               "id": "0193a1b2-7c00-7000-8000-3d6b541500e0",
@@ -4462,7 +4710,9 @@
           ]
         }
       ],
-      "formats": ["qr"],
+      "formats": [
+        "qr"
+      ],
       "staff": {
         "id": "0193a1b2-7c00-7000-8000-41493f9880bb",
         "name": "Sam Rivera",
@@ -4565,8 +4815,12 @@
         "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8"
       },
       "ownerAccount": false,
-      "skipped": ["no_email"],
-      "warnings": ["replaces_pass_tag"],
+      "skipped": [
+        "no_email"
+      ],
+      "warnings": [
+        "replaces_pass_tag"
+      ],
       "lostAt": 1795521600000,
       "undoUntil": null
     }
@@ -4750,7 +5004,9 @@
                     "max": 2,
                     "step": 39,
                     "maxLength": 20,
-                    "enum": ["adult"]
+                    "enum": [
+                      "adult"
+                    ]
                   }
                 }
               ],
@@ -4888,7 +5144,9 @@
                 "passJson": {},
                 "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
                 "assetGrant": "logo",
-                "assetNames": ["thumbnail.png"]
+                "assetNames": [
+                  "thumbnail.png"
+                ]
               }
             },
             "previous": {
@@ -4920,7 +5178,9 @@
               "counter": false,
               "need": 13
             },
-            "flags": ["vip"],
+            "flags": [
+              "vip"
+            ],
             "channel": "mobile",
             "overridable": false,
             "exitAllowed": false,
@@ -5217,7 +5477,9 @@
             "available": false,
             "reading": false,
             "continuous": false,
-            "formats": ["ndef"]
+            "formats": [
+              "ndef"
+            ]
           },
           "haptics": false,
           "vas": {
@@ -5254,7 +5516,9 @@
             "state": "active"
           }
         ],
-        "surfaces": ["phone"],
+        "surfaces": [
+          "phone"
+        ],
         "preferred": "phone"
       },
       "scope": {
@@ -5272,8 +5536,12 @@
         "name": "Sam Rivera",
         "status": "active",
         "accepts": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
+          "templateIds": [
+            "0193a1b2-7c00-7000-8000-0000000000b1"
+          ],
+          "eventIds": [
+            "0193a1b2-7c00-7000-8000-0000000000e1"
+          ]
         },
         "settings": {
           "checkIn": {
@@ -5305,7 +5573,9 @@
             "assign": "desk",
             "assignAll": "desk",
             "level": "off",
-            "types": ["generic"],
+            "types": [
+              "generic"
+            ],
             "confirmBasic": "staff"
           },
           "customer": {
@@ -5316,18 +5586,36 @@
             "showDraft": false
           }
         },
-        "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"],
+        "zoneIds": [
+          "0193a1b2-7c00-7000-8000-000000000081"
+        ],
         "timeZone": "America/Los_Angeles",
         "hours": {
-          "mon": ["09:00-21:00"],
-          "tue": ["09:00-21:00"],
-          "wed": ["09:00-21:00"],
-          "thu": ["09:00-21:00"],
-          "fri": ["09:00-21:00"],
-          "sat": ["09:00-21:00"],
-          "sun": ["09:00-21:00"],
+          "mon": [
+            "09:00-21:00"
+          ],
+          "tue": [
+            "09:00-21:00"
+          ],
+          "wed": [
+            "09:00-21:00"
+          ],
+          "thu": [
+            "09:00-21:00"
+          ],
+          "fri": [
+            "09:00-21:00"
+          ],
+          "sat": [
+            "09:00-21:00"
+          ],
+          "sun": [
+            "09:00-21:00"
+          ],
           "dates": {
-            "2026-12-24": ["09:00-21:00"]
+            "2026-12-24": [
+              "09:00-21:00"
+            ]
           }
         },
         "hoursInvalid": true,
@@ -5387,7 +5675,9 @@
             "assign": "desk",
             "assignAll": "desk",
             "level": "off",
-            "types": ["generic"],
+            "types": [
+              "generic"
+            ],
             "confirmBasic": "staff"
           }
         },
@@ -5414,7 +5704,9 @@
               "available": false,
               "reading": false,
               "continuous": false,
-              "formats": ["ndef"]
+              "formats": [
+                "ndef"
+              ]
             },
             "haptics": false,
             "vas": {
@@ -5451,7 +5743,9 @@
               "state": "active"
             }
           ],
-          "surfaces": ["phone"],
+          "surfaces": [
+            "phone"
+          ],
           "preferred": "phone"
         },
         "reportedAt": 1795521600000,
@@ -5717,7 +6011,9 @@
           "since": 1794322800000,
           "dueAt": 1795521600000,
           "via": "api",
-          "flags": ["long_stay"]
+          "flags": [
+            "long_stay"
+          ]
         }
       ],
       "count": 12,

@@ -5,8 +5,12 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "description": "A day pass for the climbing gym, scanned at the front desk.",
-      "eventTypes": ["pass.issued"],
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+      "eventTypes": [
+        "pass.issued"
+      ],
+      "templateIds": [
+        "0193a1b2-7c00-7000-8000-0000000000b1"
+      ]
     },
     "response": {
       "endpoint": {
@@ -16,8 +20,12 @@
         "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
         "urlMasked": "https://hooks.example.com/…",
         "description": "A day pass for the climbing gym, scanned at the front desk.",
-        "eventTypes": ["pass.issued"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "eventTypes": [
+          "pass.issued"
+        ],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "apiVersion": "2026-12-01",
         "status": "active",
         "target": "url",
@@ -57,8 +65,12 @@
           "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
           "urlMasked": "https://hooks.example.com/…",
           "description": "A day pass for the climbing gym, scanned at the front desk.",
-          "eventTypes": ["pass.issued"],
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "eventTypes": [
+            "pass.issued"
+          ],
+          "templateIds": [
+            "0193a1b2-7c00-7000-8000-0000000000b1"
+          ],
           "apiVersion": "2026-12-01",
           "status": "active",
           "target": "url",
@@ -84,8 +96,12 @@
       "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "urlMasked": "https://hooks.example.com/…",
       "description": "A day pass for the climbing gym, scanned at the front desk.",
-      "eventTypes": ["pass.issued"],
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "eventTypes": [
+        "pass.issued"
+      ],
+      "templateIds": [
+        "0193a1b2-7c00-7000-8000-0000000000b1"
+      ],
       "apiVersion": "2026-12-01",
       "status": "active",
       "target": "url",
@@ -104,7 +120,9 @@
     "request": {
       "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "description": "",
-      "eventTypes": ["pass.issued"]
+      "eventTypes": [
+        "pass.issued"
+      ]
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-7469d345f4d2",
@@ -113,8 +131,12 @@
       "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "urlMasked": "https://hooks.example.com/…",
       "description": "A day pass for the climbing gym, scanned at the front desk.",
-      "eventTypes": ["pass.issued"],
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "eventTypes": [
+        "pass.issued"
+      ],
+      "templateIds": [
+        "0193a1b2-7c00-7000-8000-0000000000b1"
+      ],
       "apiVersion": "2026-12-01",
       "status": "active",
       "target": "url",
@@ -233,7 +255,9 @@
     "description": "Returns the capture endpoint of your sandbox, making it if there is none. A capture endpoint stores the signed requests PassBook would send, so you can read and verify them; it sends nothing and takes nothing from outside. Sandbox orgs in Test mode only. The signing `secret` is shown once, on creation; later calls return `secret: null`.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "eventTypes": ["pass.issued"]
+      "eventTypes": [
+        "pass.issued"
+      ]
     },
     "response": {
       "endpoint": {
@@ -243,8 +267,12 @@
         "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
         "urlMasked": "https://hooks.example.com/…",
         "description": "A day pass for the climbing gym, scanned at the front desk.",
-        "eventTypes": ["pass.issued"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "eventTypes": [
+          "pass.issued"
+        ],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
         "apiVersion": "2026-12-01",
         "status": "active",
         "target": "url",

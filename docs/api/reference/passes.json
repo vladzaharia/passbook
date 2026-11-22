@@ -98,7 +98,11 @@
         }
       },
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "assetNames": [
+        "icon.png",
+        "icon@2x.png",
+        "logo.png"
+      ],
       "blockedUsers": [],
       "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
@@ -180,7 +184,11 @@
         }
       },
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "assetNames": [
+        "icon.png",
+        "icon@2x.png",
+        "logo.png"
+      ],
       "blockedUsers": [],
       "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
@@ -316,7 +324,11 @@
         }
       },
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "assetNames": [
+        "icon.png",
+        "icon@2x.png",
+        "logo.png"
+      ],
       "blockedUsers": [],
       "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
@@ -502,7 +514,9 @@
             "match": [
               {
                 "input": "tier",
-                "values": ["Day pass"]
+                "values": [
+                  "Day pass"
+                ]
               }
             ]
           }
@@ -549,7 +563,9 @@
             "match": [
               {
                 "input": "tier",
-                "values": ["Day pass"]
+                "values": [
+                  "Day pass"
+                ]
               }
             ]
           }
@@ -654,7 +670,9 @@
       "action": "void",
       "message": "The gym closes at 18:00 on 24 December.",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "ids": ["0193a1b2-7c00-7000-8000-8b1bb892d676"]
+      "ids": [
+        "0193a1b2-7c00-7000-8000-8b1bb892d676"
+      ]
     },
     "response": {
       "done": 39,
@@ -743,7 +761,11 @@
         }
       },
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "assetNames": [
+        "icon.png",
+        "icon@2x.png",
+        "logo.png"
+      ],
       "blockedUsers": [],
       "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
@@ -844,7 +866,11 @@
         }
       },
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "assetNames": [
+        "icon.png",
+        "icon@2x.png",
+        "logo.png"
+      ],
       "blockedUsers": [],
       "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
@@ -969,7 +995,9 @@
     "description": "Matches photo file names to passes by external ID or serial. It reads names only and changes nothing.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "keys": ["tier"]
+      "keys": [
+        "tier"
+      ]
     },
     "response": {
       "matches": [
@@ -1133,7 +1161,11 @@
         }
       },
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "assetNames": [
+        "icon.png",
+        "icon@2x.png",
+        "logo.png"
+      ],
       "blockedUsers": [],
       "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
@@ -1228,7 +1260,11 @@
         }
       },
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "assetNames": [
+        "icon.png",
+        "icon@2x.png",
+        "logo.png"
+      ],
       "blockedUsers": [],
       "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
       "publicUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
@@ -1265,8 +1301,12 @@
     "description": "Turns channels on, off or back to the template for up to 100 passes in one call.",
     "request": {
       "action": "on",
-      "channels": ["mobile"],
-      "ids": ["0193a1b2-7c00-7000-8000-665c0f4c3b8d"],
+      "channels": [
+        "mobile"
+      ],
+      "ids": [
+        "0193a1b2-7c00-7000-8000-665c0f4c3b8d"
+      ],
       "notify": false,
       "replaceCodes": false,
       "dryRun": false
@@ -1412,7 +1452,9 @@
         ],
         "owed": false,
         "blocked": null,
-        "lastDigital": ["mobile"]
+        "lastDigital": [
+          "mobile"
+        ]
       }
     }
   },
@@ -1533,14 +1575,18 @@
         ],
         "owed": false,
         "blocked": null,
-        "lastDigital": ["mobile"]
+        "lastDigital": [
+          "mobile"
+        ]
       }
     }
   },
   "passes.postPassesBulkPrint": {
     "description": "Prints up to 50 passes of one org into one PDF. A job renders it; poll the job.",
     "request": {
-      "ids": ["0193a1b2-7c00-7000-8000-7df1a6663d89"],
+      "ids": [
+        "0193a1b2-7c00-7000-8000-7df1a6663d89"
+      ],
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
     },
     "response": {

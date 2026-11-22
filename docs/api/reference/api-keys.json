@@ -7,7 +7,9 @@
       "name": "Server integration",
       "prefix": "k3Qx9Zt2",
       "secretPrefix": "pb_test_k3Qx9Zt2",
-      "scopes": ["passes:read"],
+      "scopes": [
+        "passes:read"
+      ],
       "mode": "test",
       "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
       "createdByName": "Sam Rivera",
@@ -16,11 +18,19 @@
       "expiresAt": 1798124400000,
       "revokedAt": null,
       "kind": "service",
-      "roles": ["org_admin"],
+      "roles": [
+        "org_admin"
+      ],
       "retireAt": null,
-      "ipAllow": ["203.0.113.0/24"],
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "passStyles": ["generic"],
+      "ipAllow": [
+        "203.0.113.0/24"
+      ],
+      "templateIds": [
+        "0193a1b2-7c00-7000-8000-0000000000b1"
+      ],
+      "passStyles": [
+        "generic"
+      ],
       "rateTier": "standard",
       "parentKeyId": null,
       "rotatedFrom": null,
@@ -74,13 +84,17 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Server integration",
       "prefix": "k3Qx9Zt2",
-      "scopes": ["passes:read"],
+      "scopes": [
+        "passes:read"
+      ],
       "mode": "live",
       "createdAt": 1794322800000,
       "lastUsedAt": 1795521600000,
       "expiresAt": 1798124400000,
       "kind": "service",
-      "roles": ["org_admin"],
+      "roles": [
+        "org_admin"
+      ],
       "retireAt": null
     }
   },
@@ -107,7 +121,9 @@
         "name": "Server integration",
         "prefix": "p7Wm4Hn8",
         "secretPrefix": "pb_test_p7Wm4Hn8",
-        "scopes": ["passes:read"],
+        "scopes": [
+          "passes:read"
+        ],
         "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
@@ -116,11 +132,19 @@
         "expiresAt": 1798124400000,
         "revokedAt": null,
         "kind": "service",
-        "roles": ["org_admin"],
+        "roles": [
+          "org_admin"
+        ],
         "retireAt": null,
-        "ipAllow": ["203.0.113.0/24"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "passStyles": ["generic"],
+        "ipAllow": [
+          "203.0.113.0/24"
+        ],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "passStyles": [
+          "generic"
+        ],
         "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000021",
@@ -132,7 +156,9 @@
         "name": "Server integration",
         "prefix": "k3Qx9Zt2",
         "secretPrefix": "pb_test_k3Qx9Zt2",
-        "scopes": ["passes:read"],
+        "scopes": [
+          "passes:read"
+        ],
         "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
@@ -141,11 +167,19 @@
         "expiresAt": 1798124400000,
         "revokedAt": null,
         "kind": "service",
-        "roles": ["org_admin"],
+        "roles": [
+          "org_admin"
+        ],
         "retireAt": 1796137200000,
-        "ipAllow": ["203.0.113.0/24"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "passStyles": ["generic"],
+        "ipAllow": [
+          "203.0.113.0/24"
+        ],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "passStyles": [
+          "generic"
+        ],
         "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": null
@@ -164,7 +198,9 @@
         "name": "Server integration",
         "prefix": "p7Wm4Hn8",
         "secretPrefix": "pb_test_p7Wm4Hn8",
-        "scopes": ["passes:read"],
+        "scopes": [
+          "passes:read"
+        ],
         "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
@@ -173,11 +209,19 @@
         "expiresAt": 1798124400000,
         "revokedAt": null,
         "kind": "service",
-        "roles": ["org_admin"],
+        "roles": [
+          "org_admin"
+        ],
         "retireAt": null,
-        "ipAllow": ["203.0.113.0/24"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "passStyles": ["generic"],
+        "ipAllow": [
+          "203.0.113.0/24"
+        ],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "passStyles": [
+          "generic"
+        ],
         "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000021",
@@ -189,7 +233,9 @@
         "name": "Server integration",
         "prefix": "k3Qx9Zt2",
         "secretPrefix": "pb_test_k3Qx9Zt2",
-        "scopes": ["passes:read"],
+        "scopes": [
+          "passes:read"
+        ],
         "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
@@ -198,11 +244,19 @@
         "expiresAt": 1798124400000,
         "revokedAt": null,
         "kind": "service",
-        "roles": ["org_admin"],
+        "roles": [
+          "org_admin"
+        ],
         "retireAt": 1796137200000,
-        "ipAllow": ["203.0.113.0/24"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "passStyles": ["generic"],
+        "ipAllow": [
+          "203.0.113.0/24"
+        ],
+        "templateIds": [
+          "0193a1b2-7c00-7000-8000-0000000000b1"
+        ],
+        "passStyles": [
+          "generic"
+        ],
         "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": null
@@ -225,7 +279,9 @@
           "name": "Server integration",
           "prefix": "k3Qx9Zt2",
           "secretPrefix": "pb_test_k3Qx9Zt2",
-          "scopes": ["passes:read"],
+          "scopes": [
+            "passes:read"
+          ],
           "mode": "test",
           "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
           "createdByName": "Sam Rivera",
@@ -234,11 +290,19 @@
           "expiresAt": 1798124400000,
           "revokedAt": null,
           "kind": "service",
-          "roles": ["org_admin"],
+          "roles": [
+            "org_admin"
+          ],
           "retireAt": null,
-          "ipAllow": ["203.0.113.0/24"],
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "passStyles": ["generic"],
+          "ipAllow": [
+            "203.0.113.0/24"
+          ],
+          "templateIds": [
+            "0193a1b2-7c00-7000-8000-0000000000b1"
+          ],
+          "passStyles": [
+            "generic"
+          ],
           "rateTier": "standard",
           "parentKeyId": null,
           "rotatedFrom": null
@@ -254,8 +318,12 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Server integration",
       "kind": "service",
-      "scopes": ["passes:read"],
-      "roles": ["org_admin"]
+      "scopes": [
+        "passes:read"
+      ],
+      "roles": [
+        "org_admin"
+      ]
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-bd52f1bbce91",
@@ -263,7 +331,9 @@
       "name": "Server integration",
       "prefix": "k3Qx9Zt2",
       "secretPrefix": "pb_test_k3Qx9Zt2",
-      "scopes": ["passes:read"],
+      "scopes": [
+        "passes:read"
+      ],
       "mode": "test",
       "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
       "createdByName": "Sam Rivera",
@@ -272,11 +342,19 @@
       "expiresAt": 1798124400000,
       "revokedAt": null,
       "kind": "service",
-      "roles": ["org_admin"],
+      "roles": [
+        "org_admin"
+      ],
       "retireAt": null,
-      "ipAllow": ["203.0.113.0/24"],
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "passStyles": ["generic"],
+      "ipAllow": [
+        "203.0.113.0/24"
+      ],
+      "templateIds": [
+        "0193a1b2-7c00-7000-8000-0000000000b1"
+      ],
+      "passStyles": [
+        "generic"
+      ],
       "rateTier": "standard",
       "parentKeyId": null,
       "rotatedFrom": null,

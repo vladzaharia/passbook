@@ -29,7 +29,9 @@
     "description": "Creates a bundle of up to 10 passes with one link.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "passIds": ["0193a1b2-7c00-7000-8000-0000000000c1"],
+      "passIds": [
+        "0193a1b2-7c00-7000-8000-0000000000c1"
+      ],
       "name": "Family pack",
       "holderEmail": "ada@example.com",
       "sendEmail": true
