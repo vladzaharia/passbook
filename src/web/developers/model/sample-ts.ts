@@ -23,8 +23,12 @@ export function bodyOf(op: SampleOp): Json | undefined {
 }
 /** The query to send: what the call needs, and a page size where the operation takes one. */
 export function queryOf(op: SampleOp): Record<string, Json> {
-  const limit = op.paged && op.fields.some((f) => f.where === 'query' && f.name === 'limit');
-  return { ...op.sample.query, ...(limit ? { limit: 25 } : {}) };
+  const field = op.paged
+    ? op.fields.find((f) => f.where === 'query' && f.name === 'limit')
+    : undefined;
+  // 25, or the route's own maximum when it is lower (the type label carries it as `≤ N`).
+  const max = Number(field?.type.match(/≤ (\d+)/)?.[1] ?? 25);
+  return { ...op.sample.query, ...(field ? { limit: Math.min(25, max) } : {}) };
 }
 
 /**
