@@ -127,6 +127,8 @@ test('the portal saves the same door view, and an ended pass page drops the copy
   const page = await ctx.newPage();
   await signInHolder(page, email);
   await page.goto(`/passes/${pass.id}`);
+  // Before the save script wires the host, the lead is a plain link to the door view: wait for it.
+  await expect(page.locator('[data-save-phone][data-save-ready]').first()).toBeAttached();
   await page.getByRole('link', { name: 'Save to this phone' }).first().click();
   const sheet = page.getByRole('dialog', { name: 'Add to Home screen' });
   await expect(sheet).toBeVisible();

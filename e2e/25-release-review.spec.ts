@@ -16,16 +16,16 @@ const HASH = /\b[0-9a-f]{12,}\b/;
 /** Rendered text only: a closed Technical details disclosure does not count. */
 const shown = { useInnerText: true } as const;
 
-/** Moves the new-pass wizard to the details step, choosing the org and template when asked. */
+/** Moves the new-pass wizard to the details step, choosing the org first when it is not already chosen. */
 async function toDetails(page: Page, orgName: string, templateName: string) {
   const name = page.getByRole('textbox', { name: 'Name', exact: true });
-  for (let step = 0; step < 4 && !(await name.isVisible()); step++) {
-    const org = page.getByText(orgName, { exact: true }).first();
-    const template = page.getByText(templateName, { exact: true }).first();
-    if (await template.isVisible()) await template.click();
-    else if (await org.isVisible()) await org.click();
-    await page.getByRole('button', { name: 'Next' }).click();
-  }
+  const org = page.getByRole('main').getByText(orgName, { exact: true }).first();
+  const template = page.getByText(templateName, { exact: true }).first();
+  // The steps load before they show: wait for the org or the template tile, never click through a skeleton.
+  await expect(template.or(org).first()).toBeVisible();
+  if (!(await template.isVisible())) await org.click();
+  await template.click();
+  await page.getByRole('button', { name: 'Next' }).click();
   await expect(name).toBeVisible();
 }
 

@@ -133,7 +133,7 @@ test('pair, Android barcode check-in, duplicate protection and undo', async ({ b
         const height = width === 1180 ? 820 : 844;
         // Card zone (ui/scan.css): top token, and a bottom that clears the buddy's seat.
         const top = width < 640 ? 117 : width >= 1024 ? 108 : 117;
-        const limit = height - (width >= 1024 ? 312 : width < 640 ? 224 : 314);
+        const limit = height - (width >= 1024 ? 312 : width < 640 ? 252 : 314);
         const bottom = Math.round((box?.y ?? 0) + (box?.height ?? 0));
         expect(box?.y).toBeGreaterThanOrEqual(top);
         expect(bottom).toBeLessThanOrEqual(limit);

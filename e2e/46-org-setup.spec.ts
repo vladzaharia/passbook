@@ -259,6 +259,7 @@ test('a template opts out of Mobile and the org page counts it', async ({ page }
   const confirm = page.getByRole('dialog', { name: 'Save channels?' });
   if (await confirm.isVisible().catch(() => false))
     await confirm.getByRole('button', { name: 'Save' }).click();
+  await expect(page.getByRole('region', { name: 'Unsaved changes' })).toBeHidden();
   await expect(mobile.getByRole('radio', { name: 'Off' })).toBeChecked();
   await shoot(page, 'o10-4-template-channels');
 
