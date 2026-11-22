@@ -133,4 +133,31 @@ describe('rollout card', () => {
     mount();
     expect(await screen.findByText(/The rebuild did not start/)).toBeInTheDocument();
   });
+
+  it('shows what changed between the two versions on request', async () => {
+    stubFetch({
+      '/api/v1/templates/t1/rollout': () =>
+        json(
+          rollout({
+            changes: [
+              {
+                group: 'colors',
+                more: 0,
+                rows: [
+                  {
+                    label: 'Background',
+                    kind: 'changed',
+                    from: { type: 'color', color: '#000000' },
+                    to: { type: 'color', color: '#ffffff' },
+                  },
+                ],
+              },
+            ],
+          }),
+        ),
+    });
+    mount();
+    await userEvent.click(await screen.findByRole('button', { name: /What changed v1 → v2/ }));
+    expect(await screen.findByText('Background')).toBeInTheDocument();
+  });
 });
