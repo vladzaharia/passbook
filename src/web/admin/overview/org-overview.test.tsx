@@ -3,15 +3,15 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
-import { newOrgFacts, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { resetModeForTests } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 import { resetShownCounts } from './count.ts';
 import { audit, memoryStorage, orgActivity, overview } from './overview-fixtures.ts';
 
 const READER: OrgCapability[] = ['org:read', 'passes:read'];
-const member = (capabilities: OrgCapability[] = [...READER, 'audit:read', 'passes:operate']) =>
-  membershipFixture('o1', { orgName: 'Northwind', capabilities });
+const member = (
+  capabilities: OrgCapability[] = [...READER, 'audit:read', 'passes:operate', 'templates:author'],
+) => membershipFixture('o1', { orgName: 'Northwind', capabilities });
 
 const emptySetup = {
   orgs: 1,
@@ -36,9 +36,12 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const handlers = (activity: unknown = orgActivity()) => ({
+const doneSetup = { ...emptySetup, assignedTemplates: 1, walletPasses: 1, releasedTemplates: 1 };
+
+const handlers = (activity: unknown = orgActivity(), setup: typeof emptySetup = emptySetup) => ({
   '/api/v1/metrics/activity': () => json(activity),
-  '/api/v1/metrics/overview': () => json(overview({ setup: emptySetup })),
+  '/api/v1/metrics/overview': () => json(overview({ setup })),
+  '/api/v1/templates': () => json({ items: [], nextCursor: null }),
   '/api/v1/audit': () => json({ ...audit, items: audit.items.map((e) => ({ ...e, orgId: 'o1' })) }),
 });
 
@@ -103,7 +106,7 @@ describe('organization overview', () => {
       memberships: [member([...READER, 'templates:read', 'integrations:read'])],
       selectedOrg: 'o1',
       handlers: {
-        ...handlers(),
+        ...handlers(orgActivity(), doneSetup),
         '/api/v1/orgs/o1/workspace': () =>
           json({
             id: 'o1',
@@ -202,63 +205,80 @@ describe('organization overview', () => {
     expect(calls(fetchMock).filter((u) => u.includes('/metrics/'))).toEqual([]);
   });
 
-  it('shows the buddy and the first-run checklist when there are no passes', async () => {
+  it('shows the first-pass path when there are no passes', async () => {
     await renderApp('/admin', {
       session: 'user',
       memberships: [member()],
       selectedOrg: 'o1',
       handlers: handlers(orgActivity({ templates: [] })),
     });
-    expect(await screen.findByText('No passes yet')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'New pass' })).toHaveAttribute(
-      'href',
-      '/admin/passes/new?orgId=o1',
-    );
-    expect(await screen.findByRole('region', { name: 'Get started' })).toBeInTheDocument();
+    const path = await screen.findByRole('region', { name: 'First pass' });
+    expect(within(path).getByText('Pick a blueprint')).toHaveTextContent('Pick a blueprint');
+    expect(within(path).getByRole('link', { name: 'All blueprints' })).toBeInTheDocument();
+    expect(screen.queryByText('No passes yet')).toBeNull();
     expect(screen.queryByRole('list', { name: 'Totals' })).toBeNull();
   });
 
-  it('leads Get started with Brand and channels: the count and the first three to-dos', async () => {
+  it('folds into a Next row once the first pass is released, and stays closed', async () => {
+    const user = userEvent.setup();
     await renderApp('/admin', {
       session: 'user',
       memberships: [member()],
       selectedOrg: 'o1',
-      handlers: {
-        ...handlers(orgActivity({ templates: [] })),
-        '/api/v1/orgs/o1/pass-setup': () => json(viewOf(newOrgFacts())),
-      },
+      handlers: handlers(orgActivity(), doneSetup),
     });
-    const list = await screen.findByRole('region', { name: 'Get started' });
-    await within(list).findByText('Brand and channels');
-    const steps = within(list).getAllByRole('listitem');
-    expect(steps[0]).toHaveTextContent('Brand and channels');
-    expect(steps[0]).toHaveTextContent('3 to do · Logo · Icon · Support');
-    expect(within(steps[0] as HTMLElement).getByRole('link', { name: 'Open' })).toHaveAttribute(
+    const next = await screen.findByRole('region', { name: 'First pass is live' });
+    expect(within(next).getByRole('link', { name: 'New pass' })).toHaveAttribute(
       'href',
-      '/admin/o/o1/brand',
+      '/admin/o/o1/passes/new',
     );
-    expect(steps[1]).toHaveTextContent('Use a blueprint');
-    // A suggestion never gates: the blueprint step is still open, and the next waits on it as before.
-    expect(within(steps[1] as HTMLElement).getByRole('link', { name: 'Blueprints' })).toBeVisible();
-    expect(within(list).getAllByRole('button', { name: 'Needs step 2' })).toHaveLength(3);
+    expect(within(next).getByRole('link', { name: 'Import' })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'First pass' })).toBeNull();
+    await user.click(within(next).getByRole('button', { name: 'Close' }));
+    expect(screen.queryByRole('region', { name: 'First pass is live' })).toBeNull();
   });
 
-  it('checks the Brand step off once nothing is left to do', async () => {
+  it('shows the Next row in a mode with no passes once the first pass is released', async () => {
     await renderApp('/admin', {
       session: 'user',
       memberships: [member()],
       selectedOrg: 'o1',
-      handlers: {
-        ...handlers(orgActivity({ templates: [] })),
-        '/api/v1/orgs/o1/pass-setup': () => json(viewOf(readyFacts())),
-      },
+      handlers: handlers(orgActivity({ templates: [] }), doneSetup),
     });
-    const list = await screen.findByRole('region', { name: 'Get started' });
-    expect(await within(list).findByText('All set')).toBeInTheDocument();
-    expect(within(list).getAllByText('(done)')).toHaveLength(1);
+    expect(await screen.findByRole('region', { name: 'First pass is live' })).toBeInTheDocument();
   });
 
-  it('shows no Get started checklist in a developer sandbox', async () => {
+  it('shows the path only to a member who can author templates', async () => {
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [member([...READER, 'passes:operate'])],
+      selectedOrg: 'o1',
+      handlers: handlers(orgActivity({ templates: [] })),
+    });
+    expect(await screen.findByText('No passes yet')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'First pass' })).toBeNull();
+  });
+
+  it('keeps the Next row closed per organization', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin', {
+      session: 'user',
+      memberships: [member()],
+      selectedOrg: 'o1',
+      handlers: handlers(orgActivity(), doneSetup),
+    });
+    await user.click(
+      within(await screen.findByRole('region', { name: 'First pass is live' })).getByRole(
+        'button',
+        {
+          name: 'Close',
+        },
+      ),
+    );
+    expect(localStorage.getItem('wallet-first-pass-next-dismissed:o1')).toBe('1');
+  });
+
+  it('shows no first-pass path in a developer sandbox', async () => {
     await renderApp('/admin', {
       session: 'user',
       memberships: [{ ...member(), testOnly: true }],
@@ -266,7 +286,7 @@ describe('organization overview', () => {
       handlers: handlers(orgActivity({ templates: [] })),
     });
     expect(await screen.findByText('No passes yet')).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: 'Get started' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'First pass' })).toBeNull();
   });
 
   it('hides New pass from a member who cannot operate passes', async () => {
@@ -274,7 +294,7 @@ describe('organization overview', () => {
       session: 'user',
       memberships: [member(READER)],
       selectedOrg: 'o1',
-      handlers: handlers(orgActivity({ templates: [] })),
+      handlers: handlers(orgActivity({ templates: [] }), doneSetup),
     });
     expect(await screen.findByText('No passes yet')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'New pass' })).toBeNull();
@@ -328,7 +348,7 @@ describe.each(COMBOS)('organization overview axe at %i, %s theme', (width, theme
       selectedOrg: 'o1',
       handlers: handlers(orgActivity({ templates: [] })),
     });
-    await screen.findByRole('region', { name: 'Get started' });
+    await screen.findByRole('region', { name: 'First pass' });
     expect((await axe(document.body)).violations).toEqual([]);
   });
 });

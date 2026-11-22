@@ -37,7 +37,6 @@ export function TemplateDetailHeader({
   onTry,
   onRelease,
   onReview,
-  tryPending = false,
 }: {
   template: Template;
   crumbs: Crumb[];
@@ -58,7 +57,6 @@ export function TemplateDetailHeader({
   onTry: () => void;
   onRelease: () => void;
   onReview: () => void;
-  tryPending?: boolean;
 }) {
   const baked = t.origin === 'baked';
   const archived = t.status === 'archived';
@@ -127,7 +125,6 @@ export function TemplateDetailHeader({
               onTry={onTry}
               onRelease={onRelease}
               onReview={onReview}
-              pending={tryPending}
             />
           ) : showNewPass ? (
             <Button

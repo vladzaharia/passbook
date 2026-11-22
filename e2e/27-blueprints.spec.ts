@@ -44,11 +44,10 @@ test('Use blueprint: designer draft, Create template, release, then a pass', asy
   await page.goto(`/admin/blueprints?orgId=${encodeURIComponent(seed.org.id)}`);
   await expect(page.getByRole('heading', { level: 1, name: 'Blueprints' })).toBeVisible();
   await page.getByRole('button', { name: 'Use Balance card' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Use blueprint' });
-  await dialog.getByRole('combobox', { name: /^Organization/ }).click();
-  await page.getByRole('option', { name: seed.org.name }).click();
-  await dialog.getByRole('textbox', { name: /^Name/ }).fill(name);
-  await dialog.getByRole('button', { name: 'Open designer' }).click();
+  // Use leads to Make it yours (the org is in scope); the designer is one button away.
+  await expect(page.getByRole('heading', { level: 1, name: 'Make it yours' })).toBeVisible();
+  await page.getByRole('textbox', { name: /^Name/ }).fill(name);
+  await page.getByRole('button', { name: 'Open designer' }).click();
 
   await page.waitForURL((u) => u.pathname.endsWith('/templates/new'));
   await expect(page.getByRole('heading', { level: 1, name: `Design ${name}` })).toBeVisible();
@@ -60,7 +59,6 @@ test('Use blueprint: designer draft, Create template, release, then a pass', asy
   );
   await page.getByRole('button', { name: 'Create template' }).click();
   await page.waitForURL((u) => /^\/admin\/o\/[^/]+\/templates\/[0-9a-f-]+$/.test(u.pathname));
-  await expect(page.getByText('Template created', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('From Balance card')).toBeVisible();
   const templateId = new URL(page.url()).pathname.split('/').pop() as string;
 

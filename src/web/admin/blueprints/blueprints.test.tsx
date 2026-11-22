@@ -151,7 +151,8 @@ describe('Use blueprint', () => {
       handlers: { ...detailHandlers({ activeVersion: 'v1' }), ...handlers },
     });
     await user.click(await screen.findByRole('button', { name: 'Use blueprint' }));
-    return { ...rendered, dialog: await screen.findByRole('dialog', { name: 'Use blueprint' }) };
+    await screen.findByRole('heading', { name: 'Make it yours', level: 1 });
+    return { ...rendered, dialog: document.body };
   }
 
   it('asks for a name before Open designer', async () => {
@@ -226,7 +227,6 @@ describe('Use blueprint', () => {
     await waitFor(() =>
       expect(router.state.location.pathname).toMatch(/^\/admin\/o\/[^/]+\/templates\/made1$/),
     );
-    expect(await screen.findByText('Template created')).toBeInTheDocument();
   });
 
   it('on a phone creates the template from the dialog', async () => {
@@ -241,9 +241,8 @@ describe('Use blueprint', () => {
       '/api/v1/templates/made1': () => json(made),
       '/api/v1/templates/made1/preview': preview,
     });
-    await user.click(within(dialog).getByRole('button', { name: 'Create template' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     await waitFor(() => expect(bodies).toEqual([{ orgId: ORG.id, name: 'Balance card' }]));
-    expect(await screen.findByText('Template created')).toBeInTheDocument();
   });
 
   it('shows a taken name as the form error', async () => {
@@ -253,7 +252,7 @@ describe('Use blueprint', () => {
       [`/api/v1/templates/${ID}/use`]: () =>
         problem(409, 'TEMPLATE_EXISTS', 'A template with this name exists. Pick another name.'),
     });
-    await user.click(within(dialog).getByRole('button', { name: 'Create template' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     expect(await within(dialog).findByText(/A template with this name exists/)).toBeInTheDocument();
   });
 });
@@ -358,6 +357,8 @@ describe('the new-pass picker', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Copper card/ })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Use blueprint' }));
-    expect(await screen.findByRole('dialog', { name: 'Use blueprint' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Make it yours', level: 1 }),
+    ).toBeInTheDocument();
   });
 });

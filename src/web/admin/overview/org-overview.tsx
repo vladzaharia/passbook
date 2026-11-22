@@ -21,7 +21,8 @@ import {
   useDelayed,
 } from '@/web/ui/index.ts';
 import { LineChart } from './chart.tsx';
-import { GetStarted, SandboxCard, setupDone, useGetStartedDismissed } from './get-started.tsx';
+import { FirstPassCard, NextRow, useNextRowDismissed } from './first-pass.tsx';
+import { currentStep } from './first-pass-state.ts';
 import { RANGE_LABEL } from './kpis.tsx';
 import { OrgCounts } from './org-overview-counts.tsx';
 import { useOrgActivity, useOrgSetup } from './org-overview-queries.ts';
@@ -31,6 +32,7 @@ import './org-overview.css';
 import type { OverviewSearch } from './overview-search.ts';
 import type { Range } from './range.ts';
 import { OrgRecentActivity } from './recent-activity.tsx';
+import { SandboxCard } from './sandbox-card.tsx';
 
 function OrgSkeleton() {
   return (
@@ -100,7 +102,7 @@ function OrgCharts({
 
 /**
  * The member's Overview: this organization's passes by template over 24 hours, 7 or 30 days. With
- * no passes yet it is the buddy with an empty fan and the first-run checklist.
+ * no passes yet it is the first-pass path; once the path is done, a Next row.
  */
 export function OrgOverviewPage({
   search,
@@ -122,14 +124,21 @@ export function OrgOverviewPage({
   const busy = useDelayed(activity.isPlaceholderData && activity.isFetching, 150);
   const empty = data !== undefined && data.templates.length === 0;
   const sandbox = membership?.testOnly === true;
-  const [dismissed, dismiss] = useGetStartedDismissed();
-  const setup = useOrgSetup(orgId, principal, empty && !dismissed && !sandbox);
+  const [dismissed, dismiss] = useNextRowDismissed(orgId);
+  const setup = useOrgSetup(orgId, principal, !dismissed && !sandbox);
   const shownRange = activity.isPlaceholderData ? (data?.range ?? range) : range;
   const countScope = JSON.stringify(['org', principal ?? null, orgId ?? null, mode]);
   const canOperate = caps.includes('passes:operate');
   // A sandbox is set up by the quickstart and never holds a wallet pass: nothing to walk through.
-  const checklist =
-    setup.data !== undefined && !setupDone(setup.data.setup) && !membership?.testOnly;
+  const step = setup.data && !sandbox ? currentStep(setup.data.setup) : undefined;
+  const path =
+    orgId && caps.includes('templates:author') && setup.data && step ? (
+      <FirstPassCard orgId={orgId} setup={setup.data.setup} />
+    ) : null;
+  const next =
+    orgId && canOperate && setup.data && step === null && !dismissed ? (
+      <NextRow orgId={orgId} setup={setup.data.setup} onDismiss={dismiss} />
+    ) : null;
   const picker = (
     <Select
       aria-label="Range"
@@ -148,19 +157,19 @@ export function OrgOverviewPage({
       />
       <div className="flex flex-col gap-6">
         {sandbox ? <SandboxCard /> : null}
-        {orgId ? <OrgCounts orgId={orgId} caps={caps} /> : null}
+        {orgId && !path && !(empty && setup.isPending && !dismissed && !sandbox) ? (
+          <OrgCounts orgId={orgId} caps={caps} />
+        ) : null}
         {activity.isPending ? (
           <OrgSkeleton />
         ) : activity.isError || !data ? (
           <ErrorState error={activity.error} onRetry={() => activity.refetch()} />
         ) : empty ? (
-          // The checklist is the page's empty state while it is up; the box returns once it is gone.
-          checklist && !dismissed && setup.data ? (
-            <GetStarted
-              setup={setup.data.setup}
-              onDismiss={dismiss}
-              {...(orgId ? { orgId } : {})}
-            />
+          // The path is the page's empty state while it is up; the box returns once it is gone.
+          (path ??
+          next ??
+          (setup.isPending && !dismissed && !sandbox ? (
+            <Skeleton className="h-64" />
           ) : (
             <EmptyState
               art="passes"
@@ -173,9 +182,10 @@ export function OrgOverviewPage({
                 ) : undefined
               }
             />
-          )
+          )))
         ) : (
           <>
+            {path ?? next}
             {activity.isPlaceholderData ? (
               <p role="status" className="text-sm text-fg-muted">
                 Updating metrics. Showing {RANGE_LABEL[shownRange].toLowerCase()} until they arrive.

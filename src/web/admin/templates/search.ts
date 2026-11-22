@@ -7,6 +7,8 @@ export const templateDetailSearchSchema = z.object({
     .catch(undefined),
   /** The version under review: opens the review dialog. */
   review: z.string().max(64).optional().catch(undefined),
+  /** From the Overview path: opens Try on my phone on the draft. */
+  try: z.literal('1').optional().catch(undefined),
 });
 
 export const templateListSearchSchema = z.object({

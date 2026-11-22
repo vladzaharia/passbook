@@ -98,6 +98,7 @@ import { Route as AdminOOrgIdTemplatesUploadRouteImport } from './routes/admin/o
 import { Route as AdminOOrgIdTestInboxIndexRouteImport } from './routes/admin/o/$orgId/test-inbox/index'
 import { Route as AdminOOrgIdVisitorsIndexRouteImport } from './routes/admin/o/$orgId/visitors/index'
 import { Route as AdminOOrgIdWalletAccountsIndexRouteImport } from './routes/admin/o/$orgId/wallet-accounts/index'
+import { Route as AdminOOrgIdBlueprintsBlueprintIdUseRouteImport } from './routes/admin/o/$orgId/blueprints/$blueprintId_.use'
 import { Route as AdminOOrgIdConnectionsWebhooksEndpointIdRouteImport } from './routes/admin/o/$orgId/connections/webhooks.$endpointId'
 import { Route as AdminOOrgIdConnectionsWebhooksNewRouteImport } from './routes/admin/o/$orgId/connections/webhooks.new'
 import { Route as AdminOOrgIdPassesChangeIndexRouteImport } from './routes/admin/o/$orgId/passes/change/index'
@@ -593,6 +594,12 @@ const AdminOOrgIdWalletAccountsIndexRoute =
     path: '/wallet-accounts/',
     getParentRoute: () => AdminOOrgIdRouteRoute,
   } as any)
+const AdminOOrgIdBlueprintsBlueprintIdUseRoute =
+  AdminOOrgIdBlueprintsBlueprintIdUseRouteImport.update({
+    id: '/blueprints/$blueprintId_/use',
+    path: '/blueprints/$blueprintId/use',
+    getParentRoute: () => AdminOOrgIdRouteRoute,
+  } as any)
 const AdminOOrgIdConnectionsWebhooksEndpointIdRoute =
   AdminOOrgIdConnectionsWebhooksEndpointIdRouteImport.update({
     id: '/connections/webhooks/$endpointId',
@@ -750,6 +757,7 @@ export interface FileRoutesByFullPath {
   '/admin/o/$orgId/test-inbox/': typeof AdminOOrgIdTestInboxIndexRoute
   '/admin/o/$orgId/visitors/': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
+  '/admin/o/$orgId/blueprints/$blueprintId/use': typeof AdminOOrgIdBlueprintsBlueprintIdUseRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
   '/admin/o/$orgId/passes/change/$runId': typeof AdminOOrgIdPassesChangeRunIdRoute
@@ -849,6 +857,7 @@ export interface FileRoutesByTo {
   '/admin/o/$orgId/test-inbox': typeof AdminOOrgIdTestInboxIndexRoute
   '/admin/o/$orgId/visitors': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts': typeof AdminOOrgIdWalletAccountsIndexRoute
+  '/admin/o/$orgId/blueprints/$blueprintId/use': typeof AdminOOrgIdBlueprintsBlueprintIdUseRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
   '/admin/o/$orgId/passes/change/$runId': typeof AdminOOrgIdPassesChangeRunIdRoute
@@ -952,6 +961,7 @@ export interface FileRoutesById {
   '/admin/o/$orgId/test-inbox/': typeof AdminOOrgIdTestInboxIndexRoute
   '/admin/o/$orgId/visitors/': typeof AdminOOrgIdVisitorsIndexRoute
   '/admin/o/$orgId/wallet-accounts/': typeof AdminOOrgIdWalletAccountsIndexRoute
+  '/admin/o/$orgId/blueprints/$blueprintId_/use': typeof AdminOOrgIdBlueprintsBlueprintIdUseRoute
   '/admin/o/$orgId/connections/webhooks/$endpointId': typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   '/admin/o/$orgId/connections/webhooks/new': typeof AdminOOrgIdConnectionsWebhooksNewRoute
   '/admin/o/$orgId/passes/change/$runId': typeof AdminOOrgIdPassesChangeRunIdRoute
@@ -1056,6 +1066,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/test-inbox/'
     | '/admin/o/$orgId/visitors/'
     | '/admin/o/$orgId/wallet-accounts/'
+    | '/admin/o/$orgId/blueprints/$blueprintId/use'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
     | '/admin/o/$orgId/passes/change/$runId'
@@ -1155,6 +1166,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/test-inbox'
     | '/admin/o/$orgId/visitors'
     | '/admin/o/$orgId/wallet-accounts'
+    | '/admin/o/$orgId/blueprints/$blueprintId/use'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
     | '/admin/o/$orgId/passes/change/$runId'
@@ -1257,6 +1269,7 @@ export interface FileRouteTypes {
     | '/admin/o/$orgId/test-inbox/'
     | '/admin/o/$orgId/visitors/'
     | '/admin/o/$orgId/wallet-accounts/'
+    | '/admin/o/$orgId/blueprints/$blueprintId_/use'
     | '/admin/o/$orgId/connections/webhooks/$endpointId'
     | '/admin/o/$orgId/connections/webhooks/new'
     | '/admin/o/$orgId/passes/change/$runId'
@@ -1903,6 +1916,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOOrgIdWalletAccountsIndexRouteImport
       parentRoute: typeof AdminOOrgIdRouteRoute
     }
+    '/admin/o/$orgId/blueprints/$blueprintId_/use': {
+      id: '/admin/o/$orgId/blueprints/$blueprintId_/use'
+      path: '/blueprints/$blueprintId/use'
+      fullPath: '/admin/o/$orgId/blueprints/$blueprintId/use'
+      preLoaderRoute: typeof AdminOOrgIdBlueprintsBlueprintIdUseRouteImport
+      parentRoute: typeof AdminOOrgIdRouteRoute
+    }
     '/admin/o/$orgId/connections/webhooks/$endpointId': {
       id: '/admin/o/$orgId/connections/webhooks/$endpointId'
       path: '/connections/webhooks/$endpointId'
@@ -2049,6 +2069,7 @@ interface AdminOOrgIdRouteRouteChildren {
   AdminOOrgIdTestInboxIndexRoute: typeof AdminOOrgIdTestInboxIndexRoute
   AdminOOrgIdVisitorsIndexRoute: typeof AdminOOrgIdVisitorsIndexRoute
   AdminOOrgIdWalletAccountsIndexRoute: typeof AdminOOrgIdWalletAccountsIndexRoute
+  AdminOOrgIdBlueprintsBlueprintIdUseRoute: typeof AdminOOrgIdBlueprintsBlueprintIdUseRoute
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute: typeof AdminOOrgIdConnectionsWebhooksEndpointIdRoute
   AdminOOrgIdConnectionsWebhooksNewRoute: typeof AdminOOrgIdConnectionsWebhooksNewRoute
   AdminOOrgIdPassesChangeRunIdRoute: typeof AdminOOrgIdPassesChangeRunIdRoute
@@ -2093,6 +2114,8 @@ const AdminOOrgIdRouteRouteChildren: AdminOOrgIdRouteRouteChildren = {
   AdminOOrgIdTestInboxIndexRoute: AdminOOrgIdTestInboxIndexRoute,
   AdminOOrgIdVisitorsIndexRoute: AdminOOrgIdVisitorsIndexRoute,
   AdminOOrgIdWalletAccountsIndexRoute: AdminOOrgIdWalletAccountsIndexRoute,
+  AdminOOrgIdBlueprintsBlueprintIdUseRoute:
+    AdminOOrgIdBlueprintsBlueprintIdUseRoute,
   AdminOOrgIdConnectionsWebhooksEndpointIdRoute:
     AdminOOrgIdConnectionsWebhooksEndpointIdRoute,
   AdminOOrgIdConnectionsWebhooksNewRoute:

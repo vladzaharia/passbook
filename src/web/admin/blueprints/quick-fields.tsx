@@ -16,6 +16,17 @@ const objectUrl = (file: Blob) =>
 
 const COPY = TEMPLATE_BRAND_COPY.designer;
 
+/** Offered until a logo brings its own: teal, violet, crimson, orange, blue, ink. */
+export const PRESETS: { name: string; rgb: Rgb }[] = [
+  { name: 'Teal', rgb: { r: 15, g: 118, b: 110 } },
+  { name: 'Violet', rgb: { r: 67, g: 56, b: 202 } },
+  { name: 'Crimson', rgb: { r: 190, g: 18, b: 60 } },
+  { name: 'Orange', rgb: { r: 194, g: 65, b: 12 } },
+  { name: 'Blue', rgb: { r: 29, g: 78, b: 216 } },
+  { name: 'Ink', rgb: { r: 15, g: 23, b: 42 } },
+];
+const presetName = (c: Rgb) => PRESETS.find((p) => toHex(p.rgb) === toHex(c))?.name;
+
 /** What the organization already sets, and whether this person may write the organization's brand. */
 export interface OrgBrandInfo {
   logoUrl: string | null;
@@ -31,7 +42,7 @@ export interface QuickState {
   currency: string | undefined;
   setGoal: (goal: number | undefined) => void;
   setCurrency: (code: string | undefined) => void;
-  logo: { asset: DraftAsset; url: string; name: string } | null;
+  logo: { asset: DraftAsset; url: string; name: string; file: File } | null;
   color: Rgb | undefined;
   swatches: Rgb[];
   problem: string | undefined;
@@ -45,7 +56,7 @@ export interface QuickState {
 export function useQuickFields(): QuickState {
   const [logo, setLogo] = useState<QuickState['logo']>(null);
   const [color, setColor] = useState<Rgb | undefined>(undefined);
-  const [swatches, setSwatches] = useState<Rgb[]>([]);
+  const [swatches, setSwatches] = useState<Rgb[]>(PRESETS.map((p) => p.rgb));
   const [problem, setProblem] = useState<string>();
   const [goal, setGoal] = useState<number>();
   const [currency, setCurrency] = useState<string>();
@@ -59,8 +70,8 @@ export function useQuickFields(): QuickState {
     const placed = await placeLogo(file);
     if (!placed.ok) return setProblem(placed.message);
     const found = await logoColors(file);
-    setLogo({ asset: placed.asset, url: objectUrl(file), name: file.name });
-    setSwatches(found);
+    setLogo({ asset: placed.asset, url: objectUrl(file), name: file.name, file });
+    if (found.length > 0) setSwatches(found);
     if (found[0]) setColor(found[0]);
   }
 
@@ -83,7 +94,7 @@ export function useQuickFields(): QuickState {
     takeLogo,
     clearLogo: () => {
       setLogo(null);
-      setSwatches([]);
+      setSwatches(PRESETS.map((p) => p.rgb));
       setProblem(undefined);
     },
     pick: setColor,
@@ -205,7 +216,7 @@ export function QuickFields({
                   key={toHex(s)}
                   type="button"
                   aria-pressed={same(color, s)}
-                  aria-label={toHex(s)}
+                  aria-label={presetName(s) ?? toHex(s)}
                   onClick={() => state.pick(s)}
                   style={{ background: toHex(s) }}
                   className={cn(

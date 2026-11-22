@@ -34,6 +34,7 @@ import { stripAlt } from './releases/next-action.ts';
 import { ReleaseStrip } from './releases/release-strip.tsx';
 import { TemplateReleasesPanel } from './releases/template-releases-panel.tsx';
 import { useReleaseControls } from './releases/use-release-controls.tsx';
+import { useTryOnArrival } from './releases/use-try-on-arrival.ts';
 import type { templateDetailSearchSchema } from './search.ts';
 import { DuplicateDialog, OrgDialog } from './template-dialogs.tsx';
 import {
@@ -53,12 +54,13 @@ export function TemplateDetailContent({
   template: t,
   tab,
   review,
+  tryNow,
   crumbs,
 }: {
   template: Template;
   tab: Tab;
-  /** The version under review: the review dialog is open on it. */
-  review?: string | undefined;
+  review?: string | undefined; // The version under review: its dialog is open.
+  tryNow?: boolean | undefined;
   crumbs: Crumb[];
 }) {
   const navigate = useNavigate();
@@ -107,6 +109,7 @@ export function TemplateDetailContent({
     onClose: () => void navigate({ to: '.', search: {}, replace: true }),
   });
   const alt = state ? stripAlt(state) : null;
+  useTryOnArrival(tryNow === true, state?.next === 'try' ? draftHash : '', controls.tryVersion);
   const scanning = useScanPasses(t);
   const created = useCreated<TemplateCreated>(`template:${t.id}`);
   const importedVersion = useCreated<string>(`template:${t.id}:version`);
@@ -198,7 +201,6 @@ export function TemplateDetailContent({
         onTry={() => void controls.tryVersion(draftHash)}
         onRelease={() => controls.release(draftHash)}
         onReview={() => void navigate({ to: '.', search: { review: draftHash } })}
-        tryPending={controls.trying}
       />
       {state && !archived ? (
         <ReleaseStrip
