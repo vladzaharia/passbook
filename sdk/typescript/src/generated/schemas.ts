@@ -4211,6 +4211,22 @@ export type TemplatePage = {
   nextCursor: string | null;
 };
 
+export type TemplateRollout = {
+  releaseVersion: string | null;
+  total: number;
+  onRelease: number;
+  remaining: number;
+  failed: Array<{
+    passId: string;
+    title: string | null;
+    reason: string;
+  }>;
+  failedCount: number;
+  startedAt: number | null;
+  runId: string | null;
+  running: boolean;
+};
+
 export type TemplateSummary = {
   id: string;
   orgId: string | null;

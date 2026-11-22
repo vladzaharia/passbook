@@ -69,6 +69,7 @@ import {
   ReleaseResponseSchema,
   ReleaseTemplateSchema,
 } from '../../shared/contracts/template-release-flow.ts';
+import { TemplateRolloutSchema } from '../../shared/contracts/template-rollout.ts';
 import {
   TemplateDetailSchema,
   TemplateInputSchemaSchema,
@@ -132,6 +133,7 @@ const names = {
   OrgBranding: OrgBrandingSchema,
   Broadcast: BroadcastSchema,
   BroadcastUndo: BroadcastUndoResultSchema,
+  TemplateRollout: TemplateRolloutSchema,
   PassImportMappings: SavedImportMappingsResultSchema,
   PassImportUndo: PassImportUndoResultSchema,
   PassSummary: PassSummarySchema,

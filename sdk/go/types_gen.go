@@ -6915,6 +6915,24 @@ type TemplatePage struct {
 	NextCursor *string           `json:"nextCursor"`
 }
 
+type TemplateRollout struct {
+	ReleaseVersion *string                     `json:"releaseVersion"`
+	Total          int64                       `json:"total"`
+	OnRelease      int64                       `json:"onRelease"`
+	Remaining      int64                       `json:"remaining"`
+	Failed         []TemplateRolloutFailedItem `json:"failed"`
+	FailedCount    int64                       `json:"failedCount"`
+	StartedAt      *int64                      `json:"startedAt"`
+	RunID          *string                     `json:"runId"`
+	Running        bool                        `json:"running"`
+}
+
+type TemplateRolloutFailedItem struct {
+	PassID string  `json:"passId"`
+	Title  *string `json:"title"`
+	Reason string  `json:"reason"`
+}
+
 type TemplateSummary struct {
 	ID            string         `json:"id"`
 	OrgID         *string        `json:"orgId"`
@@ -7398,23 +7416,7 @@ type TemplatesRetrieveRolloutQuery struct {
 	Mode string `json:"mode"`
 }
 
-type TemplatesRetrieveRolloutResult struct {
-	ReleaseVersion *string                                    `json:"releaseVersion"`
-	Total          int64                                      `json:"total"`
-	OnRelease      int64                                      `json:"onRelease"`
-	Remaining      int64                                      `json:"remaining"`
-	Failed         []TemplatesRetrieveRolloutResultFailedItem `json:"failed"`
-	FailedCount    int64                                      `json:"failedCount"`
-	StartedAt      *int64                                     `json:"startedAt"`
-	RunID          *string                                    `json:"runId"`
-	Running        bool                                       `json:"running"`
-}
-
-type TemplatesRetrieveRolloutResultFailedItem struct {
-	PassID string  `json:"passId"`
-	Title  *string `json:"title"`
-	Reason string  `json:"reason"`
-}
+type TemplatesRetrieveRolloutResult = TemplateRollout
 
 type TemplatesRetrieveStampsImpactQuery struct {
 	Goal int64 `json:"goal"`

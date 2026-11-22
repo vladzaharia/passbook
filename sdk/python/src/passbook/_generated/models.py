@@ -955,6 +955,8 @@ __all__ = [
     "TemplateImportsRetrieveResult",
     "TemplateInputSchema",
     "TemplatePage",
+    "TemplateRollout",
+    "TemplateRolloutFailedItem",
     "TemplateSummary",
     "TemplatesCandidatesApproveBody",
     "TemplatesCandidatesApproveParams",
@@ -1014,7 +1016,6 @@ __all__ = [
     "TemplatesRetrieveInputSchemaResult",
     "TemplatesRetrieveResult",
     "TemplatesRetrieveRolloutResult",
-    "TemplatesRetrieveRolloutResultFailedItem",
     "TemplatesRetrieveStampsImpactResult",
     "TemplatesReviewsRequestBody",
     "TemplatesReviewsRequestResult",
@@ -7368,6 +7369,22 @@ class TemplatePage(_Model):
     items: _List[TemplateSummary]
     nextCursor: str | None
 
+class TemplateRollout(_Model):
+    releaseVersion: str | None
+    total: int
+    onRelease: int
+    remaining: int
+    failed: _List[TemplateRolloutFailedItem]
+    failedCount: int
+    startedAt: int | None
+    runId: str | None
+    running: bool
+
+class TemplateRolloutFailedItem(_Model):
+    passId: str
+    title: str | None
+    reason: str
+
 class TemplateSummary(_Model):
     id: str
     orgId: str | None
@@ -7827,22 +7844,6 @@ class TemplatesReleasesRollbackParams(_Model):
     releaseId: str
     candidateHash: str
     expectedGeneration: int
-    reason: str
-
-class TemplatesRetrieveRolloutResult(_Model):
-    releaseVersion: str | None
-    total: int
-    onRelease: int
-    remaining: int
-    failed: _List[TemplatesRetrieveRolloutResultFailedItem]
-    failedCount: int
-    startedAt: int | None
-    runId: str | None
-    running: bool
-
-class TemplatesRetrieveRolloutResultFailedItem(_Model):
-    passId: str
-    title: str | None
     reason: str
 
 class TemplatesRetrieveStampsImpactResult(_Model):
@@ -8636,6 +8637,8 @@ TemplatesReleasesReleaseResult = ReleaseResponse
 TemplatesRetrieveInputSchemaResult = TemplateInputSchema
 
 TemplatesRetrieveResult = TemplateDetail
+
+TemplatesRetrieveRolloutResult = TemplateRollout
 
 TemplatesReviewsRequestBody = ReleaseTemplate
 
