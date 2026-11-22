@@ -169,25 +169,23 @@ export async function createRuntime(
       for (const listener of tagEnded) listener(why);
     },
     capabilities(value) {
-      setNativeCapabilities(value);
-      // Android reads tags continuously: ask for them with every start from now on.
-      const nfc = getNativeCapabilities()?.nfc;
-      const wants = nfc?.continuous === true && nfc.formats.includes('tag-uid');
-      if (wants !== tagReading) {
-        tagReading = wants;
-        native?.setTagReading(wants);
-        const now = store.getSnapshot().state;
-        if (now.started && !now.block && !document.hidden) native?.start();
-      }
-      if (
-        !vasFallbackNoticeShown &&
-        scanner?.settings.reader === 'nfc' &&
-        getNativeCapabilities()?.vas.available === false
-      ) {
-        notice('Wallet pass verification is unavailable. Scan the barcode.', false);
-        vasFallbackNoticeShown = true;
-      }
-      syncCameraMode();
+      void setNativeCapabilities(value).then(() => {
+        // Android reads tags continuously: ask for them with every start from now on.
+        const nfc = getNativeCapabilities()?.nfc;
+        const wants = nfc?.continuous === true && nfc.formats.includes('tag-uid');
+        if (wants !== tagReading) {
+          tagReading = wants;
+          native?.setTagReading(wants);
+          const { started, block } = store.getSnapshot().state;
+          if (started && !block && !document.hidden) native?.start();
+        }
+        const vasOff = getNativeCapabilities()?.vas.available === false;
+        if (!vasFallbackNoticeShown && scanner?.settings.reader === 'nfc' && vasOff) {
+          notice('Wallet pass verification is unavailable. Scan the barcode.', false);
+          vasFallbackNoticeShown = true;
+        }
+        syncCameraMode();
+      });
     },
   });
   native?.customerBranding(customerBrandingOf(session));

@@ -11,8 +11,9 @@ const dist = join(root, 'dist/client');
  * Scanning pages, pass inspection, tables and search controls remain lazy. Route search schemas import
  * only light contract files (pass-list-status.ts), never the pass, scan or template contracts. */
 export const BUDGET_BYTES = 230_000;
-/** The scanner's initial load (scan.html), in gzip bytes: 152.6 kB measured (W12: offline queue sync before polls, PIN reset); trim tracked in known-bugs. */
-export const SCAN_BUDGET_BYTES = 153_000;
+/** The scanner's initial load (scan.html), in gzip bytes: 135.1 kB measured. The session and native-capability
+ * schemas load on demand (they pull most of the contracts): keep new static imports of contracts out of /scan. */
+export const SCAN_BUDGET_BYTES = 140_000;
 /**
  * The developer portal's initial load (developers.html), scripts and stylesheets, in gzip bytes.
  * The pages are prerendered, so this is only the enhancement script and the page CSS; the console,

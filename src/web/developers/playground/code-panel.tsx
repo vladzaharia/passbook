@@ -9,11 +9,16 @@ import { changedLines, snippetsFor } from './snippets.ts';
 
 const FLASH_MS = 1400;
 
-/** Copies, then says "Copied" for a moment. */
-async function copyAndSay(text: string, say: (on: boolean) => void): Promise<void> {
-  if (!(await copyToClipboard(text))) return;
+/** Copies, then says "Copied" for a moment. `timer` holds the reset so unmounting can cancel it. */
+async function copyAndSay(
+  text: string,
+  say: (on: boolean) => void,
+  timer: { current: ReturnType<typeof setTimeout> | undefined; gone: boolean },
+): Promise<void> {
+  if (!(await copyToClipboard(text)) || timer.gone) return;
   say(true);
-  setTimeout(() => say(false), 1600);
+  clearTimeout(timer.current);
+  timer.current = setTimeout(() => say(false), 1600);
 }
 
 /**
@@ -41,6 +46,18 @@ export function CodePanel({
   const previous = useRef<{ key: string; code: string } | null>(null);
   const [changed, setChanged] = useState<ReadonlySet<number>>(new Set());
   const [copied, setCopied] = useState(false);
+  const copyTimer = useRef<{ current: ReturnType<typeof setTimeout> | undefined; gone: boolean }>({
+    current: undefined,
+    gone: false,
+  });
+  useEffect(() => {
+    const timer = copyTimer.current;
+    timer.gone = false;
+    return () => {
+      timer.gone = true;
+      clearTimeout(timer.current);
+    };
+  }, []);
   const key = `${templateId}|${lang}`;
   const code = current?.code ?? '';
   useEffect(() => {
@@ -71,7 +88,7 @@ export function CodePanel({
           type="button"
           className="iconbtn copy push"
           aria-label={copied ? 'Copied' : 'Copy code'}
-          onClick={() => void copyAndSay(code, setCopied)}
+          onClick={() => void copyAndSay(code, setCopied, copyTimer.current)}
         >
           <Copy aria-hidden="true" className="lucide" />
         </button>
