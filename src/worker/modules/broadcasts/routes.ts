@@ -15,6 +15,7 @@ import {
   SendBroadcastSchema,
 } from '../../../shared/contracts/index.ts';
 import { modeOf } from '../../platform/auth.ts';
+import { handleError } from '../../platform/error-handler.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { idempotencyKeyOf, sendOnce } from '../delivery/idempotent-send.ts';
@@ -42,6 +43,7 @@ import {
   sendBroadcast,
 } from './service.ts';
 import { listBroadcastItems, retryBroadcast, updateBroadcast } from './service-edit.ts';
+import { unsupportedFilter } from './unsupported-filter.ts';
 
 type Ctx = Parameters<typeof authOf>[0];
 
@@ -84,6 +86,8 @@ async function scopeOf(
 
 /** /api/v1/broadcasts: messages and scheduled changes for the passes a target matches. */
 export const broadcastsRoutes = createRouter();
+// A target key no filter takes is named by its own code; the app's handler renders everything else.
+broadcastsRoutes.onError((error, c) => handleError(unsupportedFilter(error) ?? error, c));
 guard(broadcastsRoutes, requireTenantSessionOrApiKey('messages:write'));
 
 register(

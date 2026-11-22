@@ -1000,6 +1000,14 @@
     "note": "A change run's lock-screen text; {Label} tokens read each pass's new value (120 characters). Needs notify."
   },
   {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target: unknown keys now refused",
+    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in."
+  },
+  {
     "key": "PATCH /api/v1/broadcasts/{id} body.target.expectCount: optional input field added",
     "class": "additive",
     "operationId": "broadcasts.patchBroadcastsById",
@@ -1016,6 +1024,38 @@
     "note": "A change run on the passes one import created or updated. Exactly one of templateIds, passIds and importId."
   },
   {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target.match[]|0: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target.match[]|0: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target.match[]|1: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target.match[]|1: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target.match[]|2: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target.match[]|2: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target.match[]|3: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target.match[]|3: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
     "key": "PATCH /api/v1/broadcasts/{id} body.target.passIds: optional input field added",
     "class": "additive",
     "operationId": "broadcasts.patchBroadcastsById",
@@ -1024,12 +1064,20 @@
     "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
   },
   {
-    "key": "PATCH /api/v1/broadcasts/{id} request.target: unsupported filter fields refused",
-    "class": "notable",
+    "key": "PATCH /api/v1/broadcasts/{id} body.target.scan|0: unknown keys now refused",
+    "class": "breaking",
     "operationId": "broadcasts.patchBroadcastsById",
     "op": "PATCH /api/v1/broadcasts/{id}",
-    "change": "request.target: unsupported filter fields refused",
-    "note": "A target key the run does not filter by (status, holderEmail, externalId, connectionId) is now 422 BROADCAST_UNSUPPORTED_FILTER, not dropped."
+    "change": "body.target.scan|0: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target.scan|1: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target.scan|1: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
   },
   {
     "key": "PATCH /api/v1/identities/{id} 200.handle: field added",
@@ -1248,6 +1296,14 @@
     "note": "A change run's lock-screen text; {Label} tokens read each pass's new value (120 characters). Needs notify."
   },
   {
+    "key": "POST /api/v1/broadcasts body.target: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "body.target: unknown keys now refused",
+    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in."
+  },
+  {
     "key": "POST /api/v1/broadcasts body.target.expectCount: optional input field added",
     "class": "additive",
     "operationId": "broadcasts.postBroadcasts",
@@ -1264,12 +1320,60 @@
     "note": "A change run on the passes one import created or updated. Exactly one of templateIds, passIds and importId."
   },
   {
+    "key": "POST /api/v1/broadcasts body.target.match[]|0: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "body.target.match[]|0: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "POST /api/v1/broadcasts body.target.match[]|1: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "body.target.match[]|1: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "POST /api/v1/broadcasts body.target.match[]|2: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "body.target.match[]|2: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "POST /api/v1/broadcasts body.target.match[]|3: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "body.target.match[]|3: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
     "key": "POST /api/v1/broadcasts body.target.passIds: optional input field added",
     "class": "additive",
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
     "change": "body.target.passIds: optional input field added",
     "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
+  },
+  {
+    "key": "POST /api/v1/broadcasts body.target.scan|0: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "body.target.scan|0: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "POST /api/v1/broadcasts body.target.scan|1: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "body.target.scan|1: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
   },
   {
     "key": "POST /api/v1/broadcasts optional parameter header:Idempotency-Key added",
@@ -1280,12 +1384,20 @@
     "note": "A retry with the same key returns the first result instead of creating a second run."
   },
   {
-    "key": "POST /api/v1/broadcasts request.target: unsupported filter fields refused",
+    "key": "POST /api/v1/broadcasts request: Idempotency-Key retry with an extra target key",
     "class": "notable",
     "operationId": "broadcasts.postBroadcasts",
     "op": "POST /api/v1/broadcasts",
-    "change": "request.target: unsupported filter fields refused",
-    "note": "A target key the run does not filter by (status, holderEmail, externalId, connectionId) is now 422 BROADCAST_UNSUPPORTED_FILTER, not dropped."
+    "change": "request: Idempotency-Key retry with an extra target key",
+    "note": "A retry of an older request that had an extra target key under the same Idempotency-Key is now 422, not the stored result."
+  },
+  {
+    "key": "POST /api/v1/broadcasts request: templates resolve by the key mode release",
+    "class": "notable",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "request: templates resolve by the key mode release",
+    "note": "A Test key reads templates at their Test release; with no release in the key mode and no active passes it is 404 TEMPLATE_NOT_FOUND."
   },
   {
     "key": "POST /api/v1/broadcasts/{id}/cancel 200.message: field added",
@@ -1408,6 +1520,14 @@
     "note": "The change to preview: per input a value, or {set}, {clear}, {shift} or {add}."
   },
   {
+    "key": "POST /api/v1/broadcasts/preview body.target: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcastsPreview",
+    "op": "POST /api/v1/broadcasts/preview",
+    "change": "body.target: unknown keys now refused",
+    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in."
+  },
+  {
     "key": "POST /api/v1/broadcasts/preview body.target.expectCount: optional input field added",
     "class": "additive",
     "operationId": "broadcasts.postBroadcastsPreview",
@@ -1424,6 +1544,38 @@
     "note": "A change run on the passes one import created or updated. Exactly one of templateIds, passIds and importId."
   },
   {
+    "key": "POST /api/v1/broadcasts/preview body.target.match[]|0: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcastsPreview",
+    "op": "POST /api/v1/broadcasts/preview",
+    "change": "body.target.match[]|0: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/preview body.target.match[]|1: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcastsPreview",
+    "op": "POST /api/v1/broadcasts/preview",
+    "change": "body.target.match[]|1: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/preview body.target.match[]|2: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcastsPreview",
+    "op": "POST /api/v1/broadcasts/preview",
+    "change": "body.target.match[]|2: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/preview body.target.match[]|3: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcastsPreview",
+    "op": "POST /api/v1/broadcasts/preview",
+    "change": "body.target.match[]|3: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
     "key": "POST /api/v1/broadcasts/preview body.target.passIds: optional input field added",
     "class": "additive",
     "operationId": "broadcasts.postBroadcastsPreview",
@@ -1432,12 +1584,28 @@
     "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
   },
   {
-    "key": "POST /api/v1/broadcasts/preview request.target: unsupported filter fields refused",
+    "key": "POST /api/v1/broadcasts/preview body.target.scan|0: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcastsPreview",
+    "op": "POST /api/v1/broadcasts/preview",
+    "change": "body.target.scan|0: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/preview body.target.scan|1: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcastsPreview",
+    "op": "POST /api/v1/broadcasts/preview",
+    "change": "body.target.scan|1: unknown keys now refused",
+    "note": "A stray key in a match clause or scan is 422, not dropped. Safety fix: every client, no version opt-in."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/preview request: templates resolve by the key mode release",
     "class": "notable",
     "operationId": "broadcasts.postBroadcastsPreview",
     "op": "POST /api/v1/broadcasts/preview",
-    "change": "request.target: unsupported filter fields refused",
-    "note": "A target key the run does not filter by (status, holderEmail, externalId, connectionId) is now 422 BROADCAST_UNSUPPORTED_FILTER, not dropped."
+    "change": "request: templates resolve by the key mode release",
+    "note": "Preview resolves templates by the key mode release, as create does."
   },
   {
     "key": "POST /api/v1/connections/{id}/preview new operation",

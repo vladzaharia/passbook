@@ -89,7 +89,14 @@ export async function checkRule(
   const templateIds = JSON.parse(row.template_ids) as string[];
   let kind: Awaited<ReturnType<typeof checkRuleTemplates>>;
   try {
-    kind = await checkRuleTemplates(ctx, row.org_id, templateIds, rule.anchor, rule.offset);
+    kind = await checkRuleTemplates(
+      ctx,
+      row.org_id,
+      row.mode,
+      templateIds,
+      rule.anchor,
+      rule.offset,
+    );
   } catch (error) {
     if (!(error instanceof AppError) || error.status >= 500) throw error;
     ctx.log.warn('message_rule.paused', {

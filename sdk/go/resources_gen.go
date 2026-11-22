@@ -164,119 +164,6 @@ func (r *BrandResource) Update(ctx context.Context, body *BrandUpdateBody, opts 
 	return &out, nil
 }
 
-type BroadcastsRecipientsResource struct {
-	c *core
-}
-
-func newBroadcastsRecipientsResource(c *core) *BroadcastsRecipientsResource {
-	return &BroadcastsRecipientsResource{
-		c: c,
-	}
-}
-
-// List The passes a message reached: updated, unchanged or failed `GET /api/v1/broadcasts/{id}/items`
-func (r *BroadcastsRecipientsResource) List(ctx context.Context, id string, query *BroadcastsRecipientsListQuery, opts ...RequestOption) *Pager[BroadcastsRecipientsListItem] {
-	return newPager[BroadcastsRecipientsListItem](r.c, call{method: "GET", path: "/api/v1/broadcasts/" + pathEscape(id) + "/items", query: queryValues(query)}, "cursor", opts)
-}
-
-type BroadcastsResource struct {
-	c          *core
-	Recipients *BroadcastsRecipientsResource
-}
-
-func newBroadcastsResource(c *core) *BroadcastsResource {
-	return &BroadcastsResource{
-		c:          c,
-		Recipients: newBroadcastsRecipientsResource(c),
-	}
-}
-
-// Cancel Cancel a draft or scheduled message `POST /api/v1/broadcasts/{id}/cancel`
-func (r *BroadcastsResource) Cancel(ctx context.Context, id string, opts ...RequestOption) (*BroadcastsCancelResult, error) {
-	var out BroadcastsCancelResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/cancel"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// CountRecipients Count the passes a target matches `POST /api/v1/broadcasts/preview`
-func (r *BroadcastsResource) CountRecipients(ctx context.Context, body *BroadcastsCountRecipientsBody, opts ...RequestOption) (*BroadcastsCountRecipientsResult, error) {
-	var out BroadcastsCountRecipientsResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/preview", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Create Save, send or schedule a message or change (Idempotency-Key) `POST /api/v1/broadcasts`
-func (r *BroadcastsResource) Create(ctx context.Context, body *BroadcastsCreateBody, opts ...RequestOption) (*BroadcastsCreateResult, error) {
-	var out BroadcastsCreateResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts", body: body, idempotent: true}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// List List messages and scheduled changes `GET /api/v1/broadcasts`
-func (r *BroadcastsResource) List(ctx context.Context, query *BroadcastsListQuery, opts ...RequestOption) *Pager[Broadcast] {
-	return newPager[Broadcast](r.c, call{method: "GET", path: "/api/v1/broadcasts", query: queryValues(query)}, "cursor", opts)
-}
-
-// Retrieve One message or change, with progress `GET /api/v1/broadcasts/{id}`
-func (r *BroadcastsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*BroadcastsRetrieveResult, error) {
-	var out BroadcastsRetrieveResult
-	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/broadcasts/" + pathEscape(id)}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Retry Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`
-func (r *BroadcastsResource) Retry(ctx context.Context, id string, query *BroadcastsRetryQuery, opts ...RequestOption) (*BroadcastsRetryResult, error) {
-	var out BroadcastsRetryResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/retry", query: queryValues(query)}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Send Send a draft now or at a time `POST /api/v1/broadcasts/{id}/send`
-func (r *BroadcastsResource) Send(ctx context.Context, id string, body *BroadcastsSendBody, opts ...RequestOption) (*BroadcastsSendResult, error) {
-	var out BroadcastsSendResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/send", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Stop Stop a sending message or change after its current chunk `POST /api/v1/broadcasts/{id}/stop`
-func (r *BroadcastsResource) Stop(ctx context.Context, id string, opts ...RequestOption) (*BroadcastsStopResult, error) {
-	var out BroadcastsStopResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/stop"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Undo Undo a change for 24 hours: restores passes still at the value the change set `POST /api/v1/broadcasts/{id}/undo`
-func (r *BroadcastsResource) Undo(ctx context.Context, id string, opts ...RequestOption) (*BroadcastsUndoResult, error) {
-	var out BroadcastsUndoResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/undo"}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
-// Update Edit a draft or a scheduled message that has not started `PATCH /api/v1/broadcasts/{id}`
-func (r *BroadcastsResource) Update(ctx context.Context, id string, body *BroadcastsUpdateBody, opts ...RequestOption) (*BroadcastsUpdateResult, error) {
-	var out BroadcastsUpdateResult
-	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/broadcasts/" + pathEscape(id), body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 type BundlesResource struct {
 	c *core
 }
@@ -2523,7 +2410,6 @@ func (r *WebhookEndpointsResource) Update(ctx context.Context, id string, body *
 type Resources struct {
 	APIKeys          *ApiKeysResource
 	Brand            *BrandResource
-	Broadcasts       *BroadcastsResource
 	Bundles          *BundlesResource
 	Connections      *ConnectionsResource
 	Connectors       *ConnectorsResource
@@ -2558,7 +2444,6 @@ func newResources(c *core) Resources {
 	return Resources{
 		APIKeys:          newApiKeysResource(c),
 		Brand:            newBrandResource(c),
-		Broadcasts:       newBroadcastsResource(c),
 		Bundles:          newBundlesResource(c),
 		Connections:      newConnectionsResource(c),
 		Connectors:       newConnectorsResource(c),

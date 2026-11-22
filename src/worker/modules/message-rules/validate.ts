@@ -1,9 +1,10 @@
 import type { TemplateManifest } from '../../../passkit/types.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
 import type { RuleAnchor, RuleOffset } from '../../../shared/contracts/message-rules.ts';
 import { RULE_COPY } from '../../../shared/copy/message-rules.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { resolveTemplate } from '../passes/builder.ts';
+import { resolveModeTemplate } from '../broadcasts/target-release.ts';
 import type { AnchorInputKind } from './windows.ts';
 
 /** `date` or `date-time` when the input is a string of that format; null otherwise. */
@@ -22,13 +23,14 @@ export function anchorKindOf(manifest: TemplateManifest, input: string): AnchorI
 export async function checkRuleTemplates(
   ctx: ServiceContext,
   orgId: string,
+  mode: Mode,
   templateIds: readonly string[],
   anchor: RuleAnchor,
   offset: RuleOffset,
 ): Promise<AnchorInputKind> {
   const kinds = new Set<AnchorInputKind>();
   for (const templateId of templateIds) {
-    const { manifest } = await resolveTemplate(ctx, orgId, templateId);
+    const { manifest } = (await resolveModeTemplate(ctx, orgId, templateId, mode)).template;
     if (!manifest.messaging)
       throw new ValidationError(
         `${manifest.name} has no message field.`,

@@ -19,7 +19,7 @@ async function setup() {
       },
       kit.env,
     );
-  return { kit, post };
+  return { kit, auth, app, post };
 }
 
 const CODE = 'BROADCAST_UNSUPPORTED_FILTER';
@@ -94,7 +94,7 @@ describe('a target filter the run does not take', () => {
     await expectProblem(change, 422, CODE);
     const problem = (await change.json()) as { detail: string; issues: { path: string }[] };
     expect(problem.issues[0]?.path).toBe(`target.${key}`);
-    expect(problem.issues[0]).toMatchObject({ message: expect.stringContaining(`"${key}"`) });
+    expect(problem.detail).toContain(key);
     const message = await post('/broadcasts', {
       kind: 'message',
       send: 'draft',
@@ -116,5 +116,61 @@ describe('a target filter the run does not take', () => {
     };
     const res = await post('/broadcasts/preview', { target, patch: { gate: 'B' } });
     expect(res.status, await res.clone().text()).toBe(200);
+  });
+
+  it('refuses it on PATCH, and names every refused field', async () => {
+    const { kit, auth, app, post } = await setup();
+    const made = await post('/broadcasts', {
+      kind: 'message',
+      send: 'draft',
+      target: { templateIds: [kit.messaging.id] },
+      patch: { message: 'Hi' },
+    });
+    const id = ((await made.json()) as { id: string }).id;
+    const patch = await app.request(
+      `${ORIGIN}/api/v1/broadcasts/${id}`,
+      {
+        method: 'PATCH',
+        headers: { ...auth.admin(), 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: kit.org.id,
+          kind: 'message',
+          send: 'draft',
+          target: { templateIds: [kit.messaging.id], status: 'void', holderEmail: 'a@b.co' },
+          patch: { message: 'Hi' },
+        }),
+      },
+      kit.env,
+    );
+    await expectProblem(patch, 422, CODE);
+    const problem = (await patch.json()) as { detail: string; issues: { path: string }[] };
+    expect(problem.detail).toContain('status, holderEmail');
+    expect(problem.issues.map((i) => i.path)).toEqual(['target.status', 'target.holderEmail']);
+  });
+
+  it('stays a plain validation error when something else is wrong too', async () => {
+    const { kit, post } = await setup();
+    const res = await post('/broadcasts', {
+      kind: 'message',
+      send: 'draft',
+      target: { templateIds: [kit.messaging.id], status: 'void' },
+      patch: { message: 42 },
+    });
+    await expectProblem(res, 422, 'VALIDATION');
+  });
+
+  it('refuses a stray key inside a match clause or scan, so a clause cannot widen', async () => {
+    const { kit, post } = await setup();
+    const clause = await post('/broadcasts/preview', {
+      target: {
+        templateIds: [kit.messaging.id],
+        match: [{ input: 'gate', values: ['A'], not: true }],
+      },
+    });
+    await expectProblem(clause, 422, 'VALIDATION');
+    const scan = await post('/broadcasts/preview', {
+      target: { templateIds: [kit.messaging.id], scan: { noScanDays: 30, eventId: 'e1' } },
+    });
+    await expectProblem(scan, 422, 'VALIDATION');
   });
 });

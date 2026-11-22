@@ -145,120 +145,6 @@ class BrandResource:
         return self._core.request("PATCH", "/api/v1/brand", body=body, result=m.BrandUpdateResult, **opts)
 
 
-class BroadcastsRecipientsResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-
-    def list(
-        self,
-        id: str,
-        *,
-        cursor: str | None = None,
-        limit: int | None = None,
-        outcome: _Literal["updated", "unchanged", "failed"] | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> Page[m.BroadcastsRecipientsListItem]:
-        """The passes a message reached: updated, unchanged or failed `GET /api/v1/broadcasts/{id}/items`"""
-        return self._core.paginate("GET", f"/api/v1/broadcasts/{_p(id)}/items", query={"cursor": cursor, "limit": limit, "outcome": outcome}, result=m.BroadcastsRecipientsListResult, cursor_param="cursor", **opts)
-
-
-class BroadcastsResource:
-    def __init__(self, core: Core) -> None:
-        self._core = core
-        self.recipients = BroadcastsRecipientsResource(core)
-
-    def cancel(
-        self,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.BroadcastsCancelResult:
-        """Cancel a draft or scheduled message `POST /api/v1/broadcasts/{id}/cancel`"""
-        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/cancel", result=m.BroadcastsCancelResult, **opts)
-
-    def count_recipients(
-        self,
-        body: m.BroadcastsCountRecipientsBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.BroadcastsCountRecipientsResult:
-        """Count the passes a target matches `POST /api/v1/broadcasts/preview`"""
-        return self._core.request("POST", "/api/v1/broadcasts/preview", body=body, result=m.BroadcastsCountRecipientsResult, **opts)
-
-    def create(
-        self,
-        body: m.BroadcastsCreateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.BroadcastsCreateResult:
-        """Save, send or schedule a message or change (Idempotency-Key) `POST /api/v1/broadcasts`"""
-        return self._core.request("POST", "/api/v1/broadcasts", body=body, idempotent=True, result=m.BroadcastsCreateResult, **opts)
-
-    def list(
-        self,
-        *,
-        cursor: str | None = None,
-        limit: int | None = None,
-        state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | None = None,
-        origin: _Literal["manual", "rule"] | None = None,
-        kind: _Literal["message", "change"] | None = None,
-        parent_id: str | None = None,
-        retry_of: str | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> Page[m.Broadcast]:
-        """List messages and scheduled changes `GET /api/v1/broadcasts`"""
-        return self._core.paginate("GET", "/api/v1/broadcasts", query={"cursor": cursor, "limit": limit, "state": state, "origin": origin, "kind": kind, "parentId": parent_id, "retryOf": retry_of}, result=m.BroadcastsListResult, cursor_param="cursor", **opts)
-
-    def retrieve(
-        self,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.BroadcastsRetrieveResult:
-        """One message or change, with progress `GET /api/v1/broadcasts/{id}`"""
-        return self._core.request("GET", f"/api/v1/broadcasts/{_p(id)}", result=m.BroadcastsRetrieveResult, **opts)
-
-    def retry(
-        self,
-        id: str,
-        *,
-        expect_count: int | None | None = None,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.BroadcastsRetryResult:
-        """Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`"""
-        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/retry", query={"expectCount": expect_count}, result=m.BroadcastsRetryResult, **opts)
-
-    def send(
-        self,
-        id: str,
-        body: m.BroadcastsSendBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.BroadcastsSendResult:
-        """Send a draft now or at a time `POST /api/v1/broadcasts/{id}/send`"""
-        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/send", body=body, result=m.BroadcastsSendResult, **opts)
-
-    def stop(
-        self,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.BroadcastsStopResult:
-        """Stop a sending message or change after its current chunk `POST /api/v1/broadcasts/{id}/stop`"""
-        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/stop", result=m.BroadcastsStopResult, **opts)
-
-    def undo(
-        self,
-        id: str,
-        **opts: _Unpack[RequestOptions],
-    ) -> m.BroadcastsUndoResult:
-        """Undo a change for 24 hours: restores passes still at the value the change set `POST /api/v1/broadcasts/{id}/undo`"""
-        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/undo", result=m.BroadcastsUndoResult, **opts)
-
-    def update(
-        self,
-        id: str,
-        body: m.BroadcastsUpdateBody | _Dict[str, _Any],
-        **opts: _Unpack[RequestOptions],
-    ) -> m.BroadcastsUpdateResult:
-        """Edit a draft or a scheduled message that has not started `PATCH /api/v1/broadcasts/{id}`"""
-        return self._core.request("PATCH", f"/api/v1/broadcasts/{_p(id)}", body=body, result=m.BroadcastsUpdateResult, **opts)
-
-
 class BundlesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2411,7 +2297,6 @@ class Resources:
     def __init__(self, core: Core) -> None:
         self.api_keys = ApiKeysResource(core)
         self.brand = BrandResource(core)
-        self.broadcasts = BroadcastsResource(core)
         self.bundles = BundlesResource(core)
         self.connections = ConnectionsResource(core)
         self.connectors = ConnectorsResource(core)

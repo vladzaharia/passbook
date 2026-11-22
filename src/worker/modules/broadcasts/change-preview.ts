@@ -15,6 +15,7 @@ import { activeRelease } from '../templates/releases.ts';
 import { targetFilter } from './apply.ts';
 import { resolveOps } from './change-ops.ts';
 import { prepareTarget, storedTargetOf } from './change-target.ts';
+import { checkTargetReleases } from './guards.ts';
 import { countTarget, sampleBudgetState, targetRows } from './repo-target.ts';
 
 type Body = z.infer<typeof ChangePreviewBodySchema>;
@@ -47,6 +48,7 @@ export async function previewChange(
     notify: body.notify ?? true,
     send: 'draft',
   });
+  await checkTargetReleases(ctx, prepared, mode);
   const filter = {
     ...targetFilter(
       { org_id: body.orgId, mode, target: JSON.stringify(storedTargetOf(prepared)) },

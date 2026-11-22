@@ -3421,8 +3421,8 @@
   },
   "BROADCAST_UNSUPPORTED_FILTER": {
     "title": "Unsupported target filter",
-    "when": "The target names a field a message or change run does not filter by, such as status, holderEmail, externalId or connectionId. The field is refused, never dropped, so a run cannot reach more passes than you asked for.",
-    "fix": "Remove the field. Filter by templateIds, onDevice, holderState, q, scan or match, or list the passes with the filter and send the ids as passIds.",
+    "when": "The target has a key it does not define, such as status, holderEmail, externalId, connectionId or templateId. The key is refused, never dropped, so a run cannot reach more passes than you asked for.",
+    "fix": "Remove the key and filter by templateIds, onDevice, holderState, q, scan or match. To change passes by a filter the target lacks, list the passes with it and send their ids as passIds; a message takes templates only.",
     "retryable": false
   },
   "BROADCAST_NOT_UNDOABLE": {

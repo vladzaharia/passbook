@@ -21,7 +21,7 @@ function deref(doc: Doc, node: unknown, depth = 0): Json {
 
 type Side = 'request' | 'response';
 
-/** Response: a removed field or enum value breaks. Request: a new required field or a removed enum value does. */
+/** Response: a removed field or enum value breaks. Request: a new required field, a removed enum value or a now-closed object does. */
 function compare(
   a: Doc,
   b: Doc,
@@ -55,6 +55,9 @@ function compare(
     }
     compare(a, b, schema, nProps[name], side, `${where}.${name}`, out, seen);
   }
+  // A request object that used to drop an unknown key and now refuses it breaks a client that sends one.
+  if (side === 'request' && n.additionalProperties === false && o.additionalProperties !== false)
+    out.push(`${where}: unknown keys now refused`);
   if (side === 'request') {
     const oReq = new Set((o.required as string[] | undefined) ?? []);
     for (const name of (n.required as string[] | undefined) ?? [])
