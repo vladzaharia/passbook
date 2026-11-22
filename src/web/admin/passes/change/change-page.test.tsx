@@ -168,7 +168,7 @@ describe('Change wizard', () => {
     });
     const user = userEvent.setup();
     await fillFirstStep(user);
-    await user.click(await screen.findByRole('button', { name: 'Next', exact: true }));
+    await user.click(await screen.findByRole('button', { name: /^Next$/ }));
     await user.click(await screen.findByRole('button', { name: 'Change 2 passes' }));
     await waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]?.target).toEqual({ templateIds: ['tpl1'], q: 'ann', expectCount: 2 });
