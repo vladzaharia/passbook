@@ -26,7 +26,7 @@ const INVITATION = {
   revokedAt: null,
   acceptedAt: null,
 };
-const membership = (userId: string, roles: string[], createdAt: number) => ({
+const membership = (userId: string | undefined, roles: string[], createdAt: number) => ({
   id: uuid(`membership-${userId}`),
   orgId: IDS.org,
   orgName: 'Northwind Climbing',
