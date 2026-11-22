@@ -1,23 +1,21 @@
 import { MINTABLE_SCOPES } from '../../src/shared/contracts/api-keys.ts';
 import { SANDBOX_KEY_SCOPES } from '../../src/shared/contracts/developer-home.ts';
+import { SANDBOX_TERMINAL_NAME } from '../../src/shared/copy/developer.ts';
 import { BLUEPRINT_ID, EXAMPLE_IDS } from '../../src/web/developers/model/ids.ts';
 import { createApp } from '../../src/worker/app.ts';
 import { createApiKeyStore } from '../../src/worker/modules/api-keys/service.ts';
 import { createSessionStore } from '../../src/worker/modules/auth/sessions.ts';
-import { ensureSandboxTerminal } from '../../src/worker/modules/developer/repo-sandbox-terminal.ts';
 import { alignPassIdentity } from '../../src/worker/modules/developer/sandbox-terminal-test-fixtures.ts';
 import { PLATFORM_IDENTITY_ID } from '../../src/worker/modules/identities/resolver.ts';
 import {
   type BlueprintKit,
   blueprintKit,
 } from '../../src/worker/modules/templates/blueprint-test-fixtures.ts';
-import type { SessionAuth } from '../../src/worker/platform/auth.ts';
 import { denyAllStores } from '../../src/worker/platform/auth.ts';
-import { first, run } from '../../src/worker/platform/db.ts';
+import { run } from '../../src/worker/platform/db.ts';
 import { sha256Hex } from '../../src/worker/platform/ids.ts';
-import { createServiceContext } from '../../src/worker/platform/service-context.ts';
 import { runPassImport } from '../../src/worker/workflows/pass-import.ts';
-import { makeOrg } from './../helpers/index.ts';
+import { makeOrg, makeScanner } from './../helpers/index.ts';
 
 const ORIGIN = 'https://passbook.mobile';
 const SCOPES = [
@@ -210,26 +208,23 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
     }),
   );
 
-  // A sandbox's own terminal, made as the portal makes it; an ordinary org has none.
-  const terminalOf = async () => {
-    if (options.kind !== 'developer') return null;
-    await ensureSandboxTerminal(
-      createServiceContext(kit.env, 'test', { clock: kit.clock }),
-      { userId: owner.userId, mode: 'test' } as SessionAuth,
-      org.id,
-      used.id,
-    );
-    return (
-      (
-        await first<{ id: string }>(
-          kit.env.DB,
-          "SELECT id FROM scanners WHERE org_id = ? AND name = 'Sandbox terminal'",
-          [org.id],
-        )
-      )?.id ?? null
-    );
-  };
-  const terminalId = await terminalOf();
+  // A sandbox's own terminal (ensureSandboxTerminal makes it in the real flow); an ordinary org has none.
+  const terminalId =
+    options.kind === 'developer'
+      ? (
+          await makeScanner(kit.f, {
+            orgId: org.id,
+            mode: 'test',
+            kind: 'terminal',
+            templateIds: [used.id],
+          })
+        ).id
+      : null;
+  if (terminalId)
+    await run(kit.env.DB, 'UPDATE scanners SET name = ? WHERE id = ?', [
+      SANDBOX_TERMINAL_NAME,
+      terminalId,
+    ]);
 
   const real: Record<string, string> = {
     [EXAMPLE_IDS.orgId]: org.id,
