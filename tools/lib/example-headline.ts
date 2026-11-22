@@ -33,6 +33,7 @@ export const HEADLINE_VARIANTS: Record<string, Record<string, unknown>> = {
 export const API_BASE = API;
 
 const admit = { id: 'admit', label: 'Admit', kind: 'check_in' };
+// biome-ignore lint/suspicious/noExplicitAny: a sampled answer is untyped JSON
 type Json = Record<string, any>;
 
 /** Fixes a sampled scan answer so its parts agree: a pass that is fine, admitted at the desk. */

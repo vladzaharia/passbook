@@ -3,20 +3,50 @@ curl -X POST "https://passbook.mobile/api/v1/templates/baked:starter-event-ticke
   -H "Content-Type: application/json" \
   -d '{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-  "name": "Ada Example",
+  "name": "Day pass",
   "version": {
     "passJson": {
-      "example": {}
+      "formatVersion": 1,
+      "passTypeIdentifier": "pass.mobile.passbook.northwind",
+      "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "organizationName": "Northwind Climbing",
+      "description": "Day pass",
+      "backgroundColor": "rgb(17, 42, 74)",
+      "foregroundColor": "rgb(255, 255, 255)",
+      "labelColor": "rgb(255, 196, 0)",
+      "generic": {
+        "primaryFields": [
+          {
+            "key": "name",
+            "label": "Guest",
+            "value": "Ada Example"
+          }
+        ],
+        "secondaryFields": [
+          {
+            "key": "tier",
+            "label": "Pass",
+            "value": "Day pass"
+          }
+        ],
+        "auxiliaryFields": [
+          {
+            "key": "validUntil",
+            "label": "Valid until",
+            "value": "2026-12-31"
+          }
+        ]
+      }
     },
     "manifest": {
-      "example": {}
+      "tier": {}
     },
     "assets": [
       {
-        "name": "Ada Example",
-        "sha1": "0123456789abcdef0123456789abcdef01234567"
+        "name": "Day pass",
+        "sha1": "e6997603809dcf7d34d188068c529a7808556809"
       }
     ]
   },
-  "baseVersion": "example"
+  "baseVersion": "3"
 }'

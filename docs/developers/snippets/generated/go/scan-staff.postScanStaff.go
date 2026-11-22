@@ -19,7 +19,7 @@ func main() {
 	var body passbook.ScanStaffCreateBody
 	if err := json.Unmarshal([]byte(`{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-  "name": "Ada Example",
+  "name": "Sam Rivera",
   "role": "door"
 }`), &body); err != nil {
 		panic(err)

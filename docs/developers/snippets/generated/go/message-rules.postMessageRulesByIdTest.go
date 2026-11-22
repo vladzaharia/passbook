@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.MessageRulesSendTestBody
 	if err := json.Unmarshal([]byte(`{
-  "passId": "0193a1b2-7c00-7000-8000-0000000000a1"
+  "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
 }`), &body); err != nil {
 		panic(err)
 	}

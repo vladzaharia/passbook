@@ -19,7 +19,8 @@ func main() {
 	var body passbook.PassesCheckInRulesUpdateBody
 	if err := json.Unmarshal([]byte(`{
   "rules": {
-    "mode": "single"
+    "mode": "single",
+    "eventId": "0193a1b2-7c00-7000-8000-0000000000e1"
   }
 }`), &body); err != nil {
 		panic(err)

@@ -6,8 +6,8 @@ import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { validateAgainst } from '../test/helpers/openapi-validate.ts';
 import { HEADLINE, HEADLINE_VARIANTS, SCAN_ANSWERS, scanAnswer } from './lib/example-headline.ts';
-import { type Ctx, kindOfOp, sample } from './lib/example-sampler.ts';
 import { type Example, exampleFailures, examplesOf } from './lib/example-lint.ts';
+import { type Ctx, kindOfOp, sample } from './lib/example-sampler.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const refDir = resolve(root, 'docs/api/reference');
@@ -28,9 +28,24 @@ for (const ex of examplesOf(doc))
 const have = new Set(examplesOf(doc).map((e) => e.where));
 const unknown = new Set<string>();
 let written = 0;
+type Entry = Record<string, unknown>;
+/** Files merge per field, the later name winning: set the field wherever it is already defined. */
+const setField = (id: string, field: string, value: unknown): void => {
+  const holders = Object.values(files).filter((f) => f[id]?.[field] !== undefined);
+  if (!holders.length) {
+    const name = fileOf(id);
+    files[name] ??= {};
+    holders.push(files[name] as Record<string, Entry>);
+  }
+  for (const f of holders) {
+    f[id] ??= {};
+    (f[id] as Entry)[field] = value;
+  }
+};
 
-for (const [path, item] of Object.entries<Record<string, any>>(doc.paths))
-  for (const [method, op] of Object.entries(item)) {
+// biome-ignore lint/suspicious/noExplicitAny: the OpenAPI document is untyped JSON here
+for (const [, item] of Object.entries<Record<string, any>>(doc.paths))
+  for (const op of Object.values(item)) {
     if (!op?.operationId || !op.security?.some((s: object) => 'apiKey' in s)) continue;
     const id = op.operationId as string;
     const tag = id.split('.')[0] as string;
@@ -54,25 +69,16 @@ for (const [path, item] of Object.entries<Record<string, any>>(doc.paths))
               .map((e) => `${where}: ${e}`),
           ].join('\n'),
         );
-      // Files merge per field, the later name winning: set the field wherever it is already defined.
-      const holders = Object.values(files).filter((f) => f[id]?.[field] !== undefined);
-      if (!holders.length) holders.push((files[fileOf(id)] ??= {}));
-      for (const f of holders) (f[id] ??= {})[field] = value;
+      setField(id, field, value);
       written++;
     };
     const rq = op.requestBody?.content?.['application/json'];
     if (rq?.schema) make('request', rq.schema);
+    // biome-ignore lint/suspicious/noExplicitAny: the OpenAPI document is untyped JSON here
     const ok = Object.entries<any>(op.responses ?? {}).find(([c]) => c.startsWith('2'));
     const rs = ok?.[1].content?.['application/json'];
     if (rs?.schema) make('response', rs.schema);
-    void path;
-    void method;
   }
-const setField = (id: string, field: string, value: unknown): void => {
-  const holders = Object.values(files).filter((f) => f[id]?.[field] !== undefined);
-  if (!holders.length) holders.push((files[fileOf(id)] ??= {}));
-  for (const f of holders) (f[id] ??= {})[field] = value;
-};
 for (const [where, value] of Object.entries(HEADLINE)) {
   const [id, field] = where.split(' ') as [string, string];
   setField(id, field, value);

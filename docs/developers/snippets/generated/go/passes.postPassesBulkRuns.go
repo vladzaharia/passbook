@@ -19,11 +19,14 @@ func main() {
 	var body passbook.BulkRunsStartBody
 	if err := json.Unmarshal([]byte(`{
   "action": "void",
+  "message": "The gym closes at 18:00 on 24 December.",
+  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
   "selection": {
     "filter": {
-      "status": "active"
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "connectionId": "0193a1b2-7c00-7000-8000-000000000051"
     },
-    "expectCount": 442
+    "expectCount": 12
   }
 }`), &body); err != nil {
 		panic(err)

@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.BroadcastsSendBody
 	if err := json.Unmarshal([]byte(`{
-  "at": 1764000000000
+  "at": 3
 }`), &body); err != nil {
 		panic(err)
 	}

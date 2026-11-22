@@ -19,7 +19,7 @@ func main() {
 	var body passbook.PassesStampsApplyBody
 	if err := json.Unmarshal([]byte(`{
   "action": "add",
-  "count": 10
+  "count": 12
 }`), &body); err != nil {
 		panic(err)
 	}

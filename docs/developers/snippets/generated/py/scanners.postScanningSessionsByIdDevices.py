@@ -7,8 +7,12 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 result = pb.scanning_sessions.devices.create(
     "0193a1b2-7c00-7000-8000-0000000000e1",
     {
-        "name": "Ada Example",
+        "name": "Front desk",
         "surface": "auto",
+        "overrides": {
+            "flow": "auto",
+            "reader": "none",
+        },
     },
 )
 print(result)

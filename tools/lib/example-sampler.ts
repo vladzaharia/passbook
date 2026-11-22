@@ -14,6 +14,7 @@ import {
   TEXT,
 } from './example-world.ts';
 
+// biome-ignore lint/suspicious/noExplicitAny: schemas and samples are untyped JSON
 type Json = Record<string, any>;
 export interface Ctx {
   doc: Json;
@@ -92,9 +93,6 @@ function nameFor(key: string, kind: string): string {
   if (/key/i.test(key)) return NAMES.key as string;
   return (NAMES[kind] as string) ?? 'Day pass';
 }
-
-const PERSON_KEY =
-  /^(holder|member|person|owner|host|visitor|staff|admin|author|reviewer|createdBy|startedBy|endedBy|requestedBy|versionAuthor|actor)(Name)?$|ByName$|^by$/;
 
 /** The string for a field, or undefined when no rule applies. */
 function stringFor(key: string, kind: string, ctx: Ctx): string | undefined {
@@ -416,7 +414,7 @@ export function sample(
       return str(ctx, s, key, path, subKind);
     case 'integer':
     case 'number':
-      return num(ctx, s, key);
+      return num(s, key);
     case 'boolean':
       return TRUE_KEYS.test(key);
     case 'null':
@@ -604,7 +602,7 @@ function byPattern(pattern: string, seed: string): string | undefined {
   ].find((c) => re.test(c));
 }
 
-function num(ctx: Ctx, s: Json, key: string): number {
+function num(s: Json, key: string): number {
   let v = 3;
   if (/validFrom$|^windowFrom$|From$/.test(key)) v = T.validFrom;
   else if (/validUntil$|Until$|After$|^notAfter$|expiresAt$|^expires/.test(key))

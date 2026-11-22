@@ -20,10 +20,10 @@ func main() {
 	if err := json.Unmarshal([]byte(`{
   "marks": [
     {
-      "rollCallId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "passId": "0193a1b2-7c00-7000-8000-0000000000a2",
+      "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "status": "present",
-      "at": 1764000000000
+      "at": 3
     }
   ]
 }`), &body); err != nil {

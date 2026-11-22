@@ -2,8 +2,9 @@ curl -X POST "https://passbook.mobile/api/v1/nfc/tag-types" \
   -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-  "name": "Ada Example",
+  "name": "Wristband 14",
   "use": "member",
   "scopes": "pass",
-  "perPass": 1
+  "perPass": 3,
+  "bindingDays": 3
 }'

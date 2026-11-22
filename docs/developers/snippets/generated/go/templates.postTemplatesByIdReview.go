@@ -18,9 +18,10 @@ func main() {
 
 	var body passbook.TemplatesReviewsApproveBody
 	if err := json.Unmarshal([]byte(`{
-  "version": "4",
-  "release": true,
-  "note": "Looks right."
+  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+  "version": "3",
+  "release": false,
+  "note": "Photo ID checked at the desk."
 }`), &body); err != nil {
 		panic(err)
 	}

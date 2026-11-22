@@ -10,8 +10,8 @@ result = pb.templates.candidates.create(
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "test",
         "provider": "apple",
-        "version": "example",
-        "sourceReleaseId": "0193a1b2-7c00-7000-8000-0000000000a2",
+        "version": "3",
+        "sourceReleaseId": "0193a1b2-7c00-7000-8000-000000000013",
         "projection": {},
     },
 )

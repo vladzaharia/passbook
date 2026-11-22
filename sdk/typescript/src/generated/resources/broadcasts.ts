@@ -47,7 +47,7 @@ export class BroadcastsResource {
     return this.core.request({ method: 'GET', path: `/api/v1/broadcasts/${encodeURIComponent(id)}` }, options);
   }
 
-  /** Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry` */
+  /** Send a failed or canceled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry` */
   retry(id: string, query?: BroadcastsRetryQuery, options?: RequestOptions): Promise<BroadcastsRetryResult> {
     return this.core.request({ method: 'POST', path: `/api/v1/broadcasts/${encodeURIComponent(id)}/retry`, query }, options);
   }

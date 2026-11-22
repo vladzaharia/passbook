@@ -6,29 +6,45 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 
 result = pb.pass_imports.mappings.save(
     {
-        "templateId": "0197f1c2-6f3a-7b11-9c1e-2a5d4c8e9b10",
-        "name": "Gym export",
+        "name": "Spring members",
         "columns": [
-            "Member #",
-            "Name",
-            "Holder email",
+            "tier",
         ],
         "plan": {
             "mapping": {
-                "memberName": {
-                    "from": "/Name",
+                "name": {
+                    "from": "Name",
+                },
+                "tier": {
+                    "from": "Tier",
+                },
+                "validUntil": {
+                    "from": "Valid until",
                 },
             },
             "holderEmail": {
-                "from": "/Holder email",
+                "from": "Booking sheet",
+                "transform": {
+                    "kind": "enum",
+                    "options": {
+                        "tier": {},
+                    },
+                },
             },
             "externalId": {
-                "from": "/Member #",
+                "from": "Booking sheet",
+                "transform": {
+                    "kind": "enum",
+                    "options": {
+                        "tier": {},
+                    },
+                },
             },
             "match": "externalId",
             "keepManual": False,
-            "save": True,
+            "save": False,
         },
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
     },
 )
 print(result)

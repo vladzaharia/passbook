@@ -3,9 +3,16 @@ import { PassBook } from '@passbook/sdk';
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
 const result = await pb.scanners.update('0193a1b2-7c00-7000-8000-0000000000e1', {
-  name: 'Ada Example',
+  name: 'Front desk',
   accepts: {
-    eventId: '0193a1b2-7c00-7000-8000-0000000000a1',
+    eventId: '0193a1b2-7c00-7000-8000-0000000000e1',
+  },
+  settings: {
+    checkIn: {
+      mode: 'single',
+      eventId: '0193a1b2-7c00-7000-8000-0000000000e1',
+    },
+    direction: 'in',
   },
 });
 console.log(result);

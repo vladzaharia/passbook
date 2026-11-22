@@ -18,11 +18,14 @@ func main() {
 
 	var body passbook.WebhookEndpointsCreateBody
 	if err := json.Unmarshal([]byte(`{
+  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
   "url": "https://hooks.example.com/passbook",
-  "description": "Order system",
+  "description": "Booking system events",
   "eventTypes": [
-    "pass.issued",
-    "pass.scanned"
+    "pass.issued"
+  ],
+  "templateIds": [
+    "0193a1b2-7c00-7000-8000-0000000000b1"
   ]
 }`), &body); err != nil {
 		panic(err)

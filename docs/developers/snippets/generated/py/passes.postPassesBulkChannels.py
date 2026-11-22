@@ -11,10 +11,11 @@ result = pb.passes.bulk_update_channels(
             "mobile",
         ],
         "ids": [
-            "0193a1b2-7c00-7000-8000-0000000000a1",
+            "0193a1b2-7c00-7000-8000-0000000000c1",
         ],
         "notify": False,
         "replaceCodes": False,
+        "dryRun": False,
     },
 )
 print(result)

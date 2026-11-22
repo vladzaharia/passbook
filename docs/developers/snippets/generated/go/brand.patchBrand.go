@@ -18,8 +18,9 @@ func main() {
 
 	var body passbook.BrandUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "accent": "#1a73e8",
-  "mark": "full"
+  "accent": "#ffc400",
+  "mark": "full",
+  "configRevision": 3
 }`), &body); err != nil {
 		panic(err)
 	}

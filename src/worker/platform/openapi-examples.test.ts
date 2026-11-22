@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/index.ts';
 import { validateAgainst } from '../../../test/helpers/openapi-validate.ts';
+import { exampleFailures } from '../../../tools/lib/example-lint.ts';
 import { createApp } from '../app.ts';
 import { buildOpenApiDocument } from './openapi-document.ts';
-import { exampleFailures } from '../../../tools/lib/example-lint.ts';
 import { REFERENCE } from './openapi-reference.ts';
 
 type Media = { schema?: object };

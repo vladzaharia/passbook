@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.VisitorsSendHostEmailBody
 	if err := json.Unmarshal([]byte(`{
-  "timeZone": "example"
+  "timeZone": "America/Los_Angeles"
 }`), &body); err != nil {
 		panic(err)
 	}

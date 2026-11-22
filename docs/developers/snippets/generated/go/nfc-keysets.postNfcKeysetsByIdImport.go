@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.NfcKeysetsImportTagsBody
 	if err := json.Unmarshal([]byte(`{
-  "csv": "example",
+  "csv": "name,email,tier\nAda Example,ada@example.com,Day pass\n",
   "dryRun": false
 }`), &body); err != nil {
 		panic(err)

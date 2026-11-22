@@ -19,7 +19,7 @@ func main() {
 	var body passbook.PassesSendEmailBody
 	if err := json.Unmarshal([]byte(`{
   "to": "ada@example.com",
-  "attach": true
+  "attach": false
 }`), &body); err != nil {
 		panic(err)
 	}

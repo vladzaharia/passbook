@@ -7,8 +7,9 @@ curl -X POST "https://passbook.mobile/api/v1/passes/bulk/channels" \
     "mobile"
   ],
   "ids": [
-    "0193a1b2-7c00-7000-8000-0000000000a1"
+    "0193a1b2-7c00-7000-8000-0000000000c1"
   ],
   "notify": false,
-  "replaceCodes": false
+  "replaceCodes": false,
+  "dryRun": false
 }'

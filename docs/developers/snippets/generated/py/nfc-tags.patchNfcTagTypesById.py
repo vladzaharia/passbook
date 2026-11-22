@@ -7,9 +7,10 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 result = pb.nfc.tag_types.update(
     "0193a1b2-7c00-7000-8000-0000000000e1",
     {
-        "version": 1,
-        "name": "Ada Example",
+        "version": 3,
+        "name": "Wristband 14",
         "use": "member",
+        "scopes": "pass",
     },
 )
 print(result)

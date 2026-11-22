@@ -125,7 +125,7 @@ export function exampleFailures(doc: Doc, examples: Example[] = examplesOf(doc))
   for (const ex of examples) {
     const bad = (why: string, at: string) => out.push(`${ex.where}${at}: ${why}`);
     const mapKeys = (v: unknown, at: string): void => {
-      if (Array.isArray(v)) v.forEach((x, i) => mapKeys(x, `${at}[${i}]`));
+      if (Array.isArray(v)) for (const [i, x] of v.entries()) mapKeys(x, `${at}[${i}]`);
       else if (v && typeof v === 'object')
         for (const [k, x] of Object.entries(v)) {
           if (FILLERS.has(k)) bad(`the key "${k}" is filler`, `${at}.${k}`);

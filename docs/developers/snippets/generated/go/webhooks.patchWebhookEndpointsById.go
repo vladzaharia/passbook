@@ -18,7 +18,11 @@ func main() {
 
 	var body passbook.WebhookEndpointsUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "status": "paused"
+  "url": "https://hooks.example.com/passbook",
+  "description": "",
+  "eventTypes": [
+    "pass.issued"
+  ]
 }`), &body); err != nil {
 		panic(err)
 	}

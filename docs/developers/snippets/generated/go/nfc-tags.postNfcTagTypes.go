@@ -18,10 +18,11 @@ func main() {
 
 	var body passbook.NfcTagTypesCreateBody
 	if err := json.Unmarshal([]byte(`{
-  "name": "Ada Example",
+  "name": "Wristband 14",
   "use": "member",
   "scopes": "pass",
-  "perPass": 1
+  "perPass": 3,
+  "bindingDays": 3
 }`), &body); err != nil {
 		panic(err)
 	}

@@ -20,56 +20,37 @@ func main() {
 	if err := json.Unmarshal([]byte(`{
   "plan": {
     "mapping": {
-      "eventName": {
-        "from": "/Event"
+      "name": {
+        "from": "Name"
       },
-      "venueName": {
-        "from": "/Venue"
+      "tier": {
+        "from": "Tier"
       },
-      "venueRegion": {
-        "from": "/City"
-      },
-      "startsAt": {
-        "from": "/Starts",
-        "transform": {
-          "kind": "date",
-          "options": {
-            "input": "iso",
-            "output": "iso"
-          }
-        }
-      },
-      "endsAt": {
-        "from": "/Ends",
-        "transform": {
-          "kind": "date",
-          "options": {
-            "input": "iso",
-            "output": "iso"
-          }
-        }
-      },
-      "attendee": {
-        "from": "/Attendee"
-      },
-      "ticketId": {
-        "from": "/Ticket ID"
+      "validUntil": {
+        "from": "Valid until"
       }
     },
     "holderEmail": {
-      "from": "/Holder email"
+      "from": "Booking sheet",
+      "transform": {
+        "kind": "enum",
+        "options": {
+          "tier": {}
+        }
+      }
     },
     "externalId": {
-      "from": "/Ticket ID"
+      "from": "Booking sheet",
+      "transform": {
+        "kind": "enum",
+        "options": {
+          "tier": {}
+        }
+      }
     },
     "match": "externalId",
     "keepManual": false,
-    "save": true,
-    "overrides": {
-      "3": {
-        "/Starts": "2030-06-01T19:00:00-07:00"
-      }
-    }
+    "save": false
   }
 }`), &body); err != nil {
 		panic(err)

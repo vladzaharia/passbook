@@ -3,5 +3,5 @@ curl -X POST "https://passbook.mobile/api/v1/scanning-sessions/0193a1b2-7c00-700
   -H "Content-Type: application/json" \
   -d '{
   "action": "close",
-  "revision": 1
+  "revision": 3
 }'

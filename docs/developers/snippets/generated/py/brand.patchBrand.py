@@ -6,8 +6,9 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 
 result = pb.brand.update(
     {
-        "accent": "#1a73e8",
+        "accent": "#ffc400",
         "mark": "full",
+        "configRevision": 3,
     },
 )
 print(result)
