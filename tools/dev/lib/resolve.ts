@@ -90,6 +90,7 @@ const SOURCES: Record<string, (ctx: Ctx) => Promise<string | undefined>> = {
   eventId: (c) => firstInOrgs(c, '/api/v1/scan-events'),
   scannerId: (c) => firstInOrgs(c, '/api/v1/scanners'),
   broadcastId: (c) => firstInOrgs(c, '/api/v1/broadcasts'),
+  runId: (c) => firstInOrgs(c, '/api/v1/broadcasts'),
   importId: (c) => firstInOrgs(c, '/api/v1/pass-imports'),
   bundleToken: (c) => firstInOrgs(c, '/api/v1/bundles', (r) => last(r.url)),
   joinToken,
