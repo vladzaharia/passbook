@@ -48,9 +48,10 @@
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
       },
-      "patch": {},
-      "notify": true,
-      "message": "The gym closes at 18:00 on 24 December."
+      "patch": {
+        "validUntil": "2027-01-31"
+      },
+      "notify": true
     },
     "response": {
       "targeted": 128,
@@ -61,7 +62,14 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "title": "Day pass",
-          "changes": []
+          "changes": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "from": "2026-12-31",
+              "to": "2027-01-31"
+            }
+          ]
         }
       ],
       "unchanged": 0,

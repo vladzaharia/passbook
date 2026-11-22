@@ -1457,12 +1457,17 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-42b760bfc138",
-          "name": "Grace Okafor",
-          "role": "door"
+          "id": "0193a1b2-7c00-7000-8000-000000000022",
+          "name": "Sam Rivera",
+          "role": "desk"
+        },
+        {
+          "id": "0193a1b2-7c00-7000-8000-af276a54d0e4",
+          "name": "Priya Nair",
+          "role": "manager"
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "scan.postScanStaff": {
@@ -2556,8 +2561,8 @@
       "placeNames": ["Main hall"],
       "startedAt": 1795571640000,
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "endedAt": null,
-      "endedBy": null,
+      "endedAt": 1795572000000,
+      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "rev": 7,
       "serverNow": 1795572000000,
       "counts": {
@@ -2607,8 +2612,8 @@
     "response": {
       "checkIn": {
         "mode": "daily",
-        "direction": "in",
-        "inside": true,
+        "direction": "out",
+        "inside": false,
         "enteredAt": 1795570500000,
         "firstAt": 1795570500000,
         "validFrom": 1795507200000,
@@ -2714,7 +2719,7 @@
         "lastScans": [],
         "bundle": null,
         "door": {
-          "state": "in"
+          "state": "out"
         },
         "access": null,
         "tag": null,
@@ -3505,8 +3510,8 @@
       "assurance": "basic",
       "scope": "pass",
       "type": {
-        "id": "0193a1b2-7c00-7000-8000-9258e244adf0",
-        "name": "Wristband",
+        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+        "name": "Member wristband",
         "use": "member"
       },
       "bindingId": "0193a1b2-7c00-7000-8000-66dbb7184ff5",
@@ -3593,7 +3598,7 @@
         }
       ],
       "cursor": "c1.4812",
-      "asOf": 26,
+      "asOf": 1795570500000,
       "validUntil": 1798790399999,
       "sig": "9db483c0e33113df3e1659edd78fb536e9be76096a47a85918fc853c98c31aa0"
     }
@@ -3611,7 +3616,7 @@
         }
       ],
       "roster": {
-        "asOf": 26,
+        "asOf": 1795570500000,
         "validUntil": 1798790399999,
         "sig": "3f0a72cc03b13891a65873b6070b6d34eba2e27ae37286aa964a172be3dc3b4f"
       }
@@ -3877,7 +3882,7 @@
   },
   "scan.postScanPassesByPassIdPhoto": {
     "request": {
-      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
+      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
       "includeInPass": false
     },
     "response": {

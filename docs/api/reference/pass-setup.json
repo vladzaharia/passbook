@@ -386,15 +386,8 @@
     "request": {
       "expectedRevision": "4",
       "brand": {
-        "name": "Northwind Climbing",
-        "logo": {
-          "sha": "d5d705ca576254bf7ea60c287f5c830178058ba455a678d68b7874cdff9a9d8e",
-          "version": "b78bdcd5b6412c478d2a89e1c1296e3d617e3323c1c49c7d2c2bd73396dad792"
-        }
-      },
-      "channels": {
-        "mobile": "allowed",
-        "apple": "allowed"
+        "accent": "#ffc400",
+        "mark": "full"
       }
     },
     "response": {
@@ -802,8 +795,8 @@
     "description": "Stage a PNG for a logo, icon or web logo. Nothing about the organization changes: a pass-setup save that names the sha keeps the file, and an unused one is deleted after 24 hours. The logo and icon are the @3x; send the @2x as x2 or let it be derived.",
     "request": {
       "slot": "logo",
-      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
-      "x2": "logo@2x.png"
+      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "x2": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
     },
     "response": {
       "slot": "logo",

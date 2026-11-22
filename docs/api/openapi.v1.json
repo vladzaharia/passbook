@@ -80369,15 +80369,8 @@
               "example": {
                 "expectedRevision": "4",
                 "brand": {
-                  "name": "Northwind Climbing",
-                  "logo": {
-                    "sha": "d5d705ca576254bf7ea60c287f5c830178058ba455a678d68b7874cdff9a9d8e",
-                    "version": "b78bdcd5b6412c478d2a89e1c1296e3d617e3323c1c49c7d2c2bd73396dad792"
-                  }
-                },
-                "channels": {
-                  "mobile": "allowed",
-                  "apple": "allowed"
+                  "accent": "#ffc400",
+                  "mark": "full"
                 }
               }
             }
@@ -80897,8 +80890,8 @@
               },
               "example": {
                 "slot": "logo",
-                "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
-                "x2": "logo@2x.png"
+                "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                "x2": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
               }
             }
           }
@@ -82594,8 +82587,8 @@
                 "$ref": "#/components/schemas/BrandPassImagesUploadParams"
               },
               "example": {
-                "x3": "logo@3x.png",
-                "x2": "logo@2x.png",
+                "x3": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+                "x2": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
                 "configRevision": 3
               }
             }
@@ -83247,7 +83240,7 @@
                 "$ref": "#/components/schemas/BrandWebLogoUploadParams"
               },
               "example": {
-                "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
+                "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
                 "configRevision": 3
               }
             }
@@ -83697,7 +83690,7 @@
                     "createdAt": 1794362400000,
                     "updatedAt": 1795399200000
                   },
-                  "serviceAccountEmail": "ada@example.com"
+                  "serviceAccountEmail": "wallet-issuer@example.com"
                 }
               }
             }
@@ -83771,7 +83764,7 @@
                   "$ref": "#/components/schemas/WalletAccountsGoogleSharedRetrieveResponse"
                 },
                 "example": {
-                  "serviceAccountEmail": "ada@example.com"
+                  "serviceAccountEmail": "wallet-issuer@example.com"
                 }
               }
             }
@@ -83941,7 +83934,7 @@
                 "expectedRevision": 3,
                 "credentials": {
                   "issuerId": "3388000000022843210",
-                  "serviceAccountEmail": "ada@example.com",
+                  "serviceAccountEmail": "wallet-issuer@example.com",
                   "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
                   "scopes": [
                     "https://www.googleapis.com/auth/wallet_object.issuer"
@@ -85212,8 +85205,8 @@
                       "cls": "ok",
                       "kind": "sweep",
                       "ranAt": 1795570500000,
-                      "cutoffAt": 1795570500000,
-                      "policyDays": 35,
+                      "cutoffAt": 1764034500000,
+                      "policyDays": 365,
                       "deleted": 27,
                       "anonymised": 19,
                       "verified": false
@@ -85301,8 +85294,8 @@
                     "cls": "ok",
                     "kind": "sweep",
                     "ranAt": 1795570500000,
-                    "cutoffAt": 1795570500000,
-                    "policyDays": 35,
+                    "cutoffAt": 1764034500000,
+                    "policyDays": 365,
                     "deleted": 27,
                     "anonymised": 19,
                     "verified": false,
@@ -85465,9 +85458,9 @@
                 },
                 "example": {
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                  "status": "active",
-                  "closedAt": null,
-                  "purgeAfter": 1798790399999,
+                  "status": "closed",
+                  "closedAt": 1795572000000,
+                  "purgeAfter": 1798164000000,
                   "purging": false,
                   "purged": false,
                   "held": false,
@@ -86252,7 +86245,7 @@
                 "expectedRevision": 3,
                 "credentials": {
                   "issuerId": "3388000000022843210",
-                  "serviceAccountEmail": "ada@example.com",
+                  "serviceAccountEmail": "wallet-issuer@example.com",
                   "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
                   "scopes": [
                     "https://www.googleapis.com/auth/wallet_object.issuer"
@@ -86892,8 +86885,8 @@
                   "$ref": "#/components/schemas/PlatformWalletCredentialsRetrieveMigrationResponse"
                 },
                 "example": {
-                  "pending": 7,
-                  "migrated": 35,
+                  "pending": 0,
+                  "migrated": 1,
                   "items": [
                     {
                       "accountId": "0193a1b2-7c00-7000-8000-8c8745ea6340",
@@ -86961,7 +86954,7 @@
                   "$ref": "#/components/schemas/PlatformWalletCredentialsMigrateResponse"
                 },
                 "example": {
-                  "queued": 27
+                  "queued": 1
                 }
               }
             }
@@ -87027,7 +87020,7 @@
                   "$ref": "#/components/schemas/PlatformWalletCredentialsResolveMigrationResponse"
                 },
                 "example": {
-                  "accounts": 27
+                  "accounts": 1
                 }
               }
             }
@@ -87564,8 +87557,8 @@
                       "cls": "ok",
                       "kind": "sweep",
                       "ranAt": 1795570500000,
-                      "cutoffAt": 1795570500000,
-                      "policyDays": 35,
+                      "cutoffAt": 1764034500000,
+                      "policyDays": 365,
                       "deleted": 27,
                       "anonymised": 19,
                       "verified": false
@@ -87651,8 +87644,8 @@
                     "cls": "ok",
                     "kind": "sweep",
                     "ranAt": 1795570500000,
-                    "cutoffAt": 1795570500000,
-                    "policyDays": 35,
+                    "cutoffAt": 1764034500000,
+                    "policyDays": 365,
                     "deleted": 27,
                     "anonymised": 19,
                     "verified": false,
@@ -87743,8 +87736,8 @@
                       "cls": "ok",
                       "kind": "sweep",
                       "ranAt": 1795570500000,
-                      "cutoffAt": 1795570500000,
-                      "policyDays": 35,
+                      "cutoffAt": 1764034500000,
+                      "policyDays": 365,
                       "deleted": 27,
                       "anonymised": 19,
                       "verified": false
@@ -87819,8 +87812,8 @@
                     "cls": "ok",
                     "kind": "sweep",
                     "ranAt": 1795570500000,
-                    "cutoffAt": 1795570500000,
-                    "policyDays": 35,
+                    "cutoffAt": 1764034500000,
+                    "policyDays": 365,
                     "deleted": 27,
                     "anonymised": 19,
                     "verified": false,
@@ -93528,11 +93521,9 @@
               "example": {
                 "version": "4",
                 "modes": [
-                  "test",
-                  "live"
+                  "test"
                 ],
                 "expected": {
-                  "live": 3,
                   "test": 3
                 }
               }
@@ -93555,31 +93546,25 @@
                       "releaseId": "0193a1b2-7c00-7000-8000-d324703775c6",
                       "generation": 4,
                       "approvalKind": "test"
-                    },
-                    "live": {
-                      "outcome": "released",
-                      "releaseId": "0193a1b2-7c00-7000-8000-94a2c275b5eb",
-                      "generation": 4,
-                      "approvalKind": "peer"
                     }
                   },
                   "state": {
                     "live": {
-                      "version": "4",
-                      "at": 1795569600000,
-                      "by": "Priya Nair"
+                      "version": "3",
+                      "at": 1794362400000,
+                      "by": "Sam Rivera"
                     },
                     "test": {
                       "version": "4",
                       "at": 1795569600000,
-                      "state": "following"
+                      "state": "ahead"
                     },
                     "draft": null,
                     "review": {
                       "state": "none"
                     },
                     "alone": false,
-                    "next": null
+                    "next": "request_review"
                   }
                 }
               }
@@ -93724,10 +93709,10 @@
               "example": {
                 "version": "4",
                 "modes": [
-                  "live"
+                  "test"
                 ],
                 "expected": {
-                  "live": 3
+                  "test": 3
                 }
               }
             }
@@ -93744,7 +93729,7 @@
                 "example": {
                   "version": "4",
                   "modes": {
-                    "live": {
+                    "test": {
                       "outcome": "review_requested",
                       "releaseId": null,
                       "generation": 3,
@@ -97255,7 +97240,7 @@
                 "$ref": "#/components/schemas/PassesMemberPhotoUploadParams"
               },
               "example": {
-                "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
+                "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
                 "includeInPass": false
               }
             }
@@ -99715,11 +99700,11 @@
                 "example": {
                   "id": "0193a1b2-7c00-7000-8000-000000000053",
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-                  "generation": 3,
+                  "generation": 1,
                   "status": "active",
-                  "createdAt": 1794362400000,
+                  "createdAt": 1795572000000,
                   "voidedAt": null,
-                  "voidCause": "refund",
+                  "voidCause": null,
                   "code": "P7QK2XJ4MZ3TBWHN5RVC6DLE4A"
                 }
               }
@@ -99898,7 +99883,7 @@
                   "status": "active",
                   "createdAt": 1794362400000,
                   "voidedAt": null,
-                  "voidCause": "refund"
+                  "voidCause": null
                 }
               }
             }
@@ -105026,9 +105011,10 @@
                     "0193a1b2-7c00-7000-8000-0000000000b1"
                   ]
                 },
-                "patch": {},
-                "notify": true,
-                "message": "The gym closes at 18:00 on 24 December."
+                "patch": {
+                  "validUntil": "2027-01-31"
+                },
+                "notify": true
               }
             }
           }
@@ -105050,7 +105036,14 @@
                     {
                       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                       "title": "Day pass",
-                      "changes": []
+                      "changes": [
+                        {
+                          "key": "validUntil",
+                          "label": "Valid until",
+                          "from": "2026-12-31",
+                          "to": "2027-01-31"
+                        }
+                      ]
                     }
                   ],
                   "unchanged": 0,
@@ -112102,7 +112095,7 @@
                         "x-passbook-event-type": "pass.issued",
                         "x-passbook-timestamp": "1795570380"
                       },
-                      "body": "{\"id\":\"0193a1b2-7c00-7000-8000-000000000033\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795572300000,\"orgId\":\"0193a1b2-7c00-7000-8000-0000000000a1\",\"mode\":\"test\",\"pass\":{\"id\":\"0193a1b2-7c00-7000-8000-0000000000c1\",\"externalId\":\"booking_8841\",\"templateId\":\"0193a1b2-7c00-7000-8000-0000000000b1\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
+                      "body": "{\"id\":\"0193a1b2-7c00-7000-8000-000000000033\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795570380000,\"orgId\":\"0193a1b2-7c00-7000-8000-0000000000a1\",\"mode\":\"live\",\"pass\":{\"id\":\"0193a1b2-7c00-7000-8000-0000000000c1\",\"externalId\":\"booking_8841\",\"templateId\":\"0193a1b2-7c00-7000-8000-0000000000b1\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
                       "createdAt": 1795570380000
                     }
                   ],
@@ -112206,7 +112199,7 @@
                     "x-passbook-event-type": "pass.issued",
                     "x-passbook-timestamp": "1795570380"
                   },
-                  "body": "{\"id\":\"0193a1b2-7c00-7000-8000-000000000033\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795572300000,\"orgId\":\"0193a1b2-7c00-7000-8000-0000000000a1\",\"mode\":\"test\",\"pass\":{\"id\":\"0193a1b2-7c00-7000-8000-0000000000c1\",\"externalId\":\"booking_8841\",\"templateId\":\"0193a1b2-7c00-7000-8000-0000000000b1\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
+                  "body": "{\"id\":\"0193a1b2-7c00-7000-8000-000000000033\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795570380000,\"orgId\":\"0193a1b2-7c00-7000-8000-0000000000a1\",\"mode\":\"live\",\"pass\":{\"id\":\"0193a1b2-7c00-7000-8000-0000000000c1\",\"externalId\":\"booking_8841\",\"templateId\":\"0193a1b2-7c00-7000-8000-0000000000b1\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
                   "createdAt": 1795570380000
                 }
               }
@@ -112308,7 +112301,7 @@
                     "x-passbook-event-type": "pass.issued",
                     "x-passbook-timestamp": "1795570380"
                   },
-                  "body": "{\"id\":\"0193a1b2-7c00-7000-8000-000000000033\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795572300000,\"orgId\":\"0193a1b2-7c00-7000-8000-0000000000a1\",\"mode\":\"test\",\"pass\":{\"id\":\"0193a1b2-7c00-7000-8000-0000000000c1\",\"externalId\":\"booking_8841\",\"templateId\":\"0193a1b2-7c00-7000-8000-0000000000b1\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
+                  "body": "{\"id\":\"0193a1b2-7c00-7000-8000-000000000033\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795570380000,\"orgId\":\"0193a1b2-7c00-7000-8000-0000000000a1\",\"mode\":\"live\",\"pass\":{\"id\":\"0193a1b2-7c00-7000-8000-0000000000c1\",\"externalId\":\"booking_8841\",\"templateId\":\"0193a1b2-7c00-7000-8000-0000000000b1\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
                   "createdAt": 1795572000000
                 }
               }
@@ -115486,7 +115479,7 @@
                 "expectedRevision": 3,
                 "credentials": {
                   "issuerId": "3388000000022843210",
-                  "serviceAccountEmail": "ada@example.com",
+                  "serviceAccountEmail": "wallet-issuer@example.com",
                   "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
                   "scopes": [
                     "https://www.googleapis.com/auth/wallet_object.issuer"
@@ -119427,7 +119420,7 @@
                 "example": {
                   "source": "analytics_engine",
                   "range": "24h",
-                  "bucketMs": 1848,
+                  "bucketMs": 3600000,
                   "unavailable": [
                     "not_configured"
                   ],
@@ -119455,79 +119448,79 @@
                   "series": {
                     "issued": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "updated": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "downloads": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "registrations": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "refreshes": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "pushes": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "pushFailures": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "emails": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "emailFailures": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "emailUnknown": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "syncRuns": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "signIns": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "scans": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ]
@@ -119655,7 +119648,7 @@
                 "example": {
                   "source": "analytics_engine",
                   "range": "24h",
-                  "bucketMs": 1848,
+                  "bucketMs": 3600000,
                   "unavailable": [
                     "not_configured"
                   ],
@@ -119683,79 +119676,79 @@
                   "series": {
                     "issued": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "updated": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "downloads": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "registrations": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "refreshes": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "pushes": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "pushFailures": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "emails": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "emailFailures": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "emailUnknown": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "syncRuns": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "signIns": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "scans": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ]
@@ -119872,7 +119865,7 @@
                 },
                 "example": {
                   "range": "24h",
-                  "bucketMs": 1848,
+                  "bucketMs": 3600000,
                   "totals": {
                     "issued": 32,
                     "added": 37,
@@ -119885,13 +119878,13 @@
                   "series": {
                     "issued": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ],
                     "scans": [
                       {
-                        "t": 32,
+                        "t": 1795485600000,
                         "v": 39
                       }
                     ]
@@ -121083,12 +121076,17 @@
                 "example": {
                   "items": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-42b760bfc138",
-                      "name": "Grace Okafor",
-                      "role": "door"
+                      "id": "0193a1b2-7c00-7000-8000-000000000022",
+                      "name": "Sam Rivera",
+                      "role": "desk"
+                    },
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-af276a54d0e4",
+                      "name": "Priya Nair",
+                      "role": "manager"
                     }
                   ],
-                  "nextCursor": "c1.4812"
+                  "nextCursor": null
                 }
               }
             }
@@ -124118,8 +124116,8 @@
                   ],
                   "startedAt": 1795571640000,
                   "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
-                  "endedAt": null,
-                  "endedBy": null,
+                  "endedAt": 1795572000000,
+                  "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
                   "rev": 7,
                   "serverNow": 1795572000000,
                   "counts": {
@@ -124345,8 +124343,8 @@
                 "example": {
                   "checkIn": {
                     "mode": "daily",
-                    "direction": "in",
-                    "inside": true,
+                    "direction": "out",
+                    "inside": false,
                     "enteredAt": 1795570500000,
                     "firstAt": 1795570500000,
                     "validFrom": 1795507200000,
@@ -124452,7 +124450,7 @@
                     "lastScans": [],
                     "bundle": null,
                     "door": {
-                      "state": "in"
+                      "state": "out"
                     },
                     "access": null,
                     "tag": null,
@@ -126556,8 +126554,8 @@
                   "assurance": "basic",
                   "scope": "pass",
                   "type": {
-                    "id": "0193a1b2-7c00-7000-8000-9258e244adf0",
-                    "name": "Wristband",
+                    "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                    "name": "Member wristband",
                     "use": "member"
                   },
                   "bindingId": "0193a1b2-7c00-7000-8000-66dbb7184ff5",
@@ -127395,7 +127393,7 @@
                     }
                   ],
                   "cursor": "c1.4812",
-                  "asOf": 26,
+                  "asOf": 1795570500000,
                   "validUntil": 1798790399999,
                   "sig": "9db483c0e33113df3e1659edd78fb536e9be76096a47a85918fc853c98c31aa0"
                 }
@@ -127550,7 +127548,7 @@
                   }
                 ],
                 "roster": {
-                  "asOf": 26,
+                  "asOf": 1795570500000,
                   "validUntil": 1798790399999,
                   "sig": "3f0a72cc03b13891a65873b6070b6d34eba2e27ae37286aa964a172be3dc3b4f"
                 }
@@ -128013,7 +128011,7 @@
                 ]
               },
               "example": {
-                "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
+                "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
                 "includeInPass": false
               }
             }
@@ -132250,7 +132248,7 @@
                 "example": {
                   "code": "7K3M9QX2TA",
                   "url": "https://passbook.mobile/scan#pair=7K3M9QX2TA",
-                  "expiresAt": 1798790399999
+                  "expiresAt": 1795572600000
                 }
               }
             }
@@ -133617,15 +133615,9 @@
                 "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                 "preset": "front_desk",
                 "timeZone": "America/Los_Angeles",
-                "places": [
-                  {
-                    "zoneId": "0193a1b2-7c00-7000-8000-000000000081"
-                  }
-                ],
                 "doors": [
                   {
                     "name": "Front desk",
-                    "place": "main-hall",
                     "admits": {
                       "any": true
                     },
@@ -133659,7 +133651,7 @@
                           "pairing": {
                             "code": "7K3M9QX2TA",
                             "url": "https://passbook.mobile/scan#pair=7K3M9QX2TA",
-                            "expiresAt": 1798790399999
+                            "expiresAt": 1795572600000
                           }
                         }
                       ]
@@ -135470,7 +135462,7 @@
                   "pairing": {
                     "code": "7K3M9QX2TA",
                     "url": "https://passbook.mobile/scan#pair=7K3M9QX2TA",
-                    "expiresAt": 1798790399999
+                    "expiresAt": 1795572600000
                   }
                 }
               }
@@ -143154,8 +143146,8 @@
                       "kind": "uid",
                       "system": "uid",
                       "type": {
-                        "id": "0193a1b2-7c00-7000-8000-1c298298191d",
-                        "name": "Card",
+                        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                        "name": "Member wristband",
                         "use": "member"
                       },
                       "assurance": "basic",
@@ -143173,7 +143165,7 @@
                         "scope": "pass",
                         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                         "passTitle": "Day pass",
-                        "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                        "userId": null,
                         "holderName": "Ada Example",
                         "source": "scanner",
                         "lent": false,
@@ -143274,8 +143266,8 @@
                   "kind": "uid",
                   "system": "uid",
                   "type": {
-                    "id": "0193a1b2-7c00-7000-8000-3f480fddfed5",
-                    "name": "Wristband",
+                    "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                    "name": "Member wristband",
                     "use": "member"
                   },
                   "assurance": "basic",
@@ -143293,7 +143285,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -143393,8 +143385,8 @@
                   "kind": "uid",
                   "system": "uid",
                   "type": {
-                    "id": "0193a1b2-7c00-7000-8000-801fae1e7c26",
-                    "name": "Wristband",
+                    "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                    "name": "Member wristband",
                     "use": "member"
                   },
                   "assurance": "basic",
@@ -143412,7 +143404,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -143513,8 +143505,8 @@
                   "kind": "uid",
                   "system": "uid",
                   "type": {
-                    "id": "0193a1b2-7c00-7000-8000-eca0e2a0f275",
-                    "name": "Wristband",
+                    "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                    "name": "Member wristband",
                     "use": "member"
                   },
                   "assurance": "basic",
@@ -143532,7 +143524,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -143699,8 +143691,8 @@
                       "kind": "uid",
                       "system": "uid",
                       "type": {
-                        "id": "0193a1b2-7c00-7000-8000-27167bc88f69",
-                        "name": "Card",
+                        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                        "name": "Member wristband",
                         "use": "member"
                       },
                       "assurance": "basic",
@@ -143718,7 +143710,7 @@
                         "scope": "pass",
                         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                         "passTitle": "Day pass",
-                        "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                        "userId": null,
                         "holderName": "Ada Example",
                         "source": "scanner",
                         "lent": false,
@@ -143802,8 +143794,8 @@
                   "kind": "uid",
                   "system": "uid",
                   "type": {
-                    "id": "0193a1b2-7c00-7000-8000-1c808876e2d1",
-                    "name": "Wristband",
+                    "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                    "name": "Member wristband",
                     "use": "member"
                   },
                   "assurance": "basic",
@@ -143821,7 +143813,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -143915,8 +143907,8 @@
                   "kind": "uid",
                   "system": "uid",
                   "type": {
-                    "id": "0193a1b2-7c00-7000-8000-efbcaa6386d6",
-                    "name": "Wristband",
+                    "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                    "name": "Member wristband",
                     "use": "member"
                   },
                   "assurance": "basic",
@@ -143934,7 +143926,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -144020,8 +144012,8 @@
                   "kind": "uid",
                   "system": "uid",
                   "type": {
-                    "id": "0193a1b2-7c00-7000-8000-0471d1ffdc45",
-                    "name": "Wristband",
+                    "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                    "name": "Member wristband",
                     "use": "member"
                   },
                   "assurance": "basic",
@@ -144039,7 +144031,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -144162,8 +144154,8 @@
                   "kind": "uid",
                   "system": "uid",
                   "type": {
-                    "id": "0193a1b2-7c00-7000-8000-fe597d0e6388",
-                    "name": "Wristband",
+                    "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                    "name": "Member wristband",
                     "use": "member"
                   },
                   "assurance": "basic",
@@ -144181,7 +144173,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -144304,8 +144296,8 @@
                   "kind": "uid",
                   "system": "uid",
                   "type": {
-                    "id": "0193a1b2-7c00-7000-8000-8e48009b9c0d",
-                    "name": "Wristband",
+                    "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                    "name": "Member wristband",
                     "use": "member"
                   },
                   "assurance": "basic",
@@ -144323,7 +144315,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -144563,7 +144555,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -144679,7 +144671,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -144783,7 +144775,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -144890,8 +144882,8 @@
                   "kind": "uid",
                   "system": "uid",
                   "type": {
-                    "id": "0193a1b2-7c00-7000-8000-fc556adb1e99",
-                    "name": "Wristband",
+                    "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                    "name": "Member wristband",
                     "use": "member"
                   },
                   "assurance": "basic",
@@ -144909,7 +144901,7 @@
                     "scope": "pass",
                     "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                     "passTitle": "Day pass",
-                    "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                    "userId": null,
                     "holderName": "Ada Example",
                     "source": "scanner",
                     "lent": false,
@@ -145133,8 +145125,8 @@
                       "kind": "uid",
                       "system": "uid",
                       "type": {
-                        "id": "0193a1b2-7c00-7000-8000-edccb75dc99b",
-                        "name": "Wristband",
+                        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+                        "name": "Member wristband",
                         "use": "member"
                       },
                       "assurance": "basic",
@@ -145152,7 +145144,7 @@
                         "scope": "pass",
                         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                         "passTitle": "Day pass",
-                        "userId": "0193a1b2-7c00-7000-8000-000000000011",
+                        "userId": null,
                         "holderName": "Ada Example",
                         "source": "scanner",
                         "lent": false,

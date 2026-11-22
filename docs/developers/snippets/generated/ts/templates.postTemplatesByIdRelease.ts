@@ -6,10 +6,8 @@ const result = await pb.templates.releases.release('0193a1b2-7c00-7000-8000-0000
   version: '4',
   modes: [
     'test',
-    'live',
   ],
   expected: {
-    live: 3,
     test: 3,
   },
 });

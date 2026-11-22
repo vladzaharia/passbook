@@ -905,7 +905,7 @@
   "passes.putPassesByIdMemberPhoto": {
     "description": "Uploads a member photo for a pass.",
     "request": {
-      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
+      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
       "includeInPass": false
     },
     "response": {
@@ -1726,11 +1726,11 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000053",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "generation": 3,
+      "generation": 1,
       "status": "active",
-      "createdAt": 1794362400000,
+      "createdAt": 1795572000000,
       "voidedAt": null,
-      "voidCause": "refund",
+      "voidCause": null,
       "code": "P7QK2XJ4MZ3TBWHN5RVC6DLE4A"
     }
   },
@@ -1759,7 +1759,7 @@
       "status": "active",
       "createdAt": 1794362400000,
       "voidedAt": null,
-      "voidCause": "refund"
+      "voidCause": null
     }
   },
   "passes.getPassesByIdPrint": {

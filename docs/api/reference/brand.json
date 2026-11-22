@@ -69,7 +69,7 @@
   "brand.putBrandWebLogo": {
     "description": "Uploads the web logo as a PNG body, at most 1024 by 512 px and 512 KB. It replaces the current logo.",
     "request": {
-      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
+      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
       "configRevision": 3
     },
     "response": {

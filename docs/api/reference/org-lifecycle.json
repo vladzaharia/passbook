@@ -17,9 +17,9 @@
     },
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "status": "active",
-      "closedAt": null,
-      "purgeAfter": 1798790399999,
+      "status": "closed",
+      "closedAt": 1795572000000,
+      "purgeAfter": 1798164000000,
       "purging": false,
       "purged": false,
       "held": false,

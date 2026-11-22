@@ -18,7 +18,7 @@ func main() {
 
 	var query passbook.TemplateImportsListQuery
 	if err := json.Unmarshal([]byte(`{
-  "limit": 25
+  "limit": 20
 }`), &query); err != nil {
 		panic(err)
 	}

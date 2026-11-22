@@ -9,10 +9,10 @@ result = pb.templates.reviews.request(
     {
         "version": "4",
         "modes": [
-            "live",
+            "test",
         ],
         "expected": {
-            "live": 3,
+            "test": 3,
         },
     },
 )

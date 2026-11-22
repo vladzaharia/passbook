@@ -10,10 +10,8 @@ result = pb.templates.releases.release(
         "version": "4",
         "modes": [
             "test",
-            "live",
         ],
         "expected": {
-            "live": 3,
             "test": 3,
         },
     },

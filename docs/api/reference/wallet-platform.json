@@ -59,7 +59,7 @@
       "expectedRevision": 3,
       "credentials": {
         "issuerId": "3388000000022843210",
-        "serviceAccountEmail": "ada@example.com",
+        "serviceAccountEmail": "wallet-issuer@example.com",
         "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
         "scopes": ["https://www.googleapis.com/auth/wallet_object.issuer"]
       },
@@ -145,8 +145,8 @@
   },
   "wallet-platform.getPlatformWalletCredentialsMigrate": {
     "response": {
-      "pending": 7,
-      "migrated": 35,
+      "pending": 0,
+      "migrated": 1,
       "items": [
         {
           "accountId": "0193a1b2-7c00-7000-8000-8c8745ea6340",
@@ -170,7 +170,7 @@
   },
   "wallet-platform.postPlatformWalletCredentialsMigrate": {
     "response": {
-      "queued": 27
+      "queued": 1
     }
   },
   "wallet-platform.postPlatformWalletCredentialsMigrateResolve": {
@@ -181,7 +181,7 @@
       "action": "assign_platform"
     },
     "response": {
-      "accounts": 27
+      "accounts": 1
     }
   }
 }

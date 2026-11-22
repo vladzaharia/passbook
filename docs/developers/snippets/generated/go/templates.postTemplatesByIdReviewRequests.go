@@ -20,10 +20,10 @@ func main() {
 	if err := json.Unmarshal([]byte(`{
   "version": "4",
   "modes": [
-    "live"
+    "test"
   ],
   "expected": {
-    "live": 3
+    "test": 3
   }
 }`), &body); err != nil {
 		panic(err)

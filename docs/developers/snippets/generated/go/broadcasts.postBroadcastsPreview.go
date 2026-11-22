@@ -24,9 +24,10 @@ func main() {
       "0193a1b2-7c00-7000-8000-0000000000b1"
     ]
   },
-  "patch": {},
-  "notify": true,
-  "message": "The gym closes at 18:00 on 24 December."
+  "patch": {
+    "validUntil": "2027-01-31"
+  },
+  "notify": true
 }`), &body); err != nil {
 		panic(err)
 	}

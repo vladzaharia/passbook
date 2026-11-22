@@ -3,7 +3,7 @@
     "response": {
       "source": "analytics_engine",
       "range": "24h",
-      "bucketMs": 1848,
+      "bucketMs": 3600000,
       "unavailable": ["not_configured"],
       "totals": {
         "passes": 37,
@@ -29,79 +29,79 @@
       "series": {
         "issued": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "updated": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "downloads": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "registrations": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "refreshes": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "pushes": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "pushFailures": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "emails": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "emailFailures": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "emailUnknown": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "syncRuns": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "signIns": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "scans": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ]
@@ -144,7 +144,7 @@
     "response": {
       "source": "analytics_engine",
       "range": "24h",
-      "bucketMs": 1848,
+      "bucketMs": 3600000,
       "unavailable": ["not_configured"],
       "totals": {
         "passes": 37,
@@ -170,79 +170,79 @@
       "series": {
         "issued": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "updated": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "downloads": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "registrations": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "refreshes": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "pushes": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "pushFailures": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "emails": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "emailFailures": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "emailUnknown": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "syncRuns": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "signIns": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "scans": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ]
@@ -284,7 +284,7 @@
   "metrics.getMetricsActivity": {
     "response": {
       "range": "24h",
-      "bucketMs": 1848,
+      "bucketMs": 3600000,
       "totals": {
         "issued": 32,
         "added": 37,
@@ -297,13 +297,13 @@
       "series": {
         "issued": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ],
         "scans": [
           {
-            "t": 32,
+            "t": 1795485600000,
             "v": 39
           }
         ]

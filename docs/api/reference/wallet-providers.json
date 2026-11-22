@@ -81,7 +81,7 @@
       "expectedRevision": 3,
       "credentials": {
         "issuerId": "3388000000022843210",
-        "serviceAccountEmail": "ada@example.com",
+        "serviceAccountEmail": "wallet-issuer@example.com",
         "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
         "scopes": ["https://www.googleapis.com/auth/wallet_object.issuer"]
       }

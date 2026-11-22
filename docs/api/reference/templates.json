@@ -168,9 +168,8 @@
     "description": "Release a saved version to Test and Live in one call. Test runs first, then Live; each mode creates or reuses its candidate, reuses or writes an approval (a `test` approval in Test, a `sole` approval in Live only for the sole reviewer) and publishes at the expected generation. Test follows Live: a newer Test head stays and is reported as `kept`. Another reviewer's approval is needed otherwise: 409 `TEMPLATE_REVIEW_REQUIRED` with the plan; Test stays released and a repeat call resumes. `?dryRun=true` returns the plan and changes nothing. Send `Idempotency-Key`: the same key and body replays the stored answer with `Idempotent-Replayed: true`. `expected` is the generation each head must still be at, `0` before a first release. A Test key may name only `test`; a Live key cannot release.",
     "request": {
       "version": "4",
-      "modes": ["test", "live"],
+      "modes": ["test"],
       "expected": {
-        "live": 3,
         "test": 3
       }
     },
@@ -182,31 +181,25 @@
           "releaseId": "0193a1b2-7c00-7000-8000-d324703775c6",
           "generation": 4,
           "approvalKind": "test"
-        },
-        "live": {
-          "outcome": "released",
-          "releaseId": "0193a1b2-7c00-7000-8000-94a2c275b5eb",
-          "generation": 4,
-          "approvalKind": "peer"
         }
       },
       "state": {
         "live": {
-          "version": "4",
-          "at": 1795569600000,
-          "by": "Priya Nair"
+          "version": "3",
+          "at": 1794362400000,
+          "by": "Sam Rivera"
         },
         "test": {
           "version": "4",
           "at": 1795569600000,
-          "state": "following"
+          "state": "ahead"
         },
         "draft": null,
         "review": {
           "state": "none"
         },
         "alone": false,
-        "next": null
+        "next": "request_review"
       }
     }
   },
@@ -214,15 +207,15 @@
     "description": "Create or reuse the Test and Live candidates of a saved version without approving them, and email the org's other reviewers. A newer request replaces an older open one. Send `Idempotency-Key`.",
     "request": {
       "version": "4",
-      "modes": ["live"],
+      "modes": ["test"],
       "expected": {
-        "live": 3
+        "test": 3
       }
     },
     "response": {
       "version": "4",
       "modes": {
-        "live": {
+        "test": {
           "outcome": "review_requested",
           "releaseId": null,
           "generation": 3,
