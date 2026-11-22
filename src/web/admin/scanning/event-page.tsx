@@ -129,6 +129,7 @@ function EventDetail({
       s.accepts !== null &&
       admitsOf(s.accepts).eventIds.includes(eventId),
   );
+  const over = event.status === 'ended' || (event.status === 'live' && event.closesAt <= now);
   const editable = canManage && event.mode === mode && event.status !== 'archived';
   return (
     <>
@@ -177,7 +178,7 @@ function EventDetail({
                 {admitting.map((s) => (
                   <div key={s.id} className="flex items-center justify-between gap-2">
                     <Link
-                      className="text-accent-fg"
+                      className="inline-flex items-center text-accent-fg pointer-coarse:min-h-11"
                       to="/admin/o/$orgId/scanning/sessions/$sessionId"
                       params={{ orgId: s.orgId, sessionId: s.id }}
                     >
@@ -186,7 +187,7 @@ function EventDetail({
                     <SessionStatePill session={s} />
                   </div>
                 ))}
-                {editable ? (
+                {editable && !over ? (
                   <Button variant="secondary" onClick={() => setDialog('assign')}>
                     Add to a session
                   </Button>

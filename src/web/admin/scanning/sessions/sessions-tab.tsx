@@ -68,7 +68,7 @@ export function SessionsTab({
               <div className="min-w-0">
                 <h2 className="text-base font-semibold">
                   <Link
-                    className="inline-flex items-center gap-2 text-fg-strong hover:text-accent-fg"
+                    className="inline-flex items-center gap-2 text-fg-strong hover:text-accent-fg pointer-coarse:min-h-11"
                     to="/admin/scanning/sessions/$sessionId"
                     params={{ sessionId: s.id }}
                   >

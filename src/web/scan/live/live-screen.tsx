@@ -161,6 +161,7 @@ export function LiveScreen({
       data-testid="scan-live"
       data-view="monitor"
     >
+      <h1 className="sr-only">{session.scanner?.name ?? 'Monitor'}</h1>
       <header className="scan-live-header">
         {/* Setup is staff only: hold the name for a second, or press Enter on it. */}
         <button

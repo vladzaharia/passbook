@@ -200,12 +200,18 @@
   }
 }
 
-/* Narrow screens: two short lines, so the button stays clear of the buddy standing in the middle. */
-@media (max-width: 479px) {
+/* Readable at every width; two short lines, so the button stays clear of the buddy in the middle. */
+button.scan-hold-switch {
+  max-width: 9rem;
+  min-height: 44px;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: normal;
+  text-align: start;
+}
+@media (min-width: 834px) {
   button.scan-hold-switch {
-    max-width: 6.5rem;
-    white-space: normal;
-    text-align: start;
-    line-height: 1.2;
+    max-width: none;
+    font-size: 16px;
   }
 }

@@ -96,7 +96,7 @@ export function TemplateDetailHeader({
             <Link
               to="/admin/blueprints/$blueprintId"
               params={{ blueprintId: t.fromBlueprint.id }}
-              className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2"
+              className="inline-flex items-center rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 pointer-coarse:min-h-11"
             >
               <Badge>
                 <Compass aria-hidden className="size-3" />
