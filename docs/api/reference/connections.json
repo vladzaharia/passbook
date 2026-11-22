@@ -61,5 +61,50 @@
         "excluded": 0
       }
     }
+  },
+  "connections.getConnectionsByIdWebhookFailures": {
+    "description": "Lists retained webhook status for a connection."
+  },
+  "connections.postConnectionsByIdWebhookFailuresByRetentionIdReplay": {
+    "description": "Replays a retained webhook."
+  },
+  "connections.postConnectionsByIdWebhookFailuresByRetentionIdResolve": {
+    "description": "Marks an uncertain webhook resolved after you have checked the source system."
+  },
+  "connections.getConnections": {
+    "description": "Lists connections."
+  },
+  "connections.postConnections": {
+    "description": "Creates a connection."
+  },
+  "connections.getConnectionsSummary": {
+    "description": "A health summary across connections."
+  },
+  "connections.getConnectionsById": {
+    "description": "A connection with its runs and metrics."
+  },
+  "connections.patchConnectionsById": {
+    "description": "Updates a connection."
+  },
+  "connections.deleteConnectionsById": {
+    "description": "Deletes a connection."
+  },
+  "connections.postConnectionsTestConfig": {
+    "description": "Tests an unsaved configuration without saving it."
+  },
+  "connections.postConnectionsByIdTest": {
+    "description": "Tests the saved connection against its source."
+  },
+  "connections.postConnectionsByIdSync": {
+    "description": "Syncs now instead of waiting for the schedule."
+  },
+  "connections.getConnectionsByIdRuns": {
+    "description": "Lists the runs of a connection."
+  },
+  "connections.postConnectionsByIdWebhookSecret": {
+    "description": "Generates a new webhook secret. It is shown once."
+  },
+  "connections.deleteConnectionsByIdWebhookSecretPrevious": {
+    "description": "Stops accepting the previous webhook secret now."
   }
 }

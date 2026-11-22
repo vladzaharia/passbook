@@ -1,0 +1,5 @@
+{
+  "delivery.getDelivery": {
+    "description": "The outbox entries for a pass: each email or push and whether it was sent."
+  }
+}

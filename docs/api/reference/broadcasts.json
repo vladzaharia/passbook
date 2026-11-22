@@ -352,5 +352,23 @@
       "startedAt": 1795000000000,
       "finishedAt": 1795000090000
     }
+  },
+  "broadcasts.getBroadcasts": {
+    "description": "Lists messages and scheduled changes."
+  },
+  "broadcasts.patchBroadcastsById": {
+    "description": "Edits a draft, or a scheduled message that has not started."
+  },
+  "broadcasts.postBroadcastsByIdSend": {
+    "description": "Sends a draft now or at a time."
+  },
+  "broadcasts.postBroadcastsByIdCancel": {
+    "description": "Cancels a draft or a scheduled message."
+  },
+  "broadcasts.postBroadcastsByIdRetry": {
+    "description": "Sends a failed or cancelled message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size."
+  },
+  "broadcasts.getBroadcastsByIdItems": {
+    "description": "The passes a message reached: updated, unchanged or failed."
   }
 }

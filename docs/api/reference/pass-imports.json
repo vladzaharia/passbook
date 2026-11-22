@@ -1064,5 +1064,23 @@
       "expiresAt": 1790082800000,
       "emailHoldUntil": 1790000360000
     }
+  },
+  "pass-imports.getPassImports": {
+    "description": "Recent imports of this mode, newest first."
+  },
+  "pass-imports.deletePassImportsById": {
+    "description": "Discards a draft import that is not committing."
+  },
+  "pass-imports.getPassImportsByIdRows": {
+    "description": "The rows of an import, 100 a page."
+  },
+  "pass-imports.getPassImportsByIdErrorsCsv": {
+    "description": "The rows that failed the check, as CSV with a Problem column."
+  },
+  "pass-imports.getPassImportsByIdResultsCsv": {
+    "description": "What happened to each row, as CSV with the pass and its links."
+  },
+  "pass-imports.postPassImportsByIdEmailRest": {
+    "description": "Sends now the mail of created passes that were not emailed, including held mail ahead of its wait. 50 a call; a repeat emails nobody twice."
   }
 }

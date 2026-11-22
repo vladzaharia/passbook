@@ -86,7 +86,12 @@
       "total": 1240,
       "onRelease": 758,
       "remaining": 482,
-      "updating": [{ "version": "3", "count": 479 }],
+      "updating": [
+        {
+          "version": "3",
+          "count": 479
+        }
+      ],
       "failedCount": 3,
       "failed": [
         {
@@ -291,5 +296,62 @@
       ],
       "nextCursor": null
     }
+  },
+  "templates.getTemplatesUploads": {
+    "description": "Recent template imports of this mode, newest first."
+  },
+  "templates.getTemplatesUploadsById": {
+    "description": "The status of one template import: its state, and the report when it has failed."
+  },
+  "templates.getTemplatesPreviews": {
+    "description": "Sample previews of several templates in one call. Pass the template ids in the query."
+  },
+  "templates.getTemplatesEligible": {
+    "description": "Release-backed templates an organization can use. Only templates with an approved release appear."
+  },
+  "templates.postTemplatesByIdPreview": {
+    "description": "Renders the pass.json a template would produce for `input`, without issuing a pass."
+  },
+  "templates.getTemplatesByIdVersionsByVersion": {
+    "description": "One version of a template with its validation report."
+  },
+  "templates.getTemplatesByIdVersionsByVersionAssetsByName": {
+    "description": "The bytes of one image in a template version."
+  },
+  "templates.getTemplatesByIdChannels": {
+    "description": "The template's channel policy and what it allows now, in this mode."
+  },
+  "templates.getTemplatesByIdChannelsRuns": {
+    "description": "The latest runs that applied saved channel changes to passes, in this mode."
+  },
+  "templates.getTemplatesByIdStampsImpact": {
+    "description": "What changing the stamp goal does to the template's live passes. Read it before saving the change."
+  },
+  "templates.postTemplatesByIdUse": {
+    "description": "Makes a template in an organization from a blueprint. The blueprint is not changed."
+  },
+  "templates.postTemplatesByIdScanSetup": {
+    "description": "Sets up scanning for a template: its events and a session. Runs once per template."
+  },
+  "templates.getTemplatesByIdPackage": {
+    "description": "The active version, or the unpublished draft, as an uploadable zip."
+  },
+  "templates.getTemplatesByIdCandidates": {
+    "description": "Lists the release candidates of a template."
+  },
+  "templates.postTemplatesByIdCandidates": {
+    "description": "Creates a release candidate from the template's current draft."
+  },
+  "templates.postTemplatesByIdCandidatesByCandidateIdApprove": {
+    "description": "Approves a release candidate. A key can approve only in Test; Live approval is for a person."
+  },
+  "templates.getTemplatesByIdReleases": {
+    "description": "Lists the releases of a template, newest first."
+  },
+  "templates.postTemplatesByIdReleases": {
+    "description": "Publishes an approved release. A key can publish only in Test."
+  },
+  "templates.getTemplatesByIdReleasesImpact": {
+    "description": "What publishing or rolling back to a version changes, and for how many passes."
   }
 }
