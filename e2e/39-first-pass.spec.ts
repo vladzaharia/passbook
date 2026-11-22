@@ -26,7 +26,8 @@ test('a new org goes from the path card to a pass waiting on a phone', async ({ 
   await page.waitForURL(/\/templates\/[^/]+$/);
   await page.getByRole('button', { name: 'Try on my phone' }).first().click();
   const sheet = page.getByRole('dialog', { name: 'Try on my phone' });
-  await expect(sheet.getByText('Release v1 to Test')).toBeVisible();
-  await expect(sheet.getByText('Waiting for your phone')).toBeVisible({ timeout: 30_000 });
-  await expect(sheet.getByRole('button', { name: /^Release/ })).toBeDisabled();
+  await expect(sheet.getByText('Release v1 to Test').first()).toBeVisible();
+  await expect(sheet.getByText('Waiting for your phone').first()).toBeVisible({ timeout: 30_000 });
+  // Release is never blocked.
+  await expect(sheet.getByRole('button', { name: /^Release/ })).toBeEnabled();
 });
