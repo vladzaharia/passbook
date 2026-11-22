@@ -245,7 +245,7 @@
     "operationId": "developer.getHome",
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].client: field added",
-    "note": ""
+    "note": "client names the tool that made the call (curl, an SDK), read from its user agent; null when it sent none."
   },
   {
     "key": "GET /api/v1/developer/home new operation",
