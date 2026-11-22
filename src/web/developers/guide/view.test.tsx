@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('../model/samples.ts', () => ({ exampleSamples: () => [] }));
 vi.mock('../ui/code.tsx', () => ({
-  CodeRegion: ({ label }: { label: string }) => <pre aria-label={label} />,
+  CodeRegion: ({ label }: { label: string }) => <section aria-label={label} />,
   SampleTabs: ({ id }: { id: string }) => <div data-testid={id} />,
 }));
 vi.mock('../pages/more.tsx', () => ({ Head: ({ title }: { title: string }) => <h1>{title}</h1> }));
