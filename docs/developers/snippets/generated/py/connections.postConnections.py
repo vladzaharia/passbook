@@ -7,27 +7,26 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 result = pb.connections.create(
     {
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "connectorType": "google-sheets",
+        "connectorType": "csv-url",
         "name": "Booking sheet",
         "config": {
-            "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-            "range": "Members!A:E",
+            "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+            "idColumn": "Booking ID",
         },
-        "secrets": {
-            "sheetsToken": "••••3f9c",
-        },
-        "webhookSecret": "whsec_demo_northwind_571d4d",
         "mapping": {
             "name": {
-                "from": "Name",
+                "from": "/Name",
             },
             "tier": {
-                "from": "Tier",
+                "from": "/Plan",
             },
             "validUntil": {
-                "from": "Valid until",
+                "from": "/Valid until",
             },
         },
+        "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "holderEmailField": "/Email",
+        "mode": "poll",
     },
 )
 print(result)

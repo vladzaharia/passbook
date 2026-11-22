@@ -5,35 +5,35 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "revision": "4",
-      "passCount": 16,
+      "passCount": 128,
       "brand": {
         "name": {
-          "value": "Day pass",
+          "value": "Northwind Climbing",
           "source": "passbook"
         },
         "logo": {
           "value": {
             "sha": "3b31b934ee392193a7760192b68f9cb7b5b6a16c942d419cf5b8617f3387e386",
-            "w": 3,
-            "h": 6
+            "w": 480,
+            "h": 150
           },
           "source": "passbook",
-          "templatesOwn": 31
+          "templatesOwn": 0
         },
         "icon": {
           "value": {
             "sha": "280146e0f0ea5ca19369e425204a4c244c8341a8244be8e3bb34d2347fbb717a",
-            "w": 3,
-            "h": 6
+            "w": 87,
+            "h": 87
           },
           "source": "passbook",
-          "templatesOwn": 31
+          "templatesOwn": 0
         },
         "webLogo": {
           "value": {
             "sha": "637b0e9823f421b3815f17b5e978da27cba9f8cf123102bf718b4e39ecdbdc94",
-            "w": 3,
-            "h": 6
+            "w": 480,
+            "h": 150
           },
           "source": "passbook",
           "sameAsLogo": false
@@ -42,10 +42,10 @@
           "value": {
             "background": "#112a4a",
             "foreground": "#ffffff",
-            "label": "#ffffff"
+            "label": "#ffc400"
           },
           "source": "passbook",
-          "templatesOwn": 31
+          "templatesOwn": 0
         },
         "logoHasName": {
           "value": false,
@@ -72,7 +72,7 @@
         },
         "email": {
           "fromName": {
-            "value": "Day pass",
+            "value": "Northwind Climbing",
             "source": "passbook"
           },
           "buddy": false
@@ -109,8 +109,7 @@
             },
             "hold": null,
             "issuance": {
-              "state": "disabled",
-              "reason": "not_released"
+              "state": "enabled"
             }
           }
         },
@@ -144,8 +143,7 @@
             },
             "hold": null,
             "issuance": {
-              "state": "disabled",
-              "reason": "not_released"
+              "state": "enabled"
             }
           }
         },
@@ -179,8 +177,7 @@
             },
             "hold": null,
             "issuance": {
-              "state": "disabled",
-              "reason": "not_released"
+              "state": "enabled"
             }
           }
         },
@@ -214,8 +211,7 @@
             },
             "hold": null,
             "issuance": {
-              "state": "disabled",
-              "reason": "not_released"
+              "state": "enabled"
             }
           }
         },
@@ -249,8 +245,7 @@
             },
             "hold": null,
             "issuance": {
-              "state": "disabled",
-              "reason": "not_released"
+              "state": "enabled"
             }
           }
         },
@@ -284,8 +279,7 @@
             },
             "hold": null,
             "issuance": {
-              "state": "disabled",
-              "reason": "not_released"
+              "state": "enabled"
             }
           }
         }
@@ -299,14 +293,14 @@
           "identifier": "pass.mobile.passbook.northwind",
           "kind": "platform",
           "status": "active",
-          "notBefore": 1794322800000,
-          "notAfter": 1798124400000,
+          "notBefore": 1794362400000,
+          "notAfter": 1798790399999,
           "rotation": "auto",
-          "nextRotationAt": 1795521600000,
+          "nextRotationAt": 1795570500000,
           "issuing": true,
           "isDefault": true,
           "passCount": 16,
-          "createdAt": 1794322800000
+          "createdAt": 1794362400000
         },
         "sharedIdentifier": "pass.mobile.passbook.northwind",
         "push": "healthy",
@@ -319,11 +313,11 @@
           "state": "succeeded",
           "step": "mapping",
           "attempt": 1,
-          "waitingFor": "approval",
+          "waitingFor": null,
           "errorCode": null,
-          "createdAt": 1794322800000,
-          "updatedAt": 1795359600000,
-          "finishedAt": 1795521600000
+          "createdAt": 1794362400000,
+          "updatedAt": 1795399200000,
+          "finishedAt": 1795570500000
         },
         "managedAllowed": false,
         "passesOnShared": 24
@@ -376,15 +370,12 @@
       ],
       "checks": [
         {
-          "code": "BRAND_LOGO",
-          "level": "error",
-          "area": "brand",
-          "message": "The gym closes at 18:00 on 24 December.",
-          "channel": "mobile",
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "code": "APPLE_SHARED_ID",
+          "level": "info",
+          "area": "channels",
+          "message": "Apple passes sign with PassBook's shared ID.",
           "fix": {
-            "action": "upload_logo",
-            "target": "tier"
+            "action": "start_apple_managed"
           }
         }
       ]
@@ -412,35 +403,35 @@
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
         "revision": "4",
-        "passCount": 16,
+        "passCount": 128,
         "brand": {
           "name": {
-            "value": "Day pass",
+            "value": "Northwind Climbing",
             "source": "passbook"
           },
           "logo": {
             "value": {
               "sha": "bde4b49be77ada9698420ea19477dbcbe6e67d599e2b8c10251aca49eed2cbc2",
-              "w": 3,
-              "h": 6
+              "w": 480,
+              "h": 150
             },
             "source": "passbook",
-            "templatesOwn": 31
+            "templatesOwn": 0
           },
           "icon": {
             "value": {
               "sha": "a953339c4037475a818d5971cd83825159337aca328eb5ce6b8368284c60922d",
-              "w": 3,
-              "h": 6
+              "w": 87,
+              "h": 87
             },
             "source": "passbook",
-            "templatesOwn": 31
+            "templatesOwn": 0
           },
           "webLogo": {
             "value": {
               "sha": "68103c92504d324c16866e7937d615c69847110c80f4a930c336b84d8a50fcc3",
-              "w": 3,
-              "h": 6
+              "w": 480,
+              "h": 150
             },
             "source": "passbook",
             "sameAsLogo": false
@@ -449,10 +440,10 @@
             "value": {
               "background": "#112a4a",
               "foreground": "#ffffff",
-              "label": "#ffffff"
+              "label": "#ffc400"
             },
             "source": "passbook",
-            "templatesOwn": 31
+            "templatesOwn": 0
           },
           "logoHasName": {
             "value": false,
@@ -479,7 +470,7 @@
           },
           "email": {
             "fromName": {
-              "value": "Day pass",
+              "value": "Northwind Climbing",
               "source": "passbook"
             },
             "buddy": false
@@ -516,8 +507,7 @@
               },
               "hold": null,
               "issuance": {
-                "state": "disabled",
-                "reason": "not_released"
+                "state": "enabled"
               }
             }
           },
@@ -551,8 +541,7 @@
               },
               "hold": null,
               "issuance": {
-                "state": "disabled",
-                "reason": "not_released"
+                "state": "enabled"
               }
             }
           },
@@ -586,8 +575,7 @@
               },
               "hold": null,
               "issuance": {
-                "state": "disabled",
-                "reason": "not_released"
+                "state": "enabled"
               }
             }
           },
@@ -621,8 +609,7 @@
               },
               "hold": null,
               "issuance": {
-                "state": "disabled",
-                "reason": "not_released"
+                "state": "enabled"
               }
             }
           },
@@ -656,8 +643,7 @@
               },
               "hold": null,
               "issuance": {
-                "state": "disabled",
-                "reason": "not_released"
+                "state": "enabled"
               }
             }
           },
@@ -691,8 +677,7 @@
               },
               "hold": null,
               "issuance": {
-                "state": "disabled",
-                "reason": "not_released"
+                "state": "enabled"
               }
             }
           }
@@ -706,14 +691,14 @@
             "identifier": "pass.mobile.passbook.northwind",
             "kind": "platform",
             "status": "active",
-            "notBefore": 1794322800000,
-            "notAfter": 1798124400000,
+            "notBefore": 1794362400000,
+            "notAfter": 1798790399999,
             "rotation": "auto",
-            "nextRotationAt": 1795521600000,
+            "nextRotationAt": 1795570500000,
             "issuing": true,
             "isDefault": true,
             "passCount": 16,
-            "createdAt": 1794322800000
+            "createdAt": 1794362400000
           },
           "sharedIdentifier": "pass.mobile.passbook.northwind",
           "push": "healthy",
@@ -726,11 +711,11 @@
             "state": "succeeded",
             "step": "mapping",
             "attempt": 1,
-            "waitingFor": "approval",
+            "waitingFor": null,
             "errorCode": null,
-            "createdAt": 1794322800000,
-            "updatedAt": 1795359600000,
-            "finishedAt": 1795521600000
+            "createdAt": 1794362400000,
+            "updatedAt": 1795399200000,
+            "finishedAt": 1795570500000
           },
           "managedAllowed": false,
           "passesOnShared": 24
@@ -783,15 +768,12 @@
         ],
         "checks": [
           {
-            "code": "BRAND_LOGO",
-            "level": "error",
-            "area": "brand",
-            "message": "The gym closes at 18:00 on 24 December.",
-            "channel": "mobile",
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+            "code": "APPLE_SHARED_ID",
+            "level": "info",
+            "area": "channels",
+            "message": "Apple passes sign with PassBook's shared ID.",
             "fix": {
-              "action": "upload_logo",
-              "target": "tier"
+              "action": "start_apple_managed"
             }
           }
         ]
@@ -829,7 +811,7 @@
       "version": "2d6eb15ab7e17170d9615c70881f226899e5bfe2677d02a1756b035da1742c35",
       "w": 3,
       "h": 6,
-      "expiresAt": 1798124400000
+      "expiresAt": 1798790399999
     }
   }
 }

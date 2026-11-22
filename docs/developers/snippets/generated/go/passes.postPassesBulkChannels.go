@@ -18,15 +18,15 @@ func main() {
 
 	var body passbook.PassesBulkUpdateChannelsBody
 	if err := json.Unmarshal([]byte(`{
-  "action": "on",
+  "action": "off",
   "channels": [
-    "mobile"
+    "paper"
   ],
   "ids": [
-    "0193a1b2-7c00-7000-8000-665c0f4c3b8d"
+    "0193a1b2-7c00-7000-8000-0000000000c1",
+    "0193a1b2-7c00-7000-8000-f3f85c24ee38"
   ],
   "notify": false,
-  "replaceCodes": false,
   "dryRun": false
 }`), &body); err != nil {
 		panic(err)

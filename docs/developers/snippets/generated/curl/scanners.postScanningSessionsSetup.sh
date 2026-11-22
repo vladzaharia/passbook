@@ -14,7 +14,7 @@ curl -X POST "https://passbook.mobile/api/v1/scanning-sessions/setup" \
   "doors": [
     {
       "name": "Front desk",
-      "place": "northwind",
+      "place": "main-hall",
       "admits": {
         "any": true
       },

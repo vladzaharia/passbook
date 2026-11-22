@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.WebhookEndpointsRotateSecretBody
 	if err := json.Unmarshal([]byte(`{
-  "overlapHours": 0
+  "overlapHours": 24
 }`), &body); err != nil {
 		panic(err)
 	}

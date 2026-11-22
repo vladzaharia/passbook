@@ -82,23 +82,23 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Jordan Lee",
-      "email": "ada@example.com",
-      "hostUserId": "0193a1b2-7c00-7000-8000-000000000011",
+      "email": "jordan@example.com",
       "hostName": "Sam Rivera",
-      "windowFrom": 1795532400000,
-      "windowUntil": 1798124400000
+      "windowFrom": 1795568400000,
+      "windowUntil": 1795575600000,
+      "note": "Trial session with a coach"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0ab15bf3415b",
-      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "id": "0193a1b2-7c00-7000-8000-000000000062",
+      "passId": "0193a1b2-7c00-7000-8000-70ee23bfb40f",
       "name": "Jordan Lee",
       "hostName": "Sam Rivera",
-      "windowFrom": 1795532400000,
-      "windowUntil": 1798124400000,
-      "note": "Waiver on file.",
-      "status": "expected",
-      "statusAt": 1795521600000,
-      "autoOut": false,
+      "windowFrom": 1795568400000,
+      "windowUntil": 1795575600000,
+      "note": "Trial session with a coach",
+      "status": "in",
+      "statusAt": 1795568700000,
+      "autoOut": true,
       "hasEmail": true
     }
   },
@@ -140,16 +140,16 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-acfb17dd51e3",
-          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "name": "Maya Patel",
+          "id": "0193a1b2-7c00-7000-8000-000000000062",
+          "passId": "0193a1b2-7c00-7000-8000-70ee23bfb40f",
+          "name": "Jordan Lee",
           "hostName": "Sam Rivera",
-          "windowFrom": 1795532400000,
-          "windowUntil": 1798124400000,
-          "note": "Brings two guests on Fridays.",
-          "status": "expected",
-          "statusAt": 1795521600000,
-          "autoOut": false,
+          "windowFrom": 1795568400000,
+          "windowUntil": 1795575600000,
+          "note": "Trial session with a coach",
+          "status": "in",
+          "statusAt": 1795568700000,
+          "autoOut": true,
           "hasEmail": true
         }
       ],

@@ -4,35 +4,35 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-053478282bf0",
+          "id": "0193a1b2-7c00-7000-8000-00f4510d86a3",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "kind": "pass",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "bundleId": "0193a1b2-7c00-7000-8000-000000000032",
+          "bundleId": null,
           "to": "ada@example.com",
-          "subject": "Your day pass",
+          "subject": "Your Northwind Climbing pass",
           "attached": false,
-          "createdAt": 1794322800000
+          "createdAt": 1795570500000
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "sandbox.getTestInboxById": {
     "description": "One captured email with its HTML and text.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-9e5aec0e262e",
+      "id": "0193a1b2-7c00-7000-8000-00f4510d86a3",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "pass",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "bundleId": "0193a1b2-7c00-7000-8000-000000000032",
+      "bundleId": null,
       "to": "ada@example.com",
-      "subject": "Your day pass",
+      "subject": "Your Northwind Climbing pass",
       "attached": false,
-      "createdAt": 1794322800000,
-      "html": "<p>Your Northwind pass is ready.</p>",
-      "text": "The gym closes at 18:00 on 24 December.",
-      "forwarding": "sent"
+      "createdAt": 1795570500000,
+      "html": "<p>Your pass is ready.</p><p>Day pass for Ada Example.</p>",
+      "text": "Your pass is ready. Day pass for Ada Example.",
+      "forwarding": "none"
     }
   }
 }

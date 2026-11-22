@@ -10,9 +10,9 @@
       "roles": ["admin"],
       "csrfToken": "csrf_demo_northwind",
       "amr": "oidc",
-      "consoleUntil": 1798124400000,
+      "consoleUntil": 1798790399999,
       "consoleGroupRequired": false,
-      "expiresAt": 1798124400000
+      "expiresAt": 1798790399999
     }
   }
 }

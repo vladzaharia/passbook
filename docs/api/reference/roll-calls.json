@@ -3,23 +3,23 @@
     "description": "The open roll call.",
     "response": {
       "rollCall": {
-        "id": "0193a1b2-7c00-7000-8000-43f22fb8c77d",
-        "placeNames": ["Front entrance"],
-        "startedAt": 1794322800000,
+        "id": "0193a1b2-7c00-7000-8000-000000000072",
+        "placeNames": ["Main hall"],
+        "startedAt": 1795571640000,
         "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
-        "endedAt": 1795521600000,
-        "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
-        "rev": 24,
-        "serverNow": 1795521600000,
+        "endedAt": null,
+        "endedBy": null,
+        "rev": 7,
+        "serverNow": 1795572000000,
         "counts": {
-          "total": 128,
-          "present": 34,
-          "out": 13,
-          "unconfirmed": 21,
-          "notConfirmedOut": 24,
-          "late": 16,
-          "inNow": 8,
-          "tappedIn": 7
+          "total": 38,
+          "present": 31,
+          "out": 4,
+          "unconfirmed": 3,
+          "notConfirmedOut": 0,
+          "late": 0,
+          "inNow": 34,
+          "tappedIn": 38
         },
         "people": [
           {
@@ -29,14 +29,14 @@
             "host": "passbook.mobile",
             "place": "zone:main-hall",
             "placeName": "Front entrance",
-            "since": 1794322800000,
+            "since": 1794362400000,
             "basis": "in_now",
             "presence": "in",
             "late": false,
             "mark": {
               "status": "present",
               "by": "Sam Rivera",
-              "at": 1795521600000
+              "at": 1795570500000
             },
             "notConfirmedOut": false
           }
@@ -47,23 +47,23 @@
   "roll-calls.postRollCalls": {
     "description": "Starts a roll call, or joins the open one.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-3702cb36cf40",
-      "placeNames": ["Front entrance"],
-      "startedAt": 1794322800000,
+      "id": "0193a1b2-7c00-7000-8000-000000000072",
+      "placeNames": ["Main hall"],
+      "startedAt": 1795572000000,
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "endedAt": 1795521600000,
-      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "rev": 24,
-      "serverNow": 1795521600000,
+      "endedAt": null,
+      "endedBy": null,
+      "rev": 0,
+      "serverNow": 1795572000000,
       "counts": {
-        "total": 128,
-        "present": 34,
-        "out": 13,
-        "unconfirmed": 21,
-        "notConfirmedOut": 24,
-        "late": 16,
-        "inNow": 8,
-        "tappedIn": 7
+        "total": 38,
+        "present": 0,
+        "out": 0,
+        "unconfirmed": 38,
+        "notConfirmedOut": 0,
+        "late": 0,
+        "inNow": 36,
+        "tappedIn": 41
       },
       "people": [
         {
@@ -73,14 +73,14 @@
           "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Front entrance",
-          "since": 1794322800000,
+          "since": 1794362400000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 1795521600000
+            "at": 1795570500000
           },
           "notConfirmedOut": false
         }
@@ -90,23 +90,23 @@
   "roll-calls.getRollCallsById": {
     "description": "One roll call.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-54440c2cdb61",
-      "placeNames": ["Front entrance"],
-      "startedAt": 1794322800000,
+      "id": "0193a1b2-7c00-7000-8000-000000000072",
+      "placeNames": ["Main hall"],
+      "startedAt": 1795571640000,
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "endedAt": 1795521600000,
-      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "rev": 24,
-      "serverNow": 1795521600000,
+      "endedAt": null,
+      "endedBy": null,
+      "rev": 7,
+      "serverNow": 1795572000000,
       "counts": {
-        "total": 128,
-        "present": 34,
-        "out": 13,
-        "unconfirmed": 21,
-        "notConfirmedOut": 24,
-        "late": 16,
-        "inNow": 8,
-        "tappedIn": 7
+        "total": 38,
+        "present": 31,
+        "out": 4,
+        "unconfirmed": 3,
+        "notConfirmedOut": 0,
+        "late": 0,
+        "inNow": 34,
+        "tappedIn": 38
       },
       "people": [
         {
@@ -116,14 +116,14 @@
           "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Front entrance",
-          "since": 1794322800000,
+          "since": 1794362400000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 1795521600000
+            "at": 1795570500000
           },
           "notConfirmedOut": false
         }
@@ -138,28 +138,28 @@
           "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "status": "present",
-          "at": 1795521600000
+          "at": 1795571940000
         }
       ]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-ed3df364f785",
-      "placeNames": ["Front entrance"],
-      "startedAt": 1794322800000,
+      "id": "0193a1b2-7c00-7000-8000-000000000072",
+      "placeNames": ["Main hall"],
+      "startedAt": 1795571640000,
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "endedAt": 1795521600000,
-      "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "rev": 24,
-      "serverNow": 1795521600000,
+      "endedAt": null,
+      "endedBy": null,
+      "rev": 7,
+      "serverNow": 1795572000000,
       "counts": {
-        "total": 128,
-        "present": 34,
-        "out": 13,
-        "unconfirmed": 21,
-        "notConfirmedOut": 24,
-        "late": 16,
-        "inNow": 8,
-        "tappedIn": 7
+        "total": 38,
+        "present": 31,
+        "out": 4,
+        "unconfirmed": 3,
+        "notConfirmedOut": 0,
+        "late": 0,
+        "inNow": 34,
+        "tappedIn": 38
       },
       "people": [
         {
@@ -169,14 +169,14 @@
           "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Front entrance",
-          "since": 1794322800000,
+          "since": 1794362400000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 1795521600000
+            "at": 1795570500000
           },
           "notConfirmedOut": false
         }
@@ -185,8 +185,7 @@
         {
           "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "status": "applied",
-          "code": "NW7K2Q"
+          "status": "applied"
         }
       ]
     }
@@ -194,23 +193,23 @@
   "roll-calls.postRollCallsByIdEnd": {
     "description": "Ends a roll call.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-46afc89e63f8",
-      "placeNames": ["Front entrance"],
-      "startedAt": 1794322800000,
+      "id": "0193a1b2-7c00-7000-8000-000000000072",
+      "placeNames": ["Main hall"],
+      "startedAt": 1795571640000,
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "endedAt": 1795521600000,
+      "endedAt": 1795572000000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
-      "rev": 24,
-      "serverNow": 1795521600000,
+      "rev": 7,
+      "serverNow": 1795572000000,
       "counts": {
-        "total": 128,
-        "present": 34,
-        "out": 13,
-        "unconfirmed": 21,
-        "notConfirmedOut": 24,
-        "late": 16,
-        "inNow": 8,
-        "tappedIn": 7
+        "total": 38,
+        "present": 31,
+        "out": 4,
+        "unconfirmed": 3,
+        "notConfirmedOut": 0,
+        "late": 0,
+        "inNow": 34,
+        "tappedIn": 38
       },
       "people": [
         {
@@ -220,14 +219,14 @@
           "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Front entrance",
-          "since": 1794322800000,
+          "since": 1794362400000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 1795521600000
+            "at": 1795570500000
           },
           "notConfirmedOut": false
         }

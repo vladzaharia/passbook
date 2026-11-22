@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.PassesRemoveBody
 	if err := json.Unmarshal([]byte(`{
-  "message": "The gym closes at 18:00 on 24 December."
+  "message": "Your day pass was replaced by a monthly membership."
 }`), &body); err != nil {
 		panic(err)
 	}

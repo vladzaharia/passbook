@@ -19,7 +19,6 @@ func main() {
 	var body passbook.TemplatesPreviewBody
 	if err := json.Unmarshal([]byte(`{
   "version": "3",
-  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
   "input": {
     "name": "Ada Example",
     "tier": "Day pass",

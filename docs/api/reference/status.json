@@ -3,9 +3,9 @@
     "response": {
       "overall": "verified",
       "build": {
-        "id": "2026-11-24.1",
-        "tag": "v2026.11.24",
-        "timestamp": "2026-11-24T12:00:00.000Z"
+        "id": "2026-11-23.1",
+        "tag": "v2026.11.23",
+        "timestamp": "2026-11-23T02:00:00.000Z"
       },
       "components": [
         {
@@ -14,7 +14,7 @@
           "label": "Database",
           "state": "verified",
           "detail": null,
-          "checkedAt": 1795521600000
+          "checkedAt": 1795570500000
         },
         {
           "id": "storage",
@@ -22,7 +22,7 @@
           "label": "File storage",
           "state": "verified",
           "detail": null,
-          "checkedAt": 1795521600000
+          "checkedAt": 1795570500000
         },
         {
           "id": "queue",
@@ -30,7 +30,7 @@
           "label": "Job queue",
           "state": "verified",
           "detail": null,
-          "checkedAt": 1795521600000
+          "checkedAt": 1795570500000
         },
         {
           "id": "workflows",
@@ -38,7 +38,7 @@
           "label": "Workflows",
           "state": "verified",
           "detail": null,
-          "checkedAt": 1795521600000
+          "checkedAt": 1795570500000
         },
         {
           "id": "identity",
@@ -46,7 +46,7 @@
           "label": "Pass signing identity",
           "state": "verified",
           "detail": null,
-          "checkedAt": 1795521600000
+          "checkedAt": 1795570500000
         },
         {
           "id": "email",
@@ -54,7 +54,7 @@
           "label": "Email",
           "state": "configured",
           "detail": "Sending as hello@example.com",
-          "checkedAt": 1795521600000
+          "checkedAt": 1795570500000
         },
         {
           "id": "oidc",
@@ -62,7 +62,7 @@
           "label": "Sign-in",
           "state": "verified",
           "detail": null,
-          "checkedAt": 1795521600000
+          "checkedAt": 1795570500000
         },
         {
           "id": "connections",
@@ -70,7 +70,7 @@
           "label": "Connections",
           "state": "not_in_use",
           "detail": null,
-          "checkedAt": 1795521600000
+          "checkedAt": 1795570500000
         },
         {
           "id": "cron",
@@ -78,7 +78,7 @@
           "label": "Scheduled jobs",
           "state": "verified",
           "detail": "Last run 2 minutes ago.",
-          "checkedAt": 1795521600000
+          "checkedAt": 1795570500000
         },
         {
           "id": "build",
@@ -86,7 +86,7 @@
           "label": "Build",
           "state": "verified",
           "detail": null,
-          "checkedAt": 1795521600000
+          "checkedAt": 1795570500000
         }
       ]
     }
@@ -100,8 +100,8 @@
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "targetId": "0193a1b2-7c00-7000-8000-dc02f80774cc",
           "status": "complete",
-          "startedAt": 1794322800000,
-          "finishedAt": 1795521600000,
+          "startedAt": 1794362400000,
+          "finishedAt": 1795570500000,
           "errorCode": null
         }
       ],
@@ -117,7 +117,7 @@
           "note": "Scans answer in 3 to 5 seconds. Investigating.",
           "component": "api",
           "impact": "degraded",
-          "startedAt": 1795521600000,
+          "startedAt": 1795570500000,
           "resolvedAt": null
         },
         {
@@ -126,8 +126,8 @@
           "note": "Apple push was slow for 20 minutes. Back to normal.",
           "component": "apple_push",
           "impact": "notice",
-          "startedAt": 1794322800000,
-          "resolvedAt": 1794324000000
+          "startedAt": 1794362400000,
+          "resolvedAt": 1794363600000
         }
       ],
       "nextCursor": null
@@ -146,7 +146,7 @@
       "note": "Scans answer in 3 to 5 seconds. Investigating.",
       "component": "api",
       "impact": "degraded",
-      "startedAt": 1795521600000,
+      "startedAt": 1795570500000,
       "resolvedAt": null
     }
   },
@@ -157,8 +157,8 @@
       "note": "Fixed a slow query. Scans answer in under a second.",
       "component": "api",
       "impact": "degraded",
-      "startedAt": 1795521600000,
-      "resolvedAt": 1795532400000
+      "startedAt": 1795570500000,
+      "resolvedAt": 1795572000000
     }
   }
 }

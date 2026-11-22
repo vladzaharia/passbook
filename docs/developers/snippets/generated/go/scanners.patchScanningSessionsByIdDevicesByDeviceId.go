@@ -18,12 +18,7 @@ func main() {
 
 	var body passbook.ScanningSessionsDevicesUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "name": "Front desk",
-  "surface": "auto",
-  "overrides": {
-    "flow": "auto",
-    "reader": "barcode"
-  }
+  "name": "Front desk tablet"
 }`), &body); err != nil {
 		panic(err)
 	}

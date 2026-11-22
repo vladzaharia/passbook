@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.ApiKeysRotateCurrentBody
 	if err := json.Unmarshal([]byte(`{
-  "overlapHours": 2
+  "overlapHours": 24
 }`), &body); err != nil {
 		panic(err)
 	}

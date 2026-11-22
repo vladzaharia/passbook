@@ -18,10 +18,9 @@ func main() {
 
 	var body passbook.WebhookEndpointsDeliveriesBulkReplayBody
 	if err := json.Unmarshal([]byte(`{
-  "from": 23,
-  "to": 39,
+  "from": 1795485600000,
+  "to": 1795572000000,
   "include": "failed",
-  "missing": false,
   "dryRun": false
 }`), &body); err != nil {
 		panic(err)

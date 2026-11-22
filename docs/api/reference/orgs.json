@@ -12,7 +12,7 @@
             "id": "0193a1b2-7c00-7000-8000-85143788c181",
             "name": "Sam Rivera"
           },
-          "createdAt": 1794322800000,
+          "createdAt": 1794362400000,
           "counts": {
             "passes": 37,
             "templates": 21,
@@ -52,28 +52,28 @@
         "passColors": {
           "background": "#112a4a",
           "foreground": "#ffffff",
-          "label": "#ffffff"
+          "label": "#ffc400"
         },
         "logo": {
           "sha": "1f2ef69962ec9a8a14ab30795c4333b829fda7944fc7fcdcc4ce85964f870cc8",
-          "w": 3,
-          "h": 6
+          "w": 480,
+          "h": 150
         },
         "icon": {
           "sha": "8be6208cb899441bebbb79fc1f72f952df6b9439a9f50083c7b1deb1701cc957",
-          "w": 3,
-          "h": 6
+          "w": 87,
+          "h": 87
         },
         "web": {
           "sha": "0f5d96cefe4d8d1a4fe8ff231635d5640b88298de125406f96e84b6dff0d1af2",
-          "w": 3,
-          "h": 6
+          "w": 480,
+          "h": 150
         },
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
       "configRevision": 3,
       "passesToUpdate": 27
     }
@@ -89,7 +89,7 @@
         "id": "0193a1b2-7c00-7000-8000-b0adda3c0edb",
         "name": "Sam Rivera"
       },
-      "createdAt": 1794322800000,
+      "createdAt": 1794362400000,
       "counts": {
         "passes": 37,
         "templates": 21,
@@ -121,28 +121,28 @@
         "passColors": {
           "background": "#112a4a",
           "foreground": "#ffffff",
-          "label": "#ffffff"
+          "label": "#ffc400"
         },
         "logo": {
           "sha": "6357667f8c5c2192e496733117f6bbaeaa6cbf234c5d10817a21141db9d8b65f",
-          "w": 3,
-          "h": 6
+          "w": 480,
+          "h": 150
         },
         "icon": {
           "sha": "93dfdc99ec07b388208364a64ee9cb886229fc1c57a78e99895e3a70a7ce0197",
-          "w": 3,
-          "h": 6
+          "w": 87,
+          "h": 87
         },
         "web": {
           "sha": "5b4d7ec65e2458415b5ced8b322fe29ec0dcd9bd89a65d8f4b089860e244e3f1",
-          "w": 3,
-          "h": 6
+          "w": 480,
+          "h": 150
         },
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
       "configRevision": 3,
       "passesToUpdate": 27
     }
@@ -166,7 +166,7 @@
         "id": "0193a1b2-7c00-7000-8000-fee738ea42c2",
         "name": "Sam Rivera"
       },
-      "createdAt": 1794322800000,
+      "createdAt": 1794362400000,
       "counts": {
         "passes": 37,
         "templates": 21,
@@ -198,28 +198,28 @@
         "passColors": {
           "background": "#112a4a",
           "foreground": "#ffffff",
-          "label": "#ffffff"
+          "label": "#ffc400"
         },
         "logo": {
           "sha": "773ea1e2737b14ea46e2afa09a052b52fdc3d84336c4cca5449e3b8f812c4da0",
-          "w": 3,
-          "h": 6
+          "w": 480,
+          "h": 150
         },
         "icon": {
           "sha": "6bced4eda46d34c34943350f50cc97557f514d9e7e7525d25ff9efda79e70fc0",
-          "w": 3,
-          "h": 6
+          "w": 87,
+          "h": 87
         },
         "web": {
           "sha": "ab51731d265793a2ea4111a465a9ce0f07895049dfc3d1feacbec63a88129f34",
-          "w": 3,
-          "h": 6
+          "w": 480,
+          "h": 150
         },
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
       "configRevision": 3,
       "passesToUpdate": 27
     }
@@ -240,28 +240,28 @@
         "passColors": {
           "background": "#112a4a",
           "foreground": "#ffffff",
-          "label": "#ffffff"
+          "label": "#ffc400"
         },
         "logo": {
           "sha": "cc3b57ce1ac8f50b24eb5748d0abe49396fb74eb7768d94e0d456958127fc019",
-          "w": 3,
-          "h": 6
+          "w": 480,
+          "h": 150
         },
         "icon": {
           "sha": "fbdc3a6fd48f5e316ebab60d74cce6ac521efa5542622cdba7a4a882b0ee37dd",
-          "w": 3,
-          "h": 6
+          "w": 87,
+          "h": 87
         },
         "web": {
           "sha": "a1572ea75f80752a3e44eaeba5b2f8fdf6b8eaa4918d3f460438a7a879e81f9c",
-          "w": 3,
-          "h": 6
+          "w": 480,
+          "h": 150
         },
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
       "configRevision": 3,
       "passesToUpdate": 27,
       "counts": {
@@ -294,28 +294,28 @@
         "passColors": {
           "background": "#112a4a",
           "foreground": "#ffffff",
-          "label": "#ffffff"
+          "label": "#ffc400"
         },
         "logo": {
           "sha": "9c5aeed66e9457350b4134b06badfdcc433090663bc966f47d6e88f0e76fbe95",
-          "w": 3,
-          "h": 6
+          "w": 480,
+          "h": 150
         },
         "icon": {
           "sha": "4550293246349298a59f676905d6c4aca071fbbf6620f0a64efc6fbc93829271",
-          "w": 3,
-          "h": 6
+          "w": 87,
+          "h": 87
         },
         "web": {
           "sha": "5b25a0ebc4614ea5da770165cfef41f96cb3c24efbc7d7e9e50334f971dd6913",
-          "w": 3,
-          "h": 6
+          "w": 480,
+          "h": 150
         },
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
       "configRevision": 3,
       "passesToUpdate": 27
     }

@@ -4,36 +4,36 @@
     "response": {
       "items": [
         {
-          "occupancy": "off",
-          "capacity": 38,
-          "maxStayMinutes": 15,
+          "occupancy": "track",
+          "capacity": 120,
+          "maxStayMinutes": null,
           "hardLimit": false,
           "clearAt": "04:00",
-          "id": "0193a1b2-7c00-7000-8000-c1e76b28b6d8",
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "key": "tier",
+          "key": "main-hall",
           "name": "Main hall",
-          "parentId": "0193a1b2-7c00-7000-8000-02e051ce892a",
-          "timeZone": "America/Los_Angeles",
+          "parentId": null,
+          "timeZone": null,
           "effectiveTimeZone": "America/Los_Angeles",
-          "sort": 11,
-          "depth": 3,
-          "sessions": 34,
+          "sort": 1,
+          "depth": 0,
+          "sessions": 1,
           "checkedAt": [
             {
-              "id": "0193a1b2-7c00-7000-8000-52f6407a9f3d",
-              "name": "Training room"
+              "id": "0193a1b2-7c00-7000-8000-000000000031",
+              "name": "Front desk"
             }
           ],
           "plans": [
             {
               "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-              "templateName": "Ten-visit card",
-              "planId": "0193a1b2-7c00-7000-8000-9f9f474c8309",
-              "label": "Staff hours"
+              "templateName": "Day pass",
+              "planId": "always",
+              "label": "Always open"
             }
           ],
-          "inNow": 8,
+          "inNow": 38,
           "archivedAt": null
         }
       ],
@@ -43,157 +43,149 @@
   "scan-zones.postScanZones": {
     "description": "Creates a zone.",
     "request": {
-      "occupancy": "off",
-      "capacity": 38,
-      "maxStayMinutes": 15,
+      "occupancy": "track",
+      "capacity": 120,
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "key": "tier",
+      "key": "main-hall",
       "name": "Main hall"
     },
     "response": {
-      "occupancy": "off",
-      "capacity": 38,
-      "maxStayMinutes": 15,
+      "occupancy": "track",
+      "capacity": 120,
+      "maxStayMinutes": null,
       "hardLimit": false,
       "clearAt": "04:00",
-      "id": "0193a1b2-7c00-7000-8000-fed7cd89b418",
+      "id": "0193a1b2-7c00-7000-8000-000000000081",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "key": "tier",
+      "key": "main-hall",
       "name": "Main hall",
-      "parentId": "0193a1b2-7c00-7000-8000-da4db099ff6f",
-      "timeZone": "America/Los_Angeles",
+      "parentId": null,
+      "timeZone": null,
       "effectiveTimeZone": "America/Los_Angeles",
-      "sort": 11,
-      "depth": 3,
-      "sessions": 34,
-      "checkedAt": [
-        {
-          "id": "0193a1b2-7c00-7000-8000-1b465bc253be",
-          "name": "Main hall"
-        }
-      ],
+      "sort": 1,
+      "depth": 0,
+      "sessions": 0,
+      "checkedAt": [],
       "plans": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "templateName": "Day pass",
-          "planId": "0193a1b2-7c00-7000-8000-e910671e53fd",
+          "planId": "always",
           "label": "Always open"
         }
       ],
-      "inNow": 8,
+      "inNow": 0,
       "archivedAt": null
     }
   },
   "scan-zones.patchScanZonesById": {
     "description": "Edits a zone.",
     "request": {
-      "occupancy": "off",
-      "capacity": 38,
-      "maxStayMinutes": 15
+      "capacity": 150
     },
     "response": {
-      "occupancy": "off",
-      "capacity": 38,
-      "maxStayMinutes": 15,
+      "occupancy": "track",
+      "capacity": 150,
+      "maxStayMinutes": null,
       "hardLimit": false,
       "clearAt": "04:00",
-      "id": "0193a1b2-7c00-7000-8000-d7ee2eff7d9e",
+      "id": "0193a1b2-7c00-7000-8000-000000000081",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "key": "tier",
+      "key": "main-hall",
       "name": "Main hall",
-      "parentId": "0193a1b2-7c00-7000-8000-60b007bcf07b",
-      "timeZone": "America/Los_Angeles",
+      "parentId": null,
+      "timeZone": null,
       "effectiveTimeZone": "America/Los_Angeles",
-      "sort": 11,
-      "depth": 3,
-      "sessions": 34,
+      "sort": 1,
+      "depth": 0,
+      "sessions": 1,
       "checkedAt": [
         {
-          "id": "0193a1b2-7c00-7000-8000-04c88a191a40",
-          "name": "Main hall"
+          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "name": "Front desk"
         }
       ],
       "plans": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "templateName": "Day pass",
-          "planId": "0193a1b2-7c00-7000-8000-a620dcb1e91a",
+          "planId": "always",
           "label": "Always open"
         }
       ],
-      "inNow": 8,
+      "inNow": 38,
       "archivedAt": null
     }
   },
   "scan-zones.postScanZonesByIdArchive": {
     "description": "Archives a zone and the zones below it.",
     "response": {
-      "occupancy": "off",
-      "capacity": 38,
-      "maxStayMinutes": 15,
+      "occupancy": "track",
+      "capacity": 120,
+      "maxStayMinutes": null,
       "hardLimit": false,
       "clearAt": "04:00",
-      "id": "0193a1b2-7c00-7000-8000-0217833fc893",
+      "id": "0193a1b2-7c00-7000-8000-000000000081",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "key": "tier",
+      "key": "main-hall",
       "name": "Main hall",
-      "parentId": "0193a1b2-7c00-7000-8000-3f15685e3cc7",
-      "timeZone": "America/Los_Angeles",
+      "parentId": null,
+      "timeZone": null,
       "effectiveTimeZone": "America/Los_Angeles",
-      "sort": 11,
-      "depth": 3,
-      "sessions": 34,
+      "sort": 1,
+      "depth": 0,
+      "sessions": 1,
       "checkedAt": [
         {
-          "id": "0193a1b2-7c00-7000-8000-ed9a5ed03964",
-          "name": "Main hall"
+          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "name": "Front desk"
         }
       ],
       "plans": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "templateName": "Day pass",
-          "planId": "0193a1b2-7c00-7000-8000-0f6a194a77ad",
+          "planId": "always",
           "label": "Always open"
         }
       ],
-      "inNow": 8,
-      "archivedAt": null
+      "inNow": 38,
+      "archivedAt": 1795572000000
     }
   },
   "scan-zones.postScanZonesByIdRestore": {
     "description": "Restores a zone and the zones below it.",
     "response": {
-      "occupancy": "off",
-      "capacity": 38,
-      "maxStayMinutes": 15,
+      "occupancy": "track",
+      "capacity": 120,
+      "maxStayMinutes": null,
       "hardLimit": false,
       "clearAt": "04:00",
-      "id": "0193a1b2-7c00-7000-8000-4bbbee56c948",
+      "id": "0193a1b2-7c00-7000-8000-000000000081",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "key": "tier",
+      "key": "main-hall",
       "name": "Main hall",
-      "parentId": "0193a1b2-7c00-7000-8000-6cd02b708732",
-      "timeZone": "America/Los_Angeles",
+      "parentId": null,
+      "timeZone": null,
       "effectiveTimeZone": "America/Los_Angeles",
-      "sort": 11,
-      "depth": 3,
-      "sessions": 34,
+      "sort": 1,
+      "depth": 0,
+      "sessions": 1,
       "checkedAt": [
         {
-          "id": "0193a1b2-7c00-7000-8000-a3334658ec51",
-          "name": "Main hall"
+          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "name": "Front desk"
         }
       ],
       "plans": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "templateName": "Day pass",
-          "planId": "0193a1b2-7c00-7000-8000-4a1c5483273a",
+          "planId": "always",
           "label": "Always open"
         }
       ],
-      "inNow": 8,
+      "inNow": 38,
       "archivedAt": null
     }
   },
@@ -210,15 +202,15 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
-          "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+          "photoUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
           "plan": "Day pass",
           "type": "generic",
           "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Gear shop",
           "parentName": "Front entrance",
-          "since": 1794322800000,
-          "dueAt": 1795521600000,
+          "since": 1794362400000,
+          "dueAt": 1795570500000,
           "via": "api",
           "flags": ["long_stay"]
         }

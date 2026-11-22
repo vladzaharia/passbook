@@ -4,7 +4,8 @@ curl -X POST "https://passbook.mobile/api/v1/bundles" \
   -d '{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
   "passIds": [
-    "0193a1b2-7c00-7000-8000-0000000000c1"
+    "0193a1b2-7c00-7000-8000-0000000000c1",
+    "0193a1b2-7c00-7000-8000-400403b40e9e"
   ],
   "name": "Family pack",
   "holderEmail": "ada@example.com",

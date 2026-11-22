@@ -3,10 +3,9 @@ import { PassBook } from '@passbook/sdk';
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
 const result = await pb.nfc.tagTypes.create({
-  name: 'Wristband 14',
+  name: 'Member wristband',
   use: 'member',
   scopes: 'pass',
-  perPass: 4,
-  bindingDays: 5,
+  perPass: 1,
 });
 console.log(result);

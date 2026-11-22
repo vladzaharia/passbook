@@ -8,9 +8,9 @@
     },
     "response": {
       "dryRun": false,
-      "holders": 3,
-      "passes": 37,
-      "tags": 13
+      "holders": 1,
+      "passes": 2,
+      "tags": 0
     }
   }
 }

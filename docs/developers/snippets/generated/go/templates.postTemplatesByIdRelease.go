@@ -18,14 +18,14 @@ func main() {
 
 	var body passbook.TemplatesReleasesReleaseBody
 	if err := json.Unmarshal([]byte(`{
-  "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-  "version": "3",
+  "version": "4",
   "modes": [
+    "test",
     "live"
   ],
   "expected": {
-    "live": 8,
-    "test": 39
+    "live": 3,
+    "test": 3
   }
 }`), &body); err != nil {
 		panic(err)

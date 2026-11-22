@@ -19,7 +19,7 @@ func main() {
 	var body passbook.PassImportsCommitBody
 	if err := json.Unmarshal([]byte(`{
   "skipInvalid": false,
-  "email": false
+  "email": true
 }`), &body); err != nil {
 		panic(err)
 	}

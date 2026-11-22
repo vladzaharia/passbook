@@ -4,20 +4,20 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-cfc0b3bb8737",
+          "id": "0193a1b2-7c00-7000-8000-69938372af56",
           "system": "uid",
-          "name": "Locker tag 22",
+          "name": "Member wristband",
           "use": "member",
           "scopes": "pass",
-          "perPass": 4,
-          "bindingDays": 5,
+          "perPass": 1,
+          "bindingDays": null,
           "confirm": "staff",
           "typed": false,
           "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "version": 3,
-          "tagCount": 5,
-          "createdAt": 1794322800000,
-          "updatedAt": 1795359600000,
+          "version": 1,
+          "tagCount": 40,
+          "createdAt": 1794362400000,
+          "updatedAt": 1794362400000,
           "archivedAt": null
         }
       ],
@@ -27,76 +27,73 @@
   "nfc-tags.postNfcTagTypes": {
     "description": "Creates a tag type.",
     "request": {
-      "name": "Wristband 14",
+      "name": "Member wristband",
       "use": "member",
       "scopes": "pass",
-      "perPass": 4,
-      "bindingDays": 5
+      "perPass": 1
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-6cae2a1c9566",
+      "id": "0193a1b2-7c00-7000-8000-69938372af56",
       "system": "uid",
-      "name": "Wristband 14",
+      "name": "Member wristband",
       "use": "member",
       "scopes": "pass",
-      "perPass": 4,
-      "bindingDays": 5,
+      "perPass": 1,
+      "bindingDays": null,
       "confirm": "staff",
       "typed": false,
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "version": 3,
-      "tagCount": 5,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
+      "version": 1,
+      "tagCount": 0,
+      "createdAt": 1795572000000,
+      "updatedAt": 1795572000000,
       "archivedAt": null
     }
   },
   "nfc-tags.patchNfcTagTypesById": {
     "description": "Changes a tag type. Send the version you read.",
     "request": {
-      "version": 3,
-      "name": "Wristband 14",
-      "use": "member",
-      "scopes": "pass"
+      "version": 1,
+      "perPass": 2
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-842df6c2c9ea",
+      "id": "0193a1b2-7c00-7000-8000-69938372af56",
       "system": "uid",
-      "name": "Wristband 14",
+      "name": "Member wristband",
       "use": "member",
       "scopes": "pass",
-      "perPass": 4,
-      "bindingDays": 5,
+      "perPass": 2,
+      "bindingDays": null,
       "confirm": "staff",
       "typed": false,
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "version": 3,
-      "tagCount": 5,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
+      "version": 2,
+      "tagCount": 40,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000,
       "archivedAt": null
     }
   },
   "nfc-tags.postNfcTagTypesByIdArchive": {
     "description": "Archives a tag type. Its tags keep working.",
     "request": {
-      "version": 3
+      "version": 1
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-d68e97300c5c",
+      "id": "0193a1b2-7c00-7000-8000-69938372af56",
       "system": "uid",
-      "name": "Wristband 14",
+      "name": "Member wristband",
       "use": "member",
       "scopes": "pass",
-      "perPass": 4,
-      "bindingDays": 5,
+      "perPass": 1,
+      "bindingDays": null,
       "confirm": "staff",
       "typed": false,
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "version": 3,
-      "tagCount": 5,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
+      "version": 1,
+      "tagCount": 40,
+      "createdAt": 1794362400000,
+      "updatedAt": 1794362400000,
       "archivedAt": null
     }
   },
@@ -121,8 +118,8 @@
       "pool": false,
       "status": "active",
       "state": "assigned",
-      "createdAt": 1794322800000,
-      "lastSeenAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-a6b9ba56d38b",
@@ -131,15 +128,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       }
     }
   },
@@ -164,8 +161,8 @@
       "pool": false,
       "status": "active",
       "state": "assigned",
-      "createdAt": 1794322800000,
-      "lastSeenAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-6e665619e12e",
@@ -174,15 +171,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       }
     }
   },
@@ -207,8 +204,8 @@
       "pool": false,
       "status": "active",
       "state": "assigned",
-      "createdAt": 1794322800000,
-      "lastSeenAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-523e30953507",
@@ -217,15 +214,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       }
     }
   },
@@ -235,12 +232,12 @@
         {
           "id": "0193a1b2-7c00-7000-8000-72f29278da35",
           "name": "Key fob 3",
-          "sessionName": "Marcus Webb",
+          "sessionName": "Evening shift",
           "role": "door",
           "online": false,
           "unavailable": "offline",
           "secureOnly": false,
-          "lastUsedAt": 1795521600000
+          "lastUsedAt": 1795570500000
         }
       ],
       "nextCursor": "c1.4812"
@@ -258,10 +255,10 @@
       "scannerName": "Front desk",
       "scope": "pass",
       "state": "done",
-      "createdAt": 1794322800000,
-      "expiresAt": 1798124400000,
-      "endedAt": 1795521600000,
-      "shownAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "expiresAt": 1798790399999,
+      "endedAt": null,
+      "shownAt": 1795570500000,
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-2d8f29398284",
         "tagId": "0193a1b2-7c00-7000-8000-000000000082",
@@ -269,15 +266,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       },
       "errorCode": null,
       "hint": "CE32"
@@ -306,8 +303,8 @@
       "pool": false,
       "status": "active",
       "state": "assigned",
-      "createdAt": 1794322800000,
-      "lastSeenAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-5cb63b59239c",
@@ -316,15 +313,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       }
     }
   },
@@ -338,21 +335,21 @@
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "passTitle": "Day pass",
           "userId": "0193a1b2-7c00-7000-8000-000000000011",
-          "holderName": "Sam Rivera",
+          "holderName": "Ada Example",
           "source": "scanner",
           "lent": false,
-          "boundAt": 1795521600000,
+          "boundAt": 1795570500000,
           "boundByName": "Priya Nair",
           "scannerName": "Side door",
-          "expiresAt": 1798124400000,
-          "endedAt": 1795521600000,
-          "endCause": "admin"
+          "expiresAt": 1798790399999,
+          "endedAt": null,
+          "endCause": null
         }
       ],
       "nextCursor": "c1.4812",
       "events": [
         {
-          "at": 1795521600000,
+          "at": 1795570500000,
           "action": "lost",
           "actorName": "Sam Rivera"
         }
@@ -378,8 +375,8 @@
           "pool": false,
           "status": "active",
           "state": "assigned",
-          "createdAt": 1794322800000,
-          "lastSeenAt": 1795521600000,
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
           "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
           "binding": {
             "id": "0193a1b2-7c00-7000-8000-1ca0454186c5",
@@ -388,15 +385,15 @@
             "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
             "passTitle": "Day pass",
             "userId": "0193a1b2-7c00-7000-8000-000000000011",
-            "holderName": "Sam Rivera",
+            "holderName": "Ada Example",
             "source": "scanner",
             "lent": false,
-            "boundAt": 1795521600000,
+            "boundAt": 1795570500000,
             "boundByName": "Marcus Webb",
             "scannerName": "Gear shop till",
-            "expiresAt": 1798124400000,
-            "endedAt": 1795521600000,
-            "endCause": "admin"
+            "expiresAt": 1798790399999,
+            "endedAt": null,
+            "endCause": null
           }
         }
       ],
@@ -420,8 +417,8 @@
       "pool": false,
       "status": "active",
       "state": "assigned",
-      "createdAt": 1794322800000,
-      "lastSeenAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-195c813ac6a4",
@@ -430,15 +427,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       }
     }
   },
@@ -461,8 +458,8 @@
           "pool": false,
           "status": "active",
           "state": "assigned",
-          "createdAt": 1794322800000,
-          "lastSeenAt": 1795521600000,
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
           "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
           "binding": {
             "id": "0193a1b2-7c00-7000-8000-cd7ff2147503",
@@ -471,15 +468,15 @@
             "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
             "passTitle": "Day pass",
             "userId": "0193a1b2-7c00-7000-8000-000000000011",
-            "holderName": "Sam Rivera",
+            "holderName": "Ada Example",
             "source": "scanner",
             "lent": false,
-            "boundAt": 1795521600000,
+            "boundAt": 1795570500000,
             "boundByName": "Priya Nair",
             "scannerName": "Cafe counter",
-            "expiresAt": 1798124400000,
-            "endedAt": 1795521600000,
-            "endCause": "admin"
+            "expiresAt": 1798790399999,
+            "endedAt": null,
+            "endCause": null
           }
         }
       ],
@@ -503,8 +500,8 @@
       "pool": false,
       "status": "active",
       "state": "assigned",
-      "createdAt": 1794322800000,
-      "lastSeenAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-0054a582b75a",
@@ -513,15 +510,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       }
     }
   },
@@ -542,8 +539,8 @@
       "pool": false,
       "status": "retired",
       "state": "retired",
-      "createdAt": 1794322800000,
-      "lastSeenAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-3c6640f5d11b",
@@ -552,15 +549,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       }
     }
   },
@@ -581,8 +578,8 @@
       "pool": false,
       "status": "active",
       "state": "assigned",
-      "createdAt": 1794322800000,
-      "lastSeenAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-016a4c9211b7",
@@ -591,15 +588,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       }
     }
   },
@@ -620,8 +617,8 @@
       "pool": false,
       "status": "active",
       "state": "lost",
-      "createdAt": 1794322800000,
-      "lastSeenAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-6544de72d0ee",
@@ -630,15 +627,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       }
     }
   },
@@ -650,10 +647,10 @@
       "scannerName": "Front desk",
       "scope": "pass",
       "state": "done",
-      "createdAt": 1794322800000,
-      "expiresAt": 1798124400000,
-      "endedAt": 1795521600000,
-      "shownAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "expiresAt": 1798790399999,
+      "endedAt": null,
+      "shownAt": 1795570500000,
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-a3f4b606cab0",
         "tagId": "0193a1b2-7c00-7000-8000-000000000082",
@@ -661,15 +658,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       },
       "errorCode": null,
       "hint": "07A0"
@@ -683,10 +680,10 @@
       "scannerName": "Front desk",
       "scope": "pass",
       "state": "done",
-      "createdAt": 1794322800000,
-      "expiresAt": 1798124400000,
-      "endedAt": 1795521600000,
-      "shownAt": 1795521600000,
+      "createdAt": 1794362400000,
+      "expiresAt": 1798790399999,
+      "endedAt": null,
+      "shownAt": 1795570500000,
       "binding": {
         "id": "0193a1b2-7c00-7000-8000-5a6a3cf2770d",
         "tagId": "0193a1b2-7c00-7000-8000-000000000082",
@@ -694,15 +691,15 @@
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "passTitle": "Day pass",
         "userId": "0193a1b2-7c00-7000-8000-000000000011",
-        "holderName": "Sam Rivera",
+        "holderName": "Ada Example",
         "source": "scanner",
         "lent": false,
-        "boundAt": 1795521600000,
+        "boundAt": 1795570500000,
         "boundByName": "Sam Rivera",
         "scannerName": "Front desk",
-        "expiresAt": 1798124400000,
-        "endedAt": 1795521600000,
-        "endCause": "admin"
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
       },
       "errorCode": null,
       "hint": "965E"
@@ -727,8 +724,8 @@
           "pool": false,
           "status": "active",
           "state": "assigned",
-          "createdAt": 1794322800000,
-          "lastSeenAt": 1795521600000,
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
           "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
           "binding": {
             "id": "0193a1b2-7c00-7000-8000-bb916af58dae",
@@ -737,15 +734,15 @@
             "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
             "passTitle": "Day pass",
             "userId": "0193a1b2-7c00-7000-8000-000000000011",
-            "holderName": "Sam Rivera",
+            "holderName": "Ada Example",
             "source": "scanner",
             "lent": false,
-            "boundAt": 1795521600000,
+            "boundAt": 1795570500000,
             "boundByName": "Sam Rivera",
             "scannerName": "Side door",
-            "expiresAt": 1798124400000,
-            "endedAt": 1795521600000,
-            "endCause": "admin"
+            "expiresAt": 1798790399999,
+            "endedAt": null,
+            "endCause": null
           },
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "orgName": "Northwind Climbing"

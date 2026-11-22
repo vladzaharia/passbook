@@ -18,9 +18,7 @@ func main() {
 
 	var body passbook.ScanZonesUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "occupancy": "off",
-  "capacity": 38,
-  "maxStayMinutes": 15
+  "capacity": 150
 }`), &body); err != nil {
 		panic(err)
 	}

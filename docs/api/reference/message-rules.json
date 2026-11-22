@@ -4,40 +4,34 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-94d65b51f495",
+          "id": "0193a1b2-7c00-7000-8000-000000000052",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "name": "Welcome message",
+          "name": "Renewal reminder",
           "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "match": [
-            {
-              "input": "tier",
-              "values": ["Day pass"]
-            }
-          ],
           "anchor": {
             "kind": "input",
-            "input": "tier"
+            "input": "validUntil"
           },
           "offset": {
-            "amount": 14,
+            "amount": 7,
             "unit": "day",
             "when": "before"
           },
           "yearly": false,
-          "sendAt": "2026-12-24T09:00:00.000Z",
+          "sendAt": "09:00",
           "timeZone": "America/Los_Angeles",
-          "message": "The gym closes at 18:00 on 24 December.",
-          "clearAfter": 1798124400000,
-          "on": false,
+          "message": "Your membership renews in 7 days.",
+          "clearAfter": 604800000,
+          "on": true,
           "state": "on",
-          "pausedCode": "RULE_CREATOR_REVOKED",
-          "nextCheckAt": 1795521600000,
-          "sent": 4,
-          "skipped": 7,
-          "createdAt": 1794322800000,
-          "updatedAt": 1795359600000,
-          "version": 3
+          "pausedCode": null,
+          "nextCheckAt": 1795626000000,
+          "sent": 42,
+          "skipped": 3,
+          "createdAt": 1794362400000,
+          "updatedAt": 1795399200000,
+          "version": 2
         }
       ],
       "nextCursor": "c1.4812"
@@ -49,100 +43,81 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": [
-        {
-          "input": "tier",
-          "values": ["Day pass"]
-        }
-      ],
       "anchor": {
         "kind": "input",
-        "input": "tier"
+        "input": "validUntil"
       },
       "offset": {
-        "amount": 14,
+        "amount": 7,
         "unit": "day",
         "when": "before"
       },
-      "yearly": false,
-      "sendAt": "04:00",
+      "sendAt": "09:00",
       "timeZone": "America/Los_Angeles",
-      "message": "The gym closes at 18:00 on 24 December."
+      "message": "Your membership renews in 7 days."
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0466e599a204",
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": [
-        {
-          "input": "tier",
-          "values": ["Day pass"]
-        }
-      ],
       "anchor": {
         "kind": "input",
-        "input": "tier"
+        "input": "validUntil"
       },
       "offset": {
-        "amount": 14,
+        "amount": 7,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "sendAt": "2026-12-24T09:00:00.000Z",
+      "sendAt": "09:00",
       "timeZone": "America/Los_Angeles",
-      "message": "The gym closes at 18:00 on 24 December.",
-      "clearAfter": 1798124400000,
-      "on": false,
+      "message": "Your membership renews in 7 days.",
+      "clearAfter": 604800000,
+      "on": true,
       "state": "on",
-      "pausedCode": "RULE_CREATOR_REVOKED",
-      "nextCheckAt": 1795521600000,
-      "sent": 4,
-      "skipped": 7,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
-      "version": 3
+      "pausedCode": null,
+      "nextCheckAt": 1795626000000,
+      "sent": 42,
+      "skipped": 3,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "version": 2
     }
   },
   "message-rules.getMessageRulesById": {
     "description": "One automatic message.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-e3cae0a1b105",
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": [
-        {
-          "input": "tier",
-          "values": ["Day pass"]
-        }
-      ],
       "anchor": {
         "kind": "input",
-        "input": "tier"
+        "input": "validUntil"
       },
       "offset": {
-        "amount": 14,
+        "amount": 7,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "sendAt": "2026-12-24T09:00:00.000Z",
+      "sendAt": "09:00",
       "timeZone": "America/Los_Angeles",
-      "message": "The gym closes at 18:00 on 24 December.",
-      "clearAfter": 1798124400000,
-      "on": false,
+      "message": "Your membership renews in 7 days.",
+      "clearAfter": 604800000,
+      "on": true,
       "state": "on",
-      "pausedCode": "RULE_CREATOR_REVOKED",
-      "nextCheckAt": 1795521600000,
-      "sent": 4,
-      "skipped": 7,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
-      "version": 3
+      "pausedCode": null,
+      "nextCheckAt": 1795626000000,
+      "sent": 42,
+      "skipped": 3,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "version": 2
     }
   },
   "message-rules.putMessageRulesById": {
@@ -151,61 +126,49 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": [
-        {
-          "input": "tier",
-          "values": ["Day pass"]
-        }
-      ],
       "anchor": {
         "kind": "input",
-        "input": "tier"
+        "input": "validUntil"
       },
       "offset": {
-        "amount": 14,
+        "amount": 7,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "sendAt": "04:00",
+      "sendAt": "09:00",
       "timeZone": "America/Los_Angeles",
-      "message": "The gym closes at 18:00 on 24 December.",
-      "version": 3
+      "message": "Your membership renews in 7 days.",
+      "version": 2
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-2304d4d04f7f",
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": [
-        {
-          "input": "tier",
-          "values": ["Day pass"]
-        }
-      ],
       "anchor": {
         "kind": "input",
-        "input": "tier"
+        "input": "validUntil"
       },
       "offset": {
-        "amount": 14,
+        "amount": 7,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "sendAt": "2026-12-24T09:00:00.000Z",
+      "sendAt": "09:00",
       "timeZone": "America/Los_Angeles",
-      "message": "The gym closes at 18:00 on 24 December.",
-      "clearAfter": 1798124400000,
-      "on": false,
+      "message": "Your membership renews in 7 days.",
+      "clearAfter": 604800000,
+      "on": true,
       "state": "on",
-      "pausedCode": "RULE_CREATOR_REVOKED",
-      "nextCheckAt": 1795521600000,
-      "sent": 4,
-      "skipped": 7,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
+      "pausedCode": null,
+      "nextCheckAt": 1795626000000,
+      "sent": 42,
+      "skipped": 3,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000,
       "version": 3
     }
   },
@@ -218,40 +181,34 @@
   "message-rules.postMessageRulesByIdPause": {
     "description": "Pauses an automatic message. Save it to resume.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-3a964d3f182a",
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": [
-        {
-          "input": "tier",
-          "values": ["Day pass"]
-        }
-      ],
       "anchor": {
         "kind": "input",
-        "input": "tier"
+        "input": "validUntil"
       },
       "offset": {
-        "amount": 14,
+        "amount": 7,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "sendAt": "2026-12-24T09:00:00.000Z",
+      "sendAt": "09:00",
       "timeZone": "America/Los_Angeles",
-      "message": "The gym closes at 18:00 on 24 December.",
-      "clearAfter": 1798124400000,
+      "message": "Your membership renews in 7 days.",
+      "clearAfter": 604800000,
       "on": false,
-      "state": "on",
-      "pausedCode": "RULE_CREATOR_REVOKED",
-      "nextCheckAt": 1795521600000,
-      "sent": 4,
-      "skipped": 7,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
-      "version": 3
+      "state": "paused",
+      "pausedCode": null,
+      "nextCheckAt": null,
+      "sent": 42,
+      "skipped": 3,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000,
+      "version": 2
     }
   },
   "message-rules.getMessageRulesByIdRuns": {
@@ -259,56 +216,37 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-5120022e8ccb",
+          "id": "0193a1b2-7c00-7000-8000-1c3512308696",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "kind": "message",
-          "name": "Birthday offer",
+          "name": "Renewal reminder",
           "state": "sent",
           "target": {
-            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-            "onDevice": false,
-            "holderState": "unassigned",
-            "q": "ada",
-            "scan": {
-              "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
-              "checkedIn": false
-            },
-            "match": [
-              {
-                "input": "tier",
-                "values": ["Day pass"]
-              }
-            ],
-            "version": "3"
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
           },
-          "patch": {
-            "healthy": {}
-          },
-          "notify": false,
-          "at": 1795521600000,
-          "clearAfter": 1798124400000,
-          "parentId": "0193a1b2-7c00-7000-8000-da3c0125d33e",
-          "message": "The gym closes at 18:00 on 24 December.",
+          "patch": {},
+          "notify": true,
+          "at": 1795539600000,
+          "clearAfter": 604800000,
+          "parentId": null,
+          "message": "Your membership renews in 7 days.",
           "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
-          "followUp": {
-            "id": "0193a1b2-7c00-7000-8000-1d9c7ae85573",
-            "at": 1795521600000
-          },
+          "followUp": null,
           "counts": {
-            "targeted": 16,
-            "updated": 10,
-            "unchanged": 11,
-            "overBudget": 39,
-            "failed": 28
+            "targeted": 9,
+            "updated": 9,
+            "unchanged": 0,
+            "overBudget": 0,
+            "failed": 0
           },
           "errorCode": null,
-          "createdAt": 1794322800000,
-          "startedAt": 1794322800000,
-          "finishedAt": 1795521600000
+          "createdAt": 1795539600000,
+          "startedAt": 1795539600000,
+          "finishedAt": 1795539640000
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "message-rules.postMessageRulesPreview": {
@@ -317,35 +255,37 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": [
-        {
-          "input": "tier",
-          "values": ["Day pass"]
-        }
-      ],
       "anchor": {
         "kind": "input",
-        "input": "tier"
+        "input": "validUntil"
       },
       "offset": {
-        "amount": 14,
+        "amount": 7,
         "unit": "day",
         "when": "before"
       },
       "yearly": false,
-      "sendAt": "04:00",
+      "sendAt": "09:00",
       "timeZone": "America/Los_Angeles",
-      "message": "The gym closes at 18:00 on 24 December."
+      "message": "Your membership renews in 7 days."
     },
     "response": {
       "days": [
         {
-          "date": "2026-12-24",
-          "count": 12
+          "date": "2026-11-25",
+          "count": 3
+        },
+        {
+          "date": "2026-11-26",
+          "count": 2
+        },
+        {
+          "date": "2026-11-28",
+          "count": 4
         }
       ],
-      "total": 128,
-      "atLimit": 25
+      "total": 9,
+      "atLimit": 0
     }
   },
   "message-rules.postMessageRulesByIdTest": {
@@ -354,53 +294,34 @@
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-08164885d0ea",
+      "id": "0193a1b2-7c00-7000-8000-6d159574a6dd",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
       "name": "Renewal reminder",
       "state": "sent",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "onDevice": false,
-        "holderState": "unassigned",
-        "q": "ada",
-        "scan": {
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
-          "checkedIn": false
-        },
-        "match": [
-          {
-            "input": "tier",
-            "values": ["Day pass"]
-          }
-        ],
-        "version": "3"
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
       },
-      "patch": {
-        "healthy": {}
-      },
-      "notify": false,
-      "at": 1795521600000,
-      "clearAfter": 1798124400000,
-      "parentId": "0193a1b2-7c00-7000-8000-7f797b34da16",
-      "message": "The gym closes at 18:00 on 24 December.",
+      "patch": {},
+      "notify": true,
+      "at": 1795572000000,
+      "clearAfter": 604800000,
+      "parentId": null,
+      "message": "Your membership renews in 7 days.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
-      "followUp": {
-        "id": "0193a1b2-7c00-7000-8000-fa946c3dad38",
-        "at": 1795521600000
-      },
+      "followUp": null,
       "counts": {
-        "targeted": 16,
-        "updated": 10,
-        "unchanged": 11,
-        "overBudget": 39,
-        "failed": 28
+        "targeted": 1,
+        "updated": 1,
+        "unchanged": 0,
+        "overBudget": 0,
+        "failed": 0
       },
       "errorCode": null,
-      "createdAt": 1794322800000,
-      "startedAt": 1794322800000,
-      "finishedAt": 1795521600000
+      "createdAt": 1795572000000,
+      "startedAt": 1795572000000,
+      "finishedAt": 1795572002000
     }
   }
 }

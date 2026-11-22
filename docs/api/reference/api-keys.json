@@ -2,67 +2,80 @@
   "api-keys.getApiKeysById": {
     "description": "One key with its parent, the key that replaced it, how many child keys it has, and where it was last used from. Never the secret.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-f8d0604a90a7",
+      "id": "0193a1b2-7c00-7000-8000-000000000021",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Server integration",
       "prefix": "k3Qx9Zt2",
       "secretPrefix": "pb_test_k3Qx9Zt2",
-      "scopes": ["passes:read"],
+      "scopes": ["passes:read", "passes:write", "templates:read"],
       "mode": "test",
       "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
       "createdByName": "Sam Rivera",
-      "createdAt": 1794322800000,
-      "lastUsedAt": 1795521600000,
-      "expiresAt": 1798124400000,
+      "createdAt": 1794362400000,
+      "lastUsedAt": 1795570500000,
+      "expiresAt": null,
       "revokedAt": null,
       "kind": "service",
-      "roles": ["org_admin"],
       "retireAt": null,
-      "ipAllow": ["203.0.113.0/24"],
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "passStyles": ["generic"],
+      "ipAllow": [],
+      "templateIds": [],
+      "passStyles": [],
       "rateTier": "standard",
       "parentKeyId": null,
       "rotatedFrom": null,
       "lastIpPrefix": "203.0.113",
-      "parent": {
-        "id": "0193a1b2-7c00-7000-8000-f9239d130b00",
-        "name": "Front entrance"
-      },
-      "replacedBy": {
-        "id": "0193a1b2-7c00-7000-8000-51c718997be0",
-        "name": "Server integration"
-      },
-      "childCount": 24
+      "parent": null,
+      "replacedBy": null,
+      "childCount": 0
     }
   },
   "api-keys.getApiKeysByIdActivity": {
     "description": "What a key did lately: calls by action over the last 30 days and the latest calls. No request bodies, no secrets.",
     "response": {
-      "lastUsedAt": 1795521600000,
+      "lastUsedAt": 1795570500000,
       "lastIpPrefix": "203.0.113",
       "summary": {
-        "since": 1794322800000,
-        "calls": 8,
-        "denied": 18,
+        "since": 1794362400000,
+        "calls": 412,
+        "denied": 1,
         "actions": [
           {
-            "action": "issue",
-            "count": 12,
-            "lastAt": 1795521600000
+            "action": "pass.create",
+            "count": 128,
+            "lastAt": 1795570500000
+          },
+          {
+            "action": "pass.update",
+            "count": 41,
+            "lastAt": 1795399200000
+          },
+          {
+            "action": "auth.denied",
+            "count": 1,
+            "lastAt": 1795399200000
           }
         ]
       },
       "recent": [
         {
-          "id": 14,
-          "at": 1795521600000,
-          "action": "issue",
+          "id": 90412,
+          "at": 1795570500000,
+          "action": "pass.create",
           "outcome": "allowed",
           "targetType": "pass",
-          "targetId": "0193a1b2-7c00-7000-8000-95d0ddcf16c6",
+          "targetId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "ipPrefix": "203.0.113",
-          "code": "NW7K2Q"
+          "code": null
+        },
+        {
+          "id": 90377,
+          "at": 1795399200000,
+          "action": "auth.denied",
+          "outcome": "denied",
+          "targetType": null,
+          "targetId": null,
+          "ipPrefix": "203.0.113",
+          "code": "MISSING_SCOPE"
         }
       ]
     }
@@ -70,17 +83,16 @@
   "api-keys.getApiKeysMe": {
     "description": "The key this request used: its scopes, organization and mode. Use it to check a key works.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-cf48d0fdfe16",
+      "id": "0193a1b2-7c00-7000-8000-000000000021",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Server integration",
       "prefix": "k3Qx9Zt2",
-      "scopes": ["passes:read"],
-      "mode": "live",
-      "createdAt": 1794322800000,
-      "lastUsedAt": 1795521600000,
-      "expiresAt": 1798124400000,
+      "scopes": ["passes:read", "passes:write", "templates:read"],
+      "mode": "test",
+      "createdAt": 1794362400000,
+      "lastUsedAt": 1795570500000,
+      "expiresAt": null,
       "kind": "service",
-      "roles": ["org_admin"],
       "retireAt": null
     }
   },
@@ -88,7 +100,7 @@
     "description": "Set the instant a key stops working, earlier than its expiry. Set once; the key works until then.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "retireAt": 1795521600000
+      "retireAt": 1795570500000
     },
     "response": {
       "ok": true
@@ -98,7 +110,7 @@
     "description": "Replace a key. The new secret works at once and is shown once; the old key keeps working for `overlapHours`, then stops. Send an `Idempotency-Key` to retry safely.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "overlapHours": 2
+      "overlapHours": 24
     },
     "response": {
       "key": {
@@ -107,20 +119,19 @@
         "name": "Server integration",
         "prefix": "p7Wm4Hn8",
         "secretPrefix": "pb_test_p7Wm4Hn8",
-        "scopes": ["passes:read"],
+        "scopes": ["passes:read", "passes:write", "templates:read"],
         "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
-        "createdAt": 1795532400000,
+        "createdAt": 1795572000000,
         "lastUsedAt": null,
-        "expiresAt": 1798124400000,
+        "expiresAt": null,
         "revokedAt": null,
         "kind": "service",
-        "roles": ["org_admin"],
         "retireAt": null,
-        "ipAllow": ["203.0.113.0/24"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "passStyles": ["generic"],
+        "ipAllow": [],
+        "templateIds": [],
+        "passStyles": [],
         "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000021",
@@ -132,20 +143,19 @@
         "name": "Server integration",
         "prefix": "k3Qx9Zt2",
         "secretPrefix": "pb_test_k3Qx9Zt2",
-        "scopes": ["passes:read"],
+        "scopes": ["passes:read", "passes:write", "templates:read"],
         "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
-        "createdAt": 1794322800000,
-        "lastUsedAt": 1795521600000,
-        "expiresAt": 1798124400000,
+        "createdAt": 1794362400000,
+        "lastUsedAt": 1795570500000,
+        "expiresAt": null,
         "revokedAt": null,
         "kind": "service",
-        "roles": ["org_admin"],
-        "retireAt": 1796137200000,
-        "ipAllow": ["203.0.113.0/24"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "passStyles": ["generic"],
+        "retireAt": 1795658400000,
+        "ipAllow": [],
+        "templateIds": [],
+        "passStyles": [],
         "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": null
@@ -155,7 +165,7 @@
   "api-keys.postApiKeysMeRotate": {
     "description": "Replace the key this request used. The new secret works at once and is shown once; the old key keeps working for `overlapHours`, then stops. Send an `Idempotency-Key` to retry safely.",
     "request": {
-      "overlapHours": 2
+      "overlapHours": 24
     },
     "response": {
       "key": {
@@ -164,20 +174,19 @@
         "name": "Server integration",
         "prefix": "p7Wm4Hn8",
         "secretPrefix": "pb_test_p7Wm4Hn8",
-        "scopes": ["passes:read"],
+        "scopes": ["passes:read", "passes:write", "templates:read"],
         "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
-        "createdAt": 1795532400000,
+        "createdAt": 1795572000000,
         "lastUsedAt": null,
-        "expiresAt": 1798124400000,
+        "expiresAt": null,
         "revokedAt": null,
         "kind": "service",
-        "roles": ["org_admin"],
         "retireAt": null,
-        "ipAllow": ["203.0.113.0/24"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "passStyles": ["generic"],
+        "ipAllow": [],
+        "templateIds": [],
+        "passStyles": [],
         "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000021",
@@ -189,20 +198,19 @@
         "name": "Server integration",
         "prefix": "k3Qx9Zt2",
         "secretPrefix": "pb_test_k3Qx9Zt2",
-        "scopes": ["passes:read"],
+        "scopes": ["passes:read", "passes:write", "templates:read"],
         "mode": "test",
         "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
         "createdByName": "Sam Rivera",
-        "createdAt": 1794322800000,
-        "lastUsedAt": 1795521600000,
-        "expiresAt": 1798124400000,
+        "createdAt": 1794362400000,
+        "lastUsedAt": 1795570500000,
+        "expiresAt": null,
         "revokedAt": null,
         "kind": "service",
-        "roles": ["org_admin"],
-        "retireAt": 1796137200000,
-        "ipAllow": ["203.0.113.0/24"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "passStyles": ["generic"],
+        "retireAt": 1795658400000,
+        "ipAllow": [],
+        "templateIds": [],
+        "passStyles": [],
         "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": null
@@ -220,32 +228,31 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-ba364a56cdc3",
+          "id": "0193a1b2-7c00-7000-8000-000000000021",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "name": "Server integration",
           "prefix": "k3Qx9Zt2",
           "secretPrefix": "pb_test_k3Qx9Zt2",
-          "scopes": ["passes:read"],
+          "scopes": ["passes:read", "passes:write", "templates:read"],
           "mode": "test",
           "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
           "createdByName": "Sam Rivera",
-          "createdAt": 1794322800000,
-          "lastUsedAt": 1795521600000,
-          "expiresAt": 1798124400000,
+          "createdAt": 1794362400000,
+          "lastUsedAt": 1795570500000,
+          "expiresAt": null,
           "revokedAt": null,
           "kind": "service",
-          "roles": ["org_admin"],
           "retireAt": null,
-          "ipAllow": ["203.0.113.0/24"],
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "passStyles": ["generic"],
+          "ipAllow": [],
+          "templateIds": [],
+          "passStyles": [],
           "rateTier": "standard",
           "parentKeyId": null,
           "rotatedFrom": null
         }
       ],
-      "nextCursor": "c1.4812",
-      "revokedCount": 33
+      "nextCursor": null,
+      "revokedCount": 1
     }
   },
   "api-keys.postApiKeys": {
@@ -254,29 +261,28 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Server integration",
       "kind": "service",
-      "scopes": ["passes:read"],
-      "roles": ["org_admin"]
+      "scopes": ["passes:read", "passes:write", "templates:read"],
+      "mode": "test"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-bd52f1bbce91",
+      "id": "0193a1b2-7c00-7000-8000-000000000021",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Server integration",
       "prefix": "k3Qx9Zt2",
       "secretPrefix": "pb_test_k3Qx9Zt2",
-      "scopes": ["passes:read"],
+      "scopes": ["passes:read", "passes:write", "templates:read"],
       "mode": "test",
       "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
       "createdByName": "Sam Rivera",
-      "createdAt": 1794322800000,
-      "lastUsedAt": 1795521600000,
-      "expiresAt": 1798124400000,
+      "createdAt": 1795572000000,
+      "lastUsedAt": null,
+      "expiresAt": null,
       "revokedAt": null,
       "kind": "service",
-      "roles": ["org_admin"],
       "retireAt": null,
-      "ipAllow": ["203.0.113.0/24"],
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "passStyles": ["generic"],
+      "ipAllow": [],
+      "templateIds": [],
+      "passStyles": [],
       "rateTier": "standard",
       "parentKeyId": null,
       "rotatedFrom": null,

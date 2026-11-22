@@ -2,35 +2,34 @@
   "webhooks.postWebhookEndpoints": {
     "description": "Creates an endpoint for events of this mode. The signing `secret` is shown once. Send `?validate=1` to check the body without creating anything.",
     "request": {
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
-      "eventTypes": ["pass.issued"],
+      "url": "https://bookings.northwind.example.com/hooks/passbook",
+      "description": "Front-desk check-in sync",
+      "eventTypes": ["pass.issued", "pass.scanned"],
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
     },
     "response": {
       "endpoint": {
-        "id": "0193a1b2-7c00-7000-8000-45466d5ffd3c",
+        "id": "0193a1b2-7c00-7000-8000-000000000061",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
-        "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
-        "urlMasked": "https://hooks.example.com/…",
-        "description": "A day pass for the climbing gym, scanned at the front desk.",
-        "eventTypes": ["pass.issued"],
+        "url": "https://bookings.northwind.example.com/hooks/passbook",
+        "urlMasked": "https://bookings.northwind.example.com/…",
+        "description": "Front-desk check-in sync",
+        "eventTypes": ["pass.issued", "pass.scanned"],
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "apiVersion": "2026-12-01",
         "status": "active",
         "target": "url",
         "failingSince": null,
         "disabledAt": null,
-        "lastSuccessAt": 1795521600000,
-        "lastFailureAt": 1795500000000,
+        "lastSuccessAt": null,
+        "lastFailureAt": null,
         "lastStatus": null,
-        "secretCreatedAt": 1795521600000,
+        "secretCreatedAt": 1795572000000,
         "previousSecretExpiresAt": null,
-        "createdAt": 1794322800000
+        "createdAt": 1795572000000
       },
-      "secret": "whsec_demo_northwind_804ccd"
+      "secret": "whsec_demo_northwind_37b294"
     }
   },
   "webhooks.postWebhookEndpointsByIdTest": {
@@ -41,9 +40,9 @@
     "response": {
       "ok": true,
       "status": 200,
-      "durationMs": 1240,
+      "durationMs": 240,
       "errorCode": null,
-      "captureId": "0193a1b2-7c00-7000-8000-b233783a6345"
+      "captureId": null
     }
   },
   "webhooks.getWebhookEndpoints": {
@@ -51,25 +50,25 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-79fbc3f19817",
+          "id": "0193a1b2-7c00-7000-8000-000000000061",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
-          "urlMasked": "https://hooks.example.com/…",
-          "description": "A day pass for the climbing gym, scanned at the front desk.",
-          "eventTypes": ["pass.issued"],
+          "url": "https://bookings.northwind.example.com/hooks/passbook",
+          "urlMasked": "https://bookings.northwind.example.com/…",
+          "description": "Front-desk check-in sync",
+          "eventTypes": ["pass.issued", "pass.scanned"],
           "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "apiVersion": "2026-12-01",
           "status": "active",
           "target": "url",
           "failingSince": null,
           "disabledAt": null,
-          "lastSuccessAt": 1795521600000,
-          "lastFailureAt": 1795500000000,
-          "lastStatus": null,
-          "secretCreatedAt": 1795521600000,
+          "lastSuccessAt": 1795570500000,
+          "lastFailureAt": 1795399200000,
+          "lastStatus": 200,
+          "secretCreatedAt": 1794362400000,
           "previousSecretExpiresAt": null,
-          "createdAt": 1794322800000
+          "createdAt": 1794362400000
         }
       ],
       "nextCursor": "c1.4812"
@@ -78,54 +77,52 @@
   "webhooks.getWebhookEndpointsById": {
     "description": "One endpoint. The signing secret is never returned.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-2882d4ac8948",
+      "id": "0193a1b2-7c00-7000-8000-000000000061",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
-      "urlMasked": "https://hooks.example.com/…",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
-      "eventTypes": ["pass.issued"],
+      "url": "https://bookings.northwind.example.com/hooks/passbook",
+      "urlMasked": "https://bookings.northwind.example.com/…",
+      "description": "Front-desk check-in sync",
+      "eventTypes": ["pass.issued", "pass.scanned"],
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "apiVersion": "2026-12-01",
       "status": "active",
       "target": "url",
       "failingSince": null,
       "disabledAt": null,
-      "lastSuccessAt": 1795521600000,
-      "lastFailureAt": 1795500000000,
-      "lastStatus": null,
-      "secretCreatedAt": 1795521600000,
+      "lastSuccessAt": 1795570500000,
+      "lastFailureAt": 1795399200000,
+      "lastStatus": 200,
+      "secretCreatedAt": 1794362400000,
       "previousSecretExpiresAt": null,
-      "createdAt": 1794322800000
+      "createdAt": 1794362400000
     }
   },
   "webhooks.patchWebhookEndpointsById": {
     "description": "Changes an endpoint, or pauses or resumes it with `status`. A disabled endpoint resumes with `active`.",
     "request": {
-      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
-      "description": "",
-      "eventTypes": ["pass.issued"]
+      "eventTypes": ["pass.issued", "pass.scanned", "pass.voided"]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-7469d345f4d2",
+      "id": "0193a1b2-7c00-7000-8000-000000000061",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
-      "urlMasked": "https://hooks.example.com/…",
-      "description": "A day pass for the climbing gym, scanned at the front desk.",
-      "eventTypes": ["pass.issued"],
+      "url": "https://bookings.northwind.example.com/hooks/passbook",
+      "urlMasked": "https://bookings.northwind.example.com/…",
+      "description": "Front-desk check-in sync",
+      "eventTypes": ["pass.issued", "pass.scanned", "pass.voided"],
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "apiVersion": "2026-12-01",
       "status": "active",
       "target": "url",
       "failingSince": null,
       "disabledAt": null,
-      "lastSuccessAt": 1795521600000,
-      "lastFailureAt": 1795500000000,
-      "lastStatus": null,
-      "secretCreatedAt": 1795521600000,
+      "lastSuccessAt": 1795570500000,
+      "lastFailureAt": 1795399200000,
+      "lastStatus": 200,
+      "secretCreatedAt": 1794362400000,
       "previousSecretExpiresAt": null,
-      "createdAt": 1794322800000
+      "createdAt": 1794362400000
     }
   },
   "webhooks.deleteWebhookEndpointsById": {
@@ -137,7 +134,7 @@
   "webhooks.postWebhookEndpointsByIdSecret": {
     "description": "Rotates the signing secret and returns the new one once. The old secret stays valid for `overlapHours` (default 24).",
     "request": {
-      "overlapHours": 0
+      "overlapHours": 24
     },
     "response": {
       "secret": "whsec_demo_northwind_4a08e1"
@@ -148,18 +145,18 @@
     "response": {
       "items": [
         {
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "eventId": "0193a1b2-7c00-7000-8000-000000000033",
           "type": "pass.issued",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "externalId": "booking_8841",
-          "state": "pending",
+          "state": "delivered",
           "attempts": 1,
-          "nextAt": 1795533000000,
-          "lastStatus": 503,
+          "nextAt": 1795570380000,
+          "lastStatus": 200,
           "lastError": null,
-          "lastAttemptAt": 1795521600000,
-          "finishedAt": null,
-          "replays": 1
+          "lastAttemptAt": 1795570380000,
+          "finishedAt": 1795570380240,
+          "replays": 0
         }
       ],
       "nextCursor": "c1.4812"
@@ -168,65 +165,63 @@
   "webhooks.getWebhookEndpointsByIdDeliveriesByEventId": {
     "description": "One delivery with every attempt and the payload sent.",
     "response": {
-      "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "eventId": "0193a1b2-7c00-7000-8000-000000000033",
       "type": "pass.issued",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "externalId": "booking_8841",
-      "state": "pending",
+      "state": "delivered",
       "attempts": 1,
-      "nextAt": 1795533000000,
-      "lastStatus": 503,
+      "nextAt": 1795570380000,
+      "lastStatus": 200,
       "lastError": null,
-      "lastAttemptAt": 1795521600000,
-      "finishedAt": null,
-      "replays": 1,
+      "lastAttemptAt": 1795570380000,
+      "finishedAt": 1795570380240,
+      "replays": 0,
       "attemptLog": [
         {
           "attempt": 1,
           "trigger": "event",
           "status": 200,
           "errorCode": null,
-          "durationMs": 1240,
-          "at": 1795521600000
+          "durationMs": 240,
+          "at": 1795570380000
         }
       ],
       "payload": {
-        "id": "0193a1b2-7c00-7000-8000-9154e6cf76c2",
+        "id": "0193a1b2-7c00-7000-8000-000000000033",
         "type": "pass.issued",
         "apiVersion": "2026-12-01",
-        "createdAt": 1794322800000,
+        "createdAt": 1795570380000,
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
         "pass": {
-          "id": "0193a1b2-7c00-7000-8000-bd14eafb244c",
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
           "externalId": "booking_8841",
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
         },
         "data": {
-          "version": 3,
+          "version": 1,
           "source": "api"
-        },
-        "sample": true
+        }
       }
     }
   },
   "webhooks.postWebhookEndpointsByIdDeliveriesByEventIdReplay": {
     "description": "Sends one delivery again with a fresh signature.",
     "response": {
-      "queued": 27
+      "queued": 1
     }
   },
   "webhooks.postWebhookEndpointsByIdReplay": {
     "description": "Sends the deliveries in a time range again. `dryRun` counts without sending.",
     "request": {
-      "from": 23,
-      "to": 39,
+      "from": 1795485600000,
+      "to": 1795572000000,
       "include": "failed",
-      "missing": false,
       "dryRun": false
     },
     "response": {
-      "queued": 27
+      "queued": 3
     }
   },
   "webhooks.postWebhookEndpointsCapture": {
@@ -237,25 +232,25 @@
     },
     "response": {
       "endpoint": {
-        "id": "0193a1b2-7c00-7000-8000-f23b60ad3476",
+        "id": "0193a1b2-7c00-7000-8000-000000000061",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
-        "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
-        "urlMasked": "https://hooks.example.com/…",
-        "description": "A day pass for the climbing gym, scanned at the front desk.",
-        "eventTypes": ["pass.issued"],
+        "url": "https://bookings.northwind.example.com/hooks/passbook",
+        "urlMasked": "https://bookings.northwind.example.com/…",
+        "description": "Front-desk check-in sync",
+        "eventTypes": ["pass.issued", "pass.scanned"],
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "apiVersion": "2026-12-01",
         "status": "active",
         "target": "url",
         "failingSince": null,
         "disabledAt": null,
-        "lastSuccessAt": 1795521600000,
-        "lastFailureAt": 1795500000000,
-        "lastStatus": null,
-        "secretCreatedAt": 1795521600000,
+        "lastSuccessAt": 1795570500000,
+        "lastFailureAt": 1795399200000,
+        "lastStatus": 200,
+        "secretCreatedAt": 1794362400000,
         "previousSecretExpiresAt": null,
-        "createdAt": 1794322800000
+        "createdAt": 1794362400000
       },
       "secret": "whsec_demo_northwind_712fb5"
     }
@@ -265,18 +260,22 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-f0dcb6b5de28",
+          "id": "0193a1b2-7c00-7000-8000-f5f27988cf8a",
           "endpointId": "0193a1b2-7c00-7000-8000-000000000061",
-          "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "eventId": "0193a1b2-7c00-7000-8000-000000000033",
           "type": "pass.issued",
           "trigger": "event",
           "status": 200,
-          "durationMs": 1240,
+          "durationMs": 0,
           "headers": {
-            "tier": "Day pass"
+            "content-type": "application/json",
+            "user-agent": "PassBook-Webhooks/1.0",
+            "x-passbook-event-id": "0193a1b2-7c00-7000-8000-000000000033",
+            "x-passbook-event-type": "pass.issued",
+            "x-passbook-timestamp": "1795570380"
           },
-          "body": "The gym closes at 18:00 on 24 December.",
-          "createdAt": 1794322800000
+          "body": "{\"id\":\"0193a1b2-7c00-7000-8000-000000000033\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795572300000,\"orgId\":\"0193a1b2-7c00-7000-8000-0000000000a1\",\"mode\":\"test\",\"pass\":{\"id\":\"0193a1b2-7c00-7000-8000-0000000000c1\",\"externalId\":\"booking_8841\",\"templateId\":\"0193a1b2-7c00-7000-8000-0000000000b1\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
+          "createdAt": 1795570380000
         }
       ],
       "nextCursor": "c1.4812"
@@ -285,35 +284,43 @@
   "webhooks.getWebhookEndpointsByIdCapturesByCaptureId": {
     "description": "One stored request: the exact headers and raw body. Verify the signature over these bytes.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-f75053c42df4",
+      "id": "0193a1b2-7c00-7000-8000-f5f27988cf8a",
       "endpointId": "0193a1b2-7c00-7000-8000-000000000061",
-      "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "eventId": "0193a1b2-7c00-7000-8000-000000000033",
       "type": "pass.issued",
       "trigger": "event",
       "status": 200,
-      "durationMs": 1240,
+      "durationMs": 0,
       "headers": {
-        "tier": "Day pass"
+        "content-type": "application/json",
+        "user-agent": "PassBook-Webhooks/1.0",
+        "x-passbook-event-id": "0193a1b2-7c00-7000-8000-000000000033",
+        "x-passbook-event-type": "pass.issued",
+        "x-passbook-timestamp": "1795570380"
       },
-      "body": "The gym closes at 18:00 on 24 December.",
-      "createdAt": 1794322800000
+      "body": "{\"id\":\"0193a1b2-7c00-7000-8000-000000000033\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795572300000,\"orgId\":\"0193a1b2-7c00-7000-8000-0000000000a1\",\"mode\":\"test\",\"pass\":{\"id\":\"0193a1b2-7c00-7000-8000-0000000000c1\",\"externalId\":\"booking_8841\",\"templateId\":\"0193a1b2-7c00-7000-8000-0000000000b1\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
+      "createdAt": 1795570380000
     }
   },
   "webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay": {
     "description": "Signs a stored request again with a fresh timestamp and stores it as a new capture with the same event id.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-2255a36c5775",
+      "id": "0193a1b2-7c00-7000-8000-cb8b9310d256",
       "endpointId": "0193a1b2-7c00-7000-8000-000000000061",
-      "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "eventId": "0193a1b2-7c00-7000-8000-000000000033",
       "type": "pass.issued",
-      "trigger": "event",
+      "trigger": "replay",
       "status": 200,
-      "durationMs": 1240,
+      "durationMs": 0,
       "headers": {
-        "tier": "Day pass"
+        "content-type": "application/json",
+        "user-agent": "PassBook-Webhooks/1.0",
+        "x-passbook-event-id": "0193a1b2-7c00-7000-8000-000000000033",
+        "x-passbook-event-type": "pass.issued",
+        "x-passbook-timestamp": "1795570380"
       },
-      "body": "The gym closes at 18:00 on 24 December.",
-      "createdAt": 1794322800000
+      "body": "{\"id\":\"0193a1b2-7c00-7000-8000-000000000033\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795572300000,\"orgId\":\"0193a1b2-7c00-7000-8000-0000000000a1\",\"mode\":\"test\",\"pass\":{\"id\":\"0193a1b2-7c00-7000-8000-0000000000c1\",\"externalId\":\"booking_8841\",\"templateId\":\"0193a1b2-7c00-7000-8000-0000000000b1\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
+      "createdAt": 1795572000000
     }
   },
   "webhooks.postWebhookEndpointsByIdCapturesSecret": {
@@ -333,7 +340,7 @@
           "status": 200,
           "errorCode": null,
           "durationMs": 1240,
-          "at": 1795521600000
+          "at": 1795570500000
         }
       ]
     }

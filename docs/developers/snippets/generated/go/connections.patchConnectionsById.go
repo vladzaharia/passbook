@@ -18,14 +18,7 @@ func main() {
 
 	var body passbook.ConnectionsUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "name": "Booking sheet",
-  "config": {
-    "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-    "range": "Members!A:E"
-  },
-  "secrets": {
-    "sheetsToken": "••••3f9c"
-  }
+  "intervalSeconds": 1800
 }`), &body); err != nil {
 		panic(err)
 	}

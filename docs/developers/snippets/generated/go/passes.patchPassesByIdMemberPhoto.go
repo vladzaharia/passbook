@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.PassesMemberPhotoUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "includeInPass": false
+  "includeInPass": true
 }`), &body); err != nil {
 		panic(err)
 	}

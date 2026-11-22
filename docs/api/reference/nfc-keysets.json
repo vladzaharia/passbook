@@ -4,21 +4,21 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-6ebe432fe383",
+          "id": "0193a1b2-7c00-7000-8000-000000000041",
           "name": "Gym doors",
-          "slug": "eda1b2cf",
-          "diversify": false,
+          "slug": "gymdoors",
+          "diversify": true,
           "perTag": false,
-          "createdAt": 1794322800000,
+          "createdAt": 1794362400000,
           "disabledAt": null,
           "versions": [
             {
-              "version": 3,
+              "version": 1,
               "state": "active",
-              "createdAt": 1794322800000,
-              "stateAt": 1795521600000,
+              "createdAt": 1794362400000,
+              "stateAt": 1794362400000,
               "revokedAt": null,
-              "tags": 13
+              "tags": 40
             }
           ]
         }
@@ -30,16 +30,16 @@
     "description": "Creates a tag keyset.",
     "request": {
       "name": "Gym doors",
-      "diversify": false,
+      "diversify": true,
       "generate": true
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-c90884bba23a",
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
       "name": "Gym doors",
-      "slug": "878bae82",
-      "diversify": false,
+      "slug": "gymdoors",
+      "diversify": true,
       "perTag": false,
-      "createdAt": 1794322800000,
+      "createdAt": 1795572000000,
       "disabledAt": null,
       "keys": {
         "metaKey": "00112233445566778899aabbccddeeff",
@@ -47,12 +47,12 @@
       },
       "versions": [
         {
-          "version": 3,
+          "version": 1,
           "state": "active",
-          "createdAt": 1794322800000,
-          "stateAt": 1795521600000,
+          "createdAt": 1795572000000,
+          "stateAt": 1795572000000,
           "revokedAt": null,
-          "tags": 13
+          "tags": 0
         }
       ]
     }
@@ -63,12 +63,12 @@
       "generate": true
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-80ff2c4b2620",
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
       "name": "Gym doors",
-      "slug": "bcd5c72d",
-      "diversify": false,
+      "slug": "gymdoors",
+      "diversify": true,
       "perTag": false,
-      "createdAt": 1794322800000,
+      "createdAt": 1794362400000,
       "disabledAt": null,
       "keys": {
         "metaKey": "00112233445566778899aabbccddeeff",
@@ -76,12 +76,20 @@
       },
       "versions": [
         {
-          "version": 3,
+          "version": 2,
           "state": "active",
-          "createdAt": 1794322800000,
-          "stateAt": 1795521600000,
+          "createdAt": 1795572000000,
+          "stateAt": 1795572000000,
           "revokedAt": null,
-          "tags": 13
+          "tags": 0
+        },
+        {
+          "version": 1,
+          "state": "retiring",
+          "createdAt": 1794362400000,
+          "stateAt": 1795572000000,
+          "revokedAt": null,
+          "tags": 40
         }
       ]
     }
@@ -89,21 +97,21 @@
   "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire": {
     "description": "Retires an old key version.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-da98da6257e8",
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
       "name": "Gym doors",
-      "slug": "6104ec23",
-      "diversify": false,
+      "slug": "gymdoors",
+      "diversify": true,
       "perTag": false,
-      "createdAt": 1794322800000,
+      "createdAt": 1794362400000,
       "disabledAt": null,
       "versions": [
         {
-          "version": 3,
-          "state": "active",
-          "createdAt": 1794322800000,
-          "stateAt": 1795521600000,
+          "version": 1,
+          "state": "retired",
+          "createdAt": 1794362400000,
+          "stateAt": 1795572000000,
           "revokedAt": null,
-          "tags": 13
+          "tags": 40
         }
       ]
     }
@@ -111,21 +119,21 @@
   "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke": {
     "description": "Revokes a key version. Tags on it must be written again.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-924d43bf2a9e",
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
       "name": "Gym doors",
-      "slug": "92e661ef",
-      "diversify": false,
+      "slug": "gymdoors",
+      "diversify": true,
       "perTag": false,
-      "createdAt": 1794322800000,
+      "createdAt": 1794362400000,
       "disabledAt": null,
       "versions": [
         {
-          "version": 3,
+          "version": 1,
           "state": "active",
-          "createdAt": 1794322800000,
-          "stateAt": 1795521600000,
+          "createdAt": 1794362400000,
+          "stateAt": 1794362400000,
           "revokedAt": null,
-          "tags": 13
+          "tags": 40
         }
       ]
     }
@@ -136,24 +144,24 @@
       "toKeysetId": "0193a1b2-7c00-7000-8000-000000000041"
     },
     "response": {
-      "moved": 37,
-      "ownKey": 17,
+      "moved": 12,
+      "ownKey": 0,
       "keyset": {
-        "id": "0193a1b2-7c00-7000-8000-a27ef7dc6bd8",
-        "name": "Server integration",
-        "slug": "53658f1d",
-        "diversify": false,
+        "id": "0193a1b2-7c00-7000-8000-000000000041",
+        "name": "Gym doors",
+        "slug": "gymdoors",
+        "diversify": true,
         "perTag": false,
-        "createdAt": 1794322800000,
+        "createdAt": 1794362400000,
         "disabledAt": null,
         "versions": [
           {
-            "version": 3,
+            "version": 1,
             "state": "active",
-            "createdAt": 1794322800000,
-            "stateAt": 1795521600000,
+            "createdAt": 1794362400000,
+            "stateAt": 1794362400000,
             "revokedAt": null,
-            "tags": 13
+            "tags": 40
           }
         ]
       }
@@ -183,21 +191,21 @@
   "nfc-keysets.postNfcKeysetsByIdDisable": {
     "description": "Disables a keyset.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-350ae7ad43f7",
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
       "name": "Gym doors",
-      "slug": "889afe6b",
-      "diversify": false,
+      "slug": "gymdoors",
+      "diversify": true,
       "perTag": false,
-      "createdAt": 1794322800000,
+      "createdAt": 1794362400000,
       "disabledAt": null,
       "versions": [
         {
-          "version": 3,
+          "version": 1,
           "state": "active",
-          "createdAt": 1794322800000,
-          "stateAt": 1795521600000,
+          "createdAt": 1794362400000,
+          "stateAt": 1794362400000,
           "revokedAt": null,
-          "tags": 13
+          "tags": 40
         }
       ]
     }

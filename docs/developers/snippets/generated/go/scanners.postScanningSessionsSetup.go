@@ -29,7 +29,7 @@ func main() {
   "doors": [
     {
       "name": "Front desk",
-      "place": "northwind",
+      "place": "main-hall",
       "admits": {
         "any": true
       },

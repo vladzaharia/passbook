@@ -4,26 +4,23 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-7fa0630cb730",
+          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "name": "Open climbing",
           "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "match": {
-            "input": "tier",
-            "values": ["Day pass"]
-          },
-          "opensAt": 1795521600000,
-          "closesAt": 1798113600000,
+          "match": null,
+          "opensAt": 1795568400000,
+          "closesAt": 1795586400000,
           "timeZone": "America/Los_Angeles",
-          "capacity": 38,
-          "reentry": false,
+          "capacity": 120,
+          "reentry": true,
           "hardLimit": false,
-          "note": "Needs step-free access.",
+          "note": "Doors open 30 minutes early for members.",
           "status": "live",
-          "arrived": 4,
-          "expected": 10,
-          "scanners": 27
+          "arrived": 46,
+          "expected": 128,
+          "scanners": 2
         }
       ],
       "nextCursor": "c1.4812"
@@ -35,120 +32,99 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": {
-        "input": "tier",
-        "values": ["Day pass"]
-      },
-      "opensAt": 1795521600000,
-      "closesAt": 1798113600000,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
       "timeZone": "America/Los_Angeles",
-      "capacity": 38,
-      "reentry": false
+      "capacity": 120,
+      "note": "Doors open 30 minutes early for members."
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-2dfaf68d763b",
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": {
-        "input": "tier",
-        "values": ["Day pass"]
-      },
-      "opensAt": 1795521600000,
-      "closesAt": 1798113600000,
+      "match": null,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
       "timeZone": "America/Los_Angeles",
-      "capacity": 38,
-      "reentry": false,
+      "capacity": 120,
+      "reentry": true,
       "hardLimit": false,
-      "note": "Booked the cafe for after.",
+      "note": "Doors open 30 minutes early for members.",
       "status": "live",
-      "arrived": 4,
-      "expected": 10,
-      "scanners": 27
+      "arrived": 46,
+      "expected": 128,
+      "scanners": 2
     }
   },
   "scan-events.getScanEventsById": {
     "description": "One scan event.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-ee1769b70735",
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": {
-        "input": "tier",
-        "values": ["Day pass"]
-      },
-      "opensAt": 1795521600000,
-      "closesAt": 1798113600000,
+      "match": null,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
       "timeZone": "America/Los_Angeles",
-      "capacity": 38,
-      "reentry": false,
+      "capacity": 120,
+      "reentry": true,
       "hardLimit": false,
-      "note": "Referred by a member.",
+      "note": "Doors open 30 minutes early for members.",
       "status": "live",
-      "arrived": 4,
-      "expected": 10,
-      "scanners": 27
+      "arrived": 46,
+      "expected": 128,
+      "scanners": 2
     }
   },
   "scan-events.patchScanEventsById": {
     "description": "Edits a scan event.",
     "request": {
-      "name": "Open climbing",
-      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": {
-        "input": "tier",
-        "values": ["Day pass"]
-      }
+      "capacity": 150
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-803f36206de9",
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": {
-        "input": "tier",
-        "values": ["Day pass"]
-      },
-      "opensAt": 1795521600000,
-      "closesAt": 1798113600000,
+      "match": null,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
       "timeZone": "America/Los_Angeles",
-      "capacity": 38,
-      "reentry": false,
+      "capacity": 150,
+      "reentry": true,
       "hardLimit": false,
-      "note": "Pass reissued after a phone change.",
+      "note": "Doors open 30 minutes early for members.",
       "status": "live",
-      "arrived": 4,
-      "expected": 10,
-      "scanners": 27
+      "arrived": 46,
+      "expected": 128,
+      "scanners": 2
     }
   },
   "scan-events.postScanEventsByIdArchive": {
     "description": "Archives a scan event. Its scanners are detached.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0e5b2643c94f",
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": {
-        "input": "tier",
-        "values": ["Day pass"]
-      },
-      "opensAt": 1795521600000,
-      "closesAt": 1798113600000,
+      "match": null,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
       "timeZone": "America/Los_Angeles",
-      "capacity": 38,
-      "reentry": false,
+      "capacity": 120,
+      "reentry": true,
       "hardLimit": false,
-      "note": "Check the waiver at the next visit.",
-      "status": "live",
-      "arrived": 4,
-      "expected": 10,
-      "scanners": 27
+      "note": "Doors open 30 minutes early for members.",
+      "status": "archived",
+      "arrived": 46,
+      "expected": 128,
+      "scanners": 2
     }
   },
   "scan-events.postScanEventsByIdScanners": {
@@ -157,26 +133,23 @@
       "scannerIds": ["0193a1b2-7c00-7000-8000-000000000031"]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-8a7533a6ea66",
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-      "match": {
-        "input": "tier",
-        "values": ["Day pass"]
-      },
-      "opensAt": 1795521600000,
-      "closesAt": 1798113600000,
+      "match": null,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
       "timeZone": "America/Los_Angeles",
-      "capacity": 38,
-      "reentry": false,
+      "capacity": 120,
+      "reentry": true,
       "hardLimit": false,
-      "note": "Visits mostly on Saturday mornings.",
+      "note": "Doors open 30 minutes early for members.",
       "status": "live",
-      "arrived": 4,
-      "expected": 10,
-      "scanners": 27
+      "arrived": 46,
+      "expected": 128,
+      "scanners": 2
     }
   },
   "scan-events.getScanEventsByIdInside": {
@@ -185,15 +158,15 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
-          "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+          "photoUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
           "plan": "Day pass",
           "type": "pass.issued",
           "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Front entrance",
           "parentName": "Cafe",
-          "since": 1794322800000,
-          "dueAt": 1795521600000,
+          "since": 1794362400000,
+          "dueAt": 1795570500000,
           "via": "api",
           "flags": ["long_stay"]
         }

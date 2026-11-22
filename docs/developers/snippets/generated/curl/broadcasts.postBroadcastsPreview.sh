@@ -6,12 +6,9 @@ curl -X POST "https://passbook.mobile/api/v1/broadcasts/preview" \
   "target": {
     "templateIds": [
       "0193a1b2-7c00-7000-8000-0000000000b1"
-    ],
-    "onDevice": false
+    ]
   },
-  "patch": {
-    "healthy": {}
-  },
-  "notify": false,
+  "patch": {},
+  "notify": true,
   "message": "The gym closes at 18:00 on 24 December."
 }'

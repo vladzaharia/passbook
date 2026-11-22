@@ -11,11 +11,11 @@
           "state": "succeeded",
           "step": "mapping",
           "attempt": 1,
-          "waitingFor": "approval",
+          "waitingFor": null,
           "errorCode": null,
-          "createdAt": 1794322800000,
-          "updatedAt": 1795359600000,
-          "finishedAt": 1795521600000
+          "createdAt": 1794362400000,
+          "updatedAt": 1795399200000,
+          "finishedAt": 1795570500000
         }
       ],
       "nextCursor": "c1.4812"
@@ -31,11 +31,11 @@
       "state": "succeeded",
       "step": "mapping",
       "attempt": 1,
-      "waitingFor": "approval",
+      "waitingFor": null,
       "errorCode": null,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
-      "finishedAt": 1795521600000
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "finishedAt": 1795570500000
     }
   },
   "identity-runs.postIdentityRunsByIdRetry": {
@@ -48,11 +48,11 @@
       "state": "succeeded",
       "step": "mapping",
       "attempt": 1,
-      "waitingFor": "approval",
+      "waitingFor": null,
       "errorCode": null,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
-      "finishedAt": 1795521600000
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "finishedAt": 1795570500000
     }
   },
   "identity-runs.postIdentityRunsByIdCancel": {
@@ -65,11 +65,11 @@
       "state": "succeeded",
       "step": "mapping",
       "attempt": 1,
-      "waitingFor": "approval",
+      "waitingFor": null,
       "errorCode": null,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
-      "finishedAt": 1795521600000
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "finishedAt": 1795570500000
     }
   },
   "identity-runs.postOrgsByOrgIdIdentitiesApple": {
@@ -85,11 +85,11 @@
       "state": "succeeded",
       "step": "mapping",
       "attempt": 1,
-      "waitingFor": "approval",
+      "waitingFor": null,
       "errorCode": null,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
-      "finishedAt": 1795521600000
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "finishedAt": 1795570500000
     }
   }
 }

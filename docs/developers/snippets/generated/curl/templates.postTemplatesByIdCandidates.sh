@@ -5,7 +5,5 @@ curl -X POST "https://passbook.mobile/api/v1/templates/0193a1b2-7c00-7000-8000-0
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
   "mode": "test",
   "provider": "apple",
-  "version": "3",
-  "sourceReleaseId": "0193a1b2-7c00-7000-8000-942c94c71643",
-  "projection": {}
+  "version": "4"
 }'

@@ -7,7 +7,7 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 result = pb.passes.remove(
     "0193a1b2-7c00-7000-8000-0000000000c1",
     {
-        "message": "The gym closes at 18:00 on 24 December.",
+        "message": "Your day pass was replaced by a monthly membership.",
     },
 )
 print(result)

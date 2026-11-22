@@ -23,28 +23,20 @@ func main() {
   "templateIds": [
     "0193a1b2-7c00-7000-8000-0000000000b1"
   ],
-  "match": [
-    {
-      "input": "tier",
-      "values": [
-        "Day pass"
-      ]
-    }
-  ],
   "anchor": {
     "kind": "input",
-    "input": "tier"
+    "input": "validUntil"
   },
   "offset": {
-    "amount": 14,
+    "amount": 7,
     "unit": "day",
     "when": "before"
   },
   "yearly": false,
-  "sendAt": "04:00",
+  "sendAt": "09:00",
   "timeZone": "America/Los_Angeles",
-  "message": "The gym closes at 18:00 on 24 December.",
-  "version": 3
+  "message": "Your membership renews in 7 days.",
+  "version": 2
 }`), &body); err != nil {
 		panic(err)
 	}

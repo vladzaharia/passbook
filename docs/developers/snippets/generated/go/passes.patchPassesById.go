@@ -21,10 +21,9 @@ func main() {
   "input": {
     "name": "Ada Example",
     "tier": "Day pass",
-    "validUntil": "2026-12-31"
+    "validUntil": "2027-01-31"
   },
-  "templateVersion": "3",
-  "externalId": "booking_8841"
+  "notify": true
 }`), &body); err != nil {
 		panic(err)
 	}

@@ -4,24 +4,24 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-cadb3ad26eec",
+          "id": "0193a1b2-7c00-7000-8000-000000000022",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "name": "Sam Rivera",
-          "role": "door",
-          "pinSetAt": 1795521600000,
+          "role": "desk",
+          "pinSetAt": 1794362400000,
           "pinResetRequired": false,
           "pinLockedToday": false,
           "locked": false,
           "disabledAt": null,
-          "today": 7,
+          "today": 90,
           "lastScan": {
-            "at": 1795521600000,
-            "scannerName": "Gear shop till"
+            "at": 1795570500000,
+            "scannerName": "Front desk"
           }
         }
       ],
       "pinOnlyOff": true,
-      "hasMore": true,
+      "hasMore": false,
       "nextCursor": "c1.4812"
     }
   },
@@ -29,25 +29,22 @@
     "description": "Creates a staff member and reveals their PIN once.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Sam Rivera",
-      "role": "door"
+      "name": "Priya Nair",
+      "role": "manager"
     },
     "response": {
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-b1fc5e815a0a",
+        "id": "0193a1b2-7c00-7000-8000-af276a54d0e4",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Sam Rivera",
-        "role": "door",
-        "pinSetAt": 1795521600000,
+        "name": "Priya Nair",
+        "role": "manager",
+        "pinSetAt": 1795572000000,
         "pinResetRequired": false,
         "pinLockedToday": false,
         "locked": false,
         "disabledAt": null,
-        "today": 7,
-        "lastScan": {
-          "at": 1795521600000,
-          "scannerName": "Sam Rivera"
-        }
+        "today": 0,
+        "lastScan": null
       },
       "pin": "630454"
     }
@@ -55,23 +52,21 @@
   "scan-staff.patchScanStaffById": {
     "description": "Updates or disables a staff member.",
     "request": {
-      "name": "Sam Rivera",
-      "role": "door",
-      "disabled": false
+      "role": "manager"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-15934c47c5ba",
+      "id": "0193a1b2-7c00-7000-8000-000000000022",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Sam Rivera",
-      "role": "door",
-      "pinSetAt": 1795521600000,
+      "role": "manager",
+      "pinSetAt": 1794362400000,
       "pinResetRequired": false,
       "pinLockedToday": false,
       "locked": false,
       "disabledAt": null,
-      "today": 7,
+      "today": 90,
       "lastScan": {
-        "at": 1795521600000,
+        "at": 1795570500000,
         "scannerName": "Front desk"
       }
     }
@@ -84,18 +79,18 @@
   },
   "scan-staff.postScanStaffByIdUnlockPin": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-ff40e2fdeb42",
+      "id": "0193a1b2-7c00-7000-8000-000000000022",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "name": "Sam Rivera",
-      "role": "door",
-      "pinSetAt": 1795521600000,
+      "role": "desk",
+      "pinSetAt": 1794362400000,
       "pinResetRequired": false,
       "pinLockedToday": false,
       "locked": false,
       "disabledAt": null,
-      "today": 7,
+      "today": 90,
       "lastScan": {
-        "at": 1795521600000,
+        "at": 1795570500000,
         "scannerName": "Front desk"
       }
     }

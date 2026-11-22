@@ -4,10 +4,20 @@
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "preset": "standard",
-      "label": "Scanner sessions",
+      "label": null,
       "items": [
         {
-          "key": "api",
+          "key": "api.keys",
+          "value": 10,
+          "source": "preset"
+        },
+        {
+          "key": "webhooks.endpoints",
+          "value": 5,
+          "source": "preset"
+        },
+        {
+          "key": "nfc",
           "value": 15,
           "source": "preset"
         }
@@ -20,15 +30,15 @@
       "preset": "standard",
       "presetLabel": "Standard",
       "revision": 3,
-      "updatedAt": 1795359600000,
+      "updatedAt": 1795399200000,
       "items": [
         {
           "key": "api",
           "value": 15,
           "presetValue": 20,
           "source": "preset",
-          "note": "Photo ID checked at the desk.",
-          "expiresAt": 1798124400000
+          "note": "Pilot pricing through March.",
+          "expiresAt": 1798790399999
         }
       ],
       "presets": [
@@ -50,8 +60,8 @@
       "overrides": {
         "tier": {
           "value": 15,
-          "note": "Prefers email over push.",
-          "expiresAt": 1798124400000
+          "note": "Pilot pricing through March.",
+          "expiresAt": 1798790399999
         }
       }
     },
@@ -60,15 +70,15 @@
       "preset": "standard",
       "presetLabel": "Standard",
       "revision": 3,
-      "updatedAt": 1795359600000,
+      "updatedAt": 1795399200000,
       "items": [
         {
           "key": "api",
           "value": 15,
           "presetValue": 20,
           "source": "preset",
-          "note": "Allergic to latex chalk.",
-          "expiresAt": 1798124400000
+          "note": "Pilot pricing through March.",
+          "expiresAt": 1798790399999
         }
       ],
       "presets": [

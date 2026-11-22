@@ -8,7 +8,7 @@ result = pb.api_keys.rotate(
     "0193a1b2-7c00-7000-8000-0000000000e1",
     {
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "overlapHours": 2,
+        "overlapHours": 24,
     },
 )
 print(result)

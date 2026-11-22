@@ -4,48 +4,39 @@
     "response": {
       "saved": [
         {
-          "name": "Expiring soon",
-          "columns": ["tier"],
+          "name": "Members export",
+          "columns": ["Holder email", "Name", "Tier", "Valid until", "Member ID"],
           "plan": {
             "mapping": {
               "name": {
-                "from": "Name"
+                "from": "/Name"
               },
               "tier": {
-                "from": "Tier"
+                "from": "/Tier"
               },
               "validUntil": {
-                "from": "Valid until"
+                "from": "/Valid until",
+                "transform": {
+                  "kind": "date",
+                  "options": {
+                    "input": "iso",
+                    "output": "iso"
+                  }
+                }
               }
             },
             "holderEmail": {
-              "from": "Booking sheet",
-              "transform": {
-                "kind": "enum",
-                "options": {
-                  "tier": {}
-                }
-              }
+              "from": "/Holder email"
             },
             "externalId": {
-              "from": "Booking sheet",
-              "transform": {
-                "kind": "enum",
-                "options": {
-                  "tier": {}
-                }
-              }
+              "from": "/Member ID"
             },
             "match": "externalId",
             "keepManual": false,
-            "save": false,
-            "overrides": {
-              "Plan": {
-                "Annual": "Day pass"
-              }
-            }
+            "save": true,
+            "overrides": {}
           },
-          "savedAt": 1795521600000
+          "savedAt": 1795570500000
         }
       ]
     }
@@ -53,89 +44,76 @@
   "pass-imports.putPassImportsMappings": {
     "description": "Saves a named column mapping for a template. The same name replaces the earlier one; up to 20 are kept. Cell fixes are not saved.",
     "request": {
-      "name": "Day pass",
-      "columns": ["tier"],
+      "name": "Members export",
+      "columns": ["Holder email", "Name", "Tier", "Valid until", "Member ID"],
       "plan": {
         "mapping": {
           "name": {
-            "from": "Name"
+            "from": "/Name"
           },
           "tier": {
-            "from": "Tier"
+            "from": "/Tier"
           },
           "validUntil": {
-            "from": "Valid until"
+            "from": "/Valid until",
+            "transform": {
+              "kind": "date",
+              "options": {
+                "input": "iso",
+                "output": "iso"
+              }
+            }
           }
         },
         "holderEmail": {
-          "from": "Booking sheet",
-          "transform": {
-            "kind": "enum",
-            "options": {
-              "tier": {}
-            }
-          }
+          "from": "/Holder email"
         },
         "externalId": {
-          "from": "Booking sheet",
-          "transform": {
-            "kind": "enum",
-            "options": {
-              "tier": {}
-            }
-          }
+          "from": "/Member ID"
         },
         "match": "externalId",
         "keepManual": false,
-        "save": false
+        "save": true,
+        "overrides": {}
       },
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
     },
     "response": {
       "saved": [
         {
-          "name": "Expiring soon",
-          "columns": ["tier"],
+          "name": "Members export",
+          "columns": ["Holder email", "Name", "Tier", "Valid until", "Member ID"],
           "plan": {
             "mapping": {
               "name": {
-                "from": "Name"
+                "from": "/Name"
               },
               "tier": {
-                "from": "Tier"
+                "from": "/Tier"
               },
               "validUntil": {
-                "from": "Valid until"
+                "from": "/Valid until",
+                "transform": {
+                  "kind": "date",
+                  "options": {
+                    "input": "iso",
+                    "output": "iso"
+                  }
+                }
               }
             },
             "holderEmail": {
-              "from": "Booking sheet",
-              "transform": {
-                "kind": "enum",
-                "options": {
-                  "tier": {}
-                }
-              }
+              "from": "/Holder email"
             },
             "externalId": {
-              "from": "Booking sheet",
-              "transform": {
-                "kind": "enum",
-                "options": {
-                  "tier": {}
-                }
-              }
+              "from": "/Member ID"
             },
             "match": "externalId",
             "keepManual": false,
-            "save": false,
-            "overrides": {
-              "Plan": {
-                "Annual": "Day pass"
-              }
-            }
+            "save": true,
+            "overrides": {}
           },
-          "savedAt": 1795521600000
+          "savedAt": 1795570500000
         }
       ]
     }
@@ -143,52 +121,7 @@
   "pass-imports.deletePassImportsMappings": {
     "description": "Deletes a saved column mapping by name. A name that is not saved changes nothing.",
     "response": {
-      "saved": [
-        {
-          "name": "Expiring soon",
-          "columns": ["tier"],
-          "plan": {
-            "mapping": {
-              "name": {
-                "from": "Name"
-              },
-              "tier": {
-                "from": "Tier"
-              },
-              "validUntil": {
-                "from": "Valid until"
-              }
-            },
-            "holderEmail": {
-              "from": "Booking sheet",
-              "transform": {
-                "kind": "enum",
-                "options": {
-                  "tier": {}
-                }
-              }
-            },
-            "externalId": {
-              "from": "Booking sheet",
-              "transform": {
-                "kind": "enum",
-                "options": {
-                  "tier": {}
-                }
-              }
-            },
-            "match": "externalId",
-            "keepManual": false,
-            "save": false,
-            "overrides": {
-              "Plan": {
-                "Annual": "Day pass"
-              }
-            }
-          },
-          "savedAt": 1795521600000
-        }
-      ]
+      "saved": []
     }
   },
   "pass-imports.postPassImportsByIdUndo": {
@@ -196,17 +129,17 @@
     "request": {},
     "response": {
       "state": "done",
-      "removed": 7,
-      "restored": 10,
-      "keptTotal": 38,
+      "removed": 1,
+      "restored": 1,
+      "keptTotal": 1,
       "kept": [
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "code": "NW7K2Q"
+          "code": "IMPORT_PASS_SCANNED"
         }
       ],
-      "emailsCancelled": 2,
-      "unrevertable": 24
+      "emailsCancelled": 0,
+      "unrevertable": 0
     }
   },
   "pass-imports.postPassImports": {
@@ -274,7 +207,7 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "templateVersion": "3",
       "mode": "live",
-      "state": "done",
+      "state": "ready",
       "source": {
         "kind": "file",
         "name": "members.csv"
@@ -384,24 +317,15 @@
       "problemsTruncated": false,
       "emailBudget": 500,
       "email": true,
-      "progress": {
-        "done": 3,
-        "created": 2,
-        "updated": 1,
-        "unchanged": 0,
-        "failed": 0,
-        "skipped": 0,
-        "notEmailed": 0,
-        "removed": 0
-      },
+      "progress": null,
       "errorCode": null,
       "errorFile": false,
-      "createdAt": 1795520400000,
-      "checkedAt": 1795520520000,
-      "committedAt": 1795520700000,
-      "finishedAt": 1795520760000,
-      "expiresAt": 1796137200000,
-      "emailHoldUntil": 1795521000000
+      "createdAt": 1795569300000,
+      "checkedAt": 1795569420000,
+      "committedAt": null,
+      "finishedAt": null,
+      "expiresAt": 1796176800000,
+      "emailHoldUntil": null
     }
   },
   "pass-imports.postPassImportsByIdCheck": {
@@ -447,7 +371,7 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "templateVersion": "3",
       "mode": "live",
-      "state": "done",
+      "state": "ready",
       "source": {
         "kind": "file",
         "name": "members.csv"
@@ -557,38 +481,29 @@
       "problemsTruncated": false,
       "emailBudget": 500,
       "email": true,
-      "progress": {
-        "done": 3,
-        "created": 2,
-        "updated": 1,
-        "unchanged": 0,
-        "failed": 0,
-        "skipped": 0,
-        "notEmailed": 0,
-        "removed": 0
-      },
+      "progress": null,
       "errorCode": null,
       "errorFile": false,
-      "createdAt": 1795520400000,
-      "checkedAt": 1795520520000,
-      "committedAt": 1795520700000,
-      "finishedAt": 1795520760000,
-      "expiresAt": 1796137200000,
-      "emailHoldUntil": 1795521000000
+      "createdAt": 1795569300000,
+      "checkedAt": 1795569420000,
+      "committedAt": null,
+      "finishedAt": null,
+      "expiresAt": 1796176800000,
+      "emailHoldUntil": null
     }
   },
   "pass-imports.postPassImportsByIdCommit": {
     "description": "Creates the new passes and updates the matched ones, in the background; read the import until `state` is `done`. `skipInvalid` skips error rows instead of refusing the commit. `email` is off by default: `true` sends at once, `{ \"send\": \"held\", \"holdMs\": 300000 }` holds the mail for 1 to 60 minutes so an undo cancels it. Another commit of the same template meanwhile is 409 `IMPORT_BUSY`. Send an `Idempotency-Key`.",
     "request": {
       "skipInvalid": false,
-      "email": false
+      "email": true
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000071",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "templateVersion": "3",
       "mode": "live",
-      "state": "done",
+      "state": "committing",
       "source": {
         "kind": "file",
         "name": "members.csv"
@@ -699,9 +614,9 @@
       "emailBudget": 500,
       "email": true,
       "progress": {
-        "done": 3,
-        "created": 2,
-        "updated": 1,
+        "done": 1,
+        "created": 1,
+        "updated": 0,
         "unchanged": 0,
         "failed": 0,
         "skipped": 0,
@@ -710,12 +625,12 @@
       },
       "errorCode": null,
       "errorFile": false,
-      "createdAt": 1795520400000,
-      "checkedAt": 1795520520000,
-      "committedAt": 1795520700000,
-      "finishedAt": 1795520760000,
-      "expiresAt": 1796137200000,
-      "emailHoldUntil": 1795521000000
+      "createdAt": 1795569300000,
+      "checkedAt": 1795569420000,
+      "committedAt": 1795569600000,
+      "finishedAt": null,
+      "expiresAt": 1796176800000,
+      "emailHoldUntil": 1795569900000
     }
   },
   "pass-imports.getPassImportsById": {
@@ -847,12 +762,12 @@
       },
       "errorCode": null,
       "errorFile": false,
-      "createdAt": 1795520400000,
-      "checkedAt": 1795520520000,
-      "committedAt": 1795520700000,
-      "finishedAt": 1795520760000,
-      "expiresAt": 1796137200000,
-      "emailHoldUntil": 1795521000000
+      "createdAt": 1795569300000,
+      "checkedAt": 1795569420000,
+      "committedAt": 1795569600000,
+      "finishedAt": 1795569660000,
+      "expiresAt": 1796176800000,
+      "emailHoldUntil": 1795569900000
     }
   },
   "pass-imports.getPassImports": {
@@ -986,12 +901,12 @@
           },
           "errorCode": null,
           "errorFile": false,
-          "createdAt": 1795520400000,
-          "checkedAt": 1795520520000,
-          "committedAt": 1795520700000,
-          "finishedAt": 1795520760000,
-          "expiresAt": 1796137200000,
-          "emailHoldUntil": 1795521000000
+          "createdAt": 1795569300000,
+          "checkedAt": 1795569420000,
+          "committedAt": 1795569600000,
+          "finishedAt": 1795569660000,
+          "expiresAt": 1796176800000,
+          "emailHoldUntil": 1795569900000
         }
       ],
       "nextCursor": "c1.4812"
@@ -1008,27 +923,48 @@
     "response": {
       "items": [
         {
-          "row": 3,
+          "row": 2,
           "action": "create",
           "state": "done",
           "result": "created",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "externalId": "booking_8841",
-          "code": "NW7K2Q",
-          "message": "The gym closes at 18:00 on 24 December.",
+          "externalId": "NW-1001",
+          "code": null,
+          "message": null,
+          "emailed": true
+        },
+        {
+          "row": 3,
+          "action": "create",
+          "state": "done",
+          "result": "created",
+          "passId": "0193a1b2-7c00-7000-8000-f3f85c24ee38",
+          "externalId": "NW-1002",
+          "code": null,
+          "message": null,
+          "emailed": true
+        },
+        {
+          "row": 4,
+          "action": "update",
+          "state": "done",
+          "result": "updated",
+          "passId": "0193a1b2-7c00-7000-8000-39b99d289919",
+          "externalId": "NW-1003",
+          "code": null,
+          "message": null,
           "emailed": false,
           "changes": [
             {
-              "key": "tier",
+              "key": "validUntil",
               "label": "Valid until",
-              "from": "Booking sheet",
-              "to": "ada@example.com"
+              "from": "2026-12-31",
+              "to": "2027-01-15"
             }
-          ],
-          "wouldBe": "create"
+          ]
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "pass-imports.getPassImportsByIdErrorsCsv": {
@@ -1043,10 +979,10 @@
       "cursor": "c1.4812"
     },
     "response": {
-      "sent": 4,
-      "skipped": 7,
-      "alreadyQueued": 9,
-      "nextCursor": "c1.4812"
+      "sent": 0,
+      "skipped": 1,
+      "alreadyQueued": 2,
+      "nextCursor": null
     }
   },
   "pass-imports.postPassImportsByIdRemoveCreated": {
@@ -1058,7 +994,7 @@
       "skipped": [
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "code": "NW7K2Q"
+          "code": "IMPORT_PASS_CHANGED"
         }
       ],
       "nextCursor": "c1.4812"

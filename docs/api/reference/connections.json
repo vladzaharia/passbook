@@ -3,46 +3,59 @@
     "description": "A dry run of the next sync over the last 30 days of records, at most 200: what it would create, update, leave unchanged, skip or reject. New records wait (`counts.waiting`) while the template has no approved release (`releaseBlocked`). It reads the source and the connection's passes and writes nothing: no cursor moves and no run is recorded. `columns` lists the source's fields with up to three sample cells and, for a field with few distinct values, those values and their counts. Needs connections:read and passes:read.",
     "response": {
       "ok": true,
-      "records": 71,
+      "records": 3,
       "counts": {
-        "create": 15,
-        "update": 38,
-        "unchanged": 11,
-        "skipped": 7,
+        "create": 1,
+        "update": 1,
+        "unchanged": 1,
+        "skipped": 0,
         "errors": 0,
         "waiting": 0
       },
-      "releaseBlocked": "no_release",
+      "releaseBlocked": null,
       "window": {
-        "days": 18,
-        "limit": 25,
-        "since": 1794322800000,
-        "excluded": 3
+        "days": 30,
+        "limit": 200,
+        "since": 1792980000000,
+        "excluded": 0
       },
       "samples": [
         {
-          "ref": "booking_8841",
+          "ref": "B-2041",
           "action": "create",
           "fields": {
-            "tier": {}
-          },
-          "message": "The gym closes at 18:00 on 24 December."
+            "name": "Mei Tanaka",
+            "tier": "Day pass"
+          }
+        },
+        {
+          "ref": "B-2038",
+          "action": "update",
+          "fields": {
+            "validUntil": "2027-01-31"
+          }
         }
       ],
       "columns": [
         {
-          "pointer": "/input/tier",
+          "pointer": "/Booking ID",
+          "label": "Booking ID",
+          "samples": ["B-2041", "B-2038"],
+          "values": []
+        },
+        {
+          "pointer": "/Plan",
           "label": "Plan",
           "samples": ["Day pass"],
           "values": [
             {
               "value": "Day pass",
-              "count": 12
+              "count": 3
             }
           ]
         }
       ],
-      "durationMs": 1240
+      "durationMs": 1650
     }
   },
   "connections.getConnectionsByIdWebhookFailures": {
@@ -50,18 +63,18 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-9e329c533d52",
-          "eventRef": "event:open-climbing",
-          "generation": 3,
+          "id": "0193a1b2-7c00-7000-8000-1267fd6615d3",
+          "eventRef": "evt_20261123_0412",
+          "generation": 1,
           "connectionMode": "webhook",
           "state": "failed",
-          "errorCode": "UPSTREAM_ERROR",
-          "uncertainItems": 31,
-          "receivedAt": 1795521600000,
-          "updatedAt": 1795521600000
+          "errorCode": "WEBHOOK_UPSTREAM",
+          "uncertainItems": 0,
+          "receivedAt": 1795399200000,
+          "updatedAt": 1795399500000
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "connections.postConnectionsByIdWebhookFailuresByRetentionIdReplay": {
@@ -74,8 +87,8 @@
     "description": "Marks an uncertain webhook resolved after you have checked the source system.",
     "response": {
       "ok": true,
-      "resolved": 38,
-      "state": "failed"
+      "resolved": 1,
+      "state": "resolved"
     }
   },
   "connections.getConnections": {
@@ -83,58 +96,51 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-5fbeccabafd3",
+          "id": "0193a1b2-7c00-7000-8000-000000000051",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "connectorType": "google-sheets",
-          "connectorVersion": 3,
-          "name": "Class bookings",
+          "connectorType": "csv-url",
+          "connectorVersion": 1,
+          "name": "Booking sheet",
           "config": {
-            "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-            "range": "Members!A:E"
+            "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+            "idColumn": "Booking ID"
           },
-          "hasCredential": true,
+          "hasCredential": false,
           "hasWebhookSecret": false,
           "mapping": {
             "name": {
-              "from": "Name"
+              "from": "/Name"
             },
             "tier": {
-              "from": "Tier"
+              "from": "/Plan"
             },
             "validUntil": {
-              "from": "Valid until"
+              "from": "/Valid until"
             }
           },
           "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-          "holderEmailField": "/Holder email",
-          "autoCreate": false,
-          "autoEmail": false,
+          "holderEmailField": "/Email",
+          "autoCreate": true,
+          "autoEmail": true,
           "onMissing": "keep",
-          "voidWhen": [
-            {
-              "from": "Tier",
-              "op": "in",
-              "values": ["Refunded"]
-            }
-          ],
+          "voidWhen": [],
           "webhookPrevUntil": null,
           "mode": "poll",
-          "intervalSeconds": 300,
-          "maxConcurrency": 29,
-          "requestsPerMinute": 60,
+          "intervalSeconds": 900,
+          "maxConcurrency": 1,
+          "requestsPerMinute": 6,
           "enabled": true,
           "health": "healthy",
           "consecutiveFailures": 0,
           "breakerOpenUntil": null,
-          "nextRunAt": 1795521600000,
-          "lastRunAt": 1795521600000,
-          "lastSuccessAt": 1795521600000,
+          "nextRunAt": 1795571400000,
+          "lastRunAt": 1795570500000,
+          "lastSuccessAt": 1795570500000,
           "lastErrorCode": null,
           "lastErrorAt": null,
           "webhookUrl": null,
-          "createdAt": 1794322800000,
-          "updatedAt": 1795359600000,
-          "passCount": 16
+          "createdAt": 1794362400000,
+          "updatedAt": 1795399200000
         }
       ],
       "nextCursor": "c1.4812"
@@ -144,245 +150,210 @@
     "description": "Creates a connection.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "connectorType": "google-sheets",
+      "connectorType": "csv-url",
       "name": "Booking sheet",
       "config": {
-        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-        "range": "Members!A:E"
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
       },
-      "secrets": {
-        "sheetsToken": "••••3f9c"
-      },
-      "webhookSecret": "whsec_demo_northwind_571d4d",
       "mapping": {
         "name": {
-          "from": "Name"
+          "from": "/Name"
         },
         "tier": {
-          "from": "Tier"
+          "from": "/Plan"
         },
         "validUntil": {
-          "from": "Valid until"
-        }
-      }
-    },
-    "response": {
-      "id": "0193a1b2-7c00-7000-8000-fb5f9cfb4b43",
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "connectorType": "google-sheets",
-      "connectorVersion": 3,
-      "name": "Booking sheet",
-      "config": {
-        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-        "range": "Members!A:E"
-      },
-      "hasCredential": true,
-      "hasWebhookSecret": false,
-      "mapping": {
-        "name": {
-          "from": "Name"
-        },
-        "tier": {
-          "from": "Tier"
-        },
-        "validUntil": {
-          "from": "Valid until"
+          "from": "/Valid until"
         }
       },
       "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-      "holderEmailField": "/Holder email",
-      "autoCreate": false,
-      "autoEmail": false,
-      "onMissing": "keep",
-      "voidWhen": [
-        {
-          "from": "Tier",
-          "op": "in",
-          "values": ["Refunded"]
+      "holderEmailField": "/Email",
+      "mode": "poll"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "csv-url",
+      "connectorVersion": 1,
+      "name": "Booking sheet",
+      "config": {
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
+      },
+      "hasCredential": false,
+      "hasWebhookSecret": false,
+      "mapping": {
+        "name": {
+          "from": "/Name"
+        },
+        "tier": {
+          "from": "/Plan"
+        },
+        "validUntil": {
+          "from": "/Valid until"
         }
-      ],
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Email",
+      "autoCreate": true,
+      "autoEmail": true,
+      "onMissing": "keep",
+      "voidWhen": [],
       "webhookPrevUntil": null,
       "mode": "poll",
-      "intervalSeconds": 300,
-      "maxConcurrency": 29,
-      "requestsPerMinute": 60,
+      "intervalSeconds": 900,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 6,
       "enabled": true,
-      "health": "healthy",
+      "health": "unknown",
       "consecutiveFailures": 0,
       "breakerOpenUntil": null,
-      "nextRunAt": 1795521600000,
-      "lastRunAt": 1795521600000,
-      "lastSuccessAt": 1795521600000,
+      "nextRunAt": 1795572000000,
+      "lastRunAt": null,
+      "lastSuccessAt": null,
       "lastErrorCode": null,
       "lastErrorAt": null,
       "webhookUrl": null,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000
+      "createdAt": 1795572000000,
+      "updatedAt": 1795572000000
     }
   },
   "connections.getConnectionsSummary": {
     "description": "A health summary across connections.",
     "response": {
-      "total": 128,
+      "total": 1,
       "byHealth": {
-        "healthy": 30
+        "healthy": 1
       },
-      "attention": [
-        {
-          "id": "0193a1b2-7c00-7000-8000-748ff5b81201",
-          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "name": "Evening rush",
-          "health": "healthy",
-          "lastErrorCode": null,
-          "lastErrorAt": null
-        }
-      ]
+      "attention": []
     }
   },
   "connections.getConnectionsById": {
     "description": "A connection with its runs and metrics.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-e7d3ff20fee8",
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "connectorType": "google-sheets",
-      "connectorVersion": 3,
+      "connectorType": "csv-url",
+      "connectorVersion": 1,
       "name": "Booking sheet",
       "config": {
-        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-        "range": "Members!A:E"
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
       },
-      "hasCredential": true,
+      "hasCredential": false,
       "hasWebhookSecret": false,
       "mapping": {
         "name": {
-          "from": "Name"
+          "from": "/Name"
         },
         "tier": {
-          "from": "Tier"
+          "from": "/Plan"
         },
         "validUntil": {
-          "from": "Valid until"
+          "from": "/Valid until"
         }
       },
       "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-      "holderEmailField": "/Holder email",
-      "autoCreate": false,
-      "autoEmail": false,
+      "holderEmailField": "/Email",
+      "autoCreate": true,
+      "autoEmail": true,
       "onMissing": "keep",
-      "voidWhen": [
-        {
-          "from": "Tier",
-          "op": "in",
-          "values": ["Refunded"]
-        }
-      ],
+      "voidWhen": [],
       "webhookPrevUntil": null,
       "mode": "poll",
-      "intervalSeconds": 300,
-      "maxConcurrency": 29,
-      "requestsPerMinute": 60,
+      "intervalSeconds": 900,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 6,
       "enabled": true,
       "health": "healthy",
       "consecutiveFailures": 0,
       "breakerOpenUntil": null,
-      "nextRunAt": 1795521600000,
-      "lastRunAt": 1795521600000,
-      "lastSuccessAt": 1795521600000,
+      "nextRunAt": 1795571400000,
+      "lastRunAt": 1795570500000,
+      "lastSuccessAt": 1795570500000,
       "lastErrorCode": null,
       "lastErrorAt": null,
       "webhookUrl": null,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
       "runs": [
         {
-          "id": "0193a1b2-7c00-7000-8000-245be9f523e8",
+          "id": "0193a1b2-7c00-7000-8000-000000000023",
           "trigger": "schedule",
-          "startedAt": 1794322800000,
-          "finishedAt": 1795521600000,
-          "outcome": "unchanged",
-          "recordsSeen": 29,
-          "passesChanged": 0,
-          "passesCreated": 0,
+          "startedAt": 1795570500000,
+          "finishedAt": 1795570501800,
+          "outcome": "changed",
+          "recordsSeen": 3,
+          "passesChanged": 1,
+          "passesCreated": 1,
           "passesVoided": 0,
           "recordsFailed": 0,
           "errorCode": null,
           "errorDetail": null,
           "httpStatus": 200,
-          "durationMs": 1240
+          "durationMs": 1800
         }
       ],
       "metrics": {
-        "p50Ms": 1435,
-        "p95Ms": 926,
-        "errorRate": 22,
-        "passCount": 16
+        "p50Ms": 1650,
+        "p95Ms": 2400,
+        "errorRate": 0,
+        "passCount": 3
       }
     }
   },
   "connections.patchConnectionsById": {
     "description": "Updates a connection.",
     "request": {
-      "name": "Booking sheet",
-      "config": {
-        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-        "range": "Members!A:E"
-      },
-      "secrets": {
-        "sheetsToken": "••••3f9c"
-      }
+      "intervalSeconds": 1800
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-742b83bf552f",
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "connectorType": "google-sheets",
-      "connectorVersion": 3,
+      "connectorType": "csv-url",
+      "connectorVersion": 1,
       "name": "Booking sheet",
       "config": {
-        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-        "range": "Members!A:E"
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
       },
-      "hasCredential": true,
+      "hasCredential": false,
       "hasWebhookSecret": false,
       "mapping": {
         "name": {
-          "from": "Name"
+          "from": "/Name"
         },
         "tier": {
-          "from": "Tier"
+          "from": "/Plan"
         },
         "validUntil": {
-          "from": "Valid until"
+          "from": "/Valid until"
         }
       },
       "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-      "holderEmailField": "/Holder email",
-      "autoCreate": false,
-      "autoEmail": false,
+      "holderEmailField": "/Email",
+      "autoCreate": true,
+      "autoEmail": true,
       "onMissing": "keep",
-      "voidWhen": [
-        {
-          "from": "Tier",
-          "op": "in",
-          "values": ["Refunded"]
-        }
-      ],
+      "voidWhen": [],
       "webhookPrevUntil": null,
       "mode": "poll",
-      "intervalSeconds": 300,
-      "maxConcurrency": 29,
-      "requestsPerMinute": 60,
+      "intervalSeconds": 1800,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 6,
       "enabled": true,
       "health": "healthy",
       "consecutiveFailures": 0,
       "breakerOpenUntil": null,
-      "nextRunAt": 1795521600000,
-      "lastRunAt": 1795521600000,
-      "lastSuccessAt": 1795521600000,
+      "nextRunAt": 1795571400000,
+      "lastRunAt": 1795570500000,
+      "lastSuccessAt": 1795570500000,
       "lastErrorCode": null,
       "lastErrorAt": null,
       "webhookUrl": null,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000
     }
   },
   "connections.deleteConnectionsById": {
@@ -395,36 +366,26 @@
     "description": "Tests an unsaved configuration without saving it.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "connectorType": "google-sheets",
+      "connectorType": "csv-url",
       "config": {
-        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-        "range": "Members!A:E"
-      },
-      "secrets": {
-        "sheetsToken": "••••3f9c"
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
       },
       "mapping": {
         "name": {
-          "from": "Name"
+          "from": "/Name"
         },
         "tier": {
-          "from": "Tier"
+          "from": "/Plan"
         },
         "validUntil": {
-          "from": "Valid until"
+          "from": "/Valid until"
         }
-      },
-      "voidWhen": [
-        {
-          "from": "Tier",
-          "op": "in",
-          "values": ["Refunded"]
-        }
-      ]
+      }
     },
     "response": {
       "ok": true,
-      "detail": "Read 71 records from the sheet.",
+      "detail": "3 rows. Columns: Booking ID, Name, Email, Plan, Valid until",
       "durationMs": 1240,
       "sample": [
         {
@@ -445,7 +406,7 @@
       "window": {
         "days": 18,
         "limit": 25,
-        "since": 1794322800000,
+        "since": 1794362400000,
         "excluded": 3
       },
       "samples": [
@@ -454,8 +415,7 @@
           "action": "create",
           "fields": {
             "tier": {}
-          },
-          "message": "The gym closes at 18:00 on 24 December."
+          }
         }
       ],
       "columns": [
@@ -477,12 +437,12 @@
     "description": "Tests the saved connection against its source.",
     "response": {
       "ok": true,
-      "detail": "Read 3 rows from the sheet.",
-      "durationMs": 1240,
+      "detail": "3 rows. Columns: Booking ID, Name, Email, Plan, Valid until",
+      "durationMs": 1650,
       "sample": [
         {
-          "pointer": "/input/tier",
-          "preview": "Day pass"
+          "pointer": "/Name",
+          "preview": "Mei Tanaka"
         }
       ]
     }
@@ -499,20 +459,20 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-019e1c023c2f",
+          "id": "0193a1b2-7c00-7000-8000-000000000023",
           "trigger": "schedule",
-          "startedAt": 1794322800000,
-          "finishedAt": 1795521600000,
-          "outcome": "unchanged",
-          "recordsSeen": 29,
-          "passesChanged": 0,
-          "passesCreated": 0,
+          "startedAt": 1795570500000,
+          "finishedAt": 1795570501800,
+          "outcome": "changed",
+          "recordsSeen": 3,
+          "passesChanged": 1,
+          "passesCreated": 1,
           "passesVoided": 0,
           "recordsFailed": 0,
           "errorCode": null,
           "errorDetail": null,
           "httpStatus": 200,
-          "durationMs": 1240
+          "durationMs": 1800
         }
       ],
       "nextCursor": "c1.4812"
@@ -521,113 +481,101 @@
   "connections.postConnectionsByIdWebhookSecret": {
     "description": "Generates a new webhook secret. It is shown once.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-be284b989875",
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "connectorType": "google-sheets",
-      "connectorVersion": 3,
+      "connectorType": "csv-url",
+      "connectorVersion": 1,
       "name": "Booking sheet",
       "config": {
-        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-        "range": "Members!A:E"
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
       },
-      "hasCredential": true,
-      "hasWebhookSecret": false,
+      "hasCredential": false,
+      "hasWebhookSecret": true,
       "mapping": {
         "name": {
-          "from": "Name"
+          "from": "/Name"
         },
         "tier": {
-          "from": "Tier"
+          "from": "/Plan"
         },
         "validUntil": {
-          "from": "Valid until"
+          "from": "/Valid until"
         }
       },
       "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-      "holderEmailField": "/Holder email",
-      "autoCreate": false,
-      "autoEmail": false,
+      "holderEmailField": "/Email",
+      "autoCreate": true,
+      "autoEmail": true,
       "onMissing": "keep",
-      "voidWhen": [
-        {
-          "from": "Tier",
-          "op": "in",
-          "values": ["Refunded"]
-        }
-      ],
-      "webhookPrevUntil": null,
-      "mode": "poll",
-      "intervalSeconds": 300,
-      "maxConcurrency": 29,
-      "requestsPerMinute": 60,
+      "voidWhen": [],
+      "webhookPrevUntil": 1795658400000,
+      "mode": "hybrid",
+      "intervalSeconds": 900,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 6,
       "enabled": true,
       "health": "healthy",
       "consecutiveFailures": 0,
       "breakerOpenUntil": null,
-      "nextRunAt": 1795521600000,
-      "lastRunAt": 1795521600000,
-      "lastSuccessAt": 1795521600000,
+      "nextRunAt": 1795571400000,
+      "lastRunAt": 1795570500000,
+      "lastSuccessAt": 1795570500000,
       "lastErrorCode": null,
       "lastErrorAt": null,
-      "webhookUrl": null,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000
+      "webhookUrl": "https://passbook.mobile/hooks/connections/0193a1b2-7c00-7000-8000-000000000051",
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000
     }
   },
   "connections.deleteConnectionsByIdWebhookSecretPrevious": {
     "description": "Stops accepting the previous webhook secret now.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0a2406e95429",
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "connectorType": "google-sheets",
-      "connectorVersion": 3,
+      "connectorType": "csv-url",
+      "connectorVersion": 1,
       "name": "Booking sheet",
       "config": {
-        "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-        "range": "Members!A:E"
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
       },
-      "hasCredential": true,
-      "hasWebhookSecret": false,
+      "hasCredential": false,
+      "hasWebhookSecret": true,
       "mapping": {
         "name": {
-          "from": "Name"
+          "from": "/Name"
         },
         "tier": {
-          "from": "Tier"
+          "from": "/Plan"
         },
         "validUntil": {
-          "from": "Valid until"
+          "from": "/Valid until"
         }
       },
       "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-      "holderEmailField": "/Holder email",
-      "autoCreate": false,
-      "autoEmail": false,
+      "holderEmailField": "/Email",
+      "autoCreate": true,
+      "autoEmail": true,
       "onMissing": "keep",
-      "voidWhen": [
-        {
-          "from": "Tier",
-          "op": "in",
-          "values": ["Refunded"]
-        }
-      ],
+      "voidWhen": [],
       "webhookPrevUntil": null,
-      "mode": "poll",
-      "intervalSeconds": 300,
-      "maxConcurrency": 29,
-      "requestsPerMinute": 60,
+      "mode": "hybrid",
+      "intervalSeconds": 900,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 6,
       "enabled": true,
       "health": "healthy",
       "consecutiveFailures": 0,
       "breakerOpenUntil": null,
-      "nextRunAt": 1795521600000,
-      "lastRunAt": 1795521600000,
-      "lastSuccessAt": 1795521600000,
+      "nextRunAt": 1795571400000,
+      "lastRunAt": 1795570500000,
+      "lastSuccessAt": 1795570500000,
       "lastErrorCode": null,
       "lastErrorAt": null,
-      "webhookUrl": null,
-      "createdAt": 1794322800000,
-      "updatedAt": 1795359600000
+      "webhookUrl": "https://passbook.mobile/hooks/connections/0193a1b2-7c00-7000-8000-000000000051",
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000
     }
   },
   "connections.postHooksConnectionsById": {

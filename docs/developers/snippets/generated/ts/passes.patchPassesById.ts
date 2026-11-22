@@ -6,9 +6,8 @@ const result = await pb.passes.update('0193a1b2-7c00-7000-8000-0000000000c1', {
   input: {
     name: 'Ada Example',
     tier: 'Day pass',
-    validUntil: '2026-12-31',
+    validUntil: '2027-01-31',
   },
-  templateVersion: '3',
-  externalId: 'booking_8841',
+  notify: true,
 });
 console.log(result);

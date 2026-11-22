@@ -3,32 +3,20 @@ curl -X POST "https://passbook.mobile/api/v1/connections/test-config" \
   -H "Content-Type: application/json" \
   -d '{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-  "connectorType": "google-sheets",
+  "connectorType": "csv-url",
   "config": {
-    "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
-    "range": "Members!A:E"
-  },
-  "secrets": {
-    "sheetsToken": "••••3f9c"
+    "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+    "idColumn": "Booking ID"
   },
   "mapping": {
     "name": {
-      "from": "Name"
+      "from": "/Name"
     },
     "tier": {
-      "from": "Tier"
+      "from": "/Plan"
     },
     "validUntil": {
-      "from": "Valid until"
+      "from": "/Valid until"
     }
-  },
-  "voidWhen": [
-    {
-      "from": "Tier",
-      "op": "in",
-      "values": [
-        "Refunded"
-      ]
-    }
-  ]
+  }
 }'

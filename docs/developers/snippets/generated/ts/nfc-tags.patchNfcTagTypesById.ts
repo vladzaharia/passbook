@@ -3,9 +3,7 @@ import { PassBook } from '@passbook/sdk';
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
 const result = await pb.nfc.tagTypes.update('0193a1b2-7c00-7000-8000-0000000000e1', {
-  version: 3,
-  name: 'Wristband 14',
-  use: 'member',
-  scopes: 'pass',
+  version: 1,
+  perPass: 2,
 });
 console.log(result);

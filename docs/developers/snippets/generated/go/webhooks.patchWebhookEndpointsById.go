@@ -18,10 +18,10 @@ func main() {
 
 	var body passbook.WebhookEndpointsUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
-  "description": "",
   "eventTypes": [
-    "pass.issued"
+    "pass.issued",
+    "pass.scanned",
+    "pass.voided"
   ]
 }`), &body); err != nil {
 		panic(err)

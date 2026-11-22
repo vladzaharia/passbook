@@ -8,9 +8,9 @@
           "passLabel": "Day pass",
           "placedByKind": "org",
           "placedByLabel": "Sam Rivera",
-          "reason": "Refund issued at the desk.",
-          "createdAt": 1794322800000,
-          "releasedAt": 1795521600000,
+          "reason": "Chargeback dispute: keep records until the bank closes it.",
+          "createdAt": 1794362400000,
+          "releasedAt": 1795570500000,
           "releasedByLabel": "Sam Rivera",
           "canRelease": true
         }
@@ -21,7 +21,7 @@
   "retention.postOrgsByOrgIdRetentionHolds": {
     "request": {
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "reason": "Duplicate booking."
+      "reason": "Chargeback dispute: keep records until the bank closes it."
     },
     "response": {
       "ok": true
@@ -39,8 +39,8 @@
           "id": "0193a1b2-7c00-7000-8000-f6551f7b876e",
           "cls": "ok",
           "kind": "sweep",
-          "ranAt": 1795521600000,
-          "cutoffAt": 1795521600000,
+          "ranAt": 1795570500000,
+          "cutoffAt": 1795570500000,
           "policyDays": 35,
           "deleted": 27,
           "anonymised": 19,
@@ -56,8 +56,8 @@
         "id": "0193a1b2-7c00-7000-8000-368e2792563b",
         "cls": "ok",
         "kind": "sweep",
-        "ranAt": 1795521600000,
-        "cutoffAt": 1795521600000,
+        "ranAt": 1795570500000,
+        "cutoffAt": 1795570500000,
         "policyDays": 35,
         "deleted": 27,
         "anonymised": 19,
@@ -80,9 +80,9 @@
           "passLabel": "Day pass",
           "placedByKind": "org",
           "placedByLabel": "Sam Rivera",
-          "reason": "Waiver not signed.",
-          "createdAt": 1794322800000,
-          "releasedAt": 1795521600000,
+          "reason": "Chargeback dispute: keep records until the bank closes it.",
+          "createdAt": 1794362400000,
+          "releasedAt": 1795570500000,
           "releasedByLabel": "Sam Rivera",
           "canRelease": true
         }
@@ -93,7 +93,7 @@
   "retention.postPlatformOrgsByOrgIdRetentionHolds": {
     "request": {
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "reason": "Wristband replaced after it was lost."
+      "reason": "Chargeback dispute: keep records until the bank closes it."
     },
     "response": {
       "ok": true
@@ -111,8 +111,8 @@
           "id": "0193a1b2-7c00-7000-8000-25493e2b3dac",
           "cls": "ok",
           "kind": "sweep",
-          "ranAt": 1795521600000,
-          "cutoffAt": 1795521600000,
+          "ranAt": 1795570500000,
+          "cutoffAt": 1795570500000,
           "policyDays": 35,
           "deleted": 27,
           "anonymised": 19,
@@ -128,8 +128,8 @@
         "id": "0193a1b2-7c00-7000-8000-4e4ff0287162",
         "cls": "ok",
         "kind": "sweep",
-        "ranAt": 1795521600000,
-        "cutoffAt": 1795521600000,
+        "ranAt": 1795570500000,
+        "cutoffAt": 1795570500000,
         "policyDays": 35,
         "deleted": 27,
         "anonymised": 19,
@@ -150,8 +150,8 @@
           "id": "0193a1b2-7c00-7000-8000-db650d7d22e4",
           "cls": "ok",
           "kind": "sweep",
-          "ranAt": 1795521600000,
-          "cutoffAt": 1795521600000,
+          "ranAt": 1795570500000,
+          "cutoffAt": 1795570500000,
           "policyDays": 35,
           "deleted": 27,
           "anonymised": 19,
@@ -167,8 +167,8 @@
         "id": "0193a1b2-7c00-7000-8000-d6f41259f7ba",
         "cls": "ok",
         "kind": "sweep",
-        "ranAt": 1795521600000,
-        "cutoffAt": 1795521600000,
+        "ranAt": 1795570500000,
+        "cutoffAt": 1795570500000,
         "policyDays": 35,
         "deleted": 27,
         "anonymised": 19,

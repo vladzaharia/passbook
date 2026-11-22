@@ -10,68 +10,57 @@
           "orgName": "Northwind Climbing",
           "status": "active",
           "mode": "live",
-          "modifiedAt": 1795359600000,
+          "modifiedAt": 1795399200000,
           "voidedAt": null,
           "removedAt": null,
           "removalMessage": "Removed by the front desk.",
-          "lastRefreshedAt": 1795521600000,
-          "refreshRequestedAt": 1795521600000,
-          "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-f21676190484.pkpass",
-          "pageUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+          "lastRefreshedAt": 1795570500000,
+          "refreshRequestedAt": 1795570500000,
+          "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
+          "pageUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
           "walletOffers": [
             {
               "provider": "google",
-              "href": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+              "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
               "installation": "unknown"
             }
           ],
           "walletIssuance": {
             "google": {
-              "state": "disabled",
-              "reason": "not_released"
+              "state": "enabled"
             },
             "samsung": {
-              "state": "disabled",
-              "reason": "not_released"
+              "state": "enabled"
             }
           },
           "presentationEligible": false,
           "channels": {
             "mobile": {
-              "on": false,
-              "source": "pass",
-              "reason": "not_released",
-              "retiredCause": "pass"
+              "on": true,
+              "source": "template"
             },
             "apple": {
-              "on": false,
-              "source": "pass",
-              "reason": "not_released",
-              "retiredCause": "pass"
+              "on": true,
+              "source": "template"
             },
             "google": {
               "on": false,
-              "source": "pass",
-              "reason": "not_released",
-              "retiredCause": "pass"
+              "source": "org",
+              "reason": "not_enrolled"
             },
             "samsung": {
               "on": false,
-              "source": "pass",
-              "reason": "not_released",
-              "retiredCause": "pass"
+              "source": "org",
+              "reason": "not_enrolled"
             },
             "paper": {
-              "on": false,
-              "source": "pass",
-              "reason": "not_released",
-              "retiredCause": "pass"
+              "on": true,
+              "source": "template"
             },
             "nfc": {
               "on": false,
-              "source": "pass",
-              "reason": "not_released",
-              "retiredCause": "pass"
+              "source": "org",
+              "reason": "tags_off"
             }
           },
           "holderPrint": false,
@@ -116,15 +105,15 @@
               "label": "Key fob 3",
               "hint": "D335",
               "scope": "pass",
-              "boundAt": 1795521600000,
-              "lostAt": 1795521600000
+              "boundAt": 1795570500000,
+              "lostAt": 1795570500000
             }
           ],
           "inWallet": false,
           "readOnly": false,
           "support": {
             "email": "ada@example.com",
-            "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+            "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
             "platform": true
           }
         }
@@ -143,7 +132,7 @@
           "title": "Day pass",
           "support": {
             "email": "ada@example.com",
-            "url": "https://northwind.example.com/p/xK3v9QmT2Lw8"
+            "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
           }
         }
       ],
@@ -163,68 +152,57 @@
       "orgName": "Northwind Climbing",
       "status": "active",
       "mode": "live",
-      "modifiedAt": 1795359600000,
+      "modifiedAt": 1795399200000,
       "voidedAt": null,
       "removedAt": null,
       "removalMessage": "Removed by the front desk.",
-      "lastRefreshedAt": 1795521600000,
-      "refreshRequestedAt": 1795521600000,
-      "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-2f7f8274cbaf.pkpass",
-      "pageUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+      "lastRefreshedAt": 1795570500000,
+      "refreshRequestedAt": 1795570500000,
+      "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
+      "pageUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
       "walletOffers": [
         {
           "provider": "google",
-          "href": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+          "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
           "installation": "unknown"
         }
       ],
       "walletIssuance": {
         "google": {
-          "state": "disabled",
-          "reason": "not_released"
+          "state": "enabled"
         },
         "samsung": {
-          "state": "disabled",
-          "reason": "not_released"
+          "state": "enabled"
         }
       },
       "presentationEligible": false,
       "channels": {
         "mobile": {
-          "on": false,
-          "source": "pass",
-          "reason": "not_released",
-          "retiredCause": "pass"
+          "on": true,
+          "source": "template"
         },
         "apple": {
-          "on": false,
-          "source": "pass",
-          "reason": "not_released",
-          "retiredCause": "pass"
+          "on": true,
+          "source": "template"
         },
         "google": {
           "on": false,
-          "source": "pass",
-          "reason": "not_released",
-          "retiredCause": "pass"
+          "source": "org",
+          "reason": "not_enrolled"
         },
         "samsung": {
           "on": false,
-          "source": "pass",
-          "reason": "not_released",
-          "retiredCause": "pass"
+          "source": "org",
+          "reason": "not_enrolled"
         },
         "paper": {
-          "on": false,
-          "source": "pass",
-          "reason": "not_released",
-          "retiredCause": "pass"
+          "on": true,
+          "source": "template"
         },
         "nfc": {
           "on": false,
-          "source": "pass",
-          "reason": "not_released",
-          "retiredCause": "pass"
+          "source": "org",
+          "reason": "tags_off"
         }
       },
       "holderPrint": false,
@@ -269,15 +247,15 @@
           "label": "Wristband 14",
           "hint": "4522",
           "scope": "pass",
-          "boundAt": 1795521600000,
-          "lostAt": 1795521600000
+          "boundAt": 1795570500000,
+          "lostAt": 1795570500000
         }
       ],
       "inWallet": false,
       "readOnly": false,
       "support": {
         "email": "ada@example.com",
-        "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+        "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
         "platform": true
       }
     }
@@ -291,7 +269,7 @@
   "me.postMePassesByIdRefresh": {
     "response": {
       "accepted": true,
-      "requestedAt": 1795521600000,
+      "requestedAt": 1795570500000,
       "cooldownSeconds": 16
     }
   },
@@ -322,7 +300,7 @@
       "items": [
         {
           "email": "ada@example.com",
-          "verifiedAt": 1795521600000,
+          "verifiedAt": 1795570500000,
           "verifiedVia": "magic_link",
           "primary": false
         }
@@ -343,7 +321,7 @@
       "items": [
         {
           "email": "ada@example.com",
-          "verifiedAt": 1795521600000,
+          "verifiedAt": 1795570500000,
           "verifiedVia": "magic_link",
           "primary": false
         }
@@ -356,7 +334,7 @@
       "items": [
         {
           "email": "ada@example.com",
-          "verifiedAt": 1795521600000,
+          "verifiedAt": 1795570500000,
           "verifiedVia": "magic_link",
           "primary": false
         }
@@ -369,8 +347,8 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-8736fcdefc15",
-          "createdAt": 1794322800000,
-          "lastSeenAt": 1795521600000,
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
           "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
           "current": false
         }

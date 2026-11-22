@@ -3,11 +3,10 @@ import { PassBook } from '@passbook/sdk';
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
 const result = await pb.passes.bulkApply({
-  action: 'void',
-  message: 'The gym closes at 18:00 on 24 December.',
-  orgId: '0193a1b2-7c00-7000-8000-0000000000a1',
+  action: 'send_email',
   ids: [
-    '0193a1b2-7c00-7000-8000-8b1bb892d676',
+    '0193a1b2-7c00-7000-8000-0000000000c1',
+    '0193a1b2-7c00-7000-8000-f3f85c24ee38',
   ],
 });
 console.log(result);

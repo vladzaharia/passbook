@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.NfcTagTypesArchiveBody
 	if err := json.Unmarshal([]byte(`{
-  "version": 3
+  "version": 1
 }`), &body); err != nil {
 		panic(err)
 	}

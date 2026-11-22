@@ -6,9 +6,9 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 
 result = pb.passes.match_photos(
     {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "keys": [
-            "tier",
+            "NW-1001",
+            "NW-1002",
         ],
     },
 )
