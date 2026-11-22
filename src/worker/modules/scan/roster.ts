@@ -10,7 +10,7 @@ import { type AdmitsPass, matchesEvent } from './admits.ts';
 import { localDay } from './counts.ts';
 import { requireOfflineList } from './offline-policy.ts';
 import { type RosterRow, rosterPage } from './repo-roster.ts';
-import { configEpochOf } from './scan-epochs.ts';
+import { configEpochOf, credentialEpochOfActor } from './scan-epochs.ts';
 
 type Roster = z.infer<typeof ScanRosterSchema>;
 type Entry = Roster['entries'][number];
@@ -22,7 +22,7 @@ const PAGE = 2000;
  * passes, makes every earlier roster stamp stop verifying, so a stale list cannot label a read `listed`.
  */
 export const scopeKeyOf = (actor: ScanActor): string =>
-  `${scopeSessionId(actor) ?? ''}:${actor.scanningSession?.updatedAt ?? 0}:${configEpochOf(actor)}`;
+  `${scopeSessionId(actor) ?? ''}:${actor.scanningSession?.updatedAt ?? 0}:${configEpochOf(actor)}:${credentialEpochOfActor(actor)}`;
 
 /**
  * The window MAC. It binds the device's scope to `asOf` and `validUntil`, so `batch` can tell a

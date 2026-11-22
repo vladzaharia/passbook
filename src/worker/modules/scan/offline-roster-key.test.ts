@@ -2,7 +2,10 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { TEST_NOW } from '../../../../test/helpers/index.ts';
 import { run } from '../../platform/db.ts';
 import { kit, setupActionFixture } from './act-test-fixtures.ts';
+import type { ScanActor } from './actor.ts';
 import { LIST, rosterOf, ticketTemplate } from './offline-test-fixtures.ts';
+import { scopeKeyOf } from './roster.ts';
+import { setScanEpochs } from './scan-epochs.ts';
 
 beforeAll(setupActionFixture);
 afterEach(() => kit.clock.set(TEST_NOW));
@@ -53,5 +56,32 @@ describe('the offline list key is the scanner config epoch', () => {
     const edited = await keyOf(headers);
     expect(edited.sig).not.toBe(first.sig);
     expect(edited.rev).not.toBe(first.rev);
+  });
+
+  it('a newer epoch cannot cancel an older event revision', async () => {
+    const tpl = await ticketTemplate();
+    const scanner = await kit.scanner({ templateIds: [tpl], settings: LIST });
+    const e1 = await kit.event({ templateIds: [tpl] });
+    const e2 = await kit.event({ templateIds: [tpl] });
+    const E = 1_800_000_000_000;
+    await run(kit.env.DB, 'UPDATE scan_events SET updated_at = ? WHERE id = ?', [E, e1.id]);
+    await run(kit.env.DB, 'UPDATE scan_events SET updated_at = ? WHERE id = ?', [E - 1, e2.id]);
+    await run(kit.env.DB, 'UPDATE scanners SET event_id = ? WHERE id = ?', [e1.id, scanner.id]);
+    const first = await keyOf(scanner.headers);
+    // The epoch is one higher and the event revision one lower: a sum would not move.
+    await run(kit.env.DB, 'UPDATE scanners SET event_id = ? WHERE id = ?', [e2.id, scanner.id]);
+    const second = await keyOf(scanner.headers);
+    expect(second.rev).not.toBe(first.rev);
+    expect(Number.isSafeInteger(second.rev)).toBe(true);
+  });
+
+  it('a pairing (a new credential epoch) changes the list scope', () => {
+    const actor = (credential: number) => {
+      const a = { scanningSession: null, scanner: null } as unknown as ScanActor;
+      setScanEpochs(a, { scanner: { id: 's', credential, config: 3 }, events: {} });
+      return a;
+    };
+    expect(scopeKeyOf(actor(1))).not.toBe(scopeKeyOf(actor(2)));
+    expect(scopeKeyOf(actor(1))).toBe(scopeKeyOf(actor(1)));
   });
 });

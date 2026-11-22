@@ -13,7 +13,7 @@ import {
 import { sessionTodayByTypeStmt, todayByTypeStmt } from './repo-counts-by-type.ts';
 import { eventTotalsStmt } from './repo-event-attendance.ts';
 import { scanningSessionTodayStmt } from './repo-scanning-sessions.ts';
-import { configEpochOf } from './scan-epochs.ts';
+import { configEpochOf, hash53 } from './scan-epochs.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 
 const DAY = 86_400_000;
@@ -127,9 +127,10 @@ function buildCounts(
   // An event has its own totals, and one pass type would repeat the total.
   const byType = !event && templateIds.length !== 1;
   // The scanner's config epoch, not its `updated_at`: a staff sign-in, sign-out or idle unbind must not
-  // make the door drop its offline list. The sum moves when either part does.
-  const configRev =
-    Math.max(event?.updatedAt ?? 0, actor.scanningSession?.updatedAt ?? 0) + configEpochOf(actor);
+  // make the door drop its offline list. A hash, not a sum, so a newer epoch cannot cancel an older event.
+  const configRev = hash53(
+    `${Math.max(event?.updatedAt ?? 0, actor.scanningSession?.updatedAt ?? 0)}:${configEpochOf(actor)}`,
+  );
   const guard = cacheGuard ? { sql: cacheGuard.sql, params: [...cacheGuard.params] } : undefined;
   const authority = cloneObservedScanActor(authorityActor);
   // Bind the injected clock as late as possible, when the caller assembles its batch.
