@@ -134,11 +134,13 @@ export function DoneCard({
           >
             <Check aria-hidden className="size-4" />
           </span>
-          {b.state === 'cancelled'
-            ? C.run.stopped
-            : failed
-              ? C.run.failedTitle
-              : C.run.doneTitle(b.counts.updated)}
+          {undone
+            ? C.run.undoneTitle
+            : b.state === 'cancelled'
+              ? C.run.stopped
+              : failed
+                ? C.run.failedTitle
+                : C.run.doneTitle(b.counts.updated)}
         </p>
         <Counters b={b} />
         {children}
