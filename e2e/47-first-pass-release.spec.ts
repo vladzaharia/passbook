@@ -108,13 +108,9 @@ test('a new org tries its blueprint on a phone, then releases it to holders', as
     await shoot(page, 'journey1-released');
     await page.goto(`/admin/o/${org.id}`);
     await expect(page.getByRole('region', { name: 'First pass' })).toBeVisible();
-    expect(await todo()).toBe(onTemplate);
-    await expect(
-      page.getByRole('link', { name: 'Template version released to Live' }).first(),
-    ).toBeVisible();
-    await expect(
-      page.getByRole('link', { name: 'Template version released to Test' }).first(),
-    ).toBeVisible();
+    await expect.poll(todo).toBe(onTemplate);
+    await expect(page.getByRole('link', { name: 'Released v1 to Live' }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Released v1 to Test' }).first()).toBeVisible();
     await shoot(page, 'journey1-overview');
   } finally {
     await api.dispose();

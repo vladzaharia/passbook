@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { entryLabel } from './entry-label.ts';
 
 describe('entryLabel', () => {
-  it('names the mode a release went to', () => {
+  it('names the version and the mode a release went to', () => {
+    expect(
+      entryLabel({ action: 'template.release', detail: { mode: 'live', versionNumber: 3 } }),
+    ).toBe('Released v3 to Live');
+    expect(
+      entryLabel({ action: 'template.release', detail: { mode: 'test', versionNumber: 3 } }),
+    ).toBe('Released v3 to Test');
+  });
+
+  it('keeps today’s wording for an entry without a version number', () => {
     expect(entryLabel({ action: 'template.release', detail: { mode: 'live' } })).toBe(
       'Template version released to Live',
     );
