@@ -103,7 +103,7 @@
   },
   "API_KEY_CREDENTIAL_LIVE_ORG": {
     "title": "Credential scopes are live and one org",
-    "when": "A test-mode key or a platform key asked for a credential scope (scanning:admin).",
+    "when": "A test-mode key or a platform key asked for a credential scope (scanning:admin or nfc:keys).",
     "fix": "Mint the key in live mode, for that organization, with an expiry within 90 days.",
     "retryable": false
   },

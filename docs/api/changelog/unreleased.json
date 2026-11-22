@@ -136,6 +136,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"nfc:keys\" added",
+    "note": "New scope for secure tag keysets: live keys of one organization, expiry within 90 days, minted by a signed-in org_admin only."
+  },
+  {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysMe",
@@ -262,6 +270,14 @@
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].client: field added",
     "note": "client names the tool that made the call (curl, an SDK), read from its user agent; null when it sent none."
+  },
+  {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"nfc:keys\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"nfc:keys\" added",
+    "note": "New scope for secure tag keysets: live keys of one organization, expiry within 90 days, minted by a signed-in org_admin only."
   },
   {
     "key": "GET /api/v1/developer/home new operation",
@@ -446,6 +462,14 @@
     "op": "GET /api/v1/metrics/platform/overview",
     "change": "200.setup.releasedTemplates: field added",
     "note": "setup.releasedTemplates counts templates with a Live release. setup.passes and setup.walletPasses now count Test and Live passes."
+  },
+  {
+    "key": "GET /api/v1/nfc/keysets callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.getNfcKeysets",
+    "op": "GET /api/v1/nfc/keysets",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key; never key material."
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
@@ -1710,6 +1734,62 @@
     "op": "POST /api/v1/message-rules/{id}/test",
     "change": "201.message: field added",
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysets",
+    "op": "POST /api/v1/nfc/keysets",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key; generated keys are in this answer only (null on an Idempotency-Key replay)."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/disable callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdDisable",
+    "op": "POST /api/v1/nfc/keysets/{id}/disable",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/import callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
+    "op": "POST /api/v1/nfc/keysets/{id}/import",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key; a dry run is free."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/keys/{version}/retire callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire",
+    "op": "POST /api/v1/nfc/keysets/{id}/keys/{version}/retire",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/keys/{version}/revoke callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke",
+    "op": "POST /api/v1/nfc/keysets/{id}/keys/{version}/revoke",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/reenrol callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdReenrol",
+    "op": "POST /api/v1/nfc/keysets/{id}/reenrol",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/rotate callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdRotate",
+    "op": "POST /api/v1/nfc/keysets/{id}/rotate",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key; generated keys are in this answer only (null on an Idempotency-Key replay)."
   },
   {
     "key": "POST /api/v1/nfc/passes/{passId}/tags/assign new operation",

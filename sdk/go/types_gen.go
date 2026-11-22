@@ -2471,6 +2471,8 @@ type NfcEnrollmentsCreateParams struct {
 	Binding   *string `json:"binding,omitempty"`
 }
 
+type NfcKeysetsCreateBody = NfcKeysetsCreateParams
+
 type NfcKeysetsCreateParams = any
 
 type NfcKeysetsCreateParams1 struct {
@@ -2492,14 +2494,166 @@ type NfcKeysetsCreateParams3 struct {
 	MetaKey string `json:"metaKey"`
 }
 
+type NfcKeysetsCreateResult struct {
+	ID         string                               `json:"id"`
+	Name       string                               `json:"name"`
+	Slug       string                               `json:"slug"`
+	Diversify  bool                                 `json:"diversify"`
+	PerTag     bool                                 `json:"perTag"`
+	CreatedAt  int64                                `json:"createdAt"`
+	DisabledAt *int64                               `json:"disabledAt"`
+	Keys       map[string]any                       `json:"keys"`
+	Versions   []NfcKeysetsCreateResultVersionsItem `json:"versions"`
+}
+
+type NfcKeysetsCreateResultVersionsItem struct {
+	Version   int64  `json:"version"`
+	State     string `json:"state"`
+	CreatedAt int64  `json:"createdAt"`
+	StateAt   *int64 `json:"stateAt"`
+	RevokedAt *int64 `json:"revokedAt"`
+	Tags      int64  `json:"tags"`
+}
+
+type NfcKeysetsDisableResult struct {
+	ID         string                                `json:"id"`
+	Name       string                                `json:"name"`
+	Slug       string                                `json:"slug"`
+	Diversify  bool                                  `json:"diversify"`
+	PerTag     bool                                  `json:"perTag"`
+	CreatedAt  int64                                 `json:"createdAt"`
+	DisabledAt *int64                                `json:"disabledAt"`
+	Versions   []NfcKeysetsDisableResultVersionsItem `json:"versions"`
+}
+
+type NfcKeysetsDisableResultVersionsItem struct {
+	Version   int64  `json:"version"`
+	State     string `json:"state"`
+	CreatedAt int64  `json:"createdAt"`
+	StateAt   *int64 `json:"stateAt"`
+	RevokedAt *int64 `json:"revokedAt"`
+	Tags      int64  `json:"tags"`
+}
+
+type NfcKeysetsImportTagsBody = NfcKeysetsImportTagsParams
+
 type NfcKeysetsImportTagsParams struct {
 	CSV    string `json:"csv"`
 	DryRun bool   `json:"dryRun"`
 }
 
+type NfcKeysetsImportTagsResult struct {
+	DryRun       bool                                     `json:"dryRun"`
+	Rows         int64                                    `json:"rows"`
+	Ok           int64                                    `json:"ok"`
+	Added        int64                                    `json:"added"`
+	Problems     []NfcKeysetsImportTagsResultProblemsItem `json:"problems"`
+	MoreProblems int64                                    `json:"moreProblems"`
+}
+
+type NfcKeysetsImportTagsResultProblemsItem struct {
+	Line   int64   `json:"line"`
+	Uid    *string `json:"uid"`
+	Reason string  `json:"reason"`
+}
+
+type NfcKeysetsListItem struct {
+	ID         string                           `json:"id"`
+	Name       string                           `json:"name"`
+	Slug       string                           `json:"slug"`
+	Diversify  bool                             `json:"diversify"`
+	PerTag     bool                             `json:"perTag"`
+	CreatedAt  int64                            `json:"createdAt"`
+	DisabledAt *int64                           `json:"disabledAt"`
+	Versions   []NfcKeysetsListItemVersionsItem `json:"versions"`
+}
+
+type NfcKeysetsListItemVersionsItem struct {
+	Version   int64  `json:"version"`
+	State     string `json:"state"`
+	CreatedAt int64  `json:"createdAt"`
+	StateAt   *int64 `json:"stateAt"`
+	RevokedAt *int64 `json:"revokedAt"`
+	Tags      int64  `json:"tags"`
+}
+
+type NfcKeysetsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+}
+
+type NfcKeysetsReenrollBody = NfcKeysetsReenrollParams
+
 type NfcKeysetsReenrollParams struct {
 	ToKeysetID string `json:"toKeysetId"`
 }
+
+type NfcKeysetsReenrollResult struct {
+	Moved  int64                          `json:"moved"`
+	OwnKey int64                          `json:"ownKey"`
+	Keyset NfcKeysetsReenrollResultKeyset `json:"keyset"`
+}
+
+type NfcKeysetsReenrollResultKeyset struct {
+	ID         string                                       `json:"id"`
+	Name       string                                       `json:"name"`
+	Slug       string                                       `json:"slug"`
+	Diversify  bool                                         `json:"diversify"`
+	PerTag     bool                                         `json:"perTag"`
+	CreatedAt  int64                                        `json:"createdAt"`
+	DisabledAt *int64                                       `json:"disabledAt"`
+	Versions   []NfcKeysetsReenrollResultKeysetVersionsItem `json:"versions"`
+}
+
+type NfcKeysetsReenrollResultKeysetVersionsItem struct {
+	Version   int64  `json:"version"`
+	State     string `json:"state"`
+	CreatedAt int64  `json:"createdAt"`
+	StateAt   *int64 `json:"stateAt"`
+	RevokedAt *int64 `json:"revokedAt"`
+	Tags      int64  `json:"tags"`
+}
+
+type NfcKeysetsRetireKeyResult struct {
+	ID         string                                  `json:"id"`
+	Name       string                                  `json:"name"`
+	Slug       string                                  `json:"slug"`
+	Diversify  bool                                    `json:"diversify"`
+	PerTag     bool                                    `json:"perTag"`
+	CreatedAt  int64                                   `json:"createdAt"`
+	DisabledAt *int64                                  `json:"disabledAt"`
+	Versions   []NfcKeysetsRetireKeyResultVersionsItem `json:"versions"`
+}
+
+type NfcKeysetsRetireKeyResultVersionsItem struct {
+	Version   int64  `json:"version"`
+	State     string `json:"state"`
+	CreatedAt int64  `json:"createdAt"`
+	StateAt   *int64 `json:"stateAt"`
+	RevokedAt *int64 `json:"revokedAt"`
+	Tags      int64  `json:"tags"`
+}
+
+type NfcKeysetsRevokeKeyResult struct {
+	ID         string                                  `json:"id"`
+	Name       string                                  `json:"name"`
+	Slug       string                                  `json:"slug"`
+	Diversify  bool                                    `json:"diversify"`
+	PerTag     bool                                    `json:"perTag"`
+	CreatedAt  int64                                   `json:"createdAt"`
+	DisabledAt *int64                                  `json:"disabledAt"`
+	Versions   []NfcKeysetsRevokeKeyResultVersionsItem `json:"versions"`
+}
+
+type NfcKeysetsRevokeKeyResultVersionsItem struct {
+	Version   int64  `json:"version"`
+	State     string `json:"state"`
+	CreatedAt int64  `json:"createdAt"`
+	StateAt   *int64 `json:"stateAt"`
+	RevokedAt *int64 `json:"revokedAt"`
+	Tags      int64  `json:"tags"`
+}
+
+type NfcKeysetsRotateBody = NfcKeysetsRotateParams
 
 type NfcKeysetsRotateParams = any
 
@@ -2514,6 +2668,27 @@ type NfcKeysetsRotateParams2 struct {
 
 type NfcKeysetsRotateParams3 struct {
 	MetaKey string `json:"metaKey"`
+}
+
+type NfcKeysetsRotateResult struct {
+	ID         string                               `json:"id"`
+	Name       string                               `json:"name"`
+	Slug       string                               `json:"slug"`
+	Diversify  bool                                 `json:"diversify"`
+	PerTag     bool                                 `json:"perTag"`
+	CreatedAt  int64                                `json:"createdAt"`
+	DisabledAt *int64                               `json:"disabledAt"`
+	Keys       map[string]any                       `json:"keys"`
+	Versions   []NfcKeysetsRotateResultVersionsItem `json:"versions"`
+}
+
+type NfcKeysetsRotateResultVersionsItem struct {
+	Version   int64  `json:"version"`
+	State     string `json:"state"`
+	CreatedAt int64  `json:"createdAt"`
+	StateAt   *int64 `json:"stateAt"`
+	RevokedAt *int64 `json:"revokedAt"`
+	Tags      int64  `json:"tags"`
 }
 
 type NfcTagTypesArchiveBody = NfcTagTypesArchiveParams

@@ -95,7 +95,7 @@ from being accepted again. Rotating only the public link does not create a crede
 
 ### Credential keys
 
-`scanning:admin` is minted by a signed-in `org_admin` with a recent step-up, never by a key or through a role. It is for live keys bound to one org, and it expires within 90 days. A PIN, pairing code or till token is shown once, in the answer that made it, and is never logged or audited; the logger also redacts `wls_` tokens and PIN fields. A replay with an `Idempotency-Key` stores the answer with every secret null. Limits are per key, and a call that commits nothing is refunded.
+`scanning:admin` and `nfc:keys` are minted by a signed-in `org_admin` with a recent step-up, never by a key or through a role. It is for live keys bound to one org, and it expires within 90 days. A PIN, pairing code, till token or tag key is shown once, in the answer that made it, and is never logged or audited; the logger also redacts `wls_` tokens and PIN and key fields. The idempotency store hashes typed-in tag keys as HMACs, so a weak key cannot be confirmed offline. A replay with an `Idempotency-Key` stores the answer with every secret null. Limits are per key, and a call that commits nothing is refunded.
 
 ## Fails closed
 

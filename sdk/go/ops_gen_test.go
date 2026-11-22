@@ -574,6 +574,78 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"nfc.keysets.list", "GET", "/api/v1/nfc/keysets", false,
+		"", `{"items":[{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Keysets.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"nfc.keysets.create", "POST", "/api/v1/nfc/keysets", false,
+		`{"name":"x","generate":true}`, `{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"keys":{"metaKey":"x","fileKey":"x"},"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b NfcKeysetsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.NFC.Keysets.Create(ctx, &b)
+		},
+	},
+	{
+		"nfc.keysets.disable", "POST", "/api/v1/nfc/keysets/id1/disable", false,
+		"", `{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Keysets.Disable(ctx, "id1")
+		},
+	},
+	{
+		"nfc.keysets.importTags", "POST", "/api/v1/nfc/keysets/id1/import", false,
+		`{"csv":"x","dryRun":false}`, `{"dryRun":false,"rows":0,"ok":0,"added":0,"problems":[{"line":0,"uid":"x","reason":"bad_uid"}],"moreProblems":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b NfcKeysetsImportTagsBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.NFC.Keysets.ImportTags(ctx, "id1", &b)
+		},
+	},
+	{
+		"nfc.keysets.retireKey", "POST", "/api/v1/nfc/keysets/id1/keys/2/retire", false,
+		"", `{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Keysets.RetireKey(ctx, "id1", int64(2))
+		},
+	},
+	{
+		"nfc.keysets.revokeKey", "POST", "/api/v1/nfc/keysets/id1/keys/2/revoke", false,
+		"", `{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Keysets.RevokeKey(ctx, "id1", int64(2))
+		},
+	},
+	{
+		"nfc.keysets.reenroll", "POST", "/api/v1/nfc/keysets/id1/reenrol", false,
+		`{"toKeysetId":"x"}`, `{"moved":0,"ownKey":0,"keyset":{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b NfcKeysetsReenrollBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.NFC.Keysets.Reenroll(ctx, "id1", &b)
+		},
+	},
+	{
+		"nfc.keysets.rotate", "POST", "/api/v1/nfc/keysets/id1/rotate", false,
+		`{"generate":true}`, `{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"keys":{"metaKey":"x","fileKey":"x"},"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b NfcKeysetsRotateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.NFC.Keysets.Rotate(ctx, "id1", &b)
+		},
+	},
+	{
 		"nfc.tagTypes.list", "GET", "/api/v1/nfc/tag-types", false,
 		"", `{"items":[{"id":"x","system":"uid","name":"x","use":"member","version":0,"createdAt":0,"updatedAt":0,"archivedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

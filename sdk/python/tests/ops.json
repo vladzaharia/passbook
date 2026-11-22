@@ -2620,6 +2620,326 @@
   }
  },
  {
+  "id": "nfc-keysets.getNfcKeysets",
+  "call": "nfc.keysets.list",
+  "http": "GET",
+  "path": "/api/v1/nfc/keysets",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "slug": "x",
+     "diversify": false,
+     "perTag": false,
+     "createdAt": 0,
+     "disabledAt": 0,
+     "versions": [
+      {
+       "version": 0,
+       "state": "active",
+       "createdAt": 0,
+       "stateAt": 0,
+       "revokedAt": 0,
+       "tags": 0
+      }
+     ]
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysets",
+  "call": "nfc.keysets.create",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "name": "x",
+   "generate": true
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "slug": "x",
+   "diversify": false,
+   "perTag": false,
+   "createdAt": 0,
+   "disabledAt": 0,
+   "keys": {
+    "metaKey": "x",
+    "fileKey": "x"
+   },
+   "versions": [
+    {
+     "version": 0,
+     "state": "active",
+     "createdAt": 0,
+     "stateAt": 0,
+     "revokedAt": 0,
+     "tags": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdDisable",
+  "call": "nfc.keysets.disable",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/disable",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "slug": "x",
+   "diversify": false,
+   "perTag": false,
+   "createdAt": 0,
+   "disabledAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "state": "active",
+     "createdAt": 0,
+     "stateAt": 0,
+     "revokedAt": 0,
+     "tags": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdImport",
+  "call": "nfc.keysets.import_tags",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/import",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "csv": "x",
+   "dryRun": false
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "dryRun": false,
+   "rows": 0,
+   "ok": 0,
+   "added": 0,
+   "problems": [
+    {
+     "line": 0,
+     "uid": "x",
+     "reason": "bad_uid"
+    }
+   ],
+   "moreProblems": 0
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire",
+  "call": "nfc.keysets.retire_key",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/keys/{version}/retire",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "version",
+    "py": "version",
+    "integer": true
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "slug": "x",
+   "diversify": false,
+   "perTag": false,
+   "createdAt": 0,
+   "disabledAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "state": "active",
+     "createdAt": 0,
+     "stateAt": 0,
+     "revokedAt": 0,
+     "tags": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke",
+  "call": "nfc.keysets.revoke_key",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/keys/{version}/revoke",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "version",
+    "py": "version",
+    "integer": true
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "slug": "x",
+   "diversify": false,
+   "perTag": false,
+   "createdAt": 0,
+   "disabledAt": 0,
+   "versions": [
+    {
+     "version": 0,
+     "state": "active",
+     "createdAt": 0,
+     "stateAt": 0,
+     "revokedAt": 0,
+     "tags": 0
+    }
+   ]
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdReenrol",
+  "call": "nfc.keysets.reenroll",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/reenrol",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "toKeysetId": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "moved": 0,
+   "ownKey": 0,
+   "keyset": {
+    "id": "x",
+    "name": "x",
+    "slug": "x",
+    "diversify": false,
+    "perTag": false,
+    "createdAt": 0,
+    "disabledAt": 0,
+    "versions": [
+     {
+      "version": 0,
+      "state": "active",
+      "createdAt": 0,
+      "stateAt": 0,
+      "revokedAt": 0,
+      "tags": 0
+     }
+    ]
+   }
+  }
+ },
+ {
+  "id": "nfc-keysets.postNfcKeysetsByIdRotate",
+  "call": "nfc.keysets.rotate",
+  "http": "POST",
+  "path": "/api/v1/nfc/keysets/{id}/rotate",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "generate": true
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "name": "x",
+   "slug": "x",
+   "diversify": false,
+   "perTag": false,
+   "createdAt": 0,
+   "disabledAt": 0,
+   "keys": {
+    "metaKey": "x",
+    "fileKey": "x"
+   },
+   "versions": [
+    {
+     "version": 0,
+     "state": "active",
+     "createdAt": 0,
+     "stateAt": 0,
+     "revokedAt": 0,
+     "tags": 0
+    }
+   ]
+  }
+ },
+ {
   "id": "nfc-tags.getNfcTagTypes",
   "call": "nfc.tag_types.list",
   "http": "GET",

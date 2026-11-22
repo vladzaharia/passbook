@@ -9983,6 +9983,7 @@
                 "scan-setup:read",
                 "scan-setup:write",
                 "scanning:admin",
+                "nfc:keys",
                 "nfc:read",
                 "nfc:write",
                 "wallet:read",
@@ -10129,6 +10130,7 @@
                         "scan-setup:read",
                         "scan-setup:write",
                         "scanning:admin",
+                        "nfc:keys",
                         "nfc:read",
                         "nfc:write",
                         "wallet:read",
@@ -10360,6 +10362,7 @@
                         "scan-setup:read",
                         "scan-setup:write",
                         "scanning:admin",
+                        "nfc:keys",
                         "nfc:read",
                         "nfc:write",
                         "wallet:read",
@@ -10589,6 +10592,7 @@
                     "scan-setup:read",
                     "scan-setup:write",
                     "scanning:admin",
+                    "nfc:keys",
                     "nfc:read",
                     "nfc:write",
                     "wallet:read",
@@ -10822,6 +10826,7 @@
                 "scan-setup:read",
                 "scan-setup:write",
                 "scanning:admin",
+                "nfc:keys",
                 "nfc:read",
                 "nfc:write",
                 "wallet:read",
@@ -11232,6 +11237,7 @@
                 "scan-setup:read",
                 "scan-setup:write",
                 "scanning:admin",
+                "nfc:keys",
                 "nfc:read",
                 "nfc:write",
                 "wallet:read",
@@ -27742,6 +27748,7 @@
                 "scanning:write",
                 "scan-setup:read",
                 "scanning:admin",
+                "nfc:keys",
                 "api-keys:write"
               ]
             },
@@ -36505,6 +36512,7 @@
                           "scan-setup:read",
                           "scan-setup:write",
                           "scanning:admin",
+                          "nfc:keys",
                           "nfc:read",
                           "nfc:write",
                           "wallet:read",
@@ -37132,6 +37140,7 @@
                                 "scan-setup:read",
                                 "scan-setup:write",
                                 "scanning:admin",
+                                "nfc:keys",
                                 "nfc:read",
                                 "nfc:write",
                                 "wallet:read",
@@ -96043,6 +96052,7 @@
                                 "scan-setup:read",
                                 "scan-setup:write",
                                 "scanning:admin",
+                                "nfc:keys",
                                 "nfc:read",
                                 "nfc:write",
                                 "wallet:read",
@@ -125438,6 +125448,16 @@
     },
     "/api/v1/nfc/keysets": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "List tag keysets",
         "tags": [
           "nfc-keysets"
@@ -125601,15 +125621,12 @@
           "resource": "nfc.keysets",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
@@ -125619,6 +125636,16 @@
         ]
       },
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "x-feature": {
           "key": "nfc",
           "atLeast": "secure"
@@ -125790,21 +125817,21 @@
           "resource": "nfc.keysets",
           "method": "create"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_KEY_INVALID",
           "KEYSET_KEY_REUSED",
           "KEYSET_KEY_WEAK",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "ORG_FORBIDDEN",
           "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
@@ -125816,6 +125843,16 @@
     },
     "/api/v1/nfc/keysets/{id}/rotate": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Rotate a keyset to a new key version",
         "tags": [
           "nfc-keysets"
@@ -125982,11 +126019,6 @@
           "resource": "nfc.keysets",
           "method": "rotate"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-step-up": {
           "maxAgeSec": 600,
@@ -125995,12 +126027,17 @@
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
+          "IDEMPOTENCY_IN_PROGRESS",
+          "IDEMPOTENCY_KEY_INVALID",
+          "IDEMPOTENCY_KEY_REUSED",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_KEY_INVALID",
           "KEYSET_KEY_REUSED",
           "KEYSET_KEY_WEAK",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -126013,6 +126050,16 @@
     },
     "/api/v1/nfc/keysets/{id}/keys/{version}/retire": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Retire an old key version",
         "tags": [
           "nfc-keysets"
@@ -126158,19 +126205,16 @@
           "resource": "nfc.keysets",
           "method": "retireKey"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_KEY_NOT_FOUND",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -126182,6 +126226,16 @@
     },
     "/api/v1/nfc/keysets/{id}/keys/{version}/revoke": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Revoke a key version: tags on it must be written again",
         "tags": [
           "nfc-keysets"
@@ -126327,19 +126381,16 @@
           "resource": "nfc.keysets",
           "method": "revokeKey"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_KEY_NOT_FOUND",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -126351,6 +126402,16 @@
     },
     "/api/v1/nfc/keysets/{id}/reenrol": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Move the tags of a keyset to another keyset",
         "tags": [
           "nfc-keysets"
@@ -126514,18 +126575,15 @@
           "resource": "nfc.keysets",
           "method": "reenroll"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -126537,6 +126595,16 @@
     },
     "/api/v1/nfc/keysets/{id}/import": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Import supplier-personalised tags (dry run or add)",
         "tags": [
           "nfc-keysets"
@@ -126656,11 +126724,6 @@
           "resource": "nfc.keysets",
           "method": "importTags"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
@@ -126669,8 +126732,10 @@
           "IMPORT_EMPTY",
           "IMPORT_HEADER",
           "IMPORT_TOO_MANY",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
@@ -126682,6 +126747,16 @@
     },
     "/api/v1/nfc/keysets/{id}/disable": {
       "post": {
+        "security": [
+          {
+            "apiKey": [
+              "nfc:keys"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Disable a keyset",
         "tags": [
           "nfc-keysets"
@@ -126817,18 +126892,15 @@
           "resource": "nfc.keysets",
           "method": "disable"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "KEYSET_CHANGED",
           "KEYSET_NOT_FOUND",
+          "MISSING_SCOPE",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",

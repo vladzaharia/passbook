@@ -2053,6 +2053,9 @@
   "nfc-keysets post /keysets": [
     "CONFLICT",
     "FORBIDDEN",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "KEYSET_CHANGED",
     "KEYSET_KEY_INVALID",
     "KEYSET_KEY_REUSED",
@@ -2116,6 +2119,9 @@
   "nfc-keysets post /keysets/{id}/rotate": [
     "CONFLICT",
     "FORBIDDEN",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
     "KEYSET_CHANGED",
     "KEYSET_KEY_INVALID",
     "KEYSET_KEY_REUSED",

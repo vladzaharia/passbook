@@ -704,6 +704,81 @@ class MessageRulesResource:
         return self._core.request("PUT", f"/api/v1/message-rules/{_p(id)}", body=body, result=m.MessageRulesUpdateResult, **opts)
 
 
+class NfcKeysetsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        body: m.NfcKeysetsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsCreateResult:
+        """Create a tag keyset `POST /api/v1/nfc/keysets`"""
+        return self._core.request("POST", "/api/v1/nfc/keysets", body=body, result=m.NfcKeysetsCreateResult, **opts)
+
+    def disable(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsDisableResult:
+        """Disable a keyset `POST /api/v1/nfc/keysets/{id}/disable`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/disable", result=m.NfcKeysetsDisableResult, **opts)
+
+    def import_tags(
+        self,
+        id: str,
+        body: m.NfcKeysetsImportTagsBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsImportTagsResult:
+        """Import supplier-personalised tags (dry run or add) `POST /api/v1/nfc/keysets/{id}/import`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/import", body=body, result=m.NfcKeysetsImportTagsResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.NfcKeysetsListItem]:
+        """List tag keysets `GET /api/v1/nfc/keysets`"""
+        return self._core.paginate("GET", "/api/v1/nfc/keysets", query={"cursor": cursor}, result=m.NfcKeysetsListResult, cursor_param="cursor", **opts)
+
+    def reenroll(
+        self,
+        id: str,
+        body: m.NfcKeysetsReenrollBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsReenrollResult:
+        """Move the tags of a keyset to another keyset `POST /api/v1/nfc/keysets/{id}/reenrol`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/reenrol", body=body, result=m.NfcKeysetsReenrollResult, **opts)
+
+    def retire_key(
+        self,
+        id: str,
+        version: int,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsRetireKeyResult:
+        """Retire an old key version `POST /api/v1/nfc/keysets/{id}/keys/{version}/retire`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/keys/{_p(version)}/retire", result=m.NfcKeysetsRetireKeyResult, **opts)
+
+    def revoke_key(
+        self,
+        id: str,
+        version: int,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsRevokeKeyResult:
+        """Revoke a key version: tags on it must be written again `POST /api/v1/nfc/keysets/{id}/keys/{version}/revoke`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/keys/{_p(version)}/revoke", result=m.NfcKeysetsRevokeKeyResult, **opts)
+
+    def rotate(
+        self,
+        id: str,
+        body: m.NfcKeysetsRotateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.NfcKeysetsRotateResult:
+        """Rotate a keyset to a new key version `POST /api/v1/nfc/keysets/{id}/rotate`"""
+        return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/rotate", body=body, result=m.NfcKeysetsRotateResult, **opts)
+
+
 class NfcTagTypesResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -748,6 +823,7 @@ class NfcTagTypesResource:
 class NfcResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.keysets = NfcKeysetsResource(core)
         self.tag_types = NfcTagTypesResource(core)
 
 

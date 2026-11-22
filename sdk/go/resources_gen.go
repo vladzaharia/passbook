@@ -741,6 +741,84 @@ func (r *MessageRulesResource) Update(ctx context.Context, id string, body *Mess
 	return &out, nil
 }
 
+type NfcKeysetsResource struct {
+	c *core
+}
+
+func newNfcKeysetsResource(c *core) *NfcKeysetsResource {
+	return &NfcKeysetsResource{
+		c: c,
+	}
+}
+
+// Create Create a tag keyset `POST /api/v1/nfc/keysets`
+func (r *NfcKeysetsResource) Create(ctx context.Context, body *NfcKeysetsCreateBody, opts ...RequestOption) (*NfcKeysetsCreateResult, error) {
+	var out NfcKeysetsCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Disable Disable a keyset `POST /api/v1/nfc/keysets/{id}/disable`
+func (r *NfcKeysetsResource) Disable(ctx context.Context, id string, opts ...RequestOption) (*NfcKeysetsDisableResult, error) {
+	var out NfcKeysetsDisableResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/disable"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ImportTags Import supplier-personalised tags (dry run or add) `POST /api/v1/nfc/keysets/{id}/import`
+func (r *NfcKeysetsResource) ImportTags(ctx context.Context, id string, body *NfcKeysetsImportTagsBody, opts ...RequestOption) (*NfcKeysetsImportTagsResult, error) {
+	var out NfcKeysetsImportTagsResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/import", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List tag keysets `GET /api/v1/nfc/keysets`
+func (r *NfcKeysetsResource) List(ctx context.Context, query *NfcKeysetsListQuery, opts ...RequestOption) *Pager[NfcKeysetsListItem] {
+	return newPager[NfcKeysetsListItem](r.c, call{method: "GET", path: "/api/v1/nfc/keysets", query: queryValues(query)}, "cursor", opts)
+}
+
+// Reenroll Move the tags of a keyset to another keyset `POST /api/v1/nfc/keysets/{id}/reenrol`
+func (r *NfcKeysetsResource) Reenroll(ctx context.Context, id string, body *NfcKeysetsReenrollBody, opts ...RequestOption) (*NfcKeysetsReenrollResult, error) {
+	var out NfcKeysetsReenrollResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/reenrol", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RetireKey Retire an old key version `POST /api/v1/nfc/keysets/{id}/keys/{version}/retire`
+func (r *NfcKeysetsResource) RetireKey(ctx context.Context, id string, version int64, opts ...RequestOption) (*NfcKeysetsRetireKeyResult, error) {
+	var out NfcKeysetsRetireKeyResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/keys/" + pathEscape(version) + "/retire"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RevokeKey Revoke a key version: tags on it must be written again `POST /api/v1/nfc/keysets/{id}/keys/{version}/revoke`
+func (r *NfcKeysetsResource) RevokeKey(ctx context.Context, id string, version int64, opts ...RequestOption) (*NfcKeysetsRevokeKeyResult, error) {
+	var out NfcKeysetsRevokeKeyResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/keys/" + pathEscape(version) + "/revoke"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Rotate Rotate a keyset to a new key version `POST /api/v1/nfc/keysets/{id}/rotate`
+func (r *NfcKeysetsResource) Rotate(ctx context.Context, id string, body *NfcKeysetsRotateBody, opts ...RequestOption) (*NfcKeysetsRotateResult, error) {
+	var out NfcKeysetsRotateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/rotate", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type NfcTagTypesResource struct {
 	c *core
 }
@@ -785,12 +863,14 @@ func (r *NfcTagTypesResource) Update(ctx context.Context, id string, body *NfcTa
 
 type NfcResource struct {
 	c        *core
+	Keysets  *NfcKeysetsResource
 	TagTypes *NfcTagTypesResource
 }
 
 func newNfcResource(c *core) *NfcResource {
 	return &NfcResource{
 		c:        c,
+		Keysets:  newNfcKeysetsResource(c),
 		TagTypes: newNfcTagTypesResource(c),
 	}
 }
