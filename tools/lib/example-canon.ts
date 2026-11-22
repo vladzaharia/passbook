@@ -3,6 +3,7 @@
 // that shows that resource. Pure data.
 import {
   API,
+  BUNDLE_URL,
   CANON,
   hex,
   IDS,
@@ -483,6 +484,103 @@ export const RELEASE = {
     next: null,
   },
 };
+/** The package check of the Day pass: one warning, nothing blocking (templates/package/images.ts). */
+const REPORT = {
+  ok: true,
+  issues: [
+    {
+      severity: 'warning',
+      code: 'IMAGE_DERIVED',
+      message: 'icon@2x.png derived from the @3x image.',
+      path: 'icon@2x.png',
+    },
+  ],
+};
+const candidate4 = uuid('candidate-4');
+const approval4 = uuid('approval-4');
+const hash4 = hex('candidate-hash-4', 64);
+/** Version 4 for Apple Wallet in Live: Sam built it, Priya approved it. */
+export const CANDIDATE = {
+  id: candidate4,
+  templateId: IDS.template,
+  orgId: IDS.org,
+  mode: 'live',
+  provider: 'apple',
+  version: '4',
+  contentHash: hex('content-hash-4', 64),
+  candidateHash: hash4,
+  adapterRevision: 1,
+  adapterCapabilities: ['issue', 'update'],
+  audiencePolicyRevision: 1,
+  authorId: IDS.user,
+  versionAuthorId: IDS.user,
+  authorName: 'Sam Rivera',
+  versionAuthorName: 'Sam Rivera',
+  createdAt: RELEASED_AT - 2 * HOUR,
+  approvals: [
+    {
+      id: approval4,
+      candidateId: candidate4,
+      candidateHash: hash4,
+      reviewerId: uuid('user-priya'),
+      reviewerName: 'Priya Nair',
+      kind: 'peer',
+      createdAt: RELEASED_AT - MIN,
+    },
+  ],
+};
+/** The release record of version 4 in Live. */
+export const RELEASE_ROW = {
+  id: release,
+  templateId: IDS.template,
+  orgId: IDS.org,
+  mode: 'live',
+  provider: 'apple',
+  version: '4',
+  generation: 4,
+  candidateHash: hash4,
+  source: 'approved',
+  action: 'release',
+  previousReleaseId: uuid('release-3'),
+  createdBy: uuid('user-priya'),
+  createdByName: 'Priya Nair',
+  createdAt: RELEASED_AT,
+  candidateId: candidate4,
+  approvalId: approval4,
+};
+/** Version 3 of the Day pass as stored: its images, its check, its manifest. */
+export const TEMPLATE_VERSION = {
+  version: '3',
+  createdAt: T.updated,
+  createdBy: IDS.user,
+  assets: [
+    ['icon.png', 'icon', 1, 29, 29, 1620],
+    ['icon@2x.png', 'icon', 2, 58, 58, 3410],
+    ['logo.png', 'logo', 1, 160, 50, 6240],
+  ].map(([name, slot, scale, width, height, size]) => ({
+    name,
+    slot,
+    scale,
+    size,
+    sha1: hex(`asset-${name}`, 40),
+    crc32: Number.parseInt(hex(`crc-${name}`, 8), 16),
+    width,
+    height,
+  })),
+  report: REPORT,
+  active: true,
+  displayOnly: false,
+  passCount: 128,
+  manifest: {
+    fields: {
+      name: { type: 'string', label: 'Guest', required: true },
+      tier: { type: 'string', label: 'Pass' },
+      validUntil: { type: 'date', label: 'Valid until' },
+    },
+  },
+  passJson: TEMPLATE.passJson,
+};
+
 /** Version 4 of the Day pass, released 40 minutes ago and still reaching passes. */
 export const ROLLOUT = {
   releaseVersion: '4',
@@ -547,17 +645,7 @@ export const UPLOAD = {
   templateId: IDS.template,
   version: '3',
   error: null,
-  report: {
-    ok: true,
-    issues: [
-      {
-        severity: 'warning',
-        code: 'IMAGE_DERIVED',
-        message: 'icon@2x.png derived from the @3x image.',
-        path: 'icon@2x.png',
-      },
-    ],
-  },
+  report: REPORT,
   issues: 1,
   createdAt: T.updated,
 };
@@ -649,6 +737,266 @@ export const PAIRING = {
 /** What a scan request sends: the pass's barcode, read by the camera. */
 export const SCAN_INPUT = { code: SCAN_CODE, method: 'camera' };
 
+const level = (state: string, reason?: string) => [
+  { level: 'passbook', state: 'ok', canChange: false },
+  { level: 'plan', state: 'ok', canChange: false },
+  { level: 'org', state, ...(reason ? { reason } : {}), canChange: true },
+  { level: 'template', state: 'ok', canChange: true },
+  { level: 'pass', state: 'ok', canChange: true },
+];
+/** Where the Day pass reaches holders: Apple Wallet, the web pass and paper; no Google or Samsung account, no tags. */
+export const EFFECTIVE = {
+  mobile: { on: true, source: 'template' },
+  apple: { on: true, source: 'template' },
+  google: { on: false, source: 'org', reason: 'not_enrolled' },
+  samsung: { on: false, source: 'org', reason: 'not_enrolled' },
+  paper: { on: true, source: 'template' },
+  nfc: { on: false, source: 'org', reason: 'tags_off' },
+};
+export const CHANNELS = {
+  effective: EFFECTIVE,
+  levels: {
+    mobile: level('ok'),
+    apple: level('ok'),
+    google: level('needs', 'not_enrolled'),
+    samsung: level('needs', 'not_enrolled'),
+    paper: level('ok'),
+    nfc: level('off', 'tags_off'),
+  },
+  overrides: {},
+  replace: { supported: false, windows: [] },
+};
+
+/** A bulk removal of the Day passes: 128 targeted, two already gone. */
+export const BULK_RUN = {
+  id: uuid('bulk-run-remove'),
+  orgId: IDS.org,
+  action: 'remove',
+  state: 'done',
+  total: 128,
+  done: 126,
+  skipped: 2,
+  skippedBy: { PASS_REMOVED: 2 },
+  stopRequested: false,
+  createdAt: T.now - 6 * MIN,
+  finishedAt: T.now - MIN,
+  code: null,
+};
+
+/** The front desk's door rules: once a day per pass (contracts/scan.ts CheckInPolicy). */
+export const CHECK_IN_POLICY = { mode: 'daily' };
+
+/** The tablet at the front desk, paired and online. */
+export const SCANNER = {
+  id: IDS.scanner,
+  orgId: IDS.org,
+  mode: 'live',
+  kind: 'device',
+  deviceRole: 'scan',
+  name: 'Front desk',
+  accepts: { templateIds: [IDS.template], eventIds: [IDS.event] },
+  timeZone: 'America/Los_Angeles',
+  status: 'paired',
+  online: true,
+  pairedAt: T.created,
+  pairedLabel: 'Front desk tablet',
+  lastSeenAt: T.recent,
+  expiresAt: null,
+  staff: null,
+  today: 142,
+  createdAt: T.created,
+  pairing: null,
+};
+
+/** Tonight's shift at the front desk: one tablet, open until 22:00. */
+export const SESSION = {
+  id: IDS.session,
+  orgId: IDS.org,
+  orgName: 'Northwind Climbing',
+  mode: 'live',
+  name: 'Evening shift',
+  status: 'active',
+  accepts: { templateIds: [IDS.template], eventIds: [IDS.event] },
+  zoneIds: [IDS.zone],
+  timeZone: 'America/Los_Angeles',
+  hold: null,
+  createdAt: T.created,
+  updatedAt: T.updated,
+  deviceCount: 1,
+  onlineCount: 1,
+  today: 142,
+};
+
+/** The session's tablet at the front desk. */
+export const SESSION_DEVICE = {
+  id: IDS.device,
+  sessionId: IDS.session,
+  name: 'Front desk tablet',
+  surface: 'auto',
+  effectiveSurface: 'phone',
+  overrides: {},
+  online: true,
+  paired: true,
+  revoked: false,
+  lastSeenAt: T.recent,
+  createdAt: T.created,
+  updatedAt: T.updated,
+};
+
+/** The main hall: tracked, 120 inside at most, cleared at 04:00. */
+export const ZONE = {
+  occupancy: 'track',
+  capacity: 120,
+  maxStayMinutes: null,
+  hardLimit: false,
+  clearAt: '04:00',
+  id: IDS.zone,
+  orgId: IDS.org,
+  key: 'main-hall',
+  name: 'Main hall',
+  parentId: null,
+  timeZone: null,
+  effectiveTimeZone: 'America/Los_Angeles',
+  sort: 1,
+  depth: 0,
+  sessions: 1,
+  checkedAt: [{ id: IDS.scanner, name: 'Front desk' }],
+  plans: [
+    {
+      templateId: IDS.template,
+      templateName: TEMPLATE.name,
+      planId: 'always',
+      label: 'Always open',
+    },
+  ],
+  inNow: 38,
+  archivedAt: null,
+};
+
+/** Sam at the front desk: a desk role, on shift since six. */
+export const STAFF = {
+  id: IDS.staff,
+  orgId: IDS.org,
+  name: 'Sam Rivera',
+  role: 'desk',
+  pinSetAt: T.created,
+  pinResetRequired: false,
+  pinLockedToday: false,
+  locked: false,
+  disabledAt: null,
+  today: 90,
+  lastScan: { at: T.recent, scannerName: 'Front desk' },
+};
+
+/** Ada's pass holder record: emailed, not yet claimed by an account. */
+export const HOLDER = {
+  passId: IDS.pass,
+  state: 'waiting',
+  email: 'ada@example.com',
+  ownerUserId: null,
+  ownerName: null,
+  blockedUserIds: [],
+  transfer: null,
+  reissueRequired: false,
+  updatedAt: T.updated,
+};
+
+/** Ada's family: her day pass and her son's youth pass, behind one link. */
+export const BUNDLE = {
+  id: IDS.bundle,
+  orgId: IDS.org,
+  mode: 'live',
+  name: 'Family pack',
+  url: BUNDLE_URL,
+  holderEmail: 'ada@example.com',
+  passes: [
+    { id: IDS.pass, title: 'Day pass', status: 'active', removedAt: null },
+    { id: uuid('pass-youth'), title: 'Youth session pass', status: 'active', removedAt: null },
+  ],
+  createdAt: T.updated,
+  linkRotatedAt: null,
+};
+
+/** What a capture endpoint stored instead of sending: the signed request, as it would have gone out. */
+export const CAPTURE = {
+  id: uuid('capture'),
+  endpointId: IDS.endpoint,
+  eventId: IDS.delivery,
+  type: 'pass.issued',
+  trigger: 'event',
+  status: 200,
+  durationMs: 0,
+  headers: {
+    'content-type': 'application/json',
+    'user-agent': 'PassBook-Webhooks/1.0',
+    'x-passbook-event-id': IDS.delivery,
+    'x-passbook-event-type': 'pass.issued',
+    'x-passbook-timestamp': String(Math.floor(issued / 1000)),
+  },
+  createdAt: issued,
+};
+
+/** A roll call of the main hall, six minutes in: 31 confirmed, 4 out, 3 still to find. */
+export const ROLL_CALL = {
+  id: IDS.rollCall,
+  placeNames: ['Main hall'],
+  startedAt: T.now - 6 * MIN,
+  startedBy: IDS.user,
+  endedAt: null,
+  endedBy: null,
+  rev: 7,
+  serverNow: T.now,
+  counts: {
+    total: 38,
+    present: 31,
+    out: 4,
+    unconfirmed: 3,
+    notConfirmedOut: 0,
+    late: 0,
+    inNow: 34,
+    tappedIn: 38,
+  },
+};
+
+/** The member wristband: one per pass, checked by staff when it is handed over. */
+export const TAG_TYPE = {
+  id: uuid('tag-type-wristband'),
+  system: 'uid',
+  name: 'Member wristband',
+  use: 'member',
+  scopes: 'pass',
+  perPass: 1,
+  bindingDays: null,
+  confirm: 'staff',
+  typed: false,
+  templateIds: [IDS.template],
+  version: 1,
+  tagCount: 40,
+  createdAt: T.created,
+  updatedAt: T.created,
+};
+
+/** The keys the gym's door tags are written with. */
+export const KEYSET = {
+  id: IDS.keyset,
+  name: 'Gym doors',
+  slug: 'gymdoors',
+  diversify: true,
+  perTag: false,
+  createdAt: T.created,
+  disabledAt: null,
+  versions: [
+    {
+      version: 1,
+      state: 'active',
+      createdAt: T.created,
+      stateAt: T.created,
+      revokedAt: null,
+      tags: 40,
+    },
+  ],
+};
+
 /** Object shapes the API repeats, by properties that give them away, to the world's own object. */
 export const SHAPES: { has: string[]; value: Record<string, unknown> }[] = [
   ...CANON,
@@ -664,6 +1012,24 @@ export const SHAPES: { has: string[]; value: Record<string, unknown> }[] = [
   { has: ['trigger', 'outcome', 'recordsSeen'], value: CONNECTION_RUN },
   { has: ['releaseVersion', 'onRelease', 'failedCount'], value: ROLLOUT },
   { has: ['uploadId', 'status'], value: UPLOAD },
+  { has: ['action', 'skippedBy', 'stopRequested'], value: BULK_RUN },
+  { has: ['effective', 'levels', 'overrides'], value: CHANNELS },
+  { has: ['durationFrom', 'durationMinutes', 'days'], value: CHECK_IN_POLICY },
+  { has: ['deviceRole', 'accepts', 'settings'], value: SCANNER },
+  { has: ['accepts', 'settings', 'deviceCount', 'onlineCount'], value: SESSION },
+  { has: ['sessionId', 'surface', 'effectiveSurface'], value: SESSION_DEVICE },
+  { has: ['occupancy', 'clearAt', 'checkedAt'], value: ZONE },
+  { has: ['pinSetAt', 'pinResetRequired', 'role'], value: STAFF },
+  { has: ['blockedUserIds', 'transfer', 'ownerUserId'], value: HOLDER },
+  { has: ['holderEmail', 'passes', 'linkRotatedAt'], value: BUNDLE },
+  { has: ['endpointId', 'headers', 'trigger'], value: CAPTURE },
+  { has: ['apiVersion', 'pass', 'data', 'type'], value: DELIVERY.payload },
+  { has: ['placeNames', 'rev', 'serverNow', 'counts'], value: ROLL_CALL },
+  { has: ['system', 'use', 'perPass', 'bindingDays'], value: TAG_TYPE },
+  { has: ['diversify', 'perTag', 'versions'], value: KEYSET },
+  { has: ['contentHash', 'candidateHash', 'adapterRevision'], value: CANDIDATE },
+  { has: ['generation', 'candidateHash', 'previousReleaseId'], value: RELEASE_ROW },
+  { has: ['assets', 'report', 'displayOnly', 'passJson'], value: TEMPLATE_VERSION },
   { has: ['opensAt', 'closesAt', 'reentry', 'arrived'], value: SCAN_EVENT },
   { has: ['hostName', 'windowFrom', 'windowUntil'], value: VISITOR },
 ];

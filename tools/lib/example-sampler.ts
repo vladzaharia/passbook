@@ -731,11 +731,13 @@ function object(
 function str(ctx: Ctx, s: Json, key: string, path: string, kind: string): string {
   const f = s.format;
   if (s.pattern?.startsWith('^#[0-9a-fA-F]{6}'))
-    return /foreground|label/i.test(path)
-      ? '#ffffff'
-      : /accent/i.test(path)
-        ? '#ffc400'
-        : '#112a4a';
+    return /label/i.test(key)
+      ? '#ffc400'
+      : /foreground/i.test(path)
+        ? '#ffffff'
+        : /accent/i.test(path)
+          ? '#ffc400'
+          : '#112a4a';
   if (key === 'actionId' || key === 'defaultActionId' || key === 'idempotencyKey')
     return contextString(key, kind, path, ctx) as string;
   if (f === 'date-time')

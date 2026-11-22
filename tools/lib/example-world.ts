@@ -61,6 +61,7 @@ export const KIND_OF_TAG: Record<string, string> = {
   'api-keys': 'key',
   orgs: 'org',
   'pass-imports': 'import',
+  brand: 'org',
   'scan-zones': 'zone',
   'scan-events': 'event',
   'scan-staff': 'staff',

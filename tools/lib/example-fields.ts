@@ -1,6 +1,8 @@
 // Values for fields whose meaning the field name does not tell: codes the server writes into plain strings, fields an
 // everyday record leaves empty, and free text, which comes from its family's sentences (example-text.ts).
 // Each code rule cites where the server writes it, so a reader can check the example against the code.
+
+import { EFFECTIVE } from './example-canon.ts';
 import { type Family, familyOf, PROSE_KEYS, sentenceFor } from './example-text.ts';
 import { BUNDLE_URL, IDS, JOIN_URL, PAIRING_CODE, SCAN_CODE } from './example-world.ts';
 
@@ -26,7 +28,19 @@ const RULES: Rule[] = [
   [ANY, /\.vas\.reason$/, ''],
   [/^scan\.getScanVisitors$/, /\.note$/, null],
   [ANY, /(^|\.)pairing\.code$/, PAIRING_CODE],
-  [/^scan\.postScanPair/, /^\.code$/, PAIRING_CODE],
+  [/^scan\.postScanPair|^scanners\.postScannersByIdPairing$/, /^\.code$/, PAIRING_CODE],
+  [
+    /^scan\.postScanPair|^scanners\.postScannersByIdPairing$/,
+    /^\.url$/,
+    `https://passbook.mobile/scan#pair=${PAIRING_CODE}`,
+  ],
+  [ANY, /(^|\.)pairing\.url$/, `https://passbook.mobile/scan#pair=${PAIRING_CODE}`],
+  [
+    /^scanners\./,
+    /\.ref$/,
+    (p: string) =>
+      /zones/.test(p) ? 'main-hall' : /events/.test(p) ? 'open-climbing' : 'front-desk',
+  ],
   [/^scan\./, /(\.input|\.card|\.items\[\d+\])\.code$/, SCAN_CODE],
   [/^roll-calls\.|RollCall/, /\.results\[\d+\]\.code$/, OMIT],
   [ANY, /\.customer\.greet$/, 'Hi, Ada'],
@@ -36,15 +50,26 @@ const RULES: Rule[] = [
   [/^join-links\./, /\.link\.url$/, JOIN_URL],
   [ANY, /\.webLogo\.url$/, `/brand/${IDS.org}/9f2c4e1a7b3d.png`],
   [
+    /^templates\./,
+    /\.assetBaseUrl$/,
+    `https://passbook.mobile/api/v1/templates/${IDS.template}/versions/3/assets`,
+  ],
+  [
     /^developer\./,
     /\.endpoints\[\d+\]\.url$/,
     'https://bookings.northwind.example.com/hooks/passbook',
   ],
   [ANY, /\.(walletIssuance\.\w+|issuance)$/, { state: 'enabled' }],
-  // Channels: `reason` is present only when a channel is off (contracts/channels.ts), and the everyday pass has
-  // every channel on that the org has.
-  [ANY, /\.(channels|effective)\.\w+\.on$/, true],
-  [ANY, /\.(channels|effective)\.\w+\.(reason|retiredAt|retiredCause)$/, OMIT],
+  // The org's brand: its own name, and image sizes a Wallet pass takes at 3x (orgs/brand.ts).
+  [ANY, /\.brand\.(name|email\.fromName)\.value$/, 'Northwind Climbing'],
+  [ANY, /\.(logo|web|webLogo)(\.value)?\.w$/, 480],
+  [ANY, /\.(logo|web|webLogo)(\.value)?\.h$/, 150],
+  [ANY, /\.icon(\.value)?\.[wh]$/, 87],
+  [/^(pass-setup|brand|orgs)\./, /\.templatesOwn$/, 0],
+  [/^pass-setup\./, /(^|\.view)\.passCount$/, 128],
+  // Channels: where a pass reaches holders, with a reason on each one that is off (contracts/channels.ts).
+  [ANY, /\.effective$/, EFFECTIVE],
+  [/^(me|passes|users)\./, /\.channels$/, EFFECTIVE],
   [ANY, /\.(walletIssuance\.\w+|issuance)\.reason$/, OMIT],
   [ANY, /\.(walletIssuance\.\w+|issuance)\.state$/, 'enabled'],
   // An APNs push that went through has no reason (delivery/push.ts).
@@ -120,6 +145,8 @@ const RULES: Rule[] = [
       },
     ],
   ],
+  // Only a sample event carries `sample` (webhooks/payload.ts); a real one leaves it out.
+  [/^(events|webhooks)\./, /(^|\.items\[\d+\]|\.payload)\.sample$/, OMIT],
   // A capture holds the body exactly as it would have been signed and sent (webhooks/payload.ts).
   [
     /^webhooks\./,

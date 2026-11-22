@@ -387,7 +387,11 @@ function invariantFailures(o: Json, at: string): string[] {
     )
       out.push(`${at}.${k}: is an empty object`);
   const total = num(o.total);
-  if (total !== undefined) {
+  // A run still moving, or stopped part way, has parts that do not yet reach its total.
+  if (
+    total !== undefined &&
+    !/^(running|queued|stopped|sending|pending|committing|scheduled)$/.test(state)
+  ) {
     const parts = entries.filter(
       ([k, v]) =>
         /^(done|failed|created|updated|unchanged|skipped|removed|ok|errors|refused|headsUp)$/.test(
@@ -444,10 +448,11 @@ function corpusFailures(examples: Example[]): string[] {
       return;
     }
     if (typeof v !== 'string') return;
-    if (NAME_KEYS.test(key) && /\s|[A-Z]/.test(v)) {
+    // A JSON Schema's `title` names a field, not a thing of the world.
+    if (NAME_KEYS.test(key) && /\s|[A-Z]/.test(v) && !/\.properties\./.test(path)) {
       let table = 'unknown';
       try {
-        table = tableFor(key, path.replace(/\[\]/g, '[]'), ex.op.split('.')[0] ?? '');
+        table = tableFor(key, path, ex.op.split('.')[0] ?? '', ex.op.split('.')[1]);
       } catch {
         /* an unknown entity is the generator's error, not this rule's */
       }

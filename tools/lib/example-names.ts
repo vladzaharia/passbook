@@ -16,6 +16,7 @@ export const TABLES: Record<string, string[]> = {
   bundle: ['Family pack', 'Birthday party', 'School group', 'Team outing'],
   view: ['Expiring soon', 'Day passes this week', 'Not yet installed', 'Staff and coaches'],
   asset: ['logo.png', 'icon.png', 'strip.png', 'thumbnail.png'],
+  mapping: ['Members export', 'Booking sheet columns'],
   file: ['members.csv', 'spring-members.csv', 'guest-list.csv', 'tags.csv'],
   hour: ['9 AM', '10 AM', '5 PM', '6 PM', '7 PM'],
   action: ['Admit', 'Check out', 'Add a visit', 'Redeem reward'],
@@ -111,11 +112,12 @@ const RULES: [RegExp, string][] = [
   [/^(windows?|waiting|attention|replace)$/, 'window'],
   [/^(templates?)$/, 'template'],
   [/^(passes|pass)$/, 'pass'],
-  [/^(scanners?|terminals?|reader)$/, 'scanner'],
+  [/^(scanners?|terminals?|reader|doors?|checked)$/, 'scanner'],
   [/^(devices?)$/, 'device'],
   [/^(connections?)$/, 'connection'],
   [/^(webhooks?|endpoints?)$/, 'endpoint'],
-  [/^(keys?|keyset)$/, 'key'],
+  [/^(keysets?)$/, 'keyset'],
+  [/^(keys?)$/, 'key'],
   [/^(imports?)$/, 'import'],
   [/^(rules?)$/, 'rule'],
   [/^(broadcasts?)$/, 'broadcast'],
@@ -127,17 +129,30 @@ const RULES: [RegExp, string][] = [
   [/^(apple|google|samsung|identity)$/, 'identity'],
 ];
 
+/** Operations under the `scanners` tag that return a scanning session or one of its devices. */
+const OP_TABLES: [RegExp, string][] = [
+  [/ScanningSessions.*Devices/, 'device'],
+  [/ScanningSessions/, 'session'],
+];
+
 const NAMEY = /^(name|label|title|subtitle|alt)$|(Name|Label|Title)$/;
 export const isNameKey = (key: string): boolean => NAMEY.test(key);
 
 /** The table for the entity a name field sits in. Throws when none is known. */
-export function tableFor(key: string, path: string, tag: string): string {
+export function tableFor(key: string, path: string, tag: string, name = ''): string {
   const own = words(key).filter((w) => !/^(name|label|title|display|subtitle)$/.test(w));
   const parents = path.split('.').filter(Boolean).slice(0, -1).reverse();
   const first = words(tag)[0] ?? '';
   // Scan counts by type are by pass type: the template (contracts/scan-session.ts).
   if (/byType/.test(path)) return 'template';
-  const candidates = [...own, ...parents.flatMap((p) => words(p)), ...words(tag)];
+  // A broadcast lists the passes it reached, each by its own title.
+  if (tag === 'broadcasts' && key === 'title') return 'pass';
+  if (tag === 'pass-imports' && /Mappings/.test(name)) return 'mapping';
+  const candidates = [...own, ...parents.flatMap((p) => words(p))];
+  for (const w of candidates) for (const [re, table] of RULES) if (re.test(w)) return table;
+  // Operations whose tag names a different resource than they return.
+  for (const [re, table] of OP_TABLES) if (re.test(name)) return table;
+  candidates.push(...words(tag));
   for (const w of candidates) for (const [re, table] of RULES) if (re.test(w)) return table;
   for (const [t, k, table] of KEYED) if (t.test(first) && k.test(key)) return table;
   throw new Error(
@@ -152,7 +167,7 @@ export const missing = new Set<string>();
 export function humanName(key: string, path: string, op: string): string {
   let table: string[] | undefined;
   try {
-    table = TABLES[tableFor(key, path, op.split('.')[0] ?? '')];
+    table = TABLES[tableFor(key, path, op.split('.')[0] ?? '', op.split('.')[1])];
   } catch (e) {
     missing.add((e as Error).message);
     return 'MISSING';
