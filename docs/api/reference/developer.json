@@ -54,7 +54,7 @@
       "limitPerMinute": 60,
       "callsLastHour": 11,
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-08677b291e63",
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration",
         "prefix": "k3Qx9Zt2"
       }
@@ -63,14 +63,14 @@
   "developer.getResolve": {
     "response": {
       "kind": "request",
-      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+      "href": "https://passbook.mobile/developers/logs",
       "label": "Server integration"
     }
   },
   "developer.getAccess": {
     "response": {
       "access": "yes",
-      "signInUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
+      "signInUrl": "https://passbook.mobile/login"
     }
   },
   "developer.getHome": {
@@ -121,7 +121,7 @@
       },
       "keys": [
         {
-          "id": "0193a1b2-7c00-7000-8000-5b22af792a32",
+          "id": "0193a1b2-7c00-7000-8000-000000000021",
           "name": "Server integration",
           "secretPrefix": "pb_test_k3Qx9Zt2",
           "scopes": ["passes:read"],
@@ -153,7 +153,7 @@
       ],
       "endpoints": [
         {
-          "id": "0193a1b2-7c00-7000-8000-d54203d80850",
+          "id": "0193a1b2-7c00-7000-8000-000000000061",
           "target": "capture",
           "url": "https://bookings.northwind.example.com/hooks/passbook",
           "status": "active",
@@ -200,7 +200,7 @@
       "createdAt": 1794362400000,
       "closedAt": null,
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-83809299d114",
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration",
         "secret": "whsec_demo_northwind_002aa9",
         "mode": "test",
@@ -249,7 +249,7 @@
         "closedAt": null
       },
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-2e43a4b7d7f2",
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration",
         "secret": "whsec_demo_northwind_3bfe98",
         "mode": "test",
@@ -276,7 +276,7 @@
       "createdAt": 1794362400000,
       "closedAt": null,
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-36f8064e541c",
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration",
         "secret": "whsec_demo_northwind_1a6dad",
         "mode": "test",

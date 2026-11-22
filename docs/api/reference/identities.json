@@ -65,7 +65,7 @@
       "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-e851f02ed0e3",
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "label": "Northwind signing identity",
       "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -123,7 +123,7 @@
       "nfcEnabled": false
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-af9acfb38f5c",
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "label": "Northwind signing identity",
       "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -186,7 +186,7 @@
       "pkcs12Base64": "MIIKcQIBAzCCCjcGCSqGSIb3DQEHAaCC…"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-55a9504cea38",
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "label": "Northwind signing identity",
       "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -252,7 +252,7 @@
       "p8": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-b77c91894178",
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "label": "Northwind signing identity",
       "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -305,13 +305,13 @@
   },
   "identities.postIdentitiesByIdRenew": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-7e7cf1807529",
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "provision",
       "targetType": "identity",
       "targetId": "0193a1b2-7c00-7000-8000-870b9da3cb5b",
       "state": "succeeded",
-      "step": "mapping",
+      "step": "done",
       "attempt": 1,
       "waitingFor": null,
       "errorCode": null,
@@ -344,13 +344,13 @@
       "confirm": "northwind-climbing"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-17e9a1f20c2e",
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "provision",
       "targetType": "identity",
       "targetId": "0193a1b2-7c00-7000-8000-99a96f51c2ac",
       "state": "succeeded",
-      "step": "mapping",
+      "step": "done",
       "attempt": 1,
       "waitingFor": null,
       "errorCode": null,
@@ -361,7 +361,7 @@
   },
   "identities.getIdentitiesById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-24d75afcb667",
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "label": "Northwind signing identity",
       "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -414,7 +414,7 @@
   },
   "identities.deleteIdentitiesByIdPushKey": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-00facb7cb770",
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "label": "Northwind signing identity",
       "passTypeIdentifier": "pass.mobile.passbook.northwind",

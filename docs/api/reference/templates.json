@@ -899,13 +899,13 @@
     },
     "response": {
       "session": {
-        "id": "0193a1b2-7c00-7000-8000-f1786f005c74",
+        "id": "0193a1b2-7c00-7000-8000-000000000091",
         "name": "Evening shift"
       },
       "created": false,
       "events": [
         {
-          "id": "0193a1b2-7c00-7000-8000-089eb962fdc5",
+          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
           "name": "Open climbing",
           "created": false
         }

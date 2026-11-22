@@ -2,7 +2,7 @@
   "scan.postScanResolve": {
     "description": "Reads a code and says what it is, without acting on it.",
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-4e5b15c46ad2",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
       "input": {
         "code": "K7QZ4M2VXN5HJ3RPWB6TDFCLYA",
         "method": "camera"
@@ -269,7 +269,7 @@
   "scan.postScanActions": {
     "description": "Scans a code and acts on it.",
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-4e5b15c46ad2",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
       "input": {
         "code": "K7QZ4M2VXN5HJ3RPWB6TDFCLYA",
         "method": "camera"
@@ -537,7 +537,7 @@
   "scan.postScanScansByScanIdUndo": {
     "description": "Undoes a check-in.",
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-944c95fec073",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
       "scope": {
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
@@ -1042,7 +1042,7 @@
         }
       },
       "scanner": {
-        "id": "0193a1b2-7c00-7000-8000-3ce510e7f6c7",
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
         "name": "Front desk",
         "kind": "device",
         "deviceRole": "scan",
@@ -1083,13 +1083,13 @@
         "name": "Sam Rivera",
         "orgs": [
           {
-            "id": "0193a1b2-7c00-7000-8000-4e2a1508079b",
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
             "name": "Sam Rivera"
           }
         ]
       },
       "event": {
-        "id": "0193a1b2-7c00-7000-8000-fdf328e9131c",
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
         "name": "Open climbing",
         "opensAt": 1795570500000,
         "closesAt": 1798162500000,
@@ -1099,13 +1099,13 @@
       },
       "templates": [
         {
-          "id": "0193a1b2-7c00-7000-8000-f83cacfb2efd",
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
           "name": "Day pass",
           "style": "generic",
           "formats": ["qr"],
           "actions": [
             {
-              "id": "0193a1b2-7c00-7000-8000-65f61b0d4693",
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
               "label": "Admit",
               "kind": "check_in"
             }
@@ -1114,7 +1114,7 @@
       ],
       "formats": ["qr"],
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-89b65dae6ada",
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
         "name": "Sam Rivera",
         "role": "door",
         "pinResetRequired": true
@@ -1339,7 +1339,7 @@
         }
       },
       "scanner": {
-        "id": "0193a1b2-7c00-7000-8000-254b115f4e13",
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
         "name": "Front desk",
         "kind": "device",
         "deviceRole": "scan",
@@ -1380,13 +1380,13 @@
         "name": "Sam Rivera",
         "orgs": [
           {
-            "id": "0193a1b2-7c00-7000-8000-bad33676805b",
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
             "name": "Sam Rivera"
           }
         ]
       },
       "event": {
-        "id": "0193a1b2-7c00-7000-8000-01f927b69f0c",
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
         "name": "Open climbing",
         "opensAt": 1795570500000,
         "closesAt": 1798162500000,
@@ -1396,13 +1396,13 @@
       },
       "templates": [
         {
-          "id": "0193a1b2-7c00-7000-8000-a75ae45ba05e",
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
           "name": "Day pass",
           "style": "generic",
           "formats": ["qr"],
           "actions": [
             {
-              "id": "0193a1b2-7c00-7000-8000-87a076624dfc",
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
               "label": "Admit",
               "kind": "check_in"
             }
@@ -1411,7 +1411,7 @@
       ],
       "formats": ["qr"],
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-5587ae8cfb6f",
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
         "name": "Sam Rivera",
         "role": "door",
         "pinResetRequired": true
@@ -1652,7 +1652,7 @@
         }
       },
       "scanner": {
-        "id": "0193a1b2-7c00-7000-8000-232203ae00af",
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
         "name": "Front desk",
         "kind": "device",
         "deviceRole": "scan",
@@ -1693,13 +1693,13 @@
         "name": "Sam Rivera",
         "orgs": [
           {
-            "id": "0193a1b2-7c00-7000-8000-cff128c66a02",
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
             "name": "Sam Rivera"
           }
         ]
       },
       "event": {
-        "id": "0193a1b2-7c00-7000-8000-2b4ad1110f24",
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
         "name": "Open climbing",
         "opensAt": 1795570500000,
         "closesAt": 1798162500000,
@@ -1709,13 +1709,13 @@
       },
       "templates": [
         {
-          "id": "0193a1b2-7c00-7000-8000-36c0d1b363cb",
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
           "name": "Day pass",
           "style": "generic",
           "formats": ["qr"],
           "actions": [
             {
-              "id": "0193a1b2-7c00-7000-8000-21aab3624c44",
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
               "label": "Admit",
               "kind": "check_in"
             }
@@ -1724,7 +1724,7 @@
       ],
       "formats": ["qr"],
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-897e8897c4bc",
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
         "name": "Sam Rivera",
         "role": "door",
         "pinResetRequired": true
@@ -1949,7 +1949,7 @@
         }
       },
       "scanner": {
-        "id": "0193a1b2-7c00-7000-8000-e286eca732a3",
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
         "name": "Front desk",
         "kind": "device",
         "deviceRole": "scan",
@@ -1990,13 +1990,13 @@
         "name": "Sam Rivera",
         "orgs": [
           {
-            "id": "0193a1b2-7c00-7000-8000-f935aa33b360",
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
             "name": "Sam Rivera"
           }
         ]
       },
       "event": {
-        "id": "0193a1b2-7c00-7000-8000-622353d62692",
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
         "name": "Open climbing",
         "opensAt": 1795570500000,
         "closesAt": 1798162500000,
@@ -2006,13 +2006,13 @@
       },
       "templates": [
         {
-          "id": "0193a1b2-7c00-7000-8000-ea9bdd80f818",
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
           "name": "Day pass",
           "style": "generic",
           "formats": ["qr"],
           "actions": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0bdcca68d1a9",
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
               "label": "Admit",
               "kind": "check_in"
             }
@@ -2021,7 +2021,7 @@
       ],
       "formats": ["qr"],
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-5e5c74406de0",
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
         "name": "Sam Rivera",
         "role": "door",
         "pinResetRequired": true
@@ -2248,7 +2248,7 @@
           }
         },
         "scanner": {
-          "id": "0193a1b2-7c00-7000-8000-472dc10f18b9",
+          "id": "0193a1b2-7c00-7000-8000-000000000031",
           "name": "Front desk",
           "kind": "device",
           "deviceRole": "scan",
@@ -2289,13 +2289,13 @@
           "name": "Sam Rivera",
           "orgs": [
             {
-              "id": "0193a1b2-7c00-7000-8000-a519f89bc5ea",
+              "id": "0193a1b2-7c00-7000-8000-0000000000a1",
               "name": "Sam Rivera"
             }
           ]
         },
         "event": {
-          "id": "0193a1b2-7c00-7000-8000-b731325fbed0",
+          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
           "name": "Open climbing",
           "opensAt": 1795570500000,
           "closesAt": 1798162500000,
@@ -2305,13 +2305,13 @@
         },
         "templates": [
           {
-            "id": "0193a1b2-7c00-7000-8000-e569b0e5d39c",
+            "id": "0193a1b2-7c00-7000-8000-0000000000b1",
             "name": "Day pass",
             "style": "generic",
             "formats": ["qr"],
             "actions": [
               {
-                "id": "0193a1b2-7c00-7000-8000-e319d4a95d0b",
+                "id": "0193a1b2-7c00-7000-8000-000000000073",
                 "label": "Admit",
                 "kind": "check_in"
               }
@@ -2320,7 +2320,7 @@
         ],
         "formats": ["qr"],
         "staff": {
-          "id": "0193a1b2-7c00-7000-8000-8fac238360c5",
+          "id": "0193a1b2-7c00-7000-8000-000000000022",
           "name": "Sam Rivera",
           "role": "door",
           "pinResetRequired": true
@@ -3345,7 +3345,7 @@
         }
       },
       "scanner": {
-        "id": "0193a1b2-7c00-7000-8000-ddde4b2ac3e3",
+        "id": "0193a1b2-7c00-7000-8000-000000000031",
         "name": "Front desk",
         "kind": "device",
         "deviceRole": "scan",
@@ -3386,13 +3386,13 @@
         "name": "Sam Rivera",
         "orgs": [
           {
-            "id": "0193a1b2-7c00-7000-8000-84f6aafd54e7",
+            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
             "name": "Sam Rivera"
           }
         ]
       },
       "event": {
-        "id": "0193a1b2-7c00-7000-8000-6513528f2699",
+        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
         "name": "Open climbing",
         "opensAt": 1795570500000,
         "closesAt": 1798162500000,
@@ -3402,13 +3402,13 @@
       },
       "templates": [
         {
-          "id": "0193a1b2-7c00-7000-8000-e8b181600568",
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
           "name": "Day pass",
           "style": "generic",
           "formats": ["qr"],
           "actions": [
             {
-              "id": "0193a1b2-7c00-7000-8000-3d6b541500e0",
+              "id": "0193a1b2-7c00-7000-8000-000000000073",
               "label": "Admit",
               "kind": "check_in"
             }
@@ -3417,7 +3417,7 @@
       ],
       "formats": ["qr"],
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-41493f9880bb",
+        "id": "0193a1b2-7c00-7000-8000-000000000022",
         "name": "Sam Rivera",
         "role": "door",
         "pinResetRequired": true
@@ -3926,7 +3926,7 @@
       "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-78d7ffdff436",
+      "id": "0193a1b2-7c00-7000-8000-000000000043",
       "at": 1795570500000,
       "body": "Waiver signed on paper; scan it to the file.",
       "by": "Sam Rivera",
@@ -3945,7 +3945,7 @@
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-e49a181acf95",
+      "id": "0193a1b2-7c00-7000-8000-000000000043",
       "at": 1795570500000,
       "body": "Waiver signed on paper; scan it to the file.",
       "by": "Sam Rivera",

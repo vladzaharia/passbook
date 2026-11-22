@@ -6,10 +6,10 @@
     "response": {
       "runId": "0193a1b2-7c00-7000-8000-000000000023",
       "state": "succeeded",
-      "step": "mapping",
+      "step": "done",
       "waitingFor": null,
       "errorCode": null,
-      "issuerId": "0193a1b2-7c00-7000-8000-5b1671cfb457",
+      "issuerId": "3388000000022843210",
       "updatedAt": 1795399200000
     }
   },
@@ -20,10 +20,10 @@
     "response": {
       "runId": "0193a1b2-7c00-7000-8000-000000000023",
       "state": "succeeded",
-      "step": "mapping",
+      "step": "done",
       "waitingFor": null,
       "errorCode": null,
-      "issuerId": "0193a1b2-7c00-7000-8000-b534ddff192b",
+      "issuerId": "3388000000022843210",
       "updatedAt": 1795399200000
     }
   },
@@ -58,7 +58,7 @@
       "provider": "google",
       "expectedRevision": 3,
       "credentials": {
-        "issuerId": "0193a1b2-7c00-7000-8000-654cf905765e",
+        "issuerId": "3388000000022843210",
         "serviceAccountEmail": "ada@example.com",
         "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
         "scopes": ["https://www.googleapis.com/auth/wallet_object.issuer"]
@@ -123,7 +123,7 @@
   },
   "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderRelease": {
     "response": {
-      "status": "held"
+      "status": "released"
     }
   },
   "wallet-platform.getPlatformWalletEnrolments": {

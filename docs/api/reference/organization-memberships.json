@@ -40,18 +40,18 @@
   },
   "organization-memberships.postOrgsByIdInvitations": {
     "request": {
-      "email": "ada@example.com",
+      "email": "priya@example.com",
       "roles": ["org_admin"]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-ca3f7056f73b",
+      "id": "0193a1b2-7c00-7000-8000-9be99f782636",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "email": "ada@example.com",
+      "email": "priya@example.com",
       "roles": ["org_admin"],
-      "createdAt": 1794362400000,
-      "expiresAt": 1798790399999,
+      "createdAt": 1795572000000,
+      "expiresAt": 1796176800000,
       "revokedAt": null,
-      "acceptedAt": 1795570500000
+      "acceptedAt": null
     }
   },
   "organization-memberships.deleteOrgsByIdInvitationsByInvitationId": {

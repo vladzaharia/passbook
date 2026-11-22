@@ -10,8 +10,8 @@
           "placedByLabel": "Sam Rivera",
           "reason": "Chargeback dispute: keep records until the bank closes it.",
           "createdAt": 1794362400000,
-          "releasedAt": 1795570500000,
-          "releasedByLabel": "Sam Rivera",
+          "releasedAt": null,
+          "releasedByLabel": null,
           "canRelease": true
         }
       ],
@@ -82,8 +82,8 @@
           "placedByLabel": "Sam Rivera",
           "reason": "Chargeback dispute: keep records until the bank closes it.",
           "createdAt": 1794362400000,
-          "releasedAt": 1795570500000,
-          "releasedByLabel": "Sam Rivera",
+          "releasedAt": null,
+          "releasedByLabel": null,
           "canRelease": true
         }
       ],

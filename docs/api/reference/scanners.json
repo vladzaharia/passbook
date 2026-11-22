@@ -26,12 +26,12 @@
       "mode": "live",
       "sessions": [
         {
-          "id": "0193a1b2-7c00-7000-8000-29650d0e4b08",
+          "id": "0193a1b2-7c00-7000-8000-000000000091",
           "ref": "front-desk",
           "name": "Evening shift",
           "devices": [
             {
-              "id": "0193a1b2-7c00-7000-8000-71f606d06020",
+              "id": "0193a1b2-7c00-7000-8000-000000000012",
               "name": "Front desk tablet",
               "pairing": {
                 "code": "7K3M9QX2TA",
@@ -45,7 +45,7 @@
       "pairingReissued": false,
       "zones": [
         {
-          "id": "0193a1b2-7c00-7000-8000-2da6a116b65a",
+          "id": "0193a1b2-7c00-7000-8000-000000000081",
           "ref": "main-hall",
           "name": "Main hall",
           "created": false
@@ -53,7 +53,7 @@
       ],
       "events": [
         {
-          "id": "0193a1b2-7c00-7000-8000-573ef07c57f4",
+          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
           "ref": "open-climbing",
           "name": "Open climbing",
           "created": false
@@ -61,7 +61,7 @@
       ],
       "staff": [
         {
-          "id": "0193a1b2-7c00-7000-8000-ffa2080e787b",
+          "id": "0193a1b2-7c00-7000-8000-000000000022",
           "name": "Sam Rivera",
           "role": "door",
           "pin": "969219"

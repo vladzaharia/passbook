@@ -36,7 +36,7 @@
           "late": false,
           "actor": {
             "type": "scanner",
-            "id": "0193a1b2-7c00-7000-8000-c20879dc8a09"
+            "id": "0193a1b2-7c00-7000-8000-000000000011"
           },
           "undoneAt": 1795570500000,
           "undoneBy": "Sam Rivera",
@@ -48,7 +48,7 @@
   },
   "scans.getScansById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-365f110f04e9",
+      "id": "0193a1b2-7c00-7000-8000-000000000043",
       "at": 1795570500000,
       "outcome": "ok",
       "reason": null,
@@ -80,7 +80,7 @@
       "late": false,
       "actor": {
         "type": "scanner",
-        "id": "0193a1b2-7c00-7000-8000-174c9f75f70f"
+        "id": "0193a1b2-7c00-7000-8000-000000000011"
       },
       "undoneAt": 1795570500000,
       "undoneBy": "Sam Rivera",

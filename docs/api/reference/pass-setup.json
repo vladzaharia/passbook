@@ -286,7 +286,7 @@
       },
       "apple": {
         "identity": {
-          "id": "0193a1b2-7c00-7000-8000-c502b02d035c",
+          "id": "0193a1b2-7c00-7000-8000-0000000000d1",
           "provider": "apple",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "label": "Welcome back",
@@ -305,13 +305,13 @@
         "sharedIdentifier": "pass.mobile.passbook.northwind",
         "push": "healthy",
         "run": {
-          "id": "0193a1b2-7c00-7000-8000-220f7e3b8e24",
+          "id": "0193a1b2-7c00-7000-8000-000000000023",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "kind": "provision",
           "targetType": "identity",
           "targetId": "0193a1b2-7c00-7000-8000-a7d5d406ee66",
           "state": "succeeded",
-          "step": "mapping",
+          "step": "done",
           "attempt": 1,
           "waitingFor": null,
           "errorCode": null,
@@ -324,7 +324,7 @@
       },
       "templates": [
         {
-          "id": "0193a1b2-7c00-7000-8000-19da33726412",
+          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
           "name": "Day pass",
           "ownBrand": ["colors"],
           "placeholders": ["logo"],
@@ -684,7 +684,7 @@
         },
         "apple": {
           "identity": {
-            "id": "0193a1b2-7c00-7000-8000-bbd56be0f791",
+            "id": "0193a1b2-7c00-7000-8000-0000000000d1",
             "provider": "apple",
             "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
             "label": "Welcome back",
@@ -703,13 +703,13 @@
           "sharedIdentifier": "pass.mobile.passbook.northwind",
           "push": "healthy",
           "run": {
-            "id": "0193a1b2-7c00-7000-8000-b784855d66f3",
+            "id": "0193a1b2-7c00-7000-8000-000000000023",
             "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
             "kind": "provision",
             "targetType": "identity",
             "targetId": "0193a1b2-7c00-7000-8000-ff536f447809",
             "state": "succeeded",
-            "step": "mapping",
+            "step": "done",
             "attempt": 1,
             "waitingFor": null,
             "errorCode": null,
@@ -722,7 +722,7 @@
         },
         "templates": [
           {
-            "id": "0193a1b2-7c00-7000-8000-a1d8aed1fc7a",
+            "id": "0193a1b2-7c00-7000-8000-0000000000b1",
             "name": "Day pass",
             "ownBrand": ["colors"],
             "placeholders": ["logo"],

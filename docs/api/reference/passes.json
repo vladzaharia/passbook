@@ -1724,7 +1724,7 @@
   "passes.postPassesByIdPrints": {
     "description": "Prints a ticket. An earlier print of the same pass is voided.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-84d91b876d60",
+      "id": "0193a1b2-7c00-7000-8000-000000000053",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "generation": 3,
       "status": "active",
@@ -1739,7 +1739,7 @@
     "response": {
       "prints": [
         {
-          "id": "0193a1b2-7c00-7000-8000-85293b8ac1c9",
+          "id": "0193a1b2-7c00-7000-8000-000000000053",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "generation": 3,
           "status": "active",
@@ -1753,7 +1753,7 @@
   "passes.postPassesByIdPrintsByPrintIdVoid": {
     "description": "Voids a printed ticket so its code stops working.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-bd2f1e92b562",
+      "id": "0193a1b2-7c00-7000-8000-000000000053",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "generation": 3,
       "status": "active",

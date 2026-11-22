@@ -73710,7 +73710,7 @@
                 "example": {
                   "authenticated": true,
                   "user": {
-                    "id": "0193a1b2-7c00-7000-8000-0a4917238d60",
+                    "id": "0193a1b2-7c00-7000-8000-000000000011",
                     "name": "Sam Rivera",
                     "primaryEmail": "sam@example.com"
                   },
@@ -74523,21 +74523,20 @@
                 "example": {
                   "items": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-f21676190484",
-                      "title": "Ten-visit card",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+                      "title": "Day pass",
                       "subtitle": "Ada Example",
-                      "templateName": "Monthly membership",
+                      "templateName": "Day pass",
                       "orgName": "Northwind Climbing",
                       "status": "active",
                       "mode": "live",
                       "modifiedAt": 1795399200000,
                       "voidedAt": null,
                       "removedAt": null,
-                      "removalMessage": "Removed by the front desk.",
-                      "lastRefreshedAt": 1795570500000,
-                      "refreshRequestedAt": 1795570500000,
+                      "removalMessage": null,
+                      "lastRefreshedAt": 1795399380000,
+                      "refreshRequestedAt": null,
                       "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
-                      "pageUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
                       "walletOffers": [
                         {
                           "provider": "google",
@@ -74545,45 +74544,6 @@
                           "installation": "unknown"
                         }
                       ],
-                      "walletIssuance": {
-                        "google": {
-                          "state": "enabled"
-                        },
-                        "samsung": {
-                          "state": "enabled"
-                        }
-                      },
-                      "presentationEligible": false,
-                      "channels": {
-                        "mobile": {
-                          "on": true,
-                          "source": "template"
-                        },
-                        "apple": {
-                          "on": true,
-                          "source": "template"
-                        },
-                        "google": {
-                          "on": false,
-                          "source": "org",
-                          "reason": "not_enrolled"
-                        },
-                        "samsung": {
-                          "on": false,
-                          "source": "org",
-                          "reason": "not_enrolled"
-                        },
-                        "paper": {
-                          "on": true,
-                          "source": "template"
-                        },
-                        "nfc": {
-                          "on": false,
-                          "source": "org",
-                          "reason": "tags_off"
-                        }
-                      },
-                      "holderPrint": false,
                       "passJson": {
                         "formatVersion": 1,
                         "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -74621,23 +74581,8 @@
                       "assetNames": [
                         "strip.png"
                       ],
-                      "tags": [
-                        {
-                          "id": "0193a1b2-7c00-7000-8000-df21d53b4950",
-                          "label": "Key fob 3",
-                          "hint": "D335",
-                          "scope": "pass",
-                          "boundAt": 1795570500000,
-                          "lostAt": 1795570500000
-                        }
-                      ],
-                      "inWallet": false,
-                      "readOnly": false,
-                      "support": {
-                        "email": "ada@example.com",
-                        "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
-                        "platform": true
-                      }
+                      "inWallet": true,
+                      "readOnly": false
                     }
                   ],
                   "nextCursor": "c1.4812",
@@ -75425,7 +75370,7 @@
                   ]
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-2f7f8274cbaf",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "title": "Day pass",
                   "subtitle": "Ada Example",
                   "templateName": "Day pass",
@@ -75435,11 +75380,10 @@
                   "modifiedAt": 1795399200000,
                   "voidedAt": null,
                   "removedAt": null,
-                  "removalMessage": "Removed by the front desk.",
-                  "lastRefreshedAt": 1795570500000,
-                  "refreshRequestedAt": 1795570500000,
+                  "removalMessage": null,
+                  "lastRefreshedAt": 1795399380000,
+                  "refreshRequestedAt": null,
                   "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
-                  "pageUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
                   "walletOffers": [
                     {
                       "provider": "google",
@@ -75447,45 +75391,6 @@
                       "installation": "unknown"
                     }
                   ],
-                  "walletIssuance": {
-                    "google": {
-                      "state": "enabled"
-                    },
-                    "samsung": {
-                      "state": "enabled"
-                    }
-                  },
-                  "presentationEligible": false,
-                  "channels": {
-                    "mobile": {
-                      "on": true,
-                      "source": "template"
-                    },
-                    "apple": {
-                      "on": true,
-                      "source": "template"
-                    },
-                    "google": {
-                      "on": false,
-                      "source": "org",
-                      "reason": "not_enrolled"
-                    },
-                    "samsung": {
-                      "on": false,
-                      "source": "org",
-                      "reason": "not_enrolled"
-                    },
-                    "paper": {
-                      "on": true,
-                      "source": "template"
-                    },
-                    "nfc": {
-                      "on": false,
-                      "source": "org",
-                      "reason": "tags_off"
-                    }
-                  },
-                  "holderPrint": false,
                   "passJson": {
                     "formatVersion": 1,
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -75523,23 +75428,8 @@
                   "assetNames": [
                     "logo.png"
                   ],
-                  "tags": [
-                    {
-                      "id": "0193a1b2-7c00-7000-8000-b696562afc51",
-                      "label": "Wristband 14",
-                      "hint": "4522",
-                      "scope": "pass",
-                      "boundAt": 1795570500000,
-                      "lostAt": 1795570500000
-                    }
-                  ],
-                  "inWallet": false,
-                  "readOnly": false,
-                  "support": {
-                    "email": "ada@example.com",
-                    "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
-                    "platform": true
-                  }
+                  "inWallet": true,
+                  "readOnly": false
                 }
               }
             }
@@ -76337,7 +76227,7 @@
                       "email": "ada@example.com",
                       "verifiedAt": 1795570500000,
                       "verifiedVia": "magic_link",
-                      "primary": false
+                      "primary": true
                     }
                   ],
                   "nextCursor": "c1.4812"
@@ -76672,7 +76562,7 @@
                       "email": "ada@example.com",
                       "verifiedAt": 1795570500000,
                       "verifiedVia": "magic_link",
-                      "primary": false
+                      "primary": true
                     }
                   ],
                   "nextCursor": "c1.4812"
@@ -76797,7 +76687,7 @@
                       "createdAt": 1794362400000,
                       "lastSeenAt": 1795570500000,
                       "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
-                      "current": false
+                      "current": true
                     }
                   ],
                   "nextCursor": "c1.4812"
@@ -77628,7 +77518,7 @@
                   "limitPerMinute": 60,
                   "callsLastHour": 11,
                   "key": {
-                    "id": "0193a1b2-7c00-7000-8000-08677b291e63",
+                    "id": "0193a1b2-7c00-7000-8000-000000000021",
                     "name": "Server integration",
                     "prefix": "k3Qx9Zt2"
                   }
@@ -77718,7 +77608,7 @@
                 },
                 "example": {
                   "kind": "request",
-                  "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+                  "href": "https://passbook.mobile/developers/logs",
                   "label": "Server integration"
                 }
               }
@@ -77797,7 +77687,7 @@
                 },
                 "example": {
                   "access": "yes",
-                  "signInUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
+                  "signInUrl": "https://passbook.mobile/login"
                 }
               }
             }
@@ -78615,7 +78505,7 @@
                   },
                   "keys": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-5b22af792a32",
+                      "id": "0193a1b2-7c00-7000-8000-000000000021",
                       "name": "Server integration",
                       "secretPrefix": "pb_test_k3Qx9Zt2",
                       "scopes": [
@@ -78649,7 +78539,7 @@
                   ],
                   "endpoints": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-d54203d80850",
+                      "id": "0193a1b2-7c00-7000-8000-000000000061",
                       "target": "capture",
                       "url": "https://bookings.northwind.example.com/hooks/passbook",
                       "status": "active",
@@ -78879,7 +78769,7 @@
                   "createdAt": 1794362400000,
                   "closedAt": null,
                   "key": {
-                    "id": "0193a1b2-7c00-7000-8000-83809299d114",
+                    "id": "0193a1b2-7c00-7000-8000-000000000021",
                     "name": "Server integration",
                     "secret": "whsec_demo_northwind_002aa9",
                     "mode": "test",
@@ -79415,7 +79305,7 @@
                     "closedAt": null
                   },
                   "key": {
-                    "id": "0193a1b2-7c00-7000-8000-2e43a4b7d7f2",
+                    "id": "0193a1b2-7c00-7000-8000-000000000021",
                     "name": "Server integration",
                     "secret": "whsec_demo_northwind_3bfe98",
                     "mode": "test",
@@ -79663,7 +79553,7 @@
                   "createdAt": 1794362400000,
                   "closedAt": null,
                   "key": {
-                    "id": "0193a1b2-7c00-7000-8000-36f8064e541c",
+                    "id": "0193a1b2-7c00-7000-8000-000000000021",
                     "name": "Server integration",
                     "secret": "whsec_demo_northwind_1a6dad",
                     "mode": "test",
@@ -80282,7 +80172,7 @@
                   },
                   "apple": {
                     "identity": {
-                      "id": "0193a1b2-7c00-7000-8000-c502b02d035c",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
                       "provider": "apple",
                       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                       "label": "Welcome back",
@@ -80301,13 +80191,13 @@
                     "sharedIdentifier": "pass.mobile.passbook.northwind",
                     "push": "healthy",
                     "run": {
-                      "id": "0193a1b2-7c00-7000-8000-220f7e3b8e24",
+                      "id": "0193a1b2-7c00-7000-8000-000000000023",
                       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                       "kind": "provision",
                       "targetType": "identity",
                       "targetId": "0193a1b2-7c00-7000-8000-a7d5d406ee66",
                       "state": "succeeded",
-                      "step": "mapping",
+                      "step": "done",
                       "attempt": 1,
                       "waitingFor": null,
                       "errorCode": null,
@@ -80320,7 +80210,7 @@
                   },
                   "templates": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-19da33726412",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                       "name": "Day pass",
                       "ownBrand": [
                         "colors"
@@ -80790,7 +80680,7 @@
                     },
                     "apple": {
                       "identity": {
-                        "id": "0193a1b2-7c00-7000-8000-bbd56be0f791",
+                        "id": "0193a1b2-7c00-7000-8000-0000000000d1",
                         "provider": "apple",
                         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                         "label": "Welcome back",
@@ -80809,13 +80699,13 @@
                       "sharedIdentifier": "pass.mobile.passbook.northwind",
                       "push": "healthy",
                       "run": {
-                        "id": "0193a1b2-7c00-7000-8000-b784855d66f3",
+                        "id": "0193a1b2-7c00-7000-8000-000000000023",
                         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                         "kind": "provision",
                         "targetType": "identity",
                         "targetId": "0193a1b2-7c00-7000-8000-ff536f447809",
                         "state": "succeeded",
-                        "step": "mapping",
+                        "step": "done",
                         "attempt": 1,
                         "waitingFor": null,
                         "errorCode": null,
@@ -80828,7 +80718,7 @@
                     },
                     "templates": [
                       {
-                        "id": "0193a1b2-7c00-7000-8000-a1d8aed1fc7a",
+                        "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                         "name": "Day pass",
                         "ownBrand": [
                           "colors"
@@ -81764,7 +81654,7 @@
                 "$ref": "#/components/schemas/InvitationsCreateParams"
               },
               "example": {
-                "email": "ada@example.com",
+                "email": "priya@example.com",
                 "roles": [
                   "org_admin"
                 ]
@@ -81781,16 +81671,16 @@
                   "$ref": "#/components/schemas/InvitationsCreateResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-ca3f7056f73b",
+                  "id": "0193a1b2-7c00-7000-8000-9be99f782636",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-                  "email": "ada@example.com",
+                  "email": "priya@example.com",
                   "roles": [
                     "org_admin"
                   ],
-                  "createdAt": 1794362400000,
-                  "expiresAt": 1798790399999,
+                  "createdAt": 1795572000000,
+                  "expiresAt": 1796176800000,
                   "revokedAt": null,
-                  "acceptedAt": 1795570500000
+                  "acceptedAt": null
                 }
               }
             }
@@ -82034,22 +81924,19 @@
                 "example": {
                   "items": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-791800cb3b6d",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                       "slug": "northwind-climbing",
                       "name": "Northwind Climbing",
                       "status": "active",
                       "personal": false,
-                      "personalOwner": {
-                        "id": "0193a1b2-7c00-7000-8000-85143788c181",
-                        "name": "Sam Rivera"
-                      },
-                      "createdAt": 1794362400000,
+                      "personalOwner": null,
+                      "createdAt": 1772560800000,
                       "counts": {
-                        "passes": 37,
-                        "templates": 21,
-                        "connections": 37,
-                        "apiKeys": 31,
-                        "members": 10
+                        "passes": 128,
+                        "templates": 2,
+                        "connections": 1,
+                        "apiKeys": 2,
+                        "members": 4
                       },
                       "countsCapped": false
                     }
@@ -82123,7 +82010,7 @@
                   "$ref": "#/components/schemas/Org"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-443600bb705a",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "slug": "northwind-climbing",
                   "name": "Northwind Climbing",
                   "status": "active",
@@ -82226,22 +82113,19 @@
                   "$ref": "#/components/schemas/PlatformOrgsRetrieveResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-ef5fae06e71f",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "slug": "northwind-climbing",
                   "name": "Northwind Climbing",
                   "status": "active",
                   "personal": false,
-                  "personalOwner": {
-                    "id": "0193a1b2-7c00-7000-8000-b0adda3c0edb",
-                    "name": "Sam Rivera"
-                  },
-                  "createdAt": 1794362400000,
+                  "personalOwner": null,
+                  "createdAt": 1772560800000,
                   "counts": {
-                    "passes": 37,
-                    "templates": 21,
-                    "connections": 37,
-                    "apiKeys": 31,
-                    "members": 10
+                    "passes": 128,
+                    "templates": 2,
+                    "connections": 1,
+                    "apiKeys": 2,
+                    "members": 4
                   },
                   "countsCapped": false
                 }
@@ -82321,7 +82205,7 @@
                   "$ref": "#/components/schemas/Org"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-474c52d6622d",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "slug": "northwind-climbing",
                   "name": "Northwind Climbing",
                   "status": "active",
@@ -82496,12 +82380,11 @@
                   "$ref": "#/components/schemas/OrgSummary"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-01869e1eec57",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "slug": "northwind-climbing",
                   "name": "Northwind Climbing",
                   "status": "active",
                   "personal": false,
-                  "kind": "standard",
                   "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "branding": {
                     "accent": "#ffc400",
@@ -82530,22 +82413,17 @@
                     "mark": "full",
                     "logoHasName": false
                   },
-                  "createdAt": 1794362400000,
+                  "createdAt": 1772560800000,
                   "updatedAt": 1795399200000,
-                  "configRevision": 3,
-                  "passesToUpdate": 27,
                   "counts": {
-                    "passes": 37,
-                    "templates": 21,
-                    "connections": 37,
-                    "apiKeys": 31,
-                    "members": 10
+                    "passes": 128,
+                    "templates": 2,
+                    "connections": 1,
+                    "apiKeys": 2,
+                    "members": 4
                   },
                   "countsCapped": false,
-                  "personalOwner": {
-                    "id": "0193a1b2-7c00-7000-8000-9c6f58d9e22a",
-                    "name": "Sam Rivera"
-                  }
+                  "personalOwner": null
                 }
               }
             }
@@ -82625,22 +82503,19 @@
                   "$ref": "#/components/schemas/PlatformOrgsSetStatusResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-459cd32ec25f",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "slug": "northwind-climbing",
                   "name": "Northwind Climbing",
                   "status": "active",
                   "personal": false,
-                  "personalOwner": {
-                    "id": "0193a1b2-7c00-7000-8000-fee738ea42c2",
-                    "name": "Sam Rivera"
-                  },
-                  "createdAt": 1794362400000,
+                  "personalOwner": null,
+                  "createdAt": 1772560800000,
                   "counts": {
-                    "passes": 37,
-                    "templates": 21,
-                    "connections": 37,
-                    "apiKeys": 31,
-                    "members": 10
+                    "passes": 128,
+                    "templates": 2,
+                    "connections": 1,
+                    "apiKeys": 2,
+                    "members": 4
                   },
                   "countsCapped": false
                 }
@@ -82735,7 +82610,7 @@
                   "$ref": "#/components/schemas/Org"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-7cddba97bea2",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "slug": "northwind-climbing",
                   "name": "Northwind Climbing",
                   "status": "active",
@@ -82854,7 +82729,7 @@
                   "$ref": "#/components/schemas/Org"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-f64572e4c3e7",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "slug": "northwind-climbing",
                   "name": "Northwind Climbing",
                   "status": "active",
@@ -83259,7 +83134,7 @@
                   "$ref": "#/components/schemas/Org"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-9e56e8b2ba2a",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "slug": "northwind-climbing",
                   "name": "Northwind Climbing",
                   "status": "active",
@@ -83387,7 +83262,7 @@
                   "$ref": "#/components/schemas/Org"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-56996c38ccf5",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "slug": "northwind-climbing",
                   "name": "Northwind Climbing",
                   "status": "active",
@@ -83509,7 +83384,7 @@
                   "$ref": "#/components/schemas/Org"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-1d741e401ccd",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "slug": "northwind-climbing",
                   "name": "Northwind Climbing",
                   "status": "active",
@@ -83637,10 +83512,10 @@
                 "example": {
                   "runId": "0193a1b2-7c00-7000-8000-000000000023",
                   "state": "succeeded",
-                  "step": "mapping",
+                  "step": "done",
                   "waitingFor": null,
                   "errorCode": null,
-                  "issuerId": "0193a1b2-7c00-7000-8000-4cb02fbe6641",
+                  "issuerId": "3388000000022843210",
                   "updatedAt": 1795399200000
                 }
               }
@@ -83724,10 +83599,10 @@
                   "run": {
                     "runId": "0193a1b2-7c00-7000-8000-000000000023",
                     "state": "succeeded",
-                    "step": "mapping",
+                    "step": "done",
                     "waitingFor": null,
                     "errorCode": null,
-                    "issuerId": "0193a1b2-7c00-7000-8000-3718620adea4",
+                    "issuerId": "3388000000022843210",
                     "updatedAt": 1795399200000
                   }
                 }
@@ -84065,7 +83940,7 @@
                 "provider": "google",
                 "expectedRevision": 3,
                 "credentials": {
-                  "issuerId": "0193a1b2-7c00-7000-8000-db2c4602b80d",
+                  "issuerId": "3388000000022843210",
                   "serviceAccountEmail": "ada@example.com",
                   "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
                   "scopes": [
@@ -85082,8 +84957,8 @@
                       "placedByLabel": "Sam Rivera",
                       "reason": "Chargeback dispute: keep records until the bank closes it.",
                       "createdAt": 1794362400000,
-                      "releasedAt": 1795570500000,
-                      "releasedByLabel": "Sam Rivera",
+                      "releasedAt": null,
+                      "releasedByLabel": null,
                       "canRelease": true
                     }
                   ],
@@ -86082,10 +85957,10 @@
                 "example": {
                   "runId": "0193a1b2-7c00-7000-8000-000000000023",
                   "state": "succeeded",
-                  "step": "mapping",
+                  "step": "done",
                   "waitingFor": null,
                   "errorCode": null,
-                  "issuerId": "0193a1b2-7c00-7000-8000-5b1671cfb457",
+                  "issuerId": "3388000000022843210",
                   "updatedAt": 1795399200000
                 }
               }
@@ -86168,10 +86043,10 @@
                 "example": {
                   "runId": "0193a1b2-7c00-7000-8000-000000000023",
                   "state": "succeeded",
-                  "step": "mapping",
+                  "step": "done",
                   "waitingFor": null,
                   "errorCode": null,
-                  "issuerId": "0193a1b2-7c00-7000-8000-b534ddff192b",
+                  "issuerId": "3388000000022843210",
                   "updatedAt": 1795399200000
                 }
               }
@@ -86376,7 +86251,7 @@
                 "provider": "google",
                 "expectedRevision": 3,
                 "credentials": {
-                  "issuerId": "0193a1b2-7c00-7000-8000-654cf905765e",
+                  "issuerId": "3388000000022843210",
                   "serviceAccountEmail": "ada@example.com",
                   "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
                   "scopes": [
@@ -86842,7 +86717,7 @@
                   "$ref": "#/components/schemas/PlatformOrgsWalletEnrollmentsReleaseResponse"
                 },
                 "example": {
-                  "status": "held"
+                  "status": "released"
                 }
               }
             }
@@ -87440,8 +87315,8 @@
                       "placedByLabel": "Sam Rivera",
                       "reason": "Chargeback dispute: keep records until the bank closes it.",
                       "createdAt": 1794362400000,
-                      "releasedAt": 1795570500000,
-                      "releasedByLabel": "Sam Rivera",
+                      "releasedAt": null,
+                      "releasedByLabel": null,
                       "canRelease": true
                     }
                   ],
@@ -91898,13 +91773,13 @@
                 },
                 "example": {
                   "session": {
-                    "id": "0193a1b2-7c00-7000-8000-f1786f005c74",
+                    "id": "0193a1b2-7c00-7000-8000-000000000091",
                     "name": "Evening shift"
                   },
                   "created": false,
                   "events": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-089eb962fdc5",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
                       "name": "Open climbing",
                       "created": false
                     }
@@ -99838,7 +99713,7 @@
                   "$ref": "#/components/schemas/PassesPrintsCreateResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-84d91b876d60",
+                  "id": "0193a1b2-7c00-7000-8000-000000000053",
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "generation": 3,
                   "status": "active",
@@ -99925,7 +99800,7 @@
                 "example": {
                   "prints": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-85293b8ac1c9",
+                      "id": "0193a1b2-7c00-7000-8000-000000000053",
                       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                       "generation": 3,
                       "status": "active",
@@ -100017,7 +99892,7 @@
                   "$ref": "#/components/schemas/PassesPrintsVoidResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-bd2f1e92b562",
+                  "id": "0193a1b2-7c00-7000-8000-000000000053",
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "generation": 3,
                   "status": "active",
@@ -113588,7 +113463,7 @@
                   "$ref": "#/components/schemas/IdentitiesCreateResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-e851f02ed0e3",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "label": "Northwind signing identity",
                   "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -113708,7 +113583,7 @@
                   "$ref": "#/components/schemas/IdentitiesRetrieveResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-24d75afcb667",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "label": "Northwind signing identity",
                   "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -113834,7 +113709,7 @@
                   "$ref": "#/components/schemas/IdentitiesUpdateResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-af9acfb38f5c",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "label": "Northwind signing identity",
                   "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -114031,7 +113906,7 @@
                   "$ref": "#/components/schemas/IdentitiesRotateResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-55a9504cea38",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "label": "Northwind signing identity",
                   "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -114233,7 +114108,7 @@
                   "$ref": "#/components/schemas/IdentitiesPushKeyUploadResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-b77c91894178",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "label": "Northwind signing identity",
                   "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -114349,7 +114224,7 @@
                   "$ref": "#/components/schemas/IdentitiesPushKeyDeleteResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-00facb7cb770",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "label": "Northwind signing identity",
                   "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -114463,13 +114338,13 @@
                   "$ref": "#/components/schemas/IdentitiesRenewResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-7e7cf1807529",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "kind": "provision",
                   "targetType": "identity",
                   "targetId": "0193a1b2-7c00-7000-8000-870b9da3cb5b",
                   "state": "succeeded",
-                  "step": "mapping",
+                  "step": "done",
                   "attempt": 1,
                   "waitingFor": null,
                   "errorCode": null,
@@ -114636,13 +114511,13 @@
                   "$ref": "#/components/schemas/IdentitiesCertificatesRevokeResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-17e9a1f20c2e",
+                  "id": "0193a1b2-7c00-7000-8000-0000000000d1",
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "kind": "provision",
                   "targetType": "identity",
                   "targetId": "0193a1b2-7c00-7000-8000-99a96f51c2ac",
                   "state": "succeeded",
-                  "step": "mapping",
+                  "step": "done",
                   "attempt": 1,
                   "waitingFor": null,
                   "errorCode": null,
@@ -114770,7 +114645,7 @@
                       "targetType": "identity",
                       "targetId": "0193a1b2-7c00-7000-8000-51958dbe3aca",
                       "state": "succeeded",
-                      "step": "mapping",
+                      "step": "done",
                       "attempt": 1,
                       "waitingFor": null,
                       "errorCode": null,
@@ -114852,7 +114727,7 @@
                   "targetType": "identity",
                   "targetId": "0193a1b2-7c00-7000-8000-28b41a6d1a88",
                   "state": "succeeded",
-                  "step": "mapping",
+                  "step": "done",
                   "attempt": 1,
                   "waitingFor": null,
                   "errorCode": null,
@@ -114932,7 +114807,7 @@
                   "targetType": "identity",
                   "targetId": "0193a1b2-7c00-7000-8000-e0a10815b3f1",
                   "state": "succeeded",
-                  "step": "mapping",
+                  "step": "done",
                   "attempt": 1,
                   "waitingFor": null,
                   "errorCode": null,
@@ -115029,7 +114904,7 @@
                   "targetType": "identity",
                   "targetId": "0193a1b2-7c00-7000-8000-709dc480c274",
                   "state": "succeeded",
-                  "step": "mapping",
+                  "step": "done",
                   "attempt": 1,
                   "waitingFor": null,
                   "errorCode": null,
@@ -115274,7 +115149,7 @@
                   "targetType": "identity",
                   "targetId": "0193a1b2-7c00-7000-8000-0695c3d9ba70",
                   "state": "succeeded",
-                  "step": "mapping",
+                  "step": "done",
                   "attempt": 1,
                   "waitingFor": null,
                   "errorCode": null,
@@ -115610,7 +115485,7 @@
                 "provider": "google",
                 "expectedRevision": 3,
                 "credentials": {
-                  "issuerId": "0193a1b2-7c00-7000-8000-0b89e58da58a",
+                  "issuerId": "3388000000022843210",
                   "serviceAccountEmail": "ada@example.com",
                   "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
                   "scopes": [
@@ -116018,7 +115893,7 @@
                   "$ref": "#/components/schemas/PlatformUsersRetrieveResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-03416847bf94",
+                  "id": "0193a1b2-7c00-7000-8000-000000000011",
                   "name": "Sam Rivera",
                   "primaryEmail": "ada@example.com",
                   "status": "active",
@@ -116051,7 +115926,7 @@
                   ],
                   "sessions": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-7ce02b71e45f",
+                      "id": "0193a1b2-7c00-7000-8000-000000000091",
                       "amr": "oidc",
                       "roles": [
                         "admin"
@@ -116159,7 +116034,7 @@
                   "$ref": "#/components/schemas/PlatformUsersUpdateResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-0c96da81e6ee",
+                  "id": "0193a1b2-7c00-7000-8000-000000000011",
                   "name": "Sam Rivera",
                   "primaryEmail": "ada@example.com",
                   "status": "active",
@@ -116246,7 +116121,7 @@
                   "$ref": "#/components/schemas/PlatformUsersEmailsCreateResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-42505ee090f2",
+                  "id": "0193a1b2-7c00-7000-8000-000000000011",
                   "name": "Sam Rivera",
                   "primaryEmail": "ada@example.com",
                   "status": "active",
@@ -116279,7 +116154,7 @@
                   ],
                   "sessions": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-8fbf12e63c02",
+                      "id": "0193a1b2-7c00-7000-8000-000000000091",
                       "amr": "oidc",
                       "roles": [
                         "admin"
@@ -116391,7 +116266,7 @@
                   "$ref": "#/components/schemas/PlatformUsersEmailsDeleteResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-cc77d533af24",
+                  "id": "0193a1b2-7c00-7000-8000-000000000011",
                   "name": "Sam Rivera",
                   "primaryEmail": "ada@example.com",
                   "status": "active",
@@ -116424,7 +116299,7 @@
                   ],
                   "sessions": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-737380440d0c",
+                      "id": "0193a1b2-7c00-7000-8000-000000000091",
                       "amr": "oidc",
                       "roles": [
                         "admin"
@@ -116532,7 +116407,7 @@
                   "$ref": "#/components/schemas/PlatformUsersEmailsMakePrimaryResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-b6cbc6073182",
+                  "id": "0193a1b2-7c00-7000-8000-000000000011",
                   "name": "Sam Rivera",
                   "primaryEmail": "ada@example.com",
                   "status": "active",
@@ -116565,7 +116440,7 @@
                   ],
                   "sessions": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-2153af24037f",
+                      "id": "0193a1b2-7c00-7000-8000-000000000091",
                       "amr": "oidc",
                       "roles": [
                         "admin"
@@ -120523,7 +120398,7 @@
                     }
                   },
                   "scanner": {
-                    "id": "0193a1b2-7c00-7000-8000-3ce510e7f6c7",
+                    "id": "0193a1b2-7c00-7000-8000-000000000031",
                     "name": "Front desk",
                     "kind": "device",
                     "deviceRole": "scan",
@@ -120566,13 +120441,13 @@
                     "name": "Sam Rivera",
                     "orgs": [
                       {
-                        "id": "0193a1b2-7c00-7000-8000-4e2a1508079b",
+                        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                         "name": "Sam Rivera"
                       }
                     ]
                   },
                   "event": {
-                    "id": "0193a1b2-7c00-7000-8000-fdf328e9131c",
+                    "id": "0193a1b2-7c00-7000-8000-0000000000e1",
                     "name": "Open climbing",
                     "opensAt": 1795570500000,
                     "closesAt": 1798162500000,
@@ -120582,7 +120457,7 @@
                   },
                   "templates": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-f83cacfb2efd",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                       "name": "Day pass",
                       "style": "generic",
                       "formats": [
@@ -120590,7 +120465,7 @@
                       ],
                       "actions": [
                         {
-                          "id": "0193a1b2-7c00-7000-8000-65f61b0d4693",
+                          "id": "0193a1b2-7c00-7000-8000-000000000073",
                           "label": "Admit",
                           "kind": "check_in"
                         }
@@ -120601,7 +120476,7 @@
                     "qr"
                   ],
                   "staff": {
-                    "id": "0193a1b2-7c00-7000-8000-89b65dae6ada",
+                    "id": "0193a1b2-7c00-7000-8000-000000000022",
                     "name": "Sam Rivera",
                     "role": "door",
                     "pinResetRequired": true
@@ -120966,7 +120841,7 @@
                     }
                   },
                   "scanner": {
-                    "id": "0193a1b2-7c00-7000-8000-254b115f4e13",
+                    "id": "0193a1b2-7c00-7000-8000-000000000031",
                     "name": "Front desk",
                     "kind": "device",
                     "deviceRole": "scan",
@@ -121009,13 +120884,13 @@
                     "name": "Sam Rivera",
                     "orgs": [
                       {
-                        "id": "0193a1b2-7c00-7000-8000-bad33676805b",
+                        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                         "name": "Sam Rivera"
                       }
                     ]
                   },
                   "event": {
-                    "id": "0193a1b2-7c00-7000-8000-01f927b69f0c",
+                    "id": "0193a1b2-7c00-7000-8000-0000000000e1",
                     "name": "Open climbing",
                     "opensAt": 1795570500000,
                     "closesAt": 1798162500000,
@@ -121025,7 +120900,7 @@
                   },
                   "templates": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-a75ae45ba05e",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                       "name": "Day pass",
                       "style": "generic",
                       "formats": [
@@ -121033,7 +120908,7 @@
                       ],
                       "actions": [
                         {
-                          "id": "0193a1b2-7c00-7000-8000-87a076624dfc",
+                          "id": "0193a1b2-7c00-7000-8000-000000000073",
                           "label": "Admit",
                           "kind": "check_in"
                         }
@@ -121044,7 +120919,7 @@
                     "qr"
                   ],
                   "staff": {
-                    "id": "0193a1b2-7c00-7000-8000-5587ae8cfb6f",
+                    "id": "0193a1b2-7c00-7000-8000-000000000022",
                     "name": "Sam Rivera",
                     "role": "door",
                     "pinResetRequired": true
@@ -121488,7 +121363,7 @@
                     }
                   },
                   "scanner": {
-                    "id": "0193a1b2-7c00-7000-8000-232203ae00af",
+                    "id": "0193a1b2-7c00-7000-8000-000000000031",
                     "name": "Front desk",
                     "kind": "device",
                     "deviceRole": "scan",
@@ -121531,13 +121406,13 @@
                     "name": "Sam Rivera",
                     "orgs": [
                       {
-                        "id": "0193a1b2-7c00-7000-8000-cff128c66a02",
+                        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                         "name": "Sam Rivera"
                       }
                     ]
                   },
                   "event": {
-                    "id": "0193a1b2-7c00-7000-8000-2b4ad1110f24",
+                    "id": "0193a1b2-7c00-7000-8000-0000000000e1",
                     "name": "Open climbing",
                     "opensAt": 1795570500000,
                     "closesAt": 1798162500000,
@@ -121547,7 +121422,7 @@
                   },
                   "templates": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-36c0d1b363cb",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                       "name": "Day pass",
                       "style": "generic",
                       "formats": [
@@ -121555,7 +121430,7 @@
                       ],
                       "actions": [
                         {
-                          "id": "0193a1b2-7c00-7000-8000-21aab3624c44",
+                          "id": "0193a1b2-7c00-7000-8000-000000000073",
                           "label": "Admit",
                           "kind": "check_in"
                         }
@@ -121566,7 +121441,7 @@
                     "qr"
                   ],
                   "staff": {
-                    "id": "0193a1b2-7c00-7000-8000-897e8897c4bc",
+                    "id": "0193a1b2-7c00-7000-8000-000000000022",
                     "name": "Sam Rivera",
                     "role": "door",
                     "pinResetRequired": true
@@ -121868,7 +121743,7 @@
                     }
                   },
                   "scanner": {
-                    "id": "0193a1b2-7c00-7000-8000-e286eca732a3",
+                    "id": "0193a1b2-7c00-7000-8000-000000000031",
                     "name": "Front desk",
                     "kind": "device",
                     "deviceRole": "scan",
@@ -121911,13 +121786,13 @@
                     "name": "Sam Rivera",
                     "orgs": [
                       {
-                        "id": "0193a1b2-7c00-7000-8000-f935aa33b360",
+                        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                         "name": "Sam Rivera"
                       }
                     ]
                   },
                   "event": {
-                    "id": "0193a1b2-7c00-7000-8000-622353d62692",
+                    "id": "0193a1b2-7c00-7000-8000-0000000000e1",
                     "name": "Open climbing",
                     "opensAt": 1795570500000,
                     "closesAt": 1798162500000,
@@ -121927,7 +121802,7 @@
                   },
                   "templates": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-ea9bdd80f818",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                       "name": "Day pass",
                       "style": "generic",
                       "formats": [
@@ -121935,7 +121810,7 @@
                       ],
                       "actions": [
                         {
-                          "id": "0193a1b2-7c00-7000-8000-0bdcca68d1a9",
+                          "id": "0193a1b2-7c00-7000-8000-000000000073",
                           "label": "Admit",
                           "kind": "check_in"
                         }
@@ -121946,7 +121821,7 @@
                     "qr"
                   ],
                   "staff": {
-                    "id": "0193a1b2-7c00-7000-8000-5e5c74406de0",
+                    "id": "0193a1b2-7c00-7000-8000-000000000022",
                     "name": "Sam Rivera",
                     "role": "door",
                     "pinResetRequired": true
@@ -122260,7 +122135,7 @@
                       }
                     },
                     "scanner": {
-                      "id": "0193a1b2-7c00-7000-8000-472dc10f18b9",
+                      "id": "0193a1b2-7c00-7000-8000-000000000031",
                       "name": "Front desk",
                       "kind": "device",
                       "deviceRole": "scan",
@@ -122303,13 +122178,13 @@
                       "name": "Sam Rivera",
                       "orgs": [
                         {
-                          "id": "0193a1b2-7c00-7000-8000-a519f89bc5ea",
+                          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                           "name": "Sam Rivera"
                         }
                       ]
                     },
                     "event": {
-                      "id": "0193a1b2-7c00-7000-8000-b731325fbed0",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
                       "name": "Open climbing",
                       "opensAt": 1795570500000,
                       "closesAt": 1798162500000,
@@ -122319,7 +122194,7 @@
                     },
                     "templates": [
                       {
-                        "id": "0193a1b2-7c00-7000-8000-e569b0e5d39c",
+                        "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                         "name": "Day pass",
                         "style": "generic",
                         "formats": [
@@ -122327,7 +122202,7 @@
                         ],
                         "actions": [
                           {
-                            "id": "0193a1b2-7c00-7000-8000-e319d4a95d0b",
+                            "id": "0193a1b2-7c00-7000-8000-000000000073",
                             "label": "Admit",
                             "kind": "check_in"
                           }
@@ -122338,7 +122213,7 @@
                       "qr"
                     ],
                     "staff": {
-                      "id": "0193a1b2-7c00-7000-8000-8fac238360c5",
+                      "id": "0193a1b2-7c00-7000-8000-000000000022",
                       "name": "Sam Rivera",
                       "role": "door",
                       "pinResetRequired": true
@@ -125904,7 +125779,7 @@
                     }
                   },
                   "scanner": {
-                    "id": "0193a1b2-7c00-7000-8000-ddde4b2ac3e3",
+                    "id": "0193a1b2-7c00-7000-8000-000000000031",
                     "name": "Front desk",
                     "kind": "device",
                     "deviceRole": "scan",
@@ -125947,13 +125822,13 @@
                     "name": "Sam Rivera",
                     "orgs": [
                       {
-                        "id": "0193a1b2-7c00-7000-8000-84f6aafd54e7",
+                        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
                         "name": "Sam Rivera"
                       }
                     ]
                   },
                   "event": {
-                    "id": "0193a1b2-7c00-7000-8000-6513528f2699",
+                    "id": "0193a1b2-7c00-7000-8000-0000000000e1",
                     "name": "Open climbing",
                     "opensAt": 1795570500000,
                     "closesAt": 1798162500000,
@@ -125963,7 +125838,7 @@
                   },
                   "templates": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-e8b181600568",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
                       "name": "Day pass",
                       "style": "generic",
                       "formats": [
@@ -125971,7 +125846,7 @@
                       ],
                       "actions": [
                         {
-                          "id": "0193a1b2-7c00-7000-8000-3d6b541500e0",
+                          "id": "0193a1b2-7c00-7000-8000-000000000073",
                           "label": "Admit",
                           "kind": "check_in"
                         }
@@ -125982,7 +125857,7 @@
                     "qr"
                   ],
                   "staff": {
-                    "id": "0193a1b2-7c00-7000-8000-41493f9880bb",
+                    "id": "0193a1b2-7c00-7000-8000-000000000022",
                     "name": "Sam Rivera",
                     "role": "door",
                     "pinResetRequired": true
@@ -128741,7 +128616,7 @@
                   ]
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-78d7ffdff436",
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
                   "at": 1795570500000,
                   "body": "Waiver signed on paper; scan it to the file.",
                   "by": "Sam Rivera",
@@ -128930,7 +128805,7 @@
                   ]
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-e49a181acf95",
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
                   "at": 1795570500000,
                   "body": "Waiver signed on paper; scan it to the file.",
                   "by": "Sam Rivera",
@@ -129650,7 +129525,7 @@
                 "$ref": "#/components/schemas/TerminalResolveParams"
               },
               "example": {
-                "idempotencyKey": "0193a1b2-7c00-7000-8000-4e5b15c46ad2",
+                "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
                 "input": {
                   "code": "K7QZ4M2VXN5HJ3RPWB6TDFCLYA",
                   "method": "camera"
@@ -129998,7 +129873,7 @@
                 "$ref": "#/components/schemas/TerminalActParams"
               },
               "example": {
-                "idempotencyKey": "0193a1b2-7c00-7000-8000-4e5b15c46ad2",
+                "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
                 "input": {
                   "code": "K7QZ4M2VXN5HJ3RPWB6TDFCLYA",
                   "method": "camera"
@@ -131042,7 +130917,7 @@
                 "$ref": "#/components/schemas/TerminalScansUndoParams"
               },
               "example": {
-                "idempotencyKey": "0193a1b2-7c00-7000-8000-944c95fec073",
+                "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
                 "scope": {
                   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
                   "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
@@ -133774,12 +133649,12 @@
                   "mode": "live",
                   "sessions": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-29650d0e4b08",
+                      "id": "0193a1b2-7c00-7000-8000-000000000091",
                       "ref": "front-desk",
                       "name": "Evening shift",
                       "devices": [
                         {
-                          "id": "0193a1b2-7c00-7000-8000-71f606d06020",
+                          "id": "0193a1b2-7c00-7000-8000-000000000012",
                           "name": "Front desk tablet",
                           "pairing": {
                             "code": "7K3M9QX2TA",
@@ -133793,7 +133668,7 @@
                   "pairingReissued": false,
                   "zones": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-2da6a116b65a",
+                      "id": "0193a1b2-7c00-7000-8000-000000000081",
                       "ref": "main-hall",
                       "name": "Main hall",
                       "created": false
@@ -133801,7 +133676,7 @@
                   ],
                   "events": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-573ef07c57f4",
+                      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
                       "ref": "open-climbing",
                       "name": "Open climbing",
                       "created": false
@@ -133809,7 +133684,7 @@
                   ],
                   "staff": [
                     {
-                      "id": "0193a1b2-7c00-7000-8000-ffa2080e787b",
+                      "id": "0193a1b2-7c00-7000-8000-000000000022",
                       "name": "Sam Rivera",
                       "role": "door",
                       "pin": "969219"
@@ -141451,7 +141326,7 @@
                       "late": false,
                       "actor": {
                         "type": "scanner",
-                        "id": "0193a1b2-7c00-7000-8000-c20879dc8a09"
+                        "id": "0193a1b2-7c00-7000-8000-000000000011"
                       },
                       "undoneAt": 1795570500000,
                       "undoneBy": "Sam Rivera",
@@ -141753,7 +141628,7 @@
                   "$ref": "#/components/schemas/ScanRecord"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-365f110f04e9",
+                  "id": "0193a1b2-7c00-7000-8000-000000000043",
                   "at": 1795570500000,
                   "outcome": "ok",
                   "reason": null,
@@ -141785,7 +141660,7 @@
                   "late": false,
                   "actor": {
                     "type": "scanner",
-                    "id": "0193a1b2-7c00-7000-8000-174c9f75f70f"
+                    "id": "0193a1b2-7c00-7000-8000-000000000011"
                   },
                   "undoneAt": 1795570500000,
                   "undoneBy": "Sam Rivera",
@@ -143394,7 +143269,7 @@
                   "$ref": "#/components/schemas/NfcTagsRebindResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-58a922e08e82",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "mode": "live",
                   "kind": "uid",
                   "system": "uid",
@@ -143513,7 +143388,7 @@
                   "$ref": "#/components/schemas/NfcBindingsDeleteResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-21e75ba48766",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "mode": "live",
                   "kind": "uid",
                   "system": "uid",
@@ -143633,7 +143508,7 @@
                   "$ref": "#/components/schemas/NfcBindingsUpdateResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-3be101d1ddb5",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "mode": "live",
                   "kind": "uid",
                   "system": "uid",
@@ -143922,7 +143797,7 @@
                   "$ref": "#/components/schemas/NfcTagsRetrieveResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-1c9525e8908b",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "mode": "live",
                   "kind": "uid",
                   "system": "uid",
@@ -144035,7 +143910,7 @@
                   "$ref": "#/components/schemas/NfcTagsUpdateResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-73744b356e1a",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "mode": "live",
                   "kind": "uid",
                   "system": "uid",
@@ -144140,7 +144015,7 @@
                   "$ref": "#/components/schemas/NfcTagsRetireResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-8879e555f571",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "mode": "live",
                   "kind": "uid",
                   "system": "uid",
@@ -144282,7 +144157,7 @@
                   "$ref": "#/components/schemas/NfcTagsRestoreResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-dd8714aab547",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "mode": "live",
                   "kind": "uid",
                   "system": "uid",
@@ -144424,7 +144299,7 @@
                   "$ref": "#/components/schemas/NfcTagsReportLostResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-af79a8fd04c8",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "mode": "live",
                   "kind": "uid",
                   "system": "uid",
@@ -144672,7 +144547,7 @@
                   "$ref": "#/components/schemas/NfcEnrollmentsCreateResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-14a3af7523c3",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
                   "scannerName": "Front desk",
@@ -144788,7 +144663,7 @@
                   "$ref": "#/components/schemas/NfcEnrollmentsRetrieveResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-04a88920947f",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
                   "scannerName": "Front desk",
@@ -144892,7 +144767,7 @@
                   "$ref": "#/components/schemas/NfcEnrollmentsCancelResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-52407207d6ed",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
                   "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
                   "scannerName": "Front desk",
@@ -144993,7 +144868,7 @@
                 "$ref": "#/components/schemas/NfcTagsAssignParams"
               },
               "example": {
-                "id": "0193a1b2-7c00-7000-8000-811c34ab2abe",
+                "id": "0193a1b2-7c00-7000-8000-000000000082",
                 "format": "hex",
                 "binding": "pass",
                 "label": "Wristband 14"
@@ -145010,7 +144885,7 @@
                   "$ref": "#/components/schemas/NfcTagsAssignResponse"
                 },
                 "example": {
-                  "id": "0193a1b2-7c00-7000-8000-811c34ab2abe",
+                  "id": "0193a1b2-7c00-7000-8000-000000000082",
                   "mode": "live",
                   "kind": "uid",
                   "system": "uid",

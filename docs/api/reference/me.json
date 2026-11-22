@@ -3,21 +3,20 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-f21676190484",
-          "title": "Ten-visit card",
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "title": "Day pass",
           "subtitle": "Ada Example",
-          "templateName": "Monthly membership",
+          "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active",
           "mode": "live",
           "modifiedAt": 1795399200000,
           "voidedAt": null,
           "removedAt": null,
-          "removalMessage": "Removed by the front desk.",
-          "lastRefreshedAt": 1795570500000,
-          "refreshRequestedAt": 1795570500000,
+          "removalMessage": null,
+          "lastRefreshedAt": 1795399380000,
+          "refreshRequestedAt": null,
           "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
-          "pageUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
           "walletOffers": [
             {
               "provider": "google",
@@ -25,45 +24,6 @@
               "installation": "unknown"
             }
           ],
-          "walletIssuance": {
-            "google": {
-              "state": "enabled"
-            },
-            "samsung": {
-              "state": "enabled"
-            }
-          },
-          "presentationEligible": false,
-          "channels": {
-            "mobile": {
-              "on": true,
-              "source": "template"
-            },
-            "apple": {
-              "on": true,
-              "source": "template"
-            },
-            "google": {
-              "on": false,
-              "source": "org",
-              "reason": "not_enrolled"
-            },
-            "samsung": {
-              "on": false,
-              "source": "org",
-              "reason": "not_enrolled"
-            },
-            "paper": {
-              "on": true,
-              "source": "template"
-            },
-            "nfc": {
-              "on": false,
-              "source": "org",
-              "reason": "tags_off"
-            }
-          },
-          "holderPrint": false,
           "passJson": {
             "formatVersion": 1,
             "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -99,23 +59,8 @@
           },
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
           "assetNames": ["strip.png"],
-          "tags": [
-            {
-              "id": "0193a1b2-7c00-7000-8000-df21d53b4950",
-              "label": "Key fob 3",
-              "hint": "D335",
-              "scope": "pass",
-              "boundAt": 1795570500000,
-              "lostAt": 1795570500000
-            }
-          ],
-          "inWallet": false,
-          "readOnly": false,
-          "support": {
-            "email": "ada@example.com",
-            "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
-            "platform": true
-          }
+          "inWallet": true,
+          "readOnly": false
         }
       ],
       "nextCursor": "c1.4812",
@@ -145,7 +90,7 @@
   },
   "me.getMePassesById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-2f7f8274cbaf",
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
       "title": "Day pass",
       "subtitle": "Ada Example",
       "templateName": "Day pass",
@@ -155,11 +100,10 @@
       "modifiedAt": 1795399200000,
       "voidedAt": null,
       "removedAt": null,
-      "removalMessage": "Removed by the front desk.",
-      "lastRefreshedAt": 1795570500000,
-      "refreshRequestedAt": 1795570500000,
+      "removalMessage": null,
+      "lastRefreshedAt": 1795399380000,
+      "refreshRequestedAt": null,
       "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
-      "pageUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
       "walletOffers": [
         {
           "provider": "google",
@@ -167,45 +111,6 @@
           "installation": "unknown"
         }
       ],
-      "walletIssuance": {
-        "google": {
-          "state": "enabled"
-        },
-        "samsung": {
-          "state": "enabled"
-        }
-      },
-      "presentationEligible": false,
-      "channels": {
-        "mobile": {
-          "on": true,
-          "source": "template"
-        },
-        "apple": {
-          "on": true,
-          "source": "template"
-        },
-        "google": {
-          "on": false,
-          "source": "org",
-          "reason": "not_enrolled"
-        },
-        "samsung": {
-          "on": false,
-          "source": "org",
-          "reason": "not_enrolled"
-        },
-        "paper": {
-          "on": true,
-          "source": "template"
-        },
-        "nfc": {
-          "on": false,
-          "source": "org",
-          "reason": "tags_off"
-        }
-      },
-      "holderPrint": false,
       "passJson": {
         "formatVersion": 1,
         "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -241,23 +146,8 @@
       },
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
       "assetNames": ["logo.png"],
-      "tags": [
-        {
-          "id": "0193a1b2-7c00-7000-8000-b696562afc51",
-          "label": "Wristband 14",
-          "hint": "4522",
-          "scope": "pass",
-          "boundAt": 1795570500000,
-          "lostAt": 1795570500000
-        }
-      ],
-      "inWallet": false,
-      "readOnly": false,
-      "support": {
-        "email": "ada@example.com",
-        "url": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
-        "platform": true
-      }
+      "inWallet": true,
+      "readOnly": false
     }
   },
   "me.deleteMePassesById": {
@@ -302,7 +192,7 @@
           "email": "ada@example.com",
           "verifiedAt": 1795570500000,
           "verifiedVia": "magic_link",
-          "primary": false
+          "primary": true
         }
       ],
       "nextCursor": "c1.4812"
@@ -336,7 +226,7 @@
           "email": "ada@example.com",
           "verifiedAt": 1795570500000,
           "verifiedVia": "magic_link",
-          "primary": false
+          "primary": true
         }
       ],
       "nextCursor": "c1.4812"
@@ -350,7 +240,7 @@
           "createdAt": 1794362400000,
           "lastSeenAt": 1795570500000,
           "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
-          "current": false
+          "current": true
         }
       ],
       "nextCursor": "c1.4812"

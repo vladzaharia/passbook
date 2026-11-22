@@ -103,7 +103,7 @@
       "binding": "pass"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-58a922e08e82",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
@@ -146,7 +146,7 @@
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-3be101d1ddb5",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
@@ -189,7 +189,7 @@
       "pool": false
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-73744b356e1a",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
@@ -249,7 +249,7 @@
       "binding": "pass"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-14a3af7523c3",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
       "scannerName": "Front desk",
@@ -282,13 +282,13 @@
   },
   "nfc-tags.postNfcPassesByPassIdTagsAssign": {
     "request": {
-      "id": "0193a1b2-7c00-7000-8000-811c34ab2abe",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "format": "hex",
       "binding": "pass",
       "label": "Wristband 14"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-811c34ab2abe",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
@@ -402,7 +402,7 @@
   },
   "nfc-tags.deleteNfcBindingsByBindingId": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-21e75ba48766",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
@@ -485,7 +485,7 @@
   },
   "nfc-tags.getNfcTagsById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-1c9525e8908b",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
@@ -524,7 +524,7 @@
   },
   "nfc-tags.postNfcTagsByIdRetire": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-8879e555f571",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
@@ -563,7 +563,7 @@
   },
   "nfc-tags.postNfcTagsByIdRestore": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-dd8714aab547",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
@@ -602,7 +602,7 @@
   },
   "nfc-tags.postNfcTagsByIdLost": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-af79a8fd04c8",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
@@ -641,7 +641,7 @@
   },
   "nfc-tags.getNfcPassesByPassIdEnrollmentsById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-04a88920947f",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
       "scannerName": "Front desk",
@@ -674,7 +674,7 @@
   },
   "nfc-tags.deleteNfcPassesByPassIdEnrollmentsById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-52407207d6ed",
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
       "scannerName": "Front desk",

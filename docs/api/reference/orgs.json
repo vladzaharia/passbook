@@ -3,22 +3,19 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-791800cb3b6d",
+          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
           "slug": "northwind-climbing",
           "name": "Northwind Climbing",
           "status": "active",
           "personal": false,
-          "personalOwner": {
-            "id": "0193a1b2-7c00-7000-8000-85143788c181",
-            "name": "Sam Rivera"
-          },
-          "createdAt": 1794362400000,
+          "personalOwner": null,
+          "createdAt": 1772560800000,
           "counts": {
-            "passes": 37,
-            "templates": 21,
-            "connections": 37,
-            "apiKeys": 31,
-            "members": 10
+            "passes": 128,
+            "templates": 2,
+            "connections": 1,
+            "apiKeys": 2,
+            "members": 4
           },
           "countsCapped": false
         }
@@ -38,7 +35,7 @@
       "preset": "standard"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-443600bb705a",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
       "slug": "northwind-climbing",
       "name": "Northwind Climbing",
       "status": "active",
@@ -80,22 +77,19 @@
   },
   "orgs.getOrgsById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-ef5fae06e71f",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
       "slug": "northwind-climbing",
       "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
-      "personalOwner": {
-        "id": "0193a1b2-7c00-7000-8000-b0adda3c0edb",
-        "name": "Sam Rivera"
-      },
-      "createdAt": 1794362400000,
+      "personalOwner": null,
+      "createdAt": 1772560800000,
       "counts": {
-        "passes": 37,
-        "templates": 21,
-        "connections": 37,
-        "apiKeys": 31,
-        "members": 10
+        "passes": 128,
+        "templates": 2,
+        "connections": 1,
+        "apiKeys": 2,
+        "members": 4
       },
       "countsCapped": false
     }
@@ -107,7 +101,7 @@
       "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-474c52d6622d",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
       "slug": "northwind-climbing",
       "name": "Northwind Climbing",
       "status": "active",
@@ -157,22 +151,19 @@
       "status": "active"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-459cd32ec25f",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
       "slug": "northwind-climbing",
       "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
-      "personalOwner": {
-        "id": "0193a1b2-7c00-7000-8000-fee738ea42c2",
-        "name": "Sam Rivera"
-      },
-      "createdAt": 1794362400000,
+      "personalOwner": null,
+      "createdAt": 1772560800000,
       "counts": {
-        "passes": 37,
-        "templates": 21,
-        "connections": 37,
-        "apiKeys": 31,
-        "members": 10
+        "passes": 128,
+        "templates": 2,
+        "connections": 1,
+        "apiKeys": 2,
+        "members": 4
       },
       "countsCapped": false
     }
@@ -184,7 +175,7 @@
       "configRevision": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-7cddba97bea2",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
       "slug": "northwind-climbing",
       "name": "Northwind Climbing",
       "status": "active",
@@ -226,12 +217,11 @@
   },
   "orgs.getOrgsByIdWorkspace": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-01869e1eec57",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
       "slug": "northwind-climbing",
       "name": "Northwind Climbing",
       "status": "active",
       "personal": false,
-      "kind": "standard",
       "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
       "branding": {
         "accent": "#ffc400",
@@ -260,27 +250,22 @@
         "mark": "full",
         "logoHasName": false
       },
-      "createdAt": 1794362400000,
+      "createdAt": 1772560800000,
       "updatedAt": 1795399200000,
-      "configRevision": 3,
-      "passesToUpdate": 27,
       "counts": {
-        "passes": 37,
-        "templates": 21,
-        "connections": 37,
-        "apiKeys": 31,
-        "members": 10
+        "passes": 128,
+        "templates": 2,
+        "connections": 1,
+        "apiKeys": 2,
+        "members": 4
       },
       "countsCapped": false,
-      "personalOwner": {
-        "id": "0193a1b2-7c00-7000-8000-9c6f58d9e22a",
-        "name": "Sam Rivera"
-      }
+      "personalOwner": null
     }
   },
   "orgs.deleteOrgsByIdBrandingBySlot": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-f64572e4c3e7",
+      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
       "slug": "northwind-climbing",
       "name": "Northwind Climbing",
       "status": "active",
