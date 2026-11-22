@@ -35,7 +35,8 @@ export function sqlOutsideRepo(rel: string, text: string): string | null {
 // A bound parameter that switches a filter off defeats index use and lets a null drop a tenant filter.
 // Build the WHERE from the filters that are present instead. The patterns cover a null test of a bind in
 // either order (also through `(SELECT ?)`), `?NNN`, ISNULL / COALESCE / IFNULL / NULLIF of a bind, an
-// empty-string sentinel, `? = 0|1` flags and CASE WHEN ?.
+// empty-string sentinel, a bind compared with a literal (`? = 'all'`, `? > 0`), a bare bind beside OR and
+// CASE WHEN ?.
 const P = String.raw`\?\d*`;
 const OPTIONAL_BIND = [
   new RegExp(String.raw`${P}\s+IS\s+(?:NOT\s+)?NULL\b`, 'gi'),
@@ -47,6 +48,9 @@ const OPTIONAL_BIND = [
   new RegExp(String.raw`${P}\s*(?:=|==|!=|<>)\s*[01]\b`, 'gi'),
   new RegExp(String.raw`\(\s*SELECT\s+${P}\s*\)\s+IS\s+(?:NOT\s+)?NULL\b`, 'gi'),
   new RegExp(String.raw`\bNULLIF\s*\(\s*${P}\s*,`, 'gi'),
+  new RegExp(String.raw`${P}\s*(?:=|==|!=|<>|<=?|>=?)\s*(?:'[^']*'|-?\d)`, 'gi'),
+  new RegExp(String.raw`(?:\(|\bOR\b|\bAND\b|\bWHERE\b)\s*${P}\s*\bOR\b`, 'gi'),
+  new RegExp(String.raw`\bOR\b\s*${P}\s*(?:\)|\bAND\b|\bOR\b)`, 'gi'),
 ];
 const TEST_FILE =
   /\.test\.tsx?$|(^|\/)(?:test-kit|test-support|test-utils|testing|[a-z0-9-]*(?:test-support|fixtures?))\.tsx?$/;

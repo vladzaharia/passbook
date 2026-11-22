@@ -8,7 +8,7 @@ import type { OpaqueEntry } from './authority-scope-opaque.ts';
 export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
   'src/worker/modules/scan/repo-scans.ts': {
     reason:
-      'caller-built scan predicates (scan-predicate.ts); the writes bind org_id and mode themselves',
+      'caller-built, parenthesized scan predicates (scan-predicate.ts); each write is pinned by its own id, state and at, and binds only the id',
     exprs: ['AMBIGUOUS_SCAN', 'extra.sql', 'original.sql', 'guard.sql'],
     deps: [
       'src/worker/modules/scan/scan-predicate.ts',
@@ -35,9 +35,11 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
     hash: '1d7ff7871aa0',
   },
   'src/worker/modules/events/repo.ts': {
-    reason: 'caller-supplied pass-read guard; org_id and the fence are literal in the statement',
+    reason:
+      'caller-supplied pass-read guard from wallet-providers/repo-holder-events.ts, parenthesized; org_id and the fence are literal in the statement',
     exprs: ['guard.sql'],
-    hash: '1851880d3ec7',
+    deps: ['src/worker/modules/wallet-providers/repo-holder-events.ts'],
+    hash: 'dba79525715f',
   },
   'src/worker/modules/passes/repo-remove-compensate.ts': {
     reason: 'removal proof SQL from repo-remove-snapshot.ts',
@@ -49,8 +51,12 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
     reason:
       'tightening-only optional fences from connectionPassFences, and the caller-supplied release fence',
     exprs: ['fences', 'fence.sql'],
-    deps: ['src/worker/modules/passes/repo-connection-context.ts'],
-    hash: '78ffa993d257',
+    deps: [
+      'src/worker/modules/passes/repo-connection-context.ts',
+      'src/worker/modules/passes/repo-release.ts',
+      'src/worker/modules/templates/repo-release-heads.ts',
+    ],
+    hash: '045cab578c73',
   },
   'src/worker/modules/passes/repo-history-assets.ts': {
     reason: 'pass, upload and candidate guards built in repo-history-image.ts',
@@ -75,7 +81,8 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
     hash: 'd406ce5318a5',
   },
   'src/worker/modules/webhooks/repo-retention.ts': {
-    reason: 'org scope and eligibility SQL built by retention/repo-sweep.ts',
+    reason:
+      'org scope and eligibility SQL built in this file; the scope type comes from retention/repo-sweep.ts',
     exprs: ['e.sql'],
     deps: ['src/worker/modules/retention/repo-sweep.ts'],
     hash: '71ddd3d45231',

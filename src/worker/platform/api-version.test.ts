@@ -46,6 +46,9 @@ describe('PassBook-Version', () => {
     expect(ran).toBe(false);
     expect((await post({ 'PassBook-Version': '2026-11-22' })).status).toBe(200);
     expect(ran).toBe(true);
+    ran = false;
+    expect((await post()).status).toBe(200);
+    expect(ran).toBe(true);
   });
 
   it('is wired ahead of every /api/v1 route', async () => {
@@ -57,5 +60,15 @@ describe('PassBook-Version', () => {
     );
     expect(res.status).toBe(422);
     expect(((await res.json()) as { code: string }).code).toBe('API_VERSION_UNKNOWN');
+  });
+
+  it('does not gate a route outside /api/v1', async () => {
+    const { createApp } = await import('../app.ts');
+    const res = await createApp().request(
+      'https://wallet.test/health',
+      { headers: { 'PassBook-Version': '2026-01-01' } },
+      env,
+    );
+    expect(res.status).toBe(200);
   });
 });

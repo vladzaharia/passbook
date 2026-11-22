@@ -265,6 +265,36 @@ describe('authority-scope', () => {
     expect(findings(changed, text).some((f) => f.detail.includes('source behind'))).toBe(true);
   });
 
+  it('fails when the source of a caller-built fragment gains an OR', () => {
+    const files = new Map(treeFiles());
+    const mod = 'src/worker/modules/';
+    const cases: [string, string, string, string][] = [
+      [
+        `${mod}passes/repo-connection-state.ts`,
+        `${mod}passes/repo-release.ts`,
+        'sql: `',
+        'sql: `1 OR ',
+      ],
+      [
+        `${mod}events/repo.ts`,
+        `${mod}wallet-providers/repo-holder-events.ts`,
+        'WHERE id = ?)',
+        'WHERE id = ?) OR 1',
+      ],
+    ];
+    for (const [rel, dep, from, to] of cases) {
+      const findings = (map: Map<string, string>) =>
+        scanFile(rel, map.get(rel) ?? '', owners, map).filter(
+          (f) => f.rule === 'raw-guarded-write',
+        );
+      expect(findings(files)).toEqual([]);
+      const source = files.get(dep) ?? '';
+      expect(source).toContain(from);
+      const changed = new Map(files).set(dep, source.replaceAll(from, to));
+      expect(findings(changed).some((f) => f.detail.includes('source behind'))).toBe(true);
+    }
+  });
+
   it('inlines a ternary of literals, and a constant that is one', () => {
     const same = (a: string, b: string) =>
       expect(rawWriteStatements(a)).toEqual(rawWriteStatements(b));

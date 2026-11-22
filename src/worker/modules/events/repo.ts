@@ -30,7 +30,7 @@ export function insertEventStmt(
     db,
     `INSERT INTO pass_events (id, org_id, pass_id, mode, kind, device, actor_type, actor_id, data, at)
      SELECT ?, p.org_id, p.id, ?, ?, ?, ?, ?, ?, ? FROM passes p
-     WHERE p.id = ? AND p.org_id = ? AND (p.mode = ? OR ? = 'test')${guard ? ` AND ${guard.sql}` : ''}`,
+     WHERE p.id = ? AND p.org_id = ? AND (p.mode = ? OR ? = 'test')${guard ? ` AND (${guard.sql})` : ''}`,
     [
       row.id,
       row.mode,

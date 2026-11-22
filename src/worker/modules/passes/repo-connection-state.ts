@@ -58,7 +58,7 @@ export async function applyConnectionState(
     db,
     `UPDATE passes SET sync_error_code = ?
      WHERE id = ? AND holder_email IS ? AND owner_user_id IS ? AND ${connectionPassPredicate} ${fences}
-       ${fence ? `AND template_id = ? AND ${fence.sql}` : ''}
+       ${fence ? `AND template_id = ? AND (${fence.sql})` : ''}
      RETURNING holder_email, owner_user_id, link_generation, version`,
     [
       code,

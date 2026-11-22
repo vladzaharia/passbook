@@ -61,6 +61,10 @@ describe('check-sql-owner', () => {
       'WHERE (? = 0 OR org_id = ?)',
       'WHERE ((SELECT ?) IS NULL OR org_id = ?)',
       "WHERE org_id = IFNULL(NULLIF(?, ''), org_id)",
+      "WHERE (? = 'all' OR org_id = ?)",
+      'WHERE (? > 0 OR org_id = ?)',
+      'WHERE (? OR org_id = ?)',
+      'WHERE (org_id = ? OR ?)',
     ])
       expect(optionalBindPredicate(rel, `const q = \`${sql}\`;`), sql).toHaveLength(1);
   });

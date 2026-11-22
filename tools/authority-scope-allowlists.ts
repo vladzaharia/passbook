@@ -109,7 +109,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/events/repo.ts': {
     reason:
       'pass_events is an append-only ledger written by recordPassEvent; WP5b owns the grant conversion',
-    writes: ['pass_events:5bc69fcc1cf4', 'pass_events:7ac7f822118d'],
+    writes: ['pass_events:5cde459e82f9', 'pass_events:7ac7f822118d'],
   },
   'src/worker/modules/apple/repo-events.ts': {
     reason:
@@ -151,7 +151,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/passes/repo-connection-state.ts': {
     reason:
       'sync_error_code is volatile bookkeeping stamped by connection sync behind a full pass and release snapshot',
-    writes: ['passes:8379a08fde3b'],
+    writes: ['passes:a25f2e7af13b'],
   },
   'src/worker/modules/passes/repo-history-assets.ts': {
     reason:

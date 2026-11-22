@@ -4,8 +4,12 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
   'src/worker/modules/auth/repo.ts': [
     {
       text: 'WHERE ? = 0 OR NOT EXISTS (SELECT 1 FROM auth_identities WHERE user_id = ?)`,',
+      reason: 'a flag picks whether an INSERT ... SELECT runs; bound values only, no tenant term',
+    },
+    {
+      text: "AND (? = 'oidc' OR NOT EXISTS (SELECT 1 FROM org_memberships m WHERE m.user_id = users.id AND m.revoked_at IS NULL))`,",
       reason:
-        'a flag the service decides picks a variant of the statement; org_id and mode stay literal',
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
     },
   ],
   'src/worker/modules/broadcasts/repo.ts': [
@@ -22,7 +26,7 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
     {
       text: "AND ((state = 'processing' AND (? = 0 OR available_at < ?))",
       reason:
-        'a flag the service decides picks a variant of the statement; org_id and mode stay literal',
+        'a flag adds a time window; an outbox repair across the platform, no org filter by design',
     },
   ],
   'src/worker/modules/developer/repo-request-log.ts': [
@@ -50,6 +54,16 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
       text: '`UPDATE message_rules SET next_check_at = ?, last_broadcast_id = COALESCE(?, last_broadcast_id)',
       reason: 'a SET or VALUES expression on a bound value, not a filter',
     },
+    {
+      text: "AND (? <> 'on' OR (SELECT COUNT(*) FROM message_rules WHERE org_id = ? AND mode = ? AND state = 'on') < ?)`,",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "AND (? <> 'on' OR state = 'on'",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
   ],
   'src/worker/modules/passes/repo-authority.ts': [
     {
@@ -62,7 +76,7 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
     {
       text: "AND (? = 0 OR status = 'active') ORDER BY id LIMIT ?`,",
       reason:
-        'a flag the service decides picks a variant of the statement; org_id and mode stay literal',
+        'an activeOnly flag; the reissue org_id filter is built from what is present (null means platform-wide), unchanged from main',
     },
   ],
   'src/worker/modules/passes/repo-remove-compensate.ts': [
@@ -76,7 +90,7 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
     {
       text: 'AND (? = 0 OR ${NEEDS_PROVIDER_RETIREMENT} OR ${PROVIDER_RETIREMENT_COMPLETE})',
       reason:
-        'a flag the service decides picks a variant of the statement; org_id and mode stay literal',
+        'a flag adds a retirement guard; a test-pass sweep with mode = test literal and no org filter by design',
     },
   ],
   'src/worker/modules/scan/override-scope.ts': [
@@ -102,18 +116,15 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
   'src/worker/modules/scan/repo-device.ts': [
     {
       text: "'? = 1 AND (contact_at <= ? OR contact_at IS NULL AND last_seen_at <= ?) AND (online_since IS NULL OR online_since <= ?)';",
-      reason:
-        'a flag the service decides picks a variant of the statement; org_id and mode stay literal',
+      reason: 'a flag picks a variant of a by-scanner-id update; no org filter by design',
     },
     {
       text: 'contact_at = CASE WHEN ? = 1 THEN ? ELSE contact_at END',
-      reason:
-        'a flag the service decides picks a variant of the statement; org_id and mode stay literal',
+      reason: 'a flag picks a variant of a by-scanner-id update; no org filter by design',
     },
     {
       text: 'OR (? = 1 AND (contact_at IS NULL OR contact_at <= ?)))`,',
-      reason:
-        'a flag the service decides picks a variant of the statement; org_id and mode stay literal',
+      reason: 'a flag picks a variant of a by-scanner-id update; no org filter by design',
     },
   ],
   'src/worker/modules/scan/repo-scans.ts': [
@@ -151,8 +162,7 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
   'src/worker/modules/wallet-providers/repo-callbacks-state.ts': [
     {
       text: 'AND (? = 0 OR served_at IS NOT NULL) AND ${inserted}`,',
-      reason:
-        'a flag the service decides picks a variant of the statement; org_id and mode stay literal',
+      reason: 'a flag adds a served-at guard; keyed by ref id, no org filter by design',
     },
   ],
   'src/worker/modules/wallet-providers/repo-google-managed.ts': [
@@ -174,6 +184,31 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
     {
       text: "revoked_at = CASE WHEN ? = 'upsert' THEN NULL ELSE revoked_at END, updated_at = ?",
       reason: 'a SET or VALUES expression on a bound value, not a filter',
+    },
+    {
+      text: "AND (? = 'revoke' OR i.retirement_requested_at IS NULL)",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "AND ((? = 'upsert' AND (i.lifecycle = 'active' OR (i.lifecycle IN ('revoking', 'revoked')",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "OR (? = 'revoke' AND (i.lifecycle = 'active' OR (i.lifecycle = 'revoking' AND EXISTS (",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "AND (? = 'revoke' OR EXISTS (SELECT 1 FROM passes pass WHERE pass.id = i.pass_id",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "AND (? = 'revoke' OR EXISTS (SELECT 1 FROM wallet_provider_accounts account",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
     },
   ],
   'src/worker/modules/wallet-providers/repo-instance-finish.ts': [
@@ -199,6 +234,26 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
       text: "revoked_at = CASE WHEN ? = 'upsert' THEN NULL ELSE revoked_at END, updated_at = ?",
       reason: 'a SET or VALUES expression on a bound value, not a filter',
     },
+    {
+      text: "AND ((? = 'download' AND bearer.download_token = ?) OR (? = 'holder' AND bearer.owner_user_id = ?)))`;",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "AND ((? = 'download' AND holder.download_token = ?) OR (? = 'holder' AND holder.owner_user_id = ?))",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "AND ((? = 'upsert' AND (i.lifecycle = 'active' OR (i.lifecycle IN ('revoking', 'revoked')",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "OR (? = 'revoke' AND (i.lifecycle = 'active' OR (i.lifecycle = 'revoking' AND EXISTS (",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
   ],
   'src/worker/platform/workflow-runs.ts': [
     {
@@ -208,6 +263,49 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
     {
       text: 'run_guard = CASE WHEN ? THEN NULL ELSE run_guard END',
       reason: 'a SET or VALUES expression on a bound value, not a filter',
+    },
+  ],
+  'src/worker/modules/channels/repo-replace.ts': [
+    {
+      text: "AND (? = 'never' OR pc.override = 'off' OR (pc.override IS NULL AND ? <> 'on'))`,",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+  ],
+  'src/worker/modules/events/repo.ts': [
+    {
+      text: "WHERE p.id = ? AND p.org_id = ? AND (p.mode = ? OR ? = 'test')${guard ? ` AND (${guard.sql})` : ''}`,",
+      reason:
+        'a Test-mode fence may read either mode of the pass by id (unchanged from main); org_id is literal',
+    },
+  ],
+  'src/worker/modules/wallet-providers/repo-samsung-card-state.ts': [
+    {
+      text: "AND st.card_type = ? AND (st.testing_mode_off = 'Y' OR ? = 'test')",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+  ],
+  'src/worker/modules/wallet-providers/repo-sync-targets.ts': [
+    {
+      text: "AND ? = 'samsung' AND o.version = ? AND o.state = 'claimed'",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "AND ? = 'samsung' AND o.version = ? AND o.state IN ('claimed', 'uncertain')",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "AND i.provider = 'samsung' AND ? = 'samsung' AND o.version = ?",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+    },
+    {
+      text: "AND i.provider = 'samsung' AND ? = 'samsung' AND o.version = ?",
+      reason:
+        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
     },
   ],
 };
