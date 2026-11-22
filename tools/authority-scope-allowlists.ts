@@ -148,7 +148,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/passes/repo-connection-state.ts': {
     reason:
       'sync_error_code is volatile bookkeeping stamped by connection sync behind a full pass and release snapshot',
-    writes: ['passes:de5d2c1970fb'],
+    writes: ['passes:2b567467d2d7'],
   },
   'src/worker/modules/passes/repo-history-assets.ts': {
     reason:
