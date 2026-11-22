@@ -15,6 +15,9 @@ import {
   upsertGoogleGenericObject,
 } from './google-rest.ts';
 import {
+  addGoogleObjectMessage,
+  findGoogleObjectMessage,
+  type GoogleAddMessage,
   patchGoogleObjectBody,
   revokeGoogleObject,
   upsertGoogleClass,
@@ -284,6 +287,45 @@ export async function patchGoogleRuntimeObject(
       input.type === undefined
         ? patchGoogleGenericObject(rest, objectScope(s, input), input.projection)
         : patchGoogleObjectBody(rest, input.type, objectScope(s, input), input.projection),
+  );
+}
+
+interface GoogleRuntimeMessageInput extends GoogleRuntimeObjectIdentity {
+  type: GoogleType;
+  onProviderResponse: WalletRuntimeResponseSink;
+}
+
+/** The one runtime entry that sends a change message: object `addMessage`, never a class or a PATCH body. */
+export async function addGoogleRuntimeMessage(
+  ctx: ServiceContext,
+  scope: WalletRuntimeScope,
+  input: GoogleRuntimeMessageInput & { message: GoogleAddMessage },
+): Promise<void> {
+  ctx = snapshotWalletCredentialContext(ctx);
+  await withGoogleRest(
+    ctx,
+    scope,
+    input.assertCurrent,
+    'google-message',
+    input.onProviderResponse,
+    (rest, s) => addGoogleObjectMessage(rest, input.type, objectScope(s, input), input.message),
+  );
+}
+
+/** One GET of the object to settle a message whose transport was ambiguous. */
+export async function findGoogleRuntimeMessage(
+  ctx: ServiceContext,
+  scope: WalletRuntimeScope,
+  input: GoogleRuntimeMessageInput & { messageId: string },
+): Promise<GoogleAddMessage['messageType'] | null> {
+  ctx = snapshotWalletCredentialContext(ctx);
+  return withGoogleRest(
+    ctx,
+    scope,
+    input.assertCurrent,
+    'google-object',
+    input.onProviderResponse,
+    (rest, s) => findGoogleObjectMessage(rest, input.type, objectScope(s, input), input.messageId),
   );
 }
 

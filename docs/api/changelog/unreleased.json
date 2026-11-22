@@ -704,6 +704,14 @@
     "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
   },
   {
+    "key": "GET /api/v1/passes/{id}/events 200.items[].kind: enum value \"wallet.messaged\" added",
+    "class": "notable",
+    "operationId": "passes.getPassesByIdEvents",
+    "op": "GET /api/v1/passes/{id}/events",
+    "change": "200.items[].kind: enum value \"wallet.messaged\" added",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
     "class": "additive",
     "operationId": "passes.getPassesBulkRunsById",

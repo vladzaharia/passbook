@@ -96,3 +96,50 @@ test('a Samsung update is recorded and an injected failure is returned once', as
   const state = (await (await request.get(`${mock}/__mock/state`)).json()) as MockState;
   expect(state.samsung.refs.ref1?.state).toBe('EXPIRED');
 });
+
+test('a Google change message lands on the object, and a fourth notification in a day is refused', async ({
+  request,
+}) => {
+  const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const iat = Math.floor(Date.now() / 1000);
+  const { access_token: accessToken } = (await (
+    await request.post(`${mock}/token`, {
+      form: {
+        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+        assertion: signJwt(
+          { iss: 'e2e@example.iam.gserviceaccount.com', scope: SCOPE, iat, exp: iat + 300 },
+          privateKey,
+        ),
+      },
+    })
+  ).json()) as { access_token: string };
+  const headers = { authorization: `Bearer ${accessToken}` };
+  const api = `${mock}/walletobjects/v1`;
+  const classId = '3388000000022334455.e2e-class';
+  const objectId = '3388000000022334455.e2e-object';
+  await request.post(`${api}/genericClass`, { headers, data: { id: classId } });
+  await request.post(`${api}/genericObject`, { headers, data: { id: objectId, classId } });
+
+  const message = (id: string, messageType: string) => ({
+    message: { id, header: 'Club', body: 'Tier is now Gold', messageType },
+  });
+  const url = `${api}/genericObject/${encodeURIComponent(objectId)}/addMessage`;
+  for (const id of ['m1', 'm2', 'm3'])
+    expect(
+      (await request.post(url, { headers, data: message(id, 'TEXT_AND_NOTIFY') })).status(),
+    ).toBe(200);
+  const refused = await request.post(url, { headers, data: message('m4', 'TEXT_AND_NOTIFY') });
+  expect(refused.status()).toBe(429);
+  expect(JSON.stringify(await refused.json())).toContain('QuotaExceeded');
+  expect((await request.post(url, { headers, data: message('m5', 'TEXT') })).status()).toBe(200);
+
+  const state = (await (await request.get(`${mock}/__mock/state`)).json()) as {
+    google: { genericObject: Record<string, { messages: { id: string; messageType: string }[] }> };
+  };
+  expect(state.google.genericObject[objectId]?.messages.map((m) => m.id)).toEqual([
+    'm1',
+    'm2',
+    'm3',
+    'm5',
+  ]);
+});

@@ -32,7 +32,14 @@ export interface MockSamsungTemplate {
 export interface MockWalletsOptions {
   /** Used for Samsung cards with no template set. */
   defaultSamsungTemplate?: MockSamsungTemplate;
+  /** The clock `addMessage` counts notifications over; default `Date.now`. */
+  now?: () => number;
 }
+
+const NOTIFY_WINDOW_MS = 24 * 60 * 60 * 1000;
+/** Google's documented cap of notifying messages per object per 24 h, and the assumed cap of messages held. */
+const NOTIFY_LIMIT = 3;
+const MESSAGE_CAP = 10;
 
 type Doc = Record<string, unknown>;
 
@@ -96,6 +103,9 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
   let failures: (MockFailure & { left: number })[] = [];
   let requests: MockRequestLog[] = [];
   let counter = 0;
+  const now = options.now ?? Date.now;
+  /** TEXT_AND_NOTIFY messages accepted per object, by time, for the 24 h limit. */
+  const notifications = new Map<string, number[]>();
 
   function reset(): void {
     for (const store of Object.values(google)) store.clear();
@@ -104,6 +114,7 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
     samsungTemplates.clear();
     samsungRefs.clear();
     samsungCancels.length = 0;
+    notifications.clear();
     failures = [];
     requests = [];
   }
@@ -143,6 +154,11 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
     if (!RESOURCES.includes(kind as Resource)) return googleError(404, 'Not found');
     const store = google[kind as Resource];
     const isObject = kind !== undefined && kind in CLASS_OF;
+    if (segments[2] === 'addMessage') {
+      if (!isObject || !id || request.method !== 'POST')
+        return googleError(405, 'Method not allowed');
+      return addMessage(kind as ObjectResource, id, store, body);
+    }
     if (request.method === 'GET' && id) {
       const doc = store.get(id);
       return doc ? json(200, doc) : googleError(404, `${kind} ${id} not found`);
@@ -173,6 +189,37 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
       return json(200, store.get(id));
     }
     return googleError(405, 'Method not allowed');
+  }
+
+  /** Object `addMessage` (google-messages.md section 1): appends, and the fourth notification in 24 h is refused. */
+  function addMessage(
+    kind: ObjectResource,
+    id: string,
+    store: Map<string, Doc>,
+    body: Doc | undefined,
+  ): Response {
+    const doc = store.get(id);
+    if (!doc) return googleError(404, `${kind} ${id} not found`);
+    const message = (body?.message ?? null) as Doc | null;
+    if (!message || typeof message.id !== 'string' || typeof message.body !== 'string')
+      return googleError(400, 'message is required');
+    const held = Array.isArray(doc.messages) ? (doc.messages as Doc[]) : [];
+    if (held.length >= MESSAGE_CAP) return googleError(400, 'Too many messages on the object');
+    const key = `${kind}/${id}`;
+    if (message.messageType === 'TEXT_AND_NOTIFY') {
+      const recent = (notifications.get(key) ?? []).filter((t) => t > now() - NOTIFY_WINDOW_MS);
+      if (recent.length >= NOTIFY_LIMIT)
+        return json(429, {
+          error: {
+            code: 429,
+            message: 'QuotaExceededException: too many notifying messages in 24 hours',
+            status: 'RESOURCE_EXHAUSTED',
+          },
+        });
+      notifications.set(key, [...recent, now()]);
+    }
+    doc.messages = [...held, structuredClone(message)];
+    return json(200, { resource: doc });
   }
 
   function savePage(jwtText: string): Response {
@@ -377,6 +424,15 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
     },
     get requests(): readonly MockRequestLog[] {
       return requests;
+    },
+    /** Notifying messages the mock accepted per `collection/id` with their times (what Google counts). */
+    get notifications(): ReadonlyMap<string, readonly number[]> {
+      return notifications;
+    },
+    /** Counts notifications Google saw that PassBook did not send, so the quota refusal can be exercised. */
+    seedNotifications(kind: ObjectResource, id: string, count: number): void {
+      const key = `${kind}/${id}`;
+      notifications.set(key, [...(notifications.get(key) ?? []), ...Array(count).fill(now())]);
     },
     google,
     saves,

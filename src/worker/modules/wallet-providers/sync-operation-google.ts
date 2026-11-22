@@ -1,7 +1,11 @@
+import type { PassJson } from '../../../passkit/types.ts';
+import { withMessageHistory } from '../../../passkit/wallets/google/messages.ts';
+import type { GoogleObjectCommon } from '../../../passkit/wallets/google/types.ts';
 import { currentPassJson, getPass } from '../passes/repo-read-pass.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { googleCallbackClassProjection } from './google-callback-binding.ts';
 import { compileGooglePass, projectionGoogleType } from './google-compile.ts';
+import type { GoogleGenericProjection } from './google-projection.ts';
 import { markWalletClaimUncertain } from './instance.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { renderGoogleProjection } from './render-projection.ts';
@@ -19,6 +23,7 @@ import type {
   WalletSyncOperationExecution,
   WalletSyncRunResult,
 } from './sync-operation-context.ts';
+import { prepareGoogleMessages, sendGoogleMessage } from './sync-operation-google-messages.ts';
 import { completeWalletSyncOperation as complete } from './sync-operation-retirement.ts';
 
 export async function runGoogleWalletProviderOperation(
@@ -152,6 +157,14 @@ export async function runGoogleWalletProviderOperation(
         });
         await assertCurrent();
         providerStarted = true;
+        const messageIdentity = {
+          releaseId: op.identityProjectionReleaseId,
+          passId: op.passId,
+          credentialGeneration: op.credentialGeneration,
+          channelEpoch: op.channelEpoch,
+          ...partition,
+        };
+        const prepared = await prepareGoogleMessages(execution, binding.scope, messageIdentity);
         const classResult = await upsertGoogleRuntimeClass(ctx, binding.scope, {
           releaseId: op.identityProjectionReleaseId,
           ...partition,
@@ -172,8 +185,17 @@ export async function runGoogleWalletProviderOperation(
         await upsertGoogleRuntimeObject(ctx, binding.scope, {
           ...identity,
           ...partition,
-          projection: compiled.objectBody,
+          // PassBook owns the object's `messages` (decision 3): the delivered history, or the voided message.
+          projection: withMessageHistory(
+            compiled.objectBody as unknown as GoogleObjectCommon,
+            prepared.history,
+            (passJson as PassJson | null)?.voided === true,
+            ctx.clock.now(),
+          ) as unknown as GoogleGenericProjection,
         });
+        await assertCurrent();
+        // Object first, message second: a message failure never fails the write it describes.
+        await sendGoogleMessage(execution, binding.scope, messageIdentity, prepared);
         return complete(ctx, claim, op, { kind: 'success' });
       }
       const rendered = renderGoogleProjection(approved.projection, passJson);

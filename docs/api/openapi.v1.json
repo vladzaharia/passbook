@@ -67012,6 +67012,7 @@
                               "device.log",
                               "wallet.saved",
                               "wallet.removed",
+                              "wallet.messaged",
                               "push.queued",
                               "push.sent",
                               "push.failed",

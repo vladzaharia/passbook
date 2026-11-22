@@ -1,5 +1,10 @@
 import type { GoogleValidatedAccount } from './google-credentials.ts';
-import { GoogleWalletError, googleFetch, googleHttpError } from './google-errors.ts';
+import {
+  GoogleWalletError,
+  googleFetch,
+  googleHttpError,
+  isGoogleNotifyQuota,
+} from './google-errors.ts';
 import {
   type DerivedGoogleId,
   type GoogleClassScope,
@@ -55,21 +60,33 @@ export function clearGoogleRestMemo(): void {
   knownResources.clear();
 }
 
+const MAX_ERROR_BYTES = 8 * 1024;
+
+async function isQuotaResponse(response: Response): Promise<boolean> {
+  try {
+    const text = (await response.text()).slice(0, MAX_ERROR_BYTES);
+    return isGoogleNotifyQuota(response.status, text);
+  } catch {
+    return false;
+  }
+}
+
 export async function request(
   ctx: GoogleWalletRestContext,
   resource: Resource,
   method: 'GET' | 'POST' | 'PATCH' | 'PUT',
   id?: DerivedGoogleId,
   body?: Record<string, unknown>,
+  action?: 'addMessage',
 ): Promise<Response> {
   if (!isGoogleBearerToken(ctx.accessToken)) throw new GoogleWalletError('invalid_input', 'rest');
   // An id outside the source issuer's namespace is another issuer's resource, whatever its brand.
   if (id && !id.startsWith(`${ctx.account.issuerId}.`))
     throw new GoogleWalletError('invalid_input', 'rest');
-  const operation = `${resource} ${method}`;
+  const operation = `${resource} ${action ?? method}`;
   const response = await googleFetch(
     ctx.fetcher ?? globalThis.fetch,
-    `${WALLET_API}/${resource}${id ? `/${encodeURIComponent(id)}` : ''}`,
+    `${WALLET_API}/${resource}${id ? `/${encodeURIComponent(id)}` : ''}${action ? `/${action}` : ''}`,
     {
       method,
       headers: {
@@ -83,6 +100,14 @@ export async function request(
   );
   if (!response.ok) {
     if (response.status === 401) ctx.onUnauthorized?.();
+    // The body is read for the quota check only; it is never kept, logged or put in the error.
+    if (action === 'addMessage' && (await isQuotaResponse(response)))
+      throw new GoogleWalletError(
+        'quota_exceeded',
+        operation,
+        response.status,
+        googleHttpError(operation, response.status, response.headers, ctx.now?.()).retryAfterMs,
+      );
     throw googleHttpError(
       operation,
       response.status,

@@ -6,7 +6,9 @@ export {
   type WalletRuntimeScope,
 } from './runtime-core.ts';
 export {
+  addGoogleRuntimeMessage,
   createGoogleRuntimeOffer,
+  findGoogleRuntimeMessage,
   googleRuntimeIdHashes,
   inactivateGoogleRuntimeObject,
   patchGoogleRuntimeClass,

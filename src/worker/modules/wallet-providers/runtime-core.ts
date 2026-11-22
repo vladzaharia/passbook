@@ -115,6 +115,10 @@ const GOOGLE_CLASS_PATH =
 const GOOGLE_OBJECT_PATH =
   /^\/walletobjects\/v1\/(?:generic|eventTicket|loyalty|giftCard|offer)Object(?:\/[^/]+)?$/;
 
+// A change message goes to one object's addMessage and nowhere else (google-messages.md section 6).
+const GOOGLE_MESSAGE_PATH =
+  /^\/walletobjects\/v1\/(?:generic|eventTicket|loyalty|giftCard|offer)Object\/[^/]+\/addMessage$/;
+
 export function runtimeExecution(
   ctx: ServiceContext,
   scope: WalletRuntimeScope,
@@ -143,7 +147,10 @@ export function runtimeExecution(
         provider === 'google' &&
         url.origin === 'https://walletobjects.googleapis.com' &&
         ((capture.stage === 'google-class' && GOOGLE_CLASS_PATH.test(url.pathname)) ||
-          (capture.stage === 'google-object' && GOOGLE_OBJECT_PATH.test(url.pathname)));
+          (capture.stage === 'google-object' && GOOGLE_OBJECT_PATH.test(url.pathname)) ||
+          (capture.stage === 'google-message' &&
+            method === 'POST' &&
+            GOOGLE_MESSAGE_PATH.test(url.pathname)));
       const validSamsung =
         provider === 'samsung' &&
         capture.stage === 'samsung-update' &&
