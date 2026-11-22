@@ -8,6 +8,17 @@ import type { DraftAsset } from '../templates/designer/model.ts';
 import './blueprints.css';
 import { type Choices, logoColors, placeLogo } from './quick-setup.ts';
 
+/** Offered until a logo brings its own: teal, violet, crimson, orange, blue, ink. */
+export const PRESETS: { name: string; rgb: Rgb }[] = [
+  { name: 'Teal', rgb: { r: 15, g: 118, b: 110 } },
+  { name: 'Violet', rgb: { r: 67, g: 56, b: 202 } },
+  { name: 'Crimson', rgb: { r: 190, g: 18, b: 60 } },
+  { name: 'Orange', rgb: { r: 194, g: 65, b: 12 } },
+  { name: 'Blue', rgb: { r: 29, g: 78, b: 216 } },
+  { name: 'Ink', rgb: { r: 15, g: 23, b: 42 } },
+];
+const presetName = (c: Rgb) => PRESETS.find((p) => toHex(p.rgb) === toHex(c))?.name;
+
 /** A preview address for the chosen file; empty where the browser has none. */
 const objectUrl = (file: Blob) =>
   typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : '';
@@ -31,7 +42,7 @@ export interface QuickState {
 export function useQuickFields(): QuickState {
   const [logo, setLogo] = useState<QuickState['logo']>(null);
   const [color, setColor] = useState<Rgb | undefined>(undefined);
-  const [swatches, setSwatches] = useState<Rgb[]>([]);
+  const [swatches, setSwatches] = useState<Rgb[]>(PRESETS.map((p) => p.rgb));
   const [problem, setProblem] = useState<string>();
   const [goal, setGoal] = useState<number>();
   const [currency, setCurrency] = useState<string>();
@@ -45,7 +56,7 @@ export function useQuickFields(): QuickState {
     if (!placed.ok) return setProblem(placed.message);
     const found = await logoColors(file);
     setLogo({ asset: placed.asset, url: objectUrl(file), name: file.name, file });
-    setSwatches(found);
+    if (found.length > 0) setSwatches(found);
     if (found[0]) setColor(found[0]);
   }
 
@@ -62,7 +73,7 @@ export function useQuickFields(): QuickState {
     takeLogo,
     clearLogo: () => {
       setLogo(null);
-      setSwatches([]);
+      setSwatches(PRESETS.map((p) => p.rgb));
       setProblem(undefined);
     },
     pick: setColor,
@@ -111,7 +122,7 @@ export function QuickFields({ state, choices }: { state: QuickState; choices: Ch
                 key={toHex(s)}
                 type="button"
                 aria-pressed={same(color, s)}
-                aria-label={toHex(s)}
+                aria-label={presetName(s) ?? toHex(s)}
                 onClick={() => state.pick(s)}
                 style={{ background: toHex(s) }}
                 className={cn(

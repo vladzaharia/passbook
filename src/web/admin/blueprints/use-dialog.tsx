@@ -1,22 +1,14 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
-import { errorMessage } from '../../lib/errors.ts';
-import { PHONE, useMediaQuery } from '../../lib/media.ts';
-import { markMinted } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
-import { Button, Dialog, DialogContent, FormField, Input, Select } from '../../ui/index.ts';
-import { markCreated } from '../passes/created.tsx';
-import { useBlueprintVersion, useUseBlueprint } from './api.ts';
-import { QuickFields, useQuickFields } from './quick-fields.tsx';
-import { choicesOf, docOfVersion } from './quick-setup.ts';
-import { useBlueprintRequest } from './use-request.ts';
+import { Button, Dialog, DialogContent, FormField, Select } from '../../ui/index.ts';
 
 type Blueprint = Pick<TemplateSummaryDto, 'id' | 'name' | 'activeVersion'>;
 
 /**
- * Use blueprint: an organization, a name, and quick setup (a logo and its colour). Create template
- * makes a tracked, branded template on any screen; Open designer starts a draft on a larger one.
+ * Use blueprint always ends on Make it yours. With an organization in scope (or only one that can
+ * author) it goes straight there; otherwise this asks which organization, and Continue goes.
  */
 export function UseBlueprintDialog({
   blueprint,
@@ -27,7 +19,6 @@ export function UseBlueprintDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const phone = useMediaQuery(PHONE);
   const navigate = useNavigate();
   const scope = useOrgScope();
   // Only organizations where the person authors templates can receive one.
@@ -35,64 +26,27 @@ export function UseBlueprintDialog({
     () => scope.memberships.filter((m) => m.capabilities.includes('templates:author')),
     [scope.memberships],
   );
-  const fallback = orgs.find((m) => m.orgId === scope.orgId)?.orgId ?? orgs[0]?.orgId;
+  const direct =
+    orgs.find((m) => m.orgId === scope.orgId)?.orgId ??
+    (orgs.length === 1 ? orgs[0]?.orgId : undefined);
   const [chosen, setChosen] = useState<string | undefined>(undefined);
-  const [name, setName] = useState(blueprint.name);
-  const [error, setError] = useState<{ org?: string; name?: string; form?: string }>({});
-  const create = useUseBlueprint(blueprint.id);
-  const request = useBlueprintRequest();
-  const quick = useQuickFields();
-  const version = useBlueprintVersion(blueprint.id, blueprint.activeVersion);
-  const choices = useMemo(
-    () => (version.data ? choicesOf(docOfVersion(version.data)) : {}),
-    [version.data],
-  );
-  const orgId = chosen ?? fallback;
-
-  function check(): { orgId: string; name: string } | null {
-    const next = name.trim();
-    const problems = {
-      ...(orgId ? {} : { org: 'Choose an organization.' }),
-      ...(next ? {} : { name: 'Enter a name.' }),
-    };
-    setError(problems);
-    return orgId && next ? { orgId, name: next } : null;
-  }
-
-  function openDesigner() {
-    const input = check();
-    if (!input) return;
-    onOpenChange(false);
-    void navigate({
-      to: '/admin/o/$orgId/templates/new',
-      params: { orgId: input.orgId },
-      search: { blueprint: blueprint.id, name: input.name },
-    });
-  }
-
-  async function submit() {
-    const input = check();
-    if (!input) return;
-    try {
-      const made = await create.mutateAsync(await request(blueprint, input, quick));
-      markMinted(`template:${made.id}`);
-      markCreated(`template:${made.id}`, 'fromBlueprint');
+  const blueprintId = blueprint.id;
+  const go = useCallback(
+    (orgId: string) => {
       onOpenChange(false);
       void navigate({
-        to: '/admin/o/$orgId/templates/$templateId',
-        params: { orgId: input.orgId, templateId: made.id },
+        to: '/admin/o/$orgId/blueprints/$blueprintId/use',
+        params: { orgId, blueprintId },
       });
-    } catch (cause) {
-      setError({ form: errorMessage(cause) });
-    }
-  }
-
+    },
+    [navigate, onOpenChange, blueprintId],
+  );
+  useEffect(() => {
+    if (open && direct) go(direct);
+  }, [open, direct, go]);
+  if (direct) return null;
   return (
-    <Dialog
-      open={open}
-      dirty={name !== blueprint.name || chosen !== undefined || quick.touched}
-      onOpenChange={onOpenChange}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         title="Use blueprint"
         footer={
@@ -100,48 +54,23 @@ export function UseBlueprintDialog({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            {phone ? null : (
-              <Button variant="outline" disabled={quick.touched} onClick={openDesigner}>
-                Open designer
-              </Button>
-            )}
-            <Button loading={create.isPending} onClick={() => void submit()}>
-              Create template
+            <Button disabled={!chosen} onClick={() => chosen && go(chosen)}>
+              Continue
             </Button>
           </>
         }
       >
-        <div className="flex flex-col gap-4">
-          <FormField label="Organization" required error={error.org}>
-            {(c) => (
-              <Select
-                {...c}
-                value={orgId}
-                placeholder="Choose an organization"
-                onValueChange={(v) => {
-                  setChosen(v);
-                  setError({});
-                }}
-                options={orgs.map((m) => ({ value: m.orgId, label: m.orgName }))}
-              />
-            )}
-          </FormField>
-          <FormField label="Name" required error={error.name ?? error.form}>
-            {(c) => (
-              <Input
-                {...c}
-                data-autofocus
-                value={name}
-                maxLength={120}
-                onChange={(e) => {
-                  setName(e.target.value);
-                  setError({});
-                }}
-              />
-            )}
-          </FormField>
-          <QuickFields state={quick} choices={choices} />
-        </div>
+        <FormField label="Organization" required>
+          {(c) => (
+            <Select
+              {...c}
+              value={chosen}
+              placeholder="Choose an organization"
+              onValueChange={setChosen}
+              options={orgs.map((m) => ({ value: m.orgId, label: m.orgName }))}
+            />
+          )}
+        </FormField>
       </DialogContent>
     </Dialog>
   );
