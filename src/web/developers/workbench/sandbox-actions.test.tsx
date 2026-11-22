@@ -12,11 +12,10 @@ const m = vi.hoisted(() => ({
 
 vi.mock('../console/sandbox-actions.ts', () => ({
   ActionError: class ActionError extends Error {
-    constructor(
-      message: string,
-      readonly signInUrl?: string,
-    ) {
+    signInUrl?: string;
+    constructor(message: string, signInUrl?: string) {
       super(message);
+      this.signInUrl = signInUrl;
     }
   },
   resetSandbox: m.reset,

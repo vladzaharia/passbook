@@ -14,12 +14,12 @@ const m = vi.hoisted(() => ({
 vi.mock('../playground/live.ts', () => ({
   PORTAL_READ: {},
   LiveError: class LiveError extends Error {
-    constructor(
-      readonly status: number,
-      readonly code: string | undefined,
-      message: string,
-    ) {
+    status: number;
+    code: string | undefined;
+    constructor(status: number, code: string | undefined, message: string) {
       super(message);
+      this.status = status;
+      this.code = code;
     }
   },
   LiveClient: class {
