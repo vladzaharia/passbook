@@ -143,7 +143,6 @@ export function panelProps(
     mode: SCOPE.mode,
     versions: VERSIONS,
     capabilities: ALL_CAPABILITIES,
-    currentUserId: 'operator-1',
     ...overrides,
   };
 }

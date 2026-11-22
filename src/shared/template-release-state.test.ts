@@ -50,6 +50,7 @@ type Heads = Pick<ReleaseFacts, 'versions' | 'live' | 'test'>;
 const HEADS = {
   empty: { versions: [], live: null, test: null },
   draft: { versions: [V1], live: null, test: null },
+  firstReviewed: { versions: [V2], live: null, test: null },
   tried: { versions: [V1], live: null, test: head('v1') },
   released: { versions: [V1], live: head('v1'), test: head('v1') },
   changed: { versions: [V2, V1], live: head('v1'), test: head('v1') },
@@ -89,6 +90,11 @@ const TABLE: [HeadState, Review, Record<Role, string | null>][] = [
     'draft',
     'none',
     { solo: 'try', admin: 'try', author: 'request_review', reviewer: null, publisher: null },
+  ],
+  [
+    'firstReviewed',
+    'approved',
+    { solo: 'release', admin: 'release', author: 'wait', reviewer: 'wait', publisher: 'release' },
   ],
   [
     'tried',

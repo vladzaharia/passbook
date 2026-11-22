@@ -8,6 +8,7 @@ import { clearLocalDrafts } from './local-drafts.ts';
 import { setTestOnlyOrgs } from './mode.ts';
 import { clearPreviewBatches } from './preview-batch.ts';
 import { loginHref } from './redirect.ts';
+import { clearSavedPasses } from './saved-passes.ts';
 
 export type AuthedSession = Extract<SessionResponse, { authenticated: true }>;
 
@@ -238,7 +239,8 @@ export function leaveSignedOut(target: string, next?: string): void {
   } catch {
     // Storage blocked: the sign-in page just skips the wave.
   }
-  window.location.assign(target);
+  // Every way out (sign out, everywhere, switch) first clears this phone's saved passes.
+  void clearSavedPasses().then(() => window.location.assign(target));
 }
 
 export async function signOut(csrfToken?: string, options: SignOutOptions = {}): Promise<void> {

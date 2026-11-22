@@ -625,6 +625,35 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"orgs.stageBrandAsset", "POST", "/api/v1/orgs/id1/brand-assets", false,
+		`{"slot":"logo","png":"x"}`, `{"slot":"logo","sha":"x","version":"x","w":0,"h":0,"expiresAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b OrgsStageBrandAssetBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Orgs.StageBrandAsset(ctx, "id1", &b)
+		},
+	},
+	{
+		"orgs.retrievePassSetup", "GET", "/api/v1/orgs/id1/pass-setup", false,
+		"", `{"orgId":"x","mode":"live","revision":"x","passCount":0,"brand":{"name":{"value":"x","source":"passbook"},"logo":{"value":{"sha":"x","w":0,"h":0},"source":"passbook","templatesOwn":0},"icon":{"value":{"sha":"x","w":0,"h":0},"source":"passbook","templatesOwn":0},"webLogo":{"value":{"sha":"x","w":0,"h":0},"source":"passbook","sameAsLogo":false},"passColors":{"value":{"background":"x","foreground":"x","label":"x"},"source":"passbook","templatesOwn":0},"logoHasName":{"value":false,"source":"passbook"},"accent":{"value":"x","source":"passbook"},"mark":{"chosen":"full","effective":"full","allowed":["full"]},"support":{"email":{"value":"x","source":"passbook"},"url":{"value":"x","source":"passbook"}},"email":{"fromName":{"value":"x","source":"passbook"},"buddy":false}},"channels":{},"apple":{"identity":{"id":"x","provider":"apple","orgId":"x","label":"x","identifier":"x","kind":"platform","status":"provisioning","notBefore":0,"notAfter":0,"rotation":"auto","nextRotationAt":0,"issuing":false,"isDefault":false,"passCount":0,"createdAt":0},"sharedIdentifier":"x","push":"unknown","run":{"id":"x","orgId":"x","kind":"provision","targetType":"identity","targetId":"x","state":"queued","step":"x","attempt":0,"waitingFor":"x","errorCode":"x","createdAt":0,"updatedAt":0,"finishedAt":0},"managedAllowed":false,"passesOnShared":0},"templates":[{"id":"x","name":"x","ownBrand":["colors"],"placeholders":["logo"],"channels":{}}],"checks":[{"code":"BRAND_LOGO","level":"error","area":"brand","message":"x","fix":{"action":"upload_logo"}}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Orgs.RetrievePassSetup(ctx, "id1")
+		},
+	},
+	{
+		"orgs.updatePassSetup", "PATCH", "/api/v1/orgs/id1/pass-setup", true,
+		`{"expectedRevision":"x"}`, `{"dryRun":false,"view":{"orgId":"x","mode":"live","revision":"x","passCount":0,"brand":{"name":{"value":"x","source":"passbook"},"logo":{"value":{"sha":"x","w":0,"h":0},"source":"passbook","templatesOwn":0},"icon":{"value":{"sha":"x","w":0,"h":0},"source":"passbook","templatesOwn":0},"webLogo":{"value":{"sha":"x","w":0,"h":0},"source":"passbook","sameAsLogo":false},"passColors":{"value":{"background":"x","foreground":"x","label":"x"},"source":"passbook","templatesOwn":0},"logoHasName":{"value":false,"source":"passbook"},"accent":{"value":"x","source":"passbook"},"mark":{"chosen":"full","effective":"full","allowed":["full"]},"support":{"email":{"value":"x","source":"passbook"},"url":{"value":"x","source":"passbook"}},"email":{"fromName":{"value":"x","source":"passbook"},"buddy":false}},"channels":{},"apple":{"identity":{"id":"x","provider":"apple","orgId":"x","label":"x","identifier":"x","kind":"platform","status":"provisioning","notBefore":0,"notAfter":0,"rotation":"auto","nextRotationAt":0,"issuing":false,"isDefault":false,"passCount":0,"createdAt":0},"sharedIdentifier":"x","push":"unknown","run":{"id":"x","orgId":"x","kind":"provision","targetType":"identity","targetId":"x","state":"queued","step":"x","attempt":0,"waitingFor":"x","errorCode":"x","createdAt":0,"updatedAt":0,"finishedAt":0},"managedAllowed":false,"passesOnShared":0},"templates":[{"id":"x","name":"x","ownBrand":["colors"],"placeholders":["logo"],"channels":{}}],"checks":[{"code":"BRAND_LOGO","level":"error","area":"brand","message":"x","fix":{"action":"upload_logo"}}]},"diff":[{"field":"brand.name"}],"impact":{"passesToUpdate":0,"channelStops":[{"channel":"mobile","templates":0,"passes":0}],"enrolments":["google"]}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b OrgsUpdatePassSetupBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Orgs.UpdatePassSetup(ctx, "id1", &b, nil)
+		},
+	},
+	{
 		"passImports.list", "GET", "/api/v1/pass-imports", false,
 		"", `{"items":[{"id":"x","templateId":"x","templateVersion":"x","mode":"live","state":"mapping","source":{"kind":"file","name":"x"},"columns":[{"pointer":"x","label":"x","samples":["x"]}],"plan":{"mapping":{},"holderEmail":{"from":"x"},"externalId":{"from":"x"},"match":"externalId"},"counts":{"rows":0,"create":0,"update":0,"unchanged":0,"errors":0,"warnings":0,"emailable":0},"previews":[{"row":0,"action":"create","input":{}}],"problems":[{"row":0,"column":"x","field":"x","code":"x","message":"x","severity":"error"}],"problemTotals":{"errors":0,"warnings":0},"problemsTruncated":false,"emailBudget":0,"email":false,"progress":{"done":0,"created":0,"updated":0,"unchanged":0,"failed":0,"notEmailed":0,"removed":0},"errorCode":"x","errorFile":false,"createdAt":0,"checkedAt":0,"committedAt":0,"finishedAt":0,"expiresAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

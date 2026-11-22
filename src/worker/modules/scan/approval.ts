@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import type { ScanApprovalSchema } from '../../../shared/contracts/scan.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './guard.ts';
+import { namedDayCountsStatement } from './repo-pin-tag.ts';
 import { approverStatement, managerRosterStatement } from './repo-staff.ts';
 import {
   ANY_MANAGER,
@@ -11,6 +12,7 @@ import {
   preparePinReservation,
   type VerifiedPinSnapshot,
 } from './staff-pin.ts';
+import { assertNamedDayRows, countNamedMiss, dayWindowOf } from './staff-pin-day.ts';
 
 /**
  * A Manager's PIN for one action (SA 2.7). Verified here and stored nowhere: the scan row keeps
@@ -40,11 +42,35 @@ export async function verifyApproval(
     },
     guard,
   );
+  const scannerId = actor.scanner?.id ?? actor.actorKey;
+  // Only a name that exists is counted, so made-up names cannot fill the counters.
+  let known = false;
   try {
-    const results = await db.batch([approverStatement(db, orgId, staffId), ...reservation.stmts]);
+    // The named day counters are read in the same batch (no extra trip); a spent day refuses before the PIN is checked.
+    const day = staffId
+      ? [namedDayCountsStatement(db, staffId, scannerId, dayWindowOf(ctx.clock.now()))]
+      : [];
+    const all = await db.batch([
+      approverStatement(db, orgId, staffId),
+      ...reservation.stmts,
+      ...day,
+    ]);
+    const results = all.slice(0, all.length - day.length);
+    known = pinStaffFromResult(results[0]) !== null;
+    if (staffId)
+      assertNamedDayRows(
+        ctx,
+        (all.at(-1)?.results ?? []) as { key: string; count: number }[],
+        scannerId,
+        staffId,
+      );
     return staffId
       ? await reservation.verify(results.slice(1), pinStaffFromResult(results[0]), pin, true)
       : await reservation.verifyAny(results.slice(1), pinStaffListFromResult(results[0]), pin);
+  } catch (error) {
+    // A named approval counts against the person's day like a named sign-in does.
+    if (staffId && known) await countNamedMiss(ctx, { orgId, scannerId, staffId }, error);
+    throw error;
   } finally {
     await reservation.refund();
   }

@@ -3,6 +3,7 @@ import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth } from '../../../../test/helpers/index.ts';
 import { BundleSchema } from '../../../shared/contracts/index.ts';
 import { createApp } from '../../app.ts';
+import { revealToken } from '../../platform/capability-token.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { fakeLimiter } from '../auth/test-support.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
@@ -49,6 +50,8 @@ async function bundleWith(count: number, mode: 'live' | 'test' = 'live') {
   const bundle = BundleSchema.parse(await res.json());
   return { passes, bundle, headers, token: bundle.url?.split('/b/')[1] ?? '' };
 }
+const ANDROID =
+  'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36';
 const get = (path: string, headers: Record<string, string> = {}, env = kit.env) =>
   app.request(`${ORIGIN}${path}`, { headers }, env);
 const events = (kind: string, passId: string) =>
@@ -59,7 +62,7 @@ const events = (kind: string, passId: string) =>
   );
 
 describe('GET /b/:token', () => {
-  it('renders every pass with its own add link and the add-all badge', async () => {
+  it('renders the stack with one add-all badge and a link to each other pass', async () => {
     const { passes, token } = await bundleWith(3);
     const res = await get(`/b/${token}`, {
       'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604.1',
@@ -71,8 +74,12 @@ describe('GET /b/:token', () => {
     // The pass page's lead, no heading over it: the badge says it.
     expect(html).toContain('aria-label="Add to Apple Wallet"');
     expect(html).toContain(`href="/b/${token}/passes.pkpasses"`);
-    for (const p of passes) expect(html).toContain(`href="/b/${token}/${p.id}/pass.pkpass"`);
-    expect(html).toContain('3 passes');
+    expect(html).toContain('All passes (3)');
+    // One count, no badge per pass; the other two are peeks, plain links to their own pages.
+    for (const p of passes) expect(html).not.toContain(`/b/${token}/${p.id}/pass.pkpass`);
+    expect(html.match(/class="wl-peek"/g)).toHaveLength(2);
+    expect(html.match(/href="\/b\/[^/"]+\/[0-9a-f-]{36}"/g)).toHaveLength(2);
+    expect(html).not.toContain('Open in My passes');
     // The pass tokens never reach the page.
     for (const p of passes) expect(html).not.toContain(p.downloadToken);
     expect(html).not.toMatch(/<script(?![^>]*\ssrc=)/);
@@ -87,7 +94,7 @@ describe('GET /b/:token', () => {
     expect(html).toContain('<svg');
   });
 
-  it('gives Android a Show barcode row per pass and no Apple badge', async () => {
+  it('gives Android Show at the door on the front pass and no Apple badge', async () => {
     const { passes, token } = await bundleWith(2);
     const html = await (
       await get(`/b/${token}`, {
@@ -95,25 +102,102 @@ describe('GET /b/:token', () => {
           'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36',
       })
     ).text();
-    for (const p of passes) {
-      expect(html).toContain(`href="/b/${token}/${p.id}/barcode"`);
-      expect(html).not.toContain(`/b/${token}/${p.id}/pass.pkpass`);
-    }
-    expect(html.match(/Show barcode/g)).toHaveLength(2);
+    for (const p of passes) expect(html).not.toContain(`/b/${token}/${p.id}/pass.pkpass`);
+    expect(html.match(/Show at the door/g)).toHaveLength(1);
+    expect(html.match(/href="\/b\/[^/"]+\/[^/"]+\/barcode"/g)).toHaveLength(1);
+    expect(html.match(/class="wl-peek"/g)).toHaveLength(1);
     expect(html).not.toContain('aria-label="Add to Apple Wallet"');
     expect(html).not.toContain('data-awb=');
     expect(html).toContain('For Apple Wallet, open this page on an iPhone.');
   });
 
-  it('serves a member barcode page under the bundle token, with nothing to save', async () => {
+  it('serves a member page under the bundle capability, carrying no member token anywhere', async () => {
+    const { passes, bundle, headers, token } = await bundleWith(3);
+    const [live, voided, removed] = passes;
+    await run(kit.env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [voided?.id]);
+    await run(kit.env.DB, 'UPDATE passes SET removed_at = ? WHERE id = ?', [
+      Date.now(),
+      removed?.id,
+    ]);
+    const android =
+      'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36';
+    const bodies: string[] = [];
+    for (const p of passes) {
+      const res = await get(`/b/${token}/${p.id}`, { 'user-agent': android });
+      expect(res.status).toBe(200);
+      expect(res.headers.get('location')).toBeNull();
+      bodies.push(await res.text());
+    }
+    const plain = await Promise.all(
+      passes.map((p) => revealToken(kit.env, 'pass', p.id, p.orgId, p.downloadToken)),
+    );
+    const bundlePage = await (await get(`/b/${token}`)).text();
+    const barcode = await get(`/b/${token}/${live?.id}/barcode`);
+    bodies.push(bundlePage, await barcode.text());
+    // Not one /b response carries a member's own link or token, in its body or its headers.
+    for (const body of bodies) {
+      for (const t of plain) expect(body).not.toContain(t);
+      expect(body).not.toMatch(/\/p\/[A-Za-z0-9_-]{16,}/);
+      expect(body).not.toMatch(/\/(print|sign-in|resend)\b/);
+    }
+    for (const res of [await get(`/b/${token}/${live?.id}`), barcode])
+      for (const [, value] of res.headers) {
+        for (const t of plain) expect(value).not.toContain(t);
+      }
+    expect(bodies[0]).toContain(`href="/b/${token}/${live?.id}/barcode"`);
+    expect(bodies[0]).toContain(`href="/b/${token}"`);
+    // Ended members render ended: no barcode, no file.
+    for (const ended of [bodies[1], bodies[2]]) {
+      expect(ended).not.toMatch(/href="[^"]*\/barcode"/);
+      expect(ended).not.toContain('pass.pkpass');
+    }
+    // Outside the bundle, or once the bundle is rotated, every member page, file and barcode is a 404.
+    const other = await makePass();
+    expect((await get(`/b/${token}/${other.id}`)).status).toBe(404);
+    const rotate = await app.request(
+      `${ORIGIN}/api/v1/bundles/${bundle.id}/rotate-link`,
+      { method: 'POST', headers },
+      kit.env,
+    );
+    expect(rotate.status).toBe(200);
+    for (const path of ['', '/barcode', '/pass.pkpass'])
+      expect((await get(`/b/${token}/${live?.id}${path}`)).status).toBe(404);
+  });
+
+  it('saves a member door view under the bundle worker, scoped to that member', async () => {
+    const { passes, token } = await bundleWith(2);
+    const id = passes[0]?.id;
+    const member = await (await get(`/b/${token}/${id}`, { 'user-agent': ANDROID })).text();
+    expect(member).toContain(`data-save-phone="/b/${token}/${id}/barcode"`);
+    expect(member).toContain('<script src="/b/save.js" defer>');
+    const door = await get(`/b/${token}/${id}/barcode`);
+    expect(await door.text()).toContain('data-door-saved');
+    for (const path of ['/b/sw.js', '/b/save.js']) {
+      const res = await get(path);
+      expect(res.status).toBe(200);
+      expect(res.headers.get('content-type')).toContain('javascript');
+    }
+    const save = await (await get('/b/save.js')).text();
+    expect(save).toContain("createPolicy('passbook-save'");
+    expect(save).toContain("'/b/sw.js'");
+    expect(save).not.toContain("'/p/sw.js'");
+    expect(await (await get('/b/sw.js')).text()).toContain('barcode:');
+    // The saved page's relative back link lands on the member page.
+    const back = await get(`/b/${token}/${id}/`);
+    expect(back.status).toBe(308);
+    expect(back.headers.get('location')).toBe(`/b/${token}/${id}`);
+    expect(door.headers.get('content-security-policy')).toContain('passbook-save');
+  });
+
+  it('serves a member barcode page under the bundle token', async () => {
     const { passes, token } = await bundleWith(2);
     const res = await get(`/b/${token}/${passes[0]?.id}/barcode`);
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('<svg');
-    expect(html).not.toContain('data-offline');
-    expect(html).not.toMatch(/<script\b/);
-    expect(html).toContain(`href="/b/${token}"`);
+    // The saved copy keeps no token: its way back is relative, and /b/:token/:passId/ redirects.
+    expect(html).toContain('href="./"');
+    expect(html).toContain('data-door-saved');
     expect(res.headers.get('cache-control')).toContain('no-store');
     // A pass outside the bundle and a rotated token are 404 pages.
     const other = await makePass();
@@ -232,6 +316,17 @@ describe('rate limit', () => {
     expect((await hit('2.2.2.2')).status).toBe(200);
     for (let i = 0; i < 5; i++) await get(`/b/${token}/${passes[0]?.id}/assets/icon.png`, {}, env);
     expect((await get(`/b/${token}`, { 'cf-connecting-ip': '3.3.3.3' }, env)).status).toBe(200);
+  });
+
+  it('counts the archive once and a member page once', async () => {
+    const { token, passes } = await bundleWith(1);
+    const env = { ...kit.env, RL_PUBLIC: fakeLimiter(1) as unknown as RateLimit };
+    const ip = { 'cf-connecting-ip': '4.4.4.4' };
+    expect((await get(`/b/${token}/passes.pkpasses`, ip, env)).status).toBe(200);
+    expect((await get(`/b/${token}/passes.pkpasses`, ip, env)).status).toBe(429);
+    const member = { 'cf-connecting-ip': '5.5.5.5' };
+    expect((await get(`/b/${token}/${passes[0]?.id}`, member, env)).status).toBe(200);
+    expect((await get(`/b/${token}/${passes[0]?.id}`, member, env)).status).toBe(429);
   });
 });
 

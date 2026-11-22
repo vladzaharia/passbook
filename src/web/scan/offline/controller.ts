@@ -53,6 +53,9 @@ async function hashesOf(code: string): Promise<string[]> {
   return Promise.all(forms.map(rosterHash));
 }
 
+/** How long an online request waits for the queue to be sent. */
+const SYNC_WAIT_MS = 30_000;
+
 export function createOfflineController(d: OfflineDeps) {
   const dayOf = (t: number) => todayKey(d.timeZone(), t);
   let timer: unknown = null;
@@ -74,21 +77,28 @@ export function createOfflineController(d: OfflineDeps) {
   }
 
   /** One pass: top up the list, then send what is queued. A failure backs the next pass off. */
-  async function cycle() {
-    if (running || stopped) return;
+  let current: Promise<void> | null = null;
+  function cycle(): Promise<void> {
+    if (running || stopped) return current ?? Promise.resolve();
+    current = run();
+    return current;
+  }
+  async function run() {
     running = true;
     try {
       if (d.online()) {
         const now = d.clock.now();
-        if (d.mode === 'list' && now - refreshedAt >= REFRESH_MS) {
-          await d.roster.refresh(d.api, now, d.scope(), dayOf);
-          refreshedAt = now;
-        }
+        // The queue goes first: the server dates a read no earlier than the last list it served, so a
+        // refresh before the send would make every read queued on the old list late.
         if ((await d.queue.all()).length > 0) {
           await publish(true);
           const result = await syncQueue(d.api, d.queue, await d.roster.meta());
           conflicts += result.conflicts;
           if (result.conflicts > 0) await d.meta.set(CONFLICTS, conflicts);
+        }
+        if (d.mode === 'list' && now - refreshedAt >= REFRESH_MS) {
+          await d.roster.refresh(d.api, now, d.scope(), dayOf);
+          refreshedAt = now;
         }
       }
       failures = 0;
@@ -166,6 +176,17 @@ export function createOfflineController(d: OfflineDeps) {
     /** The queue as the shift sheet lists it. */
     async queueRows(): Promise<QueueView[]> {
       return queueView(await d.queue.all());
+    },
+    /**
+     * Send what is queued before an online request, waiting for it (30 s at most). A failed sync, no
+     * connection or an empty queue returns at once: the request goes on.
+     */
+    async syncNow() {
+      if (stopped || !d.online() || (await d.queue.all()).length === 0) return;
+      await Promise.race([
+        cycle(),
+        new Promise<void>((resolve) => setTimeout(resolve, SYNC_WAIT_MS)),
+      ]);
     },
     /** Sync now: the button, `online` and a return to the page. */
     kick() {

@@ -1,8 +1,5 @@
-import {
-  type CreatedDeveloperSandbox,
-  type DeveloperSandbox,
-  MINTABLE_SCOPES,
-} from '../../../shared/contracts/index.ts';
+import { SANDBOX_KEY_SCOPES } from '../../../shared/contracts/developer-home.ts';
+import type { CreatedDeveloperSandbox, DeveloperSandbox } from '../../../shared/contracts/index.ts';
 import {
   SANDBOX_EXISTS_COPY,
   SANDBOX_KEY_NAME,
@@ -40,10 +37,7 @@ const QUICKSTART_BLUEPRINT = 'baked:starter-event-ticket';
 const KEY_TTL_MS = 30 * 86_400_000;
 
 /** A key a sandbox holds can reach everything a test org can, except minting keys, the terminal scope and the live-only scanning setup scope. */
-const KEY_SCOPES = MINTABLE_SCOPES.filter(
-  (s) =>
-    !isPlatformScope(s) && s !== 'api-keys:write' && s !== 'scans:write' && s !== 'scanning:admin',
-);
+const KEY_SCOPES = SANDBOX_KEY_SCOPES.filter((s) => !isPlatformScope(s));
 
 const dto = (row: SandboxRow, templateId: string | null): DeveloperSandbox => ({
   id: row.id,

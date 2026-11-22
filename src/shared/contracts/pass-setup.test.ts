@@ -110,7 +110,7 @@ describe('staged brand assets', () => {
       false,
     );
     expect(BrandAssetSlotSchema.options).toEqual(['logo', 'icon', 'webLogo']);
-    const staged = { slot: 'logo', sha: SHA, w: 480, h: 150, expiresAt: NOW };
+    const staged = { slot: 'logo', sha: SHA, version: SHA, w: 480, h: 150, expiresAt: NOW };
     expect(StagedBrandAssetSchema.parse(staged)).toEqual(staged);
   });
 });

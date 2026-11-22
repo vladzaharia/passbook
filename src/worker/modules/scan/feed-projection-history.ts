@@ -78,6 +78,7 @@ export function projectScanRecord(
     override: row.override,
     offline: row.offline,
     unverified: row.unverified,
+    late: row.late,
     actor: { type: row.actorType === 'user' ? 'user' : 'scanner', id: row.actorId },
     undoneAt: row.undoneAt,
     undoneBy: verified ? row.undoneBy : null,

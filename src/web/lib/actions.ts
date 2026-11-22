@@ -35,6 +35,7 @@ import { AUTH_ACTIONS } from './actions-auth.ts';
 import { BROADCAST_RUN_ACTIONS } from './actions-broadcast.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
+import { SCAN_PIN_ACTIONS } from './actions-scan-pin.ts';
 import { TEMPLATE_VERSION_ACTIONS } from './actions-template-version.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
@@ -111,6 +112,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'org.entitlements_update': a('Organization features changed', SlidersHorizontal, 'info'),
   'org.export': a('Organization export started', I.download, 'info'),
   'org.export_link': a('Organization export link made', I.download, 'info'),
+  'org.pass_setup_update': a('Brand and channels updated', I.edit, 'info'),
   'org.purge': a('Organization data removed', I.delete, 'danger'),
   'org.reactivate': a('Organization reactivated', Play, 'success'),
   'org.reopen': a('Organization reopened', Play, 'success'),
@@ -207,8 +209,6 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'scan.override': a('Let in by the desk', ShieldAlert, 'info'),
   'scan.overrides_capped': a('Overrides paused after 120 in an hour', ShieldAlert, 'warning'),
   'scan.misses_capped': a('Scanner paused after misses', ShieldAlert, 'warning'),
-  'scan_staff.pin_locked': a('PIN locked after 5 tries', Lock, 'warning'),
-  'scanner.pin_flood': a('Scanner PINs locked after 20 tries', Lock, 'warning'),
   'sandbox.send_to_me': a('Test email sent to admin', I.sendEmail, 'info'),
   'session.revoke': a('Session revoked', I.signOut, 'warning'),
   'settings.update': a('Settings updated', Settings, 'info'),
@@ -272,6 +272,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'template.rollback': a('Template rolled back', I.restore, 'warning'),
   'template.upload': a('Template uploaded', ENTITY.template.icon, 'success'),
   ...AUTH_ACTIONS,
+  ...SCAN_PIN_ACTIONS,
   ...BROADCAST_RUN_ACTIONS,
   'bundle.create': a('Bundle created', ENTITY.bundle.icon, 'success'),
   'bundle.delete': a('Bundle deleted', I.delete, 'danger'),

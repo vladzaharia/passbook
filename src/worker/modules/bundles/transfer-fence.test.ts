@@ -151,8 +151,9 @@ describe('bundle credential transfer fences', () => {
     const page = await get(`/b/${token}`);
     expect(page.status).toBe(200);
     const html = await page.text();
-    expect(html).toContain(`/b/${token}/${other.id}/pass.pkpass`);
-    expect(html).not.toContain(`/b/${token}/${pass.id}/pass.pkpass`);
+    expect(html).not.toContain(`/b/${token}/${pass.id}`);
+    expect((await get(`/b/${token}/${other.id}`)).status).toBe(200);
+    expect((await get(`/b/${token}/${pass.id}`)).status).toBe(404);
     await expectProblem(await get(`/b/${token}/${pass.id}/pass.pkpass`), 404, 'LINK_NOT_FOUND');
     await expectProblem(await get(`/b/${token}/${pass.id}/assets/icon.png`), 404, 'LINK_NOT_FOUND');
     expect((await get(`/b/${token}/${other.id}/pass.pkpass`)).status).toBe(200);
@@ -204,8 +205,8 @@ describe('bundle credential transfer fences', () => {
     await expectProblem(await get(`/b/${token}/${pass.id}/assets/icon.png`), 404, 'LINK_NOT_FOUND');
     expect((await get(`/b/${token}/${other.id}/pass.pkpass`)).status).toBe(200);
     const oldPage = await (await get(`/b/${token}`)).text();
-    expect(oldPage).toContain(`/b/${token}/${other.id}/pass.pkpass`);
-    expect(oldPage).not.toContain(`/b/${token}/${pass.id}/pass.pkpass`);
+    expect((await get(`/b/${token}/${other.id}`)).status).toBe(200);
+    expect(oldPage).not.toContain(`/b/${token}/${pass.id}`);
     const oldArchive = await get(`/b/${token}/passes.pkpasses`);
     expect(expectValidZip(new Uint8Array(await oldArchive.arrayBuffer()))).toEqual([
       `${other.id}.pkpass`,

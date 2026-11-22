@@ -33,6 +33,8 @@ import {
 } from './modules/org-lifecycle/routes.ts';
 import { brandAssetRoutes } from './modules/orgs/brand-assets.ts';
 import { brandRoutes } from './modules/orgs/brand-routes.ts';
+import { passSetupRoutes } from './modules/orgs/pass-setup-routes.ts';
+import { passSetupWriteRoutes } from './modules/orgs/pass-setup-write-routes.ts';
 import { orgsRoutes } from './modules/orgs/routes.ts';
 import {
   orgEntitlementsRoutes,
@@ -161,6 +163,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/api/v1/developer', developerRoutes);
   // Ahead of orgsRoutes, whose session-only guard would turn a key away from the read.
   app.route('/api/v1/orgs', orgEntitlementsRoutes);
+  app.route('/api/v1/orgs', passSetupRoutes);
+  app.route('/api/v1/orgs', passSetupWriteRoutes);
   app.route('/api/v1/orgs', orgsRoutes);
   app.route('/api/v1/brand', brandRoutes);
   app.route('/api/v1/orgs', walletCredentialRoutes);

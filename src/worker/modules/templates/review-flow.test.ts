@@ -226,6 +226,20 @@ const inbox = async (org: OrgRow, by: Actor) => {
   return TemplateReviewListSchema.parse(await res.json()).items;
 };
 
+const approvals = (templateId: string) =>
+  all<{ id: string }>(
+    env.DB,
+    `SELECT a.id FROM template_approvals a JOIN template_candidates c ON c.id = a.candidate_id
+     WHERE c.template_id = ?`,
+    [templateId],
+  );
+const heads = (templateId: string) =>
+  all<{ mode: string; version: string; generation: number }>(
+    env.DB,
+    'SELECT mode, version, generation FROM template_releases WHERE template_id = ? ORDER BY mode',
+    [templateId],
+  );
+
 const emailOf = async (userId: string) =>
   (
     await all<{ e: string }>(env.DB, 'SELECT primary_email AS e FROM users WHERE id = ?', [userId])
@@ -248,6 +262,17 @@ describe('review requests', () => {
       [t.templateId],
     );
     expect(audited).toHaveLength(1);
+    // A repeated request creates nothing, so it mails nobody and writes no second audit row.
+    mail.length = 0;
+    await send(`/${t.templateId}/review-requests`, { orgId: org.id, version: t.version }, owner);
+    expect(mail).toEqual([]);
+    expect(
+      await all(
+        env.DB,
+        "SELECT 1 FROM audit_log WHERE target_id = ? AND action = 'template.review_requested'",
+        [t.templateId],
+      ),
+    ).toHaveLength(1);
     expect(await inbox(org, reviewer)).toEqual([
       expect.objectContaining({ templateId: t.templateId, version: t.version, orgId: org.id }),
     ]);
@@ -333,14 +358,97 @@ describe('review', () => {
       await send(`/${t.templateId}/review`, body, await key(org.id, reviewer.userId)),
     );
     expect(result.approved).toEqual(['test']);
-    // release:true under a key checks the publish step's own scope, not the review one.
-    const again = await send(
-      `/${t.templateId}/review`,
-      { ...body, release: true },
-      await key(org.id, reviewer.userId),
-    );
-    expect([200, 403]).toContain(again.status);
-    expect((await again.clone().text()).includes('You do not have access')).toBe(false);
     expect(await inbox(org, reviewer)).toHaveLength(1);
+  });
+
+  it('releases with release:true when the key also holds publish, and refuses it before approving when not', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const reviewer = await member(org.id, ['template_reviewer', 'template_publisher']);
+    const t = await uploaded('Key Release Flow', org, owner);
+    await request(t.templateId, org, t.version, owner);
+    const body = { version: t.version, release: true };
+    await expectProblem(
+      await send(
+        `/${t.templateId}/review`,
+        body,
+        await key(org.id, reviewer.userId, 'test', ['templates:publish']),
+      ),
+      403,
+      'MISSING_SCOPE',
+    );
+    expect(await approvals(t.templateId)).toEqual([]);
+    const result = await ok(
+      await send(`/${t.templateId}/review`, body, await key(org.id, reviewer.userId)),
+    );
+    expect(result.approved).toEqual(['test']);
+    expect(result.release?.modes.test).toMatchObject({ outcome: 'released', approvalKind: 'peer' });
+    expect(await heads(t.templateId)).toEqual([
+      { mode: 'test', version: t.version, generation: 1 },
+    ]);
+  });
+
+  it('refuses release:true for a key without write scope before approving', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const reviewer = await member(org.id, ['template_reviewer', 'template_publisher']);
+    const t = await uploaded('No Write Flow', org, owner);
+    await request(t.templateId, org, t.version, owner);
+    await expectProblem(
+      await send(
+        `/${t.templateId}/review`,
+        { version: t.version, release: true },
+        await key(org.id, reviewer.userId, 'test', ['templates:write']),
+      ),
+      403,
+      'MISSING_SCOPE',
+    );
+    expect(await approvals(t.templateId)).toEqual([]);
+  });
+
+  it('audits only what the caller approved and refuses a replaced version', async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const reviewer = await member(org.id, ['template_reviewer']);
+    const t = await uploaded('Replaced Flow', org, owner);
+    await request(t.templateId, org, t.version, owner);
+    await ok(
+      await send(`/${t.templateId}/review`, { orgId: org.id, version: t.version }, reviewer),
+    );
+    // The author reviews after a peer did: nothing new is approved or audited as a review.
+    const again = await ok(
+      await send(`/${t.templateId}/review`, { orgId: org.id, version: t.version }, owner),
+    );
+    expect(again.approved).toEqual([]);
+    const reviews = await all(
+      env.DB,
+      "SELECT 1 FROM audit_log WHERE target_id = ? AND action = 'template.review'",
+      [t.templateId],
+    );
+    expect(reviews).toHaveLength(1);
+
+    await run(
+      env.DB,
+      `INSERT INTO template_versions (template_id, version, manifest, pass_json, assets, report, created_by, created_at)
+       SELECT template_id, 'newer', manifest, pass_json, assets, report, created_by, created_at + 1000
+       FROM template_versions WHERE template_id = ? AND version = ?`,
+      [t.templateId, t.version],
+    );
+    await request(t.templateId, org, 'newer', owner);
+    await expectProblem(
+      await send(`/${t.templateId}/review`, { orgId: org.id, version: t.version }, reviewer),
+      409,
+      'TEMPLATE_REVIEW_SUPERSEDED',
+    );
+  });
+
+  it("keeps a key's inbox to Test and leaves out its creator's own work", async () => {
+    const org = await makeOrg(f);
+    const owner = await member(org.id, ['org_admin']);
+    const reviewer = await member(org.id, ['template_reviewer']);
+    const t = await uploaded('Key Inbox Flow', org, owner);
+    await request(t.templateId, org, t.version, owner);
+    expect(await inbox(org, await key(org.id, owner.userId))).toEqual([]);
+    expect(await inbox(org, await key(org.id, reviewer.userId))).toHaveLength(1);
   });
 });

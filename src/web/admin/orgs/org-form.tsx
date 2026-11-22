@@ -22,64 +22,31 @@ import {
   useUnsavedChangesGuard,
 } from '@/web/ui/index.ts';
 import { useIdentityOptions } from '../wallet-accounts/apple/queries.ts';
-import { HEX } from './branding.ts';
-import { ColorField } from './color-field.tsx';
-import { PassBrandingCard, type PassColorsDraft } from './pass-branding.tsx';
-import { passUpdateText, useRefreshOrgs, useUpdateOrg } from './queries.ts';
+import { useRefreshOrgs, useUpdateOrg } from './queries.ts';
 
 type Org = z.infer<typeof OrgSummarySchema>;
 
 const DEFAULT_IDENTITY = 'default';
-const DEFAULT_ACCENT = '#0f766e';
 
-export interface OrgDraft extends PassColorsDraft {
+export interface OrgDraft {
   name: string;
   identity: string;
-  accent: string;
 }
 
 export function orgToDraft(org: Org): OrgDraft {
-  const colors = org.branding.passColors;
-  return {
-    name: org.name,
-    identity: org.defaultIdentityId ?? DEFAULT_IDENTITY,
-    accent: org.branding.accent ?? '',
-    background: colors?.background ?? '',
-    foreground: colors?.foreground ?? '',
-    label: colors?.label ?? '',
-    logoHasName: org.branding.logoHasName ?? false,
-  };
+  return { name: org.name, identity: org.defaultIdentityId ?? DEFAULT_IDENTITY };
 }
-
-const COLOR_ERROR = 'Use a 6-digit hex like #0f766e.';
 
 export function validateOrg(d: OrgDraft): Record<string, string> {
-  const errors: Record<string, string> = {};
-  if (!d.name.trim()) errors.name = 'Required.';
-  if (d.accent && !HEX.test(d.accent)) errors.accent = COLOR_ERROR;
-  const colors = [d.background, d.foreground, d.label];
-  // Pass colours go together: all three or none.
-  if (colors.some(Boolean))
-    for (const key of ['background', 'foreground', 'label'] as const)
-      if (!HEX.test(d[key])) errors[key] = d[key] ? COLOR_ERROR : 'Set all three colours.';
-  return errors;
+  return d.name.trim() ? {} : { name: 'Required.' };
 }
 
-/** Support contacts and images are kept from the stored branding. */
+/** The name and the signing identity; brand lives on Brand and channels. */
 export function orgPatch(d: OrgDraft, org: Org) {
-  const { accent: _a, passColors: _p, logoHasName: _l, ...kept } = org.branding;
   return {
     name: d.name.trim(),
     defaultIdentityId: d.identity === DEFAULT_IDENTITY ? null : d.identity,
     ...(org.configRevision === undefined ? {} : { configRevision: org.configRevision }),
-    branding: {
-      ...kept,
-      ...(d.accent ? { accent: d.accent } : {}),
-      ...(d.background
-        ? { passColors: { background: d.background, foreground: d.foreground, label: d.label } }
-        : {}),
-      ...(d.logoHasName ? { logoHasName: true } : {}),
-    },
   };
 }
 
@@ -122,7 +89,7 @@ export function OrgForm({ org, canChooseIdentity }: { org: Org; canChooseIdentit
     try {
       const body = orgPatch(draft, org);
       const { defaultIdentityId: _identity, ...tenantBody } = body;
-      const result = await update.mutateAsync(canChooseIdentity ? body : tenantBody);
+      await update.mutateAsync(canChooseIdentity ? body : tenantBody);
       setEdits((current) => {
         const remaining = { ...current };
         for (const key of Object.keys(current) as (keyof OrgDraft)[]) {
@@ -130,7 +97,7 @@ export function OrgForm({ org, canChooseIdentity }: { org: Org; canChooseIdentit
         }
         return remaining;
       });
-      saved('Organization saved', passUpdateText(result.passesToUpdate));
+      saved('Organization saved');
       return 'saved';
     } catch (cause) {
       if (handleStaleSave(cause, refresh)) return 'refused';
@@ -143,7 +110,6 @@ export function OrgForm({ org, canChooseIdentity }: { org: Org; canChooseIdentit
     }
   }
 
-  // Both cards are one form: Save checks the pass colours too and focuses the first error.
   return (
     <Form id={FORM_ID} className="flex flex-col gap-6" {...check.form} onValid={save}>
       <Card>
@@ -204,19 +170,10 @@ export function OrgForm({ org, canChooseIdentity }: { org: Org; canChooseIdentit
                   )}
                 </FormField>
               ) : null}
-              <ColorField
-                label="Accent colour"
-                value={draft.accent}
-                fallback={DEFAULT_ACCENT}
-                empty="Teal"
-                error={errors.accent}
-                onChange={(accent) => patch({ accent })}
-              />
             </FormGrid>
           </div>
         </CardBody>
       </Card>
-      <PassBrandingCard org={org} draft={draft} errors={errors} onChange={patch} />
       <SaveBar
         dirty={dirty}
         saving={update.isPending}

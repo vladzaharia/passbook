@@ -258,6 +258,46 @@ describe('/p renders the portal HolderPassView', () => {
     },
   );
 
+  describe('save to this phone', () => {
+    const TOKEN = 'abcdefghijklmnop0123';
+    const android = {
+      device: { device: 'android', inApp: false },
+      barcodeHref: `/p/${TOKEN}/barcode`,
+      publicUrl: `https://wallet.test/p/${TOKEN}`,
+    } as const;
+
+    it('marks the page for the shared script, which is the only script it adds', () => {
+      const html = page(android);
+      expect(html).toContain(`data-save-phone="/p/${TOKEN}/barcode"`);
+      expect(html).toContain('<script src="/p/save.js" defer></script>');
+      expect(html).toContain('data-save-do');
+      expect(html).toContain('data-save-drop');
+      expect(html).toContain('<dialog');
+      expect(html).toContain(HOLDER_COPY.homeScreenTitle);
+      // The lead stays a link to the door view without script, and the saved face offers the door.
+      expect(html).toMatch(/<a class="wl-hero-action" href="\/p\/\w+\/barcode" data-save-do/);
+      expect(html).toContain(HOLDER_COPY.showAtDoor);
+      expect(html.replace(/<style[\s\S]*?<\/style>/g, '')).not.toMatch(/<script nonce/);
+    });
+
+    it('is absent where nothing can be saved: Apple devices, no door view, a foreign path', () => {
+      expect(page({ ...android, device: { device: 'iphone', inApp: false } })).not.toContain(
+        'data-save-phone',
+      );
+      expect(page({ ...android, barcodeHref: undefined })).not.toContain('data-save-phone');
+      expect(page({ ...android, publicUrl: 'https://wallet.test/x/y' })).not.toContain(
+        'data-save-phone',
+      );
+    });
+
+    it('marks an ended pass so the page drops any saved copy', () => {
+      const html = page({ ...android, voided: true });
+      expect(html).toContain(`data-save-ended="/p/${TOKEN}/barcode"`);
+      expect(html).not.toContain('data-save-phone');
+      expect(html).not.toContain('<dialog');
+    });
+  });
+
   it('words the link preview the same on every device', () => {
     for (const device of ['iphone', 'android', 'other'] as const) {
       expect(page({ device: { device, inApp: false } })).toContain(

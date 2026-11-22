@@ -2586,6 +2586,18 @@ type OrgsEntitlementsRetrieveResultItemsItem struct {
 	Source string `json:"source"`
 }
 
+type OrgsRetrievePassSetupResult = PassSetup
+
+type OrgsStageBrandAssetBody = OrgsStageBrandAssetParams
+
+type OrgsStageBrandAssetParams struct {
+	Slot string  `json:"slot"`
+	PNG  string  `json:"png"`
+	X2   *string `json:"x2,omitempty"`
+}
+
+type OrgsStageBrandAssetResult = StagedBrandAsset
+
 type OrgsUpdateParams struct {
 	Slug              *string      `json:"slug,omitempty"`
 	Name              *string      `json:"name,omitempty"`
@@ -2594,6 +2606,53 @@ type OrgsUpdateParams struct {
 	Status            *string      `json:"status,omitempty"`
 	ConfigRevision    *int64       `json:"configRevision,omitempty"`
 }
+
+type OrgsUpdatePassSetupBody = OrgsUpdatePassSetupParams
+
+type OrgsUpdatePassSetupParams struct {
+	ExpectedRevision string                             `json:"expectedRevision"`
+	Brand            *OrgsUpdatePassSetupParamsBrand    `json:"brand,omitempty"`
+	Channels         *OrgsUpdatePassSetupParamsChannels `json:"channels,omitempty"`
+}
+
+type OrgsUpdatePassSetupParamsBrand struct {
+	Name              *string                                `json:"name,omitempty"`
+	Logo              map[string]any                         `json:"logo,omitempty"`
+	Icon              map[string]any                         `json:"icon,omitempty"`
+	WebLogo           map[string]any                         `json:"webLogo,omitempty"`
+	WebLogoSameAsLogo *bool                                  `json:"webLogoSameAsLogo,omitempty"`
+	PassColors        map[string]any                         `json:"passColors,omitempty"`
+	LogoHasName       *bool                                  `json:"logoHasName,omitempty"`
+	Accent            *string                                `json:"accent,omitempty"`
+	Mark              *string                                `json:"mark,omitempty"`
+	Support           *OrgsUpdatePassSetupParamsBrandSupport `json:"support,omitempty"`
+	Email             *OrgsUpdatePassSetupParamsBrandEmail   `json:"email,omitempty"`
+}
+
+type OrgsUpdatePassSetupParamsBrandEmail struct {
+	FromName *string `json:"fromName,omitempty"`
+	Buddy    *bool   `json:"buddy,omitempty"`
+}
+
+type OrgsUpdatePassSetupParamsBrandSupport struct {
+	Email *string `json:"email,omitempty"`
+	URL   *string `json:"url,omitempty"`
+}
+
+type OrgsUpdatePassSetupParamsChannels struct {
+	Mobile  *string `json:"mobile,omitempty"`
+	Apple   *string `json:"apple,omitempty"`
+	Google  *string `json:"google,omitempty"`
+	Samsung *string `json:"samsung,omitempty"`
+	Paper   *string `json:"paper,omitempty"`
+	NFC     *string `json:"nfc,omitempty"`
+}
+
+type OrgsUpdatePassSetupQuery struct {
+	DryRun *string `json:"dryRun,omitempty"`
+}
+
+type OrgsUpdatePassSetupResult = PassSetupResult
 
 type PassChannelsChangedEvent struct {
 	ID         string                       `json:"id"`
@@ -3647,6 +3706,518 @@ type PassScannedEventData struct {
 	Override  *bool    `json:"override,omitempty"`
 	Offline   *bool    `json:"offline,omitempty"`
 	Amount    *float64 `json:"amount,omitempty"`
+}
+
+type PassSetup struct {
+	OrgID     string                   `json:"orgId"`
+	Mode      string                   `json:"mode"`
+	Revision  string                   `json:"revision"`
+	PassCount int64                    `json:"passCount"`
+	Brand     PassSetupBrand           `json:"brand"`
+	Channels  PassSetupChannels        `json:"channels"`
+	Apple     PassSetupApple           `json:"apple"`
+	Templates []PassSetupTemplatesItem `json:"templates"`
+	Checks    []PassSetupChecksItem    `json:"checks"`
+}
+
+type PassSetupApple struct {
+	Identity         map[string]any `json:"identity"`
+	SharedIdentifier string         `json:"sharedIdentifier"`
+	Push             string         `json:"push"`
+	Run              map[string]any `json:"run"`
+	ManagedAllowed   bool           `json:"managedAllowed"`
+	PassesOnShared   int64          `json:"passesOnShared"`
+}
+
+type PassSetupBrand struct {
+	Name        PassSetupBrandName        `json:"name"`
+	Logo        PassSetupBrandLogo        `json:"logo"`
+	Icon        PassSetupBrandIcon        `json:"icon"`
+	WebLogo     PassSetupBrandWebLogo     `json:"webLogo"`
+	PassColors  PassSetupBrandPassColors  `json:"passColors"`
+	LogoHasName PassSetupBrandLogoHasName `json:"logoHasName"`
+	Accent      PassSetupBrandAccent      `json:"accent"`
+	Mark        PassSetupBrandMark        `json:"mark"`
+	Support     PassSetupBrandSupport     `json:"support"`
+	Email       PassSetupBrandEmail       `json:"email"`
+}
+
+type PassSetupBrandAccent struct {
+	Value  *string `json:"value"`
+	Source string  `json:"source"`
+}
+
+type PassSetupBrandEmail struct {
+	FromName PassSetupBrandEmailFromName `json:"fromName"`
+	Buddy    bool                        `json:"buddy"`
+}
+
+type PassSetupBrandEmailFromName struct {
+	Value  *string `json:"value"`
+	Source string  `json:"source"`
+}
+
+type PassSetupBrandIcon struct {
+	Value        map[string]any `json:"value"`
+	Source       string         `json:"source"`
+	TemplatesOwn int64          `json:"templatesOwn"`
+}
+
+type PassSetupBrandLogo struct {
+	Value        map[string]any `json:"value"`
+	Source       string         `json:"source"`
+	TemplatesOwn int64          `json:"templatesOwn"`
+}
+
+type PassSetupBrandLogoHasName struct {
+	Value  *bool  `json:"value"`
+	Source string `json:"source"`
+}
+
+type PassSetupBrandMark struct {
+	Chosen    string   `json:"chosen"`
+	Effective string   `json:"effective"`
+	Allowed   []string `json:"allowed"`
+}
+
+type PassSetupBrandName struct {
+	Value  *string `json:"value"`
+	Source string  `json:"source"`
+}
+
+type PassSetupBrandPassColors struct {
+	Value        map[string]any `json:"value"`
+	Source       string         `json:"source"`
+	TemplatesOwn int64          `json:"templatesOwn"`
+}
+
+type PassSetupBrandSupport struct {
+	Email PassSetupBrandSupportEmail `json:"email"`
+	URL   PassSetupBrandSupportUrl   `json:"url"`
+}
+
+type PassSetupBrandSupportEmail struct {
+	Value  *string `json:"value"`
+	Source string  `json:"source"`
+}
+
+type PassSetupBrandSupportUrl struct {
+	Value  *string `json:"value"`
+	Source string  `json:"source"`
+}
+
+type PassSetupBrandWebLogo struct {
+	Value      map[string]any `json:"value"`
+	Source     string         `json:"source"`
+	SameAsLogo bool           `json:"sameAsLogo"`
+}
+
+type PassSetupChannels struct {
+	Mobile  *PassSetupChannelsMobile  `json:"mobile,omitempty"`
+	Apple   *PassSetupChannelsApple   `json:"apple,omitempty"`
+	Google  *PassSetupChannelsGoogle  `json:"google,omitempty"`
+	Samsung *PassSetupChannelsSamsung `json:"samsung,omitempty"`
+	Paper   *PassSetupChannelsPaper   `json:"paper,omitempty"`
+	NFC     *PassSetupChannelsNfc     `json:"nfc,omitempty"`
+}
+
+type PassSetupChannelsApple struct {
+	On        bool                               `json:"on"`
+	Allowed   bool                               `json:"allowed"`
+	Levels    []PassSetupChannelsAppleLevelsItem `json:"levels"`
+	Templates PassSetupChannelsAppleTemplates    `json:"templates"`
+	Account   *PassSetupChannelsAppleAccount     `json:"account,omitempty"`
+}
+
+type PassSetupChannelsAppleAccount struct {
+	Mode              string                                     `json:"mode"`
+	Provider          string                                     `json:"provider"`
+	AccountID         *string                                    `json:"accountId"`
+	Source            *string                                    `json:"source"`
+	PlatformAvailable bool                                       `json:"platformAvailable"`
+	State             string                                     `json:"state"`
+	EnrolmentRevision int64                                      `json:"enrolmentRevision"`
+	Prerequisites     PassSetupChannelsAppleAccountPrerequisites `json:"prerequisites"`
+	Hold              map[string]any                             `json:"hold"`
+	Issuance          any                                        `json:"issuance"`
+}
+
+type PassSetupChannelsAppleAccountIssuance1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PassSetupChannelsAppleAccountIssuance2 struct {
+	State string `json:"state"`
+}
+
+type PassSetupChannelsAppleAccountPrerequisites struct {
+	Check     bool  `json:"check"`
+	RoundTrip *bool `json:"roundTrip"`
+}
+
+type PassSetupChannelsAppleLevelsItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassSetupChannelsAppleTemplates struct {
+	On    int64 `json:"on"`
+	Off   int64 `json:"off"`
+	Never int64 `json:"never"`
+	Total int64 `json:"total"`
+}
+
+type PassSetupChannelsGoogle struct {
+	On        bool                                `json:"on"`
+	Allowed   bool                                `json:"allowed"`
+	Levels    []PassSetupChannelsGoogleLevelsItem `json:"levels"`
+	Templates PassSetupChannelsGoogleTemplates    `json:"templates"`
+	Account   *PassSetupChannelsGoogleAccount     `json:"account,omitempty"`
+}
+
+type PassSetupChannelsGoogleAccount struct {
+	Mode              string                                      `json:"mode"`
+	Provider          string                                      `json:"provider"`
+	AccountID         *string                                     `json:"accountId"`
+	Source            *string                                     `json:"source"`
+	PlatformAvailable bool                                        `json:"platformAvailable"`
+	State             string                                      `json:"state"`
+	EnrolmentRevision int64                                       `json:"enrolmentRevision"`
+	Prerequisites     PassSetupChannelsGoogleAccountPrerequisites `json:"prerequisites"`
+	Hold              map[string]any                              `json:"hold"`
+	Issuance          any                                         `json:"issuance"`
+}
+
+type PassSetupChannelsGoogleAccountIssuance1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PassSetupChannelsGoogleAccountIssuance2 struct {
+	State string `json:"state"`
+}
+
+type PassSetupChannelsGoogleAccountPrerequisites struct {
+	Check     bool  `json:"check"`
+	RoundTrip *bool `json:"roundTrip"`
+}
+
+type PassSetupChannelsGoogleLevelsItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassSetupChannelsGoogleTemplates struct {
+	On    int64 `json:"on"`
+	Off   int64 `json:"off"`
+	Never int64 `json:"never"`
+	Total int64 `json:"total"`
+}
+
+type PassSetupChannelsMobile struct {
+	On        bool                                `json:"on"`
+	Allowed   bool                                `json:"allowed"`
+	Levels    []PassSetupChannelsMobileLevelsItem `json:"levels"`
+	Templates PassSetupChannelsMobileTemplates    `json:"templates"`
+	Account   *PassSetupChannelsMobileAccount     `json:"account,omitempty"`
+}
+
+type PassSetupChannelsMobileAccount struct {
+	Mode              string                                      `json:"mode"`
+	Provider          string                                      `json:"provider"`
+	AccountID         *string                                     `json:"accountId"`
+	Source            *string                                     `json:"source"`
+	PlatformAvailable bool                                        `json:"platformAvailable"`
+	State             string                                      `json:"state"`
+	EnrolmentRevision int64                                       `json:"enrolmentRevision"`
+	Prerequisites     PassSetupChannelsMobileAccountPrerequisites `json:"prerequisites"`
+	Hold              map[string]any                              `json:"hold"`
+	Issuance          any                                         `json:"issuance"`
+}
+
+type PassSetupChannelsMobileAccountIssuance1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PassSetupChannelsMobileAccountIssuance2 struct {
+	State string `json:"state"`
+}
+
+type PassSetupChannelsMobileAccountPrerequisites struct {
+	Check     bool  `json:"check"`
+	RoundTrip *bool `json:"roundTrip"`
+}
+
+type PassSetupChannelsMobileLevelsItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassSetupChannelsMobileTemplates struct {
+	On    int64 `json:"on"`
+	Off   int64 `json:"off"`
+	Never int64 `json:"never"`
+	Total int64 `json:"total"`
+}
+
+type PassSetupChannelsNfc struct {
+	On        bool                             `json:"on"`
+	Allowed   bool                             `json:"allowed"`
+	Levels    []PassSetupChannelsNfcLevelsItem `json:"levels"`
+	Templates PassSetupChannelsNfcTemplates    `json:"templates"`
+	Account   *PassSetupChannelsNfcAccount     `json:"account,omitempty"`
+}
+
+type PassSetupChannelsNfcAccount struct {
+	Mode              string                                   `json:"mode"`
+	Provider          string                                   `json:"provider"`
+	AccountID         *string                                  `json:"accountId"`
+	Source            *string                                  `json:"source"`
+	PlatformAvailable bool                                     `json:"platformAvailable"`
+	State             string                                   `json:"state"`
+	EnrolmentRevision int64                                    `json:"enrolmentRevision"`
+	Prerequisites     PassSetupChannelsNfcAccountPrerequisites `json:"prerequisites"`
+	Hold              map[string]any                           `json:"hold"`
+	Issuance          any                                      `json:"issuance"`
+}
+
+type PassSetupChannelsNfcAccountIssuance1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PassSetupChannelsNfcAccountIssuance2 struct {
+	State string `json:"state"`
+}
+
+type PassSetupChannelsNfcAccountPrerequisites struct {
+	Check     bool  `json:"check"`
+	RoundTrip *bool `json:"roundTrip"`
+}
+
+type PassSetupChannelsNfcLevelsItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassSetupChannelsNfcTemplates struct {
+	On    int64 `json:"on"`
+	Off   int64 `json:"off"`
+	Never int64 `json:"never"`
+	Total int64 `json:"total"`
+}
+
+type PassSetupChannelsPaper struct {
+	On        bool                               `json:"on"`
+	Allowed   bool                               `json:"allowed"`
+	Levels    []PassSetupChannelsPaperLevelsItem `json:"levels"`
+	Templates PassSetupChannelsPaperTemplates    `json:"templates"`
+	Account   *PassSetupChannelsPaperAccount     `json:"account,omitempty"`
+}
+
+type PassSetupChannelsPaperAccount struct {
+	Mode              string                                     `json:"mode"`
+	Provider          string                                     `json:"provider"`
+	AccountID         *string                                    `json:"accountId"`
+	Source            *string                                    `json:"source"`
+	PlatformAvailable bool                                       `json:"platformAvailable"`
+	State             string                                     `json:"state"`
+	EnrolmentRevision int64                                      `json:"enrolmentRevision"`
+	Prerequisites     PassSetupChannelsPaperAccountPrerequisites `json:"prerequisites"`
+	Hold              map[string]any                             `json:"hold"`
+	Issuance          any                                        `json:"issuance"`
+}
+
+type PassSetupChannelsPaperAccountIssuance1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PassSetupChannelsPaperAccountIssuance2 struct {
+	State string `json:"state"`
+}
+
+type PassSetupChannelsPaperAccountPrerequisites struct {
+	Check     bool  `json:"check"`
+	RoundTrip *bool `json:"roundTrip"`
+}
+
+type PassSetupChannelsPaperLevelsItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassSetupChannelsPaperTemplates struct {
+	On    int64 `json:"on"`
+	Off   int64 `json:"off"`
+	Never int64 `json:"never"`
+	Total int64 `json:"total"`
+}
+
+type PassSetupChannelsSamsung struct {
+	On        bool                                 `json:"on"`
+	Allowed   bool                                 `json:"allowed"`
+	Levels    []PassSetupChannelsSamsungLevelsItem `json:"levels"`
+	Templates PassSetupChannelsSamsungTemplates    `json:"templates"`
+	Account   *PassSetupChannelsSamsungAccount     `json:"account,omitempty"`
+}
+
+type PassSetupChannelsSamsungAccount struct {
+	Mode              string                                       `json:"mode"`
+	Provider          string                                       `json:"provider"`
+	AccountID         *string                                      `json:"accountId"`
+	Source            *string                                      `json:"source"`
+	PlatformAvailable bool                                         `json:"platformAvailable"`
+	State             string                                       `json:"state"`
+	EnrolmentRevision int64                                        `json:"enrolmentRevision"`
+	Prerequisites     PassSetupChannelsSamsungAccountPrerequisites `json:"prerequisites"`
+	Hold              map[string]any                               `json:"hold"`
+	Issuance          any                                          `json:"issuance"`
+}
+
+type PassSetupChannelsSamsungAccountIssuance1 struct {
+	State  string `json:"state"`
+	Reason string `json:"reason"`
+}
+
+type PassSetupChannelsSamsungAccountIssuance2 struct {
+	State string `json:"state"`
+}
+
+type PassSetupChannelsSamsungAccountPrerequisites struct {
+	Check     bool  `json:"check"`
+	RoundTrip *bool `json:"roundTrip"`
+}
+
+type PassSetupChannelsSamsungLevelsItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassSetupChannelsSamsungTemplates struct {
+	On    int64 `json:"on"`
+	Off   int64 `json:"off"`
+	Never int64 `json:"never"`
+	Total int64 `json:"total"`
+}
+
+type PassSetupChecksItem struct {
+	Code        string                 `json:"code"`
+	Level       string                 `json:"level"`
+	Area        string                 `json:"area"`
+	Message     string                 `json:"message"`
+	Channel     *string                `json:"channel,omitempty"`
+	TemplateIds []string               `json:"templateIds,omitempty"`
+	Fix         PassSetupChecksItemFix `json:"fix"`
+}
+
+type PassSetupChecksItemFix struct {
+	Action string  `json:"action"`
+	Target *string `json:"target,omitempty"`
+}
+
+type PassSetupResult struct {
+	DryRun bool                      `json:"dryRun"`
+	View   PassSetup                 `json:"view"`
+	Diff   []PassSetupResultDiffItem `json:"diff"`
+	Impact PassSetupResultImpact     `json:"impact"`
+}
+
+type PassSetupResultDiffItem struct {
+	Field  string `json:"field"`
+	Before any    `json:"before,omitempty"`
+	After  any    `json:"after,omitempty"`
+}
+
+type PassSetupResultImpact struct {
+	PassesToUpdate int64                                   `json:"passesToUpdate"`
+	ChannelStops   []PassSetupResultImpactChannelStopsItem `json:"channelStops"`
+	Enrolments     []string                                `json:"enrolments"`
+}
+
+type PassSetupResultImpactChannelStopsItem struct {
+	Channel   string `json:"channel"`
+	Templates int64  `json:"templates"`
+	Passes    int64  `json:"passes"`
+}
+
+type PassSetupTemplatesItem struct {
+	ID           string                         `json:"id"`
+	Name         string                         `json:"name"`
+	OwnBrand     []string                       `json:"ownBrand"`
+	Placeholders []string                       `json:"placeholders"`
+	Channels     PassSetupTemplatesItemChannels `json:"channels"`
+}
+
+type PassSetupTemplatesItemChannels struct {
+	Mobile  *PassSetupTemplatesItemChannelsMobile  `json:"mobile,omitempty"`
+	Apple   *PassSetupTemplatesItemChannelsApple   `json:"apple,omitempty"`
+	Google  *PassSetupTemplatesItemChannelsGoogle  `json:"google,omitempty"`
+	Samsung *PassSetupTemplatesItemChannelsSamsung `json:"samsung,omitempty"`
+	Paper   *PassSetupTemplatesItemChannelsPaper   `json:"paper,omitempty"`
+	NFC     *PassSetupTemplatesItemChannelsNfc     `json:"nfc,omitempty"`
+}
+
+type PassSetupTemplatesItemChannelsApple struct {
+	On           bool    `json:"on"`
+	Source       string  `json:"source"`
+	Reason       *string `json:"reason,omitempty"`
+	RetiredAt    *int64  `json:"retiredAt,omitempty"`
+	RetiredCause *string `json:"retiredCause,omitempty"`
+}
+
+type PassSetupTemplatesItemChannelsGoogle struct {
+	On           bool    `json:"on"`
+	Source       string  `json:"source"`
+	Reason       *string `json:"reason,omitempty"`
+	RetiredAt    *int64  `json:"retiredAt,omitempty"`
+	RetiredCause *string `json:"retiredCause,omitempty"`
+}
+
+type PassSetupTemplatesItemChannelsMobile struct {
+	On           bool    `json:"on"`
+	Source       string  `json:"source"`
+	Reason       *string `json:"reason,omitempty"`
+	RetiredAt    *int64  `json:"retiredAt,omitempty"`
+	RetiredCause *string `json:"retiredCause,omitempty"`
+}
+
+type PassSetupTemplatesItemChannelsNfc struct {
+	On           bool    `json:"on"`
+	Source       string  `json:"source"`
+	Reason       *string `json:"reason,omitempty"`
+	RetiredAt    *int64  `json:"retiredAt,omitempty"`
+	RetiredCause *string `json:"retiredCause,omitempty"`
+}
+
+type PassSetupTemplatesItemChannelsPaper struct {
+	On           bool    `json:"on"`
+	Source       string  `json:"source"`
+	Reason       *string `json:"reason,omitempty"`
+	RetiredAt    *int64  `json:"retiredAt,omitempty"`
+	RetiredCause *string `json:"retiredCause,omitempty"`
+}
+
+type PassSetupTemplatesItemChannelsSamsung struct {
+	On           bool    `json:"on"`
+	Source       string  `json:"source"`
+	Reason       *string `json:"reason,omitempty"`
+	RetiredAt    *int64  `json:"retiredAt,omitempty"`
+	RetiredCause *string `json:"retiredCause,omitempty"`
 }
 
 type PassSummary struct {
@@ -5330,6 +5901,7 @@ type ScanRecord struct {
 	Override     bool            `json:"override"`
 	Offline      bool            `json:"offline"`
 	Unverified   *bool           `json:"unverified,omitempty"`
+	Late         *bool           `json:"late,omitempty"`
 	Actor        ScanRecordActor `json:"actor"`
 	UndoneAt     *int64          `json:"undoneAt"`
 	UndoneBy     *string         `json:"undoneBy"`
@@ -5868,15 +6440,17 @@ type ScanSetupsUpdateParamsSettingsTags struct {
 }
 
 type ScanStaff struct {
-	ID         string         `json:"id"`
-	OrgID      string         `json:"orgId"`
-	Name       string         `json:"name"`
-	Role       string         `json:"role"`
-	PINSetAt   int64          `json:"pinSetAt"`
-	Locked     bool           `json:"locked"`
-	DisabledAt *int64         `json:"disabledAt"`
-	Today      int64          `json:"today"`
-	LastScan   map[string]any `json:"lastScan"`
+	ID               string         `json:"id"`
+	OrgID            string         `json:"orgId"`
+	Name             string         `json:"name"`
+	Role             string         `json:"role"`
+	PINSetAt         int64          `json:"pinSetAt"`
+	PINResetRequired bool           `json:"pinResetRequired"`
+	PINLockedToday   bool           `json:"pinLockedToday"`
+	Locked           bool           `json:"locked"`
+	DisabledAt       *int64         `json:"disabledAt"`
+	Today            int64          `json:"today"`
+	LastScan         map[string]any `json:"lastScan"`
 }
 
 type ScanStaffCreateParams struct {
@@ -6812,6 +7386,15 @@ type SettingsUpdateParams struct {
 	Scope          *string        `json:"scope,omitempty"`
 	Values         map[string]any `json:"values"`
 	ConfigRevision *int64         `json:"configRevision,omitempty"`
+}
+
+type StagedBrandAsset struct {
+	Slot      string `json:"slot"`
+	Sha       string `json:"sha"`
+	Version   string `json:"version"`
+	W         int64  `json:"w"`
+	H         int64  `json:"h"`
+	ExpiresAt int64  `json:"expiresAt"`
 }
 
 type TemplateDetail struct {

@@ -1,0 +1,163 @@
+import { act, render, screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { updateSession } from '../console/session.ts';
+import { homeClosed, homeDone, homeFresh, homeNone, homeProgressed } from './home-fixtures.ts';
+import { mount } from './index.tsx';
+import { WorkbenchIsland } from './island.tsx';
+import { ago, duration, keyState, left, masked, meter, sparkPoints, ticksOf } from './model.ts';
+import { Workbench } from './workbench.tsx';
+
+const noCalls = async () => [];
+afterEach(() => vi.unstubAllGlobals());
+
+describe('workbench model', () => {
+  it('formats the time and the clocks without the device clock', () => {
+    expect(duration(222_000)).toBe('3:42');
+    expect(duration(3_725_000)).toBe('1:02:05');
+    expect(ago(1000, 30_000)).toBe('now');
+    expect(ago(0, 5 * 60_000)).toBe('5 min');
+    expect(left(10 * 86_400_000, 0)).toBe('10 d');
+    expect(left(1000, 0)).toBe('<1 min');
+  });
+
+  it('builds ticks from the server track, sign-in first', () => {
+    if (!homeProgressed.progress) throw new Error('fixture');
+    const ticks = ticksOf(homeProgressed.progress);
+    expect(ticks.map((t) => [t.id, t.at !== null, t.current])).toEqual([
+      ['signin', true, false],
+      ['sandbox', true, false],
+      ['call', true, false],
+      ['change', false, true],
+      ['webhook', false, false],
+    ]);
+  });
+
+  it('draws, meters and masks', () => {
+    expect(sparkPoints([0, 0], 10, 10)).toBe('0.0,9.0 10.0,9.0');
+    expect(meter(12, 500)).toBe(2);
+    expect(meter(9, null)).toBe(0);
+    const [sandbox, ci] = homeDone.keys;
+    expect(sandbox && keyState(sandbox, homeDone.now)).toBe('active');
+    expect(ci && keyState(ci, homeDone.now)).toBe('rolling');
+    expect(masked({ secretPrefix: 'pbp_test_Ab12Cd' })).toBe('pbp_test_Ab12Cd_…');
+  });
+});
+
+describe('Workbench', () => {
+  it('no sandbox: one way in and the Live orgs', () => {
+    render(<Workbench home={homeNone} loadCalls={noCalls} />);
+    expect(screen.getByRole('heading', { name: 'No sandbox yet' })).toBeTruthy();
+    expect(screen.getByRole('link', { name: 'Create sandbox' }).getAttribute('href')).toBe(
+      '/developers/quickstart#sandbox',
+    );
+    expect(screen.getAllByRole('link', { name: 'Live key' })[0]?.getAttribute('href')).toBe(
+      '/admin/o/019a-live-1/api-keys',
+    );
+  });
+
+  it('fresh: the track asks to continue, nothing used yet', () => {
+    render(<Workbench home={homeFresh} loadCalls={noCalls} />);
+    expect(screen.getByTestId('wb-track-count').textContent).toBe('2 of 5');
+    expect(screen.getByRole('link', { name: 'Continue' }).getAttribute('href')).toBe(
+      '/developers/quickstart',
+    );
+    expect(screen.getByText('No calls yet.')).toBeTruthy();
+    expect(screen.getByText('pbp_test_Ab12Cd_…')).toBeTruthy();
+    expect(screen.getByText('Test only')).toBeTruthy();
+  });
+
+  it('done: the time, the pass fan and every card filled', () => {
+    render(<Workbench home={homeDone} loadCalls={noCalls} />);
+    expect(screen.getByTestId('wb-track-time').textContent).toBe('First pass in 3:22');
+    expect(screen.queryByRole('link', { name: 'Continue' })).toBeNull();
+    expect(screen.getAllByRole('link', { name: /QS-104/ })).toHaveLength(3);
+    expect(screen.getByText('Rolling')).toBeTruthy();
+    expect(screen.getByText('hooks.example.dev')).toBeTruthy();
+    expect(document.querySelector('.wb-meter')?.getAttribute('data-used')).toBe('2');
+    expect(screen.getByText('of 500')).toBeTruthy();
+  });
+
+  it('closed: no track, no New key, the reopen window', () => {
+    render(<Workbench home={homeClosed} loadCalls={noCalls} />);
+    expect(screen.queryByRole('heading', { name: 'Quickstart' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'New key' })).toBeNull();
+    expect(screen.getByTestId('wb-closed').textContent).toBe('Closed 2 d ago. Reopen within 28 d.');
+    expect(screen.getByText('Keys stopped when the sandbox closed.')).toBeTruthy();
+  });
+
+  it('filters calls by source with one log read per source', async () => {
+    const load = vi.fn(async () => [homeProgressed.calls[3]].filter((c) => c !== undefined));
+    render(<Workbench home={homeProgressed} loadCalls={load} />);
+    const calls = screen.getByRole('region', { name: 'Calls' });
+    expect(within(calls).getAllByRole('link').length).toBeGreaterThan(5);
+    await userEvent.click(within(calls).getByRole('button', { name: 'Run here' }));
+    await waitFor(() =>
+      expect(within(calls).getByText('Run here', { selector: '.sr' })).toBeTruthy(),
+    );
+    await userEvent.click(within(calls).getByRole('button', { name: 'All' }));
+    await userEvent.click(within(calls).getByRole('button', { name: 'Run here' }));
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(load).toHaveBeenCalledWith('try');
+  });
+});
+
+describe('WorkbenchIsland', () => {
+  it('reads the home once and renders it; a refusal says so', async () => {
+    const fetchFn = vi.fn(async () => Response.json(homeFresh));
+    render(<WorkbenchIsland fetchFn={fetchFn} />);
+    expect(await screen.findByRole('heading', { name: homeFresh.sandbox?.name })).toBeTruthy();
+    expect(fetchFn).toHaveBeenCalledWith('/api/v1/developer/home', expect.anything());
+  });
+
+  it('offers Retry on a failure, and no Retry for no access', async () => {
+    const failing = vi.fn(async () => new Response(null, { status: 500 }));
+    const { unmount } = render(<WorkbenchIsland fetchFn={failing} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Retry' }));
+    expect(failing).toHaveBeenCalledTimes(2);
+    unmount();
+    render(<WorkbenchIsland fetchFn={async () => new Response(null, { status: 403 })} />);
+    expect(await screen.findByText(/No developer access/)).toBeTruthy();
+  });
+});
+
+describe('the workbench island mount', () => {
+  const page = () => {
+    document.body.innerHTML =
+      '<div id="workbench" data-island="workbench"></div><div data-home-marketing="">Hero</div>';
+    return document.getElementById('workbench') as HTMLElement;
+  };
+  const marketing = () => document.querySelector<HTMLElement>('[data-home-marketing]');
+  afterEach(() => document.body.replaceChildren());
+
+  it('leaves the public home alone when signed out', async () => {
+    updateSession({ kind: 'out' });
+    const el = page();
+    await mount(el);
+    expect(el.innerHTML).toBe('');
+    expect(marketing()?.hidden).toBe(false);
+  });
+
+  it('leaves it alone without developer access', async () => {
+    updateSession({ kind: 'none', csrf: 'c', siteKey: '' });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(null, { status: 403 })),
+    );
+    const el = page();
+    await mount(el);
+    expect(el.innerHTML).toBe('');
+    expect(marketing()?.hidden).toBe(false);
+  });
+
+  it('replaces the home with the Workbench for a developer, reading the home once', async () => {
+    updateSession({ kind: 'none', csrf: 'c', siteKey: '' });
+    const fetchFn = vi.fn(async () => Response.json(homeFresh));
+    vi.stubGlobal('fetch', fetchFn);
+    const el = page();
+    await act(() => mount(el));
+    expect(marketing()?.hidden).toBe(true);
+    expect(await screen.findByRole('heading', { name: homeFresh.sandbox?.name })).toBeTruthy();
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+});

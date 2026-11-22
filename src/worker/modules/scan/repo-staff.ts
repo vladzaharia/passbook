@@ -11,6 +11,9 @@ export interface ScanStaffRow {
   name: string;
   role: ScanRole;
   pinHash: string;
+  pinSetAt: number;
+  /** A shared PIN was seen: the person has not taken the new PIN the server set yet. */
+  pinResetRequired: boolean;
   disabledAt: number | null;
   updatedAt: number;
   /** Trigger-owned; read in the same row as the PIN hash and role (non-enumerable). */
@@ -23,6 +26,8 @@ export interface StaffRaw {
   name: string;
   role: ScanRole;
   pin_hash: string;
+  pin_set_at: number;
+  pin_reset_required: number;
   disabled_at: number | null;
   updated_at: number;
   auth_epoch: number;
@@ -36,6 +41,8 @@ export const toStaff = (r: StaffRaw): ScanStaffRow =>
       name: r.name,
       role: r.role,
       pinHash: r.pin_hash,
+      pinSetAt: r.pin_set_at,
+      pinResetRequired: r.pin_reset_required === 1,
       updatedAt: r.updated_at,
       disabledAt: r.disabled_at,
     } satisfies ScanStaffRow,
@@ -43,12 +50,16 @@ export const toStaff = (r: StaffRaw): ScanStaffRow =>
     { value: r.auth_epoch, enumerable: false },
   ) as ScanStaffRow;
 
-const COLUMNS = 'id, org_id, name, role, pin_hash, disabled_at, updated_at, auth_epoch';
+const COLUMNS =
+  'id, org_id, name, role, pin_hash, pin_set_at, pin_reset_required, disabled_at, updated_at, auth_epoch';
 
 export const staffStatement = (db: Db, orgId: string, id: string): D1PreparedStatement =>
   stmt(db, `SELECT ${COLUMNS} FROM scan_staff WHERE id = ? AND org_id = ?`, [id, orgId]);
 
-/** The active managers of an org, for a PIN that names none: a PIN is matched against these. */
+/**
+ * The active managers of an org, for a PIN that names none: a PIN is matched against these. A person
+ * who has not taken the new PIN the server set is left out: their PIN is a plain miss.
+ */
 export const managerRosterStatement = (
   db: Db,
   orgId: string,
@@ -57,29 +68,45 @@ export const managerRosterStatement = (
   stmt(
     db,
     `SELECT ${COLUMNS} FROM scan_staff WHERE org_id = ? AND role IN ('manager'${deskOk ? ",'desk'" : ''}) AND disabled_at IS NULL
+       AND pin_reset_required = 0
      ORDER BY id`,
     [orgId],
   );
 
-/** Every active person of an org, for sign-in by PIN alone (the caller has checked the count). */
-export const activeRosterStatement = (db: Db, orgId: string): D1PreparedStatement =>
+/**
+ * Who a PIN alone can be: the one active person with its tag, and everyone whose tag is not set yet
+ * (those from before tags, until their next sign-in), so a PIN shared with one of them is still seen.
+ */
+export const pinOnlyCandidatesStatement = (
+  db: Db,
+  orgId: string,
+  tag: string,
+): D1PreparedStatement =>
   stmt(
     db,
-    `SELECT ${COLUMNS} FROM scan_staff WHERE org_id = ? AND disabled_at IS NULL ORDER BY id`,
-    [orgId],
+    `SELECT ${COLUMNS}, pin_tag = ? AS tag_hit FROM scan_staff
+     WHERE org_id = ? AND disabled_at IS NULL AND (pin_tag = ? OR pin_tag IS NULL) ORDER BY id`,
+    [tag, orgId, tag],
   );
 
 /** Everyone ever added, disabled included: a new PIN must not equal one that re-enabling would bring back. */
 export const fullRosterStatement = (db: Db, orgId: string): D1PreparedStatement =>
   stmt(db, `SELECT ${COLUMNS} FROM scan_staff WHERE org_id = ? ORDER BY id`, [orgId]);
 
-/** The named person, or every active manager when the PIN names none. */
+/** The named person, or every active manager when the PIN names none; one who must take a new PIN is no one. */
 export const approverStatement = (
   db: Db,
   orgId: string,
   staffId: string | undefined,
   deskOk = false,
-) => (staffId ? staffStatement(db, orgId, staffId) : managerRosterStatement(db, orgId, deskOk));
+) =>
+  staffId
+    ? stmt(
+        db,
+        `SELECT ${COLUMNS} FROM scan_staff WHERE id = ? AND org_id = ? AND pin_reset_required = 0`,
+        [staffId, orgId],
+      )
+    : managerRosterStatement(db, orgId, deskOk);
 
 /** Scoped to the org: another org's staff id is the same as an unknown one. */
 export async function getStaff(db: Db, orgId: string, id: string): Promise<ScanStaffRow | null> {
@@ -92,6 +119,7 @@ export interface NewStaff {
   name: string;
   role: ScanRole;
   pinHash: string;
+  pinTag: string;
   /** The MAC root the hash was made under. */
   pinMacVersion: number;
   createdBy: string | null;
@@ -107,6 +135,7 @@ export const addStaffInsert = (g: Grant, row: NewStaff): GrantedStatement =>
       'name',
       'role',
       'pin_hash',
+      'pin_tag',
       'pin_mac_version',
       'pin_set_at',
       'created_by',
@@ -118,6 +147,7 @@ export const addStaffInsert = (g: Grant, row: NewStaff): GrantedStatement =>
       row.name,
       row.role,
       row.pinHash,
+      row.pinTag,
       row.pinMacVersion,
       row.now,
       row.createdBy,
@@ -145,12 +175,15 @@ export const addStaffPinRotate = (
   g: Grant,
   id: string,
   pinHash: string,
+  pinTag: string,
   pinMacVersion: number,
   now: number,
 ): GrantedStatement =>
   g.update('scan_staff', {
     set: {
       pin_hash: pinHash,
+      pin_tag: pinTag,
+      pin_reset_required: 0,
       pin_mac_version: pinMacVersion,
       pin_set_at: now,
       updated_at: maxNow(now),
@@ -172,6 +205,7 @@ export interface StaffBase {
   name: string;
   role: ScanRole;
   pinSetAt: number;
+  pinResetRequired: boolean;
   disabledAt: number | null;
 }
 
@@ -179,7 +213,7 @@ export interface StaffBase {
 export async function getStaffBase(db: Db, orgId: string, id: string): Promise<StaffBase | null> {
   const r = await stmt(
     db,
-    'SELECT id, org_id, name, role, pin_set_at, disabled_at FROM scan_staff WHERE id = ? AND org_id = ?',
+    'SELECT id, org_id, name, role, pin_set_at, pin_reset_required, disabled_at FROM scan_staff WHERE id = ? AND org_id = ?',
     [id, orgId],
   ).first<{
     id: string;
@@ -187,6 +221,7 @@ export async function getStaffBase(db: Db, orgId: string, id: string): Promise<S
     name: string;
     role: ScanRole;
     pin_set_at: number;
+    pin_reset_required: number;
     disabled_at: number | null;
   }>();
   return r
@@ -196,6 +231,7 @@ export async function getStaffBase(db: Db, orgId: string, id: string): Promise<S
         name: r.name,
         role: r.role,
         pinSetAt: r.pin_set_at,
+        pinResetRequired: r.pin_reset_required === 1,
         disabledAt: r.disabled_at,
       }
     : null;

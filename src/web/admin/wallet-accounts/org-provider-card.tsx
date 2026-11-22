@@ -9,7 +9,6 @@ import {
   CardHeader,
   SegmentedControl,
   StatusPill,
-  SwitchRow,
   toast,
 } from '@/web/ui/index.ts';
 import { COPY, PROVIDER_NAME, safeError } from './copy.ts';
@@ -40,7 +39,7 @@ function StatePill({ e }: { e: WalletEnrolment }) {
   );
 }
 
-/** One wallet in the organization's current mode: source, own credentials, and the switch. */
+/** One wallet in the organization's current mode: source, own credentials and what is left before it can turn on. */
 export function OrgProviderCard({
   orgId,
   enrolment: e,
@@ -57,8 +56,10 @@ export function OrgProviderCard({
   const actions = useWalletActions();
   const [busy, setBusy] = useState(false);
   const name = PROVIDER_NAME[e.provider];
-  const blocker = blockerOf(e);
   const on = e.state === 'on';
+  const blocker = blockerOf(e);
+  const notReleased = e.issuance.state === 'disabled' ? COPY.notReleased : undefined;
+  const help = e.state === 'held' ? undefined : on ? notReleased : (blocker ?? notReleased);
   const revoked = e.state === 'revoked';
 
   async function run(work: () => Promise<unknown>, done?: string) {
@@ -136,24 +137,8 @@ export function OrgProviderCard({
           />
         </div>
         <div className="flex flex-col gap-3 border-t border-border pt-4">
-          <SwitchRow
-            label={`${name} on`}
-            help={
-              e.state === 'held'
-                ? undefined
-                : on
-                  ? e.issuance.state === 'disabled'
-                    ? COPY.notReleased
-                    : undefined
-                  : (blocker ?? (e.issuance.state === 'disabled' ? COPY.notReleased : undefined))
-            }
-            checked={on}
-            disabled={!canManage || busy || revoked || (!on && blocker !== null)}
-            onCheckedChange={(next) =>
-              void run(() => actions.act(orgId, e, next ? 'enable' : 'disable'))
-            }
-          />
-          <ul aria-label="Before it can turn on" className="flex flex-col gap-1 text-sm">
+          {help ? <p className="text-sm text-fg-muted">{help}</p> : null}
+          <ul aria-label="Before it can be allowed" className="flex flex-col gap-1 text-sm">
             {gatesOf(e).map((g) => (
               <li key={g.label} className="flex items-center gap-2 text-fg-muted">
                 {g.ok ? (

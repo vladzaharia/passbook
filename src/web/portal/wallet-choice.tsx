@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { HOLDER_COPY } from '../../shared/copy/holder.ts';
 import { NATIVE_WALLET_BADGES, type WalletChoice } from '../../shared/wallet-choice.ts';
 import type { RenderBuddy } from './add/scan.tsx';
+import { RemoveRow, SaveLead } from './save-phone.tsx';
 
 type NativeChoice = WalletChoice & { id: 'google' | 'samsung' };
 const isNative = (c: WalletChoice): c is NativeChoice => c.id === 'google' || c.id === 'samsung';
@@ -27,14 +28,20 @@ export function WalletLead({
   apple,
   buddy,
   printHref,
+  door,
 }: {
   choice: WalletChoice | undefined;
   apple: ReactNode;
   buddy: RenderBuddy;
   /** Paper only: Print leads. */
   printHref?: string | undefined;
+  /** The saved door view's path, when this pass can be saved to the phone. */
+  door?: string | null | undefined;
 }) {
   if (choice?.id === 'apple' && apple) return apple;
+  if (choice?.id === 'phone' && choice.href && door) {
+    return <SaveLead href={choice.href} door={door} buddy={buddy} />;
+  }
   // Apple without its block (no area) cannot lead: Print does, when it is there.
   const way = choice?.id === 'apple' ? undefined : choice;
   if (!way && !printHref) return null;
@@ -59,9 +66,20 @@ export function WalletLead({
 }
 
 /** A quiet row that goes somewhere: icon, label, chevron. */
-function OtherLink({ href, icon, label }: { href: string; icon: ReactNode; label: string }) {
+function OtherLink({
+  href,
+  icon,
+  label,
+  save,
+}: {
+  href: string;
+  icon: ReactNode;
+  label: string;
+  /** The row that saves to the phone (the page's script takes the click over). */
+  save?: boolean;
+}) {
   return (
-    <a className="wl-other" href={href}>
+    <a className="wl-other" href={href} {...(save ? { 'data-save-do': '' } : {})}>
       {icon}
       <span>{label}</span>
       <ChevronRight aria-hidden className="wl-other-go" />
@@ -71,6 +89,8 @@ function OtherLink({ href, icon, label }: { href: string; icon: ReactNode; label
 
 interface Row {
   key: string;
+  /** Shown only while the phone's saved copy is absent (idle) or present (saved). */
+  when?: 'idle' | 'saved';
   className?: string;
   body: ReactNode;
 }
@@ -87,17 +107,48 @@ export function OtherWays({
   printHref,
   portalHref,
   extra,
+  door,
+  phoneLead,
 }: {
   choices: readonly WalletChoice[];
   apple: ReactNode;
   printHref?: string | undefined;
   portalHref?: string | undefined;
   extra?: ReactNode;
+  /** The saved door view's path, when this pass can be saved to the phone. */
+  door?: string | null | undefined;
+  /** "Save to this phone" is the lead: its saved face is there, so only Remove stays here. */
+  phoneLead?: boolean;
 }) {
   const native = choices.filter(isNative);
   const rows: Row[] = [];
+  const remove: Row = { key: 'remove', when: 'saved', body: <RemoveRow /> };
+  if (phoneLead && door) rows.push(remove);
   for (const choice of choices) {
-    if ((choice.id === 'browser' || choice.id === 'phone') && choice.href) {
+    if (choice.id === 'phone' && choice.href && door) {
+      rows.push(
+        {
+          key: 'phone',
+          when: 'idle',
+          body: (
+            <OtherLink
+              href={choice.href}
+              icon={<ScanLine aria-hidden />}
+              label={HOLDER_COPY.saveToPhone}
+              save
+            />
+          ),
+        },
+        {
+          key: 'door',
+          when: 'saved',
+          body: (
+            <OtherLink href={door} icon={<ScanLine aria-hidden />} label={HOLDER_COPY.showAtDoor} />
+          ),
+        },
+        remove,
+      );
+    } else if ((choice.id === 'browser' || choice.id === 'phone') && choice.href) {
       rows.push({
         key: choice.id,
         body: (
@@ -150,7 +201,7 @@ export function OtherWays({
   return (
     <ul className="wl-others" aria-label={HOLDER_COPY.otherWays}>
       {rows.map((row) => (
-        <li key={row.key} className={row.className}>
+        <li key={row.key} className={row.className} data-when={row.when}>
           {row.body}
         </li>
       ))}

@@ -30,6 +30,10 @@ const SessionTemplateSchema = z.object({
   actions: z.array(z.object({ id: z.string(), label: z.string(), kind: ScanActionKindSchema })),
 });
 const SessionStaffSchema = z.object({ id: IdSchema, name: z.string(), role: ScanRoleSchema });
+/** The signed-in person; `pinResetRequired` while their PIN must be replaced before they go on. */
+const SignedInStaffSchema = SessionStaffSchema.extend({
+  pinResetRequired: z.literal(true).optional(),
+});
 
 /** `GET /scan/staff?q=`: people matching a name, when the sign-in roster was cut. */
 export const ScanStaffSearchSchema = pageOf(SessionStaffSchema);
@@ -75,7 +79,7 @@ export const ScanSessionSchema = z.object({
     .nullable(),
   templates: z.array(SessionTemplateSchema),
   formats: z.array(CodeFormatSchema),
-  staff: SessionStaffSchema.nullable(),
+  staff: SignedInStaffSchema.nullable(),
   /** Only when staff sign-in is on. */
   staffList: z.array(SessionStaffSchema).nullable(),
   /** The roster was cut: search it with `GET /scan/staff?q=`. */
@@ -99,6 +103,11 @@ export const ScanStaffSignInSchema = z.object({
   /** Omitted: the PIN is matched among the org's active Door and Desk staff. `STAFF_NAME_REQUIRED` says to send the name. */
   staffId: IdSchema.optional(),
   pin: z.string().regex(/^\d{6}$/),
+});
+/** `POST /scan/staff/pin`: the server's new PIN for the signed-in person, shown once, while a reset is required. */
+export const ScanStaffNewPinSchema = z.object({
+  pin: z.string().regex(/^\d{6}$/),
+  session: ScanSessionSchema,
 });
 export const ScanLookupRequestSchema = z.object({
   q: z.string().trim().min(1).max(120),

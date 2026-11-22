@@ -5,6 +5,8 @@ export const templateDetailSearchSchema = z.object({
     .enum(['overview', 'versions', 'channels', 'manifest', 'inputs'])
     .optional()
     .catch(undefined),
+  /** The version under review: opens the review dialog. */
+  review: z.string().max(64).optional().catch(undefined),
 });
 
 export const templateListSearchSchema = z.object({

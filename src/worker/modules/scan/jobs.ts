@@ -12,6 +12,7 @@ import { readSystemValue } from '../settings/repo.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { lookupHashOf } from './codes.ts';
 import { scanCredentialKeys } from './credential-input.ts';
+import { dailyPinDigest } from './pin-digest.ts';
 import { recoverScans } from './recover.ts';
 import {
   type BackfillKeys,
@@ -232,4 +233,5 @@ export async function dailyScans(ctx: ServiceContext): Promise<void> {
   );
   ctx.log.info('scan.retention', { live, test, offline, notes, testNotes });
   await sweepEnrollments(ctx);
+  await dailyPinDigest(ctx);
 }

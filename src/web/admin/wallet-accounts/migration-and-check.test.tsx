@@ -5,7 +5,7 @@ import { axe } from 'vitest-axe';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
-import { credential, enrolment } from './wallet-accounts-test-fixtures.ts';
+import { credential, enrolment, renderOrgAccounts } from './wallet-accounts-test-fixtures.ts';
 
 const MANAGE: OrgCapability[] = ['org:read', 'integrations:read', 'integrations:manage'];
 beforeEach(() => {
@@ -39,7 +39,7 @@ const north = membershipFixture('o1', { orgName: 'North', capabilities: MANAGE }
 describe('credential check', () => {
   it('queues, polls and says why a check failed', async () => {
     const user = userEvent.setup();
-    await renderApp('/admin/o/o1/wallet-accounts', {
+    await renderOrgAccounts({
       memberships: [north],
       handlers: orgHandlers(() => json({ checkId: 'k1', status: 'queued' })),
     });
@@ -56,7 +56,7 @@ describe('credential check', () => {
 
   it('shows the wait when checks are rate limited', async () => {
     const user = userEvent.setup();
-    await renderApp('/admin/o/o1/wallet-accounts', {
+    await renderOrgAccounts({
       memberships: [north],
       handlers: orgHandlers(() => problem(429, 'RATE_LIMITED', 'Slow down.')),
     });
@@ -71,7 +71,7 @@ describe('check abort', () => {
     const user = userEvent.setup();
     const signals: AbortSignal[] = [];
     const base = orgHandlers(() => json({ checkId: 'k1', status: 'queued' }));
-    const { unmount } = await renderApp('/admin/o/o1/wallet-accounts', {
+    const { unmount } = await renderOrgAccounts({
       memberships: [north],
       handlers: {
         ...base,

@@ -174,6 +174,15 @@
       ]
     },
     {
+      "code": "API_KEY_SCOPE_EXCEEDS_SANDBOX",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "api-keys"
+      ]
+    },
+    {
       "code": "API_KEY_TERMINALS_REQUIRED",
       "statuses": [
         422
@@ -411,6 +420,15 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "BRAND_ASSET_NOT_FOUND",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
       ]
     },
     {
@@ -2163,6 +2181,15 @@
       ]
     },
     {
+      "code": "LAST_EMAIL",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me"
+      ]
+    },
+    {
       "code": "LAST_ORG_ADMIN",
       "statuses": [
         409
@@ -2325,9 +2352,19 @@
       "modules": [
         "broadcasts",
         "connections",
+        "orgs",
         "platform",
         "scan",
         "templates"
+      ]
+    },
+    {
+      "code": "MODE_LIVE_REQUIRED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "orgs"
       ]
     },
     {
@@ -2568,6 +2605,7 @@
         403
       ],
       "modules": [
+        "orgs",
         "passes",
         "platform"
       ]
@@ -2860,6 +2898,24 @@
       ],
       "modules": [
         "passes"
+      ]
+    },
+    {
+      "code": "PASS_SETUP_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "PASS_SETUP_EMPTY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "orgs"
       ]
     },
     {
@@ -4366,6 +4422,42 @@
       ]
     },
     {
+      "code": "STAFF_PIN_ADMIN_RESET",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_PIN_RESET_NOT_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_PIN_RESET_REQUIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_PIN_TAKEN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "STAFF_REQUIRED",
       "statuses": [
         403
@@ -4378,6 +4470,15 @@
       "code": "STAFF_SIGN_IN_DISABLED",
       "statuses": [
         403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "STAFF_SIGN_IN_REQUIRED",
+      "statuses": [
+        409
       ],
       "modules": [
         "scan"
@@ -5091,11 +5192,21 @@
       ]
     },
     {
+      "code": "TEMPLATE_REVIEW_SUPERSEDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "templates"
+      ]
+    },
+    {
       "code": "TEMPLATE_SELF_APPROVAL",
       "statuses": [
         403
       ],
       "modules": [
+        "templates",
         "wallet-providers"
       ]
     },

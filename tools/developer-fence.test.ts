@@ -56,6 +56,14 @@ const EXEMPT: Record<string, Exempt> = {
     reason:
       'mails platform admins about the platform identities, never an org or a holder: a developer org has no such mail to send',
   },
+  'src/worker/modules/scan/pin-digest.ts': {
+    reason:
+      'mails an org its own admins about scanner PIN events: a developer org holds no scanner, terminal or staff PIN, so no event exists to report',
+  },
+  'src/worker/modules/scan/pin-only-notice.ts': {
+    reason:
+      'mails an org its own admins after wrong PINs on a paired scanner: a developer org has no paired scanner to enter one',
+  },
   'src/worker/modules/identities/certificates.ts': {
     reason:
       'signs a probe manifest to prove an uploaded certificate matches its key: the signature is checked and dropped, never stored, served or sent',

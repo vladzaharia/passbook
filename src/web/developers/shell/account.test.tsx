@@ -5,6 +5,9 @@ import { json, membershipFixture, renderApp, sessionFixture } from '../../lib/te
 import { readPref, THEME_KEY } from '../../lib/theme.tsx';
 import { mountAccount } from './account.ts';
 
+const clearSavedPasses = vi.hoisted(() => vi.fn(async () => undefined));
+vi.mock('../../lib/saved-passes.ts', () => ({ clearSavedPasses }));
+
 const clearCookie = () => {
   // biome-ignore lint/suspicious/noDocumentCookie: resets the theme cookie between tests
   document.cookie = `${THEME_KEY}=; Path=/; Max-Age=0`;
@@ -101,6 +104,18 @@ describe('the developer site account island', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Account menu' }));
     expect(items(await screen.findByRole('menu'))).toEqual(['My passes', 'Account', 'Sign out']);
+  });
+
+  it("clears this phone's saved passes when it signs out", async () => {
+    const user = userEvent.setup();
+    await mount(sessionFixture('user'));
+    const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
+    fetchMock.mockImplementation(async (url: string) =>
+      url === '/auth/logout' ? json({ redirect: '/login' }) : json(sessionFixture('user')),
+    );
+    await user.click(await screen.findByRole('button', { name: 'Account menu' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Sign out' }));
+    await waitFor(() => expect(clearSavedPasses).toHaveBeenCalled());
   });
 
   it('keeps the theme chosen here when the portal opens', async () => {

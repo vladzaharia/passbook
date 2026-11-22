@@ -59,8 +59,8 @@ export const ORG_NAV: readonly (readonly NavSection[])[] = [
     },
   ],
   [
+    page('Brand and channels', '/brand', 'identity', ['logo', 'apple', 'wallet']),
     page('Members', '/members', 'user', ['people', 'invitations', 'access']),
-    page('Wallet accounts', '/wallet-accounts', 'identity', ['apple', 'google', 'samsung']),
     apiKeys,
     audit,
     retention,
