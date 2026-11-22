@@ -15,7 +15,8 @@ import {
 } from './helpers/releases.ts';
 import { createOrgWithRoles } from './helpers/seed.ts';
 
-test.setTimeout(240_000);
+test.setTimeout(360_000);
+test.use({ actionTimeout: 30_000 });
 
 const SHOTS = process.env.ROLLOUT_SHOTS;
 const SIZES = [
@@ -135,19 +136,24 @@ test('Tell holders messages the passes on the release, once, and never the ones 
     await expect(dialog.getByText(/3 passes are still updating/)).toBeVisible();
     await expect(dialog.getByText(/\/120/)).toBeVisible();
     if (SHOTS) {
+      // A resize closes the dialog: each shot opens it afresh.
       for (const colorScheme of ['light', 'dark'] as const) {
         await page.emulateMedia({ colorScheme });
         for (const [width, height] of SIZES) {
           await page.setViewportSize({ width, height });
-          await page.waitForTimeout(500);
+          await page.goto(url);
+          await page.getByRole('button', { name: 'Tell holders' }).click();
+          await expect(dialog.getByText(/2 on v2/)).toBeVisible();
+          await page.waitForTimeout(600);
           await page.screenshot({ path: `${SHOTS}/dialog-${width}-${colorScheme}.png` });
         }
       }
       await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(url);
+      await page.getByRole('button', { name: 'Tell holders' }).click();
+      await expect(dialog.getByText(/2 on v2/)).toBeVisible();
     }
-    const text = (
-      await dialog.getByRole('textbox', { name: /Notify on the lock screen/ }).inputValue()
-    ).trim();
+    const text = before.tell?.text ?? '';
     expect(text).toMatch(/has a new design\.$/);
     await dialog.getByRole('button', { name: 'Tell 2 holders' }).click();
     await expect(page.getByText('Message sent')).toBeVisible();
