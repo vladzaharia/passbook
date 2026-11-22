@@ -255,10 +255,10 @@ describe('Scanning page', () => {
       handlers,
     });
     expect(await screen.findByRole('heading', { name: 'Scanning', level: 1 })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('tablist')).toBeNull());
     expect(
       await screen.findByRole('heading', { name: 'Set up scanning', level: 2 }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: 'Sessions' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.queryByRole('button', { name: 'New session' })).toBeNull();
     expect((await axe(container)).violations).toEqual([]);
   });
@@ -314,6 +314,7 @@ describe('Scanning page', () => {
       selectedOrg: 'o1',
       handlers,
     });
+    await waitFor(() => expect(screen.queryByRole('tablist')).toBeNull());
     expect(
       await screen.findByRole('heading', { name: 'Set up scanning', level: 2 }),
     ).toBeInTheDocument();

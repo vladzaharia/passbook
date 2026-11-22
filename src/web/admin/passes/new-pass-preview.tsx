@@ -12,7 +12,7 @@ import {
   Card,
   Dialog,
   DialogContent,
-  EntityArt,
+  EmptyState,
   ErrorState,
   Skeleton,
 } from '../../ui/index.ts';
@@ -170,7 +170,7 @@ export function LivePreview({
   if (!templateId)
     return (
       <div className="flex aspect-[320/420] w-full max-w-xs flex-col items-center justify-center gap-2 self-center rounded-xl border border-dashed border-border-strong">
-        <EntityArt name="passes" size="sm" />
+        <EmptyState inline art="passes" title="Pick a template" />
       </div>
     );
   if (error) return <ErrorState inline error={error} onRetry={retry} />;

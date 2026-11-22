@@ -28,6 +28,7 @@ export function HeaderActionsView({ runner }: { runner: PassActionRunner }) {
           <Button
             key={d.id}
             variant="outline"
+            className={d.id === 'void' ? 'text-danger' : undefined}
             iconStart={<Icon aria-hidden />}
             loading={runner.pending[d.id]}
             busy={d.id === 'pull' ? 'spin' : undefined}

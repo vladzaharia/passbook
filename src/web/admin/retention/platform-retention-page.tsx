@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { PageHeader } from '@/web/ui/index.ts';
+import { Button, PageHeader } from '@/web/ui/index.ts';
 import { ReceiptsCard } from './receipts-card.tsx';
 
 /** Receipts of the platform's own deletions. An organization's receipts are on its page. */
@@ -8,17 +8,10 @@ export function PlatformRetentionPage() {
     <>
       <PageHeader
         title="Retention"
-        description={
-          <>
-            Windows are in{' '}
-            <Link
-              to="/admin/platform/settings"
-              className="text-accent-fg underline underline-offset-2"
-            >
-              Settings
-            </Link>
-            ; holds and an organization's receipts are on its page.
-          </>
+        actions={
+          <Button asChild variant="outline">
+            <Link to="/admin/platform/settings">Retention windows</Link>
+          </Button>
         }
       />
       <ReceiptsCard scope="platform-pass" orgId="" />

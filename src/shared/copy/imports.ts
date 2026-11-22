@@ -10,7 +10,7 @@ export const IMPORT_COPY = {
   title: 'Import passes',
   template: 'Template',
   noTemplates: 'No released templates in this mode.',
-  fileTab: 'File',
+  fileTab: 'CSV file',
   pasteTab: 'Paste',
   linkTab: 'Sheet link',
   dropLead: 'Drop a .csv file or',
@@ -104,7 +104,7 @@ export const IMPORT_COPY = {
   },
   source: {
     way: 'Source',
-    file: 'File',
+    file: 'Spreadsheet',
     fileHint: 'CSV, paste or a sheet link',
     connection: 'Connection',
     connectionHint: 'Shopify, Stripe, WooCommerce and more',

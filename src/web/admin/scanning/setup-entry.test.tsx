@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { resetModeForTests } from '@/web/lib/mode.ts';
@@ -22,10 +22,14 @@ const org = {
   memberships: [membershipFixture('o1', { orgName: 'Northwind', orgSlug: 'northwind' })],
 };
 
+// With nothing set up the tab strip goes once the lists have loaded.
+const settled = () => waitFor(() => expect(screen.queryByRole('tablist')).toBeNull());
+
 describe('Scanning with nothing set up', () => {
   it('offers the three setups and Start blank, and no checklist', async () => {
     const user = userEvent.setup();
     await renderApp('/admin/o/o1/scanning', { ...org, handlers });
+    await settled();
     expect(await screen.findByRole('heading', { name: 'Set up scanning' })).toBeInTheDocument();
     for (const name of [/Front desk/, /Event night/, /Several areas/])
       expect(screen.getByRole('link', { name })).toHaveAttribute(
@@ -42,6 +46,7 @@ describe('Scanning with nothing set up', () => {
   it("opens the wizard with the tile's answers", async () => {
     const user = userEvent.setup();
     await renderApp('/admin/o/o1/scanning', { ...org, handlers });
+    await settled();
     await user.click(await screen.findByRole('link', { name: /Event night/ }));
     expect(await screen.findByRole('textbox', { name: /Door name/ })).toHaveValue('Doors');
   });
@@ -71,6 +76,7 @@ describe('Scanning with nothing set up', () => {
       ],
       handlers,
     });
+    await settled();
     expect(await screen.findByText('No scanning sessions')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /Front desk/ })).toBeNull();
   });

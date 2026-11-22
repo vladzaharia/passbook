@@ -162,15 +162,59 @@ describe('organization people and service access', () => {
     ).toBeInTheDocument();
   });
 
+  it('hides Revoke on your own row and keeps it for others', async () => {
+    const own = membership({
+      id: 'm-own',
+      userId: 'u1',
+      userName: 'Pat',
+      userEmail: 'pat@example.test',
+    });
+    const other = membership({ id: 'm-other' });
+    await renderApp('/admin/o/o1/members', {
+      session: 'admin',
+      handlers: handlers({
+        '/api/v1/orgs/o1/memberships': () => json({ items: [own, other], nextCursor: null }),
+      }),
+    });
+    expect(await screen.findByText('Pat')).toBeInTheDocument();
+    expect(screen.getByText('You')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Revoke membership for Pat' })).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Revoke membership for Ada Lovelace' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows no expiry on an accepted invitation', async () => {
+    await renderApp('/admin/o/o1/members', {
+      session: 'admin',
+      handlers: handlers({
+        '/api/v1/orgs/o1/invitations': () =>
+          json({
+            items: [
+              invitation({
+                id: 'i-a',
+                email: 'accepted@example.test',
+                acceptedAt: 1_700_000_050_000,
+              }),
+              invitation(),
+            ],
+            nextCursor: null,
+          }),
+      }),
+    });
+    expect(await screen.findByText('accepted@example.test')).toBeInTheDocument();
+    expect(listItem('Invitations', 'accepted@example.test')).not.toHaveTextContent('Expires');
+    expect(listItem('Invitations', 'pending@example.test')).toHaveTextContent('Expires');
+  });
+
   it('shows people management to a member with members:manage independently of org edits', async () => {
     const { fetchMock } = await renderBaseApp('/admin/o/o1/members', {
       session: 'user',
       memberships: [membershipFixture('o1', { capabilities: ['org:read', 'members:manage'] })],
       handlers: handlers(),
     });
-    expect(
-      await screen.findByRole('heading', { name: 'Members and invitations' }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Invitations' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Members and invitations' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Invite member' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Accent colour')).toBeNull();
     expect(fetchMock.mock.calls.some(([url]) => String(url).startsWith('/api/v1/identities'))).toBe(
@@ -238,7 +282,7 @@ describe('organization people and service access', () => {
         expect(screen.queryByRole('button', { name: `Revoke invitation for ${email}` })).toBeNull();
       }
     }
-    expect(screen.getByRole('heading', { name: 'Members', level: 3 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Members', level: 2 })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Invitations' })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Revoke membership for Ada Lovelace' }),
@@ -451,60 +495,6 @@ describe('organization people and service access', () => {
       'DELETE /api/v1/orgs/o1/memberships/member-1',
       'DELETE /api/v1/orgs/o1/invitations/invite-1',
     ]);
-  });
-
-  it('refetches current memberships and clears a revoked organization from the scope', async () => {
-    const current = membershipFixture('o1', { id: 'member-1', orgName: org.name });
-    const other = membershipFixture('o2', { orgName: 'Other organization' });
-    let currentMemberships = [current, other];
-    let membershipRequests = 0;
-    const { queryClient } = await renderApp('/admin/o/o1/members', {
-      session: 'admin',
-      selectedOrg: 'o1',
-      handlers: handlers({
-        '/api/v1/orgs/memberships/me': () => {
-          membershipRequests += 1;
-          return json({ items: currentMemberships, nextCursor: null });
-        },
-        '/api/v1/orgs/o1/memberships': () =>
-          json({
-            items: currentMemberships
-              .filter((m) => m.orgId === 'o1')
-              .map((m) => ({ ...m, userName: null, userEmail: 'u1@example.test' })),
-            nextCursor: null,
-          }),
-        '/api/v1/orgs/o1/memberships/member-1': (_url, init) => {
-          expect(init?.method).toBe('DELETE');
-          currentMemberships = [other];
-          return json({ ok: true });
-        },
-      }),
-    });
-    const user = userEvent.setup();
-    const picker = await screen.findByRole('combobox', { name: /^Scope:/ });
-    await waitFor(() => expect(picker).toHaveTextContent(org.name));
-    const requestsBeforeRevoke = membershipRequests;
-
-    await user.click(
-      await screen.findByRole('button', { name: 'Revoke membership for u1@example.test' }),
-    );
-    const own = await screen.findByRole('alertdialog', { name: /^Remove your access to / });
-    await user.click(within(own).getByRole('button', { name: 'Remove my access' }));
-    await waitFor(() => {
-      expect(membershipRequests).toBeGreaterThan(requestsBeforeRevoke);
-      expect(queryClient.getQueryData(['org-memberships', 'me'])).toEqual({
-        items: [other],
-        nextCursor: null,
-      });
-    });
-    await waitFor(() =>
-      expect(screen.getByRole('combobox', { name: /^Scope:/ })).toHaveTextContent(
-        'Choose an organization',
-      ),
-    );
-    await user.click(screen.getByRole('combobox', { name: /^Scope:/ }));
-    expect(screen.queryByRole('option', { name: org.name })).toBeNull();
-    expect(await screen.findByRole('option', { name: 'Other organization' })).toBeInTheDocument();
   });
 
   it('reports rejected revocations without removing access', async () => {

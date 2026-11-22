@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
   OrgInvitationListSchema,
@@ -11,7 +12,16 @@ import { api } from '@/web/lib/api.ts';
 import { revokeAccessConfirm } from '@/web/lib/confirms.ts';
 import { formatDateTime } from '@/web/lib/format.ts';
 import { membershipsQuery, sessionQuery, useSession } from '@/web/lib/session.ts';
-import { Button, Card, CardBody, CardHeader, ConfirmDialog, ErrorState } from '@/web/ui/index.ts';
+import {
+  Badge,
+  Card,
+  CardBody,
+  ConfirmDialog,
+  ErrorState,
+  ListRow,
+  ListRows,
+  RowActions,
+} from '@/web/ui/index.ts';
 import { NO_EMAIL_LABEL } from '../../../shared/email.ts';
 import { InviteForm, type SendInvite } from './org-invite-form.tsx';
 import { ROLE_LABELS } from './org-roles.ts';
@@ -20,8 +30,6 @@ interface Revoking {
   kind: 'memberships' | 'invitations';
   id: string;
   label: string;
-  /** Your own membership: revoking it ends your access to this organization. */
-  self: boolean;
 }
 
 export function AccessCard({ org }: { org: { id: string; name: string; personal?: boolean } }) {
@@ -86,12 +94,11 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
 
   return (
     <Card>
-      <CardHeader title="Members and invitations" />
       <CardBody className="flex flex-col gap-5">
         <section aria-labelledby="org-members-heading" className="flex flex-col gap-3">
-          <h3 id="org-members-heading" className="text-sm font-semibold text-fg-strong">
+          <h2 id="org-members-heading" className="text-sm font-semibold text-fg-strong">
             Members
-          </h3>
+          </h2>
           {members.isPending ? (
             <p role="status" className="text-sm text-fg-muted">
               Loading members…
@@ -101,51 +108,49 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
           ) : members.data.items.filter((member) => member.revokedAt === null).length === 0 ? (
             <p className="text-sm text-fg-muted">No active members.</p>
           ) : (
-            <ul className="flex flex-col gap-2">
+            <ListRows label="Members">
               {members.data.items
                 .filter((member) => member.revokedAt === null)
                 .map((member) => {
                   const label = member.userName ?? member.userEmail ?? NO_EMAIL_LABEL;
                   const self = member.userId === authed?.user.id;
+                  const roles = member.roles.map((role) => ROLE_LABELS[role]).join(', ');
                   return (
-                    <li
+                    <ListRow
                       key={member.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3"
-                    >
-                      <div className="min-w-0 text-sm">
-                        <p className="break-words font-medium text-fg-strong">
-                          {label}
-                          {self ? <span className="ml-2 text-xs text-fg-muted">You</span> : null}
-                        </p>
-                        {member.userName && member.userEmail ? (
-                          <p className="break-all text-fg-muted">{member.userEmail}</p>
-                        ) : null}
-                        <p className="text-fg-muted">
-                          {member.roles.map((role) => ROLE_LABELS[role]).join(', ')}
-                        </p>
-                      </div>
-                      {org.personal ? null : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          aria-label={`Revoke membership for ${label}`}
-                          onClick={() =>
-                            setRevoking({ kind: 'memberships', id: member.id, label, self })
-                          }
-                        >
-                          Revoke
-                        </Button>
-                      )}
-                    </li>
+                      title={label}
+                      pills={self ? <Badge>You</Badge> : null}
+                      meta={
+                        member.userName && member.userEmail
+                          ? `${member.userEmail} · ${roles}`
+                          : roles
+                      }
+                      trailing={
+                        org.personal || self ? null : (
+                          <RowActions
+                            label={`Actions for ${label}`}
+                            actions={[
+                              {
+                                label: `Revoke membership for ${label}`,
+                                icon: Trash2,
+                                destructive: true,
+                                onSelect: () =>
+                                  setRevoking({ kind: 'memberships', id: member.id, label }),
+                              },
+                            ]}
+                          />
+                        )
+                      }
+                    />
                   );
                 })}
-            </ul>
+            </ListRows>
           )}
         </section>
         <section aria-labelledby="org-invitations-heading" className="flex flex-col gap-3">
-          <h3 id="org-invitations-heading" className="text-sm font-semibold text-fg-strong">
+          <h2 id="org-invitations-heading" className="text-sm font-semibold text-fg-strong">
             Invitations
-          </h3>
+          </h2>
           {invitations.isPending ? (
             <p role="status" className="text-sm text-fg-muted">
               Loading invitations…
@@ -159,7 +164,7 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
           ) : invitations.data.items.length === 0 ? (
             <p className="text-sm text-fg-muted">No invitations.</p>
           ) : (
-            <ul className="flex flex-col gap-2">
+            <ListRows label="Invitations">
               {invitations.data.items.map((invitation) => {
                 const status =
                   invitation.revokedAt !== null
@@ -169,41 +174,40 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
                       : invitation.expiresAt <= Date.now()
                         ? 'Expired'
                         : 'Pending';
+                const roles = invitation.roles.map((role) => ROLE_LABELS[role]).join(', ');
                 return (
-                  <li
+                  <ListRow
                     key={invitation.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3"
-                  >
-                    <div className="min-w-0 text-sm">
-                      <p className="break-all font-medium text-fg-strong">{invitation.email}</p>
-                      <p className="text-fg-muted">
-                        {invitation.roles.map((role) => ROLE_LABELS[role]).join(', ')}
-                      </p>
-                      <p className="text-xs text-fg-muted">
-                        {status} · Expires {formatDateTime(invitation.expiresAt)}
-                      </p>
-                    </div>
-                    {status === 'Pending' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        aria-label={`Revoke invitation for ${invitation.email}`}
-                        onClick={() =>
-                          setRevoking({
-                            kind: 'invitations',
-                            id: invitation.id,
-                            label: invitation.email,
-                            self: false,
-                          })
-                        }
-                      >
-                        Revoke
-                      </Button>
-                    )}
-                  </li>
+                    title={invitation.email}
+                    meta={`${roles} · ${
+                      status === 'Accepted'
+                        ? status
+                        : `${status} · Expires ${formatDateTime(invitation.expiresAt)}`
+                    }`}
+                    trailing={
+                      status === 'Pending' ? (
+                        <RowActions
+                          label={`Actions for ${invitation.email}`}
+                          actions={[
+                            {
+                              label: `Revoke invitation for ${invitation.email}`,
+                              icon: Trash2,
+                              destructive: true,
+                              onSelect: () =>
+                                setRevoking({
+                                  kind: 'invitations',
+                                  id: invitation.id,
+                                  label: invitation.email,
+                                }),
+                            },
+                          ]}
+                        />
+                      ) : null
+                    }
+                  />
                 );
               })}
-            </ul>
+            </ListRows>
           )}
           {org.personal ? null : <InviteForm pending={invite.isPending} onInvite={sendInvite} />}
         </section>
@@ -211,7 +215,7 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
           open={revoking !== null}
           onOpenChange={(open) => !open && setRevoking(null)}
           {...revokeAccessConfirm(revoking?.kind ?? 'memberships', revoking?.label ?? '', {
-            self: revoking?.self ?? false,
+            self: false,
             org: org.name,
           })}
           destructive

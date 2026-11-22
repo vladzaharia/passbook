@@ -72,7 +72,7 @@ test.describe('retention console', () => {
     await expect(page.getByText('Released', { exact: true })).toBeVisible();
 
     await page.goto(`/admin/o/${org.id}/audit`);
-    await expect(page.getByText('Held records are kept until the hold is released.')).toBeVisible();
+    await expect(page.getByText('Kept 365 days unless held.')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Export' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Legal hold placed' }).first()).toBeVisible();
   });
@@ -124,7 +124,12 @@ test.describe('retention console', () => {
         'org-retention',
         ready('Retention receipts'),
       );
-      await sweep(page, `/admin/o/${org.id}/audit`, 'org-audit', ready('Held records are kept'));
+      await sweep(
+        page,
+        `/admin/o/${org.id}/audit`,
+        'org-audit',
+        ready('Kept 365 days unless held'),
+      );
       await sweep(
         page,
         `/admin/o/${org.id}/audit?entry=1`,
