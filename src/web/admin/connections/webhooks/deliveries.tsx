@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { WebhookDeliverySchema, WebhookEndpointStatus } from '@/shared/contracts/webhooks.ts';
 import { TEST_TAG, type TestRow, testRowOf } from '@/shared/webhook-test-rows.ts';
-import { entityLabel } from '../../../lib/entity-label.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import type { DataColumnDef } from '../../../ui/data-table-meta.ts';
 import {
@@ -24,6 +23,7 @@ import {
   DELIVERY_STATUS,
   EVENT_LABEL,
   failureLabel,
+  passLabel,
   responseLabel,
 } from './labels.ts';
 import { queuedLine, replayError } from './replay-errors.ts';
@@ -119,7 +119,7 @@ export function Deliveries({
             title={d.externalId ?? undefined}
             className="text-xs font-normal"
           >
-            {entityLabel(d.externalId, 'Open pass')}
+            {passLabel(d)}
           </RowLink>
         ),
     },
