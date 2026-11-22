@@ -92,6 +92,15 @@ describe('scan-setups with an API key', () => {
     );
   });
 
+  it('answers 404 to a platform key on a setup by id', async () => {
+    const { body } = await create();
+    await expectProblem(
+      await asKey(['scan-setup:read'], null, 'GET', `/api/v1/scan-setups/${body.id}`),
+      404,
+      'SCANNER_NOT_FOUND',
+    );
+  });
+
   it('keeps session access', async () => {
     expect((await send('GET', '/api/v1/scan-setups', admin())).status).toBe(200);
   });
