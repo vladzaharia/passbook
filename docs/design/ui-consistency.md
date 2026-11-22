@@ -493,7 +493,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Identity | `EntityAvatar kind id name accent size`; `EntityChip kind id name to`; `EntityIcon kind` |
 | Next steps | `Checklist title steps onDismiss`; `Celebrate when` (milestones only) |
 | Loading | `Skeleton`, `SkeletonRows`, `SkeletonDetail`, `SkeletonKeyValue`, `SkeletonTimeline`, `SkeletonChartCard`, `SkeletonTileGrid`; `Handoff loading skeleton`; `LoadingRail`; `PendingNote` (polling rows only) |
-| Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `SaveBarGroup` around a page's forms; `TOUCH_HIT` gives a custom control a 44 px touch hit area |
+| Buttons | `Button size='sm'\|'md'\|'badge'\|'lg' busy='spin'\|'pulse'\|'bob' done={value} undo paused`; `IconButton size='sm'\|'md'\|'badge'`; `mutationButton(m)` spreads `loading`/`paused`; `SaveBar dirty saving paused formId?`; `SaveBarGroup` around a page's forms; a control under 44 px grows to a real 44 px box under `pointer-coarse` (`size-11`, `min-h-11`): the box itself, not a `::before` hit area |
 | Cards | `Card`, `CardHeader title actions`, `CardLink to\|href` |
 | Badge | `AppleWalletBadge href label? locale? onClick?` (the black art on every ground) |
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |
