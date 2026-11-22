@@ -19,8 +19,8 @@
         "pushes": 920,
         "pushFailures": 4,
         "emails": 23,
-        "emailFailures": 0,
-        "emailUnknown": 0,
+        "emailFailures": 1,
+        "emailUnknown": 2,
         "syncRuns": 672,
         "signIns": 9,
         "scans": 994,
@@ -294,7 +294,7 @@
           },
           {
             "t": 1795564800000,
-            "v": 0
+            "v": 1
           }
         ],
         "emailUnknown": [
@@ -320,11 +320,11 @@
           },
           {
             "t": 1795478400000,
-            "v": 0
+            "v": 1
           },
           {
             "t": 1795564800000,
-            "v": 0
+            "v": 1
           }
         ],
         "syncRuns": [
@@ -474,8 +474,8 @@
         "pushes": 920,
         "pushFailures": 4,
         "emails": 23,
-        "emailFailures": 0,
-        "emailUnknown": 0,
+        "emailFailures": 1,
+        "emailUnknown": 2,
         "syncRuns": 672,
         "signIns": 9,
         "scans": 994,
@@ -749,7 +749,7 @@
           },
           {
             "t": 1795564800000,
-            "v": 0
+            "v": 1
           }
         ],
         "emailUnknown": [
@@ -775,11 +775,11 @@
           },
           {
             "t": 1795478400000,
-            "v": 0
+            "v": 1
           },
           {
             "t": 1795564800000,
-            "v": 0
+            "v": 1
           }
         ],
         "syncRuns": [

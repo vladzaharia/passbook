@@ -1910,15 +1910,38 @@
           }
         },
         "manifest": {
-          "tier": {}
+          "fields": {
+            "name": {
+              "type": "string",
+              "label": "Guest",
+              "required": true
+            },
+            "tier": {
+              "type": "string",
+              "label": "Pass"
+            },
+            "validUntil": {
+              "type": "date",
+              "label": "Valid until"
+            }
+          }
         },
         "assets": [
           {
+            "name": "icon.png",
+            "sha1": "27fb038614999199b74c8ad7572a3980f88331b4"
+          },
+          {
+            "name": "icon@2x.png",
+            "sha1": "8bfd9766f5c143dcbd199b5e8fcef0c36dfbffb2"
+          },
+          {
             "name": "logo.png",
-            "sha1": "3099a2091b1dcc923ba4d623f8a0ed6ebbf93ec1"
+            "sha1": "ad9876757a905c5b30777075b0f9b1b93fbca70d"
           }
         ]
-      }
+      },
+      "baseVersion": "3"
     }
   },
   "templates.postTemplatesByIdArchive": {

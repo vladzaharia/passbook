@@ -141,7 +141,7 @@
     }
   },
   "webhooks.getWebhookEndpointsByIdDeliveries": {
-    "description": "Deliveries of an endpoint, newest first. Filter by `state` or `type`.",
+    "description": "Deliveries of an endpoint, newest first. Filter by `state` or `type`. `nextAt` is the next try while `state` is `pending`; once a delivery finishes it keeps the last claim's hold, 5 minutes after that attempt, and nothing is sent then.",
     "response": {
       "items": [
         {
@@ -151,7 +151,7 @@
           "externalId": "booking_8841",
           "state": "delivered",
           "attempts": 1,
-          "nextAt": 1795570380000,
+          "nextAt": 1795570680000,
           "lastStatus": 200,
           "lastError": null,
           "lastAttemptAt": 1795570380000,
@@ -163,7 +163,7 @@
     }
   },
   "webhooks.getWebhookEndpointsByIdDeliveriesByEventId": {
-    "description": "One delivery with every attempt and the payload sent.",
+    "description": "One delivery with every attempt and the payload sent. `nextAt` is the next try while `state` is `pending`; once a delivery finishes it keeps the last claim's hold, 5 minutes after that attempt, and nothing is sent then.",
     "response": {
       "eventId": "0193a1b2-7c00-7000-8000-000000000033",
       "type": "pass.issued",
@@ -171,7 +171,7 @@
       "externalId": "booking_8841",
       "state": "delivered",
       "attempts": 1,
-      "nextAt": 1795570380000,
+      "nextAt": 1795570680000,
       "lastStatus": 200,
       "lastError": null,
       "lastAttemptAt": 1795570380000,

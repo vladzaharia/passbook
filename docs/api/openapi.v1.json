@@ -74537,13 +74537,7 @@
                       "lastRefreshedAt": 1795399380000,
                       "refreshRequestedAt": null,
                       "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
-                      "walletOffers": [
-                        {
-                          "provider": "google",
-                          "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
-                          "installation": "unknown"
-                        }
-                      ],
+                      "walletOffers": [],
                       "passJson": {
                         "formatVersion": 1,
                         "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -75384,13 +75378,7 @@
                   "lastRefreshedAt": 1795399380000,
                   "refreshRequestedAt": null,
                   "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
-                  "walletOffers": [
-                    {
-                      "provider": "google",
-                      "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
-                      "installation": "unknown"
-                    }
-                  ],
+                  "walletOffers": [],
                   "passJson": {
                     "formatVersion": 1,
                     "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -78493,7 +78481,7 @@
                   },
                   "usage": {
                     "calls24h": 38,
-                    "errors24h": 2,
+                    "errors24h": 5,
                     "captures24h": 6,
                     "passes": 9,
                     "series": {
@@ -78507,13 +78495,11 @@
                         0,
                         0,
                         0,
-                        0,
                         1,
                         1,
                         1,
                         1,
-                        1,
-                        3,
+                        2,
                         4,
                         4,
                         4,
@@ -78522,7 +78508,9 @@
                         4,
                         2,
                         2,
-                        2
+                        2,
+                        1,
+                        1
                       ],
                       "errors": [
                         0,
@@ -78544,11 +78532,11 @@
                         1,
                         0,
                         0,
-                        1,
                         0,
                         0,
                         0,
-                        0
+                        0,
+                        1
                       ]
                     }
                   },
@@ -80840,9 +80828,9 @@
                   },
                   "diff": [
                     {
-                      "field": "brand.name",
-                      "before": {},
-                      "after": {}
+                      "field": "brand.accent",
+                      "before": "#e8b400",
+                      "after": "#ffc400"
                     }
                   ],
                   "impact": {
@@ -91622,15 +91610,38 @@
                     }
                   },
                   "manifest": {
-                    "tier": {}
+                    "fields": {
+                      "name": {
+                        "type": "string",
+                        "label": "Guest",
+                        "required": true
+                      },
+                      "tier": {
+                        "type": "string",
+                        "label": "Pass"
+                      },
+                      "validUntil": {
+                        "type": "date",
+                        "label": "Valid until"
+                      }
+                    }
                   },
                   "assets": [
                     {
+                      "name": "icon.png",
+                      "sha1": "27fb038614999199b74c8ad7572a3980f88331b4"
+                    },
+                    {
+                      "name": "icon@2x.png",
+                      "sha1": "8bfd9766f5c143dcbd199b5e8fcef0c36dfbffb2"
+                    },
+                    {
                       "name": "logo.png",
-                      "sha1": "3099a2091b1dcc923ba4d623f8a0ed6ebbf93ec1"
+                      "sha1": "ad9876757a905c5b30777075b0f9b1b93fbca70d"
                     }
                   ]
-                }
+                },
+                "baseVersion": "3"
               }
             }
           }
@@ -100340,7 +100351,7 @@
                       "actorType": "user",
                       "actorId": "0193a1b2-7c00-7000-8000-000000000011",
                       "data": {
-                        "tier": {}
+                        "tier": "Day pass"
                       },
                       "at": 1795570500000
                     }
@@ -101315,7 +101326,7 @@
                 "source": {
                   "kind": "file",
                   "name": "members.csv",
-                  "csv": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\n"
+                  "csv": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\nmei@example.com,Mei Tanaka,Day pass,2026-12-31,NW-1004\nchris.example.com,Chris Dalton,Day pass,2026-12-31,NW-1005\n"
                 },
                 "mapping": "auto"
               },
@@ -101327,7 +101338,7 @@
                     "source": {
                       "kind": "file",
                       "name": "members.csv",
-                      "csv": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\n"
+                      "csv": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\nmei@example.com,Mei Tanaka,Day pass,2026-12-31,NW-1004\nchris.example.com,Chris Dalton,Day pass,2026-12-31,NW-1005\n"
                     },
                     "mapping": "auto"
                   }
@@ -101339,7 +101350,7 @@
                     "source": {
                       "kind": "file",
                       "name": "members.csv",
-                      "csv": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\n"
+                      "csv": "Holder email,Name,Tier,Valid until,Member ID\nada@example.com,Ada Example,Day pass,2026-12-31,NW-1001\ngrace@example.com,Grace Okafor,Day pass,2026-12-31,NW-1002\nalan@example.com,Alan Reyes,Day pass,2027-01-15,NW-1003\nmei@example.com,Mei Tanaka,Day pass,2026-12-31,NW-1004\nchris.example.com,Chris Dalton,Day pass,2026-12-31,NW-1005\n"
                     },
                     "plan": {
                       "mapping": {
@@ -101432,7 +101443,8 @@
                       "label": "Member ID",
                       "samples": [
                         "NW-1001",
-                        "NW-1002"
+                        "NW-1002",
+                        "NW-1003"
                       ]
                     }
                   ],
@@ -101467,14 +101479,14 @@
                     "overrides": {}
                   },
                   "counts": {
-                    "rows": 3,
+                    "rows": 5,
                     "create": 2,
                     "update": 1,
-                    "unchanged": 0,
-                    "errors": 0,
-                    "warnings": 0,
+                    "unchanged": 1,
+                    "errors": 1,
+                    "warnings": 1,
                     "emailable": 2,
-                    "errorsCreate": 0,
+                    "errorsCreate": 1,
                     "errorsUpdate": 0
                   },
                   "previews": [
@@ -101504,12 +101516,42 @@
                         "tier": "Day pass",
                         "validUntil": "2027-01-15"
                       }
+                    },
+                    {
+                      "row": 5,
+                      "action": "create",
+                      "input": {
+                        "name": "Mei Tanaka",
+                        "tier": "Day pass",
+                        "validUntil": "2026-12-31"
+                      }
                     }
                   ],
-                  "problems": [],
+                  "problems": [
+                    {
+                      "row": 6,
+                      "column": "Holder email",
+                      "field": "holderEmail",
+                      "label": "Holder email",
+                      "value": "chris.example.com",
+                      "code": "EMAIL_INVALID",
+                      "message": "Email is not valid.",
+                      "severity": "error"
+                    },
+                    {
+                      "row": 4,
+                      "column": "Name",
+                      "field": "name",
+                      "label": "Name",
+                      "value": "Alan Reyes",
+                      "code": "IMPORT_MANUAL_KEPT",
+                      "message": "Name was edited in PassBook; the edit is kept.",
+                      "severity": "warning"
+                    }
+                  ],
                   "problemTotals": {
-                    "errors": 0,
-                    "warnings": 0
+                    "errors": 1,
+                    "warnings": 1
                   },
                   "problemsTruncated": false,
                   "emailBudget": 500,
@@ -101685,7 +101727,8 @@
                           "label": "Member ID",
                           "samples": [
                             "NW-1001",
-                            "NW-1002"
+                            "NW-1002",
+                            "NW-1003"
                           ]
                         }
                       ],
@@ -101720,14 +101763,14 @@
                         "overrides": {}
                       },
                       "counts": {
-                        "rows": 3,
+                        "rows": 5,
                         "create": 2,
                         "update": 1,
-                        "unchanged": 0,
-                        "errors": 0,
-                        "warnings": 0,
+                        "unchanged": 1,
+                        "errors": 1,
+                        "warnings": 1,
                         "emailable": 2,
-                        "errorsCreate": 0,
+                        "errorsCreate": 1,
                         "errorsUpdate": 0
                       },
                       "previews": [
@@ -101757,23 +101800,53 @@
                             "tier": "Day pass",
                             "validUntil": "2027-01-15"
                           }
+                        },
+                        {
+                          "row": 5,
+                          "action": "create",
+                          "input": {
+                            "name": "Mei Tanaka",
+                            "tier": "Day pass",
+                            "validUntil": "2026-12-31"
+                          }
                         }
                       ],
-                      "problems": [],
+                      "problems": [
+                        {
+                          "row": 6,
+                          "column": "Holder email",
+                          "field": "holderEmail",
+                          "label": "Holder email",
+                          "value": "chris.example.com",
+                          "code": "EMAIL_INVALID",
+                          "message": "Email is not valid.",
+                          "severity": "error"
+                        },
+                        {
+                          "row": 4,
+                          "column": "Name",
+                          "field": "name",
+                          "label": "Name",
+                          "value": "Alan Reyes",
+                          "code": "IMPORT_MANUAL_KEPT",
+                          "message": "Name was edited in PassBook; the edit is kept.",
+                          "severity": "warning"
+                        }
+                      ],
                       "problemTotals": {
-                        "errors": 0,
-                        "warnings": 0
+                        "errors": 1,
+                        "warnings": 1
                       },
                       "problemsTruncated": false,
                       "emailBudget": 500,
                       "email": true,
                       "progress": {
-                        "done": 3,
+                        "done": 4,
                         "created": 2,
                         "updated": 1,
-                        "unchanged": 0,
+                        "unchanged": 1,
                         "failed": 0,
-                        "skipped": 0,
+                        "skipped": 1,
                         "notEmailed": 0,
                         "removed": 0
                       },
@@ -101919,7 +101992,8 @@
                       "label": "Member ID",
                       "samples": [
                         "NW-1001",
-                        "NW-1002"
+                        "NW-1002",
+                        "NW-1003"
                       ]
                     }
                   ],
@@ -101954,14 +102028,14 @@
                     "overrides": {}
                   },
                   "counts": {
-                    "rows": 3,
+                    "rows": 5,
                     "create": 2,
                     "update": 1,
-                    "unchanged": 0,
-                    "errors": 0,
-                    "warnings": 0,
+                    "unchanged": 1,
+                    "errors": 1,
+                    "warnings": 1,
                     "emailable": 2,
-                    "errorsCreate": 0,
+                    "errorsCreate": 1,
                     "errorsUpdate": 0
                   },
                   "previews": [
@@ -101991,23 +102065,53 @@
                         "tier": "Day pass",
                         "validUntil": "2027-01-15"
                       }
+                    },
+                    {
+                      "row": 5,
+                      "action": "create",
+                      "input": {
+                        "name": "Mei Tanaka",
+                        "tier": "Day pass",
+                        "validUntil": "2026-12-31"
+                      }
                     }
                   ],
-                  "problems": [],
+                  "problems": [
+                    {
+                      "row": 6,
+                      "column": "Holder email",
+                      "field": "holderEmail",
+                      "label": "Holder email",
+                      "value": "chris.example.com",
+                      "code": "EMAIL_INVALID",
+                      "message": "Email is not valid.",
+                      "severity": "error"
+                    },
+                    {
+                      "row": 4,
+                      "column": "Name",
+                      "field": "name",
+                      "label": "Name",
+                      "value": "Alan Reyes",
+                      "code": "IMPORT_MANUAL_KEPT",
+                      "message": "Name was edited in PassBook; the edit is kept.",
+                      "severity": "warning"
+                    }
+                  ],
                   "problemTotals": {
-                    "errors": 0,
-                    "warnings": 0
+                    "errors": 1,
+                    "warnings": 1
                   },
                   "problemsTruncated": false,
                   "emailBudget": 500,
                   "email": true,
                   "progress": {
-                    "done": 3,
+                    "done": 4,
                     "created": 2,
                     "updated": 1,
-                    "unchanged": 0,
+                    "unchanged": 1,
                     "failed": 0,
-                    "skipped": 0,
+                    "skipped": 1,
                     "notEmailed": 0,
                     "removed": 0
                   },
@@ -102208,36 +102312,32 @@
                 "plan": {
                   "mapping": {
                     "name": {
-                      "from": "Name"
+                      "from": "/Name"
                     },
                     "tier": {
-                      "from": "Tier"
+                      "from": "/Tier"
                     },
                     "validUntil": {
-                      "from": "Valid until"
+                      "from": "/Valid until",
+                      "transform": {
+                        "kind": "date",
+                        "options": {
+                          "input": "iso",
+                          "output": "iso"
+                        }
+                      }
                     }
                   },
                   "holderEmail": {
-                    "from": "Booking sheet",
-                    "transform": {
-                      "kind": "enum",
-                      "options": {
-                        "tier": {}
-                      }
-                    }
+                    "from": "/Holder email"
                   },
                   "externalId": {
-                    "from": "Booking sheet",
-                    "transform": {
-                      "kind": "enum",
-                      "options": {
-                        "tier": {}
-                      }
-                    }
+                    "from": "/Member ID"
                   },
                   "match": "externalId",
                   "keepManual": false,
-                  "save": false
+                  "save": true,
+                  "overrides": {}
                 }
               }
             }
@@ -102298,7 +102398,8 @@
                       "label": "Member ID",
                       "samples": [
                         "NW-1001",
-                        "NW-1002"
+                        "NW-1002",
+                        "NW-1003"
                       ]
                     }
                   ],
@@ -102333,14 +102434,14 @@
                     "overrides": {}
                   },
                   "counts": {
-                    "rows": 3,
+                    "rows": 5,
                     "create": 2,
                     "update": 1,
-                    "unchanged": 0,
-                    "errors": 0,
-                    "warnings": 0,
+                    "unchanged": 1,
+                    "errors": 1,
+                    "warnings": 1,
                     "emailable": 2,
-                    "errorsCreate": 0,
+                    "errorsCreate": 1,
                     "errorsUpdate": 0
                   },
                   "previews": [
@@ -102370,12 +102471,42 @@
                         "tier": "Day pass",
                         "validUntil": "2027-01-15"
                       }
+                    },
+                    {
+                      "row": 5,
+                      "action": "create",
+                      "input": {
+                        "name": "Mei Tanaka",
+                        "tier": "Day pass",
+                        "validUntil": "2026-12-31"
+                      }
                     }
                   ],
-                  "problems": [],
+                  "problems": [
+                    {
+                      "row": 6,
+                      "column": "Holder email",
+                      "field": "holderEmail",
+                      "label": "Holder email",
+                      "value": "chris.example.com",
+                      "code": "EMAIL_INVALID",
+                      "message": "Email is not valid.",
+                      "severity": "error"
+                    },
+                    {
+                      "row": 4,
+                      "column": "Name",
+                      "field": "name",
+                      "label": "Name",
+                      "value": "Alan Reyes",
+                      "code": "IMPORT_MANUAL_KEPT",
+                      "message": "Name was edited in PassBook; the edit is kept.",
+                      "severity": "warning"
+                    }
+                  ],
                   "problemTotals": {
-                    "errors": 0,
-                    "warnings": 0
+                    "errors": 1,
+                    "warnings": 1
                   },
                   "problemsTruncated": false,
                   "emailBudget": 500,
@@ -102496,7 +102627,7 @@
                 "$ref": "#/components/schemas/PassImportsCommitParams"
               },
               "example": {
-                "skipInvalid": false,
+                "skipInvalid": true,
                 "email": true
               }
             }
@@ -102557,7 +102688,8 @@
                       "label": "Member ID",
                       "samples": [
                         "NW-1001",
-                        "NW-1002"
+                        "NW-1002",
+                        "NW-1003"
                       ]
                     }
                   ],
@@ -102592,14 +102724,14 @@
                     "overrides": {}
                   },
                   "counts": {
-                    "rows": 3,
+                    "rows": 5,
                     "create": 2,
                     "update": 1,
-                    "unchanged": 0,
-                    "errors": 0,
-                    "warnings": 0,
+                    "unchanged": 1,
+                    "errors": 1,
+                    "warnings": 1,
                     "emailable": 2,
-                    "errorsCreate": 0,
+                    "errorsCreate": 1,
                     "errorsUpdate": 0
                   },
                   "previews": [
@@ -102629,12 +102761,42 @@
                         "tier": "Day pass",
                         "validUntil": "2027-01-15"
                       }
+                    },
+                    {
+                      "row": 5,
+                      "action": "create",
+                      "input": {
+                        "name": "Mei Tanaka",
+                        "tier": "Day pass",
+                        "validUntil": "2026-12-31"
+                      }
                     }
                   ],
-                  "problems": [],
+                  "problems": [
+                    {
+                      "row": 6,
+                      "column": "Holder email",
+                      "field": "holderEmail",
+                      "label": "Holder email",
+                      "value": "chris.example.com",
+                      "code": "EMAIL_INVALID",
+                      "message": "Email is not valid.",
+                      "severity": "error"
+                    },
+                    {
+                      "row": 4,
+                      "column": "Name",
+                      "field": "name",
+                      "label": "Name",
+                      "value": "Alan Reyes",
+                      "code": "IMPORT_MANUAL_KEPT",
+                      "message": "Name was edited in PassBook; the edit is kept.",
+                      "severity": "warning"
+                    }
+                  ],
                   "problemTotals": {
-                    "errors": 0,
-                    "warnings": 0
+                    "errors": 1,
+                    "warnings": 1
                   },
                   "problemsTruncated": false,
                   "emailBudget": 500,
@@ -102816,6 +102978,28 @@
                           "to": "2027-01-15"
                         }
                       ]
+                    },
+                    {
+                      "row": 5,
+                      "action": "unchanged",
+                      "state": "done",
+                      "result": "unchanged",
+                      "passId": "0193a1b2-7c00-7000-8000-d1d45c058976",
+                      "externalId": "NW-1004",
+                      "code": null,
+                      "message": null,
+                      "emailed": false
+                    },
+                    {
+                      "row": 6,
+                      "action": "error",
+                      "state": "skipped",
+                      "result": null,
+                      "passId": null,
+                      "externalId": "NW-1005",
+                      "code": "EMAIL_INVALID",
+                      "message": "Email is not valid.",
+                      "emailed": false
                     }
                   ],
                   "nextCursor": null
@@ -103224,7 +103408,7 @@
                   "$ref": "#/components/schemas/PassImportsSendEmailsResponse"
                 },
                 "example": {
-                  "sent": 0,
+                  "sent": 1,
                   "skipped": 1,
                   "alreadyQueued": 2,
                   "nextCursor": null
@@ -105349,9 +105533,7 @@
                   ],
                   "onDevice": false
                 },
-                "patch": {
-                  "healthy": {}
-                },
+                "patch": {},
                 "message": "The gym closes at 18:00 on 24 December."
               }
             }
@@ -112676,7 +112858,7 @@
                       "externalId": "booking_8841",
                       "state": "delivered",
                       "attempts": 1,
-                      "nextAt": 1795570380000,
+                      "nextAt": 1795570680000,
                       "lastStatus": 200,
                       "lastError": null,
                       "lastAttemptAt": 1795570380000,
@@ -112705,7 +112887,7 @@
           "resource": "webhookEndpoints.deliveries",
           "method": "list"
         },
-        "description": "Deliveries of an endpoint, newest first. Filter by `state` or `type`.",
+        "description": "Deliveries of an endpoint, newest first. Filter by `state` or `type`. `nextAt` is the next try while `state` is `pending`; once a delivery finishes it keeps the last claim's hold, 5 minutes after that attempt, and nothing is sent then.",
         "security": [
           {
             "apiKey": [
@@ -112861,7 +113043,7 @@
                   "externalId": "booking_8841",
                   "state": "delivered",
                   "attempts": 1,
-                  "nextAt": 1795570380000,
+                  "nextAt": 1795570680000,
                   "lastStatus": 200,
                   "lastError": null,
                   "lastAttemptAt": 1795570380000,
@@ -112914,7 +113096,7 @@
           "resource": "webhookEndpoints.deliveries",
           "method": "retrieve"
         },
-        "description": "One delivery with every attempt and the payload sent.",
+        "description": "One delivery with every attempt and the payload sent. `nextAt` is the next try while `state` is `pending`; once a delivery finishes it keeps the last claim's hold, 5 minutes after that attempt, and nothing is sent then.",
         "security": [
           {
             "apiKey": [
@@ -115650,19 +115832,10 @@
                   "providers": [
                     {
                       "provider": "google",
-                      "lifecycle": "active",
-                      "desiredOperation": {
-                        "version": 3,
-                        "kind": "upsert",
-                        "state": "succeeded",
-                        "reason": null
-                      },
+                      "lifecycle": "absent",
+                      "desiredOperation": null,
                       "priorGenerationRetirementPending": false,
                       "installation": "unknown",
-                      "reported": {
-                        "event": "saved",
-                        "at": 1795570500000
-                      },
                       "issuance": {
                         "state": "disabled",
                         "reason": "not_released"
@@ -115670,19 +115843,10 @@
                     },
                     {
                       "provider": "samsung",
-                      "lifecycle": "active",
-                      "desiredOperation": {
-                        "version": 3,
-                        "kind": "upsert",
-                        "state": "succeeded",
-                        "reason": null
-                      },
+                      "lifecycle": "absent",
+                      "desiredOperation": null,
                       "priorGenerationRetirementPending": false,
                       "installation": "unknown",
-                      "reported": {
-                        "event": "saved",
-                        "at": 1795570500000
-                      },
                       "issuance": {
                         "state": "disabled",
                         "reason": "not_released"
@@ -119411,8 +119575,8 @@
                     "pushes": 920,
                     "pushFailures": 4,
                     "emails": 23,
-                    "emailFailures": 0,
-                    "emailUnknown": 0,
+                    "emailFailures": 1,
+                    "emailUnknown": 2,
                     "syncRuns": 672,
                     "signIns": 9,
                     "scans": 994,
@@ -119686,7 +119850,7 @@
                       },
                       {
                         "t": 1795564800000,
-                        "v": 0
+                        "v": 1
                       }
                     ],
                     "emailUnknown": [
@@ -119712,11 +119876,11 @@
                       },
                       {
                         "t": 1795478400000,
-                        "v": 0
+                        "v": 1
                       },
                       {
                         "t": 1795564800000,
-                        "v": 0
+                        "v": 1
                       }
                     ],
                     "syncRuns": [
@@ -119951,8 +120115,8 @@
                     "pushes": 920,
                     "pushFailures": 4,
                     "emails": 23,
-                    "emailFailures": 0,
-                    "emailUnknown": 0,
+                    "emailFailures": 1,
+                    "emailUnknown": 2,
                     "syncRuns": 672,
                     "signIns": 9,
                     "scans": 994,
@@ -120226,7 +120390,7 @@
                       },
                       {
                         "t": 1795564800000,
-                        "v": 0
+                        "v": 1
                       }
                     ],
                     "emailUnknown": [
@@ -120252,11 +120416,11 @@
                       },
                       {
                         "t": 1795478400000,
-                        "v": 0
+                        "v": 1
                       },
                       {
                         "t": 1795564800000,
-                        "v": 0
+                        "v": 1
                       }
                     ],
                     "syncRuns": [
@@ -141874,8 +142038,8 @@
                       "approvedBy": "Sam Rivera",
                       "method": "camera",
                       "amount": 14,
-                      "before": {},
-                      "after": {},
+                      "before": null,
+                      "after": null,
                       "passVersion": 3,
                       "override": false,
                       "offline": false,
@@ -142208,8 +142372,8 @@
                   "approvedBy": "Sam Rivera",
                   "method": "camera",
                   "amount": 14,
-                  "before": {},
-                  "after": {},
+                  "before": null,
+                  "after": null,
                   "passVersion": 3,
                   "override": false,
                   "offline": false,
@@ -143618,7 +143782,7 @@
                 },
                 "example": {
                   "scope": {
-                    "tier": {}
+                    "tier": "Day pass"
                   }
                 }
               }

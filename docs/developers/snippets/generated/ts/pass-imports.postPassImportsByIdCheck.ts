@@ -6,36 +6,32 @@ const result = await pb.passImports.check('0193a1b2-7c00-7000-8000-0000000000e1'
   plan: {
     mapping: {
       name: {
-        from: 'Name',
+        from: '/Name',
       },
       tier: {
-        from: 'Tier',
+        from: '/Tier',
       },
       validUntil: {
-        from: 'Valid until',
+        from: '/Valid until',
+        transform: {
+          kind: 'date',
+          options: {
+            input: 'iso',
+            output: 'iso',
+          },
+        },
       },
     },
     holderEmail: {
-      from: 'Booking sheet',
-      transform: {
-        kind: 'enum',
-        options: {
-          tier: {},
-        },
-      },
+      from: '/Holder email',
     },
     externalId: {
-      from: 'Booking sheet',
-      transform: {
-        kind: 'enum',
-        options: {
-          tier: {},
-        },
-      },
+      from: '/Member ID',
     },
     match: 'externalId',
     keepManual: false,
-    save: false,
+    save: true,
+    overrides: {},
   },
 });
 console.log(result);

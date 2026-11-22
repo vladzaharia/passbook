@@ -17,13 +17,7 @@
           "lastRefreshedAt": 1795399380000,
           "refreshRequestedAt": null,
           "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
-          "walletOffers": [
-            {
-              "provider": "google",
-              "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
-              "installation": "unknown"
-            }
-          ],
+          "walletOffers": [],
           "passJson": {
             "formatVersion": 1,
             "passTypeIdentifier": "pass.mobile.passbook.northwind",
@@ -104,13 +98,7 @@
       "lastRefreshedAt": 1795399380000,
       "refreshRequestedAt": null,
       "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
-      "walletOffers": [
-        {
-          "provider": "google",
-          "href": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
-          "installation": "unknown"
-        }
-      ],
+      "walletOffers": [],
       "passJson": {
         "formatVersion": 1,
         "passTypeIdentifier": "pass.mobile.passbook.northwind",

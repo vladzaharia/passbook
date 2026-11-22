@@ -2,6 +2,6 @@ curl -X POST "https://passbook.mobile/api/v1/pass-imports/0193a1b2-7c00-7000-800
   -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-  "skipInvalid": false,
+  "skipInvalid": true,
   "email": true
 }'

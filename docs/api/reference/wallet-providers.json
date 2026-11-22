@@ -6,19 +6,10 @@
       "providers": [
         {
           "provider": "google",
-          "lifecycle": "active",
-          "desiredOperation": {
-            "version": 3,
-            "kind": "upsert",
-            "state": "succeeded",
-            "reason": null
-          },
+          "lifecycle": "absent",
+          "desiredOperation": null,
           "priorGenerationRetirementPending": false,
           "installation": "unknown",
-          "reported": {
-            "event": "saved",
-            "at": 1795570500000
-          },
           "issuance": {
             "state": "disabled",
             "reason": "not_released"
@@ -26,19 +17,10 @@
         },
         {
           "provider": "samsung",
-          "lifecycle": "active",
-          "desiredOperation": {
-            "version": 3,
-            "kind": "upsert",
-            "state": "succeeded",
-            "reason": null
-          },
+          "lifecycle": "absent",
+          "desiredOperation": null,
           "priorGenerationRetirementPending": false,
           "installation": "unknown",
-          "reported": {
-            "event": "saved",
-            "at": 1795570500000
-          },
           "issuance": {
             "state": "disabled",
             "reason": "not_released"

@@ -785,9 +785,9 @@
       },
       "diff": [
         {
-          "field": "brand.name",
-          "before": {},
-          "after": {}
+          "field": "brand.accent",
+          "before": "#e8b400",
+          "after": "#ffc400"
         }
       ],
       "impact": {
