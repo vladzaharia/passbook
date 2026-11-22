@@ -5,10 +5,10 @@ import { Badge } from '../ui/badge.tsx';
 function Group({ title, items }: { title: string; items: readonly ReportItem[] }) {
   if (items.length === 0) return null;
   return (
-    <section className="flex flex-col gap-2" aria-label={title}>
-      <h4 className="text-sm font-semibold text-fg-strong">
+    <div className="flex flex-col gap-2">
+      <h3 className="text-sm font-semibold text-fg-strong">
         {title} <span className="font-normal text-fg-muted">({items.length})</span>
-      </h4>
+      </h3>
       <ul className="flex flex-col divide-y divide-border rounded-lg border border-border bg-surface-raised">
         {items.map((item) => (
           <li
@@ -23,7 +23,7 @@ function Group({ title, items }: { title: string; items: readonly ReportItem[] }
           </li>
         ))}
       </ul>
-    </section>
+    </div>
   );
 }
 

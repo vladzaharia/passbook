@@ -33,9 +33,9 @@ export function CodeView({
 }) {
   const lines = highlightTokens(code, lang);
   return (
-    // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable code region
-    <section className="region" tabIndex={0} aria-label={label}>
-      <pre className={`src${num ? ' num' : ''}`}>
+    <section className="region" aria-label={label}>
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable code region */}
+      <pre className={`src${num ? ' num' : ''}`} tabIndex={0}>
         <code>
           {lines.map((toks, i) => (
             // biome-ignore lint/suspicious/noArrayIndexKey: lines are positional

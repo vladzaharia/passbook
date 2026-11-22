@@ -212,8 +212,8 @@ export function CommandPalette({
               />
               {preview ? (
                 <DialogPrimitive.Close
-                  aria-label="Close"
-                  className="shrink-0 rounded-sm border border-border px-1.5 py-0.5 text-xs text-fg-muted pointer-coarse:min-h-8 pointer-coarse:px-2.5"
+                  aria-label="esc, close"
+                  className="shrink-0 rounded-sm border border-border px-1.5 py-0.5 text-xs text-fg-muted pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:px-2.5"
                 >
                   esc
                 </DialogPrimitive.Close>

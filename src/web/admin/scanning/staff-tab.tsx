@@ -214,9 +214,8 @@ function OrganizationStaff({
       ) : null}
       <div className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-border bg-surface-raised p-4">
         <p className="text-sm text-fg-muted">
-          Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans since each
-          scanner's local midnight, not undone. A device's day lock on named PINs clears when it is
-          re-paired.
+          Shared by Live and Test. Counts show {mode === 'test' ? 'Test' : 'Live'} scans today, not
+          undone.
         </p>
         {canManage && !staff.isPending && !staff.isError && (rows.length > 0 || q) ? (
           <div className="flex flex-wrap gap-2">
