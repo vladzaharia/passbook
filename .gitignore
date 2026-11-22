@@ -42,3 +42,8 @@ _site/
 __pycache__/
 .pytest_cache/
 *.egg-info/
+
+# Written by `npm run gen` from assets/fonts/noto.
+/public/fonts/noto/
+/public/fonts/pdf/NotoSans-*.ttf
+/public/fonts/pdf/OFL-NotoSans.txt
