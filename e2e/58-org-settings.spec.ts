@@ -22,9 +22,8 @@ test.describe('org settings', () => {
     await page.reload();
     await expect(page.getByLabel('Website')).toHaveValue('https://gym.example/');
 
-    await page
-      .getByRole('button', { name: /(Use default for|Reset) Website( to default)?/ })
-      .click();
+    // No platform default, so there is no reset button: an empty input clears it.
+    await page.getByLabel('Website').fill('');
     await page.getByRole('button', { name: 'Save' }).first().click();
     await page.reload();
     await expect(page.getByLabel('Website')).toHaveValue('');
@@ -33,14 +32,14 @@ test.describe('org settings', () => {
   test('another org setting round-trips', async ({ page }) => {
     const org = readSeed().org;
     await page.goto(`/admin/o/${org.id}/settings`);
-    const from = page.getByLabel('Email From name');
-    await from.fill('Rain City Fit');
+    const from = page.getByLabel('Emails per day');
+    await from.fill('250');
     await page.getByRole('button', { name: 'Save' }).first().click();
     await page.reload();
-    await expect(page.getByLabel('Email From name')).toHaveValue('Rain City Fit');
-    await page.getByLabel('Email From name').fill('');
+    await expect(page.getByLabel('Emails per day')).toHaveValue('250');
+    await page.getByLabel('Emails per day').fill('');
     await page.getByRole('button', { name: 'Save' }).first().click();
     await page.reload();
-    await expect(page.getByLabel('Email From name')).toHaveValue('');
+    await expect(page.getByLabel('Emails per day')).toHaveValue('');
   });
 });

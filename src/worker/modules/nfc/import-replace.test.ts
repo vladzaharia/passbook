@@ -151,8 +151,10 @@ describe('replace tag keys by import', () => {
     const t = await f.org();
     const { authority, made } = await keyset('Supplier', t);
     const uids = Array.from({ length: 41 }, (_, n) => `04dd${String(n).padStart(10, '0')}`);
+    const keyFor = (prefix: string, n: number) => `${prefix}${n.toString(16).padStart(30, '0')}`;
+    const csvOf = (prefix: string) => uids.map((u, n) => `${u},${keyFor(prefix, n)}`).join('\n');
     await importTags(ctx(), authority, made.id, {
-      csv: uids.map((u) => `${u},${K1}`).join('\n'),
+      csv: csvOf('a1'),
       dryRun: false,
     });
     await run(
@@ -164,12 +166,12 @@ describe('replace tag keys by import', () => {
     const error = vi.spyOn(ctx().log, 'error').mockImplementation(() => {});
     try {
       const out = await importTags(ctx(), authority, made.id, {
-        csv: uids.map((u) => `${u},${K2}`).join('\n'),
+        csv: csvOf('b2'),
         dryRun: false,
         replace: true,
       });
       expect(out).toMatchObject({ ok: 41, added: 41, problems: [] });
-      expect(await keyOf(t.org.id, made.id, uids[40] ?? '')).toBe(K2);
+      expect(await keyOf(t.org.id, made.id, uids[40] ?? '')).toBe(keyFor('b2', 40));
       expect(error.mock.calls.map((c) => (c[1] as { code: string }).code)).toEqual([
         'NFC_REKEYED_AUDIT_FAILED',
         'NFC_REKEYED_AUDIT_FAILED',
