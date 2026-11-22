@@ -6,6 +6,7 @@ import { keyLive } from '../../platform/repo-api-key-sql.ts';
 import { DEVICE_IDLE_MS } from './auth-store.ts';
 import { effectiveReleaseIdSql, usedRelease } from './effective-release.ts';
 import { channelEpochSql } from './repo-lookup.ts';
+import { keyActsAsTerminalSql } from './sandbox-terminal-sql.ts';
 import { STAFF_IDLE_MS, STAFF_MAX_MS } from './staff-binding.ts';
 
 /** The SQL behind the scan grant checks (`authority-checks.ts`, `scan-pass-checks.ts`, `scan-write-grant.ts`). */
@@ -18,16 +19,15 @@ export const deviceAwakeCheck = (scannerId: string, now: number): Check =>
     [scannerId, now, DEVICE_IDLE_MS, now],
   );
 
-/** The API key a till scans with is live, bound to this terminal, in the grant's tenant and lists `scans:write`. */
+/** The API key a till scans with is live, in the grant's tenant, and a till key bound to this terminal or a sandbox key on the sandbox terminal. */
 export const apiKeyActsCheck = (keyId: string, scannerId: string, now: number): Check => {
   const live = keyLive('k', now);
   return tenantCheck(
     'actor',
     `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ? AND k.org_id = {org} AND k.mode = {mode}
        AND ${live.sql}
-       AND EXISTS (SELECT 1 FROM json_each(k.scopes) j WHERE j.type = 'text' AND j.value = 'scans:write')
-       AND EXISTS (SELECT 1 FROM api_key_terminals t WHERE t.key_id = k.id AND t.scanner_id = ?))`,
-    [keyId, ...live.params, scannerId],
+       AND ${keyActsAsTerminalSql(true)})`,
+    [keyId, ...live.params, scannerId, scannerId],
   );
 };
 

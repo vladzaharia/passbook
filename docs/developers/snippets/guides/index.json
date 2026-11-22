@@ -153,8 +153,7 @@
     ],
     "files": {
       "ts": "door-check-in.ts"
-    },
-    "expect": "reached"
+    }
   },
   {
     "id": "create-webhook-endpoint",

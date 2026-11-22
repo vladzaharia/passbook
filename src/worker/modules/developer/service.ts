@@ -31,6 +31,7 @@ import {
   ticketOf,
 } from './repo.ts';
 import { closeSandbox, insertSandbox } from './repo-grants.ts';
+import { ensureSandboxTerminal } from './sandbox-terminal.ts';
 
 /** The quickstart's blueprint, and how long its test key lives. */
 const QUICKSTART_BLUEPRINT = 'baked:starter-event-ticket';
@@ -219,6 +220,7 @@ export async function createSandbox(
       await authorizeWebhooks(ctx, test, row.org_id, 'integrations:manage'),
     );
     await tick('capture');
+    await ensureSandboxTerminal(ctx, test, row.org_id, templateId);
     const prior = await sandboxKeyOf(db, row.org_id, session.userId, SANDBOX_KEY_NAME);
     if (prior) return { ...dto(row, templateId), key: null, previousKey: prior };
     const key = await mintSandboxKey(ctx, test, row.org_id);

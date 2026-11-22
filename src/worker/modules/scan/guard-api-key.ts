@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import { SANDBOX_TERMINAL_ALIAS } from '../../../shared/copy/developer.ts';
 import { API_KEY_LABEL } from '../../platform/api-key-token.ts';
 import { keyCaller, type ScannerAuth } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
@@ -11,9 +12,15 @@ import {
   ValidationError,
 } from '../../platform/errors.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
+import { orgIsDeveloper } from '../orgs/repo-entitlements.ts';
 import type { ScanActor } from './actor.ts';
 import { scannerExpired } from './auth-store.ts';
-import { apiKeyActs, keyBoundTo, orgAccessRevisionOf } from './repo-api-key.ts';
+import {
+  apiKeyActs,
+  keyBoundTo,
+  orgAccessRevisionOf,
+  sandboxTerminalIdOf,
+} from './repo-api-key.ts';
 import { getScanner, type ScannerRow } from './repo-device.ts';
 
 export const DEVICE_HEADER = 'x-passbook-device';
@@ -39,7 +46,13 @@ export interface KeyTerminal {
 export async function keyTerminalOf(c: Context<AppBindings>, token: string): Promise<KeyTerminal> {
   const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
   if (!key) throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
-  if (!key.scopes.includes('scans:write')) {
+  // A sandbox key never holds `scans:write`; it reaches only the sandbox terminal (keyActsAsTerminalSql).
+  const sandboxKey =
+    key.mode === 'test' &&
+    key.orgId !== null &&
+    key.scopes.includes('passes:write') &&
+    (await orgIsDeveloper(c.env.DB, key.orgId));
+  if (!key.scopes.includes('scans:write') && !sandboxKey) {
     reportDenied(c, 'MISSING_SCOPE', key);
     throw new ForbiddenError('The API key lacks the scans:write scope.', 'MISSING_SCOPE');
   }
@@ -51,12 +64,16 @@ export async function keyTerminalOf(c: Context<AppBindings>, token: string): Pro
     reportDenied(c, 'FORBIDDEN', key);
     throw new ForbiddenError('An API key cannot call this route.', 'API_KEY_ROUTE');
   }
-  const scannerId = c.req.header(DEVICE_HEADER)?.trim();
-  if (!scannerId) {
+  const named = c.req.header(DEVICE_HEADER)?.trim();
+  if (!named) {
     reportDenied(c, 'FORBIDDEN', key);
     throw new ValidationError(`Name the terminal in ${DEVICE_HEADER}.`, [], 'DEVICE_REQUIRED');
   }
   const db = c.env.DB;
+  const scannerId =
+    sandboxKey && named === SANDBOX_TERMINAL_ALIAS
+      ? ((await sandboxTerminalIdOf(db, key.orgId)) ?? named)
+      : named;
   const row = await getScanner(db, scannerId);
   // One answer for every way the header can be wrong: unknown, another org or mode, removed, expired
   // or not one of this key's terminals.

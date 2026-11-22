@@ -4,15 +4,19 @@ import { BLUEPRINT_ID, EXAMPLE_IDS } from '../../src/web/developers/model/ids.ts
 import { createApp } from '../../src/worker/app.ts';
 import { createApiKeyStore } from '../../src/worker/modules/api-keys/service.ts';
 import { createSessionStore } from '../../src/worker/modules/auth/sessions.ts';
+import { ensureSandboxTerminal } from '../../src/worker/modules/developer/sandbox-terminal.ts';
+import { alignPassIdentity } from '../../src/worker/modules/developer/sandbox-terminal-test-fixtures.ts';
 import { PLATFORM_IDENTITY_ID } from '../../src/worker/modules/identities/resolver.ts';
 import {
   type BlueprintKit,
   blueprintKit,
 } from '../../src/worker/modules/templates/blueprint-test-fixtures.ts';
-import { runPassImport } from '../../src/worker/workflows/pass-import.ts';
+import type { SessionAuth } from '../../src/worker/platform/auth.ts';
 import { denyAllStores } from '../../src/worker/platform/auth.ts';
-import { run } from '../../src/worker/platform/db.ts';
+import { first, run } from '../../src/worker/platform/db.ts';
 import { sha256Hex } from '../../src/worker/platform/ids.ts';
+import { createServiceContext } from '../../src/worker/platform/service-context.ts';
+import { runPassImport } from '../../src/worker/workflows/pass-import.ts';
 import { makeOrg } from './../helpers/index.ts';
 
 const ORIGIN = 'https://passbook.mobile';
@@ -183,6 +187,27 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
     }),
   );
 
+  // A sandbox's own terminal, made as the portal makes it; an ordinary org has none.
+  const terminalOf = async () => {
+    if (options.kind !== 'developer') return null;
+    await ensureSandboxTerminal(
+      createServiceContext(kit.env, 'test', { clock: kit.clock }),
+      { userId: owner.userId, mode: 'test' } as SessionAuth,
+      org.id,
+      used.id,
+    );
+    return (
+      (
+        await first<{ id: string }>(
+          kit.env.DB,
+          "SELECT id FROM scanners WHERE org_id = ? AND name = 'Sandbox terminal'",
+          [org.id],
+        )
+      )?.id ?? null
+    );
+  };
+  const terminalId = await terminalOf();
+
   const real: Record<string, string> = {
     [EXAMPLE_IDS.orgId]: org.id,
     [EXAMPLE_IDS.templateId]: used.id,
@@ -225,6 +250,10 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
     orgId: org.id,
     templateId: used.id,
     passId: pass.id,
+    terminalId,
+    /** The pass JSON the scanner reads carries the identity row's ids (the kit stores another). */
+    align: (passId: string) => alignPassIdentity(kit.env.DB, passId),
+    clock: kit.clock,
     calls,
     fetch: fetchLike as typeof fetch,
   };
