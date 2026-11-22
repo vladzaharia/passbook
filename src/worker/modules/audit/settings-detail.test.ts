@@ -34,6 +34,7 @@ describe('settings audit detail for a tenant', () => {
   });
 
   it('leaves other details to the generic redaction', () => {
-    expect(read({ scope: 'org' })).toEqual({ '[redacted]': '[redacted]' });
+    expect(read({ detail: 'org' })).toEqual({ '[redacted]': '[redacted]' });
+    expect(read({ scope: 'org' })).toEqual({ scope: 'org' });
   });
 });
