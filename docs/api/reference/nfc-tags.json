@@ -352,7 +352,7 @@
       "nextCursor": "c1.4812",
       "events": [
         {
-          "at": 12,
+          "at": 1795521600000,
           "action": "lost",
           "actorName": "Open climbing"
         }

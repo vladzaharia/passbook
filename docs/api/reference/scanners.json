@@ -75,7 +75,7 @@
           "params": {
             "field": "tier"
           },
-          "door": "door",
+          "door": "in",
           "subject": {
             "kind": "session",
             "ref": "booking_8841"
@@ -389,14 +389,14 @@
       "state": "paired",
       "device": {
         "label": "Front desk tablet",
-        "at": 12
+        "at": 1795521600000
       }
     }
   },
   "scanners.postScannersByIdToken": {
     "description": "Makes a till token, shown once. It replaces the old one.",
     "response": {
-      "token": "9346be99e663beb4926569e31119a812",
+      "token": "c0ffee00c0ffee00c0ffee00c0ffee01",
       "expiresAt": 1798124400000
     }
   },
@@ -626,15 +626,12 @@
             }
           },
           "hoursInvalid": true,
-          "hold": {
-            "state": "open",
-            "until": 21
-          },
+          "hold": null,
           "window": {
             "open": false,
             "by": "always",
             "opensAt": 1795521600000,
-            "closesAt": 1795521600000
+            "closesAt": 1798113600000
           },
           "createdAt": 1794322800000,
           "updatedAt": 1795359600000,
@@ -715,15 +712,12 @@
         }
       },
       "hoursInvalid": true,
-      "hold": {
-        "state": "open",
-        "until": 21
-      },
+      "hold": null,
       "window": {
         "open": false,
         "by": "always",
         "opensAt": 1795521600000,
-        "closesAt": 1795521600000
+        "closesAt": 1798113600000
       },
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -854,7 +848,7 @@
       "activity": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000031",
-          "at": 12,
+          "at": 1795521600000,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -948,15 +942,12 @@
         }
       },
       "hoursInvalid": true,
-      "hold": {
-        "state": "open",
-        "until": 21
-      },
+      "hold": null,
       "window": {
         "open": false,
         "by": "always",
         "opensAt": 1795521600000,
-        "closesAt": 1795521600000
+        "closesAt": 1798113600000
       },
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -1087,7 +1078,7 @@
       "activity": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000031",
-          "at": 12,
+          "at": 1795521600000,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -1177,15 +1168,12 @@
         }
       },
       "hoursInvalid": true,
-      "hold": {
-        "state": "open",
-        "until": 21
-      },
+      "hold": null,
       "window": {
         "open": false,
         "by": "always",
         "opensAt": 1795521600000,
-        "closesAt": 1795521600000
+        "closesAt": 1798113600000
       },
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -1316,7 +1304,7 @@
       "activity": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000031",
-          "at": 12,
+          "at": 1795521600000,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -1986,15 +1974,12 @@
         }
       },
       "hoursInvalid": true,
-      "hold": {
-        "state": "open",
-        "until": 21
-      },
+      "hold": null,
       "window": {
         "open": false,
         "by": "always",
         "opensAt": 1795521600000,
-        "closesAt": 1795521600000
+        "closesAt": 1798113600000
       },
       "createdAt": 1794322800000,
       "updatedAt": 1795359600000,
@@ -2125,7 +2110,7 @@
       "activity": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000031",
-          "at": 12,
+          "at": 1795521600000,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -2146,7 +2131,7 @@
     "response": {
       "from": 23,
       "to": 39,
-      "total": 128,
+      "total": 38,
       "ok": 38,
       "headsUp": 33,
       "refused": 0,
@@ -2205,7 +2190,7 @@
         "latest": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 12,
+            "at": 1795521600000,
             "staffName": "Sam Rivera",
             "approvedBy": "Sam Rivera",
             "reason": "Left the gym early; refund issued at the desk."

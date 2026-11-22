@@ -14,10 +14,7 @@
             "check": false,
             "roundTrip": false
           },
-          "hold": {
-            "at": 12,
-            "reason": "Left the gym early; refund issued at the desk."
-          },
+          "hold": null,
           "issuance": {
             "state": "disabled",
             "reason": "not_released"
@@ -44,10 +41,7 @@
         "check": false,
         "roundTrip": false
       },
-      "hold": {
-        "at": 12,
-        "reason": "Left the gym early; refund issued at the desk."
-      },
+      "hold": null,
       "issuance": {
         "state": "disabled",
         "reason": "not_released"
@@ -70,10 +64,7 @@
         "check": false,
         "roundTrip": false
       },
-      "hold": {
-        "at": 12,
-        "reason": "Left the gym early; refund issued at the desk."
-      },
+      "hold": null,
       "issuance": {
         "state": "disabled",
         "reason": "not_released"
@@ -96,10 +87,7 @@
         "check": false,
         "roundTrip": false
       },
-      "hold": {
-        "at": 12,
-        "reason": "Left the gym early; refund issued at the desk."
-      },
+      "hold": null,
       "issuance": {
         "state": "disabled",
         "reason": "not_released"
@@ -122,10 +110,7 @@
         "check": false,
         "roundTrip": false
       },
-      "hold": {
-        "at": 12,
-        "reason": "Left the gym early; refund issued at the desk."
-      },
+      "hold": null,
       "issuance": {
         "state": "disabled",
         "reason": "not_released"

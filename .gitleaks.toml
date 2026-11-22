@@ -1,0 +1,21 @@
+# Secret scanning for the whole tree (CI runs `gitleaks dir .`). The default rules stay on.
+# The only allowlist is by shape: the demo values our API examples use, which are documented in
+# tools/lib/example-world.ts and cannot authenticate (the example key's tail is 42 characters, not 43).
+title = "PassBook"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Demo shapes used in the API examples and their tests"
+regexes = [
+  '''whsec_demo_northwind_[0-9a-f]{6}''',
+  '''pb_test_[A-Za-z0-9]{8}_northwind-demo-key-do-not-use-[0-9a-f]{12}''',
+  '''pb_test_(?:k3Qx9Zt2|p7Wm4Hn8)''',
+  '''c0ffee00c0ffee00c0ffee00c0ffee01''',
+  '''ApiKeyRotationKey\d''',
+  '''0193a1b2-7c00-7000-8000-0000000000aa''',
+  '''demo-token-northwind-[0-9a-f]{22}''',
+  '''00112233445566778899aabbccddeeff''',
+  '''ffeeddccbbaa99887766554433221100''',
+]

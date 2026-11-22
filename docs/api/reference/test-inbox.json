@@ -30,7 +30,7 @@
       "subject": "Your day pass",
       "attached": false,
       "createdAt": 1794322800000,
-      "html": "html",
+      "html": "<p>Your Northwind pass is ready.</p>",
       "text": "The gym closes at 18:00 on 24 December.",
       "forwarding": "sent"
     }

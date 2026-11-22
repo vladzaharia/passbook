@@ -15,7 +15,7 @@
           "disabledAt": null,
           "today": 7,
           "lastScan": {
-            "at": 12,
+            "at": 1795521600000,
             "scannerName": "Front desk"
           }
         }
@@ -45,7 +45,7 @@
         "disabledAt": null,
         "today": 7,
         "lastScan": {
-          "at": 12,
+          "at": 1795521600000,
           "scannerName": "Sam Rivera"
         }
       },
@@ -71,7 +71,7 @@
       "disabledAt": null,
       "today": 7,
       "lastScan": {
-        "at": 12,
+        "at": 1795521600000,
         "scannerName": "Front desk"
       }
     }
@@ -95,7 +95,7 @@
       "disabledAt": null,
       "today": 7,
       "lastScan": {
-        "at": 12,
+        "at": 1795521600000,
         "scannerName": "Front desk"
       }
     }

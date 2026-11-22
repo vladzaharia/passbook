@@ -153,7 +153,7 @@
       "secrets": {
         "sheetsToken": "••••3f9c"
       },
-      "webhookSecret": "whsec_demo571d4d450b1de2be7856efd7cafc",
+      "webhookSecret": "whsec_demo_northwind_571d4d",
       "mapping": {
         "name": {
           "from": "Name"
@@ -301,10 +301,10 @@
           "finishedAt": 1795521600000,
           "outcome": "unchanged",
           "recordsSeen": 29,
-          "passesChanged": 16,
+          "passesChanged": 0,
           "passesCreated": 19,
           "passesVoided": 4,
-          "recordsFailed": 31,
+          "recordsFailed": 0,
           "errorCode": null,
           "errorDetail": null,
           "httpStatus": 200,
@@ -505,10 +505,10 @@
           "finishedAt": 1795521600000,
           "outcome": "unchanged",
           "recordsSeen": 29,
-          "passesChanged": 16,
+          "passesChanged": 0,
           "passesCreated": 19,
           "passesVoided": 4,
-          "recordsFailed": 31,
+          "recordsFailed": 0,
           "errorCode": null,
           "errorDetail": null,
           "httpStatus": 200,

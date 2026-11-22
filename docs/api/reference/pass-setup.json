@@ -4,7 +4,7 @@
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "revision": "revision",
+      "revision": "4",
       "passCount": 16,
       "brand": {
         "name": {
@@ -108,10 +108,7 @@
               "check": false,
               "roundTrip": false
             },
-            "hold": {
-              "at": 12,
-              "reason": "Left the gym early; refund issued at the desk."
-            },
+            "hold": null,
             "issuance": {
               "state": "disabled",
               "reason": "not_released"
@@ -147,10 +144,7 @@
               "check": false,
               "roundTrip": false
             },
-            "hold": {
-              "at": 12,
-              "reason": "Left the gym early; refund issued at the desk."
-            },
+            "hold": null,
             "issuance": {
               "state": "disabled",
               "reason": "not_released"
@@ -186,10 +180,7 @@
               "check": false,
               "roundTrip": false
             },
-            "hold": {
-              "at": 12,
-              "reason": "Left the gym early; refund issued at the desk."
-            },
+            "hold": null,
             "issuance": {
               "state": "disabled",
               "reason": "not_released"
@@ -225,10 +216,7 @@
               "check": false,
               "roundTrip": false
             },
-            "hold": {
-              "at": 12,
-              "reason": "Left the gym early; refund issued at the desk."
-            },
+            "hold": null,
             "issuance": {
               "state": "disabled",
               "reason": "not_released"
@@ -264,10 +252,7 @@
               "check": false,
               "roundTrip": false
             },
-            "hold": {
-              "at": 12,
-              "reason": "Left the gym early; refund issued at the desk."
-            },
+            "hold": null,
             "issuance": {
               "state": "disabled",
               "reason": "not_released"
@@ -303,10 +288,7 @@
               "check": false,
               "roundTrip": false
             },
-            "hold": {
-              "at": 12,
-              "reason": "Left the gym early; refund issued at the desk."
-            },
+            "hold": null,
             "issuance": {
               "state": "disabled",
               "reason": "not_released"
@@ -435,7 +417,7 @@
       "view": {
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
-        "revision": "revision",
+        "revision": "4",
         "passCount": 16,
         "brand": {
           "name": {
@@ -539,10 +521,7 @@
                 "check": false,
                 "roundTrip": false
               },
-              "hold": {
-                "at": 12,
-                "reason": "Left the gym early; refund issued at the desk."
-              },
+              "hold": null,
               "issuance": {
                 "state": "disabled",
                 "reason": "not_released"
@@ -578,10 +557,7 @@
                 "check": false,
                 "roundTrip": false
               },
-              "hold": {
-                "at": 12,
-                "reason": "Left the gym early; refund issued at the desk."
-              },
+              "hold": null,
               "issuance": {
                 "state": "disabled",
                 "reason": "not_released"
@@ -617,10 +593,7 @@
                 "check": false,
                 "roundTrip": false
               },
-              "hold": {
-                "at": 12,
-                "reason": "Left the gym early; refund issued at the desk."
-              },
+              "hold": null,
               "issuance": {
                 "state": "disabled",
                 "reason": "not_released"
@@ -656,10 +629,7 @@
                 "check": false,
                 "roundTrip": false
               },
-              "hold": {
-                "at": 12,
-                "reason": "Left the gym early; refund issued at the desk."
-              },
+              "hold": null,
               "issuance": {
                 "state": "disabled",
                 "reason": "not_released"
@@ -695,10 +665,7 @@
                 "check": false,
                 "roundTrip": false
               },
-              "hold": {
-                "at": 12,
-                "reason": "Left the gym early; refund issued at the desk."
-              },
+              "hold": null,
               "issuance": {
                 "state": "disabled",
                 "reason": "not_released"
@@ -734,10 +701,7 @@
                 "check": false,
                 "roundTrip": false
               },
-              "hold": {
-                "at": 12,
-                "reason": "Left the gym early; refund issued at the desk."
-              },
+              "hold": null,
               "issuance": {
                 "state": "disabled",
                 "reason": "not_released"
@@ -869,7 +833,7 @@
     "request": {
       "slot": "logo",
       "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGNgYGD4DwABBAEAHnOcQAAAAABJRU5ErkJggg==",
-      "x2": "x2"
+      "x2": "logo@2x.png"
     },
     "response": {
       "slot": "logo",

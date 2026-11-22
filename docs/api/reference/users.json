@@ -36,7 +36,7 @@
       ],
       "identities": [
         {
-          "provider": "provider",
+          "provider": "google",
           "subject": "Your day pass",
           "emailClaim": "ada@example.com",
           "emailVerified": false,
@@ -53,9 +53,9 @@
           "lastSeenAt": 1795521600000,
           "expiresAt": 1798124400000,
           "revokedAt": null,
-          "userAgent": "userAgent",
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
           "current": false,
-          "method": "method"
+          "method": "GET"
         }
       ],
       "passes": [
@@ -71,8 +71,8 @@
       "recentAudit": [
         {
           "id": 14,
-          "at": 12,
-          "action": "action",
+          "at": 1795521600000,
+          "action": "issue",
           "actorType": "api_key",
           "actorId": "0193a1b2-7c00-7000-8000-000000000011"
         }
@@ -115,7 +115,7 @@
       ],
       "identities": [
         {
-          "provider": "provider",
+          "provider": "google",
           "subject": "Your day pass",
           "emailClaim": "ada@example.com",
           "emailVerified": false,
@@ -132,9 +132,9 @@
           "lastSeenAt": 1795521600000,
           "expiresAt": 1798124400000,
           "revokedAt": null,
-          "userAgent": "userAgent",
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
           "current": false,
-          "method": "method"
+          "method": "GET"
         }
       ],
       "passes": [
@@ -150,8 +150,8 @@
       "recentAudit": [
         {
           "id": 14,
-          "at": 12,
-          "action": "action",
+          "at": 1795521600000,
+          "action": "issue",
           "actorType": "api_key",
           "actorId": "0193a1b2-7c00-7000-8000-000000000011"
         }
@@ -177,7 +177,7 @@
       ],
       "identities": [
         {
-          "provider": "provider",
+          "provider": "google",
           "subject": "Your day pass",
           "emailClaim": "ada@example.com",
           "emailVerified": false,
@@ -194,9 +194,9 @@
           "lastSeenAt": 1795521600000,
           "expiresAt": 1798124400000,
           "revokedAt": null,
-          "userAgent": "userAgent",
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
           "current": false,
-          "method": "method"
+          "method": "GET"
         }
       ],
       "passes": [
@@ -212,8 +212,8 @@
       "recentAudit": [
         {
           "id": 14,
-          "at": 12,
-          "action": "action",
+          "at": 1795521600000,
+          "action": "issue",
           "actorType": "api_key",
           "actorId": "0193a1b2-7c00-7000-8000-000000000011"
         }
@@ -239,7 +239,7 @@
       ],
       "identities": [
         {
-          "provider": "provider",
+          "provider": "google",
           "subject": "Your day pass",
           "emailClaim": "ada@example.com",
           "emailVerified": false,
@@ -256,9 +256,9 @@
           "lastSeenAt": 1795521600000,
           "expiresAt": 1798124400000,
           "revokedAt": null,
-          "userAgent": "userAgent",
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
           "current": false,
-          "method": "method"
+          "method": "GET"
         }
       ],
       "passes": [
@@ -274,8 +274,8 @@
       "recentAudit": [
         {
           "id": 14,
-          "at": 12,
-          "action": "action",
+          "at": 1795521600000,
+          "action": "issue",
           "actorType": "api_key",
           "actorId": "0193a1b2-7c00-7000-8000-000000000011"
         }

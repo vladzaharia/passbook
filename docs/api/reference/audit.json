@@ -4,15 +4,15 @@
       "items": [
         {
           "id": 14,
-          "at": 12,
+          "at": 1795521600000,
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "actorType": "user",
           "actorId": "0193a1b2-7c00-7000-8000-000000000011",
           "actorLabel": "Sam Rivera",
-          "action": "action",
-          "targetType": "targetType",
+          "action": "issue",
+          "targetType": "pass",
           "targetId": "0193a1b2-7c00-7000-8000-b47ff194dbc0",
-          "targetLabel": "targetLabel",
+          "targetLabel": "Day pass",
           "requestId": "0193a1b2-7c00-7000-8000-7e8e665c70aa",
           "detail": {}
         }
@@ -25,15 +25,15 @@
       "items": [
         {
           "id": 14,
-          "at": 12,
+          "at": 1795521600000,
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "actorType": "user",
           "actorId": "0193a1b2-7c00-7000-8000-000000000011",
           "actorLabel": "Sam Rivera",
-          "action": "action",
-          "targetType": "targetType",
+          "action": "issue",
+          "targetType": "pass",
           "targetId": "0193a1b2-7c00-7000-8000-c32b5659438f",
-          "targetLabel": "targetLabel",
+          "targetLabel": "Day pass",
           "requestId": "0193a1b2-7c00-7000-8000-ff724fab02df",
           "detail": {}
         }

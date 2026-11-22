@@ -136,10 +136,7 @@
           "provider": "google",
           "source": "platform",
           "state": "off",
-          "hold": {
-            "at": 12,
-            "reason": "Left the gym early; refund issued at the desk."
-          },
+          "hold": null,
           "updatedAt": 1795359600000
         }
       ],
@@ -168,7 +165,7 @@
         }
       ],
       "nextCursor": "c1.4812",
-      "next": "next"
+      "next": "/account"
     }
   },
   "wallet-platform.postPlatformWalletCredentialsMigrate": {

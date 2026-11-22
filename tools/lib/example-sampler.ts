@@ -3,6 +3,7 @@ import {
   API,
   CANON,
   hex,
+  pem,
   IDS,
   KEY_PREFIX,
   KIND_OF_TAG,
@@ -133,17 +134,14 @@ function stringFor(key: string, kind: string, ctx: Ctx): string | undefined {
       /^(secret|webhookSecret|newSecret)$/,
       () => (ctx.kind === 'key' ? keySecret(KEY_PREFIX) : webhookSecret(`${ctx.op}${k}`)),
     ],
-    [/^secretPrefix$/, () => (ctx.kind === 'key' ? `pb_test_${KEY_PREFIX}` : 'whsec_demo')],
-    [/^prefix$/, () => (ctx.kind === 'key' ? KEY_PREFIX : 'whsec_demo')],
+    [/^secretPrefix$/, () => (ctx.kind === 'endpoint' ? 'whsec_demo' : `pb_test_${KEY_PREFIX}`)],
+    [/^prefix$/, () => (ctx.kind === 'endpoint' ? 'whsec_demo' : KEY_PREFIX)],
     [
       /^(token|apiKey|rawKey)$/,
-      () => (/Try/.test(ctx.op) ? keySecret(KEY_PREFIX) : hex(`${ctx.op}${k}`, 32)),
+      () => (/Try/.test(ctx.op) ? keySecret(KEY_PREFIX) : 'c0ffee00c0ffee00c0ffee00c0ffee01'),
     ],
-    [/^(privateKeyPem|keyPem|pem)$/, '-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----'],
-    [
-      /^(certificatePem|publicKeyPem)$/,
-      '-----BEGIN CERTIFICATE-----\n…\n-----END CERTIFICATE-----',
-    ],
+    [/^(privateKeyPem|keyPem|pem)$/, pem('PRIVATE KEY')],
+    [/^(certificatePem|publicKeyPem)$/, pem('CERTIFICATE')],
     [
       /^(lastErrorCode|syncErrorCode|errorCode|voidCause|refused|refusedReason|error)$/,
       () =>
@@ -362,9 +360,9 @@ function contextString(key: string, kind: string, path: string, ctx: Ctx): strin
     case 'defaultActionId':
       return 'admit';
     case 'idempotencyKey':
-      return `0193a1b2-7c00-7000-8000-${hex(`${ctx.op}${path}`, 12)}`;
+      return IDS.idem;
     default:
-      return undefined;
+      return FIELD[key]?.(ctx, path);
   }
 }
 
@@ -414,7 +412,93 @@ function pickEnum(values: unknown[], key: string): unknown {
 
 /** Fields that describe a resource gone wrong or retired; an everyday example leaves them empty. */
 const STATE_KEYS =
-  /^(revokedAt|retireAt|retiredAt|removedAt|disabledAt|deletedAt|archivedAt|failingSince|rotatedFrom|parentKeyId|previous\w*|breakerOpenUntil|undoUntil|lastError\w*|syncErrorCode|errorDetail|errorCode|errorFile|voidedAt|expiredAt|matched|pushBudget|blocked\w*|pairedAt|pairedBy\w*|lastStatus)$/;
+  /^(revokedAt|retireAt|retiredAt|removedAt|disabledAt|deletedAt|archivedAt|failingSince|rotatedFrom|parentKeyId|previous\w*|breakerOpenUntil|undoUntil|lastError\w*|syncErrorCode|errorDetail|errorCode|errorFile|voidedAt|expiredAt|matched|pushBudget|blocked\w*|pairedAt|pairedBy\w*|lastStatus|closedAt|closingAt|hold)$/;
+
+type Maker = (ctx: Ctx, path: string) => string;
+const h =
+  (n: number): Maker =>
+  (ctx, path) =>
+    hex(`${ctx.op}${path}`, n);
+const t =
+  (v: string): Maker =>
+  () =>
+    v;
+const id12: Maker = (ctx, path) => `0193a1b2-7c00-7000-8000-${hex(`${ctx.op}${path}`, 12)}`;
+/** Plain strings with no better rule: a real value for each field, never the field's name. */
+const FIELD: Record<string, Maker> = {
+  turnstileToken: t('0.demo-turnstile-response-northwind'),
+  turnstileSiteKey: t('0x4AAAAAAAdemoNorthwind'),
+  csrfToken: t('csrf_demo_northwind'),
+  next: t('/account'),
+  removalMessage: t('Removed by the front desk.'),
+  href: t(`${SITE}/p/xK3v9QmT2Lw8`),
+  userAgent: t('Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)'),
+  method: t('GET'),
+  route: t('/api/v1/passes'),
+  query: t('limit=25'),
+  client: t('PassBook SDK for TypeScript'),
+  requestBody: t('{"limit":25}'),
+  responseBody: t('{"items":[],"nextCursor":null}'),
+  orgSlug: t(ORG_SLUG),
+  confirm: t(ORG_SLUG),
+  nameInput: t(ORG),
+  revision: t('4'),
+  x2: t('logo@2x.png'),
+  x3: t('logo@3x.png'),
+  passLabel: t('Day pass'),
+  placedByLabel: t('Sam Rivera'),
+  releasedByLabel: t('Sam Rivera'),
+  cls: t('ok'),
+  mac: h(64),
+  prevMac: h(64),
+  refsDigest: h(64),
+  certSha256: h(64),
+  sig: h(64),
+  presetLabel: t('Standard'),
+  parentVersion: t('2'),
+  releaseVersion: t('3'),
+  html: t('<p>Your Northwind pass is ready.</p>'),
+  passTypeIdentifier: t('pass.mobile.passbook.northwind'),
+  teamIdentifier: t('A1B2C3D4E5'),
+  certSubject: t('CN=Pass Type ID: pass.mobile.passbook.northwind'),
+  certSerial: h(16),
+  apnsBinding: t('production'),
+  apnsReason: t('BadDeviceToken'),
+  handle: t('northwind'),
+  pkcs12Base64: t('MIIKcQIBAzCCCjcGCSqGSIb3DQEHAaCC…'),
+  p8: t(pem('PRIVATE KEY')),
+  phase: t('active'),
+  caller: t('terminal'),
+  status: t('ok'),
+  provider: t('google'),
+  action: t('issue'),
+  lastIpPrefix: t('203.0.113'),
+  ipPrefix: t('203.0.113'),
+  targetType: t('pass'),
+  issuer: t('https://id.example.com'),
+  platformAdminGroup: t('passbook-admins'),
+  adminGroup: t('northwind-admins'),
+  developerGroup: t('northwind-developers'),
+  userGroup: t('northwind-staff'),
+  address: t('ada@example.com'),
+  targetLabel: t('Day pass'),
+  tag: t('wristband-14'),
+  timestamp: t(new Date(T.recent).toISOString()),
+  unavailable: t('not_configured'),
+  host: t('passbook.mobile'),
+  overrideOf: id12,
+  replaces: id12,
+  skipped: t('no_email'),
+  place: t('zone:main-hall'),
+  door: t('in'),
+  where: t('passes'),
+  headline: t('Day pass'),
+  sub: t('Ada Example'),
+  greet: t('Hi Ada'),
+  eventType: t('pass.issued'),
+  flag: t('vip'),
+  log: t('Delivered to the endpoint; it answered 200.'),
+};
 
 const TRUE_KEYS = /^(is|has|can|allow|enabled|active|ok|sendEmail|valid|live|default)/;
 
@@ -622,6 +706,16 @@ function str(ctx: Ctx, s: Json, key: string, path: string, kind: string): string
   return v;
 }
 
+/** 32 hex digits; the two NFC keys are plainly sequential, so no scanner takes them for key material. */
+const hex32 = (seed: string): string =>
+  seed.endsWith('metaKey')
+    ? '00112233445566778899aabbccddeeff'
+    : seed.endsWith('fileKey')
+      ? 'ffeeddccbbaa99887766554433221100'
+      : /[tT]oken$/.test(seed)
+        ? 'c0ffee00c0ffee00c0ffee00c0ffee01'
+        : hex(seed, 32);
+
 const PATTERNS: [string, (seed: string) => string][] = [
   ['^([01]\\d|2[0-3]):[0-5]\\d-(([01]\\d|2[0-3]):[0-5]\\d|24:00)$', () => '09:00-21:00'],
   ['^(zone|event):\\S{1,64}$', () => 'zone:main-hall'],
@@ -630,11 +724,11 @@ const PATTERNS: [string, (seed: string) => string][] = [
   ['^[0-9a-f]{64}$', (s) => hex(s, 64)],
   ['^[0-9a-f]{8}$', (s) => hex(s, 8)],
   ['^[a-z0-9]{8}$', (s) => hex(s, 8)],
-  ['^[0-9a-fA-F]{32}$', (s) => hex(s, 32)],
+  ['^[0-9a-fA-F]{32}$', (s) => hex32(s)],
   ['^([01]\\d|2[0-3]):[0-5]\\d$', () => '04:00'],
   ['^[0-9]{1,32}$', () => '3388000000022843210'],
-  ['^[A-Za-z0-9_-]{43}$', (s) => hex(s, 43)],
-  ['^[0-9a-f]{32}$', (s) => hex(s, 32)],
+  ['^[A-Za-z0-9_-]{43}$', (s) => `demo-token-northwind-${hex(s, 22)}`],
+  ['^[0-9a-f]{32}$', (s) => hex32(s)],
   ['^\\d{6}$', (s) => String(100000 + (parseInt(hex(s, 5), 16) % 899999))],
 ];
 function byPattern(pattern: string, seed: string): string | undefined {
@@ -662,7 +756,7 @@ function num(s: Json, key: string): number {
     v = /breaker/.test(key) ? T.soon : /undo/.test(key) ? T.soon : T.validUntil;
   else if (/^(createdAt|startedAt|firstSeenAt|notBefore)$/.test(key)) v = T.created;
   else if (/^(updatedAt|modifiedAt)$/.test(key)) v = T.updated;
-  else if (/(At|Since)$/.test(key)) v = T.recent;
+  else if (/(At|Since|On)$|^(at|serverNow|when)$/.test(key)) v = T.recent;
   else if (/^width$/.test(key)) v = 320;
   else if (/^height$/.test(key)) v = 100;
   else if (/size|bytes/i.test(key)) v = 24576;
@@ -698,6 +792,54 @@ function ownKindOf(op: string): string {
 
 /** Fields that must agree with each other after sampling. */
 function fixState(out: Json, props: Json): void {
+  const num = (k: string): number | undefined =>
+    typeof out[k] === 'number' ? (out[k] as number) : undefined;
+  // Three sibling numbers that came out the same are nudged apart.
+  const seen = new Map<number, string[]>();
+  for (const [k, v] of Object.entries(out))
+    if (typeof v === 'number' && Number.isInteger(v) && v >= 2 && v < 1e12)
+      seen.set(v, [...(seen.get(v) ?? []), k]);
+  for (const [v, keys] of seen) if (keys.length >= 3) keys.forEach((k, i) => (out[k] = v + i * 3));
+  // A total is the sum of its parts.
+  const parts = Object.keys(out).filter(
+    (k) =>
+      /^(done|failed|created|updated|unchanged|skipped|removed|ok|errors|refused)$/.test(k) &&
+      num(k) !== undefined,
+  );
+  if (num('total') !== undefined && parts.length >= 2)
+    out.total = parts.reduce((n, k) => n + (num(k) ?? 0), 0);
+  if (
+    num('recordsSeen') !== undefined &&
+    (num('recordsFailed') ?? 0) > (num('recordsSeen') as number)
+  )
+    out.recordsFailed = 0;
+  if (out.outcome === 'unchanged')
+    for (const k of Object.keys(out)) if (/Changed$/.test(k)) out[k] = 0;
+  if (num('lastSuccessAt') !== undefined && num('lastSuccessAt') === num('lastFailureAt'))
+    out.lastFailureAt = (num('lastSuccessAt') as number) - 6 * 3_600_000;
+  if (out.state === 'delivered') {
+    const nullable = Array.isArray(props.nextAt?.type) && props.nextAt.type.includes('null');
+    if ('nextAt' in out && !nullable) {
+      // The schema always carries a next attempt, so the everyday row is a retry that is scheduled.
+      out.state = 'pending';
+      out.nextAt = T.soon;
+      if ('lastStatus' in out) out.lastStatus = 503;
+    } else {
+      if ('nextAt' in out) out.nextAt = null;
+      if ('lastStatus' in out) out.lastStatus = 200;
+    }
+    if ('replays' in out) out.replays = 1;
+  }
+  // A start is before its end.
+  for (const [k, v] of Object.entries(out)) {
+    const m = /^(.*?)(From|Start|Starts|Opens|Since)(At)?$/i.exec(k);
+    if (!m || typeof v !== 'number') continue;
+    for (const k2 of Object.keys(out)) {
+      const e = /^(.*?)(Until|End|Ends|Closes|Before)(At)?$/i.exec(k2);
+      if (e && e[1] === m[1] && typeof out[k2] === 'number' && v >= (out[k2] as number))
+        out[k2] = v + 30 * 86_400_000;
+    }
+  }
   if ('prefix' in props && 'secretPrefix' in props && 'mode' in out) out.mode = 'test';
   if ('webhookUrl' in props && 'mode' in out) {
     const inbound = out.mode === 'webhook' || out.mode === 'hybrid';

@@ -213,7 +213,7 @@
           "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
           "plan": "Day pass",
           "type": "generic",
-          "host": "host",
+          "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
           "parentName": "Main hall",

@@ -4,8 +4,8 @@
       "overall": "failing",
       "build": {
         "id": "0193a1b2-7c00-7000-8000-0000000000c1",
-        "tag": "tag",
-        "timestamp": "timestamp"
+        "tag": "wristband-14",
+        "timestamp": "2026-11-24T12:00:00.000Z"
       },
       "components": [
         {

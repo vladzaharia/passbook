@@ -38,14 +38,14 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 12,
+      "at": 1795521600000,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-0796d9bf4812",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 12
+        "at": 1795521600000
       },
       "counts": {
         "targeted": 16,
@@ -149,14 +149,14 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 12,
+      "at": 1795521600000,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-b82d6382833f",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 12
+        "at": 1795521600000
       },
       "counts": {
         "targeted": 16,
@@ -201,14 +201,14 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 12,
+      "at": 1795521600000,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-d6f7651d382a",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 12
+        "at": 1795521600000
       },
       "counts": {
         "targeted": 16,
@@ -255,14 +255,14 @@
             "healthy": {}
           },
           "notify": false,
-          "at": 12,
+          "at": 1795521600000,
           "clearAfter": 1798124400000,
           "parentId": "0193a1b2-7c00-7000-8000-1abf523adc00",
           "message": "The gym closes at 18:00 on 24 December.",
           "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
           "followUp": {
             "id": "0193a1b2-7c00-7000-8000-000000000042",
-            "at": 12
+            "at": 1795521600000
           },
           "counts": {
             "targeted": 16,
@@ -324,14 +324,14 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 12,
+      "at": 1795521600000,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-e8d417b45162",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 12
+        "at": 1795521600000
       },
       "counts": {
         "targeted": 16,
@@ -349,7 +349,7 @@
   "broadcasts.postBroadcastsByIdSend": {
     "description": "Sends a draft now or at a time.",
     "request": {
-      "at": 12
+      "at": 1795521600000
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000042",
@@ -379,14 +379,14 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 12,
+      "at": 1795521600000,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-42e8b5697d27",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 12
+        "at": 1795521600000
       },
       "counts": {
         "targeted": 16,
@@ -431,14 +431,14 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 12,
+      "at": 1795521600000,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-e17050b9d657",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 12
+        "at": 1795521600000
       },
       "counts": {
         "targeted": 16,
@@ -483,14 +483,14 @@
         "healthy": {}
       },
       "notify": false,
-      "at": 12,
+      "at": 1795521600000,
       "clearAfter": 1798124400000,
       "parentId": "0193a1b2-7c00-7000-8000-4cb271bc325f",
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
         "id": "0193a1b2-7c00-7000-8000-000000000042",
-        "at": 12
+        "at": 1795521600000
       },
       "counts": {
         "targeted": 16,

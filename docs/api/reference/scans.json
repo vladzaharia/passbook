@@ -5,7 +5,7 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000043",
-          "at": 12,
+          "at": 1795521600000,
           "outcome": "ok",
           "reason": null,
           "kind": "check_in",
@@ -48,7 +48,7 @@
   "scans.getScansById": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000043",
-      "at": 12,
+      "at": 1795521600000,
       "outcome": "ok",
       "reason": null,
       "kind": "check_in",
@@ -87,7 +87,7 @@
   },
   "scans.postScansByIdUndo": {
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-2bb6abe5810a"
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa"
     },
     "response": {
       "checkIn": {
@@ -230,7 +230,7 @@
         "lastScans": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 12,
+            "at": 1795521600000,
             "actionLabel": "Admit",
             "outcome": "ok",
             "scannerName": "Front desk",
@@ -317,7 +317,7 @@
       },
       "previous": {
         "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-        "at": 12,
+        "at": 1795521600000,
         "scannerName": "Front desk",
         "staffName": "Sam Rivera",
         "actionLabel": "Admit",
@@ -331,7 +331,7 @@
         "name": "Day pass",
         "style": "generic"
       },
-      "at": 12,
+      "at": 1795521600000,
       "cooldownRemainingMs": 1715,
       "value": {
         "input": "tier",
@@ -344,12 +344,12 @@
         "counter": false,
         "need": 13
       },
-      "flags": ["flag"],
+      "flags": ["vip"],
       "channel": "mobile",
       "overridable": false,
       "approvals": false,
       "group": {
-        "total": 128,
+        "total": 39,
         "done": 39,
         "already": 26,
         "refused": 0,
@@ -423,7 +423,7 @@
         "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 12
+          "at": 1795521600000
         },
         "timeZone": "America/Los_Angeles"
       },

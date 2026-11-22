@@ -24,7 +24,7 @@
       "rateTier": "standard",
       "parentKeyId": null,
       "rotatedFrom": null,
-      "lastIpPrefix": "lastIpPrefix",
+      "lastIpPrefix": "203.0.113",
       "parent": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration"
@@ -40,14 +40,14 @@
     "description": "What a key did lately: calls by action over the last 30 days and the latest calls. No request bodies, no secrets.",
     "response": {
       "lastUsedAt": 1795521600000,
-      "lastIpPrefix": "lastIpPrefix",
+      "lastIpPrefix": "203.0.113",
       "summary": {
         "since": 1794322800000,
         "calls": 8,
         "denied": 18,
         "actions": [
           {
-            "action": "action",
+            "action": "issue",
             "count": 12,
             "lastAt": 1795521600000
           }
@@ -56,12 +56,12 @@
       "recent": [
         {
           "id": 14,
-          "at": 12,
-          "action": "action",
+          "at": 1795521600000,
+          "action": "issue",
           "outcome": "allowed",
-          "targetType": "targetType",
+          "targetType": "pass",
           "targetId": "0193a1b2-7c00-7000-8000-95d0ddcf16c6",
-          "ipPrefix": "ipPrefix",
+          "ipPrefix": "203.0.113",
           "code": "NW7K2Q"
         }
       ]
@@ -124,7 +124,7 @@
         "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000021",
-        "secret": "pb_test_p7Wm4Hn8_b270a237a93e4b689f92b5550e9fab2c11b9749fedf"
+        "secret": "pb_test_p7Wm4Hn8_northwind-demo-key-do-not-use-b270a237a93e"
       },
       "previous": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
@@ -181,7 +181,7 @@
         "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000021",
-        "secret": "pb_test_p7Wm4Hn8_b270a237a93e4b689f92b5550e9fab2c11b9749fedf"
+        "secret": "pb_test_p7Wm4Hn8_northwind-demo-key-do-not-use-b270a237a93e"
       },
       "previous": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
@@ -280,7 +280,7 @@
       "rateTier": "standard",
       "parentKeyId": null,
       "rotatedFrom": null,
-      "secret": "pb_test_k3Qx9Zt2_3eae7039cab36f88b5186a04713dc9433236b56f68f"
+      "secret": "pb_test_k3Qx9Zt2_northwind-demo-key-do-not-use-3eae7039cab3"
     }
   }
 }

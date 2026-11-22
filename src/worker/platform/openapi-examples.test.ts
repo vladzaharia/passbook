@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/index.ts';
 import { validateAgainst } from '../../../test/helpers/openapi-validate.ts';
-import { exampleFailures } from '../../../tools/lib/example-lint.ts';
+import { exampleFailures, examplesOf } from '../../../tools/lib/example-lint.ts';
 import { createApp } from '../app.ts';
 import { buildOpenApiDocument } from './openapi-document.ts';
+import { apiKeyPrefixOf } from './api-key-token.ts';
 import { REFERENCE } from './openapi-reference.ts';
 
 type Media = { schema?: object };
@@ -75,5 +76,17 @@ describe('the document', () => {
       check(op.operationId, 'response', ok?.[1].content?.['application/json']);
     }
     expect(bad).toEqual([]);
+  });
+
+  it('has example secrets the API-key parser rejects, so none can authenticate', () => {
+    const secrets: string[] = [];
+    const walk = (v: unknown): void => {
+      if (typeof v === 'string' && /^(?:wlt|pbp?o?)_(?:(?:live|test)_)?[A-Za-z0-9_-]{8}_/.test(v))
+        secrets.push(v);
+      else if (v && typeof v === 'object') for (const x of Object.values(v)) walk(x);
+    };
+    for (const ex of examplesOf(doc as never)) walk(ex.value);
+    expect(secrets.length).toBeGreaterThan(0);
+    expect(secrets.filter((secret) => apiKeyPrefixOf(secret) !== null)).toEqual([]);
   });
 });

@@ -10,7 +10,7 @@
         "endedAt": 1795521600000,
         "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
         "rev": 24,
-        "serverNow": 17,
+        "serverNow": 1795521600000,
         "counts": {
           "total": 128,
           "present": 34,
@@ -26,7 +26,7 @@
             "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
             "holder": "Ada Example",
             "plan": "Day pass",
-            "host": "host",
+            "host": "passbook.mobile",
             "place": "zone:main-hall",
             "placeName": "Main hall",
             "since": 1794322800000,
@@ -36,7 +36,7 @@
             "mark": {
               "status": "present",
               "by": "Sam Rivera",
-              "at": 12
+              "at": 1795521600000
             },
             "notConfirmedOut": false
           }
@@ -54,7 +54,7 @@
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "rev": 24,
-      "serverNow": 17,
+      "serverNow": 1795521600000,
       "counts": {
         "total": 128,
         "present": 34,
@@ -70,7 +70,7 @@
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
           "plan": "Day pass",
-          "host": "host",
+          "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
           "since": 1794322800000,
@@ -80,7 +80,7 @@
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 12
+            "at": 1795521600000
           },
           "notConfirmedOut": false
         }
@@ -97,7 +97,7 @@
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "rev": 24,
-      "serverNow": 17,
+      "serverNow": 1795521600000,
       "counts": {
         "total": 128,
         "present": 34,
@@ -113,7 +113,7 @@
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
           "plan": "Day pass",
-          "host": "host",
+          "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
           "since": 1794322800000,
@@ -123,7 +123,7 @@
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 12
+            "at": 1795521600000
           },
           "notConfirmedOut": false
         }
@@ -138,7 +138,7 @@
           "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "status": "present",
-          "at": 12
+          "at": 1795521600000
         }
       ]
     },
@@ -150,7 +150,7 @@
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "rev": 24,
-      "serverNow": 17,
+      "serverNow": 1795521600000,
       "counts": {
         "total": 128,
         "present": 34,
@@ -166,7 +166,7 @@
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
           "plan": "Day pass",
-          "host": "host",
+          "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
           "since": 1794322800000,
@@ -176,7 +176,7 @@
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 12
+            "at": 1795521600000
           },
           "notConfirmedOut": false
         }
@@ -201,7 +201,7 @@
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "rev": 24,
-      "serverNow": 17,
+      "serverNow": 1795521600000,
       "counts": {
         "total": 128,
         "present": 34,
@@ -217,7 +217,7 @@
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
           "plan": "Day pass",
-          "host": "host",
+          "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
           "since": 1794322800000,
@@ -227,7 +227,7 @@
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 12
+            "at": 1795521600000
           },
           "notConfirmedOut": false
         }

@@ -13,7 +13,7 @@
           "modifiedAt": 1795359600000,
           "voidedAt": null,
           "removedAt": null,
-          "removalMessage": "removalMessage",
+          "removalMessage": "Removed by the front desk.",
           "lastRefreshedAt": 1795521600000,
           "refreshRequestedAt": 1795521600000,
           "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
@@ -21,7 +21,7 @@
           "walletOffers": [
             {
               "provider": "google",
-              "href": "href",
+              "href": "https://northwind.example.com/p/xK3v9QmT2Lw8",
               "installation": "unknown"
             }
           ],
@@ -148,7 +148,7 @@
         }
       ],
       "bundle": {
-        "token": "9d1bb889813fe4b3c36f6babef523ed2",
+        "token": "c0ffee00c0ffee00c0ffee00c0ffee01",
         "count": 12,
         "parts": 25
       }
@@ -166,7 +166,7 @@
       "modifiedAt": 1795359600000,
       "voidedAt": null,
       "removedAt": null,
-      "removalMessage": "removalMessage",
+      "removalMessage": "Removed by the front desk.",
       "lastRefreshedAt": 1795521600000,
       "refreshRequestedAt": 1795521600000,
       "downloadUrl": "https://northwind.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
@@ -174,7 +174,7 @@
       "walletOffers": [
         {
           "provider": "google",
-          "href": "href",
+          "href": "https://northwind.example.com/p/xK3v9QmT2Lw8",
           "installation": "unknown"
         }
       ],
@@ -371,7 +371,7 @@
           "id": "0193a1b2-7c00-7000-8000-0000000000c1",
           "createdAt": 1794322800000,
           "lastSeenAt": 1795521600000,
-          "userAgent": "userAgent",
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
           "current": false
         }
       ],

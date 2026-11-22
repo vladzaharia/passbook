@@ -8,7 +8,7 @@
         "primaryEmail": "ada@example.com"
       },
       "roles": ["admin"],
-      "csrfToken": "csrfToken",
+      "csrfToken": "csrf_demo_northwind",
       "amr": "oidc",
       "consoleUntil": 1798124400000,
       "consoleGroupRequired": false,

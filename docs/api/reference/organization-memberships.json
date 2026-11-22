@@ -6,7 +6,7 @@
           "id": "0193a1b2-7c00-7000-8000-0000000000c1",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "orgName": "Northwind Climbing",
-          "orgSlug": "orgSlug",
+          "orgSlug": "northwind-climbing",
           "personal": false,
           "testOnly": false,
           "userId": "0193a1b2-7c00-7000-8000-000000000011",
@@ -66,13 +66,13 @@
   },
   "organization-memberships.postOrgsInvitationsAccept": {
     "request": {
-      "token": "55f338f9e7b2f2370b6b7532db55a18f9540929f109"
+      "token": "demo-token-northwind-55f338f9e7b2f2370b6b75"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000c1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
-      "orgSlug": "orgSlug",
+      "orgSlug": "northwind-climbing",
       "personal": false,
       "testOnly": false,
       "userId": "0193a1b2-7c00-7000-8000-000000000011",
@@ -84,7 +84,7 @@
   },
   "organization-memberships.postOrgsInvitationsPreview": {
     "request": {
-      "token": "6f0b87be0c2906bafb1ffb4c2809af2273a0bdbdc6a"
+      "token": "demo-token-northwind-6f0b87be0c2906bafb1ffb"
     },
     "response": {
       "orgName": "Northwind Climbing"
@@ -97,7 +97,7 @@
           "id": "0193a1b2-7c00-7000-8000-0000000000c1",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "orgName": "Northwind Climbing",
-          "orgSlug": "orgSlug",
+          "orgSlug": "northwind-climbing",
           "personal": false,
           "testOnly": false,
           "userId": "0193a1b2-7c00-7000-8000-000000000011",

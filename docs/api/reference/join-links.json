@@ -6,7 +6,7 @@
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
         "mode": "live",
         "enabled": true,
-        "nameInput": "nameInput",
+        "nameInput": "Northwind Climbing",
         "nameInputs": [
           {
             "key": "tier",
@@ -49,7 +49,7 @@
   "join-links.putJoinLinksByTemplateId": {
     "request": {
       "enabled": true,
-      "nameInput": "nameInput",
+      "nameInput": "Northwind Climbing",
       "askEmail": false,
       "revision": 3
     },
@@ -59,7 +59,7 @@
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
         "mode": "live",
         "enabled": true,
-        "nameInput": "nameInput",
+        "nameInput": "Northwind Climbing",
         "nameInputs": [
           {
             "key": "tier",
@@ -106,7 +106,7 @@
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
         "mode": "live",
         "enabled": true,
-        "nameInput": "nameInput",
+        "nameInput": "Northwind Climbing",
         "nameInputs": [
           {
             "key": "tier",

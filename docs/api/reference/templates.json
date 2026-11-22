@@ -69,7 +69,7 @@
   "templates.getTemplatesByIdRollout": {
     "description": "How far the approved release has reached the organization's passes in the request's mode. `remaining` counts active passes on a different, non-equivalent build, the ones the automatic rollout moves, and `updating` splits the ones still on their way by version. Passes left behind are counted in `failedCount`: the rebuild recorded why, or every rebuild of this release has finished (or none started within ten minutes, `stalled`). `failed` lists the first 50 with the reason, only for a caller who can also read passes. `tell` offers a message to the holders whose passes are on the release, for 24 hours after it and until one is sent; send it as a message broadcast targeting `{ templateIds, version }` with `tell.key` as the `Idempotency-Key`.",
     "response": {
-      "releaseVersion": "releaseVersion",
+      "releaseVersion": "3",
       "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
       "fromVersion": "3",
       "total": 128,
@@ -153,17 +153,17 @@
       "state": {
         "live": {
           "version": "3",
-          "at": 12,
+          "at": 1795521600000,
           "by": "Sam Rivera"
         },
         "test": {
           "version": "3",
-          "at": 12,
+          "at": 1795521600000,
           "state": "following"
         },
         "draft": {
           "version": "3",
-          "at": 12
+          "at": 1795521600000
         },
         "review": {
           "state": "none"
@@ -203,17 +203,17 @@
       "state": {
         "live": {
           "version": "3",
-          "at": 12,
+          "at": 1795521600000,
           "by": "Sam Rivera"
         },
         "test": {
           "version": "3",
-          "at": 12,
+          "at": 1795521600000,
           "state": "following"
         },
         "draft": {
           "version": "3",
-          "at": 12
+          "at": 1795521600000
         },
         "review": {
           "state": "none"
@@ -253,17 +253,17 @@
         "state": {
           "live": {
             "version": "3",
-            "at": 12,
+            "at": 1795521600000,
             "by": "Sam Rivera"
           },
           "test": {
             "version": "3",
-            "at": 12,
+            "at": 1795521600000,
             "state": "following"
           },
           "draft": {
             "version": "3",
-            "at": 12
+            "at": 1795521600000
           },
           "review": {
             "state": "none"
@@ -841,14 +841,14 @@
           "candidateHash": "d1be8409d99c8a6edf27a23a2af992fa57c5829e9b7decf00526ed59c5aadf18",
           "adapterRevision": 3,
           "adapterCapabilities": ["read"],
-          "audiencePolicyRevision": 3,
+          "audiencePolicyRevision": 6,
           "authorId": "0193a1b2-7c00-7000-8000-3a5a2d975dd8",
           "versionAuthorId": "0193a1b2-7c00-7000-8000-0df0db664993",
           "authorName": "Sam Rivera",
           "versionAuthorName": "Sam Rivera",
           "createdAt": 1794322800000,
           "sourceReleaseId": "0193a1b2-7c00-7000-8000-2155235f8afc",
-          "sourceReleaseGeneration": 3,
+          "sourceReleaseGeneration": 9,
           "sourceReleaseHash": "98b2d3d2b4d8c72aec46f892cd3dce4ad873586b66087b2e5848831cfe67810c",
           "accountId": "0193a1b2-7c00-7000-8000-19590015b3d9",
           "accountRevision": 31,
@@ -891,14 +891,14 @@
       "candidateHash": "64488dddee9ce3e407729b188396eb98ef2778a6c9cfa84bd56e2b887b41a611",
       "adapterRevision": 3,
       "adapterCapabilities": ["read"],
-      "audiencePolicyRevision": 3,
+      "audiencePolicyRevision": 6,
       "authorId": "0193a1b2-7c00-7000-8000-de32766d9027",
       "versionAuthorId": "0193a1b2-7c00-7000-8000-f9eab450ec8f",
       "authorName": "Sam Rivera",
       "versionAuthorName": "Sam Rivera",
       "createdAt": 1794322800000,
       "sourceReleaseId": "0193a1b2-7c00-7000-8000-942c94c71643",
-      "sourceReleaseGeneration": 3,
+      "sourceReleaseGeneration": 9,
       "sourceReleaseHash": "1f467c3e8fdcaf050575a33ebd71f14ef7a0e5dc19291f8dc23ff4d4859d0c6e",
       "accountId": "0193a1b2-7c00-7000-8000-cb8a9de41f3c",
       "accountRevision": 31,
@@ -1396,7 +1396,7 @@
           "id": "0193a1b2-7c00-7000-8000-0000000000b1",
           "name": "Day pass",
           "opensAt": 1795521600000,
-          "closesAt": 1795521600000,
+          "closesAt": 1798113600000,
           "open": false,
           "scheduled": false
         }
@@ -1576,7 +1576,7 @@
         }
       ],
       "dryRun": false,
-      "parentVersion": "parentVersion"
+      "parentVersion": "2"
     }
   },
   "templates.postTemplatesByIdUseCheck": {
@@ -1827,14 +1827,14 @@
       "candidateHash": "917b9b8f3fa2b2d1237d7aeae7903a83ec725a67641584f69ea42baaa14f7b40",
       "adapterRevision": 3,
       "adapterCapabilities": ["read"],
-      "audiencePolicyRevision": 3,
+      "audiencePolicyRevision": 6,
       "authorId": "0193a1b2-7c00-7000-8000-7a4c33d5a5ef",
       "versionAuthorId": "0193a1b2-7c00-7000-8000-6cdc3c4f6291",
       "authorName": "Sam Rivera",
       "versionAuthorName": "Sam Rivera",
       "createdAt": 1794322800000,
       "sourceReleaseId": "0193a1b2-7c00-7000-8000-a920965e8f14",
-      "sourceReleaseGeneration": 3,
+      "sourceReleaseGeneration": 9,
       "sourceReleaseHash": "1784f9b0dfdef1a2d053dcb98058a58cf6284d96e7f5112f0a1a92e48b32f88a",
       "accountId": "0193a1b2-7c00-7000-8000-168e2cae8d8e",
       "accountRevision": 31,

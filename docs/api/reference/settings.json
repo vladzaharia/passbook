@@ -16,11 +16,11 @@
       ],
       "configRevision": 3,
       "oidc": {
-        "issuer": "issuer",
-        "platformAdminGroup": "platformAdminGroup",
-        "adminGroup": "adminGroup",
-        "developerGroup": "developerGroup",
-        "userGroup": "userGroup",
+        "issuer": "https://id.example.com",
+        "platformAdminGroup": "passbook-admins",
+        "adminGroup": "northwind-admins",
+        "developerGroup": "northwind-developers",
+        "userGroup": "northwind-staff",
         "consoleGroupRequired": false
       },
       "released": {
@@ -53,11 +53,11 @@
       ],
       "configRevision": 3,
       "oidc": {
-        "issuer": "issuer",
-        "platformAdminGroup": "platformAdminGroup",
-        "adminGroup": "adminGroup",
-        "developerGroup": "developerGroup",
-        "userGroup": "userGroup",
+        "issuer": "https://id.example.com",
+        "platformAdminGroup": "passbook-admins",
+        "adminGroup": "northwind-admins",
+        "developerGroup": "northwind-developers",
+        "userGroup": "northwind-staff",
         "consoleGroupRequired": false
       },
       "released": {
@@ -73,7 +73,7 @@
   },
   "settings.getSettingsReplyTo": {
     "response": {
-      "address": "address",
+      "address": "ada@example.com",
       "state": "confirmed"
     }
   },
@@ -82,17 +82,17 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
     },
     "response": {
-      "address": "address",
+      "address": "ada@example.com",
       "state": "confirmed"
     }
   },
   "settings.postSettingsReplyToConfirm": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "token": "7ed38937e3e04a38987efbe66780cb15"
+      "token": "c0ffee00c0ffee00c0ffee00c0ffee01"
     },
     "response": {
-      "address": "address",
+      "address": "ada@example.com",
       "state": "confirmed"
     }
   }

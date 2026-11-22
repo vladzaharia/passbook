@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { exampleFailures } from './example-lint.ts';
+import { pem } from './example-world.ts';
 import type { Doc } from './openapi-diff.ts';
 
 const UUID7 = '0193a1b2-7c00-7000-8000-0000000000c1';
@@ -122,8 +123,9 @@ describe('exampleFailures', () => {
   });
 
   it('rejects objects whose numbers are all 1 or all 3', () => {
-    expect(run({ a: 3, b: 3, c: 3 })).toEqual([
+    expect(run({ a: 3, b: 3, c: 3 }).sort()).toEqual([
       'a.getA response: every number is 3, which reads as filler',
+      'a.getA response: three sibling numbers are all 3, which reads as filler',
     ]);
     expect(run({ a: 1, b: 1, c: 1 })).toEqual([
       'a.getA response: every number is 1, which reads as filler',
@@ -141,13 +143,13 @@ describe('exampleFailures', () => {
     ]);
     expect(run({ t: 'AKIAIOSFODNN7EXAMPLE' })).toHaveLength(1);
     expect(run({ t: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc' })).toHaveLength(1);
-    expect(run({ t: `pb_test_k3Qx9Zt2_${'b9'.repeat(21)}x` })).toEqual([]);
-    expect(run({ t: 'whsec_demo4f9a0c' })).toEqual([]);
+    expect(run({ t: `pb_test_k3Qx9Zt2_${'b9'.repeat(21)}` })).toEqual([]);
+    expect(run({ t: 'whsec_demo_northwind_4f9a0c' })).toEqual([]);
     expect(run({ t: 'whsec_4f9a0c31d7' })).toHaveLength(1);
-    expect(run({ t: '-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----' })).toEqual([]);
+    expect(run({ t: pem('PRIVATE KEY') })).toEqual([]);
     expect(
       run({
-        t: `-----BEGIN PRIVATE KEY-----\n${'MIIEvQIBADANBgkq'.repeat(4)}\n-----END PRIVATE KEY-----`,
+        t: pem('PRIVATE KEY').replace('…', 'MIIEvQIBADANBgkq'.repeat(4)),
       }),
     ).toHaveLength(1);
   });
@@ -156,11 +158,61 @@ describe('exampleFailures', () => {
     const key = {
       prefix: 'k3Qx9Zt2',
       secretPrefix: 'pb_test_k3Qx9Zt2',
-      secret: 'pb_test_q8Wm3Lr5_x',
+      secret: 'pb_test_p7Wm4Hn8_x',
     };
     expect(run(key)).toEqual(['a.getA response.secret: does not start with "pb_test_k3Qx9Zt2"']);
     expect(run({ prefix: 'pb_test_k3Qx9Zt2', secretPrefix: 'pb_test_k3Qx9Zt2' })).toEqual([
       'a.getA response.prefix: equals secretPrefix; the prefix is the part after the label',
     ]);
+  });
+
+  it('rejects a value that is just its field name', () => {
+    expect(run({ orgSlug: 'orgSlug' })).toEqual([
+      'a.getA response.orgSlug: "orgSlug" is just the field name',
+    ]);
+    expect(run({ csrf_token: 'CsrfToken' })).toHaveLength(1);
+    expect(run({ method: 'GET' })).toEqual([]);
+  });
+
+  it('reads at, serverNow and *On as times', () => {
+    for (const key of ['at', 'serverNow', 'createdOn', 'validUntil'])
+      expect(run({ [key]: 12 })).toEqual([
+        `a.getA response.${key}: time 12 is not a plausible millisecond time`,
+      ]);
+  });
+
+  it('rejects fields that cannot all be true', () => {
+    const cases: [Record<string, unknown>, string][] = [
+      [
+        { lastSuccessAt: 1795521600000, lastFailureAt: 1795521600000 },
+        'lastSuccessAt and lastFailureAt are the same instant',
+      ],
+      [
+        { opensAt: 1795521600000, closesAt: 1795521600000 },
+        'opensAt (1795521600000) must be before closesAt (1795521600000)',
+      ],
+      [
+        { validFrom: 1795521600000, validUntil: 1795500000000 },
+        'validFrom (1795521600000) must be before validUntil (1795500000000)',
+      ],
+      [{ status: 'active', closedAt: 1795521600000 }, 'closedAt is set on an active record'],
+      [
+        { state: 'delivered', nextAt: 1795521600000, lastStatus: 200 },
+        'nextAt is set on a delivered record',
+      ],
+      [{ state: 'delivered', lastStatus: null }, 'a delivered record has no lastStatus'],
+      [{ state: 'delivered', replays: 30 }, 'replays 30 is too many for one delivery'],
+      [{ recordsSeen: 29, recordsFailed: 31 }, 'recordsFailed (31) exceeds recordsSeen (29)'],
+      [{ outcome: 'unchanged', passesChanged: 16 }, 'passesChanged is 16 on an unchanged run'],
+      [{ total: 128, done: 20, failed: 26 }, 'the parts add up to 46, not total 128'],
+      [
+        { durationMs: 7, attempts: 7, count: 7 },
+        'three sibling numbers are all 7, which reads as filler',
+      ],
+    ];
+    for (const [value, why] of cases) expect(run(value)).toEqual([`a.getA response: ${why}`]);
+    expect(
+      run({ opensAt: 1795521600000, closesAt: 1795600000000, status: 'active', closedAt: null }),
+    ).toEqual([]);
   });
 });

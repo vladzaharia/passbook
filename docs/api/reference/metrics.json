@@ -4,7 +4,7 @@
       "source": "analytics_engine",
       "range": "24h",
       "bucketMs": 1848,
-      "unavailable": ["unavailable"],
+      "unavailable": ["not_configured"],
       "totals": {
         "passes": 37,
         "activePasses": 37,
@@ -132,8 +132,8 @@
       ],
       "recent": [
         {
-          "at": 12,
-          "action": "action",
+          "at": 1795521600000,
+          "action": "issue",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "targetId": "0193a1b2-7c00-7000-8000-d08db361dbb2"
         }
@@ -145,7 +145,7 @@
       "source": "analytics_engine",
       "range": "24h",
       "bucketMs": 1848,
-      "unavailable": ["unavailable"],
+      "unavailable": ["not_configured"],
       "totals": {
         "passes": 37,
         "activePasses": 37,
@@ -273,8 +273,8 @@
       ],
       "recent": [
         {
-          "at": 12,
-          "action": "action",
+          "at": 1795521600000,
+          "action": "issue",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "targetId": "0193a1b2-7c00-7000-8000-51bada0b27c4"
         }

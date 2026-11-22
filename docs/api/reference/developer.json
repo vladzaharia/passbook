@@ -5,18 +5,18 @@
         {
           "id": "0193a1b2-7c00-7000-8000-0000000000c1",
           "requestId": "0193a1b2-7c00-7000-8000-dbe949fceb62",
-          "at": 12,
-          "method": "method",
-          "route": "route",
+          "at": 1795521600000,
+          "method": "GET",
+          "route": "/api/v1/passes",
           "path": "input.tier",
-          "query": "query",
+          "query": "limit=25",
           "status": 7,
           "code": "NW7K2Q",
           "durationMs": 1240,
           "keyId": "0193a1b2-7c00-7000-8000-000000000021",
           "mode": "live",
           "via": "try",
-          "client": "client",
+          "client": "PassBook SDK for TypeScript",
           "hasBodies": true
         }
       ],
@@ -28,21 +28,21 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000c1",
       "requestId": "0193a1b2-7c00-7000-8000-716455de049a",
-      "at": 12,
-      "method": "method",
-      "route": "route",
+      "at": 1795521600000,
+      "method": "GET",
+      "route": "/api/v1/passes",
       "path": "input.tier",
-      "query": "query",
+      "query": "limit=25",
       "status": 7,
       "code": "NW7K2Q",
       "durationMs": 1240,
       "keyId": "0193a1b2-7c00-7000-8000-000000000021",
       "mode": "live",
       "via": "try",
-      "client": "client",
+      "client": "PassBook SDK for TypeScript",
       "hasBodies": true,
-      "requestBody": "requestBody",
-      "responseBody": "responseBody",
+      "requestBody": "{\"limit\":25}",
+      "responseBody": "{\"items\":[],\"nextCursor\":null}",
       "bodiesExpireAt": 1795521600000
     }
   },
@@ -56,14 +56,14 @@
       "key": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration",
-        "prefix": "whsec_demo"
+        "prefix": "k3Qx9Zt2"
       }
     }
   },
   "developer.getResolve": {
     "response": {
       "kind": "request",
-      "href": "href",
+      "href": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "label": "Day pass"
     }
   },
@@ -80,13 +80,13 @@
       "sandbox": {
         "id": "0193a1b2-7c00-7000-8000-0000000000c1",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "orgSlug": "orgSlug",
+        "orgSlug": "northwind-climbing",
         "name": "Day pass",
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
         "mode": "test",
         "previewOnly": true,
         "createdAt": 1794322800000,
-        "closedAt": 1795521600000,
+        "closedAt": null,
         "closeReason": "idle",
         "reopenUntil": 1798124400000,
         "limits": {
@@ -123,7 +123,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-000000000021",
           "name": "Server integration",
-          "secretPrefix": "whsec_demo",
+          "secretPrefix": "pb_test_k3Qx9Zt2",
           "scopes": ["passes:read"],
           "createdAt": 1794322800000,
           "expiresAt": 1798124400000,
@@ -136,18 +136,18 @@
         {
           "id": "0193a1b2-7c00-7000-8000-0000000000c1",
           "requestId": "0193a1b2-7c00-7000-8000-0a8b002ca006",
-          "at": 12,
-          "method": "method",
-          "route": "route",
+          "at": 1795521600000,
+          "method": "GET",
+          "route": "/api/v1/passes",
           "path": "input.tier",
-          "query": "query",
+          "query": "limit=25",
           "status": 7,
           "code": "NW7K2Q",
           "durationMs": 1240,
           "keyId": "0193a1b2-7c00-7000-8000-000000000021",
           "mode": "live",
           "via": "try",
-          "client": "client",
+          "client": "PassBook SDK for TypeScript",
           "hasBodies": true
         }
       ],
@@ -157,7 +157,7 @@
           "target": "capture",
           "url": "https://hooks.example.com/passbook",
           "status": "active",
-          "eventTypes": ["eventType"],
+          "eventTypes": ["pass.issued"],
           "lastAt": 1795521600000,
           "lastOk": false
         }
@@ -188,21 +188,21 @@
   },
   "developer.postSandbox": {
     "request": {
-      "turnstileToken": "turnstileToken",
+      "turnstileToken": "0.demo-turnstile-response-northwind",
       "viewedAt": 1795521600000
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000c1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgSlug": "orgSlug",
+      "orgSlug": "northwind-climbing",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "previewOnly": true,
       "createdAt": 1794322800000,
-      "closedAt": 1795521600000,
+      "closedAt": null,
       "key": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration",
-        "secret": "whsec_demo002aa94bc847c36aef03c721b31d",
+        "secret": "whsec_demo_northwind_002aa9",
         "mode": "test",
         "expiresAt": 1798124400000
       },
@@ -214,44 +214,44 @@
       "sandbox": {
         "id": "0193a1b2-7c00-7000-8000-0000000000c1",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "orgSlug": "orgSlug",
+        "orgSlug": "northwind-climbing",
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
         "previewOnly": true,
         "createdAt": 1794322800000,
-        "closedAt": 1795521600000
+        "closedAt": null
       },
-      "turnstileSiteKey": "turnstileSiteKey"
+      "turnstileSiteKey": "0x4AAAAAAAdemoNorthwind"
     }
   },
   "developer.deleteSandbox": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000c1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgSlug": "orgSlug",
+      "orgSlug": "northwind-climbing",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "previewOnly": true,
       "createdAt": 1794322800000,
-      "closedAt": 1795521600000
+      "closedAt": null
     }
   },
   "developer.postSandboxReset": {
     "request": {
-      "turnstileToken": "turnstileToken"
+      "turnstileToken": "0.demo-turnstile-response-northwind"
     },
     "response": {
       "sandbox": {
         "id": "0193a1b2-7c00-7000-8000-0000000000c1",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "orgSlug": "orgSlug",
+        "orgSlug": "northwind-climbing",
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
         "previewOnly": true,
         "createdAt": 1794322800000,
-        "closedAt": 1795521600000
+        "closedAt": null
       },
       "key": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration",
-        "secret": "whsec_demo3bfe98ab18b381f43e2f85180c99",
+        "secret": "whsec_demo_northwind_3bfe98",
         "mode": "test",
         "expiresAt": 1798124400000
       },
@@ -270,15 +270,15 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000c1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "orgSlug": "orgSlug",
+      "orgSlug": "northwind-climbing",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "previewOnly": true,
       "createdAt": 1794322800000,
-      "closedAt": 1795521600000,
+      "closedAt": null,
       "key": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "name": "Server integration",
-        "secret": "whsec_demo1a6dad10dd6d550a11c1486e9e06",
+        "secret": "whsec_demo_northwind_1a6dad",
         "mode": "test",
         "expiresAt": 1798124400000
       },
@@ -287,7 +287,7 @@
   },
   "developer.postTryToken": {
     "response": {
-      "token": "pb_test_k3Qx9Zt2_3eae7039cab36f88b5186a04713dc9433236b56f68f",
+      "token": "pb_test_k3Qx9Zt2_northwind-demo-key-do-not-use-3eae7039cab3",
       "expiresAt": 1798124400000
     }
   },

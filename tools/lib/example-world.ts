@@ -44,6 +44,7 @@ export const IDS: Record<string, string> = {
   action: id(0x73),
   member: id(0x11),
   key2: id(0x24),
+  idem: id(0xaa),
 };
 
 /** A tag or a key name (singular, lower-case) to the kind of resource whose id it holds. */
@@ -153,13 +154,16 @@ export const TEXT = {
   locale: 'en-US',
 };
 
-/** An API key's lookup prefix (8 characters) and its test-mode secret: `pb_test_<prefix>_<43 characters>`. */
+/**
+ * An API key's lookup prefix (8 characters) and an example test-mode secret. The real tail is 43 characters; the
+ * example's is 42, so `apiKeyPrefixOf` rejects it and no example can ever pass for a working key.
+ */
 export const KEY_PREFIX = 'k3Qx9Zt2';
 export const NEW_KEY_PREFIX = 'p7Wm4Hn8';
 export const keySecret = (prefix: string): string =>
-  `pb_test_${prefix}_${hex(`secret${prefix}`, 43)}`;
-/** A webhook signing secret, marked demo so it is plainly not a working one. */
-export const webhookSecret = (seed: string): string => `whsec_demo${hex(seed, 28)}`;
+  `pb_test_${prefix}_northwind-demo-key-do-not-use-${hex(`secret${prefix}`, 12)}`;
+/** A webhook signing secret, a readable demo word plus a short hex. */
+export const webhookSecret = (seed: string): string => `whsec_demo_northwind_${hex(seed, 6)}`;
 
 /** Stable fake hex of `len` digits from a seed, so no two fields share a sample. */
 export function hex(seed: string, len: number): string {
@@ -299,12 +303,12 @@ export const IMPORT = {
   plan: IMPORT_PLAN,
   counts: {
     rows: 3,
-    create: 3,
-    update: 0,
+    create: 2,
+    update: 1,
     unchanged: 0,
     errors: 0,
     warnings: 0,
-    emailable: 3,
+    emailable: 2,
     errorsCreate: 0,
     errorsUpdate: 0,
   },
@@ -321,7 +325,7 @@ export const IMPORT = {
     },
     {
       row: 4,
-      action: 'create',
+      action: 'update',
       input: { name: 'Alan Reyes', tier: 'Day pass', validUntil: '2027-01-15' },
     },
   ],
@@ -332,8 +336,8 @@ export const IMPORT = {
   email: true,
   progress: {
     done: 3,
-    created: 3,
-    updated: 0,
+    created: 2,
+    updated: 1,
     unchanged: 0,
     failed: 0,
     skipped: 0,
@@ -356,3 +360,7 @@ export const CANON: { has: string[]; value: Record<string, unknown> }[] = [
   { has: ['slug', 'activeVersion', 'orgName'], value: TEMPLATE_DETAIL },
   { has: ['templateId', 'state', 'plan', 'counts'], value: IMPORT },
 ];
+
+/** A PEM block that shows the shape and none of the material: a header, an ellipsis, a footer. */
+export const pem = (label: string): string =>
+  `${['-----BEGIN', label, '-----'].join(' ').replace(' -----', '-----')}\n…\n${['-----END', label, '-----'].join(' ').replace(' -----', '-----')}`;

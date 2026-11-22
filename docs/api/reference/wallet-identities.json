@@ -29,13 +29,13 @@
         {
           "id": 14,
           "callId": "0193a1b2-7c00-7000-8000-159c7a486e02",
-          "phase": "phase",
-          "method": "method",
+          "phase": "active",
+          "method": "GET",
           "target": "tier",
-          "caller": "caller",
-          "status": "status",
+          "caller": "terminal",
+          "status": "ok",
           "durationMs": 1240,
-          "at": 12
+          "at": 1795521600000
         }
       ],
       "available": false

@@ -2,7 +2,7 @@
   "scan.postScanResolve": {
     "description": "Reads a code and says what it is, without acting on it.",
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-16cd4619eddb",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
       "input": {
         "code": "NW7K2Q",
         "method": "camera"
@@ -139,7 +139,7 @@
         "lastScans": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 12,
+            "at": 1795521600000,
             "actionLabel": "Admit",
             "outcome": "ok",
             "scannerName": "Front desk",
@@ -226,7 +226,7 @@
       },
       "previous": {
         "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-        "at": 12,
+        "at": 1795521600000,
         "scannerName": "Front desk",
         "staffName": "Sam Rivera",
         "actionLabel": "Admit",
@@ -240,7 +240,7 @@
         "name": "Day pass",
         "style": "generic"
       },
-      "at": 12,
+      "at": 1795521600000,
       "cooldownRemainingMs": 1715,
       "value": {
         "input": "tier",
@@ -258,7 +258,7 @@
       "overridable": false,
       "approvals": false,
       "group": {
-        "total": 128,
+        "total": 39,
         "done": 39,
         "already": 26,
         "refused": 0,
@@ -332,7 +332,7 @@
         "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 12
+          "at": 1795521600000
         },
         "timeZone": "America/Los_Angeles"
       },
@@ -426,7 +426,7 @@
   "scan.postScanActions": {
     "description": "Scans a code and acts on it.",
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-b448066034ab",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
       "input": {
         "code": "NW7K2Q",
         "method": "camera"
@@ -565,7 +565,7 @@
         "lastScans": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 12,
+            "at": 1795521600000,
             "actionLabel": "Admit",
             "outcome": "ok",
             "scannerName": "Front desk",
@@ -652,7 +652,7 @@
       },
       "previous": {
         "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-        "at": 12,
+        "at": 1795521600000,
         "scannerName": "Front desk",
         "staffName": "Sam Rivera",
         "actionLabel": "Admit",
@@ -666,7 +666,7 @@
         "name": "Day pass",
         "style": "generic"
       },
-      "at": 12,
+      "at": 1795521600000,
       "cooldownRemainingMs": 1715,
       "value": {
         "input": "tier",
@@ -684,7 +684,7 @@
       "overridable": false,
       "approvals": false,
       "group": {
-        "total": 128,
+        "total": 39,
         "done": 39,
         "already": 26,
         "refused": 0,
@@ -758,7 +758,7 @@
         "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 12
+          "at": 1795521600000
         },
         "timeZone": "America/Los_Angeles"
       },
@@ -852,7 +852,7 @@
   "scan.postScanScansByScanIdUndo": {
     "description": "Undoes a check-in.",
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-26c98103fc9c",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
       "scope": {
         "setupId": "0193a1b2-7c00-7000-8000-27347ab42881",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
@@ -987,7 +987,7 @@
         "lastScans": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 12,
+            "at": 1795521600000,
             "actionLabel": "Admit",
             "outcome": "ok",
             "scannerName": "Front desk",
@@ -1074,7 +1074,7 @@
       },
       "previous": {
         "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-        "at": 12,
+        "at": 1795521600000,
         "scannerName": "Front desk",
         "staffName": "Sam Rivera",
         "actionLabel": "Admit",
@@ -1088,7 +1088,7 @@
         "name": "Day pass",
         "style": "generic"
       },
-      "at": 12,
+      "at": 1795521600000,
       "cooldownRemainingMs": 1715,
       "value": {
         "input": "tier",
@@ -1106,7 +1106,7 @@
       "overridable": false,
       "approvals": false,
       "group": {
-        "total": 128,
+        "total": 39,
         "done": 39,
         "already": 26,
         "refused": 0,
@@ -1180,7 +1180,7 @@
         "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 12
+          "at": 1795521600000
         },
         "timeZone": "America/Los_Angeles"
       },
@@ -1277,7 +1277,7 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-6482995efc7f",
-          "at": 12,
+          "at": 1795521600000,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -1300,7 +1300,7 @@
       "items": [
         {
           "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-          "at": 12,
+          "at": 1795521600000,
           "outcome": "ok",
           "reason": null,
           "actionLabel": "Admit",
@@ -1405,15 +1405,12 @@
             }
           },
           "hoursInvalid": true,
-          "hold": {
-            "state": "open",
-            "until": 21
-          },
+          "hold": null,
           "window": {
             "open": false,
             "by": "always",
             "opensAt": 1795521600000,
-            "closesAt": 1795521600000
+            "closesAt": 1798113600000
           },
           "createdAt": 1794322800000,
           "updatedAt": 1795359600000,
@@ -1608,7 +1605,7 @@
         "id": "0193a1b2-7c00-7000-8000-0000000000e1",
         "name": "Open climbing",
         "opensAt": 1795521600000,
-        "closesAt": 1795521600000,
+        "closesAt": 1798113600000,
         "timeZone": "America/Los_Angeles",
         "reentry": false,
         "note": "Photo ID checked at the desk."
@@ -1644,7 +1641,7 @@
       ],
       "staffTruncated": false,
       "approvals": false,
-      "csrfToken": "csrfToken",
+      "csrfToken": "csrf_demo_northwind",
       "undoWindowMinutes": 2,
       "counts": {
         "today": 7,
@@ -1741,15 +1738,12 @@
             }
           },
           "hoursInvalid": true,
-          "hold": {
-            "state": "open",
-            "until": 21
-          },
+          "hold": null,
           "window": {
             "open": false,
             "by": "always",
             "opensAt": 1795521600000,
-            "closesAt": 1795521600000
+            "closesAt": 1798113600000
           },
           "createdAt": 1794322800000,
           "updatedAt": 1795359600000,
@@ -1944,7 +1938,7 @@
         "id": "0193a1b2-7c00-7000-8000-0000000000e1",
         "name": "Open climbing",
         "opensAt": 1795521600000,
-        "closesAt": 1795521600000,
+        "closesAt": 1798113600000,
         "timeZone": "America/Los_Angeles",
         "reentry": false,
         "note": "Photo ID checked at the desk."
@@ -1980,7 +1974,7 @@
       ],
       "staffTruncated": false,
       "approvals": false,
-      "csrfToken": "csrfToken",
+      "csrfToken": "csrf_demo_northwind",
       "undoWindowMinutes": 2,
       "counts": {
         "today": 7,
@@ -2093,15 +2087,12 @@
             }
           },
           "hoursInvalid": true,
-          "hold": {
-            "state": "open",
-            "until": 21
-          },
+          "hold": null,
           "window": {
             "open": false,
             "by": "always",
             "opensAt": 1795521600000,
-            "closesAt": 1795521600000
+            "closesAt": 1798113600000
           },
           "createdAt": 1794322800000,
           "updatedAt": 1795359600000,
@@ -2296,7 +2287,7 @@
         "id": "0193a1b2-7c00-7000-8000-0000000000e1",
         "name": "Open climbing",
         "opensAt": 1795521600000,
-        "closesAt": 1795521600000,
+        "closesAt": 1798113600000,
         "timeZone": "America/Los_Angeles",
         "reentry": false,
         "note": "Photo ID checked at the desk."
@@ -2332,7 +2323,7 @@
       ],
       "staffTruncated": false,
       "approvals": false,
-      "csrfToken": "csrfToken",
+      "csrfToken": "csrf_demo_northwind",
       "undoWindowMinutes": 2,
       "counts": {
         "today": 7,
@@ -2429,15 +2420,12 @@
             }
           },
           "hoursInvalid": true,
-          "hold": {
-            "state": "open",
-            "until": 21
-          },
+          "hold": null,
           "window": {
             "open": false,
             "by": "always",
             "opensAt": 1795521600000,
-            "closesAt": 1795521600000
+            "closesAt": 1798113600000
           },
           "createdAt": 1794322800000,
           "updatedAt": 1795359600000,
@@ -2632,7 +2620,7 @@
         "id": "0193a1b2-7c00-7000-8000-0000000000e1",
         "name": "Open climbing",
         "opensAt": 1795521600000,
-        "closesAt": 1795521600000,
+        "closesAt": 1798113600000,
         "timeZone": "America/Los_Angeles",
         "reentry": false,
         "note": "Photo ID checked at the desk."
@@ -2668,7 +2656,7 @@
       ],
       "staffTruncated": false,
       "approvals": false,
-      "csrfToken": "csrfToken",
+      "csrfToken": "csrf_demo_northwind",
       "undoWindowMinutes": 2,
       "counts": {
         "today": 7,
@@ -2767,15 +2755,12 @@
               }
             },
             "hoursInvalid": true,
-            "hold": {
-              "state": "open",
-              "until": 21
-            },
+            "hold": null,
             "window": {
               "open": false,
               "by": "always",
               "opensAt": 1795521600000,
-              "closesAt": 1795521600000
+              "closesAt": 1798113600000
             },
             "createdAt": 1794322800000,
             "updatedAt": 1795359600000,
@@ -2970,7 +2955,7 @@
           "id": "0193a1b2-7c00-7000-8000-0000000000e1",
           "name": "Open climbing",
           "opensAt": 1795521600000,
-          "closesAt": 1795521600000,
+          "closesAt": 1798113600000,
           "timeZone": "America/Los_Angeles",
           "reentry": false,
           "note": "Photo ID checked at the desk."
@@ -3006,7 +2991,7 @@
         ],
         "staffTruncated": false,
         "approvals": false,
-        "csrfToken": "csrfToken",
+        "csrfToken": "csrf_demo_northwind",
         "undoWindowMinutes": 2,
         "counts": {
           "today": 7,
@@ -3044,7 +3029,7 @@
         "endedAt": 1795521600000,
         "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
         "rev": 24,
-        "serverNow": 17,
+        "serverNow": 1795521600000,
         "counts": {
           "total": 128,
           "present": 34,
@@ -3060,7 +3045,7 @@
             "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
             "holder": "Ada Example",
             "plan": "Day pass",
-            "host": "host",
+            "host": "passbook.mobile",
             "place": "zone:main-hall",
             "placeName": "Main hall",
             "since": 1794322800000,
@@ -3070,7 +3055,7 @@
             "mark": {
               "status": "present",
               "by": "Sam Rivera",
-              "at": 12
+              "at": 1795521600000
             },
             "notConfirmedOut": false
           }
@@ -3087,7 +3072,7 @@
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "rev": 24,
-      "serverNow": 17,
+      "serverNow": 1795521600000,
       "counts": {
         "total": 128,
         "present": 34,
@@ -3103,7 +3088,7 @@
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
           "plan": "Day pass",
-          "host": "host",
+          "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
           "since": 1794322800000,
@@ -3113,7 +3098,7 @@
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 12
+            "at": 1795521600000
           },
           "notConfirmedOut": false
         }
@@ -3129,7 +3114,7 @@
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "rev": 24,
-      "serverNow": 17,
+      "serverNow": 1795521600000,
       "counts": {
         "total": 128,
         "present": 34,
@@ -3145,7 +3130,7 @@
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
           "plan": "Day pass",
-          "host": "host",
+          "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
           "since": 1794322800000,
@@ -3155,7 +3140,7 @@
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 12
+            "at": 1795521600000
           },
           "notConfirmedOut": false
         }
@@ -3169,7 +3154,7 @@
           "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "status": "present",
-          "at": 12
+          "at": 1795521600000
         }
       ]
     },
@@ -3181,7 +3166,7 @@
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "rev": 24,
-      "serverNow": 17,
+      "serverNow": 1795521600000,
       "counts": {
         "total": 128,
         "present": 34,
@@ -3197,7 +3182,7 @@
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
           "plan": "Day pass",
-          "host": "host",
+          "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
           "since": 1794322800000,
@@ -3207,7 +3192,7 @@
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 12
+            "at": 1795521600000
           },
           "notConfirmedOut": false
         }
@@ -3231,7 +3216,7 @@
       "endedAt": 1795521600000,
       "endedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "rev": 24,
-      "serverNow": 17,
+      "serverNow": 1795521600000,
       "counts": {
         "total": 128,
         "present": 34,
@@ -3247,7 +3232,7 @@
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
           "plan": "Day pass",
-          "host": "host",
+          "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
           "since": 1794322800000,
@@ -3257,7 +3242,7 @@
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 12
+            "at": 1795521600000
           },
           "notConfirmedOut": false
         }
@@ -3266,7 +3251,7 @@
   },
   "scan.postScanMarkOut": {
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-d26499f1845f",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "place": "zone:main-hall",
       "scope": {
@@ -3417,7 +3402,7 @@
         "lastScans": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 12,
+            "at": 1795521600000,
             "actionLabel": "Admit",
             "outcome": "ok",
             "scannerName": "Front desk",
@@ -3504,7 +3489,7 @@
       },
       "previous": {
         "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-        "at": 12,
+        "at": 1795521600000,
         "scannerName": "Front desk",
         "staffName": "Sam Rivera",
         "actionLabel": "Admit",
@@ -3518,7 +3503,7 @@
         "name": "Day pass",
         "style": "generic"
       },
-      "at": 12,
+      "at": 1795521600000,
       "cooldownRemainingMs": 1715,
       "value": {
         "input": "tier",
@@ -3531,12 +3516,12 @@
         "counter": false,
         "need": 13
       },
-      "flags": ["flag"],
+      "flags": ["vip"],
       "channel": "mobile",
       "overridable": false,
       "approvals": false,
       "group": {
-        "total": 128,
+        "total": 39,
         "done": 39,
         "already": 26,
         "refused": 0,
@@ -3610,7 +3595,7 @@
         "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 12
+          "at": 1795521600000
         },
         "timeZone": "America/Los_Angeles"
       },
@@ -3703,8 +3688,8 @@
   },
   "scan.postScanOverrides": {
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-0de3558ca9f0",
-      "overrideOf": "overrideOf",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
+      "overrideOf": "0193a1b2-7c00-7000-8000-889675b5d21f",
       "approval": {
         "staffId": "0193a1b2-7c00-7000-8000-000000000022",
         "pin": "667129"
@@ -3858,7 +3843,7 @@
         "lastScans": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 12,
+            "at": 1795521600000,
             "actionLabel": "Admit",
             "outcome": "ok",
             "scannerName": "Front desk",
@@ -3945,7 +3930,7 @@
       },
       "previous": {
         "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-        "at": 12,
+        "at": 1795521600000,
         "scannerName": "Front desk",
         "staffName": "Sam Rivera",
         "actionLabel": "Admit",
@@ -3959,7 +3944,7 @@
         "name": "Day pass",
         "style": "generic"
       },
-      "at": 12,
+      "at": 1795521600000,
       "cooldownRemainingMs": 1715,
       "value": {
         "input": "tier",
@@ -3972,12 +3957,12 @@
         "counter": false,
         "need": 13
       },
-      "flags": ["flag"],
+      "flags": ["vip"],
       "channel": "mobile",
       "overridable": false,
       "approvals": false,
       "group": {
-        "total": 128,
+        "total": 39,
         "done": 39,
         "already": 26,
         "refused": 0,
@@ -4051,7 +4036,7 @@
         "type": "generic",
         "rule": {
           "kind": "until",
-          "at": 12
+          "at": 1795521600000
         },
         "timeZone": "America/Los_Angeles"
       },
@@ -4169,7 +4154,7 @@
   },
   "scan.postScanSignOut": {
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-5dcb97b9a794",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "tag": "returned"
     },
@@ -4252,15 +4237,12 @@
             }
           },
           "hoursInvalid": true,
-          "hold": {
-            "state": "open",
-            "until": 21
-          },
+          "hold": null,
           "window": {
             "open": false,
             "by": "always",
             "opensAt": 1795521600000,
-            "closesAt": 1795521600000
+            "closesAt": 1798113600000
           },
           "createdAt": 1794322800000,
           "updatedAt": 1795359600000,
@@ -4455,7 +4437,7 @@
         "id": "0193a1b2-7c00-7000-8000-0000000000e1",
         "name": "Open climbing",
         "opensAt": 1795521600000,
-        "closesAt": 1795521600000,
+        "closesAt": 1798113600000,
         "timeZone": "America/Los_Angeles",
         "reentry": false,
         "note": "Photo ID checked at the desk."
@@ -4491,7 +4473,7 @@
       ],
       "staffTruncated": false,
       "approvals": false,
-      "csrfToken": "csrfToken",
+      "csrfToken": "csrf_demo_northwind",
       "undoWindowMinutes": 2,
       "counts": {
         "today": 7,
@@ -4543,7 +4525,7 @@
   },
   "scan.postScanTagsBind": {
     "request": {
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-744adb47d1ba",
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
       "tag": {
         "uid": "04A3B2C1D5E680",
         "uidRandom": false,
@@ -4578,7 +4560,7 @@
         "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8"
       },
       "ownerAccount": false,
-      "skipped": ["skipped"],
+      "skipped": ["no_email"],
       "warnings": ["replaces_pass_tag"],
       "lostAt": 1795521600000,
       "undoUntil": null
@@ -4603,7 +4585,7 @@
         "open": false,
         "by": "always",
         "opensAt": 1795521600000,
-        "closesAt": 1795521600000
+        "closesAt": 1798113600000
       }
     }
   },
@@ -4653,14 +4635,14 @@
       "cursor": "c1.4812",
       "asOf": 26,
       "validUntil": 1798124400000,
-      "sig": "sig"
+      "sig": "9db483c0e33113df3e1659edd78fb536e9be76096a47a85918fc853c98c31aa0"
     }
   },
   "scan.postScanBatch": {
     "request": {
       "items": [
         {
-          "idempotencyKey": "0193a1b2-7c00-7000-8000-df88aebe5699",
+          "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
           "code": "NW7K2Q",
           "method": "camera",
           "clientTs": 18,
@@ -4671,13 +4653,13 @@
       "roster": {
         "asOf": 26,
         "validUntil": 1798124400000,
-        "sig": "sig"
+        "sig": "3f0a72cc03b13891a65873b6070b6d34eba2e27ae37286aa964a172be3dc3b4f"
       }
     },
     "response": {
       "items": [
         {
-          "idempotencyKey": "0193a1b2-7c00-7000-8000-df88aebe5699",
+          "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa",
           "outcome": {
             "checkIn": {
               "mode": "single",
@@ -4819,7 +4801,7 @@
               "lastScans": [
                 {
                   "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-                  "at": 12,
+                  "at": 1795521600000,
                   "actionLabel": "Admit",
                   "outcome": "ok",
                   "scannerName": "Front desk",
@@ -4906,7 +4888,7 @@
             },
             "previous": {
               "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-              "at": 12,
+              "at": 1795521600000,
               "scannerName": "Front desk",
               "staffName": "Sam Rivera",
               "actionLabel": "Admit",
@@ -4920,7 +4902,7 @@
               "name": "Day pass",
               "style": "generic"
             },
-            "at": 12,
+            "at": 1795521600000,
             "cooldownRemainingMs": 1715,
             "value": {
               "input": "tier",
@@ -4933,12 +4915,12 @@
               "counter": false,
               "need": 13
             },
-            "flags": ["flag"],
+            "flags": ["vip"],
             "channel": "mobile",
             "overridable": false,
             "approvals": false,
             "group": {
-              "total": 128,
+              "total": 39,
               "done": 39,
               "already": 26,
               "refused": 0,
@@ -5012,7 +4994,7 @@
               "type": "generic",
               "rule": {
                 "kind": "until",
-                "at": 12
+                "at": 1795521600000
               },
               "timeZone": "America/Los_Angeles"
             },
@@ -5126,11 +5108,11 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000043",
-          "at": 12,
+          "at": 1795521600000,
           "event": "scanned",
           "reason": null,
           "label": "Day pass",
-          "place": "place",
+          "place": "zone:main-hall",
           "staff": "Sam Rivera",
           "amount": 14
         }
@@ -5143,7 +5125,7 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-000000000043",
-          "at": 12,
+          "at": 1795521600000,
           "body": "The gym closes at 18:00 on 24 December.",
           "by": "Sam Rivera",
           "own": false,
@@ -5155,11 +5137,11 @@
   "scan.postScanPassesByPassIdNotes": {
     "request": {
       "body": "The gym closes at 18:00 on 24 December.",
-      "idempotencyKey": "0193a1b2-7c00-7000-8000-1001108cb011"
+      "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000043",
-      "at": 12,
+      "at": 1795521600000,
       "body": "The gym closes at 18:00 on 24 December.",
       "by": "Sam Rivera",
       "own": false,
@@ -5178,7 +5160,7 @@
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000043",
-      "at": 12,
+      "at": 1795521600000,
       "body": "The gym closes at 18:00 on 24 December.",
       "by": "Sam Rivera",
       "own": false,
@@ -5343,15 +5325,12 @@
           }
         },
         "hoursInvalid": true,
-        "hold": {
-          "state": "open",
-          "until": 21
-        },
+        "hold": null,
         "window": {
           "open": false,
           "by": "always",
           "opensAt": 1795521600000,
-          "closesAt": 1795521600000
+          "closesAt": 1798113600000
         },
         "createdAt": 1794322800000,
         "updatedAt": 1795359600000,
@@ -5484,7 +5463,7 @@
     "response": {
       "from": 23,
       "to": 39,
-      "total": 128,
+      "total": 38,
       "ok": 38,
       "headsUp": 33,
       "refused": 0,
@@ -5543,7 +5522,7 @@
         "latest": [
           {
             "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-            "at": 12,
+            "at": 1795521600000,
             "staffName": "Sam Rivera",
             "approvedBy": "Sam Rivera",
             "reason": "Left the gym early; refund issued at the desk."
@@ -5611,7 +5590,7 @@
       "rows": [
         {
           "id": "0193a1b2-7c00-7000-8000-9c363d1b3be8",
-          "at": 12,
+          "at": 1795521600000,
           "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
           "scannerName": "Front desk",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -5652,23 +5631,23 @@
           ],
           "outCause": "stay",
           "scanId": "0193a1b2-7c00-7000-8000-000000000043",
-          "overrideOf": "overrideOf",
+          "overrideOf": "0193a1b2-7c00-7000-8000-ad16f0d9b95b",
           "resolvedBy": {
             "staff": "Sam Rivera",
             "device": "iPhone 15"
           },
-          "replaces": "replaces",
+          "replaces": "0193a1b2-7c00-7000-8000-c7dd3bf79506",
           "customer": {
             "v": 1,
             "screen": "ok",
             "ref": "booking_8841",
-            "at": 12,
-            "where": "where",
+            "at": 1795521600000,
+            "where": "passes",
             "band": {
-              "headline": "headline",
-              "sub": "sub"
+              "headline": "Day pass",
+              "sub": "Ada Example"
             },
-            "greet": "greet",
+            "greet": "Hi Ada",
             "chips": [
               {
                 "id": "0193a1b2-7c00-7000-8000-000000000043",
@@ -5725,7 +5704,7 @@
           "photoUrl": "https://northwind.example.com/p/xK3v9QmT2Lw8",
           "plan": "Day pass",
           "type": "generic",
-          "host": "host",
+          "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
           "parentName": "Day pass",

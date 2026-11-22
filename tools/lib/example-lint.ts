@@ -38,9 +38,12 @@ const SECRET_SHAPES: [RegExp, string][] = [
   [/\bpb[po]?_live_/, 'a live-prefixed key'],
   [/\bgh[pousr]_[A-Za-z0-9]{36}/, 'a GitHub token'],
   [/\bxox[baprs]-/, 'a Slack token'],
-  [/whsec_(?!demo)/, 'a webhook secret that is not marked demo'],
+  [/whsec_(?!demo_northwind_)/, 'a webhook secret that is not marked demo'],
+  [/\bpb_test_[A-Za-z0-9_-]{8}_[A-Za-z0-9_-]{43}$/, 'a test key our own parser accepts'],
   [/-----BEGIN [A-Z ]*PRIVATE KEY-----[^-]{40,}-----END/, 'a whole PEM key'],
 ];
+/** A key or value with case and separators removed, to compare a value with its own field name. */
+const squash = (text: string): string => text.toLowerCase().replace(/[^a-z0-9]/g, '');
 const WORLD_IDS = new Set(Object.values(IDS));
 /** The entity a key names: `templateId` and `template` are `template`; every actor key is a `user`. */
 const entityOf = (key: string): string =>
@@ -63,7 +66,7 @@ const RESOURCE_NAME =
   /^(name|label|title|description)$|^(org|template|scanner|device|type|connection|keyset|zone|event|key|identity|asset)Names?$|Label$/;
 /** Words from an earlier sample world; every example describes Northwind Climbing now. */
 const FOREIGN = /Harbor|Example Events|TICKET-|Event ticket|Acme|Henry/i;
-const TIME_KEY = /(?:At|Until|From|Since|Before|After)$/;
+const TIME_KEY = /(?:At|Until|From|Since|Before|After|On)$|^(?:at|serverNow|when)$/;
 const ID_KEY = /^id$|Id$|^serial$|^serialNumber$/;
 
 export interface Example {
@@ -178,6 +181,8 @@ export function exampleFailures(doc: Doc, examples: Example[] = examplesOf(doc))
         continue;
       }
       if (typeof v === 'string') {
+        if (v.length > 1 && squash(v) === squash(leaf.key) && leaf.key !== '')
+          bad(`"${v}" is just the field name`, at);
         if (FOREIGN.test(v)) bad(`"${v.slice(0, 40)}" is from another sample world`, at);
         if (FILLERS.has(v.toLowerCase()) && !(v === 'string' && leaf.key === 'type'))
           bad(`"${v}" is filler`, at);
@@ -251,6 +256,12 @@ function objectFailures(value: unknown, at: string): string[] {
   }
   if (numbers.length >= 3 && (numbers.every((n) => n === 1) || numbers.every((n) => n === 3)))
     out.push(`${at}: every number is ${numbers[0]}, which reads as filler`);
+  const repeated = [...new Set(numbers.filter((n) => n >= 2))].filter(
+    (n) => numbers.filter((m) => m === n).length >= 3,
+  );
+  for (const n of repeated)
+    out.push(`${at}: three sibling numbers are all ${n}, which reads as filler`);
+  out.push(...invariantFailures(o, at));
   if (typeof o.prefix === 'string' && o.secretPrefix === o.prefix)
     out.push(`${at}.prefix: equals secretPrefix; the prefix is the part after the label`);
   if (typeof o.secret === 'string' && typeof o.prefix === 'string') {
@@ -258,5 +269,62 @@ function objectFailures(value: unknown, at: string): string[] {
     if (!o.secret.startsWith(head)) out.push(`${at}.secret: does not start with "${head}"`);
   }
   for (const [k, v] of Object.entries(o)) out.push(...objectFailures(v, `${at}.${k}`));
+  return out;
+}
+
+const START = /^(.*?)(From|Start|Starts|Opens|Since)(At)?$/i;
+const END = /^(.*?)(Until|End|Ends|Closes|Before)(At)?$/i;
+const FINAL_STATES = /^(delivered|succeeded|sent|done|completed|finished|ok|paired|healthy)$/;
+const GONE_AT =
+  /^(closedAt|revokedAt|disabledAt|removedAt|deletedAt|archivedAt|failingSince|retireAt)$/;
+const num = (v: unknown): number | undefined => (typeof v === 'number' ? v : undefined);
+
+/** Fields of one object that cannot all be true together. Each rule is generic: pairs, states and totals. */
+function invariantFailures(o: Json, at: string): string[] {
+  const out: string[] = [];
+  const entries = Object.entries(o);
+  for (const [k, v] of entries) {
+    const a = START.exec(k);
+    if (!a || num(v) === undefined) continue;
+    for (const [k2, v2] of entries) {
+      const b = END.exec(k2);
+      if (b && b[1] === a[1] && num(v2) !== undefined && (v as number) >= (v2 as number))
+        out.push(`${at}: ${k} (${v}) must be before ${k2} (${v2})`);
+    }
+  }
+  const last = [num(o.lastSuccessAt), num(o.lastFailureAt)];
+  if (last[0] !== undefined && last[0] === last[1])
+    out.push(`${at}: lastSuccessAt and lastFailureAt are the same instant`);
+  const state =
+    typeof o.state === 'string' ? o.state : typeof o.status === 'string' ? o.status : '';
+  if (state === 'active')
+    for (const [k, v] of entries)
+      if (GONE_AT.test(k) && v !== null && v !== undefined)
+        out.push(`${at}: ${k} is set on an active record`);
+  if (FINAL_STATES.test(state) && o.nextAt !== undefined && o.nextAt !== null)
+    out.push(`${at}: nextAt is set on a ${state} record`);
+  if (state === 'delivered' && 'lastStatus' in o && o.lastStatus === null)
+    out.push(`${at}: a delivered record has no lastStatus`);
+  if (state === 'delivered' && (num(o.replays) ?? 0) > 5)
+    out.push(`${at}: replays ${o.replays} is too many for one delivery`);
+  const seen = num(o.recordsSeen);
+  const failed = num(o.recordsFailed);
+  if (seen !== undefined && failed !== undefined && failed > seen)
+    out.push(`${at}: recordsFailed (${failed}) exceeds recordsSeen (${seen})`);
+  if (o.outcome === 'unchanged')
+    for (const [k, v] of entries)
+      if (/Changed$/.test(k) && typeof v === 'number' && v !== 0)
+        out.push(`${at}: ${k} is ${v} on an unchanged run`);
+  const total = num(o.total);
+  if (total !== undefined) {
+    const parts = entries.filter(
+      ([k, v]) =>
+        /^(done|failed|created|updated|unchanged|skipped|removed|ok|errors|refused)$/.test(k) &&
+        num(v) !== undefined,
+    );
+    const sum = parts.reduce((n, [, v]) => n + (v as number), 0);
+    if (parts.length >= 2 && sum !== total)
+      out.push(`${at}: the parts add up to ${sum}, not total ${total}`);
+  }
   return out;
 }
