@@ -18,7 +18,6 @@ import { getPass } from '../passes/repo-read-pass.ts';
 import { isPassHeld } from '../retention/holds.ts';
 import type { ScanActor } from './actor.ts';
 import { isManager, mayReadNotes, mayWriteNotes, passInScope } from './history-scope.ts';
-import { auditPassRead } from './read-audit.ts';
 import {
   deviceNoteCount,
   deviceUnderCap,
@@ -28,6 +27,7 @@ import {
   readNotes,
   underCap,
 } from './repo-notes.ts';
+import { auditPassRead } from './repo-read-audit.ts';
 import { scanReadAuthority } from './repo-read-authority.ts';
 import { HISTORY_READ } from './repo-scan-history.ts';
 import { scanWriteGrant } from './scan-write-grant.ts';
