@@ -129,6 +129,7 @@ describe('islands', () => {
       'api-rail',
       'keys',
       'logs',
+      'moved',
       'org-chip',
       'playground',
       'quickstart',

@@ -1,224 +1,16 @@
-import { ArrowUpRight } from 'lucide-react';
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { anySdk } from '../../../shared/developers-sdk.ts';
 import { operations } from '../model/dates.ts';
-import { exampleSamples, samplesFor } from '../model/samples.ts';
-import type { ConsoleOp, ErrorRow, Field, OpView, ResourcePage, Site } from '../model/types.ts';
-import { CopyButton, JsonBlock, SampleTabs } from '../ui/code.tsx';
-import { EnvChip } from '../ui/env-chip.tsx';
+import { opPath } from '../model/markdown.ts';
+import type { ConsoleOp, OpView, ResourcePage } from '../model/types.ts';
 import { MethodPill } from '../ui/method-pill.tsx';
-import { Prose } from '../ui/prose.tsx';
-import { Ticket } from '../ui/ticket.tsx';
-import { SIGN_IN } from './layout.tsx';
-
-const WHERE_LABEL: Record<Field['where'], string> = {
-  path: 'Path',
-  query: 'Query',
-  header: 'Headers',
-  body: DEV_COPY.reference.body,
-};
-const WHERE_ORDER: Field['where'][] = ['path', 'query', 'header', 'body'];
 
 const humanize = (sub: string) =>
   sub
     .replace(/([A-Z])/g, ' $1')
     .replace(/-/g, ' ')
     .replace(/^./, (c) => c.toUpperCase());
-
-function Params({ fields }: { fields: Field[] }) {
-  return (
-    <div className="params">
-      {fields.map((f) => (
-        <div key={f.name}>
-          <div className="row g2 wrap-row">
-            <span className="pn">{f.name}</span>
-            <span className="pt">{f.type}</span>
-            {f.required ? <span className="req">Required</span> : null}
-            {f.deprecated ? <span className="pill neutral">Deprecated</span> : null}
-          </div>
-          {f.description ? (
-            <p className="pd">
-              <Prose text={f.description} />
-            </p>
-          ) : null}
-          {f.children.length > 0 ? (
-            <div className="kids">
-              <Params fields={f.children} />
-            </div>
-          ) : null}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** One row per code on the page; an operation lists only the names, so a code's text is sent once. */
-function pageErrors(page: ResourcePage): ErrorRow[] {
-  const rows = new Map<string, ErrorRow>();
-  for (const op of page.ops) for (const e of op.errors) if (!rows.has(e.code)) rows.set(e.code, e);
-  return [...rows.values()].sort((x, y) => x.code.localeCompare(y.code));
-}
-
-function OpErrors({ op }: { op: OpView }) {
-  if (op.errors.length === 0) return null;
-  return (
-    <details className="op-errors mt8">
-      <summary>
-        {DEV_COPY.reference.errors} ({op.errors.length})
-      </summary>
-      <p className="mono sm mt2 wrap-any">{op.errors.map((e) => e.code).join(', ')}</p>
-    </details>
-  );
-}
-
-function PageErrors({ rows, known }: { rows: ErrorRow[]; known: Set<string> }) {
-  if (rows.length === 0) return null;
-  return (
-    <section className="page-errors" id="errors">
-      <h2 className="h2">{DEV_COPY.reference.errors}</h2>
-      <p className="muted sm mt2">{DEV_COPY.reference.errorsLine}</p>
-      <div className="table-wrap mt4">
-        <table className="errs">
-          <thead>
-            <tr>
-              <th scope="col">Code</th>
-              <th scope="col">Status</th>
-              <th scope="col">Fix</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((e) => (
-              <tr key={e.code}>
-                <td className="mono">
-                  {known.has(e.code) ? <a href={`${PATHS.errors}/${e.code}`}>{e.code}</a> : e.code}
-                </td>
-                <td className="mono">{e.status ?? ''}</td>
-                <td>{e.fix}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-/** The right pane: the request as a ticket stub, a signed-out run slot, then the response. */
-function Rail({ op, site, slot, slug }: { op: OpView; site: Site; slot: string; slug: string }) {
-  const samples = samplesFor(op, site.baseUrl);
-  const ok = op.returns;
-  return (
-    <aside className="rail-pane" aria-label={`${op.title}: request and response`}>
-      <div className="row g3 rail-h">
-        <h3 className="h2">{DEV_COPY.reference.tryIt}</h3>
-        <span className="pill info mono">test</span>
-        <span className="push" data-budget />
-      </div>
-      <div id={slot} data-island="run" data-op={op.operationId} data-slug={slug} className="try">
-        <Ticket
-          stub={<SampleTabs id={`s-${op.anchor}`} samples={samples} />}
-          body={
-            <div className="row g3 try-foot">
-              <a className="btn sm" href={SIGN_IN}>
-                {DEV_COPY.reference.signInToTry}
-              </a>
-            </div>
-          }
-        />
-      </div>
-      {op.examples.length > 0 ? (
-        <div className="examples">
-          <h3 className="h3">{DEV_COPY.reference.examples}</h3>
-          {op.examples.map((e) => (
-            <details key={e.id} className="example">
-              <summary>{e.title}</summary>
-              <SampleTabs id={`e-${op.anchor}-${e.id}`} samples={exampleSamples(e)} />
-            </details>
-          ))}
-        </div>
-      ) : null}
-      {ok && ok.example !== undefined ? (
-        <div className="resp">
-          <div className="row g2 resp-h">
-            <span className="h3">Response</span>
-            <span className="pill success mono">{ok.status}</span>
-            <CopyButton label="Copy response" />
-          </div>
-          <JsonBlock json={ok.example} label={`${op.title}: ${ok.status} response`} />
-        </div>
-      ) : null}
-    </aside>
-  );
-}
-
-function Operation({ op, site, slug }: { op: OpView; site: Site; slug: string }) {
-  const groups = WHERE_ORDER.map((w) => ({
-    w,
-    fields: op.fields.filter((f) => f.where === w),
-  })).filter((g) => g.fields.length > 0);
-  return (
-    <section className="op" aria-labelledby={op.anchor}>
-      <i id={op.operationId} className="alias" aria-hidden="true" />
-      <div className="op-prose">
-        <div className="row g3 wrap-row">
-          <h2 className="h1" id={op.anchor}>
-            <a className="anchor" href={`#${op.anchor}`} aria-label={`Link to ${op.title}`}>
-              {op.title}
-            </a>
-          </h2>
-          {op.deprecated ? <span className="pill neutral">Deprecated</span> : null}
-          {op.changedIn ? (
-            <a
-              className={`pill changed-in ${op.changedIn.breaking ? 'warn' : 'neutral'}`}
-              href={`${PATHS.changelog}#${op.changedIn.date}`}
-            >
-              {op.changedIn.kind === 'Added' ? 'New in' : 'Changed in'} {op.changedIn.date}
-            </a>
-          ) : null}
-        </div>
-        <div className="endpoint row g3">
-          <MethodPill method={op.method} />
-          <code>{op.path}</code>
-          <CopyButton label="Copy path" />
-        </div>
-        {op.description ? (
-          <p className="lede">
-            <Prose text={op.description} />
-          </p>
-        ) : null}
-        <div className="wrap-row g2 chips">
-          {op.scopes.map((s) => (
-            <span key={s} className="chip mono">
-              {s}
-            </span>
-          ))}
-          {op.idempotent ? <span className="chip">Idempotent with key</span> : null}
-          <span className="chip mono">
-            {DEV_COPY.reference.sdk} {op.sdkCall}
-          </span>
-        </div>
-        {groups.map((g) => (
-          <div key={g.w}>
-            <h3 className="h2 mt8">{WHERE_LABEL[g.w]}</h3>
-            <Params fields={g.fields} />
-          </div>
-        ))}
-        {op.returns ? (
-          <>
-            <h3 className="h2 mt8">{DEV_COPY.reference.returns}</h3>
-            <p className="mt2">
-              <span className="pill success mono">{op.returns.status}</span>{' '}
-              {op.returns.schema ? <span className="inline-code">{op.returns.schema}</span> : null}
-            </p>
-          </>
-        ) : null}
-        <OpErrors op={op} />
-      </div>
-      <Rail op={op} site={site} slot={`try-${op.anchor}`} slug={slug} />
-    </section>
-  );
-}
 
 function ConsoleOnly({ ops }: { ops: ConsoleOp[] }) {
   if (ops.length === 0) return null;
@@ -239,10 +31,34 @@ function ConsoleOnly({ ops }: { ops: ConsoleOp[] }) {
   );
 }
 
-export function ResourceView({ page, site }: { page: ResourcePage; site: Site }) {
-  const known = new Set(site.errors.map((e) => e.code));
-  let sub: string | null | undefined;
-  const first = page.ops[0];
+/**
+ * A row per operation, linking to its own page. The row's id is the operation's old anchor on this
+ * page, and `data-moved` lets the island carry a `#create` link to the page it moved to.
+ */
+function OpRow({ page, op }: { page: ResourcePage; op: OpView }) {
+  return (
+    <a
+      className="lrow oprow"
+      id={op.anchor}
+      data-moved
+      data-alias={op.operationId}
+      href={opPath(page, op)}
+    >
+      <MethodPill method={op.method} />
+      <span className="oprow-t">{op.title}</span>
+      <code className="mono sm push">{op.path.replace(/^\/api\/v1/, '')}</code>
+    </a>
+  );
+}
+
+/** A resource: its operations, each on a page of its own. */
+export function ResourceView({ page }: { page: ResourcePage }) {
+  const groups: { sub: string | null; ops: OpView[] }[] = [];
+  for (const op of page.ops) {
+    const last = groups[groups.length - 1];
+    if (last && last.sub === op.sub) last.ops.push(op);
+    else groups.push({ sub: op.sub, ops: [op] });
+  }
   return (
     <>
       <div className="eyebrow">
@@ -250,35 +66,24 @@ export function ResourceView({ page, site }: { page: ResourcePage; site: Site })
         <span aria-hidden="true">·</span>
         <span>{page.group}</span>
       </div>
-      {/* The personalizing island: it has no size, and mounts when the page loads. */}
-      <i data-island="snippets" aria-hidden="true" />
+      {/* Carries an old `#anchor` to the operation's own page. */}
+      <i data-island="moved" aria-hidden="true" />
       <h1 className="h1 page-h">{page.label}</h1>
       <p className="muted mt2">
         {anySdk() ? null : <span className="pill neutral">{DEV_COPY.reference.sdkSoon}</span>}{' '}
-        {operations(page.ops.length)}. Send{' '}
-        <code className="inline-code">Authorization: Bearer</code> <EnvChip />.{' '}
-        <a href={`${PATHS.reference}/${page.slug}.md`}>Markdown</a>
+        {operations(page.ops.length)}. <a href={`${PATHS.reference}/${page.slug}.md`}>Markdown</a>
       </p>
-      {page.ops.map((op) => {
-        const heading = op.sub !== sub && op.sub ? humanize(op.sub) : null;
-        sub = op.sub;
-        return (
-          <div key={op.anchor}>
-            {heading ? <h2 className="sub-h">{heading}</h2> : null}
-            <Operation op={op} site={site} slug={page.slug} />
+      {groups.map((g) => (
+        <section key={g.sub ?? ''} className="mt8">
+          {g.sub ? <h2 className="sub-h">{humanize(g.sub)}</h2> : null}
+          <div className="list card mt4">
+            {g.ops.map((op) => (
+              <OpRow key={op.anchor} page={page} op={op} />
+            ))}
           </div>
-        );
-      })}
-      <PageErrors rows={pageErrors(page)} known={known} />
+        </section>
+      ))}
       <ConsoleOnly ops={page.consoleOnly} />
-      {first ? (
-        <div className="trybar" data-island="try-bar">
-          <a className="btn" href={`#try-${first.anchor}`} data-try-bar>
-            {DEV_COPY.reference.tryIt}
-            <ArrowUpRight aria-hidden="true" />
-          </a>
-        </div>
-      ) : null}
     </>
   );
 }

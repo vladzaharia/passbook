@@ -45,6 +45,12 @@ export function SampleTabs({ id, samples }: { id: string; samples: Sample[] }) {
             />
             <label className="tab" htmlFor={`${id}-${s.lang}`}>
               {s.label}
+              {s.soon ? (
+                <>
+                  <span className="soon-dot" aria-hidden="true" />
+                  <span className="sr"> (SDK soon)</span>
+                </>
+              ) : null}
             </label>
           </span>
         ))}

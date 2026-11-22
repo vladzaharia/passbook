@@ -47,6 +47,11 @@ export interface RouteSpec {
    * `auth`, and route-inventory.test.ts counts it as decided. Authority, if any, is the route's own.
    */
   public?: true;
+  /**
+   * Error codes the route can return that inference misses (docs/api/operation-codes.json is derived
+   * from the handler's call graph by `npm run gen`). Read by that tool, not at runtime.
+   */
+  codes?: readonly string[];
 }
 
 const publicHandlers = new WeakSet<object>();
@@ -139,6 +144,7 @@ export function register<S extends RouteSpec>(
     summary: spec.summary,
     ...(spec.operationId ? { operationId: spec.operationId } : {}),
     tags: [tag],
+    'x-route': `${tag} ${spec.method} ${spec.path}`,
     request: {
       ...(spec.params ? { params: spec.params } : {}),
       ...(spec.query ? { query: spec.query } : {}),

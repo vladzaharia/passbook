@@ -19,7 +19,8 @@ afterAll(() => rmSync(work, { recursive: true, force: true }));
 
 describe('what the Run island reads', () => {
   it('has a slot on every operation, and every slot resolves to its operation in its page file', () => {
-    const pages = readdirSync(join(work, 'developers/reference')).filter((f) =>
+    const dir = join(work, 'developers/reference');
+    const pages = readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter((f) =>
       f.endsWith('.html'),
     );
     expect(pages.length).toBeGreaterThan(10);
@@ -88,7 +89,7 @@ describe('what the Run island reads', () => {
   });
 
   it('draws the slot as a ticket with a stub and a body, the shape the island keeps', () => {
-    expect(read('developers/reference/passes.html')).toMatch(
+    expect(read('developers/reference/passes/create.html')).toMatch(
       /data-island="run"[^>]*><div class="ticket"><div class="stub">.*?<\/div><div class="body">/s,
     );
   });

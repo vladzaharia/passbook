@@ -119,6 +119,12 @@
     "fix": "Remove terminals, or add the scans:write scope.",
     "retryable": false
   },
+  "API_VERSION_UNKNOWN": {
+    "title": "Unknown API version",
+    "when": "The PassBook-Version header names a version that does not exist.",
+    "fix": "Send a version from GET /api/v1/versions, or omit the header.",
+    "retryable": false
+  },
   "ARCHIVE_TOO_LARGE": {
     "title": "Archive too large",
     "when": "The uploaded template archive is over 15 MB.",
@@ -213,6 +219,12 @@
     "title": "Unknown image slot",
     "when": "The image name does not match a slot on this pass or template.",
     "fix": "Use a slot name from the pass type's image slots in the request path.",
+    "retryable": false
+  },
+  "AUTHORITY_DENIED": {
+    "title": "Not allowed here",
+    "when": "The caller lacks the authority this write needs.",
+    "fix": "Use a key with the scope the operation lists, or ask an org admin.",
     "retryable": false
   },
   "BLOCK_NOT_FOUND": {
@@ -395,6 +407,24 @@
     "fix": "Start a certificate request, then upload the certificate.",
     "retryable": false
   },
+  "CHANNEL_REPLACE_ALL_OFF": {
+    "title": "No channel left on",
+    "when": "The change would turn every channel off.",
+    "fix": "Keep at least one channel on.",
+    "retryable": false
+  },
+  "CHANNEL_REPLACE_WINDOW_OPEN": {
+    "title": "Replace window open",
+    "when": "A channel replacement is already open for this pass.",
+    "fix": "Finish or wait for it to close, then send the request again.",
+    "retryable": false
+  },
+  "CONFLICT": {
+    "title": "Conflict",
+    "when": "The request conflicts with the current state of the resource.",
+    "fix": "Read the resource again and adjust the request.",
+    "retryable": false
+  },
   "CONNECTION_CONFLICT": {
     "title": "Connection changed",
     "when": "Another request changed the connection while yours was running.",
@@ -437,6 +467,12 @@
     "fix": "Set type to a value from GET /api/v1/connectors.",
     "retryable": false
   },
+  "CONSOLE_ACCESS_REQUIRED": {
+    "title": "Console access required",
+    "when": "The platform requires the admin group for organization console routes, and this session has neither the group nor platform admin.",
+    "fix": "Ask an administrator to add you to the admin group in Polaris ID, then sign in again.",
+    "retryable": false
+  },
   "CREATE_STALE": {
     "title": "Pass create raced",
     "when": "Another pass was created with this externalId while yours was being created.",
@@ -472,6 +508,12 @@
     "when": "The bundle changed.",
     "fix": "Review the recipient and try again.",
     "retryable": true
+  },
+  "DEVELOPER_ACCESS_REQUIRED": {
+    "title": "Developer access required",
+    "when": "A signed-in person without developer access called a developer sandbox or Try it route.",
+    "fix": "Ask an administrator to add you to the developer group in Polaris ID, then sign in again.",
+    "retryable": false
   },
   "DEVICE_REQUIRED": {
     "title": "Terminal not named",
@@ -573,6 +615,18 @@
     "title": "externalId in use",
     "when": "Another pass of this template has that externalId.",
     "fix": "Send a new externalId, or PATCH the existing pass.",
+    "retryable": false
+  },
+  "FEATURE_LIMIT_REACHED": {
+    "title": "Plan limit reached",
+    "when": "The organization is at the cap its plan sets for this feature.",
+    "fix": "Remove something the plan counts, or ask an admin to raise the limit.",
+    "retryable": false
+  },
+  "FEATURE_NOT_INCLUDED": {
+    "title": "Not in your plan",
+    "when": "The organization does not have the feature this call uses.",
+    "fix": "Ask an org admin to enable the feature, then send the request again.",
     "retryable": false
   },
   "FORBIDDEN": {
@@ -749,6 +803,12 @@
     "fix": "Choose another handle.",
     "retryable": false
   },
+  "IDENTITY_NOT_CONFIGURED": {
+    "title": "Identity not set up",
+    "when": "The organization has no signing identity for this pass type.",
+    "fix": "Add an identity in Admin, then send the request again.",
+    "retryable": false
+  },
   "IDENTITY_NOT_FOUND": {
     "title": "Signing identity not found",
     "when": "No signing identity with this id exists in this mode and organization.",
@@ -765,18 +825,6 @@
     "title": "Identity cannot renew automatically",
     "when": "Only a managed or platform identity with a certificate renews automatically.",
     "fix": "Set rotation to manual, or upload a certificate.",
-    "retryable": false
-  },
-  "CONSOLE_ACCESS_REQUIRED": {
-    "title": "Console access required",
-    "when": "The platform requires the admin group for organization console routes, and this session has neither the group nor platform admin.",
-    "fix": "Ask an administrator to add you to the admin group in Polaris ID, then sign in again.",
-    "retryable": false
-  },
-  "DEVELOPER_ACCESS_REQUIRED": {
-    "title": "Developer access required",
-    "when": "A signed-in person without developer access called a developer sandbox or Try it route.",
-    "fix": "Ask an administrator to add you to the developer group in Polaris ID, then sign in again.",
     "retryable": false
   },
   "IDENTITY_PLATFORM_ENV_MISMATCH": {
@@ -1102,6 +1150,12 @@
     "when": "This is the last org admin.",
     "fix": "Make someone else an org admin first.",
     "retryable": false
+  },
+  "LINEAGE_CHANGED": {
+    "title": "Template lineage changed",
+    "when": "The template was replaced by another lineage while the request ran.",
+    "fix": "Reload the template and send the request again.",
+    "retryable": true
   },
   "LINK_NOT_FOUND": {
     "title": "Link not found",
@@ -1481,6 +1535,42 @@
     "fix": "Name a manager in the request.",
     "retryable": false
   },
+  "PRINTING_OFF": {
+    "title": "Printing is off",
+    "when": "Printing is turned off for this template or organization.",
+    "fix": "Turn printing on in Admin, then send the request again.",
+    "retryable": false
+  },
+  "PRINT_CODE_UNAVAILABLE": {
+    "title": "Print code unavailable",
+    "when": "The pass has no code that can be printed.",
+    "fix": "Rebuild the pass, then print it again.",
+    "retryable": false
+  },
+  "PRINT_CONFLICT": {
+    "title": "Print conflict",
+    "when": "The print job conflicts with one already queued.",
+    "fix": "Wait for the current job to finish, then send the request again.",
+    "retryable": true
+  },
+  "PRINT_JOB_NOT_FOUND": {
+    "title": "Print job not found",
+    "when": "No print job has this id in your organization.",
+    "fix": "List the print jobs and use an id from the list.",
+    "retryable": false
+  },
+  "PRINT_NOT_ACTIVE": {
+    "title": "Print not active",
+    "when": "The print job is no longer active.",
+    "fix": "Start a new print job.",
+    "retryable": false
+  },
+  "PRINT_NOT_FOUND": {
+    "title": "Print not found",
+    "when": "No print has this id in your organization.",
+    "fix": "List the prints and use an id from the list.",
+    "retryable": false
+  },
   "RATE_LIMITED": {
     "title": "Rate limited",
     "when": "The key went over its request limit.",
@@ -1522,6 +1612,12 @@
     "when": "A confirmation link was sent less than a minute ago.",
     "fix": "Wait a minute, then call POST /api/v1/settings/reply-to/resend again.",
     "retryable": false
+  },
+  "RETENTION_CHANGED": {
+    "title": "Retention changed",
+    "when": "The retention policy changed while the request ran.",
+    "fix": "Read the current policy and send the request again.",
+    "retryable": true
   },
   "RETENTION_RECEIPT_BUSY": {
     "title": "Retention receipt busy",
@@ -2225,6 +2321,12 @@
     "fix": "Pair the scanner, then sign in.",
     "retryable": false
   },
+  "STALE": {
+    "title": "Out of date",
+    "when": "The resource changed after you read it.",
+    "fix": "Read it again and resend with the new version.",
+    "retryable": true
+  },
   "STAMPS_ABOVE_MAX": {
     "title": "Stamps above the maximum",
     "when": "The card holds more stamps than the new version allows.",
@@ -2615,6 +2717,12 @@
     "fix": "Configure the provider for the organization, or release for another provider.",
     "retryable": false
   },
+  "TEMPLATE_RELEASE_CHANGED": {
+    "title": "Release changed",
+    "when": "The template release changed while the request ran.",
+    "fix": "Read the template again and resend.",
+    "retryable": true
+  },
   "TEMPLATE_RELEASE_CONFLICT": {
     "title": "Release changed",
     "when": "The approved release changed while your request ran.",
@@ -2747,6 +2855,12 @@
     "fix": "Use a key that starts with pb_test_.",
     "retryable": false
   },
+  "TOKEN_SEAL_MISMATCH": {
+    "title": "Token not found",
+    "when": "The token does not match what this pass was sealed with.",
+    "fix": "Use the link or code from the pass itself.",
+    "retryable": false
+  },
   "UNAUTHENTICATED": {
     "title": "No credentials",
     "when": "The request has no valid credentials.",
@@ -2788,6 +2902,12 @@
     "when": "No template upload with this id exists in this mode and organization.",
     "fix": "Check the id with GET /api/v1/templates/uploads.",
     "retryable": false
+  },
+  "UPSTREAM": {
+    "title": "Upstream failed",
+    "when": "A service PassBook depends on refused or failed the request.",
+    "fix": "Send the request again after the Retry-After delay.",
+    "retryable": true
   },
   "USER_NOT_FOUND": {
     "title": "User not found",

@@ -31,6 +31,26 @@ const input: EventTicketInput = { eventName: 'Harbor Night', /* ... */ };
 await pb.passes.create({ templateId, input });
 ```
 
+## passes
+
+Issues or changes a pass. The key comes from PASSBOOK_KEY only. The body is a JSON object from `--file <path>`, or `--file -` for stdin; flags are laid over it. It prints the pass as JSON. A failure prints `CODE: detail` and exits 1.
+
+    passbook passes create --template <templateId> --set name="Ada" --email ada@example.com
+    cat pass.json | passbook passes create --file - --idempotency-key order-1042
+    passbook passes update <passId> --set seat=B12 --notify
+
+ Flag                      | Commands
+---------------------------|---------------------------------------------
+ --file <path\|->          | Both. JSON body; `-` reads stdin.
+ --set key=value           | Both. Sets a field of `input`; repeatable.
+ --external-id <id>        | Both.
+ --idempotency-key <key>   | Both. Retrying with it never issues twice.
+ --template <id>           | create. Required unless the body has `templateId`.
+ --email, --serial         | create. Holder email, serial.
+ --send-email              | create. Email the pass link.
+ --template-version <v>    | update.
+ --notify                  | update. Push the change to the holder's wallet.
+
 ## Maintaining
 
 `npm run build` here compiles to `dist`; it expects `@passbook/sdk` installed. Publishing is the owner's step.

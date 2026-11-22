@@ -1,7 +1,7 @@
 import { gzipSync } from 'node:zlib';
 import { DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
-import { pagePath } from '../model/markdown.ts';
+import { opPath, pagePath } from '../model/markdown.ts';
 import type { Site } from '../model/types.ts';
 import type { ActionDoc, GuideDoc, HintDoc, SearchIndex } from './types.ts';
 
@@ -133,7 +133,7 @@ export function buildSearchIndex(site: Site): SearchIndex {
       desc: brief(o.description),
       idempotent: o.idempotent,
       scopes: o.scopes,
-      href: `${pagePath(page)}#${o.anchor}`,
+      href: opPath(page, o),
     })),
   );
   const guides: GuideDoc[] = [

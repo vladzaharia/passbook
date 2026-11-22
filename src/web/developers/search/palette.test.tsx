@@ -184,7 +184,7 @@ describe('a search that finds nothing', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Void a pass' })).toHaveAttribute(
       'href',
-      expect.stringContaining('/developers/reference/passes#void'),
+      expect.stringContaining('/developers/reference/passes/void'),
     );
   });
 });

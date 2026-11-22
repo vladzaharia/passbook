@@ -36,6 +36,8 @@ const captureOf = (v: Vector, n: number): Capture => ({
   createdAt: 1_000 + n,
 });
 
+const calls: Array<Record<string, unknown>> = [];
+
 /** A capture endpoint whose list is newest first, and a template that has an input schema. */
 function fakeApi(pages: () => Capture[], schema: Record<string, unknown> = {}): Api {
   return {
@@ -58,6 +60,16 @@ function fakeApi(pages: () => Capture[], schema: Record<string, unknown> = {}): 
     templates: {
       retrieve: async () => ({ name: 'Event ticket' }),
       retrieveInputSchema: async () => schema,
+    },
+    passes: {
+      create: async (body, options) => {
+        calls.push({ op: 'create', body, options });
+        return { id: 'pass_1' };
+      },
+      update: async (id, body, options) => {
+        calls.push({ op: 'update', id, body, options });
+        return { id };
+      },
     },
   };
 }
@@ -296,5 +308,88 @@ describe('passbook types', () => {
     expect(await run(['listen'], io({ PASSBOOK_KEY: 'k' }))).toBe(1);
     expect(await run(['nope'], io({ PASSBOOK_KEY: 'k' }))).toBe(1);
     expect(lines.join('\n')).toMatch(/PASSBOOK_KEY.*template id.*--forward-to.*Unknown command/s);
+  });
+});
+
+describe('passbook passes', () => {
+  const lines: string[] = [];
+  const io = (env: Record<string, string>, extra: Partial<Parameters<typeof run>[1]> = {}) => ({
+    env,
+    out: (l: string) => lines.push(l),
+    err: (l: string) => lines.push(`ERR ${l}`),
+    writeFile: async () => undefined,
+    readFile: async () => '{"templateId":"t1","input":{"a":"1"}}',
+    readStdin: async () => '{"input":{"b":"2"}}',
+    makeClient: () => fakeApi(() => []),
+    ...extra,
+  });
+  const env = { PASSBOOK_KEY: 'pb_test_secret' };
+
+  it('creates from a file with flags laid over it, passing the idempotency key', async () => {
+    calls.length = 0;
+    const code = await run(
+      [
+        'passes',
+        'create',
+        '--file',
+        'p.json',
+        '--set',
+        'c=3',
+        '--email',
+        'a@b.co',
+        '--idempotency-key',
+        'k1',
+      ],
+      io(env),
+    );
+    expect(code).toBe(0);
+    expect(calls[0]).toEqual({
+      op: 'create',
+      body: { templateId: 't1', input: { a: '1', c: '3' }, holderEmail: 'a@b.co' },
+      options: { idempotencyKey: 'k1' },
+    });
+    expect(lines.join('\n')).toContain('"id": "pass_1"');
+  });
+
+  it('updates from stdin', async () => {
+    calls.length = 0;
+    expect(await run(['passes', 'update', 'p1', '--file', '-', '--notify'], io(env))).toBe(0);
+    expect(calls[0]).toMatchObject({
+      op: 'update',
+      id: 'p1',
+      body: { input: { b: '2' }, notify: true },
+    });
+  });
+
+  it('prints the problem code and detail, never the key', async () => {
+    lines.length = 0;
+    const failing = io(env, {
+      makeClient: () => ({
+        ...fakeApi(() => []),
+        passes: {
+          create: async () => {
+            throw Object.assign(new Error('x'), {
+              code: 'VALIDATION',
+              detail: 'input.name is required.',
+            });
+          },
+          update: async () => ({}),
+        },
+      }),
+    });
+    expect(await run(['passes', 'create', '--template', 't1'], failing)).toBe(1);
+    expect(lines).toEqual(['ERR VALIDATION: input.name is required.']);
+    expect(lines.join('')).not.toContain('pb_test_secret');
+  });
+
+  it('explains missing pieces', async () => {
+    lines.length = 0;
+    expect(await run(['passes', 'create'], io(env, { readFile: async () => '{}' }))).toBe(1);
+    expect(await run(['passes', 'update'], io(env))).toBe(1);
+    expect(await run(['passes', 'update', 'p1'], io(env))).toBe(1);
+    expect(
+      await run(['passes', 'create', '--file', 'x'], io(env, { readFile: async () => 'nope' })),
+    ).toBe(1);
+    expect(lines.join('\n')).toMatch(/--template.*pass id.*needs a change.*not valid JSON/s);
   });
 });

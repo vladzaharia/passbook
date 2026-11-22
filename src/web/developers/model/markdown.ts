@@ -1,11 +1,14 @@
 import { DEV_COPY } from '../../../shared/copy/developers.ts';
-import { PATHS, twin } from '../../../shared/developers.ts';
+import { opUrl, PATHS, twin } from '../../../shared/developers.ts';
 import type { Guide } from '../guide/model.ts';
 import { operations } from './dates.ts';
 import { samplesFor } from './samples.ts';
 import type { Field, OpView, ResourcePage, Site } from './types.ts';
 
 export const pagePath = (page: ResourcePage) => `${PATHS.reference}/${page.slug}`;
+
+/** An operation's own page: `/developers/reference/passes/create`, `…/passes/memberphoto-get`. */
+export const opPath = (page: ResourcePage, op: OpView) => opUrl(page.slug, op.anchor);
 
 const cell = (text: string) => text.replaceAll('|', '\\|').replaceAll('\n', ' ');
 const fenced = (lang: string, code: string) => `\`\`\`${lang}\n${code}\n\`\`\``;
@@ -17,8 +20,12 @@ function fieldRows(fields: Field[], depth = 0): string[] {
   ]);
 }
 
-function opMarkdown(op: OpView, base: string): string {
-  const out = [`## ${op.title} {#${op.anchor}}`, '', `\`${op.method.toUpperCase()} ${op.path}\``];
+function opMarkdown(op: OpView, base: string, level = 2): string {
+  const out = [
+    `${'#'.repeat(level)} ${op.title} {#${op.anchor}}`,
+    '',
+    `\`${op.method.toUpperCase()} ${op.path}\``,
+  ];
   if (op.description) out.push('', op.description);
   const facts = [
     ...(op.scopes.length > 0 ? [`Scopes: ${op.scopes.map((s) => `\`${s}\``).join(', ')}`] : []),
@@ -74,6 +81,15 @@ export function pageMarkdown(page: ResourcePage, site: Site): string {
       out.push(`- \`${c.method.toUpperCase()} ${c.path}\`: ${c.title}`);
   }
   return `${out.join('\n')}\n`;
+}
+
+/** One operation's twin: its page as markdown, under the resource's heading. */
+export function opPageMarkdown(page: ResourcePage, op: OpView, site: Site): string {
+  return `${[
+    `${page.group} · [${page.label}](${twin(pagePath(page))}) · PassBook API reference. Authenticate with \`Authorization: Bearer $PASSBOOK_KEY\`.`,
+    '',
+    opMarkdown(op, site.baseUrl, 1),
+  ].join('\n')}\n`;
 }
 
 export function homeMarkdown(site: Site): string {

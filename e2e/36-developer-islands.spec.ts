@@ -81,6 +81,13 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     return (await run.catch(() => null))?.headers()['x-request-id'] ?? null;
   })();
 
+  // D10: Try it on an operation page is bound to the sandbox, and runs there.
+  await page.goto('/developers/reference/passes/create');
+  await expect(page.locator('[data-sandbox]')).toHaveText(/^test · \S+/);
+  await expect(
+    page.locator('.try').getByRole('button', { name: 'Run', exact: true }),
+  ).toBeVisible();
+
   // D1: the webhook tester renders, with no Trusted Types error.
   await page.goto('/developers/webhooks');
   await expect(page.getByRole('tab', { name: 'Python' })).toBeVisible();

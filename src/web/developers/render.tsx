@@ -21,6 +21,8 @@ import {
   guidesIndexMarkdown,
   homeMarkdown,
   llmsTxt,
+  opPageMarkdown,
+  opPath,
   pageMarkdown,
   pagePath,
 } from './model/markdown.ts';
@@ -49,6 +51,7 @@ import {
   WebhooksView,
 } from './pages/more.tsx';
 import { NotFoundView } from './pages/not-found.tsx';
+import { OperationView } from './pages/operation.tsx';
 import { ResourceView } from './pages/resource.tsx';
 import { StatusView } from './pages/status.tsx';
 import type { BlueprintPreviews } from './playground/model.ts';
@@ -71,9 +74,11 @@ export function renderSite(
     out.push({ file: fileOf(doc.url, dir), body: document(doc, origin, assets), url: doc.url });
     if (doc.twin !== undefined) out.push({ file: twin(doc.url), body: doc.twin });
   };
-  const side = (current?: Site['pages'][number], ops = false) => (
-    <SideNav site={site} current={current} ops={ops} />
-  );
+  const side = (
+    current?: Site['pages'][number],
+    ops = false,
+    op?: Site['pages'][number]['ops'][number],
+  ) => <SideNav site={site} current={current} ops={ops} op={op} />;
   const page = (
     url: string,
     title: string,
@@ -143,7 +148,7 @@ export function renderSite(
             .join(', ')}.`,
           body: html(
             <Shell site={site} active="reference" side={side(p, true)}>
-              <ResourceView page={p} site={site} />
+              <ResourceView page={p} />
             </Shell>,
           ),
           md: true,
@@ -153,6 +158,30 @@ export function renderSite(
       ),
     });
     out.push({ file: twin(url), body: pageMarkdown(p, site) });
+    for (const op of p.ops) {
+      const opUrl = opPath(p, op);
+      out.push({
+        file: fileOf(opUrl, false),
+        url: opUrl,
+        body: document(
+          {
+            url: opUrl,
+            title: `${op.title} · ${p.label} · API reference · ${base}`,
+            description:
+              `${op.method.toUpperCase()} ${op.path}. ${op.description.split('\n')[0] ?? ''}`.trim(),
+            body: html(
+              <Shell site={site} active="reference" side={side(p, true, op)}>
+                <OperationView page={p} op={op} site={site} />
+              </Shell>,
+            ),
+            md: true,
+          },
+          origin,
+          assets,
+        ),
+      });
+      out.push({ file: twin(opUrl), body: opPageMarkdown(p, op, site) });
+    }
   }
   page(
     PATHS.protocols,
