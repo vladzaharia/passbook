@@ -6,17 +6,12 @@ import type { AdmitsInput } from '../../../shared/contracts/scanners.ts';
 import type { Grant } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { classifyD1Error } from '../../platform/db.ts';
-import {
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from '../../platform/errors.ts';
+import { ConflictError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
-import type { TenantPassWrite } from '../passes/http.ts';
 import { getUser } from '../users/repo.ts';
 import { DEFAULT_SETTINGS } from './dto-console.ts';
+import { credentialKeyOf } from './key-credentials.ts';
 import { createPairing, hashPairCode, newPairCode, PAIR_TTL_MS, type Pairing } from './pairing.ts';
 import { TERMINAL_TTL_MS } from './pairing-token.ts';
 import {
@@ -76,18 +71,6 @@ export async function issuePairing(
     capture.origin,
     capture.authority,
   );
-}
-
-/** A key shows pairing codes only with `scanning:admin`, org-bound, in live mode (see `setupTables`). */
-export function requirePairingKey(authority: TenantPassWrite, orgId: string): void {
-  if (
-    authority.kind !== 'api_key' ||
-    authority.scope !== 'scanning:admin' ||
-    authority.keyOrgId !== orgId ||
-    authority.orgId !== orgId ||
-    authority.mode !== 'live'
-  )
-    throw new ForbiddenError();
 }
 
 export interface SetupPlan {
@@ -162,7 +145,8 @@ export async function planSetup(
     await checkAccepts(ctx, orgId, mode, { eventId: settings.checkIn.eventId }, [], capture.events);
   const made = (id: string | null | undefined) => (id && capture.events.has(id) ? null : id);
   const pairable = pairNow && !input.adminUserId && kind !== 'terminal';
-  if (pairable && authority.kind === 'api_key') requirePairingKey(authority, orgId);
+  if (pairable && authority.kind === 'api_key')
+    credentialKeyOf(authority, orgId, userId, 'scanning:admin');
   else if (pairable) requirePairingAuthority(authority, userId, orgId);
   const code = pairable ? newPairCode() : null;
   const pairing =
@@ -222,11 +206,11 @@ export function setupStatements(
   });
   addScannerTemplates(g, id, accepts?.templateIds ?? []);
   addSetupInsert(g, id, capture.mode, input.adminUserId ?? null, input.watch);
-  addEnrollment(ctx, g, id, userId, input, settings, enrollment);
+  addEnrollment(ctx, g, id, createdByOf(capture.authority, userId), input, settings, enrollment);
   g.add(
     audited(g, ctx, {
       orgId,
-      ...adminActorOf(capture.authority, userId),
+      ...adminActorOf(capture.authority, userId, capture.ip),
       action: 'scanner.setup_create',
       targetType: 'scanner',
       targetId: id,
@@ -237,7 +221,7 @@ export function setupStatements(
     g.add(
       audited(g, ctx, {
         orgId,
-        ...adminActorOf(capture.authority, userId),
+        ...adminActorOf(capture.authority, userId, capture.ip),
         action: 'scanner.pairing_create',
         targetType: 'scanner',
         targetId: id,

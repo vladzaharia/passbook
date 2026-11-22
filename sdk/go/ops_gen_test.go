@@ -574,6 +574,78 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"nfc.keysets.list", "GET", "/api/v1/nfc/keysets", false,
+		"", `{"items":[{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Keysets.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"nfc.keysets.create", "POST", "/api/v1/nfc/keysets", false,
+		`{"name":"x","generate":true}`, `{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"keys":{"metaKey":"x","fileKey":"x"},"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b NfcKeysetsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.NFC.Keysets.Create(ctx, &b)
+		},
+	},
+	{
+		"nfc.keysets.disable", "POST", "/api/v1/nfc/keysets/id1/disable", false,
+		"", `{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Keysets.Disable(ctx, "id1")
+		},
+	},
+	{
+		"nfc.keysets.importTags", "POST", "/api/v1/nfc/keysets/id1/import", false,
+		`{"csv":"x","dryRun":false}`, `{"dryRun":false,"rows":0,"ok":0,"added":0,"problems":[{"line":0,"uid":"x","reason":"bad_uid"}],"moreProblems":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b NfcKeysetsImportTagsBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.NFC.Keysets.ImportTags(ctx, "id1", &b)
+		},
+	},
+	{
+		"nfc.keysets.retireKey", "POST", "/api/v1/nfc/keysets/id1/keys/2/retire", false,
+		"", `{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Keysets.RetireKey(ctx, "id1", int64(2))
+		},
+	},
+	{
+		"nfc.keysets.revokeKey", "POST", "/api/v1/nfc/keysets/id1/keys/2/revoke", false,
+		"", `{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.NFC.Keysets.RevokeKey(ctx, "id1", int64(2))
+		},
+	},
+	{
+		"nfc.keysets.reenroll", "POST", "/api/v1/nfc/keysets/id1/reenrol", false,
+		`{"toKeysetId":"x"}`, `{"moved":0,"ownKey":0,"keyset":{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b NfcKeysetsReenrollBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.NFC.Keysets.Reenroll(ctx, "id1", &b)
+		},
+	},
+	{
+		"nfc.keysets.rotate", "POST", "/api/v1/nfc/keysets/id1/rotate", false,
+		`{"generate":true}`, `{"id":"x","name":"x","slug":"x","diversify":false,"perTag":false,"createdAt":0,"disabledAt":0,"keys":{"metaKey":"x","fileKey":"x"},"versions":[{"version":0,"state":"active","createdAt":0,"stateAt":0,"revokedAt":0,"tags":0}]}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b NfcKeysetsRotateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.NFC.Keysets.Rotate(ctx, "id1", &b)
+		},
+	},
+	{
 		"nfc.tagTypes.list", "GET", "/api/v1/nfc/tag-types", false,
 		"", `{"items":[{"id":"x","system":"uid","name":"x","use":"member","version":0,"createdAt":0,"updatedAt":0,"archivedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1319,6 +1391,42 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanStaff.list", "GET", "/api/v1/scan-staff", false,
+		"", `{"items":[{"id":"x","orgId":"x","name":"x","role":"door","pinSetAt":0,"pinResetRequired":false,"pinLockedToday":false,"locked":false,"disabledAt":0,"today":0,"lastScan":{"at":0,"scannerName":"x"}}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanStaff.List(ctx, nil).All(ctx)
+		},
+	},
+	{
+		"scanStaff.create", "POST", "/api/v1/scan-staff", false,
+		`{"orgId":"x","name":"x","role":"door"}`, `{"staff":{"id":"x","orgId":"x","name":"x","role":"door","pinSetAt":0,"pinResetRequired":false,"pinLockedToday":false,"locked":false,"disabledAt":0,"today":0,"lastScan":{"at":0,"scannerName":"x"}},"pin":"x"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanStaffCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanStaff.Create(ctx, &b)
+		},
+	},
+	{
+		"scanStaff.update", "PATCH", "/api/v1/scan-staff/id1", false,
+		`{}`, `{"id":"x","orgId":"x","name":"x","role":"door","pinSetAt":0,"pinResetRequired":false,"pinLockedToday":false,"locked":false,"disabledAt":0,"today":0,"lastScan":{"at":0,"scannerName":"x"}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanStaffUpdateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanStaff.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"scanStaff.resetPin", "POST", "/api/v1/scan-staff/id1/reset-pin", false,
+		"", `{"pin":"x"}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.ScanStaff.ResetPIN(ctx, "id1")
+		},
+	},
+	{
 		"scanZones.list", "GET", "/api/v1/scan-zones", false,
 		"", `{"items":[{"occupancy":"off","capacity":0,"maxStayMinutes":0,"clearAt":"x","id":"x","orgId":"x","key":"x","name":"x","parentId":"x","timeZone":"x","effectiveTimeZone":"x","sort":0,"depth":0,"sessions":0,"checkedAt":[{"id":"x","name":"x"}],"plans":[{"templateId":"x","templateName":"x","planId":"x","label":"x"}],"inNow":0,"archivedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1402,6 +1510,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanners.create", "POST", "/api/v1/scanners", false,
+		`{"orgId":"x","name":"x","kind":"device","accepts":{"eventId":"x"},"timeZone":"x"}`, `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0,"pairing":{"code":"x","url":"x","expiresAt":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScannersCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Scanners.Create(ctx, &b)
+		},
+	},
+	{
 		"scanners.update", "PATCH", "/api/v1/scanners/id1", false,
 		`{}`, `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -1424,10 +1543,31 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"scanners.pairing.retrieve", "GET", "/api/v1/scanners/id1/pairing", false,
+		"", `{"state":"waiting","device":{"label":"x","at":0}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Scanners.Pairing.Retrieve(ctx, "id1")
+		},
+	},
+	{
+		"scanners.pairing.create", "POST", "/api/v1/scanners/id1/pairing", false,
+		"", `{"code":"x","url":"x","expiresAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Scanners.Pairing.Create(ctx, "id1", nil)
+		},
+	},
+	{
 		"scanners.revoke", "POST", "/api/v1/scanners/id1/revoke", false,
 		"", `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Scanners.Revoke(ctx, "id1")
+		},
+	},
+	{
+		"scanners.rotateToken", "POST", "/api/v1/scanners/id1/token", false,
+		"", `{"token":"x","expiresAt":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Scanners.RotateToken(ctx, "id1", nil)
 		},
 	},
 	{
@@ -1464,6 +1604,17 @@ var generatedOps = []opCase{
 				return nil, err
 			}
 			return c.ScanningSessions.Update(ctx, "id1", &b)
+		},
+	},
+	{
+		"scanningSessions.devices.create", "POST", "/api/v1/scanning-sessions/id1/devices", false,
+		`{}`, `{"id":"x","sessionId":"x","name":"x","surface":"auto","effectiveSurface":"phone","overrides":{},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"capabilities":{"width":0,"height":0,"touch":false,"camera":"unknown","keyboard":false,"nativeBarcode":false,"surfaces":["phone"],"preferred":"phone"},"reportedAt":0,"paired":false,"online":false,"revoked":false,"lastSeenAt":0,"updatedAt":0,"signIn":"paired","adminName":"x","pairing":{"code":"x","url":"x","expiresAt":0}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b ScanningSessionsDevicesCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.ScanningSessions.Devices.Create(ctx, "id1", &b)
 		},
 	},
 	{

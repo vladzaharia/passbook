@@ -84,7 +84,7 @@ describe('scan event tenant routes', () => {
     const create = await call(member, 'POST', '', input(otherOrgId));
     expect(create.status).toBe(404);
     expect(ProblemSchema.parse(await create.json()).code).toBe('ORG_NOT_FOUND');
-    expect((await call(member, 'GET', '')).status).toBe(403);
+    expect((await call(member, 'GET', '')).status).toBe(422);
     expect(await state()).toEqual(before);
   });
 

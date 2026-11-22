@@ -82,6 +82,8 @@ export const ApiScopeSchema = z.enum([
   'scan-setup:write',
   /** Staff PINs and paired devices (codes shown once) in the one-call setup: org-bound, live keys only. */
   'scanning:admin',
+  /** Secure tag keysets: list, create, rotate, retire, revoke, re-enrol, disable, import. Org-bound, live keys only. */
+  'nfc:keys',
   'nfc:read',
   'nfc:write',
   'wallet:read',
