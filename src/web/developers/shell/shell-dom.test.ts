@@ -179,6 +179,36 @@ describe('islands', () => {
     ISLANDS.account = original as NonNullable<typeof original>;
   });
 
+  it('shows the account slot again, and reports the error, when the island fails to load or mount', async () => {
+    const original = ISLANDS.account;
+    const reported: unknown[] = [];
+    const onError = (e: ErrorEvent) => {
+      e.preventDefault();
+      reported.push(e.error);
+    };
+    window.addEventListener('error', onError);
+    observe(() => {});
+    for (const fail of ['load', 'mount'] as const) {
+      ISLANDS.account = async () => {
+        if (fail === 'load') throw new Error('chunk failed');
+        return {
+          mount: async () => {
+            throw new Error('mount failed');
+          },
+        };
+      };
+      document.body.innerHTML = '<span data-island="account"><a href="/login">Sign in</a></span>';
+      const slot = document.querySelector<HTMLElement>('[data-island="account"]') as HTMLElement;
+      mountIslands();
+      expect(slot.hasAttribute('data-hydrating')).toBe(true);
+      await vi.waitFor(() => expect(slot.hasAttribute('data-hydrating')).toBe(false));
+      expect(slot.querySelector('a')?.textContent).toBe('Sign in');
+    }
+    expect(reported.map((e) => (e as Error).message)).toEqual(['chunk failed', 'mount failed']);
+    window.removeEventListener('error', onError);
+    ISLANDS.account = original as NonNullable<typeof original>;
+  });
+
   it('does not wait for the observer when none is registered or supported', () => {
     const seen = observe(() => {});
     document.body.innerHTML = '<div data-island="unknown"></div>';

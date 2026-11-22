@@ -26,6 +26,14 @@ async function anyActiveEndpoint(ctx: ServiceContext): Promise<boolean> {
   return memo.any;
 }
 
+/**
+ * An endpoint was made in this isolate: the "none" answer the memo may hold is wrong now. Without this, the first
+ * endpoint of a quiet platform (a new sandbox's capture endpoint) waits up to 30 s for its first kick.
+ */
+export function noteActiveEndpoint(ctx: ServiceContext): void {
+  memo = { at: ctx.clock.now(), any: true };
+}
+
 /** Claims the lanes that have due deliveries. Never throws: a failure waits for the minute sweep. */
 export async function kick(ctx: ServiceContext): Promise<void> {
   const now = ctx.clock.now();
@@ -38,11 +46,30 @@ export async function kick(ctx: ServiceContext): Promise<void> {
   }
 }
 
+let trailing = false;
+
+/**
+ * A kick for a write request. A write inside the one-second window of the last kick would otherwise leave its
+ * events for the minute sweep, so it waits out the window once and kicks then: still one kick a second.
+ */
+export async function kickAfterWrite(ctx: ServiceContext): Promise<void> {
+  const wait = KICK_EVERY_MS - (ctx.clock.now() - lastKick);
+  if (wait <= 0) return kick(ctx);
+  if (trailing) return;
+  trailing = true;
+  try {
+    await new Promise((resolve) => setTimeout(resolve, wait + 25));
+  } finally {
+    trailing = false;
+  }
+  await kick(ctx);
+}
+
 /** After every write request, in the background: events from scans, the API and Wallet leave in seconds. */
 export const webhookKick = createMiddleware<AppBindings>(async (c, next) => {
   await next();
   if (!READ_ONLY.has(c.req.method)) {
     const ctx = serviceContext(c);
-    ctx.waitUntil(kick(ctx));
+    ctx.waitUntil(kickAfterWrite(ctx));
   }
 });

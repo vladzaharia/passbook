@@ -89,6 +89,13 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   // 5. Captures: a signed test event lands.
   await page.getByRole('button', { name: 'Send test event' }).click();
   await expect(page.locator('.qs-cap', { hasText: 'webhook.test' })).toContainText('Verified');
+  // The events of the two calls leave through the queue within seconds, not on the minute sweep.
+  await expect(page.locator('.qs-cap', { hasText: 'pass.issued' })).toBeVisible({
+    timeout: 60_000,
+  });
+  await expect(page.locator('.qs-cap', { hasText: 'pass.updated' })).toBeVisible({
+    timeout: 30_000,
+  });
   await shots(page, '07-captures', true);
 
   // 6. Done.
@@ -131,6 +138,10 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
     page.getByRole('status').filter({ hasText: /Reset\. Deleted 1 pass/ }),
   ).toBeVisible();
   await expect(page.getByText(/pbp_test_/).first()).toBeVisible();
+  // The workbench already shows the emptied sandbox: the old calls are gone before Done is pressed.
+  await expect(
+    page.getByRole('region', { name: 'Calls' }).getByText('422', { exact: true }),
+  ).toHaveCount(0);
   await shots(page, '12-reset-done');
   expect((await curl('GET', '/passes', key)).status).toBe(401);
 

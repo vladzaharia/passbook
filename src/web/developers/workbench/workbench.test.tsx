@@ -102,6 +102,46 @@ describe('Workbench', () => {
   });
 });
 
+describe('after Reset', () => {
+  it('reads the new home as soon as Reset succeeds, and the Calls card shows its calls', async () => {
+    vi.doMock('../console/turnstile.ts', () => ({ verify: async () => 'token' }));
+    vi.doMock('../console/sandbox-actions.ts', async (orig) => ({
+      ...(await orig<typeof import('../console/sandbox-actions.ts')>()),
+      resetSandbox: async () => ({
+        secret: 'pbp_test_NEW',
+        deleted: { passes: 1, captures: 1, calls: 38 },
+        resetsLeft: 2,
+      }),
+    }));
+    vi.resetModules();
+    const { Workbench: Fresh } = await import('./workbench.tsx');
+    const { updateSession: set } = await import('../console/session.ts');
+    set({
+      kind: 'ready',
+      csrf: 'c',
+      siteKey: 'k',
+      sandbox: { id: 's', orgSlug: 'x', templateId: null },
+    });
+    const onChanged = vi.fn();
+    const { rerender } = render(
+      <Fresh home={homeProgressed} loadCalls={noCalls} onChanged={onChanged} />,
+    );
+    const calls = screen.getByRole('region', { name: 'Calls' });
+    expect(within(calls).getAllByRole('link').length).toBeGreaterThan(5);
+    await userEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Reset sandbox' }));
+    await screen.findByText(/Reset\. Deleted 1 pass/);
+    expect(onChanged).toHaveBeenCalledTimes(1);
+    // The refreshed home has no calls: the card follows it at once.
+    rerender(
+      <Fresh home={{ ...homeProgressed, calls: [] }} loadCalls={noCalls} onChanged={onChanged} />,
+    );
+    await waitFor(() => expect(within(calls).getByText('No calls yet.')).toBeTruthy());
+    vi.doUnmock('../console/turnstile.ts');
+    vi.doUnmock('../console/sandbox-actions.ts');
+  });
+});
+
 describe('WorkbenchIsland', () => {
   it('reads the home once and renders it; a refusal says so', async () => {
     const fetchFn = vi.fn(async () => Response.json(homeFresh));

@@ -86,6 +86,8 @@ export function ResetAction({ onChanged }: { onChanged: () => void }) {
       }
       setOut(done);
       setStep('done');
+      // The old calls, counts and keys are gone: the workbench reads the new home now, not when the key panel closes.
+      onChanged();
     } catch (e) {
       setError(
         e instanceof ActionError
@@ -177,6 +179,7 @@ export function ReopenAction({
       const session = await loadSession();
       if (session.kind === 'out') throw new ActionError('Sign in again.');
       setOut(await reopenSandbox(session.csrf));
+      onChanged();
     } catch (e) {
       setError(
         e instanceof ActionError

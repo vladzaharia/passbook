@@ -20,6 +20,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { redactDetail } from '../audit/redact.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import { fenceOf, type WebhookAccess } from './access.ts';
+import { noteActiveEndpoint } from './kick.ts';
 import { countOrgTemplates, countRecentCreates } from './repo-api.ts';
 import {
   deleteEndpoint,
@@ -228,6 +229,7 @@ export async function makeEndpoint(
   });
   await commitEndpoint(g);
   const endpoint = await requireEndpoint(ctx, access, endpointId);
+  noteActiveEndpoint(ctx);
   ctx.log.info('webhooks.endpoint_created', { orgId, endpointId, host: hostOf(input.url) });
   return { endpoint: toDto(endpoint, true), secret };
 }

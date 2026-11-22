@@ -8,7 +8,7 @@ import {
   setupRig,
   stubNet,
 } from './deliver-test-fixtures.ts';
-import { kick } from './kick.ts';
+import { kick, kickAfterWrite, noteActiveEndpoint } from './kick.ts';
 
 let rig: Rig;
 let net: Net;
@@ -73,6 +73,33 @@ describe('the kick', () => {
     rig.kit.clock.advance(31_000);
     await kick(rig.ctx);
     expect(rig.hooks.sent).toHaveLength(1);
+  });
+
+  it('trusts "none" for 30 s unless an endpoint was just made in this isolate', async () => {
+    await kick(rig.ctx);
+    rig.kit.clock.advance(2_000);
+    await endpointWithSecret(rig, { orgId: rig.orgId });
+    await rig.kit.pass();
+    noteActiveEndpoint(rig.ctx);
+    await kick(rig.ctx);
+    expect(rig.hooks.sent).toHaveLength(1);
+  });
+
+  it('a write inside the one-second window of the last kick still gets its own kick, once', async () => {
+    const ep = await endpointWithSecret(rig, { orgId: rig.orgId });
+    await rig.kit.pass();
+    await kick(rig.ctx);
+    expect(rig.hooks.sent).toHaveLength(1);
+    // New work and a free lane, half a second later: the plain kick is throttled, the write's kick waits and runs.
+    await rig.db
+      .prepare('UPDATE webhook_endpoints SET lane_token = NULL, lane_until = NULL WHERE id = ?')
+      .bind(ep)
+      .run();
+    rig.kit.clock.advance(500);
+    const both = Promise.all([kickAfterWrite(rig.ctx), kickAfterWrite(rig.ctx)]);
+    rig.kit.clock.advance(600);
+    await both;
+    expect(rig.hooks.sent).toHaveLength(2);
   });
 
   it('never throws when the queue is down; the lane is released for the sweep', async () => {
