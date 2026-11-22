@@ -127,10 +127,12 @@ export const stampedWrite = (db: D1Database, passId: string, runId: string, afte
 export const wroteBy = async (db: D1Database, passId: string, runId: string, after: number) =>
   (await stampedWrite(db, passId, runId, after)) !== null;
 
-/** The run whose write last set the pass, or null after any other write (`passes.write_ref`). */
-export const writeRefOf = async (db: D1Database, passId: string) =>
+/** The version a change run's own write to the pass produced (set by trigger 0188), or null while it has not written. */
+export const writtenVersion = async (db: D1Database, runId: string, passId: string) =>
   (
-    await first<{ write_ref: string | null }>(db, 'SELECT write_ref FROM passes WHERE id = ?', [
-      passId,
-    ])
-  )?.write_ref ?? null;
+    await first<{ written_version: number | null }>(
+      db,
+      'SELECT written_version FROM broadcast_targets WHERE broadcast_id = ? AND pass_id = ?',
+      [runId, passId],
+    )
+  )?.written_version ?? null;

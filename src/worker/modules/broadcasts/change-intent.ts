@@ -3,7 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { atValues } from './change-ops.ts';
 import { type BroadcastRow, clearIntent, insertItems, pendingIntents } from './repo.ts';
-import { stampedWrite, writeRefOf } from './repo-items.ts';
+import { stampedWrite, writtenVersion } from './repo-items.ts';
 
 /** What a change was about to do to one pass: its touched values before and after, and the pass version it read. */
 export interface Intent {
@@ -32,12 +32,10 @@ export async function settlePending(ctx: ServiceContext, row: BroadcastRow): Pro
       // edit is not ours, whatever values it left, and a racing edit between the read and the write is
       // told apart because `before` is read from the stamped version and the one before it.
       const write = await stampedWrite(db, r.pass_id, row.id, intent.version);
-      // An input no field renders is stored with no version row; the run's id on the pass shows it landed.
-      // Any later publish clears the id, and the pass is then read again like one that never changed.
-      const stored =
-        !write && pass !== null && pass.version > intent.version
-          ? (await writeRefOf(db, r.pass_id)) === row.id
-          : false;
+      // An input no field renders is stored with no version row: the run's own target row holds the
+      // version its write produced, which another run's or anyone's later write cannot overwrite.
+      const written = write ? null : await writtenVersion(db, row.id, r.pass_id);
+      const stored = written !== null && written > intent.version;
       const landed =
         pass !== null &&
         pass.mode === row.mode &&
@@ -64,7 +62,7 @@ export async function settlePending(ctx: ServiceContext, row: BroadcastRow): Pro
             outcome: 'updated',
             silent: false,
             before: JSON.stringify(before),
-            version: write?.version ?? pass.version,
+            version: write?.version ?? written ?? pass.version,
           },
         ]);
       } else await clearIntent(db, row.id, r.pass_id);

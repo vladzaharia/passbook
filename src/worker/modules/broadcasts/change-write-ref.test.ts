@@ -72,7 +72,7 @@ describe('a metadata-only write that crashes before its item', () => {
     });
   });
 
-  it('a later unrelated write clears the ref, so it is never taken for the item', async () => {
+  it('an unrelated write after the item write does not hide it', async () => {
     const passId = await unrendered();
     const id = await start(passId);
     await crashBeforeItem(id);
@@ -83,11 +83,29 @@ describe('a metadata-only write that crashes before its item', () => {
       notify: false,
       mutate: (p) => ({ personalization: { ...p.personalization, note: 'x' } }),
     });
-    const row = await all<{ write_ref: string | null }>(
-      ck.kit.env.DB,
-      'SELECT write_ref FROM passes WHERE id = ?',
-      [passId],
-    );
-    expect(row[0]?.write_ref).toBeNull();
+    await applyChunk(jobCtxOf(ck.kit), id, null);
+    expect(await visits(passId)).toBe(1);
+    expect(await ck.items(id)).toHaveLength(1);
+  });
+
+  it("another run's write to the pass does not hide the first run's", async () => {
+    const passId = await unrendered();
+    const a = await start(passId);
+    await crashBeforeItem(a);
+    const b = await start(passId);
+    await applyChunk(jobCtxOf(ck.kit), b, null);
+    expect(await visits(passId)).toBe(2);
+    await applyChunk(jobCtxOf(ck.kit), a, null);
+    expect(await visits(passId)).toBe(2);
+    expect(await ck.items(a)).toHaveLength(1);
+    expect(await ck.items(b)).toHaveLength(1);
+  });
+
+  it('a recorded item is not applied again by a later pass over the run', async () => {
+    const passId = await unrendered();
+    const id = await start(passId);
+    await applyChunk(jobCtxOf(ck.kit), id, null);
+    await applyChunk(jobCtxOf(ck.kit), id, null);
+    expect(await visits(passId)).toBe(1);
   });
 });
