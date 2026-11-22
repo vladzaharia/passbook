@@ -422,6 +422,15 @@ func (r *ConnectionsResource) List(ctx context.Context, query *ConnectionsListQu
 	return newPager[ConnectionsListItem](r.c, call{method: "GET", path: "/api/v1/connections", query: queryValues(query)}, "cursor", opts)
 }
 
+// Preview Preview a sync `POST /api/v1/connections/{id}/preview`
+func (r *ConnectionsResource) Preview(ctx context.Context, id string, opts ...RequestOption) (*ConnectionsPreviewResult, error) {
+	var out ConnectionsPreviewResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/" + pathEscape(id) + "/preview"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Retrieve Connection with runs and metrics `GET /api/v1/connections/{id}`
 func (r *ConnectionsResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ConnectionsRetrieveResult, error) {
 	var out ConnectionsRetrieveResult
@@ -477,9 +486,9 @@ func (r *ConnectionsResource) Test(ctx context.Context, id string, opts ...Reque
 }
 
 // TestConfig Test an unsaved configuration `POST /api/v1/connections/test-config`
-func (r *ConnectionsResource) TestConfig(ctx context.Context, body *ConnectionsTestConfigBody, opts ...RequestOption) (*ConnectionsTestConfigResult, error) {
+func (r *ConnectionsResource) TestConfig(ctx context.Context, body *ConnectionsTestConfigBody, query *ConnectionsTestConfigQuery, opts ...RequestOption) (*ConnectionsTestConfigResult, error) {
 	var out ConnectionsTestConfigResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/test-config", body: body}, &out, opts); err != nil {
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/connections/test-config", query: queryValues(query), body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil

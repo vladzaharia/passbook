@@ -531,6 +531,43 @@ export type CapturedEmailPage = {
   nextCursor: string | null;
 };
 
+export type ConnectionPreview = {
+  ok: boolean;
+  errorCode?: string;
+  records: number;
+  counts: {
+    create: number;
+    update: number;
+    unchanged: number;
+    skipped: number;
+    errors: number;
+    waiting: number;
+  };
+  releaseBlocked: string | null;
+  window: {
+    days: number;
+    limit: number;
+    since: number;
+    excluded: number;
+  };
+  samples: Array<{
+    ref: string;
+    action: "create" | "update" | "unchanged" | "skipped" | "error";
+    fields: Record<string, unknown>;
+    message?: string;
+  }>;
+  columns: Array<{
+    pointer: string;
+    label: string;
+    samples: Array<string>;
+    values: Array<{
+      value: string;
+      count: number;
+    }>;
+  }>;
+  durationMs: number;
+};
+
 export type ConnectionsCreateParams = {
   orgId: string;
   connectorType: string;
@@ -541,7 +578,7 @@ export type ConnectionsCreateParams = {
   mapping?: Record<string, {
     from: string;
     transform?: {
-      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
       options?: Record<string, unknown>;
     };
   }>;
@@ -566,6 +603,20 @@ export type ConnectionsTestConfigParams = {
   connectorType: string;
   config: Record<string, unknown>;
   secrets?: Record<string, string>;
+  mapping?: Record<string, {
+    from: string;
+    transform?: {
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+      options?: Record<string, unknown>;
+    };
+  }>;
+  voidWhen?: Array<{
+    from: string;
+    op: "in" | "present";
+    values?: Array<string | number | boolean>;
+  }>;
+  autoCreate?: boolean;
+  defaultTemplateId?: string;
 };
 
 export type ConnectionsUpdateParams = {
@@ -576,7 +627,7 @@ export type ConnectionsUpdateParams = {
   mapping?: Record<string, {
     from: string;
     transform?: {
-      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
       options?: Record<string, unknown>;
     };
   }>;

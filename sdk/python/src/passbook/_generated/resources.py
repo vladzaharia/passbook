@@ -397,6 +397,14 @@ class ConnectionsResource:
         """List connections `GET /api/v1/connections`"""
         return self._core.paginate("GET", "/api/v1/connections", query={"health": health, "q": q, "cursor": cursor, "limit": limit}, result=m.ConnectionsListResult, cursor_param="cursor", **opts)
 
+    def preview(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsPreviewResult:
+        """Preview a sync `POST /api/v1/connections/{id}/preview`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/preview", result=m.ConnectionsPreviewResult, **opts)
+
     def retrieve(
         self,
         id: str,
@@ -449,10 +457,12 @@ class ConnectionsResource:
     def test_config(
         self,
         body: m.ConnectionsTestConfigBody | _Dict[str, _Any],
+        *,
+        preview: _Literal["true", "false"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.ConnectionsTestConfigResult:
         """Test an unsaved configuration `POST /api/v1/connections/test-config`"""
-        return self._core.request("POST", "/api/v1/connections/test-config", body=body, result=m.ConnectionsTestConfigResult, **opts)
+        return self._core.request("POST", "/api/v1/connections/test-config", body=body, query={"preview": preview}, result=m.ConnectionsTestConfigResult, **opts)
 
     def update(
         self,

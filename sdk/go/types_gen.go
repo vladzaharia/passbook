@@ -884,6 +884,53 @@ type CapturedEmailPage struct {
 	NextCursor *string         `json:"nextCursor"`
 }
 
+type ConnectionPreview struct {
+	Ok             bool                           `json:"ok"`
+	ErrorCode      *string                        `json:"errorCode,omitempty"`
+	Records        int64                          `json:"records"`
+	Counts         ConnectionPreviewCounts        `json:"counts"`
+	ReleaseBlocked *string                        `json:"releaseBlocked"`
+	Window         ConnectionPreviewWindow        `json:"window"`
+	Samples        []ConnectionPreviewSamplesItem `json:"samples"`
+	Columns        []ConnectionPreviewColumnsItem `json:"columns"`
+	DurationMs     int64                          `json:"durationMs"`
+}
+
+type ConnectionPreviewColumnsItem struct {
+	Pointer string                                   `json:"pointer"`
+	Label   string                                   `json:"label"`
+	Samples []string                                 `json:"samples"`
+	Values  []ConnectionPreviewColumnsItemValuesItem `json:"values"`
+}
+
+type ConnectionPreviewColumnsItemValuesItem struct {
+	Value string `json:"value"`
+	Count int64  `json:"count"`
+}
+
+type ConnectionPreviewCounts struct {
+	Create    int64 `json:"create"`
+	Update    int64 `json:"update"`
+	Unchanged int64 `json:"unchanged"`
+	Skipped   int64 `json:"skipped"`
+	Errors    int64 `json:"errors"`
+	Waiting   int64 `json:"waiting"`
+}
+
+type ConnectionPreviewSamplesItem struct {
+	Ref     string         `json:"ref"`
+	Action  string         `json:"action"`
+	Fields  map[string]any `json:"fields"`
+	Message *string        `json:"message,omitempty"`
+}
+
+type ConnectionPreviewWindow struct {
+	Days     int64 `json:"days"`
+	Limit    int64 `json:"limit"`
+	Since    int64 `json:"since"`
+	Excluded int64 `json:"excluded"`
+}
+
 type ConnectionsCreateBody = ConnectionsCreateParams
 
 type ConnectionsCreateParams struct {
@@ -1037,6 +1084,8 @@ type ConnectionsListQuery struct {
 	Limit  *int64  `json:"limit,omitempty"`
 }
 
+type ConnectionsPreviewResult = ConnectionPreview
+
 type ConnectionsRetrieveResult struct {
 	ID                  string                                           `json:"id"`
 	OrgID               string                                           `json:"orgId"`
@@ -1099,6 +1148,9 @@ type ConnectionsRetrieveResultRunsItem struct {
 	Outcome       string  `json:"outcome"`
 	RecordsSeen   *int64  `json:"recordsSeen"`
 	PassesChanged *int64  `json:"passesChanged"`
+	PassesCreated *int64  `json:"passesCreated"`
+	PassesVoided  *int64  `json:"passesVoided"`
+	RecordsFailed *int64  `json:"recordsFailed"`
 	ErrorCode     *string `json:"errorCode"`
 	ErrorDetail   *string `json:"errorDetail,omitempty"`
 	HttpStatus    *int64  `json:"httpStatus"`
@@ -1241,6 +1293,9 @@ type ConnectionsRunsListItem struct {
 	Outcome       string  `json:"outcome"`
 	RecordsSeen   *int64  `json:"recordsSeen"`
 	PassesChanged *int64  `json:"passesChanged"`
+	PassesCreated *int64  `json:"passesCreated"`
+	PassesVoided  *int64  `json:"passesVoided"`
+	RecordsFailed *int64  `json:"recordsFailed"`
 	ErrorCode     *string `json:"errorCode"`
 	ErrorDetail   *string `json:"errorDetail,omitempty"`
 	HttpStatus    *int64  `json:"httpStatus"`
@@ -1260,23 +1315,88 @@ type ConnectionsSyncResult struct {
 type ConnectionsTestConfigBody = ConnectionsTestConfigParams
 
 type ConnectionsTestConfigParams struct {
-	OrgID         string            `json:"orgId"`
-	ConnectorType string            `json:"connectorType"`
-	Config        map[string]any    `json:"config"`
-	Secrets       map[string]string `json:"secrets,omitempty"`
+	OrgID             string                                             `json:"orgId"`
+	ConnectorType     string                                             `json:"connectorType"`
+	Config            map[string]any                                     `json:"config"`
+	Secrets           map[string]string                                  `json:"secrets,omitempty"`
+	Mapping           map[string]ConnectionsTestConfigParamsMappingValue `json:"mapping,omitempty"`
+	VoidWhen          []ConnectionsTestConfigParamsVoidWhenItem          `json:"voidWhen,omitempty"`
+	AutoCreate        *bool                                              `json:"autoCreate,omitempty"`
+	DefaultTemplateID *string                                            `json:"defaultTemplateId,omitempty"`
+}
+
+type ConnectionsTestConfigParamsMappingValue struct {
+	From      string                                            `json:"from"`
+	Transform *ConnectionsTestConfigParamsMappingValueTransform `json:"transform,omitempty"`
+}
+
+type ConnectionsTestConfigParamsMappingValueTransform struct {
+	Kind    string         `json:"kind"`
+	Options map[string]any `json:"options,omitempty"`
+}
+
+type ConnectionsTestConfigParamsVoidWhenItem struct {
+	From   string `json:"from"`
+	Op     string `json:"op"`
+	Values []any  `json:"values,omitempty"`
+}
+
+type ConnectionsTestConfigQuery struct {
+	Preview *string `json:"preview,omitempty"`
 }
 
 type ConnectionsTestConfigResult struct {
-	Ok         bool                                    `json:"ok"`
-	Detail     *string                                 `json:"detail,omitempty"`
-	ErrorCode  *string                                 `json:"errorCode,omitempty"`
-	DurationMs int64                                   `json:"durationMs"`
-	Sample     []ConnectionsTestConfigResultSampleItem `json:"sample,omitempty"`
+	Ok             bool                                     `json:"ok"`
+	Detail         *string                                  `json:"detail,omitempty"`
+	ErrorCode      *string                                  `json:"errorCode,omitempty"`
+	DurationMs     int64                                    `json:"durationMs"`
+	Sample         []ConnectionsTestConfigResultSampleItem  `json:"sample,omitempty"`
+	Records        *int64                                   `json:"records,omitempty"`
+	Counts         *ConnectionsTestConfigResultCounts       `json:"counts,omitempty"`
+	ReleaseBlocked *string                                  `json:"releaseBlocked,omitempty"`
+	Window         *ConnectionsTestConfigResultWindow       `json:"window,omitempty"`
+	Samples        []ConnectionsTestConfigResultSamplesItem `json:"samples,omitempty"`
+	Columns        []ConnectionsTestConfigResultColumnsItem `json:"columns,omitempty"`
+}
+
+type ConnectionsTestConfigResultColumnsItem struct {
+	Pointer string                                             `json:"pointer"`
+	Label   string                                             `json:"label"`
+	Samples []string                                           `json:"samples"`
+	Values  []ConnectionsTestConfigResultColumnsItemValuesItem `json:"values"`
+}
+
+type ConnectionsTestConfigResultColumnsItemValuesItem struct {
+	Value string `json:"value"`
+	Count int64  `json:"count"`
+}
+
+type ConnectionsTestConfigResultCounts struct {
+	Create    int64 `json:"create"`
+	Update    int64 `json:"update"`
+	Unchanged int64 `json:"unchanged"`
+	Skipped   int64 `json:"skipped"`
+	Errors    int64 `json:"errors"`
+	Waiting   int64 `json:"waiting"`
 }
 
 type ConnectionsTestConfigResultSampleItem struct {
 	Pointer string `json:"pointer"`
 	Preview string `json:"preview"`
+}
+
+type ConnectionsTestConfigResultSamplesItem struct {
+	Ref     string         `json:"ref"`
+	Action  string         `json:"action"`
+	Fields  map[string]any `json:"fields"`
+	Message *string        `json:"message,omitempty"`
+}
+
+type ConnectionsTestConfigResultWindow struct {
+	Days     int64 `json:"days"`
+	Limit    int64 `json:"limit"`
+	Since    int64 `json:"since"`
+	Excluded int64 `json:"excluded"`
 }
 
 type ConnectionsTestResult struct {

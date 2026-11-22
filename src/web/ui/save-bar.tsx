@@ -29,6 +29,8 @@ export interface SaveBarProps {
   formId?: string;
   onDiscard: () => void;
   saveLabel?: string;
+  /** The bar's status line while unsaved, e.g. "2 changes". */
+  label?: string;
   /** A save option beside the buttons (Notify holders). */
   extra?: ReactNode;
 }
@@ -108,6 +110,7 @@ function SaveBarView({
   formId,
   onDiscard,
   saveLabel = 'Save',
+  label = 'Unsaved changes',
   extra,
 }: SaveBarProps) {
   const [phase, setPhase] = useState<Phase>(dirty ? 'shown' : 'hidden');
@@ -152,7 +155,7 @@ function SaveBarView({
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-safe py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:[--wl-gutter:1.5rem]">
         {/* Phones: the buttons say it; the label stays for screen readers and for "Saved". */}
         <p className={cn('text-sm text-fg-strong', !done && 'max-sm:sr-only')} role="status">
-          {done ? 'Saved' : 'Unsaved changes'}
+          {done ? 'Saved' : label}
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-x-4">
           {extra}

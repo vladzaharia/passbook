@@ -66,6 +66,7 @@ export const IMPORT_COPY = {
       yesno: 'Yes or no',
     },
     pickOne: 'Pick one',
+    dontIssue: "Don't issue",
     choose: 'Choose',
     empty: 'empty',
     datesAs: 'Dates read as',

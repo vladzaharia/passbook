@@ -14,6 +14,7 @@ import { HolderTab } from './holder-tab.tsx';
 import { ImagesTab } from './images-tab.tsx';
 import { ActivityTab } from './info-tabs.tsx';
 import { MemberPhotoCard } from './member-photo-card.tsx';
+import type { Notice } from './notify-preview.tsx';
 import { StampsCard } from './stamps-card.tsx';
 import { SyncTab } from './sync-tab.tsx';
 import { TagsCard } from './tags-card.tsx';
@@ -30,6 +31,7 @@ export function PassTabs({
   picked,
   onPick,
   onDraft,
+  onNotice,
   readOnly,
 }: {
   pass: PassDetailDto;
@@ -38,6 +40,7 @@ export function PassTabs({
   picked: number | undefined;
   onPick: (version: number | undefined) => void;
   onDraft: (draft: Record<string, unknown> | null) => void;
+  onNotice: (notice: Notice | null) => void;
   readOnly: boolean;
 }) {
   return (
@@ -60,6 +63,7 @@ export function PassTabs({
             schema={template.data.inputSchema}
             manifest={template.data.manifest}
             onDraft={onDraft}
+            onNotice={onNotice}
             readOnly={readOnly}
           />
         ) : (

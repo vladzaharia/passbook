@@ -127,7 +127,9 @@ describe('connection detail', () => {
     expect(screen.getByText('400 ms / 900 ms')).toBeInTheDocument();
     const table = screen.getByRole('table', { name: 'Connection runs' });
     expect(within(table).getByText('UPSTREAM_5XX · 503')).toBeInTheDocument();
-    expect(within(table).getByText('10 seen, 2 changed')).toBeInTheDocument();
+    expect(
+      within(table).getByText('10 seen · 1 created · 1 updated · 1 voided · 1 failed'),
+    ).toBeInTheDocument();
     // One health pill: the header's.
     expect(screen.getAllByText('Degraded')).toHaveLength(1);
     const passesLink = screen.getByRole('link', { name: /2 passes/ });

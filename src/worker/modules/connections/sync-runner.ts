@@ -56,6 +56,7 @@ function add(into: Totals, from: Totals): void {
   into.created += from.created;
   into.missing += from.missing;
   into.errors += from.errors;
+  if (from.voided) into.voided = (into.voided ?? 0) + from.voided;
 }
 
 const MAX_SAMPLES = 5;

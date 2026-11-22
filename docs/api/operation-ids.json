@@ -59,6 +59,7 @@
   "connections.getConnectionsSummary",
   "connections.patchConnectionsById",
   "connections.postConnections",
+  "connections.postConnectionsByIdPreview",
   "connections.postConnectionsByIdSync",
   "connections.postConnectionsByIdTest",
   "connections.postConnectionsByIdWebhookFailuresByRetentionIdReplay",

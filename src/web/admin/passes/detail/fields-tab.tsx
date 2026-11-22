@@ -1,7 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useId, useMemo, useState } from 'react';
 import type { z } from 'zod';
+import type { Json } from '@/shared/contracts/common.ts';
 import { PassDetailSchema } from '@/shared/contracts/passes.ts';
+import { fieldChanges } from '@/shared/issuing/diff.ts';
 import { api } from '../../../lib/api.ts';
 import { isApiError } from '../../../lib/errors.ts';
 import {
@@ -27,6 +29,7 @@ import {
   validateValues,
 } from '../schema-form/index.ts';
 import { BudgetNote } from './budget-note.tsx';
+import type { Notice } from './notify-preview.tsx';
 
 type Pass = z.infer<typeof PassDetailSchema>;
 
@@ -52,6 +55,7 @@ export function FieldsTab({
   schema,
   manifest,
   onDraft,
+  onNotice,
   readOnly,
 }: {
   pass: Pass;
@@ -59,6 +63,8 @@ export function FieldsTab({
   manifest?: unknown;
   /** Unsaved values (debounced 300 ms) for the live preview; null when clean. */
   onDraft?: (draft: FormValues | null) => void;
+  /** What a save with Notify would send; null when nothing would. */
+  onNotice?: (notice: Notice | null) => void;
   readOnly: boolean;
 }) {
   const qc = useQueryClient();
@@ -97,6 +103,25 @@ export function FieldsTab({
       setRejected(false);
     }
   }, [pass, stale, dirty, saving]);
+
+  const changes = useMemo(
+    () =>
+      fieldChanges(
+        schema,
+        cleanValues(baseline.values) as Record<string, Json>,
+        cleanValues(draft) as Record<string, Json>,
+      ),
+    [schema, baseline.values, draft],
+  );
+  const was = useMemo(
+    () => Object.fromEntries(changes.map((c) => [c.key, c.from ?? 'empty'])),
+    [changes],
+  );
+  const silent = pass.pushBudget.used >= pass.pushBudget.limit;
+  useEffect(() => {
+    onNotice?.(notify && dirty && !locked && changes.length > 0 ? { changes, silent } : null);
+  }, [notify, dirty, locked, changes, silent, onNotice]);
+  useEffect(() => () => onNotice?.(null), [onNotice]);
 
   const errors = useMemo(() => validateValues(schema, draft), [schema, draft]);
   const check = useFormErrors(errors);
@@ -230,6 +255,7 @@ export function FieldsTab({
       <BudgetNote budget={pass.pushBudget} show={notify && dirty && !locked} />
       <SchemaForm
         collapseEmpty
+        was={dirty ? was : undefined}
         schema={schema}
         value={draft}
         onChange={setDraft}
@@ -244,10 +270,11 @@ export function FieldsTab({
       <SaveBar
         dirty={dirty && !readOnly}
         saving={saving}
+        label={changes.length === 1 ? '1 change' : `${changes.length} changes`}
         extra={
           locked ? null : (
             <CheckboxField
-              label="Notify holders"
+              label="Notify"
               checked={notify}
               disabled={!dirty || saving}
               onCheckedChange={(c) => setNotify(c === true)}

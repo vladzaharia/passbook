@@ -5,7 +5,7 @@ import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { cn } from '../../../lib/cn.ts';
 import { Badge, Select } from '../../../ui/index.ts';
-import { DATE_FORMATS, type MatchRow, type MatchState, setColumns } from './match-model.ts';
+import { DATE_FORMATS, type MatchRow, type MatchState, SKIP, setColumns } from './match-model.ts';
 import { shownSample } from './match-sample.ts';
 
 const NONE = '__none__';
@@ -50,9 +50,11 @@ function ColumnSelect({
 /** Each distinct value of a choice column, with the option it becomes. */
 function ValueMap({
   row,
+  canSkip,
   onChange,
 }: {
   row: MatchRow;
+  canSkip: boolean;
   onChange: (values: MatchRow['values']) => void;
 }) {
   if (row.values.length === 0) return null;
@@ -73,7 +75,10 @@ function ValueMap({
             placeholder={C.match.choose}
             value={v.to ?? undefined}
             onValueChange={(to) => onChange(row.values.map((x, j) => (j === i ? { ...x, to } : x)))}
-            options={row.options.map((o) => ({ value: o.value, label: o.label }))}
+            options={[
+              ...row.options.map((o) => ({ value: o.value, label: o.label })),
+              ...(canSkip ? [{ value: SKIP, label: C.match.dontIssue }] : []),
+            ]}
           />
           {row.counted ? (
             <span className="text-xs text-fg-muted tabular-nums">{C.match.rowsCount(v.count)}</span>
@@ -124,6 +129,7 @@ export function MatchRowView({
   error,
   index,
   onRow,
+  canSkip = false,
 }: {
   row: MatchRow;
   columns: Columns;
@@ -131,12 +137,16 @@ export function MatchRowView({
   error?: string | undefined;
   index: number;
   onRow: (row: MatchRow) => void;
+  /** Offer "Don't issue" as a value's target. */
+  canSkip?: boolean;
 }) {
   const matchBy = state.find === `col:${row.key}`;
   const first = columns.find((c) => c.pointer === row.from[0]);
-  const samples = (first?.samples ?? []).map((cell, i) =>
-    shownSample(row, cell, Object.fromEntries(columns.map((c) => [c.label, c.samples[i] ?? '']))),
-  );
+  const samples = (first?.samples ?? [])
+    .slice(0, 3)
+    .map((cell, i) =>
+      shownSample(row, cell, Object.fromEntries(columns.map((c) => [c.label, c.samples[i] ?? '']))),
+    );
   const conf = row.confidence ? CONFIDENCE[row.confidence] : null;
   const set = (from: (string | undefined)[]) =>
     onRow(
@@ -209,7 +219,7 @@ export function MatchRowView({
         </div>
       </div>
       {row.kind === 'choice' && row.from.length > 0 ? (
-        <ValueMap row={row} onChange={(values) => onRow({ ...row, values })} />
+        <ValueMap row={row} canSkip={canSkip} onChange={(values) => onRow({ ...row, values })} />
       ) : null}
       {row.kind === 'date' && row.from.length > 0 ? (
         <DateFormat

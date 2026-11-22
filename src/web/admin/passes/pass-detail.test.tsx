@@ -506,6 +506,23 @@ describe('pass detail: loading', () => {
 });
 
 describe('pass detail: save and conflicts', () => {
+  it('shows the saved value under an edited field, the change count and the notification', async () => {
+    const user = userEvent.setup();
+    const server = newServer();
+    await renderApp('/admin/passes/p1', {
+      session: 'admin',
+      ...orgScope,
+      handlers: patchAware(server, () => json(server.pass)),
+    });
+    await user.type(await screen.findByLabelText(/Member name/), ' Jr');
+    expect(await screen.findByText('Was Sam Jones')).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Unsaved changes' })).toHaveTextContent('1 change');
+    expect(screen.queryByRole('region', { name: 'Notification preview' })).toBeNull();
+    await user.click(screen.getByRole('checkbox', { name: 'Notify' }));
+    const banner = await screen.findByRole('region', { name: 'Notification preview' });
+    expect(banner).toHaveTextContent('Member name is now Sam Jones Jr');
+  });
+
   it('saves only the changed keys with the loaded version in If-Match', async () => {
     const user = userEvent.setup();
     const server = newServer();

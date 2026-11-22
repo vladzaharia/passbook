@@ -43,6 +43,8 @@ export interface SchemaFormProps {
   maxImageBytes?: number;
   /** An existing pass: sections with nothing set and nothing required fold to a "Show" row. */
   collapseEmpty?: boolean;
+  /** The saved value of a field being edited, by key: "Was Monthly" under it. */
+  was?: Readonly<Record<string, string>> | undefined;
 }
 
 /**
@@ -63,6 +65,7 @@ export function SchemaForm({
   hiddenKeys,
   maxImageBytes = 256 * 1024,
   collapseEmpty = false,
+  was,
 }: SchemaFormProps) {
   const groups = useMemo(
     () =>
@@ -187,7 +190,9 @@ export function SchemaForm({
                   <FormField
                     label={field.label}
                     help={
-                      owned ? (
+                      was?.[field.key] !== undefined && !owned ? (
+                        `Was ${was[field.key]}`
+                      ) : owned ? (
                         <SourceChip name={sourceName} />
                       ) : fieldSources?.[field.key] === 'manual' && onResetField ? (
                         <Button

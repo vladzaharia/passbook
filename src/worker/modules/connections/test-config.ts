@@ -59,6 +59,52 @@ export async function firstRecord(
   return fetched.status === 'ok' ? fetched.record : null;
 }
 
+/** The connector context of an unsaved configuration: the platform safe fetch, secrets for this request only. */
+export function unsavedContext(
+  sctx: ServiceContext,
+  def: AnyConnector,
+  orgId: string,
+  config: unknown,
+  secrets: unknown,
+): ConnectorContext<unknown, unknown> {
+  const deps = getDeps();
+  return {
+    connection: { id: 'test', orgId, generation: 0, config },
+    secrets,
+    now: () => sctx.clock.now(),
+    fetch: createSafeFetch({
+      platformHosts: platformHostsOf(sctx.env),
+      timeoutMs: def.defaults.timeoutMs,
+      ...(def.defaults.maxResponseBytes ? { maxBytes: def.defaults.maxResponseBytes } : {}),
+      ...(def.defaults.maxRedirects ? { maxRedirects: def.defaults.maxRedirects } : {}),
+      ...(deps.resolver ? { resolver: deps.resolver } : {}),
+      ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
+    }),
+    signal: AbortSignal.timeout(30_000),
+    log: (event, data) =>
+      sctx.log.info(`connector.${event}`, { orgId, connectorType: def.type, ...data }),
+  };
+}
+
+/** Everything a test of an unsaved configuration checks before it reaches out. */
+export async function openUnsaved(
+  sctx: ServiceContext,
+  input: Input,
+  authority?: ConnectionAuthority,
+) {
+  const def = requireConnector(input.connectorType);
+  await assertOrg(sctx, input.orgId);
+  const config = parseWith(def.configSchema, input.config, 'config');
+  const secrets = def.secretSchema
+    ? parseWith(def.secretSchema, input.secrets ?? {}, 'secrets')
+    : undefined;
+  if (def.urls) {
+    await assertConnectionAuthority(sctx, authority);
+    await assertSafeUrls(sctx, def.urls(config));
+  }
+  return { def, cc: unsavedContext(sctx, def, input.orgId, config, secrets) };
+}
+
 /**
  * Runs the connector's test and reads one record for an unsaved configuration, through the
  * platform safe fetch. Nothing is stored; the secrets live for this request only.
@@ -87,23 +133,7 @@ export async function testConfig(
     // Push-only connectors fetch nothing; records arrive in signed webhooks.
     return { ok: true, detail: 'Records arrive by webhook.', durationMs: 0 };
   }
-  const deps = getDeps();
-  const cc: ConnectorContext<unknown, unknown> = {
-    connection: { id: 'test', orgId: input.orgId, generation: 0, config },
-    secrets,
-    now: () => sctx.clock.now(),
-    fetch: createSafeFetch({
-      platformHosts: platformHostsOf(sctx.env),
-      timeoutMs: def.defaults.timeoutMs,
-      ...(def.defaults.maxResponseBytes ? { maxBytes: def.defaults.maxResponseBytes } : {}),
-      ...(def.defaults.maxRedirects ? { maxRedirects: def.defaults.maxRedirects } : {}),
-      ...(deps.resolver ? { resolver: deps.resolver } : {}),
-      ...(deps.fetchImpl ? { fetchImpl: deps.fetchImpl } : {}),
-    }),
-    signal: AbortSignal.timeout(30_000),
-    log: (event, data) =>
-      sctx.log.info(`connector.${event}`, { orgId: input.orgId, connectorType: def.type, ...data }),
-  };
+  const cc = unsavedContext(sctx, def, input.orgId, config, secrets);
   let result: Result;
   try {
     await assertConnectionAuthority(sctx, authority);

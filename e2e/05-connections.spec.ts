@@ -78,7 +78,7 @@ test('demo connection: create, test, sync creates passes, resync updates them', 
   await expect(async () => {
     await page.reload();
     // The runs table stacks into a list when its column is narrow (beside the sidebar).
-    const run = /Sync now.*Changed.*3 seen, 3 changed/i;
+    const run = /Sync now.*Changed.*3 seen · 3 created/i;
     await expect(
       page
         .getByRole('row', { name: run })

@@ -8,6 +8,7 @@ import {
 import { useMemo } from 'react';
 import { z } from 'zod';
 import { OkSchema } from '@/shared/contracts/common.ts';
+import { ConnectionPreviewSchema } from '@/shared/contracts/connection-preview.ts';
 import {
   ConnectionDetailSchema,
   ConnectionListSchema,
@@ -185,6 +186,9 @@ export function useConnectionActions(id: string) {
     test: useMutation({
       mutationFn: () => api.post(`/api/v1/connections/${id}/test`, TestConnectionResponseSchema),
       onSuccess: done,
+    }),
+    preview: useMutation({
+      mutationFn: () => api.post(`/api/v1/connections/${id}/preview`, ConnectionPreviewSchema),
     }),
     sync: useMutation({
       mutationFn: () => api.post(`/api/v1/connections/${id}/sync`, SyncNowResponseSchema),
