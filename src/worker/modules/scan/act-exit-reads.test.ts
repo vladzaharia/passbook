@@ -167,3 +167,56 @@ describe('OC4 on a value-first scanner', () => {
     expect(exit).toMatchObject({ kind: 'ok', checkIn: { direction: 'out' } });
   });
 });
+
+describe('OC4 on a fixed door with a value-first default', () => {
+  const setup = async (direction: 'in' | 'out') => {
+    const tpl = await kit.scanTemplate('Punch', {
+      actions: [
+        { id: 'stamp', label: 'Add stamp', kind: 'add', input: 'stamps' },
+        { id: 'enter', label: 'Check in', kind: 'check_in' },
+      ],
+    });
+    const mk = (d: 'in' | 'out' | 'both') =>
+      kit.scanner({ templateIds: [tpl], settings: { checkIn: { mode: 'in_out' }, direction: d } });
+    const both = await mk('both');
+    const fixed = await mk(direction);
+    const pass = await kit.scanPass(tpl);
+    return { both, fixed, pass };
+  };
+  const rowOf = (id: string | null) =>
+    first<{ action_id: string | null; action_kind: string | null }>(
+      kit.env.DB,
+      'SELECT action_id, action_kind FROM scans WHERE id = ?',
+      [id],
+    );
+
+  it('a fixed Out door taps a voided pass out with auto and no direction', async () => {
+    const { both, fixed, pass } = await setup('out');
+    expect((await out(await act(both.headers, codeOf(pass), { actionId: 'enter' }))).kind).toBe(
+      'ok',
+    );
+    await void_(pass);
+    const exit = await out(await act(fixed.headers, codeOf(pass), { actionId: 'auto' }));
+    expect(exit).toMatchObject({ kind: 'ok', checkIn: { direction: 'out' } });
+  });
+
+  it('a fixed In door still refuses a voided pass', async () => {
+    const { both, fixed, pass } = await setup('in');
+    await act(both.headers, codeOf(pass), { actionId: 'enter' });
+    await void_(pass);
+    expect(await out(await act(fixed.headers, codeOf(pass), { actionId: 'auto' }))).toMatchObject({
+      kind: 'refused',
+      reason: 'voided',
+    });
+  });
+
+  it('a not-inside heads-up records the check-in action, not the default', async () => {
+    const { both, pass } = await setup('out');
+    await void_(pass);
+    const held = await out(
+      await act(both.headers, codeOf(pass), { actionId: 'auto', direction: 'out' }),
+    );
+    expect(held).toMatchObject({ kind: 'heads_up', reason: 'not_inside' });
+    expect(await rowOf(held.scanId)).toMatchObject({ action_id: 'enter', action_kind: 'check_in' });
+  });
+});

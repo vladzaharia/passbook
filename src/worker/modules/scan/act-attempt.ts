@@ -176,7 +176,14 @@ export async function attempt(
       : null;
     if (pass && !passFence) throw raced();
     const named = evaluated.found?.scan.actions.find((a) => a.id === req.actionId);
-    const action = named ?? (evaluated.found ? defaultAction(actor, evaluated.found.scan) : null);
+    const picked = evaluated.found ? pickFor(actor, evaluated.found, req) : null;
+    const action =
+      named ??
+      (picked && picked !== 'choose'
+        ? picked
+        : evaluated.found
+          ? defaultAction(actor, evaluated.found.scan)
+          : null);
     return {
       outcome: await finishStop(
         {

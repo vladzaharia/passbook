@@ -184,8 +184,8 @@ export async function checkOverride(
 }
 
 /** A named tap-out of a voided or ended pass (OC4): the desk's Check out, which has no action to name. */
-const tapsOut = (req: { direction?: 'in' | 'out' | undefined }, found: Found): boolean =>
-  found.inactive !== undefined && req.direction === 'out';
+const tapsOut = (actor: ScanActor, req: PickReq, found: Found): boolean =>
+  found.inactive !== undefined && (req.direction ?? actor.settings.direction) === 'out';
 
 /**
  * Which action this request runs: named, the scanner's default, or `choose` for the desk. A tap-out
@@ -208,7 +208,7 @@ type PickReq = { actionId: string; direction?: 'in' | 'out' | undefined };
 
 /** The action this request runs on this Found. */
 export const pickFor = (actor: ScanActor, found: Found, req: PickReq) =>
-  pickAction(actor, found.scan, req.actionId, tapsOut(req, found));
+  pickAction(actor, found.scan, req.actionId, tapsOut(actor, req, found));
 
 /** OC4: the relaxed pass fence of an inactive Found is only ever committed as a tap-out. */
 export function assertTapOut(found: Found, state: string): void {
