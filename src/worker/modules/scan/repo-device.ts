@@ -146,11 +146,20 @@ export async function touchScanner(
   /** False for an upload: it stamps the device as seen but never moves `contact_at`. */
   contact = true,
 ): Promise<void> {
-  // A contact after a silence of CONTACT_GAP_MS keeps the contact before it (a row from before 0175 has only
-  // `last_seen_at`) and starts a new stretch. No commas: a stamp-only write is matched by tools/authority-scope.ts.
-  const gap = '? = 1 AND (contact_at <= ? OR contact_at IS NULL AND last_seen_at <= ?)';
+  // A contact after a real silence of CONTACT_GAP_MS keeps the contact before it (a row from before 0175 has only
+  // `last_seen_at`) and starts a new stretch. The stored contact lags the real one by up to `everyMs`, so a stored
+  // age of GAP + everyMs is the least that proves a real silence of GAP. While a grace is open neither column moves
+  // (a second gap must not re-date the first outage, nor chain graces). No commas: a stamp-only write is matched
+  // by tools/authority-scope.ts.
+  const gap =
+    '? = 1 AND (contact_at <= ? OR contact_at IS NULL AND last_seen_at <= ?) AND (online_since IS NULL OR online_since <= ?)';
   const c = contact ? 1 : 0;
-  const silent = [c, now - CONTACT_GAP_MS, now - CONTACT_GAP_MS];
+  const silent = [
+    c,
+    now - CONTACT_GAP_MS - everyMs,
+    now - CONTACT_GAP_MS - everyMs,
+    now - CONTACT_GRACE_MS,
+  ];
   await run(
     db,
     `UPDATE scanners SET last_seen_at = ?, last_ip_prefix = ?,

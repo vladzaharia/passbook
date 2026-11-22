@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { all, run } from '../../platform/db.ts';
 import { createScannerStore } from './auth-store.ts';
+import { beforeBatch } from './batch-interceptor-test-support.ts';
 import { deviceDayKey } from './repo-pin-tag.ts';
 import {
   auditActions,
@@ -188,6 +189,24 @@ describe('pairing', () => {
     await lock();
     expect((await consoleCall('POST', `/${body.id}/pair-here`)).status).toBe(200);
     expect(await locked()).toHaveLength(0);
+  });
+
+  it("a pairing that fails at commit leaves the device's wrong-PIN day lock", async () => {
+    const { body } = await create();
+    const locked = () =>
+      all(env.DB, 'SELECT count FROM counters WHERE key = ?', [deviceDayKey(body.id)]);
+    await run(env.DB, 'INSERT INTO counters (key, window_start, count) VALUES (?, 0, 100)', [
+      deviceDayKey(body.id),
+    ]);
+    const { result, fired } = await beforeBatch(
+      env,
+      /DELETE FROM counters WHERE key = \?/,
+      (db) => run(db, "UPDATE scanners SET pair_code_hash = 'moved' WHERE id = ?", [body.id]),
+      () => pairCall('', body.pairing?.code ?? ''),
+    );
+    expect(fired).toBe(true);
+    expect(result.status).toBe(400);
+    expect(await locked()).toHaveLength(1);
   });
 
   it('caps misses per IP: the 31st is a 429, even for a good code', async () => {

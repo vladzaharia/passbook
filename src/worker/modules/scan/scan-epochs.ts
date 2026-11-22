@@ -32,3 +32,7 @@ export function copyScanEpochs(from: ScanActor, to: ScanActor): void {
   const epochs = scanEpochsOf(from);
   if (epochs) setScanEpochs(to, structuredClone(epochs));
 }
+
+/** The scanner's config epoch as captured with the actor, else 0: it moves on settings, event, role, time zone, templates and the session binding, never on a staff bind. */
+export const configEpochOf = (actor: ScanActor): number =>
+  scanEpochsOf(actor)?.scanner?.config ?? 0;

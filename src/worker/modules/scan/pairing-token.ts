@@ -6,9 +6,9 @@ import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { deviceLabel } from './dto-console.ts';
-import { adminGrant, audited } from './repo-admin-grant.ts';
+import { adminGrant, audited, PAIRING_TABLES } from './repo-admin-grant.ts';
 import { DEVICE_MAX_MS } from './repo-device.ts';
-import { clearDeviceDayStatement } from './repo-pin-tag.ts';
+import { clearDeviceDayPart } from './repo-pin-tag.ts';
 import { type ConsoleScannerRow, scannerSlot } from './repo-scanners.ts';
 import {
   addAdminCredential,
@@ -138,8 +138,10 @@ export async function pairHere(
       ],
       PAIR_CODES,
       scanner.id,
+      PAIRING_TABLES,
     );
     addAdminCredential(g, scanner.id, scanner.kind, c);
+    g.include(clearDeviceDayPart(scanner.id));
     g.add(
       audited(g, ctx, {
         orgId: scanner.orgId,
@@ -153,7 +155,6 @@ export async function pairHere(
     );
     if (restored) addRestoreAudit(g, ctx, userId, scanner);
     await g.commit().catch(nameTaken);
-    await clearDeviceDayStatement(ctx.env.DB, scanner.id).run();
     return { token: c.token, csrfSecret: c.csrfSecret, expiresAt: c.expiresAt };
   });
 }
@@ -183,8 +184,10 @@ export async function replaceTerminalToken(
       ],
       PAIR_CODES,
       scanner.id,
+      PAIRING_TABLES,
     );
     addAdminCredential(g, scanner.id, scanner.kind, c);
+    g.include(clearDeviceDayPart(scanner.id));
     g.add(
       audited(g, ctx, {
         orgId: scanner.orgId,
@@ -197,7 +200,6 @@ export async function replaceTerminalToken(
     );
     if (restored) addRestoreAudit(g, ctx, userId, scanner);
     await g.commit().catch(nameTaken);
-    await clearDeviceDayStatement(ctx.env.DB, scanner.id).run();
     return { token: c.token, expiresAt: c.expiresAt };
   });
 }

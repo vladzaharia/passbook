@@ -1854,8 +1854,10 @@ changes nothing. A late
   on every scanner request except `POST /batch` (an upload), at most once a minute, and the batch reads it as it was
   before the request. Those stamps cannot be ordered by a device (polls, the socket, sign-in, a refused sync), so the
   floor has a reconnect grace:
-  - a request that arrives 3 min (`CONTACT_GAP_MS`) or more after the last one keeps that last contact in
-    `contact_prev_at` and sets `online_since` to now;
+  - a request that arrives after a real silence of 3 min or more keeps the last contact in `contact_prev_at` and sets
+    `online_since` to now (the stamp is throttled to once a minute, so the stored stamp must be 4 min old to prove
+    3 min of silence); while a grace is open neither column moves, so a flapping link cannot re-date the first outage
+    or chain graces;
   - for 20 min (`CONTACT_GRACE_MS`) after `online_since`, the contact half of the floor is the pre-gap
     `contact_prev_at`, not `contact_at`; after that it is `contact_at` again;
   - a row with no `contact_at` (before 0175) uses `last_seen_at`, then 0.

@@ -101,6 +101,9 @@ const SCAN_ADMIN_TABLES = [
   'scanner_setups',
 ] as const;
 
+/** A pairing grant also lifts the device's wrong-PIN day lock (`clearDeviceDayPart`). */
+export const PAIRING_TABLES = [...SCAN_ADMIN_TABLES, 'counters'] as const;
+
 /**
  * The tables the one-call setup grant may write, by caller: a console session all of them; a
  * `scanning:write` key neither staff nor, in test mode, zones (both are org-wide, not moded); a

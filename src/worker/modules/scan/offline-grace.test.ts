@@ -2,6 +2,7 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { TEST_NOW } from '../../../../test/helpers/index.ts';
 import { all, run } from '../../platform/db.ts';
 import { kit, setupActionFixture } from './act-test-fixtures.ts';
+import { TOUCH_EVERY_MS } from './auth-store.ts';
 import { batch, batchOf, item, LIST, rosterOf, ticketTemplate } from './offline-test-fixtures.ts';
 import { CONTACT_GAP_MS, CONTACT_GRACE_MS } from './repo-device.ts';
 
@@ -92,14 +93,7 @@ describe('the reconnect grace', () => {
     }
     expect((await batch(headers, queued, roster)).status).toBe(403);
     expect((await signIn()).status).toBe(200);
-    // This bare scanner has no scanning session, so its list is stamped with the row's updated_at, which a
-    // sign-in moves: take the list again and put its download date back to where the door really got it.
-    const again = await rosterOf(headers);
-    await run(kit.env.DB, 'UPDATE scan_offline_state SET roster_at = ? WHERE scanner_id = ?', [
-      t0,
-      scanner.id,
-    ]);
-    expect(await kinds(await batch(headers, queued, again))).toEqual(['ok', 'ok', 'ok']);
+    expect(await kinds(await batch(headers, queued, roster))).toEqual(['ok', 'ok', 'ok']);
     expect(await lateOf(queued)).toBe(0);
     expect((await stampOf(scanner.id))?.prev).toBe(t0);
   });
@@ -142,16 +136,31 @@ describe('the reconnect grace', () => {
     expect(await lateOf(old)).toBe(1);
   });
 
-  it('starts the gap at exactly CONTACT_GAP_MS of silence', async () => {
-    const short = await outage(CONTACT_GAP_MS - 1);
+  it('starts the gap only after a real silence of CONTACT_GAP_MS, the stamp throttle included', async () => {
+    const short = await outage(CONTACT_GAP_MS + TOUCH_EVERY_MS - 1);
     await kit.get(short.headers, '/stats');
     expect((await stampOf(short.scanner.id))?.prev).toBeNull();
-    const exact = await outage(CONTACT_GAP_MS);
+    const exact = await outage(CONTACT_GAP_MS + TOUCH_EVERY_MS);
     await kit.get(exact.headers, '/stats');
     expect(await stampOf(exact.scanner.id)).toMatchObject({
       prev: exact.t0,
       since: kit.clock.now(),
     });
+  });
+
+  it('keeps the first outage dated when the link flaps inside the grace', async () => {
+    const { scanner, headers, roster, t0, reads } = await outage(60 * MIN);
+    await kit.get(headers, '/stats');
+    const since = (await stampOf(scanner.id))?.since;
+    const queued = await reads(2);
+    // A second silence of 6 minutes inside the grace moves neither column.
+    kit.clock.advance(6 * MIN);
+    await kit.get(headers, '/stats');
+    kit.clock.advance(6 * MIN);
+    await kit.get(headers, '/stats');
+    expect(await stampOf(scanner.id)).toMatchObject({ prev: t0, since });
+    expect(await kinds(await batch(headers, queued, roster))).toEqual(['ok', 'ok']);
+    expect(await lateOf(queued)).toBe(0);
   });
 
   it('judges a batch against the pre-gap contact for CONTACT_GRACE_MS after the reconnect, and not after', async () => {
