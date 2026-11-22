@@ -37,6 +37,7 @@ const TONE = {
   needs: 'border-warning-border bg-warning-subtle text-warning',
   off: 'border-border-strong bg-state-hover-tint text-fg-muted',
   locked: 'border-dashed border-border-strong bg-transparent text-fg-muted',
+  moot: 'border-border bg-transparent text-fg-muted',
 } as const;
 
 function Pill({
@@ -68,13 +69,14 @@ function Pill({
     <span
       data-level={level.level}
       data-state={level.state}
+      data-dim={dim || undefined}
       data-stop={stop || undefined}
       aria-current={stop ? 'step' : undefined}
       className={cn(
         'inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium whitespace-nowrap [&_svg]:size-3.5',
-        TONE[level.state],
+        // Past the stop a level is moot: it quiets to a neutral outline, never to a faded colour (opacity broke contrast).
+        dim ? TONE.moot : TONE[level.state],
         stop && 'ring-2 ring-border-strong ring-offset-1 ring-offset-surface-raised',
-        dim && 'opacity-45',
       )}
     >
       {icon}
