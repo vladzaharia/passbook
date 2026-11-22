@@ -39,7 +39,32 @@ const KEY_TTL_MS = 30 * 86_400_000;
 /** A key a sandbox holds can reach everything a test org can, except minting keys, the terminal scope and the live-only scanning setup scope. */
 const KEY_SCOPES = SANDBOX_KEY_SCOPES.filter((s) => !isPlatformScope(s));
 
-const dto = (row: SandboxRow, templateId: string | null): DeveloperSandbox => ({
+/** A new Test personal key for the person (30 days): the secret is in the answer once and nowhere else. */
+export async function mintSandboxKey(
+  ctx: ServiceContext,
+  test: SessionAuth,
+  orgId: string,
+): Promise<NonNullable<CreatedDeveloperSandbox['key']>> {
+  const now = ctx.clock.now();
+  const authority = await authorizeApiKeys(ctx, test, orgId, 'org:read');
+  const key = await createApiKey(ctx, authority, {
+    orgId,
+    name: SANDBOX_KEY_NAME,
+    kind: 'personal',
+    mode: 'test',
+    scopes: KEY_SCOPES,
+    expiresAt: now + KEY_TTL_MS,
+  });
+  return {
+    id: key.id,
+    name: key.name,
+    secret: key.secret,
+    mode: 'test',
+    expiresAt: key.expiresAt ?? now + KEY_TTL_MS,
+  };
+}
+
+export const dto = (row: SandboxRow, templateId: string | null): DeveloperSandbox => ({
   id: row.id,
   orgId: row.org_id,
   orgSlug: row.slug,
@@ -75,11 +100,11 @@ class HookAbort extends Error {
  * The quickstart ticket: a copy of the event-ticket blueprint, released in Test. Each step reads what is already
  * there, so a retry after a failure does only what is missing. Its id, or null if it could not be made.
  */
-async function quickstartTemplate(
+export async function quickstartTemplate(
   ctx: ServiceContext,
   auth: SessionAuth,
   orgId: string,
-  tick: (step: SandboxStep) => Promise<void>,
+  tick: (step: SandboxStep) => Promise<void> = async () => undefined,
 ): Promise<string | null> {
   const db = ctx.env.DB;
   const scope = { orgId, mode: 'test', provider: 'apple' } as const;
@@ -196,27 +221,9 @@ export async function createSandbox(
     await tick('capture');
     const prior = await sandboxKeyOf(db, row.org_id, session.userId, SANDBOX_KEY_NAME);
     if (prior) return { ...dto(row, templateId), key: null, previousKey: prior };
-    const authority = await authorizeApiKeys(ctx, test, row.org_id, 'org:read');
-    const key = await createApiKey(ctx, authority, {
-      orgId: row.org_id,
-      name: SANDBOX_KEY_NAME,
-      kind: 'personal',
-      mode: 'test',
-      scopes: KEY_SCOPES,
-      expiresAt: now + KEY_TTL_MS,
-    });
+    const key = await mintSandboxKey(ctx, test, row.org_id);
     await tick('key');
-    return {
-      ...dto(row, templateId),
-      key: {
-        id: key.id,
-        name: key.name,
-        secret: key.secret,
-        mode: 'test',
-        expiresAt: key.expiresAt ?? now + KEY_TTL_MS,
-      },
-      previousKey: null,
-    };
+    return { ...dto(row, templateId), key, previousKey: null };
   } catch (error) {
     if (error instanceof HookAbort) throw error.error;
     throw error;

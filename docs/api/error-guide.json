@@ -3490,5 +3490,35 @@
     "when": "A pass moved since the bulk run's snapshot; the run skips it and counts it under PASS_CHANGED.",
     "fix": "Start a new run for the passes that are left.",
     "retryable": false
+  },
+  "SANDBOX_CLOSED": {
+    "title": "Sandbox is closed",
+    "when": "You asked to reset a closed developer sandbox.",
+    "fix": "Reopen the sandbox first, then reset it.",
+    "retryable": false
+  },
+  "SANDBOX_NOT_CLOSED": {
+    "title": "Sandbox is already open",
+    "when": "You asked to reopen a sandbox that is open.",
+    "fix": "Nothing to do: the sandbox is open.",
+    "retryable": false
+  },
+  "SANDBOX_REOPEN_ADMIN": {
+    "title": "An administrator closed this sandbox",
+    "when": "Only the person or the idle sweep can reopen a sandbox they closed; an administrator's close stays closed.",
+    "fix": "Ask an administrator to reopen it.",
+    "retryable": false
+  },
+  "SANDBOX_REOPEN_WINDOW": {
+    "title": "The reopen window has passed",
+    "when": "A closed sandbox can be reopened for 30 days.",
+    "fix": "The sandbox cannot be reopened; it is not made again, as there is one per person.",
+    "retryable": false
+  },
+  "SANDBOX_RESET_LIMIT": {
+    "title": "Too many resets today",
+    "when": "A sandbox can be reset 3 times in a day.",
+    "fix": "Wait until the oldest reset of the day is 24 hours old, then reset again.",
+    "retryable": true
   }
 }

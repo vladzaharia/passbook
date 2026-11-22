@@ -66,8 +66,8 @@ export function QuickstartView() {
                 {C.change.line2}
               </p>
             </Step>
-            <Step n={5} state="todo" title={C.home.title}>
-              <p className="sm muted">{C.home.line}</p>
+            <Step n={5} state="todo" title={QS_COPY.hear.title}>
+              <p className="sm muted">{QS_COPY.hear.line}</p>
             </Step>
           </>
         }

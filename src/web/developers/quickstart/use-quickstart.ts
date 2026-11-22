@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { RequestLogEntry } from '../../../shared/contracts/developer.ts';
+import type { DeveloperProgress } from '../../../shared/contracts/developer-home.ts';
 import { type Sandbox, type Session, updateSession } from '../console/session.ts';
 import { type Built, LiveClient, LiveError } from '../playground/live.ts';
 import type { InputValues } from '../playground/model.ts';
@@ -6,6 +8,7 @@ import { fromDetail, type PgTemplate } from '../playground/templates.ts';
 import { beacon } from './beacon.ts';
 import { firstInput, type Problem } from './model.ts';
 import type { Call, QsPass } from './types.ts';
+import { useHome } from './use-home.ts';
 import { markViewed } from './viewed.ts';
 
 interface PassBody {
@@ -49,8 +52,10 @@ export function useQuickstart(initial: Session) {
   const [run, setRun] = useState<Call>({ state: 'idle' });
   const [change, setChange] = useState<Call>({ state: 'idle' });
   const [pass, setPass] = useState<QsPass | null>(null);
-  const [doneAt, setDoneAt] = useState<number | null>(null);
   const [renderedMs, setRenderedMs] = useState<number | null>(null);
+  const [renderedAt, setRenderedAt] = useState<number | null>(null);
+  const { home, skew, refresh } = useHome();
+  const progress: DeveloperProgress | null = home?.progress ?? null;
   /** Same key for "Run again" (the pass comes back as it was); a failed run starts a new one. */
   const key = useRef(crypto.randomUUID());
 
@@ -101,8 +106,9 @@ export function useQuickstart(initial: Session) {
       if (key_) setSecret(key_);
       setRun({ state: 'idle' });
       if (csrf) beacon(csrf, 'sandbox');
+      void refresh();
     },
-    [csrf, session],
+    [csrf, session, refresh],
   );
 
   const create = useCallback(async () => {
@@ -127,6 +133,7 @@ export function useQuickstart(initial: Session) {
           at: Date.now(),
         });
         beacon(csrf, 'run');
+        void refresh();
         return;
       }
       key.current = crypto.randomUUID();
@@ -142,7 +149,7 @@ export function useQuickstart(initial: Session) {
       setRun({ state: 'fail', problem: problemOf(e), requestId: null, at: Date.now() });
       beacon(csrf, 'fail', 'NETWORK');
     }
-  }, [client, templateId, input, csrf]);
+  }, [client, templateId, input, csrf, refresh]);
 
   const update = useCallback(
     async (admission: string) => {
@@ -165,8 +172,11 @@ export function useQuickstart(initial: Session) {
             requestId: sent.requestId,
             replayed: false,
             at: Date.now(),
+            etag: sent.etag,
+            via: 'here',
           });
           beacon(csrf, 'change');
+          void refresh();
           return;
         }
         const problem = {
@@ -181,19 +191,57 @@ export function useQuickstart(initial: Session) {
         beacon(csrf, 'fail', 'NETWORK');
       }
     },
-    [client, pass, csrf],
+    [client, pass, csrf, refresh],
   );
 
-  /** The stage reports the first time every wallet drew the pass: the moment the pass is live. */
+  /** The listener heard the pass being made from a terminal: the page shows it as a call and reads the home again. */
+  const heardPass = useCallback(
+    (e: RequestLogEntry) => {
+      setRun({
+        state: 'ok',
+        status: e.status,
+        ms: e.durationMs,
+        requestId: e.requestId,
+        replayed: false,
+        at: e.at,
+        via: 'terminal',
+        client: e.client,
+      });
+      if (csrf) beacon(csrf, 'run');
+      void refresh();
+    },
+    [csrf, refresh],
+  );
+
+  /** The pass the server holds, when the page has not made or read it yet or a call from a terminal changed it. */
+  const held = home?.passes[0];
+  useEffect(() => {
+    if (!client || !held || (pass && pass.id === held.id && pass.version >= held.version)) return;
+    let live = true;
+    client.send<PassBody>('GET', `/passes/${encodeURIComponent(held.id)}`).then(
+      (sent) => {
+        if (live && sent.ok && sent.body) setPass(passOf(sent.body, performance.now()));
+      },
+      // The stage keeps its empty card; the next read of the home tries again.
+      () => undefined,
+    );
+    return () => {
+      live = false;
+    };
+  }, [client, held, pass]);
+
+  /** The stage reports the first time every wallet drew the pass; the funnel hears it once. */
+  const told2 = useRef(false);
   const rendered = useCallback(
     (ms: number) => {
       setRenderedMs(ms);
-      if (doneAt === null) {
-        setDoneAt(Date.now());
-        if (csrf) beacon(csrf, 'live');
+      setRenderedAt((t) => t ?? Date.now());
+      if (!told2.current && csrf) {
+        told2.current = true;
+        beacon(csrf, 'live');
       }
     },
-    [doneAt, csrf],
+    [csrf],
   );
 
   return {
@@ -209,8 +257,13 @@ export function useQuickstart(initial: Session) {
     run,
     change,
     pass,
-    doneAt,
+    home,
+    skew,
+    progress,
+    refresh,
     renderedMs,
+    renderedAt,
+    heardPass,
     sandboxMade,
     create,
     update,

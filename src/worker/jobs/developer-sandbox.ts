@@ -17,10 +17,21 @@ export const SANDBOX_CREATE_TABLES = [
   'developer_sandboxes',
 ] as const;
 
+const TABLES = {
+  'platform.job.developer_sandbox.create': SANDBOX_CREATE_TABLES,
+  'platform.job.developer_sandbox.close': ['orgs', 'api_keys', 'developer_sandboxes'],
+  'platform.job.developer_sandbox.try_revoke': ['developer_sandboxes'],
+  'platform.job.developer_sandbox.funnel': ['developer_sandboxes'],
+  'platform.job.developer_sandbox.restart': ['developer_sandboxes', 'api_keys'],
+  'platform.job.developer_sandbox.reset_rows': ['webhook_captures'],
+  'platform.job.developer_sandbox.reset_key': ['developer_sandboxes'],
+  'platform.job.developer_sandbox.reopen': ['orgs', 'developer_sandboxes'],
+} as const;
+
 /**
  * The `system:` grants a request may trigger for developer sandboxes: making one (a person who proved a live
  * session, Turnstile and the rest in the request), closing one (its person or the daily sweep), ending its try
- * tokens (its person) and stamping its funnel columns (its person, set once). Fixed purposes and tables; the job context never leaves this function, and
+ * tokens (its person), stamping its funnel columns (its person, set once), restarting its quickstart track (a reset) and reopening it (its person, inside the window). Fixed purposes and tables; the job context never leaves this function, and
  * `tools/authority-scope.ts` allows only `modules/developer/repo-grants.ts` to import it.
  */
 export function developerSandboxGrant(
@@ -29,7 +40,11 @@ export function developerSandboxGrant(
     | 'platform.job.developer_sandbox.create'
     | 'platform.job.developer_sandbox.close'
     | 'platform.job.developer_sandbox.try_revoke'
-    | 'platform.job.developer_sandbox.funnel',
+    | 'platform.job.developer_sandbox.funnel'
+    | 'platform.job.developer_sandbox.restart'
+    | 'platform.job.developer_sandbox.reset_rows'
+    | 'platform.job.developer_sandbox.reset_key'
+    | 'platform.job.developer_sandbox.reopen',
   checks: Check[],
   orgId?: string,
 ): Grant {
@@ -44,13 +59,7 @@ export function developerSandboxGrant(
     purpose,
     codes: CODES,
     checks,
-    tables:
-      purpose === 'platform.job.developer_sandbox.create'
-        ? SANDBOX_CREATE_TABLES
-        : purpose === 'platform.job.developer_sandbox.try_revoke' ||
-            purpose === 'platform.job.developer_sandbox.funnel'
-          ? ['developer_sandboxes']
-          : ['orgs', 'api_keys', 'developer_sandboxes'],
+    tables: TABLES[purpose],
     ...(orgId === undefined ? {} : { orgId }),
   });
 }

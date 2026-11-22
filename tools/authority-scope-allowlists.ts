@@ -173,7 +173,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/passes/repo-ops-retention.ts': {
     reason:
       'retention purge of a soft-deleted pass past its grace period: server-selected ids behind a keyset commitment and scan retention proof, no principal',
-    writes: ['passes:81fead64601a'],
+    writes: ['passes:481a78f5dfa3'],
   },
   'src/worker/modules/passes/repo-transfer-asset-gc.ts': {
     reason:
@@ -297,6 +297,8 @@ export const DYNAMIC_WRITE_ALLOWLIST: Record<string, string> = {
     'deleteInBatches takes its table from the caller; a call that names a guarded table is a raw-guarded-write finding at the call site',
   'src/worker/platform/db.ts':
     'casUpdate takes its table from the caller (identifier-checked); a call that names a guarded table is a raw-guarded-write finding at the call site',
+  'src/worker/modules/developer/repo-reset.ts':
+    "a sandbox reset deletes Test rows of the person's own developer org from the fixed RESET_TABLES list (a constant keyed object, never a request value); every statement repeats RESETTING: developer org, active, sandbox open and owned, the reset's stamp the track start, no hold",
   'src/worker/modules/org-lifecycle/repo-purge.ts':
     'the org purge (platform job, no principal) deletes the tables of PURGE_STEPS; every delete repeats the closed, in-purge and no-hold test, and a schema test proves each table is a step, a cascade of one, kept or not tenant data',
   'src/worker/modules/passes/repo-credential-transfer.ts':
@@ -310,6 +312,10 @@ export const DYNAMIC_WRITE_ALLOWLIST: Record<string, string> = {
 export const UNTENANTED_CHECK_ALLOWLIST: Record<string, string> = {
   'src/worker/modules/developer/repo-grants.ts#developer_sandboxes':
     "the owner's own close: the check asks that the person has a sandbox, and the grant's org write is pinned to the org id the service read for that person",
+  'src/worker/modules/developer/repo-grants-reset.ts#orgs':
+    "the reopen window: the check reads the one org row by the id the service read from the person's own sandbox, and the same grant's org write is pinned to that id",
+  'src/worker/modules/developer/repo-grants-reset.ts#developer_sandboxes':
+    "the owner's own reset or reopen: the check names the org id the service read from the person's own sandbox row and the person's user id, and the grant's writes are pinned to that same org id",
   'src/worker/modules/passes/repo-authority.ts#api_keys':
     "capabilityChecks: k.id is the grant's own API-key principal (the same authority object), which the actor row resolves in its tenant",
   'src/worker/modules/passes/repo-authority.ts#org_memberships':

@@ -39,6 +39,7 @@ const call = (i: number, over: Partial<RequestLogEntry> = {}): RequestLogEntry =
   keyId: '019a-key-1',
   mode: 'test',
   via: null,
+  client: 'curl/8.7.1',
   hasBodies: true,
   ...over,
 });

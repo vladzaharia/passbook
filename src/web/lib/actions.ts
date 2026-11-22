@@ -33,6 +33,7 @@ import {
 import { ACTION_ICON } from './action-icons.ts';
 import { AUTH_ACTIONS } from './actions-auth.ts';
 import { BROADCAST_RUN_ACTIONS } from './actions-broadcast.ts';
+import { DEVELOPER_ACTIONS } from './actions-developer.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
 import { SCAN_PIN_ACTIONS } from './actions-scan-pin.ts';
@@ -56,9 +57,6 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'broadcast.send': a('Message sent', I.updateDevices, 'info'),
   'broadcast.update': a('Message edited', I.edit, 'info'),
   'broadcast.retry': a('Message sent again', I.updateDevices, 'info'),
-  'developer_sandbox.close': a('Developer sandbox closed', Pause, 'warning'),
-  'developer_sandbox.create': a('Developer sandbox made', ENTITY.org.icon, 'success'),
-  'developer_sandbox.try_revoke': a('Try it sessions ended', ENTITY.apiKey.icon, 'warning'),
   'message_rule.create': a('Message rule created', ENTITY.broadcast.icon, 'success'),
   'message_rule.update': a('Message rule edited', I.edit, 'info'),
   'message_rule.pause': a('Message rule paused', Pause, 'warning'),
@@ -274,6 +272,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   ...AUTH_ACTIONS,
   ...SCAN_PIN_ACTIONS,
   ...BROADCAST_RUN_ACTIONS,
+  ...DEVELOPER_ACTIONS,
   'bundle.create': a('Bundle created', ENTITY.bundle.icon, 'success'),
   'bundle.delete': a('Bundle deleted', I.delete, 'danger'),
   'bundle.rotate_link': a('Bundle link rotated', I.rotate, 'info'),

@@ -58,7 +58,7 @@ export function TopBar({ active }: { active?: NavKey }) {
         />
       }
       // The sandbox chip (island) when there is one; nothing otherwise.
-      controls={<span data-island="org-chip" className="empty:hidden" />}
+      controls={<span data-island="org-chip" />}
       account={
         <span data-island="account">
           <SignInButton>

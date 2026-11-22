@@ -1,0 +1,289 @@
+/* The quickstart's server-driven steps: what was made, the key box, the terminal listener, hear back and done. */
+
+/* ---------- Step 2 ---------- */
+.qs-mades {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.qs-made {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  min-width: 0;
+}
+.qs-made .muted {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.qs-made-dot {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--pk-border-strong);
+  color: var(--pk-text-muted);
+}
+.qs-made[data-done="true"] .qs-made-dot {
+  background: var(--pk-accent);
+  border-color: var(--pk-accent);
+  color: var(--pk-accent-on);
+}
+.qs-made-dot .lucide {
+  width: 12px;
+  height: 12px;
+}
+.qs-env {
+  display: grid;
+  gap: 12px;
+}
+.qs-env-box {
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-sunken);
+  padding: 12px 16px;
+  min-width: 0;
+}
+.qs-env-h {
+  justify-content: space-between;
+  align-items: center;
+}
+.qs-env-v {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--pk-text-strong);
+}
+.qs-env-key {
+  color: var(--pk-accent);
+}
+.qs-env-a {
+  align-items: center;
+}
+.qs-env-a .push {
+  margin-inline-start: auto;
+}
+
+/* ---------- Step 3 ---------- */
+.qs-where {
+  margin-block: 4px 12px;
+}
+.qs-soon {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-inline-start: 6px;
+  vertical-align: 6px;
+  border-radius: 50%;
+  background: var(--dp-violet, #8b5cf6);
+}
+.qs-soon-line {
+  margin: 0;
+  padding: 8px 16px;
+  border-top: 1px solid var(--pk-border-subtle);
+}
+.qs-soon-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--dp-violet, #8b5cf6);
+  border: 1px solid color-mix(in oklab, var(--dp-violet, #8b5cf6) 50%, transparent);
+}
+.qs-term[data-state="wait"] {
+  background: var(--pk-surface-sunken);
+}
+.qs-pulse {
+  position: relative;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--pk-accent);
+}
+.qs-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--pk-accent);
+  opacity: 0.6;
+  animation: qs-listen 1.6s ease-out infinite;
+}
+@keyframes qs-listen {
+  from {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+.chip-from {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--pk-accent-subtle);
+  color: var(--pk-accent);
+}
+.chip-from .lucide {
+  width: 12px;
+  height: 12px;
+}
+.qs-heard {
+  align-items: center;
+}
+.qs-fix {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 14px 16px;
+  border-top: 1px solid var(--pk-danger-border);
+  background: var(--pk-danger-subtle);
+}
+.qs-fix .h3 {
+  color: var(--pk-danger);
+  font-size: 14px;
+}
+.qs-chips {
+  margin-block: 4px 12px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Step 5 ---------- */
+.qs-hear {
+  padding: 0;
+  margin-block: 8px 12px;
+}
+.qs-hear-h {
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--pk-border-subtle);
+}
+.qs-hear-h .push,
+.qs-cap .push {
+  margin-inline-start: auto;
+}
+.qs-caps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.qs-cap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--pk-border-subtle);
+  flex-wrap: wrap;
+}
+.qs-cap:last-child {
+  border-bottom: 0;
+}
+.qs-cap-s {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--pk-success-subtle);
+  color: var(--pk-success);
+}
+.qs-hear .qs-note {
+  padding: 12px 16px;
+}
+.qs-hear-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.qs-hear-c {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  align-content: start;
+}
+.qs-hear-c pre {
+  margin: 0;
+  overflow-x: auto;
+  color: var(--pk-text-strong);
+}
+
+/* ---------- Done ---------- */
+.qs-wide {
+  display: block;
+}
+.qs-done {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+}
+.qs-done-card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 36px 16px 28px;
+  border: 1px solid var(--pk-border-subtle);
+  border-radius: var(--pk-radius-lg);
+  background: var(--pk-surface-raised);
+}
+.qs-done-pass {
+  width: 100%;
+  max-width: 17rem;
+}
+.qs-done-t {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.qs-done-a {
+  justify-content: center;
+}
+.qs-done-next {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 12px;
+}
+.qs-next-card {
+  display: grid;
+  gap: 18px;
+  padding: 16px;
+  color: var(--pk-text-strong);
+  text-decoration: none;
+}
+.qs-next-card:hover {
+  border-color: var(--pk-border-strong);
+}
+@media (prefers-reduced-motion: reduce) {
+  .qs-pulse::after {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+/* A phone: the tab row scrolls instead of clipping, and the file name makes room. */
+.qs-code .code-h {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+@media (max-width: 520px) {
+  .qs-code .code-h .file {
+    display: none;
+  }
+  .qs-code .code-h .iconbtn {
+    margin-inline-start: auto;
+  }
+}

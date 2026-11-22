@@ -47,6 +47,37 @@ export const CreatedDeveloperSandboxSchema = DeveloperSandboxSchema.extend({
 });
 export type CreatedDeveloperSandbox = z.infer<typeof CreatedDeveloperSandboxSchema>;
 
+/** `POST /developer/sandbox/reset`: the same check as making a sandbox. */
+export const ResetDeveloperSandboxSchema = z.object({
+  turnstileToken: z.string().min(1).max(4096),
+});
+export type ResetDeveloperSandbox = z.infer<typeof ResetDeveloperSandboxSchema>;
+
+/**
+ * What a reset did: the sandbox, the new key (the secret shown once; the old key is revoked when the reset starts),
+ * the rows deleted, the test passes that could not be deleted now (`kept`: a hold or an unfinished retirement) and
+ * the resets left today. `more`: the time ran out before the purge finished, so there is no new key yet; ask again
+ * (it resumes and costs no reset).
+ */
+export const SandboxResetSchema = z.object({
+  sandbox: DeveloperSandboxSchema,
+  key: CreatedDeveloperSandboxSchema.shape.key,
+  deleted: z.object({
+    passes: z.number().int().nonnegative(),
+    captures: z.number().int().nonnegative(),
+    calls: z.number().int().nonnegative(),
+    other: z
+      .number()
+      .int()
+      .nonnegative()
+      .describe('Bundles, captured emails, imports, broadcasts, rules and idempotency records.'),
+  }),
+  kept: z.number().int().nonnegative(),
+  more: z.boolean(),
+  resetsLeft: z.number().int().min(0).max(3),
+});
+export type SandboxReset = z.infer<typeof SandboxResetSchema>;
+
 /**
  * `POST /developer/try-token`: a 15-minute bearer for the portal's Try it, bound to the session and the sandbox's
  * Test key. Refresh at 12 minutes; keep it in memory only, never in storage or a URL.
@@ -75,6 +106,8 @@ export const RequestLogEntrySchema = z.object({
   keyId: IdSchema.nullable(),
   mode: ModeSchema,
   via: z.literal('try').nullable(),
+  /** The caller's tool as a short name (`curl/8.7.1`, `node`, `python-requests`), never the User-Agent header. Null when unknown. */
+  client: z.string().max(32).nullable(),
   /** Request and response bodies are stored and still readable (24 hours, developer Test traffic). */
   hasBodies: z.boolean(),
 });

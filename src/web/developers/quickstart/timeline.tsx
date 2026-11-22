@@ -14,6 +14,12 @@ interface Row {
 
 const H = QS_COPY.happened;
 
+/** `201 · From your terminal · curl/8.7.1`, or the status and time when it was sent from this page. */
+const callLine = (c: Extract<Call, { state: 'ok' }>): string =>
+  c.via === 'terminal'
+    ? [c.status, QS_COPY.call.from, c.client].filter(Boolean).join(' · ')
+    : `${c.status} · ${c.ms} ms`;
+
 /** What the page's calls and the sandbox's endpoint did, in the order they happened. Rows still to come are open circles. */
 export function rowsOf(input: {
   run: Call;
@@ -30,7 +36,7 @@ export function rowsOf(input: {
       ? {
           id: 'run',
           title: 'POST /api/v1/passes',
-          line: `${run.status} · ${run.ms} ms`,
+          line: callLine(run),
           state: 'done',
           at: run.at,
         }
@@ -76,7 +82,7 @@ export function rowsOf(input: {
         ? {
             id: 'patch',
             title: 'PATCH /api/v1/passes/{id}',
-            line: `${change.status} · ${change.ms} ms`,
+            line: callLine(change),
             state: 'done',
             at: change.at,
           }

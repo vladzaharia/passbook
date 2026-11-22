@@ -2661,6 +2661,7 @@
         409
       ],
       "modules": [
+        "developer",
         "org-lifecycle"
       ]
     },
@@ -3517,6 +3518,15 @@
       ]
     },
     {
+      "code": "SANDBOX_CLOSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
       "code": "SANDBOX_CONFLICT",
       "statuses": [
         409
@@ -3536,6 +3546,15 @@
     },
     {
       "code": "SANDBOX_KEY_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_NOT_CLOSED",
       "statuses": [
         409
       ],
@@ -3568,6 +3587,33 @@
       ],
       "modules": [
         "sandbox"
+      ]
+    },
+    {
+      "code": "SANDBOX_REOPEN_ADMIN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_REOPEN_WINDOW",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_RESET_LIMIT",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "developer"
       ]
     },
     {

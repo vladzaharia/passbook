@@ -113,7 +113,7 @@ export function quickstartMarkdown(): string {
     `2. **${s.sandbox.title}.** ${s.sandbox.line} ${s.sandbox.keyOnce}`,
     `3. **${s.run.title}.** \`POST /api/v1/passes\` with the template id and its fields. Expect \`201\`.`,
     `4. **${s.change.title}.** \`PATCH /api/v1/passes/{id}\` with \`If-Match\` set to the version you read.`,
-    `5. **${s.home.title}.** ${s.home.line}`,
+    `5. **${QS_COPY.hear.title}.** ${QS_COPY.hear.line}`,
     '',
     'Every step runs in your own sandbox; a sandbox never issues a real pass.',
   ]);
