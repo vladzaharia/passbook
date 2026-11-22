@@ -2,6 +2,7 @@ import type { TemplateRelease } from '../../../shared/contracts/template-release
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getWalletProviderReadiness } from './account-service.ts';
 import { publishableSchema } from './projection-contract.ts';
+import { SYSTEM_AUTHORED_PROVIDERS } from './projection-system-authority.ts';
 
 const PROVIDERS = ['google', 'samsung'] as const;
 
@@ -18,7 +19,9 @@ export async function queueSystemProjections(
   const { orgId, mode, templateId, version } = release;
   try {
     // Only orgs with a provider account have anything to project; others queue nothing.
-    const open = PROVIDERS.filter((provider) => publishableSchema(provider, 2));
+    const open = PROVIDERS.filter(
+      (provider) => SYSTEM_AUTHORED_PROVIDERS.includes(provider) && publishableSchema(provider, 2),
+    );
     const ready: (typeof PROVIDERS)[number][] = [];
     for (const provider of open) {
       const readiness = await getWalletProviderReadiness(ctx, { orgId, mode, provider });
