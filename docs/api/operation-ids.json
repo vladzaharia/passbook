@@ -451,6 +451,7 @@
   "templates.postTemplatesByIdCandidates",
   "templates.postTemplatesByIdCandidatesByCandidateIdApprove",
   "templates.postTemplatesByIdCandidatesPromote",
+  "templates.postTemplatesByIdChannelsResetPasses",
   "templates.postTemplatesByIdClone",
   "templates.postTemplatesByIdPreview",
   "templates.postTemplatesByIdRelease",

@@ -18,13 +18,14 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import type { Actor } from '../passes/service.ts';
 import { startApplyInstance } from './apply-start.ts';
+import type { ChainCan } from './chain.ts';
 import { assertNoOpenWindow, refuseAllOff, refuseUnsupported, replaceSet } from './replace.ts';
 import { templateReplaceable } from './replaceable.ts';
 import * as repo from './repo.ts';
 import { rotatedCount } from './repo-replace.ts';
 import { latestRun, pendingRun } from './repo-runs.ts';
 import { writeTemplatePolicy } from './repo-write.ts';
-import { channelDefaults, loadTemplate } from './service.ts';
+import { channelDefaults, loadTemplate, templateExtras } from './service.ts';
 import { openWindows, splitWindows, WINDOW_HORIZON_MS } from './windows.ts';
 
 type PutTemplateResponse = z.infer<typeof PutTemplateChannelsResponseSchema>;
@@ -46,6 +47,7 @@ export async function putTemplateChannels(
   authority: TenantPassWrite,
   template: repo.TemplateRef,
   mode: Mode,
+  can: ChainCan,
   body: {
     channels: Partial<Record<Channel, TemplateChannelState>>;
     revision: number;
@@ -167,6 +169,7 @@ export async function putTemplateChannels(
     revision: wrote ? revision + 1 : revision,
     effective: effectiveChannels(view.inputs),
     defaults: channelDefaults(view.inputs),
+    ...(await templateExtras(ctx, template, mode, view.inputs, can)),
     impact,
     workflowInstanceId,
     replaceSupported: supported,

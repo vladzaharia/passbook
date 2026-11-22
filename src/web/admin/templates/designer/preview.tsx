@@ -46,6 +46,7 @@ export function DesignerPreview({
   assetBase,
   checking,
   stripUrl,
+  assetOverrides,
 }: {
   passJson: Record<string, unknown> | null | undefined;
   assets: readonly DraftAsset[];
@@ -53,13 +54,15 @@ export function DesignerPreview({
   checking: boolean;
   /** A stamp card's strip, drawn in the browser for the preview count. */
   stripUrl?: string | null;
+  /** File name to URL: the organization's logo and icon, where they apply. */
+  assetOverrides?: Record<string, string> | undefined;
 }) {
   const [face, setFace] = useState<PassSide>('front');
   const host = usePartDrop(passJson);
   const view = useMemo(() => {
     if (!passJson) return null;
     try {
-      const files = previewAssetMap(assets, assetBase);
+      const files = { ...previewAssetMap(assets, assetBase), ...assetOverrides };
       if (stripUrl) {
         files['strip@2x.png'] = stripUrl;
         files['strip@3x.png'] = stripUrl;
@@ -69,7 +72,7 @@ export function DesignerPreview({
       // A pass the card cannot read shows the fallback line; the issues list says why.
       return null;
     }
-  }, [passJson, assets, assetBase, stripUrl]);
+  }, [passJson, assets, assetBase, stripUrl, assetOverrides]);
   return (
     <div className="flex flex-col items-center gap-3" data-testid="designer-preview">
       <div ref={host} className="relative w-full">

@@ -1,5 +1,6 @@
 import type { Channel, ChannelReason, ChannelSource, OfferHold } from '../contracts/channels.ts';
 import { FEATURE_ASK, NOT_INCLUDED } from './entitlements.ts';
+import { WALLET_SETUP_LABEL } from './wallet-setup.ts';
 
 export const CHANNEL_LABEL: Record<Channel, string> = {
   mobile: 'Mobile',
@@ -110,20 +111,14 @@ export const channelWhy = (
 export const CHANNEL_FIX_LABEL: Record<ChannelFix, string> = {
   platform: 'Platform settings',
   org: 'Organization settings',
-  template: 'Template channels',
-  wallet: 'Wallet accounts',
+  template: 'Channels and brand',
+  wallet: WALLET_SETUP_LABEL,
 };
 
 export const CHANNEL_COPY = {
-  templateDefault: 'Template default',
+  useTemplate: 'Use template',
   notAvailable: 'Not available',
   disabled: 'Disabled',
-  applyExisting: 'Apply to existing passes',
-  applyTitle: 'Apply to existing passes?',
-  applyBody: 'Passes with their own channel choices follow this template again.',
-  applyDone: 'Passes follow the template',
-  applyNone: 'No passes to update.',
-  applyFailed: 'Could not update every pass. Try again.',
   platformCard: 'Channels',
   appleTap: 'Apple phone tap',
   appleTapWaiting: 'Waiting for Apple approval',

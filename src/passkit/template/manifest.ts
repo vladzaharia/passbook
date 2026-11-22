@@ -12,6 +12,7 @@ import type {
   TemplateManifest,
   ValidationIssue,
 } from '../types.ts';
+import { brandManifestIssues } from './brand.ts';
 import { channelsManifestIssues } from './channels.ts';
 import { countersIssues, derivedPassScope } from './counters.ts';
 import { emailManifestIssues } from './email.ts';
@@ -213,6 +214,7 @@ export function validateManifest(
   issues.push(...walletsManifestIssues(manifest, options));
   issues.push(...paperManifestIssues(manifest, options));
   issues.push(...channelsManifestIssues(manifest));
+  issues.push(...brandManifestIssues(manifest));
 
   if (manifest.previewOnlyAssets && options.assetNames) {
     for (const name of manifest.previewOnlyAssets)

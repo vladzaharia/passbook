@@ -1,11 +1,13 @@
 import type { z } from 'zod';
 import { GOAL_MAX, GOAL_MIN } from '@/passkit/stamps/layout.ts';
+import type { BrandPartName } from '@/passkit/template/brand.ts';
 import type { TemplateVersionDetailSchema } from '@/shared/contracts/index.ts';
 import { currencyOptions } from '@/shared/money.ts';
 import { patternMatches } from '@/shared/safe-pattern.ts';
 import { contrast, type Rgb, toRgbText } from '../templates/designer/contrast.ts';
 import { placeImage, setSlotImage } from '../templates/designer/images.ts';
 import { type DesignDoc, type DraftAsset, isRecord } from '../templates/designer/model.ts';
+import { setBrandPart } from '../templates/designer/ops-brand.ts';
 import { readStamps, setGoal } from '../templates/designer/stamps.ts';
 
 /** A saved version as the designer's documents (the designer's own `docOf`, without its page). */
@@ -87,6 +89,8 @@ export interface QuickSetup {
   name: string;
   color?: Rgb | undefined;
   logo?: DraftAsset | undefined;
+  /** Parts the template keeps its own of, because the organization already sets them or cannot be written. */
+  own?: readonly BrandPartName[] | undefined;
 }
 
 /** The blueprint as the org's template: its own name, colours and logo, never the blueprint flag. */
@@ -107,7 +111,8 @@ export function brandDoc(base: DesignDoc, setup: QuickSetup): DesignDoc {
   }
   if (setup.goal !== undefined) doc = setGoal(doc, setup.goal);
   if (setup.currency !== undefined) doc = withCurrency(doc, setup.currency);
-  return setup.logo ? setSlotImage(doc, 'logo', setup.logo) : doc;
+  if (setup.logo) doc = setSlotImage(doc, 'logo', setup.logo);
+  return (setup.own ?? []).reduce((d, part) => setBrandPart(d, part, true), doc);
 }
 
 /** A logo box is 50-160 pt wide and 50 pt high at most; the @2x box is the one a free image fits. */

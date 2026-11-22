@@ -1,3 +1,4 @@
+import type { BrandPartName } from '@/passkit/template/brand.ts';
 import { renameIn } from '@/passkit/template/merge/renames.ts';
 import type { Json, PassStyle, TemplateManifest } from '@/passkit/types.ts';
 import { type AccessOp, applyAccessOp } from './access/ops.ts';
@@ -6,6 +7,7 @@ import { applyCounterOp, type CounterOp } from './counters.ts';
 import { setSlotImage } from './images.ts';
 import type { InputSpec } from './inputs.ts';
 import type { DesignDoc, DraftAsset, GroupId } from './model.ts';
+import { setBrandPart } from './ops-brand.ts';
 import {
   addInput,
   type BarcodeSettings,
@@ -73,6 +75,7 @@ export type Op =
   | { op: 'list'; key: ListKey; items: Record<string, unknown>[] }
   | { op: 'paper'; patch: PaperPatch }
   | { op: 'image'; slot: string; asset: DraftAsset | null }
+  | { op: 'brand'; part: BrandPartName; own: boolean }
   | { op: 'stamps-add'; art: Partial<Record<ArtSlot, DraftAsset>> }
   | { op: 'stamps-goal'; goal: number }
   | { op: 'stamps-set'; patch: { tilt?: boolean; keepReady?: boolean; maximum?: number } }
@@ -154,6 +157,8 @@ export function applyOp(doc: DesignDoc, o: Op): DesignDoc {
       return setPaper(doc, o.patch);
     case 'image':
       return setSlotImage(doc, o.slot, o.asset);
+    case 'brand':
+      return setBrandPart(doc, o.part, o.own);
     case 'scan-display':
       return applyScanOp(doc, o);
     case 'stamps-add':

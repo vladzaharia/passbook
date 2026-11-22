@@ -20,7 +20,7 @@ import { isPreviewOnlyOrg, PREVIEW_PASS_IDENTITY } from '../developer/fence.ts';
 import type { IdentityRow } from '../identities/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
-import { readBranding, type TenantBranding } from './branding.ts';
+import { appliedBranding, readBranding, type TenantBranding } from './branding.ts';
 import { type PrefetchedAuthSeal, plainAuthToken } from './build-auth-token.ts';
 import { type BuildInputs, readBuildInputs } from './build-reads.ts';
 import { artifactOf, editPass, tenantOf } from './builder-finish.ts';
@@ -216,7 +216,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
     : row && row.id === req.identityId && deps.identities.byRow
       ? await deps.identities.byRow(row)
       : await deps.identities.byId(req.identityId);
-  const branding = readBranding(req.branding);
+  const branding = appliedBranding(readBranding(req.branding), resolved.manifest);
   const [{ overrides: originalOverrides, photo, artHashes }, contacts, authToken] =
     await Promise.all([
       req.prefetched && resolved.id === req.templateId && !req.omitPassAssets

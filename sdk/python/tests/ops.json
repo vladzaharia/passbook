@@ -4629,6 +4629,7 @@
   "cursor": null,
   "result": {
    "effective": {},
+   "levels": {},
    "overrides": {},
    "replace": {
     "supported": false,
@@ -4676,6 +4677,7 @@
   "cursor": null,
   "result": {
    "effective": {},
+   "levels": {},
    "overrides": {},
    "replace": {
     "supported": false,
@@ -7456,6 +7458,9 @@
    "channels": {},
    "revision": 0,
    "effective": {},
+   "levels": {},
+   "overrides": {},
+   "overridePasses": 0,
    "defaults": {}
   }
  },

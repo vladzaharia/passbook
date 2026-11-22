@@ -2864,6 +2864,44 @@ export type PassesChannelsRetrieveResult = {
       retiredCause?: "pass" | "template";
     };
   };
+  levels: {
+    mobile?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    apple?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    google?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    samsung?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    paper?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    nfc?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+  };
   overrides: {
     mobile?: "on" | "off";
     apple?: "on" | "off";
@@ -2940,6 +2978,44 @@ export type PassesChannelsUpdateResult = {
       retiredAt?: number;
       retiredCause?: "pass" | "template";
     };
+  };
+  levels: {
+    mobile?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    apple?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    google?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    samsung?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    paper?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    nfc?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
   };
   overrides: {
     mobile?: "on" | "off";
@@ -3929,6 +4005,53 @@ export type TemplatesChannelsRetrieveResult = {
       retiredCause?: "pass" | "template";
     };
   };
+  levels: {
+    mobile?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    apple?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    google?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    samsung?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    paper?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    nfc?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+  };
+  overrides: {
+    mobile?: number;
+    apple?: number;
+    google?: number;
+    samsung?: number;
+    paper?: number;
+    nfc?: number;
+  };
+  overridePasses: number;
   defaults: {
     mobile?: "on" | "off";
     apple?: "on" | "off";

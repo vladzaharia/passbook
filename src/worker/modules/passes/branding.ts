@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { bakedTemplates } from '../../../generated/baked-templates.ts';
-import type { PassJson } from '../../../passkit/types.ts';
+import { type BrandPartName, ownBrandParts } from '../../../passkit/template/brand.ts';
+import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
 import type { BrandingImageRef } from '../orgs/branding-files.ts';
 import { sourceBlueprintAssets } from './repo-blueprint-art.ts';
 
@@ -90,6 +91,23 @@ export function tenantPassJson(
   if (branding.colors?.foreground) pass.foregroundColor = branding.colors.foreground;
   if (branding.colors?.label) pass.labelColor = branding.colors.label;
   return pass;
+}
+
+/**
+ * The org's branding as one template takes it: a part the template's `brand` block keeps its own of
+ * is left out, so the template's colours or image stand. No block: the branding unchanged.
+ */
+export function appliedBranding(
+  branding: TenantBranding,
+  manifest?: Pick<TemplateManifest, 'brand'> | null,
+): TenantBranding {
+  const own: readonly BrandPartName[] = ownBrandParts(manifest);
+  if (own.length === 0) return branding;
+  return {
+    ...branding,
+    colors: own.includes('colors') ? null : branding.colors,
+    images: branding.images.filter((i) => !(own as readonly string[]).includes(i.slot)),
+  };
 }
 
 /**

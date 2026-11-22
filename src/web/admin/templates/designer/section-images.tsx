@@ -1,6 +1,8 @@
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { Badge, Callout, IconButton } from '../../../ui/index.ts';
+import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
+import { Badge, Button, Callout, IconButton } from '../../../ui/index.ts';
+import { SourceTag } from '../../brand/source-tag.tsx';
 import { ImageSlotRow } from '../../passes/detail/image-slot-row.tsx';
 import { slotNeeds } from '../../passes/detail/image-slots.ts';
 import '../../passes/passes.css';
@@ -8,12 +10,20 @@ import { MAX_ASSET_BYTES, TOO_BIG } from '../../passes/png.ts';
 import { useDesigner } from './context.tsx';
 import { isSlotImage, placeImage, previewAssetMap } from './images.ts';
 import { SLOT_LABEL, slotsOf } from './model.ts';
+import { ownParts } from './ops-brand.ts';
+import { isBrandSlot, useOrgBrand } from './org-brand.ts';
+
+const COPY = TEMPLATE_BRAND_COPY.designer;
 
 const STAMP_STRIP_NEEDS =
   'needs 750 × 288 px (@2x) and 1125 × 432 px (@3x); stamps are drawn on it';
 
 function SlotDrop({ slot }: { slot: string }) {
-  const { doc, edit, assetBase } = useDesigner();
+  const { doc, edit, assetBase, orgId, readOnly } = useDesigner();
+  const org = useOrgBrand(orgId);
+  const part = isBrandSlot(slot) ? slot : null;
+  const orgImage = part ? org[part] : null;
+  const own = part !== null && ownParts(doc).includes(part);
   const [problem, setProblem] = useState<string>();
   const [soft, setSoft] = useState<string>();
   const current = doc.assets.find((a) => isSlotImage(a, slot));
@@ -35,11 +45,42 @@ function SlotDrop({ slot }: { slot: string }) {
     setSoft(placed.warning);
     edit({ op: 'image', slot, asset: placed.asset });
   }
+  // The organization's image wins until the template asks to keep its own.
+  if (part && orgImage && !own)
+    return (
+      <ImageSlotRow
+        target={`images:${slot}`}
+        label={label}
+        badge={<SourceTag source="org" label={COPY.fromOrg} />}
+        thumb={{ url: orgImage.url }}
+        ground={ground}
+        needs={slotNeeds(slot)}
+        onFile={() => undefined}
+        disabled
+        action="Replace"
+        trailing={
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={readOnly}
+            onClick={() => edit({ op: 'brand', part, own: true })}
+          >
+            {COPY.override}
+          </Button>
+        }
+      />
+    );
   return (
     <ImageSlotRow
       target={`images:${slot}`}
       label={label}
-      badge={slot === 'icon' ? <Badge>Required</Badge> : null}
+      badge={
+        part && orgImage ? (
+          <SourceTag source="template" label={COPY.own} />
+        ) : slot === 'icon' ? (
+          <Badge>Required</Badge>
+        ) : null
+      }
       thumb={{ url: url ?? null }}
       ground={ground}
       detail={
@@ -53,15 +94,27 @@ function SlotDrop({ slot }: { slot: string }) {
       onFile={(f) => void take(f)}
       action={current ? 'Replace' : 'Add'}
       trailing={
-        current && slot !== 'icon' ? (
-          <IconButton
-            label={`Remove ${label.toLowerCase()}`}
-            icon={<Trash2 aria-hidden />}
-            variant="ghost"
-            size="sm"
-            onClick={() => edit({ op: 'image', slot, asset: null })}
-          />
-        ) : null
+        <>
+          {part && orgImage ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={readOnly}
+              onClick={() => edit({ op: 'brand', part, own: false })}
+            >
+              {COPY.useOrg}
+            </Button>
+          ) : null}
+          {current && slot !== 'icon' ? (
+            <IconButton
+              label={`Remove ${label.toLowerCase()}`}
+              icon={<Trash2 aria-hidden />}
+              variant="ghost"
+              size="sm"
+              onClick={() => edit({ op: 'image', slot, asset: null })}
+            />
+          ) : null}
+        </>
       }
     />
   );

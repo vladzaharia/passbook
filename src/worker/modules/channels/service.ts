@@ -20,9 +20,11 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { getOrgSettings, getPlatformSettings, type OrgSettings } from '../settings/service.ts';
 import { walletProviderDisabledReason } from '../wallet-providers/provider-policy.ts';
+import { type ChainCan, passChains, templateChains } from './chain.ts';
 import { passReplaceable } from './replaceable.ts';
 import * as repo from './repo.ts';
 import { rotationOwed } from './repo-replace.ts';
+import { overrideCounts, overridePassCount } from './repo-reset.ts';
 import { openWindows, splitWindows } from './windows.ts';
 
 type Per<T> = Partial<Record<Channel, T>>;
@@ -148,9 +150,13 @@ export async function loadPass(ctx: ServiceContext, pass: PassKey): Promise<Load
   return loaded;
 }
 
+/** The caller sees every level; it may change PassBook and Plan only as a platform admin. */
+export const CAN_ORG: ChainCan = { platform: false, org: true, template: true };
+
 export async function passChannels(
   ctx: ServiceContext,
   pass: Parameters<typeof loadPass>[1],
+  can: ChainCan = CAN_ORG,
 ): Promise<PassChannelsDto> {
   const { inputs, rows } = await loadPass(ctx, pass);
   const now = ctx.clock.now();
@@ -171,8 +177,10 @@ export async function passChannels(
       copies,
     ));
   const split = splitWindows(windows);
+  const effective = effectiveChannels(inputs);
   return {
-    effective: effectiveChannels(inputs),
+    effective,
+    levels: passChains(inputs, effective, can),
     overrides: inputs.pass,
     replace: {
       supported,
@@ -220,10 +228,30 @@ export const channelDefaults = (inputs: ChannelInputs): TemplateChannelsDto['def
     CHANNELS.map((c) => [c, defaultOf(inputs, c)]),
   ) as TemplateChannelsDto['defaults'];
 
+/** What a template's channel responses add to its effective view: the chain and the override counts. */
+export async function templateExtras(
+  ctx: ServiceContext,
+  template: repo.TemplateRef,
+  mode: Mode,
+  inputs: ChannelInputs,
+  can: ChainCan = CAN_ORG,
+): Promise<Pick<TemplateChannelsDto, 'levels' | 'overrides' | 'overridePasses'>> {
+  const overrides = await overrideCounts(ctx.env.DB, template.orgId, mode, template.id);
+  const any = CHANNELS.some((c) => (overrides[c] ?? 0) > 0);
+  return {
+    levels: templateChains(inputs, effectiveChannels(inputs), can),
+    overrides,
+    overridePasses: any
+      ? await overridePassCount(ctx.env.DB, template.orgId, mode, template.id, CHANNELS)
+      : 0,
+  };
+}
+
 export async function templateChannels(
   ctx: ServiceContext,
   template: repo.TemplateRef,
   mode: Mode,
+  can: ChainCan = CAN_ORG,
 ): Promise<TemplateChannelsDto> {
   const { inputs, policy, revision } = await loadTemplate(ctx, template, mode);
   return {
@@ -231,6 +259,7 @@ export async function templateChannels(
     revision,
     effective: effectiveChannels(inputs),
     defaults: channelDefaults(inputs),
+    ...(await templateExtras(ctx, template, mode, inputs, can)),
   };
 }
 

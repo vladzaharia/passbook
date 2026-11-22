@@ -1993,6 +1993,10 @@
     "resource": "templates.candidates",
     "method": "promote"
   },
+  "templates.postTemplatesByIdChannelsResetPasses": {
+    "resource": "templates.channels",
+    "method": "resetPasses"
+  },
   "templates.postTemplatesByIdClone": {
     "resource": "templates",
     "method": "clone"

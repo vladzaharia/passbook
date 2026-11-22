@@ -289,10 +289,7 @@ export interface TemplateManifest {
   blueprint?: boolean;
   /** Files used for web previews only. They never enter the signed bundle. */
   previewOnlyAssets?: string[];
-  /**
-   * Opts in to broadcast messages: `input` is bound to a back field whose changeMessage is "%@",
-   * so a new value shows on the lock screen.
-   */
+  /** Opts in to broadcast messages: `input` is a back field whose changeMessage is "%@". */
   messaging?: { input: string };
   /** `unique`: at most one pass per externalId for this template, per org and mode. */
   externalId?: { unique?: boolean };
@@ -311,6 +308,7 @@ export interface TemplateManifest {
   /** Printed ticket layout (size, barcode, fields, terms). Absent: derived from the roles. */
   paper?: PaperManifest;
   channels?: Partial<Record<string, 'on' | 'off'>>;
+  brand?: Partial<Record<'colors' | 'logo' | 'icon', 'org' | 'template'>>;
 }
 
 export type Personalization = Record<string, Json>;

@@ -5,7 +5,7 @@ import { emailAssetUrl } from '../../email/buddy.ts';
 import { renderPassEmail } from '../../email/pass.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { passEmailOrgName } from '../delivery/email-from.ts';
-import { readBranding, tenantPassJson } from '../passes/branding.ts';
+import { appliedBranding, readBranding, tenantPassJson } from '../passes/branding.ts';
 import { getOrgSettings, getPlatformSettings } from '../settings/service.ts';
 import { orgBrandOf } from './brand.ts';
 import { previewImages, previewTemplate } from './preview-art.ts';
@@ -39,7 +39,7 @@ export async function renderEmailPreview(
     orgBrandOf(ctx, orgId),
   ]);
   const raw = JSON.parse(row.branding) as { supportEmail?: string; supportUrl?: string };
-  const branding = readBranding(raw);
+  const branding = appliedBranding(readBranding(raw), template.manifest);
   const { iconUrl, logo } = await previewImages(ctx, orgId, branding, template, origin);
   const personal = row.personal_user_id !== null;
   const passJson = tenantPassJson(template.passJson, row.name, branding, personal);

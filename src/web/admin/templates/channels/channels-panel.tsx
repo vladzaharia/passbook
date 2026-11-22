@@ -19,13 +19,15 @@ import {
   SkeletonRows,
   toast,
 } from '../../../ui/index.ts';
+import { ChainBadge } from '../../brand/chain-badge.tsx';
 import { ChannelList, ChannelRow } from '../../channels/channel-row.tsx';
 import { usePutTemplateChannels, useTemplateChannels } from './api.ts';
-import { ApplyExisting } from './apply-existing.tsx';
 import { ChannelRuns } from './channel-runs.tsx';
 import { impactLines } from './impact.ts';
 import { ReplaceOption } from './replace-option.tsx';
+import { ResetPasses } from './reset-passes.tsx';
 import { ReviewDialog } from './review-dialog.tsx';
+import { TemplateBrandCard } from './template-brand-card.tsx';
 
 type Draft = Partial<Record<Channel, TemplateChannelState>>;
 type Dry = z.infer<typeof PutTemplateChannelsResponseSchema>;
@@ -45,18 +47,22 @@ const OPTIONS = (['on', 'off', 'never'] as const).map((value) => ({
 const OWN = new Set(['never', 'template_off']);
 
 /**
- * Template › Channels for the current mode: On, Off (a pass may still turn it on) or Never per
- * channel. A channel something above the template blocks shows why and cannot be changed. Save
+ * Template › Channels and brand for the current mode: On, Off (a pass may still turn it on) or Never per
+ * channel, each with the chain of levels above it. A channel something above the template blocks
+ * shows why and cannot be changed. Reset N passes sends their own choices back to the template. Save
  * asks the server for the effect first and shows it before anything is written.
  */
 export function TemplateChannelsPanel({
   templateId,
   orgId,
   canPublish,
+  canEdit,
 }: {
   templateId: string;
   orgId: string;
   canPublish: boolean;
+  /** The caller authors this template: Override and Use organization open its designer. */
+  canEdit: boolean;
 }) {
   const query = useTemplateChannels(templateId, orgId);
   const put = usePutTemplateChannels(templateId, orgId);
@@ -140,6 +146,7 @@ export function TemplateChannelsPanel({
                   key={c}
                   channel={c}
                   status={status}
+                  chain={<ChainBadge levels={data.levels[c]} />}
                   locked={limited}
                   control={
                     <SegmentedControl
@@ -160,11 +167,16 @@ export function TemplateChannelsPanel({
             })}
           </ChannelList>
         </CardBody>
-        {canPublish ? (
-          <div className="border-t border-border px-4 py-3">
-            <ApplyExisting templateId={templateId} orgId={orgId} disabled={changed.length > 0} />
-          </div>
-        ) : null}
+        <div className="border-t border-border px-4 py-3">
+          <ResetPasses
+            templateId={templateId}
+            orgId={orgId}
+            passes={data.overridePasses}
+            overrides={data.overrides}
+            disabled={changed.length > 0}
+            canReset={canPublish}
+          />
+        </div>
         {canPublish ? (
           <SaveBar
             dirty={changed.length > 0}
@@ -198,6 +210,7 @@ export function TemplateChannelsPanel({
         </ReviewDialog>
       </Card>
       <ChannelRuns templateId={templateId} orgId={orgId} />
+      <TemplateBrandCard templateId={templateId} orgId={orgId} canEdit={canEdit} />
     </div>
   );
 }

@@ -160,7 +160,9 @@ export function ChannelRow({
 
 /** Ask PassBook: a mailto to PassBook's support, for a channel the plan does not include. */
 export function AskPassbook({ channel, orgName }: { channel: Channel; orgName: string }) {
-  const subject = encodeURIComponent(`${CHANNEL_LABEL[channel]} for ${orgName}`);
+  const subject = encodeURIComponent(
+    orgName ? `${CHANNEL_LABEL[channel]} for ${orgName}` : CHANNEL_LABEL[channel],
+  );
   return (
     <div>
       <Button asChild variant="outline" size="sm" iconStart={<CircleHelp aria-hidden />}>

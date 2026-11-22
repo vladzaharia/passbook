@@ -48,7 +48,7 @@ describe('ChannelPreviews', () => {
   const gone = { on: false, source: 'org' as const, reason: 'not_enrolled' as const };
   const tab = (name: string) => screen.getByRole('radio', { name });
 
-  it('keeps every channel that is off as a disabled tab with its reason', () => {
+  it('keeps every channel that is off as a locked tab with its reason', () => {
     show({
       channels: channels({
         google: { on: false, source: 'pass', reason: 'pass_off' },
@@ -71,7 +71,7 @@ describe('ChannelPreviews', () => {
       ['Paper', 'Printing off for all organizations'],
     ] as const) {
       const t = tab(name);
-      expect(t).toHaveAttribute('aria-disabled', 'true');
+      expect(t).not.toHaveAttribute('aria-disabled');
       expect(t).toHaveAttribute('title', text);
       expect(t).toHaveAccessibleDescription(text);
     }
@@ -80,25 +80,51 @@ describe('ChannelPreviews', () => {
 
   it('says Off when a channel is off without a reason', () => {
     show({ channels: channels({ google: { on: false, source: 'template' } }) });
-    expect(tab('Google')).toHaveAccessibleDescription('Off');
+    expect(tab('Google')).toHaveAttribute('title', 'Off');
   });
 
-  it('does not select a disabled tab', async () => {
+  it('opens a locked tab to name the level that stops it', async () => {
     const user = userEvent.setup();
-    show({ channels: channels({ google: off }) });
+    show({
+      channels: channels({ google: off, samsung: gone }),
+      lockedAction: ({ level }) => <a href="#fix">Fix at {level}</a>,
+    });
     await user.click(tab('Google'));
-    expect(tab('Apple')).toBeChecked();
-    expect(screen.getByTestId('apple-pane')).toBeInTheDocument();
+    expect(tab('Google')).toBeChecked();
+    const pane = screen.getByText('Google Wallet: Off for this template').closest('[data-locked]');
+    expect(pane).toHaveAttribute('data-locked', 'template');
+    expect(pane).toHaveTextContent('Template stops it');
+    expect(screen.getByRole('link', { name: 'Fix at template' })).toBeInTheDocument();
+    // The card stays behind the veil, greyed and hidden from assistive tech.
+    expect(screen.getByTestId('apple-pane').parentElement).toHaveAttribute('aria-hidden', 'true');
+    await user.click(tab('Samsung'));
+    expect(
+      screen.getByText('Samsung Wallet: Organization not enrolled').closest('[data-locked]'),
+    ).toHaveAttribute('data-locked', 'org');
+    await user.click(tab('Apple'));
+    expect(screen.queryByRole('link', { name: /Fix at/ })).toBeNull();
   });
 
-  it('arrow keys skip disabled tabs', async () => {
+  it('names PassBook or Plan for a platform stop and a plan refusal', async () => {
+    const user = userEvent.setup();
+    show({
+      channels: channels({
+        paper: { on: false, source: 'platform', reason: 'printing_off' },
+        samsung: { on: false, source: 'platform', reason: 'not_included' },
+      }),
+    });
+    await user.click(tab('Paper'));
+    expect(document.querySelector('[data-locked]')).toHaveAttribute('data-locked', 'passbook');
+    await user.click(tab('Samsung'));
+    expect(document.querySelector('[data-locked]')).toHaveAttribute('data-locked', 'plan');
+  });
+
+  it('arrow keys move through locked tabs too', async () => {
     const user = userEvent.setup();
     show({ channels: channels({ google: off, samsung: off }) });
     tab('Apple').focus();
     await user.keyboard('{ArrowRight}');
-    await waitFor(() => expect(tab('Mobile')).toBeChecked());
-    await user.keyboard('{ArrowLeft}');
-    await waitFor(() => expect(tab('Apple')).toBeChecked());
+    await waitFor(() => expect(tab('Google')).toBeChecked());
     await user.keyboard('{End}');
     await waitFor(() => expect(tab('Paper')).toBeChecked());
   });

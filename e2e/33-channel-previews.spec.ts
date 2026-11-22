@@ -39,7 +39,7 @@ test('a blueprint previews Apple, Google, Samsung, Mobile and Paper from sample 
 const tabsOf = (scope: import('@playwright/test').Locator) =>
   scope.getByRole('radiogroup', { name: 'Channel' }).getByRole('radio');
 
-test('the template page and the designer show unavailable channels as disabled tabs', async ({
+test('the template page and the designer show unavailable channels as locked tabs', async ({
   page,
 }) => {
   const seed = readSeed();
@@ -47,7 +47,7 @@ test('the template page and the designer show unavailable channels as disabled t
   const id = encodeURIComponent(seed.template.id);
   // Google and Samsung are withheld for this organization; Paper is off on the template only,
   // so the designer, which edits every channel's design, keeps it open.
-  for (const [url, scope, disabled, open] of [
+  for (const [url, scope, locked, open] of [
     [`/admin/o/${org}/templates/${id}`, column(page), ['Google', 'Samsung', 'Paper'], []],
     [
       `/admin/o/${org}/templates/${id}/design`,
@@ -59,19 +59,24 @@ test('the template page and the designer show unavailable channels as disabled t
     await page.goto(url);
     const tabs = tabsOf(scope);
     await expect(tabs).toHaveCount(5);
-    for (const name of disabled) {
+    for (const name of locked) {
       const off = tabs.filter({ hasText: name });
-      await expect(off).toHaveAttribute('aria-disabled', 'true');
-      await expect(off).not.toHaveAccessibleDescription('');
+      await expect(off).not.toHaveAttribute('aria-disabled', 'true');
+      await expect(off).toHaveAttribute('title', /.+/);
     }
+    // A locked tab opens a pane that names the level that stops it.
+    await tabs.filter({ hasText: 'Google' }).click();
+    await expect(scope.locator('[data-locked="passbook"]')).toContainText('PassBook stops it');
     for (const name of open) {
-      await expect(tabs.filter({ hasText: name })).not.toHaveAttribute('aria-disabled', 'true');
+      await tabs.filter({ hasText: name }).click();
+      await expect(scope.locator('[data-locked]')).toHaveCount(0);
     }
+    await tabs.filter({ hasText: 'Apple' }).click();
     await expect(tabs.filter({ hasText: 'Apple' })).toBeChecked();
   }
 });
 
-test('a pass shows its channels that are off as disabled tabs with why', async ({ page }) => {
+test('a pass shows its channels that are off as locked tabs with why', async ({ page }) => {
   const seed = readSeed();
   const api = await apiAs('admin');
   let passId: string;
@@ -88,7 +93,12 @@ test('a pass shows its channels that are off as disabled tabs with why', async (
   await page.goto(`/admin/o/${encodeURIComponent(seed.org.id)}/passes/${passId}`);
   const tabs = tabsOf(column(page));
   await expect(tabs).toHaveCount(5);
-  await expect(tabs.filter({ hasText: 'Mobile' })).toHaveAttribute('aria-disabled', 'true');
-  await expect(tabs.filter({ hasText: 'Mobile' })).toHaveAccessibleDescription('Off for this pass');
-  await expect(tabs.filter({ hasText: 'Apple' })).not.toHaveAttribute('aria-disabled');
+  await expect(tabs.filter({ hasText: 'Mobile' })).toHaveAttribute('title', 'Off for this pass');
+  await expect(tabs.filter({ hasText: 'Apple' })).not.toHaveAttribute('title', /.+/);
+  await tabs.filter({ hasText: 'Mobile' }).click();
+  await expect(column(page).locator('[data-locked="pass"]')).toContainText('This pass stops it');
+  // The pass card's chain ends in This pass, and Use template drops its own choice.
+  await page.getByRole('tab', { name: 'Holder' }).click();
+  await expect(page.getByRole('list', { name: 'Chain' }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Use template', exact: true })).toBeVisible();
 });

@@ -1,0 +1,42 @@
+/** Template › Channels and brand, the pass card's chain and the locked preview. `{x}` marks a value. */
+export const TEMPLATE_BRAND_COPY = {
+  tab: 'Channels and brand',
+  reset: {
+    none: 'No pass has its own choice',
+    some: '{n} passes have their own choice',
+    one: '1 pass has its own choice',
+    button: 'Reset {n} passes',
+    buttonOne: 'Reset 1 pass',
+    title: 'Reset passes?',
+    body: 'They follow this template again. Copies keep working.',
+    line: '{channel}: {n}',
+    done: 'Passes follow the template',
+    partial: 'Reset {done} of {total}. Try again for the rest.',
+    failed: 'Could not reset the passes. Try again.',
+  },
+  brand: {
+    title: 'Brand',
+    logo: 'Logo',
+    icon: 'Icon',
+    colors: 'Colours',
+    support: 'Support',
+    override: 'Override',
+    useOrg: 'Use organization',
+    designer: 'Opens the designer.',
+    unavailable: 'Brand is not available to you.',
+  },
+  designer: {
+    fromOrg: 'From organization',
+    own: 'This template',
+    override: 'Override for this template',
+    useOrg: 'Use organization',
+    logoToOrg: 'Saved as the organization logo.',
+    colorsToOrg: 'Saved as the organization colours.',
+    colorsNote: 'Passes use the organization colours.',
+    channelOff: '{channel} is off for this template. Change it in Channels and brand.',
+  },
+  locked: {
+    openOrg: 'Open Brand and channels',
+    openTemplate: 'Open Channels and brand',
+  },
+} as const;

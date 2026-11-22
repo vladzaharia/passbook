@@ -4934,6 +4934,12 @@ export type TemplatesCandidatesPromoteParams = {
   version: string;
 };
 
+export type TemplatesChannelsResetPassesParams = {
+  channels?: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
+  dryRun?: boolean;
+  orgId?: string;
+};
+
 export type TemplatesChannelsUpdateParams = {
   channels: {
     mobile?: "on" | "off" | "never";

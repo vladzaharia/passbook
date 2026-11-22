@@ -142,6 +142,7 @@ export function LoadedPassDetail({
         // A sandbox pass is a preview on every channel, so every channel shows, each with its band.
         channels={p.testPreview ? undefined : p.channels}
         channelsTab="holder"
+        own="pass"
         apple={
           <PassPreviewPanel
             passJson={source.passJson}

@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
+import type { BrandPartName } from '@/passkit/template/brand.ts';
 import type { UseBlueprintRequest } from '@/shared/contracts/index.ts';
 import type { TemplateSummaryDto } from '@/shared/contracts/templates.ts';
 import { errorMessage } from '../../lib/errors.ts';
@@ -7,9 +8,13 @@ import { PHONE, useMediaQuery } from '../../lib/media.ts';
 import { markMinted } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { Button, Dialog, DialogContent, FormField, Input, Select } from '../../ui/index.ts';
+import { usePassSetup } from '../brand/api.ts';
+import { brandingUrl } from '../orgs/queries.ts';
 import { markCreated } from '../passes/created.tsx';
+import { parseColor } from '../templates/designer/contrast.ts';
 import { assetsPayload } from '../templates/designer/images.ts';
 import { useBlueprintVersion, useLoadBlueprintVersion, useUseBlueprint } from './api.ts';
+import { writeOrgBrand } from './org-brand-write.ts';
 import { QuickFields, useQuickFields } from './quick-fields.tsx';
 import { brandDoc, choicesOf, docOfVersion } from './quick-setup.ts';
 
@@ -49,6 +54,24 @@ export function UseBlueprintDialog({
     [version.data],
   );
   const orgId = chosen ?? fallback;
+  const setup = usePassSetup(orgId ?? '', Boolean(orgId) && open);
+  const orgBrand = setup.data?.brand;
+  const colors = orgBrand?.passColors.value;
+  const canWrite = Boolean(
+    scope.memberships.find((m) => m.orgId === orgId)?.capabilities.includes('org:manage'),
+  );
+  const orgSetsLogo = orgBrand?.logo.source === 'org';
+  const orgSetsColors = orgBrand?.passColors.source === 'org';
+  // With no org brand yet the logo and colour become the organization's; otherwise (or without the
+  // right to write it) the template keeps its own, and says so in its manifest.
+  const logoToOrg = quick.logo !== null && !orgSetsLogo && canWrite;
+  const colorToOrg = quick.color !== undefined && !orgSetsColors && canWrite;
+  const own: BrandPartName[] = [
+    ...(quick.logo && !logoToOrg ? (['logo'] as const) : []),
+    ...(quick.color && !colorToOrg ? (['colors'] as const) : []),
+  ];
+  const templateTouched =
+    own.length > 0 || quick.goal !== undefined || quick.currency !== undefined;
 
   function check(): { orgId: string; name: string } | null {
     const next = name.trim();
@@ -73,13 +96,14 @@ export function UseBlueprintDialog({
 
   /** The request: an exact copy, or the draft with the logo and colour put in. */
   async function request(input: { orgId: string; name: string }): Promise<UseBlueprintRequest> {
-    if (!quick.touched || !blueprint.activeVersion) return input;
+    if (!templateTouched || !blueprint.activeVersion) return input;
     const doc = brandDoc(docOfVersion(await load(blueprint.id, blueprint.activeVersion)), {
       name: input.name,
-      color: quick.color,
-      logo: quick.logo?.asset,
+      color: quick.color && !colorToOrg ? quick.color : undefined,
+      logo: quick.logo && !logoToOrg ? quick.logo.asset : undefined,
       goal: quick.goal,
       currency: quick.currency,
+      own,
     });
     return {
       ...input,
@@ -95,6 +119,11 @@ export function UseBlueprintDialog({
     const input = check();
     if (!input) return;
     try {
+      if (logoToOrg || colorToOrg)
+        await writeOrgBrand(input.orgId, {
+          logo: logoToOrg ? quick.logo?.asset.upload : undefined,
+          color: colorToOrg ? quick.color : undefined,
+        });
       const made = await create.mutateAsync(await request(input));
       markMinted(`template:${made.id}`);
       markCreated(`template:${made.id}`, 'fromBlueprint');
@@ -161,7 +190,21 @@ export function UseBlueprintDialog({
               />
             )}
           </FormField>
-          <QuickFields state={quick} choices={choices} />
+          <QuickFields
+            state={quick}
+            choices={choices}
+            org={{
+              logoUrl:
+                orgSetsLogo && orgBrand?.logo.value && orgId
+                  ? brandingUrl(orgId, 'logo', orgBrand.logo.value.sha)
+                  : null,
+              colors:
+                orgSetsColors && colors?.background
+                  ? (parseColor(colors.background) ?? null)
+                  : null,
+              canWrite,
+            }}
+          />
         </div>
       </DialogContent>
     </Dialog>
