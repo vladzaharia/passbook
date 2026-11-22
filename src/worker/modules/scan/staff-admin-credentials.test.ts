@@ -1,12 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { makeOrg, makeScanner, makeScanStaff } from '../../../../test/helpers/index.ts';
-import { StaffPinSchema } from '../../../shared/contracts/scanners.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { staffPinsOnRoot } from '../status/repo.ts';
 import { getStaff } from './repo-staff.ts';
 import { createStaff, resetStaffPin } from './staff-admin.ts';
-import { setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
+import { IssuedPinSchema, setupStaffAdminTestKit } from './staff-admin-test-fixtures.ts';
 import { hashPin } from './staff-pin.ts';
 import { pinTag } from './staff-pin-hash.ts';
 
@@ -93,7 +92,7 @@ describe('staff records and credentials', () => {
     const res = await send('POST', resetPath(person.id), undefined, admin('test'));
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toContain('no-store');
-    const body = StaffPinSchema.strict().parse(await res.json());
+    const body = IssuedPinSchema.strict().parse(await res.json());
     expect(Object.keys(body)).toEqual(['pin']);
     expect(body.pin).not.toBe(person.pin);
     const after = await credential(person.id);
@@ -268,7 +267,7 @@ describe('staff records and credentials', () => {
     ).toBe(200);
     const reset = await send('POST', resetPath(id));
     expect(reset.status).toBe(200);
-    const replacement = StaffPinSchema.strict().parse(await reset.json());
+    const replacement = IssuedPinSchema.strict().parse(await reset.json());
     expect((await send('PATCH', itemPath(id), { disabled: true })).status).toBe(200);
     expect((await send('PATCH', itemPath(id), { disabled: false })).status).toBe(200);
     const rows = await all<{
@@ -328,7 +327,7 @@ describe('staff PIN tag', () => {
     expect((await state(id))?.pin_tag).toBe(await pinTag(env, orgId, created.pin));
     await run(env.DB, 'UPDATE scan_staff SET pin_reset_required = 1 WHERE id = ?', [id]);
     const res = await send('POST', resetPath(id), undefined, admin('test'));
-    const { pin } = StaffPinSchema.parse(await res.json());
+    const { pin } = IssuedPinSchema.parse(await res.json());
     expect(await state(id)).toEqual({
       pin_tag: await pinTag(env, orgId, pin),
       pin_reset_required: 0,

@@ -26,7 +26,11 @@ const FEATURE_ROUTES: Record<string, unknown> = {
   'post /api/v1/scan-zones/visits/{id}/reset': 'scanning.devices',
   'post /api/v1/scan-zones/{id}/archive': 'scanning.devices',
   'post /api/v1/scan-zones/{id}/restore': 'scanning.devices',
+  'post /api/v1/scanners': 'scanning.devices',
   'post /api/v1/scanners/{id}/mode': 'scanning.devices',
+  'post /api/v1/scanners/{id}/pairing': 'scanning.devices',
+  'post /api/v1/scanners/{id}/token': 'scanning.devices',
+  'post /api/v1/scanning-sessions/{id}/devices': 'scanning.devices',
   'post /api/v1/scanners/{id}/revoke': 'scanning.devices',
   'post /api/v1/scanning-sessions/{id}/hold': 'scanning.devices',
   // Declared with `xFeature` (documentation): the service and its grant enforce them.

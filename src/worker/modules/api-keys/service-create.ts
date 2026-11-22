@@ -31,7 +31,7 @@ export async function newSecret(ctx: ServiceContext, kind: ApiKeyKind, mode: 'li
   return { prefix, label, secret, hash: await sha256Hex(secret) };
 }
 
-/** A credential scope (`scanning:admin`) mints PINs and pairing codes: only a live key of one organization, and it expires within 90 days. Refused at mint, not at the first call. */
+/** A credential scope (`scanning:admin`, `nfc:keys`) mints PINs, pairing codes and tag keys: only a live key of one organization, and it expires within 90 days. Refused at mint, not at the first call. */
 export function assertCredentialKey(
   scopes: readonly string[],
   kind: ApiKeyKind,
@@ -42,25 +42,26 @@ export function assertCredentialKey(
   if (!scopes.some((s) => (CREDENTIAL_SCOPES as readonly string[]).includes(s))) return;
   if (kind === 'platform' || mode !== 'live')
     throw new ValidationError(
-      'The scanning:admin scope is for live keys of one organization.',
+      'Credential scopes (scanning:admin, nfc:keys) are for live keys of one organization.',
       [
         {
           path: 'scopes',
-          message: 'The scanning:admin scope is for live keys of one organization.',
+          message:
+            'Credential scopes (scanning:admin, nfc:keys) are for live keys of one organization.',
         },
       ],
-      'API_KEY_SCANNING_ADMIN_LIVE_ORG',
+      'API_KEY_CREDENTIAL_LIVE_ORG',
     );
   if (expiresAt == null)
     throw new ValidationError(
-      'A key with scanning:admin needs an expiry.',
-      [{ path: 'expiresAt', message: 'A key with scanning:admin needs an expiry.' }],
+      'A key with a credential scope needs an expiry.',
+      [{ path: 'expiresAt', message: 'A key with a credential scope needs an expiry.' }],
       'API_KEY_EXPIRY_REQUIRED',
     );
   if (expiresAt > now + MAX_LIFETIME_MS)
     throw new ValidationError(
-      'A key with scanning:admin lives at most 90 days.',
-      [{ path: 'expiresAt', message: 'A key with scanning:admin lives at most 90 days.' }],
+      'A key with a credential scope lives at most 90 days.',
+      [{ path: 'expiresAt', message: 'A key with a credential scope lives at most 90 days.' }],
       'API_KEY_EXPIRY_TOO_LONG',
     );
 }
