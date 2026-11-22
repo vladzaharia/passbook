@@ -1,6 +1,6 @@
 import type { z } from 'zod';
 import type { AuditEntrySchema } from '@/shared/contracts/audit.ts';
-import { actionLabel } from '@/web/lib/actions.ts';
+import { entryLabel } from '@/web/lib/entry-label.ts';
 import {
   DiffViewer,
   JsonViewer,
@@ -46,13 +46,13 @@ export function EntryDrawer({
   return (
     <Sheet open={entry !== undefined} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
-        title={entry ? actionLabel(entry.action) : 'Audit entry'}
+        title={entry ? entryLabel(entry) : 'Audit entry'}
         className="w-96"
         header={
           entry ? (
             <div className="min-w-0">
               <p aria-hidden className="truncate text-sm font-semibold text-fg-strong">
-                {actionLabel(entry.action)}
+                {entryLabel(entry)}
               </p>
               <code className="font-mono text-xs text-fg-muted">{entry.action}</code>
             </div>

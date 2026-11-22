@@ -2,6 +2,7 @@ import { ArrowRight } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { actionOf } from '@/web/lib/actions.ts';
 import { cn } from '@/web/lib/cn.ts';
+import { entryLabel } from '@/web/lib/entry-label.ts';
 import type { Tone } from '@/web/lib/status.ts';
 import { formatDateTime } from '../../lib/format.ts';
 import type { AuditEntry } from './entry-drawer.tsx';
@@ -33,7 +34,7 @@ export function ActionButton({
   /** Let a long label wrap instead of truncating (table cells). */
   wrap?: boolean;
 }) {
-  const a = actionOf(entry.action);
+  const a = { ...actionOf(entry.action), label: entryLabel(entry) };
   return (
     <button
       type="button"
