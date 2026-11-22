@@ -172,7 +172,6 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
                   hasMore={Boolean(eligible.hasNextPage)}
                   onRetry={() => void eligible.refetch()}
                   templateId={templateId}
-                  previewVersion={release?.version}
                   choiceError={check.errors.template}
                   onSelect={(id) => {
                     if (orgId && canReadTemplates) chooseTemplate(id);

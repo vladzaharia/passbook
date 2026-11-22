@@ -81,6 +81,21 @@ function Wiz({
       <ErrorState subject="the template" error={failed.error} onRetry={() => failed.refetch()} />
     );
   if (loading) return <Skeleton className="h-64" />;
+  // The create was rate limited. This is the kit's error card, in the viewport, with the wait; the
+  // wizard (its step, fields and selection) is only hidden, and Retry sends the same call again.
+  if (w.limited && w.refusal)
+    return (
+      <ErrorState
+        title={w.refusal}
+        error={w.limited}
+        onRetry={() => (p ? w.submit(p.targeted) : undefined)}
+        action={
+          <Button variant="outline" onClick={() => w.setLimited(null)}>
+            Back to review
+          </Button>
+        }
+      />
+    );
 
   const go = (to: number) => w.setStep(to);
   /** The count the person selected is the one the run takes: a different one is confirmed first. */

@@ -16,6 +16,7 @@ export const SCOPE_LABEL: Record<string, string> = {
   'wallet:write': 'Turn on wallet accounts (channel already allowed)',
   'scanning:write': 'Set up scanning',
   'scan-setup:read': 'Read scanner setups',
-  'scanning:admin': 'Set up scanning with staff and devices',
+  'scanning:admin': 'Door credentials: pairing codes, till tokens, staff PINs',
+  'nfc:keys': 'Make and rotate NFC tag keys',
   'api-keys:write': 'Manage its own child keys',
 };

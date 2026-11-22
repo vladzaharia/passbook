@@ -23,6 +23,7 @@ import {
   OptionTile,
   useFormErrors,
 } from '@/web/ui/index.ts';
+import { issued } from './scanner-api.ts';
 
 export type ScanStaff = z.infer<typeof ScanStaffSchema>;
 
@@ -86,7 +87,7 @@ export function StaffFormDialog({
         onSaved();
       } else {
         const created = await api.post('/api/v1/scan-staff', CreatedStaffSchema, parsed.data);
-        onCreated(created.staff.name, created.pin);
+        onCreated(created.staff.name, issued(created.pin));
       }
     } catch (cause) {
       if (isApiError(cause) && (cause.status === 0 || cause.status >= 500)) {
@@ -251,7 +252,7 @@ export function StaffResetDialog({
             undefined,
             { query: { orgId } },
           );
-          onReset(staff.name, result.pin);
+          onReset(staff.name, issued(result.pin));
         } catch (cause) {
           onUncertain();
           throw cause;

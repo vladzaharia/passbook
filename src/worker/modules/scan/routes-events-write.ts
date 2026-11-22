@@ -13,9 +13,10 @@ import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platf
 import { type createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
-import { type C, orgIdOf, tenantAuthorityOf } from '../passes/http.ts';
+import { type C, tenantAuthorityOf } from '../passes/http.ts';
 import { captureEventAuthority, eventTarget, eventView, listEvents } from './events.ts';
 import { archiveEvent, assignScanners, createEvent, updateEvent } from './events-mutations.ts';
+import { orgOf } from './key-credentials.ts';
 
 type Router = ReturnType<typeof createRouter>;
 const TAG = 'scan-events';
@@ -87,9 +88,8 @@ export function registerEventWrites(router: Router): void {
     async (c) => {
       const given = c.req.valid('query');
       const auth = c.var.auth;
-      // A key names no org: it reads its own.
-      const orgId = auth?.kind === 'api_key' ? orgIdOf(auth, given.orgId) : given.orgId;
-      if (!orgId) throw new ForbiddenError('Choose an organization.');
+      // One decision for every scan list that takes an org (see `orgOf`).
+      const orgId = orgOf(auth, given.orgId);
       const query = { ...given, orgId };
       let w: Awaited<ReturnType<typeof writer>>;
       try {

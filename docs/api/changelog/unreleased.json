@@ -136,6 +136,14 @@
     "note": "Roles can include developer: set by the Polaris ID developer group, implied for platform admins."
   },
   {
+    "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"nfc:keys\" added",
+    "class": "notable",
+    "operationId": "api-keys.getApiKeysMe",
+    "op": "GET /api/v1/api-keys/me",
+    "change": "200.scopes[]: enum value \"nfc:keys\" added",
+    "note": "New scope for secure tag keysets: live keys of one organization, expiry within 90 days, minted by a signed-in org_admin only."
+  },
+  {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:read\" added",
     "class": "notable",
     "operationId": "api-keys.getApiKeysMe",
@@ -278,6 +286,14 @@
     "op": "GET /api/v1/developer/home",
     "change": "200.calls[].client: field added",
     "note": "client names the tool that made the call (curl, an SDK), read from its user agent; null when it sent none."
+  },
+  {
+    "key": "GET /api/v1/developer/home 200.keys[].scopes[]: enum value \"nfc:keys\" added",
+    "class": "notable",
+    "operationId": "developer.getHome",
+    "op": "GET /api/v1/developer/home",
+    "change": "200.keys[].scopes[]: enum value \"nfc:keys\" added",
+    "note": "New scope for secure tag keysets: live keys of one organization, expiry within 90 days, minted by a signed-in org_admin only."
   },
   {
     "key": "GET /api/v1/developer/home new operation",
@@ -478,6 +494,22 @@
     "op": "GET /api/v1/metrics/platform/overview",
     "change": "200.setup.releasedTemplates: field added",
     "note": "setup.releasedTemplates counts templates with a Live release. setup.passes and setup.walletPasses now count Test and Live passes."
+  },
+  {
+    "key": "GET /api/v1/nfc/keysets callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.getNfcKeysets",
+    "op": "GET /api/v1/nfc/keysets",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key; never key material."
+  },
+  {
+    "key": "GET /api/v1/nfc/keysets query orgId: now optional",
+    "class": "additive",
+    "operationId": "nfc-keysets.getNfcKeysets",
+    "op": "GET /api/v1/nfc/keysets",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
@@ -744,6 +776,22 @@
     "note": "The staff list says pinOnlyOff: true while PIN-only sign-in is off after repeated wrong PINs."
   },
   {
+    "key": "GET /api/v1/scan-staff callable by scanning:admin key",
+    "class": "additive",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "callable by scanning:admin key",
+    "note": "Callable with a live, org-bound scanning:admin key: plain accounts, no activity or locks."
+  },
+  {
+    "key": "GET /api/v1/scan-staff query orgId: now optional",
+    "class": "additive",
+    "operationId": "scan-staff.getScanStaff",
+    "op": "GET /api/v1/scan-staff",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
+  },
+  {
     "key": "GET /api/v1/scan/session 200.staff.pinResetRequired: field added",
     "class": "additive",
     "operationId": "scan.getScanSession",
@@ -774,6 +822,14 @@
     "op": "GET /api/v1/scanners/{id}",
     "change": "200.staff.name: now nullable",
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "GET /api/v1/scanners/{id}/pairing callable by scan-setup:read key",
+    "class": "additive",
+    "operationId": "scanners.getScannersByIdPairing",
+    "op": "GET /api/v1/scanners/{id}/pairing",
+    "change": "callable by scan-setup:read key",
+    "note": "Callable with an org-bound scan-setup:read key; the poll never shows the code."
   },
   {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.hardware: field added",
@@ -1279,6 +1335,22 @@
     "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
   },
   {
+    "key": "PATCH /api/v1/scan-staff/{id} callable by scanning:admin key",
+    "class": "additive",
+    "operationId": "scan-staff.patchScanStaffById",
+    "op": "PATCH /api/v1/scan-staff/{id}",
+    "change": "callable by scanning:admin key",
+    "note": "Callable with a live, org-bound scanning:admin key."
+  },
+  {
+    "key": "PATCH /api/v1/scan-staff/{id} query orgId: now optional",
+    "class": "additive",
+    "operationId": "scan-staff.patchScanStaffById",
+    "op": "PATCH /api/v1/scan-staff/{id}",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
+  },
+  {
     "key": "PATCH /api/v1/scanners/{id} 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.patchScannersById",
@@ -1373,6 +1445,14 @@
     "op": "POST /api/v1/api-keys",
     "change": "403: code API_KEY_SCOPE_EXCEEDS_SANDBOX added",
     "note": "A sandbox key may not hold api-keys:write, scans:write or scanning:admin, at mint or roll: 403, scopes in issues."
+  },
+  {
+    "key": "POST /api/v1/api-keys error code API_KEY_SCANNING_ADMIN_LIVE_ORG renamed",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "error code API_KEY_SCANNING_ADMIN_LIVE_ORG renamed",
+    "note": "API_KEY_SCANNING_ADMIN_LIVE_ORG is now API_KEY_CREDENTIAL_LIVE_ORG (unreleased code, same meaning)."
   },
   {
     "key": "POST /api/v1/api-keys keys: scanning:admin removed from org_admin role tokens",
@@ -2061,6 +2141,70 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
+    "key": "POST /api/v1/nfc/keysets callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysets",
+    "op": "POST /api/v1/nfc/keysets",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key; generated keys are in this answer only (null on an Idempotency-Key replay)."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets query orgId: now optional",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysets",
+    "op": "POST /api/v1/nfc/keysets",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/disable callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdDisable",
+    "op": "POST /api/v1/nfc/keysets/{id}/disable",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/import callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
+    "op": "POST /api/v1/nfc/keysets/{id}/import",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key; a dry run is free."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/keys/{version}/retire callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire",
+    "op": "POST /api/v1/nfc/keysets/{id}/keys/{version}/retire",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/keys/{version}/revoke callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke",
+    "op": "POST /api/v1/nfc/keysets/{id}/keys/{version}/revoke",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/reenrol callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdReenrol",
+    "op": "POST /api/v1/nfc/keysets/{id}/reenrol",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/rotate callable by nfc:keys key",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdRotate",
+    "op": "POST /api/v1/nfc/keysets/{id}/rotate",
+    "change": "callable by nfc:keys key",
+    "note": "Callable with a live, org-bound nfc:keys key; generated keys are in this answer only (null on an Idempotency-Key replay)."
+  },
+  {
     "key": "POST /api/v1/nfc/passes/{passId}/tags/assign new operation",
     "class": "additive",
     "operationId": "nfc-tags.postNfcPassesByPassIdTagsAssign",
@@ -2309,6 +2453,14 @@
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
   },
   {
+    "key": "POST /api/v1/scan-staff 201.pin: now nullable",
+    "class": "notable",
+    "operationId": "scan-staff.postScanStaff",
+    "op": "POST /api/v1/scan-staff",
+    "change": "201.pin: now nullable",
+    "note": "Null only on an Idempotency-Key replay: secrets are shown once. Typed clients must accept null."
+  },
+  {
     "key": "POST /api/v1/scan-staff 201.staff.pinLockedToday: field added",
     "class": "additive",
     "operationId": "scan-staff.postScanStaff",
@@ -2323,6 +2475,38 @@
     "op": "POST /api/v1/scan-staff",
     "change": "201.staff.pinResetRequired: field added",
     "note": "Staff report pinResetRequired: a shared PIN was seen and the person sets a new one at their next sign-in."
+  },
+  {
+    "key": "POST /api/v1/scan-staff callable by scanning:admin key",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaff",
+    "op": "POST /api/v1/scan-staff",
+    "change": "callable by scanning:admin key",
+    "note": "Callable with a live, org-bound scanning:admin key; the secret is in this answer only."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/{id}/reset-pin 200.pin: now nullable",
+    "class": "notable",
+    "operationId": "scan-staff.postScanStaffByIdResetPin",
+    "op": "POST /api/v1/scan-staff/{id}/reset-pin",
+    "change": "200.pin: now nullable",
+    "note": "Null only on an Idempotency-Key replay: secrets are shown once. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/{id}/reset-pin callable by scanning:admin key",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffByIdResetPin",
+    "op": "POST /api/v1/scan-staff/{id}/reset-pin",
+    "change": "callable by scanning:admin key",
+    "note": "Callable with a live, org-bound scanning:admin key; the secret is in this answer only."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/{id}/reset-pin query orgId: now optional",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffByIdResetPin",
+    "op": "POST /api/v1/scan-staff/{id}/reset-pin",
+    "change": "query orgId: now optional",
+    "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
     "key": "POST /api/v1/scan-staff/{id}/unlock-pin new operation",
@@ -2445,6 +2629,14 @@
     "note": "Another mode's event is as good as unknown: no existence oracle."
   },
   {
+    "key": "POST /api/v1/scanners callable by scanning:admin and scanning:write keys",
+    "class": "additive",
+    "operationId": "scanners.postScanners",
+    "op": "POST /api/v1/scanners",
+    "change": "callable by scanning:admin and scanning:write keys",
+    "note": "Callable with a live scanning:admin key (a device gets its code, once) or a scanning:write key (pairing: null, either mode)."
+  },
+  {
     "key": "POST /api/v1/scanners/{id}/mode 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.postScannersByIdMode",
@@ -2461,12 +2653,44 @@
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
   },
   {
+    "key": "POST /api/v1/scanners/{id}/pairing 200.code, url: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdPairing",
+    "op": "POST /api/v1/scanners/{id}/pairing",
+    "change": "200.code, url: now nullable",
+    "note": "Null only on an Idempotency-Key replay: secrets are shown once. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/pairing callable by scanning:admin key",
+    "class": "additive",
+    "operationId": "scanners.postScannersByIdPairing",
+    "op": "POST /api/v1/scanners/{id}/pairing",
+    "change": "callable by scanning:admin key",
+    "note": "Callable with a live, org-bound scanning:admin key; the secret is in this answer only."
+  },
+  {
     "key": "POST /api/v1/scanners/{id}/revoke 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.postScannersByIdRevoke",
     "op": "POST /api/v1/scanners/{id}/revoke",
     "change": "200.staff.name: now nullable",
     "note": "Not additive: these names are now string or null. A key gets ids, not names. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/token 200.token: now nullable",
+    "class": "notable",
+    "operationId": "scanners.postScannersByIdToken",
+    "op": "POST /api/v1/scanners/{id}/token",
+    "change": "200.token: now nullable",
+    "note": "Null only on an Idempotency-Key replay: secrets are shown once. Typed clients must accept null."
+  },
+  {
+    "key": "POST /api/v1/scanners/{id}/token callable by scanning:admin key",
+    "class": "additive",
+    "operationId": "scanners.postScannersByIdToken",
+    "op": "POST /api/v1/scanners/{id}/token",
+    "change": "callable by scanning:admin key",
+    "note": "Callable with a live, org-bound scanning:admin key; the secret is in this answer only."
   },
   {
     "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.hardware: field added",
@@ -2491,6 +2715,14 @@
     "op": "POST /api/v1/scanning-sessions/{id}/devices",
     "change": "201.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices callable by scanning:admin and scanning:write keys",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "callable by scanning:admin and scanning:write keys",
+    "note": "Callable with a live scanning:admin key (the code, once) or a scanning:write key (pairing: null, either mode)."
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.hardware: field added",
