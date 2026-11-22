@@ -1,7 +1,7 @@
 // Builds an example from a schema and the fictional world (example-world.ts): values by field name, then format.
 
 import { SHAPES } from './example-canon.ts';
-import { ERROR_KEYS, errorCodeFor, fieldValue, OMIT } from './example-fields.ts';
+import { ERROR_KEYS, errorCodeFor, fieldValue, OMIT, stateTimeKey } from './example-fields.ts';
 import { humanName } from './example-names.ts';
 import { PROSE_KEYS } from './example-text.ts';
 import {
@@ -689,12 +689,13 @@ function object(
       // A state an ordinary example is not in: null where the field allows it, else absent.
       const nullable = Array.isArray(v.type) && v.type.includes('null');
       if (nullable) {
-        out[k] = null;
+        out[k] = !ctx.request && depth <= 1 && stateTimeKey(ctx.op)?.test(k) ? T.now : null;
         continue;
       }
       if (!required.includes(k)) continue;
     }
-    if (!required.includes(k) && !(k in canon) && Object.keys(canon).length) continue;
+    // A seed or canonical object says which optional fields the record has; an empty seed has none.
+    if (!required.includes(k) && !(k in canon) && (seed || Object.keys(canon).length)) continue;
     if (!required.includes(k) && !(k in canon)) {
       if (v.deprecated || optional >= cap || depth > 8) continue;
       optional++;
@@ -708,7 +709,10 @@ function object(
       depth + 1,
       k in canon ? canon[k] : undefined,
     );
-    if (value !== undefined) out[k] = value;
+    // The record a state change answers with carries the time of that change (archive -> archivedAt).
+    if (value === null && !ctx.request && depth <= 1 && stateTimeKey(ctx.op)?.test(k))
+      out[k] = T.now;
+    else if (value !== undefined) out[k] = value;
   }
   // A canonical object is coherent as written; only sampled rows need their fields reconciled.
   if (!Object.keys(canon).length) fixState(out, props, ctx);

@@ -146,7 +146,13 @@ function* walk(
   if (value && typeof value === 'object') {
     const props = obj(s.properties);
     const entries = Object.entries(value as Json);
-    if (!entries.length && Object.keys(props).length) yield { path, key, value, schema: s };
+    // An empty object is filler only where the schema requires something in it; a sparse record ({} overrides) is not.
+    if (
+      !entries.length &&
+      Object.keys(props).length &&
+      (s.required as unknown[] | undefined)?.length
+    )
+      yield { path, key, value, schema: s };
     const alts = [...((s.oneOf as unknown[]) ?? []), ...((s.anyOf as unknown[]) ?? [])];
     for (const [k, v] of entries) {
       const sub =

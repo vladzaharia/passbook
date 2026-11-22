@@ -151,6 +151,20 @@ describe('fitFailures', () => {
     expect(run('broadcasts.getBroadcastsById', { clearAfter: 604_800_000 })).toEqual([]);
   });
 
+  it('rejects a state change whose own time is null: archive, void, close, revoke', () => {
+    expect(
+      run('nfc-tags.postNfcTagTypesByIdArchive', { name: 'Member wristband', archivedAt: null }),
+    ).toEqual([
+      'nfc-tags.postNfcTagTypesByIdArchive response.archivedAt: postNfcTagTypesByIdArchive answers with archivedAt null',
+    ]);
+    expect(run('api-keys.postApiKeysByIdRevoke', { key: { revokedAt: null } })).toEqual([
+      'api-keys.postApiKeysByIdRevoke response.key.revokedAt: postApiKeysByIdRevoke answers with revokedAt null',
+    ]);
+    expect(run('org-lifecycle.postOrgsByOrgIdClose', { closedAt: 1795572000000 })).toEqual([]);
+    // Undoing a state clears its time: an unvoid is not a void.
+    expect(run('passes.postPassesByIdUnvoid', { voidedAt: null })).toEqual([]);
+  });
+
   it('rejects a scanning session named after a person', () => {
     expect(run('scan.getScanSession', { workspace: { session: { name: 'Sam Rivera' } } })).toEqual([
       'scan.getScanSession response.workspace.session.name: the scanning session is named after a person (Sam Rivera); name it for a place or shift',

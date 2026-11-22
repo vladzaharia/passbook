@@ -1,7 +1,7 @@
 // Fit rules: a value can be well-formed and still wrong for where it sits. A sentence written for broadcasts in a
 // template issue, an error code the operation cannot carry, an hour bin out of order, a session named after a person.
 // Pure: no I/O. exampleFailures (example-lint.ts) runs these over every example.
-import { allowedCodes, ERROR_KEYS } from './example-fields.ts';
+import { allowedCodes, ERROR_KEYS, stateTimeKey } from './example-fields.ts';
 import { TABLES } from './example-names.ts';
 import { familyOf, PROSE_KEYS, SENTENCE_HOME } from './example-text.ts';
 
@@ -76,9 +76,28 @@ export function fitFailures(doc: object, examples: Example[]): string[] {
         );
     };
     visit(ex.value, '', '', 'America/Los_Angeles');
+    if (/ response$/.test(ex.where)) out.push(...stateTimeFailures(ex.where, ex.op, ex.value));
   }
   return out;
 }
+
+/** A response to a state change whose time for that state is null: the record says it never happened. */
+export function stateTimeFailures(where: string, op: string, value: unknown): string[] {
+  const name = op.split('.')[1] ?? '';
+  const field = stateTimeKey(op);
+  if (!field || !value || typeof value !== 'object' || Array.isArray(value)) return [];
+  const out: string[] = [];
+  // The record itself, or the one record the answer wraps (`{ key: {...} }`).
+  const records = [value as Json, ...Object.values(value as Json).filter(isRecord)];
+  for (const [i, o] of records.entries())
+    for (const [k, v] of Object.entries(o))
+      if (field.test(k) && v === null)
+        out.push(
+          `${where}${i === 0 ? '' : `.${Object.keys(value as Json).find((x) => (value as Json)[x] === o)}`}.${k}: ${name} answers with ${k} null`,
+        );
+  return out;
+}
+const isRecord = (v: unknown): v is Json => !!v && typeof v === 'object' && !Array.isArray(v);
 
 /** A scanning session's own name: under a `session` key, or the root or items of a scanning-session operation. */
 const isSessionName = (op: string, at: string): boolean =>

@@ -739,19 +739,32 @@ export const PAIRING = {
 /** What a scan request sends: the pass's barcode, read by the camera. */
 export const SCAN_INPUT = { code: SCAN_CODE, method: 'camera' };
 
-const level = (state: string, reason?: string) => [
-  { level: 'passbook', state: 'ok', canChange: false },
+const level = (state: string, reason?: string, at: 'passbook' | 'org' = 'org') => [
+  {
+    level: 'passbook',
+    state: at === 'passbook' ? state : 'ok',
+    ...(at === 'passbook' && reason ? { reason } : {}),
+    canChange: false,
+  },
   { level: 'plan', state: 'ok', canChange: false },
-  { level: 'org', state, ...(reason ? { reason } : {}), canChange: true },
+  {
+    level: 'org',
+    state: at === 'org' ? state : 'ok',
+    ...(at === 'org' && reason ? { reason } : {}),
+    canChange: true,
+  },
   { level: 'template', state: 'ok', canChange: true },
   { level: 'pass', state: 'ok', canChange: true },
 ];
-/** Where the Day pass reaches holders: Apple Wallet, the web pass and paper; no Google or Samsung account, no tags. */
+/**
+ * Where the Day pass reaches holders: Apple Wallet, the web pass and paper. Google and Samsung are not released on
+ * the platform yet (the first level that stops a channel names it), and the org has no tags.
+ */
 export const EFFECTIVE = {
   mobile: { on: true, source: 'template' },
   apple: { on: true, source: 'template' },
-  google: { on: false, source: 'org', reason: 'not_enrolled' },
-  samsung: { on: false, source: 'org', reason: 'not_enrolled' },
+  google: { on: false, source: 'platform', reason: 'not_released' },
+  samsung: { on: false, source: 'platform', reason: 'not_released' },
   paper: { on: true, source: 'template' },
   nfc: { on: false, source: 'org', reason: 'tags_off' },
 };
@@ -760,8 +773,8 @@ export const CHANNELS = {
   levels: {
     mobile: level('ok'),
     apple: level('ok'),
-    google: level('needs', 'not_enrolled'),
-    samsung: level('needs', 'not_enrolled'),
+    google: level('locked', 'not_released', 'passbook'),
+    samsung: level('locked', 'not_released', 'passbook'),
     paper: level('ok'),
     nfc: level('off', 'tags_off'),
   },
@@ -958,6 +971,22 @@ export const ROLL_CALL = {
     inNow: 34,
     tappedIn: 38,
   },
+  people: [
+    {
+      passId: IDS.pass,
+      holder: 'Ada Example',
+      plan: 'Always open',
+      host: null,
+      place: 'zone:main-hall',
+      placeName: 'Main hall',
+      since: T.recent,
+      basis: 'in_now',
+      presence: 'in',
+      late: false,
+      notConfirmedOut: false,
+      mark: { status: 'present', by: 'Sam Rivera', at: T.now - MIN },
+    },
+  ],
 };
 
 /** The member wristband: one per pass, checked by staff when it is handed over. */
@@ -1031,6 +1060,68 @@ export const MY_PASS = {
   readOnly: false,
 };
 
+/** The gym's own signing identity: managed by PassBook, valid to 31 December, pushes healthy. */
+const CERT_FROM = Date.UTC(2025, 11, 31, 8, 0, 0);
+export const IDENTITY = {
+  id: IDS.identity,
+  orgId: IDS.org,
+  label: 'Northwind signing identity',
+  passTypeIdentifier: 'pass.mobile.passbook.northwind',
+  teamIdentifier: 'A1B2C3D4E5',
+  source: 'db',
+  certSha256: hex('identity-cert', 64),
+  certSubject: 'CN=Pass Type ID: pass.mobile.passbook.northwind',
+  certSerial: hex('identity-serial', 16),
+  notBefore: CERT_FROM,
+  notAfter: T.validUntil,
+  daysRemaining: Math.floor((T.validUntil - T.now) / (24 * HOUR)),
+  apnsBinding: 'production',
+  apnsAvailable: true,
+  pushMethod: 'certificate',
+  pushKey: null,
+  apnsHealth: 'healthy',
+  apnsCheckedAt: T.recent,
+  apnsReason: 'BadDeviceToken',
+  passCount: 131,
+  nfcEnabled: false,
+  nfcKeys: [],
+  isDefault: true,
+  createdAt: CERT_FROM,
+  kind: 'managed',
+  status: 'active',
+  rotation: 'auto',
+  issuing: true,
+  nextRotationAt: T.validUntil - 30 * 24 * HOUR,
+  handle: 'northwind',
+};
+/** The run that renewed the identity's certificate this afternoon. */
+export const IDENTITY_RUN = {
+  id: uuid('identity-run'),
+  orgId: IDS.org,
+  kind: 'rotate',
+  targetType: 'identity',
+  targetId: IDS.identity,
+  state: 'succeeded',
+  step: 'done',
+  attempt: 1,
+  waitingFor: null,
+  errorCode: null,
+  createdAt: T.now - 3 * MIN,
+  updatedAt: T.now - MIN,
+  finishedAt: T.now - MIN,
+};
+/** Last week's export of the org's data, ready to download for a few more days. */
+export const EXPORT = {
+  id: uuid('export'),
+  state: 'ready',
+  createdAt: T.now - 2 * 24 * HOUR,
+  finishedAt: T.now - 2 * 24 * HOUR + 4 * MIN,
+  expiresAt: T.now + 5 * 24 * HOUR,
+  bytes: 1_843_200,
+  entities: { passes: 131, templates: 3, holders: 126, scans: 4210 },
+  errorCode: null,
+};
+
 /** Object shapes the API repeats, by properties that give them away, to the world's own object. */
 export const SHAPES: { has: string[]; value: Record<string, unknown> }[] = [
   ...CANON,
@@ -1057,6 +1148,9 @@ export const SHAPES: { has: string[]; value: Record<string, unknown> }[] = [
   { has: ['blockedUserIds', 'transfer', 'ownerUserId'], value: HOLDER },
   { has: ['holderEmail', 'passes', 'linkRotatedAt'], value: BUNDLE },
   { has: ['slug', 'counts', 'countsCapped'], value: ORG_ROW },
+  { has: ['passTypeIdentifier', 'certSha256', 'apnsHealth'], value: IDENTITY },
+  { has: ['kind', 'targetType', 'targetId', 'attempt'], value: IDENTITY_RUN },
+  { has: ['state', 'bytes', 'entities'], value: EXPORT },
   { has: ['templateName', 'orgName', 'inWallet'], value: MY_PASS },
   { has: ['endpointId', 'headers', 'trigger'], value: CAPTURE },
   { has: ['apiVersion', 'pass', 'data', 'type'], value: DELIVERY.payload },

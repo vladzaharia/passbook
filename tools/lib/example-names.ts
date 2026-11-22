@@ -149,6 +149,7 @@ export function tableFor(key: string, path: string, tag: string, name = ''): str
   // A broadcast lists the passes it reached, each by its own title.
   if (tag === 'broadcasts' && key === 'title') return 'pass';
   if (tag === 'pass-imports' && /Mappings/.test(name)) return 'mapping';
+  if (tag === 'metrics' && /(^|\.)live\[/.test(path)) return 'event';
   const candidates = [...own, ...parents.flatMap((p) => words(p))];
   for (const w of candidates) for (const [re, table] of RULES) if (re.test(w)) return table;
   // Operations whose tag names a different resource than they return.

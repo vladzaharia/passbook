@@ -49,12 +49,16 @@ describe('exampleFailures', () => {
     expect(run({ holder: { name: 'Ada Example' } })).toEqual([]);
   });
 
-  it('rejects an empty {} where the schema has properties', () => {
-    const schema = { properties: { passJson: { type: 'object', properties: { a: {} } } } };
+  it('rejects an empty {} where the schema requires properties, not a sparse record', () => {
+    const schema = {
+      properties: { passJson: { type: 'object', properties: { a: {} }, required: ['a'] } },
+    };
     expect(run({ passJson: {} }, schema)).toEqual([
       'a.getA response.passJson: an empty {} where the schema has properties',
     ]);
     expect(run({ meta: {} }, { properties: { meta: { type: 'object' } } })).toEqual([]);
+    const sparse = { properties: { overrides: { type: 'object', properties: { paper: {} } } } };
+    expect(run({ overrides: {} }, sparse)).toEqual([]);
   });
 
   it('rejects truncated and non-v7 UUIDs in id fields', () => {

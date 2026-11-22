@@ -25,6 +25,8 @@ const RULES: Rule[] = [
   [/^scans?\./, /\.tag\.passes\[\d+\]\.reason$/, null],
   [/^scans?\./, /\.members\[\d+\]\.reason$/, null],
   [/^scans?\./, /\.members\[\d+\]\.refusedReason$/, OMIT],
+  // A check-in moves no value: a scan record's `value` is for value actions (add, take, set).
+  [/^scans?\./, /\.items\[\d+\]\.value$/, null],
   [ANY, /\.byReason\[\d+\]\.reason$/, nth(['already_done', 'expired', 'no_balance'])],
   [ANY, /\.overrides\.latest\[\d+\]\.reason$/, nth(['already_done', 'no_balance'])],
   // The native shell reports VAS; a working reader reports no reason (scanning-sessions.ts).
@@ -65,7 +67,8 @@ const RULES: Rule[] = [
     /\.endpoints\[\d+\]\.url$/,
     'https://bookings.northwind.example.com/hooks/passbook',
   ],
-  [ANY, /\.(walletIssuance\.\w+|issuance)$/, { state: 'enabled' }],
+  // Google and Samsung issuance is gated until the platform releases them (contracts/wallet-providers.ts).
+  [ANY, /\.(walletIssuance\.\w+|issuance)$/, { state: 'disabled', reason: 'not_released' }],
   // A Google Wallet issuer id is a long number (wallet-providers); a finished provisioning run is on its last step.
   [ANY, /\.issuerId$/, '3388000000022843210'],
   [
@@ -99,6 +102,9 @@ const RULES: Rule[] = [
   // One org's migration moves its one account.
   [/^wallet-platform\..*Migrate/, /^\.(accounts|queued|migrated)$/, 1],
   [/^wallet-platform\..*Migrate/, /^\.pending$/, 0],
+  // The audit log names actions as `<area>.<verb>` (web/lib/actions.ts); the everyday one issued Ada's pass.
+  [/^audit\./, /\.items\[\d+\]\.action$/, 'pass.create'],
+  [/^audit\./, /\.items\[\d+\]\.targetId$/, IDS.pass],
   // The org is Northwind; an org object's id is the org's (orgs, brand, workspace).
   [/^(orgs|brand)\./, /^\.id$/, IDS.org],
   [/^(orgs|brand)\./, /\.personalOwner$/, null],
@@ -117,8 +123,6 @@ const RULES: Rule[] = [
   // Channels: where a pass reaches holders, with a reason on each one that is off (contracts/channels.ts).
   [ANY, /\.effective$/, EFFECTIVE],
   [/^(me|passes|users)\./, /\.channels$/, EFFECTIVE],
-  [ANY, /\.(walletIssuance\.\w+|issuance)\.reason$/, OMIT],
-  [ANY, /\.(walletIssuance\.\w+|issuance)\.state$/, 'enabled'],
   // An APNs push that went through has no reason (delivery/push.ts).
   [ANY, /\.lastPush\.ok$/, true],
   [ANY, /\.lastPush\.httpStatus$/, 200],
@@ -214,6 +218,22 @@ const RULES: Rule[] = [
     }),
   ],
 ];
+
+/** A state change's own time: an archive answers with `archivedAt` set, a void with `voidedAt`. */
+const STATE_TIME: [RegExp, RegExp][] = [
+  [/Archive$/, /^archivedAt$/],
+  [/Void$/, /^voidedAt$/],
+  [/Close$/, /^closedAt$/],
+  [/Revoke$/, /^revokedAt$/],
+  [/Retire$/, /^(retiredAt|retireAt)$/],
+  [/Disable$/, /^disabledAt$/],
+  [/Remove$/, /^removedAt$/],
+  [/End$/, /^endedAt$/],
+  [/Lost$/, /^lostAt$/],
+];
+/** The time field an operation's state change sets, by the verb its name ends with. */
+export const stateTimeKey = (op: string): RegExp | undefined =>
+  STATE_TIME.find(([verb]) => verb.test(op.split('.')[1] ?? ''))?.[1];
 
 /** Keys that hold a machine error code. */
 export const ERROR_KEYS = /^(errorCode|lastErrorCode|syncErrorCode|error|lastError|pausedCode)$/;

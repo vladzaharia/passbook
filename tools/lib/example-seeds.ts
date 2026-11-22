@@ -31,6 +31,7 @@ import {
   WEBHOOK_SECRET,
   ZONE,
 } from './example-canon.ts';
+import { IDP_SEEDS } from './example-seeds-idp.ts';
 import { API, hex, IDS, IMPORT, IMPORT_PLAN, PASS, T, TEMPLATE } from './example-world.ts';
 
 const uuid = (seed: string): string => `0193a1b2-7c00-7000-8000-${hex(seed, 12)}`;
@@ -158,6 +159,7 @@ const READY = {
 };
 
 export const SEEDS: Record<string, unknown> = {
+  ...IDP_SEEDS,
   'pass-imports.postPassImports response': READY,
   'pass-imports.postPassImportsByIdCheck response': READY,
   'pass-imports.postPassImportsByIdCommit request': { skipInvalid: false, email: true },
@@ -702,7 +704,7 @@ export const SEEDS: Record<string, unknown> = {
     items: [
       { key: 'api.keys', value: 10, source: 'preset' },
       { key: 'webhooks.endpoints', value: 5, source: 'preset' },
-      { key: 'nfc', value: false, source: 'preset' },
+      { key: 'nfc', value: 0, source: 'preset' },
     ],
   },
   'pass-imports.getPassImportsMappings response': { saved: [SAVED_MAPPING] },
@@ -723,7 +725,8 @@ export const SEEDS: Record<string, unknown> = {
     emailsCancelled: 0,
     unrevertable: 0,
   },
-  'pass-imports.postPassImportsByIdEmailRest request': {},
+  // The first page of the rest: no cursor yet.
+  'pass-imports.postPassImportsByIdEmailRest request': { cursor: null },
   'pass-imports.postPassImportsByIdEmailRest response': {
     sent: 0,
     skipped: 1,
@@ -773,6 +776,58 @@ export const SEEDS: Record<string, unknown> = {
     eventTypes: ['pass.issued', 'pass.scanned', 'pass.voided'],
   },
   'webhooks.postWebhookEndpointsByIdSecret request': { overlapHours: 24 },
+  // A capture endpoint stores what it would send; it has no URL (webhooks/capture).
+  'webhooks.postWebhookEndpointsCapture request': { eventTypes: ['pass.issued', 'pass.scanned'] },
+  'webhooks.postWebhookEndpointsCapture response': {
+    endpoint: {
+      ...WEBHOOK_ENDPOINT,
+      id: uuid('endpoint-capture'),
+      mode: 'test',
+      url: null,
+      urlMasked: '',
+      description: '',
+      templateIds: null,
+      target: 'capture',
+      lastSuccessAt: null,
+      lastFailureAt: null,
+      lastStatus: null,
+      secretCreatedAt: T.now,
+      createdAt: T.now,
+    },
+    secret: WEBHOOK_SECRET,
+  },
+  'passes.postPassesByIdPrintsByPrintIdVoid response': {
+    id: IDS.print,
+    passId: IDS.pass,
+    generation: 1,
+    status: 'voided',
+    createdAt: T.updated,
+    voidedAt: T.now,
+    voidCause: 'manual',
+  },
+  'connections.postConnectionsTestConfig response': {
+    ok: true,
+    detail: '3 rows. Columns: Booking ID, Name, Email, Plan, Valid until',
+    durationMs: 1650,
+    sample: [{ pointer: '/Name', preview: 'Mei Tanaka' }],
+    records: 3,
+    counts: { create: 1, update: 1, unchanged: 1, skipped: 0, errors: 0, waiting: 0 },
+    releaseBlocked: null,
+    window: { days: 30, limit: 200, since: T.now - 30 * 24 * 3_600_000, excluded: 0 },
+    samples: [
+      { ref: 'B-2041', action: 'create', fields: { name: 'Mei Tanaka', tier: 'Day pass' } },
+      { ref: 'B-2038', action: 'update', fields: { validUntil: '2027-01-31' } },
+    ],
+    columns: [
+      { pointer: '/Booking ID', label: 'Booking ID', samples: ['B-2041', 'B-2038'], values: [] },
+      {
+        pointer: '/Plan',
+        label: 'Plan',
+        samples: ['Day pass'],
+        values: [{ value: 'Day pass', count: 3 }],
+      },
+    ],
+  },
   'webhooks.postWebhookEndpointsByIdCapturesByCaptureIdReplay response': {
     ...CAPTURE,
     id: uuid('capture-replay'),
@@ -793,6 +848,7 @@ export const SEEDS: Record<string, unknown> = {
   },
   'roll-calls.postRollCalls response': {
     ...ROLL_CALL,
+    people: ROLL_CALL.people.map((p) => ({ ...p, mark: null })),
     startedAt: T.now,
     rev: 0,
     counts: {
