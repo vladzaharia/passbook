@@ -16,6 +16,8 @@ import {
   TemplateReleaseListSchema,
   TemplateReleaseQueryScopeSchema,
   TemplateReleaseSchema,
+  TemplateRolloutQuerySchema,
+  TemplateRolloutSchema,
 } from '../../../shared/contracts/index.ts';
 import type { AppBindings } from '../../platform/context.ts';
 import { register } from '../../platform/openapi.ts';
@@ -31,6 +33,7 @@ import {
   rollbackRelease,
 } from './releases.ts';
 import { promoteToLive } from './releases-promote.ts';
+import { templateRollout } from './rollout.ts';
 
 type Router = OpenAPIHono<AppBindings>;
 
@@ -172,6 +175,29 @@ export function registerTemplateReleases(router: Router): void {
       const q = c.req.valid('query');
       return c.json(
         await releaseImpact(serviceContext(c), auth, c.req.valid('param').id, {
+          ...q,
+          orgId: orgIdOf(auth, q.orgId),
+        }),
+      );
+    },
+  );
+
+  register(
+    router,
+    'templates',
+    {
+      method: 'get',
+      path: '/{id}/rollout',
+      summary: 'How far the approved release has reached the organization’s passes',
+      params: IdParamSchema,
+      query: TemplateRolloutQuerySchema,
+      response: TemplateRolloutSchema,
+    },
+    async (c) => {
+      const auth = authOf(c);
+      const q = c.req.valid('query');
+      return c.json(
+        await templateRollout(serviceContext(c), auth, c.req.valid('param').id, {
           ...q,
           orgId: orgIdOf(auth, q.orgId),
         }),

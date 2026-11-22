@@ -154,6 +154,8 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
+      # The baked sync only settles when the generated stamp strips are in public/.
+      - run: node tools/build-templates.ts
       - name: Worker coverage shard (thresholds apply after the merge)
         run: npm run coverage:worker -- --shard=${{ matrix.shard }}/16 --reporter=blob --reporter=default
         env:

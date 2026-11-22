@@ -105,6 +105,8 @@ export const CreateBroadcastBodySchema = z
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: 'custom', path, message });
     const { target } = body;
+    if (target.version && (body.kind !== 'message' || target.templateIds?.length !== 1))
+      issue(['target', 'version'], 'Only a message to one template can name a version.');
     if (body.kind === 'message') {
       if (!target.templateIds) issue(['target'], 'A message targets templates.');
       if (body.message !== undefined) issue(['message'], 'A message sets its text in the patch.');
@@ -152,6 +154,13 @@ export const ChangePreviewBodySchema = z
         code: 'custom',
         path: ['target', 'match'],
         message: 'Runs match values or ranges.',
+      });
+    // A version narrows one template's message audience, as on create.
+    if (body.target.version && (body.patch || body.target.templateIds?.length !== 1))
+      ctx.addIssue({
+        code: 'custom',
+        path: ['target', 'version'],
+        message: 'Only a message to one template can name a version.',
       });
   });
 

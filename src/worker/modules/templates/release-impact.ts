@@ -14,7 +14,7 @@ import { getLatestRelease } from './repo-releases.ts';
 
 export const COUNT_CAP = 10_000;
 
-/** Passes of the org on the template, in the release's mode, that are not yet on `version`. */
+/** Active passes of the org on the template, in the release's mode, that the rollout would move to `version` (the cron's rule). */
 async function affectedPasses(
   ctx: ServiceContext,
   query: TemplateReleaseImpactQuery,

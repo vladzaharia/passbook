@@ -9,7 +9,7 @@ export function PlanSummary({
   orgId,
   diff = true,
 }: {
-  plan: ReleasePlan;
+  plan: Pick<ReleasePlan, 'diff' | 'modes'>;
   templateId: string;
   orgId: string;
   /** False on a first release, which shows the pass instead. */

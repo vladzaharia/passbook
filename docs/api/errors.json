@@ -1461,8 +1461,6 @@
         400
       ],
       "modules": [
-        "delivery",
-        "passes",
         "platform"
       ]
     },
@@ -1473,6 +1471,16 @@
       ],
       "modules": [
         "templates"
+      ]
+    },
+    {
+      "code": "IDEMPOTENCY_KEY_RESERVED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts",
+        "platform"
       ]
     },
     {
@@ -5115,6 +5123,15 @@
       ],
       "modules": [
         "nfc"
+      ]
+    },
+    {
+      "code": "TELL_ALREADY_SENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "delivery"
       ]
     },
     {

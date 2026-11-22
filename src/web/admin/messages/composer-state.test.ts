@@ -21,3 +21,12 @@ describe('message scan audiences', () => {
     }
   });
 });
+
+describe('a draft made through the API with a version', () => {
+  it('keeps the version when it reopens and sends it back', () => {
+    const draft = broadcast({ target: { templateIds: ['t1'], version: 'abcdef1234567890' } });
+    const state = stateOfBroadcast(draft);
+    expect(state.version).toBe('abcdef1234567890');
+    expect(targetOf(state)).toMatchObject({ templateIds: ['t1'], version: 'abcdef1234567890' });
+  });
+});

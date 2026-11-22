@@ -41,6 +41,11 @@
   },
   {
     "role": "org",
+    "path": "/admin/o/{orgId}/blueprints/{blueprintId}/use",
+    "name": "admin-blueprint-use"
+  },
+  {
+    "role": "org",
     "path": "/admin/o/{orgId}/connections",
     "name": "admin-connections"
   },
@@ -113,6 +118,16 @@
     "role": "org",
     "path": "/admin/o/{orgId}/passes/import/{importId}",
     "name": "admin-pass-import-detail"
+  },
+  {
+    "role": "org",
+    "path": "/admin/o/{orgId}/passes/change",
+    "name": "admin-pass-change"
+  },
+  {
+    "role": "org",
+    "path": "/admin/o/{orgId}/passes/change/{runId}",
+    "name": "admin-pass-change-run"
   },
   {
     "role": "org",
@@ -363,6 +378,11 @@
     "role": "org",
     "path": "/admin/passes/import",
     "name": "legacy-pass-import"
+  },
+  {
+    "role": "org",
+    "path": "/admin/passes/change",
+    "name": "legacy-pass-change"
   },
   {
     "role": "org",

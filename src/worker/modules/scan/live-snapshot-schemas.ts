@@ -18,6 +18,8 @@ export const scannerSnapshot = z.strictObject({
   expiresAt: TimestampSchema.nullable(),
   lastSeenAt: TimestampSchema.nullable(),
   contactAt: TimestampSchema.nullable(),
+  contactPrevAt: TimestampSchema.nullable(),
+  onlineSince: TimestampSchema.nullable(),
   revokedAt: TimestampSchema.nullable(),
   staffId: IdSchema.nullable(),
   staffSince: TimestampSchema.nullable(),

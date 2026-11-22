@@ -176,6 +176,14 @@
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
   },
   {
+    "key": "GET /api/v1/broadcasts 200.items[].target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.getBroadcasts",
+    "op": "GET /api/v1/broadcasts",
+    "change": "200.items[].target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
     "key": "GET /api/v1/broadcasts optional parameter query:kind added",
     "class": "additive",
     "operationId": "broadcasts.getBroadcasts",
@@ -206,6 +214,14 @@
     "op": "GET /api/v1/broadcasts/{id}",
     "change": "200.message: field added",
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "GET /api/v1/broadcasts/{id} 200.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.getBroadcastsById",
+    "op": "GET /api/v1/broadcasts/{id}",
+    "change": "200.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
     "key": "GET /api/v1/connections/{id} 200.runs[].passesCreated: field added",
@@ -438,6 +454,14 @@
     "op": "GET /api/v1/message-rules/{id}/runs",
     "change": "200.items[].message: field added",
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "GET /api/v1/message-rules/{id}/runs 200.items[].target.version: field added",
+    "class": "additive",
+    "operationId": "message-rules.getMessageRulesByIdRuns",
+    "op": "GET /api/v1/message-rules/{id}/runs",
+    "change": "200.items[].target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
     "key": "GET /api/v1/metrics/overview 200.setup.releasedTemplates: field added",
@@ -904,6 +928,22 @@
     "note": "overrides counts the template's passes with their own choice, per channel."
   },
   {
+    "key": "GET /api/v1/templates/{id}/releases/impact 200.passes: count meaning changed",
+    "class": "notable",
+    "operationId": "templates.getTemplatesByIdReleasesImpact",
+    "op": "GET /api/v1/templates/{id}/releases/impact",
+    "change": "200.passes: count meaning changed",
+    "note": "passes.count is now the active passes the rollout would move (another version, different build), not every pass on another version."
+  },
+  {
+    "key": "GET /api/v1/templates/{id}/rollout new operation",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdRollout",
+    "op": "GET /api/v1/templates/{id}/rollout",
+    "change": "new operation",
+    "note": "Shows how many of the organization's passes are on the approved release and which could not update."
+  },
+  {
     "key": "GET /api/v1/templates/{id}/sample.csv new operation",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdSampleCsv",
@@ -1032,6 +1072,14 @@
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
   },
   {
+    "key": "PATCH /api/v1/broadcasts/{id} 200.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "200.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
     "key": "PATCH /api/v1/broadcasts/{id} body.message: optional input field added",
     "class": "additive",
     "operationId": "broadcasts.patchBroadcastsById",
@@ -1062,6 +1110,14 @@
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.passIds: optional input field added",
     "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
+  },
+  {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target.version: optional input field added",
+    "class": "additive",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target.version: optional input field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
     "key": "PATCH /api/v1/identities/{id} 200.handle: field added",
@@ -1304,6 +1360,14 @@
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
   },
   {
+    "key": "POST /api/v1/broadcasts 201.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "201.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
     "key": "POST /api/v1/broadcasts body.message: optional input field added",
     "class": "additive",
     "operationId": "broadcasts.postBroadcasts",
@@ -1336,6 +1400,30 @@
     "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
   },
   {
+    "key": "POST /api/v1/broadcasts body.target.version: optional input field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "body.target.version: optional input field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
+    "key": "POST /api/v1/broadcasts clear follow-up covers unchanged passes",
+    "class": "notable",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "clear follow-up covers unchanged passes",
+    "note": "A message's clearAfter follow-up clears every pass the run updated or found already showing its text."
+  },
+  {
+    "key": "POST /api/v1/broadcasts idempotency-key rollout-tell reserved",
+    "class": "notable",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "idempotency-key rollout-tell reserved",
+    "note": "Idempotency-Key rollout-tell: is reserved for Tell holders on the active release: other uses are 422, a second sender 409."
+  },
+  {
     "key": "POST /api/v1/broadcasts optional parameter header:Idempotency-Key added",
     "class": "additive",
     "operationId": "broadcasts.postBroadcasts",
@@ -1352,12 +1440,28 @@
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
   },
   {
+    "key": "POST /api/v1/broadcasts/{id}/cancel 200.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdCancel",
+    "op": "POST /api/v1/broadcasts/{id}/cancel",
+    "change": "200.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
     "key": "POST /api/v1/broadcasts/{id}/retry 201.message: field added",
     "class": "additive",
     "operationId": "broadcasts.postBroadcastsByIdRetry",
     "op": "POST /api/v1/broadcasts/{id}/retry",
     "change": "201.message: field added",
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/retry 201.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdRetry",
+    "op": "POST /api/v1/broadcasts/{id}/retry",
+    "change": "201.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
     "key": "POST /api/v1/broadcasts/{id}/retry optional parameter query:expectCount added",
@@ -1374,6 +1478,22 @@
     "op": "POST /api/v1/broadcasts/{id}/send",
     "change": "200.message: field added",
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/send 200.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdSend",
+    "op": "POST /api/v1/broadcasts/{id}/send",
+    "change": "200.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/stop 200.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdStop",
+    "op": "POST /api/v1/broadcasts/{id}/stop",
+    "change": "200.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
     "key": "POST /api/v1/broadcasts/{id}/stop new operation",
@@ -1486,6 +1606,14 @@
     "op": "POST /api/v1/broadcasts/preview",
     "change": "body.target.passIds: optional input field added",
     "note": "A change run on up to 5,000 chosen passes of the org and mode. Exactly one of templateIds, passIds and importId."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/preview body.target.version: optional input field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsPreview",
+    "op": "POST /api/v1/broadcasts/preview",
+    "change": "body.target.version: optional input field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
     "key": "POST /api/v1/connections/{id}/preview new operation",
@@ -1736,6 +1864,14 @@
     "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
   },
   {
+    "key": "POST /api/v1/message-rules/{id}/test 201.target.version: field added",
+    "class": "additive",
+    "operationId": "message-rules.postMessageRulesByIdTest",
+    "op": "POST /api/v1/message-rules/{id}/test",
+    "change": "201.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
     "key": "POST /api/v1/nfc/keysets callable by nfc:keys key",
     "class": "additive",
     "operationId": "nfc-keysets.postNfcKeysets",
@@ -1942,6 +2078,14 @@
     "op": "POST /api/v1/pass-imports/{id}/undo",
     "change": "new operation",
     "note": "Undoes an ended import for 24 hours: removes its unedited passes, restores the ones it updated, cancels held mail."
+  },
+  {
+    "key": "POST /api/v1/passes idempotency-key reserved prefixes",
+    "class": "notable",
+    "operationId": "passes.postPasses",
+    "op": "POST /api/v1/passes",
+    "change": "idempotency-key reserved prefixes",
+    "note": "Idempotency-Key cannot start with broadcast-create:, bulk-send: or rollout-tell: (422 IDEMPOTENCY_KEY_RESERVED)."
   },
   {
     "key": "POST /api/v1/passes/{id}/remove 200.matched: field added",

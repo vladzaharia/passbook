@@ -78,8 +78,9 @@ type Credential = { scanner: ScannerAuth; key?: KeyTerminal } | { admin: Session
 /** Terminal bearer or a till's API key, else the device cookie, else a user session. */
 async function credentialOf(c: Context<AppBindings>): Promise<Credential> {
   const { scanners, sessions } = c.var.stores;
-  // An upload is not a contact: it never moves the floor the server holds queued reads to (batch.ts).
-  const upload = c.req.method === 'POST' && /\/(?:batch|device)$/.test(c.req.path);
+  // An upload is not a contact: it never moves the floor the server holds queued reads to (batch.ts). The
+  // device socket and `POST /device` are contacts: the reconnect grace (repo-device.ts) covers their order.
+  const upload = c.req.method === 'POST' && /\/batch$/.test(c.req.path);
   const meta = { ipPrefix: ipPrefix(c.req.header('cf-connecting-ip')), contact: !upload };
   const header = c.req.header('authorization');
   if (header) {

@@ -40,6 +40,24 @@ export function principalOf(auth: AuthContext): string {
   return `scanner:${auth.scannerId}`;
 }
 
+/**
+ * Key prefixes the server writes itself into `idempotency_keys`: the scopes of `sendOnce`, and Tell
+ * holders' shared reservation. POST /passes stores its client key unprefixed in the same table, so it
+ * alone refuses them (`assertKeyNotReserved`); every other route namespaces the client key.
+ */
+export const RESERVED_KEY_PREFIXES = ['broadcast-create:', 'bulk-send:', 'rollout-tell:'] as const;
+
+/** 422 `IDEMPOTENCY_KEY_RESERVED` for a client key that starts with an internal prefix (except `allowed`). */
+export function assertKeyNotReserved(key: string): void {
+  const prefix = RESERVED_KEY_PREFIXES.find((p) => key.startsWith(p));
+  if (prefix)
+    throw new ValidationError(
+      `Idempotency-Key cannot start with "${prefix}": that prefix is reserved.`,
+      [],
+      'IDEMPOTENCY_KEY_RESERVED',
+    );
+}
+
 /** The trimmed `Idempotency-Key` header, or undefined when absent. */
 export function idempotencyKeyHeader(header: string | undefined): string | undefined {
   const raw = header?.trim();

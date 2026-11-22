@@ -230,7 +230,7 @@ export const TemplateReleaseImpactSchema = z.object({
   /** The release being replaced; for a rollback that restores an archived template, its last release. */
   fromVersion: z.string().nullable(),
   toVersion: z.string(),
-  /** Passes of this org, in the release's mode, that are not yet on `toVersion`. Counted up to 10,000. */
+  /** Active passes of this org, in the release's mode, that the rollout would move: on another version whose build differs from `toVersion`'s. Counted up to 10,000. */
   passes: z.object({ count: z.number().int(), capped: z.boolean() }),
   diff: z.object({
     fields: z.array(ReleaseChangeSchema),
