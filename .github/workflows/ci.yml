@@ -181,6 +181,8 @@ jobs:
       - run: npm ci
       # The baked sync only settles when the generated stamp strips are in public/.
       - run: node tools/build-templates.ts
+      # The ticket PDF's Noto Sans TTFs are copied into public/fonts by gen; worker tests read them from ASSETS.
+      - run: node tools/build-ssr-tokens.ts
       - name: Worker coverage shard (thresholds apply after the merge)
         run: npm run coverage:worker -- --shard=${{ matrix.shard }}/16 --reporter=blob --reporter=default
         env:
