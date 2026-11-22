@@ -175,7 +175,7 @@ export const homeDone: DeveloperHome = {
     {
       id: '019a-key-2',
       name: 'CI',
-      secretPrefix: 'pbp_test_Zx98Yw',
+      secretPrefix: 'pbp_test_demo01',
       scopes: ['passes:read'],
       createdAt: NOW - HOUR,
       expiresAt: NOW + 7 * DAY,

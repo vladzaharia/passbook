@@ -17,7 +17,9 @@ func main() {
 	}
 
 	var body passbook.ConnectionsUpdateBody
-	if err := json.Unmarshal([]byte(`{}`), &body); err != nil {
+	if err := json.Unmarshal([]byte(`{
+  "intervalSeconds": 1800
+}`), &body); err != nil {
 		panic(err)
 	}
 

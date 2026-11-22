@@ -9,8 +9,11 @@ result = pb.bundles.create(
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "passIds": [
             "0193a1b2-7c00-7000-8000-0000000000c1",
+            "0193a1b2-7c00-7000-8000-400403b40e9e",
         ],
-        "name": "Example",
+        "name": "Family pack",
+        "holderEmail": "ada@example.com",
+        "sendEmail": True,
     },
 )
 print(result)

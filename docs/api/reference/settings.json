@@ -1,0 +1,91 @@
+{
+  "settings.getSettings": {
+    "response": {
+      "items": [
+        {
+          "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
+          "key": "org.timeZone",
+          "value": "America/Los_Angeles",
+          "default": "UTC",
+          "source": "org",
+          "updatedAt": 1794362400000,
+          "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
+        },
+        {
+          "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
+          "key": "email.orgCapPerDay",
+          "value": 500,
+          "default": 500,
+          "source": "default",
+          "ceiling": 2000,
+          "updatedAt": null,
+          "updatedBy": null
+        }
+      ],
+      "configRevision": 3
+    }
+  },
+  "settings.putSettings": {
+    "request": {
+      "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
+      "values": {
+        "org.timeZone": "America/Los_Angeles"
+      },
+      "configRevision": 2
+    },
+    "response": {
+      "items": [
+        {
+          "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
+          "key": "org.timeZone",
+          "value": "America/Los_Angeles",
+          "default": "UTC",
+          "source": "org",
+          "updatedAt": 1795572000000,
+          "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
+        },
+        {
+          "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
+          "key": "email.orgCapPerDay",
+          "value": 500,
+          "default": 500,
+          "source": "default",
+          "ceiling": 2000,
+          "updatedAt": null,
+          "updatedBy": null
+        }
+      ],
+      "configRevision": 3
+    }
+  },
+  "settings.getSettingsImpact": {
+    "response": {
+      "emailOnlyUsers": 33
+    }
+  },
+  "settings.getSettingsReplyTo": {
+    "response": {
+      "address": "ada@example.com",
+      "state": "confirmed"
+    }
+  },
+  "settings.postSettingsReplyToResend": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "address": "ada@example.com",
+      "state": "confirmed"
+    }
+  },
+  "settings.postSettingsReplyToConfirm": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "token": "c0ffee00c0ffee00c0ffee00c0ffee01"
+    },
+    "response": {
+      "address": "ada@example.com",
+      "state": "confirmed"
+    }
+  }
+}

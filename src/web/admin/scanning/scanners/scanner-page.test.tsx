@@ -313,7 +313,7 @@ describe('Scanner page', () => {
         ...base,
         '/api/v1/scan-setups/s1': () => json(s({ kind: 'terminal', pairedLabel: null })),
         '/api/v1/scanners/s1/token': () =>
-          json({ token: 'wls_ab12cd34_secretsecretsecret', expiresAt: Date.now() + 1e9 }),
+          json({ token: 'wls_demo0001_demodemodemo', expiresAt: Date.now() + 1e9 }),
       },
     });
     const user = userEvent.setup();

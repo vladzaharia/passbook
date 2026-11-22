@@ -1,0 +1,295 @@
+{
+  "users.getUsers": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-af8de0857b70",
+          "name": "Sam Rivera",
+          "primaryEmail": "sam@example.com",
+          "status": "active",
+          "lastRoles": ["admin"],
+          "createdAt": 1794362400000,
+          "lastLoginAt": 1795570500000,
+          "passCount": 16,
+          "signInMethods": ["oidc"]
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "users.getUsersById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000011",
+      "name": "Sam Rivera",
+      "primaryEmail": "sam@example.com",
+      "status": "active",
+      "lastRoles": ["admin"],
+      "createdAt": 1794362400000,
+      "lastLoginAt": 1795570500000,
+      "signInMethods": ["oidc"],
+      "emails": [
+        {
+          "email": "sam@example.com",
+          "verifiedVia": "magic_link",
+          "verifiedAt": 1795570500000
+        }
+      ],
+      "identities": [
+        {
+          "provider": "pocketid",
+          "subject": "c2a1f6e0-5b7d-4e3a-9f12-6d8b4a0e7c35",
+          "emailClaim": "sam@example.com",
+          "emailVerified": false,
+          "groups": ["Access"],
+          "lastUsedAt": 1795570500000
+        }
+      ],
+      "sessions": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000091",
+          "amr": "oidc",
+          "roles": ["admin"],
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
+          "expiresAt": 1798790399999,
+          "revokedAt": null,
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
+          "current": false,
+          "method": "GET"
+        }
+      ],
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-42d7551c0b15",
+          "title": "Day pass",
+          "templateName": "Day pass",
+          "orgName": "Northwind Climbing",
+          "status": "active"
+        }
+      ],
+      "passCount": 16,
+      "recentAudit": [
+        {
+          "id": 14,
+          "at": 1795570500000,
+          "action": "issue",
+          "actorType": "api_key",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000011"
+        }
+      ]
+    }
+  },
+  "users.patchUsersById": {
+    "request": {
+      "status": "active"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000011",
+      "name": "Sam Rivera",
+      "primaryEmail": "sam@example.com",
+      "status": "active",
+      "lastRoles": ["admin"],
+      "createdAt": 1794362400000,
+      "lastLoginAt": 1795570500000
+    }
+  },
+  "users.postUsersByIdEmails": {
+    "request": {
+      "email": "sam.rivera@example.com"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000011",
+      "name": "Sam Rivera",
+      "primaryEmail": "sam@example.com",
+      "status": "active",
+      "lastRoles": ["admin"],
+      "createdAt": 1794362400000,
+      "lastLoginAt": 1795570500000,
+      "signInMethods": ["oidc"],
+      "emails": [
+        {
+          "email": "sam@example.com",
+          "verifiedVia": "magic_link",
+          "verifiedAt": 1795570500000
+        }
+      ],
+      "identities": [
+        {
+          "provider": "pocketid",
+          "subject": "c2a1f6e0-5b7d-4e3a-9f12-6d8b4a0e7c35",
+          "emailClaim": "sam@example.com",
+          "emailVerified": false,
+          "groups": ["Access"],
+          "lastUsedAt": 1795570500000
+        }
+      ],
+      "sessions": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000091",
+          "amr": "oidc",
+          "roles": ["admin"],
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
+          "expiresAt": 1798790399999,
+          "revokedAt": null,
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
+          "current": false,
+          "method": "GET"
+        }
+      ],
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-9f970a1ed4fc",
+          "title": "Day pass",
+          "templateName": "Day pass",
+          "orgName": "Northwind Climbing",
+          "status": "active"
+        }
+      ],
+      "passCount": 16,
+      "recentAudit": [
+        {
+          "id": 14,
+          "at": 1795570500000,
+          "action": "issue",
+          "actorType": "api_key",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000011"
+        }
+      ]
+    }
+  },
+  "users.deleteUsersByIdEmailsByEmail": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000011",
+      "name": "Sam Rivera",
+      "primaryEmail": "sam@example.com",
+      "status": "active",
+      "lastRoles": ["admin"],
+      "createdAt": 1794362400000,
+      "lastLoginAt": 1795570500000,
+      "signInMethods": ["oidc"],
+      "emails": [
+        {
+          "email": "sam@example.com",
+          "verifiedVia": "magic_link",
+          "verifiedAt": 1795570500000
+        }
+      ],
+      "identities": [
+        {
+          "provider": "pocketid",
+          "subject": "c2a1f6e0-5b7d-4e3a-9f12-6d8b4a0e7c35",
+          "emailClaim": "sam@example.com",
+          "emailVerified": false,
+          "groups": ["Access"],
+          "lastUsedAt": 1795570500000
+        }
+      ],
+      "sessions": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000091",
+          "amr": "oidc",
+          "roles": ["admin"],
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
+          "expiresAt": 1798790399999,
+          "revokedAt": null,
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
+          "current": false,
+          "method": "GET"
+        }
+      ],
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-f8ee46f35f20",
+          "title": "Day pass",
+          "templateName": "Day pass",
+          "orgName": "Northwind Climbing",
+          "status": "active"
+        }
+      ],
+      "passCount": 16,
+      "recentAudit": [
+        {
+          "id": 14,
+          "at": 1795570500000,
+          "action": "issue",
+          "actorType": "api_key",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000011"
+        }
+      ]
+    }
+  },
+  "users.postUsersByIdEmailsByEmailPrimary": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000011",
+      "name": "Sam Rivera",
+      "primaryEmail": "sam@example.com",
+      "status": "active",
+      "lastRoles": ["admin"],
+      "createdAt": 1794362400000,
+      "lastLoginAt": 1795570500000,
+      "signInMethods": ["oidc"],
+      "emails": [
+        {
+          "email": "sam@example.com",
+          "verifiedVia": "magic_link",
+          "verifiedAt": 1795570500000
+        }
+      ],
+      "identities": [
+        {
+          "provider": "pocketid",
+          "subject": "c2a1f6e0-5b7d-4e3a-9f12-6d8b4a0e7c35",
+          "emailClaim": "sam@example.com",
+          "emailVerified": false,
+          "groups": ["Access"],
+          "lastUsedAt": 1795570500000
+        }
+      ],
+      "sessions": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000091",
+          "amr": "oidc",
+          "roles": ["admin"],
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
+          "expiresAt": 1798790399999,
+          "revokedAt": null,
+          "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)",
+          "current": false,
+          "method": "GET"
+        }
+      ],
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-c427695ea03d",
+          "title": "Day pass",
+          "templateName": "Day pass",
+          "orgName": "Northwind Climbing",
+          "status": "active"
+        }
+      ],
+      "passCount": 16,
+      "recentAudit": [
+        {
+          "id": 14,
+          "at": 1795570500000,
+          "action": "issue",
+          "actorType": "api_key",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000011"
+        }
+      ]
+    }
+  },
+  "users.postUsersByIdSessionsRevoke": {
+    "response": {
+      "ok": true
+    }
+  },
+  "users.deleteUsersByIdSessionsBySessionId": {
+    "response": {
+      "ok": true
+    }
+  }
+}

@@ -111,7 +111,7 @@ export const SetupChannelSchema = z.object({
     never: z.number().int().nonnegative(),
     total: z.number().int().nonnegative(),
   }),
-  account: WalletEnrolmentSchema.optional().describe('Google and Samsung: the enrolment.'),
+  account: WalletEnrolmentSchema.optional().describe('Google and Samsung: the enrollment.'),
 });
 export type SetupChannel = z.infer<typeof SetupChannelSchema>;
 
@@ -260,7 +260,7 @@ export const PassSetupImpactSchema = z.object({
     .describe('Blocked channels: what stops getting new copies. Copies keep working.'),
   enrolments: z
     .array(WalletProviderSchema)
-    .describe('Wallet enrolments the save turns on: Allowed with a ready account.'),
+    .describe('Wallet enrollments the save turns on: Allowed with a ready account.'),
 });
 export type PassSetupImpact = z.infer<typeof PassSetupImpactSchema>;
 

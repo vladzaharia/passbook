@@ -1,0 +1,9 @@
+{
+  "scan-display.getScanDisplayPreview": {
+    "response": {
+      "scope": {
+        "tier": "Day pass"
+      }
+    }
+  }
+}

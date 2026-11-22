@@ -1,26 +1,213 @@
 {
   "nfc-keysets.getNfcKeysets": {
-    "description": "Lists tag keysets."
+    "description": "Lists tag keysets.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000041",
+          "name": "Gym doors",
+          "slug": "gymdoors",
+          "diversify": true,
+          "perTag": false,
+          "createdAt": 1794362400000,
+          "disabledAt": null,
+          "versions": [
+            {
+              "version": 1,
+              "state": "active",
+              "createdAt": 1794362400000,
+              "stateAt": 1794362400000,
+              "revokedAt": null,
+              "tags": 40
+            }
+          ]
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "nfc-keysets.postNfcKeysets": {
-    "description": "Creates a tag keyset."
+    "description": "Creates a tag keyset.",
+    "request": {
+      "name": "Gym doors",
+      "diversify": true,
+      "generate": true
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
+      "name": "Gym doors",
+      "slug": "gymdoors",
+      "diversify": true,
+      "perTag": false,
+      "createdAt": 1795572000000,
+      "disabledAt": null,
+      "keys": {
+        "metaKey": "00112233445566778899aabbccddeeff",
+        "fileKey": "ffeeddccbbaa99887766554433221100"
+      },
+      "versions": [
+        {
+          "version": 1,
+          "state": "active",
+          "createdAt": 1795572000000,
+          "stateAt": 1795572000000,
+          "revokedAt": null,
+          "tags": 0
+        }
+      ]
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdRotate": {
-    "description": "Rotates a keyset to a new key version."
+    "description": "Rotates a keyset to a new key version.",
+    "request": {
+      "generate": true
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
+      "name": "Gym doors",
+      "slug": "gymdoors",
+      "diversify": true,
+      "perTag": false,
+      "createdAt": 1794362400000,
+      "disabledAt": null,
+      "keys": {
+        "metaKey": "00112233445566778899aabbccddeeff",
+        "fileKey": "ffeeddccbbaa99887766554433221100"
+      },
+      "versions": [
+        {
+          "version": 2,
+          "state": "active",
+          "createdAt": 1795572000000,
+          "stateAt": 1795572000000,
+          "revokedAt": null,
+          "tags": 0
+        },
+        {
+          "version": 1,
+          "state": "retiring",
+          "createdAt": 1794362400000,
+          "stateAt": 1795572000000,
+          "revokedAt": null,
+          "tags": 40
+        }
+      ]
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire": {
-    "description": "Retires an old key version."
+    "description": "Retires an old key version.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
+      "name": "Gym doors",
+      "slug": "gymdoors",
+      "diversify": true,
+      "perTag": false,
+      "createdAt": 1794362400000,
+      "disabledAt": null,
+      "versions": [
+        {
+          "version": 1,
+          "state": "retired",
+          "createdAt": 1794362400000,
+          "stateAt": 1795572000000,
+          "revokedAt": null,
+          "tags": 40
+        }
+      ]
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke": {
-    "description": "Revokes a key version. Tags on it must be written again."
+    "description": "Revokes a key version. Tags on it must be written again.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
+      "name": "Gym doors",
+      "slug": "gymdoors",
+      "diversify": true,
+      "perTag": false,
+      "createdAt": 1794362400000,
+      "disabledAt": null,
+      "versions": [
+        {
+          "version": 1,
+          "state": "active",
+          "createdAt": 1794362400000,
+          "stateAt": 1794362400000,
+          "revokedAt": null,
+          "tags": 40
+        }
+      ]
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdReenrol": {
-    "description": "Moves the tags of a keyset to another keyset."
+    "description": "Moves the tags of a keyset to another keyset.",
+    "request": {
+      "toKeysetId": "0193a1b2-7c00-7000-8000-000000000041"
+    },
+    "response": {
+      "moved": 12,
+      "ownKey": 0,
+      "keyset": {
+        "id": "0193a1b2-7c00-7000-8000-000000000041",
+        "name": "Gym doors",
+        "slug": "gymdoors",
+        "diversify": true,
+        "perTag": false,
+        "createdAt": 1794362400000,
+        "disabledAt": null,
+        "versions": [
+          {
+            "version": 1,
+            "state": "active",
+            "createdAt": 1794362400000,
+            "stateAt": 1794362400000,
+            "revokedAt": null,
+            "tags": 40
+          }
+        ]
+      }
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdImport": {
-    "description": "Imports supplier-personalised tags. Run it as a dry run first, then add."
+    "description": "Imports supplier-personalized tags. Run it as a dry run first, then add.",
+    "request": {
+      "csv": "uid,type,meta key,file key\n04A3B2C1D5E680,NTAG 424 DNA,00112233445566778899aabbccddeeff,ffeeddccbbaa99887766554433221100\n04A3B2C1D5E681,NTAG 424 DNA,00112233445566778899aabbccddee01,ffeeddccbbaa99887766554433221101\n04A3B2C1D5E682,NTAG 424 DNA,0123456789abcdef0123456789abcdef,ffeeddccbbaa99887766554433221102\n",
+      "dryRun": true
+    },
+    "response": {
+      "dryRun": true,
+      "rows": 3,
+      "ok": 2,
+      "added": 0,
+      "problems": [
+        {
+          "line": 4,
+          "uid": "04A3B2C1D5E682",
+          "reason": "weak_key"
+        }
+      ],
+      "moreProblems": 0
+    }
   },
   "nfc-keysets.postNfcKeysetsByIdDisable": {
-    "description": "Disables a keyset."
+    "description": "Disables a keyset.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000041",
+      "name": "Gym doors",
+      "slug": "gymdoors",
+      "diversify": true,
+      "perTag": false,
+      "createdAt": 1794362400000,
+      "disabledAt": 1795572000000,
+      "versions": [
+        {
+          "version": 1,
+          "state": "active",
+          "createdAt": 1794362400000,
+          "stateAt": 1794362400000,
+          "revokedAt": null,
+          "tags": 40
+        }
+      ]
+    }
   }
 }

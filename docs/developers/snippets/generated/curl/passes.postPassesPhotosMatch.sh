@@ -3,6 +3,7 @@ curl -X POST "https://passbook.mobile/api/v1/passes/photos/match" \
   -H "Content-Type: application/json" \
   -d '{
   "keys": [
-    "Example"
+    "NW-1001",
+    "NW-1002"
   ]
 }'

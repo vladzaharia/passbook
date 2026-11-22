@@ -1,0 +1,164 @@
+{
+  "status.getStatus": {
+    "response": {
+      "overall": "verified",
+      "build": {
+        "id": "2026-11-23.1",
+        "tag": "v2026.11.23",
+        "timestamp": "2026-11-23T02:00:00.000Z"
+      },
+      "components": [
+        {
+          "id": "database",
+          "kind": "database",
+          "label": "Database",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795570500000
+        },
+        {
+          "id": "storage",
+          "kind": "storage",
+          "label": "File storage",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795570500000
+        },
+        {
+          "id": "queue",
+          "kind": "queue",
+          "label": "Job queue",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795570500000
+        },
+        {
+          "id": "workflows",
+          "kind": "workflow",
+          "label": "Workflows",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795570500000
+        },
+        {
+          "id": "identity",
+          "kind": "identity",
+          "label": "Pass signing identity",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795570500000
+        },
+        {
+          "id": "email",
+          "kind": "email",
+          "label": "Email",
+          "state": "configured",
+          "detail": "Sending as hello@example.com",
+          "checkedAt": 1795570500000
+        },
+        {
+          "id": "oidc",
+          "kind": "oidc",
+          "label": "Sign-in",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795570500000
+        },
+        {
+          "id": "connections",
+          "kind": "connection",
+          "label": "Connections",
+          "state": "not_in_use",
+          "detail": null,
+          "checkedAt": 1795570500000
+        },
+        {
+          "id": "cron",
+          "kind": "cron",
+          "label": "Scheduled jobs",
+          "state": "verified",
+          "detail": "Last run 2 minutes ago.",
+          "checkedAt": 1795570500000
+        },
+        {
+          "id": "build",
+          "kind": "build",
+          "label": "Build",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795570500000
+        }
+      ]
+    }
+  },
+  "status.getStatusWorkflows": {
+    "response": {
+      "items": [
+        {
+          "instanceId": "0193a1b2-7c00-7000-8000-83548b1a0435",
+          "kind": "template_import",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "targetId": "0193a1b2-7c00-7000-8000-dc02f80774cc",
+          "status": "complete",
+          "startedAt": 1794362400000,
+          "finishedAt": 1795570500000,
+          "errorCode": null
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "status.getStatusIncidents": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+          "title": "Card scans slow at the front desk",
+          "note": "Scans answer in 3 to 5 seconds. Investigating.",
+          "component": "api",
+          "impact": "degraded",
+          "startedAt": 1795570500000,
+          "resolvedAt": null
+        },
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ac",
+          "title": "Wallet updates delayed",
+          "note": "Apple push was slow for 20 minutes. Back to normal.",
+          "component": "apple_push",
+          "impact": "notice",
+          "startedAt": 1794362400000,
+          "resolvedAt": 1794363600000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "status.postStatusIncidents": {
+    "request": {
+      "title": "Card scans slow at the front desk",
+      "note": "Scans answer in 3 to 5 seconds. Investigating.",
+      "component": "api",
+      "impact": "degraded"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+      "title": "Card scans slow at the front desk",
+      "note": "Scans answer in 3 to 5 seconds. Investigating.",
+      "component": "api",
+      "impact": "degraded",
+      "startedAt": 1795570500000,
+      "resolvedAt": null
+    }
+  },
+  "status.postStatusIncidentsByIdResolve": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+      "title": "Card scans slow at the front desk",
+      "note": "Fixed a slow query. Scans answer in under a second.",
+      "component": "api",
+      "impact": "degraded",
+      "startedAt": 1795570500000,
+      "resolvedAt": 1795572000000
+    }
+  }
+}

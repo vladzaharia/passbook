@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.PassImportsSendEmailsBody
 	if err := json.Unmarshal([]byte(`{
-  "cursor": "Example"
+  "cursor": null
 }`), &body); err != nil {
 		panic(err)
 	}

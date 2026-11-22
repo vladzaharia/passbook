@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
+import { pemBlock } from '../../../../../test/helpers/pem.ts';
 import { markCreated } from '../../passes/created.tsx';
 import { remainingDays } from './expiry.tsx';
 import { type UploadDraft, validateUpload } from './upload-input.ts';
@@ -36,7 +37,7 @@ const draft = (over: Partial<UploadDraft> = {}): UploadDraft => ({
   mode: 'pem',
   label: 'Acme',
   certificatePem: '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----',
-  privateKeyPem: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+  privateKeyPem: pemBlock('PRIVATE KEY', 'abc'),
   p12: undefined,
   p12Password: '',
   ...over,
@@ -279,7 +280,7 @@ describe('identities list', () => {
     await ui.click(within(dialog).getByLabelText('Certificate (PEM)'));
     await ui.paste('-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----');
     await ui.click(within(dialog).getByLabelText('Private key (PEM)'));
-    await ui.paste('-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----');
+    await ui.paste(pemBlock('PRIVATE KEY', 'abc'));
     await ui.click(within(dialog).getByRole('button', { name: 'Upload' }));
     expect(
       await within(dialog).findByText('Key does not match the certificate.'),
@@ -338,10 +339,7 @@ describe('identity detail', () => {
     const dialog = await screen.findByRole('dialog');
     await ui.click(within(dialog).getByRole('button', { name: 'Add key' }));
     expect(await within(dialog).findByText('Choose a .p8 file.')).toBeInTheDocument();
-    const file = new File(
-      ['-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----'],
-      'AuthKey_AB12CD34EF.p8',
-    );
+    const file = new File([pemBlock('PRIVATE KEY', 'AAAA')], 'AuthKey_AB12CD34EF.p8');
     await ui.upload(dialog.querySelector('input[type=file]') as HTMLInputElement, file);
     expect(within(dialog).getByLabelText(/Key ID/)).toHaveValue('AB12CD34EF');
     await ui.click(within(dialog).getByRole('button', { name: 'Add key' }));
@@ -510,7 +508,7 @@ describe('identity detail', () => {
     await ui.click(within(dialog).getByLabelText('Certificate (PEM)'));
     await ui.paste('-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----');
     await ui.click(within(dialog).getByLabelText('Private key (PEM)'));
-    await ui.paste('-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----');
+    await ui.paste(pemBlock('PRIVATE KEY', 'abc'));
     await ui.click(within(dialog).getByRole('button', { name: 'Upload' }));
     await waitFor(() =>
       expect(router.state.location.pathname).toBe('/admin/platform/wallet-accounts/i9'),
@@ -643,7 +641,7 @@ describe('identity detail', () => {
 
   it('opens renewal from the lifecycle panel and keeps the draft when replacement fails', async () => {
     const certificate = '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----';
-    const privateKey = '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----';
+    const privateKey = pemBlock('PRIVATE KEY', 'abc');
     let attempts = 0;
     await renderApp('/admin/platform/wallet-accounts/i1', {
       session: 'admin',
@@ -699,13 +697,13 @@ describe('identity detail', () => {
     );
     await ui.type(
       within(dialog).getByLabelText('Private key (PEM)'),
-      '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+      pemBlock('PRIVATE KEY', 'abc'),
     );
     await ui.click(within(dialog).getByRole('button', { name: 'Replace certificate' }));
     await waitFor(() =>
       expect(body).toEqual({
         certificatePem: '-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----',
-        privateKeyPem: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+        privateKeyPem: pemBlock('PRIVATE KEY', 'abc'),
       }),
     );
   });

@@ -4,13 +4,9 @@
     "request": {
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "input": {
-        "eventName": "Harbor Night",
-        "venueName": "Harbor Hall",
-        "venueRegion": "Cupertino, CA",
-        "startsAt": "2030-06-01T19:00:00-07:00",
-        "endsAt": "2030-06-01T22:00:00-07:00",
-        "attendee": "Ada Example",
-        "ticketId": "TICKET-0001"
+        "name": "Ada Example",
+        "tier": "Day pass",
+        "validUntil": "2026-12-31"
       },
       "holderEmail": "ada@example.com",
       "externalId": "booking_8841",
@@ -22,8 +18,8 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "templateVersion": "3",
       "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
-      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-      "title": "Harbor Night",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
       "subtitle": "Ada Example",
       "externalId": "booking_8841",
       "status": "active",
@@ -37,28 +33,20 @@
       "ownerUserId": null,
       "deviceCount": 0,
       "removedAt": null,
-      "modifiedAt": 1764000000000,
-      "createdAt": 1764000000000,
+      "modifiedAt": 1795572000000,
+      "createdAt": 1795572000000,
       "reissueRequired": false,
       "ownerName": null,
       "ownerEmail": null,
       "personalization": {
-        "eventName": "Harbor Night",
-        "venueName": "Harbor Hall",
-        "venueRegion": "Cupertino, CA",
-        "startsAt": "2030-06-01T19:00:00-07:00",
-        "endsAt": "2030-06-01T22:00:00-07:00",
-        "attendee": "Ada Example",
-        "ticketId": "TICKET-0001"
+        "name": "Ada Example",
+        "tier": "Day pass",
+        "validUntil": "2026-12-31"
       },
       "fieldSources": {
-        "eventName": "manual",
-        "venueName": "manual",
-        "venueRegion": "manual",
-        "startsAt": "manual",
-        "endsAt": "manual",
-        "attendee": "manual",
-        "ticketId": "manual"
+        "name": "manual",
+        "tier": "manual",
+        "validUntil": "manual"
       },
       "registrations": 0,
       "lastRefreshedAt": null,
@@ -69,8 +57,8 @@
           "cause": "create",
           "source": null,
           "actorType": "api_key",
-          "actorId": null,
-          "createdAt": 1764000000000,
+          "actorId": "0193a1b2-7c00-7000-8000-000000000021",
+          "createdAt": 1795572000000,
           "purged": false
         }
       ],
@@ -78,27 +66,45 @@
       "warnings": [],
       "passJson": {
         "formatVersion": 1,
-        "passTypeIdentifier": "pass.example.wallet",
-        "serialNumber": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-        "organizationName": "Example Events",
-        "description": "Event ticket",
-        "eventTicket": {
+        "passTypeIdentifier": "pass.mobile.passbook.northwind",
+        "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+        "organizationName": "Northwind Climbing",
+        "description": "Day pass",
+        "backgroundColor": "rgb(17, 42, 74)",
+        "foregroundColor": "rgb(255, 255, 255)",
+        "labelColor": "rgb(255, 196, 0)",
+        "generic": {
           "primaryFields": [
             {
-              "key": "event",
-              "label": "Event",
-              "value": "Harbor Night"
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ],
+          "secondaryFields": [
+            {
+              "key": "tier",
+              "label": "Pass",
+              "value": "Day pass"
+            }
+          ],
+          "auxiliaryFields": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "value": "2026-12-31"
             }
           ]
         }
       },
-      "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
+      "assetBaseUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/assets/",
       "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
       "blockedUsers": [],
-      "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
-      "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8",
+      "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
+      "publicUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
       "email": {
-        "outcome": "queued"
+        "outcome": "queued",
+        "cap": "org"
       }
     }
   },
@@ -110,9 +116,9 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "templateVersion": "3",
       "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
-      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-      "title": "Ada Example",
-      "subtitle": "Row 4, seat 12",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
       "externalId": "booking_8841",
       "status": "active",
       "mode": "live",
@@ -123,23 +129,63 @@
       "holderEmail": "ada@example.com",
       "holderState": "waiting",
       "ownerUserId": null,
-      "deviceCount": 0,
+      "deviceCount": 2,
       "removedAt": null,
-      "modifiedAt": 1764000000000,
-      "createdAt": 1764000000000,
+      "modifiedAt": 1795399200000,
+      "createdAt": 1795399200000,
       "reissueRequired": false,
       "ownerName": null,
       "ownerEmail": null,
       "personalization": {
         "name": "Ada Example",
-        "seat": "Row 4, seat 12"
+        "tier": "Day pass",
+        "validUntil": "2026-12-31"
       },
       "fieldSources": {
         "name": "manual",
-        "seat": "manual"
+        "tier": "manual",
+        "validUntil": "manual"
       },
-      "registrations": 0,
-      "lastRefreshedAt": null,
+      "passJson": {
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.mobile.passbook.northwind",
+        "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+        "organizationName": "Northwind Climbing",
+        "description": "Day pass",
+        "backgroundColor": "rgb(17, 42, 74)",
+        "foregroundColor": "rgb(255, 255, 255)",
+        "labelColor": "rgb(255, 196, 0)",
+        "generic": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ],
+          "secondaryFields": [
+            {
+              "key": "tier",
+              "label": "Pass",
+              "value": "Day pass"
+            }
+          ],
+          "auxiliaryFields": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "value": "2026-12-31"
+            }
+          ]
+        }
+      },
+      "assetBaseUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/assets/",
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "blockedUsers": [],
+      "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
+      "publicUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+      "registrations": 2,
+      "lastRefreshedAt": 1795399380000,
       "versions": [
         {
           "version": 1,
@@ -147,34 +193,13 @@
           "cause": "create",
           "source": null,
           "actorType": "api_key",
-          "actorId": null,
-          "createdAt": 1764000000000,
+          "actorId": "0193a1b2-7c00-7000-8000-000000000021",
+          "createdAt": 1795399200000,
           "purged": false
         }
       ],
       "deliveries": [],
-      "warnings": [],
-      "passJson": {
-        "formatVersion": 1,
-        "passTypeIdentifier": "pass.example.wallet",
-        "serialNumber": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-        "organizationName": "Example Events",
-        "description": "Event ticket",
-        "eventTicket": {
-          "primaryFields": [
-            {
-              "key": "name",
-              "label": "Guest",
-              "value": "Ada Example"
-            }
-          ]
-        }
-      },
-      "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
-      "blockedUsers": [],
-      "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
-      "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8"
+      "warnings": []
     }
   },
   "passes.getPasses": {
@@ -187,9 +212,9 @@
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "templateVersion": "3",
           "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
-          "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-          "title": "Ada Example",
-          "subtitle": "Row 4, seat 12",
+          "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+          "title": "Day pass",
+          "subtitle": "Ada Example",
           "externalId": "booking_8841",
           "status": "active",
           "mode": "live",
@@ -200,20 +225,23 @@
           "holderEmail": "ada@example.com",
           "holderState": "waiting",
           "ownerUserId": null,
-          "deviceCount": 0,
+          "deviceCount": 2,
           "removedAt": null,
-          "modifiedAt": 1764000000000,
-          "createdAt": 1764000000000
+          "modifiedAt": 1795399200000,
+          "createdAt": 1795399200000
         }
       ],
-      "nextCursor": null
+      "nextCursor": "c1.4812",
+      "count": 128
     }
   },
   "passes.patchPassesById": {
     "description": "Changes a pass's fields. Send `If-Match` with the current `version`; a stale version is `412 VERSION_CONFLICT`. Installed passes update in Wallet.",
     "request": {
       "input": {
-        "seat": "Row 5, seat 3"
+        "name": "Ada Example",
+        "tier": "Day pass",
+        "validUntil": "2027-01-31"
       },
       "notify": true
     },
@@ -223,9 +251,9 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "templateVersion": "3",
       "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
-      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-      "title": "Ada Example",
-      "subtitle": "Row 4, seat 12",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
       "externalId": "booking_8841",
       "status": "active",
       "mode": "live",
@@ -236,23 +264,63 @@
       "holderEmail": "ada@example.com",
       "holderState": "waiting",
       "ownerUserId": null,
-      "deviceCount": 0,
+      "deviceCount": 2,
       "removedAt": null,
-      "modifiedAt": 1764000000000,
-      "createdAt": 1764000000000,
+      "modifiedAt": 1795572000000,
+      "createdAt": 1795399200000,
       "reissueRequired": false,
       "ownerName": null,
       "ownerEmail": null,
       "personalization": {
         "name": "Ada Example",
-        "seat": "Row 5, seat 3"
+        "tier": "Day pass",
+        "validUntil": "2027-01-31"
       },
       "fieldSources": {
         "name": "manual",
-        "seat": "manual"
+        "tier": "manual",
+        "validUntil": "manual"
       },
-      "registrations": 0,
-      "lastRefreshedAt": null,
+      "passJson": {
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.mobile.passbook.northwind",
+        "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+        "organizationName": "Northwind Climbing",
+        "description": "Day pass",
+        "backgroundColor": "rgb(17, 42, 74)",
+        "foregroundColor": "rgb(255, 255, 255)",
+        "labelColor": "rgb(255, 196, 0)",
+        "generic": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ],
+          "secondaryFields": [
+            {
+              "key": "tier",
+              "label": "Pass",
+              "value": "Day pass"
+            }
+          ],
+          "auxiliaryFields": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "value": "2026-12-31"
+            }
+          ]
+        }
+      },
+      "assetBaseUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/assets/",
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "blockedUsers": [],
+      "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
+      "publicUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+      "registrations": 2,
+      "lastRefreshedAt": 1795399380000,
       "versions": [
         {
           "version": 1,
@@ -260,37 +328,13 @@
           "cause": "create",
           "source": null,
           "actorType": "api_key",
-          "actorId": null,
-          "createdAt": 1764000000000,
+          "actorId": "0193a1b2-7c00-7000-8000-000000000021",
+          "createdAt": 1795399200000,
           "purged": false
         }
       ],
       "deliveries": [],
-      "warnings": [],
-      "passJson": {
-        "formatVersion": 1,
-        "passTypeIdentifier": "pass.example.wallet",
-        "serialNumber": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-        "organizationName": "Example Events",
-        "description": "Event ticket",
-        "eventTicket": {
-          "primaryFields": [
-            {
-              "key": "name",
-              "label": "Guest",
-              "value": "Ada Example"
-            }
-          ]
-        }
-      },
-      "assetBaseUrl": "https://wallet.example.com/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
-      "blockedUsers": [],
-      "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
-      "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8",
-      "email": {
-        "outcome": "queued"
-      }
+      "warnings": []
     }
   },
   "passes.postPassesByIdVoid": {
@@ -301,9 +345,9 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "templateVersion": "3",
       "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
-      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-      "title": "Ada Example",
-      "subtitle": "Row 4, seat 12",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
       "externalId": "booking_8841",
       "status": "voided",
       "mode": "live",
@@ -314,10 +358,10 @@
       "holderEmail": "ada@example.com",
       "holderState": "waiting",
       "ownerUserId": null,
-      "deviceCount": 0,
+      "deviceCount": 2,
       "removedAt": null,
-      "modifiedAt": 1764000000000,
-      "createdAt": 1764000000000
+      "modifiedAt": 1795572000000,
+      "createdAt": 1795399200000
     }
   },
   "passes.postPassesByIdUnvoid": {
@@ -328,9 +372,9 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "templateVersion": "3",
       "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
-      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-      "title": "Ada Example",
-      "subtitle": "Row 4, seat 12",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
       "externalId": "booking_8841",
       "status": "active",
       "mode": "live",
@@ -341,16 +385,16 @@
       "holderEmail": "ada@example.com",
       "holderState": "waiting",
       "ownerUserId": null,
-      "deviceCount": 0,
+      "deviceCount": 2,
       "removedAt": null,
-      "modifiedAt": 1764000000000,
-      "createdAt": 1764000000000
+      "modifiedAt": 1795572000000,
+      "createdAt": 1795399200000
     }
   },
   "passes.postPassesByIdRemove": {
     "description": "Removes the pass from Wallet by publishing a voided, expired final version. The record stays; undo with restore. `message` shows on the lock screen.",
     "request": {
-      "message": "Booking cancelled"
+      "message": "Your day pass was replaced by a monthly membership."
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000c1",
@@ -358,9 +402,9 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "templateVersion": "3",
       "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
-      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-      "title": "Ada Example",
-      "subtitle": "Row 4, seat 12",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
       "externalId": "booking_8841",
       "status": "voided",
       "mode": "live",
@@ -371,10 +415,10 @@
       "holderEmail": "ada@example.com",
       "holderState": "waiting",
       "ownerUserId": null,
-      "deviceCount": 0,
-      "removedAt": 1764000000000,
-      "modifiedAt": 1764000000000,
-      "createdAt": 1764000000000
+      "deviceCount": 2,
+      "removedAt": 1795572000000,
+      "modifiedAt": 1795572000000,
+      "createdAt": 1795399200000
     }
   },
   "passes.postPassesByIdRestore": {
@@ -385,9 +429,9 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "templateVersion": "3",
       "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
-      "serial": "3f9c2d6a-5b1e-4c7a-9d20-8a41e6b7c0f2",
-      "title": "Ada Example",
-      "subtitle": "Row 4, seat 12",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
       "externalId": "booking_8841",
       "status": "active",
       "mode": "live",
@@ -398,10 +442,10 @@
       "holderEmail": "ada@example.com",
       "holderState": "waiting",
       "ownerUserId": null,
-      "deviceCount": 0,
+      "deviceCount": 2,
       "removedAt": null,
-      "modifiedAt": 1764000000000,
-      "createdAt": 1764000000000
+      "modifiedAt": 1795572000000,
+      "createdAt": 1795399200000
     }
   },
   "passes.deletePassesById": {
@@ -414,7 +458,7 @@
     "description": "Emails the pass link to the holder, or to `to` when given. Send an `Idempotency-Key` header to retry safely.",
     "request": {
       "to": "ada@example.com",
-      "attach": true
+      "attach": false
     },
     "response": {
       "ok": true
@@ -423,8 +467,8 @@
   "passes.postPassesByIdRotateLink": {
     "description": "Replaces the download and public links. The old links stop working.",
     "response": {
-      "downloadUrl": "https://wallet.example.com/p/0193a1b2-7c00-7000-8000-0000000000c1.pkpass",
-      "publicUrl": "https://wallet.example.com/p/xK3v9QmT2Lw8"
+      "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
+      "publicUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
     }
   },
   "passes.postPassesByIdNewCode": {
@@ -436,43 +480,93 @@
   "passes.getPassesViews": {
     "description": "The saved views of the passes list.",
     "response": {
-      "items": [],
-      "revision": 0
+      "items": [
+        {
+          "id": "expiring",
+          "name": "Expiring this month",
+          "filter": {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "status": "active"
+          }
+        },
+        {
+          "id": "not-on-a-phone",
+          "name": "Not on a phone yet",
+          "filter": {
+            "onDevice": false
+          }
+        }
+      ],
+      "revision": 3
     }
   },
   "passes.putPassesViews": {
     "description": "Replaces the saved views (at most 20) of an organization and mode. Send the `revision` you read; a stale one answers 409 `VIEWS_CHANGED`. A view cannot hold a holder email.",
     "request": {
-      "items": [],
-      "revision": 0
+      "items": [
+        {
+          "id": "expiring",
+          "name": "Expiring this month",
+          "filter": {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "status": "active"
+          }
+        },
+        {
+          "id": "not-on-a-phone",
+          "name": "Not on a phone yet",
+          "filter": {
+            "onDevice": false
+          }
+        }
+      ],
+      "revision": 2
     },
     "response": {
-      "items": [],
-      "revision": 1
+      "items": [
+        {
+          "id": "expiring",
+          "name": "Expiring this month",
+          "filter": {
+            "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+            "status": "active"
+          }
+        },
+        {
+          "id": "not-on-a-phone",
+          "name": "Not on a phone yet",
+          "filter": {
+            "onDevice": false
+          }
+        }
+      ],
+      "revision": 3
     }
   },
   "passes.postPassesBulkRuns": {
     "description": "Voids, emails or removes every pass a filter matches, in the background. The matching passes are fixed when the run starts; `expectCount` must equal the count then, or it answers 409 `SELECTION_CHANGED`. One run at a time per organization and mode.",
     "request": {
-      "action": "void",
+      "action": "remove",
+      "message": "Your day pass was replaced by a monthly membership.",
       "selection": {
         "filter": {
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "status": "active"
         },
-        "expectCount": 442
+        "expectCount": 128
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "id": "0193a1b2-7c00-7000-8000-e4051803febe",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "action": "void",
+      "action": "remove",
       "state": "running",
-      "total": 442,
-      "done": 124,
+      "total": 128,
+      "done": 0,
       "skipped": 0,
       "skippedBy": {},
       "stopRequested": false,
-      "createdAt": 1764000000000,
+      "createdAt": 1795572000000,
       "finishedAt": null,
       "code": null
     }
@@ -480,51 +574,57 @@
   "passes.getPassesBulkRunsById": {
     "description": "The progress of a bulk run.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "id": "0193a1b2-7c00-7000-8000-e4051803febe",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "action": "void",
-      "state": "running",
-      "total": 442,
-      "done": 124,
-      "skipped": 0,
-      "skippedBy": {},
+      "action": "remove",
+      "state": "done",
+      "total": 128,
+      "done": 126,
+      "skipped": 2,
+      "skippedBy": {
+        "PASS_REMOVED": 2
+      },
       "stopRequested": false,
-      "createdAt": 1764000000000,
-      "finishedAt": null,
+      "createdAt": 1795571640000,
+      "finishedAt": 1795571940000,
       "code": null
     }
   },
   "passes.postPassesBulkRunsByIdStop": {
     "description": "Stops a running bulk run after its current chunk. Passes already handled stay handled.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "id": "0193a1b2-7c00-7000-8000-e4051803febe",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "action": "void",
-      "state": "running",
-      "total": 442,
-      "done": 124,
-      "skipped": 0,
-      "skippedBy": {},
+      "action": "remove",
+      "state": "stopped",
+      "total": 128,
+      "done": 64,
+      "skipped": 1,
+      "skippedBy": {
+        "PASS_REMOVED": 1
+      },
       "stopRequested": true,
-      "createdAt": 1764000000000,
-      "finishedAt": null,
-      "code": null
+      "createdAt": 1795571640000,
+      "finishedAt": 1795572000000,
+      "code": "BULK_RUN_STOPPED"
     }
   },
   "passes.getPassesBulkRunsCurrent": {
     "description": "The organization's running bulk run, or the last one that ended within the hour; run is absent when there is none.",
     "response": {
       "run": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+        "id": "0193a1b2-7c00-7000-8000-e4051803febe",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "action": "void",
+        "action": "remove",
         "state": "running",
-        "total": 442,
-        "done": 124,
-        "skipped": 0,
-        "skippedBy": {},
+        "total": 128,
+        "done": 64,
+        "skipped": 1,
+        "skippedBy": {
+          "PASS_REMOVED": 1
+        },
         "stopRequested": false,
-        "createdAt": 1764000000000,
+        "createdAt": 1795571640000,
         "finishedAt": null,
         "code": null
       }
@@ -533,94 +633,1127 @@
   "passes.postPassesBulk": {
     "description": "Voids, emails or removes up to 100 passes: send `ids`, or a `selection` with a filter and the `expectCount` you saw (any other count answers 409 SELECTION_CHANGED). Above 100 passes use POST /passes/bulk-runs.",
     "request": {
-      "action": "void",
-      "ids": ["0193a1b2-7c00-7000-8000-0000000000c1"]
+      "action": "send_email",
+      "ids": ["0193a1b2-7c00-7000-8000-0000000000c1", "0193a1b2-7c00-7000-8000-f3f85c24ee38"]
     },
     "response": {
       "done": 1,
-      "skipped": []
+      "skipped": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-f3f85c24ee38",
+          "code": "NO_RECIPIENT"
+        }
+      ]
     }
   },
   "passes.putPassesByIdConnection": {
-    "description": "Binds a pass to a connection ref, or unbinds it. A bound pass takes its fields from the connection."
+    "description": "Binds a pass to a connection ref, or unbinds it. A bound pass takes its fields from the connection.",
+    "request": {
+      "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+      "externalRef": "booking_8841",
+      "resetFieldSources": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
+      "externalId": "booking_8841",
+      "status": "active",
+      "mode": "live",
+      "version": 2,
+      "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
+      "externalRef": "booking_8841",
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 2,
+      "removedAt": null,
+      "modifiedAt": 1795572000000,
+      "createdAt": 1795399200000,
+      "reissueRequired": false,
+      "ownerName": null,
+      "ownerEmail": null,
+      "personalization": {
+        "name": "Ada Example",
+        "tier": "Day pass",
+        "validUntil": "2026-12-31"
+      },
+      "fieldSources": {
+        "name": "manual",
+        "tier": "manual",
+        "validUntil": "manual"
+      },
+      "passJson": {
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.mobile.passbook.northwind",
+        "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+        "organizationName": "Northwind Climbing",
+        "description": "Day pass",
+        "backgroundColor": "rgb(17, 42, 74)",
+        "foregroundColor": "rgb(255, 255, 255)",
+        "labelColor": "rgb(255, 196, 0)",
+        "generic": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ],
+          "secondaryFields": [
+            {
+              "key": "tier",
+              "label": "Pass",
+              "value": "Day pass"
+            }
+          ],
+          "auxiliaryFields": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "value": "2026-12-31"
+            }
+          ]
+        }
+      },
+      "assetBaseUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/assets/",
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "blockedUsers": [],
+      "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
+      "publicUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+      "registrations": 2,
+      "lastRefreshedAt": 1795399380000,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "3",
+          "cause": "create",
+          "source": null,
+          "actorType": "api_key",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000021",
+          "createdAt": 1795399200000,
+          "purged": false
+        }
+      ],
+      "deliveries": [],
+      "warnings": []
+    }
   },
   "passes.postPassesByIdRefresh": {
-    "description": "Rebuilds the pass from its connection and pushes the change to devices."
+    "description": "Rebuilds the pass from its connection and pushes the change to devices.",
+    "response": {
+      "accepted": true,
+      "requestedAt": 1795570500000
+    }
   },
   "passes.getPassesByIdVersionsByVersion": {
-    "description": "A retained version of a pass, for rendering."
+    "description": "A retained version of a pass, for rendering.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
+      "externalId": "booking_8841",
+      "status": "active",
+      "mode": "live",
+      "version": 1,
+      "connectionId": null,
+      "externalRef": null,
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 2,
+      "removedAt": null,
+      "modifiedAt": 1795399200000,
+      "createdAt": 1795399200000,
+      "reissueRequired": false,
+      "ownerName": null,
+      "ownerEmail": null,
+      "personalization": {
+        "name": "Ada Example",
+        "tier": "Day pass",
+        "validUntil": "2026-12-31"
+      },
+      "fieldSources": {
+        "name": "manual",
+        "tier": "manual",
+        "validUntil": "manual"
+      },
+      "passJson": {
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.mobile.passbook.northwind",
+        "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+        "organizationName": "Northwind Climbing",
+        "description": "Day pass",
+        "backgroundColor": "rgb(17, 42, 74)",
+        "foregroundColor": "rgb(255, 255, 255)",
+        "labelColor": "rgb(255, 196, 0)",
+        "generic": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ],
+          "secondaryFields": [
+            {
+              "key": "tier",
+              "label": "Pass",
+              "value": "Day pass"
+            }
+          ],
+          "auxiliaryFields": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "value": "2026-12-31"
+            }
+          ]
+        }
+      },
+      "assetBaseUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/assets/",
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "blockedUsers": [],
+      "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
+      "publicUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+      "registrations": 2,
+      "lastRefreshedAt": 1795399380000,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "3",
+          "cause": "create",
+          "source": null,
+          "actorType": "api_key",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000021",
+          "createdAt": 1795399200000,
+          "purged": false
+        }
+      ],
+      "deliveries": [],
+      "warnings": []
+    }
   },
   "passes.getPassesByIdDiff": {
-    "description": "The fields that differ between two retained versions of a pass."
+    "description": "The fields that differ between two retained versions of a pass.",
+    "response": {
+      "changes": [
+        {
+          "path": "input.validUntil",
+          "from": "2026-12-31",
+          "to": "2027-01-31"
+        }
+      ]
+    }
   },
   "passes.getPassesByIdAssets": {
-    "description": "The per-pass image overrides of a pass."
+    "description": "The per-pass image overrides of a pass.",
+    "response": {
+      "items": [
+        {
+          "name": "thumbnail.png",
+          "sha1": "22393d32ede2d752a38c0632d11bc4d32c45b65c",
+          "size": 18432,
+          "width": 90,
+          "height": 90,
+          "createdAt": 1795399200000
+        }
+      ],
+      "nextCursor": null
+    }
   },
   "passes.putPassesByIdAssetsByName": {
-    "description": "Uploads an image override for one pass as a PNG body."
+    "description": "Uploads an image override for one pass as a PNG body.",
+    "response": {
+      "name": "thumbnail.png",
+      "sha1": "22393d32ede2d752a38c0632d11bc4d32c45b65c",
+      "size": 18432,
+      "width": 90,
+      "height": 90,
+      "createdAt": 1795399200000
+    }
   },
   "passes.deletePassesByIdAssetsByName": {
-    "description": "Removes an image override. The pass goes back to the template's image."
+    "description": "Removes an image override. The pass goes back to the template's image.",
+    "response": {
+      "ok": true
+    }
   },
   "passes.getPassesByIdMemberPhoto": {
-    "description": "The member photo settings of a pass."
+    "description": "The member photo settings of a pass.",
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "url": "/api/v1/passes/0193a1b2-7c00-7000-8000-0000000000c1/member-photo/image?v=1",
+      "includeInPass": false,
+      "walletSupported": true,
+      "updatedAt": 1795399200000
+    }
   },
   "passes.putPassesByIdMemberPhoto": {
-    "description": "Uploads a member photo for a pass."
+    "description": "Uploads a member photo for a pass.",
+    "request": {
+      "png": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "includeInPass": false
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "url": "/api/v1/passes/0193a1b2-7c00-7000-8000-0000000000c1/member-photo/image?v=1",
+      "includeInPass": false,
+      "walletSupported": true,
+      "updatedAt": 1795399200000
+    }
   },
   "passes.patchPassesByIdMemberPhoto": {
-    "description": "Sets whether the photo is included in the Wallet pass."
+    "description": "Sets whether the photo is included in the Wallet pass.",
+    "request": {
+      "includeInPass": true
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "url": "/api/v1/passes/0193a1b2-7c00-7000-8000-0000000000c1/member-photo/image?v=1",
+      "includeInPass": true,
+      "walletSupported": true,
+      "updatedAt": 1795399200000
+    }
   },
   "passes.deletePassesByIdMemberPhoto": {
-    "description": "Removes the member photo."
+    "description": "Removes the member photo.",
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "url": null,
+      "includeInPass": false,
+      "walletSupported": true,
+      "updatedAt": 1795572000000
+    }
   },
   "passes.getPassesByIdMemberPhotoImage": {
     "description": "The member photo bytes. The photo is private and needs a key with access to the pass."
   },
   "passes.postPassesPhotosMatch": {
-    "description": "Matches photo file names to passes by external ID or serial. It reads names only and changes nothing."
+    "description": "Matches photo file names to passes by external ID or serial. It reads names only and changes nothing.",
+    "request": {
+      "keys": ["NW-1001", "NW-1002"]
+    },
+    "response": {
+      "matches": [
+        {
+          "key": "NW-1001",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "state": "matched"
+        },
+        {
+          "key": "NW-1002",
+          "passId": "0193a1b2-7c00-7000-8000-f3f85c24ee38",
+          "state": "matched"
+        }
+      ]
+    }
   },
   "passes.getPassesByIdCheckIn": {
-    "description": "The check-in rules of a pass."
+    "description": "The check-in rules of a pass.",
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "rules": {
+        "mode": "daily"
+      },
+      "defaults": {
+        "mode": "daily",
+        "validFrom": 1795507200000,
+        "validUntil": 1798790399999
+      },
+      "effective": {
+        "mode": "daily",
+        "validFrom": 1795507200000,
+        "validUntil": 1798790399999
+      },
+      "updatedAt": 1795399200000
+    }
   },
   "passes.putPassesByIdCheckIn": {
-    "description": "Sets the check-in rules of a pass."
+    "description": "Sets the check-in rules of a pass.",
+    "request": {
+      "rules": {
+        "mode": "daily"
+      }
+    },
+    "response": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "rules": {
+        "mode": "daily"
+      },
+      "defaults": {
+        "mode": "daily",
+        "validFrom": 1795507200000,
+        "validUntil": 1798790399999
+      },
+      "effective": {
+        "mode": "daily",
+        "validFrom": 1795507200000,
+        "validUntil": 1798790399999
+      },
+      "updatedAt": 1795572000000
+    }
   },
   "passes.postPassesByIdStamps": {
-    "description": "Adds stamps to a stamp card, or redeems its reward."
+    "description": "Adds stamps to a stamp card, or redeems its reward.",
+    "request": {
+      "action": "add",
+      "count": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
+      "externalId": "booking_8841",
+      "status": "active",
+      "mode": "live",
+      "version": 2,
+      "connectionId": null,
+      "externalRef": null,
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 2,
+      "removedAt": null,
+      "modifiedAt": 1795572000000,
+      "createdAt": 1795399200000,
+      "reissueRequired": false,
+      "ownerName": null,
+      "ownerEmail": null,
+      "personalization": {
+        "name": "Ada Example",
+        "tier": "Day pass",
+        "validUntil": "2026-12-31"
+      },
+      "fieldSources": {
+        "name": "manual",
+        "tier": "manual",
+        "validUntil": "manual"
+      },
+      "passJson": {
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.mobile.passbook.northwind",
+        "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+        "organizationName": "Northwind Climbing",
+        "description": "Day pass",
+        "backgroundColor": "rgb(17, 42, 74)",
+        "foregroundColor": "rgb(255, 255, 255)",
+        "labelColor": "rgb(255, 196, 0)",
+        "generic": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ],
+          "secondaryFields": [
+            {
+              "key": "tier",
+              "label": "Pass",
+              "value": "Day pass"
+            }
+          ],
+          "auxiliaryFields": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "value": "2026-12-31"
+            }
+          ]
+        }
+      },
+      "assetBaseUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/assets/",
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "blockedUsers": [],
+      "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
+      "publicUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+      "registrations": 2,
+      "lastRefreshedAt": 1795399380000,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "3",
+          "cause": "create",
+          "source": null,
+          "actorType": "api_key",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000021",
+          "createdAt": 1795399200000,
+          "purged": false
+        }
+      ],
+      "deliveries": [],
+      "warnings": []
+    }
   },
   "passes.postPassesByIdRenew": {
-    "description": "Renews the term of a pass."
+    "description": "Renews the term of a pass.",
+    "request": {},
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "templateVersion": "3",
+      "identityId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "serial": "0193a1b2-7c00-7000-8000-0000000000c2",
+      "title": "Day pass",
+      "subtitle": "Ada Example",
+      "externalId": "booking_8841",
+      "status": "active",
+      "mode": "live",
+      "version": 2,
+      "connectionId": null,
+      "externalRef": null,
+      "syncErrorCode": null,
+      "holderEmail": "ada@example.com",
+      "holderState": "waiting",
+      "ownerUserId": null,
+      "deviceCount": 2,
+      "removedAt": null,
+      "modifiedAt": 1795572000000,
+      "createdAt": 1795399200000,
+      "reissueRequired": false,
+      "ownerName": null,
+      "ownerEmail": null,
+      "personalization": {
+        "name": "Ada Example",
+        "tier": "Day pass",
+        "validUntil": "2027-12-31"
+      },
+      "fieldSources": {
+        "name": "manual",
+        "tier": "manual",
+        "validUntil": "manual"
+      },
+      "passJson": {
+        "formatVersion": 1,
+        "passTypeIdentifier": "pass.mobile.passbook.northwind",
+        "serialNumber": "0193a1b2-7c00-7000-8000-0000000000c2",
+        "organizationName": "Northwind Climbing",
+        "description": "Day pass",
+        "backgroundColor": "rgb(17, 42, 74)",
+        "foregroundColor": "rgb(255, 255, 255)",
+        "labelColor": "rgb(255, 196, 0)",
+        "generic": {
+          "primaryFields": [
+            {
+              "key": "name",
+              "label": "Guest",
+              "value": "Ada Example"
+            }
+          ],
+          "secondaryFields": [
+            {
+              "key": "tier",
+              "label": "Pass",
+              "value": "Day pass"
+            }
+          ],
+          "auxiliaryFields": [
+            {
+              "key": "validUntil",
+              "label": "Valid until",
+              "value": "2026-12-31"
+            }
+          ]
+        }
+      },
+      "assetBaseUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/assets/",
+      "assetNames": ["icon.png", "icon@2x.png", "logo.png"],
+      "blockedUsers": [],
+      "downloadUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ/pass.pkpass",
+      "publicUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+      "registrations": 2,
+      "lastRefreshedAt": 1795399380000,
+      "versions": [
+        {
+          "version": 1,
+          "templateVersion": "3",
+          "cause": "create",
+          "source": null,
+          "actorType": "api_key",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000021",
+          "createdAt": 1795399200000,
+          "purged": false
+        }
+      ],
+      "deliveries": [],
+      "warnings": []
+    }
   },
   "passes.postPassesBulkReissue": {
-    "description": "Rebuilds the passes of a template in your org and pushes them to devices. A key needs `passes:write`."
+    "description": "Rebuilds the passes of a template in your org and pushes them to devices. A key needs `passes:write`.",
+    "request": {
+      "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "version": "4"
+    },
+    "response": {
+      "workflowInstanceId": "0193a1b2-7c00-7000-8000-fc526349df42"
+    }
   },
   "passes.postPassesBulkChannels": {
-    "description": "Turns channels on, off or back to the template for up to 100 passes in one call."
+    "description": "Turns channels on, off or back to the template for up to 100 passes in one call.",
+    "request": {
+      "action": "off",
+      "channels": ["paper"],
+      "ids": ["0193a1b2-7c00-7000-8000-0000000000c1", "0193a1b2-7c00-7000-8000-f3f85c24ee38"],
+      "notify": false,
+      "dryRun": false
+    },
+    "response": {
+      "done": 2,
+      "skipped": [],
+      "preview": {
+        "impact": [
+          {
+            "channel": "mobile",
+            "passes": 37,
+            "rotated": 3
+          }
+        ],
+        "unsupported": 7,
+        "allOff": 24,
+        "blocked": null,
+        "windows": [
+          {
+            "kind": "event",
+            "id": "0193a1b2-7c00-7000-8000-75a9665dea0f",
+            "name": "Evening rush",
+            "opensAt": 1795570500000,
+            "closesAt": 1798162500000,
+            "open": false,
+            "scheduled": false
+          }
+        ]
+      }
+    }
   },
   "passes.getPassesByIdChannels": {
-    "description": "A pass's channels: effective state, source and overrides."
+    "description": "A pass's channels: effective state, source and overrides.",
+    "response": {
+      "effective": {
+        "mobile": {
+          "on": true,
+          "source": "template"
+        },
+        "apple": {
+          "on": true,
+          "source": "template"
+        },
+        "google": {
+          "on": false,
+          "source": "platform",
+          "reason": "not_released"
+        },
+        "samsung": {
+          "on": false,
+          "source": "platform",
+          "reason": "not_released"
+        },
+        "paper": {
+          "on": true,
+          "source": "template"
+        },
+        "nfc": {
+          "on": false,
+          "source": "org",
+          "reason": "tags_off"
+        }
+      },
+      "levels": {
+        "mobile": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ],
+        "apple": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ],
+        "google": [
+          {
+            "level": "passbook",
+            "state": "locked",
+            "reason": "not_released",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ],
+        "samsung": [
+          {
+            "level": "passbook",
+            "state": "locked",
+            "reason": "not_released",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ],
+        "paper": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ],
+        "nfc": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "off",
+            "reason": "tags_off",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ]
+      },
+      "overrides": {},
+      "replace": {
+        "supported": false,
+        "windows": [],
+        "owed": false,
+        "blocked": null,
+        "lastDigital": ["mobile"]
+      }
+    }
   },
   "passes.putPassesByIdChannels": {
-    "description": "Overrides channels for one pass. A `null` value returns that channel to its template."
+    "description": "Overrides channels for one pass. A `null` value returns that channel to its template.",
+    "request": {
+      "channels": {
+        "mobile": "on",
+        "apple": "on",
+        "google": "on",
+        "samsung": "on",
+        "paper": "on",
+        "nfc": "on"
+      }
+    },
+    "response": {
+      "effective": {
+        "mobile": {
+          "on": true,
+          "source": "template"
+        },
+        "apple": {
+          "on": true,
+          "source": "template"
+        },
+        "google": {
+          "on": false,
+          "source": "platform",
+          "reason": "not_released"
+        },
+        "samsung": {
+          "on": false,
+          "source": "platform",
+          "reason": "not_released"
+        },
+        "paper": {
+          "on": false,
+          "source": "pass",
+          "reason": "pass_off"
+        },
+        "nfc": {
+          "on": false,
+          "source": "org",
+          "reason": "tags_off"
+        }
+      },
+      "levels": {
+        "mobile": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ],
+        "apple": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ],
+        "google": [
+          {
+            "level": "passbook",
+            "state": "locked",
+            "reason": "not_released",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ],
+        "samsung": [
+          {
+            "level": "passbook",
+            "state": "locked",
+            "reason": "not_released",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ],
+        "paper": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ],
+        "nfc": [
+          {
+            "level": "passbook",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "plan",
+            "state": "ok",
+            "canChange": false
+          },
+          {
+            "level": "org",
+            "state": "off",
+            "reason": "tags_off",
+            "canChange": true
+          },
+          {
+            "level": "template",
+            "state": "ok",
+            "canChange": true
+          },
+          {
+            "level": "pass",
+            "state": "ok",
+            "canChange": true
+          }
+        ]
+      },
+      "overrides": {
+        "paper": "off"
+      },
+      "replace": {
+        "supported": false,
+        "windows": [],
+        "owed": false,
+        "blocked": null,
+        "lastDigital": ["mobile"]
+      }
+    }
   },
   "passes.postPassesBulkPrint": {
-    "description": "Prints up to 50 passes of one org into one PDF. A job renders it; poll the job."
+    "description": "Prints up to 50 passes of one org into one PDF. A job renders it; poll the job.",
+    "request": {
+      "ids": ["0193a1b2-7c00-7000-8000-7df1a6663d89"],
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+    },
+    "response": {
+      "jobId": "0193a1b2-7c00-7000-8000-000000000063",
+      "count": 12,
+      "skipped": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-8c3634195564",
+          "code": "PRINTING_OFF",
+          "reason": "Paper is off for Day pass"
+        }
+      ]
+    }
   },
   "passes.getPassesBulkPrintByJobId": {
-    "description": "The state of a bulk print job."
+    "description": "The state of a bulk print job.",
+    "response": {
+      "state": "ready",
+      "count": 12,
+      "skipped": 7,
+      "engine": "pdf-lib",
+      "lossy": false
+    }
   },
   "passes.getPassesBulkPrintByJobIdPdf": {
     "description": "The combined PDF of a finished bulk print job."
   },
   "passes.postPassesByIdPrints": {
-    "description": "Prints a ticket. An earlier print of the same pass is voided."
+    "description": "Prints a ticket. An earlier print of the same pass is voided.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000053",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "generation": 1,
+      "status": "active",
+      "createdAt": 1795572000000,
+      "voidedAt": null,
+      "voidCause": null,
+      "code": "P7QK2XJ4MZ3TBWHN5RVC6DLE4A"
+    }
   },
   "passes.getPassesByIdPrints": {
-    "description": "A pass's prints, newest first. Codes are never listed."
+    "description": "A pass's prints, newest first. Codes are never listed.",
+    "response": {
+      "prints": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000053",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "generation": 3,
+          "status": "active",
+          "createdAt": 1794362400000,
+          "voidedAt": null,
+          "voidCause": "refund"
+        }
+      ]
+    }
   },
   "passes.postPassesByIdPrintsByPrintIdVoid": {
-    "description": "Voids a printed ticket so its code stops working."
+    "description": "Voids a printed ticket so its code stops working.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000053",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "generation": 1,
+      "status": "voided",
+      "createdAt": 1795399200000,
+      "voidedAt": 1795572000000,
+      "voidCause": "manual"
+    }
   },
   "passes.getPassesByIdPrint": {
     "description": "The print page of the active print, for staff."
@@ -632,9 +1765,59 @@
     "description": "A template image used by the print page, for staff."
   },
   "passes.getPassesByIdEvents": {
-    "description": "The sync log and activity of a pass, newest first."
+    "description": "The sync log and activity of a pass, newest first.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-5bdf6ee7e2dd",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "mode": "live",
+          "kind": "pass.issued",
+          "device": "iPhone 15",
+          "actorType": "user",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000011",
+          "data": {
+            "tier": "Day pass"
+          },
+          "at": 1795570500000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "passes.getPassesByIdDevices": {
-    "description": "The devices of a pass with their sync status."
+    "description": "The devices of a pass with their sync status.",
+    "response": {
+      "version": 1,
+      "devices": [
+        {
+          "device": "iPhone 15",
+          "status": "current",
+          "registeredAt": 1795399380000,
+          "unregisteredAt": null,
+          "lastFetch": {
+            "at": 1795399380000,
+            "version": 1,
+            "httpStatus": 200
+          },
+          "lastPush": null,
+          "removal": null
+        },
+        {
+          "device": "Apple Watch",
+          "status": "current",
+          "registeredAt": 1795399440000,
+          "unregisteredAt": null,
+          "lastFetch": {
+            "at": 1795399440000,
+            "version": 1,
+            "httpStatus": 200
+          },
+          "lastPush": null,
+          "removal": null
+        }
+      ],
+      "removal": null
+    }
   }
 }

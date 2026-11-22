@@ -19,8 +19,10 @@ func main() {
 	var body passbook.TemplatesReleasesReleaseBody
 	if err := json.Unmarshal([]byte(`{
   "version": "4",
+  "modes": [
+    "test"
+  ],
   "expected": {
-    "live": 2,
     "test": 3
   }
 }`), &body); err != nil {

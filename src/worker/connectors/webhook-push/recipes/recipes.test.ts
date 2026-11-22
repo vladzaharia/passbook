@@ -355,7 +355,7 @@ describe('calcom-bookings', () => {
 });
 
 describe('verifyRecipe', () => {
-  const SECRET = 'shpss_test_secret_0123456789abcdef';
+  const SECRET = 'shpss_demo_secret';
   const shopify = RECIPES['shopify-orders'];
 
   it('Shopify: the event id is the body digest, so a different X-Shopify-Webhook-Id changes nothing', async () => {

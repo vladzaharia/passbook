@@ -81,8 +81,8 @@ describe('create', () => {
   it('seals entered keys and does not echo them', async () => {
     const t = await f.org();
     const authority = await t.admin.authority();
-    const metaKey = '0123456789abcdef0123456789abcdef';
-    const fileKey = 'fedcba9876543210fedcba9876543210';
+    const metaKey = '00112233445566778899aabbccddeeff';
+    const fileKey = 'ffeeddccbbaa99887766554433221100';
     const made = await createKeyset(ctx(), authority, {
       name: 'Supplier',
       diversify: false,
@@ -320,7 +320,7 @@ describe('rotate, retire and disable', () => {
       await refused(rotateKeyset(ctx(), authority, made.id, keys), 'KEYSET_KEY_REUSED');
     await rotateKeyset(ctx(), authority, made.id, {
       metaKey: fresh,
-      fileKey: '1234567890abcdef1234567890abcdef',
+      fileKey: 'aaaaaaaabbbbbbbbccccccccdddddddd',
     });
     await retireKeyVersion(ctx(), authority, made.id, 1);
     await refused(

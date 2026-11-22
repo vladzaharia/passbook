@@ -19,7 +19,8 @@ func main() {
 	var body passbook.PassesMatchPhotosBody
 	if err := json.Unmarshal([]byte(`{
   "keys": [
-    "Example"
+    "NW-1001",
+    "NW-1002"
   ]
 }`), &body); err != nil {
 		panic(err)

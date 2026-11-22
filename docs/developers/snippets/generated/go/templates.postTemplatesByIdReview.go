@@ -20,7 +20,7 @@ func main() {
 	if err := json.Unmarshal([]byte(`{
   "version": "4",
   "release": true,
-  "note": "Looks right."
+  "note": "Logo and colors match the brand guide."
 }`), &body); err != nil {
 		panic(err)
 	}

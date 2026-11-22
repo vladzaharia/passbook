@@ -1,0 +1,58 @@
+# Secret scanning for the whole tree (CI runs `gitleaks dir .`). The default rules stay on.
+# The allowlist matches the finding's own text, and every pattern is anchored (^...$), so a real token that merely
+# contains one of these shapes is still reported. There are no path rules and no per-finding ignores.
+# What is allowed, and why:
+#  - the demo values our API examples use (tools/lib/example-world.ts): they cannot authenticate (the example key's
+#    tail is 42 characters, the real one 43);
+#  - three false positives of the key rule: `p12.privateKeyPem`, `KEY_ALG_RSA_2048` and two version slugs;
+#  - a public P-256 key (SPKI, 124 base64 characters ending ==), public by definition.
+# tools/check-gitleaks-allowlist.ts proves the boundary: CI runs it with the pinned binary.
+title = "PassBook"
+
+[extend]
+useDefault = true
+
+# Our own formats, as minted by api-key-token.ts, scanner-auth.ts, webhooks/secrets.ts (`whsec_` plus 32 bytes, 43
+# characters) and developer/try-token.ts. Custom rules carry no
+# stopwords and need no `key =` context, so a real key is found in a header, a log line or a bare constant, and a
+# tail that contains "demo" or "example" does not hide it. gitleaks uses RE2 (no lookahead), so the boundary on each
+# side is a character class that is not part of the secret group. On the left a JSON escape (`\n`, `\r`, `\t`) is a
+# boundary too: its letter would otherwise hide a token at the start of an escaped line in a JSON log.
+[[rules]]
+id = "passbook-api-key"
+description = "A PassBook API key or scanner token"
+regex = '''(?:^|[^A-Za-z0-9_-]|\\[nrt])((?:wlt|pb|pbp|pbo|wls)_(?:(?:live|test)_)?[A-Za-z0-9_-]{8}_[A-Za-z0-9_-]{43})(?:[^A-Za-z0-9_-]|$)'''
+secretGroup = 1
+keywords = ["pb_", "pbp_", "pbo_", "wlt_", "wls_"]
+
+[[rules]]
+id = "passbook-webhook-secret"
+description = "A PassBook webhook signing secret"
+regex = '''(?:^|[^A-Za-z0-9_-]|\\[nrt])(whsec_[A-Za-z0-9_-]{43})(?:[^A-Za-z0-9_-]|$)'''
+secretGroup = 1
+keywords = ["whsec_"]
+
+[[rules]]
+id = "passbook-try-token"
+description = "A PassBook developer try token: pbtry_<payload>.<mac>"
+regex = '''(?:^|[^A-Za-z0-9_-]|\\[nrt])(pbtry_[A-Za-z0-9_-]{40,}\.[A-Za-z0-9_-]{43})(?:[^A-Za-z0-9_-]|$)'''
+secretGroup = 1
+keywords = ["pbtry_"]
+
+[allowlist]
+description = "Demo shapes, identifiers and public keys, each anchored"
+regexes = [
+  '''^whsec_demo_northwind_[0-9a-f]{6}$''',
+  '''^pb_test_[A-Za-z0-9]{8}_northwind-demo-key-do-not-use-[0-9a-f]{12}$''',
+  '''^pb_test_(?:k3Qx9Zt2|p7Wm4Hn8)$''',
+  '''^demo-token-northwind-[0-9a-f]{22}$''',
+  '''^c0ffee00c0ffee00c0ffee00c0ffee01$''',
+  '''^00112233445566778899aabbccddeeff$''',
+  '''^ffeeddccbbaa99887766554433221100$''',
+  '''^0193a1b2-7c00-7000-8000-0000000000aa$''',
+  '''^ApiKeyRotationKey[0-9]$''',
+  '''^[a-z0-9]+\.privateKeyPem$''',
+  '''^KEY_ALG_RSA_2048$''',
+  '''^(?:wallet-completion-v1|incompatible-v2)$''',
+  '''^MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE[A-Za-z0-9+/]{86}==$''',
+]

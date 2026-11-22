@@ -20,7 +20,7 @@ func main() {
 	if err := json.Unmarshal([]byte(`{
   "eventTypes": [
     "pass.issued",
-    "pass.updated"
+    "pass.scanned"
   ]
 }`), &body); err != nil {
 		panic(err)

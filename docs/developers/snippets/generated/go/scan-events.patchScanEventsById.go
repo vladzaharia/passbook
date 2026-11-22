@@ -17,7 +17,9 @@ func main() {
 	}
 
 	var body passbook.ScanEventsUpdateBody
-	if err := json.Unmarshal([]byte(`{}`), &body); err != nil {
+	if err := json.Unmarshal([]byte(`{
+  "capacity": 150
+}`), &body); err != nil {
 		panic(err)
 	}
 
