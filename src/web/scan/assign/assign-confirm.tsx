@@ -73,7 +73,7 @@ export function ConfirmBody({
   const choose = p.ownerAccount && !a.request;
   return (
     <>
-      <Identity name={name} meta={p.card.templateName} heading />
+      <Identity name={name} meta={p.card.templateName} photoUrl={p.card.photoUrl} heading />
       <div className="scan-assign-link">
         <TagChip hint={p.hint} assurance={p.assurance} />
       </div>

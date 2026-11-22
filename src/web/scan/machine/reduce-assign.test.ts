@@ -524,3 +524,45 @@ describe('a USB reader', () => {
     expect(assignOf(r.state)?.note?.kind).toBe('is_pass');
   });
 });
+
+describe('what the tag opens by default', () => {
+  const previewWith = (over: Parameters<typeof bindResultOf>[0]) => {
+    const t = tagged();
+    const r = run(t.state, [300, cardReadEvent()]);
+    const bind = assignCmd(r.cmds, 'assign.bind');
+    return run(r.state, [
+      400,
+      { type: 'assign.previewed', key: bind.key, result: bindResultOf(over) },
+    ]);
+  };
+  it("a template that opens the person starts on all of the person's passes", () => {
+    expect(assignOf(previewWith({ opensDefault: 'user' }).state)?.scope).toBe('user');
+  });
+  it('a person without an account stays on the pass, and an absent default is the pass', () => {
+    expect(assignOf(previewWith({ opensDefault: 'user', ownerAccount: false }).state)?.scope).toBe(
+      'pass',
+    );
+    expect(assignOf(previewWith({}).state)?.scope).toBe('pass');
+    expect(assignOf(previewWith({ opensDefault: 'pass' }).state)?.scope).toBe('pass');
+  });
+  it('the desk can still change it', () => {
+    const c = previewWith({ opensDefault: 'user' });
+    const r = step(c.state, { type: 'assign.scope', scope: 'pass' }, at(500));
+    expect(assignOf(r.state)?.scope).toBe('pass');
+  });
+  it('a tag clicked on plays the link beat', () => {
+    const c = confirming();
+    const bind = step(c.state, { type: 'assign.bind' }, at(500));
+    const cmd = assignCmd(bind.cmds, 'assign.bind');
+    const done = step(
+      bind.state,
+      {
+        type: 'assign.bound',
+        key: cmd.key,
+        result: bindResultOf({ status: 'bound', bindingId: 'b1' }),
+      },
+      at(600),
+    );
+    expect(done.cmds).toContainEqual({ c: 'beat', beat: 'link' });
+  });
+});

@@ -250,6 +250,8 @@ export const ScanTagBindResultSchema = z.object({
   }),
   /** The pass has an owner account, so `user` scope is possible. */
   ownerAccount: z.boolean(),
+  /** What the template says the tag opens when nobody chooses; absent from older replies. */
+  opensDefault: TagScopeSchema.optional(),
   /** Titles of the person's passes a basic tag will not open. */
   skipped: z.array(z.string()).max(8),
   warnings: z.array(ScanTagWarningSchema).max(5),

@@ -17,6 +17,7 @@ import type { StripEntry } from '../ui/last-scan-strip.tsx';
 import { AssignCard, type AssignCardContext, toneOf } from './assign-card.tsx';
 import { AssignDock } from './assign-dock.tsx';
 import { TAG_EXTRA_COPY } from './copy.ts';
+import { TagProp } from './tag-prop.tsx';
 import { canTapToRead, type TagReader, tagReaderOf } from './tag-reader.ts';
 import { tagsPortOf } from './tags-port.ts';
 
@@ -31,6 +32,8 @@ export interface TagUi {
   dock: ReactNode | null;
   tint: 'green' | 'amber' | 'red' | 'slate' | null;
   pose: 'pair' | 'aim' | null;
+  /** The tag beside the violet pass once a tag is read. */
+  prop: ReactNode | null;
   strip: StripEntry | null;
   onUndo: (() => void) | null;
   layer: ReactNode;
@@ -229,6 +232,7 @@ export function useTagUi({
           approve: (staffId, pin) =>
             dispatch({ type: 'assign.approve', ...(staffId ? { staffId } : {}), pin }),
           closePin: () => dispatch({ type: 'assign.pin', open: false }),
+          lookUp: () => openLookup(true),
         }}
       />
     ) : null,
@@ -254,6 +258,7 @@ export function useTagUi({
     ) : null,
     tint: tone ? TINT[tone] : null,
     pose: a ? (a.step === 'pass' ? 'aim' : 'pair') : null,
+    prop: a?.tag ? <TagProp struck={tone === 'refused'} /> : null,
     strip: stripEntry,
     onUndo: strip?.bindingId ? () => dispatch({ type: 'assign.undo' }) : null,
     layer,

@@ -36,6 +36,41 @@ describe('the assign card', () => {
     show('assign-pass-banner');
     expect(screen.getByTestId('scan-assign-banner').textContent).toContain('Voided');
   });
+  it('an ambiguous card offers Look up by name, and it opens the sheet', () => {
+    const lookUp = vi.fn();
+    render(<TagVisual scenario="assign-pass-ambiguous" onLookUp={lookUp} />);
+    const banner = screen.getByTestId('scan-assign-banner');
+    expect(banner.textContent).toContain('More than one pass');
+    fireEvent.click(within(banner).getByRole('button', { name: 'Look up' }));
+    expect(lookUp).toHaveBeenCalledTimes(1);
+  });
+  it('other banners have no Look up button', () => {
+    show('assign-pass-banner');
+    expect(within(screen.getByTestId('scan-assign-banner')).queryByRole('button')).toBeNull();
+  });
+  it('confirm shows the holder photo, and initials when it fails to load', () => {
+    show('assign-confirm-photo');
+    const photo = document.querySelector<HTMLImageElement>('.scan-assign-photo');
+    expect(photo?.getAttribute('src')).toContain('data:image/svg+xml');
+    fireEvent.error(photo as HTMLImageElement);
+    expect(document.querySelector('.scan-assign-photo')).toBeNull();
+    expect(document.querySelector('.scan-assign-initials')).toBeTruthy();
+  });
+  it('confirm without a photo shows initials', () => {
+    show('assign-confirm');
+    expect(document.querySelector('.scan-assign-photo')).toBeNull();
+    expect(document.querySelector('.scan-assign-initials')).toBeTruthy();
+  });
+  it('the tag prop sits beside the buddy once a tag is read, and the done card plays link', () => {
+    show('assign-done');
+    expect(document.querySelector('.wl-buddy-prop .scan-tag-prop')).toBeTruthy();
+    expect(document.querySelector('.wl-buddy')?.getAttribute('data-beat')).toBe('link');
+    expect(document.querySelector('.scan-tag-chain')).toBeTruthy();
+  });
+  it('no tag read, no prop', () => {
+    show('assign-tag-android');
+    expect(document.querySelector('.scan-tag-prop')).toBeNull();
+  });
   it('confirm offers the person only with an account, and the Works with label', () => {
     show('assign-confirm');
     expect(screen.getByText(SCAN_TAG_COPY.worksWith.label)).toBeTruthy();

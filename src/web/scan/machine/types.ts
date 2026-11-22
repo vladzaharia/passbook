@@ -18,7 +18,6 @@ export type { FailCode, PinNote, ScanInput };
 export type Card = ScanCard;
 export type Counts = ScanCounts;
 
-/** A Manager's PIN approval. */
 export interface Approval {
   /** Absent: the PIN is matched against the org's managers. */
   staffId?: string;
@@ -234,6 +233,7 @@ export type BuddyBeat =
   | 'lock'
   | 'look'
   | 'pair'
+  | 'link'
   | 'hello'
   | 'tug';
 

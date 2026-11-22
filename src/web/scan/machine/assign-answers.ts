@@ -104,7 +104,7 @@ export function previewed(s: MachineState, ev: Of<'assign.previewed'>, env: Env)
       key: null,
       preview: r,
       step: 'confirm',
-      scope: 'pass',
+      scope: r.ownerAccount && r.opensDefault === 'user' ? 'user' : 'pass',
       banner: null,
       note: null,
     },
@@ -139,7 +139,7 @@ export function bound(s: MachineState, ev: Of<'assign.bound'>, env: Env): Out {
     env,
     [
       { c: 'sound', tone: 'ok' },
-      { c: 'beat', beat: 'hop' },
+      { c: 'beat', beat: 'link' },
       {
         c: 'announce',
         text: `${r.status === 'moved' ? SCAN_TAG_COPY.ok.moved : SCAN_TAG_COPY.ok.assigned}. ${name}.${r.undoUntil ? ' Undo available.' : ''}`,

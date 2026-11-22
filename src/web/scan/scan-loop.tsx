@@ -227,6 +227,7 @@ export function ScanLoop({
           size="xl-scan"
           mood={view.buddy.mood === 'neutral' ? 'flat' : view.buddy.mood}
           pose={tags.pose ?? view.buddy.pose}
+          {...(tags.prop ? { prop: tags.prop } : {})}
           beat={view.buddy.beat ?? undefined}
           card={view.buddy.card}
           immediate

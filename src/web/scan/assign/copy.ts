@@ -27,7 +27,7 @@ export const TAG_EXTRA_COPY = {
     removed: { headline: 'Removed', sub: "Can't assign a tag to a removed pass." },
     expired: { headline: 'Expired', sub: "Can't assign a tag to an expired pass." },
     not_accepted: { headline: 'Not accepted here', sub: "This pass isn't on this scanner." },
-    ambiguous: { headline: 'More than one pass', sub: 'Scan the card again.' },
+    ambiguous: { headline: 'More than one pass', sub: 'Look the person up by name.' },
   },
   basicLow: 'This tag is below what this pass needs.',
   lostWarn: 'Reported lost {date}.',

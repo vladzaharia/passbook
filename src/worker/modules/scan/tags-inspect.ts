@@ -153,7 +153,10 @@ export async function cardPass(
   if (!one)
     throw new ForbiddenError('This scanner does not take that pass.', 'TAG_PASS_NOT_ACCEPTED');
   if (rest.length > 0)
-    throw new ConflictError('Several passes match. Scan the card again.', 'TAG_CARD_AMBIGUOUS');
+    throw new ConflictError(
+      'Several passes match. Look the person up by name.',
+      'TAG_CARD_AMBIGUOUS',
+    );
   const { pass } = one;
   if (pass.removedAt !== null) throw refused('removed');
   if (pass.status === 'voided') throw refused('voided');

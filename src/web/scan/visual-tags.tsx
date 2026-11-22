@@ -5,6 +5,7 @@ import { Buddy } from '../ui/art/buddy.tsx';
 import { ScanAppView } from './app.tsx';
 import { AssignCard, toneOf } from './assign/assign-card.tsx';
 import { AssignDock } from './assign/assign-dock.tsx';
+import { TagProp } from './assign/tag-prop.tsx';
 import { AssignChip } from './enroll/request-chip.tsx';
 import { RequestStrip } from './enroll/request-strip.tsx';
 import { initialState } from './machine/initial-state.ts';
@@ -21,6 +22,7 @@ const handlers = {
   label: noop,
   approve: noop,
   closePin: noop,
+  lookUp: noop,
 };
 const dockHandlers = {
   cancel: noop,
@@ -56,7 +58,13 @@ function useStaticStore() {
   return store;
 }
 
-export function TagVisual({ scenario }: { scenario: TagScenario }) {
+export function TagVisual({
+  scenario,
+  onLookUp = noop,
+}: {
+  scenario: TagScenario;
+  onLookUp?: () => void;
+}) {
   const store = useStaticStore();
   const assign = assigns[scenario];
   const door = doors[scenario];
@@ -92,6 +100,8 @@ export function TagVisual({ scenario }: { scenario: TagScenario }) {
             size="xl-scan"
             mood={face}
             pose={a ? (a.step === 'pass' ? 'aim' : 'pair') : 'rest'}
+            {...(a?.tag ? { prop: <TagProp struck={toneOf(a) === 'refused'} /> } : {})}
+            {...(a?.step === 'done' ? { beat: 'link' } : {})}
             immediate
           />
         }
@@ -143,7 +153,7 @@ export function TagVisual({ scenario }: { scenario: TagScenario }) {
                 readerNote: null,
                 webStatus: 'idle',
               }}
-              on={handlers}
+              on={{ ...handlers, lookUp: onLookUp }}
             />
           ) : door ? (
             <ResultCard outcome={door.outcome} phase="up" tagRead={door.tagRead} />

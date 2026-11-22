@@ -213,7 +213,7 @@ export async function knownPhotoUrl(
   ctx: ServiceContext,
   actor: ScanActor,
   candidate: Candidate,
-  template: ResolvedTemplate,
+  template?: ResolvedTemplate,
   currentTemplate?: ResolvedTemplate,
 ): Promise<PreparedPhotoGrant | null> {
   const pinned = { ...ctx, env: snapshotCredentialEnv(ctx.env) };

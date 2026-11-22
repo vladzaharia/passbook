@@ -1,4 +1,4 @@
-import { CircleAlert, Loader2 } from 'lucide-react';
+import { CircleAlert, Loader2, Search } from 'lucide-react';
 import { SCAN_TAG_COPY } from '../../../shared/copy/scan-tags.ts';
 import type { AssignState } from '../machine/assign-state.ts';
 import { VerdictGlyph } from '../result/verdict-glyph.tsx';
@@ -50,6 +50,8 @@ export interface AssignCardHandlers {
   label(label: string): void;
   approve(staffId: string | undefined, pin: string): void;
   closePin(): void;
+  /** Opens the Look up sheet: a pick there becomes the pass. */
+  lookUp(): void;
 }
 
 function Headline({ a, ctx }: { a: AssignState; ctx: AssignCardContext }) {
@@ -100,7 +102,11 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
         </>
       ) : name ? (
         <>
-          <Identity name={name} meta={ctx.knownName ? a.preview?.card.templateName : null} />
+          <Identity
+            name={name}
+            meta={ctx.knownName ? a.preview?.card.templateName : null}
+            photoUrl={a.preview?.card.photoUrl}
+          />
           <p className="scan-assign-sub">{fill(c.assigningTo, { name })}</p>
         </>
       ) : null}
@@ -142,6 +148,12 @@ function Body({ a, ctx, on }: { a: AssignState; ctx: AssignCardContext; on: Assi
           <CircleAlert aria-hidden size={18} />
           <b>{bannerLine(a.banner).headline}</b>
           {bannerLine(a.banner).sub}
+          {a.banner === 'ambiguous' ? (
+            <button type="button" className="scan-assign-banner-act" onClick={on.lookUp}>
+              <Search aria-hidden size={16} />
+              {TAG_EXTRA_COPY.look}
+            </button>
+          ) : null}
         </div>
       ) : null}
       {a.waiting ? (
@@ -229,6 +241,7 @@ export function AssignCard({
             <Identity
               name={done.card.holderName ?? done.card.title}
               meta={done.card.templateName}
+              photoUrl={done.card.photoUrl}
             />
             <div className="scan-assign-link">
               <TagChip
