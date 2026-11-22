@@ -1,6 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
 import { KeyRound, Mail } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import { NO_EMAIL_LABEL } from '../../shared/email.ts';
 import { personLabel } from '../lib/format.ts';
 import { useSession } from '../lib/session.ts';
@@ -15,6 +15,22 @@ export interface AccountPageProps {
   focusAdd?: boolean;
   /** ?verified=<email>: the add-email link just confirmed it. */
   verified?: string;
+}
+
+/** An address wraps before the @ and after a dot, never inside the domain's words. */
+function BreakableEmail({ email }: { email: string }) {
+  const parts = email.split(/(?=@)|(?<=\.)/);
+  return (
+    <>
+      {parts.map((part, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: a static split of one string
+        <Fragment key={i}>
+          {i > 0 ? <wbr /> : null}
+          <span className="whitespace-nowrap">{part}</span>
+        </Fragment>
+      ))}
+    </>
+  );
 }
 
 /**
@@ -39,21 +55,25 @@ export function AccountPage({ focusAdd = false, verified }: AccountPageProps) {
       <div className="flex min-w-0 flex-col gap-6">
         {authed ? (
           <Card>
-            <CardBody className="flex items-center gap-3">
+            <CardBody className="flex flex-wrap items-center gap-3">
               <EntityAvatar
                 kind="user"
                 id={authed.user.id}
                 name={personLabel(authed.user)}
                 size={48}
               />
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 basis-40">
                 {authed.user.name ? (
                   <p className="truncate text-sm font-semibold text-fg-strong">
                     {authed.user.name}
                   </p>
                 ) : null}
-                <p className="text-sm text-fg-muted [overflow-wrap:anywhere]">
-                  {authed.user.primaryEmail ?? NO_EMAIL_LABEL}
+                <p className="text-sm text-fg-muted">
+                  {authed.user.primaryEmail ? (
+                    <BreakableEmail email={authed.user.primaryEmail} />
+                  ) : (
+                    NO_EMAIL_LABEL
+                  )}
                 </p>
               </div>
               <Badge tone="neutral" className="shrink-0">

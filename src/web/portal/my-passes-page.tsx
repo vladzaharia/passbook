@@ -1,3 +1,4 @@
+import './preload-barcode.ts';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Plus } from 'lucide-react';

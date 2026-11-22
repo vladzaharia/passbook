@@ -25,12 +25,13 @@ export const PRESENTATION_HEADERS = {
 /**
  * The door view: a white field the scanner reads against, in every theme. The kit supplies the
  * button; everything else is this page's. Nothing but the code, the pass's name and the way
- * back. No text of the credential or its altText: they never reach page text (presentation.test.ts).
+ * back. The code takes the page's width less the body's 1rem gutters and .5rem more, which is its
+ * quiet zone against the white. No text of the credential or its altText: they never reach page text (presentation.test.ts).
  */
 const CSS = `${RIBBON_CSS}
 html,body{background:#fff;color:#0b1220}
 body{margin:0;min-height:100dvh}
-.door{display:flex;flex-direction:column;align-items:center;gap:1.5rem;min-height:100dvh;box-sizing:border-box;width:100%;max-width:30rem;margin:0 auto;padding:max(1.5rem,env(safe-area-inset-top)) 1.25rem max(1.5rem,env(safe-area-inset-bottom))}
+.door{display:flex;flex-direction:column;align-items:center;gap:1.5rem;min-height:100dvh;box-sizing:border-box;width:100%;max-width:30rem;margin:0 auto;padding:max(1.5rem,env(safe-area-inset-top)) .5rem max(1.5rem,env(safe-area-inset-bottom))}
 .door-head{display:flex;flex-direction:column;align-items:center;gap:.25rem;text-align:center}
 .door-head h1{margin:0;font-size:1.25rem;line-height:1.75rem;font-weight:600;overflow-wrap:anywhere;color:#0b1220}
 .door-head p{margin:0;font-size:.875rem;line-height:1.25rem;color:#4b5563}
@@ -38,14 +39,13 @@ body{margin:0;min-height:100dvh}
 .org-logo{display:block;max-width:100%;height:auto}
 .org-name{display:none}
 .presentation-figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:.75rem;width:100%}
-.presentation-code{display:flex;justify-content:center;align-items:center;width:100%;padding:1rem;box-sizing:border-box;background:#fff;color:#000}
+.presentation-code{display:flex;justify-content:center;align-items:center;width:100%;padding:0;box-sizing:border-box;background:#fff;color:#000}
 .presentation-code[data-square=true]{width:min(100%,24rem)}
 .presentation-code svg{display:block;width:100%;height:auto}
 .presentation-unavailable p{margin:0}
 .door-foot{display:flex;flex-direction:column;align-items:center;gap:.75rem;margin-top:auto}
 .door-foot p{margin:0;font-size:.875rem;line-height:1.25rem;color:#4b5563}
 .door-foot [hidden]{display:none}
-@media(max-width:360px){.presentation-code{padding:.5rem}}
 `;
 
 /** The door view's headers; the pass's own expiry rides in one so a saved copy can honour it. */

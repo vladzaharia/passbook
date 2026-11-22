@@ -1,8 +1,9 @@
 /* PassStack (pass-stack.tsx): plain classes only, so the bundle page (SSR) can inline this sheet
    as it is. The stack is the card's width (22rem at most); its container sizes the peeks' radius
-   as the card's own (14 of 320). Transform and opacity only; reduced motion keeps nothing moving. */
+   as the card's own (14 of 320). A peek is the card's top 68 px: the header's two lines (an org name
+   that wraps) read whole, and the next peek covers only its 10 px overlap. Transform and opacity only; reduced motion keeps nothing moving. */
 .wl-stack {
-  --wl-peek: 3.625rem;
+  --wl-peek: 4.25rem;
   --wl-peek-radius: calc(100cqw * 14 / 320);
   container-type: inline-size;
   display: grid;
@@ -11,6 +12,7 @@
   margin: 0 auto;
   padding: 0;
   list-style: none;
+  flex-shrink: 0;
 }
 .wl-stack-front {
   position: relative;
@@ -29,6 +31,9 @@
 .wl-stack-peek {
   position: relative;
   min-width: 0;
+  /* The strip's own height: in My passes' flex column the grid's rows were squeezed to 43 px and
+     the next peek covered most of this one. */
+  min-height: var(--wl-peek);
 }
 .wl-peek {
   position: relative;
@@ -40,6 +45,19 @@
   color: inherit;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
+}
+/* A peek with a row under it (the bundle's door link on Android) is a whole short card, then the
+   row, then a gap before the next. */
+.wl-stack-peek[data-way] .wl-peek {
+  border-radius: var(--wl-peek-radius);
+}
+.wl-peek-way {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.5rem;
+}
+.wl-stack-peek[data-way] + .wl-stack-peek {
+  margin-top: 0.875rem;
 }
 /* The last peek is the stack's bottom edge: a short card, rounded all round. */
 .wl-stack-peek:last-child .wl-peek {

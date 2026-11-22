@@ -1,3 +1,4 @@
+import './preload-barcode.ts';
 import { type InfiniteData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import type { MyPassListSchema } from '@/shared/contracts/me.ts';

@@ -94,7 +94,7 @@ describe('GET /b/:token', () => {
     expect(html).toContain('<svg');
   });
 
-  it('gives Android Show at the door on the front pass and no Apple badge', async () => {
+  it('gives Android Show at the door on every live member and no Apple badge', async () => {
     const { passes, token } = await bundleWith(2);
     const html = await (
       await get(`/b/${token}`, {
@@ -103,8 +103,8 @@ describe('GET /b/:token', () => {
       })
     ).text();
     for (const p of passes) expect(html).not.toContain(`/b/${token}/${p.id}/pass.pkpass`);
-    expect(html.match(/Show at the door/g)).toHaveLength(1);
-    expect(html.match(/href="\/b\/[^/"]+\/[^/"]+\/barcode"/g)).toHaveLength(1);
+    expect(html.match(/>Show at the door</g)).toHaveLength(2);
+    expect(html.match(/href="\/b\/[^/"]+\/[^/"]+\/barcode"/g)).toHaveLength(2);
     expect(html.match(/class="wl-peek"/g)).toHaveLength(1);
     expect(html).not.toContain('aria-label="Add to Apple Wallet"');
     expect(html).not.toContain('data-awb=');
