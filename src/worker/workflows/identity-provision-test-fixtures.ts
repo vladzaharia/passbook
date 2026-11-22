@@ -29,6 +29,8 @@ export class FakeApple {
   /** Throw after the next create succeeds, as a dropped response would. */
   /** The provisioner refuses the next certificate order, permanently. */
   refuse = false;
+  /** Answer createPassType with this identifier instead of the requested one. */
+  wrongIdentifier: string | null = null;
   dropNext: 'createPassType' | 'createCertificate' | null = null;
 
   readonly ca: FakeWwdr;
@@ -56,7 +58,7 @@ export class FakeApple {
 
   async createPassType(handle: string, name: string): Promise<CreatedPassType> {
     this.calls.push('createPassType');
-    const identifier = `pass.mobile.passbook.${handle}`;
+    const identifier = this.wrongIdentifier ?? `pass.mobile.passbook.${handle}`;
     const held = this.passTypes.get(identifier);
     if (held) return { ...held, outcome: 'existing' };
     const ref = { ascId: `asc-pt-${handle}`, identifier, name };

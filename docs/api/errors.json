@@ -1680,6 +1680,15 @@
       ]
     },
     {
+      "code": "IDENTITY_PASS_TYPE_MISMATCH",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "workflows"
+      ]
+    },
+    {
       "code": "IDENTITY_PLATFORM_ENV_MISMATCH",
       "statuses": [
         503
