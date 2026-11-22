@@ -78,6 +78,7 @@ export function planActionReads(
           ctx.env,
           found,
           found.liveCandidate?.templateSnapshot?.raw,
+          found.inactive !== undefined,
         );
         if (!prepared && picked !== 'choose') throw new StaleScanAuthority();
         base = prepared

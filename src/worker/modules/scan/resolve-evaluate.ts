@@ -18,7 +18,7 @@ import { occupancyAsRead, planOccupancy } from './occupancy/admission.ts';
 import { credentialTombstonesClear } from './repo-credential-tombstones.ts';
 import { type Candidate, hasScanPolicy } from './repo-lookup.ts';
 import { codeRotatedOut } from './repo-rotations.ts';
-import { activeFlags, type Evaluated, type Found, foundOf } from './resolve.ts';
+import { activeFlags, type Evaluated, type Found, foundOf, type Stop } from './resolve.ts';
 import {
   accepts,
   candidateAudit,
@@ -75,6 +75,26 @@ export async function evaluate(
     return { ...stop('refused', 'not_found', { stale: true }), ...refs };
   const result = await evaluateObserved(ctx, actor, input, waive, refs, options);
   return result.stop ? Object.assign(result, refs) : result;
+}
+
+/** Why a pass cannot be scanned at all, from the candidate alone. */
+function unavailable(ctx: ServiceContext, one: Candidate): Stop {
+  const json = candidateWallet(one);
+  if (!json) return stop('refused', 'not_found', { stale: true });
+  const audit = candidateAudit(one);
+  if (one.pass.removedAt !== null)
+    return stop('refused', 'removed', { ...audit, at: one.pass.removedAt });
+  if (one.pass.status === 'voided')
+    return stop('refused', 'voided', { ...audit, at: one.pass.modifiedAt });
+  const validity = validityOf(json, ctx.clock.now());
+  if (validity.status === 'voided')
+    return stop('refused', 'voided', { ...audit, at: one.pass.modifiedAt });
+  if (validity.status === 'expired')
+    return stop('refused', isGuestPass(one) ? 'guest_expired' : 'expired', {
+      ...audit,
+      at: validity.validUntil,
+    });
+  return stop('refused', 'not_accepted');
 }
 
 async function evaluateObserved(
@@ -173,25 +193,16 @@ async function evaluateObserved(
           channel: 'paper',
         })
       : stop('refused', 'not_found', { stale: true });
-  const found = await foundOf(ctx, one, actor);
-  if (!found) {
-    const json = candidateWallet(one);
-    if (!json) return stop('refused', 'not_found', { stale: true });
-    const audit = candidateAudit(one);
-    if (one.pass.removedAt !== null)
-      return stop('refused', 'removed', { ...audit, at: one.pass.removedAt });
-    if (one.pass.status === 'voided')
-      return stop('refused', 'voided', { ...audit, at: one.pass.modifiedAt });
-    const validity = validityOf(json, ctx.clock.now());
-    if (validity.status === 'voided')
-      return stop('refused', 'voided', { ...audit, at: one.pass.modifiedAt });
-    if (validity.status === 'expired')
-      return stop('refused', isGuestPass(one) ? 'guest_expired' : 'expired', {
-        ...audit,
-        at: validity.validUntil,
-      });
-    return stop('refused', 'not_accepted');
-  }
+  // Only a scanner that can tap out asks for a voided or ended pass back (OC4); every other scan
+  // gets the refusal below, exactly as before.
+  const dir = actor.settings.direction;
+  const mayExit =
+    dir === 'out' ||
+    dir === 'both' ||
+    actor.settings.checkIn?.mode === 'in_out' ||
+    one.checkInRules?.mode === 'in_out';
+  const found = await foundOf(ctx, one, actor, { exit: mayExit });
+  if (!found) return unavailable(ctx, one);
   const known = {
     pass: found.pass,
     ref: found.ref,
@@ -199,7 +210,7 @@ async function evaluateObserved(
     connectionGeneration: found.connectionGeneration,
   };
   const channel = await channelVerdict(ctx, one, input, matchedBy);
-  if (channel?.kind === 'off')
+  if (channel?.kind === 'off' && !found.inactive)
     return stop('refused', 'channel_off', { ...candidateAudit(one), channel: channel.channel });
   const configured =
     options.admits?.(found) !== false &&
@@ -248,12 +259,24 @@ async function evaluateObserved(
   // A re-entry event is a place too: its admission rules still apply, the builder decides in and out.
   const eventPlaced = !placed ? (planned?.place ?? null) : null;
   const admission = configured && !placed ? planned : null;
+  const place = placed ?? eventPlaced;
+  // OC4: leaving is never refused for who you are. A tap-out skips the pass's validity, plan, hours
+  // and guest checks (steps 10-14), so a voided or ended pass still taps out; only "not this
+  // organization's pass" stops it, and `foundOf` already returned null for that. Exits are the one
+  // exemption: a voided or ended pass on any other scan is refused as if it had not been found, and
+  // the pass fence is relaxed only for a Found that carries `inactive` (`prepareActionPassFence`).
+  const zoneExit = place?.found.direction === 'out';
+  const exiting = admission?.plan.state.direction === 'out' || zoneExit;
+  if (found.inactive) {
+    if (!exiting) return unavailable(ctx, one);
+    if (channel?.kind === 'off')
+      return stop('refused', 'channel_off', { ...candidateAudit(one), channel: channel.channel });
+  }
   // The pass's own event filter rejects it: a bare refusal, with no card, identity or grant.
   const selected = admission?.plan.event;
   if (selected && !eventAcceptsPass(actor, selected, found.pass))
     return stop('refused', 'wrong_event');
   found.admission = admission?.plan;
-  const place = placed ?? eventPlaced;
   if (place) found.occupancy = place.found;
   if (eventAdmission && planned) {
     found.eventAdmission = planned.plan;
@@ -267,9 +290,6 @@ async function evaluateObserved(
       hard: true,
       occupancy: occupancyAsRead(place.found, place.turnaround),
     });
-  // A tap-out skips steps 10-14 (OC4): leaving is never refused for who you are.
-  const zoneExit = place?.found.direction === 'out';
-  const exiting = admission?.plan.state.direction === 'out' || zoneExit;
   // Access refusals are authority: they come before the gate, the window and every heads-up.
   const denied = exiting
     ? null
