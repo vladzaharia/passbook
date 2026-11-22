@@ -136,10 +136,7 @@ export async function applyChange(
       ...(plan.text
         ? { changeText: (next: Personalization) => textFor(plan, template, next) ?? '' }
         : {}),
-      extraChecks: [
-        creatorLive(row, ctx.clock.now()),
-        notWrittenYet(row.id, pass.id, pass.version),
-      ],
+      extraChecks: [creatorLive(row, ctx.clock.now()), notWrittenYet(row.id, pass.id)],
       mutate: (current) => {
         // The pass may have changed since selection; this reruns on each retry of the write.
         if (
@@ -198,8 +195,8 @@ export async function applyChange(
     if (!(error instanceof AppError)) throw error;
     // The write was refused because this run already wrote the pass (a newer attempt of this step):
     // settle that write's item instead of recording a failure over it.
-    if (await alreadyWritten(ctx.env.DB, row.id, pass.id, pass.version)) {
-      await settlePending(ctx, row);
+    if (await alreadyWritten(ctx.env.DB, row.id, pass.id)) {
+      await settlePending(ctx, row, pass.id);
       return null;
     }
     ctx.log.warn('broadcast.pass_failed', {

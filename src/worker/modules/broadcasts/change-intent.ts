@@ -21,16 +21,15 @@ export interface Intent {
 
 const SETTLE = 25;
 
-/** The run's item for the pass is recorded, or its own write is stamped past the version it read. */
+/** The run's item for the pass is recorded, or its own write is stamped. */
 export async function alreadyWritten(
   db: D1Database,
   runId: string,
   passId: string,
-  version: number,
 ): Promise<boolean> {
   if ((await handledPassIds(db, runId, [passId])).has(passId)) return true;
   const found = await writtenBy(db, runId, passId);
-  return found !== null && found.version > version;
+  return found !== null;
 }
 
 /**
@@ -39,10 +38,14 @@ export async function alreadyWritten(
  * change set (or voided, or on the new design) is recorded with the earlier values it had, once; a
  * pass that never changed drops the intent and is read again like any other. Nothing is applied twice.
  */
-export async function settlePending(ctx: ServiceContext, row: BroadcastRow): Promise<void> {
+export async function settlePending(
+  ctx: ServiceContext,
+  row: BroadcastRow,
+  only?: string,
+): Promise<void> {
   const db = ctx.env.DB;
   for (;;) {
-    const rows = await pendingIntents(db, row.id, SETTLE);
+    const rows = await pendingIntents(db, row.id, SETTLE, only);
     for (const r of rows) {
       const intent = JSON.parse(r.intent) as Intent;
       const pass = await getPass(db, r.pass_id, row.org_id);

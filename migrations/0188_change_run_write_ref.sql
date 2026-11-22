@@ -13,11 +13,11 @@ AFTER UPDATE OF write_ref ON passes
 WHEN NEW.write_ref IS NOT NULL
 BEGIN
   UPDATE broadcast_targets SET written_version = NEW.version,
-    written_prev = (SELECT json_group_object(k.key, OLD.personalization -> ('$."' || k.key || '"'))
-      FROM json_each(broadcast_targets.intent, '$.to') k
-      WHERE (OLD.personalization -> ('$."' || k.key || '"')) IS NOT NULL),
-    written_next = (SELECT json_group_object(k.key, NEW.personalization -> ('$."' || k.key || '"'))
-      FROM json_each(broadcast_targets.intent, '$.to') k
-      WHERE (NEW.personalization -> ('$."' || k.key || '"')) IS NOT NULL)
+    written_prev = (SELECT json_group_object(o.key, OLD.personalization -> o.fullkey)
+      FROM json_each(OLD.personalization) o
+      WHERE o.key IN (SELECT key FROM json_each(broadcast_targets.intent, '$.to'))),
+    written_next = (SELECT json_group_object(o.key, NEW.personalization -> o.fullkey)
+      FROM json_each(NEW.personalization) o
+      WHERE o.key IN (SELECT key FROM json_each(broadcast_targets.intent, '$.to')))
     WHERE broadcast_id = NEW.write_ref AND pass_id = NEW.id AND intent IS NOT NULL;
 END;

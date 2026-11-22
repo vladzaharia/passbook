@@ -100,11 +100,12 @@ export async function setIntent(
 ): Promise<void> {
   const { changes } = await run(
     db,
-    'UPDATE broadcast_targets SET intent = ? WHERE broadcast_id = ? AND pass_id = ?',
+    'UPDATE broadcast_targets SET intent = ? WHERE broadcast_id = ? AND pass_id = ? AND intent IS NULL',
     [intent, broadcastId, passId],
   );
-  // No target row means no stamp from the write: a crash would apply the change twice.
-  if (changes !== 1) throw new Error(`No target row for ${broadcastId} on ${passId}.`);
+  // No target row means no stamp from the write (a crash would apply the change twice); a live intent
+  // is another attempt's, which a stale attempt must not overwrite.
+  if (changes === 0) throw new Error(`No target row for ${broadcastId} on ${passId}.`);
 }
 
 export const clearIntent = (db: D1Database, broadcastId: string, passId: string) =>
@@ -114,11 +115,16 @@ export const clearIntent = (db: D1Database, broadcastId: string, passId: string)
   ]);
 
 /** Passes with an intent and no item: a step died between writing the pass and recording it. */
-export const pendingIntents = (db: D1Database, broadcastId: string, limit: number) =>
+export const pendingIntents = (
+  db: D1Database,
+  broadcastId: string,
+  limit: number,
+  passId?: string,
+) =>
   all<{ pass_id: string; intent: string }>(
     db,
-    `SELECT t.pass_id, t.intent FROM broadcast_targets t WHERE t.broadcast_id = ? AND t.intent IS NOT NULL
+    `SELECT t.pass_id, t.intent FROM broadcast_targets t WHERE t.broadcast_id = ? AND t.intent IS NOT NULL${passId ? ' AND t.pass_id = ?' : ''}
        AND NOT EXISTS (SELECT 1 FROM broadcast_items i WHERE i.broadcast_id = t.broadcast_id AND i.pass_id = t.pass_id)
      ORDER BY t.pass_id LIMIT ?`,
-    [broadcastId, limit],
+    passId ? [broadcastId, passId, limit] : [broadcastId, limit],
   ) as Promise<{ pass_id: string; intent: string }[]>;

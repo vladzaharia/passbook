@@ -93,14 +93,13 @@ export function creatorLive(
 }
 
 /**
- * A run's write to a pass is refused once its item is recorded or its write is stamped past the version
- * it read: a step attempt that outlived a newer one (or a retry after its own write landed) stops
+ * A run's write to a pass is refused once its item is recorded or its write is stamped: a step attempt that outlived a newer one (or a retry after its own write landed) stops
  * instead of computing the change again on the moved pass. Evaluated inside the write.
  */
-export const notWrittenYet = (runId: string, passId: string, version: number): Check =>
+export const notWrittenYet = (runId: string, passId: string): Check =>
   rawCheck(
     'stale',
     `NOT EXISTS (SELECT 1 FROM broadcast_items WHERE broadcast_id = ? AND pass_id = ?)
-     AND NOT EXISTS (SELECT 1 FROM broadcast_targets WHERE broadcast_id = ? AND pass_id = ? AND written_version > ?)`,
-    [runId, passId, runId, passId, version],
+     AND NOT EXISTS (SELECT 1 FROM broadcast_targets WHERE broadcast_id = ? AND pass_id = ? AND written_version IS NOT NULL)`,
+    [runId, passId, runId, passId],
   );
