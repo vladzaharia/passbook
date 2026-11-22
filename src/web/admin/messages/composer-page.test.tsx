@@ -154,6 +154,31 @@ describe('Message composer', () => {
     expect(requests).toEqual(['detail']);
   });
 
+  it('shows the version an API-made draft is narrowed to', async () => {
+    const draft = broadcast({
+      id: 'b6',
+      orgId: ORG.id,
+      state: 'draft',
+      startedAt: null,
+      target: { templateIds: ['tpl1'], version: 'abcdef1234567890' },
+      patch: { message: 'Hello' },
+    });
+    await renderApp('/admin/messages/new?from=b6', {
+      session: 'admin',
+      memberships: [membershipFixture(ORG.id, { orgName: ORG.name, orgSlug: ORG.slug })],
+      selectedOrg: ORG.id,
+      handlers: {
+        '/api/v1/broadcasts/b6': () => json(draft),
+        '/api/v1/templates': () => json({ items: [templateSummary()], nextCursor: null }),
+        '/api/v1/templates/tpl1': () => json(MESSAGING),
+        '/api/v1/broadcasts/preview': () =>
+          json({ targeted: 1, onDevice: 1, overBudget: 0, limit: 3 }),
+      },
+    });
+    expect(await screen.findByText('abcdef12')).toBeInTheDocument();
+    expect(screen.getByText(/Set through the API/)).toBeInTheDocument();
+  });
+
   it('removes a previously loaded draft and its send confirmation on a scope switch', async () => {
     const writes: string[] = [];
     const draft = broadcast({

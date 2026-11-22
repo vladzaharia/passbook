@@ -75,6 +75,12 @@ export function AudienceSection({
         onToggle={toggle}
         error={error}
       />
+      {state.version ? (
+        <p className="text-sm text-fg-muted">
+          Only passes on version <b className="text-fg-strong">{state.version.slice(0, 8)}</b> or an
+          equivalent build. Set through the API.
+        </p>
+      ) : null}
       <SwitchRow
         label="On a device only"
         checked={state.onDevice}
