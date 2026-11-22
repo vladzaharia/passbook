@@ -163,7 +163,8 @@
     "description": "Imports supplier-personalized tags. Run it as a dry run first, then add.",
     "request": {
       "csv": "name,email,tier\nAda Example,ada@example.com,Day pass\n",
-      "dryRun": false
+      "dryRun": false,
+      "replace": false
     },
     "response": {
       "dryRun": false,

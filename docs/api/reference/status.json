@@ -38,5 +38,49 @@
       ],
       "nextCursor": "c1.4812"
     }
+  },
+  "status.getStatusIncidents": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "title": "Day pass",
+          "note": "Photo ID checked at the desk.",
+          "component": "api",
+          "impact": "notice",
+          "startedAt": 1794322800000,
+          "resolvedAt": 1795521600000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "status.postStatusIncidents": {
+    "request": {
+      "title": "Day pass",
+      "note": "Photo ID checked at the desk.",
+      "component": "api",
+      "impact": "notice"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "title": "Day pass",
+      "note": "Photo ID checked at the desk.",
+      "component": "api",
+      "impact": "notice",
+      "startedAt": 1794322800000,
+      "resolvedAt": 1795521600000
+    }
+  },
+  "status.postStatusIncidentsByIdResolve": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "title": "Day pass",
+      "note": "Photo ID checked at the desk.",
+      "component": "api",
+      "impact": "notice",
+      "startedAt": 1794322800000,
+      "resolvedAt": 1795521600000
+    }
   }
 }

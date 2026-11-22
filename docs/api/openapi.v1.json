@@ -57802,6 +57802,239 @@
           "nextCursor"
         ]
       },
+      "PlatformStatusListIncidentsResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "note": {
+                  "type": "string"
+                },
+                "component": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "api",
+                    "apple_push",
+                    "email",
+                    "webhooks",
+                    "google",
+                    "samsung",
+                    null
+                  ]
+                },
+                "impact": {
+                  "type": "string",
+                  "enum": [
+                    "notice",
+                    "degraded",
+                    "outage"
+                  ]
+                },
+                "startedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "resolvedAt": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "note",
+                "component",
+                "impact",
+                "startedAt",
+                "resolvedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
+      "PlatformStatusOpenIncidentParams": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "component": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "api",
+              "apple_push",
+              "email",
+              "webhooks",
+              "google",
+              "samsung",
+              null
+            ],
+            "default": null
+          },
+          "impact": {
+            "type": "string",
+            "enum": [
+              "notice",
+              "degraded",
+              "outage"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "note",
+          "impact"
+        ]
+      },
+      "PlatformStatusOpenIncidentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "component": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "api",
+              "apple_push",
+              "email",
+              "webhooks",
+              "google",
+              "samsung",
+              null
+            ]
+          },
+          "impact": {
+            "type": "string",
+            "enum": [
+              "notice",
+              "degraded",
+              "outage"
+            ]
+          },
+          "startedAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "resolvedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "note",
+          "component",
+          "impact",
+          "startedAt",
+          "resolvedAt"
+        ]
+      },
+      "PlatformStatusResolveIncidentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "component": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "api",
+              "apple_push",
+              "email",
+              "webhooks",
+              "google",
+              "samsung",
+              null
+            ]
+          },
+          "impact": {
+            "type": "string",
+            "enum": [
+              "notice",
+              "degraded",
+              "outage"
+            ]
+          },
+          "startedAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "resolvedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "note",
+          "component",
+          "impact",
+          "startedAt",
+          "resolvedAt"
+        ]
+      },
       "MetricsRetrieveOverviewResponse": {
         "type": "object",
         "properties": {
@@ -72535,6 +72768,9 @@
           },
           "dryRun": {
             "type": "boolean"
+          },
+          "replace": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -72586,7 +72822,8 @@
                     "dup_file",
                     "dup_key",
                     "meta_key",
-                    "exists"
+                    "exists",
+                    "not_on_keyset"
                   ]
                 }
               },
@@ -119146,6 +119383,221 @@
         ]
       }
     },
+    "/api/v1/status/incidents": {
+      "get": {
+        "summary": "Incident notes on the public status page",
+        "tags": [
+          "status"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformStatusListIncidentsResponse"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+                      "title": "Day pass",
+                      "note": "Photo ID checked at the desk.",
+                      "component": "api",
+                      "impact": "notice",
+                      "startedAt": 1794322800000,
+                      "resolvedAt": 1795521600000
+                    }
+                  ],
+                  "nextCursor": "c1.4812"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "status.getStatusIncidents",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "listIncidents"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "post": {
+        "summary": "Open an incident note on the public status page",
+        "tags": [
+          "status"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformStatusOpenIncidentParams"
+              },
+              "example": {
+                "title": "Day pass",
+                "note": "Photo ID checked at the desk.",
+                "component": "api",
+                "impact": "notice"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformStatusOpenIncidentResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+                  "title": "Day pass",
+                  "note": "Photo ID checked at the desk.",
+                  "component": "api",
+                  "impact": "notice",
+                  "startedAt": 1794322800000,
+                  "resolvedAt": 1795521600000
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "status.postStatusIncidents",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "openIncident"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/status/incidents/{id}/resolve": {
+      "post": {
+        "summary": "Resolve an incident note",
+        "tags": [
+          "status"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformStatusResolveIncidentResponse"
+                },
+                "example": {
+                  "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+                  "title": "Day pass",
+                  "note": "Photo ID checked at the desk.",
+                  "component": "api",
+                  "impact": "notice",
+                  "startedAt": 1794322800000,
+                  "resolvedAt": 1795521600000
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "status.postStatusIncidentsByIdResolve",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "resolveIncident"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INCIDENT_NOT_FOUND",
+          "NOT_FOUND",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
     "/api/v1/metrics/overview": {
       "get": {
         "summary": "Organization overview metrics",
@@ -145338,6 +145790,28 @@
           {
             "schema": {
               "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "passId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pass",
+                "user"
+              ]
+            },
+            "required": false,
+            "name": "binding",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "maxLength": 80
             },
             "required": false,
@@ -148080,7 +148554,8 @@
               },
               "example": {
                 "csv": "name,email,tier\nAda Example,ada@example.com,Day pass\n",
-                "dryRun": false
+                "dryRun": false,
+                "replace": false
               }
             }
           }
@@ -148128,6 +148603,10 @@
         },
         "description": "Imports supplier-personalized tags. Run it as a dry run first, then add.",
         "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
         "x-codes": [
           "CONFLICT",
           "FORBIDDEN",
@@ -148143,6 +148622,7 @@
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
           "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
