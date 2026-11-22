@@ -31,7 +31,7 @@ const COMPILERS: Record<keyof WalletTargetOut, WalletCompiler> = {
  */
 export function compileWallets(
   source: PreviewSource,
-  where: { origin?: string; now?: Date } = {},
+  where: { origin?: string; now?: Date; website?: string } = {},
 ): WalletTargetOut {
   const manifest = source.manifest as unknown as TemplateManifest;
   const now = where.now ?? new Date();
@@ -65,7 +65,7 @@ export function compileWallets(
     assetUrl: (name) => urls[name],
     appLink: {
       name: String(source.passJson.organizationName ?? ''),
-      url: samsungPortalUrl(origin),
+      url: samsungPortalUrl(origin, where.website),
       ...(urls['logo@3x.png'] ? { logo: urls['logo@3x.png'] } : {}),
     },
   });
@@ -76,7 +76,7 @@ export function compileWallets(
     const compiled = compiler.compile(view, {
       now,
       omit,
-      portalUrl: samsungPortalUrl(origin),
+      portalUrl: samsungPortalUrl(origin, where.website),
     } as Parameters<WalletCompiler['compile']>[1]);
     const report = fidelityReport({
       target,
@@ -84,7 +84,9 @@ export function compileWallets(
       views: [view],
       ...(manifest.wallets ? { wallets: manifest.wallets } : {}),
       now,
-      ...(target === 'samsung' ? { compile: { portalUrl: samsungPortalUrl(origin) } } : {}),
+      ...(target === 'samsung'
+        ? { compile: { portalUrl: samsungPortalUrl(origin, where.website) } }
+        : {}),
     });
     out[target] = { compiled, report };
   }

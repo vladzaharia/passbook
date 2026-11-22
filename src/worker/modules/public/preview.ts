@@ -15,6 +15,7 @@ import { depsOf } from '../passes/deps.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { paperTicket } from '../prints/paper.ts';
+import { getOrgSettings } from '../settings/service.ts';
 import { currentPublicGeneration } from './repo.ts';
 import { openPublicAsset, type PublicAsset, pageModel } from './service.ts';
 
@@ -66,6 +67,7 @@ export async function previewFor(
     paperTicket(ctx, pass),
   ]);
   const base = baseUrl(ctx.env);
+  const website = (await getOrgSettings(ctx, pass.orgId))['org.website'];
   const assetBase = `/preview/${link}/assets/`;
   const assets = Object.fromEntries(
     Object.entries(model.assets).map(([name, path]) => [
@@ -93,7 +95,7 @@ export async function previewFor(
         input: pass.personalization,
         testBand: true,
       },
-      { origin: base, now },
+      { origin: base, now, ...(website ? { website } : {}) },
     );
   } catch {
     // A pass a compiler cannot read still shows the Apple card and the ticket.

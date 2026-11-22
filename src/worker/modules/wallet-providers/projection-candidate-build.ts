@@ -35,8 +35,9 @@ async function pinnedProjection(
   ctx: ServiceContext,
   version: VersionRow,
   named: ProjectionV2Request | ProjectionV2,
+  orgId: string,
 ): Promise<ProjectionV2> {
-  const { pins, report } = await computeProjectionPins(ctx, named.provider, version);
+  const { pins, report } = await computeProjectionPins(ctx, named.provider, version, 'dry', orgId);
   if (unreleasable(report))
     throw new ConflictError(statusLabel(report.status), 'WALLET_PROJECTION_BLOCKED');
   const omissions = [...new Set(named.approvedOmissions)].sort();
@@ -67,7 +68,8 @@ export async function buildProjectionCandidate(
   });
   if (!source) throw changed();
   let projection: NativeProjection;
-  if (named.schema === 2) projection = await pinnedProjection(ctx, source.version, named);
+  if (named.schema === 2)
+    projection = await pinnedProjection(ctx, source.version, named, scope.orgId);
   else {
     projection = named;
     assertProjectionSource(projection, source.version);

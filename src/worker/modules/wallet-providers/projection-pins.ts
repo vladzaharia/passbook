@@ -7,6 +7,7 @@ import { resolveWalletView } from '../../../passkit/wallets/view.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { getOrgSettings } from '../settings/service.ts';
 import { previewPlan } from '../templates/build-check.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
@@ -19,6 +20,11 @@ import { COMPILERS, pipelineRevision } from './projection-pipeline.ts';
 /** The hash a candidate pins for a version's `wallets` block (`null` when it has none). */
 export const walletsHash = (wallets: unknown): Promise<string> =>
   sha256Hex(canonicalJson(wallets ?? null));
+
+/** The organization's `org.website` setting, if it has one (Q22). */
+export async function orgWebsite(ctx: ServiceContext, orgId?: string): Promise<string | undefined> {
+  return orgId ? (await getOrgSettings(ctx, orgId))['org.website'] : undefined;
+}
 
 export interface ComputedProjection {
   pins: ProjectionV2;
@@ -39,6 +45,8 @@ export async function computeProjectionPins(
   provider: NativeProvider,
   version: VersionRow,
   mode: 'dry' | 'store' = 'dry',
+  /** The organization whose website is the Samsung app link; none: the holder portal. */
+  orgId?: string,
 ): Promise<ComputedProjection> {
   const compiler = COMPILERS[provider];
   const registry = createTemplateRegistry(ctx.env, { ctx });
@@ -88,7 +96,11 @@ export async function computeProjectionPins(
     now,
     wallets,
     ...(provider === 'samsung'
-      ? { compile: { portalUrl: samsungPortalUrl(baseUrl(ctx.env)) } }
+      ? {
+          compile: {
+            portalUrl: samsungPortalUrl(baseUrl(ctx.env), await orgWebsite(ctx, orgId)),
+          },
+        }
       : {}),
   });
   return {

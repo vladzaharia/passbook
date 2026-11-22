@@ -76,7 +76,7 @@ async function projectOnce(ctx: ServiceContext, job: SystemProjectionJob): Promi
   if (!candidate) {
     const version = await getVersion(db, templateId, job.version);
     if (!version) return skipped(ctx, job, 'version missing');
-    const { pins, report } = await computeProjectionPins(ctx, provider, version);
+    const { pins, report } = await computeProjectionPins(ctx, provider, version, 'dry', orgId);
     if (unreleasable(report)) return skipped(ctx, job, report.status.kind);
     const author = systemAuthority('author', orgId, mode);
     candidate = await buildProjectionCandidate(

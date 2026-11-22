@@ -14,6 +14,7 @@ import { previewPlan } from '../templates/build-check.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
 import { prepareProjectionArt, sizeShipped, type WalletArt } from './projection-art.ts';
 import type { ProjectionV2 } from './projection-contract.ts';
+import { orgWebsite } from './projection-pins.ts';
 import { recordProjectionArt } from './repo-projection-art.ts';
 import type { SamsungCardProjection } from './samsung-token.ts';
 
@@ -118,7 +119,7 @@ export async function compileSamsungCard(
   const options: SamsungCompileOptions = {
     now,
     omit: template.manifest.wallets?.samsung?.omit ?? [],
-    portalUrl: samsungPortalUrl(baseUrl(ctx.env)),
+    portalUrl: samsungPortalUrl(baseUrl(ctx.env), await orgWebsite(ctx, pass.orgId)),
     issuedAt: new Date(input.createdAt),
   };
   const result = samsungCompiler.compile(view, options);

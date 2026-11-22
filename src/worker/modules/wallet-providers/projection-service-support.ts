@@ -255,7 +255,7 @@ async function currentPins(
   if (!version) return false;
   return pinsAcceptable(
     candidate,
-    await computeProjectionPins(ctx, candidate.provider, version),
+    await computeProjectionPins(ctx, candidate.provider, version, 'dry', candidate.orgId),
     rule,
   );
 }
@@ -268,7 +268,13 @@ export async function storeReleaseArt(
   if (candidate.projection.schema !== 2) return;
   const version = await getVersion(ctx.env.DB, candidate.templateId, candidate.version);
   if (!version) throw changed();
-  const current = await computeProjectionPins(ctx, candidate.provider, version, 'store');
+  const current = await computeProjectionPins(
+    ctx,
+    candidate.provider,
+    version,
+    'store',
+    candidate.orgId,
+  );
   if (!pinsAcceptable(candidate, current, rule)) throw changed();
   await recordProjectionArt(ctx.env.DB, {
     candidateId: candidate.id,

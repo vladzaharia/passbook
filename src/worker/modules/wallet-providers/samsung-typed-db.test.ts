@@ -2,7 +2,9 @@ import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { installKeysetTestEnv } from '../../../../test/helpers/credential-keyset.ts';
 import { samsungCompiler } from '../../../passkit/wallets/samsung/index.ts';
 import { first, run } from '../../platform/db.ts';
+import { clearSettingsCache } from '../settings/service.ts';
 import { getVersion } from '../templates/repo.ts';
+import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { setupWalletOfferKit } from './offers-test-fixtures.ts';
 import { computeProjectionPins } from './projection-pins.ts';
 import { createProjectionCandidate } from './projection-service.ts';
@@ -10,6 +12,7 @@ import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { getProjectionCandidate } from './repo-projection-store.ts';
 import { putSamsungCardState, samsungCardStateFresh } from './repo-samsung-card-state.ts';
 import { runtimeGoogleLegacyFixture } from './runtime-integration-fixtures.ts';
+import { decryptCard } from './samsung-card-test-fixtures.ts';
 
 beforeAll(() => {
   setWalletProvidersEnabledForTest(true);
@@ -99,5 +102,32 @@ describe('the card-state row is mode-aware', () => {
       samsungCardStateFresh(t.kit.env.DB, { ...candidate, mode }, 'loyalty', now);
     expect(await fresh('test')).toBe(true);
     expect(await fresh('live')).toBe(false);
+  });
+});
+
+describe('the Samsung app link (Q22)', () => {
+  const appLink = async (t: Awaited<ReturnType<typeof setupSamsungCallbacks>>) => {
+    const response = await t.call({ token: await t.token() });
+    expect(response.status).toBe(200);
+    const { cdata } = (await response.json()) as { cdata: string };
+    const card = (await decryptCard(
+      cdata,
+      t.samsung.partnerCertificatePem,
+      t.samsung.partnerPrivateKeyPem,
+    )) as { card: { data: { attributes: Record<string, string> }[] } };
+    return card.card.data[0]?.attributes.appLinkData;
+  };
+
+  it('is the organization website when one is set, else the holder portal', async () => {
+    const t = await setupSamsungCallbacks({ samsungSchema: 2 });
+    const portal = `${t.kit.env.PUBLIC_BASE_URL.replace(/\/+$/, '')}/account`;
+    expect(await appLink(t)).toBe(portal);
+    await run(
+      t.kit.env.DB,
+      "INSERT INTO settings (scope, key, value, updated_at) VALUES (?, 'org.website', ?, ?)",
+      [`org:${t.kit.org.id}`, JSON.stringify('https://gym.example/'), t.kit.clock.now()],
+    );
+    clearSettingsCache(t.kit.env.DB);
+    expect(await appLink(t)).toBe('https://gym.example/');
   });
 });
