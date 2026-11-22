@@ -826,6 +826,7 @@ __all__ = [
     "PlatformOrgsLegalHoldsCreateParams",
     "PlatformOrgsSetStatusParams",
     "PlatformOrgsWalletEnrollmentsHoldParams",
+    "PlatformStatusOpenIncidentParams",
     "PlatformTemplatesAssignParams",
     "PlatformTemplatesShareParams",
     "PlatformUsersEmailsCreateParams",
@@ -6479,6 +6480,12 @@ class PlatformOrgsSetStatusParams(_Model):
 
 class PlatformOrgsWalletEnrollmentsHoldParams(_Model):
     reason: str
+
+class PlatformStatusOpenIncidentParams(_Model):
+    title: str
+    note: str
+    component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str = None
+    impact: _Literal["notice", "degraded", "outage"] | str
 
 class PlatformTemplatesAssignParams(_Model):
     orgId: str | None

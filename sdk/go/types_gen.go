@@ -5645,6 +5645,13 @@ type PlatformOrgsWalletEnrollmentsHoldParams struct {
 	Reason string `json:"reason"`
 }
 
+type PlatformStatusOpenIncidentParams struct {
+	Title     string  `json:"title"`
+	Note      string  `json:"note"`
+	Component *string `json:"component,omitempty"`
+	Impact    string  `json:"impact"`
+}
+
 type PlatformTemplatesAssignParams struct {
 	OrgID *string `json:"orgId"`
 }

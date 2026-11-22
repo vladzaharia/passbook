@@ -28330,6 +28330,50 @@
           "token"
         ]
       },
+      "PlatformStatusOpenIncidentParams": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+          },
+          "component": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "api",
+              "apple_push",
+              "email",
+              "webhooks",
+              "google",
+              "samsung",
+              null
+            ],
+            "default": null
+          },
+          "impact": {
+            "type": "string",
+            "enum": [
+              "notice",
+              "degraded",
+              "outage"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "note",
+          "impact"
+        ]
+      },
       "TerminalResolveParams": {
         "type": "object",
         "properties": {
@@ -100580,6 +100624,363 @@
         "x-codes": [
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/status/incidents": {
+      "get": {
+        "summary": "Incident notes on the public status page",
+        "tags": [
+          "status"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "note": {
+                            "type": "string"
+                          },
+                          "component": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "enum": [
+                              "api",
+                              "apple_push",
+                              "email",
+                              "webhooks",
+                              "google",
+                              "samsung",
+                              null
+                            ]
+                          },
+                          "impact": {
+                            "type": "string",
+                            "enum": [
+                              "notice",
+                              "degraded",
+                              "outage"
+                            ]
+                          },
+                          "startedAt": {
+                            "type": "integer",
+                            "minimum": 0
+                          },
+                          "resolvedAt": {
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "note",
+                          "component",
+                          "impact",
+                          "startedAt",
+                          "resolvedAt"
+                        ]
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "status.getStatusIncidents",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "listIncidents"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      },
+      "post": {
+        "summary": "Open an incident note on the public status page",
+        "tags": [
+          "status"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformStatusOpenIncidentParams"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "component": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "api",
+                        "apple_push",
+                        "email",
+                        "webhooks",
+                        "google",
+                        "samsung",
+                        null
+                      ]
+                    },
+                    "impact": {
+                      "type": "string",
+                      "enum": [
+                        "notice",
+                        "degraded",
+                        "outage"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "resolvedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "note",
+                    "component",
+                    "impact",
+                    "startedAt",
+                    "resolvedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "status.postStatusIncidents",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "openIncident"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/status/incidents/{id}/resolve": {
+      "post": {
+        "summary": "Resolve an incident note",
+        "tags": [
+          "status"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "component": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "enum": [
+                        "api",
+                        "apple_push",
+                        "email",
+                        "webhooks",
+                        "google",
+                        "samsung",
+                        null
+                      ]
+                    },
+                    "impact": {
+                      "type": "string",
+                      "enum": [
+                        "notice",
+                        "degraded",
+                        "outage"
+                      ]
+                    },
+                    "startedAt": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "resolvedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "note",
+                    "component",
+                    "impact",
+                    "startedAt",
+                    "resolvedAt"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "status.postStatusIncidentsByIdResolve",
+        "x-sdk": {
+          "resource": "platform.status",
+          "method": "resolveIncident"
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "INCIDENT_NOT_FOUND",
+          "NOT_FOUND",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"

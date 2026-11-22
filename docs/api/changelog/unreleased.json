@@ -920,6 +920,14 @@
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
   },
   {
+    "key": "GET /api/v1/status/incidents new operation",
+    "class": "additive",
+    "operationId": "status.getStatusIncidents",
+    "op": "GET /api/v1/status/incidents",
+    "change": "new operation",
+    "note": "Lists the incident notes on the public status page. Platform admins only."
+  },
+  {
     "key": "GET /api/v1/template-reviews new operation",
     "class": "additive",
     "operationId": "templates.getTemplateReviews",
@@ -2763,6 +2771,22 @@
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "new operation",
     "note": "Set up scanning in one call: places, events, staff, sessions and devices."
+  },
+  {
+    "key": "POST /api/v1/status/incidents new operation",
+    "class": "additive",
+    "operationId": "status.postStatusIncidents",
+    "op": "POST /api/v1/status/incidents",
+    "change": "new operation",
+    "note": "Opens an incident note on the public status page. Platform admins only."
+  },
+  {
+    "key": "POST /api/v1/status/incidents/{id}/resolve new operation",
+    "class": "additive",
+    "operationId": "status.postStatusIncidentsByIdResolve",
+    "op": "POST /api/v1/status/incidents/{id}/resolve",
+    "change": "new operation",
+    "note": "Resolves an incident note; it stays on the page for 14 days."
   },
   {
     "key": "POST /api/v1/templates/{id}/archive 200.openReview: field added",
