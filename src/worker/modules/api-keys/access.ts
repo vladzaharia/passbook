@@ -1,13 +1,17 @@
 import { MINTABLE_SCOPES } from '../../../shared/contracts/api-keys.ts';
-import { isPlatformScope, scopeCapability } from '../../platform/api-scopes.ts';
+import { CREDENTIAL_SCOPES, isPlatformScope, scopeCapability } from '../../platform/api-scopes.ts';
 import type { Amr, ApiScope, AuthContext } from '../../platform/auth.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import { type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 
-/** Scopes no child holds: minting stops at one level, and a terminal's scope is bound to its terminals. */
-export const CHILD_NEVER: readonly ApiScope[] = ['api-keys:write', 'scans:write'];
+/** Scopes no child holds: minting stops at one level, a terminal's scope is bound to its terminals, and a key never mints a credential scope. */
+export const CHILD_NEVER: readonly ApiScope[] = [
+  'api-keys:write',
+  'scans:write',
+  ...CREDENTIAL_SCOPES,
+];
 
 /** A key caller is a service key of the org (it holds `api-keys:write`): it reaches its own children only. */
 export type ApiKeyAuthority =

@@ -101,6 +101,15 @@ describe('scan-setups with an API key', () => {
     );
   });
 
+  it('answers 404 to a platform key on the setups list, naming an org or not', async () => {
+    for (const path of ['/api/v1/scan-setups', `/api/v1/scan-setups?orgId=${orgId}`])
+      await expectProblem(
+        await asKey(['scan-setup:read'], null, 'GET', path),
+        404,
+        'ORG_NOT_FOUND',
+      );
+  });
+
   it('keeps session access', async () => {
     expect((await send('GET', '/api/v1/scan-setups', admin())).status).toBe(200);
   });

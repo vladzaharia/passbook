@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { CreateApiKeySchema } from '../../../shared/contracts/index.ts';
 import { type ApiKeyKind, secretLabel } from '../../platform/api-key-token.ts';
-import { effectiveScopes } from '../../platform/api-scopes.ts';
+import { CREDENTIAL_SCOPES, effectiveScopes } from '../../platform/api-scopes.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { ipListTooBroad, parseCidr } from '../../platform/ip-allow.ts';
@@ -31,16 +31,37 @@ export async function newSecret(ctx: ServiceContext, kind: ApiKeyKind, mode: 'li
   return { prefix, label, secret, hash: await sha256Hex(secret) };
 }
 
-/** `scanning:admin` mints PINs and pairing codes, which only an org-bound live key may: refuse it at mint, not at the first call. */
-export function assertScanningAdminKey(
+/** A credential scope (`scanning:admin`) mints PINs and pairing codes: only a live key of one organization, and it expires within 90 days. Refused at mint, not at the first call. */
+export function assertCredentialKey(
   scopes: readonly string[],
   kind: ApiKeyKind,
   mode: 'live' | 'test',
+  expiresAt: number | null | undefined,
+  now: number,
 ): void {
-  if (scopes.includes('scanning:admin') && (kind === 'platform' || mode !== 'live'))
-    throw invalid(
+  if (!scopes.some((s) => (CREDENTIAL_SCOPES as readonly string[]).includes(s))) return;
+  if (kind === 'platform' || mode !== 'live')
+    throw new ValidationError(
       'The scanning:admin scope is for live keys of one organization.',
+      [
+        {
+          path: 'scopes',
+          message: 'The scanning:admin scope is for live keys of one organization.',
+        },
+      ],
       'API_KEY_SCANNING_ADMIN_LIVE_ORG',
+    );
+  if (expiresAt == null)
+    throw new ValidationError(
+      'A key with scanning:admin needs an expiry.',
+      [{ path: 'expiresAt', message: 'A key with scanning:admin needs an expiry.' }],
+      'API_KEY_EXPIRY_REQUIRED',
+    );
+  if (expiresAt > now + MAX_LIFETIME_MS)
+    throw new ValidationError(
+      'A key with scanning:admin lives at most 90 days.',
+      [{ path: 'expiresAt', message: 'A key with scanning:admin lives at most 90 days.' }],
+      'API_KEY_EXPIRY_TOO_LONG',
     );
 }
 
@@ -218,7 +239,7 @@ export async function createApiKey(
   // A sandbox holds the sandbox ceiling, whoever mints (a role's bundle counts too).
   await assertSandboxCeiling(ctx.env.DB, orgId, effectiveScopes(input.scopes, input.roles));
   const mode = authority.kind === 'platform' ? input.mode : authority.mode;
-  assertScanningAdminKey(effectiveScopes(input.scopes, input.roles), kind, mode);
+  assertCredentialKey(effectiveScopes(input.scopes, input.roles), kind, mode, input.expiresAt, now);
   assertOrgBoundScopes(effectiveScopes(input.scopes, input.roles), kind);
   const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);
   const row: ApiKeyRow = {

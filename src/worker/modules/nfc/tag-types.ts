@@ -34,7 +34,8 @@ import {
 export const tagTypeNotFound = () => new NotFoundError('Tag type not found.', 'TAG_TYPE_NOT_FOUND');
 
 /**
- * A session needs the capability through its membership (a non-member gets a 404); an API key needs the
+ * A session needs the capability through its membership (a non-member gets a 404); an API key of another org, or a platform key,
+ * gets the same 404; an API key needs the
  * scope the route guard verified: `scans:read` to read, `scanning:write` to change.
  */
 export async function tagTypeAccess(
@@ -47,7 +48,7 @@ export async function tagTypeAccess(
   if (!auth) throw new UnauthenticatedError();
   if (auth.kind === 'scanner') throw new ForbiddenError();
   if (auth.kind === 'session' && !(await getOrgAccess(ctx, auth.userId, orgId))) throw notFound();
-  if (auth.kind === 'api_key' && auth.orgId !== null && auth.orgId !== orgId) throw notFound();
+  if (auth.kind === 'api_key' && auth.orgId !== orgId) throw notFound();
   assertOrgAccess(auth, orgId);
   return tenantAuthorityOf(ctx, auth, orgId, capability);
 }

@@ -1,9 +1,11 @@
 import type { z } from 'zod';
-import { MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
+import { CREDENTIAL_SCOPES, MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
 import type { ApiScopeSchema } from '../../shared/contracts/common.ts';
 import type { OrgCapability, OrgRole } from '../../shared/contracts/org-membership.ts';
 import { OrgRoleSchema } from '../../shared/contracts/org-membership.ts';
 import { rolesGranting } from './org-role-grants.ts';
+
+export { CREDENTIAL_SCOPES };
 
 type ApiScope = z.infer<typeof ApiScopeSchema>;
 
@@ -67,16 +69,13 @@ export function scopeExercises(scope: ApiScope, capability: OrgCapability): bool
   return scopeCapability[scope] === capability || ALSO_READS[scope] === capability;
 }
 
-/** Scopes that mint or reset device credentials. A key holds one only when it is named in `scopes`, never through a role. */
-export const CREDENTIAL_SCOPES: readonly ApiScope[] = ['scanning:admin'];
-
 /**
  * Org scopes a role stands for: those a route accepts (`MINTABLE_SCOPES`), so a role token never holds a scope
  * nobody reviewed, and never `scans:write`, a terminal's scope (bound to its terminals), never a credential scope.
  */
 const presetScope = (scope: TenantScope) =>
   !NOT_TENANT_AUTHORITY.includes(scope) &&
-  !CREDENTIAL_SCOPES.includes(scope) &&
+  !(CREDENTIAL_SCOPES as readonly string[]).includes(scope) &&
   (MINTABLE_SCOPES as readonly string[]).includes(scope);
 
 /**
