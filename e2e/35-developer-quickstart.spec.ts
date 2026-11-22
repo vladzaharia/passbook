@@ -50,13 +50,13 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   const [, secret = '', templateId = ''] =
     clip.match(/^PASSBOOK_KEY=(\S+)\nPASSBOOK_TEMPLATE_ID=(\S+)\n$/) ?? [];
   expect(secret).toMatch(/^pbp_test_/);
-  await expect(env).toContainText(/PASSBOOK_KEY=pbp_test_…\w{4}/);
+  await expect(env).toContainText(/PASSBOOK_KEY=pbp_test_…[\w-]{4}/);
   await expect(env).not.toContainText(secret);
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Step 3: curl is the default (no SDK is published) and the page listens for a call from outside it.
   await expect(page.getByRole('tab', { name: 'curl' })).toHaveAttribute('aria-selected', 'true');
-  await expect(page.getByText(/Listening for pbp_test_…\w{4}/)).toBeVisible();
+  await expect(page.getByText(/Listening for pbp_test_…[\w-]{4}/)).toBeVisible();
   const api = context.request;
   const auth = { authorization: `Bearer ${secret}`, 'user-agent': 'curl/8.7.1' };
   const template = (await (
