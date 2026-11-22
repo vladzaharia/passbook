@@ -175,8 +175,8 @@ describe('Message composer', () => {
           json({ targeted: 1, onDevice: 1, overBudget: 0, limit: 3 }),
       },
     });
-    expect(await screen.findByText('abcdef12')).toBeInTheDocument();
-    expect(screen.getByText(/Set through the API/)).toBeInTheDocument();
+    expect(await screen.findByText(/or an equivalent build/)).toBeInTheDocument();
+    expect(screen.queryByText('abcdef12')).toBeNull();
   });
 
   it('removes a previously loaded draft and its send confirmation on a scope switch', async () => {

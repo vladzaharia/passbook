@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { TemplateRollout } from '@/shared/contracts/template-rollout.ts';
-import { errorMessage } from '../../../lib/errors.ts';
+import { errorMessage, isApiError } from '../../../lib/errors.ts';
 import { formatCount } from '../../../lib/format.ts';
 import {
   Button,
@@ -52,7 +52,11 @@ export function TellHolders({
       toast.success('Message sent');
       onClose();
     } catch (cause) {
-      setError(errorMessage(cause));
+      setError(
+        isApiError(cause) && cause.code === 'IDEMPOTENCY_KEY_RESERVED'
+          ? 'A newer release replaced this one. Reload.'
+          : errorMessage(cause),
+      );
     }
   }
   return (

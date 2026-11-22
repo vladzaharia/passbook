@@ -7,6 +7,7 @@ import { formatCount } from '../../lib/format.ts';
 import { Callout, FormField, Input, Select, SwitchRow } from '../../ui/index.ts';
 import { useScanEvents } from '../scanning/scanner-api.ts';
 import { templateDetailQuery } from '../templates/api.ts';
+import { vOf } from '../templates/versions.ts';
 import type { ComposerState, HolderChoice } from './composer-state.ts';
 import { HOLDER_LABEL } from './labels.ts';
 import { TemplateChoices } from './template-choices.tsx';
@@ -77,8 +78,14 @@ export function AudienceSection({
       />
       {state.version ? (
         <p className="text-sm text-fg-muted">
-          Only passes on version <b className="text-fg-strong">{state.version.slice(0, 8)}</b> or an
-          equivalent build. Set through the API.
+          Only passes on{' '}
+          <b className="text-fg-strong">
+            {(() => {
+              const detail = state.templateIds[0] ? details.get(state.templateIds[0]) : undefined;
+              return detail ? vOf(detail, state.version) : 'one version';
+            })()}
+          </b>{' '}
+          or an equivalent build.
         </p>
       ) : null}
       <SwitchRow

@@ -160,4 +160,29 @@ describe('rollout card', () => {
     await userEvent.click(await screen.findByRole('button', { name: /What changed v1 → v2/ }));
     expect(await screen.findByText('Background')).toBeInTheDocument();
   });
+
+  it('says a newer release replaced this one when the key is no longer the release', async () => {
+    stubFetch({
+      '/api/v1/templates/t1/rollout': () => json(rollout()),
+      '/api/v1/broadcasts/preview': () =>
+        json({ targeted: 4, onDevice: 3, overBudget: 0, limit: 5 }),
+      '/api/v1/broadcasts': () =>
+        json(
+          {
+            type: 'x',
+            title: 'Reserved',
+            status: 422,
+            code: 'IDEMPOTENCY_KEY_RESERVED',
+            detail: 'raw text',
+          },
+          422,
+        ),
+    });
+    mount();
+    await userEvent.click(await screen.findByRole('button', { name: 'Tell holders' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Tell 4 holders' }));
+    expect(
+      await screen.findByText('A newer release replaced this one. Reload.'),
+    ).toBeInTheDocument();
+  });
 });
