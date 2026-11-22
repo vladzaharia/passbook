@@ -128,6 +128,12 @@ export const DEV_GUIDES = [
   { id: 'pass-lifecycle', title: 'Pass lifecycle', line: 'Void, remove, delete', tone: 'amber' },
   { id: 'test-mode', title: 'Test mode', line: 'Inbox, reset, purge', tone: 'blue' },
   { id: 'go-live', title: 'Go live', line: 'The checklist', tone: 'teal' },
+  {
+    id: 'release-a-template',
+    title: 'Release a template',
+    line: 'Try, review, release',
+    tone: 'blue',
+  },
   { id: 'partner-apps', title: 'Partner apps', line: 'Installations', tone: 'violet' },
   {
     id: 'scan-setup',
