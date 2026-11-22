@@ -148,7 +148,10 @@ export function TagVisual({ scenario }: { scenario: TagScenario }) {
           ) : door ? (
             <ResultCard outcome={door.outcome} phase="up" tagRead={door.tagRead} />
           ) : scenario === 'request-strip' ? (
-            <RequestStrip name="Maya Okafor" onOpen={noop} onLater={noop} />
+            <>
+              <h1 className="sr-only">Front desk</h1>
+              <RequestStrip name="Maya Okafor" onOpen={noop} onLater={noop} />
+            </>
           ) : null
         }
       />

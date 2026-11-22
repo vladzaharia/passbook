@@ -34,16 +34,19 @@ test("admin creates a Henry's pass with the wizard and downloads a valid .pkpass
   const holder = `${memberId.toLowerCase()}@example.test`;
 
   await page.goto('/admin/passes/new');
+  // The scope breadcrumb can carry the org name too on a cold start: pick the org from the list, by role.
   await page
-    .getByText(/^Henry/)
-    .first()
+    .getByRole('main')
+    .getByRole('link', { name: /^Henry/ })
     .click();
   await expect
     .poll(() => new URL(page.url()).pathname)
     .toBe(`/admin/o/${encodeURIComponent(orgId)}/passes/new`);
   // Choosing the organization lands on Template; Next stays off until a template is chosen.
-  await page.getByText('Blue Entrance', { exact: true }).click();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('radio', { name: /Blue Entrance/ }).click({ force: true });
+  const next = page.getByRole('button', { name: 'Next' });
+  await expect(next).toBeEnabled();
+  await next.click();
 
   await page.getByLabel('Member name').fill(memberName);
   await page.getByLabel('Member number').fill(memberId);
