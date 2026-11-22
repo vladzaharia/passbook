@@ -98,7 +98,7 @@ export function DoneCard({
               : C.run.doneTitle(b.counts.updated)
       }
     >
-      <Counters b={b} />
+      {undone ? null : <Counters b={b} />}
       {children}
     </RunDone>
   );

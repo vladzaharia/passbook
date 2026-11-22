@@ -44,7 +44,8 @@ export const CHANGE_COPY = {
   },
   which: {
     ids: (c: number) => `${n(c, 'selected pass', 'selected passes')}`,
-    import: 'The passes of this import',
+    import: (c?: number) =>
+      c === undefined ? 'The passes of this import' : `${n(c, 'pass', 'passes')} of this import`,
     template: (name: string) => `All active passes of ${name}`,
     filter: (c: number, name: string) => `${n(c, 'matching pass', 'matching passes')} of ${name}`,
   },

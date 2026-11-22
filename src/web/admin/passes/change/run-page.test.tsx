@@ -161,6 +161,19 @@ describe('Change run page', () => {
     expect(screen.queryByText('Change undone')).not.toBeInTheDocument();
   });
 
+  it('shows the undo result in place of the change counters once undone', async () => {
+    const undoRun = change({
+      id: 'u1',
+      parentId: 'r1',
+      state: 'sent',
+      counts: { targeted: 2, updated: 2, unchanged: 0, overBudget: 0, failed: 0 },
+    });
+    setup(change(), {}, { parentId: undoRun });
+    expect(await screen.findByText('Restored 2.')).toBeInTheDocument();
+    expect(screen.queryByText('Changed')).not.toBeInTheDocument();
+    expect(screen.queryByText('Already set')).not.toBeInTheDocument();
+  });
+
   it('links to the run that resumed this one instead of offering Resume again', async () => {
     const child = change({ id: 'r2', state: 'sending' });
     setup(

@@ -80,7 +80,22 @@ function setup(
     selectedOrg: ORG.id,
     handlers: {
       '/api/v1/templates/tpl1': () => json(templateDetail()),
-      '/api/v1/pass-imports/imp1': () => json(importDto({ id: 'imp1', templateId: 'tpl1' })),
+      '/api/v1/pass-imports/imp1': () =>
+        json(
+          importDto({
+            id: 'imp1',
+            templateId: 'tpl1',
+            counts: {
+              rows: 1240,
+              create: 1200,
+              update: 40,
+              unchanged: 0,
+              errors: 0,
+              warnings: 0,
+              emailable: 0,
+            },
+          }),
+        ),
       '/api/v1/broadcasts/preview': (_u, init) => {
         previews.push(JSON.parse(String(init?.body)));
         return json(preview(options.previews?.(previews.length) ?? {}));
@@ -349,6 +364,12 @@ describe('Change wizard selections', () => {
     const c = collect();
     setup(c.create, { path: '/admin/o/org1/passes/change?importId=imp1' });
     expect(await sendTo(c.sent)).toEqual({ importId: 'imp1', expectCount: 2 });
+  });
+
+  it('says how many passes the import made or changed on the first step', async () => {
+    const c = collect();
+    setup(c.create, { path: '/admin/o/org1/passes/change?importId=imp1' });
+    expect(await screen.findByText('1,240 passes of this import')).toBeInTheDocument();
   });
 
   it('opens Tell holders on the template with Notify on', async () => {

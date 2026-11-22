@@ -220,6 +220,29 @@ describe('progress and results', () => {
     expect(posts).toHaveLength(1);
   });
 
+  it('stops offering Change these and Download results once the import is undone', async () => {
+    const user = userEvent.setup();
+    await open(finished({ finishedAt: Date.now() }), {
+      '/api/v1/pass-imports/imp1/undo': () =>
+        json({
+          state: 'done',
+          removed: 120,
+          restored: 40,
+          keptTotal: 0,
+          kept: [],
+          emailsCancelled: 0,
+        }),
+    });
+    expect(await screen.findByRole('link', { name: 'Change these' })).toBeTruthy();
+    await user.click(await screen.findByRole('button', { name: 'Undo import' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Undo this import?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Undo import' }));
+    await screen.findByText(/Removed 120/);
+    expect(screen.queryByRole('link', { name: 'Change these' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Download results' })).toBeNull();
+    expect(screen.queryByText('Created')).toBeNull();
+  });
+
   it('says so when the undo failed, and keeps the button', async () => {
     const user = userEvent.setup();
     await open(finished({ finishedAt: Date.now() }), {

@@ -42,7 +42,7 @@ export interface ChangeSearch {
 /** Which passes, in a line: the source the run reads, so the person can see what it will touch. */
 function whichOf(selection: ChangeSelection, templateName: string): string {
   if (selection.kind === 'ids') return C.which.ids(selection.ids.length);
-  if (selection.kind === 'import') return C.which.import;
+  if (selection.kind === 'import') return C.which.import(selection.count);
   if (selection.kind === 'template') return C.which.template(templateName);
   return C.which.filter(selection.count, templateName);
 }
@@ -216,7 +216,14 @@ export function ChangePage({ search }: { search: ChangeSearch }) {
     (search.templateId
       ? { kind: 'template', templateId: search.templateId }
       : imported.data
-        ? { kind: 'import', importId: imported.data.id, templateIds: [imported.data.templateId] }
+        ? {
+            kind: 'import',
+            importId: imported.data.id,
+            templateIds: [imported.data.templateId],
+            ...(imported.data.counts
+              ? { count: imported.data.counts.create + imported.data.counts.update }
+              : {}),
+          }
         : undefined);
   // A filter a run cannot take is refused, never widened to the template.
   const selection = candidate && targetOf(candidate) === null ? undefined : candidate;
