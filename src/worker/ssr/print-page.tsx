@@ -1,4 +1,4 @@
-import { Ban, Download, Printer, RotateCcw } from 'lucide-react';
+import { Ban, Download, Printer, RotateCcw, TriangleAlert } from 'lucide-react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import holderCss from '../../generated/ssr-holder.css?raw';
 import type { OrgBrand } from '../../shared/contracts/brand.ts';
@@ -41,6 +41,8 @@ const PAGE_CSS = `${RIBBON_CSS}
 .pp-confirm .btn{width:auto}
 .pp-confirm[hidden],.pp-error[hidden]{display:none}
 .pp-error{margin:0;color:var(--pk-danger-fg,var(--pk-text-strong))}
+.callout[data-lossy]{margin:0;border-color:var(--pk-warning-border);background:var(--pk-warning-subtle)}
+.callout[data-lossy]>svg{color:var(--pk-warning)}
 .pp-empty p,.pp-unavailable p{margin:0}
 ${PAPER_CSS}`;
 
@@ -150,7 +152,7 @@ function actionsHtml(props: PrintPageProps) {
   ].join('');
   const lossy =
     props.model.state === 'ready' && hasUndrawable(props.model.content)
-      ? `<p class="callout" data-lossy>${escapeHtml(PRINT_COPY.lossy)}</p>`
+      ? `<p class="callout" data-lossy>${iconHtml(TriangleAlert)}<span>${escapeHtml(PRINT_COPY.lossy)}</span></p>`
       : '';
   return `${lossy}<div class="pp-actions">${actions}</div>${
     holder
