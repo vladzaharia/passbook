@@ -94,8 +94,15 @@ export function ChannelRow({
   const above = stop?.state === 'locked';
   const status = channelStatusLine({ levels: row.levels, templates: row.templates });
   const state = row.on ? 'on' : (stop?.state ?? 'off');
+  // On at the organization, but no template uses it: the dot reads as off.
+  const unused = row.on && row.templates.total > 0 && row.templates.on === 0;
   return (
-    <li data-channel={channel} data-state={state} className="py-3 first:pt-0 last:pb-0">
+    <li
+      data-channel={channel}
+      data-state={state}
+      {...(unused ? { 'data-unused': '' } : {})}
+      className="py-3 first:pt-0 last:pb-0"
+    >
       <div className="flex min-h-11 items-center gap-3">
         <button
           type="button"
@@ -120,7 +127,7 @@ export function ChannelRow({
                 aria-hidden
                 className={cn(
                   'size-1.5 rounded-full',
-                  row.on
+                  row.on && !unused
                     ? 'bg-success'
                     : stop?.state === 'needs'
                       ? 'bg-warning'

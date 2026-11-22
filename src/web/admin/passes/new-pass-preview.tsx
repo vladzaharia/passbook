@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Eye } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
+import type { PassSetup } from '@/shared/contracts/pass-setup.ts';
 import { PreviewResponseSchema } from '@/shared/contracts/templates.ts';
 import { api } from '@/web/lib/api.ts';
 import { useDebounced } from '@/web/lib/debounce.ts';
@@ -16,6 +17,8 @@ import {
   ErrorState,
   Skeleton,
 } from '../../ui/index.ts';
+import { usePassSetup } from '../brand/api.ts';
+import { brandingUrl } from '../orgs/queries.ts';
 import { PassPreview } from './pass-preview.tsx';
 import {
   cleanValues,
@@ -90,6 +93,31 @@ export function useReleasedPreview({
   });
 }
 
+const BRAND_ASSET = /^(logo|icon)(?:@([23])x)?\.png$/;
+
+/**
+ * The organization's own logo and icon in place of the template's, for the parts the template
+ * follows the organization on: what the issued pass will carry, and fresh as soon as it changes.
+ */
+export function brandAssetUrls(
+  setup: PassSetup | undefined,
+  orgId: string | undefined,
+  templateId: string | undefined,
+  names: readonly string[],
+): Record<string, string> | undefined {
+  if (!setup || !orgId) return undefined;
+  const own = setup.templates.find((t) => t.id === templateId)?.ownBrand ?? [];
+  const out: Record<string, string> = {};
+  for (const name of names) {
+    const m = BRAND_ASSET.exec(name);
+    const slot = m?.[1] as 'logo' | 'icon' | undefined;
+    const image = slot ? setup.brand[slot] : undefined;
+    if (!m || !slot || !image?.value || image.source !== 'org' || own.includes(slot)) continue;
+    out[name] = brandingUrl(orgId, slot, image.value.sha, `${m[2] ?? '2'}x`);
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 export interface LivePreviewInput {
   templateId: string | undefined;
   orgId: string | undefined;
@@ -106,6 +134,8 @@ export interface LivePreviewState {
   preview: Preview | undefined;
   error: unknown;
   retry: () => void;
+  /** The organization's logo and icon over the template's own, by asset name. */
+  assetUrls: Record<string, string> | undefined;
   /** The details were valid once: the card dealt in and stops looking like a sample. */
   dealt: boolean;
 }
@@ -146,7 +176,13 @@ export function useLivePreview({
   useEffect(() => {
     if (valid && !dealt) setDealt(true);
   }, [valid, dealt]);
+  const setup = usePassSetup(orgId ?? '', Boolean(orgId));
+  const assetUrls = useMemo(
+    () => brandAssetUrls(setup.data, orgId, templateId, preview.data?.assetNames ?? []),
+    [setup.data, orgId, templateId, preview.data?.assetNames],
+  );
   return {
+    assetUrls,
     templateId,
     preview: debounced.scopeKey === scopeKey ? preview.data : undefined,
     error: debounced.scopeKey === scopeKey && preview.isError ? preview.error : null,
@@ -166,7 +202,7 @@ export function LivePreview({
   state: LivePreviewState;
   transitionName?: string | undefined;
 }) {
-  const { templateId, preview, dealt, error, retry } = state;
+  const { templateId, preview, dealt, error, retry, assetUrls } = state;
   if (!templateId)
     return (
       <div className="flex aspect-[320/420] w-full max-w-xs flex-col items-center justify-center gap-2 self-center rounded-xl border border-dashed border-border-strong">
@@ -182,6 +218,7 @@ export function LivePreview({
         passJson={preview.passJson}
         assetBaseUrl={preview.assetBaseUrl}
         assetNames={preview.assetNames}
+        assetUrls={assetUrls}
         enter={dealt}
         {...(transitionName ? { transitionName } : {})}
       />
@@ -238,6 +275,7 @@ export function ShowPassRow({
             passJson={state.preview.passJson}
             assetBaseUrl={state.preview.assetBaseUrl}
             assetNames={state.preview.assetNames}
+            assetUrls={state.assetUrls}
             still
             {...(transitionName ? { transitionName } : {})}
           />

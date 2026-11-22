@@ -128,6 +128,44 @@ describe('Brand and channels', () => {
     expect(bodies[1]).toEqual({ dryRun: false, body: expected });
   });
 
+  it('says one template and one pass in the singular, and one pass in the header', async () => {
+    const user = userEvent.setup();
+    const view = { ...viewOf(readyFacts()), passCount: 1 };
+    await setup(view, {
+      '/api/v1/orgs/o1/pass-setup': (_url: URL, init?: RequestInit) =>
+        init?.method !== 'PATCH'
+          ? json(view)
+          : json(
+              dry(view, {
+                impact: {
+                  passesToUpdate: 0,
+                  channelStops: [{ channel: 'mobile', templates: 1, passes: 1 }],
+                  enrolments: [],
+                },
+              }),
+            ),
+    });
+    expect(await screen.findByText('1 pass')).toBeInTheDocument();
+    const channels = await screen.findByRole('region', { name: 'Channels' });
+    await user.click(within(channels).getByRole('switch', { name: /Mobile allowed/ }));
+    await user.click(screen.getByRole('button', { name: 'Review' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(
+      await within(dialog).findByText(/Mobile stops for 1 template · 1 pass\./),
+    ).toBeInTheDocument();
+  });
+
+  it('draws a channel no template uses with the off dot, and keeps its switch on', async () => {
+    const view = viewOf(readyFacts());
+    view.channels.mobile.templates = { on: 0, off: 2, never: 0, total: 2 };
+    await setup(view);
+    const channels = await screen.findByRole('region', { name: 'Channels' });
+    const row = (name: string) => within(channels).getByText(name).closest('li') as HTMLElement;
+    expect(row('Mobile')).toHaveAttribute('data-unused');
+    expect(within(row('Mobile')).getByRole('switch')).toBeChecked();
+    expect(row('Apple Wallet')).not.toHaveAttribute('data-unused');
+  });
+
   it('keeps the draft and asks for a new review when someone saved first', async () => {
     const user = userEvent.setup();
     const view = viewOf(readyFacts());

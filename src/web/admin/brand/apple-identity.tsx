@@ -1,5 +1,5 @@
 import { BadgeCheck, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import type { PassSetup } from '@/shared/contracts/pass-setup.ts';
 import { PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
@@ -24,6 +24,16 @@ function stepIndex(step: string | null): number {
   if (/type|identifier|create/.test(step)) return 1;
   return 0;
 }
+
+/** An identifier that wraps only after a dot, never inside a part. */
+const breakAtDots = (id: string) =>
+  id.split('.').map((part, i, all) => (
+    <Fragment key={all.slice(0, i + 1).join('.')}>
+      {part}
+      {i < all.length - 1 ? '.' : null}
+      {i < all.length - 1 ? <wbr /> : null}
+    </Fragment>
+  ));
 
 /** What the Apple row signs with: the shared ID, a run in progress, or the org's own managed ID. */
 export function AppleIdentity({
@@ -54,8 +64,8 @@ export function AppleIdentity({
           {identity ? <BadgeCheck className="size-5" /> : <ShieldCheck className="size-5" />}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="break-all font-mono text-sm text-fg-strong">
-            {identity?.identifier ?? apple.sharedIdentifier}
+          <p className="break-normal font-mono text-sm text-fg-strong">
+            {breakAtDots(identity?.identifier ?? apple.sharedIdentifier)}
           </p>
           <p className="text-xs text-fg-muted">
             {identity ? KINDS[identity.kind] : KINDS.platform}

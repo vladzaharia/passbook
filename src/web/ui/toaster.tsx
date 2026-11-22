@@ -1,6 +1,7 @@
 import { CircleCheck, XCircle } from 'lucide-react';
 import { Toaster as Sonner, toast as sonner } from 'sonner';
 import { errorMessage } from '../lib/errors.ts';
+import { BELOW_LG, useMediaQuery } from '../lib/media.ts';
 import { isStepUp } from '../lib/step-up.ts';
 import { useTheme } from '../lib/theme.tsx';
 import { BuddyFace } from './art/face.tsx';
@@ -19,21 +20,29 @@ function SuccessMark({ scene }: { scene?: 'post' }) {
 }
 
 const BOTTOM = 'calc(max(var(--wl-bottom-bar, 0px), env(safe-area-inset-bottom)) + 1rem)';
+/** Below the sticky top bar (3.5rem), clear of the notch. */
+const TOP = 'calc(env(safe-area-inset-top, 0px) + 4rem)';
+const LEFT = 'max(1rem, env(safe-area-inset-left))';
+const RIGHT = 'max(1rem, env(safe-area-inset-right))';
 
-export function Toaster() {
+/**
+ * `belowTopBar`: the admin and portal shells. Under 1024 px the page is one column, so a bottom
+ * toast lands on the form being used; it sits under the top bar instead. From 1024 px it is
+ * bottom right, above the fixed SaveBar or SelectionBar (--wl-bottom-bar, bottom-bar.ts), else
+ * the safe area. The scanner screens keep the bottom.
+ */
+export function Toaster({ belowTopBar = false }: { belowTopBar?: boolean }) {
   const { resolved } = useTheme();
+  const narrow = useMediaQuery(BELOW_LG);
+  const top = belowTopBar && narrow;
   return (
     <Sonner
       theme={resolved}
-      position="bottom-right"
-      // Above the fixed SaveBar or SelectionBar (--wl-bottom-bar, bottom-bar.ts), else the safe
-      // area. Phones keep the bottom with an overlay open: the top would cover a sheet's header.
-      offset={{ bottom: BOTTOM, right: 'max(1rem, env(safe-area-inset-right))' }}
-      mobileOffset={{
-        bottom: BOTTOM,
-        left: 'max(1rem, env(safe-area-inset-left))',
-        right: 'max(1rem, env(safe-area-inset-right))',
-      }}
+      position={top ? 'top-center' : 'bottom-right'}
+      offset={top ? { top: TOP, left: LEFT, right: RIGHT } : { bottom: BOTTOM, right: RIGHT }}
+      mobileOffset={
+        top ? { top: TOP, left: LEFT, right: RIGHT } : { bottom: BOTTOM, left: LEFT, right: RIGHT }
+      }
       closeButton
       icons={{
         success: <SuccessMark />,

@@ -838,6 +838,30 @@
         ],
         "enrolments": []
       }
+    },
+    "requests": {
+      "Brand and support": {
+        "expectedRevision": "r1",
+        "brand": {
+          "logo": {
+            "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "passColors": {
+            "background": "#0f172a",
+            "foreground": "#ffffff",
+            "label": "#fbbf24"
+          },
+          "support": {
+            "email": "help@acme.test"
+          }
+        }
+      },
+      "Block Mobile": {
+        "expectedRevision": "r1",
+        "channels": {
+          "mobile": "blocked"
+        }
+      }
     }
   },
   "pass-setup.postOrgsByOrgIdBrandAssets": {

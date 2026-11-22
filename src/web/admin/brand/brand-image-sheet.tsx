@@ -3,7 +3,7 @@ import { PASS_FIX_COPY } from '@/shared/copy/pass-setup-fix.ts';
 import { Button, Dialog, DialogContent, ErrorState, SkeletonRows, toast } from '@/web/ui/index.ts';
 import { isSetupChanged, usePassSetup, useSavePassSetup } from './api.ts';
 import { AssetTile } from './asset-tile.tsx';
-import type { StagedImage } from './draft.ts';
+import { type StagedImage, stagedRef } from './draft.ts';
 
 const COPY = PASS_FIX_COPY.sheet;
 
@@ -38,7 +38,7 @@ export function BrandImageSheet({
     try {
       await save.mutateAsync({
         expectedRevision: setup.data.revision,
-        brand: { [slot]: { sha: staged.sha } },
+        brand: { [slot]: stagedRef(staged) },
       });
       onSaved(slot);
       close(false);

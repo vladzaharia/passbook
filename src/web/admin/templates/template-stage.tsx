@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ChannelStage } from '../../channel-previews/channel-stage.tsx';
@@ -10,6 +10,7 @@ import { PassPreview, PassPreviewPanel } from '../passes/pass-preview.tsx';
 import { useTemplatePreview } from './api.ts';
 import { useTemplateChannels } from './channels/api.ts';
 import { PreviewToggle, type PreviewView } from './preview-toggle.tsx';
+import { useArrivalDeal } from './use-arrival-deal.ts';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
 
@@ -42,16 +43,7 @@ export function useTemplateStage(t: Template, scope: ReturnType<typeof useOrgSco
     [preview.data, t, candidate?.version],
   );
   const minted = useMintedOnArrival(`template:${t.id}`);
-  // A duplicate mints once on arrival (the value must change after mount); a hard load deals once.
-  const [mint, setMint] = useState(0);
-  const [deal, setDeal] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setDeal(false), 900);
-    return () => clearTimeout(t);
-  }, []);
-  useEffect(() => {
-    if (minted) setMint(1);
-  }, [minted]);
+  const { mint, deal } = useArrivalDeal(minted);
 
   const panel = (size: 'column' | 'card' | 'sheet') =>
     !t.activeVersion && !candidate ? (

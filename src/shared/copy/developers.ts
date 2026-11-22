@@ -136,4 +136,10 @@ export const DEV_GUIDES = [
     line: 'Doors, staff, devices',
     tone: 'amber',
   },
+  {
+    id: 'org-setup',
+    title: 'Set up an organization in one call',
+    line: 'Brand, support, channels',
+    tone: 'teal',
+  },
 ] as const;
