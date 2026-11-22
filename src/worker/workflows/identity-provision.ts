@@ -20,11 +20,10 @@ import {
   stepValidate,
 } from '../modules/identities/provision-steps.ts';
 import { getManagedState } from '../modules/identities/repo-provision.ts';
-import { enterStep, finishRun, parkRun } from '../modules/identities/repo-runs.ts';
+import { enterStep, finishRun, handleOwner, parkRun } from '../modules/identities/repo-runs.ts';
 import { stepRevoke } from '../modules/identities/revoke-run.ts';
 import type { IdentityProvisionParams } from '../modules/identities/run-start.ts';
 import type { Clock } from '../platform/clock.ts';
-import { first } from '../platform/db.ts';
 import type { AppEnv } from '../platform/env.ts';
 import { AppError, ConflictError, NotFoundError, UnavailableError } from '../platform/errors.ts';
 import { createJobContext, type ServiceContext } from '../platform/service-context.ts';
@@ -148,12 +147,8 @@ async function resolvePassType(ctx: ServiceContext, rpc: AppleRpc, runId: string
   const orgName = await orgNameOf(ctx, run.target_id);
   const created = await rpc.createPassType(ref.handle, `${orgName} (PassBook)`, runId);
   // The provisioner knows no owners: an existing pass type must be the one this org reserved.
-  const reserved = await first<{ org_id: string }>(
-    ctx.env.DB,
-    'SELECT org_id FROM identity_handles WHERE handle = ?',
-    [ref.handle],
-  );
-  if (created.identifier !== identifier || reserved?.org_id !== run.target_id) {
+  const reserved = await handleOwner(ctx.env.DB, ref.handle);
+  if (created.identifier !== identifier || reserved?.orgId !== run.target_id) {
     ctx.log.error('identity.pass_type_mismatch', {
       runId,
       code: 'IDENTITY_PASS_TYPE_MISMATCH',
