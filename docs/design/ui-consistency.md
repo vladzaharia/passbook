@@ -367,7 +367,10 @@ Action icons (`src/web/lib/action-icons.ts`):
   | `toast.action(msg, { label, onClick })` | One follow-up (`View run`) |
   | `toast.dismiss(id)` | The offer no longer applies |
 
-  Toasts clear the SaveBar; on phones they move to the top while a sheet is open. Success wears
+  Toasts never cover the form in use or the SaveBar. From 1024 px they sit bottom right above the
+  SaveBar (`--wl-bottom-bar`); below 1024 px, where the page is one column, they sit under the top
+  bar, so they clear a bottom sheet and the controls at the foot of the screen. The scanner
+  screens keep the bottom. Success wears
   the buddy's face, unless a page buddy is in view (one buddy per view, `ui/art/presence.ts`):
   then a check.
 - **Copy**: `CopyButton` for a value on screen, `copyText(value, what)` (`lib/clipboard.ts`) from

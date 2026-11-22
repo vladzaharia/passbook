@@ -12,7 +12,7 @@ One request sets an organization's logo, pass colours, support contact and which
 - `brand:manage` also stages images and saves the brand and support. It cannot change channels.
 - `org:write` does all of it. Allowing Google or Samsung can also use `wallet:write` or `integrations:manage`.
 
-The key belongs to one organization. A Test key reads the Test setup and changes images and colours. The name, support, email and channels need a live key: a Test key gets `403` [MODE_LIVE_REQUIRED](/developers/errors/MODE_LIVE_REQUIRED).
+The key belongs to one organization. A Test key reads the Test setup and changes images and colours. The name, support, email and channels are live-facing, so they need a live key: a Test key gets `403` [MODE_LIVE_REQUIRED](/developers/errors/MODE_LIVE_REQUIRED). A sandbox organization has no live side, so a Test key can change them there.
 
 {{run current-key}}
 

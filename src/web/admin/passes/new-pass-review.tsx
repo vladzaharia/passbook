@@ -59,7 +59,13 @@ export function ReviewStep({
   error: ReactNode;
 }) {
   const warnings = all
-    .filter((w) => w.severity === 'warning' && w.code !== 'PLATFORM_BRANDING')
+    // The org's own Add support row says the same as BACK_CONTACT, so only one of them shows.
+    .filter(
+      (w) =>
+        w.severity === 'warning' &&
+        w.code !== 'PLATFORM_BRANDING' &&
+        !(w.code === 'BACK_CONTACT' && setup?.orgId),
+    )
     .map((w) => w.message);
   const fields = describeSchema(schema)
     .flatMap((g) => g.fields)

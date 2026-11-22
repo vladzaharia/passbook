@@ -1,5 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
@@ -27,6 +27,7 @@ import { PreviewLayout } from '../passes/preview-layout.tsx';
 import { useTemplatePreview } from './api.ts';
 import { useTemplateChannels } from './channels/api.ts';
 import { TemplateChannelsPanel } from './channels/channels-panel.tsx';
+import { useChannelDraft } from './channels/use-channel-draft.ts';
 import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
 import { PreviewToggle, type PreviewView } from './preview-toggle.tsx';
@@ -43,6 +44,7 @@ import {
   useTemplateLifecycle,
 } from './template-lifecycle.tsx';
 import { TemplateInputs, TemplateOverview } from './template-overview.tsx';
+import { useArrivalDeal } from './use-arrival-deal.ts';
 import { useScanPasses } from './use-scan-passes.ts';
 import { versionName, versionNumber, vOf } from './versions.ts';
 import { VersionsPanel } from './versions-panel.tsx';
@@ -94,6 +96,7 @@ export function TemplateDetailContent({
     candidate?.version,
   );
   const channels = useTemplateChannels(t.id, scope.orgId ?? '', Boolean(scope.orgId));
+  const channelDraft = useChannelDraft(`${scope.orgId}:${mode}:${t.id}`);
   const source = useMemo(
     () => previewSource(preview.data, t, { version: candidate?.version }),
     [preview.data, t, candidate?.version],
@@ -113,16 +116,7 @@ export function TemplateDetailContent({
   const created = useCreated<TemplateCreated>(`template:${t.id}`);
   const importedVersion = useCreated<string>(`template:${t.id}:version`);
   const minted = useMintedOnArrival(`template:${t.id}`);
-  // A duplicate mints once on arrival (the value must change after mount); a hard load deals once.
-  const [mint, setMint] = useState(0);
-  const [deal, setDeal] = useState(true);
-  useEffect(() => {
-    const t = setTimeout(() => setDeal(false), 900);
-    return () => clearTimeout(t);
-  }, []);
-  useEffect(() => {
-    if (minted) setMint(1);
-  }, [minted]);
+  const { mint, deal } = useArrivalDeal(minted);
   const [duplicate, setDuplicate] = useState(false);
   const [changingOrg, setChangingOrg] = useState(false);
   const canAssign = canAuthor && isAdmin;
@@ -292,6 +286,7 @@ export function TemplateDetailContent({
                 orgId={scope.orgId}
                 canPublish={canPublish && !archived}
                 canEdit={canEdit && !archived}
+                draft={channelDraft}
               />
             ) : null}
           </TabsContent>

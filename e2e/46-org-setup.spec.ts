@@ -177,6 +177,20 @@ test('Get your own ID shows the run, then the managed ID, with the provisioner s
   const apple = page.locator('[data-channel="apple"]');
   await apple.getByRole('button', { expanded: false }).first().click();
   await expect(apple.getByText(identifier)).toBeVisible();
+  // At 390 the identifier breaks only after a dot, never inside a part.
+  await page.setViewportSize({ width: 390, height: 844 });
+  const split = await apple.getByText(identifier).evaluate((el) => {
+    const range = document.createRange();
+    const out: string[] = [];
+    for (const node of el.childNodes)
+      if (node.nodeType === Node.TEXT_NODE) {
+        range.selectNodeContents(node);
+        if (range.getClientRects().length > 1) out.push(node.textContent ?? '');
+      }
+    return { out, wrapped: el.getClientRects()[0] ? el.getBoundingClientRect().height : 0 };
+  });
+  expect(split.out).toEqual([]);
+  await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.getByText("Apple passes sign with PassBook's shared ID.")).toBeHidden();
   await shoot(page, 'o10-2-managed');
 });
@@ -198,6 +212,13 @@ test('blocking Mobile shows the counts and stops the /p code', async ({ page, br
   expect((await anon.request.get(code)).status()).toBe(200);
 
   await page.goto(brandUrl(org.id));
+  // Paper and NFC are on for the org but no template uses them: the dot reads off, the switch stays on.
+  for (const channel of ['paper', 'nfc']) {
+    const row = page.locator(`[data-channel="${channel}"]`);
+    await expect(row).toHaveAttribute('data-unused', '');
+    await expect(row.getByRole('switch')).toBeChecked();
+  }
+  await expect(page.locator('[data-channel="mobile"]')).not.toHaveAttribute('data-unused');
   const mobile = page.locator('[data-channel="mobile"]');
   await mobile.getByRole('switch', { name: 'Mobile allowed' }).click();
   await page.getByRole('button', { name: 'Review', exact: true }).click();
@@ -226,6 +247,14 @@ test('a template opts out of Mobile and the org page counts it', async ({ page }
   );
   const mobile = page.getByRole('radiogroup', { name: 'Mobile' });
   await mobile.getByRole('radio', { name: 'Off' }).click();
+  // A layout switch remounts the tab; the unsaved choice survives it.
+  for (const width of [390, 834, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(
+      page.getByRole('radiogroup', { name: 'Mobile' }).getByRole('radio', { name: 'Off' }),
+    ).toBeChecked();
+    await expect(page.getByRole('region', { name: 'Unsaved changes' })).toBeVisible();
+  }
   await page.getByRole('button', { name: 'Save', exact: true }).click();
   const confirm = page.getByRole('dialog', { name: 'Save channels?' });
   if (await confirm.isVisible().catch(() => false))
@@ -255,6 +284,10 @@ test('a new pass fixes a missing logo in place', async ({ page }) => {
   await page.getByLabel('Holder email').fill('maya@example.test');
   await next.click();
   await expect(page.getByText('Uses the placeholder logo.')).toBeVisible();
+  // One line for the missing support contact, and no https warning for a local web service.
+  await expect(page.getByText("Pass backs list PassBook's support.")).toBeVisible();
+  await expect(page.getByText('Add a phone, email or link on the back')).toHaveCount(0);
+  await expect(page.getByText('webServiceURL')).toHaveCount(0);
   await shoot(page, 'o10-5-review-warning');
   await page.getByRole('button', { name: 'Add logo' }).first().click();
   const sheet = page.getByRole('dialog', { name: 'Add logo' });
@@ -265,9 +298,46 @@ test('a new pass fixes a missing logo in place', async ({ page }) => {
   // The row leaves once the pass's warnings are read again; the icon and support rows stay.
   await expect(page.getByText('Uses the placeholder logo.')).toBeHidden();
   await expect(page.getByText('Uses the placeholder icon.')).toBeVisible();
+  // The preview draws the organization's logo over the template's placeholder.
+  await expect(
+    page
+      .getByRole('complementary', { name: 'Preview' })
+      .locator('img[src*="/branding/logo/"]')
+      .first(),
+  ).toBeAttached();
   await shoot(page, 'o10-5-fixed');
   const read = await apiAs('admin');
   const view = await read.get(`/api/v1/orgs/${org.id}/pass-setup`);
   expect(view.brand.logo.source).toBe('org');
   await read.dispose();
+});
+
+test('a toast sits under the top bar on narrow screens and never covers the form', async ({
+  page,
+}) => {
+  const api = await apiAs('admin');
+  const org = await newOrg(api, 'ts');
+  await api.dispose();
+
+  for (const width of [834, 390]) {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+    await page.goto(brandUrl(org.id));
+    await page.getByRole('switch', { name: 'Buddy in emails' }).scrollIntoViewIfNeeded();
+    await page.getByRole('switch', { name: 'Buddy in emails' }).click();
+    await page.getByRole('button', { name: 'Review', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Save', exact: true }).click();
+    const toast = page.locator('[data-sonner-toast]', { hasText: 'Saved' }).first();
+    await expect(toast).toBeVisible();
+    await expect(toast).toHaveAttribute('data-y-position', 'top');
+    const box = await toast.boundingBox();
+    const top = await page.locator('header, [role="banner"]').first().boundingBox();
+    expect(box?.y ?? 0).toBeGreaterThanOrEqual((top?.y ?? 0) + (top?.height ?? 0) - 1);
+    if (SHOTS) await page.screenshot({ path: `${SHOTS}/o10-6-toast-${width}.png` });
+    await page.goto(brandUrl(org.id));
+    // Back to the default for the next width: turn the switch off again.
+    await page.getByRole('switch', { name: 'Buddy in emails' }).click();
+    await page.getByRole('button', { name: 'Review', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Save', exact: true }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+  }
 });
