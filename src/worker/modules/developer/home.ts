@@ -195,7 +195,7 @@ export async function developerHome(
     usageOf(ctx, orgId, now),
     openKeysOf(db, orgId, now),
     sandboxKeyOf(db, orgId, session.userId, SANDBOX_KEY_NAME),
-    listLogs(db, orgId, {}, CALLS, now),
+    listLogs(db, orgId, { portal: 'hide' }, CALLS, now),
     endpointsOf(db, orgId),
     latestTestPasses(db, orgId, PASSES),
   ]);

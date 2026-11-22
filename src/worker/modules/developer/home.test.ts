@@ -301,6 +301,22 @@ describe('developer track triggers', () => {
   });
 });
 
+describe('GET /developer/home calls', () => {
+  it('leaves out the portal’s own reads and keeps the calls a person made', async () => {
+    const d = await t.developer();
+    const { token } = await t.mint(d.browser);
+    const page = fromPage(d.browser, token);
+    await t.call('/passes', { headers: { ...page, 'x-passbook-client': 'portal' } });
+    await t.call('/passes/none', { headers: bearer(d.key.secret) });
+    await t.call('/passes', { headers: page });
+    await t.settle();
+    const h = await home(d.browser);
+    expect(h.calls.map((c) => c.status).sort()).toEqual([200, 404]);
+    expect(h.calls).toHaveLength(2);
+    expect(h.calls.some((c) => c.client === 'portal')).toBe(false);
+  });
+});
+
 describe('GET /developer/logs source and after', () => {
   it('splits key calls from Run here and lists only rows after the cursor', async () => {
     const d = await t.developer();

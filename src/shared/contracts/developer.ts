@@ -139,6 +139,10 @@ export const RequestLogQuerySchema = z.object({
     .enum(['key', 'try', 'all'])
     .default('all')
     .describe('key: calls with a sandbox key; try: Run here; all: both.'),
+  portal: z
+    .enum(['show', 'hide'])
+    .default('show')
+    .describe("hide: leave out the portal's own background reads (client portal)."),
   after: IdSchema.optional().describe('Only calls newer than this log id: the listener cursor.'),
   cursor: z.string().max(512).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),

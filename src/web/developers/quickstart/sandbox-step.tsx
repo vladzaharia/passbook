@@ -74,7 +74,14 @@ export function EnvBox({
           {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
           {copied ? M.copied : M.copyEnv}
         </button>
-        <button type="button" className="btn outline" onClick={onNext}>
+        <button
+          type="button"
+          className="btn outline"
+          onClick={() => {
+            setShown(false);
+            onNext();
+          }}
+        >
           {M.next}
           <ArrowRight aria-hidden="true" />
         </button>

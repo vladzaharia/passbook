@@ -39,10 +39,22 @@ export function mountIslands(root: ParentNode = document): void {
         if (!entry.isIntersecting) continue;
         observer.unobserve(entry.target);
         const el = entry.target as HTMLElement;
-        void ISLANDS[el.dataset.island ?? '']?.().then((island) => island.mount(el));
+        void (async () => {
+          try {
+            const island = await ISLANDS[el.dataset.island ?? '']?.();
+            await island?.mount(el);
+          } finally {
+            // Mounted or not, the static Sign in shows again if the island never replaced it.
+            delete el.dataset.hydrating;
+          }
+        })();
       }
     },
     { rootMargin: '200px' },
   );
-  for (const el of pending) observer.observe(el);
+  for (const el of pending) {
+    // The account slot is Sign in until the session is known: hide it meanwhile, so a signed-in page never shows both.
+    if (el.dataset.island === 'account') el.dataset.hydrating = '';
+    observer.observe(el);
+  }
 }

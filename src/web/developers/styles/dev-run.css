@@ -251,3 +251,8 @@ dialog.sheet::backdrop {
 :root[data-sheet="open"] body {
   overflow: hidden;
 }
+
+/* Until the session is known the Sign in link keeps its place and is not shown, so it never sits beside the chip. */
+[data-island="account"][data-hydrating] {
+  visibility: hidden;
+}

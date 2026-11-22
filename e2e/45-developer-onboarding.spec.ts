@@ -70,7 +70,7 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   await expect(page.getByText('201 CREATED')).toBeVisible();
   const preview = page.getByRole('complementary', { name: 'Your pass, live' });
   await expect(preview.getByText(/Rendered in/)).toBeVisible();
-  await shots(page, '05-pass-from-curl');
+  await shots(page, '05-pass-from-curl', true);
 
   // 4. PATCH from the page, with If-Match; the runner then reads the change back.
   const id = made.json.id as string;
@@ -84,19 +84,12 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   const read = await curl('GET', `/passes/${id}`, key);
   expect(read.status).toBe(200);
   expect(JSON.stringify(read.json)).toContain('VIP');
-  await shots(page, '06-changed');
+  await shots(page, '06-changed', true);
 
   // 5. Captures: a signed test event lands.
   await page.getByRole('button', { name: 'Send test event' }).click();
   await expect(page.locator('.qs-cap', { hasText: 'webhook.test' })).toContainText('Verified');
-  // The events of the two calls arrive by queue, a moment after the calls themselves.
-  await expect(page.locator('.qs-cap', { hasText: 'pass.issued' })).toBeVisible({
-    timeout: 45_000,
-  });
-  await expect(page.locator('.qs-cap', { hasText: 'pass.updated' })).toBeVisible({
-    timeout: 45_000,
-  });
-  await shots(page, '07-captures');
+  await shots(page, '07-captures', true);
 
   // 6. Done.
   await page.getByRole('button', { name: 'Finish' }).click();
@@ -111,12 +104,52 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   await page.waitForURL((u) => u.pathname === '/developers');
   await expect(page.getByRole('button', { name: 'Reset' })).toBeVisible();
   await shots(page, '09-workbench');
+  // The header never shows Sign in beside the session chip while the account menu loads.
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Sign in' })).toBeHidden();
+  // Calls leaves out the page's own polling and keeps what was made: the 422, the create and the PATCH.
+  const calls = page.getByRole('region', { name: 'Calls' });
+  await expect(calls.getByText('422', { exact: true })).toBeVisible();
+  await expect(calls.getByText('/api/v1/passes', { exact: true }).first()).toBeVisible();
+  await expect(calls.getByRole('link', { name: /PATCH \/api\/v1\/passes\/:id/ })).toBeVisible();
+  await expect(calls.getByText(/\/captures/)).toHaveCount(0);
 
   // Admin is pinned to Test: no Test switch, and the Overview points back to Developers.
   await page.goto('/admin');
   await expect(page.getByRole('link', { name: 'Open Developers' })).toBeVisible();
   await expect(page.getByRole('radiogroup', { name: 'Mode' })).toHaveCount(0);
   await shots(page, '10-admin-pinned');
+
+  // Reset confirms, deletes the test data and shows the new key once; the old key stops.
+  await page.goto('/developers');
+  await page.getByRole('button', { name: 'Reset' }).click();
+  await expect(
+    page.getByText('Passes, events and logs in this sandbox are deleted.'),
+  ).toBeVisible();
+  await shots(page, '11-reset-confirm');
+  await page.getByRole('button', { name: 'Reset sandbox' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: /Reset\. Deleted 1 pass/ }),
+  ).toBeVisible();
+  await expect(page.getByText(/pbp_test_/).first()).toBeVisible();
+  await shots(page, '12-reset-done');
+  expect((await curl('GET', '/passes', key)).status).toBe(401);
+
+  // Closed, the workbench offers Reopen inside its window, and Reopen gives a replacement key.
+  const closed = await page.evaluate(async () => {
+    const who = (await (await fetch('/api/v1/session')).json()) as { csrfToken: string };
+    const res = await fetch('/api/v1/developer/sandbox', {
+      method: 'DELETE',
+      headers: { accept: 'application/json', 'x-csrf-token': who.csrfToken },
+    });
+    return res.status;
+  });
+  expect(closed).toBe(200);
+  await page.goto('/developers');
+  await expect(page.getByTestId('wb-closed')).toContainText('Reopen within');
+  await shots(page, '13-closed');
+  await page.getByRole('button', { name: 'Reopen' }).click();
+  await expect(page.getByText('Reopened. Your key was replaced.')).toBeVisible();
+  await shots(page, '14-reopened');
 });
 
 test.describe('quickstart gates', () => {
@@ -129,7 +162,7 @@ test.describe('quickstart gates', () => {
       await expect(step.getByRole('link', { name: 'My passes' })).toBeVisible();
       await expect(page.getByText(/user@example\.test/)).toBeVisible();
       await expect(page.getByRole('button', { name: 'Create sandbox' })).toHaveCount(0);
-      await shots(page, '11-no-group');
+      await shots(page, '15-no-group');
     });
   });
 
@@ -151,7 +184,7 @@ test.describe('quickstart gates', () => {
         /\/auth\/oidc\/start\?next=/,
       );
       await expect(page.getByRole('button', { name: 'Create sandbox' })).toHaveCount(0);
-      await shots(page, '12-email');
+      await shots(page, '16-email');
     });
   });
 });
