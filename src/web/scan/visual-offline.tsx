@@ -49,6 +49,7 @@ const OFFLINE: ScanState['offline'] = { mode: 'list', listAt: LIST_AT, syncing: 
 function Sheet() {
   return (
     <div className="mx-auto grid max-w-md gap-6 p-5">
+      <h1 className="sr-only">Offline status</h1>
       <div className="flex flex-wrap gap-2">
         <SyncChip state={{ kind: 'offline', queued: 3 }} />
         <SyncChip state={{ kind: 'syncing', queued: 3 }} />
@@ -73,6 +74,7 @@ function Admin() {
   const [draft, setDraft] = useState<SessionDraft>({ ...emptySessionDraft(), whenOffline: 'list' });
   return (
     <div className="mx-auto max-w-xl p-5">
+      <h1 className="sr-only">Offline settings</h1>
       <SessionOfflineFields draft={draft} set={(p) => setDraft((d) => ({ ...d, ...p }))} />
     </div>
   );
