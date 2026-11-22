@@ -2,7 +2,6 @@ import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { Minus } from 'lucide-react';
 import { type ComponentProps, type ReactNode, useId, useState } from 'react';
 import { cn } from '../lib/cn.ts';
-import { TOUCH_HIT } from './button.tsx';
 import { Label } from './label.tsx';
 
 /**
@@ -36,13 +35,9 @@ export function Checkbox({
   return (
     <CheckboxPrimitive.Root
       className={cn(
-        'relative inline-flex size-5 shrink-0 items-center justify-center rounded-sm border border-border-strong bg-surface-raised text-state-checked-on wl-colors',
-        'hover:not-disabled:border-fg-muted',
-        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus',
-        'data-[state=checked]:border-state-checked-edge data-[state=checked]:bg-state-checked-fill',
-        'data-[state=indeterminate]:border-state-checked-edge data-[state=indeterminate]:bg-state-checked-fill',
-        'disabled:cursor-not-allowed disabled:bg-surface-sunken disabled:opacity-50',
-        TOUCH_HIT,
+        // The button is the 44 px touch target; the 20 px box is drawn inside it.
+        'group/cb relative inline-flex size-5 shrink-0 items-center justify-center rounded-sm text-state-checked-on pointer-coarse:size-11',
+        'focus-visible:outline-none disabled:cursor-not-allowed',
         className,
       )}
       onCheckedChange={(value) => {
@@ -51,7 +46,18 @@ export function Checkbox({
       }}
       {...props}
     >
-      <CheckboxPrimitive.Indicator>
+      <span
+        aria-hidden
+        className={cn(
+          'absolute top-1/2 left-1/2 size-5 -translate-1/2 rounded-sm border border-border-strong bg-surface-raised wl-colors',
+          'group-hover/cb:not-group-disabled/cb:border-fg-muted',
+          'group-focus-visible/cb:outline-2 group-focus-visible/cb:outline-offset-2 group-focus-visible/cb:outline-focus',
+          'group-data-[state=checked]/cb:border-state-checked-edge group-data-[state=checked]/cb:bg-state-checked-fill',
+          'group-data-[state=indeterminate]/cb:border-state-checked-edge group-data-[state=indeterminate]/cb:bg-state-checked-fill',
+          'group-disabled/cb:bg-surface-sunken group-disabled/cb:opacity-50',
+        )}
+      />
+      <CheckboxPrimitive.Indicator className="relative flex group-disabled/cb:opacity-50">
         {props.checked === 'indeterminate' ? (
           <Minus aria-hidden className="size-3.5" />
         ) : (
@@ -70,7 +76,7 @@ export function CheckboxField({
   const id = useId();
   return (
     <div className={cn('flex min-h-6 items-center gap-2 pointer-coarse:min-h-11', className)}>
-      <Checkbox id={id} {...props} />
+      <Checkbox id={id} className="pointer-coarse:-mx-3" {...props} />
       <Label htmlFor={id} className="font-normal">
         {label}
       </Label>

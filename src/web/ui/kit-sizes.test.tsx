@@ -57,13 +57,13 @@ describe('SegmentedControl', () => {
     const item = block(css, '.wl-seg > [role="radio"],\n.pc-seg label');
     expect(track).toMatch(/padding:\s*2px/);
     expect(track).toMatch(/border-width:\s*1px/);
-    // 30 + 2 × 2 padding + 2 × 1 border = 36; touch 38 + 6 = 44.
+    // 30 + 2 × 2 padding + 2 × 1 border = 36; touch: no padding or border, the segments are 44.
     expect(item).toMatch(/min-height:\s*1\.875rem/);
     expect(item).toMatch(/font-size:\s*0\.875rem/);
     expect(item).toMatch(/font-weight:\s*500/);
-    expect(css).toMatch(
-      /@media \(pointer: coarse\) \{\s*\.wl-seg > \[role="radio"\],\s*\.pc-seg label \{\s*min-height:\s*2\.375rem/,
-    );
+    const touch = css.slice(css.indexOf('@media (pointer: coarse)'));
+    expect(touch).toMatch(/\.wl-seg,\s*\.pc-seg \{\s*padding:\s*0;\s*border-width:\s*0;/);
+    expect(touch).toMatch(/\.pc-seg label \{\s*min-height:\s*2\.75rem/);
   });
 
   it('renders the SPA control and the SSR toggle on the shared classes', () => {

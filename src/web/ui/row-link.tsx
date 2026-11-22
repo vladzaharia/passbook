@@ -12,7 +12,7 @@ type AnchorProps = AnchorHTMLAttributes<HTMLAnchorElement> & { ref?: Ref<HTMLAnc
  * the target, and teal stays for actions (ui-consistency.md "Tables").
  */
 const ROW_LINK =
-  'block min-w-0 truncate rounded-sm font-medium text-fg-strong underline-offset-2 wl-colors hover:text-accent-fg hover:underline';
+  'block min-w-0 truncate rounded-sm font-medium pointer-coarse:-my-3 pointer-coarse:py-3 text-fg-strong underline-offset-2 wl-colors hover:text-accent-fg hover:underline';
 /** Voided or archived records: muted and struck through, also on hover. */
 const ROW_LINK_INACTIVE =
   'text-fg-muted line-through decoration-fg-subtle hover:text-fg-strong hover:line-through';

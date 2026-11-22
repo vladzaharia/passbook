@@ -120,11 +120,7 @@ function ScopedApiKeys({
 
   return (
     <>
-      <PageHeader
-        title="API keys"
-        meta={orgId === null ? undefined : 'All modes'}
-        actions={empty ? undefined : create('primary')}
-      />
+      <PageHeader title="API keys" actions={empty ? undefined : create('primary')} />
       {live.isError && liveRows.length === 0 ? (
         <ErrorState error={live.error} onRetry={() => live.refetch()} />
       ) : (
