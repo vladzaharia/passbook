@@ -290,6 +290,7 @@ export type Broadcast = {
       to?: string;
       timeZone: string;
     }>;
+    version?: string;
   };
   patch: Record<string, unknown>;
   notify: boolean;
@@ -352,6 +353,7 @@ export type BroadcastsCountRecipientsParams = {
       op: "startsWith" | "contains";
       value: string;
     }>;
+    version?: string;
     passIds?: Array<string>;
     importId?: string;
     expectCount?: number;
@@ -397,6 +399,7 @@ export type BroadcastsCreateParams = {
       op: "startsWith" | "contains";
       value: string;
     }>;
+    version?: string;
     passIds?: Array<string>;
     importId?: string;
     expectCount?: number;
@@ -445,6 +448,7 @@ export type BroadcastsUpdateParams = {
       op: "startsWith" | "contains";
       value: string;
     }>;
+    version?: string;
     passIds?: Array<string>;
     importId?: string;
     expectCount?: number;
@@ -4281,22 +4285,65 @@ export type TemplateReviewList = {
 
 export type TemplateRollout = {
   releaseVersion: string | null;
+  releaseId: string | null;
+  fromVersion: string | null;
   total: number;
   onRelease: number;
   remaining: number;
+  updating: Array<{
+    version: string;
+    count: number;
+  }>;
+  failedCount: number;
   failed: Array<{
     passId: string;
     title: string | null;
     reason: string;
   }>;
-  failedCount: number;
   startedAt: number | null;
   runId: string | null;
   running: boolean;
+  stalled: boolean;
+  changes: Array<{
+    group: "colors" | "front" | "back" | "images" | "barcode";
+    rows: Array<{
+      label: string;
+      kind: "added" | "removed" | "changed";
+      from: {
+        type: "text";
+        text: string;
+      } | {
+        type: "color";
+        color: string;
+      } | {
+        type: "date";
+        at: number;
+      } | {
+        type: "image";
+        version: string;
+        asset: string;
+      } | null;
+      to: {
+        type: "text";
+        text: string;
+      } | {
+        type: "color";
+        color: string;
+      } | {
+        type: "date";
+        at: number;
+      } | {
+        type: "image";
+        version: string;
+        asset: string;
+      } | null;
+    }>;
+    more: number;
+  }>;
   tell: {
-    path: "change" | "message";
-    text: string | null;
+    text: string;
     until: number;
+    key: string;
   } | null;
 };
 

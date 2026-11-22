@@ -78,21 +78,32 @@
     }
   },
   "templates.getTemplatesByIdRollout": {
-    "description": "How far the approved release has reached the organization's passes in the request's mode. `remaining` counts active passes on a different, non-equivalent build, the ones the automatic rollout moves. Once every rebuild since the release has finished, passes still left behind are listed in `failed` (the first 50; `failedCount` has the total) with the reason the rebuild recorded. `tell` says what Tell holders would do for 24 hours after the release: `change` (a latest-design run that notifies) while passes are still moving, `message` (send `text` to the template's passes) once they have moved.",
+    "description": "How far the approved release has reached the organization's passes in the request's mode. `remaining` counts active passes on a different, non-equivalent build, the ones the automatic rollout moves, and `updating` splits the ones still on their way by version. Passes left behind are counted in `failedCount`: the rebuild recorded why, or every rebuild of this release has finished (or none started within ten minutes, `stalled`). `failed` lists the first 50 with the reason, only for a caller who can also read passes. `tell` offers a message to the holders whose passes are on the release, for 24 hours after it and until one is sent; send it as a message broadcast targeting `{ templateIds, version }` with `tell.key` as the `Idempotency-Key`.",
     "response": {
       "releaseVersion": "4",
+      "releaseId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "fromVersion": "3",
       "total": 1240,
       "onRelease": 758,
       "remaining": 482,
-      "failed": [],
-      "failedCount": 0,
+      "updating": [{ "version": "3", "count": 479 }],
+      "failedCount": 3,
+      "failed": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "title": "Alex Morgan",
+          "reason": "The card holds more stamps than the new version allows."
+        }
+      ],
       "startedAt": 1764086400000,
-      "runId": "0193a1b2-7c00-7000-8000-0000000000d4",
+      "runId": "bulk-0193a1b2-7c00-7000-8000-0000000000d4",
       "running": true,
+      "stalled": false,
+      "changes": [],
       "tell": {
-        "path": "change",
-        "text": null,
-        "until": 1764172800000
+        "text": "Gym has a new design.",
+        "until": 1764172800000,
+        "key": "rollout-tell:0193a1b2-7c00-7000-8000-0000000000c1"
       }
     }
   },

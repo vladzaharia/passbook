@@ -410,6 +410,7 @@ type BroadcastTarget struct {
 	Q           *string  `json:"q,omitempty"`
 	Scan        any      `json:"scan,omitempty"`
 	Match       []any    `json:"match,omitempty"`
+	Version     *string  `json:"version,omitempty"`
 }
 
 type BroadcastTargetMatchItem1 struct {
@@ -465,6 +466,7 @@ type BroadcastsCountRecipientsParamsTarget struct {
 	Q           *string  `json:"q,omitempty"`
 	Scan        any      `json:"scan,omitempty"`
 	Match       []any    `json:"match,omitempty"`
+	Version     *string  `json:"version,omitempty"`
 	PassIds     []string `json:"passIds,omitempty"`
 	ImportID    *string  `json:"importId,omitempty"`
 	ExpectCount *int64   `json:"expectCount,omitempty"`
@@ -556,6 +558,7 @@ type BroadcastsCreateParamsTarget struct {
 	Q           *string  `json:"q,omitempty"`
 	Scan        any      `json:"scan,omitempty"`
 	Match       []any    `json:"match,omitempty"`
+	Version     *string  `json:"version,omitempty"`
 	PassIds     []string `json:"passIds,omitempty"`
 	ImportID    *string  `json:"importId,omitempty"`
 	ExpectCount *int64   `json:"expectCount,omitempty"`
@@ -660,6 +663,7 @@ type BroadcastsUpdateParamsTarget struct {
 	Q           *string  `json:"q,omitempty"`
 	Scan        any      `json:"scan,omitempty"`
 	Match       []any    `json:"match,omitempty"`
+	Version     *string  `json:"version,omitempty"`
 	PassIds     []string `json:"passIds,omitempty"`
 	ImportID    *string  `json:"importId,omitempty"`
 	ExpectCount *int64   `json:"expectCount,omitempty"`
@@ -6944,22 +6948,87 @@ type TemplateReviewListItemsItem struct {
 }
 
 type TemplateRollout struct {
-	ReleaseVersion *string                     `json:"releaseVersion"`
-	Total          int64                       `json:"total"`
-	OnRelease      int64                       `json:"onRelease"`
-	Remaining      int64                       `json:"remaining"`
-	Failed         []TemplateRolloutFailedItem `json:"failed"`
-	FailedCount    int64                       `json:"failedCount"`
-	StartedAt      *int64                      `json:"startedAt"`
-	RunID          *string                     `json:"runId"`
-	Running        bool                        `json:"running"`
-	Tell           map[string]any              `json:"tell"`
+	ReleaseVersion *string                       `json:"releaseVersion"`
+	ReleaseID      *string                       `json:"releaseId"`
+	FromVersion    *string                       `json:"fromVersion"`
+	Total          int64                         `json:"total"`
+	OnRelease      int64                         `json:"onRelease"`
+	Remaining      int64                         `json:"remaining"`
+	Updating       []TemplateRolloutUpdatingItem `json:"updating"`
+	FailedCount    int64                         `json:"failedCount"`
+	Failed         []TemplateRolloutFailedItem   `json:"failed"`
+	StartedAt      *int64                        `json:"startedAt"`
+	RunID          *string                       `json:"runId"`
+	Running        bool                          `json:"running"`
+	Stalled        bool                          `json:"stalled"`
+	Changes        []TemplateRolloutChangesItem  `json:"changes"`
+	Tell           map[string]any                `json:"tell"`
+}
+
+type TemplateRolloutChangesItem struct {
+	Group string                               `json:"group"`
+	Rows  []TemplateRolloutChangesItemRowsItem `json:"rows"`
+	More  int64                                `json:"more"`
+}
+
+type TemplateRolloutChangesItemRowsItem struct {
+	Label string `json:"label"`
+	Kind  string `json:"kind"`
+	From  any    `json:"from"`
+	To    any    `json:"to"`
+}
+
+type TemplateRolloutChangesItemRowsItemFrom1 struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+type TemplateRolloutChangesItemRowsItemFrom2 struct {
+	Type  string `json:"type"`
+	Color string `json:"color"`
+}
+
+type TemplateRolloutChangesItemRowsItemFrom3 struct {
+	Type string `json:"type"`
+	At   int64  `json:"at"`
+}
+
+type TemplateRolloutChangesItemRowsItemFrom4 struct {
+	Type    string `json:"type"`
+	Version string `json:"version"`
+	Asset   string `json:"asset"`
+}
+
+type TemplateRolloutChangesItemRowsItemTo1 struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+type TemplateRolloutChangesItemRowsItemTo2 struct {
+	Type  string `json:"type"`
+	Color string `json:"color"`
+}
+
+type TemplateRolloutChangesItemRowsItemTo3 struct {
+	Type string `json:"type"`
+	At   int64  `json:"at"`
+}
+
+type TemplateRolloutChangesItemRowsItemTo4 struct {
+	Type    string `json:"type"`
+	Version string `json:"version"`
+	Asset   string `json:"asset"`
 }
 
 type TemplateRolloutFailedItem struct {
 	PassID string  `json:"passId"`
 	Title  *string `json:"title"`
 	Reason string  `json:"reason"`
+}
+
+type TemplateRolloutUpdatingItem struct {
+	Version string `json:"version"`
+	Count   int64  `json:"count"`
 }
 
 type TemplateSummary struct {
