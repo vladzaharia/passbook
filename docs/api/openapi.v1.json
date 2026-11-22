@@ -36469,6 +36469,21 @@
           {
             "schema": {
               "type": "string",
+              "enum": [
+                "show",
+                "hide"
+              ],
+              "default": "show",
+              "description": "hide: leave out the portal's own background reads (client portal)."
+            },
+            "required": false,
+            "description": "hide: leave out the portal's own background reads (client portal).",
+            "name": "portal",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "minLength": 1,
               "maxLength": 64,
               "description": "Only calls newer than this log id: the listener cursor."
@@ -39688,6 +39703,36 @@
                     "background": "#0f172a",
                     "foreground": "#ffffff",
                     "label": "#fbbf24"
+                  }
+                }
+              },
+              "examples": {
+                "Brand and support": {
+                  "summary": "Brand and support",
+                  "value": {
+                    "expectedRevision": "r1",
+                    "brand": {
+                      "logo": {
+                        "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                      },
+                      "passColors": {
+                        "background": "#0f172a",
+                        "foreground": "#ffffff",
+                        "label": "#fbbf24"
+                      },
+                      "support": {
+                        "email": "help@acme.test"
+                      }
+                    }
+                  }
+                },
+                "Block Mobile": {
+                  "summary": "Block Mobile",
+                  "value": {
+                    "expectedRevision": "r1",
+                    "channels": {
+                      "mobile": "blocked"
+                    }
                   }
                 }
               }
