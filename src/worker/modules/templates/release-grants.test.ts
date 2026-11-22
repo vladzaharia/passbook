@@ -12,6 +12,7 @@ import {
   makeUser,
   type OrgRow,
 } from '../../../../test/helpers/index.ts';
+import { withoutTrigger } from '../../../../test/helpers/triggers.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
 import {
   TemplateApprovalSchema,
@@ -35,9 +36,9 @@ import { basicPackage, passJson, zipOf } from './package/fixtures.ts';
 import { createTemplateRegistry } from './registry.ts';
 import { getTemplate } from './repo.ts';
 import { archiveUploadedTemplate } from './repo-mutations.ts';
-import { recordRolloutFailure } from './repo-release-impact.ts';
 import { writeApproval, writeRelease } from './repo-release-write.ts';
 import { getCandidate } from './repo-releases.ts';
+import { recordRolloutFailure } from './repo-rollout.ts';
 import { resetBakedSync, syncBakedTemplates } from './sync.ts';
 import { bakedFrom, fakeAssets, importZip, sourceOf, watchBatch } from './testing.ts';
 
@@ -782,10 +783,56 @@ describe('rollout and impact', () => {
         ),
       ),
     });
-  const rollout = async (id: string, actor: Actor, query: Record<string, string> = {}) => {
+  const rollout = async (
+    id: string,
+    actor: Pick<Actor, 'headers'>,
+    query: Record<string, string> = {},
+  ) => {
     const q = new URLSearchParams({ orgId: org.id, mode: 'live', ...query });
-    return request(`/${id}/rollout?${q}`, actor);
+    return request(`/${id}/rollout?${q}`, actor as Actor);
   };
+  const read = async (id: string, actor: Pick<Actor, 'headers'> = publisher) =>
+    TemplateRolloutSchema.parse(await (await rollout(id, actor)).json());
+  const releaseOf = async (templateId: string, mode = 'live') =>
+    (
+      await first<{ id: string }>(
+        env.DB,
+        'SELECT id FROM template_releases WHERE template_id = ? AND mode = ? ORDER BY generation DESC',
+        [templateId, mode],
+      )
+    )?.id ?? '';
+  /** A bulk reissue that carries the release, as the cron starts one. */
+  async function rebuild(
+    templateId: string,
+    instance: string,
+    status: string,
+    options: { mode?: string; releaseId?: string } = {},
+  ) {
+    const mode = options.mode ?? 'live';
+    await run(
+      env.DB,
+      `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
+       VALUES (?, 'bulk_reissue', ?, ?, ?, ?)`,
+      [instance, org.id, templateId, status, clock.now() + 1],
+    );
+    await run(env.DB, 'INSERT INTO workflow_release_snapshot_sets (instance_id) VALUES (?)', [
+      instance,
+    ]);
+    const release = await first<{ id: string; generation: number; version: string }>(
+      env.DB,
+      'SELECT id, generation, version FROM template_releases WHERE id = ?',
+      [options.releaseId ?? (await releaseOf(templateId, mode))],
+    );
+    await run(
+      env.DB,
+      `INSERT INTO workflow_release_snapshots (instance_id, org_id, mode, template_id, release_id, generation, version)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [instance, org.id, mode, templateId, release?.id, release?.generation, release?.version],
+    );
+  }
+  /** A key stands for the org; its scopes are the only thing that varies. */
+  const key = (scopes: string[], orgId = org.id) =>
+    ({ headers: auth.apiKey({ orgId, scopes: scopes as never }) }) satisfies Pick<Actor, 'headers'>;
 
   it('reports progress, leftovers after the rebuild, and nothing from other orgs', async () => {
     const t = await released('Rollout Card');
@@ -796,35 +843,83 @@ describe('rollout and impact', () => {
     const old = await registry.resolve(t.templateId, second.result?.version ?? '');
     const behind = await makePass(f, { orgId: org.id, template: old });
     await makePass(f, { orgId: otherOrg.id, template: old });
-    const read = async () =>
-      TemplateRolloutSchema.parse(await (await rollout(t.templateId, publisher)).json());
-    const before = await read();
+    const reader = await member(org.id, ['org_admin']);
+    const before = await read(t.templateId, reader);
     expect(before).toMatchObject({
       releaseVersion: t.version,
       total: 2,
+      onRelease: 1,
       remaining: 1,
       running: false,
+      failed: [],
+      failedCount: 0,
+      runId: null,
+      stalled: false,
     });
-    expect(before).toMatchObject({ onRelease: 1, failed: [], failedCount: 0, runId: null });
+    expect(before.updating).toEqual([{ version: old.version, count: 1 }]);
 
-    const started = clock.now();
-    await run(
-      env.DB,
-      `INSERT INTO workflow_runs (instance_id, kind, org_id, target_id, status, started_at)
-       VALUES ('run-open', 'bulk_reissue', ?, ?, 'running', ?)`,
-      [org.id, t.templateId, started + 1],
-    );
-    expect(await read()).toMatchObject({ running: true, failed: [], remaining: 1 });
+    await rebuild(t.templateId, 'run-open', 'running');
+    expect(await read(t.templateId, reader)).toMatchObject({
+      running: true,
+      failed: [],
+      remaining: 1,
+    });
     await run(
       env.DB,
       "UPDATE workflow_runs SET status = 'complete' WHERE instance_id = 'run-open'",
     );
-    const after = await read();
-    expect(after).toMatchObject({ running: false, runId: 'run-open', failedCount: 1 });
+    const after = await read(t.templateId, reader);
+    expect(after).toMatchObject({
+      running: false,
+      runId: 'run-open',
+      failedCount: 1,
+      updating: [],
+    });
     expect(after.failed.map((p) => p.passId)).toEqual([behind.id]);
+    expect(after.failed[0]?.reason).toBe('Not moved by the last rebuild.');
 
     await run(env.DB, "UPDATE passes SET status = 'voided' WHERE id = ?", [behind.id]);
-    expect(await read()).toMatchObject({ total: 1, remaining: 0, failed: [] });
+    expect(await read(t.templateId, reader)).toMatchObject({ total: 1, remaining: 0, failed: [] });
+  });
+
+  it('ignores a rebuild in the other mode or for another release', async () => {
+    const t = await released('Rollout Modes');
+    const second = await secondVersion('Rollout Modes');
+    const old = await createTemplateRegistry(env).resolve(
+      t.templateId,
+      second.result?.version ?? '',
+    );
+    await makePass(f, { orgId: org.id, template: old });
+    // A finished run that carries this release in Test mode says nothing about Live.
+    await rebuild(t.templateId, 'run-test', 'complete', {
+      mode: 'test',
+      releaseId: await releaseOf(t.templateId),
+    });
+    const body = await read(t.templateId, await member(org.id, ['org_admin']));
+    expect(body).toMatchObject({ runId: null, running: false, failedCount: 0, remaining: 1 });
+  });
+
+  it('treats a rollout that never started as stalled after the grace period', async () => {
+    const t = await released('Rollout Stalled');
+    const second = await secondVersion('Rollout Stalled');
+    const old = await createTemplateRegistry(env).resolve(
+      t.templateId,
+      second.result?.version ?? '',
+    );
+    await makePass(f, { orgId: org.id, template: old });
+    expect(await read(t.templateId)).toMatchObject({ stalled: false, failedCount: 0 });
+    const now = clock.now();
+    clock.set(now + 12 * 60_000);
+    try {
+      const later = await member(org.id, ['template_publisher']);
+      expect(await read(t.templateId, later)).toMatchObject({
+        stalled: true,
+        failedCount: 1,
+        updating: [],
+      });
+    } finally {
+      clock.set(now);
+    }
   });
 
   it('shows the recorded reason before any rebuild has finished', async () => {
@@ -835,29 +930,20 @@ describe('rollout and impact', () => {
       second.result?.version ?? '',
     );
     const behind = await makePass(f, { orgId: org.id, template: old });
-    const release = await first<{ id: string }>(
-      env.DB,
-      'SELECT id FROM template_releases WHERE template_id = ? ORDER BY generation DESC',
-      [t.templateId],
-    );
     await recordRolloutFailure(env.DB, {
       passId: behind.id,
       orgId: org.id,
       mode: 'live',
       templateId: t.templateId,
-      releaseId: release?.id ?? '',
+      releaseId: await releaseOf(t.templateId),
       code: 'STAMPS_ABOVE_MAX',
       message: 'The card holds more stamps than the new version allows.',
       at: clock.now(),
     });
-    const body = TemplateRolloutSchema.parse(await (await rollout(t.templateId, publisher)).json());
-    expect(body).toMatchObject({ failedCount: 1, remaining: 1, running: false });
+    const body = await read(t.templateId, await member(org.id, ['org_admin']));
+    expect(body).toMatchObject({ failedCount: 1, remaining: 1, running: false, updating: [] });
     expect(body.failed).toEqual([
-      {
-        passId: behind.id,
-        title: null,
-        reason: expect.stringContaining('more stamps'),
-      },
+      { passId: behind.id, title: null, reason: expect.stringContaining('more stamps') },
     ]);
     // The row belongs to that pass in that org: another org's pass id records nothing.
     await recordRolloutFailure(env.DB, {
@@ -877,33 +963,99 @@ describe('rollout and impact', () => {
     ).toEqual([{ code: 'STAMPS_ABOVE_MAX' }]);
   });
 
-  it('offers Tell holders as a change before passes move, a message after, nothing after a day', async () => {
+  it('lists passes only to a caller who can read passes, for sessions and keys alike', async () => {
+    const t = await released('Rollout Visibility');
+    const second = await secondVersion('Rollout Visibility');
+    const old = await createTemplateRegistry(env).resolve(
+      t.templateId,
+      second.result?.version ?? '',
+    );
+    const behind = await makePass(f, { orgId: org.id, template: old });
+    await recordRolloutFailure(env.DB, {
+      passId: behind.id,
+      orgId: org.id,
+      mode: 'live',
+      templateId: t.templateId,
+      releaseId: await releaseOf(t.templateId),
+      code: 'X',
+      message: 'Left behind.',
+      at: clock.now(),
+    });
+    // A publisher reads templates, not passes: the count, never the list.
+    expect(await read(t.templateId, publisher)).toMatchObject({ failedCount: 1, failed: [] });
+    expect((await read(t.templateId, await member(org.id, ['org_admin']))).failed).toHaveLength(1);
+    expect(await read(t.templateId, key(['templates:read']))).toMatchObject({
+      failedCount: 1,
+      failed: [],
+    });
+    expect((await read(t.templateId, key(['templates:read', 'passes:read']))).failed).toHaveLength(
+      1,
+    );
+    // Parity with the session rules: another org is not found, no templates:read is forbidden.
+    await expectProblem(
+      await rollout(t.templateId, key(['templates:read'], otherOrg.id)),
+      403,
+      'ORG_FORBIDDEN',
+    );
+    expect((await rollout(t.templateId, key(['passes:read']))).status).toBe(403);
+  });
+
+  it('counts an older version on an equivalent build, and not a quarantined pass, as done', async () => {
+    const t = await released('Rollout Equivalent');
+    const second = await secondVersion('Rollout Equivalent');
+    const registry = createTemplateRegistry(env);
+    const old = await registry.resolve(t.templateId, second.result?.version ?? '');
+    const same = await makePass(f, { orgId: org.id, template: old });
+    const quarantined = await makePass(f, { orgId: org.id, template: old });
+    await run(env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [quarantined.id]);
+    expect(await read(t.templateId)).toMatchObject({ total: 1, remaining: 1 });
+    await withoutTrigger(env.DB, 'template_versions_immutable', () =>
+      run(
+        env.DB,
+        `UPDATE template_versions SET build_key = 'same' WHERE template_id = ? AND version IN (?, ?)`,
+        [t.templateId, t.version, old.version],
+      ),
+    );
+    expect(same.id).not.toBe(quarantined.id);
+    expect(await read(t.templateId)).toMatchObject({ total: 1, onRelease: 1, remaining: 0 });
+  });
+
+  it('offers one message per release, to whoever is on it, and a text that fits a rollback', async () => {
     const t = await released('Rollout Tell');
     const registry = createTemplateRegistry(env);
     const second = await secondVersion('Rollout Tell');
     const old = await registry.resolve(t.templateId, second.result?.version ?? '');
     const onRelease = await registry.resolve(t.templateId, t.version);
-    await makePass(f, { orgId: org.id, template: onRelease });
+    const releaseId = await releaseOf(t.templateId);
     const behind = await makePass(f, { orgId: org.id, template: old });
-    const read = async () =>
-      TemplateRolloutSchema.parse(await (await rollout(t.templateId, publisher)).json());
-    expect((await read()).tell).toMatchObject({ path: 'change', text: null });
+    expect((await read(t.templateId)).tell).toBeNull();
+    await makePass(f, { orgId: org.id, template: onRelease });
+    const offered = (await read(t.templateId)).tell;
+    expect(offered).toMatchObject({
+      key: `rollout-tell:${releaseId}`,
+      text: 'Rollout Tell has a new design.',
+    });
     await run(env.DB, 'UPDATE passes SET template_version = ? WHERE id = ?', [
       t.version,
       behind.id,
     ]);
-    const after = await read();
-    expect(after.remaining).toBe(0);
-    expect(after.tell).toMatchObject({
-      path: 'message',
-      text: expect.stringContaining('Rollout Tell'),
-    });
+    expect((await read(t.templateId)).tell).not.toBeNull();
+    // Sent once: the idempotency row the message create leaves hides the offer for good.
+    await run(
+      env.DB,
+      `INSERT INTO idempotency_keys (org_id, key, request_hash, resource_id, created_at)
+       VALUES (?, ?, 'h', 'done:{}', ?)`,
+      [org.id, `broadcast-create:live:user-1:rollout-tell:${releaseId}`, clock.now()],
+    );
+    expect((await read(t.templateId)).tell).toBeNull();
+    await run(env.DB, 'DELETE FROM idempotency_keys WHERE org_id = ?', [org.id]);
+    expect((await read(t.templateId)).tell).not.toBeNull();
+    // A day later the offer is over.
     const now = clock.now();
     clock.set(now + 25 * 3_600_000);
     try {
       const later = await member(org.id, ['template_publisher']);
-      const res = await rollout(t.templateId, later);
-      expect(TemplateRolloutSchema.parse(await res.json()).tell).toBeNull();
+      expect((await read(t.templateId, later)).tell).toBeNull();
     } finally {
       clock.set(now);
     }

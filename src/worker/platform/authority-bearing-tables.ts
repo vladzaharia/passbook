@@ -88,6 +88,8 @@ export const PASS_BEARING_TABLES: ReadonlySet<string> = new Set([
   'revisions',
   'pass_personalizations',
   'broadcast_items',
+  'broadcast_targets',
+  'template_rollout_failures',
   'message_rule_fires',
   'pass_check_in',
   'sandbox_forward_passes',
