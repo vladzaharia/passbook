@@ -31,7 +31,7 @@ export const SheetCloseButton = DialogPrimitive.Close;
 export interface SheetContentProps
   extends Omit<ComponentProps<typeof DialogPrimitive.Content>, 'title'> {
   title: ReactNode;
-  side?: 'left' | 'right';
+  side?: 'left' | 'right' | 'bottom';
   hideTitle?: boolean;
   /** No Close button: the sheet cannot be dismissed (a step that must be finished). */
   hideClose?: boolean;
@@ -43,12 +43,14 @@ export interface SheetContentProps
  * Touch drag to close: the sheet follows the finger (touch-action pan-y keeps vertical scrolling),
  * the overlay fades with it; past 40% of the width or 0.5 px/ms it closes, else springs back.
  */
-function useDragToClose(side: 'left' | 'right') {
+function useDragToClose(side: 'left' | 'right' | 'bottom') {
   const close = useContext(SheetClose);
   const content = useRef<HTMLDivElement>(null);
   const overlay = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; t: number; dx: number; on: boolean } | null>(null);
   const dir = side === 'left' ? -1 : 1;
+  // The bottom sheet closes by its button, Esc or the overlay; no horizontal drag.
+  const draggable = side !== 'bottom';
   const reset = (el: HTMLElement) => {
     el.style.transition = 'transform 200ms var(--wl-ease-spring)';
     el.style.transform = '';
@@ -60,7 +62,7 @@ function useDragToClose(side: 'left' | 'right') {
     overlay,
     handlers: {
       onPointerDown: (e: PointerEvent<HTMLDivElement>) => {
-        if (e.pointerType !== 'touch' || !close) return;
+        if (e.pointerType !== 'touch' || !close || !draggable) return;
         drag.current = { x: e.clientX, y: e.clientY, t: e.timeStamp, dx: 0, on: false };
       },
       onPointerMove: (e: PointerEvent<HTMLDivElement>) => {
@@ -127,11 +129,13 @@ export function SheetContent({
         }}
         {...handlers}
         className={cn(
-          'fixed inset-y-0 z-50 flex w-72 max-w-[calc(100%-1rem)] touch-pan-y flex-col border-border bg-surface-raised shadow-elevation-3',
-          'pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
-          side === 'left'
-            ? 'wl-sheet-left left-0 border-r pl-[env(safe-area-inset-left)]'
-            : 'wl-sheet-right right-0 border-l pr-[env(safe-area-inset-right)] max-sm:w-[calc(100%-1rem)] sm:w-96',
+          'fixed z-50 flex touch-pan-y flex-col border-border bg-surface-raised shadow-elevation-3',
+          side === 'bottom'
+            ? 'wl-sheet-bottom inset-x-0 bottom-0 max-h-[88dvh] rounded-t-xl border-t pb-[env(safe-area-inset-bottom)]'
+            : 'inset-y-0 w-72 max-w-[calc(100%-1rem)] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
+          side === 'left' && 'wl-sheet-left left-0 border-r pl-[env(safe-area-inset-left)]',
+          side === 'right' &&
+            'wl-sheet-right right-0 border-l pr-[env(safe-area-inset-right)] max-sm:w-[calc(100%-1rem)] sm:w-96',
           className,
         )}
         {...props}

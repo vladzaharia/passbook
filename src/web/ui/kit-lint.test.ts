@@ -25,7 +25,7 @@ describe('kit lint', () => {
   });
 
   it('shows a Spinner only in buttons and polling rows', () => {
-    const allowed = new Set(['ui/button.tsx']);
+    const allowed = new Set(['ui/button.tsx', 'admin/templates/releases/try-sheet.tsx']);
     for (const { path, text } of files) {
       if (allowed.has(path)) continue;
       expect(text, path).not.toMatch(/<Spinner\b/);

@@ -46,11 +46,12 @@
 @keyframes wl-spark {
   from {
     opacity: 1;
-    transform: rotate(var(--a)) translateY(0) scaleY(1);
+    transform: rotate(var(--a)) translateY(calc(-1 * var(--wl-spark-r, 0px))) scaleY(1);
   }
   to {
     opacity: 0;
-    transform: rotate(calc(var(--a) + 40deg)) translateY(-14px) scaleY(0.4);
+    transform: rotate(calc(var(--a) + 40deg)) translateY(calc(-1 * var(--wl-spark-r, 0px) - 14px))
+      scaleY(0.4);
   }
 }
 
@@ -163,7 +164,8 @@
   background: var(--wl-foil);
   opacity: 0;
   transform-origin: 50% 100%;
-  animation: wl-spark 640ms var(--wl-ease-out) calc(var(--i) * 40ms) backwards;
+  animation: wl-spark 640ms var(--wl-ease-out) calc(var(--wl-spark-delay, 0ms) + var(--i) * 40ms)
+    backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
