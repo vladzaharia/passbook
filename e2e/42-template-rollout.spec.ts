@@ -123,7 +123,6 @@ test('Tell holders messages the passes on the release, once, and never the ones 
     await expect(page.getByRole('progressbar', { name: 'Passes on the release' })).toBeVisible();
     await expect(page.getByText('v2 · 2')).toBeVisible();
     await expect(page.getByText('v1 · 3')).toBeVisible();
-    await page.getByRole('button', { name: /What changed v1 → v2/ }).click();
 
     const card = page.getByRole('progressbar', { name: 'Passes on the release' });
     await shoot(page, url, 'rollout', () => expect(card).toBeVisible());
