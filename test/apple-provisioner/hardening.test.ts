@@ -77,9 +77,14 @@ describe('CSR strictness', () => {
 
 describe('findPassType', () => {
   it('allowlists a managed pass type an earlier attempt created, so its certificate can follow', async () => {
-    const { api } = stubApple(() => ({
-      body: { data: [{ id: 'PT7', attributes: { identifier: MANAGED, name: 'Henrys' } }] },
-    }));
+    const { api } = stubApple(({ method }) =>
+      method === 'POST'
+        ? {
+            status: 201,
+            body: { data: { id: 'C1', attributes: { certificateType: 'PASS_TYPE_ID' } } },
+          }
+        : { body: { data: [{ id: 'PT7', attributes: { identifier: MANAGED, name: 'Henrys' } }] } },
+    );
     await api.findPassType(MANAGED);
     const row = await env.DB.prepare(
       'SELECT asc_id, source FROM asc_pass_types WHERE identifier = ?',
