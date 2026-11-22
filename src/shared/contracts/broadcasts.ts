@@ -94,6 +94,8 @@ export const BroadcastTargetSchema = z.object({
   q: z.string().trim().max(200).optional(),
   scan: ScanTargetSchema.optional(),
   match: InputMatchSchema.optional(),
+  /** A message to one template's passes that are on this version or an equivalent build. */
+  version: z.string().min(1).max(64).optional(),
 });
 export type BroadcastTarget = z.infer<typeof BroadcastTargetSchema>;
 

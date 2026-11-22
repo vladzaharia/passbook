@@ -23,6 +23,8 @@ export interface PassListFilter {
   noScanSince?: number;
   /** Only passes whose inputs satisfy every clause. */
   match?: InputMatch;
+  /** Passes on this template version or on a version with the same build. */
+  version?: string;
   /** Skips passes removed from Wallet. */
   excludeRemoved?: boolean;
   q?: string;
@@ -83,6 +85,15 @@ export function passFilterSql(filter: PassListFilter): {
     const m = inputMatchSql(filter.match, 'passes');
     add(m.sql, ...m.params);
   }
+  if (filter.version)
+    add(
+      `(template_version = ? OR EXISTS (SELECT 1 FROM template_versions a
+        JOIN template_versions b ON b.template_id = a.template_id AND b.build_key = a.build_key
+        WHERE a.template_id = passes.template_id AND a.version = passes.template_version
+          AND b.version = ? AND a.build_key IS NOT NULL))`,
+      filter.version,
+      filter.version,
+    );
   if (filter.excludeRemoved) where.push('removed_at IS NULL');
   if (filter.cursor) add('id < ?', filter.cursor);
   const q = filter.q?.trim();

@@ -32,6 +32,7 @@ export function storedTargetOf(
     ...(target.q ? { q: target.q } : {}),
     ...(target.scan ? { scan: target.scan } : {}),
     ...(target.match ? { match: target.match as StoredBroadcastTarget['match'] } : {}),
+    ...(target.version ? { version: target.version } : {}),
     ...(target.importId ? { importId: target.importId } : {}),
     ...(target.expectCount !== undefined ? { expectCount: target.expectCount } : {}),
     ...(body.kind === 'change' && body.message ? { message: body.message } : {}),

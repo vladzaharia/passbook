@@ -105,6 +105,8 @@ export const CreateBroadcastBodySchema = z
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: 'custom', path, message });
     const { target } = body;
+    if (target.version && (body.kind !== 'message' || target.templateIds?.length !== 1))
+      issue(['target', 'version'], 'Only a message to one template can name a version.');
     if (body.kind === 'message') {
       if (!target.templateIds) issue(['target'], 'A message targets templates.');
       if (body.message !== undefined) issue(['message'], 'A message sets its text in the patch.');
