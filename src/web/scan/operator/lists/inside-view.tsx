@@ -9,6 +9,7 @@ import { stayText } from '../../machine/access-view.ts';
 import { fill } from '../../ui/copy.ts';
 import { ACCESS_COPY } from '../../ui/copy-access.ts';
 import { sessionTime } from '../../ui/session-time.ts';
+import { ListEmpty } from './list-empty.tsx';
 import { PersonAvatar } from './person-avatar.tsx';
 import { useRoving } from './use-roving.ts';
 import './lists.css';
@@ -168,7 +169,7 @@ export function InsideView({
             {ACCESS_COPY.inside.offline}
           </p>
         ) : !state.loading && !state.rows.length ? (
-          <p className="op-list-note">{V.insideEmpty}</p>
+          <ListEmpty>{V.insideEmpty}</ListEmpty>
         ) : null}
         <ul className="op-rows" onKeyDown={roving.onKeyDown}>
           {state.rows.map((row, index) => (

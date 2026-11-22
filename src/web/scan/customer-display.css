@@ -146,7 +146,8 @@
 .cstage-notice {
   position: absolute;
   right: clamp(16px, 2vw, 48px);
-  bottom: clamp(12px, 1.4vw, 32px);
+  /* Top, not bottom: the staff "Hold to switch back" button owns the bottom-right corner. */
+  top: clamp(12px, 1.4vw, 32px);
   z-index: 2;
   padding: 6px 14px;
   border-radius: 999px;
@@ -196,5 +197,15 @@
   }
   .cstage-buddy {
     width: min(44vw, 60dvh);
+  }
+}
+
+/* Narrow screens: two short lines, so the button stays clear of the buddy standing in the middle. */
+@media (max-width: 479px) {
+  button.scan-hold-switch {
+    max-width: 6.5rem;
+    white-space: normal;
+    text-align: start;
+    line-height: 1.2;
   }
 }

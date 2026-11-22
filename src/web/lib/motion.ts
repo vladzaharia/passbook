@@ -146,7 +146,9 @@ export { useChangeCount } from './change-count.ts';
  * The number to show while counting to `value`: from 0 on mount, from the shown number on change,
  * 600 ms ease-out. Without a layout engine (tests) or with reduced motion it is `value`.
  */
-export function useCountUp(value: number, ms = 600): number {
+export function useCountUp(raw: number, ms = 600): number {
+  // A count is never below 0: a net figure that dips under it (more out than in) shows as 0, never a minus.
+  const value = Math.max(0, raw);
   const [shown, setShown] = useState(value);
   const last = useRef(0);
   useLayoutEffect(() => {
@@ -160,7 +162,7 @@ export function useCountUp(value: number, ms = 600): number {
     let frame = 0;
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / ms);
-      const n = Math.round(from + (value - from) * (1 - (1 - t) ** 3));
+      const n = Math.max(0, Math.round(from + (value - from) * (1 - (1 - t) ** 3)));
       last.current = n;
       setShown(n);
       if (t < 1) frame = requestAnimationFrame(tick);

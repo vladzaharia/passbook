@@ -4,10 +4,9 @@ import { settingsOf } from '../scanners/scanner-draft.ts';
 import type { SessionDraft } from './draft.ts';
 
 const HELP: Record<OfflineMode, string> = {
-  stop: 'Scans wait for a connection. Nothing is let in unchecked.',
-  decide:
-    'Staff let people in by eye. Each entry is checked when the door is back online, and a bad one shows as a conflict.',
-  list: 'The door checks a list of valid passes held on the device. No names are stored. The scanner must be open before the connection drops, and NFC tags still need a connection.',
+  stop: 'Scans wait for a connection.',
+  decide: 'Staff let people in by eye; each entry is checked once back online.',
+  list: 'The door checks a list of valid passes held on the device.',
 };
 
 /** O8: one setting for what the door does with no connection. */

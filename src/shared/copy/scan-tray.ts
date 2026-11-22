@@ -3,6 +3,7 @@ export const SCAN_TRAY_COPY = {
   enterCode: 'Enter code',
   field: 'Name, email or code',
   fieldCode: 'Code',
+  codeLabel: 'Pass code',
   lookUp: 'Look up',
   enter: 'Enter',
   letters: 'ABC',

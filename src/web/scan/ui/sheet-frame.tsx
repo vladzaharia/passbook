@@ -73,13 +73,23 @@ export interface SheetFrameProps {
   footer?: ReactNode;
   /** A 560 tray (This shift) instead of the 700 sheet: one height, a pull down closes. */
   tray?: boolean;
+  /** A tray as tall as its content (End shift), not the full 560. */
+  fit?: boolean;
 }
 
 /**
  * The handheld's one sheet (design 6): a 700 px bottom sheet (snap 460) with a grab handle, a header, a scrolling
  * body and a thumb footer. At 640 and up it is the side sheet every other scanner panel uses.
  */
-export function SheetFrame({ label, onClose, header, children, footer, tray }: SheetFrameProps) {
+export function SheetFrame({
+  label,
+  onClose,
+  header,
+  children,
+  footer,
+  tray,
+  fit,
+}: SheetFrameProps) {
   const phone = useMediaQuery(PHONE);
   const opener = useOpener(true);
   const [snap, setSnap] = useState<Snap>(tray ? 'half' : 'full');
@@ -106,6 +116,7 @@ export function SheetFrame({ label, onClose, header, children, footer, tray }: S
           className="scan-pass-sheet wl-dialog"
           data-snap={snap}
           data-tray={tray || undefined}
+          data-fit={fit || undefined}
           onOpenAutoFocus={focusInitial}
           onCloseAutoFocus={restoreOpener(opener)}
         >

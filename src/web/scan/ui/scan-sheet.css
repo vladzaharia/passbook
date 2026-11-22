@@ -23,6 +23,10 @@
 .scan-pass-sheet[data-tray] {
   height: min(560px, calc(100dvh - env(safe-area-inset-top, 0px) - 48px));
 }
+.scan-pass-sheet[data-tray][data-fit] {
+  height: auto;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 48px);
+}
 @media (prefers-reduced-motion: no-preference) {
   .scan-pass-sheet {
     transition: height 200ms var(--wl-ease-out);
@@ -81,7 +85,9 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding-block-end: 8px;
+  padding-block-end: 24px;
+  /* The last row fades out above the pinned footer instead of being cut mid-row. */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
 }
 .scan-sheet-foot {
   display: flex;
@@ -107,4 +113,16 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+}
+
+/* The phone's action sheet (the menu) dims the stage behind it, so the camera message never reads through it. */
+@media (max-width: 639.98px) {
+  body:has([role="menu"][data-state="open"]) .scan-shell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 55;
+    background: rgb(0 0 0 / 0.45);
+    pointer-events: none;
+  }
 }

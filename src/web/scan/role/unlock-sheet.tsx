@@ -35,11 +35,12 @@ export function RoleUnlock({ api, refetch }: { api: ScanApi; refetch: () => Prom
   };
   return (
     <>
-      <div className="fixed right-3 bottom-3 z-10 flex flex-col items-end gap-2">
+      <div className="fixed left-3 bottom-3 z-10 flex flex-col items-start gap-2">
         {error ? <Callout tone="danger">{error}</Callout> : null}
         <Button
           variant="ghost"
           size="sm"
+          className="scan-hold-switch"
           onPointerDown={start}
           onPointerUp={stop}
           onPointerLeave={stop}

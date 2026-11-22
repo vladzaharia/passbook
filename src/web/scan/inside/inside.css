@@ -217,18 +217,23 @@
 .scan-in-trailing {
   flex: none;
 }
+.scan-in-mark-short {
+  display: none;
+}
 .scan-in-more {
   align-self: center;
 }
 @media (max-width: 420px) {
-  /* A narrow phone: the action stays on the row as an icon. */
+  /* A narrow phone: the action keeps a short word beside its icon. */
   .scan-in-mark-label {
     display: none;
+  }
+  .scan-in-mark-short {
+    display: inline;
   }
   .scan-in-mark {
     min-width: 44px;
     min-height: 44px;
-    padding-inline: 0;
   }
 }
 @media (prefers-reduced-motion: no-preference) {

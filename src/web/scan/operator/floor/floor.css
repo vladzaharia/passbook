@@ -201,6 +201,16 @@
   height: 32px;
   font-size: 12px;
 }
+/* A small avatar: the verdict disc shrinks and sits further out, clear of the initials. */
+.op-fl-visitors .op-disc {
+  width: 14px;
+  height: 14px;
+  inset: auto -5px -5px auto;
+}
+.op-fl-visitors .op-disc svg {
+  width: 9px;
+  height: 9px;
+}
 .op-fl-open {
   display: grid;
   min-width: 0;

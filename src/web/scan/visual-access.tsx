@@ -73,6 +73,8 @@ export const ACCESS_SCENARIOS = [
 ] as const;
 export type AccessScenario = (typeof ACCESS_SCENARIOS)[number];
 
+const quietSocket = () => ({ close: () => undefined });
+
 function RollScenario({ scenario }: { scenario: AccessScenario }) {
   const done = { status: 'present' as const, by: 'Sam K.', at: ROLL_T0 };
   const people =
@@ -94,7 +96,7 @@ function RollScenario({ scenario }: { scenario: AccessScenario }) {
     enabled: true,
     online,
     by: '',
-    connect: () => ({ close: () => undefined }),
+    connect: quietSocket,
   });
   const loaded = roll.call !== null;
   const { mark } = roll;
