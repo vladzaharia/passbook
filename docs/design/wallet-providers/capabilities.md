@@ -43,7 +43,7 @@ as a labelled line), `difference` (carried, looks different), `omitted` (left ou
 | `relevance.maxDistance` | difference | difference | difference | difference | difference | unsupported | unsupported | unsupported |
 | `validity.expiration` | native | native | native | native | native | native | native | native |
 | `void.visual` | native | native | native | native | native | native | native | native |
-| `messaging.notify` | native | native | native | native | native | difference | difference | difference |
+| `messaging.notify` | difference | difference | difference | difference | difference | difference | difference | difference |
 | `updates.push` | native | native | native | native | native | native | native | native |
 | `upcoming.multi` | text | text | omitted | omitted | omitted | difference | difference | omitted |
 | `links.featured` | native | native | native | native | native | text | text | text |

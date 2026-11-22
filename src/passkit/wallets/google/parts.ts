@@ -166,6 +166,13 @@ export function unsupportedParts(ctx: Ctx): void {
   const { view } = ctx;
   if (view.relevance.beacons.length > 0)
     ctx.note('relevance.beacons', 'beacons', 'unsupported', 'Google Wallet has no beacons.');
+  if (view.messaging.fields.length > 0)
+    ctx.note(
+      'messaging.notify',
+      '',
+      'difference',
+      'Google Wallet writes the alert; the message shows on the pass.',
+    );
   if (view.nfc) ctx.note('nfc', '', 'unsupported', 'Google Smart Tap is not set up.');
   if (view.personalization)
     ctx.note('personalization', '', 'unsupported', 'Google Wallet has no sign-up on the pass.');

@@ -111,7 +111,6 @@ describe('broadcast budget per wallet', () => {
       providerBudgets(kit.ctx, (await getPass(kit.env.DB, pass.id)) ?? pass);
     expect(await budgets()).toEqual({
       google: { used: 0, limit: 3, resetsAt: null },
-      samsung: { used: 0, limit: 0, resetsAt: null },
     });
     for (const text of ['One', 'Two', 'Three', 'Four']) {
       await send(text);
@@ -125,7 +124,7 @@ describe('broadcast budget per wallet', () => {
       'deferred',
       'deferred',
     ]);
-    expect(events.every((e) => e.providers?.samsung === 'over')).toBe(true);
+    expect(events.every((e) => !('samsung' in (e.providers ?? {})))).toBe(true);
     expect((await budgets()).google).toMatchObject({ used: 0, limit: 3 });
     // The gate a real send calls: three sent messages in the window fill Google's budget.
     for (let i = 0; i < 3; i++)
@@ -142,7 +141,7 @@ describe('broadcast budget per wallet', () => {
       );
     const full = await budgets();
     expect(full.google).toMatchObject({ used: 3, limit: 3 });
-    expect(budgetOutcomes(full)).toMatchObject({ google: 'over', samsung: 'over' });
+    expect(budgetOutcomes(full)).toEqual({ google: 'over' });
     kit.clock.advance(25 * 3_600_000);
     expect(budgetOutcomes(await budgets())).toMatchObject({ google: 'deferred' });
   });
