@@ -1,6 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { ORG_WEBSITE_INVALID } from '@/shared/copy/org-website.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 import { localZone } from '@/web/lib/timezones.ts';
 
@@ -186,7 +187,7 @@ describe('org website', () => {
     const input = await screen.findByLabelText('Website');
     await user.type(input, 'http://gym.example');
     await user.click(screen.getByRole('button', { name: 'Save' }));
-    expect(await screen.findByText('Use an https URL without credentials.')).toBeInTheDocument();
+    expect(await screen.findByText(ORG_WEBSITE_INVALID)).toBeInTheDocument();
     expect(puts).toEqual([]);
     await user.clear(input);
     await user.type(input, 'https://gym.example');

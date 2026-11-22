@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ORG_WEBSITE_INVALID } from '../copy/org-website.ts';
 import { strictEmail } from '../email.ts';
 import { checkFromName } from '../email-from-name.ts';
 import { DATA_CLASSES, type RetentionClass } from '../privacy/data-classes.ts';
@@ -96,7 +97,7 @@ export const OrgSettingsSchema = z.object({
   'org.website': z
     .string()
     .max(2048)
-    .refine(isHttpsUrl, 'Use an https URL without credentials.')
+    .refine(isHttpsUrl, ORG_WEBSITE_INVALID)
     .transform((value) => new URL(value).href)
     .optional(),
   'branding.accent': z

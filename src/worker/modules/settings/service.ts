@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import { OrgSettingsSchema, PlatformSettingsSchema } from '../../../shared/contracts/settings.ts';
 import { featureNotIncluded } from '../../../shared/copy/entitlements.ts';
+import { ORG_WEBSITE_INVALID } from '../../../shared/copy/org-website.ts';
 import { checkFromName } from '../../../shared/email-from-name.ts';
 import type { Actor } from '../../platform/context.ts';
 import { entitlementsOf } from '../../platform/entitlements.ts';
@@ -10,7 +11,7 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
-import { isIpLiteral, platformHostsOf } from '../../platform/safe-fetch.ts';
+import { platformHostsOf, urlRefusal } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
@@ -152,12 +153,9 @@ export async function listSettings(ctx: ServiceContext, scope: string): Promise<
     : inherit(entries, await getPlatformSettings(ctx), await entitlementsOf(ctx, orgId));
 }
 
-/** Private, local and platform hosts are no org website. Mirrors the host rules of `assertSafeUrl`, without its UNSAFE_URL code. */
+/** Private, local and platform hosts are no org website. */
 function websiteRefusal(ctx: ServiceContext, url: string): string | null {
-  const host = new URL(url).hostname.toLowerCase().replace(/\.+$/, '');
-  const local = !host.includes('.') || /\.(local|internal|localhost)$/.test(host);
-  const platform = platformHostsOf(ctx.env).some((p) => host === p || host.endsWith(`.${p}`));
-  return isIpLiteral(host) || local || platform ? 'Use a public https address.' : null;
+  return urlRefusal(new URL(url), platformHostsOf(ctx.env)) ? ORG_WEBSITE_INVALID : null;
 }
 
 /** The schema checks the name against "PassBook"; this also checks the platform's current sender name. */
