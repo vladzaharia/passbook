@@ -18,6 +18,51 @@ describe('findAppleBinding', () => {
     ]);
   });
 
+  it('catches dynamic access and whole-env reads', () => {
+    const f = 'src/worker/modules/passes/service.ts';
+    const bad = [
+      "const a = env['AP' + 'PLE'];",
+      "const k = 'AP' + 'PLE'; const a = env[k];",
+      'const a = env[name];',
+      'const a = c.env[name];',
+      'const a = env[`APPLE`];',
+      'const v = Object.values(env);',
+      'const v = Object.entries(c.env);',
+      'const v = Reflect.get(env, key);',
+      'const { DB, ...rest } = env; rest.APPLE;',
+      "const { DB, ...rest } = c.env; rest['APPLE'];",
+      'const { DB, ...rest } = c.env; rest[key];',
+      'const copy = { ...env, DB: x }; copy.APPLE;',
+      'const copy = { ...env } as Env; Object.values(copy);',
+      'function f({ DB, ...rest }: Env) { return rest[k]; }',
+    ];
+    for (const line of bad) expect(findAppleBinding(f, line), line).toHaveLength(1);
+    const ok = [
+      'const a = env.DB;',
+      'const { DB, ...rest } = other;',
+      'const m = { ...opts };',
+      'const a = table[name];',
+      'const v = Object.values(map);',
+      'function f({ a, ...rest }: Props) { return rest[k]; }',
+      'const copy = { ...env, DB: x }; copy.DB;',
+      'const { DB, ...rest } = env; rest.TURNSTILE;',
+    ];
+    for (const line of ok) expect(findAppleBinding(f, line), line).toEqual([]);
+    expect(findAppleBinding('src/worker/workflows/identity-provision.ts', bad.join('\n'))).toEqual(
+      [],
+    );
+  });
+
+  it('lets reviewed files read the env by key, but never name APPLE', () => {
+    const f = 'src/worker/platform/crypto.ts';
+    expect(findAppleBinding(f, 'const a = env[name]; Object.keys(env);')).toEqual([]);
+    expect(findAppleBinding(f, "const a = env['AP' + 'PLE'];")).toEqual([`${f}:1`]);
+    expect(findAppleBinding('src/worker/x/some.test.ts', 'Object.values(env);')).toEqual([]);
+    expect(
+      findAppleBinding('src/worker/x/some.test.ts', 'Object.assign(env, { DB: db });'),
+    ).toEqual([]);
+  });
+
   it('catches imports of the client outside the workflow', () => {
     const text = [
       "import { ascClient } from '../identities/asc-client.ts';",
