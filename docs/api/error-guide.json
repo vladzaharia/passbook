@@ -23,6 +23,18 @@
     "fix": "Request only scopes the parent key already holds, or create the key with a broader parent.",
     "retryable": false
   },
+  "API_KEY_EXPIRY_REQUIRED": {
+    "title": "Expiry required",
+    "when": "A personal key, a platform key, or a key with the scanning:admin scope was made without an expiry.",
+    "fix": "Send expiresAt, at most 90 days ahead.",
+    "retryable": false
+  },
+  "API_KEY_EXPIRY_TOO_LONG": {
+    "title": "Expiry too far ahead",
+    "when": "A personal key, a platform key, or a key with the scanning:admin scope has an expiry more than 90 days ahead.",
+    "fix": "Send an earlier expiresAt.",
+    "retryable": false
+  },
   "API_KEY_MODE_MISMATCH": {
     "title": "Key mode mismatch",
     "when": "You tried to rotate a key from the other mode (live or test).",
@@ -87,6 +99,12 @@
     "title": "Route not open to keys",
     "when": "A key called a scanner route that keys cannot use.",
     "fix": "Call this route from a paired scanner or a signed-in session.",
+    "retryable": false
+  },
+  "API_KEY_SCANNING_ADMIN_LIVE_ORG": {
+    "title": "scanning:admin is live and one org",
+    "when": "A test-mode key or a platform key asked for scanning:admin.",
+    "fix": "Make a live key of one organization.",
     "retryable": false
   },
   "API_KEY_SCAN_ORG_REQUIRED": {

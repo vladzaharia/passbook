@@ -1,4 +1,4 @@
-import { redact } from '../../platform/log.ts';
+import { redact, VALUE_PATTERNS } from '../../platform/log.ts';
 
 /** A stored body is cut here, after redaction. */
 export const BODY_MAX_CHARS = 8000;
@@ -45,14 +45,6 @@ const isSafe = (key: string) =>
 /** A problem+json answer (`status` and `title`): its `code`, `title` and `detail` are the platform's own words. */
 const PROBLEM_KEYS = new Set(['code', 'title', 'detail']);
 
-/** Capability shapes that can sit inside a safe string: links, JWTs, webhook secrets, pairing and signature parameters. */
-const VALUE_PATTERNS: [RegExp, string][] = [
-  [/(\/(?:preview|p|b|j|t|w)\/)[A-Za-z0-9_.~-]{12,}/g, '$1[redacted]'],
-  [/eyJ[\w-]+\.[\w-]+\.[\w-]+/g, '[redacted jwt]'],
-  [/whsec_[\w-]+/g, 'whsec_[redacted]'],
-  [/#pair=[^&\s"]+/g, '#pair=[redacted]'],
-  [/([?&](?:sig|exp|p|m|t|token|code|key|state)=)[^&\s"]+/gi, '$1[redacted]'],
-];
 const BLANK = '[redacted]';
 
 function scrubString(value: string): string {

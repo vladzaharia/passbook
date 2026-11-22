@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
+import { CREDENTIAL_SCOPES, MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
 import { OrgRoleSchema } from '../../shared/contracts/org-membership.ts';
 import { effectiveScopes, ROLE_PRESETS, scopeCapability } from './api-scopes.ts';
 import { rolesGranting } from './org-role-grants.ts';
@@ -18,7 +18,6 @@ describe('role presets', () => {
         'scans:read',
         'scanning:write',
         'scan-setup:read',
-        'scanning:admin',
         'connections:read',
         'connections:write',
         'webhooks:manage',
@@ -100,8 +99,8 @@ describe('role presets', () => {
     expect(ROLE_PRESETS.pass_operator).not.toContain('scanning:write');
     expect(ROLE_PRESETS.integration_admin).not.toContain('scanning:write');
     expect(ROLE_PRESETS.org_admin).toContain('scanning:write');
-    expect(ROLE_PRESETS.org_admin).toContain('scanning:admin');
-    expect(ROLE_PRESETS.pass_operator).not.toContain('scanning:admin');
+    for (const role of OrgRoleSchema.options)
+      for (const scope of CREDENTIAL_SCOPES) expect(ROLE_PRESETS[role]).not.toContain(scope);
   });
 
   it('adds a role to the listed scopes, once each', () => {

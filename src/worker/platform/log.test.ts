@@ -18,6 +18,115 @@ describe('redaction', () => {
     expect(out.ok).toBe('yes');
   });
 
+  it('redacts PIN and NFC key fields at any depth, and leaves look-alikes', () => {
+    const out = JSON.stringify(
+      redact({
+        pin: '123456',
+        staff_pin: '234567',
+        pins: ['p1n5'],
+        staffPins: { a: 'p1n6' },
+        body: { approval: { newPin: '345678', newPIN: 'p1n7' }, list: [{ pinHash: 'h4sh' }] },
+        nfc: { fileKey: 'ff00', metaKey: 'aa11', keys: ['k1'] },
+        shipping: 'ok',
+        mapping: 'ok',
+        keysetId: 'ks-1',
+        unknownKey: 'u1',
+        cooldownKey: 'c1',
+        ownKey: 3,
+        pinSetAt: 111,
+        pinOnly: true,
+        pinMacVersion: 2,
+        staffPinId: 'sp-1',
+      }),
+    );
+    for (const secret of [
+      '123456',
+      '234567',
+      'p1n5',
+      'p1n6',
+      '345678',
+      'p1n7',
+      'h4sh',
+      'ff00',
+      'aa11',
+      'k1',
+    ])
+      expect(out).not.toContain(secret);
+    for (const kept of [
+      '"shipping":"ok"',
+      '"mapping":"ok"',
+      'ks-1',
+      '"unknownKey":"u1"',
+      '"cooldownKey":"c1"',
+      '"ownKey":3',
+      '"pinSetAt":111',
+      '"pinOnly":true',
+      '"pinMacVersion":2',
+      'sp-1',
+    ])
+      expect(out).toContain(kept);
+  });
+
+  it('redacts pairing codes by key and by link, and keeps a bare code', () => {
+    const out = JSON.stringify(
+      redact({
+        code: 'NOT_FOUND',
+        pairCode: 'ABCD-1234',
+        pair_code: 'ABCD-5678',
+        pairing: { code: 'WXYZ-9999', url: 'https://x.test/scan#pair=WXYZ-9999' },
+        pairingState: 'open',
+      }),
+    );
+    expect(out).not.toMatch(/ABCD|WXYZ/);
+    expect(out).toContain('"code":"NOT_FOUND"');
+    expect(out).toContain('"pairingState":"open"');
+    expect(redactString('open https://x.test/scan#pair=ABC123 now')).toBe(
+      'open https://x.test/scan#pair=[redacted] now',
+    );
+  });
+
+  it('redacts camelCase secret keys and pairingCode, and keeps ops fields', () => {
+    const out = JSON.stringify(
+      redact({
+        objectIdHmacKey: 'h1',
+        signingPrivateKey: 'p1',
+        clientSecret: 's1',
+        pairingCode: 'PC-1',
+        hmacKeyVersion: 2,
+        newFileKey: 'nf1',
+        pairingCodes: 3,
+        keysetId: 'ks',
+      }),
+    );
+    for (const secret of ['h1', 'p1', 's1', 'PC-1', 'nf1']) expect(out).not.toContain(secret);
+    expect(out).toContain('"hmacKeyVersion":2');
+    expect(out).toContain('"pairingCodes":3');
+    expect(out).toContain('"keysetId":"ks"');
+  });
+
+  it('redacts the wallet image route /w/i/<ref>', () => {
+    expect(redactString('GET /w/i/abcdefghijklmnop.png')).toBe('GET /w/i/[redacted]');
+  });
+
+  it('redacts webhook secrets, JWTs, NFC links and /w/ links in strings', () => {
+    expect(redactString('whsec_abc123DEF')).toBe('whsec_[redacted]');
+    expect(redactString('t eyJhbGciOi.eyJzdWIiOi.c2lnbmF0dXJl')).toBe('t [redacted jwt]');
+    expect(redactString('https://x/t/slug?p=abc&m=def')).toBe(
+      'https://x/t/slug?p=[redacted]&m=[redacted]',
+    );
+    expect(redactString('GET /w/abcdefghijklmnop')).toBe('GET /w/[redacted]');
+  });
+
+  it('redacts scanner tokens in strings and nested values', () => {
+    const token = `wls_abcd1234_${'A'.repeat(43)}`;
+    expect(redactString(`Cookie: __Host-wallet_scan=${token}`)).toBe(
+      'Cookie: __Host-wallet_scan=wls_[redacted]',
+    );
+    const out = JSON.stringify(redact({ note: token, deep: { list: [`got ${token}`] } }));
+    expect(out).not.toContain('abcd1234');
+    expect(out).toContain('wls_[redacted]');
+  });
+
   it('redacts capability URLs, keys, emails and PEM blocks in strings', () => {
     expect(redactString('GET /p/abcdefghijklmnopqrstuv/pass.pkpass')).toBe(
       'GET /p/[redacted]/pass.pkpass',

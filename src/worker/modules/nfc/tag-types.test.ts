@@ -257,4 +257,16 @@ describe('tag type access', () => {
     );
     expect((await call(elsewhere, 'GET', `?orgId=${org.id}`)).status).toBe(403);
   });
+
+  it('answers 404 to a platform key on a tag type by id', async () => {
+    const { org, admin } = await setup();
+    const type = (await (
+      await call(admin, 'POST', `?orgId=${org.id}`, { name: 'Plat', use: 'member' })
+    ).json()) as TagType;
+    const platform = (await makeApiKey(f.kit.fx, { orgId: null, scopes: ['scanning:write'] }))
+      .headers;
+    expect((await call(platform, 'PATCH', `/${type.id}`, { version: 1, name: 'No' })).status).toBe(
+      404,
+    );
+  });
 });

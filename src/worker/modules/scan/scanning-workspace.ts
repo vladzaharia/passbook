@@ -5,6 +5,7 @@ import {
   AppError,
   ConflictError,
   ForbiddenError,
+  NotFoundError,
   UnauthenticatedError,
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -56,6 +57,7 @@ export async function readableScanningPage<
   ) => Promise<{ items: T[]; nextCursor: string | null }>,
 ) {
   if (auth.kind === 'api_key') {
+    if (auth.orgId === null) throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
     const orgId = orgIdOf(auth, query.orgId);
     return list({ ...query, orgId }, await tenantAuthorityOf(ctx, auth, orgId, 'scanning:read'));
   }

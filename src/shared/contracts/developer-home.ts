@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MINTABLE_SCOPES } from './api-keys.ts';
+import { CREDENTIAL_SCOPES, MINTABLE_SCOPES } from './api-keys.ts';
 import { ApiScopeSchema, IdSchema, OrgIdSchema, TimestampSchema } from './common.ts';
 import { RequestLogEntrySchema } from './developer.ts';
 import { OrgRolesSchema } from './org-membership.ts';
@@ -10,7 +10,10 @@ import { WebhookEndpointStatusSchema } from './webhooks.ts';
  * Live-only scanning setup. The sandbox key has all of them; a key made in the portal holds a subset.
  */
 export const SANDBOX_KEY_SCOPES = MINTABLE_SCOPES.filter(
-  (s) => s !== 'api-keys:write' && s !== 'scans:write' && s !== 'scanning:admin',
+  (s) =>
+    s !== 'api-keys:write' &&
+    s !== 'scans:write' &&
+    !(CREDENTIAL_SCOPES as readonly string[]).includes(s),
 );
 
 const at = (text: string) => TimestampSchema.nullable().describe(text);

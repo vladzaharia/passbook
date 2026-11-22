@@ -1,6 +1,7 @@
 import { type Grant, grant } from '../../platform/authority.ts';
 import { exactlyOne, rowIs } from '../../platform/authority-checks.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
+import { type GrantPart, writePart } from '../../platform/authority-include.ts';
 import { all, stmt } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
@@ -150,6 +151,13 @@ export const namedDayCountsStatement = (
 /** An admin's PIN reset or Unlock: the person's wrong PINs of the day no longer count. */
 export const clearNamedDayStatement = (db: Db, staffId: string) =>
   stmt(db, 'DELETE FROM counters WHERE key = ?', [namedDayKey(staffId)]);
+
+/**
+ * Pairing again keeps the scanner id, so it ends the device's wrong-PIN day lock. A part of the pairing
+ * grant's own batch: it commits with a successful pairing and never on a refused one.
+ */
+export const clearDeviceDayPart = (scannerId: string): GrantPart =>
+  writePart('DELETE FROM counters WHERE key = ? AND {grant}', [deviceDayKey(scannerId)]);
 
 /** A day's events for the admin digest, newest last. */
 export const digestEvents = (db: Db, since: number, until: number) =>

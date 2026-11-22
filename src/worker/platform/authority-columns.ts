@@ -139,6 +139,8 @@ export const EPOCH_TABLES: EpochTable[] = [
       'name',
       'last_seen_at',
       'contact_at',
+      'contact_prev_at',
+      'online_since',
       'last_ip_prefix',
       'paired_label',
       'pair_expires_at',
