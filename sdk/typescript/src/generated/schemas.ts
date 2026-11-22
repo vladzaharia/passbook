@@ -1267,6 +1267,9 @@ export type PassDetail = {
     message: string;
     path?: string;
     params?: Record<string, string>;
+    fix?: {
+      action: "upload_logo" | "upload_icon";
+    };
   }>;
   templateWarnings?: Array<{
     severity: "error" | "warning" | "info";
@@ -1274,6 +1277,9 @@ export type PassDetail = {
     message: string;
     path?: string;
     params?: Record<string, string>;
+    fix?: {
+      action: "upload_logo" | "upload_icon";
+    };
   }>;
 };
 
@@ -4820,6 +4826,9 @@ export type TemplateDetail = {
         message: string;
         path?: string;
         params?: Record<string, string>;
+        fix?: {
+          action: "upload_logo" | "upload_icon";
+        };
       }>;
     };
     active: boolean;

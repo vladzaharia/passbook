@@ -25,6 +25,6 @@ describe.each(SLUGS)('%s placeholder art', (slug) => {
   it('warns on a template made from it that keeps the art', () => {
     const assets = (baked?.assets ?? []).map((a) => ({ slot: a.slot, sha1: a.sha1 }));
     const warnings = brandingWarnings({ id: 'tpl-copy', assets }, none, []);
-    expect(warnings.map((w) => w.code)).toEqual(['PLATFORM_BRANDING']);
+    expect(warnings.map((w) => w.path)).toEqual(['logo', 'icon']);
   });
 });

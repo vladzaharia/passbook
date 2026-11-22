@@ -5085,6 +5085,22 @@
                             "additionalProperties": {
                               "type": "string"
                             }
+                          },
+                          "fix": {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "enum": [
+                                  "upload_logo",
+                                  "upload_icon"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "action"
+                            ],
+                            "description": "An in-place fix: add the organization logo or icon."
                           }
                         },
                         "required": [
@@ -7903,6 +7919,22 @@
                   "additionalProperties": {
                     "type": "string"
                   }
+                },
+                "fix": {
+                  "type": "object",
+                  "properties": {
+                    "action": {
+                      "type": "string",
+                      "enum": [
+                        "upload_logo",
+                        "upload_icon"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "description": "An in-place fix: add the organization logo or icon."
                 }
               },
               "required": [
@@ -7939,6 +7971,22 @@
                   "additionalProperties": {
                     "type": "string"
                   }
+                },
+                "fix": {
+                  "type": "object",
+                  "properties": {
+                    "action": {
+                      "type": "string",
+                      "enum": [
+                        "upload_logo",
+                        "upload_icon"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "action"
+                  ],
+                  "description": "An in-place fix: add the organization logo or icon."
                 }
               },
               "required": [
@@ -51521,6 +51569,22 @@
                                 "additionalProperties": {
                                   "type": "string"
                                 }
+                              },
+                              "fix": {
+                                "type": "object",
+                                "properties": {
+                                  "action": {
+                                    "type": "string",
+                                    "enum": [
+                                      "upload_logo",
+                                      "upload_icon"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "action"
+                                ],
+                                "description": "An in-place fix: add the organization logo or icon."
                               }
                             },
                             "required": [
@@ -51842,6 +51906,22 @@
                                   "additionalProperties": {
                                     "type": "string"
                                   }
+                                },
+                                "fix": {
+                                  "type": "object",
+                                  "properties": {
+                                    "action": {
+                                      "type": "string",
+                                      "enum": [
+                                        "upload_logo",
+                                        "upload_icon"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "action"
+                                  ],
+                                  "description": "An in-place fix: add the organization logo or icon."
                                 }
                               },
                               "required": [
@@ -53050,6 +53130,22 @@
                             "additionalProperties": {
                               "type": "string"
                             }
+                          },
+                          "fix": {
+                            "type": "object",
+                            "properties": {
+                              "action": {
+                                "type": "string",
+                                "enum": [
+                                  "upload_logo",
+                                  "upload_icon"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "action"
+                            ],
+                            "description": "An in-place fix: add the organization logo or icon."
                           }
                         },
                         "required": [
@@ -53591,6 +53687,22 @@
                                 "additionalProperties": {
                                   "type": "string"
                                 }
+                              },
+                              "fix": {
+                                "type": "object",
+                                "properties": {
+                                  "action": {
+                                    "type": "string",
+                                    "enum": [
+                                      "upload_logo",
+                                      "upload_icon"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "action"
+                                ],
+                                "description": "An in-place fix: add the organization logo or icon."
                               }
                             },
                             "required": [
@@ -55370,6 +55482,22 @@
                                 "additionalProperties": {
                                   "type": "string"
                                 }
+                              },
+                              "fix": {
+                                "type": "object",
+                                "properties": {
+                                  "action": {
+                                    "type": "string",
+                                    "enum": [
+                                      "upload_logo",
+                                      "upload_icon"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "action"
+                                ],
+                                "description": "An in-place fix: add the organization logo or icon."
                               }
                             },
                             "required": [
@@ -55953,6 +56081,22 @@
                                 "additionalProperties": {
                                   "type": "string"
                                 }
+                              },
+                              "fix": {
+                                "type": "object",
+                                "properties": {
+                                  "action": {
+                                    "type": "string",
+                                    "enum": [
+                                      "upload_logo",
+                                      "upload_icon"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "action"
+                                ],
+                                "description": "An in-place fix: add the organization logo or icon."
                               }
                             },
                             "required": [

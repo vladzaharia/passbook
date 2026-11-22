@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Link } from '@tanstack/react-router';
 import { ChevronDown, UserPlus } from 'lucide-react';
 import { useState } from 'react';
@@ -7,6 +8,8 @@ import { cn } from '../../../lib/cn.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import { setMode } from '../../../lib/mode.ts';
 import { Button, Callout, ProgressBar } from '../../../ui/index.ts';
+import { PassChecks } from '../../brand/pass-checks.tsx';
+import { passKeys } from '../api.ts';
 import { CreatedCallout } from '../created.tsx';
 import type { PassActionRunner } from '../pass-actions.tsx';
 import { REMOVAL_LIMIT, removedOnDevices } from './removal-copy.ts';
@@ -58,10 +61,31 @@ export function ReissueRequiredCallout({
 
 const IMAGE_CODES = /^(IMAGE_|THUMBNAIL_|PLATFORM_BRANDING|UNUSED_IMAGE|MISSING_IMAGE)/;
 
-/** This pass's own warnings, collapsed: one line each, linking to the tab that fixes it. */
+/**
+ * The pass's setup rows (a placeholder image, the org's checks for its template; each with its fix)
+ * and its other warnings.
+ */
 export function PassWarnings({ pass }: { pass: PassDetailDto }) {
+  const client = useQueryClient();
+  return (
+    <>
+      <PassChecks
+        orgId={pass.orgId}
+        templateId={pass.templateId}
+        warnings={pass.warnings}
+        onFixed={() => void client.invalidateQueries({ queryKey: passKeys.detail(pass.id) })}
+      />
+      <OtherWarnings pass={pass} />
+    </>
+  );
+}
+
+/** This pass's own warnings, collapsed: one line each, linking to the tab that fixes it. */
+function OtherWarnings({ pass }: { pass: PassDetailDto }) {
   const [open, setOpen] = useState(true);
-  const list = pass.warnings.filter((w) => w.severity !== 'info');
+  const list = pass.warnings.filter(
+    (w) => w.severity !== 'info' && !(w.code === 'PLATFORM_BRANDING' && w.fix),
+  );
   if (list.length === 0) return null;
   return (
     <Callout

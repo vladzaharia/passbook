@@ -2850,19 +2850,29 @@ type PassDetailPushBudget struct {
 }
 
 type PassDetailTemplateWarningsItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                             `json:"severity"`
+	Code     string                             `json:"code"`
+	Message  string                             `json:"message"`
+	Path     *string                            `json:"path,omitempty"`
+	Params   map[string]string                  `json:"params,omitempty"`
+	Fix      *PassDetailTemplateWarningsItemFix `json:"fix,omitempty"`
+}
+
+type PassDetailTemplateWarningsItemFix struct {
+	Action string `json:"action"`
 }
 
 type PassDetailWarningsItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                     `json:"severity"`
+	Code     string                     `json:"code"`
+	Message  string                     `json:"message"`
+	Path     *string                    `json:"path,omitempty"`
+	Params   map[string]string          `json:"params,omitempty"`
+	Fix      *PassDetailWarningsItemFix `json:"fix,omitempty"`
+}
+
+type PassDetailWarningsItemFix struct {
+	Action string `json:"action"`
 }
 
 type PassDevice struct {
@@ -7615,11 +7625,16 @@ type TemplateDetailVersionsItemReport struct {
 }
 
 type TemplateDetailVersionsItemReportIssuesItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                                         `json:"severity"`
+	Code     string                                         `json:"code"`
+	Message  string                                         `json:"message"`
+	Path     *string                                        `json:"path,omitempty"`
+	Params   map[string]string                              `json:"params,omitempty"`
+	Fix      *TemplateDetailVersionsItemReportIssuesItemFix `json:"fix,omitempty"`
+}
+
+type TemplateDetailVersionsItemReportIssuesItemFix struct {
+	Action string `json:"action"`
 }
 
 type TemplateImportsListItem struct {
@@ -7956,11 +7971,16 @@ type TemplatesListPreviewsResultItemsItem struct {
 }
 
 type TemplatesListPreviewsResultItemsItemWarningsItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                                               `json:"severity"`
+	Code     string                                               `json:"code"`
+	Message  string                                               `json:"message"`
+	Path     *string                                              `json:"path,omitempty"`
+	Params   map[string]string                                    `json:"params,omitempty"`
+	Fix      *TemplatesListPreviewsResultItemsItemWarningsItemFix `json:"fix,omitempty"`
+}
+
+type TemplatesListPreviewsResultItemsItemWarningsItemFix struct {
+	Action string `json:"action"`
 }
 
 type TemplatesListQuery struct {
@@ -7990,11 +8010,16 @@ type TemplatesPreviewResult struct {
 }
 
 type TemplatesPreviewResultWarningsItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                                 `json:"severity"`
+	Code     string                                 `json:"code"`
+	Message  string                                 `json:"message"`
+	Path     *string                                `json:"path,omitempty"`
+	Params   map[string]string                      `json:"params,omitempty"`
+	Fix      *TemplatesPreviewResultWarningsItemFix `json:"fix,omitempty"`
+}
+
+type TemplatesPreviewResultWarningsItemFix struct {
+	Action string `json:"action"`
 }
 
 type TemplatesReleasesCreateBody = TemplatesReleasesCreateParams
@@ -8271,11 +8296,16 @@ type TemplatesVersionsRetrieveResultReport struct {
 }
 
 type TemplatesVersionsRetrieveResultReportIssuesItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                                              `json:"severity"`
+	Code     string                                              `json:"code"`
+	Message  string                                              `json:"message"`
+	Path     *string                                             `json:"path,omitempty"`
+	Params   map[string]string                                   `json:"params,omitempty"`
+	Fix      *TemplatesVersionsRetrieveResultReportIssuesItemFix `json:"fix,omitempty"`
+}
+
+type TemplatesVersionsRetrieveResultReportIssuesItemFix struct {
+	Action string `json:"action"`
 }
 
 type TerminalActBody = TerminalActParams

@@ -13,6 +13,7 @@ import {
   EmptyState,
   EntityArt,
 } from '@/web/ui/index.ts';
+import { type BrandStep, useBrandStep } from '../brand/overview-step.tsx';
 
 const KEY = 'wallet-get-started-dismissed';
 
@@ -102,18 +103,22 @@ function firstRunSteps(setup: MetricsOverview['setup'], orgId?: string): Step[] 
   ];
 }
 
-/** Steps for a `Checklist`: the first open one is the primary action. */
-export function checklistSteps(setup: MetricsOverview['setup'], orgId?: string) {
+/**
+ * Steps for a `Checklist`: the first open one is the primary action. `brand` is an organization's
+ * step 1; it is a suggestion, so the steps after it never wait on it.
+ */
+export function checklistSteps(setup: MetricsOverview['setup'], orgId?: string, brand?: BrandStep) {
   const steps = firstRunSteps(setup, orgId);
   const next = steps.findIndex((s) => !s.done);
-  return steps.map((s, i) => ({
+  const offset = brand ? 1 : 0;
+  const core = steps.map((s, i) => ({
     id: s.id,
     label: s.label,
     done: s.done,
     action:
       next >= 0 && i > next && !s.done ? (
         <Button size="sm" variant="outline" disabled>
-          Needs step {next + 1}
+          Needs step {next + 1 + offset}
         </Button>
       ) : (
         <Button
@@ -129,6 +134,7 @@ export function checklistSteps(setup: MetricsOverview['setup'], orgId?: string) 
         </Button>
       ),
   }));
+  return brand ? [brand, ...core] : core;
 }
 
 /**
@@ -166,10 +172,14 @@ function StepArt({ name, state }: { name: ArtName; state: 'done' | 'next' | 'lat
 export function GetStarted({
   setup,
   onDismiss,
+  orgId,
 }: {
   setup: MetricsOverview['setup'];
   onDismiss: () => void;
+  /** An organization's Overview: step 1 is its Brand and channels. */
+  orgId?: string;
 }) {
+  const brand = useBrandStep(orgId);
   const steps = firstRunSteps(setup);
   const next = steps.findIndex((s) => !s.done);
   return (
@@ -189,7 +199,7 @@ export function GetStarted({
               ))}
             </ol>
           }
-          steps={checklistSteps(setup)}
+          steps={checklistSteps(setup, undefined, brand)}
         />
       </CardBody>
     </Card>

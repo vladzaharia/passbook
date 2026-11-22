@@ -3718,6 +3718,9 @@ export type TemplatesListPreviewsResult = {
       message: string;
       path?: string;
       params?: Record<string, string>;
+      fix?: {
+        action: "upload_logo" | "upload_icon";
+      };
     }>;
     assetBaseUrl: string;
     assetNames: Array<string>;
@@ -3761,6 +3764,9 @@ export type TemplateImportsRetrieveResult = {
       message: string;
       path?: string;
       params?: Record<string, string>;
+      fix?: {
+        action: "upload_logo" | "upload_icon";
+      };
     }>;
   } | null;
   error: string | null;
@@ -3963,6 +3969,9 @@ export type TemplatesPreviewResult = {
     message: string;
     path?: string;
     params?: Record<string, string>;
+    fix?: {
+      action: "upload_logo" | "upload_icon";
+    };
   }>;
   assetBaseUrl: string;
   assetNames: Array<string>;
@@ -4199,6 +4208,9 @@ export type TemplatesVersionsRetrieveResult = {
       message: string;
       path?: string;
       params?: Record<string, string>;
+      fix?: {
+        action: "upload_logo" | "upload_icon";
+      };
     }>;
   };
   active: boolean;

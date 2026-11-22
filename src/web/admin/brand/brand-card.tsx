@@ -32,7 +32,7 @@ const ratio = (a: string, b: string) => {
 };
 
 /** `Text 16.0:1 · Labels 7.9:1`, green while both clear Apple's minimums, amber under them. */
-function ContrastLine({ bg, fg, label }: { bg: string; fg: string; label: string }) {
+export function ContrastLine({ bg, fg, label }: { bg: string; fg: string; label: string }) {
   if (![bg, fg, label].every((c) => HEX.test(c))) return null;
   const text = ratio(fg, bg) ?? 21;
   const labels = ratio(label, bg) ?? 21;

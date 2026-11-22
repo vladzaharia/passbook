@@ -419,7 +419,9 @@ __all__ = [
     "PassDetailMatchedItem",
     "PassDetailPushBudget",
     "PassDetailTemplateWarningsItem",
+    "PassDetailTemplateWarningsItemFix",
     "PassDetailWarningsItem",
+    "PassDetailWarningsItemFix",
     "PassDevice",
     "PassFilter",
     "PassFilterMatchItem1",
@@ -1063,6 +1065,7 @@ __all__ = [
     "TemplateDetailVersionsItemAssetsItem",
     "TemplateDetailVersionsItemReport",
     "TemplateDetailVersionsItemReportIssuesItem",
+    "TemplateDetailVersionsItemReportIssuesItemFix",
     "TemplateImportsListItem",
     "TemplateImportsListResult",
     "TemplateImportsListResultItemsItem",
@@ -1105,11 +1108,13 @@ __all__ = [
     "TemplatesListPreviewsResult",
     "TemplatesListPreviewsResultItemsItem",
     "TemplatesListPreviewsResultItemsItemWarningsItem",
+    "TemplatesListPreviewsResultItemsItemWarningsItemFix",
     "TemplatesListResult",
     "TemplatesPreviewBody",
     "TemplatesPreviewParams",
     "TemplatesPreviewResult",
     "TemplatesPreviewResultWarningsItem",
+    "TemplatesPreviewResultWarningsItemFix",
     "TemplatesReleasesCreateBody",
     "TemplatesReleasesCreateParams",
     "TemplatesReleasesCreateResult",
@@ -1149,6 +1154,7 @@ __all__ = [
     "TemplatesVersionsRetrieveResultAssetsItem",
     "TemplatesVersionsRetrieveResultReport",
     "TemplatesVersionsRetrieveResultReportIssuesItem",
+    "TemplatesVersionsRetrieveResultReportIssuesItemFix",
     "TerminalActBody",
     "TerminalActParams",
     "TerminalActParamsApproval",
@@ -3876,6 +3882,10 @@ class PassDetailTemplateWarningsItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: PassDetailTemplateWarningsItemFix | None = None
+
+class PassDetailTemplateWarningsItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class PassDetailWarningsItem(_Model):
     severity: _Literal["error", "warning", "info"] | str
@@ -3883,6 +3893,10 @@ class PassDetailWarningsItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: PassDetailWarningsItemFix | None = None
+
+class PassDetailWarningsItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class PassDevice(_Model):
     shortId: str
@@ -8059,6 +8073,10 @@ class TemplateDetailVersionsItemReportIssuesItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: TemplateDetailVersionsItemReportIssuesItemFix | None = None
+
+class TemplateDetailVersionsItemReportIssuesItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class TemplateImportsListItem(_Model):
     uploadId: str
@@ -8407,6 +8425,10 @@ class TemplatesListPreviewsResultItemsItemWarningsItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: TemplatesListPreviewsResultItemsItemWarningsItemFix | None = None
+
+class TemplatesListPreviewsResultItemsItemWarningsItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class TemplatesPreviewParams(_Model):
     version: str | None = None
@@ -8426,6 +8448,10 @@ class TemplatesPreviewResultWarningsItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: TemplatesPreviewResultWarningsItemFix | None = None
+
+class TemplatesPreviewResultWarningsItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class TemplatesReleasesCreateParams(_Model):
     orgId: str
@@ -8657,6 +8683,10 @@ class TemplatesVersionsRetrieveResultReportIssuesItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: TemplatesVersionsRetrieveResultReportIssuesItemFix | None = None
+
+class TemplatesVersionsRetrieveResultReportIssuesItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class TerminalActParams(_Model):
     idempotencyKey: str
