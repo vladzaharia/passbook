@@ -10,7 +10,7 @@ const m = vi.hoisted(() => ({
     warning: vi.fn(),
     info: vi.fn(() => 'prep'),
     dismiss: vi.fn(),
-    action: vi.fn(),
+    action: vi.fn((_message: string, _action: { onClick: () => void }) => undefined),
   },
 }));
 vi.mock('../../lib/api.ts', () => ({ api: { post: m.post, get: m.get } }));
@@ -19,7 +19,7 @@ vi.mock('../../ui/index.ts', async (orig) => ({ ...(await orig<object>()), toast
 
 import { BulkPrintAction } from './bulk-print.tsx';
 
-const props = { ids: ['a', 'b'], orgId: 'o1', disabled: false } as const;
+const props = { ids: ['a', 'b'], orgId: 'o1' as string | undefined, disabled: false };
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -100,7 +100,7 @@ describe('BulkPrintAction', () => {
       .click(screen.getByRole('button', { name: 'Print' }));
     await vi.advanceTimersByTimeAsync(2100);
     await waitFor(() => expect(m.toast.error).toHaveBeenCalled());
-    expect((m.toast.error.mock.calls[0]?.[0] as Error).message).toContain('PDF could not be made');
+    expect(String(m.toast.error.mock.calls[0]?.[0])).toContain('PDF could not be made');
   });
 
   it('gives up with a slow-PDF note after a minute of polling', async () => {
@@ -113,6 +113,6 @@ describe('BulkPrintAction', () => {
       .click(screen.getByRole('button', { name: 'Print' }));
     await vi.advanceTimersByTimeAsync(125_000);
     await waitFor(() => expect(m.toast.error).toHaveBeenCalled());
-    expect((m.toast.error.mock.calls[0]?.[0] as Error).message).toContain('taking long');
+    expect(String(m.toast.error.mock.calls[0]?.[0])).toContain('taking long');
   });
 });
