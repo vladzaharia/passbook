@@ -25,3 +25,16 @@ describe('the access beats', () => {
     expect(readFileSync(join(__dirname, 'beats.css'), 'utf8')).toContain('beats-5.css');
   });
 });
+
+describe('the link beat', () => {
+  const beats6 = readFileSync(join(__dirname, 'beats-6.css'), 'utf8');
+  const prop = readFileSync(join(__dirname, '../assign/tag-prop.css'), 'utf8');
+  it('dips the pass and moves the tag only for motion', () => {
+    expect(beats6).toContain('[data-beat="link"][data-run] [data-part="c2"]');
+    expect(prop).toContain('scan-link-fly');
+    const outside = prop
+      .replace(/@keyframes[\s\S]*?\n\}\n/g, '')
+      .replace(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}\n/, '');
+    expect(outside).not.toMatch(/animation:/);
+  });
+});

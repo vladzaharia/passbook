@@ -6,7 +6,7 @@ import './scan-sheet.css';
 import './tray.css';
 
 /** How far the on-screen keyboard covers the page, and the height left above it. */
-function useVisibleViewport(): { inset: number; height: number | null } {
+export function useVisibleViewport(): { inset: number; height: number | null } {
   const [view, setView] = useState<{ inset: number; height: number | null }>({
     inset: 0,
     height: null,

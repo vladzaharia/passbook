@@ -87,6 +87,9 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
     return <SkeletonRows label="Updating organization scope" />;
   // The card the wizard shows is the one the pass's page opens with: the same name morphs it.
   const vt = createdId ? `pass-${createdId}` : undefined;
+  // The scope already names the organization: the org step is neither shown nor a way back.
+  const skipOrg = Boolean(scope.orgId) && step > 0;
+  const shift = skipOrg ? 1 : 0;
   const aside = <StagePreview state={live} name={name} transitionName={vt} />;
   const showPass = <ShowPassRow state={live} title={name ?? 'Pass'} transitionName={vt} />;
 
@@ -97,12 +100,12 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
         breadcrumbs={[{ label: 'Passes', to: '/admin/passes' }, { label: 'New' }]}
       />
       <Wizard
-        steps={steps}
-        current={step}
-        onStep={go}
+        steps={skipOrg ? steps.slice(shift) : steps}
+        current={step - shift}
+        onStep={(i) => go(i + shift)}
         aside={aside}
         onCancel={onCancel}
-        {...(step > 0 ? { onBack: () => go(step - 1) } : {})}
+        {...(step > shift ? { onBack: () => go(step - 1) } : {})}
         formId={FORM_ID}
         nextLabel={
           at === 'review' ? (payload.sendEmail ? 'Create and send' : 'Create pass') : 'Next'

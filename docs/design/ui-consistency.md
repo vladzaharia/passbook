@@ -15,7 +15,7 @@ Behaviour and Apple rules: [ux-principles.md](ux-principles.md). Motion:
 | Sunken | `surface-sunken` | Code, art slots, read-only and disabled fields in light. Never an editable field in light |
 | Overlay | `surface-overlay` | Dialogs, menus, sheets, save and wizard bars |
 | Lines | `border` (dividers), `border-strong` (controls, art strokes) | Never raw greys |
-| Text | `fg-strong` titles, `fg` body and values, `fg-muted` labels and meta, `fg-subtle` placeholders | Dark `fg-muted` ≈ #8f98ad: 4.5–7:1 on raised, so labels separate from values |
+| Text | `fg-strong` titles, `fg` body and values, `fg-muted` labels and meta, `fg-subtle` placeholders (`--wl-placeholder`, 4.5:1 or more; "optional" goes in the label) | Dark `fg-muted` ≈ #8f98ad: 4.5–7:1 on raised, so labels separate from values |
 | Accent | `accent` (#2dd4bf dark, #0f766e light) | Selection and the one primary action per view. Never origin, role or health |
 | States | `success`, `warning`, `danger`, `info` + `-subtle`/`-border` | `success` only for healthy or working; `info` is blue (not Polaris violet, not foil) |
 
