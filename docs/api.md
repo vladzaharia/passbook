@@ -46,7 +46,7 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `org:write` | change the org's pass setup (`PATCH /orgs/{orgId}/pass-setup`, `POST /orgs/{orgId}/brand-assets`): name, brand, support, email, allowed channels. Only `org_admin` can mint it |
 | `wallet:write` | turn a Google or Samsung account on for a channel that is already allowed (`PATCH /orgs/{orgId}/pass-setup`). Allowing or blocking a channel needs `org:write`. Needs `integrations:manage` to delegate |
 | `api-keys:write` | child keys of the calling key: mint, list, read, rotate, retire, revoke; rotate itself. A service key only (see Child keys) |
-| `scanning:admin` | `POST /scanning-sessions/setup` with staff and paired devices: PINs and pairing codes come back once. Org-bound, live keys only, rate limited. Only `org_admin` can mint it |
+| `scanning:admin` | `POST /scanning-sessions/setup` with staff and paired devices: PINs and pairing codes come back once. Org-bound, live keys only, expiry within 90 days, rate limited. Only an `org_admin` session with Polaris ID sign-in and step-up mints it, by naming it in `scopes`: no role or parent key includes it |
 | `scanning:write` | `POST /templates/{id}/scan-setup`: make a template's scanning events and session. Needs `scanning:manage` to delegate, so only `org_admin` can mint it. It reads the event names, venues and dates on the template's issued passes, and reaches nothing else |
 | `scan-setup:read` | `GET /scan-setups` and `GET /scan-setups/{id}`: read the org's managed scanner and screen setups. Needs `scanning:read` to delegate. Reaches nothing else; another org's setup is a 404 |
 
@@ -73,7 +73,7 @@ Rollout: a key made before 1 December 2026 that is sent from a browser still wor
 
 **Roles.** `roles` holds role presets: `org_admin`, `integration_admin`, `template_author`, `template_reviewer`,
 `template_publisher`, `pass_operator`, `read_only`. The role's scopes are copied into the key's `scopes` when it is made and the role stays as a label: a bundle that gains a scope later never reaches an existing key. A creator can give a role only if every scope in it is within their own roles
-(`403 API_KEY_SCOPE_EXCEEDS_CREATOR`). The terminal scope `scans:write` is never in a role.
+(`403 API_KEY_SCOPE_EXCEEDS_CREATOR`). The terminal scope `scans:write` and the credential scope `scanning:admin` are never in a role: name `scanning:admin` in `scopes`.
 
 **Expiry and retirement.** `expiresAt` is fixed when the key is made. `POST /api-keys/{id}/retire` with
 `{"orgId": ..., "retireAt": <ms>}` ends the key at that instant, once, never after `expiresAt`
@@ -884,7 +884,7 @@ The call writes everything in one batch: a failure writes nothing. Names that ar
 
 - **Replay.** The same `Idempotency-Key` and body returns the same ids with `replayed: true` and no PINs or codes. A device that was never paired and whose code ran out gets a new one, and `pairingReissued` is true. The same key with another body is 409 `SCAN_SETUP_KEY_REUSED`.
 - **Errors.** A plan problem is 422 `SCAN_SETUP_INVALID`, an `error` check 422 `SCAN_SETUP_CHECKS_FAILED`; both carry `issues` with a path. A name or key taken during the call is 409 `SCAN_SETUP_NAME_TAKEN`: send it again. A key for another org gets 404.
-- **Keys.** `scanning:write` makes events, sessions, new places (live keys only) and devices with no pairing code; its rows have no user creator and the audit row names the key. `scanning:admin` (org-bound, live keys only, refused at mint otherwise as 422 `API_KEY_SCANNING_ADMIN_LIVE_ORG`; only `org_admin` can mint it) also makes staff and gives PINs and pairing codes once, up to 10 such setups an hour and 100 PINs and codes a day per key (429 `RATE_LIMITED`). Without it, staff are 403 `SCAN_SETUP_ADMIN_SCOPE`; places or staff from a test key are 403 `SCAN_SETUP_LIVE_ONLY`. The grant itself refuses the tables a key's scope does not cover. Test mode: places and staff are shared with live.
+- **Keys.** `scanning:write` makes events, sessions, new places (live keys only) and devices with no pairing code; its rows have no user creator and the audit row names the key. `scanning:admin` (org-bound, live keys only, refused at mint otherwise as 422 `API_KEY_SCANNING_ADMIN_LIVE_ORG`; `expiresAt` required, at most 90 days ahead: 422 `API_KEY_EXPIRY_REQUIRED` / `API_KEY_EXPIRY_TOO_LONG`; only an `org_admin` session with Polaris ID sign-in and step-up can mint it, never a key or a role) also makes staff and gives PINs and pairing codes once, up to 10 such setups an hour and 100 PINs and codes a day per key (429 `RATE_LIMITED`). Without it, staff are 403 `SCAN_SETUP_ADMIN_SCOPE`; places or staff from a test key are 403 `SCAN_SETUP_LIVE_ONLY`. The grant itself refuses the tables a key's scope does not cover. Test mode: places and staff are shared with live.
 - **Replay and pairing.** A replay reissues expired codes for a console session only, one commit per device: two replays at once can each mint a code, and the later one wins.
 - **Offline.** `event_night` gives a door the offline list only when it needs no exits (no tracked place, no re-entry, no direction). An explicit list on a door that needs exits is the error check `OFFLINE_LIST_BLOCKED`.
 - **Limits.** At most 10 new events in all, counting each `fromTemplate` entry's events (422 `SCAN_SETUP_INVALID`).

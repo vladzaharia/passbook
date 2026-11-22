@@ -92,7 +92,12 @@ const TENANT_ENUM_VALUES: Record<string, true> = {
   webhook: true,
 };
 // Names the organization itself owns: shown to its members, still screened by SENSITIVE_VALUE.
-const TENANT_TEXT_FIELDS: Record<string, true> = { name: true, slug: true, label: true };
+const TENANT_TEXT_FIELDS: Record<string, true> = {
+  name: true,
+  slug: true,
+  label: true,
+  scope: true,
+};
 const TENANT_DETAIL_KEYS: Record<string, true> = {
   accepts: true,
   action: true,
@@ -100,6 +105,7 @@ const TENANT_DETAIL_KEYS: Record<string, true> = {
   after: true,
   attempts: true,
   before: true,
+  scope: true,
   block: true,
   branding: true,
   bytes: true,

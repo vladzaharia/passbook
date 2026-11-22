@@ -23,6 +23,18 @@
     "fix": "Request only scopes the parent key already holds, or create the key with a broader parent.",
     "retryable": false
   },
+  "API_KEY_EXPIRY_REQUIRED": {
+    "title": "Expiry required",
+    "when": "A personal key, a platform key, or a key with the scanning:admin scope was made without an expiry.",
+    "fix": "Send expiresAt, at most 90 days ahead.",
+    "retryable": false
+  },
+  "API_KEY_EXPIRY_TOO_LONG": {
+    "title": "Expiry too far ahead",
+    "when": "A personal key, a platform key, or a key with the scanning:admin scope has an expiry more than 90 days ahead.",
+    "fix": "Send an earlier expiresAt.",
+    "retryable": false
+  },
   "API_KEY_MODE_MISMATCH": {
     "title": "Key mode mismatch",
     "when": "You tried to rotate a key from the other mode (live or test).",
@@ -87,6 +99,12 @@
     "title": "Route not open to keys",
     "when": "A key called a scanner route that keys cannot use.",
     "fix": "Call this route from a paired scanner or a signed-in session.",
+    "retryable": false
+  },
+  "API_KEY_SCANNING_ADMIN_LIVE_ORG": {
+    "title": "scanning:admin is live and one org",
+    "when": "A test-mode key or a platform key asked for scanning:admin.",
+    "fix": "Make a live key of one organization.",
     "retryable": false
   },
   "API_KEY_SCAN_ORG_REQUIRED": {
@@ -437,6 +455,12 @@
     "fix": "Set type to a value from GET /api/v1/connectors.",
     "retryable": false
   },
+  "CONSOLE_ACCESS_REQUIRED": {
+    "title": "Console access required",
+    "when": "The platform requires the admin group for organization console routes, and this session has neither the group nor platform admin.",
+    "fix": "Ask an administrator to add you to the admin group in Polaris ID, then sign in again.",
+    "retryable": false
+  },
   "CREATE_STALE": {
     "title": "Pass create raced",
     "when": "Another pass was created with this externalId while yours was being created.",
@@ -472,6 +496,12 @@
     "when": "The bundle changed.",
     "fix": "Review the recipient and try again.",
     "retryable": true
+  },
+  "DEVELOPER_ACCESS_REQUIRED": {
+    "title": "Developer access required",
+    "when": "A signed-in person without developer access called a developer sandbox or Try it route.",
+    "fix": "Ask an administrator to add you to the developer group in Polaris ID, then sign in again.",
+    "retryable": false
   },
   "DEVICE_REQUIRED": {
     "title": "Terminal not named",
@@ -765,18 +795,6 @@
     "title": "Identity cannot renew automatically",
     "when": "Only a managed or platform identity with a certificate renews automatically.",
     "fix": "Set rotation to manual, or upload a certificate.",
-    "retryable": false
-  },
-  "CONSOLE_ACCESS_REQUIRED": {
-    "title": "Console access required",
-    "when": "The platform requires the admin group for organization console routes, and this session has neither the group nor platform admin.",
-    "fix": "Ask an administrator to add you to the admin group in Polaris ID, then sign in again.",
-    "retryable": false
-  },
-  "DEVELOPER_ACCESS_REQUIRED": {
-    "title": "Developer access required",
-    "when": "A signed-in person without developer access called a developer sandbox or Try it route.",
-    "fix": "Ask an administrator to add you to the developer group in Polaris ID, then sign in again.",
     "retryable": false
   },
   "IDENTITY_PLATFORM_ENV_MISMATCH": {
@@ -2207,6 +2225,30 @@
     "fix": "Choose a different name.",
     "retryable": false
   },
+  "STAFF_PIN_ADMIN_RESET": {
+    "title": "Admin reset needed",
+    "when": "A Manager whose PIN is shared asked for a new PIN themselves. Only an admin resets a Manager's PIN.",
+    "fix": "Ask an admin to reset the PIN in the Staff tab.",
+    "retryable": false
+  },
+  "STAFF_PIN_RESET_NOT_REQUIRED": {
+    "title": "PIN does not need replacing",
+    "when": "The signed-in person's PIN is not flagged for a reset.",
+    "fix": "Nothing to do; keep using the current PIN.",
+    "retryable": false
+  },
+  "STAFF_PIN_RESET_REQUIRED": {
+    "title": "New PIN needed",
+    "when": "The signed-in person has a shared PIN and has not taken the new one the server sets.",
+    "fix": "Call POST /scan/staff/pin, or sign out.",
+    "retryable": false
+  },
+  "STAFF_PIN_TAKEN": {
+    "title": "PIN in use",
+    "when": "Another active staff member has that PIN, so the person cannot be re-enabled with it.",
+    "fix": "Reset the PIN, then try again.",
+    "retryable": false
+  },
   "STAFF_REQUIRED": {
     "title": "Staff sign-in required",
     "when": "The scanner has no signed-in staff member.",
@@ -2217,6 +2259,12 @@
     "title": "Staff sign-in off",
     "when": "Staff sign-in is not turned on for this scanner.",
     "fix": "Turn on staff sign-in in the scanner's settings.",
+    "retryable": false
+  },
+  "STAFF_SIGN_IN_REQUIRED": {
+    "title": "Sign in first",
+    "when": "A new PIN was sent before any staff member signed in on this scanner.",
+    "fix": "Sign in with POST /scan/staff, then send the new PIN.",
     "retryable": false
   },
   "STAFF_SIGN_IN_UNAVAILABLE": {
@@ -2639,16 +2687,16 @@
     "fix": "Ask the author to request review of this version, then review it again.",
     "retryable": false
   },
-  "TEMPLATE_REVIEW_SUPERSEDED": {
-    "title": "Review request replaced",
-    "when": "A newer version of the template has an open request, so this one was replaced.",
-    "fix": "Review the newer version listed in the message.",
-    "retryable": false
-  },
   "TEMPLATE_REVIEW_REQUIRED": {
     "title": "Review required",
     "when": "Another reviewer must approve this version before it is released in Live.",
     "fix": "Request review with request: true, or have another reviewer approve it.",
+    "retryable": false
+  },
+  "TEMPLATE_REVIEW_SUPERSEDED": {
+    "title": "Review request replaced",
+    "when": "A newer version of the template has an open request, so this one was replaced.",
+    "fix": "Review the newer version listed in the message.",
     "retryable": false
   },
   "TEMPLATE_SELF_APPROVAL": {
@@ -3219,36 +3267,6 @@
     "title": "Zone not found",
     "when": "No zone with this id exists in this mode and organization.",
     "fix": "Check the zone id.",
-    "retryable": false
-  },
-  "STAFF_PIN_RESET_NOT_REQUIRED": {
-    "title": "PIN does not need replacing",
-    "when": "The signed-in person's PIN is not flagged for a reset.",
-    "fix": "Nothing to do; keep using the current PIN.",
-    "retryable": false
-  },
-  "STAFF_PIN_TAKEN": {
-    "title": "PIN in use",
-    "when": "Another active staff member has that PIN, so the person cannot be re-enabled with it.",
-    "fix": "Reset the PIN, then try again.",
-    "retryable": false
-  },
-  "STAFF_SIGN_IN_REQUIRED": {
-    "title": "Sign in first",
-    "when": "A new PIN was sent before any staff member signed in on this scanner.",
-    "fix": "Sign in with POST /scan/staff, then send the new PIN.",
-    "retryable": false
-  },
-  "STAFF_PIN_ADMIN_RESET": {
-    "title": "Admin reset needed",
-    "when": "A Manager whose PIN is shared asked for a new PIN themselves. Only an admin resets a Manager's PIN.",
-    "fix": "Ask an admin to reset the PIN in the Staff tab.",
-    "retryable": false
-  },
-  "STAFF_PIN_RESET_REQUIRED": {
-    "title": "New PIN needed",
-    "when": "The signed-in person has a shared PIN and has not taken the new one the server sets.",
-    "fix": "Call POST /scan/staff/pin, or sign out.",
     "retryable": false
   }
 }
