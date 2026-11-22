@@ -224,6 +224,8 @@ describe('Assign tag dialog', () => {
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
     const list = calls(fetchMock, 'GET', '/nfc/tags')[0]?.[0];
     expect(String(list)).toContain('status=spare');
+    expect(String(list)).toContain('passId=p1');
+    expect(String(list)).toContain('binding=user');
     const last = calls(fetchMock, 'POST', '/tags/assign').at(-1);
     expect(JSON.parse(String(last?.[1]?.body))).toEqual({ tagId: 't9', binding: 'user' });
   });

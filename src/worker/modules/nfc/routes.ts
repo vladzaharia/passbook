@@ -25,6 +25,7 @@ import {
   unbindTag,
   updateTag,
 } from './tags-admin.ts';
+import { listSparesFor } from './tags-spare.ts';
 
 /** Tags bound to passes and people: /api/v1/nfc. Console sessions only; API keys have no tag routes. */
 export const nfcRoutes = createRouter();
@@ -98,15 +99,18 @@ register(
   async (c) => {
     const q = c.req.valid('query');
     const { ctx, authority } = await actingIn(c, q.orgId, 'passes:read', orgNotFound);
+    const filter = {
+      orgId: q.orgId,
+      mode: authority.mode,
+      status: q.status,
+      q: q.q,
+      cursor: q.cursor,
+      limit: q.limit ?? 50,
+    };
     return c.json(
-      await listTags(ctx.env.DB, {
-        orgId: q.orgId,
-        mode: authority.mode,
-        status: q.status,
-        q: q.q,
-        cursor: q.cursor,
-        limit: q.limit ?? 50,
-      }),
+      q.passId && q.status === 'spare'
+        ? await listSparesFor(ctx, filter, q.passId, q.binding ?? 'pass')
+        : await listTags(ctx.env.DB, filter),
     );
   },
 );
