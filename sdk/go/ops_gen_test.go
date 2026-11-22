@@ -1671,6 +1671,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"templates.retrieveRollout", "GET", "/api/v1/templates/id1/rollout", false,
+		"", `{"releaseVersion":"x","releaseId":"x","fromVersion":"x","total":0,"onRelease":0,"remaining":0,"updating":[{"version":"x","count":0}],"failedCount":0,"failed":[{"passId":"x","title":"x","reason":"x"}],"startedAt":0,"runId":"x","running":false,"stalled":false,"changes":[{"group":"colors","rows":[{"label":"x","kind":"added","from":{"type":"text","text":"x"},"to":{"type":"text","text":"x"}}],"more":0}],"tell":{"text":"x","until":0,"key":"x"}}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Templates.RetrieveRollout(ctx, "id1", nil)
+		},
+	},
+	{
 		"templates.downloadSample", "GET", "/api/v1/templates/id1/sample.csv", false,
 		"", "",
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

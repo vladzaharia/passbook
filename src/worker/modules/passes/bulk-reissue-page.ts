@@ -2,6 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { AppError, ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { dispatchSafely } from '../delivery/issuance-intent.ts';
+import { recordRolloutFailure } from '../templates/repo-rollout.ts';
 import { publishPass } from './publish.ts';
 import { passesForReissue } from './repo.ts';
 import {
@@ -198,6 +199,24 @@ export async function reissuePage(
         templateId: params.templateId,
         code: error.code,
       });
+      if (row.release)
+        // Bookkeeping for the rollout view: it never fails the page.
+        await recordRolloutFailure(ctx.env.DB, {
+          passId: row.id,
+          orgId: row.release.orgId,
+          mode: row.release.mode,
+          templateId: row.release.templateId,
+          releaseId: row.release.releaseId,
+          code: error.code,
+          message: error.message,
+          at: ctx.clock.now(),
+        }).catch((cause: unknown) =>
+          ctx.log.error('bulk_reissue.failure_record_failed', {
+            passId: row.id,
+            code: 'ROLLOUT_FAILURE_RECORD',
+            error: cause,
+          }),
+        );
     }
   }
   if (result.revoked) {

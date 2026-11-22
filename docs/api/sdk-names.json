@@ -2402,5 +2402,9 @@
   "webhooks.getWebhookEndpointsByIdTests": {
     "resource": "webhookEndpoints.tests",
     "method": "list"
+  },
+  "templates.getTemplatesByIdRollout": {
+    "resource": "templates",
+    "method": "retrieveRollout"
   }
 }

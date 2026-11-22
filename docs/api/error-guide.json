@@ -257,10 +257,22 @@
     "fix": "Remove the setting, or ask the platform owner to enable it for the organization.",
     "retryable": false
   },
+  "BROADCAST_EMPTY": {
+    "title": "No passes chosen",
+    "when": "The target names no template, pass or import.",
+    "fix": "Send templateIds, passIds or an importId.",
+    "retryable": false
+  },
   "BROADCAST_INVALID_INPUT": {
     "title": "Invalid broadcast input",
     "when": "A value in the broadcast's patch does not match the template's input schema.",
     "fix": "Fix the values named in issues; GET /api/v1/templates/{id}/input-schema lists the allowed inputs.",
+    "retryable": false
+  },
+  "BROADCAST_INVALID_OP": {
+    "title": "Change does not fit the field",
+    "when": "A change asks for a shift on a field that is not a date, an add on one that is not a number, or a clear on a required field.",
+    "fix": "Use set for text, shift for dates, add for numbers, and clear only for optional fields.",
     "retryable": false
   },
   "BROADCAST_NOT_CANCELLABLE": {
@@ -293,10 +305,34 @@
     "fix": "Check the state with GET /api/v1/broadcasts/{id} and retry only a failed or cancelled message.",
     "retryable": false
   },
+  "BROADCAST_NOT_SENDING": {
+    "title": "Not sending",
+    "when": "Only a sending message or change can be stopped.",
+    "fix": "Read the run with GET /api/v1/broadcasts/{id}.",
+    "retryable": false
+  },
+  "BROADCAST_NOT_UNDOABLE": {
+    "title": "Cannot be undone",
+    "when": "The run is not a finished change: it is a message, an undo, still sending, or never sent.",
+    "fix": "Stop a sending change first, then undo it.",
+    "retryable": false
+  },
+  "BROADCAST_NO_RELEASE": {
+    "title": "No approved design",
+    "when": "A template in the run has no approved release to move passes to.",
+    "fix": "Approve and publish a release of the template, then run it again.",
+    "retryable": false
+  },
   "BROADCAST_ORG": {
     "title": "Broadcast organization change",
     "when": "The update tries to move the message to another organization.",
     "fix": "Remove the organization change and update the message in its own organization.",
+    "retryable": false
+  },
+  "BROADCAST_PASS_CHANGED": {
+    "title": "Pass changed since the run",
+    "when": "An undo found a pass whose input no longer holds the value the change set, so it kept the pass.",
+    "fix": "Edit the pass by hand if you still want the earlier value.",
     "retryable": false
   },
   "BROADCAST_PAST": {
@@ -311,10 +347,28 @@
     "fix": "Set at to a time within the next year.",
     "retryable": false
   },
+  "BROADCAST_TOO_MANY_TEMPLATES": {
+    "title": "Passes of too many templates",
+    "when": "The chosen passes belong to more than 20 templates.",
+    "fix": "Split the change by template.",
+    "retryable": false
+  },
+  "BROADCAST_UNDO_EXPIRED": {
+    "title": "Undo window has passed",
+    "when": "A change can be undone for 24 hours after it ends.",
+    "fix": "Change the passes again by hand or with a new change.",
+    "retryable": false
+  },
   "BROADCAST_UNKNOWN_INPUT": {
     "title": "Unknown broadcast input",
     "when": "The patch sets an input the target template does not have.",
     "fix": "Use only input names from GET /api/v1/templates/{id}/input-schema.",
+    "retryable": false
+  },
+  "BROADCAST_UNKNOWN_TOKEN": {
+    "title": "Unknown field in the message",
+    "when": "The message has a {Label} token that no field of the targeted templates carries.",
+    "fix": "Use a field label as the form shows it, or remove the token.",
     "retryable": false
   },
   "BULK_RUN_ACTIVE": {
@@ -605,6 +659,12 @@
     "fix": "Approve a release for the template with POST /api/v1/templates/{id}/releases, then retry.",
     "retryable": false
   },
+  "EXPECT_COUNT_REQUIRED": {
+    "title": "Send the count left",
+    "when": "Resuming a change needs expectCount: the passes it has left.",
+    "fix": "Preview the remainder, then retry with ?expectCount=<count>.",
+    "retryable": false
+  },
   "EXPIRY_PAST": {
     "title": "Expiry in the past",
     "when": "expiresAt is not in the future.",
@@ -723,6 +783,12 @@
     "title": "Idempotency-Key required",
     "when": "A release without dryRun came without an Idempotency-Key header.",
     "fix": "Send a unique string of 1 to 200 characters, such as a UUID, and reuse it to retry.",
+    "retryable": false
+  },
+  "IDEMPOTENCY_KEY_RESERVED": {
+    "title": "Idempotency-Key reserved",
+    "when": "On POST /passes the key starts with broadcast-create:, bulk-send: or rollout-tell:, which the server uses itself; on POST /broadcasts rollout-tell: is only for Tell holders on the active release.",
+    "fix": "Use another Idempotency-Key.",
     "retryable": false
   },
   "IDEMPOTENCY_KEY_REUSED": {
@@ -981,6 +1047,12 @@
     "title": "Too many saved mappings",
     "when": "The template already has 20 saved import mappings and the request names a new one.",
     "fix": "Delete a saved mapping with DELETE /api/v1/pass-imports/mappings, or reuse an existing name to replace it.",
+    "retryable": false
+  },
+  "IMPORT_NOT_ENDED": {
+    "title": "Import not ended",
+    "when": "The import is still running, or was undone, so the passes it made are not fixed.",
+    "fix": "Wait for the import to finish, or choose passes another way.",
     "retryable": false
   },
   "IMPORT_NOT_FOUND": {
@@ -2285,6 +2357,12 @@
     "fix": "Rotate the secret with POST /api/v1/webhook-endpoints/{id}/secret, then send the request again.",
     "retryable": false
   },
+  "SELECTION_CHANGED": {
+    "title": "Selection changed",
+    "when": "The passes the request matches now differ by more than 2% from expectCount.",
+    "fix": "Preview the selection again and send the new count as expectCount.",
+    "retryable": false
+  },
   "SERIAL_TAKEN": {
     "title": "Serial in use",
     "when": "Another pass already has this serial.",
@@ -2321,6 +2399,30 @@
     "fix": "Choose a different name.",
     "retryable": false
   },
+  "STAFF_PIN_ADMIN_RESET": {
+    "title": "Admin reset needed",
+    "when": "A Manager whose PIN is shared asked for a new PIN themselves. Only an admin resets a Manager's PIN.",
+    "fix": "Ask an admin to reset the PIN in the Staff tab.",
+    "retryable": false
+  },
+  "STAFF_PIN_RESET_NOT_REQUIRED": {
+    "title": "PIN does not need replacing",
+    "when": "The signed-in person's PIN is not flagged for a reset.",
+    "fix": "Nothing to do; keep using the current PIN.",
+    "retryable": false
+  },
+  "STAFF_PIN_RESET_REQUIRED": {
+    "title": "New PIN needed",
+    "when": "The signed-in person has a shared PIN and has not taken the new one the server sets.",
+    "fix": "Call POST /scan/staff/pin, or sign out.",
+    "retryable": false
+  },
+  "STAFF_PIN_TAKEN": {
+    "title": "PIN in use",
+    "when": "Another active staff member has that PIN, so the person cannot be re-enabled with it.",
+    "fix": "Reset the PIN, then try again.",
+    "retryable": false
+  },
   "STAFF_REQUIRED": {
     "title": "Staff sign-in required",
     "when": "The scanner has no signed-in staff member.",
@@ -2331,6 +2433,12 @@
     "title": "Staff sign-in off",
     "when": "Staff sign-in is not turned on for this scanner.",
     "fix": "Turn on staff sign-in in the scanner's settings.",
+    "retryable": false
+  },
+  "STAFF_SIGN_IN_REQUIRED": {
+    "title": "Sign in first",
+    "when": "A new PIN was sent before any staff member signed in on this scanner.",
+    "fix": "Sign in with POST /scan/staff, then send the new PIN.",
     "retryable": false
   },
   "STAFF_SIGN_IN_UNAVAILABLE": {
@@ -2621,6 +2729,12 @@
     "fix": "Choose a tag type whose use the template accepts.",
     "retryable": false
   },
+  "TELL_ALREADY_SENT": {
+    "title": "Holders already told",
+    "when": "Another member already sent the message that tells holders about this release.",
+    "fix": "Nothing to do. Open Messages to see it.",
+    "retryable": false
+  },
   "TEMPLATE_ARCHIVED": {
     "title": "Template archived",
     "when": "The template is archived and cannot be used here.",
@@ -2765,16 +2879,16 @@
     "fix": "Ask the author to request review of this version, then review it again.",
     "retryable": false
   },
-  "TEMPLATE_REVIEW_SUPERSEDED": {
-    "title": "Review request replaced",
-    "when": "A newer version of the template has an open request, so this one was replaced.",
-    "fix": "Review the newer version listed in the message.",
-    "retryable": false
-  },
   "TEMPLATE_REVIEW_REQUIRED": {
     "title": "Review required",
     "when": "Another reviewer must approve this version before it is released in Live.",
     "fix": "Request review with request: true, or have another reviewer approve it.",
+    "retryable": false
+  },
+  "TEMPLATE_REVIEW_SUPERSEDED": {
+    "title": "Review request replaced",
+    "when": "A newer version of the template has an open request, so this one was replaced.",
+    "fix": "Review the newer version listed in the message.",
     "retryable": false
   },
   "TEMPLATE_SELF_APPROVAL": {

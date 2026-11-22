@@ -137,7 +137,7 @@ only, so `RateLimit-Remaining` is sent on 429 alone. Other limits (login, scanne
 | Header | Where | Meaning |
 |---|---|---|
 | `Authorization: Bearer <key>` | all key routes | the API key |
-| `Idempotency-Key` | pass create, resend, bulk email, bundle email | 1 to 200 characters; a retry returns the first result; the same key with another request is 422 `IDEMPOTENCY_KEY_REUSED`, a repeat while the first runs is 409 `IDEMPOTENCY_IN_PROGRESS` |
+| `Idempotency-Key` | pass create, resend, bulk email, bundle email, broadcasts (`POST /passes` refuses keys starting `broadcast-create:`, `bulk-send:` or `rollout-tell:`: 422 `IDEMPOTENCY_KEY_RESERVED`; on `POST /broadcasts`, `rollout-tell:<active release id>` is the console's Tell holders on a message to one template and version, any other use of it is 422, and a second caller on a used one is 409 `TELL_ALREADY_SENT`) | 1 to 200 characters; a retry returns the first result; the same key with another request is 422 `IDEMPOTENCY_KEY_REUSED`, a repeat while the first runs is 409 `IDEMPOTENCY_IN_PROGRESS` |
 | `If-Match: <version>` | pass update | optimistic concurrency; stale is `412 VERSION_CONFLICT` |
 | `x-passbook-mode` | console sessions | `test` selects Test mode; keys use their own mode |
 

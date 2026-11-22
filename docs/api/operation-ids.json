@@ -439,6 +439,7 @@
   "templates.getTemplatesByIdPackage",
   "templates.getTemplatesByIdReleases",
   "templates.getTemplatesByIdReleasesImpact",
+  "templates.getTemplatesByIdRollout",
   "templates.getTemplatesByIdSampleCsv",
   "templates.getTemplatesByIdStampsImpact",
   "templates.getTemplatesByIdVersionsByVersion",

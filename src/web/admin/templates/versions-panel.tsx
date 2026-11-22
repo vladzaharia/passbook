@@ -1,5 +1,5 @@
 import { Smartphone } from 'lucide-react';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema, TemplateVersionSchema } from '@/shared/contracts/templates.ts';
 import { formatDateTime } from '../../lib/format.ts';
@@ -35,6 +35,7 @@ export function VersionsPanel({
   draft,
   onTry,
   onRelease,
+  rollout,
 }: {
   template: Template;
   /** The newest valid version newer than Live: the one a release names. */
@@ -42,6 +43,8 @@ export function VersionsPanel({
   /** Set for a viewer who may release: Try and Release show on each valid, non-Live version. */
   onTry?: ((version: string) => void) | undefined;
   onRelease?: ((version: string) => void) | undefined;
+  /** How far the Live release has reached the passes: the card's first block. */
+  rollout?: ReactNode;
 }) {
   const [report, setReport] = useState<string | undefined>(
     template.versions.find((v) => v.active)?.version ?? template.versions[0]?.version,
@@ -61,6 +64,7 @@ export function VersionsPanel({
           }
         />
         <CardBody>
+          {rollout}
           <ListRows label="Versions">
             {newestFirst.map((v) => {
               const n = versionNumber(template, v.version);
