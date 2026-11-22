@@ -11,6 +11,7 @@ import { BuddyArt } from '../../web/ui/art/buddy-art.tsx';
 import { ART_CSS } from '../../web/ui/art/css.ts';
 import inspectCss from '../../web/ui/art/scenes/inspect.css?raw';
 import type { PrintAudience, PrintPageModel } from '../modules/prints/page.ts';
+import { hasUndrawable } from '../modules/prints/pdf-coverage.ts';
 import { documentStart, type PageTheme } from './head.ts';
 import { actionHtml, hostedPage } from './hosted.ts';
 import { HOSTED_ART_CSS, stateArtHtml } from './hosted-art.tsx';
@@ -147,7 +148,11 @@ function actionsHtml(props: PrintPageProps) {
       ? [button('reprint', PRINT_COPY.reprint, RotateCcw), button('void', PRINT_COPY.void, Ban)]
       : []),
   ].join('');
-  return `<div class="pp-actions">${actions}</div>${
+  const lossy =
+    props.model.state === 'ready' && hasUndrawable(props.model.content)
+      ? `<p class="callout" data-lossy>${escapeHtml(PRINT_COPY.lossy)}</p>`
+      : '';
+  return `${lossy}<div class="pp-actions">${actions}</div>${
     holder
       ? `${confirm('reprint', PRINT_COPY.confirmReprint, '/reprint')}${confirm('void', PRINT_COPY.confirmVoid, '/void')}`
       : ''

@@ -105,13 +105,27 @@ const applied = async (passId: string) =>
   ).map((r) => JSON.parse(r.data) as { providers?: Record<string, string> });
 
 describe('broadcast budget per wallet', () => {
+  it('reads only the Google gate and instance', async () => {
+    const instance = await import('../wallet-providers/instance.ts');
+    const policy = await import('../wallet-providers/provider-policy.ts');
+    const pass = await kit.makePass();
+    vi.mocked(instance.getWalletInstance).mockClear();
+    vi.mocked(policy.walletProviderDisabledReason).mockClear();
+    await providerBudgets(kit.ctx, (await getPass(kit.env.DB, pass.id)) ?? pass);
+    const providers = [
+      ...vi.mocked(instance.getWalletInstance).mock.calls.map((c) => c[1].provider),
+      ...vi.mocked(policy.walletProviderDisabledReason).mock.calls.map((c) => c[1]),
+    ];
+    expect(providers.length).toBeGreaterThan(0);
+    expect(providers.every((p) => p === 'google')).toBe(true);
+  });
+
   it('defers instead of sending, counts nothing, and would skip over a full budget', async () => {
     const pass = await kit.makePass();
     const budgets = async () =>
       providerBudgets(kit.ctx, (await getPass(kit.env.DB, pass.id)) ?? pass);
     expect(await budgets()).toEqual({
       google: { used: 0, limit: 3, resetsAt: null },
-      samsung: { used: 0, limit: 0, resetsAt: null },
     });
     for (const text of ['One', 'Two', 'Three', 'Four']) {
       await send(text);
@@ -125,7 +139,7 @@ describe('broadcast budget per wallet', () => {
       'deferred',
       'deferred',
     ]);
-    expect(events.every((e) => e.providers?.samsung === 'over')).toBe(true);
+    expect(events.every((e) => !('samsung' in (e.providers ?? {})))).toBe(true);
     expect((await budgets()).google).toMatchObject({ used: 0, limit: 3 });
     // The gate a real send calls: three sent messages in the window fill Google's budget.
     for (let i = 0; i < 3; i++)
@@ -142,7 +156,7 @@ describe('broadcast budget per wallet', () => {
       );
     const full = await budgets();
     expect(full.google).toMatchObject({ used: 3, limit: 3 });
-    expect(budgetOutcomes(full)).toMatchObject({ google: 'over', samsung: 'over' });
+    expect(budgetOutcomes(full)).toEqual({ google: 'over' });
     kit.clock.advance(25 * 3_600_000);
     expect(budgetOutcomes(await budgets())).toMatchObject({ google: 'deferred' });
   });

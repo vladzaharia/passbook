@@ -1,0 +1,5 @@
+{
+  "entitlements.getOrgsByIdEntitlements": {
+    "description": "The features and limits of the organization's plan, and how much of each it has used."
+  }
+}

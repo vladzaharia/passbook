@@ -282,4 +282,31 @@ describe('the sandbox test terminal', () => {
     const res = await call(headers, '/resolve', read(pass.id));
     expect([res.status, await codeOf(res)]).toEqual([403, 'MISSING_SCOPE']);
   });
+
+  it('answers a rate-limited first use with 429, not 404', async () => {
+    const s = await sandbox();
+    const pass = await s.pass();
+    await run(kit.env.DB, 'UPDATE scanners SET revoked_at = 1 WHERE id = ?', [s.terminal.id]);
+    await run(kit.env.DB, 'UPDATE developer_sandboxes SET terminal_id = NULL WHERE org_id = ?', [
+      s.made.orgId,
+    ]);
+    const real = kit.env.RL_SCAN_PAIR;
+    Object.assign(kit.env, { RL_SCAN_PAIR: fakeRateLimiter({ limit: 0 }) });
+    try {
+      const res = await call(
+        { ...s.key, 'x-passbook-device': 'sandbox' },
+        '/resolve',
+        read(pass.id),
+      );
+      expect([res.status, await codeOf(res)]).toEqual([429, 'RATE_LIMITED']);
+    } finally {
+      Object.assign(kit.env, { RL_SCAN_PAIR: real });
+    }
+    const again = await call(
+      { ...s.key, 'x-passbook-device': 'sandbox' },
+      '/resolve',
+      read(pass.id),
+    );
+    expect(again.status).toBe(200);
+  });
 });

@@ -23,6 +23,7 @@ const PURPOSE: ScanPurpose = 'org_mode.scan.scanner.create';
 const TERMINAL_TABLES = ['scanners', 'scanner_templates', 'developer_sandboxes'];
 
 const LOG_WINDOW_MS = 60_000;
+const MAX_TRACKED = 1000;
 const lastFailure = new Map<string, number>();
 
 type Held = { id: string; expires_at: number | null };
@@ -155,6 +156,8 @@ export async function ensureSandboxTerminal(
     // A grant that keeps failing is logged once per caller and window, not on every call.
     const who = caller.kind === 'api_key' ? caller.keyId : orgId;
     if (now - (lastFailure.get(who) ?? -LOG_WINDOW_MS) >= LOG_WINDOW_MS) {
+      for (const [k, at] of lastFailure) if (now - at >= LOG_WINDOW_MS) lastFailure.delete(k);
+      if (lastFailure.size >= MAX_TRACKED) lastFailure.clear();
       lastFailure.set(who, now);
       ctx.log.error('developer.sandbox_terminal_failed', {
         orgId,

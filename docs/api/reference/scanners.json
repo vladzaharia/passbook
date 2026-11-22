@@ -138,5 +138,50 @@
       "staff": [],
       "checks": []
     }
+  },
+  "scanners.patchScannersById": {
+    "description": "Edits a scanner."
+  },
+  "scanners.postScannersByIdRevoke": {
+    "description": "Removes a scanner from use."
+  },
+  "scanners.postScannersByIdMode": {
+    "description": "Moves a scanner live, or to test mode."
+  },
+  "scanners.postScanners": {
+    "description": "Creates a scanner. A device comes with a pairing code."
+  },
+  "scanners.postScannersByIdPairing": {
+    "description": "Makes a new pairing code. It replaces any live one."
+  },
+  "scanners.getScannersByIdPairing": {
+    "description": "Polls a pairing to see whether the device has paired."
+  },
+  "scanners.postScannersByIdToken": {
+    "description": "Makes a till token, shown once. It replaces the old one."
+  },
+  "scanners.getScanSetups": {
+    "description": "Lists managed scanner and screen setups."
+  },
+  "scanners.getScanSetupsById": {
+    "description": "A scanner setup and its view settings."
+  },
+  "scanners.getScanningSessions": {
+    "description": "Lists scanning sessions."
+  },
+  "scanners.getScanningSessionsById": {
+    "description": "A session's rules and devices."
+  },
+  "scanners.patchScanningSessionsById": {
+    "description": "Updates the rules shared by a session's devices."
+  },
+  "scanners.postScanningSessionsByIdHold": {
+    "description": "Closes the session now, opens it now, or goes back to the session hours."
+  },
+  "scanners.patchScanningSessionsByIdDevicesByDeviceId": {
+    "description": "Configures one device of a session."
+  },
+  "scanners.postScanningSessionsByIdDevices": {
+    "description": "Adds a device to a scanning session."
   }
 }

@@ -39,17 +39,21 @@ export function TypePanel({
   );
 }
 
-/** The org's unassigned tags, to pick one. */
+/** The org's unassigned tags this pass's policy takes, to pick one. */
 export function SparePanel({
   orgId,
+  passId,
+  binding,
   value,
   onChange,
 }: {
   orgId: string;
+  passId: string;
+  binding: 'pass' | 'user';
   value: string | undefined;
   onChange: (id: string) => void;
 }) {
-  const query = useTagList(orgId, 'spare', undefined);
+  const query = useTagList(orgId, 'spare', undefined, { passId, binding });
   const items = query.data?.pages.flatMap((p) => p.items) ?? [];
   if (query.isPending) return <SkeletonRows rows={3} label="Loading tags" />;
   if (query.isError)

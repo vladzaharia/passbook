@@ -29,6 +29,7 @@ function exercised(view: WalletPassView, type: GoogleType): CapabilityId[] {
   if (view.colors.label) out.push('colors.label');
   if (view.relevance.beacons.length > 0) out.push('relevance.beacons');
   if (view.nfc) out.push('nfc');
+  if (view.messaging.fields.length > 0) out.push('messaging.notify');
   if (view.personalization) out.push('personalization');
   if (view.events.length > 0) out.push('upcoming.multi');
   if (view.relevance.dates.length > 0 && (type === 'loyalty' || type === 'gift'))

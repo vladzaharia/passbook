@@ -151,7 +151,7 @@ describe('changing and deleting notes', () => {
 });
 
 describe('reads are audited and bounded', () => {
-  it('history and notes reads leave a row with a count and no content; a later page does not', async () => {
+  it('history and notes reads each leave one row with a count and no content; a later page does not', async () => {
     const pass = await kit.scanPass(templateId);
     const dana = await device('desk', 'Dana Q.');
     await add(pass.id, dana.headers, 'Secret remark');
@@ -160,12 +160,27 @@ describe('reads are audited and bounded', () => {
     await kit.get(dana.headers, `/passes/${pass.id}/history?cursor=1_x`);
     const rows = await all<{ action: string; detail: string }>(
       kit.env.DB,
-      "SELECT action, detail FROM audit_log WHERE target_id = ? AND action IN ('scan.history.read', 'scan.note.read')",
+      "SELECT action, detail FROM audit_log WHERE target_id = ? AND action IN ('scan.history.read', 'scan.note.read') ORDER BY id",
       [pass.id],
     );
-    expect(rows.map((r) => r.action).sort()).toEqual(['scan.history.read', 'scan.note.read']);
+    expect(rows.map((r) => r.action)).toEqual(['scan.note.read', 'scan.history.read']);
     expect(JSON.stringify(rows)).not.toContain('Secret');
-    expect(JSON.parse(rows[0]?.detail ?? '{}')).toHaveProperty('count');
+    for (const r of rows) expect(JSON.parse(r.detail)).toHaveProperty('count');
+  });
+
+  it('reads of two passes, or after the window, each leave a row', async () => {
+    const [a, b] = [await kit.scanPass(templateId), await kit.scanPass(templateId)];
+    const dana = await device('desk', 'Dana R.');
+    await kit.get(dana.headers, `/passes/${a.id}/history`);
+    await kit.get(dana.headers, `/passes/${b.id}/history`);
+    kit.clock.advance(61_000);
+    await kit.get(dana.headers, `/passes/${a.id}/history`);
+    const rows = await all<{ target_id: string }>(
+      kit.env.DB,
+      "SELECT target_id FROM audit_log WHERE action = 'scan.history.read' AND target_id IN (?, ?)",
+      [a.id, b.id],
+    );
+    expect(rows.map((r) => r.target_id).sort()).toEqual([a.id, a.id, b.id].sort());
   });
 
   it('a terminal reads no notes', async () => {

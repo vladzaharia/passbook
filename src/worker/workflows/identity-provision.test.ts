@@ -127,6 +127,17 @@ describe('provision', () => {
     }
   });
 
+  it('fails the run when Apple answers with a pass type the org did not reserve', async () => {
+    const h = await harness('mismatch-co');
+    h.apple.wrongIdentifier = 'pass.mobile.passbook.someoneelse';
+    const warn = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { runId, out } = await provision(h);
+    expect(out).toEqual({ state: 'failed' });
+    expect((await h.runRow(runId)).error_code).toBe('IDENTITY_PASS_TYPE_MISMATCH');
+    expect(h.apple.count('createCertificate')).toBe(0);
+    expect(JSON.stringify(warn.mock.calls)).toContain('identity.pass_type_mismatch');
+  });
+
   it('refuses to delete or reassign a reserved handle', async () => {
     const h = await harness('reserved-co');
     await provision(h);

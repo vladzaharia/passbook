@@ -54,7 +54,7 @@ export const SCAN_REASON_COPY: Record<ScanReason | ClientScanReason, ScanLine> =
   },
   outside_hours: { headline: 'Outside hours', sub: '{plan} opens {when}.' },
   guest_expired: { headline: 'Guest pass ended', sub: 'Ended {time}. Ask a manager.' },
-  guest_visits_used: { headline: 'No visits left', sub: 'Used {used} of {limit} visits.' },
+  guest_visits_used: { headline: 'No visits left', sub: 'Used {used} of {limit}.' },
   suspended: { headline: 'Suspended', sub: 'Ask a manager.' },
   tag_lost: { headline: 'Tag reported lost', sub: 'Keep it and call security.' },
   tag_not_allowed: { headline: 'Tag not accepted', sub: "This tag isn't accepted here." },

@@ -24,7 +24,7 @@ import {
 import { useEndpointActions } from './api.ts';
 import { Deliveries } from './deliveries.tsx';
 import { EndpointStatus } from './endpoint-status.tsx';
-import { endpointHost, endpointState, spanLabel } from './health.ts';
+import { endpointHost, endpointState, lastDelivery, spanLabel } from './health.ts';
 import { ReplayDialog } from './replay-dialog.tsx';
 import { RotateDialog } from './rotate-dialog.tsx';
 import { SettingsCard } from './settings-card.tsx';
@@ -46,13 +46,14 @@ function StateCallout({
   canManage: boolean;
 }) {
   const state = endpointState(e);
+  const hasDeliveries = lastDelivery(e) !== null;
   if (state === 'active') return null;
   const actions = canManage ? (
     <>
       <Button size="sm" loading={busy} iconStart={<Play aria-hidden />} onClick={onResume}>
         Resume
       </Button>
-      {state === 'disabled' ? (
+      {state === 'disabled' && hasDeliveries ? (
         <Button size="sm" variant="outline" iconStart={<RotateCw aria-hidden />} onClick={onReplay}>
           Replay failed
         </Button>
@@ -65,17 +66,13 @@ function StateCallout({
         ? ` after ${spanLabel(e.disabledAt - e.failingSince)} of failed deliveries`
         : ' after repeated failed deliveries';
     return (
-      <Callout tone="danger" title="Disabled" actions={actions}>
+      <Callout tone="danger" actions={actions}>
         {`Disabled${after}. Fix the endpoint, then resume.`}
       </Callout>
     );
   }
   if (state === 'paused')
-    return (
-      <Callout title="Paused" actions={actions}>
-        Nothing is sent until you resume.
-      </Callout>
-    );
+    return <Callout actions={actions}>Nothing is sent until you resume.</Callout>;
   return (
     <Callout tone="warning" title="Deliveries are failing">
       PassBook retries for up to 3 days, then disables the endpoint.
@@ -125,13 +122,15 @@ export function EndpointDetail({
         actions={
           canManage ? (
             <>
-              <Button
-                variant="outline"
-                iconStart={<RotateCw aria-hidden />}
-                onClick={() => setReplay(true)}
-              >
-                Replay
-              </Button>
+              {lastDelivery(e) !== null ? (
+                <Button
+                  variant="outline"
+                  iconStart={<RotateCw aria-hidden />}
+                  onClick={() => setReplay(true)}
+                >
+                  Replay
+                </Button>
+              ) : null}
               <MoreMenu>
                 <DropdownMenuItem
                   disabled={e.status === 'disabled'}

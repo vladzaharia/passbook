@@ -3,7 +3,7 @@ import { SANDBOX_TERMINAL_ALIAS } from '../../../shared/copy/developer.ts';
 import { API_KEY_LABEL } from '../../platform/api-key-token.ts';
 import { keyCaller, type ScannerAuth } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import { reportDenied } from '../../platform/denied.ts';
+import { noteKeyRefused, reportDenied } from '../../platform/denied.ts';
 import {
   type AppError,
   ForbiddenError,
@@ -11,7 +11,7 @@ import {
   UnauthenticatedError,
   ValidationError,
 } from '../../platform/errors.ts';
-import { checkRateLimit } from '../../platform/rate-limit.ts';
+import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { scannerExpired } from './auth-store.ts';
@@ -48,7 +48,10 @@ export interface KeyTerminal {
  */
 export async function keyTerminalOf(c: Context<AppBindings>, token: string): Promise<KeyTerminal> {
   const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c));
-  if (!key) throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+  if (!key) {
+    noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
+    throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+  }
   // A sandbox key never holds `scans:write`; it reaches only the sandbox terminal (keyActsAsTerminalSql).
   const sandboxKey =
     key.mode === 'test' &&
@@ -57,6 +60,7 @@ export async function keyTerminalOf(c: Context<AppBindings>, token: string): Pro
     key.scopes.includes('passes:write');
   if (!key.scopes.includes('scans:write') && !sandboxKey) {
     reportDenied(c, 'MISSING_SCOPE', key);
+    noteKeyRefused(c, { code: 'MISSING_SCOPE', keyId: key.keyId, scope: 'scans:write' });
     throw new ForbiddenError('The API key lacks the scans:write scope.', 'MISSING_SCOPE');
   }
   if (key.orgId === null) {
@@ -78,10 +82,8 @@ export async function keyTerminalOf(c: Context<AppBindings>, token: string): Pro
     // A sandbox made before its terminal existed gets it on first use.
     let id = await sandboxTerminalIdOf(db, key.orgId, serviceContext(c).clock.now());
     // The scan rate limits come after this guard, so the write has its own: 30 attempts a minute per key.
-    if (
-      id === null &&
-      (await checkRateLimit(c.env, 'RL_SCAN_PAIR', `sandbox-terminal:${key.keyId}`))
-    ) {
+    if (id === null) {
+      await enforceRateLimit(c.env, 'RL_SCAN_PAIR', `RL_SCAN_PAIR:sandbox-terminal:${key.keyId}`);
       await ensureSandboxTerminal(serviceContext(c), key, key.orgId);
       id = await sandboxTerminalIdOf(db, key.orgId, serviceContext(c).clock.now());
     }

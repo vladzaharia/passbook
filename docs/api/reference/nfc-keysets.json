@@ -1,0 +1,26 @@
+{
+  "nfc-keysets.getNfcKeysets": {
+    "description": "Lists tag keysets."
+  },
+  "nfc-keysets.postNfcKeysets": {
+    "description": "Creates a tag keyset."
+  },
+  "nfc-keysets.postNfcKeysetsByIdRotate": {
+    "description": "Rotates a keyset to a new key version."
+  },
+  "nfc-keysets.postNfcKeysetsByIdKeysByVersionRetire": {
+    "description": "Retires an old key version."
+  },
+  "nfc-keysets.postNfcKeysetsByIdKeysByVersionRevoke": {
+    "description": "Revokes a key version. Tags on it must be written again."
+  },
+  "nfc-keysets.postNfcKeysetsByIdReenrol": {
+    "description": "Moves the tags of a keyset to another keyset."
+  },
+  "nfc-keysets.postNfcKeysetsByIdImport": {
+    "description": "Imports supplier-personalised tags. Run it as a dry run first, then add."
+  },
+  "nfc-keysets.postNfcKeysetsByIdDisable": {
+    "description": "Disables a keyset."
+  }
+}

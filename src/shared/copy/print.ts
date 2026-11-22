@@ -44,6 +44,7 @@ export const PRINT_COPY = {
       : `Preparing ${tickets}.`,
   bulkReady: (tickets: string, lossy: boolean, skipped = 0, why = '') =>
     `${tickets} ready${skipped > 0 ? `, ${skipped} skipped${why ? `: ${why}` : ''}` : ''}${lossy ? '. Some names could not be shown.' : ''}`,
+  lossy: 'Some characters cannot be printed and will show as plain letters or ?.',
   bulkDownload: 'Download',
   bulkFailed: 'The PDF could not be made. Try again.',
   bulkSlow: 'The PDF is taking long. Try again shortly.',

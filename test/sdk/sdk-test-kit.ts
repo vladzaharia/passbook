@@ -8,6 +8,9 @@ type Fetch = typeof fetch;
 
 export interface SdkRig {
   kit: Awaited<ReturnType<typeof setupKit>>;
+  /** The test key, and a fetch that reaches the app, for code that builds its own client. */
+  key: string;
+  toApp: Fetch;
   /** The SDK's calls reach the app in-process; `through` can answer or fail a call first. */
   client(options?: {
     through?: (call: Fetch) => Fetch;
@@ -28,6 +31,8 @@ export async function setupSdkRig(): Promise<SdkRig> {
   const toApp: Fetch = async (input, init) => app.request(input as string, init, kit.env);
   return {
     kit,
+    key: key.secret,
+    toApp,
     async client({ through, maxRetries } = {}) {
       const calls: Request[] = [];
       const recording: Fetch = (input, init) => {

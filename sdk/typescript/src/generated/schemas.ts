@@ -978,6 +978,7 @@ export type NfcKeysetsCreateParams = {
 export type NfcKeysetsImportTagsParams = {
   csv: string;
   dryRun: boolean;
+  replace?: boolean;
 };
 
 export type NfcKeysetsReenrollParams = {
@@ -2419,6 +2420,13 @@ export type PlatformOrgsSetStatusParams = {
 
 export type PlatformOrgsWalletEnrollmentsHoldParams = {
   reason: string;
+};
+
+export type PlatformStatusOpenIncidentParams = {
+  title: string;
+  note: string;
+  component?: "api" | "apple_push" | "email" | "webhooks" | "google" | "samsung" | null;
+  impact: "notice" | "degraded" | "outage";
 };
 
 export type PlatformTemplatesAssignParams = {
