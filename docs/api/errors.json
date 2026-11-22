@@ -2000,6 +2000,33 @@
       ]
     },
     {
+      "code": "INTENT_ITEM_RECORDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "INTENT_LIVE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "INTENT_NO_TARGET",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "INTERNAL",
       "statuses": [
         500
