@@ -160,3 +160,12 @@
 .ok-t {
   color: var(--pk-success);
 }
+@media (pointer: coarse) {
+  .pg .input {
+    height: 44px;
+  }
+  .pg .seg > button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
