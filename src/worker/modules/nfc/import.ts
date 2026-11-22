@@ -49,24 +49,27 @@ export async function importTags(
   if (!active) throw conflict('Rotate the keyset first.', 'KEYSET_NO_ACTIVE_KEY');
   const parsed = parseImportCsv(input.csv);
   const problems: ImportProblem[] = [...parsed.problems];
-  // A tag key equal to the shared meta key would let any reader of a tap's PICC data forge its MAC.
-  const [current] = await versionEnvelopes(ctx.env.DB, keyset.id, ['active']);
-  const meta = current
-    ? bytesToHex(
-        (
-          await openVersion(
-            await loadKekRing(ctx.env),
-            { ...scopeOf(keyset), keyId: current.id, version: current.version },
-            current.envelope,
-          )
-        ).meta,
-      )
-    : '';
-  parsed.rows = parsed.rows.filter((r) => {
-    if (r.key !== meta) return true;
-    problems.push({ line: r.line, uid: r.uid, reason: 'meta_key' });
-    return false;
-  });
+  // A tag key equal to the shared meta key would let any reader of a tap's PICC data forge its MAC. Only the
+  // add checks it: a dry run that did would tell a caller which guessed key is the meta key, for free.
+  if (!input.dryRun) {
+    const [current] = await versionEnvelopes(ctx.env.DB, keyset.id, ['active']);
+    const meta = current
+      ? bytesToHex(
+          (
+            await openVersion(
+              await loadKekRing(ctx.env),
+              { ...scopeOf(keyset), keyId: current.id, version: current.version },
+              current.envelope,
+            )
+          ).meta,
+        )
+      : '';
+    parsed.rows = parsed.rows.filter((r) => {
+      if (r.key !== meta) return true;
+      problems.push({ line: r.line, uid: r.uid, reason: 'meta_key' });
+      return false;
+    });
+  }
   const refs = await Promise.all(
     parsed.rows.map(async (r) => ({ row: r, ...(await tagRef(ctx.env, a.orgId, a.mode, r.uid)) })),
   );
@@ -98,7 +101,7 @@ export async function importTags(
       const { grant, writes } = replace
         ? (({ grant, updates }) => ({ grant, writes: updates }))(rekeyGrant(ctx, a, target, tags))
         : (({ grant, inserts }) => ({ grant, writes: inserts }))(importGrant(ctx, a, target, tags));
-      const results = await commitKeyset(grant).catch((error: unknown) => {
+      const results = await commitKeyset(grant, a).catch((error: unknown) => {
         if (added > 0 && error instanceof AppError)
           throw conflict(
             `${added} tags were imported before the keyset changed. Check the file again for the rest.`,

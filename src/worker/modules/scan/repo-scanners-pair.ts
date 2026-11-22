@@ -4,6 +4,7 @@ import { gt, inList, maxNow, type SetValue } from '../../platform/authority-expr
 import { first } from '../../platform/db.ts';
 import { ForbiddenError } from '../../platform/errors.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
+import { credentialKeyOf } from './key-credentials.ts';
 
 type Db = D1Database;
 
@@ -20,6 +21,16 @@ export function requirePairingAuthority(
     authority.capability !== 'scanning:manage'
   )
     throw new ForbiddenError();
+}
+
+/** Pairing codes and till tokens: the console session, or a live `scanning:admin` key of this org. */
+export function requireCredentialAuthority(
+  authority: TenantPassWrite | null | undefined,
+  actorId: string,
+  orgId: string,
+): void {
+  if (authority?.kind === 'api_key') credentialKeyOf(authority, orgId, actorId, 'scanning:admin');
+  else requirePairingAuthority(authority, actorId, orgId);
 }
 
 const TOKEN_CLEARED = {
@@ -44,7 +55,7 @@ export const addPairCode = (
   id: string,
   hash: string,
   expiresAt: number,
-  userId: string,
+  createdBy: string | null,
   now: number,
   restart: boolean,
 ): GrantedStatement =>
@@ -52,7 +63,7 @@ export const addPairCode = (
     set: {
       pair_code_hash: hash,
       pair_expires_at: expiresAt,
-      pair_created_by: userId,
+      pair_created_by: createdBy,
       updated_at: maxNow(now),
       ...(restart ? { ...TOKEN_CLEARED, revoked_at: null } : {}),
     },

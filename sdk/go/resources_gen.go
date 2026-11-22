@@ -741,6 +741,84 @@ func (r *MessageRulesResource) Update(ctx context.Context, id string, body *Mess
 	return &out, nil
 }
 
+type NfcKeysetsResource struct {
+	c *core
+}
+
+func newNfcKeysetsResource(c *core) *NfcKeysetsResource {
+	return &NfcKeysetsResource{
+		c: c,
+	}
+}
+
+// Create Create a tag keyset `POST /api/v1/nfc/keysets`
+func (r *NfcKeysetsResource) Create(ctx context.Context, body *NfcKeysetsCreateBody, opts ...RequestOption) (*NfcKeysetsCreateResult, error) {
+	var out NfcKeysetsCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Disable Disable a keyset `POST /api/v1/nfc/keysets/{id}/disable`
+func (r *NfcKeysetsResource) Disable(ctx context.Context, id string, opts ...RequestOption) (*NfcKeysetsDisableResult, error) {
+	var out NfcKeysetsDisableResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/disable"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ImportTags Import supplier-personalised tags (dry run or add) `POST /api/v1/nfc/keysets/{id}/import`
+func (r *NfcKeysetsResource) ImportTags(ctx context.Context, id string, body *NfcKeysetsImportTagsBody, opts ...RequestOption) (*NfcKeysetsImportTagsResult, error) {
+	var out NfcKeysetsImportTagsResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/import", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List tag keysets `GET /api/v1/nfc/keysets`
+func (r *NfcKeysetsResource) List(ctx context.Context, query *NfcKeysetsListQuery, opts ...RequestOption) *Pager[NfcKeysetsListItem] {
+	return newPager[NfcKeysetsListItem](r.c, call{method: "GET", path: "/api/v1/nfc/keysets", query: queryValues(query)}, "cursor", opts)
+}
+
+// Reenroll Move the tags of a keyset to another keyset `POST /api/v1/nfc/keysets/{id}/reenrol`
+func (r *NfcKeysetsResource) Reenroll(ctx context.Context, id string, body *NfcKeysetsReenrollBody, opts ...RequestOption) (*NfcKeysetsReenrollResult, error) {
+	var out NfcKeysetsReenrollResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/reenrol", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RetireKey Retire an old key version `POST /api/v1/nfc/keysets/{id}/keys/{version}/retire`
+func (r *NfcKeysetsResource) RetireKey(ctx context.Context, id string, version int64, opts ...RequestOption) (*NfcKeysetsRetireKeyResult, error) {
+	var out NfcKeysetsRetireKeyResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/keys/" + pathEscape(version) + "/retire"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RevokeKey Revoke a key version: tags on it must be written again `POST /api/v1/nfc/keysets/{id}/keys/{version}/revoke`
+func (r *NfcKeysetsResource) RevokeKey(ctx context.Context, id string, version int64, opts ...RequestOption) (*NfcKeysetsRevokeKeyResult, error) {
+	var out NfcKeysetsRevokeKeyResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/keys/" + pathEscape(version) + "/revoke"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Rotate Rotate a keyset to a new key version `POST /api/v1/nfc/keysets/{id}/rotate`
+func (r *NfcKeysetsResource) Rotate(ctx context.Context, id string, body *NfcKeysetsRotateBody, opts ...RequestOption) (*NfcKeysetsRotateResult, error) {
+	var out NfcKeysetsRotateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/rotate", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type NfcTagTypesResource struct {
 	c *core
 }
@@ -785,12 +863,14 @@ func (r *NfcTagTypesResource) Update(ctx context.Context, id string, body *NfcTa
 
 type NfcResource struct {
 	c        *core
+	Keysets  *NfcKeysetsResource
 	TagTypes *NfcTagTypesResource
 }
 
 func newNfcResource(c *core) *NfcResource {
 	return &NfcResource{
 		c:        c,
+		Keysets:  newNfcKeysetsResource(c),
 		TagTypes: newNfcTagTypesResource(c),
 	}
 }
@@ -1732,6 +1812,48 @@ func (r *ScanSetupsResource) Retrieve(ctx context.Context, id string, opts ...Re
 	return &out, nil
 }
 
+type ScanStaffResource struct {
+	c *core
+}
+
+func newScanStaffResource(c *core) *ScanStaffResource {
+	return &ScanStaffResource{
+		c: c,
+	}
+}
+
+// Create Create a staff member and reveal their PIN once `POST /api/v1/scan-staff`
+func (r *ScanStaffResource) Create(ctx context.Context, body *ScanStaffCreateBody, opts ...RequestOption) (*ScanStaffCreateResult, error) {
+	var out ScanStaffCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-staff", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// List List an organization’s staff `GET /api/v1/scan-staff`
+func (r *ScanStaffResource) List(ctx context.Context, query *ScanStaffListQuery, opts ...RequestOption) *Pager[ScanStaff] {
+	return newPager[ScanStaff](r.c, call{method: "GET", path: "/api/v1/scan-staff", query: queryValues(query)}, "cursor", opts)
+}
+
+// ResetPIN Replace a staff PIN and reveal it once `POST /api/v1/scan-staff/{id}/reset-pin`
+func (r *ScanStaffResource) ResetPIN(ctx context.Context, id string, opts ...RequestOption) (*ScanStaffResetPinResult, error) {
+	var out ScanStaffResetPinResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan-staff/" + pathEscape(id) + "/reset-pin"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Update Update or disable a staff member `PATCH /api/v1/scan-staff/{id}`
+func (r *ScanStaffResource) Update(ctx context.Context, id string, body *ScanStaffUpdateBody, opts ...RequestOption) (*ScanStaffUpdateResult, error) {
+	var out ScanStaffUpdateResult
+	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/scan-staff/" + pathEscape(id), body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type ScanZonesResource struct {
 	c *core
 }
@@ -1841,20 +1963,68 @@ func (r *TerminalResource) Resolve(ctx context.Context, body *TerminalResolveBod
 	return &out, nil
 }
 
-type ScannersResource struct {
+type ScannersPairingResource struct {
 	c *core
+}
+
+func newScannersPairingResource(c *core) *ScannersPairingResource {
+	return &ScannersPairingResource{
+		c: c,
+	}
+}
+
+// Create A new pairing code (replaces any live one) `POST /api/v1/scanners/{id}/pairing`
+func (r *ScannersPairingResource) Create(ctx context.Context, id string, query *ScannersPairingCreateQuery, opts ...RequestOption) (*ScannersPairingCreateResult, error) {
+	var out ScannersPairingCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners/" + pathEscape(id) + "/pairing", query: queryValues(query)}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// Retrieve Poll a pairing `GET /api/v1/scanners/{id}/pairing`
+func (r *ScannersPairingResource) Retrieve(ctx context.Context, id string, opts ...RequestOption) (*ScannersPairingRetrieveResult, error) {
+	var out ScannersPairingRetrieveResult
+	if err := r.c.do(ctx, call{method: "GET", path: "/api/v1/scanners/" + pathEscape(id) + "/pairing"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+type ScannersResource struct {
+	c       *core
+	Pairing *ScannersPairingResource
 }
 
 func newScannersResource(c *core) *ScannersResource {
 	return &ScannersResource{
-		c: c,
+		c:       c,
+		Pairing: newScannersPairingResource(c),
 	}
+}
+
+// Create Create a scanner (a device comes with a pairing code) `POST /api/v1/scanners`
+func (r *ScannersResource) Create(ctx context.Context, body *ScannersCreateBody, opts ...RequestOption) (*ScannersCreateResult, error) {
+	var out ScannersCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // Revoke Remove a scanner from use `POST /api/v1/scanners/{id}/revoke`
 func (r *ScannersResource) Revoke(ctx context.Context, id string, opts ...RequestOption) (*ScannersRevokeResult, error) {
 	var out ScannersRevokeResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners/" + pathEscape(id) + "/revoke"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// RotateToken A till token, shown once (replaces the old one) `POST /api/v1/scanners/{id}/token`
+func (r *ScannersResource) RotateToken(ctx context.Context, id string, query *ScannersRotateTokenQuery, opts ...RequestOption) (*ScannersRotateTokenResult, error) {
+	var out ScannersRotateTokenResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanners/" + pathEscape(id) + "/token", query: queryValues(query)}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -1886,6 +2056,15 @@ func newScanningSessionsDevicesResource(c *core) *ScanningSessionsDevicesResourc
 	return &ScanningSessionsDevicesResource{
 		c: c,
 	}
+}
+
+// Create Add a device to a scanning session `POST /api/v1/scanning-sessions/{id}/devices`
+func (r *ScanningSessionsDevicesResource) Create(ctx context.Context, id string, body *ScanningSessionsDevicesCreateBody, opts ...RequestOption) (*ScanningSessionsDevicesCreateResult, error) {
+	var out ScanningSessionsDevicesCreateResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scanning-sessions/" + pathEscape(id) + "/devices", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
 }
 
 // Update Configure one device `PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}`
@@ -2550,6 +2729,7 @@ type Resources struct {
 	RollCalls        *RollCallsResource
 	ScanEvents       *ScanEventsResource
 	ScanSetups       *ScanSetupsResource
+	ScanStaff        *ScanStaffResource
 	ScanZones        *ScanZonesResource
 	Terminal         *TerminalResource
 	Scanners         *ScannersResource
@@ -2585,6 +2765,7 @@ func newResources(c *core) Resources {
 		RollCalls:        newRollCallsResource(c),
 		ScanEvents:       newScanEventsResource(c),
 		ScanSetups:       newScanSetupsResource(c),
+		ScanStaff:        newScanStaffResource(c),
 		ScanZones:        newScanZonesResource(c),
 		Terminal:         newTerminalResource(c),
 		Scanners:         newScannersResource(c),

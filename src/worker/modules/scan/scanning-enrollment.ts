@@ -22,7 +22,7 @@ export function addEnrollment(
   ctx: ServiceContext,
   g: Grant,
   id: string,
-  userId: string,
+  createdBy: string | null,
   input: {
     name: string;
     deviceRole: 'scan' | 'monitor' | 'customer';
@@ -56,7 +56,7 @@ export function addEnrollment(
         created_at: now,
         updated_at: now,
       },
-      userId,
+      createdBy,
     );
   addScanningDeviceInsert(g, {
     id,
