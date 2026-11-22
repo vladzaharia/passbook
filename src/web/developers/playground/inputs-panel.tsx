@@ -1,5 +1,5 @@
 import { Copy, FlaskConical, Plus, RotateCcw } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { copyToClipboard } from './copy.ts';
 import { Fields } from './fields.tsx';
 import type { InputMode } from './hash.ts';
