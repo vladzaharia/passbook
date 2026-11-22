@@ -6,7 +6,6 @@ import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { seedTagKeys } from '../nfc/keyset-rotation-test-fixtures.ts';
 import { sealBody } from '../sandbox/captured-body.ts';
 import type { setupSamsungCallbacks } from '../wallet-providers/callbacks-test-fixtures.ts';
-import { googleMessageAad } from '../wallet-providers/google-message-aad.ts';
 import {
   claimWalletOperation,
   newWalletClaimHandle,
@@ -37,15 +36,7 @@ export interface Seeded {
   captureId: string;
   staff: { id: string; pin: string };
   /** `id -> plaintext` for rows with no production reader: opened with decryptSecret and the writer's AAD. */
-  plain: {
-    table: string;
-    id: string;
-    org: string | null;
-    kind: string;
-    text: string;
-    /** The writer's own AAD, when it is not `id|org|kind`. */
-    aad?: string;
-  }[];
+  plain: { table: string; id: string; org: string | null; kind: string; text: string }[];
 }
 
 const bytes = (e: Envelope) => [e.kekVersion, e.iv, e.wrappedDek, e.ciphertext] as const;
@@ -242,30 +233,6 @@ export async function seedEnvelopes(t: Samsung): Promise<Seeded> {
     org,
     kind: googleKind,
     text: 'google-body',
-  });
-
-  const messageId = id();
-  const messageText = 'google-message-body';
-  const message = await encryptSecret(
-    ring,
-    messageText,
-    googleMessageAad(t.operation.instanceId, messageId),
-  );
-  await run(
-    db,
-    `INSERT INTO wallet_google_messages
-     (id, instance_id, operation_id, base_version, target_version, notify, state, tries,
-      kek_version, iv, wrapped_dek, ciphertext, created_at)
-     VALUES (?, ?, ?, 1, 2, 1, 'pending', 0, ?, ?, ?, ?, ?)`,
-    [messageId, t.operation.instanceId, t.operation.id, ...bytes(message), now],
-  );
-  plain.push({
-    table: 'wallet_google_messages',
-    id: messageId,
-    org,
-    kind: 'wallet.google.message',
-    text: messageText,
-    aad: googleMessageAad(t.operation.instanceId, messageId),
   });
 
   plain.push(await seedWalletCredentialVersion(db, { orgId: org, now, id, seal }));
