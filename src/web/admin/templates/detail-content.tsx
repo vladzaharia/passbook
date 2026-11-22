@@ -268,21 +268,7 @@ export function TemplateDetailContent({
             ) : null}
             <VersionsPanel
               template={t}
-              rollout={
-                scope.orgId && scope.membership ? (
-                  <RolloutCard
-                    key={`rollout:${scope.orgId}:${mode}`}
-                    templateId={t.id}
-                    orgId={scope.orgId}
-                    mode={mode}
-                    name={(hash) => vOf(t, hash)}
-                    canTell={
-                      scope.membership.capabilities.includes('messages:manage') &&
-                      scope.membership.capabilities.includes('passes:operate')
-                    }
-                  />
-                ) : undefined
-              }
+              rollout={<RolloutCard template={t} scope={scope} />}
               draft={draftHash || undefined}
               onTry={
                 state?.next && state.next !== 'wait' && !archived

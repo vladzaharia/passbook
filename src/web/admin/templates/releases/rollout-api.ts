@@ -11,8 +11,9 @@ const key = (templateId: string, orgId: string, mode: Mode) =>
   ['admin', 'template-rollout', templateId, orgId, mode] as const;
 
 /** Polls while passes are still moving. */
-export function useRollout(templateId: string, orgId: string, mode: Mode) {
+export function useRollout(templateId: string, orgId: string, mode: Mode, enabled: boolean) {
   return useQuery({
+    enabled,
     queryKey: key(templateId, orgId, mode),
     queryFn: ({ signal }) =>
       api.get(

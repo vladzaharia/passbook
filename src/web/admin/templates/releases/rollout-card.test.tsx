@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ComponentProps } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TemplateRollout } from '@/shared/contracts/template-rollout.ts';
 import { json, stubFetch } from '../../../lib/test-utils.tsx';
@@ -22,11 +23,24 @@ const rollout = (over: Partial<TemplateRollout> = {}): TemplateRollout => ({
   ...over,
 });
 
+const TEMPLATE = {
+  id: 't1',
+  versions: [
+    { version: 'version-1', createdAt: 1 },
+    { version: 'version-2', createdAt: 2 },
+  ],
+} as unknown as ComponentProps<typeof RolloutCard>['template'];
+const scope = (canTell: boolean) =>
+  ({
+    orgId: 'org-1',
+    membership: { capabilities: canTell ? ['messages:manage', 'passes:operate'] : [] },
+  }) as unknown as ComponentProps<typeof RolloutCard>['scope'];
+
 function mount(canTell = true) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <RolloutCard templateId="t1" orgId="org-1" mode="live" name={() => 'v2'} canTell={canTell} />
+      <RolloutCard template={TEMPLATE} scope={scope(canTell)} />
     </QueryClientProvider>,
   );
 }

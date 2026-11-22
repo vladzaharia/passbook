@@ -1,9 +1,13 @@
 import { Link } from '@tanstack/react-router';
 import { useId, useState } from 'react';
+import type { z } from 'zod';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { TemplateRollout } from '@/shared/contracts/template-rollout.ts';
+import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { formatCount } from '../../../lib/format.ts';
+import { useMode } from '../../../lib/mode.ts';
+import type { useOrgScope } from '../../../lib/org-filter.tsx';
 import { Buddy } from '../../../ui/art/index.ts';
 import {
   Badge,
@@ -20,6 +24,7 @@ import {
   Skeleton,
   toast,
 } from '../../../ui/index.ts';
+import { vOf } from '../versions.ts';
 import { useRollout, useTellHolders } from './rollout-api.ts';
 
 type Tell = NonNullable<TemplateRollout['tell']>;
@@ -112,22 +117,23 @@ function TellHolders({
 
 /** Where the approved release stands for this organization's passes: progress, who is left, Tell holders. */
 export function RolloutCard({
-  templateId,
-  orgId,
-  mode,
-  name,
-  canTell,
+  template,
+  scope,
 }: {
-  templateId: string;
-  orgId: string;
-  mode: Mode;
-  /** "v2": the release's short name. */
-  name: (hash: string | null) => string;
-  canTell: boolean;
+  template: Pick<z.infer<typeof TemplateDetailSchema>, 'id' | 'versions'>;
+  scope: Pick<ReturnType<typeof useOrgScope>, 'orgId' | 'membership'>;
 }) {
-  const rollout = useRollout(templateId, orgId, mode);
+  const orgId = scope.orgId;
+  const capabilities = scope.membership?.capabilities ?? [];
+  const mode = useMode();
+  const templateId = template.id;
+  const name = (hash: string | null) => vOf(template, hash);
+  const canTell =
+    capabilities.includes('messages:manage') && capabilities.includes('passes:operate');
+  const rollout = useRollout(templateId, orgId ?? '', mode, Boolean(orgId && scope.membership));
   const [telling, setTelling] = useState(false);
   const [listed, setListed] = useState(false);
+  if (!orgId || !scope.membership) return null;
   if (rollout.isError)
     return (
       <ErrorState
