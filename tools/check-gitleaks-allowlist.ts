@@ -36,8 +36,17 @@ const pkcs8 = Buffer.concat([
   .toString('base64')
   .replace(/[+/]/g, 'A');
 
-/** Each case is a value in the context the key rule reads; `reported` is what the config must do with it. */
-const cases: { name: string; value: string; reported: boolean; bare?: boolean }[] = [
+/**
+ * Each case is a value in the context the key rule reads (`bare`: a header line; `json`: a JSON string right after
+ * that escape, as a log line holds it); `reported` is what the config must do with it.
+ */
+const cases: {
+  name: string;
+  value: string;
+  reported: boolean;
+  bare?: boolean;
+  json?: 'n' | 'r' | 't';
+}[] = [
   {
     name: 'demo-key-secret',
     value: `pb_test_k3Qx9Zt2_northwind-demo-key-do-not-use-${hex(12)}`,
@@ -86,6 +95,39 @@ const cases: { name: string; value: string; reported: boolean; bare?: boolean }[
     bare: true,
   },
   { name: 'try-token', value: `pbtry_${rand(120)}.${rand(43)}`, reported: true, bare: true },
+  // A JSON-escaped newline, return or tab is a left boundary: its letter is not part of the token.
+  {
+    name: 'key-after-json-newline',
+    value: `pb_live_${rand(8)}_${rand(43)}`,
+    reported: true,
+    json: 'n',
+  },
+  {
+    name: 'scanner-token-after-json-tab',
+    value: `wls_${rand(8)}_${rand(43)}`,
+    reported: true,
+    json: 't',
+  },
+  { name: 'webhook-after-json-newline', value: `whsec_${rand(43)}`, reported: true, json: 'n' },
+  { name: 'webhook-after-json-return', value: `whsec_${rand(43)}`, reported: true, json: 'r' },
+  {
+    name: 'try-token-after-json-newline',
+    value: `pbtry_${rand(120)}.${rand(43)}`,
+    reported: true,
+    json: 'n',
+  },
+  {
+    name: 'demo-key-after-json-newline',
+    value: `pb_test_k3Qx9Zt2_northwind-demo-key-do-not-use-${hex(12)}`,
+    reported: false,
+    json: 'n',
+  },
+  {
+    name: 'demo-webhook-after-json-tab',
+    value: `whsec_demo_northwind_${hex(6)}`,
+    reported: false,
+    json: 't',
+  },
   {
     name: 'demo-key-bare',
     value: `pb_test_k3Qx9Zt2_northwind-demo-key-do-not-use-${hex(12)}`,
@@ -126,11 +168,13 @@ const dir = mkdtempSync(join(tmpdir(), 'gitleaks-allowlist-'));
 const report = join(dir, 'report.json');
 const cases_dir = join(dir, 'cases');
 mkdirSync(cases_dir);
-for (const c of cases)
-  writeFileSync(
-    join(cases_dir, `${c.name}.txt`),
-    c.bare ? `Authorization: Bearer ${c.value}\n` : `api_key = "${c.value}"\n`,
-  );
+const contextOf = (c: (typeof cases)[number]): string =>
+  c.json
+    ? `{"log":"POST /v1/passes 401\\${c.json}${c.value}\\${c.json}retrying"}\n`
+    : c.bare
+      ? `Authorization: Bearer ${c.value}\n`
+      : `api_key = "${c.value}"\n`;
+for (const c of cases) writeFileSync(join(cases_dir, `${c.name}.txt`), contextOf(c));
 
 const run = spawnSync(
   bin,
