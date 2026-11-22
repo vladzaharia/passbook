@@ -375,11 +375,24 @@ describe('a developer org never holds Live', () => {
          AND EXISTS (SELECT 1 FROM pragma_table_info(m.name) WHERE name = 'mode')`,
     );
     expect(tables.length).toBeGreaterThan(50);
-    for (const { name } of tables)
-      await expect(
+    // SQLite fires the newest trigger first, so a table whose later migration adds its own insert checks may refuse
+    // with that message; its guard trigger must still exist and the row must still be refused.
+    const othersFirst = new Set(['wallet_samsung_tombstones']);
+    for (const { name } of tables) {
+      const guard = await all<{ name: string }>(
+        kit.env.DB,
+        `SELECT name FROM sqlite_master WHERE type = 'trigger' AND tbl_name = ?
+           AND sql LIKE '%''live''%' AND sql LIKE '%kind = ''developer''%'`,
+        [name],
+      );
+      expect(guard.length, `${name} guard trigger`).toBeGreaterThan(0);
+      const insert = expect(
         run(kit.env.DB, `INSERT INTO ${name} (org_id, mode) VALUES (?, 'live')`, [s.made.orgId]),
         name,
-      ).rejects.toThrow(/Live/);
+      );
+      if (othersFirst.has(name)) await insert.rejects.toThrow();
+      else await insert.rejects.toThrow(/Live/);
+    }
   });
 
   it('refuses a write the owner makes in Live, and allows it in Test', async () => {
