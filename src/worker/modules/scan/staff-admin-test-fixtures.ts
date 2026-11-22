@@ -41,7 +41,9 @@ import { grantScanMembership } from './test-kit.ts';
 
 const ORIGIN = 'https://wallet.test';
 export const WireStaffSchema = ScanStaffSchema.strict();
-const CreatedSchema = z.object({ staff: WireStaffSchema, ...StaffPinSchema.shape }).strict();
+/** A PIN as the answer that made it shows it (null only on an Idempotency-Key replay). */
+export const IssuedPinSchema = z.object({ pin: StaffPinSchema.shape.pin.unwrap() });
+const CreatedSchema = z.object({ staff: WireStaffSchema, ...IssuedPinSchema.shape }).strict();
 const StaffListSchema = z
   .object({ items: z.array(WireStaffSchema), hasMore: z.boolean().optional() })
   .strict();
