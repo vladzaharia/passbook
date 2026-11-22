@@ -203,7 +203,7 @@ verify on a device.
 | Milestones | AS: `hundred/all_in`; BM: `count/all_in/reward` | `count`, `all_in`, `reward`, all decided server-side | One source with the counter |
 | Scans retention | AS: 400; UA: 396 | 396 days | 13 months spans a yearly event |
 | Nav | AA: Scanners + Activity; UA: Scanning + 4 tabs | Scanning, 4 tabs, `/admin/scanning` | Covers events and staff |
-| Pause | AA: pause/resume | Not built | Event windows and revoke cover it |
+| Pause | AA: pause/resume | Built differently | Session pause and resume (`session-hold.ts`); event windows and revoke also cover it |
 | `set` races | AS: last writer wins; UK: `expectedVersion` | `expectedVersion`; mismatch is heads-up `stale` | Uses `publishPass` 412 |
 | Result content | AS, UK: fixed `scan.values` (≤ 3) and `scan.identity` (photo, ≤ 2 fields); the owner: customize text, icon and info cards per template, from any pass data | `scan.display` (D21, 4.6); `values` and `identity` removed; the card's `values` stay as system data derived from action inputs | Per-template design the owner asked for, with the verdict kept system-owned |
 | Per-event display | DM drafts: per-event overrides | Dropped. Events keep check-in logic and an optional staff note (`scan_events.note`), shown on the Start panel, `heads_up` and `refused` | Two places to edit one screen is how screens drift; one night's instruction doesn't need a template version |
@@ -1758,7 +1758,7 @@ native bridge (interface only)                                                 �
   when the scanner's `reader` is `nfc` and the value has the scan-code shape. AC §2.4.
 - **Manual:** one field "Name, email or code". Enter on a ≥ 4-char code with no space or `@` → `manual` code; ≥ 3
   letters → debounced search; `@` → exact email on Enter. A picked row emits `{ passId, method: 'manual' }`.
-- **Native bridge:** `window.passbookNative.nfc` (a future `readVAS` shell) feeds the same bus. Not built.
+- **Native bridge:** `window.passbookNative.nfc` (a future `readVAS` shell) feeds the same bus. Still not built (no `passbookNative` in `src/`).
 
 ### 8.2 Client normalisation (keeps data on the device)
 
