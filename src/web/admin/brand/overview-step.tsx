@@ -1,4 +1,5 @@
 import { PASS_FIX_COPY } from '@/shared/copy/pass-setup-fix.ts';
+import { todoCount } from '@/shared/org-setup-checks.ts';
 import { usePassSetup } from './api.ts';
 
 const COPY = PASS_FIX_COPY.overview;
@@ -18,9 +19,10 @@ export function useBrandStep(orgId: string | undefined): BrandTodo | undefined {
   const setup = usePassSetup(orgId ?? '', orgId !== undefined);
   if (!orgId || !setup.data) return undefined;
   const todo = setup.data.checks.filter((c) => c.level !== 'info');
-  if (todo.length === 0) return undefined;
+  const count = todoCount(setup.data.checks);
+  if (count === 0) return undefined;
   return {
-    count: todo.length,
+    count,
     names: [...new Set(todo.map((c) => COPY.names[c.code]))].slice(0, 3),
   };
 }
