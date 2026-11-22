@@ -13,6 +13,6 @@ describe('the scan-to-add card', () => {
 
   it('keeps a stacked peek tall enough for a two-line header, and Details a visible disclosure', () => {
     expect(read('pass-stack.css')).toMatch(/--wl-peek:\s*4\.25rem/);
-    expect(read('../../worker/ssr/bundle-page.css')).toMatch(/\.bd-more > summary::after/);
+    expect(read('../../worker/ssr/bundle-page.css')).toMatch(/\.bd-more > summary::before/);
   });
 });
