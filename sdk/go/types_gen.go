@@ -2497,8 +2497,9 @@ type NfcKeysetsCreateParams3 struct {
 }
 
 type NfcKeysetsImportTagsParams struct {
-	CSV    string `json:"csv"`
-	DryRun bool   `json:"dryRun"`
+	CSV     string `json:"csv"`
+	DryRun  bool   `json:"dryRun"`
+	Replace *bool  `json:"replace,omitempty"`
 }
 
 type NfcKeysetsReenrollParams struct {

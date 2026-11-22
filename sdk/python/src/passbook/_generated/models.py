@@ -3660,6 +3660,7 @@ class NfcKeysetsCreateParams3(_Model):
 class NfcKeysetsImportTagsParams(_Model):
     csv: str
     dryRun: bool
+    replace: bool | None = None
 
 class NfcKeysetsReenrollParams(_Model):
     toKeysetId: str

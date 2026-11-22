@@ -978,6 +978,7 @@ export type NfcKeysetsCreateParams = {
 export type NfcKeysetsImportTagsParams = {
   csv: string;
   dryRun: boolean;
+  replace?: boolean;
 };
 
 export type NfcKeysetsReenrollParams = {
