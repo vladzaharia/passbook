@@ -10,7 +10,6 @@ import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { createScannerStore } from '../scan/auth-store.ts';
 import { type BlueprintKit, blueprintKit } from '../templates/blueprint-test-fixtures.ts';
-import { alignPassIdentity } from './sandbox-terminal-test-fixtures.ts';
 
 const ORIGIN = 'https://wallet.test';
 let kit: BlueprintKit;
@@ -86,7 +85,6 @@ async function sandbox() {
     });
     expect(res.status, await res.clone().text()).toBe(201);
     const issued = (await res.json()) as { id: string };
-    await alignPassIdentity(kit.env.DB, issued.id);
     return issued;
   };
   return { made, key, terminal, terminals, pass, create };
@@ -153,15 +151,12 @@ describe('the sandbox test terminal', () => {
     expect(alias.status).toBe(200);
     const none = await other(a.key);
     expect([none.status, await codeOf(none)]).toEqual([422, 'DEVICE_REQUIRED']);
-    // A terminal of the sandbox that is not the test terminal.
-    const extra = await first<{ id: string }>(
-      kit.env.DB,
-      'SELECT id FROM scanners WHERE org_id = ?',
-      [a.made.orgId],
-    );
-    await run(kit.env.DB, "UPDATE scanners SET name = 'Door' WHERE id = ?", [extra?.id]);
-    const renamed = await other(a.key, a.terminal.id);
-    expect([renamed.status, await codeOf(renamed)]).toEqual([404, 'TERMINAL_NOT_FOUND']);
+    // A scanner the sandbox row does not name is no way in, whatever it is called.
+    await run(kit.env.DB, 'UPDATE developer_sandboxes SET terminal_id = NULL WHERE org_id = ?', [
+      a.made.orgId,
+    ]);
+    const unnamed = await other(a.key, a.terminal.id);
+    expect([unnamed.status, await codeOf(unnamed)]).toEqual([404, 'TERMINAL_NOT_FOUND']);
   });
 
   it('gives a key of an ordinary organization no terminal without scans:write', async () => {
@@ -171,8 +166,8 @@ describe('the sandbox test terminal', () => {
     const secret = `wlt_${kit.f.ids.token(6)}_${kit.f.ids.token()}`;
     await run(
       kit.env.DB,
-      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_by, created_at)
-       VALUES (?, ?, 'K', ?, ?, ?, 'test', ?, ?)`,
+      `INSERT INTO api_keys (id, org_id, name, prefix, key_hash, scopes, mode, created_by, created_at, kind)
+       VALUES (?, ?, 'K', ?, ?, ?, 'test', ?, ?, 'service')`,
       [
         kit.f.ids.id(),
         org.id,
@@ -204,5 +199,64 @@ describe('the sandbox test terminal', () => {
       read(pass.id),
     );
     expect(res.status).toBe(401);
+  });
+
+  it('is made on first use for a sandbox that has none, once under a race', async () => {
+    const s = await sandbox();
+    // A sandbox from before the terminal existed.
+    await run(kit.env.DB, 'UPDATE scanners SET revoked_at = 1 WHERE id = ?', [s.terminal.id]);
+    await run(kit.env.DB, 'UPDATE developer_sandboxes SET terminal_id = NULL WHERE org_id = ?', [
+      s.made.orgId,
+    ]);
+    const pass = await s.pass();
+    const via = () => call({ ...s.key, 'x-passbook-device': 'sandbox' }, '/resolve', read(pass.id));
+    const answers = await Promise.all([via(), via()]);
+    expect(answers.map((r) => r.status)).toEqual([200, 200]);
+    const open = await all<{ id: string }>(
+      kit.env.DB,
+      'SELECT id FROM scanners WHERE org_id = ? AND name = ? AND revoked_at IS NULL',
+      [s.made.orgId, SANDBOX_TERMINAL_NAME],
+    );
+    expect(open).toHaveLength(1);
+    const named = await first<{ terminal_id: string }>(
+      kit.env.DB,
+      'SELECT terminal_id FROM developer_sandboxes WHERE org_id = ?',
+      [s.made.orgId],
+    );
+    expect(named?.terminal_id).toBe(open[0]?.id);
+  });
+
+  it('replaces a terminal that has expired, and the key scans as the new one', async () => {
+    const s = await sandbox();
+    await run(kit.env.DB, 'UPDATE scanners SET expires_at = ? WHERE id = ?', [
+      kit.clock.now() - 1,
+      s.terminal.id,
+    ]);
+    const pass = await s.pass();
+    const res = await call({ ...s.key, 'x-passbook-device': 'sandbox' }, '/resolve', read(pass.id));
+    expect(res.status).toBe(200);
+    const [fresh] = await s.terminals().then((all) => all.filter((t) => t.id !== s.terminal.id));
+    expect(fresh).toBeDefined();
+    const old = await first<{ revoked_at: number | null }>(
+      kit.env.DB,
+      'SELECT revoked_at FROM scanners WHERE id = ?',
+      [s.terminal.id],
+    );
+    expect(old?.revoked_at).not.toBeNull();
+  });
+
+  it('keeps a sandbox key off the terminal once it loses passes:write or the sandbox closes', async () => {
+    const s = await sandbox();
+    const pass = await s.pass();
+    const headers = { ...s.key, 'x-passbook-device': s.terminal.id };
+    expect((await call(headers, '/resolve', read(pass.id))).status).toBe(200);
+    await run(
+      kit.env.DB,
+      'UPDATE developer_sandboxes SET closed_at = 1, close_reason = ? WHERE org_id = ?',
+      ['user', s.made.orgId],
+    );
+    expect((await call(headers, '/actions', { ...read(pass.id), actionId: 'auto' })).status).toBe(
+      404,
+    );
   });
 });

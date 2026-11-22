@@ -201,6 +201,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       if (key) {
         actor.apiKeyId = key.keyId;
         actor.apiKeyOrgRevision = key.orgRevision;
+        if (key.sandbox) actor.apiKeySandbox = true;
       }
       c.set('auth', auth);
       withRole(actor, null);

@@ -24,7 +24,6 @@ describe('check in at the door', () => {
       input: { ...body.input, startsAt: iso(-1), endsAt: iso(2) },
     });
     expect(made.status, made.text).toBe(201);
-    await world.align(made.json.id);
     const rules = await call(
       'PUT',
       `/passes/${made.json.id}/check-in`,

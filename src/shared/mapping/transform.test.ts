@@ -19,11 +19,23 @@ describe('date formats', () => {
     expect(date('31/12/2026 13:45', 'dmy', 'iso')).toBe('2026-12-31T13:45:00.000Z');
   });
 
-  it('keeps a written offset in ISO output and still shifts Z or other inputs', () => {
-    expect(date('2030-06-01T19:00:00-07:00', 'auto', 'iso')).toBe('2030-06-01T19:00:00-07:00');
-    expect(date('2030-06-01T19:00:00+02:00', 'iso', 'iso')).toBe('2030-06-01T19:00:00+02:00');
-    expect(date('2030-06-01T19:00:00Z', 'auto', 'iso')).toBe('2030-06-01T19:00:00.000Z');
-    expect(date('2030-06-01T19:00:00-07:00', 'auto', 'epoch-s')).toBe(1_906_596_000);
+  it('keeps a written offset only when keepOffset is on, and only for a real time', () => {
+    const keep = (value: string, input = 'auto') =>
+      transform(value, {
+        from: '',
+        transform: { kind: 'date', options: { input, output: 'iso', keepOffset: true } },
+      });
+    expect(keep('2030-06-01T19:00:00-07:00')).toBe('2030-06-01T19:00:00-07:00');
+    expect(keep('2030-06-01T19:00:00+02:00', 'iso')).toBe('2030-06-01T19:00:00+02:00');
+    // Not a real time: normalized as before, or refused.
+    expect(keep('2030-02-31T19:00:00-07:00')).toBe('2030-03-04T02:00:00.000Z');
+    expect(keep('2030-06-01T24:00:00-07:00')).toBe('2030-06-02T07:00:00.000Z');
+    expect(keep('2030-06-01T19:00:00Z')).toBe('2030-06-01T19:00:00.000Z');
+    // A saved mapping (no option) still writes UTC.
+    expect(date('2030-06-01T19:00:00-07:00', 'auto', 'iso')).toBe('2030-06-02T02:00:00.000Z');
+    expect(date('2030-06-01T19:00:00-07:00', 'auto', 'epoch-s')).toBe(
+      Math.floor(Date.parse('2030-06-01T19:00:00-07:00') / 1000),
+    );
   });
 
   it.each([

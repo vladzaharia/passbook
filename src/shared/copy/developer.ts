@@ -40,3 +40,9 @@ export const PREVIEW_PAGE_COPY = {
   missingTitle: 'Preview not found',
   missing: 'This link is not valid. Open the pass in PassBook to copy it again.',
 } as const;
+
+/** The identity a preview-only pass validates against. It names no certificate and signs nothing. */
+export const PREVIEW_PASS_IDENTITY = {
+  passTypeIdentifier: 'pass.test.preview',
+  teamIdentifier: 'TESTPREVIE',
+} as const;

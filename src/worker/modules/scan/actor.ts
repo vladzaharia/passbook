@@ -144,6 +144,8 @@ export interface ScanActor {
   apiKeyId?: string;
   /** The org's `access_revision` when the key was admitted; a change refuses the commit. */
   apiKeyOrgRevision?: number;
+  /** The key is a sandbox key: the commit also requires Test mode. */
+  apiKeySandbox?: true;
   /** A monitor's watch, loaded per request (SA D28); absent for any other device. */
   watchCover?: WatchCover | null;
   /** A monitor's Let in of another door's refusal checks in at that scan's session and event (SA 20.9); set only by `overrideScan`. */

@@ -5,7 +5,6 @@ import { BLUEPRINT_ID, EXAMPLE_IDS } from '../../src/web/developers/model/ids.ts
 import { createApp } from '../../src/worker/app.ts';
 import { createApiKeyStore } from '../../src/worker/modules/api-keys/service.ts';
 import { createSessionStore } from '../../src/worker/modules/auth/sessions.ts';
-import { alignPassIdentity } from '../../src/worker/modules/developer/sandbox-terminal-test-fixtures.ts';
 import { PLATFORM_IDENTITY_ID } from '../../src/worker/modules/identities/resolver.ts';
 import {
   type BlueprintKit,
@@ -220,6 +219,12 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
           })
         ).id
       : null;
+  if (options.kind === 'developer')
+    await run(
+      kit.env.DB,
+      'INSERT INTO developer_sandboxes (id, org_id, user_id, created_at, terminal_id) VALUES (?, ?, ?, ?, ?)',
+      [kit.f.ids.id(), org.id, owner.userId, kit.clock.now(), terminalId],
+    );
   if (terminalId)
     await run(kit.env.DB, 'UPDATE scanners SET name = ? WHERE id = ?', [
       SANDBOX_TERMINAL_NAME,
@@ -274,8 +279,6 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
     templateId: used.id,
     passId: pass.id,
     terminalId,
-    /** The pass JSON the scanner reads carries the identity row's ids (the kit stores another). */
-    align: (passId: string) => alignPassIdentity(kit.env.DB, passId),
     clock: kit.clock,
     calls,
     fetch: fetchLike as typeof fetch,

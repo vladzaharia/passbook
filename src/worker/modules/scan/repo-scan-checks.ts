@@ -22,12 +22,13 @@ export const deviceAwakeCheck = (scannerId: string, now: number): Check =>
 /** The API key a till scans with is live, in the grant's tenant, and a till key bound to this terminal or a sandbox key on the sandbox terminal. */
 export const apiKeyActsCheck = (keyId: string, scannerId: string, now: number): Check => {
   const live = keyLive('k', now);
+  const acts = keyActsAsTerminalSql(true);
   return tenantCheck(
     'actor',
     `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ? AND k.org_id = {org} AND k.mode = {mode}
        AND ${live.sql}
-       AND ${keyActsAsTerminalSql(true)})`,
-    [keyId, ...live.params, scannerId, scannerId],
+       AND ${acts.sql})`,
+    [keyId, ...live.params, ...acts.bind(scannerId)],
   );
 };
 

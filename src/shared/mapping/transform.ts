@@ -179,12 +179,28 @@ function formatDate(value: Json, o: Record<string, Json>): Json | undefined {
   }
 }
 
-const OFFSET_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?[+-]\d{2}:\d{2}$/;
+const OFFSET_ISO =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?([+-])(\d{2}):(\d{2})$/;
+/** `options.keepOffset` (auto-map writes it): a real calendar time written with a non-zero offset stays as written. */
 function kept(value: Json, o: Record<string, Json>): string | undefined {
   const input = o.input ?? 'auto';
-  if (typeof value !== 'string' || (input !== 'auto' && input !== 'iso')) return undefined;
+  if (o.keepOffset !== true || typeof value !== 'string' || (input !== 'auto' && input !== 'iso'))
+    return undefined;
   const text = value.trim();
-  return OFFSET_ISO.test(text) && !/[+-]00:00$/.test(text) ? text : undefined;
+  const m = OFFSET_ISO.exec(text);
+  if (!m) return undefined;
+  const [y, mo, d, h, mi, s, oh, om] = [1, 2, 3, 4, 5, 6, 8, 9].map((i) => Number(m[i] ?? 0));
+  const at = new Date(Date.UTC(y ?? 0, (mo ?? 1) - 1, d ?? 0, h ?? 0, mi ?? 0, s ?? 0));
+  const real =
+    at.getUTCFullYear() === y &&
+    at.getUTCMonth() === (mo ?? 1) - 1 &&
+    at.getUTCDate() === d &&
+    (h ?? 0) < 24 &&
+    (mi ?? 0) < 60 &&
+    (s ?? 0) < 60 &&
+    (oh ?? 0) < 24 &&
+    (om ?? 0) < 60;
+  return real && (oh !== 0 || om !== 0) ? text : undefined;
 }
 
 /** `record` is the whole source record; only `join` reads it. */
