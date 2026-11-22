@@ -40,6 +40,7 @@ export function checkInFinalizer(i: {
 }): Finalizer {
   const { found, action, access, presenceScope } = i;
   const place = found.occupancy ?? null;
+  const passState = found.inactive ?? (found.suspended ? 'suspended' : undefined);
   return (outcome, reason, visit) => ({
     id: i.scanId,
     claimAt: i.claimAt,
@@ -56,6 +57,7 @@ export function checkInFinalizer(i: {
     ...(outcome === 'ok' && presenceScope !== undefined ? { presenceScope } : {}),
     // Leaving is never a visit, on the card or in the history.
     ...(outcome === 'ok' && place?.direction === 'out' ? { noVisit: true } : {}),
+    ...(outcome === 'ok' && passState ? { passState } : {}),
     ...(i.eventId ? { eventId: i.eventId } : {}),
     ...(access
       ? {
