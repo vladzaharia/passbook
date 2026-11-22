@@ -55,7 +55,7 @@
       "callsLastHour": 11,
       "key": {
         "id": "0193a1b2-7c00-7000-8000-08677b291e63",
-        "name": "Northwind Climbing",
+        "name": "Server integration",
         "prefix": "k3Qx9Zt2"
       }
     }
@@ -64,7 +64,7 @@
     "response": {
       "kind": "request",
       "href": "https://northwind.example.com/p/xK3v9QmT2Lw8",
-      "label": "Northwind Climbing"
+      "label": "Server integration"
     }
   },
   "developer.getAccess": {
@@ -122,7 +122,7 @@
       "keys": [
         {
           "id": "0193a1b2-7c00-7000-8000-5b22af792a32",
-          "name": "Northwind Climbing",
+          "name": "Server integration",
           "secretPrefix": "pb_test_k3Qx9Zt2",
           "scopes": ["passes:read"],
           "createdAt": 1794322800000,
@@ -166,7 +166,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-bea24862df73",
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-          "title": "Northwind Climbing",
+          "title": "Day pass",
           "subtitle": "Ada Example",
           "status": "active",
           "version": 3,
@@ -201,7 +201,7 @@
       "closedAt": null,
       "key": {
         "id": "0193a1b2-7c00-7000-8000-83809299d114",
-        "name": "Northwind Climbing",
+        "name": "Server integration",
         "secret": "whsec_demo_northwind_002aa9",
         "mode": "test",
         "expiresAt": 1798124400000
@@ -250,7 +250,7 @@
       },
       "key": {
         "id": "0193a1b2-7c00-7000-8000-2e43a4b7d7f2",
-        "name": "Northwind Climbing",
+        "name": "Server integration",
         "secret": "whsec_demo_northwind_3bfe98",
         "mode": "test",
         "expiresAt": 1798124400000
@@ -277,7 +277,7 @@
       "closedAt": null,
       "key": {
         "id": "0193a1b2-7c00-7000-8000-36f8064e541c",
-        "name": "Northwind Climbing",
+        "name": "Server integration",
         "secret": "whsec_demo_northwind_1a6dad",
         "mode": "test",
         "expiresAt": 1798124400000

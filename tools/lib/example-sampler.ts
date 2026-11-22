@@ -1,4 +1,5 @@
 // Builds an example from a schema and the fictional world (example-world.ts): values by field name, then format.
+import { humanName, nextNote, nextReason } from './example-names.ts';
 import {
   API,
   CANON,
@@ -373,7 +374,7 @@ function contextString(key: string, kind: string, path: string, ctx: Ctx): strin
 }
 
 /** A name field: a person in person fields, a resource name elsewhere. */
-function nameField(key: string, kind: string, path: string): string | undefined {
+function nameField(key: string, kind: string, path: string, op: string): string | undefined {
   if (!/[nN]ame$|^name$|^label$|^title$|^subtitle$/.test(key)) return undefined;
   if (
     /holder|member|owner|host|visitor|staff|admin|author|reviewer|createdBy|startedBy|endedBy|requestedBy/i.test(
@@ -383,7 +384,7 @@ function nameField(key: string, kind: string, path: string): string | undefined 
     return key === 'subtitle' ? 'Ada Example' : 'Sam Rivera';
   if (/^subtitle$/.test(key)) return 'Ada Example';
   if (/^(ownerName)$/.test(key)) return 'Ada Example';
-  return nameFor(key, kind, path);
+  return humanName(key, path, op);
 }
 
 const PREFER = [
@@ -689,8 +690,10 @@ function str(ctx: Ctx, s: Json, key: string, path: string, kind: string): string
       k && !/^(source|previous|parent|prior|original|base|undoes)/.test(key) ? IDS[k] : undefined;
     return hit ?? `0193a1b2-7c00-7000-8000-${hex(`${ctx.op}${path}`, 12)}`;
   }
-  const name = nameField(key, kind, path);
+  const name = nameField(key, kind, path, ctx.op);
   if (name) return name;
+  if (key === 'reason' && !s.enum && !/Apns/.test(ctx.op)) return nextReason();
+  if (key === 'note' && !s.enum) return nextNote();
   let v = contextString(key, kind, path, ctx) ?? stringFor(key, kind, ctx);
   if (v === 'x') v = undefined;
   if (v === undefined) {
@@ -874,6 +877,8 @@ function fixState(out: Json, props: Json, op: string): void {
       if (/^passes/.test(k) && typeof out[k] === 'number') out[k] = 0;
   if (typeof out.records === 'number' && out.counts && typeof out.counts === 'object') {
     const c = out.counts as Record<string, unknown>;
+    // Waiting records are a part of the created ones; a released template has none.
+    if ('waiting' in c) c.waiting = 0;
     out.records = ['create', 'update', 'unchanged', 'skipped', 'errors'].reduce(
       (n, k) => n + (typeof c[k] === 'number' ? (c[k] as number) : 0),
       0,
@@ -883,6 +888,18 @@ function fixState(out: Json, props: Json, op: string): void {
   }
   if (typeof out.downloadUrl === 'string' && typeof out.id === 'string')
     out.downloadUrl = `${SITE}/p/${out.id}.pkpass`;
+  if (
+    /^(healthy|ok|active)$/.test(
+      ([out.state, out.status, out.health].find((v) => typeof v === 'string') as string) ?? '',
+    ) &&
+    typeof out.reason === 'string' &&
+    !/^(ok|none)$/.test(out.reason)
+  ) {
+    const r = props.reason as Json | undefined;
+    if (r?.enum?.includes('ok')) out.reason = 'ok';
+    else if (Array.isArray(r?.type) && r.type.includes('null')) out.reason = null;
+    else delete out.reason;
+  }
   // A start is before its end.
   for (const [k, v] of Object.entries(out)) {
     const m = /^(.*?)(From|Start|Starts|Opens|Since)(At)?$/i.exec(k);

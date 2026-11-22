@@ -7,7 +7,7 @@
           "id": "0193a1b2-7c00-7000-8000-7fa0630cb730",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "name": "Northwind Climbing",
+          "name": "Open climbing",
           "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "match": {
             "input": "tier",
@@ -19,7 +19,7 @@
           "capacity": 38,
           "reentry": false,
           "hardLimit": false,
-          "note": "Photo ID checked at the desk.",
+          "note": "Needs step-free access.",
           "status": "live",
           "arrived": 4,
           "expected": 10,
@@ -33,7 +33,7 @@
     "description": "Creates a scan event.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Northwind Climbing",
+      "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -49,7 +49,7 @@
       "id": "0193a1b2-7c00-7000-8000-2dfaf68d763b",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Northwind Climbing",
+      "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -61,7 +61,7 @@
       "capacity": 38,
       "reentry": false,
       "hardLimit": false,
-      "note": "Photo ID checked at the desk.",
+      "note": "Booked the cafe for after.",
       "status": "live",
       "arrived": 4,
       "expected": 10,
@@ -74,7 +74,7 @@
       "id": "0193a1b2-7c00-7000-8000-ee1769b70735",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Northwind Climbing",
+      "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -86,7 +86,7 @@
       "capacity": 38,
       "reentry": false,
       "hardLimit": false,
-      "note": "Photo ID checked at the desk.",
+      "note": "Referred by a member.",
       "status": "live",
       "arrived": 4,
       "expected": 10,
@@ -96,7 +96,7 @@
   "scan-events.patchScanEventsById": {
     "description": "Edits a scan event.",
     "request": {
-      "name": "Northwind Climbing",
+      "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -107,7 +107,7 @@
       "id": "0193a1b2-7c00-7000-8000-803f36206de9",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Northwind Climbing",
+      "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -119,7 +119,7 @@
       "capacity": 38,
       "reentry": false,
       "hardLimit": false,
-      "note": "Photo ID checked at the desk.",
+      "note": "Pass reissued after a phone change.",
       "status": "live",
       "arrived": 4,
       "expected": 10,
@@ -132,7 +132,7 @@
       "id": "0193a1b2-7c00-7000-8000-0e5b2643c94f",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Northwind Climbing",
+      "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -144,7 +144,7 @@
       "capacity": 38,
       "reentry": false,
       "hardLimit": false,
-      "note": "Photo ID checked at the desk.",
+      "note": "Check the waiver at the next visit.",
       "status": "live",
       "arrived": 4,
       "expected": 10,
@@ -160,7 +160,7 @@
       "id": "0193a1b2-7c00-7000-8000-8a7533a6ea66",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Northwind Climbing",
+      "name": "Open climbing",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -172,7 +172,7 @@
       "capacity": 38,
       "reentry": false,
       "hardLimit": false,
-      "note": "Photo ID checked at the desk.",
+      "note": "Visits mostly on Saturday mornings.",
       "status": "live",
       "arrived": 4,
       "expected": 10,
@@ -190,8 +190,8 @@
           "type": "pass.issued",
           "host": "passbook.mobile",
           "place": "zone:main-hall",
-          "placeName": "Main hall",
-          "parentName": "Northwind Climbing",
+          "placeName": "Front entrance",
+          "parentName": "Cafe",
           "since": 1794322800000,
           "dueAt": 1795521600000,
           "via": "api",
@@ -202,7 +202,7 @@
       "rev": 24,
       "places": [
         {
-          "name": "Northwind Climbing",
+          "name": "Front entrance",
           "inNow": 8,
           "capacity": 38,
           "place": "zone:main-hall",

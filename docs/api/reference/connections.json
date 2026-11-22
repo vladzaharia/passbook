@@ -10,7 +10,7 @@
         "unchanged": 11,
         "skipped": 7,
         "errors": 0,
-        "waiting": 11
+        "waiting": 0
       },
       "releaseBlocked": "no_release",
       "window": {
@@ -32,7 +32,7 @@
       "columns": [
         {
           "pointer": "/input/tier",
-          "label": "Northwind Climbing",
+          "label": "Plan",
           "samples": ["Day pass"],
           "values": [
             {
@@ -87,7 +87,7 @@
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "connectorType": "google-sheets",
           "connectorVersion": 3,
-          "name": "Northwind Climbing",
+          "name": "Class bookings",
           "config": {
             "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
             "range": "Members!A:E"
@@ -145,7 +145,7 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "connectorType": "google-sheets",
-      "name": "Northwind Climbing",
+      "name": "Booking sheet",
       "config": {
         "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
         "range": "Members!A:E"
@@ -171,7 +171,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "connectorType": "google-sheets",
       "connectorVersion": 3,
-      "name": "Northwind Climbing",
+      "name": "Booking sheet",
       "config": {
         "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
         "range": "Members!A:E"
@@ -231,7 +231,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-748ff5b81201",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "name": "Northwind Climbing",
+          "name": "Evening rush",
           "health": "healthy",
           "lastErrorCode": null,
           "lastErrorAt": null
@@ -246,7 +246,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "connectorType": "google-sheets",
       "connectorVersion": 3,
-      "name": "Northwind Climbing",
+      "name": "Booking sheet",
       "config": {
         "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
         "range": "Members!A:E"
@@ -322,7 +322,7 @@
   "connections.patchConnectionsById": {
     "description": "Updates a connection.",
     "request": {
-      "name": "Northwind Climbing",
+      "name": "Booking sheet",
       "config": {
         "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
         "range": "Members!A:E"
@@ -336,7 +336,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "connectorType": "google-sheets",
       "connectorVersion": 3,
-      "name": "Northwind Climbing",
+      "name": "Booking sheet",
       "config": {
         "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
         "range": "Members!A:E"
@@ -439,7 +439,7 @@
         "unchanged": 11,
         "skipped": 7,
         "errors": 0,
-        "waiting": 11
+        "waiting": 0
       },
       "releaseBlocked": "no_release",
       "window": {
@@ -461,7 +461,7 @@
       "columns": [
         {
           "pointer": "/input/tier",
-          "label": "Northwind Climbing",
+          "label": "Plan",
           "samples": ["Day pass"],
           "values": [
             {
@@ -525,7 +525,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "connectorType": "google-sheets",
       "connectorVersion": 3,
-      "name": "Northwind Climbing",
+      "name": "Booking sheet",
       "config": {
         "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
         "range": "Members!A:E"
@@ -581,7 +581,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "connectorType": "google-sheets",
       "connectorVersion": 3,
-      "name": "Northwind Climbing",
+      "name": "Booking sheet",
       "config": {
         "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
         "range": "Members!A:E"

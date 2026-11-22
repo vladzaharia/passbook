@@ -12,7 +12,7 @@
           "id": "0193a1b2-7c00-7000-8000-c1e76b28b6d8",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "key": "tier",
-          "name": "Northwind Climbing",
+          "name": "Main hall",
           "parentId": "0193a1b2-7c00-7000-8000-02e051ce892a",
           "timeZone": "America/Los_Angeles",
           "effectiveTimeZone": "America/Los_Angeles",
@@ -22,15 +22,15 @@
           "checkedAt": [
             {
               "id": "0193a1b2-7c00-7000-8000-52f6407a9f3d",
-              "name": "Northwind Climbing"
+              "name": "Training room"
             }
           ],
           "plans": [
             {
               "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-              "templateName": "Day pass",
+              "templateName": "Ten-visit card",
               "planId": "0193a1b2-7c00-7000-8000-9f9f474c8309",
-              "label": "Northwind Climbing"
+              "label": "Staff hours"
             }
           ],
           "inNow": 8,
@@ -48,7 +48,7 @@
       "maxStayMinutes": 15,
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "key": "tier",
-      "name": "Northwind Climbing"
+      "name": "Main hall"
     },
     "response": {
       "occupancy": "off",
@@ -59,7 +59,7 @@
       "id": "0193a1b2-7c00-7000-8000-fed7cd89b418",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "key": "tier",
-      "name": "Northwind Climbing",
+      "name": "Main hall",
       "parentId": "0193a1b2-7c00-7000-8000-da4db099ff6f",
       "timeZone": "America/Los_Angeles",
       "effectiveTimeZone": "America/Los_Angeles",
@@ -69,7 +69,7 @@
       "checkedAt": [
         {
           "id": "0193a1b2-7c00-7000-8000-1b465bc253be",
-          "name": "Northwind Climbing"
+          "name": "Main hall"
         }
       ],
       "plans": [
@@ -77,7 +77,7 @@
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "templateName": "Day pass",
           "planId": "0193a1b2-7c00-7000-8000-e910671e53fd",
-          "label": "Northwind Climbing"
+          "label": "Always open"
         }
       ],
       "inNow": 8,
@@ -100,7 +100,7 @@
       "id": "0193a1b2-7c00-7000-8000-d7ee2eff7d9e",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "key": "tier",
-      "name": "Northwind Climbing",
+      "name": "Main hall",
       "parentId": "0193a1b2-7c00-7000-8000-60b007bcf07b",
       "timeZone": "America/Los_Angeles",
       "effectiveTimeZone": "America/Los_Angeles",
@@ -110,7 +110,7 @@
       "checkedAt": [
         {
           "id": "0193a1b2-7c00-7000-8000-04c88a191a40",
-          "name": "Northwind Climbing"
+          "name": "Main hall"
         }
       ],
       "plans": [
@@ -118,7 +118,7 @@
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "templateName": "Day pass",
           "planId": "0193a1b2-7c00-7000-8000-a620dcb1e91a",
-          "label": "Northwind Climbing"
+          "label": "Always open"
         }
       ],
       "inNow": 8,
@@ -136,7 +136,7 @@
       "id": "0193a1b2-7c00-7000-8000-0217833fc893",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "key": "tier",
-      "name": "Northwind Climbing",
+      "name": "Main hall",
       "parentId": "0193a1b2-7c00-7000-8000-3f15685e3cc7",
       "timeZone": "America/Los_Angeles",
       "effectiveTimeZone": "America/Los_Angeles",
@@ -146,7 +146,7 @@
       "checkedAt": [
         {
           "id": "0193a1b2-7c00-7000-8000-ed9a5ed03964",
-          "name": "Northwind Climbing"
+          "name": "Main hall"
         }
       ],
       "plans": [
@@ -154,7 +154,7 @@
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "templateName": "Day pass",
           "planId": "0193a1b2-7c00-7000-8000-0f6a194a77ad",
-          "label": "Northwind Climbing"
+          "label": "Always open"
         }
       ],
       "inNow": 8,
@@ -172,7 +172,7 @@
       "id": "0193a1b2-7c00-7000-8000-4bbbee56c948",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "key": "tier",
-      "name": "Northwind Climbing",
+      "name": "Main hall",
       "parentId": "0193a1b2-7c00-7000-8000-6cd02b708732",
       "timeZone": "America/Los_Angeles",
       "effectiveTimeZone": "America/Los_Angeles",
@@ -182,7 +182,7 @@
       "checkedAt": [
         {
           "id": "0193a1b2-7c00-7000-8000-a3334658ec51",
-          "name": "Northwind Climbing"
+          "name": "Main hall"
         }
       ],
       "plans": [
@@ -190,7 +190,7 @@
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "templateName": "Day pass",
           "planId": "0193a1b2-7c00-7000-8000-4a1c5483273a",
-          "label": "Northwind Climbing"
+          "label": "Always open"
         }
       ],
       "inNow": 8,
@@ -215,8 +215,8 @@
           "type": "generic",
           "host": "passbook.mobile",
           "place": "zone:main-hall",
-          "placeName": "Main hall",
-          "parentName": "Northwind Climbing",
+          "placeName": "Gear shop",
+          "parentName": "Front entrance",
           "since": 1794322800000,
           "dueAt": 1795521600000,
           "via": "api",
@@ -227,7 +227,7 @@
       "rev": 24,
       "places": [
         {
-          "name": "Northwind Climbing",
+          "name": "Front entrance",
           "inNow": 8,
           "capacity": 38,
           "place": "zone:main-hall",

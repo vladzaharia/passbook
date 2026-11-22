@@ -7,7 +7,7 @@
           "id": "0193a1b2-7c00-7000-8000-94d65b51f495",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "name": "Northwind Climbing",
+          "name": "Welcome message",
           "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "match": [
             {
@@ -47,7 +47,7 @@
     "description": "Creates an automatic message.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Northwind Climbing",
+      "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
@@ -73,7 +73,7 @@
       "id": "0193a1b2-7c00-7000-8000-0466e599a204",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Northwind Climbing",
+      "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
@@ -112,7 +112,7 @@
       "id": "0193a1b2-7c00-7000-8000-e3cae0a1b105",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Northwind Climbing",
+      "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
@@ -149,7 +149,7 @@
     "description": "Saves an automatic message. Saving resumes a paused one.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Northwind Climbing",
+      "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
@@ -176,7 +176,7 @@
       "id": "0193a1b2-7c00-7000-8000-2304d4d04f7f",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Northwind Climbing",
+      "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
@@ -221,7 +221,7 @@
       "id": "0193a1b2-7c00-7000-8000-3a964d3f182a",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Northwind Climbing",
+      "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
@@ -263,7 +263,7 @@
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "kind": "message",
-          "name": "Northwind Climbing",
+          "name": "Birthday offer",
           "state": "sent",
           "target": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -315,7 +315,7 @@
     "description": "Counts the passes due each of the next 14 days.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Northwind Climbing",
+      "name": "Renewal reminder",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": [
         {
@@ -358,7 +358,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Northwind Climbing",
+      "name": "Renewal reminder",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],

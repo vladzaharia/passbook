@@ -10,14 +10,14 @@
         "nameInputs": [
           {
             "key": "tier",
-            "label": "Northwind Climbing"
+            "label": "Visits to add"
           }
         ],
         "askEmail": false,
         "generated": [
           {
             "key": "tier",
-            "label": "Northwind Climbing"
+            "label": "Plan"
           }
         ],
         "dailyLimit": 25,
@@ -29,7 +29,7 @@
           {
             "code": "no_release",
             "input": "tier",
-            "label": "Northwind Climbing"
+            "label": "Plan"
           }
         ],
         "revision": 3,
@@ -41,7 +41,7 @@
         {
           "code": "no_release",
           "input": "tier",
-          "label": "Northwind Climbing"
+          "label": "Plan"
         }
       ]
     }
@@ -63,14 +63,14 @@
         "nameInputs": [
           {
             "key": "tier",
-            "label": "Northwind Climbing"
+            "label": "Visits to add"
           }
         ],
         "askEmail": false,
         "generated": [
           {
             "key": "tier",
-            "label": "Northwind Climbing"
+            "label": "Plan"
           }
         ],
         "dailyLimit": 25,
@@ -82,7 +82,7 @@
           {
             "code": "no_release",
             "input": "tier",
-            "label": "Northwind Climbing"
+            "label": "Plan"
           }
         ],
         "revision": 3,
@@ -94,7 +94,7 @@
         {
           "code": "no_release",
           "input": "tier",
-          "label": "Northwind Climbing"
+          "label": "Plan"
         }
       ]
     }
@@ -110,14 +110,14 @@
         "nameInputs": [
           {
             "key": "tier",
-            "label": "Northwind Climbing"
+            "label": "Visits to add"
           }
         ],
         "askEmail": false,
         "generated": [
           {
             "key": "tier",
-            "label": "Northwind Climbing"
+            "label": "Plan"
           }
         ],
         "dailyLimit": 25,
@@ -129,7 +129,7 @@
           {
             "code": "no_release",
             "input": "tier",
-            "label": "Northwind Climbing"
+            "label": "Plan"
           }
         ],
         "revision": 3,
@@ -141,7 +141,7 @@
         {
           "code": "no_release",
           "input": "tier",
-          "label": "Northwind Climbing"
+          "label": "Plan"
         }
       ]
     }

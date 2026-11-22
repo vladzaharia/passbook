@@ -4,7 +4,7 @@
     "response": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "preset": "standard",
-      "label": "Northwind Climbing",
+      "label": "Scanner sessions",
       "items": [
         {
           "key": "api",
@@ -34,7 +34,7 @@
       "presets": [
         {
           "preset": "standard",
-          "label": "Northwind Climbing",
+          "label": "Standard",
           "orgCount": 8,
           "values": {
             "tier": 8
@@ -50,7 +50,7 @@
       "overrides": {
         "tier": {
           "value": 15,
-          "note": "Photo ID checked at the desk.",
+          "note": "Prefers email over push.",
           "expiresAt": 1798124400000
         }
       }
@@ -67,14 +67,14 @@
           "value": 15,
           "presetValue": 20,
           "source": "preset",
-          "note": "Photo ID checked at the desk.",
+          "note": "Allergic to latex chalk.",
           "expiresAt": 1798124400000
         }
       ],
       "presets": [
         {
           "preset": "standard",
-          "label": "Northwind Climbing",
+          "label": "Standard",
           "orgCount": 8,
           "values": {
             "tier": 8

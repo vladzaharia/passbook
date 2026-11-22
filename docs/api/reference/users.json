@@ -4,7 +4,7 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-af8de0857b70",
-          "name": "Northwind Climbing",
+          "name": "Tomas Ortega",
           "primaryEmail": "ada@example.com",
           "status": "active",
           "lastRoles": ["admin"],
@@ -20,7 +20,7 @@
   "users.getUsersById": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-03416847bf94",
-      "name": "Northwind Climbing",
+      "name": "Sam Rivera",
       "primaryEmail": "ada@example.com",
       "status": "active",
       "lastRoles": ["admin"],
@@ -61,7 +61,7 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-42d7551c0b15",
-          "title": "Northwind Climbing",
+          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"
@@ -85,7 +85,7 @@
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0c96da81e6ee",
-      "name": "Northwind Climbing",
+      "name": "Sam Rivera",
       "primaryEmail": "ada@example.com",
       "status": "active",
       "lastRoles": ["admin"],
@@ -99,7 +99,7 @@
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-42505ee090f2",
-      "name": "Northwind Climbing",
+      "name": "Sam Rivera",
       "primaryEmail": "ada@example.com",
       "status": "active",
       "lastRoles": ["admin"],
@@ -140,7 +140,7 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-9f970a1ed4fc",
-          "title": "Northwind Climbing",
+          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"
@@ -161,7 +161,7 @@
   "users.deleteUsersByIdEmailsByEmail": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-cc77d533af24",
-      "name": "Northwind Climbing",
+      "name": "Sam Rivera",
       "primaryEmail": "ada@example.com",
       "status": "active",
       "lastRoles": ["admin"],
@@ -202,7 +202,7 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-f8ee46f35f20",
-          "title": "Northwind Climbing",
+          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"
@@ -223,7 +223,7 @@
   "users.postUsersByIdEmailsByEmailPrimary": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-b6cbc6073182",
-      "name": "Northwind Climbing",
+      "name": "Sam Rivera",
       "primaryEmail": "ada@example.com",
       "status": "active",
       "lastRoles": ["admin"],
@@ -264,7 +264,7 @@
       "passes": [
         {
           "id": "0193a1b2-7c00-7000-8000-c427695ea03d",
-          "title": "Northwind Climbing",
+          "title": "Day pass",
           "templateName": "Day pass",
           "orgName": "Northwind Climbing",
           "status": "active"

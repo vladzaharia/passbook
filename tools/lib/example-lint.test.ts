@@ -261,4 +261,55 @@ describe('exampleFailures', () => {
     ]);
     expect(run({ detail: { externalId: 'booking_8841' } })).toEqual([]);
   });
+
+  it('rejects the org name on something that is not the org', () => {
+    expect(run({ zones: [{ name: 'Northwind Climbing' }] })).toEqual([
+      'a.getA response.zones[0].name: the org name is the name of something that is not the org',
+    ]);
+    expect(
+      exampleFailures(docWith({ 'orgs.getOrg': { value: { name: 'Northwind Climbing' } } })),
+    ).toEqual([]);
+    expect(run({ slug: 'northwind-climbing', name: 'Northwind Climbing' })).toEqual([]);
+  });
+
+  it('rejects one name for two kinds of thing, but not a person or a pass named for its template', () => {
+    const doc = docWith({
+      'x.getScanners': { value: { scanners: [{ name: 'Front desk' }] } },
+      'x.getPlaces': { value: { places: [{ name: 'Front desk' }] } },
+    });
+    expect(exampleFailures(doc)).toEqual([
+      '"Front desk" is the name of more than one kind of thing: place, scanner',
+    ]);
+    const people = docWith({
+      'x.getA': { value: { staff: [{ name: 'Sam Rivera' }] } },
+      'x.getB': { value: { admin: { name: 'Sam Rivera' } } },
+    });
+    expect(exampleFailures(people)).toEqual([]);
+    const passes = docWith({
+      'x.getP': { value: { passes: [{ title: 'Day pass' }] } },
+      'x.getT': { value: { templates: [{ name: 'Day pass' }] } },
+    });
+    expect(exampleFailures(passes)).toEqual([]);
+  });
+
+  it('rejects a reason or note used in more than three examples', () => {
+    const same = Object.fromEntries(
+      ['a', 'b', 'c', 'd'].map((n) => [
+        `x.get${n}`,
+        { value: { reason: 'Left early; refund issued.' } },
+      ]),
+    );
+    expect(exampleFailures(docWith(same))).toEqual([
+      '"Left early; refund issued." is the reason or note of 4 examples; at most 3',
+    ]);
+    expect(exampleFailures(docWith({ 'x.geta': same['x.geta'] as never }))).toEqual([]);
+  });
+
+  it('rejects an error reason on a healthy, ok or active record', () => {
+    expect(run({ health: 'healthy', reason: 'Bad device token.' })).toEqual([
+      'a.getA response: reason is an error on a healthy record',
+    ]);
+    expect(run({ state: 'ok', reason: 'ok' })).toEqual([]);
+    expect(run({ state: 'failing', reason: 'Bad device token.' })).toEqual([]);
+  });
 });

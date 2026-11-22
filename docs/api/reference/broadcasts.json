@@ -15,7 +15,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Northwind Climbing",
+      "name": "Holiday hours",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -82,11 +82,11 @@
       "samples": [
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Northwind Climbing",
+          "title": "Plan",
           "changes": [
             {
               "key": "tier",
-              "label": "Northwind Climbing",
+              "label": "Plan",
               "from": "hello@example.com",
               "to": "ada@example.com"
             }
@@ -110,7 +110,7 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "message",
-      "name": "Northwind Climbing",
+      "name": "Holiday hours",
       "notify": false,
       "send": "now",
       "target": {
@@ -126,7 +126,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Northwind Climbing",
+      "name": "Holiday hours",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -178,7 +178,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Northwind Climbing",
+      "name": "Holiday hours",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -232,7 +232,7 @@
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "kind": "message",
-          "name": "Northwind Climbing",
+          "name": "Maintenance closure",
           "state": "sent",
           "target": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -285,7 +285,7 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "message",
-      "name": "Northwind Climbing",
+      "name": "Holiday hours",
       "notify": false,
       "send": "now",
       "target": {
@@ -301,7 +301,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Northwind Climbing",
+      "name": "Holiday hours",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -356,7 +356,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Northwind Climbing",
+      "name": "Holiday hours",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -408,7 +408,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Northwind Climbing",
+      "name": "Holiday hours",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -460,7 +460,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Northwind Climbing",
+      "name": "Holiday hours",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -511,7 +511,7 @@
       "items": [
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Northwind Climbing",
+          "title": "New route set",
           "holderEmail": "ada@example.com",
           "outcome": "updated",
           "silent": false

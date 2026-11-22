@@ -12,20 +12,31 @@ title = "PassBook"
 [extend]
 useDefault = true
 
-# Our own formats, as minted by api-key-token.ts, scanner-auth.ts and webhooks/secrets.ts. Custom rules carry no
+# Our own formats, as minted by api-key-token.ts, scanner-auth.ts, webhooks/secrets.ts (`whsec_` plus 32 bytes, 43
+# characters) and developer/try-token.ts. Custom rules carry no
 # stopwords and need no `key =` context, so a real key is found in a header, a log line or a bare constant, and a
-# tail that contains "demo" or "example" does not hide it.
+# tail that contains "demo" or "example" does not hide it. gitleaks uses RE2 (no lookahead), so the boundary on each
+# side is a character class that is not part of the secret group.
 [[rules]]
 id = "passbook-api-key"
 description = "A PassBook API key or scanner token"
-regex = '''\b(?:wlt|pb|pbp|pbo|wls)_(?:(?:live|test)_)?[A-Za-z0-9_-]{8}_[A-Za-z0-9_-]{43}\b'''
+regex = '''(?:^|[^A-Za-z0-9_-])((?:wlt|pb|pbp|pbo|wls)_(?:(?:live|test)_)?[A-Za-z0-9_-]{8}_[A-Za-z0-9_-]{43})(?:[^A-Za-z0-9_-]|$)'''
+secretGroup = 1
 keywords = ["pb_", "pbp_", "pbo_", "wlt_", "wls_"]
 
 [[rules]]
 id = "passbook-webhook-secret"
 description = "A PassBook webhook signing secret"
-regex = '''\bwhsec_[A-Za-z0-9_-]{32}\b'''
+regex = '''(?:^|[^A-Za-z0-9_-])(whsec_[A-Za-z0-9_-]{43})(?:[^A-Za-z0-9_-]|$)'''
+secretGroup = 1
 keywords = ["whsec_"]
+
+[[rules]]
+id = "passbook-try-token"
+description = "A PassBook developer try token: pbtry_<payload>.<mac>"
+regex = '''(?:^|[^A-Za-z0-9_-])(pbtry_[A-Za-z0-9_-]{40,}\.[A-Za-z0-9_-]{43})(?:[^A-Za-z0-9_-]|$)'''
+secretGroup = 1
+keywords = ["pbtry_"]
 
 [allowlist]
 description = "Demo shapes, identifiers and public keys, each anchored"

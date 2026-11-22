@@ -4,9 +4,9 @@
       "items": [
         {
           "id": "0193a1b2-7c00-7000-8000-f21676190484",
-          "title": "Northwind Climbing",
+          "title": "Ten-visit card",
           "subtitle": "Ada Example",
-          "templateName": "Day pass",
+          "templateName": "Monthly membership",
           "orgName": "Northwind Climbing",
           "status": "active",
           "mode": "live",
@@ -109,11 +109,11 @@
             }
           },
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-          "assetNames": ["Northwind Climbing"],
+          "assetNames": ["strip.png"],
           "tags": [
             {
               "id": "0193a1b2-7c00-7000-8000-df21d53b4950",
-              "label": "Northwind Climbing",
+              "label": "Key fob 3",
               "hint": "D335",
               "scope": "pass",
               "boundAt": 1795521600000,
@@ -140,7 +140,7 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "orgName": "Northwind Climbing",
-          "title": "Northwind Climbing",
+          "title": "Day pass",
           "support": {
             "email": "ada@example.com",
             "url": "https://northwind.example.com/p/xK3v9QmT2Lw8"
@@ -157,7 +157,7 @@
   "me.getMePassesById": {
     "response": {
       "id": "0193a1b2-7c00-7000-8000-2f7f8274cbaf",
-      "title": "Northwind Climbing",
+      "title": "Day pass",
       "subtitle": "Ada Example",
       "templateName": "Day pass",
       "orgName": "Northwind Climbing",
@@ -262,11 +262,11 @@
         }
       },
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["Northwind Climbing"],
+      "assetNames": ["logo.png"],
       "tags": [
         {
           "id": "0193a1b2-7c00-7000-8000-b696562afc51",
-          "label": "Northwind Climbing",
+          "label": "Wristband 14",
           "hint": "4522",
           "scope": "pass",
           "boundAt": 1795521600000,

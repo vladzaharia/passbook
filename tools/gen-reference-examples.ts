@@ -14,6 +14,7 @@ import {
   scanAnswer,
 } from './lib/example-headline.ts';
 import { type Example, exampleFailures, examplesOf } from './lib/example-lint.ts';
+import { missing } from './lib/example-names.ts';
 import { type Ctx, kindOfOp, sample } from './lib/example-sampler.ts';
 
 const root = resolve(import.meta.dirname, '..');
@@ -102,6 +103,12 @@ for (const m of failures.filter((m) => /^\S+ requests\[/.test(m))) {
   const id = m.split(' ')[0] as string;
   if (!(id in HEADLINE_VARIANTS))
     for (const f of Object.values(files)) if (f[id]) delete f[id].requests;
+}
+if (missing.size) {
+  console.error(
+    `gen-reference-examples: ${missing.size} name field(s) have no table:\n  ${[...missing].join('\n  ')}`,
+  );
+  process.exit(1);
 }
 for (const [f, v] of Object.entries(files))
   writeFileSync(resolve(refDir, f), `${JSON.stringify(v, null, 2)}\n`);

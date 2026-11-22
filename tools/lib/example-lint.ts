@@ -1,6 +1,7 @@
 // Content rules for the examples in the committed OpenAPI document: a schema-valid example can still be filler.
 // Pure: no I/O. Run by check-openapi; the generator (tools/gen-reference-examples.ts) reruns until it is clean.
-import { IDS } from './example-world.ts';
+import { tableFor } from './example-names.ts';
+import { IDS, ORG, ORG_SLUG } from './example-world.ts';
 import type { Doc } from './openapi-diff.ts';
 
 type Json = Record<string, unknown>;
@@ -228,19 +229,20 @@ export function exampleFailures(doc: Doc, examples: Example[] = examplesOf(doc))
     }
   }
   for (const ex of examples) {
-    for (const m of objectFailures(ex.value, '')) out.push(`${ex.where}${m}`);
+    for (const m of objectFailures(ex.value, '', ex.op)) out.push(`${ex.where}${m}`);
     for (const m of ownIdReuse(ex.value)) out.push(`${ex.where}${m}`);
   }
+  out.push(...corpusFailures(examples));
   for (const [value, ops] of patterned)
     if (ops.size >= 4) out.push(`"${value}" is a regex sample reused by ${ops.size} operations`);
   return out;
 }
 
 /** Rules that read one object at a time: ids under two entities, filler numbers, a secret that does not match its prefix. */
-function objectFailures(value: unknown, at: string): string[] {
+function objectFailures(value: unknown, at: string, op = ''): string[] {
   const out: string[] = [];
   if (Array.isArray(value)) {
-    for (const [i, v] of value.entries()) out.push(...objectFailures(v, `${at}[${i}]`));
+    for (const [i, v] of value.entries()) out.push(...objectFailures(v, `${at}[${i}]`, op));
     return out;
   }
   if (!value || typeof value !== 'object') return out;
@@ -270,7 +272,15 @@ function objectFailures(value: unknown, at: string): string[] {
     const head = typeof o.secretPrefix === 'string' ? o.secretPrefix : o.prefix;
     if (!o.secret.startsWith(head)) out.push(`${at}.secret: does not start with "${head}"`);
   }
-  for (const [k, v] of Object.entries(o)) out.push(...objectFailures(v, `${at}.${k}`));
+  const isOrg =
+    /^(orgs|brand|metrics|org-lifecycle|organization-memberships|pass-setup)\./.test(op) ||
+    o.slug === ORG_SLUG ||
+    o.id === IDS.org ||
+    /(?:org|brand|organization|workspace)\w*$/i.test(at);
+  for (const k of ['name', 'label', 'title'])
+    if (o[k] === ORG && !isOrg)
+      out.push(`${at}.${k}: the org name is the name of something that is not the org`);
+  for (const [k, v] of Object.entries(o)) out.push(...objectFailures(v, `${at}.${k}`, op));
   return out;
 }
 
@@ -309,6 +319,17 @@ function invariantFailures(o: Json, at: string): string[] {
     out.push(`${at}: a delivered record has no lastStatus`);
   if (state === 'delivered' && (num(o.replays) ?? 0) > 5)
     out.push(`${at}: replays ${o.replays} is too many for one delivery`);
+  const okState = [o.state, o.status, o.health].find(
+    (v) => typeof v === 'string' && /^(healthy|ok|active)$/.test(v),
+  );
+  if (okState)
+    for (const k of ['reason', 'errorReason', 'lastError', 'errorCode'])
+      if (
+        typeof o[k] === 'string' &&
+        !/^(ok|none)$/.test(o[k] as string) &&
+        (o[k] as string).length > 0
+      )
+        out.push(`${at}: ${k} is an error on a ${okState} record`);
   if (/^(pending|queued|running|scheduled)$/.test(state) && num(o.finishedAt) !== undefined)
     out.push(`${at}: finishedAt is set on a ${state} record`);
   if (state === 'failed' && 'errorCode' in o && o.errorCode === null)
@@ -382,5 +403,50 @@ export function ownIdReuse(value: unknown): string[] {
     for (const [k, x] of Object.entries(o)) walkIds(x, `${at}.${k}`);
   };
   walkIds(value, '');
+  return out;
+}
+
+const PEOPLE = new Set(['person', 'holder', 'visitor']);
+const NAME_KEYS = /^(name|label|title)$/;
+const NOTE_KEYS = /^(reason|note|notes)$/;
+
+/** Rules over the whole set: one string as the name of two kinds of thing, and reasons or notes used over and over. */
+function corpusFailures(examples: Example[]): string[] {
+  const kindsOf = new Map<string, Set<string>>();
+  const notes = new Map<string, number>();
+  const visit = (v: unknown, path: string, key: string, ex: Example, schema: unknown): void => {
+    if (Array.isArray(v)) return void v.forEach((x) => visit(x, `${path}[]`, key, ex, schema));
+    if (v && typeof v === 'object') {
+      for (const [k, x] of Object.entries(v)) visit(x, `${path}.${k}`, k, ex, schema);
+      return;
+    }
+    if (typeof v !== 'string') return;
+    if (NAME_KEYS.test(key) && /\s|[A-Z]/.test(v)) {
+      let table = 'unknown';
+      try {
+        table = tableFor(key, path.replace(/\[\]/g, '[]'), ex.op.split('.')[0] ?? '');
+      } catch {
+        /* an unknown entity is the generator's error, not this rule's */
+      }
+      if (!PEOPLE.has(table)) (kindsOf.get(v) ?? kindsOf.set(v, new Set()).get(v))?.add(table);
+    }
+    if (NOTE_KEYS.test(key) && /\s/.test(v)) notes.set(v, (notes.get(v) ?? 0) + 1);
+  };
+  for (const ex of examples) visit(ex.value, '', '', ex, ex.schema);
+  const out: string[] = [];
+  const SAME = [
+    new Set(['pass', 'template']),
+    new Set(['connection', 'recipe']),
+    new Set(['key', 'tag']),
+  ];
+  for (const [value, kinds] of kindsOf) {
+    const list = [...kinds];
+    const clash = list.length > 1 && !SAME.some((g) => list.every((k) => g.has(k)));
+    if (clash)
+      out.push(`"${value}" is the name of more than one kind of thing: ${list.sort().join(', ')}`);
+  }
+  for (const [value, n] of notes)
+    if (n > 3)
+      out.push(`"${value.slice(0, 50)}" is the reason or note of ${n} examples; at most 3`);
   return out;
 }

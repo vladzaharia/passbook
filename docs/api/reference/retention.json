@@ -8,7 +8,7 @@
           "passLabel": "Day pass",
           "placedByKind": "org",
           "placedByLabel": "Sam Rivera",
-          "reason": "Left the gym early; refund issued at the desk.",
+          "reason": "Refund issued at the desk.",
           "createdAt": 1794322800000,
           "releasedAt": 1795521600000,
           "releasedByLabel": "Sam Rivera",
@@ -21,7 +21,7 @@
   "retention.postOrgsByOrgIdRetentionHolds": {
     "request": {
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "reason": "Left the gym early; refund issued at the desk."
+      "reason": "Duplicate booking."
     },
     "response": {
       "ok": true
@@ -80,7 +80,7 @@
           "passLabel": "Day pass",
           "placedByKind": "org",
           "placedByLabel": "Sam Rivera",
-          "reason": "Left the gym early; refund issued at the desk.",
+          "reason": "Waiver not signed.",
           "createdAt": 1794322800000,
           "releasedAt": 1795521600000,
           "releasedByLabel": "Sam Rivera",
@@ -93,7 +93,7 @@
   "retention.postPlatformOrgsByOrgIdRetentionHolds": {
     "request": {
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "reason": "Left the gym early; refund issued at the desk."
+      "reason": "Wristband replaced after it was lost."
     },
     "response": {
       "ok": true

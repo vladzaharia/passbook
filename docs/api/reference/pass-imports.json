@@ -4,7 +4,7 @@
     "response": {
       "saved": [
         {
-          "name": "Northwind Climbing",
+          "name": "Expiring soon",
           "columns": ["tier"],
           "plan": {
             "mapping": {
@@ -53,7 +53,7 @@
   "pass-imports.putPassImportsMappings": {
     "description": "Saves a named column mapping for a template. The same name replaces the earlier one; up to 20 are kept. Cell fixes are not saved.",
     "request": {
-      "name": "Northwind Climbing",
+      "name": "Day pass",
       "columns": ["tier"],
       "plan": {
         "mapping": {
@@ -94,7 +94,7 @@
     "response": {
       "saved": [
         {
-          "name": "Northwind Climbing",
+          "name": "Expiring soon",
           "columns": ["tier"],
           "plan": {
             "mapping": {
@@ -145,7 +145,7 @@
     "response": {
       "saved": [
         {
-          "name": "Northwind Climbing",
+          "name": "Expiring soon",
           "columns": ["tier"],
           "plan": {
             "mapping": {
@@ -1020,7 +1020,7 @@
           "changes": [
             {
               "key": "tier",
-              "label": "Northwind Climbing",
+              "label": "Valid until",
               "from": "Booking sheet",
               "to": "ada@example.com"
             }

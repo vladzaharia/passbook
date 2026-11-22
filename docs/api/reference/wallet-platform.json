@@ -115,7 +115,7 @@
   },
   "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold": {
     "request": {
-      "reason": "Left the gym early; refund issued at the desk."
+      "reason": "Member moved away."
     },
     "response": {
       "status": "held"

@@ -484,7 +484,7 @@
       "items": [
         {
           "id": "northwind",
-          "name": "Northwind Climbing",
+          "name": "Ten-visit card",
           "filter": {
             "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
             "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
@@ -517,7 +517,7 @@
       "items": [
         {
           "id": "northwind",
-          "name": "Northwind Climbing",
+          "name": "Monthly membership",
           "filter": {
             "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
             "connectionId": "0193a1b2-7c00-7000-8000-000000000051"
@@ -531,7 +531,7 @@
       "items": [
         {
           "id": "northwind",
-          "name": "Northwind Climbing",
+          "name": "Monthly membership",
           "filter": {
             "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
             "connectionId": "0193a1b2-7c00-7000-8000-000000000051",
@@ -883,7 +883,7 @@
     "response": {
       "items": [
         {
-          "name": "Northwind Climbing",
+          "name": "Ten-visit card",
           "sha1": "36a6fa302bb8a6a922a40706c5979a18539b8cbb",
           "size": 24576,
           "width": 320,
@@ -897,7 +897,7 @@
   "passes.putPassesByIdAssetsByName": {
     "description": "Uploads an image override for one pass as a PNG body.",
     "response": {
-      "name": "Northwind Climbing",
+      "name": "Day pass",
       "sha1": "aa33425fc53ed42f8938c49d5550cf7bc12f3796",
       "size": 24576,
       "width": 320,
@@ -1294,7 +1294,7 @@
           {
             "kind": "event",
             "id": "0193a1b2-7c00-7000-8000-75a9665dea0f",
-            "name": "Northwind Climbing",
+            "name": "Evening rush",
             "opensAt": 1795521600000,
             "closesAt": 1798113600000,
             "open": false,
@@ -1350,7 +1350,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1358,7 +1357,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1366,7 +1364,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1374,7 +1371,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1382,7 +1378,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1390,7 +1385,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ]
@@ -1409,7 +1403,7 @@
           {
             "kind": "event",
             "id": "0193a1b2-7c00-7000-8000-b04e13de3432",
-            "name": "Northwind Climbing",
+            "name": "Evening rush",
             "opensAt": 1795521600000,
             "closesAt": 1798113600000,
             "open": false,
@@ -1477,7 +1471,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1485,7 +1478,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1493,7 +1485,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1501,7 +1492,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1509,7 +1499,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1517,7 +1506,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ]
@@ -1536,7 +1524,7 @@
           {
             "kind": "event",
             "id": "0193a1b2-7c00-7000-8000-4485f6ce3565",
-            "name": "Northwind Climbing",
+            "name": "Evening rush",
             "opensAt": 1795521600000,
             "closesAt": 1798113600000,
             "open": false,
@@ -1562,7 +1550,7 @@
         {
           "id": "0193a1b2-7c00-7000-8000-8c3634195564",
           "code": "NW7K2Q",
-          "reason": "Left the gym early; refund issued at the desk."
+          "reason": "Guest of a member who left."
         }
       ]
     }
@@ -1671,7 +1659,7 @@
             "ok": true,
             "version": 3,
             "httpStatus": 200,
-            "reason": "Left the gym early; refund issued at the desk."
+            "reason": "Membership paused for the winter."
           },
           "removal": "fetched"
         }

@@ -6,7 +6,7 @@
         {
           "type": "generic",
           "version": 3,
-          "displayName": "Northwind Climbing",
+          "displayName": "Shop orders",
           "description": "A day pass for the climbing gym, scanned at the front desk.",
           "capabilities": {
             "poll": false,
@@ -32,7 +32,7 @@
           "recipes": [
             {
               "id": "custom",
-              "label": "Northwind Climbing",
+              "label": "Class bookings",
               "pasteSecret": false,
               "outputFields": {
                 "tier": {
@@ -71,7 +71,7 @@
     "response": {
       "type": "generic",
       "version": 3,
-      "displayName": "Northwind Climbing",
+      "displayName": "Booking sheet",
       "description": "A day pass for the climbing gym, scanned at the front desk.",
       "capabilities": {
         "poll": false,
@@ -97,7 +97,7 @@
       "recipes": [
         {
           "id": "custom",
-          "label": "Northwind Climbing",
+          "label": "Booking sheet",
           "pasteSecret": false,
           "outputFields": {
             "tier": {

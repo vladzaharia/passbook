@@ -85,8 +85,8 @@
       "failed": [
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Northwind Climbing",
-          "reason": "Left the gym early; refund issued at the desk."
+          "title": "Apple push refused 3 updates",
+          "reason": "Payment did not clear."
         }
       ],
       "startedAt": 1794322800000,
@@ -98,7 +98,7 @@
           "group": "colors",
           "rows": [
             {
-              "label": "Northwind Climbing",
+              "label": "Ada Example",
               "kind": "added",
               "from": {
                 "type": "text",
@@ -229,7 +229,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "version": "3",
       "release": false,
-      "note": "Photo ID checked at the desk."
+      "note": "Needs a harness fitting."
     },
     "response": {
       "version": "3",
@@ -280,7 +280,7 @@
       "items": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-          "templateName": "Day pass",
+          "templateName": "Monthly membership",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "version": "3",
           "requestedBy": "0193a1b2-7c00-7000-8000-000000000011",
@@ -296,7 +296,7 @@
       "items": [
         {
           "uploadId": "0193a1b2-7c00-7000-8000-f9beaa4ae374",
-          "name": "Northwind Climbing",
+          "name": "Monthly membership",
           "status": "complete",
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "version": "3",
@@ -389,7 +389,7 @@
             }
           ],
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-          "assetNames": ["Northwind Climbing"],
+          "assetNames": ["icon.png"],
           "id": "0193a1b2-7c00-7000-8000-9d4d6122249a"
         }
       ]
@@ -401,7 +401,7 @@
       "items": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-          "name": "Northwind Climbing",
+          "name": "Day pass",
           "templateOrgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "origin": "uploaded",
           "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
@@ -482,7 +482,7 @@
         }
       ],
       "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
-      "assetNames": ["Northwind Climbing"]
+      "assetNames": ["logo.png"]
     }
   },
   "templates.getTemplatesByIdVersionsByVersion": {
@@ -493,7 +493,7 @@
       "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
       "assets": [
         {
-          "name": "Northwind Climbing",
+          "name": "logo.png",
           "slot": "logo",
           "scale": 1,
           "locale": "en-US",
@@ -618,7 +618,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -626,7 +625,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -634,7 +632,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -642,7 +639,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -650,7 +646,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -658,7 +653,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ]
@@ -696,7 +690,7 @@
         },
         "errorCode": null,
         "waiting": {
-          "name": "Northwind Climbing",
+          "name": "Evening rush",
           "until": 21
         }
       }
@@ -752,7 +746,7 @@
     },
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Northwind Climbing",
+      "name": "Day pass",
       "version": {
         "passJson": {
           "formatVersion": 1,
@@ -792,7 +786,7 @@
         },
         "assets": [
           {
-            "name": "Northwind Climbing",
+            "name": "logo.png",
             "sha1": "e6997603809dcf7d34d188068c529a7808556809"
           }
         ]
@@ -815,7 +809,7 @@
       "events": [
         {
           "id": "0193a1b2-7c00-7000-8000-089eb962fdc5",
-          "name": "Northwind Climbing",
+          "name": "Open climbing",
           "created": false
         }
       ],
@@ -1174,7 +1168,7 @@
   "templates.postTemplatesByIdClone": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Northwind Climbing"
+      "name": "Day pass"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-0000000000b1",
@@ -1318,7 +1312,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1326,7 +1319,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1334,7 +1326,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1342,7 +1333,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1350,7 +1340,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ],
@@ -1358,7 +1347,6 @@
           {
             "level": "passbook",
             "state": "ok",
-            "reason": "not_released",
             "canChange": true
           }
         ]
@@ -1394,7 +1382,7 @@
         {
           "kind": "event",
           "id": "0193a1b2-7c00-7000-8000-be042db9c03a",
-          "name": "Northwind Climbing",
+          "name": "Evening rush",
           "opensAt": 1795521600000,
           "closesAt": 1798113600000,
           "open": false,
@@ -1452,7 +1440,7 @@
       },
       "assets": [
         {
-          "name": "Northwind Climbing",
+          "name": "logo.png",
           "slot": "logo",
           "scale": 1,
           "locale": "en-US",
@@ -1571,7 +1559,7 @@
       },
       "assets": [
         {
-          "name": "Northwind Climbing",
+          "name": "logo.png",
           "sha1": "eb463e387cdd880820a1da5b7513ba8d498c7a0b"
         }
       ],
@@ -1605,7 +1593,7 @@
       },
       "assets": [
         {
-          "name": "Northwind Climbing",
+          "name": "logo.png",
           "slot": "logo",
           "scale": 1,
           "locale": "en-US",
@@ -1687,7 +1675,7 @@
     },
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Northwind Climbing",
+      "name": "Day pass",
       "version": {
         "passJson": {
           "formatVersion": 1,
@@ -1727,7 +1715,7 @@
         },
         "assets": [
           {
-            "name": "Northwind Climbing",
+            "name": "logo.png",
             "sha1": "3099a2091b1dcc923ba4d623f8a0ed6ebbf93ec1"
           }
         ]
@@ -1861,7 +1849,7 @@
       "releaseId": "0193a1b2-7c00-7000-8000-000000000013",
       "candidateHash": "e4f3562523c418f45b6ea7434b83865e99e4a5677f178fd4256c1e3d8439d019",
       "expectedGeneration": 3,
-      "reason": "Left the gym early; refund issued at the desk."
+      "reason": "Class canceled by the coach."
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-79deef3b5ed4",
