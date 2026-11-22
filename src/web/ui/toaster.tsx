@@ -24,8 +24,11 @@ export const toast = {
   success: (message: string) => later((t) => t.success(message)),
   /** A holder emailed: the buddy posts its pass like a letter. */
   sent: (message: string) => later((t) => t.sent(message)),
-  /** `id` lets the page that shows the outcome take the toast down. */
-  info: (message: string, id?: string) => later((t) => t.info(message, id)),
+  /** `id` (given or returned) lets the page that shows the outcome take the toast down. */
+  info: (message: string, id = `info-${++ids}`) => {
+    later((t) => t.info(message, id));
+    return id;
+  },
   warning: (message: string) => later((t) => t.warning(message)),
   /** Errors stay until dismissed. `title` names what failed ("Could not save"). */
   error: (error: unknown, title: string) => later((t) => t.error(error, title)),
