@@ -1,28 +1,31 @@
 # Secret scanning for the whole tree (CI runs `gitleaks dir .`). The default rules stay on.
-# The only allowlist is by shape: the demo values our API examples use, which are documented in
-# tools/lib/example-world.ts and cannot authenticate (the example key's tail is 42 characters, not 43).
-# Three more shapes are false positives of the key rule, matched on the finding's own text: an identifier or
-# annotation (`p12.privateKeyPem`, `KEY_ALG_RSA_2048`, a version slug such as `wallet-completion-v1`) and a public
-# EC key (SPKI base64), which is public by definition. There are no path rules and no per-finding ignores.
+# The allowlist matches the finding's own text, and every pattern is anchored (^...$), so a real token that merely
+# contains one of these shapes is still reported. There are no path rules and no per-finding ignores.
+# What is allowed, and why:
+#  - the demo values our API examples use (tools/lib/example-world.ts): they cannot authenticate (the example key's
+#    tail is 42 characters, the real one 43);
+#  - three false positives of the key rule: `p12.privateKeyPem`, `KEY_ALG_RSA_2048` and two version slugs;
+#  - a public P-256 key (SPKI, 124 base64 characters ending ==), public by definition.
+# tools/check-gitleaks-allowlist.ts proves the boundary: CI runs it with the pinned binary.
 title = "PassBook"
 
 [extend]
 useDefault = true
 
 [allowlist]
-description = "Demo shapes used in the API examples and their tests"
+description = "Demo shapes, identifiers and public keys, each anchored"
 regexes = [
-  '''whsec_demo_northwind_[0-9a-f]{6}''',
-  '''pb_test_[A-Za-z0-9]{8}_northwind-demo-key-do-not-use-[0-9a-f]{12}''',
-  '''pb_test_(?:k3Qx9Zt2|p7Wm4Hn8)''',
-  '''c0ffee00c0ffee00c0ffee00c0ffee01''',
-  '''ApiKeyRotationKey\d''',
+  '''^whsec_demo_northwind_[0-9a-f]{6}$''',
+  '''^pb_test_[A-Za-z0-9]{8}_northwind-demo-key-do-not-use-[0-9a-f]{12}$''',
+  '''^pb_test_(?:k3Qx9Zt2|p7Wm4Hn8)$''',
+  '''^demo-token-northwind-[0-9a-f]{22}$''',
+  '''^c0ffee00c0ffee00c0ffee00c0ffee01$''',
+  '''^00112233445566778899aabbccddeeff$''',
+  '''^ffeeddccbbaa99887766554433221100$''',
+  '''^0193a1b2-7c00-7000-8000-0000000000aa$''',
+  '''^ApiKeyRotationKey[0-9]$''',
   '''^[a-z0-9]+\.privateKeyPem$''',
-  '''^KEY_ALG_[A-Z0-9_]+$''',
-  '''^[a-z]+(?:-[a-z]+)*-v\d+$''',
-  '''^MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE[A-Za-z0-9+/=]+$''',
-  '''0193a1b2-7c00-7000-8000-0000000000aa''',
-  '''demo-token-northwind-[0-9a-f]{22}''',
-  '''00112233445566778899aabbccddeeff''',
-  '''ffeeddccbbaa99887766554433221100''',
+  '''^KEY_ALG_RSA_2048$''',
+  '''^(?:wallet-completion-v1|incompatible-v2)$''',
+  '''^MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE[A-Za-z0-9+/]{86}==$''',
 ]

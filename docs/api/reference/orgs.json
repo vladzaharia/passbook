@@ -3,13 +3,13 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "slug": "northwind-climbing",
-          "name": "Northwind Climbing",
+          "id": "0193a1b2-7c00-7000-8000-791800cb3b6d",
+          "slug": "day-pass",
+          "name": "Day pass",
           "status": "active",
           "personal": false,
           "personalOwner": {
-            "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+            "id": "0193a1b2-7c00-7000-8000-85143788c181",
             "name": "Sam Rivera"
           },
           "createdAt": 1794322800000,
@@ -28,8 +28,8 @@
   },
   "orgs.postOrgs": {
     "request": {
-      "slug": "northwind-climbing",
-      "name": "Northwind Climbing",
+      "slug": "day-pass",
+      "name": "Day pass",
       "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1",
       "branding": {
         "accent": "#ffc400",
@@ -38,9 +38,9 @@
       "preset": "standard"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "northwind-climbing",
-      "name": "Northwind Climbing",
+      "id": "0193a1b2-7c00-7000-8000-443600bb705a",
+      "slug": "day-pass",
+      "name": "Day pass",
       "status": "active",
       "personal": false,
       "kind": "standard",
@@ -80,13 +80,13 @@
   },
   "orgs.getOrgsById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "northwind-climbing",
-      "name": "Northwind Climbing",
+      "id": "0193a1b2-7c00-7000-8000-ef5fae06e71f",
+      "slug": "day-pass",
+      "name": "Day pass",
       "status": "active",
       "personal": false,
       "personalOwner": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "id": "0193a1b2-7c00-7000-8000-b0adda3c0edb",
         "name": "Sam Rivera"
       },
       "createdAt": 1794322800000,
@@ -102,14 +102,14 @@
   },
   "orgs.patchOrgsById": {
     "request": {
-      "slug": "northwind-climbing",
-      "name": "Northwind Climbing",
+      "slug": "day-pass",
+      "name": "Day pass",
       "defaultIdentityId": "0193a1b2-7c00-7000-8000-0000000000d1"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "northwind-climbing",
-      "name": "Northwind Climbing",
+      "id": "0193a1b2-7c00-7000-8000-474c52d6622d",
+      "slug": "day-pass",
+      "name": "Day pass",
       "status": "active",
       "personal": false,
       "kind": "standard",
@@ -157,13 +157,13 @@
       "status": "active"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "northwind-climbing",
-      "name": "Northwind Climbing",
+      "id": "0193a1b2-7c00-7000-8000-459cd32ec25f",
+      "slug": "day-pass",
+      "name": "Day pass",
       "status": "active",
       "personal": false,
       "personalOwner": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "id": "0193a1b2-7c00-7000-8000-fee738ea42c2",
         "name": "Sam Rivera"
       },
       "createdAt": 1794322800000,
@@ -184,9 +184,9 @@
       "configRevision": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "northwind-climbing",
-      "name": "Northwind Climbing",
+      "id": "0193a1b2-7c00-7000-8000-7cddba97bea2",
+      "slug": "day-pass",
+      "name": "Day pass",
       "status": "active",
       "personal": false,
       "kind": "standard",
@@ -226,9 +226,9 @@
   },
   "orgs.getOrgsByIdWorkspace": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "northwind-climbing",
-      "name": "Northwind Climbing",
+      "id": "0193a1b2-7c00-7000-8000-01869e1eec57",
+      "slug": "day-pass",
+      "name": "Day pass",
       "status": "active",
       "personal": false,
       "kind": "standard",
@@ -273,16 +273,16 @@
       },
       "countsCapped": false,
       "personalOwner": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "id": "0193a1b2-7c00-7000-8000-9c6f58d9e22a",
         "name": "Sam Rivera"
       }
     }
   },
   "orgs.deleteOrgsByIdBrandingBySlot": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "slug": "northwind-climbing",
-      "name": "Northwind Climbing",
+      "id": "0193a1b2-7c00-7000-8000-f64572e4c3e7",
+      "slug": "day-pass",
+      "name": "Day pass",
       "status": "active",
       "personal": false,
       "kind": "standard",

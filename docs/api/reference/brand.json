@@ -26,7 +26,7 @@
       "configRevision": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "id": "0193a1b2-7c00-7000-8000-9e56e8b2ba2a",
       "slug": "day-pass",
       "name": "Day pass",
       "status": "active",
@@ -73,7 +73,7 @@
       "configRevision": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "id": "0193a1b2-7c00-7000-8000-56996c38ccf5",
       "slug": "day-pass",
       "name": "Day pass",
       "status": "active",
@@ -116,7 +116,7 @@
   "brand.deleteBrandWebLogo": {
     "description": "Removes the web logo. The brand kit keeps its other settings.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "id": "0193a1b2-7c00-7000-8000-1d741e401ccd",
       "slug": "day-pass",
       "name": "Day pass",
       "status": "active",

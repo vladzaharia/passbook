@@ -227,8 +227,10 @@ export function exampleFailures(doc: Doc, examples: Example[] = examplesOf(doc))
         bad(`time ${v} is not a plausible millisecond time`, at);
     }
   }
-  for (const ex of examples)
+  for (const ex of examples) {
     for (const m of objectFailures(ex.value, '')) out.push(`${ex.where}${m}`);
+    for (const m of ownIdReuse(ex.value)) out.push(`${ex.where}${m}`);
+  }
   for (const [value, ops] of patterned)
     if (ops.size >= 4) out.push(`"${value}" is a regex sample reused by ${ops.size} operations`);
   return out;
@@ -307,6 +309,20 @@ function invariantFailures(o: Json, at: string): string[] {
     out.push(`${at}: a delivered record has no lastStatus`);
   if (state === 'delivered' && (num(o.replays) ?? 0) > 5)
     out.push(`${at}: replays ${o.replays} is too many for one delivery`);
+  if (/^(pending|queued|running|scheduled)$/.test(state) && num(o.finishedAt) !== undefined)
+    out.push(`${at}: finishedAt is set on a ${state} record`);
+  if (state === 'failed' && 'errorCode' in o && o.errorCode === null)
+    out.push(`${at}: a failed record has no errorCode`);
+  for (const born of ['createdAt', 'receivedAt'])
+    if (
+      num(o.updatedAt) !== undefined &&
+      num(o[born]) !== undefined &&
+      (o.updatedAt as number) < (o[born] as number)
+    )
+      out.push(`${at}: updatedAt is before ${born}`);
+  for (const k of ['status', 'httpStatus', 'lastStatus'])
+    if (typeof o[k] === 'number' && (o[k] as number) > 0 && (o[k] as number) < 100)
+      out.push(`${at}: ${k} ${o[k]} is not an HTTP status`);
   const seen = num(o.recordsSeen);
   const failed = num(o.recordsFailed);
   if (seen !== undefined && failed !== undefined && failed > seen)
@@ -326,5 +342,29 @@ function invariantFailures(o: Json, at: string): string[] {
     if (parts.length >= 2 && sum !== total)
       out.push(`${at}: the parts add up to ${sum}, not total ${total}`);
   }
+  return out;
+}
+
+/** An object's `id` must not be the `id` of a differently shaped object elsewhere in the same example. */
+export function ownIdReuse(value: unknown): string[] {
+  const seen = new Map<string, { at: string; shape: string }>();
+  const out: string[] = [];
+  const walkIds = (v: unknown, at: string): void => {
+    if (Array.isArray(v)) {
+      for (const [i, x] of v.entries()) walkIds(x, `${at}[${i}]`);
+      return;
+    }
+    if (!v || typeof v !== 'object') return;
+    const o = v as Json;
+    if (typeof o.id === 'string' && UUID.test(o.id)) {
+      const shape = Object.keys(o).sort().join(',');
+      const was = seen.get(o.id);
+      if (was && was.shape !== shape)
+        out.push(`${at}.id: the id ${o.id} is also the id of ${was.at}`);
+      else if (!was) seen.set(o.id, { at: at || 'the example', shape });
+    }
+    for (const [k, x] of Object.entries(o)) walkIds(x, `${at}.${k}`);
+  };
+  walkIds(value, '');
   return out;
 }

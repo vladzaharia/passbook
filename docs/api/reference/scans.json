@@ -4,7 +4,7 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "id": "0193a1b2-7c00-7000-8000-0f00e0a3d693",
           "at": 1795521600000,
           "outcome": "ok",
           "reason": null,
@@ -35,7 +35,7 @@
           "late": false,
           "actor": {
             "type": "scanner",
-            "id": "0193a1b2-7c00-7000-8000-000000000011"
+            "id": "0193a1b2-7c00-7000-8000-c20879dc8a09"
           },
           "undoneAt": 1795521600000,
           "undoneBy": "Sam Rivera",
@@ -47,7 +47,7 @@
   },
   "scans.getScansById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000043",
+      "id": "0193a1b2-7c00-7000-8000-365f110f04e9",
       "at": 1795521600000,
       "outcome": "ok",
       "reason": null,
@@ -78,7 +78,7 @@
       "late": false,
       "actor": {
         "type": "scanner",
-        "id": "0193a1b2-7c00-7000-8000-000000000011"
+        "id": "0193a1b2-7c00-7000-8000-174c9f75f70f"
       },
       "undoneAt": 1795521600000,
       "undoneBy": "Sam Rivera",
@@ -104,7 +104,7 @@
       "reason": null,
       "replay": false,
       "action": {
-        "id": "0193a1b2-7c00-7000-8000-000000000073",
+        "id": "0193a1b2-7c00-7000-8000-09a938cc6289",
         "label": "Day pass",
         "kind": "check_in"
       },
@@ -124,7 +124,7 @@
         "title": "Day pass",
         "subtitle": "Ada Example",
         "template": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "id": "0193a1b2-7c00-7000-8000-e9b9c3776a02",
           "name": "Day pass",
           "style": "generic"
         },
@@ -153,7 +153,7 @@
         ],
         "actions": [
           {
-            "id": "0193a1b2-7c00-7000-8000-000000000073",
+            "id": "0193a1b2-7c00-7000-8000-a5ef4de40dbf",
             "label": "Day pass",
             "kind": "check_in",
             "available": false,
@@ -198,7 +198,7 @@
             "meta": "Northwind",
             "chips": [
               {
-                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "id": "0193a1b2-7c00-7000-8000-7bc4293bfca6",
                 "text": "The gym closes a",
                 "tone": "neutral",
                 "icon": "user"
@@ -207,7 +207,7 @@
           },
           "panels": [
             {
-              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "id": "0193a1b2-7c00-7000-8000-7afee90dc3f9",
               "kind": "membership",
               "title": "Day pass",
               "icon": "user",
@@ -215,7 +215,7 @@
               "rows": [
                 {
                   "type": "heading",
-                  "id": "0193a1b2-7c00-7000-8000-000000000043",
+                  "id": "0193a1b2-7c00-7000-8000-92bceb63d7a7",
                   "text": "The gym closes at 18:00 ",
                   "detail": "The pass has already bee"
                 }
@@ -238,8 +238,8 @@
           }
         ],
         "bundle": {
-          "id": "0193a1b2-7c00-7000-8000-000000000032",
-          "name": "Family bundle",
+          "id": "0193a1b2-7c00-7000-8000-b61c6e6fdfd1",
+          "name": "Day pass",
           "size": 24576,
           "checkedIn": 34,
           "members": [
@@ -255,13 +255,13 @@
         },
         "access": {
           "plan": {
-            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "id": "0193a1b2-7c00-7000-8000-39497a4439f9",
             "label": "Day pass",
             "kind": "always"
           },
           "zone": {
-            "id": "0193a1b2-7c00-7000-8000-000000000081",
-            "name": "Main hall"
+            "id": "0193a1b2-7c00-7000-8000-920a4ae1ddc2",
+            "name": "Day pass"
           },
           "closesAt": 1795521600000,
           "nextOpenAt": 1795521600000,
@@ -276,7 +276,7 @@
           "hint": "15E2",
           "assurance": "basic",
           "system": "uid",
-          "typeName": "Wristband 14",
+          "typeName": "Day pass",
           "scope": "pass",
           "count": 8,
           "passes": [
@@ -291,7 +291,7 @@
         "occupancy": {
           "place": {
             "kind": "zone",
-            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "id": "0193a1b2-7c00-7000-8000-8e7c11177dbd",
             "name": "Day pass"
           },
           "direction": "in",
@@ -304,7 +304,7 @@
           "capacity": 38,
           "turnaround": null,
           "parent": {
-            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "id": "0193a1b2-7c00-7000-8000-dbaa74f508e1",
             "name": "Day pass"
           }
         },
@@ -324,7 +324,7 @@
         "override": false
       },
       "event": {
-        "name": "Open climbing",
+        "name": "Day pass",
         "startsAt": 1795521600000
       },
       "template": {
@@ -362,8 +362,8 @@
         ]
       },
       "bundle": {
-        "id": "0193a1b2-7c00-7000-8000-000000000032",
-        "name": "Family bundle",
+        "id": "0193a1b2-7c00-7000-8000-00c3f1d06ee6",
+        "name": "Day pass",
         "size": 24576,
         "checkedIn": 34,
         "members": [
@@ -402,13 +402,13 @@
       "undoUntil": null,
       "access": {
         "plan": {
-          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "id": "0193a1b2-7c00-7000-8000-d02ff5614048",
           "label": "Day pass",
           "kind": "always"
         },
         "zone": {
-          "id": "0193a1b2-7c00-7000-8000-000000000081",
-          "name": "Main hall"
+          "id": "0193a1b2-7c00-7000-8000-e310b656d2f4",
+          "name": "Day pass"
         },
         "closesAt": 1795521600000,
         "nextOpenAt": 1795521600000,
@@ -431,7 +431,7 @@
         "hint": "C50F",
         "assurance": "basic",
         "system": "uid",
-        "typeName": "Wristband 14",
+        "typeName": "Day pass",
         "scope": "pass",
         "count": 8,
         "passes": [
@@ -446,7 +446,7 @@
       "occupancy": {
         "place": {
           "kind": "zone",
-          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "id": "0193a1b2-7c00-7000-8000-e9ccfde41b5f",
           "name": "Day pass"
         },
         "direction": "in",
@@ -459,7 +459,7 @@
         "capacity": 38,
         "turnaround": null,
         "parent": {
-          "id": "0193a1b2-7c00-7000-8000-000000000043",
+          "id": "0193a1b2-7c00-7000-8000-a42f9bb811f8",
           "name": "Day pass"
         }
       },
@@ -483,7 +483,7 @@
           "meta": "Northwind",
           "chips": [
             {
-              "id": "0193a1b2-7c00-7000-8000-000000000043",
+              "id": "0193a1b2-7c00-7000-8000-d8f85ad0e462",
               "text": "The gym closes a",
               "tone": "neutral",
               "icon": "user"
@@ -492,7 +492,7 @@
         },
         "panels": [
           {
-            "id": "0193a1b2-7c00-7000-8000-000000000043",
+            "id": "0193a1b2-7c00-7000-8000-e3b5cd87ca8a",
             "kind": "membership",
             "title": "Day pass",
             "icon": "user",
@@ -500,7 +500,7 @@
             "rows": [
               {
                 "type": "heading",
-                "id": "0193a1b2-7c00-7000-8000-000000000043",
+                "id": "0193a1b2-7c00-7000-8000-adc3f0194d64",
                 "text": "The gym closes at 18:00 ",
                 "detail": "The pass has already bee"
               }

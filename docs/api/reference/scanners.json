@@ -12,7 +12,7 @@
       ],
       "doors": [
         {
-          "name": "Front desk",
+          "name": "Day pass",
           "place": "northwind",
           "admits": {
             "any": true
@@ -26,13 +26,13 @@
       "mode": "live",
       "sessions": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000091",
+          "id": "0193a1b2-7c00-7000-8000-29650d0e4b08",
           "ref": "booking_8841",
-          "name": "Evening shift",
+          "name": "Day pass",
           "devices": [
             {
-              "id": "0193a1b2-7c00-7000-8000-000000000012",
-              "name": "Front desk tablet",
+              "id": "0193a1b2-7c00-7000-8000-71f606d06020",
+              "name": "Day pass",
               "pairing": {
                 "code": "NW7K2Q",
                 "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
@@ -45,23 +45,23 @@
       "pairingReissued": false,
       "zones": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000081",
+          "id": "0193a1b2-7c00-7000-8000-2da6a116b65a",
           "ref": "booking_8841",
-          "name": "Main hall",
+          "name": "Day pass",
           "created": false
         }
       ],
       "events": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "id": "0193a1b2-7c00-7000-8000-573ef07c57f4",
           "ref": "booking_8841",
-          "name": "Open climbing",
+          "name": "Day pass",
           "created": false
         }
       ],
       "staff": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000022",
+          "id": "0193a1b2-7c00-7000-8000-ffa2080e787b",
           "name": "Sam Rivera",
           "role": "door",
           "pin": "969219"
@@ -92,7 +92,7 @@
   "scanners.patchScannersById": {
     "description": "Edits a scanner.",
     "request": {
-      "name": "Front desk",
+      "name": "Day pass",
       "accepts": {
         "eventId": "0193a1b2-7c00-7000-8000-0000000000e1"
       },
@@ -105,12 +105,12 @@
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-3d4dde805854",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Front desk",
+      "name": "Day pass",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -157,7 +157,7 @@
       "lastSeenAt": 1795521600000,
       "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "id": "0193a1b2-7c00-7000-8000-f1b3a5361181",
         "name": "Sam Rivera"
       },
       "today": 7,
@@ -167,12 +167,12 @@
   "scanners.postScannersByIdRevoke": {
     "description": "Removes a scanner from use.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-0a985e97cc6c",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Front desk",
+      "name": "Day pass",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -219,7 +219,7 @@
       "lastSeenAt": 1795521600000,
       "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "id": "0193a1b2-7c00-7000-8000-e05b256281b1",
         "name": "Sam Rivera"
       },
       "today": 7,
@@ -233,12 +233,12 @@
       "detachEvent": false
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-e9625533b7d9",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Front desk",
+      "name": "Day pass",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -285,7 +285,7 @@
       "lastSeenAt": 1795521600000,
       "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "id": "0193a1b2-7c00-7000-8000-8674879bbfbc",
         "name": "Sam Rivera"
       },
       "today": 7,
@@ -296,7 +296,7 @@
     "description": "Creates a scanner. A device comes with a pairing code.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Front desk",
+      "name": "Day pass",
       "kind": "device",
       "accepts": {
         "eventId": "0193a1b2-7c00-7000-8000-0000000000e1"
@@ -311,12 +311,12 @@
       "timeZone": "America/Los_Angeles"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-5c1914000425",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Front desk",
+      "name": "Day pass",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -363,7 +363,7 @@
       "lastSeenAt": 1795521600000,
       "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "id": "0193a1b2-7c00-7000-8000-27570cbdddbf",
         "name": "Sam Rivera"
       },
       "today": 7,
@@ -388,7 +388,7 @@
     "response": {
       "state": "paired",
       "device": {
-        "label": "Front desk tablet",
+        "label": "Day pass",
         "at": 1795521600000
       }
     }
@@ -405,12 +405,12 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "id": "0193a1b2-7c00-7000-8000-5065fc416fa2",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "kind": "device",
           "deviceRole": "scan",
-          "name": "Front desk",
+          "name": "Day pass",
           "accepts": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
             "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -457,7 +457,7 @@
           "lastSeenAt": 1795521600000,
           "expiresAt": 1798124400000,
           "staff": {
-            "id": "0193a1b2-7c00-7000-8000-000000000022",
+            "id": "0193a1b2-7c00-7000-8000-1f74aa09b814",
             "name": "Sam Rivera"
           },
           "today": 7,
@@ -465,7 +465,7 @@
           "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
           "adminSession": false,
           "adminUser": {
-            "id": "0193a1b2-7c00-7000-8000-000000000031",
+            "id": "0193a1b2-7c00-7000-8000-7896649482b3",
             "name": "Sam Rivera"
           },
           "watch": {
@@ -483,12 +483,12 @@
   "scanners.getScanSetupsById": {
     "description": "A scanner setup and its view settings.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-af578344c1f7",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Front desk",
+      "name": "Day pass",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -535,7 +535,7 @@
       "lastSeenAt": 1795521600000,
       "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "id": "0193a1b2-7c00-7000-8000-40752232927b",
         "name": "Sam Rivera"
       },
       "today": 7,
@@ -543,7 +543,7 @@
       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
       "adminSession": false,
       "adminUser": {
-        "id": "0193a1b2-7c00-7000-8000-000000000031",
+        "id": "0193a1b2-7c00-7000-8000-988f78fbf29f",
         "name": "Sam Rivera"
       },
       "watch": {
@@ -560,11 +560,11 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "id": "0193a1b2-7c00-7000-8000-7cbe39473fa7",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "orgName": "Northwind Climbing",
           "mode": "live",
-          "name": "Front desk",
+          "name": "Day pass",
           "status": "active",
           "accepts": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -646,11 +646,11 @@
   "scanners.getScanningSessionsById": {
     "description": "A session's rules and devices.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-a8eb08484251",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
       "mode": "live",
-      "name": "Front desk",
+      "name": "Day pass",
       "status": "active",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -726,9 +726,9 @@
       "today": 7,
       "devices": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000012",
+          "id": "0193a1b2-7c00-7000-8000-49979bf23195",
           "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-          "name": "Front desk tablet",
+          "name": "Day pass",
           "surface": "auto",
           "effectiveSurface": "phone",
           "overrides": {
@@ -847,12 +847,12 @@
       ],
       "activity": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "id": "0193a1b2-7c00-7000-8000-e44044787d74",
           "at": 1795521600000,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Front desk",
+          "title": "Day pass",
           "outcome": "ok",
           "direction": "in",
           "scanId": "0193a1b2-7c00-7000-8000-000000000043",
@@ -868,7 +868,7 @@
   "scanners.patchScanningSessionsById": {
     "description": "Updates the rules shared by a session's devices.",
     "request": {
-      "name": "Front desk",
+      "name": "Day pass",
       "timeZone": "America/Los_Angeles",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -876,11 +876,11 @@
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-77b694ae9c04",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
       "mode": "live",
-      "name": "Front desk",
+      "name": "Day pass",
       "status": "active",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -956,9 +956,9 @@
       "today": 7,
       "devices": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000012",
+          "id": "0193a1b2-7c00-7000-8000-292f5016fbff",
           "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-          "name": "Front desk tablet",
+          "name": "Day pass",
           "surface": "auto",
           "effectiveSurface": "phone",
           "overrides": {
@@ -1077,12 +1077,12 @@
       ],
       "activity": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "id": "0193a1b2-7c00-7000-8000-ca247f0e9aee",
           "at": 1795521600000,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Front desk",
+          "title": "Day pass",
           "outcome": "ok",
           "direction": "in",
           "scanId": "0193a1b2-7c00-7000-8000-000000000043",
@@ -1102,11 +1102,11 @@
       "revision": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-b59695d61a23",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
       "mode": "live",
-      "name": "Front desk",
+      "name": "Day pass",
       "status": "active",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -1182,9 +1182,9 @@
       "today": 7,
       "devices": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000012",
+          "id": "0193a1b2-7c00-7000-8000-b5759d62c0c6",
           "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-          "name": "Front desk tablet",
+          "name": "Day pass",
           "surface": "auto",
           "effectiveSurface": "phone",
           "overrides": {
@@ -1303,12 +1303,12 @@
       ],
       "activity": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "id": "0193a1b2-7c00-7000-8000-a925da3d3952",
           "at": 1795521600000,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Front desk",
+          "title": "Day pass",
           "outcome": "ok",
           "direction": "in",
           "scanId": "0193a1b2-7c00-7000-8000-000000000043",
@@ -1324,7 +1324,7 @@
   "scanners.patchScanningSessionsByIdDevicesByDeviceId": {
     "description": "Configures one device of a session.",
     "request": {
-      "name": "Front desk",
+      "name": "Day pass",
       "surface": "auto",
       "overrides": {
         "flow": "auto",
@@ -1332,9 +1332,9 @@
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-a9aa8777a850",
       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-      "name": "Front desk",
+      "name": "Day pass",
       "surface": "auto",
       "effectiveSurface": "phone",
       "overrides": {
@@ -1454,7 +1454,7 @@
   "scanners.postScanningSessionsByIdDevices": {
     "description": "Adds a device to a scanning session.",
     "request": {
-      "name": "Front desk",
+      "name": "Day pass",
       "surface": "auto",
       "overrides": {
         "flow": "auto",
@@ -1462,9 +1462,9 @@
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-fc4006ba0a61",
       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-      "name": "Front desk",
+      "name": "Day pass",
       "surface": "auto",
       "effectiveSurface": "phone",
       "overrides": {
@@ -1588,12 +1588,12 @@
   },
   "scanners.getScannersById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-92c02c2cbb55",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Front desk",
+      "name": "Day pass",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -1640,7 +1640,7 @@
       "lastSeenAt": 1795521600000,
       "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "id": "0193a1b2-7c00-7000-8000-22dd71eeb0f1",
         "name": "Sam Rivera"
       },
       "today": 7,
@@ -1651,12 +1651,12 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "id": "0193a1b2-7c00-7000-8000-aed1e7de32bc",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "kind": "device",
           "deviceRole": "scan",
-          "name": "Front desk",
+          "name": "Day pass",
           "accepts": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
             "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -1703,7 +1703,7 @@
           "lastSeenAt": 1795521600000,
           "expiresAt": 1798124400000,
           "staff": {
-            "id": "0193a1b2-7c00-7000-8000-000000000022",
+            "id": "0193a1b2-7c00-7000-8000-3484b413ee25",
             "name": "Sam Rivera"
           },
           "today": 7,
@@ -1722,7 +1722,7 @@
   "scanners.postScanSetups": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Front desk",
+      "name": "Day pass",
       "kind": "device",
       "deviceRole": "scan",
       "accepts": {
@@ -1731,12 +1731,12 @@
       "timeZone": "America/Los_Angeles"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-3379184ba102",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Front desk",
+      "name": "Day pass",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -1783,7 +1783,7 @@
       "lastSeenAt": 1795521600000,
       "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "id": "0193a1b2-7c00-7000-8000-6f30e43e5109",
         "name": "Sam Rivera"
       },
       "today": 7,
@@ -1791,7 +1791,7 @@
       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
       "adminSession": false,
       "adminUser": {
-        "id": "0193a1b2-7c00-7000-8000-000000000031",
+        "id": "0193a1b2-7c00-7000-8000-d405711354b7",
         "name": "Sam Rivera"
       },
       "watch": {
@@ -1810,19 +1810,19 @@
   },
   "scanners.patchScanSetupsById": {
     "request": {
-      "name": "Front desk",
+      "name": "Day pass",
       "deviceRole": "scan",
       "accepts": {
         "eventId": "0193a1b2-7c00-7000-8000-0000000000e1"
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-85fafa24dc16",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Front desk",
+      "name": "Day pass",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -1869,7 +1869,7 @@
       "lastSeenAt": 1795521600000,
       "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "id": "0193a1b2-7c00-7000-8000-ec03b6c6b6fa",
         "name": "Sam Rivera"
       },
       "today": 7,
@@ -1877,7 +1877,7 @@
       "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
       "adminSession": false,
       "adminUser": {
-        "id": "0193a1b2-7c00-7000-8000-000000000031",
+        "id": "0193a1b2-7c00-7000-8000-649e2c5d32cb",
         "name": "Sam Rivera"
       },
       "watch": {
@@ -1892,7 +1892,7 @@
   "scanners.postScanningSessions": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Front desk",
+      "name": "Day pass",
       "timeZone": "America/Los_Angeles",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -1908,11 +1908,11 @@
       "zoneIds": ["0193a1b2-7c00-7000-8000-000000000081"]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-a00bb8ed379e",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
       "mode": "live",
-      "name": "Front desk",
+      "name": "Day pass",
       "status": "active",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -1988,9 +1988,9 @@
       "today": 7,
       "devices": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000012",
+          "id": "0193a1b2-7c00-7000-8000-4d562fa0e440",
           "sessionId": "0193a1b2-7c00-7000-8000-000000000091",
-          "name": "Front desk tablet",
+          "name": "Day pass",
           "surface": "auto",
           "effectiveSurface": "phone",
           "overrides": {
@@ -2109,12 +2109,12 @@
       ],
       "activity": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000031",
+          "id": "0193a1b2-7c00-7000-8000-3da68e86e338",
           "at": 1795521600000,
           "deviceId": "0193a1b2-7c00-7000-8000-000000000012",
           "deviceName": "Front desk tablet",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Front desk",
+          "title": "Day pass",
           "outcome": "ok",
           "direction": "in",
           "scanId": "0193a1b2-7c00-7000-8000-000000000043",
@@ -2139,7 +2139,7 @@
       "byAction": [
         {
           "actionId": "admit",
-          "label": "Front desk",
+          "label": "Day pass",
           "count": 12,
           "amount": 14
         }
@@ -2151,7 +2151,7 @@
       "byHour": [
         {
           "start": 37,
-          "label": "Front desk",
+          "label": "Day pass",
           "count": 12,
           "refused": 0
         }
@@ -2172,7 +2172,7 @@
       "byType": [
         {
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
-          "name": "Front desk",
+          "name": "Day pass",
           "count": 12
         }
       ],
@@ -2201,12 +2201,12 @@
   },
   "scanners.postScannersByIdPairHere": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000031",
+      "id": "0193a1b2-7c00-7000-8000-3b9685fdd430",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "device",
       "deviceRole": "scan",
-      "name": "Front desk",
+      "name": "Day pass",
       "accepts": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "eventIds": ["0193a1b2-7c00-7000-8000-0000000000e1"]
@@ -2253,7 +2253,7 @@
       "lastSeenAt": 1795521600000,
       "expiresAt": 1798124400000,
       "staff": {
-        "id": "0193a1b2-7c00-7000-8000-000000000022",
+        "id": "0193a1b2-7c00-7000-8000-2669d40f04b3",
         "name": "Sam Rivera"
       },
       "today": 7,

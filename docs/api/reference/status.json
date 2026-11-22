@@ -1,23 +1,92 @@
 {
   "status.getStatus": {
     "response": {
-      "overall": "failing",
+      "overall": "verified",
       "build": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
-        "tag": "wristband-14",
-        "timestamp": "2026-11-24T12:00:00.000Z"
+        "id": "2026-11-24.1",
+        "tag": "v2026.11.24",
+        "timestamp": "2026-11-10T15:00:00.000Z"
       },
       "components": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "id": "database",
           "kind": "database",
-          "label": "Day pass",
-          "state": "failing",
-          "detail": "The pass has already been used today.",
-          "checkedAt": 1795521600000,
-          "data": {
-            "tier": "Day pass"
-          }
+          "label": "Database",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795521600000
+        },
+        {
+          "id": "storage",
+          "kind": "storage",
+          "label": "File storage",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795521600000
+        },
+        {
+          "id": "queue",
+          "kind": "queue",
+          "label": "Job queue",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795521600000
+        },
+        {
+          "id": "workflows",
+          "kind": "workflow",
+          "label": "Workflows",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795521600000
+        },
+        {
+          "id": "identity",
+          "kind": "identity",
+          "label": "Pass signing identity",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795521600000
+        },
+        {
+          "id": "email",
+          "kind": "email",
+          "label": "Email",
+          "state": "configured",
+          "detail": "Sending as hello@example.com",
+          "checkedAt": 1795521600000
+        },
+        {
+          "id": "oidc",
+          "kind": "oidc",
+          "label": "Sign-in",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795521600000
+        },
+        {
+          "id": "connections",
+          "kind": "connection",
+          "label": "Connections",
+          "state": "not_in_use",
+          "detail": null,
+          "checkedAt": 1795521600000
+        },
+        {
+          "id": "cron",
+          "kind": "cron",
+          "label": "Scheduled jobs",
+          "state": "verified",
+          "detail": "Last run 2 minutes ago.",
+          "checkedAt": 1795521600000
+        },
+        {
+          "id": "build",
+          "kind": "build",
+          "label": "Build",
+          "state": "verified",
+          "detail": null,
+          "checkedAt": 1795521600000
         }
       ]
     }
@@ -43,44 +112,53 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Day pass",
-          "note": "Photo ID checked at the desk.",
+          "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+          "title": "Card scans slow at the front desk",
+          "note": "Scans answer in 3 to 5 seconds. Investigating.",
           "component": "api",
+          "impact": "degraded",
+          "startedAt": 1795521600000,
+          "resolvedAt": null
+        },
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000ac",
+          "title": "Wallet updates delayed",
+          "note": "Apple push was slow for 20 minutes. Back to normal.",
+          "component": "apple_push",
           "impact": "notice",
           "startedAt": 1794322800000,
-          "resolvedAt": 1795521600000
+          "resolvedAt": 1794324000000
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "status.postStatusIncidents": {
     "request": {
-      "title": "Day pass",
-      "note": "Photo ID checked at the desk.",
+      "title": "Card scans slow at the front desk",
+      "note": "Scans answer in 3 to 5 seconds. Investigating.",
       "component": "api",
-      "impact": "notice"
+      "impact": "degraded"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "title": "Day pass",
-      "note": "Photo ID checked at the desk.",
+      "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+      "title": "Card scans slow at the front desk",
+      "note": "Scans answer in 3 to 5 seconds. Investigating.",
       "component": "api",
-      "impact": "notice",
-      "startedAt": 1794322800000,
-      "resolvedAt": 1795521600000
+      "impact": "degraded",
+      "startedAt": 1795521600000,
+      "resolvedAt": null
     }
   },
   "status.postStatusIncidentsByIdResolve": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "title": "Day pass",
-      "note": "Photo ID checked at the desk.",
+      "id": "0193a1b2-7c00-7000-8000-0000000000ab",
+      "title": "Card scans slow at the front desk",
+      "note": "Fixed a slow query. Scans answer in under a second.",
       "component": "api",
-      "impact": "notice",
-      "startedAt": 1794322800000,
-      "resolvedAt": 1795521600000
+      "impact": "degraded",
+      "startedAt": 1795521600000,
+      "resolvedAt": 1795532400000
     }
   }
 }

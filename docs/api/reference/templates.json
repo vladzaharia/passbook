@@ -390,7 +390,7 @@
           ],
           "assetBaseUrl": "https://passbook.mobile/assets/0193a1b2-7c00-7000-8000-0000000000c1/",
           "assetNames": ["Day pass"],
-          "id": "0193a1b2-7c00-7000-8000-0000000000b1"
+          "id": "0193a1b2-7c00-7000-8000-9d4d6122249a"
         }
       ]
     }
@@ -686,7 +686,7 @@
     "description": "The latest runs that applied saved channel changes to passes, in this mode.",
     "response": [
       {
-        "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "id": "0193a1b2-7c00-7000-8000-4e8c29f5a9e2",
         "state": "done",
         "dueAt": 1795521600000,
         "startedAt": 1794322800000,
@@ -808,14 +808,14 @@
     },
     "response": {
       "session": {
-        "id": "0193a1b2-7c00-7000-8000-000000000091",
-        "name": "Evening shift"
+        "id": "0193a1b2-7c00-7000-8000-f1786f005c74",
+        "name": "Day pass"
       },
       "created": false,
       "events": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
-          "name": "Open climbing",
+          "id": "0193a1b2-7c00-7000-8000-089eb962fdc5",
+          "name": "Day pass",
           "created": false
         }
       ],
@@ -831,7 +831,7 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000092",
+          "id": "0193a1b2-7c00-7000-8000-4acd18c8283b",
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
@@ -856,7 +856,7 @@
           "projection": {},
           "approvals": [
             {
-              "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+              "id": "0193a1b2-7c00-7000-8000-95983fd8647d",
               "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
               "candidateHash": "d1be8409d99c8a6edf27a23a2af992fa57c5829e9b7decf00526ed59c5aadf18",
               "reviewerId": "0193a1b2-7c00-7000-8000-553c81052bee",
@@ -881,7 +881,7 @@
       "projection": {}
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000092",
+      "id": "0193a1b2-7c00-7000-8000-4b7fd61077bc",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
@@ -906,7 +906,7 @@
       "projection": {},
       "approvals": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "id": "0193a1b2-7c00-7000-8000-f8bb015a6f5b",
           "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
           "candidateHash": "64488dddee9ce3e407729b188396eb98ef2778a6c9cfa84bd56e2b887b41a611",
           "reviewerId": "0193a1b2-7c00-7000-8000-85d1bffea55c",
@@ -927,7 +927,7 @@
       "alone": false
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "id": "0193a1b2-7c00-7000-8000-751cb7888798",
       "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
       "candidateHash": "463510289cb567f74b834a9484e3874571f6b61236a5b14068b35306399df485",
       "reviewerId": "0193a1b2-7c00-7000-8000-1d1099a91130",
@@ -940,7 +940,7 @@
     "description": "Lists the releases of a template, newest first.",
     "response": {
       "active": {
-        "id": "0193a1b2-7c00-7000-8000-000000000013",
+        "id": "0193a1b2-7c00-7000-8000-856cccdb3299",
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
@@ -965,7 +965,7 @@
       },
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000013",
+          "id": "0193a1b2-7c00-7000-8000-6af6bdde22e4",
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
@@ -1005,7 +1005,7 @@
       "expectedGeneration": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000013",
+      "id": "0193a1b2-7c00-7000-8000-c82d50a85612",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
@@ -1393,7 +1393,7 @@
       "windows": [
         {
           "kind": "event",
-          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "id": "0193a1b2-7c00-7000-8000-be042db9c03a",
           "name": "Day pass",
           "opensAt": 1795521600000,
           "closesAt": 1798113600000,
@@ -1817,7 +1817,7 @@
       "version": "3"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000092",
+      "id": "0193a1b2-7c00-7000-8000-3eb2cf09bf3b",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
@@ -1842,7 +1842,7 @@
       "projection": {},
       "approvals": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "id": "0193a1b2-7c00-7000-8000-d634ce3afeb9",
           "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
           "candidateHash": "917b9b8f3fa2b2d1237d7aeae7903a83ec725a67641584f69ea42baaa14f7b40",
           "reviewerId": "0193a1b2-7c00-7000-8000-19655a66f42b",
@@ -1864,7 +1864,7 @@
       "reason": "Left the gym early; refund issued at the desk."
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000013",
+      "id": "0193a1b2-7c00-7000-8000-79deef3b5ed4",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",

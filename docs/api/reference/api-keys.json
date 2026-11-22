@@ -2,9 +2,9 @@
   "api-keys.getApiKeysById": {
     "description": "One key with its parent, the key that replaced it, how many child keys it has, and where it was last used from. Never the secret.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000021",
+      "id": "0193a1b2-7c00-7000-8000-f8d0604a90a7",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Server integration",
+      "name": "Day pass",
       "prefix": "k3Qx9Zt2",
       "secretPrefix": "pb_test_k3Qx9Zt2",
       "scopes": ["passes:read"],
@@ -26,12 +26,12 @@
       "rotatedFrom": null,
       "lastIpPrefix": "203.0.113",
       "parent": {
-        "id": "0193a1b2-7c00-7000-8000-000000000021",
-        "name": "Server integration"
+        "id": "0193a1b2-7c00-7000-8000-f9239d130b00",
+        "name": "Day pass"
       },
       "replacedBy": {
-        "id": "0193a1b2-7c00-7000-8000-000000000021",
-        "name": "Server integration"
+        "id": "0193a1b2-7c00-7000-8000-51c718997be0",
+        "name": "Day pass"
       },
       "childCount": 24
     }
@@ -70,9 +70,9 @@
   "api-keys.getApiKeysMe": {
     "description": "The key this request used: its scopes, organization and mode. Use it to check a key works.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000021",
+      "id": "0193a1b2-7c00-7000-8000-cf48d0fdfe16",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Server integration",
+      "name": "Day pass",
       "prefix": "k3Qx9Zt2",
       "scopes": ["passes:read"],
       "mode": "live",
@@ -104,7 +104,7 @@
       "key": {
         "id": "0193a1b2-7c00-7000-8000-000000000024",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Server integration",
+        "name": "Day pass",
         "prefix": "p7Wm4Hn8",
         "secretPrefix": "pb_test_p7Wm4Hn8",
         "scopes": ["passes:read"],
@@ -129,7 +129,7 @@
       "previous": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Server integration",
+        "name": "Day pass",
         "prefix": "k3Qx9Zt2",
         "secretPrefix": "pb_test_k3Qx9Zt2",
         "scopes": ["passes:read"],
@@ -161,7 +161,7 @@
       "key": {
         "id": "0193a1b2-7c00-7000-8000-000000000024",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Server integration",
+        "name": "Day pass",
         "prefix": "p7Wm4Hn8",
         "secretPrefix": "pb_test_p7Wm4Hn8",
         "scopes": ["passes:read"],
@@ -186,7 +186,7 @@
       "previous": {
         "id": "0193a1b2-7c00-7000-8000-000000000021",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Server integration",
+        "name": "Day pass",
         "prefix": "k3Qx9Zt2",
         "secretPrefix": "pb_test_k3Qx9Zt2",
         "scopes": ["passes:read"],
@@ -220,9 +220,9 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000021",
+          "id": "0193a1b2-7c00-7000-8000-ba364a56cdc3",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "name": "Server integration",
+          "name": "Day pass",
           "prefix": "k3Qx9Zt2",
           "secretPrefix": "pb_test_k3Qx9Zt2",
           "scopes": ["passes:read"],
@@ -252,15 +252,15 @@
     "description": "Creates an organization or platform API key. The secret is shown once.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Server integration",
+      "name": "Day pass",
       "kind": "service",
       "scopes": ["passes:read"],
       "roles": ["org_admin"]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000021",
+      "id": "0193a1b2-7c00-7000-8000-bd52f1bbce91",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Server integration",
+      "name": "Day pass",
       "prefix": "k3Qx9Zt2",
       "secretPrefix": "pb_test_k3Qx9Zt2",
       "scopes": ["passes:read"],

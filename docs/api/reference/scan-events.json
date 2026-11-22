@@ -4,10 +4,10 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "id": "0193a1b2-7c00-7000-8000-7fa0630cb730",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "name": "Open climbing",
+          "name": "Day pass",
           "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "match": {
             "input": "tier",
@@ -33,7 +33,7 @@
     "description": "Creates a scan event.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Open climbing",
+      "name": "Day pass",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -46,10 +46,10 @@
       "reentry": false
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "id": "0193a1b2-7c00-7000-8000-2dfaf68d763b",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Open climbing",
+      "name": "Day pass",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -71,10 +71,10 @@
   "scan-events.getScanEventsById": {
     "description": "One scan event.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "id": "0193a1b2-7c00-7000-8000-ee1769b70735",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Open climbing",
+      "name": "Day pass",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -96,7 +96,7 @@
   "scan-events.patchScanEventsById": {
     "description": "Edits a scan event.",
     "request": {
-      "name": "Open climbing",
+      "name": "Day pass",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -104,10 +104,10 @@
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "id": "0193a1b2-7c00-7000-8000-803f36206de9",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Open climbing",
+      "name": "Day pass",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -129,10 +129,10 @@
   "scan-events.postScanEventsByIdArchive": {
     "description": "Archives a scan event. Its scanners are detached.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "id": "0193a1b2-7c00-7000-8000-0e5b2643c94f",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Open climbing",
+      "name": "Day pass",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -157,10 +157,10 @@
       "scannerIds": ["0193a1b2-7c00-7000-8000-000000000031"]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "id": "0193a1b2-7c00-7000-8000-8a7533a6ea66",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Open climbing",
+      "name": "Day pass",
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "match": {
         "input": "tier",
@@ -191,7 +191,7 @@
           "host": "passbook.mobile",
           "place": "zone:main-hall",
           "placeName": "Main hall",
-          "parentName": "Open climbing",
+          "parentName": "Day pass",
           "since": 1794322800000,
           "dueAt": 1795521600000,
           "via": "api",
@@ -202,7 +202,7 @@
       "rev": 24,
       "places": [
         {
-          "name": "Open climbing",
+          "name": "Day pass",
           "inNow": 8,
           "capacity": 38,
           "place": "zone:main-hall",

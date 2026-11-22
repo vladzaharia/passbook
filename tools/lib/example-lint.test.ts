@@ -158,7 +158,7 @@ describe('exampleFailures', () => {
     const key = {
       prefix: 'k3Qx9Zt2',
       secretPrefix: 'pb_test_k3Qx9Zt2',
-      secret: 'pb_test_p7Wm4Hn8_x',
+      secret: 'pb_test_p7Wm4Hn8',
     };
     expect(run(key)).toEqual(['a.getA response.secret: does not start with "pb_test_k3Qx9Zt2"']);
     expect(run({ prefix: 'pb_test_k3Qx9Zt2', secretPrefix: 'pb_test_k3Qx9Zt2' })).toEqual([
@@ -214,5 +214,31 @@ describe('exampleFailures', () => {
     expect(
       run({ opensAt: 1795521600000, closesAt: 1795600000000, status: 'active', closedAt: null }),
     ).toEqual([]);
+  });
+
+  it('rejects an HTTP status under 100, a pending record with finishedAt, a failure with no code, updatedAt before createdAt', () => {
+    expect(run({ status: 7 })).toEqual(['a.getA response: status 7 is not an HTTP status']);
+    expect(run({ lastStatus: 200, httpStatus: 42 })).toEqual([
+      'a.getA response: httpStatus 42 is not an HTTP status',
+    ]);
+    expect(run({ state: 'pending', finishedAt: 1795521600000 })).toEqual([
+      'a.getA response: finishedAt is set on a pending record',
+    ]);
+    expect(run({ state: 'failed', errorCode: null })).toEqual([
+      'a.getA response: a failed record has no errorCode',
+    ]);
+    expect(run({ createdAt: 1795521600000, updatedAt: 1795500000000 })).toEqual([
+      'a.getA response: updatedAt is before createdAt',
+    ]);
+  });
+
+  it('rejects an id that is also the id of a differently shaped object in the same example', () => {
+    const tag = { id: UUID7, type: { id: UUID7, name: 'Wristband' }, name: 'Tag 14' };
+    expect(run(tag)).toEqual([
+      `a.getA response.type.id: the id ${UUID7} is also the id of the example`,
+    ]);
+    // The same entity shown twice is fine.
+    const twice = { items: [{ id: UUID7, name: 'a' }], active: { id: UUID7, name: 'a' } };
+    expect(run(twice)).toEqual([]);
   });
 });

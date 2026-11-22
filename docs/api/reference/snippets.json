@@ -81,7 +81,7 @@
     },
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Jordan Lee",
+      "name": "Day pass",
       "email": "ada@example.com",
       "hostUserId": "0193a1b2-7c00-7000-8000-000000000011",
       "hostName": "Sam Rivera",
@@ -89,9 +89,9 @@
       "windowUntil": 1798124400000
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000062",
+      "id": "0193a1b2-7c00-7000-8000-0ab15bf3415b",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "name": "Jordan Lee",
+      "name": "Day pass",
       "hostName": "Sam Rivera",
       "windowFrom": 1795532400000,
       "windowUntil": 1798124400000,
@@ -140,9 +140,9 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000062",
+          "id": "0193a1b2-7c00-7000-8000-acfb17dd51e3",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "name": "Jordan Lee",
+          "name": "Day pass",
           "hostName": "Sam Rivera",
           "windowFrom": 1795532400000,
           "windowUntil": 1798124400000,

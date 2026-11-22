@@ -526,7 +526,8 @@ export function sample(
   let type = s.type;
   if (Array.isArray(type)) type = type.find((t: string) => t !== 'null') ?? type[0];
   if (!type && s.properties) type = 'object';
-  const subKind = KIND_KEYS[key.replace(/Id$/, '')] ?? kind;
+  // A nested object that is not a known resource is its own row, never the parent's resource.
+  const subKind = KIND_KEYS[key.replace(/Id$/, '')] ?? (/^(body|items|)$/.test(key) ? kind : 'row');
   switch (type) {
     case 'string':
       return str(ctx, s, key, path, subKind);
@@ -612,7 +613,7 @@ function object(
         ? canon[k]
         : sample(ctx, v, k, `${path}.${k}`, k === 'id' ? idKind : kind, depth + 1);
   }
-  fixState(out, props);
+  fixState(out, props, ctx.op);
   if (!Object.keys(props).length) {
     const extra = s.additionalProperties;
     const mapKey =
@@ -756,7 +757,7 @@ function num(s: Json, key: string): number {
     v = /breaker/.test(key) ? T.soon : /undo/.test(key) ? T.soon : T.validUntil;
   else if (/^(createdAt|startedAt|firstSeenAt|notBefore)$/.test(key)) v = T.created;
   else if (/^(updatedAt|modifiedAt)$/.test(key)) v = T.updated;
-  else if (/(At|Since|On)$|^(at|serverNow|when)$/.test(key)) v = T.recent;
+  else if (/(At|Since|On)$|^(at|serverNow|when|now)$/.test(key)) v = T.recent;
   else if (/^width$/.test(key)) v = 320;
   else if (/^height$/.test(key)) v = 100;
   else if (/size|bytes/i.test(key)) v = 24576;
@@ -764,7 +765,7 @@ function num(s: Json, key: string): number {
   else if (/Ms$/.test(key)) v = 800 + (Number.parseInt(hex(key, 4), 16) % 1200);
   else if (/^attempts?$/.test(key)) v = 1;
   else if (/^since$/.test(key)) v = T.created;
-  else if (/Status$/.test(key)) v = 200;
+  else if (/^status$|Status$/.test(key)) v = 200;
   else if (/limit/i.test(key)) v = 25;
   else if (/durationMinutes/.test(key)) v = 90;
   else if (/intervalSeconds/.test(key)) v = 300;
@@ -779,7 +780,7 @@ function num(s: Json, key: string): number {
   return s.type === 'integer' ? Math.round(v) : v;
 }
 
-export const kindOfOp = (tag: string): string => KIND_OF_TAG[tag] ?? 'pass';
+export const kindOfOp = (tag: string): string => KIND_OF_TAG[tag] ?? 'row';
 
 /** What a row's own id is called when its kind is also one of its foreign keys; `row` gets a fresh id. */
 function ownKindOf(op: string): string {
@@ -791,7 +792,7 @@ function ownKindOf(op: string): string {
 }
 
 /** Fields that must agree with each other after sampling. */
-function fixState(out: Json, props: Json): void {
+function fixState(out: Json, props: Json, op: string): void {
   const num = (k: string): number | undefined =>
     typeof out[k] === 'number' ? (out[k] as number) : undefined;
   // Three sibling numbers that came out the same are nudged apart.
@@ -830,6 +831,30 @@ function fixState(out: Json, props: Json): void {
       if ('lastStatus' in out) out.lastStatus = 200;
     }
     if ('replays' in out) out.replays = 1;
+  }
+  if (
+    /^(pending|queued|running|scheduled)$/.test(String(out.state ?? out.status ?? '')) &&
+    'finishedAt' in out
+  )
+    out.finishedAt = null;
+  if ((out.state ?? out.status) === 'failed' && 'errorCode' in out && out.errorCode === null)
+    out.errorCode = 'UPSTREAM_ERROR';
+  for (const born of ['createdAt', 'receivedAt'])
+    if (
+      num('updatedAt') !== undefined &&
+      num(born) !== undefined &&
+      (num('updatedAt') as number) < (num(born) as number)
+    )
+      out.updatedAt = num(born);
+  if ('state' in out && /^nfc-tags\..*Lost$/.test(op)) out.state = 'lost';
+  if ('state' in out && /^nfc-tags\..*Retire$/.test(op)) {
+    out.state = 'retired';
+    if ('status' in out) out.status = 'retired';
+  }
+  // A call that went through carries no error code, and its path is its route.
+  if ('route' in out && typeof out.status === 'number') {
+    out.path = out.route;
+    if ('code' in out) out.code = out.status >= 400 ? 'VALIDATION' : null;
   }
   // A start is before its end.
   for (const [k, v] of Object.entries(out)) {

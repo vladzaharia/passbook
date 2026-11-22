@@ -4,16 +4,16 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000032",
+          "id": "0193a1b2-7c00-7000-8000-4236fdd212cb",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "name": "Family bundle",
+          "name": "Day pass",
           "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
           "holderEmail": "ada@example.com",
           "passes": [
             {
-              "id": "0193a1b2-7c00-7000-8000-000000000032",
-              "title": "Family bundle",
+              "id": "0193a1b2-7c00-7000-8000-b82c1fa6a85e",
+              "title": "Day pass",
               "status": "active",
               "removedAt": null
             }
@@ -30,21 +30,21 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "passIds": ["0193a1b2-7c00-7000-8000-0000000000c1"],
-      "name": "Family bundle",
+      "name": "Day pass",
       "holderEmail": "ada@example.com",
       "sendEmail": true
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000032",
+      "id": "0193a1b2-7c00-7000-8000-6ddd0e96a901",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Family bundle",
+      "name": "Day pass",
       "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "holderEmail": "ada@example.com",
       "passes": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000032",
-          "title": "Family bundle",
+          "id": "0193a1b2-7c00-7000-8000-e7cd20ce549c",
+          "title": "Day pass",
           "status": "active",
           "removedAt": null
         }
@@ -56,16 +56,16 @@
   "bundles.getBundlesById": {
     "description": "One bundle.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000032",
+      "id": "0193a1b2-7c00-7000-8000-42792a9658f8",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Family bundle",
+      "name": "Day pass",
       "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "holderEmail": "ada@example.com",
       "passes": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000032",
-          "title": "Family bundle",
+          "id": "0193a1b2-7c00-7000-8000-6ffbf8b05006",
+          "title": "Day pass",
           "status": "active",
           "removedAt": null
         }
@@ -92,16 +92,16 @@
   "bundles.postBundlesByIdRotateLink": {
     "description": "Replaces the bundle link. The old link stops working.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000032",
+      "id": "0193a1b2-7c00-7000-8000-52878a8babd3",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "name": "Family bundle",
+      "name": "Day pass",
       "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "holderEmail": "ada@example.com",
       "passes": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000032",
-          "title": "Family bundle",
+          "id": "0193a1b2-7c00-7000-8000-8e2c6f937724",
+          "title": "Day pass",
           "status": "active",
           "removedAt": null
         }

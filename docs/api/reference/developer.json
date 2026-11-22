@@ -3,15 +3,15 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "id": "0193a1b2-7c00-7000-8000-980a5f6deb75",
           "requestId": "0193a1b2-7c00-7000-8000-dbe949fceb62",
           "at": 1795521600000,
           "method": "GET",
           "route": "/api/v1/passes",
-          "path": "input.tier",
+          "path": "/api/v1/passes",
           "query": "limit=25",
-          "status": 7,
-          "code": "NW7K2Q",
+          "status": 200,
+          "code": null,
           "durationMs": 1240,
           "keyId": "0193a1b2-7c00-7000-8000-000000000021",
           "mode": "live",
@@ -26,15 +26,15 @@
   },
   "developer.getLog": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "id": "0193a1b2-7c00-7000-8000-ec201e668bd4",
       "requestId": "0193a1b2-7c00-7000-8000-716455de049a",
       "at": 1795521600000,
       "method": "GET",
       "route": "/api/v1/passes",
-      "path": "input.tier",
+      "path": "/api/v1/passes",
       "query": "limit=25",
-      "status": 7,
-      "code": "NW7K2Q",
+      "status": 200,
+      "code": null,
       "durationMs": 1240,
       "keyId": "0193a1b2-7c00-7000-8000-000000000021",
       "mode": "live",
@@ -54,8 +54,8 @@
       "limitPerMinute": 60,
       "callsLastHour": 11,
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-000000000021",
-        "name": "Server integration",
+        "id": "0193a1b2-7c00-7000-8000-08677b291e63",
+        "name": "Day pass",
         "prefix": "k3Qx9Zt2"
       }
     }
@@ -75,10 +75,10 @@
   },
   "developer.getHome": {
     "response": {
-      "now": 7,
+      "now": 1795521600000,
       "state": "open",
       "sandbox": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "id": "0193a1b2-7c00-7000-8000-8da7415d0089",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "orgSlug": "northwind-climbing",
         "name": "Day pass",
@@ -121,8 +121,8 @@
       },
       "keys": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000021",
-          "name": "Server integration",
+          "id": "0193a1b2-7c00-7000-8000-5b22af792a32",
+          "name": "Day pass",
           "secretPrefix": "pb_test_k3Qx9Zt2",
           "scopes": ["passes:read"],
           "createdAt": 1794322800000,
@@ -134,15 +134,15 @@
       ],
       "calls": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "id": "0193a1b2-7c00-7000-8000-0293e75c1aed",
           "requestId": "0193a1b2-7c00-7000-8000-0a8b002ca006",
           "at": 1795521600000,
           "method": "GET",
           "route": "/api/v1/passes",
-          "path": "input.tier",
+          "path": "/api/v1/passes",
           "query": "limit=25",
-          "status": 7,
-          "code": "NW7K2Q",
+          "status": 200,
+          "code": null,
           "durationMs": 1240,
           "keyId": "0193a1b2-7c00-7000-8000-000000000021",
           "mode": "live",
@@ -153,9 +153,9 @@
       ],
       "endpoints": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000061",
+          "id": "0193a1b2-7c00-7000-8000-d54203d80850",
           "target": "capture",
-          "url": "https://hooks.example.com/passbook",
+          "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
           "status": "active",
           "eventTypes": ["pass.issued"],
           "lastAt": 1795521600000,
@@ -164,7 +164,7 @@
       ],
       "passes": [
         {
-          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "id": "0193a1b2-7c00-7000-8000-bea24862df73",
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
           "title": "Day pass",
           "subtitle": "Ada Example",
@@ -192,7 +192,7 @@
       "viewedAt": 1795521600000
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "id": "0193a1b2-7c00-7000-8000-61f6a7533fd8",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgSlug": "northwind-climbing",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
@@ -200,8 +200,8 @@
       "createdAt": 1794322800000,
       "closedAt": null,
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-000000000021",
-        "name": "Server integration",
+        "id": "0193a1b2-7c00-7000-8000-83809299d114",
+        "name": "Day pass",
         "secret": "whsec_demo_northwind_002aa9",
         "mode": "test",
         "expiresAt": 1798124400000
@@ -212,7 +212,7 @@
   "developer.getSandbox": {
     "response": {
       "sandbox": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "id": "0193a1b2-7c00-7000-8000-e76cdeae847c",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "orgSlug": "northwind-climbing",
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
@@ -225,7 +225,7 @@
   },
   "developer.deleteSandbox": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "id": "0193a1b2-7c00-7000-8000-0c8cd6354d31",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgSlug": "northwind-climbing",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
@@ -240,7 +240,7 @@
     },
     "response": {
       "sandbox": {
-        "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "id": "0193a1b2-7c00-7000-8000-8077f820035e",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "orgSlug": "northwind-climbing",
         "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
@@ -249,8 +249,8 @@
         "closedAt": null
       },
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-000000000021",
-        "name": "Server integration",
+        "id": "0193a1b2-7c00-7000-8000-2e43a4b7d7f2",
+        "name": "Day pass",
         "secret": "whsec_demo_northwind_3bfe98",
         "mode": "test",
         "expiresAt": 1798124400000
@@ -268,7 +268,7 @@
   },
   "developer.postSandboxReopen": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "id": "0193a1b2-7c00-7000-8000-c22ae8899788",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgSlug": "northwind-climbing",
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
@@ -276,8 +276,8 @@
       "createdAt": 1794322800000,
       "closedAt": null,
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-000000000021",
-        "name": "Server integration",
+        "id": "0193a1b2-7c00-7000-8000-36f8064e541c",
+        "name": "Day pass",
         "secret": "whsec_demo_northwind_1a6dad",
         "mode": "test",
         "expiresAt": 1798124400000

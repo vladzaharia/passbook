@@ -3,19 +3,19 @@
     "description": "Creates an endpoint for events of this mode. The signing `secret` is shown once. Send `?validate=1` to check the body without creating anything.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "url": "https://hooks.example.com/passbook",
-      "description": "Booking system events",
+      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
+      "description": "A day pass for the climbing gym, scanned at the front desk.",
       "eventTypes": ["pass.issued"],
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
     },
     "response": {
       "endpoint": {
-        "id": "0193a1b2-7c00-7000-8000-000000000061",
+        "id": "0193a1b2-7c00-7000-8000-45466d5ffd3c",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
-        "url": "https://hooks.example.com/passbook",
+        "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
         "urlMasked": "https://hooks.example.com/…",
-        "description": "Booking system events",
+        "description": "A day pass for the climbing gym, scanned at the front desk.",
         "eventTypes": ["pass.issued"],
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "apiVersion": "2026-12-01",
@@ -40,7 +40,7 @@
     },
     "response": {
       "ok": true,
-      "status": 7,
+      "status": 200,
       "durationMs": 1240,
       "errorCode": null,
       "captureId": "0193a1b2-7c00-7000-8000-b233783a6345"
@@ -51,12 +51,12 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000061",
+          "id": "0193a1b2-7c00-7000-8000-79fbc3f19817",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
-          "url": "https://hooks.example.com/passbook",
+          "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
           "urlMasked": "https://hooks.example.com/…",
-          "description": "Booking system events",
+          "description": "A day pass for the climbing gym, scanned at the front desk.",
           "eventTypes": ["pass.issued"],
           "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
           "apiVersion": "2026-12-01",
@@ -78,12 +78,12 @@
   "webhooks.getWebhookEndpointsById": {
     "description": "One endpoint. The signing secret is never returned.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000061",
+      "id": "0193a1b2-7c00-7000-8000-2882d4ac8948",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "url": "https://hooks.example.com/passbook",
+      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "urlMasked": "https://hooks.example.com/…",
-      "description": "Booking system events",
+      "description": "A day pass for the climbing gym, scanned at the front desk.",
       "eventTypes": ["pass.issued"],
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "apiVersion": "2026-12-01",
@@ -102,17 +102,17 @@
   "webhooks.patchWebhookEndpointsById": {
     "description": "Changes an endpoint, or pauses or resumes it with `status`. A disabled endpoint resumes with `active`.",
     "request": {
-      "url": "https://hooks.example.com/passbook",
+      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "description": "",
       "eventTypes": ["pass.issued"]
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000061",
+      "id": "0193a1b2-7c00-7000-8000-7469d345f4d2",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "url": "https://hooks.example.com/passbook",
+      "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
       "urlMasked": "https://hooks.example.com/…",
-      "description": "Booking system events",
+      "description": "A day pass for the climbing gym, scanned at the front desk.",
       "eventTypes": ["pass.issued"],
       "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
       "apiVersion": "2026-12-01",
@@ -158,7 +158,7 @@
           "lastStatus": 503,
           "lastError": null,
           "lastAttemptAt": 1795521600000,
-          "finishedAt": 1795521600000,
+          "finishedAt": null,
           "replays": 1
         }
       ],
@@ -178,27 +178,27 @@
       "lastStatus": 503,
       "lastError": null,
       "lastAttemptAt": 1795521600000,
-      "finishedAt": 1795521600000,
+      "finishedAt": null,
       "replays": 1,
       "attemptLog": [
         {
           "attempt": 1,
           "trigger": "event",
-          "status": 7,
+          "status": 200,
           "errorCode": null,
           "durationMs": 1240,
           "at": 1795521600000
         }
       ],
       "payload": {
-        "id": "0193a1b2-7c00-7000-8000-000000000061",
+        "id": "0193a1b2-7c00-7000-8000-9154e6cf76c2",
         "type": "pass.issued",
         "apiVersion": "2026-12-01",
         "createdAt": 1794322800000,
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
         "pass": {
-          "id": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "id": "0193a1b2-7c00-7000-8000-bd14eafb244c",
           "externalId": "0193a1b2-7c00-7000-8000-0c4167996ea0",
           "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
         },
@@ -237,12 +237,12 @@
     },
     "response": {
       "endpoint": {
-        "id": "0193a1b2-7c00-7000-8000-000000000061",
+        "id": "0193a1b2-7c00-7000-8000-f23b60ad3476",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "live",
-        "url": "https://hooks.example.com/passbook",
+        "url": "https://northwind.example.com/p/xK3v9QmT2Lw8",
         "urlMasked": "https://hooks.example.com/…",
-        "description": "Booking system events",
+        "description": "A day pass for the climbing gym, scanned at the front desk.",
         "eventTypes": ["pass.issued"],
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
         "apiVersion": "2026-12-01",
@@ -270,7 +270,7 @@
           "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
           "type": "pass.issued",
           "trigger": "event",
-          "status": 7,
+          "status": 200,
           "durationMs": 1240,
           "headers": {
             "tier": "Day pass"
@@ -290,7 +290,7 @@
       "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
       "type": "pass.issued",
       "trigger": "event",
-      "status": 7,
+      "status": 200,
       "durationMs": 1240,
       "headers": {
         "tier": "Day pass"
@@ -307,7 +307,7 @@
       "eventId": "0193a1b2-7c00-7000-8000-0000000000e1",
       "type": "pass.issued",
       "trigger": "event",
-      "status": 7,
+      "status": 200,
       "durationMs": 1240,
       "headers": {
         "tier": "Day pass"
@@ -327,10 +327,10 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000061",
+          "id": "0193a1b2-7c00-7000-8000-2a01e4938940",
           "type": "pass.issued",
           "ok": true,
-          "status": 7,
+          "status": 200,
           "errorCode": null,
           "durationMs": 1240,
           "at": 1795521600000

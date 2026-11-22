@@ -45,6 +45,8 @@ export const IDS: Record<string, string> = {
   member: id(0x11),
   key2: id(0x24),
   idem: id(0xaa),
+  incident: id(0xab),
+  incident2: id(0xac),
 };
 
 /** A tag or a key name (singular, lower-case) to the kind of resource whose id it holds. */

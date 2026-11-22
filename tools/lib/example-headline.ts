@@ -12,6 +12,16 @@ import {
   TEMPLATE,
 } from './example-world.ts';
 
+const INCIDENT = {
+  id: IDS.incident,
+  title: 'Card scans slow at the front desk',
+  note: 'Scans answer in 3 to 5 seconds. Investigating.',
+  component: 'api',
+  impact: 'degraded',
+  startedAt: T.recent,
+  resolvedAt: null,
+};
+
 const create = {
   templateId: IDS.template,
   input: TEMPLATE.sample,
@@ -40,6 +50,69 @@ export const HEADLINE: Record<string, unknown> = {
       colors: [{ label: 'Background', kind: 'changed', from: '#0b2545', to: '#112a4a' }],
     },
     more: { fields: 0, images: 0, barcode: 0, colors: 0 },
+  },
+  'nfc-keysets.postNfcKeysetsByIdImport request': {
+    csv: 'uid,type,meta key,file key\n04A3B2C1D5E680,NTAG 424 DNA,00112233445566778899aabbccddeeff,ffeeddccbbaa99887766554433221100\n04A3B2C1D5E681,NTAG 424 DNA,00112233445566778899aabbccddee01,ffeeddccbbaa99887766554433221101\n04A3B2C1D5E682,NTAG 424 DNA,0123456789abcdef0123456789abcdef,ffeeddccbbaa99887766554433221102\n',
+    dryRun: true,
+  },
+  'nfc-keysets.postNfcKeysetsByIdImport response': {
+    dryRun: true,
+    rows: 3,
+    ok: 2,
+    added: 0,
+    problems: [{ line: 4, uid: '04A3B2C1D5E682', reason: 'weak_key' }],
+    moreProblems: 0,
+  },
+  'status.getStatus response': {
+    overall: 'verified',
+    build: { id: '2026-11-24.1', tag: 'v2026.11.24', timestamp: new Date(T.created).toISOString() },
+    components: [
+      ['database', 'database', 'Database', 'verified', null],
+      ['storage', 'storage', 'File storage', 'verified', null],
+      ['queue', 'queue', 'Job queue', 'verified', null],
+      ['workflows', 'workflow', 'Workflows', 'verified', null],
+      ['identity', 'identity', 'Pass signing identity', 'verified', null],
+      ['email', 'email', 'Email', 'configured', 'Sending as hello@example.com'],
+      ['oidc', 'oidc', 'Sign-in', 'verified', null],
+      ['connections', 'connection', 'Connections', 'not_in_use', null],
+      ['cron', 'cron', 'Scheduled jobs', 'verified', 'Last run 2 minutes ago.'],
+      ['build', 'build', 'Build', 'verified', null],
+    ].map(([id, kind, label, state, detail]) => ({
+      id,
+      kind,
+      label,
+      state,
+      detail,
+      checkedAt: T.recent,
+    })),
+  },
+  'status.getStatusIncidents response': {
+    items: [
+      { ...INCIDENT, id: IDS.incident },
+      {
+        id: IDS.incident2,
+        title: 'Wallet updates delayed',
+        note: 'Apple push was slow for 20 minutes. Back to normal.',
+        component: 'apple_push',
+        impact: 'notice',
+        startedAt: T.created,
+        resolvedAt: T.created + 20 * 60_000,
+      },
+    ],
+    nextCursor: null,
+  },
+  'status.postStatusIncidents request': {
+    title: INCIDENT.title,
+    note: INCIDENT.note,
+    component: 'api',
+    impact: 'degraded',
+  },
+  'status.postStatusIncidents response': { ...INCIDENT, id: IDS.incident },
+  'status.postStatusIncidentsByIdResolve response': {
+    ...INCIDENT,
+    id: IDS.incident,
+    note: 'Fixed a slow query. Scans answer in under a second.',
+    resolvedAt: T.now,
   },
   'pass-imports.postPassImports request': {
     templateId: IDS.template,

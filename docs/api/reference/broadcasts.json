@@ -2,7 +2,7 @@
   "broadcasts.postBroadcastsByIdUndo": {
     "description": "Undoes a change run for 24 hours after it ends, as a silent background run. Each pass gets back the inputs the change touched, but only while they still hold the value the change set: a pass edited since keeps its edit, and any other input it holds. Nothing notifies. Asking again returns the same undo; one that ended on an error runs again. A run that is still sending must be stopped first. Read the result from GET /broadcasts/{id} on the returned `id`.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "id": "0193a1b2-7c00-7000-8000-83da152d3f26",
       "parentId": "0193a1b2-7c00-7000-8000-3ce3679141b7",
       "restorable": 27,
       "kept": 14
@@ -11,11 +11,11 @@
   "broadcasts.postBroadcastsByIdStop": {
     "description": "Stops a sending message or change after its current chunk of passes. The run ends in state `cancelled` with errorCode BROADCAST_STOPPED, and what it already changed stays (a change can still be undone). Asking twice is the same ask.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "id": "0193a1b2-7c00-7000-8000-d8615b6cc6c3",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Holiday hours",
+      "name": "Day pass",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -44,7 +44,7 @@
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
-        "id": "0193a1b2-7c00-7000-8000-000000000042",
+        "id": "0193a1b2-7c00-7000-8000-1ea176ab013f",
         "at": 1795521600000
       },
       "counts": {
@@ -82,11 +82,11 @@
       "samples": [
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Holiday hours",
+          "title": "Day pass",
           "changes": [
             {
               "key": "tier",
-              "label": "Holiday hours",
+              "label": "Day pass",
               "from": "hello@example.com",
               "to": "ada@example.com"
             }
@@ -110,7 +110,7 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "message",
-      "name": "Holiday hours",
+      "name": "Day pass",
       "notify": false,
       "send": "now",
       "target": {
@@ -122,11 +122,11 @@
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "id": "0193a1b2-7c00-7000-8000-cfc6d428cc6a",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Holiday hours",
+      "name": "Day pass",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -155,7 +155,7 @@
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
-        "id": "0193a1b2-7c00-7000-8000-000000000042",
+        "id": "0193a1b2-7c00-7000-8000-b285c044855f",
         "at": 1795521600000
       },
       "counts": {
@@ -174,11 +174,11 @@
   "broadcasts.getBroadcastsById": {
     "description": "One message or change with its progress. A run's `state` goes `scheduled`, `sending`, then `sent`, `partial`, `failed` or `cancelled`; `counts` fills in as chunks finish.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "id": "0193a1b2-7c00-7000-8000-937970293793",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Holiday hours",
+      "name": "Day pass",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -207,7 +207,7 @@
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
-        "id": "0193a1b2-7c00-7000-8000-000000000042",
+        "id": "0193a1b2-7c00-7000-8000-62de748e435c",
         "at": 1795521600000
       },
       "counts": {
@@ -228,11 +228,11 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000042",
+          "id": "0193a1b2-7c00-7000-8000-116f237fedb3",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "kind": "message",
-          "name": "Holiday hours",
+          "name": "Day pass",
           "state": "sent",
           "target": {
             "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -261,7 +261,7 @@
           "message": "The gym closes at 18:00 on 24 December.",
           "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
           "followUp": {
-            "id": "0193a1b2-7c00-7000-8000-000000000042",
+            "id": "0193a1b2-7c00-7000-8000-8b2299a641c5",
             "at": 1795521600000
           },
           "counts": {
@@ -285,7 +285,7 @@
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "message",
-      "name": "Holiday hours",
+      "name": "Day pass",
       "notify": false,
       "send": "now",
       "target": {
@@ -297,11 +297,11 @@
       }
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "id": "0193a1b2-7c00-7000-8000-09c27d47bbb7",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Holiday hours",
+      "name": "Day pass",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -330,7 +330,7 @@
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
-        "id": "0193a1b2-7c00-7000-8000-000000000042",
+        "id": "0193a1b2-7c00-7000-8000-d80c508d74df",
         "at": 1795521600000
       },
       "counts": {
@@ -352,11 +352,11 @@
       "at": 1795521600000
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "id": "0193a1b2-7c00-7000-8000-0bda3c69b03e",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Holiday hours",
+      "name": "Day pass",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -385,7 +385,7 @@
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
-        "id": "0193a1b2-7c00-7000-8000-000000000042",
+        "id": "0193a1b2-7c00-7000-8000-fa48ca64fcd8",
         "at": 1795521600000
       },
       "counts": {
@@ -404,11 +404,11 @@
   "broadcasts.postBroadcastsByIdCancel": {
     "description": "Cancels a draft or a scheduled message.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "id": "0193a1b2-7c00-7000-8000-79dde40a0e4b",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Holiday hours",
+      "name": "Day pass",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -437,7 +437,7 @@
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
-        "id": "0193a1b2-7c00-7000-8000-000000000042",
+        "id": "0193a1b2-7c00-7000-8000-59037a4bac55",
         "at": 1795521600000
       },
       "counts": {
@@ -456,11 +456,11 @@
   "broadcasts.postBroadcastsByIdRetry": {
     "description": "Sends a failed or canceled (state `cancelled`) message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "id": "0193a1b2-7c00-7000-8000-ee4266fdccf9",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "kind": "message",
-      "name": "Holiday hours",
+      "name": "Day pass",
       "state": "sent",
       "target": {
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
@@ -489,7 +489,7 @@
       "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
       "followUp": {
-        "id": "0193a1b2-7c00-7000-8000-000000000042",
+        "id": "0193a1b2-7c00-7000-8000-adc166655b7b",
         "at": 1795521600000
       },
       "counts": {
@@ -511,7 +511,7 @@
       "items": [
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Holiday hours",
+          "title": "Day pass",
           "holderEmail": "ada@example.com",
           "outcome": "updated",
           "silent": false

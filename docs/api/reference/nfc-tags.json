@@ -4,9 +4,9 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000082",
+          "id": "0193a1b2-7c00-7000-8000-cfc0b3bb8737",
           "system": "uid",
-          "name": "Wristband 14",
+          "name": "Day pass",
           "use": "member",
           "scopes": "pass",
           "perPass": 4,
@@ -27,16 +27,16 @@
   "nfc-tags.postNfcTagTypes": {
     "description": "Creates a tag type.",
     "request": {
-      "name": "Wristband 14",
+      "name": "Day pass",
       "use": "member",
       "scopes": "pass",
       "perPass": 4,
       "bindingDays": 5
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-6cae2a1c9566",
       "system": "uid",
-      "name": "Wristband 14",
+      "name": "Day pass",
       "use": "member",
       "scopes": "pass",
       "perPass": 4,
@@ -55,14 +55,14 @@
     "description": "Changes a tag type. Send the version you read.",
     "request": {
       "version": 3,
-      "name": "Wristband 14",
+      "name": "Day pass",
       "use": "member",
       "scopes": "pass"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-842df6c2c9ea",
       "system": "uid",
-      "name": "Wristband 14",
+      "name": "Day pass",
       "use": "member",
       "scopes": "pass",
       "perPass": 4,
@@ -83,9 +83,9 @@
       "version": 3
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-d68e97300c5c",
       "system": "uid",
-      "name": "Wristband 14",
+      "name": "Day pass",
       "use": "member",
       "scopes": "pass",
       "perPass": 4,
@@ -106,18 +106,18 @@
       "binding": "pass"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-58a922e08e82",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
       "type": {
-        "id": "0193a1b2-7c00-7000-8000-000000000082",
-        "name": "Wristband 14",
+        "id": "0193a1b2-7c00-7000-8000-3f480fddfed5",
+        "name": "Day pass",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "7559",
-      "label": "Wristband 14",
+      "label": "Day pass",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -135,7 +135,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -149,18 +149,18 @@
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-3be101d1ddb5",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
       "type": {
-        "id": "0193a1b2-7c00-7000-8000-000000000082",
-        "name": "Wristband 14",
+        "id": "0193a1b2-7c00-7000-8000-eca0e2a0f275",
+        "name": "Day pass",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "3856",
-      "label": "Wristband 14",
+      "label": "Day pass",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -178,7 +178,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -188,22 +188,22 @@
   },
   "nfc-tags.patchNfcTagsById": {
     "request": {
-      "label": "Wristband 14",
+      "label": "Day pass",
       "pool": false
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-73744b356e1a",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
       "type": {
-        "id": "0193a1b2-7c00-7000-8000-000000000082",
-        "name": "Wristband 14",
+        "id": "0193a1b2-7c00-7000-8000-efbcaa6386d6",
+        "name": "Day pass",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "FB0A",
-      "label": "Wristband 14",
+      "label": "Day pass",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -221,7 +221,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -233,9 +233,9 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000082",
-          "name": "Wristband 14",
-          "sessionName": "Wristband 14",
+          "id": "0193a1b2-7c00-7000-8000-72f29278da35",
+          "name": "Day pass",
+          "sessionName": "Day pass",
           "role": "door",
           "online": false,
           "unavailable": "offline",
@@ -252,7 +252,7 @@
       "binding": "pass"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-14a3af7523c3",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
       "scannerName": "Front desk",
@@ -273,7 +273,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -285,24 +285,24 @@
   },
   "nfc-tags.postNfcPassesByPassIdTagsAssign": {
     "request": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-811c34ab2abe",
       "format": "hex",
       "binding": "pass",
-      "label": "Wristband 14"
+      "label": "Day pass"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-811c34ab2abe",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
       "type": {
-        "id": "0193a1b2-7c00-7000-8000-000000000082",
-        "name": "Wristband 14",
+        "id": "0193a1b2-7c00-7000-8000-fc556adb1e99",
+        "name": "Day pass",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "D701",
-      "label": "Wristband 14",
+      "label": "Day pass",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -320,7 +320,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -342,7 +342,7 @@
           "source": "scanner",
           "lent": false,
           "boundAt": 1795521600000,
-          "boundByName": "Wristband 14",
+          "boundByName": "Day pass",
           "scannerName": "Front desk",
           "expiresAt": 1798124400000,
           "endedAt": 1795521600000,
@@ -354,7 +354,7 @@
         {
           "at": 1795521600000,
           "action": "lost",
-          "actorName": "Open climbing"
+          "actorName": "Day pass"
         }
       ]
     }
@@ -363,18 +363,18 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000082",
+          "id": "0193a1b2-7c00-7000-8000-9b7b4eb41f51",
           "mode": "live",
           "kind": "uid",
           "system": "uid",
           "type": {
-            "id": "0193a1b2-7c00-7000-8000-000000000082",
-            "name": "Wristband 14",
+            "id": "0193a1b2-7c00-7000-8000-1c298298191d",
+            "name": "Day pass",
             "use": "member"
           },
           "assurance": "basic",
           "hint": "B98B",
-          "label": "Wristband 14",
+          "label": "Day pass",
           "pool": false,
           "status": "active",
           "state": "assigned",
@@ -392,7 +392,7 @@
             "source": "scanner",
             "lent": false,
             "boundAt": 1795521600000,
-            "boundByName": "Wristband 14",
+            "boundByName": "Day pass",
             "scannerName": "Front desk",
             "expiresAt": 1798124400000,
             "endedAt": 1795521600000,
@@ -405,18 +405,18 @@
   },
   "nfc-tags.deleteNfcBindingsByBindingId": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-21e75ba48766",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
       "type": {
-        "id": "0193a1b2-7c00-7000-8000-000000000082",
-        "name": "Wristband 14",
+        "id": "0193a1b2-7c00-7000-8000-801fae1e7c26",
+        "name": "Day pass",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "1260",
-      "label": "Wristband 14",
+      "label": "Day pass",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -434,7 +434,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -446,18 +446,18 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000082",
+          "id": "0193a1b2-7c00-7000-8000-d688d06d4534",
           "mode": "live",
           "kind": "uid",
           "system": "uid",
           "type": {
-            "id": "0193a1b2-7c00-7000-8000-000000000082",
-            "name": "Wristband 14",
+            "id": "0193a1b2-7c00-7000-8000-27167bc88f69",
+            "name": "Day pass",
             "use": "member"
           },
           "assurance": "basic",
           "hint": "A7E2",
-          "label": "Wristband 14",
+          "label": "Day pass",
           "pool": false,
           "status": "active",
           "state": "assigned",
@@ -475,7 +475,7 @@
             "source": "scanner",
             "lent": false,
             "boundAt": 1795521600000,
-            "boundByName": "Wristband 14",
+            "boundByName": "Day pass",
             "scannerName": "Front desk",
             "expiresAt": 1798124400000,
             "endedAt": 1795521600000,
@@ -488,18 +488,18 @@
   },
   "nfc-tags.getNfcTagsById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-1c9525e8908b",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
       "type": {
-        "id": "0193a1b2-7c00-7000-8000-000000000082",
-        "name": "Wristband 14",
+        "id": "0193a1b2-7c00-7000-8000-1c808876e2d1",
+        "name": "Day pass",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "081D",
-      "label": "Wristband 14",
+      "label": "Day pass",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -517,7 +517,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -527,21 +527,21 @@
   },
   "nfc-tags.postNfcTagsByIdRetire": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-8879e555f571",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
       "type": {
-        "id": "0193a1b2-7c00-7000-8000-000000000082",
-        "name": "Wristband 14",
+        "id": "0193a1b2-7c00-7000-8000-0471d1ffdc45",
+        "name": "Day pass",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "5D8B",
-      "label": "Wristband 14",
+      "label": "Day pass",
       "pool": false,
-      "status": "active",
-      "state": "assigned",
+      "status": "retired",
+      "state": "retired",
       "createdAt": 1794322800000,
       "lastSeenAt": 1795521600000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
@@ -556,7 +556,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -566,18 +566,18 @@
   },
   "nfc-tags.postNfcTagsByIdRestore": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-dd8714aab547",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
       "type": {
-        "id": "0193a1b2-7c00-7000-8000-000000000082",
-        "name": "Wristband 14",
+        "id": "0193a1b2-7c00-7000-8000-fe597d0e6388",
+        "name": "Day pass",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "2CB1",
-      "label": "Wristband 14",
+      "label": "Day pass",
       "pool": false,
       "status": "active",
       "state": "assigned",
@@ -595,7 +595,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -605,21 +605,21 @@
   },
   "nfc-tags.postNfcTagsByIdLost": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-af79a8fd04c8",
       "mode": "live",
       "kind": "uid",
       "system": "uid",
       "type": {
-        "id": "0193a1b2-7c00-7000-8000-000000000082",
-        "name": "Wristband 14",
+        "id": "0193a1b2-7c00-7000-8000-8e48009b9c0d",
+        "name": "Day pass",
         "use": "member"
       },
       "assurance": "basic",
       "hint": "E938",
-      "label": "Wristband 14",
+      "label": "Day pass",
       "pool": false,
       "status": "active",
-      "state": "assigned",
+      "state": "lost",
       "createdAt": 1794322800000,
       "lastSeenAt": 1795521600000,
       "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
@@ -634,7 +634,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -644,7 +644,7 @@
   },
   "nfc-tags.getNfcPassesByPassIdEnrollmentsById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-04a88920947f",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
       "scannerName": "Front desk",
@@ -665,7 +665,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -677,7 +677,7 @@
   },
   "nfc-tags.deleteNfcPassesByPassIdEnrollmentsById": {
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "id": "0193a1b2-7c00-7000-8000-52407207d6ed",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
       "scannerName": "Front desk",
@@ -698,7 +698,7 @@
         "source": "scanner",
         "lent": false,
         "boundAt": 1795521600000,
-        "boundByName": "Wristband 14",
+        "boundByName": "Day pass",
         "scannerName": "Front desk",
         "expiresAt": 1798124400000,
         "endedAt": 1795521600000,
@@ -712,18 +712,18 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000082",
+          "id": "0193a1b2-7c00-7000-8000-e8f5edd5a82f",
           "mode": "live",
           "kind": "uid",
           "system": "uid",
           "type": {
-            "id": "0193a1b2-7c00-7000-8000-000000000082",
-            "name": "Wristband 14",
+            "id": "0193a1b2-7c00-7000-8000-edccb75dc99b",
+            "name": "Day pass",
             "use": "member"
           },
           "assurance": "basic",
           "hint": "9578",
-          "label": "Wristband 14",
+          "label": "Day pass",
           "pool": false,
           "status": "active",
           "state": "assigned",
@@ -741,7 +741,7 @@
             "source": "scanner",
             "lent": false,
             "boundAt": 1795521600000,
-            "boundByName": "Wristband 14",
+            "boundByName": "Day pass",
             "scannerName": "Front desk",
             "expiresAt": 1798124400000,
             "endedAt": 1795521600000,
