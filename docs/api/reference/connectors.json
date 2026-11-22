@@ -1,0 +1,8 @@
+{
+  "connectors.getConnectors": {
+    "description": "Lists connector types."
+  },
+  "connectors.getConnectorsByType": {
+    "description": "One connector type with its settings."
+  }
+}

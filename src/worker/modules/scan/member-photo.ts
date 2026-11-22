@@ -14,36 +14,51 @@ import { matchesEvent } from './resolve-candidates.ts';
 import { ROLE_RANK } from './rules.ts';
 import { walletIdentityMatches } from './wallet-snapshot.ts';
 
-/** Scanner projections must not disclose an inactive pass or a disabled connection. */
-export function scannerPassActive(candidate: Candidate, passJson: PassJson, now: number): boolean {
+/** What a present pass is on the wallet side. `null`: not a pass a scanner may show at all. */
+export type ScannerPassState = 'active' | 'voided' | 'expired';
+
+/**
+ * A pass a scanner may name, and whether it is live. Everything but `voided` and `expired` is
+ * identity and authority: a removed, deleted, quarantined, transferring or mismatched pass is null.
+ */
+export function scannerPassState(
+  candidate: Candidate,
+  passJson: PassJson,
+  now: number,
+): ScannerPassState | null {
   const pass = candidate.pass;
-  if (candidate.transferPending !== false) return false;
+  if (candidate.transferPending !== false) return null;
   if (!Number.isSafeInteger(pass.credentialGeneration) || pass.credentialGeneration <= 0)
-    return false;
-  if (!Number.isSafeInteger(pass.lifecycleGeneration) || pass.lifecycleGeneration < 0) return false;
+    return null;
+  if (!Number.isSafeInteger(pass.lifecycleGeneration) || pass.lifecycleGeneration < 0) return null;
   if (
     typeof candidate.identityRevision !== 'number' ||
     !Number.isSafeInteger(candidate.identityRevision) ||
     candidate.identityRevision <= 0
   )
-    return false;
-  if (!walletIdentityMatches(candidate, passJson)) return false;
+    return null;
+  if (!walletIdentityMatches(candidate, passJson)) return null;
   const expiry = parseIsoDate(passJson.expirationDate);
-  if (passJson.expirationDate !== undefined && expiry === undefined) return false;
-  return (
-    !pass.testDataQuarantined &&
+  if (passJson.expirationDate !== undefined && expiry === undefined) return null;
+  if (
+    pass.testDataQuarantined ||
     (pass.connectionId === null
-      ? candidate.connectionGeneration === null
-      : typeof candidate.connectionGeneration === 'number' &&
-        Number.isSafeInteger(candidate.connectionGeneration) &&
-        candidate.connectionGeneration >= 0) &&
-    pass.deletedAt === null &&
-    pass.removedAt === null &&
-    pass.status === 'active' &&
-    (passJson.voided === undefined || typeof passJson.voided === 'boolean') &&
-    passJson.voided !== true &&
-    (expiry === undefined || expiry >= now)
-  );
+      ? candidate.connectionGeneration !== null
+      : typeof candidate.connectionGeneration !== 'number' ||
+        !Number.isSafeInteger(candidate.connectionGeneration) ||
+        candidate.connectionGeneration < 0) ||
+    pass.deletedAt !== null ||
+    pass.removedAt !== null ||
+    (passJson.voided !== undefined && typeof passJson.voided !== 'boolean')
+  )
+    return null;
+  if (pass.status !== 'active' || passJson.voided === true) return 'voided';
+  return expiry !== undefined && expiry < now ? 'expired' : 'active';
+}
+
+/** Scanner projections must not disclose an inactive pass or a disabled connection. */
+export function scannerPassActive(candidate: Candidate, passJson: PassJson, now: number): boolean {
+  return scannerPassState(candidate, passJson, now) === 'active';
 }
 
 /**

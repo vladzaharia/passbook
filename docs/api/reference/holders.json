@@ -1,0 +1,23 @@
+{
+  "holders.getHolders": {
+    "description": "Lists holder assignments."
+  },
+  "holders.getHoldersById": {
+    "description": "A holder assignment and any pending transfer."
+  },
+  "holders.postHoldersAssign": {
+    "description": "Sets the holder email of an unowned pass."
+  },
+  "holders.postHoldersAssignBulk": {
+    "description": "Assigns up to 100 holders in one call."
+  },
+  "holders.postHoldersReassign": {
+    "description": "Stages a holder reassignment. The new holder confirms it."
+  },
+  "holders.postHoldersUnassign": {
+    "description": "Stages removal of the holder."
+  },
+  "holders.postHoldersClearBlock": {
+    "description": "Allows a user to be attached to a pass again."
+  }
+}

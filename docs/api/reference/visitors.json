@@ -1,0 +1,20 @@
+{
+  "visitors.getVisitors": {
+    "description": "Lists the visitors of a day."
+  },
+  "visitors.postVisitors": {
+    "description": "Invites a visitor: a visitor pass with a host."
+  },
+  "visitors.getVisitorsHosts": {
+    "description": "The people who can host a visitor: the organization's members."
+  },
+  "visitors.postVisitorsByIdCheckOut": {
+    "description": "Checks a visitor out."
+  },
+  "visitors.postVisitorsByIdCancel": {
+    "description": "Cancels a visit and voids its pass."
+  },
+  "visitors.postVisitorsByIdHostEmail": {
+    "description": "Sends the host their arrival email again."
+  }
+}

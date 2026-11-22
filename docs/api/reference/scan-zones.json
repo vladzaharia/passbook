@@ -1,0 +1,20 @@
+{
+  "scan-zones.getScanZones": {
+    "description": "Lists zones."
+  },
+  "scan-zones.postScanZones": {
+    "description": "Creates a zone."
+  },
+  "scan-zones.patchScanZonesById": {
+    "description": "Edits a zone."
+  },
+  "scan-zones.postScanZonesByIdArchive": {
+    "description": "Archives a zone and the zones below it."
+  },
+  "scan-zones.postScanZonesByIdRestore": {
+    "description": "Restores a zone and the zones below it."
+  },
+  "scan-zones.postScanZonesVisitsByIdReset": {
+    "description": "Resets a pass's visits to a zone."
+  }
+}

@@ -1,10 +1,9 @@
 import type { ScanCodeInput } from '../../../shared/contracts/scan.ts';
 import { TYPED_NUMBER_FLAG } from '../../../shared/copy/scan.ts';
-import { validityOf } from '../../../shared/pass-view/validity.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { depsOf, overrideDeps } from '../passes/deps.ts';
 import { paperOff, printRefusal } from '../prints/door.ts';
-import { accessStop, isGuestPass, joinReads, planAccessReads } from './access.ts';
+import { accessStop, joinReads, planAccessReads } from './access.ts';
 import { passRulesOf, planAdmission } from './admission.ts';
 import {
   type CredentialTombstoneSnapshot,
@@ -29,6 +28,7 @@ import {
   matchesEvent,
 } from './resolve-candidates.ts';
 import { channelVerdict } from './resolve-channels.ts';
+import { exitGate, mayExit, suspendedOf, unavailable } from './resolve-exit.ts';
 import { stop, type Waive, windowStop } from './resolve-policy.ts';
 import { cloneObservedScanActor } from './scanning-workspace-observation.ts';
 import { candidateTakesTag, levelAllows } from './tag-assurance.ts';
@@ -42,9 +42,11 @@ export interface EvaluationReadPlan {
 
 export interface EvaluationOptions {
   candidateRead?: { candidates: Candidate[] | null };
-  prepareReads?: (found: Found) => Promise<EvaluationReadPlan>;
+  prepareReads?: (found: Found) => Promise<EvaluationReadPlan | undefined>;
   /** False when the request runs a value action: admission, presence and capacity are a check-in's. */
   admits?: (found: Found) => boolean;
+  /** OC4: true only when the caller will commit a tap-out of this Found (an act with a concrete check-in action). */
+  commitsExit?: (found: Found) => boolean;
 }
 
 /** SA 2.6 steps 5-13. A found pass that passes every step comes back as `found`. */
@@ -173,25 +175,8 @@ async function evaluateObserved(
           channel: 'paper',
         })
       : stop('refused', 'not_found', { stale: true });
-  const found = await foundOf(ctx, one, actor);
-  if (!found) {
-    const json = candidateWallet(one);
-    if (!json) return stop('refused', 'not_found', { stale: true });
-    const audit = candidateAudit(one);
-    if (one.pass.removedAt !== null)
-      return stop('refused', 'removed', { ...audit, at: one.pass.removedAt });
-    if (one.pass.status === 'voided')
-      return stop('refused', 'voided', { ...audit, at: one.pass.modifiedAt });
-    const validity = validityOf(json, ctx.clock.now());
-    if (validity.status === 'voided')
-      return stop('refused', 'voided', { ...audit, at: one.pass.modifiedAt });
-    if (validity.status === 'expired')
-      return stop('refused', isGuestPass(one) ? 'guest_expired' : 'expired', {
-        ...audit,
-        at: validity.validUntil,
-      });
-    return stop('refused', 'not_accepted');
-  }
+  const found = await foundOf(ctx, one, actor, { exit: mayExit(actor, one) });
+  if (!found) return unavailable(ctx, one);
   const known = {
     pass: found.pass,
     ref: found.ref,
@@ -199,7 +184,7 @@ async function evaluateObserved(
     connectionGeneration: found.connectionGeneration,
   };
   const channel = await channelVerdict(ctx, one, input, matchedBy);
-  if (channel?.kind === 'off')
+  if (channel?.kind === 'off' && !found.inactive)
     return stop('refused', 'channel_off', { ...candidateAudit(one), channel: channel.channel });
   const configured =
     options.admits?.(found) !== false &&
@@ -248,12 +233,25 @@ async function evaluateObserved(
   // A re-entry event is a place too: its admission rules still apply, the builder decides in and out.
   const eventPlaced = !placed ? (planned?.place ?? null) : null;
   const admission = configured && !placed ? planned : null;
+  const place = placed ?? eventPlaced;
+  const zoneExit = place?.found.direction === 'out';
+  const exiting = admission?.plan.state.direction === 'out' || zoneExit;
+  if (found.inactive) {
+    const inside = place?.found.inside ?? admission?.plan.state.inside ?? false;
+    const gated = exitGate(ctx, one, {
+      exiting,
+      inside,
+      commits: options.commitsExit?.(found) === true,
+      channel,
+    });
+    if (gated) return gated;
+  } else if (exiting && suspendedOf(ctx, actor, found, known, accessReads, now))
+    found.suspended = true;
   // The pass's own event filter rejects it: a bare refusal, with no card, identity or grant.
   const selected = admission?.plan.event;
   if (selected && !eventAcceptsPass(actor, selected, found.pass))
     return stop('refused', 'wrong_event');
   found.admission = admission?.plan;
-  const place = placed ?? eventPlaced;
   if (place) found.occupancy = place.found;
   if (eventAdmission && planned) {
     found.eventAdmission = planned.plan;
@@ -267,9 +265,6 @@ async function evaluateObserved(
       hard: true,
       occupancy: occupancyAsRead(place.found, place.turnaround),
     });
-  // A tap-out skips steps 10-14 (OC4): leaving is never refused for who you are.
-  const zoneExit = place?.found.direction === 'out';
-  const exiting = admission?.plan.state.direction === 'out' || zoneExit;
   // Access refusals are authority: they come before the gate, the window and every heads-up.
   const denied = exiting
     ? null
@@ -292,7 +287,7 @@ async function evaluateObserved(
     return stop('heads_up', 'needs_approval', { ...known, at: null, flags: [tagged.flag] });
   const flagged = activeFlags(found).filter((flag) => flag.stop);
   const typed = channel?.kind === 'typed';
-  if (tagged || ((flagged.length > 0 || typed) && !waive.confirmed && !zoneExit))
+  if (tagged || ((flagged.length > 0 || typed) && !waive.confirmed && !zoneExit && !found.inactive))
     return stop('heads_up', 'check_required', {
       ...known,
       flags: [

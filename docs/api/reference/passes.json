@@ -540,5 +540,101 @@
       "done": 1,
       "skipped": []
     }
+  },
+  "passes.putPassesByIdConnection": {
+    "description": "Binds a pass to a connection ref, or unbinds it. A bound pass takes its fields from the connection."
+  },
+  "passes.postPassesByIdRefresh": {
+    "description": "Rebuilds the pass from its connection and pushes the change to devices."
+  },
+  "passes.getPassesByIdVersionsByVersion": {
+    "description": "A retained version of a pass, for rendering."
+  },
+  "passes.getPassesByIdDiff": {
+    "description": "The fields that differ between two retained versions of a pass."
+  },
+  "passes.getPassesByIdAssets": {
+    "description": "The per-pass image overrides of a pass."
+  },
+  "passes.putPassesByIdAssetsByName": {
+    "description": "Uploads an image override for one pass as a PNG body."
+  },
+  "passes.deletePassesByIdAssetsByName": {
+    "description": "Removes an image override. The pass goes back to the template's image."
+  },
+  "passes.getPassesByIdMemberPhoto": {
+    "description": "The member photo settings of a pass."
+  },
+  "passes.putPassesByIdMemberPhoto": {
+    "description": "Uploads a member photo for a pass."
+  },
+  "passes.patchPassesByIdMemberPhoto": {
+    "description": "Sets whether the photo is included in the Wallet pass."
+  },
+  "passes.deletePassesByIdMemberPhoto": {
+    "description": "Removes the member photo."
+  },
+  "passes.getPassesByIdMemberPhotoImage": {
+    "description": "The member photo bytes. The photo is private and needs a key with access to the pass."
+  },
+  "passes.postPassesPhotosMatch": {
+    "description": "Matches photo file names to passes by external ID or serial. It reads names only and changes nothing."
+  },
+  "passes.getPassesByIdCheckIn": {
+    "description": "The check-in rules of a pass."
+  },
+  "passes.putPassesByIdCheckIn": {
+    "description": "Sets the check-in rules of a pass."
+  },
+  "passes.postPassesByIdStamps": {
+    "description": "Adds stamps to a stamp card, or redeems its reward."
+  },
+  "passes.postPassesByIdRenew": {
+    "description": "Renews the term of a pass."
+  },
+  "passes.postPassesBulkReissue": {
+    "description": "Rebuilds the passes of a template in your org and pushes them to devices. A key needs `passes:write`."
+  },
+  "passes.postPassesBulkChannels": {
+    "description": "Turns channels on, off or back to the template for up to 100 passes in one call."
+  },
+  "passes.getPassesByIdChannels": {
+    "description": "A pass's channels: effective state, source and overrides."
+  },
+  "passes.putPassesByIdChannels": {
+    "description": "Overrides channels for one pass. A `null` value returns that channel to its template."
+  },
+  "passes.postPassesBulkPrint": {
+    "description": "Prints up to 50 passes of one org into one PDF. A job renders it; poll the job."
+  },
+  "passes.getPassesBulkPrintByJobId": {
+    "description": "The state of a bulk print job."
+  },
+  "passes.getPassesBulkPrintByJobIdPdf": {
+    "description": "The combined PDF of a finished bulk print job."
+  },
+  "passes.postPassesByIdPrints": {
+    "description": "Prints a ticket. An earlier print of the same pass is voided."
+  },
+  "passes.getPassesByIdPrints": {
+    "description": "A pass's prints, newest first. Codes are never listed."
+  },
+  "passes.postPassesByIdPrintsByPrintIdVoid": {
+    "description": "Voids a printed ticket so its code stops working."
+  },
+  "passes.getPassesByIdPrint": {
+    "description": "The print page of the active print, for staff."
+  },
+  "passes.getPassesByIdPrintPdf": {
+    "description": "The PDF of the active print, for staff."
+  },
+  "passes.getPassesByIdPrintAssetsByName": {
+    "description": "A template image used by the print page, for staff."
+  },
+  "passes.getPassesByIdEvents": {
+    "description": "The sync log and activity of a pass, newest first."
+  },
+  "passes.getPassesByIdDevices": {
+    "description": "The devices of a pass with their sync status."
   }
 }

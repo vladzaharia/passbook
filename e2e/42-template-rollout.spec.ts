@@ -13,6 +13,7 @@ import {
   publishTemplateCandidate,
   templateReviewer,
 } from './helpers/releases.ts';
+import { gotoRollout } from './helpers/rollout.ts';
 import { createOrgWithRoles } from './helpers/seed.ts';
 
 test.setTimeout(360_000);
@@ -39,7 +40,7 @@ async function shoot(page: Page, url: string, name: string, ready: () => Promise
     await page.emulateMedia({ colorScheme });
     for (const [width, height] of SIZES) {
       await page.setViewportSize({ width, height });
-      await page.goto(url);
+      await gotoRollout(page, url);
       await ready();
       // The Releases panel shows a loading skeleton first: shoot once it has painted.
       await expect(page.getByRole('list', { name: 'Releases' })).toBeVisible();
@@ -118,7 +119,7 @@ test('Tell holders messages the passes on the release, once, and never the ones 
 
     const url = `/admin/templates/${encodeURIComponent(clone.id)}?orgId=${encodeURIComponent(org.id)}&tab=versions`;
     const page = await ctx.newPage();
-    await page.goto(url);
+    await gotoRollout(page, url);
     await expect(page.getByText('Updating passes to v2: 2 of 5')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Updating passes to v2' })).toBeVisible();
     await expect(page.getByRole('progressbar', { name: 'Passes on the release' })).toBeVisible();
@@ -128,7 +129,7 @@ test('Tell holders messages the passes on the release, once, and never the ones 
     const card = page.getByRole('progressbar', { name: 'Passes on the release' });
     await shoot(page, url, 'rollout', () => expect(card).toBeVisible());
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(url);
+    await gotoRollout(page, url);
 
     await page.getByRole('button', { name: 'Tell holders' }).click();
     const dialog = page.getByRole('dialog', { name: 'Tell holders' });
@@ -141,7 +142,7 @@ test('Tell holders messages the passes on the release, once, and never the ones 
         await page.emulateMedia({ colorScheme });
         for (const [width, height] of SIZES) {
           await page.setViewportSize({ width, height });
-          await page.goto(url);
+          await gotoRollout(page, url);
           await page.getByRole('button', { name: 'Tell holders' }).click();
           await expect(dialog.getByText(/2 on v2/)).toBeVisible();
           await page.waitForTimeout(600);
@@ -149,7 +150,7 @@ test('Tell holders messages the passes on the release, once, and never the ones 
         }
       }
       await page.setViewportSize({ width: 1440, height: 900 });
-      await page.goto(url);
+      await gotoRollout(page, url);
       await page.getByRole('button', { name: 'Tell holders' }).click();
       await expect(dialog.getByText(/2 on v2/)).toBeVisible();
     }
@@ -191,7 +192,7 @@ test('Tell holders messages the passes on the release, once, and never the ones 
     }
     // One send per release: the offer is gone, and so is the button.
     await expect.poll(async () => (await rollout()).tell).toBeNull();
-    await page.goto(url);
+    await gotoRollout(page, url);
     await expect(page.getByRole('progressbar', { name: 'Passes on the release' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Tell holders' })).toHaveCount(0);
     await shoot(page, url, 'after-send', () =>

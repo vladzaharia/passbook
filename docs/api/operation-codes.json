@@ -6630,7 +6630,12 @@
   "status get /": [
     "IDENTITY_NOT_CONFIGURED"
   ],
+  "status get /incidents": [],
   "status get /workflows": [],
+  "status post /incidents": [],
+  "status post /incidents/{id}/resolve": [
+    "INCIDENT_NOT_FOUND"
+  ],
   "templates delete /{id}": [
     "FORBIDDEN",
     "KEY_CREATOR_GONE",

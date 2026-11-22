@@ -2542,8 +2542,9 @@ type NfcKeysetsDisableResultVersionsItem struct {
 type NfcKeysetsImportTagsBody = NfcKeysetsImportTagsParams
 
 type NfcKeysetsImportTagsParams struct {
-	CSV    string `json:"csv"`
-	DryRun bool   `json:"dryRun"`
+	CSV     string `json:"csv"`
+	DryRun  bool   `json:"dryRun"`
+	Replace *bool  `json:"replace,omitempty"`
 }
 
 type NfcKeysetsImportTagsResult struct {
@@ -5644,6 +5645,13 @@ type PlatformOrgsWalletEnrollmentsHoldParams struct {
 	Reason string `json:"reason"`
 }
 
+type PlatformStatusOpenIncidentParams struct {
+	Title     string  `json:"title"`
+	Note      string  `json:"note"`
+	Component *string `json:"component,omitempty"`
+	Impact    string  `json:"impact"`
+}
+
 type PlatformTemplatesAssignParams struct {
 	OrgID *string `json:"orgId"`
 }
@@ -6408,6 +6416,7 @@ type ScanOutcome struct {
 	Flags               []string            `json:"flags"`
 	Channel             *string             `json:"channel,omitempty"`
 	Overridable         bool                `json:"overridable"`
+	ExitAllowed         *bool               `json:"exitAllowed,omitempty"`
 	Approvals           bool                `json:"approvals"`
 	Group               map[string]any      `json:"group"`
 	Bundle              map[string]any      `json:"bundle,omitempty"`
@@ -6477,6 +6486,7 @@ type ScanRecord struct {
 	PassVersion  *int64          `json:"passVersion"`
 	Override     bool            `json:"override"`
 	Offline      bool            `json:"offline"`
+	PassState    *string         `json:"passState,omitempty"`
 	Unverified   *bool           `json:"unverified,omitempty"`
 	Late         *bool           `json:"late,omitempty"`
 	Actor        ScanRecordActor `json:"actor"`

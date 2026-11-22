@@ -1,14 +1,8 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { getCookie } from 'hono/cookie';
 import { createMiddleware } from 'hono/factory';
-import type { z } from 'zod';
-import {
-  ApiScopeSchema,
-  MODE_HEADER,
-  type Mode,
-  type RoleSchema,
-} from '../../shared/contracts/common.ts';
-import type { SignInAmr, SignInLevel } from '../../shared/sign-in.ts';
+import { ApiScopeSchema, MODE_HEADER, type Mode } from '../../shared/contracts/common.ts';
+import type { SignInLevel } from '../../shared/sign-in.ts';
 import {
   authorityUnproven,
   capabilityState,
@@ -16,10 +10,11 @@ import {
   verifiedScopeOf,
   verifiedScopes,
 } from './auth-capability.ts';
+import type { AuthContext, SessionAuth } from './auth-types.ts';
 import { type KeyCaller, keyCallerOf } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
-import { type DeniedEvent, reportDenied } from './denied.ts';
+import { noteKeyRefused, reportDenied } from './denied.ts';
 import { ForbiddenError, UnauthenticatedError } from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
 import { enforceRateLimit } from './rate-limit.ts';
@@ -30,7 +25,6 @@ import {
   type ScopeRule,
   sessionKindOf,
 } from './route-auth-spec.ts';
-import type { ScannerAuth } from './scanner-auth.ts';
 import { serviceContext } from './service-context.ts';
 import {
   assertConsoleGroup,
@@ -41,105 +35,20 @@ import {
   declareStepUp,
 } from './sign-in-guard.ts';
 
+export * from './auth-types.ts';
+export { SCANNER_COOKIE, SCANNER_TOKEN, type ScannerAuth } from './scanner-auth.ts';
+
 /** Guards the route inventory test recognises; every guard of this file registers itself. */
 const knownGuards = new WeakSet<object>();
 export const isKnownGuard = (handler: object): boolean => knownGuards.has(handler);
 
-export type Role = z.infer<typeof RoleSchema>;
-export type Amr = SignInAmr;
 export const API_SCOPES = ApiScopeSchema.options;
-export type ApiScope = z.infer<typeof ApiScopeSchema>;
 
 export const SESSION_COOKIE = '__Host-wallet_sid';
-
-export interface SessionAuth {
-  kind: 'session';
-  userId: string;
-  sessionId: string;
-  roles: Role[];
-  csrfSecret: string;
-  amr: Amr;
-  /** An email session still inside the console grace window: when it ends (ms). Null otherwise. */
-  consoleUntil?: number | null;
-  /** When the sign-in was last proven (ms); null for an email link or a provider that sent no `auth_time`. */
-  authTime?: number | null;
-  /**
-   * Stores resolve 'live'. Admin guards replace it from the x-passbook-mode header; holder routes
-   * never read it (holders see all their passes).
-   */
-  mode: Mode;
-}
-
-export interface ApiKeyAuth {
-  kind: 'api_key';
-  keyId: string;
-  /** null = platform-wide key. */
-  orgId: string | null;
-  scopes: ApiScope[];
-  /** From api_keys.mode. */
-  mode: Mode;
-  /** The key is limited to templates or styles (`api_key_resources`); only a `templateScoped` route admits it. */
-  limited?: true;
-  /** Presented as a developer try token (`pbtry_`), not the key's secret. */
-  via?: 'try';
-  /** For a try token: `auth_time` of the session it stands for (null: none recorded), so step-up applies to it. */
-  sessionAuthTime?: number | null;
-  /** For a try token: how that session signed in, so a break-glass step-up goes to break-glass. */
-  sessionAmr?: Amr;
-  /** The key's org is a developer org (the sandbox); absent for every other org. */
-  orgKind?: 'developer';
-}
-
-export { SCANNER_COOKIE, SCANNER_TOKEN, type ScannerAuth } from './scanner-auth.ts';
-
-export type AuthContext = SessionAuth | ApiKeyAuth | ScannerAuth;
-
-/** Implemented by modules/auth. Returns null for unknown, expired, revoked or disabled-user sessions. */
-export interface SessionStore {
-  resolve(cookieValue: string): Promise<SessionAuth | null>;
-}
-
-/** Implemented by modules/api-keys. Hashes the presented key; returns null when invalid. */
-export interface ApiKeyStore {
-  /** A key limited to templates is refused (403) unless the caller passes `limited: 'ok'`. */
-  resolve(
-    rawKey: string,
-    caller?: KeyCaller,
-    options?: { limited?: 'ok' },
-  ): Promise<ApiKeyAuth | null>;
-}
 
 export type { KeyCaller } from './browser-signals.ts';
 /** Every key guard passes this to the key store: the address, browser signals and session cookie (KEY_IN_BROWSER). */
 export const keyCaller = (c: Context): KeyCaller => keyCallerOf(c, SESSION_COOKIE);
-
-/**
- * Implemented by modules/scan. Null for an unknown or malformed token. A known token whose scanner
- * was revoked or has expired throws a 401 with code SCANNER_REVOKED or SCANNER_EXPIRED, so the
- * device can say why. Revoking sets `revoked_at` and keeps the token columns, and expiry is
- * `expires_at` (or idle time), so the token still matches and the reason survives.
- */
-export interface ScannerStore {
-  resolve(
-    token: string,
-    transport: 'cookie' | 'bearer',
-    meta?: { ipPrefix: string | null; contact?: boolean },
-  ): Promise<ScannerAuth | null>;
-}
-
-export interface AuthStores {
-  sessions: SessionStore;
-  apiKeys: ApiKeyStore;
-  scanners: ScannerStore;
-  /** Audits a refused principal. Platform never imports a module; stores.ts wires this. */
-  onDenied?(event: DeniedEvent): Promise<void> | void;
-}
-
-export const denyAllStores: AuthStores = {
-  sessions: { resolve: async () => null },
-  apiKeys: { resolve: async () => null },
-  scanners: { resolve: async () => null },
-};
 
 function bearer(c: Context): string | null {
   const header = c.req.header('authorization');
@@ -254,11 +163,14 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     const token = rule ? bearer(c) : null;
     if (rule && token) {
       const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c), limited);
-      if (!key)
+      if (!key) {
+        noteKeyRefused(c, { code: 'INVALID_API_KEY', token });
         throw new UnauthenticatedError('The API key is invalid or expired.', 'INVALID_API_KEY');
+      }
       const needed = neededScope(rule, c, key.scopes);
       if (!needed || !key.scopes.includes(needed)) {
         reportDenied(c, 'MISSING_SCOPE', key);
+        noteKeyRefused(c, { code: 'MISSING_SCOPE', keyId: key.keyId, scope: needed ?? null });
         throw new ForbiddenError(
           needed ? `The API key lacks the ${needed} scope.` : 'The API key lacks a required scope.',
           'MISSING_SCOPE',
@@ -288,7 +200,8 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     if (sessionKind === 'tenant') assertConsoleGroup(c, session);
     if (sessionKind === 'admin') requireAdminRole(c, session);
     // After the role check: a person who could not do this anyway is not sent through a passkey prompt.
-    if (stepUp) assertStepUp(c, session, stepUp.maxAgeSec);
+    if (stepUp && (!stepUp.when || (await stepUp.when(c))))
+      assertStepUp(c, session, stepUp.maxAgeSec);
     if (sessionKind !== 'plain') {
       const principal = { ...session, mode: modeFromRequest(c) };
       if (capability) capabilityState.set(principal, { capability, proven: false });
@@ -299,7 +212,8 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
     return next();
   });
   knownGuards.add(guard);
-  if (stepUp) declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: false });
+  if (stepUp)
+    declareStepUp(guard, { maxAgeSec: stepUp.maxAgeSec, conditional: stepUp.when !== undefined });
   return declareSignIn(guard, level);
 }
 
