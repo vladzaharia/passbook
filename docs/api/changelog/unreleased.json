@@ -2170,7 +2170,7 @@
     "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
     "op": "POST /api/v1/nfc/keysets/{id}/import",
     "change": "200.problems[].reason: enum value \"not_on_keyset\" added",
-    "note": ""
+    "note": "With replace, a line for a tag that is not on this keyset (or holds no key of its own) is listed as not_on_keyset."
   },
   {
     "key": "POST /api/v1/nfc/keysets/{id}/import body.replace: optional input field added",
@@ -2178,7 +2178,7 @@
     "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
     "op": "POST /api/v1/nfc/keysets/{id}/import",
     "change": "body.replace: optional input field added",
-    "note": ""
+    "note": "replace: true swaps the key of tags already on the keyset after a leak; counters and bindings stay."
   },
   {
     "key": "POST /api/v1/nfc/keysets/{id}/import callable by nfc:keys key",
