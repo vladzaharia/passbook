@@ -292,24 +292,23 @@ describe('exampleFailures', () => {
     expect(exampleFailures(passes)).toEqual([]);
   });
 
-  it('rejects a reason or note used in more than three examples', () => {
+  it('lets one registered sentence repeat: the same event shows the same note everywhere', () => {
     const same = Object.fromEntries(
       ['a', 'b', 'c', 'd'].map((n) => [
-        `x.get${n}`,
-        { value: { reason: 'Left early; refund issued.' } },
+        `scan-events.get${n}`,
+        { value: { note: 'Doors open 30 minutes early for members.' } },
       ]),
     );
-    expect(exampleFailures(docWith(same))).toEqual([
-      '"Left early; refund issued." is the reason or note of 4 examples; at most 3',
-    ]);
-    expect(exampleFailures(docWith({ 'x.geta': same['x.geta'] as never }))).toEqual([]);
+    expect(exampleFailures(docWith(same))).toEqual([]);
   });
 
-  it('rejects an error reason on a healthy, ok or active record', () => {
-    expect(run({ health: 'healthy', reason: 'Bad device token.' })).toEqual([
+  it('rejects an error reason on a healthy, ok or active record, except the APNs probe', () => {
+    expect(run({ health: 'healthy', reason: 'BadCertificate' })).toEqual([
       'a.getA response: reason is an error on a healthy record',
     ]);
     expect(run({ state: 'ok', reason: 'ok' })).toEqual([]);
-    expect(run({ state: 'failing', reason: 'Bad device token.' })).toEqual([]);
+    expect(run({ state: 'failing', reason: 'BadCertificate' })).toEqual([]);
+    // A probe with a dummy token is healthy when Apple rejects the token (identities/apns-probe.ts).
+    expect(run({ health: 'healthy', status: 400, reason: 'BadDeviceToken' })).toEqual([]);
   });
 });

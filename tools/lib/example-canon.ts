@@ -1,0 +1,669 @@
+// The world's resources as the API returns them: one of each, consistent with each other (ids, names, times, counts).
+// The sampler trims each to the schema in hand and fills what it leaves out, so one object serves every operation
+// that shows that resource. Pure data.
+import {
+  API,
+  CANON,
+  hex,
+  IDS,
+  KEY_PREFIX,
+  PAIRING_CODE,
+  SCAN_CODE,
+  T,
+  TEMPLATE,
+  webhookSecret,
+} from './example-world.ts';
+
+const MIN = 60_000;
+const HOUR = 60 * MIN;
+const uuid = (seed: string): string => `0193a1b2-7c00-7000-8000-${hex(seed, 12)}`;
+/** The start of a local hour of the scan day (24 November, Pacific time), as epoch ms. */
+export const localHour = (h: number): number => Date.UTC(2026, 10, 24, h + 8, 0, 0);
+
+/** The ready card a desk sees for the Day pass: the template's scan display, filled for Ada. */
+export const DISPLAY = {
+  v: 1,
+  screen: 'ready',
+  templateVersion: '3',
+  variant: null,
+  identity: { holder: 'Ada Example', initials: 'AE', photo: null },
+  header: {
+    icon: null,
+    title: 'Welcome back',
+    titleLines: 1,
+    meta: 'Valid until 31 Dec 2026',
+    chips: [{ id: 'tier', text: 'Day pass', tone: 'teal', icon: null }],
+  },
+  panels: [
+    {
+      id: 'details',
+      kind: 'details',
+      title: 'Details',
+      icon: null,
+      tone: null,
+      rows: [
+        {
+          type: 'field',
+          id: 'name',
+          label: 'Guest',
+          value: 'Ada Example',
+          icon: 'user',
+          strong: true,
+        },
+        {
+          type: 'field',
+          id: 'validUntil',
+          label: 'Valid until',
+          value: '31 Dec 2026',
+          icon: 'calendar',
+          strong: false,
+        },
+      ],
+    },
+  ],
+  notes: { staff: null, refused: null },
+};
+
+/** What the front desk's counter shows: today's scans and tonight's event. */
+export const SCAN_COUNTS = {
+  today: 142,
+  event: { arrived: 46, inside: 38, expected: 128, capacity: 120 },
+  place: null,
+  byType: [
+    { templateId: uuid('template-monthly'), name: 'Monthly membership', count: 96 },
+    { templateId: IDS.template, name: TEMPLATE.name, count: 35 },
+  ],
+  asOf: T.recent,
+  configRev: 7,
+};
+
+const admit = { id: 'admit', label: 'Admit', kind: 'check_in' };
+/** Ada's day pass, scanned at the front desk and admitted. */
+export const SCAN_OK = {
+  scanId: IDS.scan,
+  kind: 'ok',
+  reason: null,
+  replay: false,
+  action: admit,
+  flags: [],
+  at: T.recent,
+  checkIn: {
+    mode: 'daily',
+    direction: 'in',
+    inside: true,
+    enteredAt: T.recent,
+    firstAt: T.recent,
+    validFrom: T.validFrom,
+    validUntil: T.validUntil,
+  },
+  card: {
+    passId: IDS.pass,
+    version: 1,
+    mode: 'live',
+    title: 'Day pass',
+    subtitle: 'Ada Example',
+    template: { id: IDS.template, name: TEMPLATE.name, style: 'generic' },
+    status: 'active',
+    validFrom: T.validFrom,
+    validUntil: T.validUntil,
+    flags: [],
+    values: [],
+    actions: [
+      {
+        ...admit,
+        available: true,
+        lock: null,
+        reason: null,
+        amount: null,
+        confirm: false,
+        confirmAbove: null,
+        cooldownRemainingMs: null,
+        armable: null,
+        rewardLabel: null,
+      },
+    ],
+    display: DISPLAY,
+    // The pass JSON minus barcode and serial, and a short-lived grant for its images (scan/assets.ts).
+    passView: {
+      passJson: { ...TEMPLATE.passJson, serialNumber: undefined },
+      assetBaseUrl: `/api/v1/scan/passes/${IDS.pass}/assets/`,
+      assetGrant: `demo-token-northwind-${hex('asset-grant', 22)}`,
+      assetNames: ['icon.png', 'icon@2x.png', 'logo.png'],
+    },
+    lastScans: [],
+    bundle: null,
+    door: { state: 'in' },
+    access: null,
+    tag: null,
+    occupancy: null,
+  },
+  display: { ...DISPLAY, screen: 'ok' },
+  template: { name: TEMPLATE.name, style: 'generic' },
+  cooldownRemainingMs: null,
+  value: null,
+  overridable: false,
+  approvals: false,
+  counts: SCAN_COUNTS,
+  undoUntil: T.recent + 2 * MIN,
+  bundle: null,
+  group: null,
+  tag: null,
+  previous: null,
+  milestone: null,
+};
+
+/** The front desk's day so far: 142 scans, the parts adding up. */
+export const SCAN_SUMMARY = {
+  from: T.now - 24 * HOUR,
+  to: T.now,
+  total: 142,
+  ok: 131,
+  headsUp: 7,
+  refused: 4,
+  undone: 2,
+  byAction: [
+    { actionId: 'admit', label: 'Admit', count: 119, amount: 0 },
+    { actionId: 'add-visit', label: 'Use a visit', count: 12, amount: 12 },
+  ],
+  firstAt: localHour(6) + 7 * MIN,
+  lastAt: T.recent,
+  scope: 'session',
+  timeZone: 'America/Los_Angeles',
+  byHour: [
+    { start: localHour(6), label: '06:00', count: 18, refused: 0 },
+    { start: localHour(7), label: '07:00', count: 24, refused: 1 },
+    { start: localHour(12), label: '12:00', count: 21, refused: 0 },
+    { start: localHour(16), label: '16:00', count: 33, refused: 1 },
+    { start: localHour(17), label: '17:00', count: 46, refused: 2 },
+  ],
+  byValue: [{ kind: 'take', count: 12, amount: 12 }],
+  byReason: [
+    { reason: 'already_done', count: 6 },
+    { reason: 'expired', count: 3 },
+    { reason: 'cooldown', count: 1 },
+    { reason: 'no_balance', count: 1 },
+  ],
+  byType: [
+    { templateId: uuid('template-monthly'), name: 'Monthly membership', count: 96 },
+    { templateId: IDS.template, name: TEMPLATE.name, count: 35 },
+  ],
+  byStaff: [
+    { staffId: IDS.staff, name: 'Sam Rivera', count: 90, overrides: 1, refused: 3 },
+    { staffId: uuid('staff-priya'), name: 'Priya Nair', count: 52, overrides: 1, refused: 1 },
+  ],
+  overrides: {
+    count: 2,
+    latest: [
+      {
+        scanId: uuid('scan-override-2'),
+        at: localHour(17) + 12 * MIN,
+        staffName: 'Sam Rivera',
+        approvedBy: 'Priya Nair',
+        reason: 'already_done',
+      },
+      {
+        scanId: uuid('scan-override-1'),
+        at: localHour(7) + 40 * MIN,
+        staffName: 'Priya Nair',
+        approvedBy: 'Priya Nair',
+        reason: 'no_balance',
+      },
+    ],
+  },
+};
+
+/** The gym's booking system, told about passes. */
+export const WEBHOOK_ENDPOINT = {
+  id: IDS.endpoint,
+  orgId: IDS.org,
+  mode: 'live',
+  url: 'https://bookings.northwind.example.com/hooks/passbook',
+  urlMasked: 'https://bookings.northwind.example.com/…',
+  description: 'Front-desk check-in sync',
+  eventTypes: ['pass.issued', 'pass.scanned'],
+  templateIds: [IDS.template],
+  apiVersion: '2026-12-01',
+  status: 'active',
+  target: 'url',
+  failingSince: null,
+  disabledAt: null,
+  lastSuccessAt: T.recent,
+  lastFailureAt: T.updated,
+  lastStatus: 200,
+  secretCreatedAt: T.created,
+  previousSecretExpiresAt: null,
+  createdAt: T.created,
+};
+export const WEBHOOK_SECRET = webhookSecret('endpoint');
+
+const issued = T.recent - 2 * MIN;
+/** The `pass.issued` event for Ada's pass, delivered on the first try. */
+export const DELIVERY = {
+  eventId: IDS.delivery,
+  type: 'pass.issued',
+  passId: IDS.pass,
+  externalId: 'booking_8841',
+  state: 'delivered',
+  attempts: 1,
+  nextAt: issued,
+  lastStatus: 200,
+  lastError: null,
+  lastAttemptAt: issued,
+  finishedAt: issued + 240,
+  replays: 0,
+  attemptLog: [
+    { attempt: 1, trigger: 'event', status: 200, errorCode: null, durationMs: 240, at: issued },
+  ],
+  payload: {
+    id: IDS.delivery,
+    type: 'pass.issued',
+    apiVersion: '2026-12-01',
+    createdAt: issued,
+    orgId: IDS.org,
+    mode: 'live',
+    pass: { id: IDS.pass, externalId: 'booking_8841', templateId: IDS.template },
+    data: { version: 1, source: 'api' },
+  },
+};
+
+/** The server integration's key: test mode, issuing and reading passes. */
+export const API_KEY = {
+  id: IDS.key,
+  orgId: IDS.org,
+  name: 'Server integration',
+  prefix: KEY_PREFIX,
+  secretPrefix: `pb_test_${KEY_PREFIX}`,
+  scopes: ['passes:read', 'passes:write', 'templates:read'],
+  mode: 'test',
+  createdBy: IDS.user,
+  createdByName: 'Sam Rivera',
+  createdAt: T.created,
+  lastUsedAt: T.recent,
+  expiresAt: null,
+  revokedAt: null,
+  kind: 'service',
+  retireAt: null,
+  ipAllow: [],
+  templateIds: [],
+  passStyles: [],
+  rateTier: 'standard',
+  parentKeyId: null,
+  rotatedFrom: null,
+  lastIpPrefix: '203.0.113',
+  parent: null,
+  replacedBy: null,
+  childCount: 0,
+};
+
+/** What the server integration did lately (api-keys/repo-family.ts reads the audit log). */
+export const KEY_ACTIVITY = {
+  lastUsedAt: T.recent,
+  lastIpPrefix: '203.0.113',
+  summary: {
+    since: T.created,
+    calls: 412,
+    denied: 1,
+    actions: [
+      { action: 'pass.create', count: 128, lastAt: T.recent },
+      { action: 'pass.update', count: 41, lastAt: T.updated },
+      { action: 'auth.denied', count: 1, lastAt: T.updated },
+    ],
+  },
+  recent: [
+    {
+      id: 90412,
+      at: T.recent,
+      action: 'pass.create',
+      outcome: 'allowed',
+      targetType: 'pass',
+      targetId: IDS.pass,
+      ipPrefix: '203.0.113',
+      code: null,
+    },
+    {
+      id: 90377,
+      at: T.updated,
+      action: 'auth.denied',
+      outcome: 'denied',
+      targetType: null,
+      targetId: null,
+      ipPrefix: '203.0.113',
+      code: 'MISSING_SCOPE',
+    },
+  ],
+};
+
+/** Holiday hours, sent to every Day pass holder. */
+export const BROADCAST = {
+  id: IDS.broadcast,
+  orgId: IDS.org,
+  mode: 'live',
+  kind: 'message',
+  name: 'Holiday hours',
+  state: 'sent',
+  target: { templateIds: [IDS.template] },
+  patch: {},
+  notify: true,
+  at: T.recent,
+  /** A duration: the message clears 31 days after it was sent, on Christmas Day. */
+  clearAfter: 31 * 24 * HOUR,
+  parentId: null,
+  message: 'The gym closes at 18:00 on 24 December.',
+  ruleId: null,
+  followUp: null,
+  counts: { targeted: 128, updated: 121, unchanged: 0, overBudget: 0, failed: 7 },
+  errorCode: null,
+  createdAt: T.recent - 10 * MIN,
+  startedAt: T.recent,
+  finishedAt: T.recent + 3 * MIN,
+};
+
+/** Seven days before a membership ends, its holder hears about it. */
+export const MESSAGE_RULE = {
+  id: IDS.rule,
+  orgId: IDS.org,
+  mode: 'live',
+  name: 'Renewal reminder',
+  templateIds: [IDS.template],
+  anchor: { kind: 'input', input: 'validUntil' },
+  offset: { amount: 7, unit: 'day', when: 'before' },
+  yearly: false,
+  sendAt: '09:00',
+  timeZone: 'America/Los_Angeles',
+  message: 'Your membership renews in 7 days.',
+  clearAfter: 7 * 24 * HOUR,
+  on: true,
+  state: 'on',
+  pausedCode: null,
+  nextCheckAt: Date.UTC(2026, 10, 25, 17, 0, 0),
+  sent: 42,
+  skipped: 3,
+  createdAt: T.created,
+  updatedAt: T.updated,
+  version: 2,
+};
+/** This morning's run of the rule: a message broadcast to the nine holders whose pass ends in a week. */
+export const RULE_RUN = {
+  ...BROADCAST,
+  id: uuid('broadcast-rule-run'),
+  name: MESSAGE_RULE.name,
+  message: MESSAGE_RULE.message,
+  ruleId: IDS.rule,
+  notify: true,
+  at: localHour(9),
+  clearAfter: 7 * 24 * HOUR,
+  counts: { targeted: 9, updated: 9, unchanged: 0, overBudget: 0, failed: 0 },
+  createdAt: localHour(9),
+  startedAt: localHour(9),
+  finishedAt: localHour(9) + 40_000,
+};
+
+/** The booking sheet: a published CSV, polled every 15 minutes. */
+export const CONNECTION_RUN = {
+  id: IDS.run,
+  trigger: 'schedule',
+  startedAt: T.recent,
+  finishedAt: T.recent + 1800,
+  outcome: 'changed',
+  recordsSeen: 3,
+  passesChanged: 1,
+  passesCreated: 1,
+  passesVoided: 0,
+  recordsFailed: 0,
+  errorCode: null,
+  errorDetail: null,
+  httpStatus: 200,
+  durationMs: 1800,
+};
+export const CONNECTION = {
+  id: IDS.connection,
+  orgId: IDS.org,
+  connectorType: 'csv-url',
+  connectorVersion: 1,
+  name: 'Booking sheet',
+  config: {
+    url: 'https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv',
+    idColumn: 'Booking ID',
+  },
+  hasCredential: false,
+  hasWebhookSecret: false,
+  mapping: {
+    name: { from: '/Name' },
+    tier: { from: '/Plan' },
+    validUntil: { from: '/Valid until' },
+  },
+  defaultTemplateId: IDS.template,
+  holderEmailField: '/Email',
+  autoCreate: true,
+  autoEmail: true,
+  onMissing: 'keep',
+  voidWhen: [],
+  webhookPrevUntil: null,
+  mode: 'poll',
+  intervalSeconds: 900,
+  maxConcurrency: 1,
+  requestsPerMinute: 6,
+  enabled: true,
+  health: 'healthy',
+  consecutiveFailures: 0,
+  breakerOpenUntil: null,
+  nextRunAt: T.recent + 15 * MIN,
+  lastRunAt: T.recent,
+  lastSuccessAt: T.recent,
+  lastErrorCode: null,
+  lastErrorAt: null,
+  webhookUrl: null,
+  createdAt: T.created,
+  updatedAt: T.updated,
+  runs: [CONNECTION_RUN],
+  metrics: { p50Ms: 1650, p95Ms: 2400, errorRate: 0, passCount: 3 },
+};
+
+const release = uuid('release-4');
+/** When version 4 of the Day pass was released. */
+export const RELEASED_AT = T.now - 40 * MIN;
+/** Releasing version 4 of the Day pass: Test follows at once, Live after a peer's approval. */
+export const RELEASE = {
+  version: '4',
+  modes: {
+    test: {
+      outcome: 'released',
+      releaseId: uuid('release-4-test'),
+      generation: 4,
+      approvalKind: 'test',
+    },
+    live: { outcome: 'released', releaseId: release, generation: 4, approvalKind: 'peer' },
+  },
+  state: {
+    live: { version: '4', at: RELEASED_AT, by: 'Priya Nair' },
+    test: { version: '4', at: RELEASED_AT, state: 'following' },
+    draft: null,
+    review: { state: 'none' },
+    alone: false,
+    next: null,
+  },
+};
+/** Version 4 of the Day pass, released 40 minutes ago and still reaching passes. */
+export const ROLLOUT = {
+  releaseVersion: '4',
+  releaseId: release,
+  fromVersion: '3',
+  total: 128,
+  onRelease: 121,
+  remaining: 7,
+  updating: [{ version: '3', count: 5 }],
+  failedCount: 2,
+  failed: [
+    { passId: uuid('pass-grace'), title: 'Day pass', reason: 'The pass changed. Retry.' },
+    {
+      passId: uuid('pass-alan'),
+      title: 'Ten-visit card',
+      reason: 'The card has 12 stamps; this version allows 10. Raise the maximum or redeem first.',
+    },
+  ],
+  startedAt: RELEASED_AT,
+  runId: `bulk-${release}`,
+  running: true,
+  stalled: false,
+  changes: [
+    {
+      group: 'colors',
+      rows: [
+        {
+          label: 'Background',
+          kind: 'changed',
+          from: { type: 'color', color: 'rgb(17, 42, 74)' },
+          to: { type: 'color', color: 'rgb(12, 74, 64)' },
+        },
+      ],
+      more: 0,
+    },
+    {
+      group: 'front',
+      rows: [
+        {
+          label: 'Auxiliary: Valid until',
+          kind: 'changed',
+          from: { type: 'text', text: '31 Dec 2026' },
+          to: { type: 'text', text: '31 Jan 2027' },
+        },
+      ],
+      more: 0,
+    },
+  ],
+  tell: {
+    text: 'Day pass has a new design.',
+    until: RELEASED_AT + 24 * HOUR,
+    key: `rollout-tell:${release}`,
+  },
+};
+
+/** The Day pass package, uploaded and checked: one warning, nothing blocking. */
+export const UPLOAD = {
+  uploadId: uuid('upload-day-pass'),
+  name: 'day-pass.zip',
+  status: 'complete',
+  step: null,
+  templateId: IDS.template,
+  version: '3',
+  error: null,
+  report: {
+    ok: true,
+    issues: [
+      {
+        severity: 'warning',
+        code: 'IMAGE_DERIVED',
+        message: 'icon@2x.png derived from the @3x image.',
+        path: 'icon@2x.png',
+      },
+    ],
+  },
+  issues: 1,
+  createdAt: T.updated,
+};
+
+/** Open climbing tonight: the event the front desk scans for. */
+export const SCAN_EVENT = {
+  id: IDS.event,
+  orgId: IDS.org,
+  mode: 'live',
+  name: 'Open climbing',
+  templateIds: [IDS.template],
+  match: null,
+  opensAt: localHour(17),
+  closesAt: localHour(22),
+  timeZone: 'America/Los_Angeles',
+  capacity: 120,
+  reentry: true,
+  hardLimit: false,
+  note: 'Doors open 30 minutes early for members.',
+  status: 'live',
+  arrived: 46,
+  expected: 128,
+  scanners: 2,
+};
+
+/** A trial visitor, booked by a coach and here now. */
+export const VISITOR = {
+  id: IDS.visitor,
+  passId: uuid('pass-visitor'),
+  name: 'Jordan Lee',
+  hostName: 'Sam Rivera',
+  windowFrom: localHour(17),
+  windowUntil: localHour(19),
+  note: 'Trial session with a coach',
+  status: 'in',
+  statusAt: localHour(17) + 5 * MIN,
+  autoOut: true,
+  hasEmail: true,
+};
+
+/** The import's rows, as committed: Ada and Grace created, Alan's pass updated (example-world.ts IMPORT). */
+export const IMPORT_ROWS = {
+  items: [
+    {
+      row: 2,
+      action: 'create',
+      state: 'done',
+      result: 'created',
+      passId: IDS.pass,
+      externalId: 'NW-1001',
+      code: null,
+      message: null,
+      emailed: true,
+    },
+    {
+      row: 3,
+      action: 'create',
+      state: 'done',
+      result: 'created',
+      passId: uuid('pass-grace'),
+      externalId: 'NW-1002',
+      code: null,
+      message: null,
+      emailed: true,
+    },
+    {
+      row: 4,
+      action: 'update',
+      state: 'done',
+      result: 'updated',
+      passId: uuid('pass-alan'),
+      externalId: 'NW-1003',
+      code: null,
+      message: null,
+      emailed: false,
+      changes: [{ key: 'validUntil', label: 'Valid until', from: '2026-12-31', to: '2027-01-15' }],
+    },
+  ],
+  nextCursor: null,
+};
+
+/** Pairing a new front-desk tablet. */
+export const PAIRING = {
+  code: PAIRING_CODE,
+  url: `${API}/scan#pair=${PAIRING_CODE}`,
+  expiresAt: T.now + 10 * MIN,
+};
+
+/** What a scan request sends: the pass's barcode, read by the camera. */
+export const SCAN_INPUT = { code: SCAN_CODE, method: 'camera' };
+
+/** Object shapes the API repeats, by properties that give them away, to the world's own object. */
+export const SHAPES: { has: string[]; value: Record<string, unknown> }[] = [
+  ...CANON,
+  { has: ['kind', 'card', 'replay'], value: SCAN_OK },
+  { has: ['today', 'asOf', 'configRev'], value: SCAN_COUNTS },
+  { has: ['headsUp', 'undone', 'byAction'], value: SCAN_SUMMARY },
+  { has: ['urlMasked', 'eventTypes', 'target'], value: WEBHOOK_ENDPOINT },
+  { has: ['eventId', 'attempts', 'nextAt', 'replays'], value: DELIVERY },
+  { has: ['prefix', 'scopes'], value: API_KEY },
+  { has: ['anchor', 'offset', 'sendAt'], value: MESSAGE_RULE },
+  { has: ['kind', 'target', 'counts', 'notify'], value: BROADCAST },
+  { has: ['connectorType', 'config', 'onMissing'], value: CONNECTION },
+  { has: ['trigger', 'outcome', 'recordsSeen'], value: CONNECTION_RUN },
+  { has: ['releaseVersion', 'onRelease', 'failedCount'], value: ROLLOUT },
+  { has: ['uploadId', 'status'], value: UPLOAD },
+  { has: ['opensAt', 'closesAt', 'reentry', 'arrived'], value: SCAN_EVENT },
+  { has: ['hostName', 'windowFrom', 'windowUntil'], value: VISITOR },
+];

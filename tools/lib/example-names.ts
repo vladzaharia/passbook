@@ -20,12 +20,6 @@ export const TABLES: Record<string, string[]> = {
   hour: ['9 AM', '10 AM', '5 PM', '6 PM', '7 PM'],
   action: ['Admit', 'Check out', 'Add a visit', 'Redeem reward'],
   inputLabel: ['Visits to add', 'Amount', 'Guests'],
-  rollout: [
-    'Apple push refused 3 updates',
-    'Google Wallet update delayed',
-    'Two passes have no email',
-    'Template change waiting for review',
-  ],
   window: ['Evening rush', 'Weekend morning', 'School holidays', 'Quiet hours'],
   flag: ['Birthday today', 'Waiver due', 'First visit', 'Coach'],
   value: ['Visits left', 'Balance', 'Days left', 'Guest passes'],
@@ -88,14 +82,16 @@ const KEYED: [RegExp, RegExp, string][] = [
 /** Segment word patterns, nearest ancestor first; the first that matches names the entity. */
 const RULES: [RegExp, string][] = [
   [/^(sandbox)$/, 'sandbox'],
-  [/^(tagtype|bytype|types?)$/, 'tagType'],
+  [/^(tagtype|types?)$/, 'tagType'],
   [/^(tags?)$/, 'tag'],
   [/^(visitors?)$/, 'visitor'],
   [/^(personalization|sample|input|previews?|holders?|rows|members?|people)$/, 'holder'],
   [
-    /^(user|admin|owner|host|staff|stafflist|author|reviewer|createdby|startedby|endedby|requestedby|approvedby|undoneby|actor|placedby|releasedby|boundby|bound|placed|released|approvals?|session)$/,
+    /^(user|admin|owner|host|staff|stafflist|author|reviewer|createdby|startedby|endedby|requestedby|approvedby|undoneby|actor|placedby|releasedby|boundby|bound|placed|released|approvals?)$/,
     'person',
   ],
+  // A scanning session is named for a shift or a place, never for the person who runs it.
+  [/^(sessions?)$/, 'session'],
   [/^(actions?|byaction)$/, 'action'],
   [/^(input|inputs)$/, 'inputLabel'],
   [/^(flags?)$/, 'flag'],
@@ -111,7 +107,7 @@ const RULES: [RegExp, string][] = [
   [/^(assets?|logo|logos)$/, 'asset'],
   [/^(source|files?|uploads?)$/, 'file'],
   [/^(events?)$/, 'event'],
-  [/^(failed|failures?|rollout)$/, 'rollout'],
+  [/^(failed)$/, 'pass'],
   [/^(windows?|waiting|attention|replace)$/, 'window'],
   [/^(templates?)$/, 'template'],
   [/^(passes|pass)$/, 'pass'],
@@ -139,6 +135,8 @@ export function tableFor(key: string, path: string, tag: string): string {
   const own = words(key).filter((w) => !/^(name|label|title|display|subtitle)$/.test(w));
   const parents = path.split('.').filter(Boolean).slice(0, -1).reverse();
   const first = words(tag)[0] ?? '';
+  // Scan counts by type are by pass type: the template (contracts/scan-session.ts).
+  if (/byType/.test(path)) return 'template';
   const candidates = [...own, ...parents.flatMap((p) => words(p)), ...words(tag)];
   for (const w of candidates) for (const [re, table] of RULES) if (re.test(w)) return table;
   for (const [t, k, table] of KEYED) if (t.test(first) && k.test(key)) return table;
@@ -168,73 +166,3 @@ export function humanName(key: string, path: string, op: string): string {
   const i = first ? 0 : Number.parseInt(hex(`${op}${path}`, 4), 16) % table.length;
   return table[i] as string;
 }
-
-export const REASONS = [
-  'Refund issued at the desk.',
-  'Duplicate booking.',
-  'Member moved away.',
-  'Waiver not signed.',
-  'Wristband replaced after it was lost.',
-  'Payment did not clear.',
-  'Class canceled by the coach.',
-  'Guest of a member who left.',
-  'Membership paused for the winter.',
-  'Booked on the wrong date.',
-  'Injury; returning in the new year.',
-  'Switched to the monthly plan.',
-  'Family moved to another city.',
-  'Event postponed to spring.',
-  'Pass issued to the wrong email.',
-  'Trial ended without a renewal.',
-  'Chargeback opened by the bank.',
-  'Account merged into another.',
-  'Staff discount ended.',
-  'Birthday party finished.',
-  'School term ended.',
-  'Gift card used up.',
-  'Corporate contract ended.',
-  'Left the gym early; refund requested.',
-  'Checked in at the wrong door.',
-  'Name misspelled at sign-up.',
-  'Photo did not match the holder.',
-  'Booking sheet row removed.',
-  'Coach pass no longer needed.',
-  'Locker hire ended.',
-];
-export const NOTES = [
-  'Photo ID checked at the desk.',
-  'Prefers email over push.',
-  'Allergic to latex chalk.',
-  'Needs a harness fitting.',
-  'Brings two guests on Fridays.',
-  'Waiver on file.',
-  'Under 16: a parent signs in.',
-  'Asked about the youth league.',
-  'Paid by bank transfer.',
-  'Uses the side door.',
-  'Staff member; free entry.',
-  'Lost the wristband once.',
-  'Has a left-handed route preference.',
-  'Renews each January.',
-  'Joined through the school group.',
-  'Wants a receipt by email.',
-  'First visit was a birthday party.',
-  'Coach for the Tuesday class.',
-  'Locker 14 until June.',
-  'Needs step-free access.',
-  'Booked the cafe for after.',
-  'Referred by a member.',
-  'Pass reissued after a phone change.',
-  'Check the waiver at the next visit.',
-  'Visits mostly on Saturday mornings.',
-  'Volunteer route setter.',
-  'Bringing a group of six.',
-  'Card on file expires in March.',
-  'Prefers the quiet hours.',
-  'Training for the winter league.',
-];
-let reasonN = 0;
-let noteN = 0;
-/** The next reason or note in turn, so one sentence is used as rarely as the pool allows. */
-export const nextReason = (): string => REASONS[reasonN++ % REASONS.length] as string;
-export const nextNote = (): string => NOTES[noteN++ % NOTES.length] as string;

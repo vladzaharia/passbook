@@ -1,8 +1,11 @@
 // Builds an example from a schema and the fictional world (example-world.ts): values by field name, then format.
-import { humanName, nextNote, nextReason } from './example-names.ts';
+
+import { SHAPES } from './example-canon.ts';
+import { ERROR_KEYS, errorCodeFor, fieldValue, OMIT } from './example-fields.ts';
+import { humanName } from './example-names.ts';
+import { PROSE_KEYS } from './example-text.ts';
 import {
   API,
-  CANON,
   hex,
   IDS,
   KEY_PREFIX,
@@ -11,6 +14,7 @@ import {
   NAMES,
   ORG,
   ORG_SLUG,
+  PASS,
   pem,
   SITE,
   T,
@@ -37,6 +41,46 @@ function resolve(ctx: Ctx, s: Json | undefined): Json {
   for (let i = 0; i < 20 && cur.$ref; i++)
     cur = ctx.doc.components.schemas[refName(cur.$ref)] ?? {};
   return cur;
+}
+
+const isObj = (v: unknown): v is Json => !!v && typeof v === 'object' && !Array.isArray(v);
+const typesOf = (ctx: Ctx, s: Json): string[] => {
+  const alts: Json[] = s.oneOf ?? s.anyOf ?? [];
+  if (alts.length) return alts.flatMap((a) => typesOf(ctx, resolve(ctx, a)));
+  if (s.const !== undefined) return [s.const === null ? 'null' : typeof s.const];
+  return Array.isArray(s.type) ? s.type : s.type ? [s.type] : [];
+};
+function allowsNull(ctx: Ctx, s: Json): boolean {
+  return typesOf(ctx, s).includes('null') || (Array.isArray(s.enum) && s.enum.includes(null));
+}
+/** A scalar fits a schema when its type, enum, const, pattern and bounds allow it. */
+function fits(ctx: Ctx, s: Json, v: unknown): boolean {
+  const alts: Json[] = s.oneOf ?? s.anyOf ?? [];
+  if (alts.length) return alts.some((a) => fits(ctx, resolve(ctx, a), v));
+  if (s.const !== undefined) return s.const === v;
+  if (Array.isArray(s.enum)) return s.enum.includes(v);
+  const types = typesOf(ctx, s);
+  const t = typeof v === 'number' && Number.isInteger(v) ? ['integer', 'number'] : [typeof v];
+  if (types.length && !t.some((x) => types.includes(x))) return false;
+  if (typeof v === 'string') {
+    if (s.pattern && !new RegExp(s.pattern).test(v)) return false;
+    if (typeof s.maxLength === 'number' && v.length > s.maxLength) return false;
+    if (typeof s.minLength === 'number' && v.length < s.minLength) return false;
+  }
+  if (typeof v === 'number') {
+    if (typeof s.minimum === 'number' && v < s.minimum) return false;
+    if (typeof s.maximum === 'number' && v > s.maximum) return false;
+  }
+  return true;
+}
+/** The alternative of a union that a seed object belongs to: it has the seed's keys and its fixed values. */
+function shapeFits(ctx: Ctx, s: Json, seed: Json): boolean {
+  const props: Json = s.properties ?? {};
+  return Object.entries(seed).every(([k, v]) => {
+    const p = props[k] ? resolve(ctx, props[k]) : undefined;
+    if (!p) return s.additionalProperties !== false && !s.properties;
+    return p.const === undefined && !p.enum ? true : fits(ctx, p, v);
+  });
 }
 
 const KIND_KEYS: Record<string, string> = {
@@ -147,29 +191,8 @@ function stringFor(key: string, kind: string, ctx: Ctx): string | undefined {
     ],
     [/^(privateKeyPem|keyPem|pem)$/, pem('PRIVATE KEY')],
     [/^(certificatePem|publicKeyPem)$/, pem('CERTIFICATE')],
-    [
-      /^(lastErrorCode|syncErrorCode|errorCode|voidCause|refused|refusedReason|error)$/,
-      () =>
-        k === 'voidCause'
-          ? 'refund'
-          : k === 'refused' || k === 'refusedReason'
-            ? 'expired'
-            : TEXT.errorCode,
-    ],
-    [/^(reason|refusedLine)$/, TEXT.reason],
-    [
-      /^(message|text|welcome|body|detail|errorDetail|note|subject)$/,
-      () =>
-        k === 'note'
-          ? TEXT.note
-          : k === 'detail' || k === 'errorDetail'
-            ? /onnection/.test(ctx.op)
-              ? 'Read 3 rows from the sheet.'
-              : TEXT.detail
-            : k === 'subject'
-              ? 'Your day pass'
-              : TEXT.message,
-    ],
+    [/^(voidCause|refused|refusedReason)$/, () => (k === 'voidCause' ? 'refund' : 'expired')],
+    [/^subject$/, 'Your Northwind Climbing pass'],
     [
       /^(title|alt|actionLabel|label|rewardLabel|pairedLabel|typeName|placeNames|description|group|icon|style)$/,
       () =>
@@ -199,8 +222,8 @@ function stringFor(key: string, kind: string, ctx: Ctx): string | undefined {
                             ? 'Northwind logo'
                             : nameFor(k, kind),
     ],
-    [/^(downloadUrl)$/, () => `${SITE}/p/${IDS.pass}.pkpass`],
-    [/^(publicUrl|url|link|joinUrl|pageUrl)$/, () => `${SITE}/p/xK3v9QmT2Lw8`],
+    [/^(downloadUrl)$/, () => PASS.downloadUrl],
+    [/^(publicUrl|url|link|joinUrl|pageUrl)$/, () => PASS.publicUrl],
     [/^(supportUrl|helpUrl)$/, `${SITE}/help`],
     [/^(webhookUrl|endpointUrl)$/, 'https://hooks.example.com/passbook'],
     [/^assetBaseUrl$/, () => `${API}/assets/${IDS.pass}/`],
@@ -373,9 +396,15 @@ function contextString(key: string, kind: string, path: string, ctx: Ctx): strin
   }
 }
 
+/** Free-text fields with no sentence for their family; the generator fails with this list. */
+export const unwritten = new Set<string>();
+
 /** A name field: a person in person fields, a resource name elsewhere. */
 function nameField(key: string, path: string, op: string): string | undefined {
   if (!/[nN]ame$|^name$|^label$|^title$|^subtitle$/.test(key)) return undefined;
+  // The holder of a pass is Ada (or a visitor); the people who work at the gym are its staff.
+  if (/holder|owner|subtitle/i.test(key)) return 'Ada Example';
+  if (/^visitor/i.test(key)) return 'Jordan Lee';
   if (
     /holder|member|owner|host|visitor|staff|admin|author|reviewer|createdBy|startedBy|endedBy|requestedBy/i.test(
       key + path,
@@ -419,7 +448,7 @@ function pickEnum(values: unknown[], key: string): unknown {
 
 /** Fields that describe a resource gone wrong or retired; an everyday example leaves them empty. */
 const STATE_KEYS =
-  /^(revokedAt|retireAt|retiredAt|removedAt|disabledAt|deletedAt|archivedAt|failingSince|rotatedFrom|parentKeyId|previous\w*|breakerOpenUntil|undoUntil|lastError\w*|syncErrorCode|errorDetail|errorCode|errorFile|voidedAt|expiredAt|matched|pushBudget|blocked\w*|pairedAt|pairedBy\w*|lastStatus|closedAt|closingAt|hold)$/;
+  /^(endCause|endedAt|waitingFor|revokedAt|retireAt|retiredAt|removedAt|disabledAt|deletedAt|archivedAt|failingSince|rotatedFrom|parentKeyId|previous\w*|breakerOpenUntil|undoUntil|lastError\w*|syncErrorCode|errorDetail|errorCode|errorFile|voidedAt|expiredAt|matched|pushBudget|blocked\w*|pairedAt|pairedBy\w*|lastStatus|closedAt|closingAt|hold)$/;
 
 type Maker = (ctx: Ctx, path: string) => string;
 const h =
@@ -438,7 +467,7 @@ const FIELD: Record<string, Maker> = {
   csrfToken: t('csrf_demo_northwind'),
   next: t('/account'),
   removalMessage: t('Removed by the front desk.'),
-  href: t(`${SITE}/p/xK3v9QmT2Lw8`),
+  href: t(PASS.publicUrl),
   userAgent: t('Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X)'),
   method: t('GET'),
   route: t('/api/v1/passes'),
@@ -509,6 +538,10 @@ const FIELD: Record<string, Maker> = {
 
 const TRUE_KEYS = /^(is|has|can|allow|enabled|active|ok|sendEmail|valid|live|default)/;
 
+/**
+ * A value for `schema`. `seed` is the world's own value for this place (a canonical object, a hand-written part): it
+ * wins wherever it fits the schema, and the schema fills in what it leaves out, so a seed never breaks validity.
+ */
 export function sample(
   ctx: Ctx,
   schema: Json | undefined,
@@ -516,20 +549,37 @@ export function sample(
   path: string,
   kind: string,
   depth: number,
+  seed?: unknown,
 ): unknown {
   const s = resolve(ctx, schema);
+  if (seed === null && allowsNull(ctx, s)) return null;
+  if (seed !== undefined && seed !== null && typeof seed !== 'object' && fits(ctx, s, seed))
+    return seed;
+  const fixed = seed === undefined ? fieldValue(ctx, key, path) : undefined;
+  // A rule may give a whole object or list: it seeds this place like a canonical value.
+  if (fixed && typeof fixed === 'object') return sample(ctx, schema, key, path, kind, depth, fixed);
+  if (fixed !== undefined && fixed !== OMIT) {
+    if (fixed === null ? allowsNull(ctx, s) : fits(ctx, s, fixed)) return fixed;
+    // An error code the schema requires: the record failed, with a code its operation can carry.
+    if (fixed === null && ERROR_KEYS.test(key) && typesOf(ctx, s).includes('string'))
+      return errorCodeFor(ctx.doc, ctx.op);
+  }
   if (s.example !== undefined) return s.example;
   if (s.const !== undefined) return s.const;
   if (s.enum) return pickEnum(s.enum, key);
   const alts = s.oneOf ?? s.anyOf;
   if (alts) {
     const non = alts.filter((a: Json) => resolve(ctx, a).type !== 'null');
-    return sample(ctx, non[0] ?? alts[0], key, path, kind, depth);
+    const like = isObj(seed)
+      ? non.find((a: Json) => shapeFits(ctx, resolve(ctx, a), seed))
+      : undefined;
+    return sample(ctx, like ?? non[0] ?? alts[0], key, path, kind, depth, seed);
   }
   if (s.allOf) {
     const named = s.allOf.find((a: Json) => a.$ref);
-    if (named) return sample(ctx, named, key, path, kind, depth);
+    if (named) return sample(ctx, named, key, path, kind, depth, seed);
   }
+  if (seed !== undefined && !s.type && !s.properties && !s.items) return seed;
   let type = s.type;
   if (Array.isArray(type)) type = type.find((t: string) => t !== 'null') ?? type[0];
   if (!type && s.properties) type = 'object';
@@ -547,11 +597,12 @@ export function sample(
       return null;
     case 'array': {
       if (depth > 8) return [];
+      const seeds = Array.isArray(seed) ? seed : undefined;
       if (s.prefixItems)
         return s.prefixItems.map((it: Json, i: number) =>
-          sample(ctx, it, key, `${path}[${i}]`, subKind, depth + 1),
+          sample(ctx, it, key, `${path}[${i}]`, subKind, depth + 1, seeds?.[i]),
         );
-      const n = Math.max(1, s.minItems ?? 1);
+      const n = seeds ? Math.max(seeds.length, s.minItems ?? 0) : Math.max(1, s.minItems ?? 1);
       const item =
         key === 'aliases'
           ? 'alias'
@@ -559,12 +610,20 @@ export function sample(
               .replace(/Ids$/, 'Id')
               .replace(/ities$/, 'ity')
               .replace(/(?<!s)s$/, '');
-      return Array.from({ length: Math.min(n, 2) }, (_, i) =>
-        sample(ctx, s.items, item, `${path}[${i}]`, KIND_KEYS[item] ?? subKind, depth + 1),
+      return Array.from({ length: seeds ? Math.min(n, s.maxItems ?? n) : Math.min(n, 2) }, (_, i) =>
+        sample(
+          ctx,
+          s.items,
+          item,
+          `${path}[${i}]`,
+          KIND_KEYS[item] ?? subKind,
+          depth + 1,
+          seeds?.[i],
+        ),
       );
     }
     case 'object':
-      return object(ctx, s, key, path, subKind, depth);
+      return object(ctx, s, key, path, subKind, depth, isObj(seed) ? seed : undefined);
     default:
       // A field with no declared type: a scalar for a setting, a small real object for an audit detail.
       return key === 'detail'
@@ -582,7 +641,20 @@ function object(
   path: string,
   kind: string,
   depth: number,
+  seed?: Json,
 ): unknown {
+  if (seed && !s.properties) {
+    // A map: the seed's keys, each value fitted to the map's value schema.
+    const extra = s.additionalProperties;
+    return Object.fromEntries(
+      Object.entries(seed).map(([k, v]) => [
+        k,
+        extra && typeof extra === 'object'
+          ? sample(ctx, extra, k, `${path}.${k}`, kind, depth + 1, v)
+          : v,
+      ]),
+    );
+  }
   if (key === 'passJson') return TEMPLATE.passJson;
   if (key === 'overrides' && s.additionalProperties?.additionalProperties)
     return { Plan: { Annual: 'Day pass' } };
@@ -594,7 +666,8 @@ function object(
     return { name: { from: 'Name' }, tier: { from: 'Tier' }, validUntil: { from: 'Valid until' } };
   const props: Json = s.properties ?? {};
   const out: Json = {};
-  const canon = ctx.request ? {} : (CANON.find((c) => c.has.every((k) => k in props))?.value ?? {});
+  const canon =
+    seed ?? (ctx.request ? {} : (SHAPES.find((c) => c.has.every((k) => k in props))?.value ?? {}));
   const required: string[] = s.required ?? [];
   // A row whose `id` would equal one of its own foreign keys (a release holds `templateId`) is its own kind.
   const foreign = new Set(
@@ -606,6 +679,8 @@ function object(
   let optional = 0;
   const cap = ctx.request ? (depth === 0 ? 3 : 2) : 14;
   for (const [k, v] of Object.entries<Json>(props)) {
+    if (!(k in canon) && !required.includes(k) && fieldValue(ctx, k, `${path}.${k}`) === OMIT)
+      continue;
     if (!(k in canon) && STATE_KEYS.test(k)) {
       // A state an ordinary example is not in: null where the field allows it, else absent.
       const nullable = Array.isArray(v.type) && v.type.includes('null');
@@ -620,12 +695,19 @@ function object(
       if (v.deprecated || optional >= cap || depth > 8) continue;
       optional++;
     }
-    out[k] =
-      k in canon
-        ? canon[k]
-        : sample(ctx, v, k, `${path}.${k}`, k === 'id' ? idKind : kind, depth + 1);
+    const value = sample(
+      ctx,
+      v,
+      k,
+      `${path}.${k}`,
+      k === 'id' ? idKind : kind,
+      depth + 1,
+      k in canon ? canon[k] : undefined,
+    );
+    if (value !== undefined) out[k] = value;
   }
-  fixState(out, props, ctx.op);
+  // A canonical object is coherent as written; only sampled rows need their fields reconciled.
+  if (!Object.keys(canon).length) fixState(out, props, ctx);
   if (!Object.keys(props).length) {
     const extra = s.additionalProperties;
     const mapKey =
@@ -670,7 +752,7 @@ function str(ctx: Ctx, s: Json, key: string, path: string, kind: string): string
       : /support|help/i.test(key)
         ? 'help@example.com'
         : 'ada@example.com';
-  if (f === 'uri' || f === 'url') return `${SITE}/p/xK3v9QmT2Lw8`;
+  if (f === 'uri' || f === 'url') return PASS.publicUrl;
   const uuidPattern =
     (!s.pattern || s.pattern.startsWith('^[0-9a-fA-F]{8}-')) && (!s.maxLength || s.maxLength >= 36);
   if (
@@ -692,8 +774,11 @@ function str(ctx: Ctx, s: Json, key: string, path: string, kind: string): string
   }
   const name = nameField(key, path, ctx.op);
   if (name) return name;
-  if (key === 'reason' && !s.enum && !/Apns/.test(ctx.op)) return nextReason();
-  if (key === 'note' && !s.enum) return nextNote();
+  if (PROSE_KEYS.test(key)) {
+    // Free text comes from its family's sentences (example-text.ts) or not at all.
+    unwritten.add(`${key} at ${path} of ${ctx.op}`);
+    return 'MISSING';
+  }
   let v = contextString(key, kind, path, ctx) ?? stringFor(key, kind, ctx);
   if (v === 'x') v = undefined;
   if (v === undefined) {
@@ -706,7 +791,7 @@ function str(ctx: Ctx, s: Json, key: string, path: string, kind: string): string
         : key.startsWith('label')
           ? '#ffc400'
           : '#112a4a';
-    else if (/(Url|Uri)$/.test(key)) v = `${SITE}/p/xK3v9QmT2Lw8`;
+    else if (/(Url|Uri)$/.test(key)) v = PASS.publicUrl;
     else {
       ctx.unknown.add(key);
       v = key;
@@ -768,7 +853,11 @@ function byPattern(pattern: string, seed: string): string | undefined {
 
 function num(s: Json, key: string): number {
   let v = 2 + (Number.parseInt(hex(key, 4), 16) % 38);
-  if (/validFrom$|^windowFrom$|From$/.test(key)) v = T.validFrom;
+  if (key === 'clearAfter') v = 7 * 86_400_000;
+  else if (/^(from|start)$/.test(key)) v = T.now - 24 * 3_600_000;
+  else if (/^(to|end)$/.test(key)) v = T.now;
+  else if (key === 'until') v = T.soon;
+  else if (/validFrom$|^windowFrom$|From$/.test(key)) v = T.validFrom;
   else if (/validUntil$|Until$|After$|^notAfter$|expiresAt$|^expires/.test(key))
     v = /breaker/.test(key) ? T.soon : /undo/.test(key) ? T.soon : T.validUntil;
   else if (/^(createdAt|startedAt|firstSeenAt|notBefore)$/.test(key)) v = T.created;
@@ -808,7 +897,8 @@ function ownKindOf(op: string): string {
 }
 
 /** Fields that must agree with each other after sampling. */
-function fixState(out: Json, props: Json, op: string): void {
+function fixState(out: Json, props: Json, ctx: Ctx): void {
+  const op = ctx.op;
   const num = (k: string): number | undefined =>
     typeof out[k] === 'number' ? (out[k] as number) : undefined;
   // Three sibling numbers that came out the same are nudged apart.
@@ -821,8 +911,9 @@ function fixState(out: Json, props: Json, op: string): void {
   // A total is the sum of its parts.
   const parts = Object.keys(out).filter(
     (k) =>
-      /^(done|failed|created|updated|unchanged|skipped|removed|ok|errors|refused)$/.test(k) &&
-      num(k) !== undefined,
+      /^(done|failed|created|updated|unchanged|skipped|removed|ok|errors|refused|headsUp)$/.test(
+        k,
+      ) && num(k) !== undefined,
   );
   if (num('total') !== undefined && parts.length >= 2)
     out.total = parts.reduce((n, k) => n + (num(k) ?? 0), 0);
@@ -854,7 +945,7 @@ function fixState(out: Json, props: Json, op: string): void {
   )
     out.finishedAt = null;
   if ((out.state ?? out.status) === 'failed' && 'errorCode' in out && out.errorCode === null)
-    out.errorCode = 'UPSTREAM_ERROR';
+    out.errorCode = errorCodeFor(ctx.doc, op);
   for (const born of ['createdAt', 'receivedAt'])
     if (
       num('updatedAt') !== undefined &&
@@ -886,14 +977,14 @@ function fixState(out: Json, props: Json, op: string): void {
     if (typeof out.detail === 'string' && out.detail.startsWith('Read '))
       out.detail = `Read ${out.records} records from the sheet.`;
   }
-  if (typeof out.downloadUrl === 'string' && typeof out.id === 'string')
-    out.downloadUrl = `${SITE}/p/${out.id}.pkpass`;
+
   if (
     /^(healthy|ok|active)$/.test(
       ([out.state, out.status, out.health].find((v) => typeof v === 'string') as string) ?? '',
     ) &&
     typeof out.reason === 'string' &&
-    !/^(ok|none)$/.test(out.reason)
+    !/^(ok|none)$/.test(out.reason) &&
+    !(out.status === 400 && out.reason === 'BadDeviceToken')
   ) {
     const r = props.reason as Json | undefined;
     if (r?.enum?.includes('ok')) out.reason = 'ok';

@@ -35,7 +35,16 @@ const importSource = { kind: 'file', name: 'members.csv', csv: MEMBERS_CSV };
 /** `<operationId> <request|response>` to its example. */
 export const HEADLINE: Record<string, unknown> = {
   'passes.postPasses request': create,
-  'passes.postPasses response': { ...PASS, email: { outcome: 'queued', cap: 'org' } },
+  'passes.postPasses response': {
+    ...PASS,
+    createdAt: T.now,
+    modifiedAt: T.now,
+    deviceCount: 0,
+    registrations: 0,
+    lastRefreshedAt: null,
+    versions: PASS.versions.map((v) => ({ ...v, createdAt: T.now })),
+    email: { outcome: 'queued', cap: 'org' },
+  },
   'templates.getTemplatesByIdReleasesImpact response': {
     fromVersion: '2',
     toVersion: '3',
@@ -65,7 +74,8 @@ export const HEADLINE: Record<string, unknown> = {
   },
   'status.getStatus response': {
     overall: 'verified',
-    build: { id: '2026-11-24.1', tag: 'v2026.11.24', timestamp: new Date(T.recent).toISOString() },
+    // The build deployed two days ago: its id and tag are its UTC date.
+    build: { id: '2026-11-23.1', tag: 'v2026.11.23', timestamp: new Date(T.updated).toISOString() },
     components: [
       ['database', 'database', 'Database', 'verified', null],
       ['storage', 'storage', 'File storage', 'verified', null],
@@ -131,38 +141,6 @@ export const HEADLINE_VARIANTS: Record<string, Record<string, unknown>> = {
 
 export const API_BASE = API;
 
-const admit = { id: 'admit', label: 'Admit', kind: 'check_in' };
-// biome-ignore lint/suspicious/noExplicitAny: a sampled answer is untyped JSON
-type Json = Record<string, any>;
-
-/** Fixes a sampled scan answer so its parts agree: a pass that is fine, admitted at the desk. */
-export function scanAnswer(v: Json): Json {
-  const card = (v.card ?? {}) as Json;
-  return {
-    ...v,
-    scanId: IDS.scan,
-    kind: 'ok',
-    reason: null,
-    action: admit,
-    flags: [],
-    card: {
-      ...card,
-      passId: IDS.pass,
-      title: 'Day pass',
-      subtitle: 'Ada Example',
-      flags: [],
-      values: [],
-      actions: [{ ...(card.actions?.[0] ?? {}), ...admit }],
-    },
-  };
-}
-
-export const SCAN_ANSWERS = new Set([
-  'scan.postScanResolve',
-  'scan.postScanActions',
-  'scan.postScanScansByScanIdUndo',
-]);
-
 type Obj = Record<string, unknown>;
 /** A rotation answers with the new key (new id, prefix and secret) and the old one, now retiring. */
 export function rotateAnswer(v: Obj): Obj {
@@ -185,7 +163,8 @@ export function rotateAnswer(v: Obj): Obj {
       id: IDS.key,
       prefix: KEY_PREFIX,
       secretPrefix: `pb_test_${KEY_PREFIX}`,
-      retireAt: T.later,
+      // The rotation's overlap: the old secret works for the 24 hours the request asked for.
+      retireAt: T.now + 24 * 3_600_000,
     },
   };
 }

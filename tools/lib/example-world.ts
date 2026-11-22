@@ -128,7 +128,8 @@ export const TEMPLATE = {
   },
 };
 
-const BASE = Date.UTC(2026, 10, 24, 15, 0, 0);
+/** Now: 18:00 on 24 November 2026 at the gym (Pacific time), the evening rush. */
+const BASE = Date.UTC(2026, 10, 25, 2, 0, 0);
 const MIN = 60_000;
 const DAY = 24 * 60 * MIN;
 /** Fixed times near one date, as integer ms. */
@@ -136,21 +137,22 @@ export const T = {
   now: BASE,
   created: BASE - 14 * DAY,
   updated: BASE - 2 * DAY,
-  recent: BASE - 3 * 60 * MIN,
+  recent: BASE - 25 * MIN,
   soon: BASE + 10 * MIN,
   tomorrow: BASE + DAY,
-  validFrom: BASE,
-  validUntil: BASE + 30 * DAY,
+  validFrom: Date.UTC(2026, 10, 24, 8, 0, 0),
+  /** The end of 31 December, the day the template's sample is valid until. */
+  validUntil: Date.UTC(2027, 0, 1, 8, 0, 0) - 1,
   later: BASE + 7 * DAY,
 };
 
-/** Reasons, messages and codes that read like traffic. */
+/** A pass's scan code: 26 base32 characters (modules/scan/codes.ts). */
+export const SCAN_CODE = 'K7QZ4M2VXN5HJ3RPWB6TDFCLYA';
+/** A scanner pairing code: 10 Crockford base32 characters (modules/scan/pairing.ts). */
+export const PAIRING_CODE = '7K3M9QX2TA';
+
+/** Formats every example shares. Free text is in example-text.ts, by family. */
 export const TEXT = {
-  reason: 'Left the gym early; refund issued at the desk.',
-  message: 'The gym closes at 18:00 on 24 December.',
-  note: 'Photo ID checked at the desk.',
-  detail: 'The pass has already been used today.',
-  errorCode: 'RATE_LIMITED',
   version: '3',
   timeZone: 'America/Los_Angeles',
   locale: 'en-US',
@@ -180,7 +182,13 @@ export function hex(seed: string, len: number): string {
   return out.slice(0, len);
 }
 
-/** A pass as the API returns it; every example that shows a pass shows this one. */
+/** The pass's link token, as `/p/<token>` shows it (passes/detail.ts). */
+const PASS_TOKEN = 'xK3v9QmT2Lw8Rp4sYb7NcQ';
+/** A bundle's and a join link's tokens (`/b/<token>`, `/j/<token>`). */
+export const BUNDLE_URL = `${API}/b/Fm2qT8vXc4NpL6sRa9WkJd`;
+export const JOIN_URL = `${API}/j/Hs7dK2pYw9QxN4tBc6VmRe`;
+
+/** A pass as the API returns it, issued two days ago, on Ada's iPhone and watch; every example that shows a pass shows this one. */
 export const PASS = {
   id: IDS.pass,
   orgId: IDS.org,
@@ -200,17 +208,17 @@ export const PASS = {
   holderEmail: 'ada@example.com',
   holderState: 'waiting',
   ownerUserId: null,
-  deviceCount: 0,
+  deviceCount: 2,
   removedAt: null,
-  modifiedAt: T.recent,
-  createdAt: T.recent,
+  modifiedAt: T.updated,
+  createdAt: T.updated,
   reissueRequired: false,
   ownerName: null,
   ownerEmail: null,
   personalization: TEMPLATE.sample,
   fieldSources: TEMPLATE.fieldSources,
-  registrations: 0,
-  lastRefreshedAt: null,
+  registrations: 2,
+  lastRefreshedAt: T.updated + 3 * MIN,
   versions: [
     {
       version: 1,
@@ -219,18 +227,18 @@ export const PASS = {
       source: null,
       actorType: 'api_key',
       actorId: IDS.key,
-      createdAt: T.recent,
+      createdAt: T.updated,
       purged: false,
     },
   ],
   deliveries: [],
   warnings: [],
   passJson: TEMPLATE.passJson,
-  assetBaseUrl: `${API}/assets/${IDS.pass}/`,
+  assetBaseUrl: `${API}/p/${PASS_TOKEN}/assets/`,
   assetNames: ['icon.png', 'icon@2x.png', 'logo.png'],
   blockedUsers: [],
-  downloadUrl: `${SITE}/p/${IDS.pass}.pkpass`,
-  publicUrl: `${SITE}/p/xK3v9QmT2Lw8`,
+  downloadUrl: `${API}/p/${PASS_TOKEN}/pass.pkpass`,
+  publicUrl: `${API}/p/${PASS_TOKEN}`,
 };
 
 /** The template every pass and scan example uses. */

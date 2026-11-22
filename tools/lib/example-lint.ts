@@ -1,5 +1,6 @@
 // Content rules for the examples in the committed OpenAPI document: a schema-valid example can still be filler.
 // Pure: no I/O. Run by check-openapi; the generator (tools/gen-reference-examples.ts) reruns until it is clean.
+import { fitFailures } from './example-lint-fit.ts';
 import { tableFor } from './example-names.ts';
 import { IDS, ORG, ORG_SLUG } from './example-world.ts';
 import type { Doc } from './openapi-diff.ts';
@@ -67,7 +68,9 @@ const RESOURCE_NAME =
   /^(name|label|title|description)$|^(org|template|scanner|device|type|connection|keyset|zone|event|key|identity|asset)Names?$|Label$/;
 /** Words from an earlier sample world; every example describes Northwind Climbing now. */
 const FOREIGN = /Harbor|Example Events|TICKET-|Event ticket|Acme|Henry/i;
-const TIME_KEY = /(?:At|Until|From|Since|Before|After|On)$|^(?:at|serverNow|when)$/;
+/** Keys that hold an instant. `clearAfter` is a duration (contracts/broadcasts.ts). */
+const TIME_KEY =
+  /^(?!clearAfter$).*(?:At|Until|From|Since|Before|After|On)$|^(?:at|serverNow|when|from|to|start|end|until)$/;
 const ID_KEY = /^id$|Id$|^serial$|^serialNumber$/;
 
 export interface Example {
@@ -233,6 +236,7 @@ export function exampleFailures(doc: Doc, examples: Example[] = examplesOf(doc))
     for (const m of ownIdReuse(ex.value)) out.push(`${ex.where}${m}`);
   }
   out.push(...corpusFailures(examples));
+  out.push(...fitFailures(doc, examples));
   for (const [value, ops] of patterned)
     if (ops.size >= 4) out.push(`"${value}" is a regex sample reused by ${ops.size} operations`);
   return out;
@@ -256,7 +260,14 @@ function objectFailures(value: unknown, at: string, op = ''): string[] {
         out.push(`${at}.${k}: the id ${v} is also the ${seen} id in this object`);
       else owner.set(v, entityOf(k));
     }
-    if (typeof v === 'number' && Number.isInteger(v) && v < 1_000_000_000_000) numbers.push(v);
+    // A version number is a count of changes, not a sample: it may equal its siblings.
+    if (
+      typeof v === 'number' &&
+      Number.isInteger(v) &&
+      v < 1_000_000_000_000 &&
+      !/[vV]ersion$/.test(k)
+    )
+      numbers.push(v);
   }
   if (numbers.length >= 3 && (numbers.every((n) => n === 1) || numbers.every((n) => n === 3)))
     out.push(`${at}: every number is ${numbers[0]}, which reads as filler`);
@@ -313,7 +324,11 @@ function invariantFailures(o: Json, at: string): string[] {
     for (const [k, v] of entries)
       if (GONE_AT.test(k) && v !== null && v !== undefined)
         out.push(`${at}: ${k} is set on an active record`);
-  if (FINAL_STATES.test(state) && o.nextAt !== undefined && o.nextAt !== null)
+  // A finished record keeps the time its last attempt was due, never one after it finished.
+  if (FINAL_STATES.test(state) && num(o.nextAt) !== undefined && num(o.finishedAt) !== undefined)
+    if ((o.nextAt as number) > (o.finishedAt as number))
+      out.push(`${at}: nextAt is after finishedAt on a ${state} record`);
+  if (FINAL_STATES.test(state) && num(o.nextAt) !== undefined && o.finishedAt === undefined)
     out.push(`${at}: nextAt is set on a ${state} record`);
   if (state === 'delivered' && 'lastStatus' in o && o.lastStatus === null)
     out.push(`${at}: a delivered record has no lastStatus`);
@@ -322,7 +337,10 @@ function invariantFailures(o: Json, at: string): string[] {
   const okState = [o.state, o.status, o.health].find(
     (v) => typeof v === 'string' && /^(healthy|ok|active)$/.test(v),
   );
-  if (okState)
+  // A healthy APNs probe is one Apple answered 400 for the dummy token (identities/apns-probe.ts).
+  const probe =
+    o.status === 400 && /^(BadDeviceToken|DeviceTokenNotForTopic)$/.test(String(o.reason));
+  if (okState && !probe)
     for (const k of ['reason', 'errorReason', 'lastError', 'errorCode'])
       if (
         typeof o[k] === 'string' &&
@@ -372,8 +390,9 @@ function invariantFailures(o: Json, at: string): string[] {
   if (total !== undefined) {
     const parts = entries.filter(
       ([k, v]) =>
-        /^(done|failed|created|updated|unchanged|skipped|removed|ok|errors|refused)$/.test(k) &&
-        num(v) !== undefined,
+        /^(done|failed|created|updated|unchanged|skipped|removed|ok|errors|refused|headsUp)$/.test(
+          k,
+        ) && num(v) !== undefined,
     );
     const sum = parts.reduce((n, [, v]) => n + (v as number), 0);
     if (parts.length >= 2 && sum !== total)
@@ -408,12 +427,13 @@ export function ownIdReuse(value: unknown): string[] {
 
 const PEOPLE = new Set(['person', 'holder', 'visitor']);
 const NAME_KEYS = /^(name|label|title)$/;
-const NOTE_KEYS = /^(reason|note|notes)$/;
 
-/** Rules over the whole set: one string as the name of two kinds of thing, and reasons or notes used over and over. */
+/**
+ * Rules over the whole set: one string as the name of two kinds of thing. Free text is judged by fit instead of by
+ * repeats (example-lint-fit.ts): one world's event has the same note in every operation that shows it.
+ */
 function corpusFailures(examples: Example[]): string[] {
   const kindsOf = new Map<string, Set<string>>();
-  const notes = new Map<string, number>();
   const visit = (v: unknown, path: string, key: string, ex: Example, schema: unknown): void => {
     if (Array.isArray(v)) {
       for (const x of v) visit(x, `${path}[]`, key, ex, schema);
@@ -433,7 +453,6 @@ function corpusFailures(examples: Example[]): string[] {
       }
       if (!PEOPLE.has(table)) (kindsOf.get(v) ?? kindsOf.set(v, new Set()).get(v))?.add(table);
     }
-    if (NOTE_KEYS.test(key) && /\s/.test(v)) notes.set(v, (notes.get(v) ?? 0) + 1);
   };
   for (const ex of examples) visit(ex.value, '', '', ex, ex.schema);
   const out: string[] = [];
@@ -448,8 +467,5 @@ function corpusFailures(examples: Example[]): string[] {
     if (clash)
       out.push(`"${value}" is the name of more than one kind of thing: ${list.sort().join(', ')}`);
   }
-  for (const [value, n] of notes)
-    if (n > 3)
-      out.push(`"${value.slice(0, 50)}" is the reason or note of ${n} examples; at most 3`);
   return out;
 }
