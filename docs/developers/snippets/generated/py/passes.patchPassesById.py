@@ -13,7 +13,7 @@ result = pb.passes.update(
             "validUntil": "2026-12-31",
         },
         "templateVersion": "3",
-        "externalId": "0193a1b2-7c00-7000-8000-1ab96d5bf47b",
+        "externalId": "booking_8841",
     },
 )
 print(result)

@@ -6,7 +6,7 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 
 result = pb.pass_imports.mappings.save(
     {
-        "name": "Day pass",
+        "name": "Northwind Climbing",
         "columns": [
             "tier",
         ],

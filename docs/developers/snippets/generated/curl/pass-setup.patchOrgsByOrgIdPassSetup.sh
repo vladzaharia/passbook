@@ -5,7 +5,7 @@ curl -X PATCH "https://passbook.mobile/api/v1/orgs/0193a1b2-7c00-7000-8000-00000
   -d '{
   "expectedRevision": "4",
   "brand": {
-    "name": "Day pass",
+    "name": "Northwind Climbing",
     "logo": {
       "sha": "d5d705ca576254bf7ea60c287f5c830178058ba455a678d68b7874cdff9a9d8e",
       "version": "b78bdcd5b6412c478d2a89e1c1296e3d617e3323c1c49c7d2c2bd73396dad792"

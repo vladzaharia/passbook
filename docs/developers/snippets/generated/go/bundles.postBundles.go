@@ -22,7 +22,7 @@ func main() {
   "passIds": [
     "0193a1b2-7c00-7000-8000-0000000000c1"
   ],
-  "name": "Day pass",
+  "name": "Northwind Climbing",
   "holderEmail": "ada@example.com",
   "sendEmail": true
 }`), &body); err != nil {

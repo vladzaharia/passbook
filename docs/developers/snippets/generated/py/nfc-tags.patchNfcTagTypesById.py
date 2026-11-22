@@ -8,7 +8,7 @@ result = pb.nfc.tag_types.update(
     "0193a1b2-7c00-7000-8000-0000000000e1",
     {
         "version": 3,
-        "name": "Day pass",
+        "name": "Northwind Climbing",
         "use": "member",
         "scopes": "pass",
     },

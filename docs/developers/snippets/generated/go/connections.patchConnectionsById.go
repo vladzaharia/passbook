@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.ConnectionsUpdateBody
 	if err := json.Unmarshal([]byte(`{
-  "name": "Day pass",
+  "name": "Northwind Climbing",
   "config": {
     "sheetId": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
     "range": "Members!A:E"

@@ -13,7 +13,7 @@ curl -X POST "https://passbook.mobile/api/v1/scanning-sessions/setup" \
   ],
   "doors": [
     {
-      "name": "Day pass",
+      "name": "Northwind Climbing",
       "place": "northwind",
       "admits": {
         "any": true

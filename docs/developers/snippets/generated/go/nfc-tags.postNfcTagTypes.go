@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.NfcTagTypesCreateBody
 	if err := json.Unmarshal([]byte(`{
-  "name": "Day pass",
+  "name": "Northwind Climbing",
   "use": "member",
   "scopes": "pass",
   "perPass": 4,

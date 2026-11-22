@@ -2,7 +2,7 @@ curl -X PATCH "https://passbook.mobile/api/v1/scanning-sessions/0193a1b2-7c00-70
   -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-  "name": "Day pass",
+  "name": "Northwind Climbing",
   "timeZone": "America/Los_Angeles",
   "accepts": {
     "templateIds": [

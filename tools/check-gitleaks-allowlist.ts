@@ -2,7 +2,7 @@
 // merely contains one (or looks like a secret) is reported. Cases are assembled here at run time, so this file holds
 // no secret-shaped text. Usage: node tools/check-gitleaks-allowlist.ts [path-to-gitleaks]  (default: gitleaks)
 import { spawnSync } from 'node:child_process';
-import { createHash, generateKeyPairSync } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -17,14 +17,24 @@ const bytes = (n: number): Buffer => {
     out.push(createHash('sha256').update(`gitleaks-allowlist-${counter++}`).digest());
   return Buffer.concat(out).subarray(0, n);
 };
+const sized = (label: string, n: number): Buffer =>
+  createHash('sha256').update(label).digest().subarray(0, n);
 const rand = (n: number): string => bytes(n).toString('base64url').slice(0, n);
 const hex = (n: number): string => bytes(n).toString('hex').slice(0, n);
-const spki = generateKeyPairSync('ec', { namedCurve: 'prime256v1' })
-  .publicKey.export({ type: 'spki', format: 'der' })
-  .toString('base64');
-const pkcs8 = generateKeyPairSync('ec', { namedCurve: 'prime256v1' })
-  .privateKey.export({ type: 'pkcs8', format: 'der' })
-  .toString('base64');
+// P-256 SubjectPublicKeyInfo and PKCS#8 shapes around fixed pseudo-random bytes (the scanner does not check the curve).
+const spki = Buffer.concat([
+  Buffer.from('3059301306072a8648ce3d020106082a8648ce3d030107034200', 'hex'),
+  Buffer.from([4]),
+  bytes(64),
+]).toString('base64');
+const pkcs8 = Buffer.concat([
+  Buffer.from('308187020100301306072a8648ce3d020106082a8648ce3d030107046d306b0201010420', 'hex'),
+  sized('pk-e', 32),
+  Buffer.from('a14403420004', 'hex'),
+  bytes(64),
+])
+  .toString('base64')
+  .replace(/[+/]/g, 'A');
 
 /** Each case is a value in the context the key rule reads; `reported` is what the config must do with it. */
 const cases: { name: string; value: string; reported: boolean; bare?: boolean }[] = [
@@ -83,7 +93,7 @@ const cases: { name: string; value: string; reported: boolean; bare?: boolean }[
   { name: 'passphrase-slug', value: 'correct-horse-battery-staple-v3', reported: true },
   {
     name: 'public-key-with-junk',
-    value: `${spki.replace(/==$/, '')}${rand(30)}==`,
+    value: `${spki.replace(/==$/, '').replace(/[+/]/g, 'A')}${rand(30).replace(/[-_]/g, 'B')}==`,
     reported: true,
   },
   { name: 'private-key', value: pkcs8, reported: true },
