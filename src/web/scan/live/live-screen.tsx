@@ -167,7 +167,7 @@ export function LiveScreen({
         <button
           type="button"
           className="scan-live-brand"
-          aria-label="Setup options"
+          aria-label={`${[session.scanner?.name, orgName].filter(Boolean).join(' ')} setup options`}
           onPointerDown={(event) => {
             if (event.button !== 0) return;
             hold.current = setTimeout(() => setSetup(true), SETUP_HOLD_MS);
@@ -188,7 +188,7 @@ export function LiveScreen({
             />
           </span>
           <span className="scan-live-brand-text">
-            <span className="scan-live-name">{session.scanner?.name}</span>
+            <span className="scan-live-name">{session.scanner?.name}</span>{' '}
             <span className="scan-live-org">{orgName}</span>
           </span>
         </button>

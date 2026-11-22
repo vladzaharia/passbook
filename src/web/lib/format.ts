@@ -277,3 +277,6 @@ export function formatMaybeDate(text: string): string {
     ? UTC_DAY.format(Date.parse(text))
     : formatDay(Date.parse(text));
 }
+
+/** `1 tag`, `2 tags`: the noun takes an `s` unless the count is 1. */
+export const pluralize = (n: number, noun: string) => `${n} ${noun}${n === 1 ? '' : 's'}`;

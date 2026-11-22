@@ -6,7 +6,9 @@ import {
   type PointerEvent,
   type ReactNode,
   useContext,
+  useEffect,
   useRef,
+  useState,
 } from 'react';
 import { cn } from '../lib/cn.ts';
 import { prefersReducedMotion } from '../lib/motion.ts';
@@ -162,8 +164,33 @@ export function SheetContent({
             </DialogPrimitive.Close>
           )}
         </div>
-        <div className="min-h-0 flex-1 overflow-auto">{children}</div>
+        <SheetBody>{children}</SheetBody>
       </DialogPrimitive.Content>
     </DialogPrimitive.Portal>
+  );
+}
+
+/** The scroll body: keyboard-focusable only while it overflows, so a keyboard can scroll it. */
+function SheetBody({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [overflows, setOverflows] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof ResizeObserver === 'undefined') return;
+    const measure = () => setOverflows(node.scrollHeight > node.clientHeight + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    if (node.firstElementChild) observer.observe(node.firstElementChild);
+    return () => observer.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      tabIndex={overflows ? 0 : undefined}
+      className="min-h-0 flex-1 overflow-auto focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+    >
+      {children}
+    </div>
   );
 }

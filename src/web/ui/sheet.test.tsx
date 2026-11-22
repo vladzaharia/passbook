@@ -62,3 +62,36 @@ describe('Sheet drag to close', () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 });
+
+describe('sheet scroll body', () => {
+  it('takes keyboard focus only while it overflows', () => {
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      value: 500,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+      configurable: true,
+      value: 200,
+    });
+    try {
+      open();
+      expect(screen.getByText('Body').parentElement).toHaveAttribute('tabindex', '0');
+    } finally {
+      Reflect.deleteProperty(HTMLElement.prototype, 'scrollHeight');
+      Reflect.deleteProperty(HTMLElement.prototype, 'clientHeight');
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('stays out of the tab order when it fits', () => {
+    open();
+    expect(screen.getByText('Body').parentElement).not.toHaveAttribute('tabindex');
+  });
+});

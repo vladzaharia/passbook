@@ -62,4 +62,11 @@ describe('validate', () => {
     expect(validate({ type: 'number' }, 2)).toHaveLength(0);
     expect(validate({ type: 'integer' }, '2')).toHaveLength(1);
   });
+  it('words the array size limits in the singular for 1', () => {
+    const msg = (schema: RunSchema, v: unknown[]) => validate(schema, v as never)[0]?.message;
+    expect(msg({ type: 'array', minItems: 1 }, [])).toBe('needs at least 1 item');
+    expect(msg({ type: 'array', minItems: 2 }, [1])).toBe('needs at least 2 items');
+    expect(msg({ type: 'array', maxItems: 1 }, [1, 2])).toBe('allows at most 1 item');
+    expect(msg({ type: 'array', maxItems: 2 }, [1, 2, 3])).toBe('allows at most 2 items');
+  });
 });

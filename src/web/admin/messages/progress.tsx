@@ -20,7 +20,7 @@ export function BroadcastProgress({
         label="Passes handled"
         value={done}
         max={total}
-        valueText={`${formatCount(done)} of ${formatCount(total)} passes`}
+        valueText={`${formatCount(done)} of ${formatCount(total)} ${total === 1 ? 'pass' : 'passes'}`}
         tone={failing ? 'warning' : 'accent'}
       />
       <span className="text-xs tabular-nums text-fg-muted">

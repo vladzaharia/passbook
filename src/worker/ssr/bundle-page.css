@@ -90,6 +90,15 @@
       white-space: nowrap;
       pointer-events: none;
     }
+    /* A keyboard still lands on it: it shows then, with its focus ring. */
+    .bd-more > summary:focus-visible {
+      position: static;
+      width: auto;
+      height: auto;
+      overflow: visible;
+      clip-path: none;
+      pointer-events: auto;
+    }
     /* Read open beside the stack: a label, not a control. */
     .bd-more > summary::before {
       display: none;

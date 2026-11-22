@@ -40,6 +40,12 @@
     background-color var(--wl-dur-hover) var(--wl-ease-move),
     color var(--wl-dur-hover) var(--wl-ease-move);
 }
+/* base.css pads and pulls up text links on touch (negative margin-block): a row is already 48 px,
+   so that would shrink its list item to one line and clip the row. */
+.wl-others > li > a.wl-other {
+  margin-block: 0;
+  padding-block: 0.5rem;
+}
 .wl-other:hover {
   background: var(--pk-state-hover-tint);
   color: var(--pk-text-strong);

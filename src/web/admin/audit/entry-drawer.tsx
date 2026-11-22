@@ -13,6 +13,7 @@ import { formatDateTime } from '../../lib/format.ts';
 import { actorRef, targetRef } from './labels.ts';
 import { describeDetail } from './redact.ts';
 import { RefChip } from './ref-chip.tsx';
+import { RekeyedTags, rekeyedTags } from './rekeyed-tags.tsx';
 import { ChangesList, settingChanges } from './settings-changes.tsx';
 
 export type AuditEntry = z.infer<typeof AuditEntrySchema>;
@@ -29,6 +30,7 @@ export function EntryDrawer({
 }) {
   const view = describeDetail(entry?.detail);
   const changes = settingChanges(entry?.detail);
+  const rekeyed = entry ? rekeyedTags(entry.action, entry.detail) : null;
   const target = entry ? targetRef(entry) : undefined;
   const context =
     view.value && typeof view.value === 'object' && !Array.isArray(view.value)
@@ -85,6 +87,7 @@ export function EntryDrawer({
                 { label: 'Request', value: entry.requestId },
               ]}
             />
+            {rekeyed ? <RekeyedTags tags={rekeyed} /> : null}
             {changes ? (
               <section aria-label="What changed" className="flex flex-col gap-2">
                 <h3 className="text-sm font-semibold text-fg-strong">What changed</h3>
@@ -93,7 +96,7 @@ export function EntryDrawer({
             ) : null}
             <section
               aria-label="Detail"
-              hidden={changes !== undefined}
+              hidden={changes !== undefined || rekeyed !== null}
               className="flex flex-col gap-2"
             >
               <h3 className="text-sm font-semibold text-fg-strong">Detail</h3>
