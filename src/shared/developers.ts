@@ -40,3 +40,7 @@ export const NOT_FOUND_FILE = '/developers/not-found.html';
 /** The markdown twin of a page: `/developers/reference/passes` -> `….md`; the home page is `index.md`. */
 export const twin = (path: string) =>
   path === PATHS.home ? `${PATHS.home}/index.md` : `${path}.md`;
+
+/** An operation's own page: `/developers/reference/passes/create`, `…/passes/memberphoto-get`. */
+export const opUrl = (slug: string, anchor: string) =>
+  `${PATHS.reference}/${slug}/${anchor.toLowerCase()}`;

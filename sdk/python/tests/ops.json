@@ -475,15 +475,11 @@
   "body": {
    "orgId": "x",
    "kind": "message",
-   "target": {
-    "templateIds": [
-     "x"
-    ]
-   },
+   "target": {},
    "patch": {}
   },
   "binary": false,
-  "idempotent": false,
+  "idempotent": true,
   "raw": false,
   "cursor": null,
   "result": {
@@ -530,11 +526,7 @@
   "query": [],
   "body": {
    "orgId": "x",
-   "target": {
-    "templateIds": [
-     "x"
-    ]
-   }
+   "target": {}
   },
   "binary": false,
   "idempotent": false,
@@ -544,7 +536,30 @@
    "targeted": 0,
    "onDevice": 0,
    "overBudget": 0,
-   "limit": 0
+   "limit": 0,
+   "samples": [
+    {
+     "passId": "x",
+     "title": "x",
+     "changes": [
+      {
+       "key": "x",
+       "label": "x",
+       "from": "x",
+       "to": "x"
+      }
+     ]
+    }
+   ],
+   "unchanged": 0,
+   "blocked": [
+    {
+     "code": "x",
+     "count": 0
+    }
+   ],
+   "notified": 0,
+   "silent": 0
   }
  },
  {
@@ -615,11 +630,7 @@
   "body": {
    "orgId": "x",
    "kind": "message",
-   "target": {
-    "templateIds": [
-     "x"
-    ]
-   },
+   "target": {},
    "patch": {}
   },
   "binary": false,
@@ -846,6 +857,82 @@
    "createdAt": 0,
    "startedAt": 0,
    "finishedAt": 0
+  }
+ },
+ {
+  "id": "broadcasts.postBroadcastsByIdStop",
+  "call": "broadcasts.stop",
+  "http": "POST",
+  "path": "/api/v1/broadcasts/{id}/stop",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "message",
+   "name": "x",
+   "state": "draft",
+   "target": {
+    "templateIds": [
+     "x"
+    ]
+   },
+   "patch": {},
+   "notify": false,
+   "at": 0,
+   "clearAfter": 0,
+   "parentId": "x",
+   "ruleId": "x",
+   "followUp": {
+    "id": "x",
+    "at": 0
+   },
+   "counts": {
+    "targeted": 0,
+    "updated": 0,
+    "unchanged": 0,
+    "overBudget": 0,
+    "failed": 0
+   },
+   "errorCode": "x",
+   "createdAt": 0,
+   "startedAt": 0,
+   "finishedAt": 0
+  }
+ },
+ {
+  "id": "broadcasts.postBroadcastsByIdUndo",
+  "call": "broadcasts.undo",
+  "http": "POST",
+  "path": "/api/v1/broadcasts/{id}/undo",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "parentId": "x",
+   "restorable": 0,
+   "kept": 0
   }
  },
  {
@@ -1255,6 +1342,9 @@
      "outcome": "running",
      "recordsSeen": 0,
      "passesChanged": 0,
+     "passesCreated": 0,
+     "passesVoided": 0,
+     "recordsFailed": 0,
      "errorCode": "x",
      "httpStatus": 0,
      "durationMs": 0
@@ -1348,6 +1438,66 @@
   }
  },
  {
+  "id": "connections.postConnectionsByIdPreview",
+  "call": "connections.preview",
+  "http": "POST",
+  "path": "/api/v1/connections/{id}/preview",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "ok": false,
+   "records": 0,
+   "counts": {
+    "create": 0,
+    "update": 0,
+    "unchanged": 0,
+    "skipped": 0,
+    "errors": 0,
+    "waiting": 0
+   },
+   "releaseBlocked": "x",
+   "window": {
+    "days": 0,
+    "limit": 0,
+    "since": 0,
+    "excluded": 0
+   },
+   "samples": [
+    {
+     "ref": "x",
+     "action": "create",
+     "fields": {}
+    }
+   ],
+   "columns": [
+    {
+     "pointer": "x",
+     "label": "x",
+     "samples": [
+      "x"
+     ],
+     "values": [
+      {
+       "value": "x",
+       "count": 0
+      }
+     ]
+    }
+   ],
+   "durationMs": 0
+  }
+ },
+ {
   "id": "connections.getConnectionsByIdRuns",
   "call": "connections.runs.list",
   "http": "GET",
@@ -1374,6 +1524,9 @@
      "outcome": "running",
      "recordsSeen": 0,
      "passesChanged": 0,
+     "passesCreated": 0,
+     "passesVoided": 0,
+     "recordsFailed": 0,
      "errorCode": "x",
      "httpStatus": 0,
      "durationMs": 0
@@ -3917,10 +4070,7 @@
   "pathParams": [],
   "query": [],
   "body": {
-   "action": "void",
-   "ids": [
-    "x"
-   ]
+   "action": "void"
   },
   "binary": false,
   "idempotent": true,
@@ -4023,6 +4173,116 @@
   }
  },
  {
+  "id": "passes.postPassesBulkRuns",
+  "call": "bulk_runs.start",
+  "http": "POST",
+  "path": "/api/v1/passes/bulk-runs",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "action": "void",
+   "selection": {
+    "filter": {},
+    "expectCount": 0
+   }
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "action": "void",
+   "state": "queued",
+   "total": 0,
+   "done": 0,
+   "skipped": 0,
+   "skippedBy": {},
+   "stopRequested": false,
+   "createdAt": 0,
+   "finishedAt": 0,
+   "code": "x"
+  }
+ },
+ {
+  "id": "passes.getPassesBulkRunsCurrent",
+  "call": "bulk_runs.current",
+  "http": "GET",
+  "path": "/api/v1/passes/bulk-runs/current",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {}
+ },
+ {
+  "id": "passes.getPassesBulkRunsById",
+  "call": "bulk_runs.retrieve",
+  "http": "GET",
+  "path": "/api/v1/passes/bulk-runs/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "action": "void",
+   "state": "queued",
+   "total": 0,
+   "done": 0,
+   "skipped": 0,
+   "skippedBy": {},
+   "stopRequested": false,
+   "createdAt": 0,
+   "finishedAt": 0,
+   "code": "x"
+  }
+ },
+ {
+  "id": "passes.postPassesBulkRunsByIdStop",
+  "call": "bulk_runs.stop",
+  "http": "POST",
+  "path": "/api/v1/passes/bulk-runs/{id}/stop",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "action": "void",
+   "state": "queued",
+   "total": 0,
+   "done": 0,
+   "skipped": 0,
+   "skippedBy": {},
+   "stopRequested": false,
+   "createdAt": 0,
+   "finishedAt": 0,
+   "code": "x"
+  }
+ },
+ {
   "id": "passes.postPassesBulkChannels",
   "call": "passes.bulk_update_channels",
   "http": "POST",
@@ -4076,6 +4336,60 @@
      "state": "matched"
     }
    ]
+  }
+ },
+ {
+  "id": "passes.getPassesViews",
+  "call": "pass_views.list",
+  "http": "GET",
+  "path": "/api/v1/passes/views",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "filter": {}
+    }
+   ],
+   "revision": 0
+  }
+ },
+ {
+  "id": "passes.putPassesViews",
+  "call": "pass_views.replace",
+  "http": "PUT",
+  "path": "/api/v1/passes/views",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "filter": {}
+    }
+   ],
+   "revision": 0
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "name": "x",
+     "filter": {}
+    }
+   ],
+   "revision": 0
   }
  },
  {
@@ -4381,6 +4695,7 @@
   "cursor": null,
   "result": {
    "effective": {},
+   "levels": {},
    "overrides": {},
    "replace": {
     "supported": false,
@@ -4428,6 +4743,7 @@
   "cursor": null,
   "result": {
    "effective": {},
+   "levels": {},
    "overrides": {},
    "replace": {
     "supported": false,
@@ -5801,6 +6117,273 @@
   }
  },
  {
+  "id": "scan-events.getScanEvents",
+  "call": "scan_events.list",
+  "http": "GET",
+  "path": "/api/v1/scan-events",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "mode": "live",
+     "name": "x",
+     "templateIds": [
+      "x"
+     ],
+     "match": {
+      "input": "x",
+      "values": [
+       "x"
+      ]
+     },
+     "opensAt": 0,
+     "closesAt": 0,
+     "timeZone": "x",
+     "capacity": 0,
+     "reentry": false,
+     "note": "x",
+     "status": "upcoming",
+     "arrived": 0,
+     "expected": 0,
+     "scanners": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "scan-events.postScanEvents",
+  "call": "scan_events.create",
+  "http": "POST",
+  "path": "/api/v1/scan-events",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "match": {
+    "input": "x",
+    "values": [
+     "x"
+    ]
+   },
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x",
+   "capacity": 0,
+   "reentry": false,
+   "note": "x",
+   "status": "upcoming",
+   "arrived": 0,
+   "expected": 0,
+   "scanners": 0
+  }
+ },
+ {
+  "id": "scan-events.getScanEventsById",
+  "call": "scan_events.retrieve",
+  "http": "GET",
+  "path": "/api/v1/scan-events/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "match": {
+    "input": "x",
+    "values": [
+     "x"
+    ]
+   },
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x",
+   "capacity": 0,
+   "reentry": false,
+   "note": "x",
+   "status": "upcoming",
+   "arrived": 0,
+   "expected": 0,
+   "scanners": 0
+  }
+ },
+ {
+  "id": "scan-events.patchScanEventsById",
+  "call": "scan_events.update",
+  "http": "PATCH",
+  "path": "/api/v1/scan-events/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "match": {
+    "input": "x",
+    "values": [
+     "x"
+    ]
+   },
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x",
+   "capacity": 0,
+   "reentry": false,
+   "note": "x",
+   "status": "upcoming",
+   "arrived": 0,
+   "expected": 0,
+   "scanners": 0
+  }
+ },
+ {
+  "id": "scan-events.postScanEventsByIdArchive",
+  "call": "scan_events.archive",
+  "http": "POST",
+  "path": "/api/v1/scan-events/{id}/archive",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "match": {
+    "input": "x",
+    "values": [
+     "x"
+    ]
+   },
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x",
+   "capacity": 0,
+   "reentry": false,
+   "note": "x",
+   "status": "upcoming",
+   "arrived": 0,
+   "expected": 0,
+   "scanners": 0
+  }
+ },
+ {
+  "id": "scan-events.postScanEventsByIdScanners",
+  "call": "scan_events.attach_scanners",
+  "http": "POST",
+  "path": "/api/v1/scan-events/{id}/scanners",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "scannerIds": [
+    "x"
+   ]
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "name": "x",
+   "templateIds": [
+    "x"
+   ],
+   "match": {
+    "input": "x",
+    "values": [
+     "x"
+    ]
+   },
+   "opensAt": 0,
+   "closesAt": 0,
+   "timeZone": "x",
+   "capacity": 0,
+   "reentry": false,
+   "note": "x",
+   "status": "upcoming",
+   "arrived": 0,
+   "expected": 0,
+   "scanners": 0
+  }
+ },
+ {
   "id": "scanners.getScanSetups",
   "call": "scan_setups.list",
   "http": "GET",
@@ -5923,6 +6506,277 @@
     "name": "x"
    },
    "watch": {}
+  }
+ },
+ {
+  "id": "scan-zones.getScanZones",
+  "call": "scan_zones.list",
+  "http": "GET",
+  "path": "/api/v1/scan-zones",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "occupancy": "off",
+     "capacity": 0,
+     "maxStayMinutes": 0,
+     "clearAt": "x",
+     "id": "x",
+     "orgId": "x",
+     "key": "x",
+     "name": "x",
+     "parentId": "x",
+     "timeZone": "x",
+     "effectiveTimeZone": "x",
+     "sort": 0,
+     "depth": 0,
+     "sessions": 0,
+     "checkedAt": [
+      {
+       "id": "x",
+       "name": "x"
+      }
+     ],
+     "plans": [
+      {
+       "templateId": "x",
+       "templateName": "x",
+       "planId": "x",
+       "label": "x"
+      }
+     ],
+     "inNow": 0,
+     "archivedAt": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "scan-zones.postScanZones",
+  "call": "scan_zones.create",
+  "http": "POST",
+  "path": "/api/v1/scan-zones",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "orgId": "x",
+   "key": "x",
+   "name": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "occupancy": "off",
+   "capacity": 0,
+   "maxStayMinutes": 0,
+   "clearAt": "x",
+   "id": "x",
+   "orgId": "x",
+   "key": "x",
+   "name": "x",
+   "parentId": "x",
+   "timeZone": "x",
+   "effectiveTimeZone": "x",
+   "sort": 0,
+   "depth": 0,
+   "sessions": 0,
+   "checkedAt": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "plans": [
+    {
+     "templateId": "x",
+     "templateName": "x",
+     "planId": "x",
+     "label": "x"
+    }
+   ],
+   "inNow": 0,
+   "archivedAt": 0
+  }
+ },
+ {
+  "id": "scan-zones.postScanZonesVisitsByIdReset",
+  "call": "scan_zones.reset_visits",
+  "http": "POST",
+  "path": "/api/v1/scan-zones/visits/{id}/reset",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "visits": 0
+  }
+ },
+ {
+  "id": "scan-zones.patchScanZonesById",
+  "call": "scan_zones.update",
+  "http": "PATCH",
+  "path": "/api/v1/scan-zones/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "occupancy": "off",
+   "capacity": 0,
+   "maxStayMinutes": 0,
+   "clearAt": "x",
+   "id": "x",
+   "orgId": "x",
+   "key": "x",
+   "name": "x",
+   "parentId": "x",
+   "timeZone": "x",
+   "effectiveTimeZone": "x",
+   "sort": 0,
+   "depth": 0,
+   "sessions": 0,
+   "checkedAt": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "plans": [
+    {
+     "templateId": "x",
+     "templateName": "x",
+     "planId": "x",
+     "label": "x"
+    }
+   ],
+   "inNow": 0,
+   "archivedAt": 0
+  }
+ },
+ {
+  "id": "scan-zones.postScanZonesByIdArchive",
+  "call": "scan_zones.archive",
+  "http": "POST",
+  "path": "/api/v1/scan-zones/{id}/archive",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "occupancy": "off",
+   "capacity": 0,
+   "maxStayMinutes": 0,
+   "clearAt": "x",
+   "id": "x",
+   "orgId": "x",
+   "key": "x",
+   "name": "x",
+   "parentId": "x",
+   "timeZone": "x",
+   "effectiveTimeZone": "x",
+   "sort": 0,
+   "depth": 0,
+   "sessions": 0,
+   "checkedAt": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "plans": [
+    {
+     "templateId": "x",
+     "templateName": "x",
+     "planId": "x",
+     "label": "x"
+    }
+   ],
+   "inNow": 0,
+   "archivedAt": 0
+  }
+ },
+ {
+  "id": "scan-zones.postScanZonesByIdRestore",
+  "call": "scan_zones.restore",
+  "http": "POST",
+  "path": "/api/v1/scan-zones/{id}/restore",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "occupancy": "off",
+   "capacity": 0,
+   "maxStayMinutes": 0,
+   "clearAt": "x",
+   "id": "x",
+   "orgId": "x",
+   "key": "x",
+   "name": "x",
+   "parentId": "x",
+   "timeZone": "x",
+   "effectiveTimeZone": "x",
+   "sort": 0,
+   "depth": 0,
+   "sessions": 0,
+   "checkedAt": [
+    {
+     "id": "x",
+     "name": "x"
+    }
+   ],
+   "plans": [
+    {
+     "templateId": "x",
+     "templateName": "x",
+     "planId": "x",
+     "label": "x"
+    }
+   ],
+   "inNow": 0,
+   "archivedAt": 0
   }
  },
  {
@@ -6651,6 +7505,234 @@
   }
  },
  {
+  "id": "scanners.patchScannersById",
+  "call": "scanners.update",
+  "http": "PATCH",
+  "path": "/api/v1/scanners/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "device",
+   "deviceRole": "scan",
+   "name": "x",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "status": "not_paired",
+   "online": false,
+   "pairedAt": 0,
+   "pairedLabel": "x",
+   "lastSeenAt": 0,
+   "expiresAt": 0,
+   "staff": {
+    "id": "x",
+    "name": "x"
+   },
+   "today": 0,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "scanners.postScannersByIdMode",
+  "call": "scanners.set_mode",
+  "http": "POST",
+  "path": "/api/v1/scanners/{id}/mode",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "mode": "live"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "device",
+   "deviceRole": "scan",
+   "name": "x",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "status": "not_paired",
+   "online": false,
+   "pairedAt": 0,
+   "pairedLabel": "x",
+   "lastSeenAt": 0,
+   "expiresAt": 0,
+   "staff": {
+    "id": "x",
+    "name": "x"
+   },
+   "today": 0,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "scanners.postScannersByIdRevoke",
+  "call": "scanners.revoke",
+  "http": "POST",
+  "path": "/api/v1/scanners/{id}/revoke",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "mode": "live",
+   "kind": "device",
+   "deviceRole": "scan",
+   "name": "x",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "status": "not_paired",
+   "online": false,
+   "pairedAt": 0,
+   "pairedLabel": "x",
+   "lastSeenAt": 0,
+   "expiresAt": 0,
+   "staff": {
+    "id": "x",
+    "name": "x"
+   },
+   "today": 0,
+   "createdAt": 0
+  }
+ },
+ {
+  "id": "scanners.getScanningSessions",
+  "call": "scanning_sessions.list",
+  "http": "GET",
+  "path": "/api/v1/scanning-sessions",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "orgId": "x",
+     "orgName": "x",
+     "mode": "live",
+     "name": "x",
+     "status": "active",
+     "accepts": {
+      "templateIds": [
+       "x"
+      ],
+      "eventIds": [
+       "x"
+      ]
+     },
+     "settings": {
+      "flow": "auto",
+      "defaultActionId": "x",
+      "roleWithoutSignIn": "door",
+      "staffSignIn": false,
+      "letInAgain": "anyone",
+      "reader": "none",
+      "lookup": false,
+      "offline": false,
+      "dailyAmount": 0
+     },
+     "timeZone": "x",
+     "createdAt": 0,
+     "updatedAt": 0,
+     "deviceCount": 0,
+     "onlineCount": 0,
+     "today": 0
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
   "id": "scanners.postScanningSessionsSetup",
   "call": "scanning_sessions.setup",
   "http": "POST",
@@ -6722,6 +7804,349 @@
      "code": "NO_EXIT",
      "level": "error",
      "message": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "scanners.getScanningSessionsById",
+  "call": "scanning_sessions.retrieve",
+  "http": "GET",
+  "path": "/api/v1/scanning-sessions/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "orgName": "x",
+   "mode": "live",
+   "name": "x",
+   "status": "active",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "createdAt": 0,
+   "updatedAt": 0,
+   "deviceCount": 0,
+   "onlineCount": 0,
+   "today": 0,
+   "devices": [
+    {
+     "id": "x",
+     "sessionId": "x",
+     "name": "x",
+     "surface": "auto",
+     "effectiveSurface": "phone",
+     "overrides": {},
+     "settings": {
+      "flow": "auto",
+      "defaultActionId": "x",
+      "roleWithoutSignIn": "door",
+      "staffSignIn": false,
+      "letInAgain": "anyone",
+      "reader": "none",
+      "lookup": false,
+      "offline": false,
+      "dailyAmount": 0
+     },
+     "capabilities": {
+      "width": 0,
+      "height": 0,
+      "touch": false,
+      "camera": "unknown",
+      "keyboard": false,
+      "nativeBarcode": false,
+      "surfaces": [
+       "phone"
+      ],
+      "preferred": "phone"
+     },
+     "reportedAt": 0,
+     "paired": false,
+     "online": false,
+     "revoked": false,
+     "lastSeenAt": 0,
+     "updatedAt": 0,
+     "signIn": "paired",
+     "adminName": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "scanners.patchScanningSessionsById",
+  "call": "scanning_sessions.update",
+  "http": "PATCH",
+  "path": "/api/v1/scanning-sessions/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "orgName": "x",
+   "mode": "live",
+   "name": "x",
+   "status": "active",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "createdAt": 0,
+   "updatedAt": 0,
+   "deviceCount": 0,
+   "onlineCount": 0,
+   "today": 0,
+   "devices": [
+    {
+     "id": "x",
+     "sessionId": "x",
+     "name": "x",
+     "surface": "auto",
+     "effectiveSurface": "phone",
+     "overrides": {},
+     "settings": {
+      "flow": "auto",
+      "defaultActionId": "x",
+      "roleWithoutSignIn": "door",
+      "staffSignIn": false,
+      "letInAgain": "anyone",
+      "reader": "none",
+      "lookup": false,
+      "offline": false,
+      "dailyAmount": 0
+     },
+     "capabilities": {
+      "width": 0,
+      "height": 0,
+      "touch": false,
+      "camera": "unknown",
+      "keyboard": false,
+      "nativeBarcode": false,
+      "surfaces": [
+       "phone"
+      ],
+      "preferred": "phone"
+     },
+     "reportedAt": 0,
+     "paired": false,
+     "online": false,
+     "revoked": false,
+     "lastSeenAt": 0,
+     "updatedAt": 0,
+     "signIn": "paired",
+     "adminName": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+  "call": "scanning_sessions.devices.update",
+  "http": "PATCH",
+  "path": "/api/v1/scanning-sessions/{id}/devices/{deviceId}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   },
+   {
+    "name": "deviceId",
+    "py": "device_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {},
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "sessionId": "x",
+   "name": "x",
+   "surface": "auto",
+   "effectiveSurface": "phone",
+   "overrides": {},
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "capabilities": {
+    "width": 0,
+    "height": 0,
+    "touch": false,
+    "camera": "unknown",
+    "keyboard": false,
+    "nativeBarcode": false,
+    "surfaces": [
+     "phone"
+    ],
+    "preferred": "phone"
+   },
+   "reportedAt": 0,
+   "paired": false,
+   "online": false,
+   "revoked": false,
+   "lastSeenAt": 0,
+   "updatedAt": 0,
+   "signIn": "paired",
+   "adminName": "x"
+  }
+ },
+ {
+  "id": "scanners.postScanningSessionsByIdHold",
+  "call": "scanning_sessions.override_hours",
+  "http": "POST",
+  "path": "/api/v1/scanning-sessions/{id}/hold",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "action": "close"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "orgId": "x",
+   "orgName": "x",
+   "mode": "live",
+   "name": "x",
+   "status": "active",
+   "accepts": {
+    "templateIds": [
+     "x"
+    ],
+    "eventIds": [
+     "x"
+    ]
+   },
+   "settings": {
+    "flow": "auto",
+    "defaultActionId": "x",
+    "roleWithoutSignIn": "door",
+    "staffSignIn": false,
+    "letInAgain": "anyone",
+    "reader": "none",
+    "lookup": false,
+    "offline": false,
+    "dailyAmount": 0
+   },
+   "timeZone": "x",
+   "createdAt": 0,
+   "updatedAt": 0,
+   "deviceCount": 0,
+   "onlineCount": 0,
+   "today": 0,
+   "devices": [
+    {
+     "id": "x",
+     "sessionId": "x",
+     "name": "x",
+     "surface": "auto",
+     "effectiveSurface": "phone",
+     "overrides": {},
+     "settings": {
+      "flow": "auto",
+      "defaultActionId": "x",
+      "roleWithoutSignIn": "door",
+      "staffSignIn": false,
+      "letInAgain": "anyone",
+      "reader": "none",
+      "lookup": false,
+      "offline": false,
+      "dailyAmount": 0
+     },
+     "capabilities": {
+      "width": 0,
+      "height": 0,
+      "touch": false,
+      "camera": "unknown",
+      "keyboard": false,
+      "nativeBarcode": false,
+      "surfaces": [
+       "phone"
+      ],
+      "preferred": "phone"
+     },
+     "reportedAt": 0,
+     "paired": false,
+     "online": false,
+     "revoked": false,
+     "lastSeenAt": 0,
+     "updatedAt": 0,
+     "signIn": "paired",
+     "adminName": "x"
     }
    ]
   }
@@ -7208,6 +8633,9 @@
    "channels": {},
    "revision": 0,
    "effective": {},
+   "levels": {},
+   "overrides": {},
+   "overridePasses": 0,
    "defaults": {}
   }
  },
@@ -7649,6 +9077,81 @@
     },
     "alone": false,
     "next": "design"
+   }
+  }
+ },
+ {
+  "id": "templates.getTemplatesByIdRollout",
+  "call": "templates.retrieve_rollout",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/rollout",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [
+   {
+    "name": "mode",
+    "py": "mode",
+    "value": "live"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "releaseVersion": "x",
+   "releaseId": "x",
+   "fromVersion": "x",
+   "total": 0,
+   "onRelease": 0,
+   "remaining": 0,
+   "updating": [
+    {
+     "version": "x",
+     "count": 0
+    }
+   ],
+   "failedCount": 0,
+   "failed": [
+    {
+     "passId": "x",
+     "title": "x",
+     "reason": "x"
+    }
+   ],
+   "startedAt": 0,
+   "runId": "x",
+   "running": false,
+   "stalled": false,
+   "changes": [
+    {
+     "group": "colors",
+     "rows": [
+      {
+       "label": "x",
+       "kind": "added",
+       "from": {
+        "type": "text",
+        "text": "x"
+       },
+       "to": {
+        "type": "text",
+        "text": "x"
+       }
+      }
+     ],
+     "more": 0
+    }
+   ],
+   "tell": {
+    "text": "x",
+    "until": 0,
+    "key": "x"
    }
   }
  },
@@ -8727,6 +10230,37 @@
    "durationMs": 0,
    "errorCode": "x",
    "captureId": "x"
+  }
+ },
+ {
+  "id": "webhooks.getWebhookEndpointsByIdTests",
+  "call": "webhook_endpoints.tests.list",
+  "http": "GET",
+  "path": "/api/v1/webhook-endpoints/{id}/tests",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "type": "pass.issued",
+     "ok": false,
+     "status": 0,
+     "errorCode": "x",
+     "durationMs": 0,
+     "at": 0
+    }
+   ]
   }
  }
 ]

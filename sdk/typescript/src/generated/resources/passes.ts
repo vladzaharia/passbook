@@ -218,7 +218,7 @@ export class PassesResource {
     this.stamps = new PassesStampsResource(core);
   }
 
-  /** Void, email or remove up to 100 passes of one org (Idempotency-Key for email) `POST /api/v1/passes/bulk` */
+  /** Void, email or remove up to 100 passes of one org, or all passes a filter matches (Idempotency-Key for email) `POST /api/v1/passes/bulk` */
   bulkApply(body: PassesBulkApplyBody, options?: RequestOptions): Promise<PassesBulkApplyResult> {
     return this.core.request({ method: 'POST', path: '/api/v1/passes/bulk', body, idempotent: true }, options);
   }

@@ -15,7 +15,13 @@ import type { TenantPassWrite } from '../passes/http.ts';
 import { getUser } from '../users/repo.ts';
 import { planScanningDevice, scanningDeviceStatements } from './device-statements.ts';
 import { kickScreen } from './live.ts';
-import { adminGrant, audited, scannerEpoch, sessionEpoch } from './repo-admin-grant.ts';
+import {
+  adminActorOf,
+  adminGrant,
+  audited,
+  scannerEpoch,
+  sessionEpoch,
+} from './repo-admin-grant.ts';
 import { assertAdminConfigurationAuthority } from './repo-scanner-configuration-authority.ts';
 import { addScannerPatch, getConsoleScanner } from './repo-scanners.ts';
 import {
@@ -181,8 +187,7 @@ export async function updateScanningDevice(
   g.add(
     audited(g, ctx, {
       orgId: parent.org_id,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: 'scanning.device_update',
       targetType: 'scanner',
       targetId: id,
@@ -205,11 +210,13 @@ export async function updateScanningDevice(
   const nextSettings = projectedDeviceSettings(parent, next, scope);
   const scannerScope = await readScannerScope(ctx.env.DB, scanner, null);
   const conflict = await conflictsWithAllScope(ctx, scanner, scope, nextSettings);
-  return deviceDto(
+  const view = deviceDto(
     next,
     ctx.clock.now(),
     !scannerScope.valid || conflict ? { ...nextSettings, acceptAllTemplates: false } : nextSettings,
   );
+  // Keys get ids, not the admin's name.
+  return authority.kind === 'api_key' ? { ...view, adminName: null } : view;
 }
 export async function joinAdminScanningSession(
   ctx: ServiceContext,

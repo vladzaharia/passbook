@@ -159,10 +159,13 @@
 .wl-sheet-right {
   --wl-sheet-x: 100%;
 }
-:is(.wl-sheet-left, .wl-sheet-right)[data-state="open"] {
+.wl-sheet-bottom {
+  --wl-sheet-y: 100%;
+}
+:is(.wl-sheet-left, .wl-sheet-right, .wl-sheet-bottom)[data-state="open"] {
   animation: wl-slide-in 260ms var(--wl-ease-move) backwards;
 }
-:is(.wl-sheet-left, .wl-sheet-right)[data-state="closed"] {
+:is(.wl-sheet-left, .wl-sheet-right, .wl-sheet-bottom)[data-state="closed"] {
   animation: wl-slide-out 200ms var(--wl-ease-in) forwards;
 }
 /* While a finger drags the sheet, it follows without easing (sheet.tsx sets --wl-drag). */
@@ -217,7 +220,7 @@
   .wl-pop[data-state],
   .wl-pop.wl-action-sheet[data-state],
   .wl-tip[data-state],
-  :is(.wl-sheet-left, .wl-sheet-right)[data-state],
+  :is(.wl-sheet-left, .wl-sheet-right, .wl-sheet-bottom)[data-state],
   .wl-bar,
   .wl-bar[data-closing],
   [data-sonner-toast][data-type] [data-icon] {
@@ -225,12 +228,12 @@
   }
   .wl-dialog[data-state="open"],
   .wl-pop.wl-action-sheet[data-state="open"],
-  :is(.wl-sheet-left, .wl-sheet-right)[data-state="open"] {
+  :is(.wl-sheet-left, .wl-sheet-right, .wl-sheet-bottom)[data-state="open"] {
     animation: wl-fade-in 150ms linear backwards;
   }
   .wl-dialog[data-state="closed"],
   .wl-pop.wl-action-sheet[data-state="closed"],
-  :is(.wl-sheet-left, .wl-sheet-right)[data-state="closed"] {
+  :is(.wl-sheet-left, .wl-sheet-right, .wl-sheet-bottom)[data-state="closed"] {
     animation: wl-fade-out 120ms linear forwards;
   }
   .wl-offline {

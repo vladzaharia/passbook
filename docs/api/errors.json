@@ -486,7 +486,25 @@
       ]
     },
     {
+      "code": "BROADCAST_EMPTY",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BROADCAST_INVALID_INPUT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_INVALID_OP",
       "statuses": [
         422
       ],
@@ -540,9 +558,45 @@
       ]
     },
     {
+      "code": "BROADCAST_NOT_SENDING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_NOT_UNDOABLE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_NO_RELEASE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BROADCAST_ORG",
       "statuses": [
         422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_PASS_CHANGED",
+      "statuses": [
+        409
       ],
       "modules": [
         "broadcasts"
@@ -567,7 +621,34 @@
       ]
     },
     {
+      "code": "BROADCAST_TOO_MANY_TEMPLATES",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_UNDO_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "BROADCAST_UNKNOWN_INPUT",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "BROADCAST_UNKNOWN_TOKEN",
       "statuses": [
         422
       ],
@@ -579,6 +660,33 @@
       "code": "BULK_RUN_ACTIVE",
       "statuses": [
         409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BULK_RUN_ENDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BULK_RUN_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "BULK_RUN_START",
+      "statuses": [
+        503
       ],
       "modules": [
         "passes"
@@ -1127,6 +1235,15 @@
       ]
     },
     {
+      "code": "EXPECT_COUNT_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "EXPIRY_PAST",
       "statuses": [
         422
@@ -1344,8 +1461,6 @@
         400
       ],
       "modules": [
-        "delivery",
-        "passes",
         "platform"
       ]
     },
@@ -1356,6 +1471,16 @@
       ],
       "modules": [
         "templates"
+      ]
+    },
+    {
+      "code": "IDEMPOTENCY_KEY_RESERVED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts",
+        "platform"
       ]
     },
     {
@@ -1801,11 +1926,21 @@
       ]
     },
     {
+      "code": "IMPORT_NOT_ENDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
       "code": "IMPORT_NOT_FOUND",
       "statuses": [
         404
       ],
       "modules": [
+        "broadcasts",
         "passes"
       ]
     },
@@ -1897,6 +2032,33 @@
       ],
       "modules": [
         "passes"
+      ]
+    },
+    {
+      "code": "INTENT_ITEM_RECORDED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "INTENT_LIVE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
+      ]
+    },
+    {
+      "code": "INTENT_NO_TARGET",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts"
       ]
     },
     {
@@ -2190,11 +2352,30 @@
       ]
     },
     {
+      "code": "MATCH_AMBIGUOUS_FIELD",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "MATCH_NEEDS_TEMPLATE",
       "statuses": [
         422
       ],
       "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "MATCH_TOO_BROAD",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "broadcasts",
         "passes"
       ]
     },
@@ -2543,6 +2724,7 @@
         409
       ],
       "modules": [
+        "developer",
         "org-lifecycle"
       ]
     },
@@ -2688,6 +2870,15 @@
       ]
     },
     {
+      "code": "PASS_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
       "code": "PASS_CHANGING",
       "statuses": [
         409
@@ -2782,6 +2973,7 @@
         404
       ],
       "modules": [
+        "broadcasts",
         "bundles",
         "channels",
         "delivery",
@@ -3389,6 +3581,15 @@
       ]
     },
     {
+      "code": "SANDBOX_CLOSED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
       "code": "SANDBOX_CONFLICT",
       "statuses": [
         409
@@ -3408,6 +3609,15 @@
     },
     {
       "code": "SANDBOX_KEY_MISSING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_NOT_CLOSED",
       "statuses": [
         409
       ],
@@ -3440,6 +3650,33 @@
       ],
       "modules": [
         "sandbox"
+      ]
+    },
+    {
+      "code": "SANDBOX_REOPEN_ADMIN",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_REOPEN_WINDOW",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "developer"
+      ]
+    },
+    {
+      "code": "SANDBOX_RESET_LIMIT",
+      "statuses": [
+        429
+      ],
+      "modules": [
+        "developer"
       ]
     },
     {
@@ -3937,6 +4174,15 @@
       ]
     },
     {
+      "code": "SCAN_MODE_LIVE_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCAN_MODE_MISMATCH",
       "statuses": [
         403,
@@ -4227,6 +4473,15 @@
       ]
     },
     {
+      "code": "SCAN_ZONE_LIVE_ONLY",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCREEN_ONLY",
       "statuses": [
         403
@@ -4251,6 +4506,25 @@
       ],
       "modules": [
         "webhooks"
+      ]
+    },
+    {
+      "code": "SELECTION_CHANGED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "broadcasts",
+        "passes"
+      ]
+    },
+    {
+      "code": "SELECTION_USE_RUN",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "passes"
       ]
     },
     {
@@ -4849,6 +5123,15 @@
       ],
       "modules": [
         "nfc"
+      ]
+    },
+    {
+      "code": "TELL_ALREADY_SENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "delivery"
       ]
     },
     {
@@ -5465,6 +5748,15 @@
       "code": "VERSION_PURGED",
       "statuses": [
         410
+      ],
+      "modules": [
+        "passes"
+      ]
+    },
+    {
+      "code": "VIEWS_CHANGED",
+      "statuses": [
+        409
       ],
       "modules": [
         "passes"

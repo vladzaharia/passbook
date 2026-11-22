@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { SANDBOX_KEY_SCOPES } from '../../../shared/contracts/developer-home.ts';
 import { KEY_PRESETS, presetOf, SANDBOX_CEILING } from '../../../shared/developers-keys.ts';
+import { HIDE_MS } from '../ui/reveal-sheet.tsx';
 import { homeDone, NOW } from '../workbench/home-fixtures.ts';
 import { type KeyApi, KeyError } from './api.ts';
 import { KeysPage } from './keys-page.tsx';
 import { maskSecret } from './model.ts';
-import { HIDE_MS } from './reveal.tsx';
 
 const SECRET = 'pbp_test_Vx9cL2mN7qR4tY8wB3kD5fH1jZ6aQ0sE';
 const DAY = 86_400_000;

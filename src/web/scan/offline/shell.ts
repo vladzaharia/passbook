@@ -2,7 +2,7 @@
  * The shell worker's registration and the session copy a cold start offline reads. Both exist only
  * for a door whose session uses an offline mode, and both go with the scanner on unpair or revoke.
  */
-import { type ScanSession, ScanSessionSchema } from '../../../shared/contracts/scan-session.ts';
+import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { offlineModeOf } from '../../../shared/scan-offline.ts';
 import { openScanDb } from './db.ts';
 import { createIdbKeyValue, type KeyValue } from './wipe.ts';
@@ -24,12 +24,19 @@ export async function keepSession(session: ScanSession): Promise<void> {
   if (!kv || !session.scanner) return;
   if (offlineModeOf(session.scanner.settings) === 'stop') await kv.remove(KEY);
   // No staff names are kept: a door that signs staff in has no offline start (`keptSession`).
-  else await kv.set(KEY, { ...session, csrfToken: null, staff: null, staffList: null });
+  else {
+    await kv.set(KEY, { ...session, csrfToken: null, staff: null, staffList: null });
+    // Fetch the schema chunk now, online, so the shell worker has it for a cold start offline.
+    void import('../../../shared/contracts/scan-session.ts').catch(() => undefined);
+  }
 }
 
 /** The kept session, only if it still parses and still asks for an offline mode. */
 export async function keptSession(): Promise<ScanSession | null> {
-  const parsed = ScanSessionSchema.safeParse(await (await meta())?.get(KEY));
+  const stored = await (await meta())?.get(KEY);
+  // The schema pulls most of the contracts: it loads only for a cold start offline, not on first paint.
+  const { ScanSessionSchema } = await import('../../../shared/contracts/scan-session.ts');
+  const parsed = ScanSessionSchema.safeParse(stored);
   return parsed.success &&
     parsed.data.scanner &&
     !parsed.data.scanner.settings.staffSignIn &&

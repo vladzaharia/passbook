@@ -2,7 +2,7 @@ import { DEV_COPY } from '../../../shared/copy/developers.ts';
 import { KEYS_COPY } from '../../../shared/copy/developers-keys.ts';
 import { LOGS_COPY, STATUS_COPY } from '../../../shared/copy/developers-ops.ts';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
-import { PATHS, twin } from '../../../shared/developers.ts';
+import { opUrl, PATHS, twin } from '../../../shared/developers.ts';
 import { operations } from './dates.ts';
 import { pagePath } from './markdown.ts';
 import type { ErrorEntry, Site } from './types.ts';
@@ -60,8 +60,7 @@ export function errorMarkdown(e: ErrorEntry): string {
   if (e.when) out.push('## When', '', e.when, '');
   if (e.usedBy.length > 0) {
     out.push('## Returned by', '');
-    for (const u of e.usedBy)
-      out.push(`- [${u.title}](${PATHS.reference}/${u.slug}.md#${u.anchor})`);
+    for (const u of e.usedBy) out.push(`- [${u.title}](${twin(opUrl(u.slug, u.anchor))})`);
   }
   return end(out);
 }
@@ -114,7 +113,7 @@ export function quickstartMarkdown(): string {
     `2. **${s.sandbox.title}.** ${s.sandbox.line} ${s.sandbox.keyOnce}`,
     `3. **${s.run.title}.** \`POST /api/v1/passes\` with the template id and its fields. Expect \`201\`.`,
     `4. **${s.change.title}.** \`PATCH /api/v1/passes/{id}\` with \`If-Match\` set to the version you read.`,
-    `5. **${s.home.title}.** ${s.home.line}`,
+    `5. **${QS_COPY.hear.title}.** ${QS_COPY.hear.line}`,
     '',
     'Every step runs in your own sandbox; a sandbox never issues a real pass.',
   ]);

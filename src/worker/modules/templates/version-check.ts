@@ -6,7 +6,9 @@ import type {
 } from '../../../shared/contracts/index.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { appliedBranding, readBranding, tenantPassJson } from '../passes/branding.ts';
 import { withBackContacts } from '../passes/contacts.ts';
+import { getOrg as getPassOrg } from '../passes/repo-read-issuance.ts';
 import { behaviors, previewPass } from './build-check.ts';
 import { dryRunReport, dryRunTemplate } from './dry-run-report.ts';
 import { type Analysis, analyzePackage } from './package/analyze.ts';
@@ -87,7 +89,17 @@ export async function checkVersion(
     org?.name ?? 'Organization',
     new Date(ctx.clock.now()),
   );
-  const built = withBackContacts(preview.passJson, {
+  // The organization's colours and name apply as they do in a build, unless the manifest keeps its own.
+  const tenant = orgId ? await getPassOrg(ctx.env.DB, orgId) : null;
+  const shown = tenant
+    ? tenantPassJson(
+        preview.passJson,
+        tenant.name,
+        appliedBranding(readBranding(tenant.branding), analysis.manifest),
+        tenant.personal,
+      )
+    : preview.passJson;
+  const built = withBackContacts(shown, {
     contact: null,
     passService: null,
   }) as unknown as Record<string, unknown>;

@@ -92,7 +92,7 @@ describe('session admits', () => {
     const tpl = await create({ templateIds: [own, foreignTpl], eventIds: [] });
     expect([tpl.status, await code(tpl)]).toEqual([404, 'TEMPLATE_NOT_FOUND']);
     expect(await code(await create({ templateIds: [own], eventIds: [testEvent.id] }))).toBe(
-      'SCAN_MODE_MISMATCH',
+      'EVENT_NOT_FOUND',
     );
   });
 

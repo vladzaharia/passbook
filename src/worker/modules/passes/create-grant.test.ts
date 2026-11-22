@@ -113,6 +113,21 @@ async function records(passId: string) {
   };
 }
 
+describe('reserved Idempotency-Key prefixes', () => {
+  const code = async (res: Response) => ((await res.json()) as { code: string }).code;
+
+  it('POST /passes, which stores its key unprefixed, refuses the keys the server writes itself', async () => {
+    const actor = await operator();
+    for (const prefix of ['broadcast-create:', 'bulk-send:', 'rollout-tell:']) {
+      const res = await issue(actor.session.headers, body(), `${prefix}live:anything`);
+      expect(res.status).toBe(422);
+      expect(await code(res)).toBe('IDEMPOTENCY_KEY_RESERVED');
+    }
+    // An ordinary key still works.
+    expect((await issue(actor.session.headers, body(), kit.fx.ids.token(12))).status).toBe(201);
+  });
+});
+
 describe('pass create as a grant', () => {
   it('creates through a session, with its event and audit in the same commit', async () => {
     const actor = await operator();

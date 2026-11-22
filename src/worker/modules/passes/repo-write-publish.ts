@@ -1,5 +1,4 @@
 import type { Personalization } from '../../../passkit/types.ts';
-import type { PassSource } from '../../../shared/contracts/passes.ts';
 import type { Check } from '../../platform/authority-checks.ts';
 import { coalesceTo, type SetValue } from '../../platform/authority-expr.ts';
 import type { HolderPrincipal } from '../../platform/authority-principal.ts';
@@ -36,7 +35,9 @@ export interface PublishWrite {
   contentHash: string;
   cause: PassCause;
   /** Why beside the cause (scan, broadcast, ...); copied to pass_versions.source by the trigger. */
-  source: PassSource | null;
+  source: string | null;
+  /** The run (change, action or undo) whose write this is; trigger 0188 stamps its target row. */
+  writeRef?: string | undefined;
   actorType: string | null;
   actorId: string | null;
   passJson: string;
@@ -120,6 +121,7 @@ export async function casPublish(ctx: ServiceContext, w: PublishWrite): Promise<
       pending_actor_id: w.actorId,
       pending_pass_json: w.passJson,
       pending_source: w.source,
+      ...(w.writeRef ? { write_ref: w.writeRef } : {}),
       barcode_hash: w.barcodeHash,
       lookup_hash: w.lookupHash,
       scan_code: w.rotation ? w.scanCode : coalesceTo(w.scanCode),
@@ -193,6 +195,8 @@ export async function casMeta(
     /** Required with authority, so its expiry is checked immediately before the batch. */
     clock?: Clock | undefined;
     extraChecks?: readonly Check[] | undefined;
+    /** The run (change, action or undo) whose write this is; trigger 0188 stamps its target row. */
+    writeRef?: string | undefined;
   },
 ): Promise<number | null> {
   if (!permitsPassMutation(set.authority)) return null;
@@ -226,6 +230,7 @@ export async function casMeta(
       barcode_hash: set.barcodeHash,
       lookup_hash: set.lookupHash,
       scan_code: coalesceTo(set.scanCode),
+      ...(set.writeRef ? { write_ref: set.writeRef } : {}),
       ...(set.connectionState ? { sync_error_code: set.connectionState.syncErrorCode } : {}),
     },
     extraChecks: set.extraChecks,

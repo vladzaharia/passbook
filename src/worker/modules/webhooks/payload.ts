@@ -73,9 +73,9 @@ function dataOf(row: FeedRow, type: WebhookEventType): Out {
       return pick(d, { ...VERSION, cause: 'string', source: 'string', notified: 'boolean' });
     case 'pass.voided':
     case 'pass.unvoided':
-      return { actorType: row.actorType };
+      return { actorType: row.actorType, ...pick(d, { runId: 'string' }) };
     case 'pass.removed':
-      return pick(d, { ...VERSION, message: 'boolean' });
+      return pick(d, { ...VERSION, message: 'boolean', runId: 'string' });
     case 'pass.restored':
       return pick(d, VERSION);
     case 'pass.installed':

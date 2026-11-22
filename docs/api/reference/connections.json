@@ -1,0 +1,65 @@
+{
+  "connections.postConnectionsByIdPreview": {
+    "description": "A dry run of the next sync over the last 30 days of records, at most 200: what it would create, update, leave unchanged, skip or reject. New records wait (`counts.waiting`) while the template has no approved release (`releaseBlocked`). It reads the source and the connection's passes and writes nothing: no cursor moves and no run is recorded. `columns` lists the source's fields with up to three sample cells and, for a field with few distinct values, those values and their counts. Needs connections:read and passes:read.",
+    "response": {
+      "ok": true,
+      "records": 115,
+      "counts": {
+        "create": 98,
+        "update": 4,
+        "unchanged": 0,
+        "skipped": 13,
+        "errors": 0,
+        "waiting": 0
+      },
+      "samples": [
+        {
+          "ref": "o-1001",
+          "action": "create",
+          "fields": {
+            "memberName": "Maya Chen",
+            "plan": "monthly"
+          }
+        },
+        {
+          "ref": "o-1002",
+          "action": "skipped",
+          "fields": {
+            "memberName": "Sam Ortiz"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "pointer": "/memberName",
+          "label": "memberName",
+          "samples": ["Maya Chen", "Sam Ortiz", "Ana Ruiz"],
+          "values": []
+        },
+        {
+          "pointer": "/plan",
+          "label": "plan",
+          "samples": ["Monthly membership", "Gift card", "Monthly membership"],
+          "values": [
+            {
+              "value": "Monthly membership",
+              "count": 84
+            },
+            {
+              "value": "Gift card",
+              "count": 13
+            }
+          ]
+        }
+      ],
+      "durationMs": 412,
+      "releaseBlocked": null,
+      "window": {
+        "days": 30,
+        "limit": 200,
+        "since": 1788000000000,
+        "excluded": 0
+      }
+    }
+  }
+}

@@ -1,0 +1,73 @@
+/*
+ * First pass: the path card's edge is the foil, drawn once and never animated. The card and its
+ * Next row hold still under reduced motion; the tiles deal in through .wl-deal (motion.css).
+ */
+.fp-card {
+  border: 1px solid transparent;
+  border-radius: var(--pk-radius-lg);
+  background:
+    linear-gradient(var(--pk-surface-raised), var(--pk-surface-raised)) padding-box,
+    var(--wl-foil) border-box;
+}
+/* A connector behind the markers: it runs from the first marker's centre to the last. */
+.fp-track {
+  position: relative;
+}
+.fp-track::before {
+  content: "";
+  position: absolute;
+  top: 1.125rem;
+  left: calc(100% / 6);
+  right: calc(100% / 6);
+  height: 1px;
+  background: var(--pk-border-strong);
+}
+.fp-next-icon {
+  background: var(--pk-accent-subtle);
+  color: var(--pk-accent);
+}
+.fp-next:nth-child(2) .fp-next-icon {
+  background: color-mix(in oklab, var(--wl-foil-2) 22%, var(--pk-surface-raised));
+  color: var(--pk-fg-strong);
+}
+.fp-next:nth-child(3) .fp-next-icon {
+  background: color-mix(in oklab, var(--wl-foil-3) 28%, var(--pk-surface-raised));
+  color: var(--pk-fg-strong);
+}
+.fp-link:hover .fp-still {
+  transform: translateY(-2px);
+}
+.fp-still {
+  transition: transform var(--wl-dur-hover) var(--wl-ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fp-still {
+    transition: none;
+  }
+  .fp-link:hover .fp-still {
+    transform: none;
+  }
+}
+/* A done step's connector: the line from the step before. It grows once when the step finished since the last visit. */
+.fp-seg {
+  position: absolute;
+  top: 1.125rem;
+  right: 50%;
+  width: 100%;
+  height: 1px;
+  background: var(--pk-accent);
+  transform-origin: left center;
+}
+.fp-seg[data-fresh] {
+  animation: fp-grow var(--wl-dur-card) var(--wl-ease-spring) 120ms backwards;
+}
+@keyframes fp-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fp-seg[data-fresh] {
+    animation: none;
+  }
+}

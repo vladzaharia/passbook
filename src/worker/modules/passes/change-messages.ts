@@ -39,16 +39,33 @@ function moved(before: Map<string, Field>, key: string, field: Field): boolean {
  * "<Label> is now %@") its message only when its value differs from the same field in the
  * previous version; a field the previous version lacked is new, not changed. Returns true when the
  * pass changed. Wallet only shows a message for a changed value, so syncs keep the template's.
+ * With `text` (a change run's own message) the first changed field carries it and the others lose
+ * theirs, so a holder gets one notification.
  */
 export function applyChangeMessages(
   pass: PassJson,
   previous: PassJson | null,
   notify: boolean,
+  text?: string,
 ): boolean {
   const before = previous ? fieldsOf(previous) : new Map<string, Field>();
   let changed = false;
+  let carried = false;
   for (const [key, field] of fieldsOf(pass)) {
-    if (notify && moved(before, key, field)) {
+    if (notify && text !== undefined && moved(before, key, field)) {
+      if (carried) {
+        if (field.changeMessage !== undefined) {
+          delete field.changeMessage;
+          changed = true;
+        }
+      } else {
+        carried = true;
+        if (field.changeMessage !== text) {
+          field.changeMessage = text;
+          changed = true;
+        }
+      }
+    } else if (notify && moved(before, key, field)) {
       if (typeof field.changeMessage !== 'string') {
         field.changeMessage = messageFor(field);
         changed = true;

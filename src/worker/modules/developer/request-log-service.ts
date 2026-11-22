@@ -56,6 +56,7 @@ export const entryOf = (r: Omit<LogRow, 'request_body' | 'response_body'>): Entr
   keyId: r.key_id,
   mode: r.mode,
   via: r.via,
+  client: r.client,
   hasBodies: r.has_bodies === 1,
 });
 

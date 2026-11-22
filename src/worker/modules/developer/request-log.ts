@@ -3,6 +3,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { redactString } from '../../platform/log.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { insertLog, type NewLog } from './repo-request-log.ts';
+import { clientOf } from './request-log-client.ts';
 import { BODY_READ_MAX_BYTES, redactBody, redactQuery } from './request-log-redact.ts';
 
 /** Only a Test secret or a try token can be a sandbox's, so only they are ever copied: a Live call is never read. */
@@ -108,6 +109,7 @@ export const requestLog = createMiddleware<AppBindings>(async (c, next) => {
     orgId: auth.orgId,
     keyId: auth.keyId,
     via: auth.via ?? null,
+    client: clientOf(c.req.header('user-agent')),
     mode: auth.mode,
     requestId: c.var.requestId,
     method: c.req.method,

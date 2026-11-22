@@ -16,7 +16,7 @@ export const MappingEntrySchema = z.object({
   from: z.string().max(500),
   transform: z
     .object({
-      kind: z.enum(['enum', 'bool-status', 'date', 'constant', 'trim', 'upper', 'lower']),
+      kind: z.enum(['enum', 'bool-status', 'date', 'constant', 'trim', 'upper', 'lower', 'join']),
       options: z.record(z.string(), JsonSchema).optional(),
     })
     .optional(),
@@ -165,6 +165,10 @@ export const ConnectionRunSchema = z.object({
   outcome: z.enum(['running', 'unchanged', 'changed', 'error', 'skipped']),
   recordsSeen: z.number().int().nullable(),
   passesChanged: z.number().int().nullable(),
+  /** Null on runs from before the counts were kept. */
+  passesCreated: z.number().int().nullable(),
+  passesVoided: z.number().int().nullable(),
+  recordsFailed: z.number().int().nullable(),
   errorCode: z.string().nullable(),
   /** First failing records of the run: `ref: CODE path message`, one per line. */
   errorDetail: z.string().nullable().optional(),
@@ -242,14 +246,6 @@ export const TestConnectionResponseSchema = z.object({
   durationMs: z.number().int(),
   sample: z.array(SampleFieldSchema).optional(),
 });
-/** Tests an unsaved configuration: nothing is stored; secrets are used once and dropped. */
-export const TestConfigSchema = z.object({
-  orgId: IdSchema,
-  connectorType: z.string().max(64),
-  config: z.record(z.string(), JsonSchema),
-  secrets: z.record(z.string(), z.string().max(4096)).optional(),
-});
-export const TestConfigResponseSchema = TestConnectionResponseSchema;
 /** Operator confirmation that the source system was checked for an uncertain webhook chunk. */
 export const ResolveWebhookFailureResponseSchema = z.object({
   ok: z.literal(true),

@@ -1,0 +1,40 @@
+/* A field a run changes: an accent outline that pulses twice, then rests. */
+.wl-changed {
+  outline: 2px solid var(--pk-accent);
+  outline-offset: 2px;
+  border-radius: var(--pk-radius-md, 0.5rem);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-changed {
+    animation: wl-change-pulse var(--wl-dur-highlight) var(--wl-ease-out) 2;
+  }
+  .wl-sheen {
+    animation: wl-sheen var(--wl-dur-sheen) var(--wl-ease-out) 1;
+  }
+}
+
+@keyframes wl-change-pulse {
+  50% {
+    outline-color: transparent;
+  }
+}
+@keyframes wl-sheen {
+  from {
+    background-position: 160% 0;
+  }
+  to {
+    background-position: -60% 0;
+  }
+}
+
+.wl-sheen {
+  background-image: linear-gradient(
+    115deg,
+    transparent 40%,
+    color-mix(in srgb, var(--pk-accent) 14%, transparent) 50%,
+    transparent 60%
+  );
+  background-size: 250% 100%;
+  background-repeat: no-repeat;
+}

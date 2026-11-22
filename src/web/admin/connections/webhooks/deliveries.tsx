@@ -2,6 +2,7 @@ import { RotateCw } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { WebhookDeliverySchema, WebhookEndpointStatus } from '@/shared/contracts/webhooks.ts';
+import { TEST_TAG, type TestRow, testRowOf } from '@/shared/webhook-test-rows.ts';
 import { entityLabel } from '../../../lib/entity-label.ts';
 import { formatDateTime } from '../../../lib/format.ts';
 import type { DataColumnDef } from '../../../ui/data-table-meta.ts';
@@ -16,12 +17,16 @@ import {
   StatusPill,
   toast,
 } from '../../../ui/index.ts';
-import { type DeliveryFilter, useDeliveries, useEndpointActions } from './api.ts';
+import { type DeliveryFilter, useDeliveries, useEndpointActions, useTestSends } from './api.ts';
 import { DeliverySheet } from './delivery-sheet.tsx';
 import { DELIVERY_STATE_LABEL, DELIVERY_STATUS, EVENT_LABEL, failureLabel } from './labels.ts';
 import { queuedLine, replayError } from './replay-errors.ts';
 
 type Delivery = z.infer<typeof WebhookDeliverySchema>;
+type Row = Delivery | TestRow;
+const isTest = (r: Row): r is TestRow => 'key' in r;
+const keyOf = (r: Row) => (isTest(r) ? r.key : r.eventId);
+const atOf = (r: Row) => (isTest(r) ? r.at : (r.lastAttemptAt ?? r.nextAt));
 
 const FILTERS = [
   { value: 'all', label: 'All' },
@@ -60,59 +65,90 @@ export function Deliveries({
       .catch((error: unknown) => toast.error(replayError(error, false), 'Could not replay'))
       .finally(() => setReplaying(undefined));
   };
-  const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
-  const columns: DataColumnDef<Delivery, never>[] = [
+  const tests = useTestSends(endpointId);
+  const deliveries = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
+  // Test sends have no state: they sit in All, merged by time, and drop out of Failed and Pending.
+  const rows = useMemo<Row[]>(
+    () =>
+      filter === 'all'
+        ? [...deliveries, ...(tests.data?.items ?? []).map(testRowOf)].sort(
+            (a, b) => atOf(b) - atOf(a),
+          )
+        : deliveries,
+    [deliveries, tests.data, filter],
+  );
+  const columns: DataColumnDef<Row, never>[] = [
     {
       id: 'type',
       header: 'Event',
       meta: { grow: true },
-      cell: ({ row: { original: d } }) => (
-        <button
-          type="button"
-          onClick={() => setOpen(d.eventId)}
-          aria-label={`${EVENT_LABEL[d.type]}, ${formatDateTime(d.lastAttemptAt ?? d.nextAt)}`}
-          className="block max-w-full truncate rounded-sm text-left font-medium text-fg-strong underline-offset-2 wl-colors hover:text-accent-fg hover:underline focus-visible:outline-2 focus-visible:outline-focus"
-        >
-          {EVENT_LABEL[d.type]}
-        </button>
-      ),
+      cell: ({ row: { original: d } }) =>
+        isTest(d) ? (
+          <span className="flex items-center gap-2 font-medium text-fg-strong">
+            {EVENT_LABEL[d.type]}
+            <StatusPill status="neutral">{TEST_TAG}</StatusPill>
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setOpen(d.eventId)}
+            aria-label={`${EVENT_LABEL[d.type]}, ${formatDateTime(d.lastAttemptAt ?? d.nextAt)}`}
+            className="block max-w-full truncate rounded-sm text-left font-medium text-fg-strong underline-offset-2 wl-colors hover:text-accent-fg hover:underline focus-visible:outline-2 focus-visible:outline-focus"
+          >
+            {EVENT_LABEL[d.type]}
+          </button>
+        ),
     },
     {
       id: 'pass',
       header: 'Pass',
       meta: { hideBelow: 'md', nowrap: true },
-      cell: ({ row: { original: d } }) => (
-        <RowLink
-          to="/admin/passes/$passId"
-          params={{ passId: d.passId }}
-          title={d.externalId ?? undefined}
-          className="text-xs font-normal"
-        >
-          {entityLabel(d.externalId, 'Open pass')}
-        </RowLink>
-      ),
+      cell: ({ row: { original: d } }) =>
+        isTest(d) ? (
+          <span className="text-fg-subtle">—</span>
+        ) : (
+          <RowLink
+            to="/admin/passes/$passId"
+            params={{ passId: d.passId }}
+            title={d.externalId ?? undefined}
+            className="text-xs font-normal"
+          >
+            {entityLabel(d.externalId, 'Open pass')}
+          </RowLink>
+        ),
     },
     {
       id: 'state',
       header: 'Status',
-      cell: ({ row: { original: d } }) => (
-        <span title={stateHint(d, endpointStatus)}>
-          <StatusPill status={DELIVERY_STATUS[d.state]}>{DELIVERY_STATE_LABEL[d.state]}</StatusPill>
-        </span>
-      ),
+      cell: ({ row: { original: d } }) =>
+        isTest(d) ? (
+          <StatusPill status={d.ok ? 'success' : 'danger'}>{d.ok ? 'Sent' : 'Failed'}</StatusPill>
+        ) : (
+          <span title={stateHint(d, endpointStatus)}>
+            <StatusPill status={DELIVERY_STATUS[d.state]}>
+              {DELIVERY_STATE_LABEL[d.state]}
+            </StatusPill>
+          </span>
+        ),
     },
     {
       id: 'attempts',
       header: 'Attempts',
       meta: { numeric: true, hideBelow: 'lg' },
-      cell: ({ row: { original: d } }) => d.attempts,
+      cell: ({ row: { original: d } }) => (isTest(d) ? 1 : d.attempts),
     },
     {
       id: 'response',
       header: 'Response',
       meta: { nowrap: true, hideBelow: 'sm' },
       cell: ({ row: { original: d } }) =>
-        d.lastAttemptAt === null ? (
+        isTest(d) ? (
+          d.status === null ? (
+            failureLabel(null, d.errorCode)
+          ) : (
+            `HTTP ${d.status}`
+          )
+        ) : d.lastAttemptAt === null ? (
           <span className="text-fg-subtle">—</span>
         ) : d.state === 'delivered' ? (
           `HTTP ${d.lastStatus ?? 200}`
@@ -126,19 +162,22 @@ export function Deliveries({
             id: 'actions',
             header: 'Replay',
             meta: { nowrap: true },
-            cell: ({ row: { original: d } }: { row: { original: Delivery } }) => (
-              <span
-                title={d.state === 'pending' ? 'Pending deliveries cannot be replayed' : undefined}
-              >
-                <IconButton
-                  label={`Replay ${EVENT_LABEL[d.type]} delivery`}
-                  size="sm"
-                  disabled={d.state === 'pending' || replaying === d.eventId}
-                  icon={<RotateCw aria-hidden />}
-                  onClick={() => replay(d.eventId)}
-                />
-              </span>
-            ),
+            cell: ({ row: { original: d } }: { row: { original: Row } }) =>
+              isTest(d) ? null : (
+                <span
+                  title={
+                    d.state === 'pending' ? 'Pending deliveries cannot be replayed' : undefined
+                  }
+                >
+                  <IconButton
+                    label={`Replay ${EVENT_LABEL[d.type]} delivery`}
+                    size="sm"
+                    disabled={d.state === 'pending' || replaying === d.eventId}
+                    icon={<RotateCw aria-hidden />}
+                    onClick={() => replay(d.eventId)}
+                  />
+                </span>
+              ),
           },
         ]
       : []),
@@ -147,7 +186,9 @@ export function Deliveries({
       header: 'Last attempt',
       meta: { nowrap: true, stackHidden: true },
       cell: ({ row: { original: d } }) =>
-        d.lastAttemptAt === null ? (
+        isTest(d) ? (
+          formatDateTime(d.at)
+        ) : d.lastAttemptAt === null ? (
           <span className="text-fg-muted">Not sent</span>
         ) : (
           formatDateTime(d.lastAttemptAt)
@@ -170,7 +211,7 @@ export function Deliveries({
           caption="Deliveries"
           columns={columns}
           data={rows}
-          getRowId={(d) => d.eventId}
+          getRowId={keyOf}
           loading={list.isPending}
           fetching={list.isFetching && !list.isFetchingNextPage}
           bare

@@ -67,7 +67,7 @@ async function authorityOf(
   auth: SessionAuth | ApiKeyAuth,
   orgId: string,
 ): Promise<TenantPassWrite> {
-  if (auth.kind === 'api_key' && auth.orgId !== null && auth.orgId !== orgId)
+  if (auth.kind === 'api_key' && auth.orgId !== orgId)
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   return tenantAuthorityOf(ctx, auth, orgId, 'scanning:manage');
 }

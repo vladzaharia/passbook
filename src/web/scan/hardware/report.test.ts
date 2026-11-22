@@ -87,13 +87,13 @@ describe('native hardware snapshot (bridge v1)', () => {
     expect(NativeScannerCapabilitiesSchema.safeParse(androidFixture()).success).toBe(true);
   });
 
-  it('drops a malformed entry alone and keeps the snapshot', () => {
+  it('drops a malformed entry alone and keeps the snapshot', async () => {
     const hardware = [
       ...(androidFixture().hardware ?? []),
       { kind: 'laser', id: 'z', builtIn: true, connected: true, state: 'ready' },
       { kind: 'usb', id: 'x'.repeat(65), builtIn: false, connected: true, state: 'ready' },
     ];
-    setNativeCapabilities({ ...androidFixture(), hardware });
+    await setNativeCapabilities({ ...androidFixture(), hardware });
     expect(getNativeCapabilities()?.hardware).toHaveLength(5);
     expect(getNativeCapabilities()?.platform).toBe('android');
     clearNativeCapabilities();

@@ -5,13 +5,11 @@ import {
   IdParamSchema,
   ScannerListQuerySchema,
   ScannerListSchema,
-  ScannerModeSchema,
   ScannerPairingSchema,
   ScannerPairingStateSchema,
   ScannerSamplePassSchema,
   ScannerSchema,
   TerminalTokenSchema,
-  UpdateScannerSchema,
 } from '../../../shared/contracts/index.ts';
 import { currentUserId, modeOf } from '../../platform/auth.ts';
 import { limitBody } from '../../platform/body-limit.ts';
@@ -21,16 +19,17 @@ import { authOf, requireTenantSession, tenantAuthorityOf } from '../passes/http.
 import { createPairing, pairingState } from './pairing.ts';
 import { pairHere, replaceTerminalToken } from './pairing-token.ts';
 import { setScannerCookie } from './routes-pair.ts';
+import { registerScannerWrites } from './routes-scanners-key.ts';
 import { createSamplePass } from './sample-pass.ts';
-import { changeMode } from './scanner-mode.ts';
 import { listScanners, loadScanner, scannerView } from './scanner-views.ts';
-import { createScanner, updateScanner } from './scanners.ts';
-import { revokeScanner } from './scanning-devices.ts';
+import { createScanner } from './scanners.ts';
 import { readableScanningPage, scopedScanningView } from './scanning-workspace.ts';
 import { scannerAuthority } from './target-authority.ts';
 
 /** Console scanners: /api/v1/scanners. Mode comes from the console's header, never the body. */
 export const scannersRoutes = createRouter();
+/** Edit and revoke take a console session or a `scanning:write` key, so they register before the session guard. */
+registerScannerWrites(scannersRoutes);
 guard(scannersRoutes, requireTenantSession);
 scannersRoutes.use('*', limitBody(64 * 1024));
 
@@ -106,29 +105,6 @@ register(
     const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
     await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:read');
     return c.json(scopedScanningView(await scannerView(ctx, row.id), row.orgId));
-  },
-);
-register(
-  scannersRoutes,
-  TAG,
-  {
-    method: 'patch',
-    path: '/{id}',
-    summary: 'Edit a scanner',
-    params: IdParamSchema,
-    body: UpdateScannerSchema,
-    response: ScannerSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
-    return c.json(
-      scopedScanningView(
-        await updateScanner(ctx, currentUserId(c), row.id, c.req.valid('json'), authority),
-        row.orgId,
-      ),
-    );
   },
 );
 register(
@@ -230,48 +206,6 @@ register(
       {
         'cache-control': 'no-store',
       },
-    );
-  },
-);
-register(
-  scannersRoutes,
-  TAG,
-  {
-    method: 'post',
-    path: '/{id}/revoke',
-    summary: 'Remove a scanner from use',
-    params: IdParamSchema,
-    response: ScannerSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
-    return c.json(
-      scopedScanningView(await revokeScanner(ctx, currentUserId(c), row.id, authority), row.orgId),
-    );
-  },
-);
-register(
-  scannersRoutes,
-  TAG,
-  {
-    method: 'post',
-    path: '/{id}/mode',
-    summary: 'Go live or move to test mode',
-    params: IdParamSchema,
-    body: ScannerModeSchema,
-    response: ScannerSchema,
-  },
-  async (c) => {
-    const ctx = serviceContext(c);
-    const row = await loadScanner(ctx, c.req.valid('param').id, modeOf(c.var.auth));
-    const authority = await scannerAuthority(ctx, authOf(c), row.orgId, 'scanning:manage');
-    return c.json(
-      scopedScanningView(
-        await changeMode(ctx, currentUserId(c), row.id, c.req.valid('json'), authority),
-        row.orgId,
-      ),
     );
   },
 );

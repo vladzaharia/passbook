@@ -52,12 +52,13 @@ export const DEV_COPY = {
   },
   reference: {
     title: 'API reference',
-    lede: 'One page per resource. Every operation has a stable anchor: the SDK method name, such as #create.',
+    lede: 'One page per operation, grouped by resource. The last segment is the SDK method name, such as /passes/create.',
     consoleOnly: 'Console only',
     consoleOnlyLine: 'Signed-in console sessions only. An API key cannot call these.',
     returns: 'Returns',
     errors: 'Errors',
     errorsLine: 'Each operation lists the codes it can return. Branch on code, not on the message.',
+    allCodes: (n: number) => `All ${n} codes`,
     body: 'Body',
     onThisPage: 'On this page',
     copy: 'Copy',
@@ -128,4 +129,10 @@ export const DEV_GUIDES = [
   { id: 'test-mode', title: 'Test mode', line: 'Inbox, reset, purge', tone: 'blue' },
   { id: 'go-live', title: 'Go live', line: 'The checklist', tone: 'teal' },
   { id: 'partner-apps', title: 'Partner apps', line: 'Installations', tone: 'violet' },
+  {
+    id: 'scan-setup',
+    title: 'Set up scanning in one call',
+    line: 'Doors, staff, devices',
+    tone: 'amber',
+  },
 ] as const;

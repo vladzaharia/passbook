@@ -6,7 +6,7 @@
     {
       "id": "valid",
       "title": "A real pass.updated delivery",
-      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
+      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-11-20\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
       "expect": null,
       "sdk": "ok",
       "secrets": [
@@ -18,14 +18,14 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318",
-        "x-passbook-signature": "v1=dcf61cbf57f51bd8fa76867fbe4b4f6bb28826d50326a300b8a2dcca94e51104"
+        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a"
       },
       "now": 1795153320
     },
     {
       "id": "valid-unicode",
       "title": "A body with non-ASCII text",
-      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000002\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"café-☕-42\",\"templateId\":\"sample-template\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
+      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000002\",\"type\":\"pass.issued\",\"apiVersion\":\"2026-11-20\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"café-☕-42\",\"templateId\":\"sample-template\"},\"data\":{\"version\":1,\"source\":\"api\"}}",
       "expect": null,
       "sdk": "ok",
       "secrets": [
@@ -37,14 +37,14 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318",
-        "x-passbook-signature": "v1=694ce25acc811a2b2d55436f5f5fd829c48270661e3e78f68c8f3676584ee34c"
+        "x-passbook-signature": "v1=cc8fb337178c35faf96b9d555f1ee754ca019da103eb0cede08021e041134574"
       },
       "now": 1795153320
     },
     {
       "id": "valid-rotation",
       "title": "Two v1 values while a secret rotates: the current secret matches the first",
-      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
+      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-11-20\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
       "expect": null,
       "sdk": "ok",
       "secrets": [
@@ -56,14 +56,14 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318",
-        "x-passbook-signature": "v1=dcf61cbf57f51bd8fa76867fbe4b4f6bb28826d50326a300b8a2dcca94e51104, v1=eb00febad0abce85de7039de8b8a4e9102f20b3e42e919b98ab8c7a1e2dcb1a2"
+        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a, v1=ed74bc7e832ae03c1167d3305dea5186a9cfe945089ff9671661f04953d16b07"
       },
       "now": 1795153320
     },
     {
       "id": "valid-previous-secret",
       "title": "Two v1 values while a secret rotates: the previous secret matches the second",
-      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
+      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-11-20\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
       "expect": null,
       "sdk": "ok",
       "secrets": [
@@ -75,14 +75,14 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318",
-        "x-passbook-signature": "v1=dcf61cbf57f51bd8fa76867fbe4b4f6bb28826d50326a300b8a2dcca94e51104, v1=eb00febad0abce85de7039de8b8a4e9102f20b3e42e919b98ab8c7a1e2dcb1a2"
+        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a, v1=ed74bc7e832ae03c1167d3305dea5186a9cfe945089ff9671661f04953d16b07"
       },
       "now": 1795153320
     },
     {
       "id": "reserialized-json",
       "title": "The receiver parsed the body and printed it again",
-      "body": "{\n  \"id\": \"0193a2fb-0000-7000-8000-000000000001\",\n  \"type\": \"pass.updated\",\n  \"apiVersion\": \"2026-12-01\",\n  \"createdAt\": 1795153318000,\n  \"orgId\": \"org_vector\",\n  \"mode\": \"test\",\n  \"pass\": {\n    \"id\": \"sample-pass\",\n    \"externalId\": \"order-1042\",\n    \"templateId\": \"sample-template\"\n  },\n  \"data\": {\n    \"version\": 2,\n    \"cause\": \"fields\",\n    \"source\": \"api\",\n    \"notified\": true\n  }\n}",
+      "body": "{\n  \"id\": \"0193a2fb-0000-7000-8000-000000000001\",\n  \"type\": \"pass.updated\",\n  \"apiVersion\": \"2026-11-20\",\n  \"createdAt\": 1795153318000,\n  \"orgId\": \"org_vector\",\n  \"mode\": \"test\",\n  \"pass\": {\n    \"id\": \"sample-pass\",\n    \"externalId\": \"order-1042\",\n    \"templateId\": \"sample-template\"\n  },\n  \"data\": {\n    \"version\": 2,\n    \"cause\": \"fields\",\n    \"source\": \"api\",\n    \"notified\": true\n  }\n}",
       "expect": {
         "step": "signature",
         "cause": "reserialized"
@@ -97,14 +97,14 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318",
-        "x-passbook-signature": "v1=dcf61cbf57f51bd8fa76867fbe4b4f6bb28826d50326a300b8a2dcca94e51104"
+        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a"
       },
       "now": 1795153320
     },
     {
       "id": "trailing-newline",
       "title": "The receiver added a newline to the body",
-      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}\n",
+      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-11-20\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}\n",
       "expect": {
         "step": "signature",
         "cause": "whitespace"
@@ -119,14 +119,14 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318",
-        "x-passbook-signature": "v1=dcf61cbf57f51bd8fa76867fbe4b4f6bb28826d50326a300b8a2dcca94e51104"
+        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a"
       },
       "now": 1795153320
     },
     {
       "id": "secret-with-space",
       "title": "The secret was pasted with a trailing space",
-      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
+      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-11-20\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
       "expect": {
         "step": "signature",
         "cause": "secret_whitespace"
@@ -141,14 +141,14 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318",
-        "x-passbook-signature": "v1=dcf61cbf57f51bd8fa76867fbe4b4f6bb28826d50326a300b8a2dcca94e51104"
+        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a"
       },
       "now": 1795153320
     },
     {
       "id": "wrong-secret",
       "title": "Another endpoint’s secret, or the old one after a rotation",
-      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
+      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-11-20\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
       "expect": {
         "step": "signature",
         "cause": "mismatch"
@@ -163,14 +163,14 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318",
-        "x-passbook-signature": "v1=dcf61cbf57f51bd8fa76867fbe4b4f6bb28826d50326a300b8a2dcca94e51104"
+        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a"
       },
       "now": 1795153320
     },
     {
       "id": "stale-timestamp",
       "title": "Signed 10 minutes ago",
-      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
+      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-11-20\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
       "expect": {
         "step": "timestamp",
         "cause": "stale"
@@ -185,14 +185,14 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795152720",
-        "x-passbook-signature": "v1=095713d2238a460e378a5c422e4cbb4f8b5befa9f6184369e6b1ce04653158ee"
+        "x-passbook-signature": "v1=b489a84f1d6ab35600910070866d89a6355b663b8afa226ceacd7b674e230976"
       },
       "now": 1795153320
     },
     {
       "id": "milliseconds-timestamp",
       "title": "A timestamp in milliseconds",
-      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
+      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-11-20\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
       "expect": {
         "step": "timestamp",
         "cause": "milliseconds"
@@ -207,14 +207,14 @@
         "x-passbook-event-id": "0193a2fb-0000-7000-8000-000000000001",
         "x-passbook-event-type": "pass.updated",
         "x-passbook-timestamp": "1795153318000",
-        "x-passbook-signature": "v1=dcf61cbf57f51bd8fa76867fbe4b4f6bb28826d50326a300b8a2dcca94e51104"
+        "x-passbook-signature": "v1=ff4439d1745c65184b305a5aa45b8a86e19eb25e7b7d72ca03953ba061aa041a"
       },
       "now": 1795153320
     },
     {
       "id": "missing-signature",
       "title": "A proxy dropped x-passbook-signature",
-      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-12-01\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
+      "body": "{\"id\":\"0193a2fb-0000-7000-8000-000000000001\",\"type\":\"pass.updated\",\"apiVersion\":\"2026-11-20\",\"createdAt\":1795153318000,\"orgId\":\"org_vector\",\"mode\":\"test\",\"pass\":{\"id\":\"sample-pass\",\"externalId\":\"order-1042\",\"templateId\":\"sample-template\"},\"data\":{\"version\":2,\"cause\":\"fields\",\"source\":\"api\",\"notified\":true}}",
       "expect": {
         "step": "signature",
         "cause": "missing_signature"

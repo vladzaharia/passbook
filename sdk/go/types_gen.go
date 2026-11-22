@@ -372,29 +372,30 @@ type BrandWebLogoUploadParams struct {
 
 type BrandWebLogoUploadResult = Org
 
-type BroadcastsCancelResult struct {
-	ID         string                       `json:"id"`
-	OrgID      string                       `json:"orgId"`
-	Mode       string                       `json:"mode"`
-	Kind       string                       `json:"kind"`
-	Name       string                       `json:"name"`
-	State      string                       `json:"state"`
-	Target     BroadcastsCancelResultTarget `json:"target"`
-	Patch      map[string]any               `json:"patch"`
-	Notify     bool                         `json:"notify"`
-	At         *int64                       `json:"at"`
-	ClearAfter *int64                       `json:"clearAfter"`
-	ParentID   *string                      `json:"parentId"`
-	RuleID     *string                      `json:"ruleId"`
-	FollowUp   map[string]any               `json:"followUp"`
-	Counts     BroadcastsCancelResultCounts `json:"counts"`
-	ErrorCode  *string                      `json:"errorCode"`
-	CreatedAt  int64                        `json:"createdAt"`
-	StartedAt  *int64                       `json:"startedAt"`
-	FinishedAt *int64                       `json:"finishedAt"`
+type Broadcast struct {
+	ID         string          `json:"id"`
+	OrgID      string          `json:"orgId"`
+	Mode       string          `json:"mode"`
+	Kind       string          `json:"kind"`
+	Name       string          `json:"name"`
+	State      string          `json:"state"`
+	Target     BroadcastTarget `json:"target"`
+	Patch      map[string]any  `json:"patch"`
+	Notify     bool            `json:"notify"`
+	At         *int64          `json:"at"`
+	ClearAfter *int64          `json:"clearAfter"`
+	ParentID   *string         `json:"parentId"`
+	Message    *string         `json:"message,omitempty"`
+	RuleID     *string         `json:"ruleId"`
+	FollowUp   map[string]any  `json:"followUp"`
+	Counts     BroadcastCounts `json:"counts"`
+	ErrorCode  *string         `json:"errorCode"`
+	CreatedAt  int64           `json:"createdAt"`
+	StartedAt  *int64          `json:"startedAt"`
+	FinishedAt *int64          `json:"finishedAt"`
 }
 
-type BroadcastsCancelResultCounts struct {
+type BroadcastCounts struct {
 	Targeted   int64 `json:"targeted"`
 	Updated    int64 `json:"updated"`
 	Unchanged  int64 `json:"unchanged"`
@@ -402,56 +403,73 @@ type BroadcastsCancelResultCounts struct {
 	Failed     int64 `json:"failed"`
 }
 
-type BroadcastsCancelResultTarget struct {
+type BroadcastTarget struct {
 	TemplateIds []string `json:"templateIds"`
 	OnDevice    *bool    `json:"onDevice,omitempty"`
 	HolderState *string  `json:"holderState,omitempty"`
 	Q           *string  `json:"q,omitempty"`
 	Scan        any      `json:"scan,omitempty"`
 	Match       []any    `json:"match,omitempty"`
+	Version     *string  `json:"version,omitempty"`
 }
 
-type BroadcastsCancelResultTargetMatchItem1 struct {
+type BroadcastTargetMatchItem1 struct {
 	Input  string   `json:"input"`
 	Values []string `json:"values"`
 }
 
-type BroadcastsCancelResultTargetMatchItem2 struct {
+type BroadcastTargetMatchItem2 struct {
 	Input string   `json:"input"`
 	Min   *float64 `json:"min,omitempty"`
 	Max   *float64 `json:"max,omitempty"`
 }
 
-type BroadcastsCancelResultTargetMatchItem3 struct {
+type BroadcastTargetMatchItem3 struct {
 	Input    string  `json:"input"`
 	From     *string `json:"from,omitempty"`
 	To       *string `json:"to,omitempty"`
 	TimeZone string  `json:"timeZone"`
 }
 
-type BroadcastsCancelResultTargetScan1 struct {
+type BroadcastTargetScan1 struct {
 	EventID   string `json:"eventId"`
 	CheckedIn bool   `json:"checkedIn"`
 }
 
-type BroadcastsCancelResultTargetScan2 struct {
+type BroadcastTargetScan2 struct {
 	NoScanDays int64 `json:"noScanDays"`
 }
+
+type BroadcastUndo struct {
+	ID         string `json:"id"`
+	ParentID   string `json:"parentId"`
+	Restorable int64  `json:"restorable"`
+	Kept       int64  `json:"kept"`
+}
+
+type BroadcastsCancelResult = Broadcast
 
 type BroadcastsCountRecipientsBody = BroadcastsCountRecipientsParams
 
 type BroadcastsCountRecipientsParams struct {
-	OrgID  string                                `json:"orgId"`
-	Target BroadcastsCountRecipientsParamsTarget `json:"target"`
+	OrgID   string                                `json:"orgId"`
+	Target  BroadcastsCountRecipientsParamsTarget `json:"target"`
+	Patch   map[string]any                        `json:"patch,omitempty"`
+	Notify  *bool                                 `json:"notify,omitempty"`
+	Message *string                               `json:"message,omitempty"`
 }
 
 type BroadcastsCountRecipientsParamsTarget struct {
-	TemplateIds []string `json:"templateIds"`
+	TemplateIds []string `json:"templateIds,omitempty"`
 	OnDevice    *bool    `json:"onDevice,omitempty"`
 	HolderState *string  `json:"holderState,omitempty"`
 	Q           *string  `json:"q,omitempty"`
 	Scan        any      `json:"scan,omitempty"`
 	Match       []any    `json:"match,omitempty"`
+	Version     *string  `json:"version,omitempty"`
+	PassIds     []string `json:"passIds,omitempty"`
+	ImportID    *string  `json:"importId,omitempty"`
+	ExpectCount *int64   `json:"expectCount,omitempty"`
 }
 
 type BroadcastsCountRecipientsParamsTargetMatchItem1 struct {
@@ -472,6 +490,12 @@ type BroadcastsCountRecipientsParamsTargetMatchItem3 struct {
 	TimeZone string  `json:"timeZone"`
 }
 
+type BroadcastsCountRecipientsParamsTargetMatchItem4 struct {
+	Input string `json:"input"`
+	Op    string `json:"op"`
+	Value string `json:"value"`
+}
+
 type BroadcastsCountRecipientsParamsTargetScan1 struct {
 	EventID   string `json:"eventId"`
 	CheckedIn bool   `json:"checkedIn"`
@@ -482,10 +506,34 @@ type BroadcastsCountRecipientsParamsTargetScan2 struct {
 }
 
 type BroadcastsCountRecipientsResult struct {
-	Targeted   int64 `json:"targeted"`
-	OnDevice   int64 `json:"onDevice"`
-	OverBudget int64 `json:"overBudget"`
-	Limit      int64 `json:"limit"`
+	Targeted   int64                                        `json:"targeted"`
+	OnDevice   int64                                        `json:"onDevice"`
+	OverBudget int64                                        `json:"overBudget"`
+	Limit      int64                                        `json:"limit"`
+	Samples    []BroadcastsCountRecipientsResultSamplesItem `json:"samples"`
+	Unchanged  int64                                        `json:"unchanged"`
+	Blocked    []BroadcastsCountRecipientsResultBlockedItem `json:"blocked"`
+	Notified   int64                                        `json:"notified"`
+	Silent     int64                                        `json:"silent"`
+	Estimated  *bool                                        `json:"estimated,omitempty"`
+}
+
+type BroadcastsCountRecipientsResultBlockedItem struct {
+	Code  string `json:"code"`
+	Count int64  `json:"count"`
+}
+
+type BroadcastsCountRecipientsResultSamplesItem struct {
+	PassID  string                                                  `json:"passId"`
+	Title   *string                                                 `json:"title"`
+	Changes []BroadcastsCountRecipientsResultSamplesItemChangesItem `json:"changes"`
+}
+
+type BroadcastsCountRecipientsResultSamplesItemChangesItem struct {
+	Key   string  `json:"key"`
+	Label string  `json:"label"`
+	From  *string `json:"from"`
+	To    *string `json:"to"`
 }
 
 type BroadcastsCreateBody = BroadcastsCreateParams
@@ -494,21 +542,26 @@ type BroadcastsCreateParams struct {
 	OrgID      string                       `json:"orgId"`
 	Kind       string                       `json:"kind"`
 	Name       *string                      `json:"name,omitempty"`
-	Target     BroadcastsCreateParamsTarget `json:"target"`
-	Patch      map[string]any               `json:"patch"`
 	Notify     *bool                        `json:"notify,omitempty"`
 	Send       *string                      `json:"send,omitempty"`
 	At         *int64                       `json:"at,omitempty"`
 	ClearAfter *int64                       `json:"clearAfter,omitempty"`
+	Target     BroadcastsCreateParamsTarget `json:"target"`
+	Patch      map[string]any               `json:"patch"`
+	Message    *string                      `json:"message,omitempty"`
 }
 
 type BroadcastsCreateParamsTarget struct {
-	TemplateIds []string `json:"templateIds"`
+	TemplateIds []string `json:"templateIds,omitempty"`
 	OnDevice    *bool    `json:"onDevice,omitempty"`
 	HolderState *string  `json:"holderState,omitempty"`
 	Q           *string  `json:"q,omitempty"`
 	Scan        any      `json:"scan,omitempty"`
 	Match       []any    `json:"match,omitempty"`
+	Version     *string  `json:"version,omitempty"`
+	PassIds     []string `json:"passIds,omitempty"`
+	ImportID    *string  `json:"importId,omitempty"`
+	ExpectCount *int64   `json:"expectCount,omitempty"`
 }
 
 type BroadcastsCreateParamsTargetMatchItem1 struct {
@@ -529,6 +582,12 @@ type BroadcastsCreateParamsTargetMatchItem3 struct {
 	TimeZone string  `json:"timeZone"`
 }
 
+type BroadcastsCreateParamsTargetMatchItem4 struct {
+	Input string `json:"input"`
+	Op    string `json:"op"`
+	Value string `json:"value"`
+}
+
 type BroadcastsCreateParamsTargetScan1 struct {
 	EventID   string `json:"eventId"`
 	CheckedIn bool   `json:"checkedIn"`
@@ -538,143 +597,16 @@ type BroadcastsCreateParamsTargetScan2 struct {
 	NoScanDays int64 `json:"noScanDays"`
 }
 
-type BroadcastsCreateResult struct {
-	ID         string                       `json:"id"`
-	OrgID      string                       `json:"orgId"`
-	Mode       string                       `json:"mode"`
-	Kind       string                       `json:"kind"`
-	Name       string                       `json:"name"`
-	State      string                       `json:"state"`
-	Target     BroadcastsCreateResultTarget `json:"target"`
-	Patch      map[string]any               `json:"patch"`
-	Notify     bool                         `json:"notify"`
-	At         *int64                       `json:"at"`
-	ClearAfter *int64                       `json:"clearAfter"`
-	ParentID   *string                      `json:"parentId"`
-	RuleID     *string                      `json:"ruleId"`
-	FollowUp   map[string]any               `json:"followUp"`
-	Counts     BroadcastsCreateResultCounts `json:"counts"`
-	ErrorCode  *string                      `json:"errorCode"`
-	CreatedAt  int64                        `json:"createdAt"`
-	StartedAt  *int64                       `json:"startedAt"`
-	FinishedAt *int64                       `json:"finishedAt"`
-}
-
-type BroadcastsCreateResultCounts struct {
-	Targeted   int64 `json:"targeted"`
-	Updated    int64 `json:"updated"`
-	Unchanged  int64 `json:"unchanged"`
-	OverBudget int64 `json:"overBudget"`
-	Failed     int64 `json:"failed"`
-}
-
-type BroadcastsCreateResultTarget struct {
-	TemplateIds []string `json:"templateIds"`
-	OnDevice    *bool    `json:"onDevice,omitempty"`
-	HolderState *string  `json:"holderState,omitempty"`
-	Q           *string  `json:"q,omitempty"`
-	Scan        any      `json:"scan,omitempty"`
-	Match       []any    `json:"match,omitempty"`
-}
-
-type BroadcastsCreateResultTargetMatchItem1 struct {
-	Input  string   `json:"input"`
-	Values []string `json:"values"`
-}
-
-type BroadcastsCreateResultTargetMatchItem2 struct {
-	Input string   `json:"input"`
-	Min   *float64 `json:"min,omitempty"`
-	Max   *float64 `json:"max,omitempty"`
-}
-
-type BroadcastsCreateResultTargetMatchItem3 struct {
-	Input    string  `json:"input"`
-	From     *string `json:"from,omitempty"`
-	To       *string `json:"to,omitempty"`
-	TimeZone string  `json:"timeZone"`
-}
-
-type BroadcastsCreateResultTargetScan1 struct {
-	EventID   string `json:"eventId"`
-	CheckedIn bool   `json:"checkedIn"`
-}
-
-type BroadcastsCreateResultTargetScan2 struct {
-	NoScanDays int64 `json:"noScanDays"`
-}
-
-type BroadcastsListItem struct {
-	ID         string                   `json:"id"`
-	OrgID      string                   `json:"orgId"`
-	Mode       string                   `json:"mode"`
-	Kind       string                   `json:"kind"`
-	Name       string                   `json:"name"`
-	State      string                   `json:"state"`
-	Target     BroadcastsListItemTarget `json:"target"`
-	Patch      map[string]any           `json:"patch"`
-	Notify     bool                     `json:"notify"`
-	At         *int64                   `json:"at"`
-	ClearAfter *int64                   `json:"clearAfter"`
-	ParentID   *string                  `json:"parentId"`
-	RuleID     *string                  `json:"ruleId"`
-	FollowUp   map[string]any           `json:"followUp"`
-	Counts     BroadcastsListItemCounts `json:"counts"`
-	ErrorCode  *string                  `json:"errorCode"`
-	CreatedAt  int64                    `json:"createdAt"`
-	StartedAt  *int64                   `json:"startedAt"`
-	FinishedAt *int64                   `json:"finishedAt"`
-}
-
-type BroadcastsListItemCounts struct {
-	Targeted   int64 `json:"targeted"`
-	Updated    int64 `json:"updated"`
-	Unchanged  int64 `json:"unchanged"`
-	OverBudget int64 `json:"overBudget"`
-	Failed     int64 `json:"failed"`
-}
-
-type BroadcastsListItemTarget struct {
-	TemplateIds []string `json:"templateIds"`
-	OnDevice    *bool    `json:"onDevice,omitempty"`
-	HolderState *string  `json:"holderState,omitempty"`
-	Q           *string  `json:"q,omitempty"`
-	Scan        any      `json:"scan,omitempty"`
-	Match       []any    `json:"match,omitempty"`
-}
-
-type BroadcastsListItemTargetMatchItem1 struct {
-	Input  string   `json:"input"`
-	Values []string `json:"values"`
-}
-
-type BroadcastsListItemTargetMatchItem2 struct {
-	Input string   `json:"input"`
-	Min   *float64 `json:"min,omitempty"`
-	Max   *float64 `json:"max,omitempty"`
-}
-
-type BroadcastsListItemTargetMatchItem3 struct {
-	Input    string  `json:"input"`
-	From     *string `json:"from,omitempty"`
-	To       *string `json:"to,omitempty"`
-	TimeZone string  `json:"timeZone"`
-}
-
-type BroadcastsListItemTargetScan1 struct {
-	EventID   string `json:"eventId"`
-	CheckedIn bool   `json:"checkedIn"`
-}
-
-type BroadcastsListItemTargetScan2 struct {
-	NoScanDays int64 `json:"noScanDays"`
-}
+type BroadcastsCreateResult = Broadcast
 
 type BroadcastsListQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
-	Limit  *int64  `json:"limit,omitempty"`
-	State  *string `json:"state,omitempty"`
-	Origin *string `json:"origin,omitempty"`
+	Cursor   *string `json:"cursor,omitempty"`
+	Limit    *int64  `json:"limit,omitempty"`
+	State    *string `json:"state,omitempty"`
+	Origin   *string `json:"origin,omitempty"`
+	Kind     *string `json:"kind,omitempty"`
+	ParentID *string `json:"parentId,omitempty"`
+	RetryOf  *string `json:"retryOf,omitempty"`
 }
 
 type BroadcastsRecipientsListItem struct {
@@ -691,137 +623,13 @@ type BroadcastsRecipientsListQuery struct {
 	Outcome *string `json:"outcome,omitempty"`
 }
 
-type BroadcastsRetrieveResult struct {
-	ID         string                         `json:"id"`
-	OrgID      string                         `json:"orgId"`
-	Mode       string                         `json:"mode"`
-	Kind       string                         `json:"kind"`
-	Name       string                         `json:"name"`
-	State      string                         `json:"state"`
-	Target     BroadcastsRetrieveResultTarget `json:"target"`
-	Patch      map[string]any                 `json:"patch"`
-	Notify     bool                           `json:"notify"`
-	At         *int64                         `json:"at"`
-	ClearAfter *int64                         `json:"clearAfter"`
-	ParentID   *string                        `json:"parentId"`
-	RuleID     *string                        `json:"ruleId"`
-	FollowUp   map[string]any                 `json:"followUp"`
-	Counts     BroadcastsRetrieveResultCounts `json:"counts"`
-	ErrorCode  *string                        `json:"errorCode"`
-	CreatedAt  int64                          `json:"createdAt"`
-	StartedAt  *int64                         `json:"startedAt"`
-	FinishedAt *int64                         `json:"finishedAt"`
+type BroadcastsRetrieveResult = Broadcast
+
+type BroadcastsRetryQuery struct {
+	ExpectCount *int64 `json:"expectCount,omitempty"`
 }
 
-type BroadcastsRetrieveResultCounts struct {
-	Targeted   int64 `json:"targeted"`
-	Updated    int64 `json:"updated"`
-	Unchanged  int64 `json:"unchanged"`
-	OverBudget int64 `json:"overBudget"`
-	Failed     int64 `json:"failed"`
-}
-
-type BroadcastsRetrieveResultTarget struct {
-	TemplateIds []string `json:"templateIds"`
-	OnDevice    *bool    `json:"onDevice,omitempty"`
-	HolderState *string  `json:"holderState,omitempty"`
-	Q           *string  `json:"q,omitempty"`
-	Scan        any      `json:"scan,omitempty"`
-	Match       []any    `json:"match,omitempty"`
-}
-
-type BroadcastsRetrieveResultTargetMatchItem1 struct {
-	Input  string   `json:"input"`
-	Values []string `json:"values"`
-}
-
-type BroadcastsRetrieveResultTargetMatchItem2 struct {
-	Input string   `json:"input"`
-	Min   *float64 `json:"min,omitempty"`
-	Max   *float64 `json:"max,omitempty"`
-}
-
-type BroadcastsRetrieveResultTargetMatchItem3 struct {
-	Input    string  `json:"input"`
-	From     *string `json:"from,omitempty"`
-	To       *string `json:"to,omitempty"`
-	TimeZone string  `json:"timeZone"`
-}
-
-type BroadcastsRetrieveResultTargetScan1 struct {
-	EventID   string `json:"eventId"`
-	CheckedIn bool   `json:"checkedIn"`
-}
-
-type BroadcastsRetrieveResultTargetScan2 struct {
-	NoScanDays int64 `json:"noScanDays"`
-}
-
-type BroadcastsRetryResult struct {
-	ID         string                      `json:"id"`
-	OrgID      string                      `json:"orgId"`
-	Mode       string                      `json:"mode"`
-	Kind       string                      `json:"kind"`
-	Name       string                      `json:"name"`
-	State      string                      `json:"state"`
-	Target     BroadcastsRetryResultTarget `json:"target"`
-	Patch      map[string]any              `json:"patch"`
-	Notify     bool                        `json:"notify"`
-	At         *int64                      `json:"at"`
-	ClearAfter *int64                      `json:"clearAfter"`
-	ParentID   *string                     `json:"parentId"`
-	RuleID     *string                     `json:"ruleId"`
-	FollowUp   map[string]any              `json:"followUp"`
-	Counts     BroadcastsRetryResultCounts `json:"counts"`
-	ErrorCode  *string                     `json:"errorCode"`
-	CreatedAt  int64                       `json:"createdAt"`
-	StartedAt  *int64                      `json:"startedAt"`
-	FinishedAt *int64                      `json:"finishedAt"`
-}
-
-type BroadcastsRetryResultCounts struct {
-	Targeted   int64 `json:"targeted"`
-	Updated    int64 `json:"updated"`
-	Unchanged  int64 `json:"unchanged"`
-	OverBudget int64 `json:"overBudget"`
-	Failed     int64 `json:"failed"`
-}
-
-type BroadcastsRetryResultTarget struct {
-	TemplateIds []string `json:"templateIds"`
-	OnDevice    *bool    `json:"onDevice,omitempty"`
-	HolderState *string  `json:"holderState,omitempty"`
-	Q           *string  `json:"q,omitempty"`
-	Scan        any      `json:"scan,omitempty"`
-	Match       []any    `json:"match,omitempty"`
-}
-
-type BroadcastsRetryResultTargetMatchItem1 struct {
-	Input  string   `json:"input"`
-	Values []string `json:"values"`
-}
-
-type BroadcastsRetryResultTargetMatchItem2 struct {
-	Input string   `json:"input"`
-	Min   *float64 `json:"min,omitempty"`
-	Max   *float64 `json:"max,omitempty"`
-}
-
-type BroadcastsRetryResultTargetMatchItem3 struct {
-	Input    string  `json:"input"`
-	From     *string `json:"from,omitempty"`
-	To       *string `json:"to,omitempty"`
-	TimeZone string  `json:"timeZone"`
-}
-
-type BroadcastsRetryResultTargetScan1 struct {
-	EventID   string `json:"eventId"`
-	CheckedIn bool   `json:"checkedIn"`
-}
-
-type BroadcastsRetryResultTargetScan2 struct {
-	NoScanDays int64 `json:"noScanDays"`
-}
+type BroadcastsRetryResult = Broadcast
 
 type BroadcastsSendBody = BroadcastsSendParams
 
@@ -829,71 +637,11 @@ type BroadcastsSendParams struct {
 	At *int64 `json:"at,omitempty"`
 }
 
-type BroadcastsSendResult struct {
-	ID         string                     `json:"id"`
-	OrgID      string                     `json:"orgId"`
-	Mode       string                     `json:"mode"`
-	Kind       string                     `json:"kind"`
-	Name       string                     `json:"name"`
-	State      string                     `json:"state"`
-	Target     BroadcastsSendResultTarget `json:"target"`
-	Patch      map[string]any             `json:"patch"`
-	Notify     bool                       `json:"notify"`
-	At         *int64                     `json:"at"`
-	ClearAfter *int64                     `json:"clearAfter"`
-	ParentID   *string                    `json:"parentId"`
-	RuleID     *string                    `json:"ruleId"`
-	FollowUp   map[string]any             `json:"followUp"`
-	Counts     BroadcastsSendResultCounts `json:"counts"`
-	ErrorCode  *string                    `json:"errorCode"`
-	CreatedAt  int64                      `json:"createdAt"`
-	StartedAt  *int64                     `json:"startedAt"`
-	FinishedAt *int64                     `json:"finishedAt"`
-}
+type BroadcastsSendResult = Broadcast
 
-type BroadcastsSendResultCounts struct {
-	Targeted   int64 `json:"targeted"`
-	Updated    int64 `json:"updated"`
-	Unchanged  int64 `json:"unchanged"`
-	OverBudget int64 `json:"overBudget"`
-	Failed     int64 `json:"failed"`
-}
+type BroadcastsStopResult = Broadcast
 
-type BroadcastsSendResultTarget struct {
-	TemplateIds []string `json:"templateIds"`
-	OnDevice    *bool    `json:"onDevice,omitempty"`
-	HolderState *string  `json:"holderState,omitempty"`
-	Q           *string  `json:"q,omitempty"`
-	Scan        any      `json:"scan,omitempty"`
-	Match       []any    `json:"match,omitempty"`
-}
-
-type BroadcastsSendResultTargetMatchItem1 struct {
-	Input  string   `json:"input"`
-	Values []string `json:"values"`
-}
-
-type BroadcastsSendResultTargetMatchItem2 struct {
-	Input string   `json:"input"`
-	Min   *float64 `json:"min,omitempty"`
-	Max   *float64 `json:"max,omitempty"`
-}
-
-type BroadcastsSendResultTargetMatchItem3 struct {
-	Input    string  `json:"input"`
-	From     *string `json:"from,omitempty"`
-	To       *string `json:"to,omitempty"`
-	TimeZone string  `json:"timeZone"`
-}
-
-type BroadcastsSendResultTargetScan1 struct {
-	EventID   string `json:"eventId"`
-	CheckedIn bool   `json:"checkedIn"`
-}
-
-type BroadcastsSendResultTargetScan2 struct {
-	NoScanDays int64 `json:"noScanDays"`
-}
+type BroadcastsUndoResult = BroadcastUndo
 
 type BroadcastsUpdateBody = BroadcastsUpdateParams
 
@@ -901,21 +649,26 @@ type BroadcastsUpdateParams struct {
 	OrgID      string                       `json:"orgId"`
 	Kind       string                       `json:"kind"`
 	Name       *string                      `json:"name,omitempty"`
-	Target     BroadcastsUpdateParamsTarget `json:"target"`
-	Patch      map[string]any               `json:"patch"`
 	Notify     *bool                        `json:"notify,omitempty"`
 	Send       *string                      `json:"send,omitempty"`
 	At         *int64                       `json:"at,omitempty"`
 	ClearAfter *int64                       `json:"clearAfter,omitempty"`
+	Target     BroadcastsUpdateParamsTarget `json:"target"`
+	Patch      map[string]any               `json:"patch"`
+	Message    *string                      `json:"message,omitempty"`
 }
 
 type BroadcastsUpdateParamsTarget struct {
-	TemplateIds []string `json:"templateIds"`
+	TemplateIds []string `json:"templateIds,omitempty"`
 	OnDevice    *bool    `json:"onDevice,omitempty"`
 	HolderState *string  `json:"holderState,omitempty"`
 	Q           *string  `json:"q,omitempty"`
 	Scan        any      `json:"scan,omitempty"`
 	Match       []any    `json:"match,omitempty"`
+	Version     *string  `json:"version,omitempty"`
+	PassIds     []string `json:"passIds,omitempty"`
+	ImportID    *string  `json:"importId,omitempty"`
+	ExpectCount *int64   `json:"expectCount,omitempty"`
 }
 
 type BroadcastsUpdateParamsTargetMatchItem1 struct {
@@ -936,6 +689,12 @@ type BroadcastsUpdateParamsTargetMatchItem3 struct {
 	TimeZone string  `json:"timeZone"`
 }
 
+type BroadcastsUpdateParamsTargetMatchItem4 struct {
+	Input string `json:"input"`
+	Op    string `json:"op"`
+	Value string `json:"value"`
+}
+
 type BroadcastsUpdateParamsTargetScan1 struct {
 	EventID   string `json:"eventId"`
 	CheckedIn bool   `json:"checkedIn"`
@@ -945,71 +704,44 @@ type BroadcastsUpdateParamsTargetScan2 struct {
 	NoScanDays int64 `json:"noScanDays"`
 }
 
-type BroadcastsUpdateResult struct {
-	ID         string                       `json:"id"`
-	OrgID      string                       `json:"orgId"`
-	Mode       string                       `json:"mode"`
-	Kind       string                       `json:"kind"`
-	Name       string                       `json:"name"`
-	State      string                       `json:"state"`
-	Target     BroadcastsUpdateResultTarget `json:"target"`
-	Patch      map[string]any               `json:"patch"`
-	Notify     bool                         `json:"notify"`
-	At         *int64                       `json:"at"`
-	ClearAfter *int64                       `json:"clearAfter"`
-	ParentID   *string                      `json:"parentId"`
-	RuleID     *string                      `json:"ruleId"`
-	FollowUp   map[string]any               `json:"followUp"`
-	Counts     BroadcastsUpdateResultCounts `json:"counts"`
-	ErrorCode  *string                      `json:"errorCode"`
-	CreatedAt  int64                        `json:"createdAt"`
-	StartedAt  *int64                       `json:"startedAt"`
-	FinishedAt *int64                       `json:"finishedAt"`
+type BroadcastsUpdateResult = Broadcast
+
+type BulkRun struct {
+	ID            string           `json:"id"`
+	OrgID         string           `json:"orgId"`
+	Action        string           `json:"action"`
+	State         string           `json:"state"`
+	Total         int64            `json:"total"`
+	Done          int64            `json:"done"`
+	Skipped       int64            `json:"skipped"`
+	SkippedBy     map[string]int64 `json:"skippedBy"`
+	StopRequested bool             `json:"stopRequested"`
+	CreatedAt     int64            `json:"createdAt"`
+	FinishedAt    *int64           `json:"finishedAt"`
+	Code          *string          `json:"code"`
 }
 
-type BroadcastsUpdateResultCounts struct {
-	Targeted   int64 `json:"targeted"`
-	Updated    int64 `json:"updated"`
-	Unchanged  int64 `json:"unchanged"`
-	OverBudget int64 `json:"overBudget"`
-	Failed     int64 `json:"failed"`
+type BulkRunsCurrentResult = CurrentBulkRun
+
+type BulkRunsRetrieveResult = BulkRun
+
+type BulkRunsStartBody = BulkRunsStartParams
+
+type BulkRunsStartParams struct {
+	Action    string                       `json:"action"`
+	Message   *string                      `json:"message,omitempty"`
+	OrgID     *string                      `json:"orgId,omitempty"`
+	Selection BulkRunsStartParamsSelection `json:"selection"`
 }
 
-type BroadcastsUpdateResultTarget struct {
-	TemplateIds []string `json:"templateIds"`
-	OnDevice    *bool    `json:"onDevice,omitempty"`
-	HolderState *string  `json:"holderState,omitempty"`
-	Q           *string  `json:"q,omitempty"`
-	Scan        any      `json:"scan,omitempty"`
-	Match       []any    `json:"match,omitempty"`
+type BulkRunsStartParamsSelection struct {
+	Filter      PassFilter `json:"filter"`
+	ExpectCount int64      `json:"expectCount"`
 }
 
-type BroadcastsUpdateResultTargetMatchItem1 struct {
-	Input  string   `json:"input"`
-	Values []string `json:"values"`
-}
+type BulkRunsStartResult = BulkRun
 
-type BroadcastsUpdateResultTargetMatchItem2 struct {
-	Input string   `json:"input"`
-	Min   *float64 `json:"min,omitempty"`
-	Max   *float64 `json:"max,omitempty"`
-}
-
-type BroadcastsUpdateResultTargetMatchItem3 struct {
-	Input    string  `json:"input"`
-	From     *string `json:"from,omitempty"`
-	To       *string `json:"to,omitempty"`
-	TimeZone string  `json:"timeZone"`
-}
-
-type BroadcastsUpdateResultTargetScan1 struct {
-	EventID   string `json:"eventId"`
-	CheckedIn bool   `json:"checkedIn"`
-}
-
-type BroadcastsUpdateResultTargetScan2 struct {
-	NoScanDays int64 `json:"noScanDays"`
-}
+type BulkRunsStopResult = BulkRun
 
 type BundlesCreateBody = BundlesCreateParams
 
@@ -1156,6 +888,53 @@ type CapturedEmailDetail struct {
 type CapturedEmailPage struct {
 	Items      []CapturedEmail `json:"items"`
 	NextCursor *string         `json:"nextCursor"`
+}
+
+type ConnectionPreview struct {
+	Ok             bool                           `json:"ok"`
+	ErrorCode      *string                        `json:"errorCode,omitempty"`
+	Records        int64                          `json:"records"`
+	Counts         ConnectionPreviewCounts        `json:"counts"`
+	ReleaseBlocked *string                        `json:"releaseBlocked"`
+	Window         ConnectionPreviewWindow        `json:"window"`
+	Samples        []ConnectionPreviewSamplesItem `json:"samples"`
+	Columns        []ConnectionPreviewColumnsItem `json:"columns"`
+	DurationMs     int64                          `json:"durationMs"`
+}
+
+type ConnectionPreviewColumnsItem struct {
+	Pointer string                                   `json:"pointer"`
+	Label   string                                   `json:"label"`
+	Samples []string                                 `json:"samples"`
+	Values  []ConnectionPreviewColumnsItemValuesItem `json:"values"`
+}
+
+type ConnectionPreviewColumnsItemValuesItem struct {
+	Value string `json:"value"`
+	Count int64  `json:"count"`
+}
+
+type ConnectionPreviewCounts struct {
+	Create    int64 `json:"create"`
+	Update    int64 `json:"update"`
+	Unchanged int64 `json:"unchanged"`
+	Skipped   int64 `json:"skipped"`
+	Errors    int64 `json:"errors"`
+	Waiting   int64 `json:"waiting"`
+}
+
+type ConnectionPreviewSamplesItem struct {
+	Ref     string         `json:"ref"`
+	Action  string         `json:"action"`
+	Fields  map[string]any `json:"fields"`
+	Message *string        `json:"message,omitempty"`
+}
+
+type ConnectionPreviewWindow struct {
+	Days     int64 `json:"days"`
+	Limit    int64 `json:"limit"`
+	Since    int64 `json:"since"`
+	Excluded int64 `json:"excluded"`
 }
 
 type ConnectionsCreateBody = ConnectionsCreateParams
@@ -1311,6 +1090,8 @@ type ConnectionsListQuery struct {
 	Limit  *int64  `json:"limit,omitempty"`
 }
 
+type ConnectionsPreviewResult = ConnectionPreview
+
 type ConnectionsRetrieveResult struct {
 	ID                  string                                           `json:"id"`
 	OrgID               string                                           `json:"orgId"`
@@ -1373,6 +1154,9 @@ type ConnectionsRetrieveResultRunsItem struct {
 	Outcome       string  `json:"outcome"`
 	RecordsSeen   *int64  `json:"recordsSeen"`
 	PassesChanged *int64  `json:"passesChanged"`
+	PassesCreated *int64  `json:"passesCreated"`
+	PassesVoided  *int64  `json:"passesVoided"`
+	RecordsFailed *int64  `json:"recordsFailed"`
 	ErrorCode     *string `json:"errorCode"`
 	ErrorDetail   *string `json:"errorDetail,omitempty"`
 	HttpStatus    *int64  `json:"httpStatus"`
@@ -1515,6 +1299,9 @@ type ConnectionsRunsListItem struct {
 	Outcome       string  `json:"outcome"`
 	RecordsSeen   *int64  `json:"recordsSeen"`
 	PassesChanged *int64  `json:"passesChanged"`
+	PassesCreated *int64  `json:"passesCreated"`
+	PassesVoided  *int64  `json:"passesVoided"`
+	RecordsFailed *int64  `json:"recordsFailed"`
 	ErrorCode     *string `json:"errorCode"`
 	ErrorDetail   *string `json:"errorDetail,omitempty"`
 	HttpStatus    *int64  `json:"httpStatus"`
@@ -1534,23 +1321,88 @@ type ConnectionsSyncResult struct {
 type ConnectionsTestConfigBody = ConnectionsTestConfigParams
 
 type ConnectionsTestConfigParams struct {
-	OrgID         string            `json:"orgId"`
-	ConnectorType string            `json:"connectorType"`
-	Config        map[string]any    `json:"config"`
-	Secrets       map[string]string `json:"secrets,omitempty"`
+	OrgID             string                                             `json:"orgId"`
+	ConnectorType     string                                             `json:"connectorType"`
+	Config            map[string]any                                     `json:"config"`
+	Secrets           map[string]string                                  `json:"secrets,omitempty"`
+	Mapping           map[string]ConnectionsTestConfigParamsMappingValue `json:"mapping,omitempty"`
+	VoidWhen          []ConnectionsTestConfigParamsVoidWhenItem          `json:"voidWhen,omitempty"`
+	AutoCreate        *bool                                              `json:"autoCreate,omitempty"`
+	DefaultTemplateID *string                                            `json:"defaultTemplateId,omitempty"`
+}
+
+type ConnectionsTestConfigParamsMappingValue struct {
+	From      string                                            `json:"from"`
+	Transform *ConnectionsTestConfigParamsMappingValueTransform `json:"transform,omitempty"`
+}
+
+type ConnectionsTestConfigParamsMappingValueTransform struct {
+	Kind    string         `json:"kind"`
+	Options map[string]any `json:"options,omitempty"`
+}
+
+type ConnectionsTestConfigParamsVoidWhenItem struct {
+	From   string `json:"from"`
+	Op     string `json:"op"`
+	Values []any  `json:"values,omitempty"`
+}
+
+type ConnectionsTestConfigQuery struct {
+	Preview *string `json:"preview,omitempty"`
 }
 
 type ConnectionsTestConfigResult struct {
-	Ok         bool                                    `json:"ok"`
-	Detail     *string                                 `json:"detail,omitempty"`
-	ErrorCode  *string                                 `json:"errorCode,omitempty"`
-	DurationMs int64                                   `json:"durationMs"`
-	Sample     []ConnectionsTestConfigResultSampleItem `json:"sample,omitempty"`
+	Ok             bool                                     `json:"ok"`
+	Detail         *string                                  `json:"detail,omitempty"`
+	ErrorCode      *string                                  `json:"errorCode,omitempty"`
+	DurationMs     int64                                    `json:"durationMs"`
+	Sample         []ConnectionsTestConfigResultSampleItem  `json:"sample,omitempty"`
+	Records        *int64                                   `json:"records,omitempty"`
+	Counts         *ConnectionsTestConfigResultCounts       `json:"counts,omitempty"`
+	ReleaseBlocked *string                                  `json:"releaseBlocked,omitempty"`
+	Window         *ConnectionsTestConfigResultWindow       `json:"window,omitempty"`
+	Samples        []ConnectionsTestConfigResultSamplesItem `json:"samples,omitempty"`
+	Columns        []ConnectionsTestConfigResultColumnsItem `json:"columns,omitempty"`
+}
+
+type ConnectionsTestConfigResultColumnsItem struct {
+	Pointer string                                             `json:"pointer"`
+	Label   string                                             `json:"label"`
+	Samples []string                                           `json:"samples"`
+	Values  []ConnectionsTestConfigResultColumnsItemValuesItem `json:"values"`
+}
+
+type ConnectionsTestConfigResultColumnsItemValuesItem struct {
+	Value string `json:"value"`
+	Count int64  `json:"count"`
+}
+
+type ConnectionsTestConfigResultCounts struct {
+	Create    int64 `json:"create"`
+	Update    int64 `json:"update"`
+	Unchanged int64 `json:"unchanged"`
+	Skipped   int64 `json:"skipped"`
+	Errors    int64 `json:"errors"`
+	Waiting   int64 `json:"waiting"`
 }
 
 type ConnectionsTestConfigResultSampleItem struct {
 	Pointer string `json:"pointer"`
 	Preview string `json:"preview"`
+}
+
+type ConnectionsTestConfigResultSamplesItem struct {
+	Ref     string         `json:"ref"`
+	Action  string         `json:"action"`
+	Fields  map[string]any `json:"fields"`
+	Message *string        `json:"message,omitempty"`
+}
+
+type ConnectionsTestConfigResultWindow struct {
+	Days     int64 `json:"days"`
+	Limit    int64 `json:"limit"`
+	Since    int64 `json:"since"`
+	Excluded int64 `json:"excluded"`
 }
 
 type ConnectionsTestResult struct {
@@ -1875,6 +1727,10 @@ type CreatedScanningDeviceOverrides struct {
 	Direction *string `json:"direction,omitempty"`
 	Lookup    *bool   `json:"lookup,omitempty"`
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+}
+
+type CurrentBulkRun struct {
+	Run *BulkRun `json:"run,omitempty"`
 }
 
 type DeliveriesListQuery struct {
@@ -2487,72 +2343,6 @@ type MessageRulesRetrieveResultOffset struct {
 	When   string `json:"when"`
 }
 
-type MessageRulesRunsListItem struct {
-	ID         string                         `json:"id"`
-	OrgID      string                         `json:"orgId"`
-	Mode       string                         `json:"mode"`
-	Kind       string                         `json:"kind"`
-	Name       string                         `json:"name"`
-	State      string                         `json:"state"`
-	Target     MessageRulesRunsListItemTarget `json:"target"`
-	Patch      map[string]any                 `json:"patch"`
-	Notify     bool                           `json:"notify"`
-	At         *int64                         `json:"at"`
-	ClearAfter *int64                         `json:"clearAfter"`
-	ParentID   *string                        `json:"parentId"`
-	RuleID     *string                        `json:"ruleId"`
-	FollowUp   map[string]any                 `json:"followUp"`
-	Counts     MessageRulesRunsListItemCounts `json:"counts"`
-	ErrorCode  *string                        `json:"errorCode"`
-	CreatedAt  int64                          `json:"createdAt"`
-	StartedAt  *int64                         `json:"startedAt"`
-	FinishedAt *int64                         `json:"finishedAt"`
-}
-
-type MessageRulesRunsListItemCounts struct {
-	Targeted   int64 `json:"targeted"`
-	Updated    int64 `json:"updated"`
-	Unchanged  int64 `json:"unchanged"`
-	OverBudget int64 `json:"overBudget"`
-	Failed     int64 `json:"failed"`
-}
-
-type MessageRulesRunsListItemTarget struct {
-	TemplateIds []string `json:"templateIds"`
-	OnDevice    *bool    `json:"onDevice,omitempty"`
-	HolderState *string  `json:"holderState,omitempty"`
-	Q           *string  `json:"q,omitempty"`
-	Scan        any      `json:"scan,omitempty"`
-	Match       []any    `json:"match,omitempty"`
-}
-
-type MessageRulesRunsListItemTargetMatchItem1 struct {
-	Input  string   `json:"input"`
-	Values []string `json:"values"`
-}
-
-type MessageRulesRunsListItemTargetMatchItem2 struct {
-	Input string   `json:"input"`
-	Min   *float64 `json:"min,omitempty"`
-	Max   *float64 `json:"max,omitempty"`
-}
-
-type MessageRulesRunsListItemTargetMatchItem3 struct {
-	Input    string  `json:"input"`
-	From     *string `json:"from,omitempty"`
-	To       *string `json:"to,omitempty"`
-	TimeZone string  `json:"timeZone"`
-}
-
-type MessageRulesRunsListItemTargetScan1 struct {
-	EventID   string `json:"eventId"`
-	CheckedIn bool   `json:"checkedIn"`
-}
-
-type MessageRulesRunsListItemTargetScan2 struct {
-	NoScanDays int64 `json:"noScanDays"`
-}
-
 type MessageRulesRunsListQuery struct {
 	Cursor *string `json:"cursor,omitempty"`
 	Limit  *int64  `json:"limit,omitempty"`
@@ -2564,71 +2354,7 @@ type MessageRulesSendTestParams struct {
 	PassID string `json:"passId"`
 }
 
-type MessageRulesSendTestResult struct {
-	ID         string                           `json:"id"`
-	OrgID      string                           `json:"orgId"`
-	Mode       string                           `json:"mode"`
-	Kind       string                           `json:"kind"`
-	Name       string                           `json:"name"`
-	State      string                           `json:"state"`
-	Target     MessageRulesSendTestResultTarget `json:"target"`
-	Patch      map[string]any                   `json:"patch"`
-	Notify     bool                             `json:"notify"`
-	At         *int64                           `json:"at"`
-	ClearAfter *int64                           `json:"clearAfter"`
-	ParentID   *string                          `json:"parentId"`
-	RuleID     *string                          `json:"ruleId"`
-	FollowUp   map[string]any                   `json:"followUp"`
-	Counts     MessageRulesSendTestResultCounts `json:"counts"`
-	ErrorCode  *string                          `json:"errorCode"`
-	CreatedAt  int64                            `json:"createdAt"`
-	StartedAt  *int64                           `json:"startedAt"`
-	FinishedAt *int64                           `json:"finishedAt"`
-}
-
-type MessageRulesSendTestResultCounts struct {
-	Targeted   int64 `json:"targeted"`
-	Updated    int64 `json:"updated"`
-	Unchanged  int64 `json:"unchanged"`
-	OverBudget int64 `json:"overBudget"`
-	Failed     int64 `json:"failed"`
-}
-
-type MessageRulesSendTestResultTarget struct {
-	TemplateIds []string `json:"templateIds"`
-	OnDevice    *bool    `json:"onDevice,omitempty"`
-	HolderState *string  `json:"holderState,omitempty"`
-	Q           *string  `json:"q,omitempty"`
-	Scan        any      `json:"scan,omitempty"`
-	Match       []any    `json:"match,omitempty"`
-}
-
-type MessageRulesSendTestResultTargetMatchItem1 struct {
-	Input  string   `json:"input"`
-	Values []string `json:"values"`
-}
-
-type MessageRulesSendTestResultTargetMatchItem2 struct {
-	Input string   `json:"input"`
-	Min   *float64 `json:"min,omitempty"`
-	Max   *float64 `json:"max,omitempty"`
-}
-
-type MessageRulesSendTestResultTargetMatchItem3 struct {
-	Input    string  `json:"input"`
-	From     *string `json:"from,omitempty"`
-	To       *string `json:"to,omitempty"`
-	TimeZone string  `json:"timeZone"`
-}
-
-type MessageRulesSendTestResultTargetScan1 struct {
-	EventID   string `json:"eventId"`
-	CheckedIn bool   `json:"checkedIn"`
-}
-
-type MessageRulesSendTestResultTargetScan2 struct {
-	NoScanDays int64 `json:"noScanDays"`
-}
+type MessageRulesSendTestResult = Broadcast
 
 type MessageRulesUpdateBody = MessageRulesUpdateParams
 
@@ -3119,6 +2845,7 @@ type PassDetail struct {
 	Serial           string                           `json:"serial"`
 	Title            *string                          `json:"title"`
 	Subtitle         *string                          `json:"subtitle"`
+	Matched          []PassDetailMatchedItem          `json:"matched,omitempty"`
 	ExternalID       *string                          `json:"externalId"`
 	Status           string                           `json:"status"`
 	Mode             *string                          `json:"mode,omitempty"`
@@ -3237,6 +2964,11 @@ type PassDetailEmail struct {
 	Cap     *string `json:"cap,omitempty"`
 }
 
+type PassDetailMatchedItem struct {
+	Input string `json:"input"`
+	Value string `json:"value"`
+}
+
 type PassDetailPushBudget struct {
 	Used     int64  `json:"used"`
 	Limit    int64  `json:"limit"`
@@ -3244,19 +2976,29 @@ type PassDetailPushBudget struct {
 }
 
 type PassDetailTemplateWarningsItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                             `json:"severity"`
+	Code     string                             `json:"code"`
+	Message  string                             `json:"message"`
+	Path     *string                            `json:"path,omitempty"`
+	Params   map[string]string                  `json:"params,omitempty"`
+	Fix      *PassDetailTemplateWarningsItemFix `json:"fix,omitempty"`
+}
+
+type PassDetailTemplateWarningsItemFix struct {
+	Action string `json:"action"`
 }
 
 type PassDetailWarningsItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                     `json:"severity"`
+	Code     string                     `json:"code"`
+	Message  string                     `json:"message"`
+	Path     *string                    `json:"path,omitempty"`
+	Params   map[string]string          `json:"params,omitempty"`
+	Fix      *PassDetailWarningsItemFix `json:"fix,omitempty"`
+}
+
+type PassDetailWarningsItemFix struct {
+	Action string `json:"action"`
 }
 
 type PassDevice struct {
@@ -3264,6 +3006,53 @@ type PassDevice struct {
 	Device    string         `json:"device"`
 	CreatedAt int64          `json:"createdAt"`
 	LastPush  map[string]any `json:"lastPush"`
+}
+
+type PassFilter struct {
+	TemplateID   *string `json:"templateId,omitempty"`
+	ConnectionID *string `json:"connectionId,omitempty"`
+	ImportID     *string `json:"importId,omitempty"`
+	Status       *string `json:"status,omitempty"`
+	HolderEmail  *string `json:"holderEmail,omitempty"`
+	HolderState  *string `json:"holderState,omitempty"`
+	OnDevice     *bool   `json:"onDevice,omitempty"`
+	Q            *string `json:"q,omitempty"`
+	ExternalID   *string `json:"externalId,omitempty"`
+	Scan         any     `json:"scan,omitempty"`
+	Match        []any   `json:"match,omitempty"`
+}
+
+type PassFilterMatchItem1 struct {
+	Input  string   `json:"input"`
+	Values []string `json:"values"`
+}
+
+type PassFilterMatchItem2 struct {
+	Input string   `json:"input"`
+	Min   *float64 `json:"min,omitempty"`
+	Max   *float64 `json:"max,omitempty"`
+}
+
+type PassFilterMatchItem3 struct {
+	Input    string  `json:"input"`
+	From     *string `json:"from,omitempty"`
+	To       *string `json:"to,omitempty"`
+	TimeZone string  `json:"timeZone"`
+}
+
+type PassFilterMatchItem4 struct {
+	Input string `json:"input"`
+	Op    string `json:"op"`
+	Value string `json:"value"`
+}
+
+type PassFilterScan1 struct {
+	EventID   string `json:"eventId"`
+	CheckedIn bool   `json:"checkedIn"`
+}
+
+type PassFilterScan2 struct {
+	NoScanDays int64 `json:"noScanDays"`
 }
 
 type PassImportMappings struct {
@@ -4010,6 +3799,7 @@ type PassIssuedEventData struct {
 type PassPage struct {
 	Items      []PassSummary `json:"items"`
 	NextCursor *string       `json:"nextCursor"`
+	Count      *int64        `json:"count,omitempty"`
 }
 
 type PassPrintVoidedEvent struct {
@@ -4060,8 +3850,9 @@ type PassRemovedEvent struct {
 }
 
 type PassRemovedEventData struct {
-	Version *int64 `json:"version,omitempty"`
-	Message *bool  `json:"message,omitempty"`
+	Version *int64  `json:"version,omitempty"`
+	Message *bool   `json:"message,omitempty"`
+	RunID   *string `json:"runId,omitempty"`
 }
 
 type PassRestoredEvent struct {
@@ -4658,28 +4449,34 @@ type PassSetupTemplatesItemChannelsSamsung struct {
 }
 
 type PassSummary struct {
-	ID              string  `json:"id"`
-	OrgID           string  `json:"orgId"`
-	TemplateID      string  `json:"templateId"`
-	TemplateVersion string  `json:"templateVersion"`
-	IdentityID      string  `json:"identityId"`
-	Serial          string  `json:"serial"`
-	Title           *string `json:"title"`
-	Subtitle        *string `json:"subtitle"`
-	ExternalID      *string `json:"externalId"`
-	Status          string  `json:"status"`
-	Mode            *string `json:"mode,omitempty"`
-	Version         int64   `json:"version"`
-	ConnectionID    *string `json:"connectionId"`
-	ExternalRef     *string `json:"externalRef,omitempty"`
-	SyncErrorCode   *string `json:"syncErrorCode"`
-	HolderEmail     *string `json:"holderEmail"`
-	HolderState     string  `json:"holderState"`
-	OwnerUserID     *string `json:"ownerUserId"`
-	DeviceCount     *int64  `json:"deviceCount,omitempty"`
-	RemovedAt       *int64  `json:"removedAt,omitempty"`
-	ModifiedAt      int64   `json:"modifiedAt"`
-	CreatedAt       int64   `json:"createdAt"`
+	ID              string                   `json:"id"`
+	OrgID           string                   `json:"orgId"`
+	TemplateID      string                   `json:"templateId"`
+	TemplateVersion string                   `json:"templateVersion"`
+	IdentityID      string                   `json:"identityId"`
+	Serial          string                   `json:"serial"`
+	Title           *string                  `json:"title"`
+	Subtitle        *string                  `json:"subtitle"`
+	Matched         []PassSummaryMatchedItem `json:"matched,omitempty"`
+	ExternalID      *string                  `json:"externalId"`
+	Status          string                   `json:"status"`
+	Mode            *string                  `json:"mode,omitempty"`
+	Version         int64                    `json:"version"`
+	ConnectionID    *string                  `json:"connectionId"`
+	ExternalRef     *string                  `json:"externalRef,omitempty"`
+	SyncErrorCode   *string                  `json:"syncErrorCode"`
+	HolderEmail     *string                  `json:"holderEmail"`
+	HolderState     string                   `json:"holderState"`
+	OwnerUserID     *string                  `json:"ownerUserId"`
+	DeviceCount     *int64                   `json:"deviceCount,omitempty"`
+	RemovedAt       *int64                   `json:"removedAt,omitempty"`
+	ModifiedAt      int64                    `json:"modifiedAt"`
+	CreatedAt       int64                    `json:"createdAt"`
+}
+
+type PassSummaryMatchedItem struct {
+	Input string `json:"input"`
+	Value string `json:"value"`
 }
 
 type PassUninstalledEvent struct {
@@ -4748,6 +4545,35 @@ type PassVersion struct {
 	Purged          bool    `json:"purged"`
 }
 
+type PassViews struct {
+	Items    []PassViewsItemsItem `json:"items"`
+	Revision int64                `json:"revision"`
+}
+
+type PassViewsItemsItem struct {
+	ID     string     `json:"id"`
+	Name   string     `json:"name"`
+	Filter PassFilter `json:"filter"`
+}
+
+type PassViewsListResult = PassViews
+
+type PassViewsReplaceBody = PassViewsReplaceParams
+
+type PassViewsReplaceParams struct {
+	Items    []PassViewsReplaceParamsItemsItem `json:"items"`
+	Revision int64                             `json:"revision"`
+	OrgID    *string                           `json:"orgId,omitempty"`
+}
+
+type PassViewsReplaceParamsItemsItem struct {
+	ID     string     `json:"id"`
+	Name   string     `json:"name"`
+	Filter PassFilter `json:"filter"`
+}
+
+type PassViewsReplaceResult = PassViews
+
 type PassVoidedEvent struct {
 	ID         string              `json:"id"`
 	Type       string              `json:"type"`
@@ -4762,6 +4588,7 @@ type PassVoidedEvent struct {
 
 type PassVoidedEventData struct {
 	ActorType *string `json:"actorType,omitempty"`
+	RunID     *string `json:"runId,omitempty"`
 }
 
 type PassesActivityListItem struct {
@@ -4812,10 +4639,20 @@ type PassesAssetsUploadResult struct {
 type PassesBulkApplyBody = PassesBulkApplyParams
 
 type PassesBulkApplyParams struct {
-	Action  string   `json:"action"`
-	Message *string  `json:"message,omitempty"`
-	Ids     []string `json:"ids"`
-	OrgID   *string  `json:"orgId,omitempty"`
+	Action    string   `json:"action"`
+	Message   *string  `json:"message,omitempty"`
+	OrgID     *string  `json:"orgId,omitempty"`
+	Ids       []string `json:"ids,omitempty"`
+	Selection any      `json:"selection,omitempty"`
+}
+
+type PassesBulkApplyParamsSelection1 struct {
+	Ids []string `json:"ids"`
+}
+
+type PassesBulkApplyParamsSelection2 struct {
+	Filter      PassFilter `json:"filter"`
+	ExpectCount int64      `json:"expectCount"`
 }
 
 type PassesBulkApplyResult struct {
@@ -4891,6 +4728,7 @@ type PassesBulkUpdateChannelsResultSkippedItem struct {
 
 type PassesChannelsRetrieveResult struct {
 	Effective PassesChannelsRetrieveResultEffective `json:"effective"`
+	Levels    PassesChannelsRetrieveResultLevels    `json:"levels"`
 	Overrides PassesChannelsRetrieveResultOverrides `json:"overrides"`
 	Replace   PassesChannelsRetrieveResultReplace   `json:"replace"`
 }
@@ -4952,6 +4790,57 @@ type PassesChannelsRetrieveResultEffectiveSamsung struct {
 	RetiredCause *string `json:"retiredCause,omitempty"`
 }
 
+type PassesChannelsRetrieveResultLevels struct {
+	Mobile  []PassesChannelsRetrieveResultLevelsMobileItem  `json:"mobile,omitempty"`
+	Apple   []PassesChannelsRetrieveResultLevelsAppleItem   `json:"apple,omitempty"`
+	Google  []PassesChannelsRetrieveResultLevelsGoogleItem  `json:"google,omitempty"`
+	Samsung []PassesChannelsRetrieveResultLevelsSamsungItem `json:"samsung,omitempty"`
+	Paper   []PassesChannelsRetrieveResultLevelsPaperItem   `json:"paper,omitempty"`
+	NFC     []PassesChannelsRetrieveResultLevelsNfcItem     `json:"nfc,omitempty"`
+}
+
+type PassesChannelsRetrieveResultLevelsAppleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsRetrieveResultLevelsGoogleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsRetrieveResultLevelsMobileItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsRetrieveResultLevelsNfcItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsRetrieveResultLevelsPaperItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsRetrieveResultLevelsSamsungItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
 type PassesChannelsRetrieveResultOverrides struct {
 	Mobile  *string `json:"mobile,omitempty"`
 	Apple   *string `json:"apple,omitempty"`
@@ -4999,6 +4888,7 @@ type PassesChannelsUpdateParamsChannels struct {
 
 type PassesChannelsUpdateResult struct {
 	Effective PassesChannelsUpdateResultEffective `json:"effective"`
+	Levels    PassesChannelsUpdateResultLevels    `json:"levels"`
 	Overrides PassesChannelsUpdateResultOverrides `json:"overrides"`
 	Replace   PassesChannelsUpdateResultReplace   `json:"replace"`
 }
@@ -5058,6 +4948,57 @@ type PassesChannelsUpdateResultEffectiveSamsung struct {
 	Reason       *string `json:"reason,omitempty"`
 	RetiredAt    *int64  `json:"retiredAt,omitempty"`
 	RetiredCause *string `json:"retiredCause,omitempty"`
+}
+
+type PassesChannelsUpdateResultLevels struct {
+	Mobile  []PassesChannelsUpdateResultLevelsMobileItem  `json:"mobile,omitempty"`
+	Apple   []PassesChannelsUpdateResultLevelsAppleItem   `json:"apple,omitempty"`
+	Google  []PassesChannelsUpdateResultLevelsGoogleItem  `json:"google,omitempty"`
+	Samsung []PassesChannelsUpdateResultLevelsSamsungItem `json:"samsung,omitempty"`
+	Paper   []PassesChannelsUpdateResultLevelsPaperItem   `json:"paper,omitempty"`
+	NFC     []PassesChannelsUpdateResultLevelsNfcItem     `json:"nfc,omitempty"`
+}
+
+type PassesChannelsUpdateResultLevelsAppleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsUpdateResultLevelsGoogleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsUpdateResultLevelsMobileItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsUpdateResultLevelsNfcItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsUpdateResultLevelsPaperItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type PassesChannelsUpdateResultLevelsSamsungItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
 }
 
 type PassesChannelsUpdateResultOverrides struct {
@@ -5244,6 +5185,7 @@ type PassesListQuery struct {
 	ExternalID   *string `json:"externalId,omitempty"`
 	Scan         *string `json:"scan,omitempty"`
 	Match        *string `json:"match,omitempty"`
+	Count        *string `json:"count,omitempty"`
 	Cursor       *string `json:"cursor,omitempty"`
 	Limit        *int64  `json:"limit,omitempty"`
 }
@@ -6181,9 +6123,17 @@ type ScanEvent struct {
 	Scanners    int64          `json:"scanners"`
 }
 
+type ScanEventsArchiveResult = ScanEvent
+
+type ScanEventsAttachScannersBody = ScanEventsAttachScannersParams
+
 type ScanEventsAttachScannersParams struct {
 	ScannerIds []string `json:"scannerIds"`
 }
+
+type ScanEventsAttachScannersResult = ScanEvent
+
+type ScanEventsCreateBody = ScanEventsCreateParams
 
 type ScanEventsCreateParams struct {
 	OrgID       string         `json:"orgId"`
@@ -6199,10 +6149,23 @@ type ScanEventsCreateParams struct {
 	Note        *string        `json:"note,omitempty"`
 }
 
+type ScanEventsCreateResult = ScanEvent
+
+type ScanEventsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+	Status *string `json:"status,omitempty"`
+	Q      *string `json:"q,omitempty"`
+}
+
 type ScanEventsMarkOutParams struct {
 	PassID string `json:"passId"`
 	Place  string `json:"place"`
 }
+
+type ScanEventsRetrieveResult = ScanEvent
+
+type ScanEventsUpdateBody = ScanEventsUpdateParams
 
 type ScanEventsUpdateParams struct {
 	Name        *string        `json:"name,omitempty"`
@@ -6217,6 +6180,8 @@ type ScanEventsUpdateParams struct {
 	Note        *string        `json:"note,omitempty"`
 	Archived    *bool          `json:"archived,omitempty"`
 }
+
+type ScanEventsUpdateResult = ScanEvent
 
 type ScanFeedRow struct {
 	ID          string   `json:"id"`
@@ -6979,6 +6944,42 @@ type ScanTemplateRef = map[string]any
 
 type ScanWorkspace = map[string]any
 
+type ScanZonesArchiveResult struct {
+	Occupancy         string                                `json:"occupancy"`
+	Capacity          *int64                                `json:"capacity"`
+	MaxStayMinutes    *int64                                `json:"maxStayMinutes"`
+	HardLimit         *bool                                 `json:"hardLimit,omitempty"`
+	ClearAt           *string                               `json:"clearAt"`
+	ID                string                                `json:"id"`
+	OrgID             string                                `json:"orgId"`
+	Key               string                                `json:"key"`
+	Name              string                                `json:"name"`
+	ParentID          *string                               `json:"parentId"`
+	TimeZone          *string                               `json:"timeZone"`
+	EffectiveTimeZone *string                               `json:"effectiveTimeZone"`
+	Sort              int64                                 `json:"sort"`
+	Depth             int64                                 `json:"depth"`
+	Sessions          int64                                 `json:"sessions"`
+	CheckedAt         []ScanZonesArchiveResultCheckedAtItem `json:"checkedAt"`
+	Plans             []ScanZonesArchiveResultPlansItem     `json:"plans"`
+	InNow             *int64                                `json:"inNow"`
+	ArchivedAt        *int64                                `json:"archivedAt"`
+}
+
+type ScanZonesArchiveResultCheckedAtItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ScanZonesArchiveResultPlansItem struct {
+	TemplateID   string `json:"templateId"`
+	TemplateName string `json:"templateName"`
+	PlanID       string `json:"planId"`
+	Label        string `json:"label"`
+}
+
+type ScanZonesCreateBody = ScanZonesCreateParams
+
 type ScanZonesCreateParams struct {
 	Occupancy      *string `json:"occupancy,omitempty"`
 	Capacity       *int64  `json:"capacity,omitempty"`
@@ -6993,10 +6994,125 @@ type ScanZonesCreateParams struct {
 	Sort           *int64  `json:"sort,omitempty"`
 }
 
+type ScanZonesCreateResult struct {
+	Occupancy         string                               `json:"occupancy"`
+	Capacity          *int64                               `json:"capacity"`
+	MaxStayMinutes    *int64                               `json:"maxStayMinutes"`
+	HardLimit         *bool                                `json:"hardLimit,omitempty"`
+	ClearAt           *string                              `json:"clearAt"`
+	ID                string                               `json:"id"`
+	OrgID             string                               `json:"orgId"`
+	Key               string                               `json:"key"`
+	Name              string                               `json:"name"`
+	ParentID          *string                              `json:"parentId"`
+	TimeZone          *string                              `json:"timeZone"`
+	EffectiveTimeZone *string                              `json:"effectiveTimeZone"`
+	Sort              int64                                `json:"sort"`
+	Depth             int64                                `json:"depth"`
+	Sessions          int64                                `json:"sessions"`
+	CheckedAt         []ScanZonesCreateResultCheckedAtItem `json:"checkedAt"`
+	Plans             []ScanZonesCreateResultPlansItem     `json:"plans"`
+	InNow             *int64                               `json:"inNow"`
+	ArchivedAt        *int64                               `json:"archivedAt"`
+}
+
+type ScanZonesCreateResultCheckedAtItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ScanZonesCreateResultPlansItem struct {
+	TemplateID   string `json:"templateId"`
+	TemplateName string `json:"templateName"`
+	PlanID       string `json:"planId"`
+	Label        string `json:"label"`
+}
+
+type ScanZonesListItem struct {
+	Occupancy         string                           `json:"occupancy"`
+	Capacity          *int64                           `json:"capacity"`
+	MaxStayMinutes    *int64                           `json:"maxStayMinutes"`
+	HardLimit         *bool                            `json:"hardLimit,omitempty"`
+	ClearAt           *string                          `json:"clearAt"`
+	ID                string                           `json:"id"`
+	OrgID             string                           `json:"orgId"`
+	Key               string                           `json:"key"`
+	Name              string                           `json:"name"`
+	ParentID          *string                          `json:"parentId"`
+	TimeZone          *string                          `json:"timeZone"`
+	EffectiveTimeZone *string                          `json:"effectiveTimeZone"`
+	Sort              int64                            `json:"sort"`
+	Depth             int64                            `json:"depth"`
+	Sessions          int64                            `json:"sessions"`
+	CheckedAt         []ScanZonesListItemCheckedAtItem `json:"checkedAt"`
+	Plans             []ScanZonesListItemPlansItem     `json:"plans"`
+	InNow             *int64                           `json:"inNow"`
+	ArchivedAt        *int64                           `json:"archivedAt"`
+}
+
+type ScanZonesListItemCheckedAtItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ScanZonesListItemPlansItem struct {
+	TemplateID   string `json:"templateId"`
+	TemplateName string `json:"templateName"`
+	PlanID       string `json:"planId"`
+	Label        string `json:"label"`
+}
+
+type ScanZonesListQuery struct {
+	Cursor   *string `json:"cursor,omitempty"`
+	Limit    *int64  `json:"limit,omitempty"`
+	Archived *string `json:"archived,omitempty"`
+}
+
 type ScanZonesMarkOutParams struct {
 	PassID string `json:"passId"`
 	Place  string `json:"place"`
 }
+
+type ScanZonesResetVisitsResult struct {
+	PassID string `json:"passId"`
+	Visits int64  `json:"visits"`
+}
+
+type ScanZonesRestoreResult struct {
+	Occupancy         string                                `json:"occupancy"`
+	Capacity          *int64                                `json:"capacity"`
+	MaxStayMinutes    *int64                                `json:"maxStayMinutes"`
+	HardLimit         *bool                                 `json:"hardLimit,omitempty"`
+	ClearAt           *string                               `json:"clearAt"`
+	ID                string                                `json:"id"`
+	OrgID             string                                `json:"orgId"`
+	Key               string                                `json:"key"`
+	Name              string                                `json:"name"`
+	ParentID          *string                               `json:"parentId"`
+	TimeZone          *string                               `json:"timeZone"`
+	EffectiveTimeZone *string                               `json:"effectiveTimeZone"`
+	Sort              int64                                 `json:"sort"`
+	Depth             int64                                 `json:"depth"`
+	Sessions          int64                                 `json:"sessions"`
+	CheckedAt         []ScanZonesRestoreResultCheckedAtItem `json:"checkedAt"`
+	Plans             []ScanZonesRestoreResultPlansItem     `json:"plans"`
+	InNow             *int64                                `json:"inNow"`
+	ArchivedAt        *int64                                `json:"archivedAt"`
+}
+
+type ScanZonesRestoreResultCheckedAtItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ScanZonesRestoreResultPlansItem struct {
+	TemplateID   string `json:"templateId"`
+	TemplateName string `json:"templateName"`
+	PlanID       string `json:"planId"`
+	Label        string `json:"label"`
+}
+
+type ScanZonesUpdateBody = ScanZonesUpdateParams
 
 type ScanZonesUpdateParams struct {
 	Occupancy      *string `json:"occupancy,omitempty"`
@@ -7009,6 +7125,40 @@ type ScanZonesUpdateParams struct {
 	TimeZone       *string `json:"timeZone,omitempty"`
 	Sort           *int64  `json:"sort,omitempty"`
 	Archived       *bool   `json:"archived,omitempty"`
+}
+
+type ScanZonesUpdateResult struct {
+	Occupancy         string                               `json:"occupancy"`
+	Capacity          *int64                               `json:"capacity"`
+	MaxStayMinutes    *int64                               `json:"maxStayMinutes"`
+	HardLimit         *bool                                `json:"hardLimit,omitempty"`
+	ClearAt           *string                              `json:"clearAt"`
+	ID                string                               `json:"id"`
+	OrgID             string                               `json:"orgId"`
+	Key               string                               `json:"key"`
+	Name              string                               `json:"name"`
+	ParentID          *string                              `json:"parentId"`
+	TimeZone          *string                              `json:"timeZone"`
+	EffectiveTimeZone *string                              `json:"effectiveTimeZone"`
+	Sort              int64                                `json:"sort"`
+	Depth             int64                                `json:"depth"`
+	Sessions          int64                                `json:"sessions"`
+	CheckedAt         []ScanZonesUpdateResultCheckedAtItem `json:"checkedAt"`
+	Plans             []ScanZonesUpdateResultPlansItem     `json:"plans"`
+	InNow             *int64                               `json:"inNow"`
+	ArchivedAt        *int64                               `json:"archivedAt"`
+}
+
+type ScanZonesUpdateResultCheckedAtItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type ScanZonesUpdateResultPlansItem struct {
+	TemplateID   string `json:"templateId"`
+	TemplateName string `json:"templateName"`
+	PlanID       string `json:"planId"`
+	Label        string `json:"label"`
 }
 
 type Scanner struct {
@@ -7140,10 +7290,18 @@ type ScannersCreateParamsSettingsTags struct {
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
 
+type ScannersRevokeResult = Scanner
+
+type ScannersSetModeBody = ScannersSetModeParams
+
 type ScannersSetModeParams struct {
 	Mode        string `json:"mode"`
 	DetachEvent *bool  `json:"detachEvent,omitempty"`
 }
+
+type ScannersSetModeResult = Scanner
+
+type ScannersUpdateBody = ScannersUpdateParams
 
 type ScannersUpdateParams struct {
 	Name     *string                       `json:"name,omitempty"`
@@ -7197,6 +7355,8 @@ type ScannersUpdateParamsSettingsTags struct {
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
+
+type ScannersUpdateResult = Scanner
 
 type ScanningDevice struct {
 	ID               string                  `json:"id"`
@@ -7509,6 +7669,8 @@ type ScanningSessionsDevicesCreateParamsOverrides struct {
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
 }
 
+type ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
+
 type ScanningSessionsDevicesUpdateParams struct {
 	Name      *string                                       `json:"name,omitempty"`
 	Surface   *string                                       `json:"surface,omitempty"`
@@ -7523,6 +7685,15 @@ type ScanningSessionsDevicesUpdateParamsOverrides struct {
 	Lookup    *bool   `json:"lookup,omitempty"`
 	ShowPhoto *bool   `json:"showPhoto,omitempty"`
 }
+
+type ScanningSessionsDevicesUpdateResult = ScanningDevice
+
+type ScanningSessionsListQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
+	Limit  *int64  `json:"limit,omitempty"`
+}
+
+type ScanningSessionsOverrideHoursBody = ScanningSessionsOverrideHoursParams
 
 type ScanningSessionsOverrideHoursParams = any
 
@@ -7541,6 +7712,10 @@ type ScanningSessionsOverrideHoursParams3 struct {
 	Action   string `json:"action"`
 	Revision *int64 `json:"revision,omitempty"`
 }
+
+type ScanningSessionsOverrideHoursResult = ScanningSessionDetail
+
+type ScanningSessionsRetrieveResult = ScanningSessionDetail
 
 type ScanningSessionsSetupBody = ScanningSessionsSetupParams
 
@@ -7695,6 +7870,8 @@ type ScanningSessionsSetupQuery struct {
 
 type ScanningSessionsSetupResult = ScanSetupAnswer
 
+type ScanningSessionsUpdateBody = ScanningSessionsUpdateParams
+
 type ScanningSessionsUpdateParams struct {
 	Name          *string                               `json:"name,omitempty"`
 	TimeZone      *string                               `json:"timeZone,omitempty"`
@@ -7767,6 +7944,8 @@ type ScanningSessionsUpdateParamsSettingsTags struct {
 	Types        []string `json:"types,omitempty"`
 	ConfirmBasic *string  `json:"confirmBasic,omitempty"`
 }
+
+type ScanningSessionsUpdateResult = ScanningSessionDetail
 
 type ScansListQuery struct {
 	Cursor        *string `json:"cursor,omitempty"`
@@ -7913,11 +8092,16 @@ type TemplateDetailVersionsItemReport struct {
 }
 
 type TemplateDetailVersionsItemReportIssuesItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                                         `json:"severity"`
+	Code     string                                         `json:"code"`
+	Message  string                                         `json:"message"`
+	Path     *string                                        `json:"path,omitempty"`
+	Params   map[string]string                              `json:"params,omitempty"`
+	Fix      *TemplateDetailVersionsItemReportIssuesItemFix `json:"fix,omitempty"`
+}
+
+type TemplateDetailVersionsItemReportIssuesItemFix struct {
+	Action string `json:"action"`
 }
 
 type TemplateImportsListItem struct {
@@ -7965,6 +8149,90 @@ type TemplateReviewListItemsItem struct {
 	Version      string  `json:"version"`
 	RequestedBy  *string `json:"requestedBy"`
 	RequestedAt  int64   `json:"requestedAt"`
+}
+
+type TemplateRollout struct {
+	ReleaseVersion *string                       `json:"releaseVersion"`
+	ReleaseID      *string                       `json:"releaseId"`
+	FromVersion    *string                       `json:"fromVersion"`
+	Total          int64                         `json:"total"`
+	OnRelease      int64                         `json:"onRelease"`
+	Remaining      int64                         `json:"remaining"`
+	Updating       []TemplateRolloutUpdatingItem `json:"updating"`
+	FailedCount    int64                         `json:"failedCount"`
+	Failed         []TemplateRolloutFailedItem   `json:"failed"`
+	StartedAt      *int64                        `json:"startedAt"`
+	RunID          *string                       `json:"runId"`
+	Running        bool                          `json:"running"`
+	Stalled        bool                          `json:"stalled"`
+	Changes        []TemplateRolloutChangesItem  `json:"changes"`
+	Tell           map[string]any                `json:"tell"`
+}
+
+type TemplateRolloutChangesItem struct {
+	Group string                               `json:"group"`
+	Rows  []TemplateRolloutChangesItemRowsItem `json:"rows"`
+	More  int64                                `json:"more"`
+}
+
+type TemplateRolloutChangesItemRowsItem struct {
+	Label string `json:"label"`
+	Kind  string `json:"kind"`
+	From  any    `json:"from"`
+	To    any    `json:"to"`
+}
+
+type TemplateRolloutChangesItemRowsItemFrom1 struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+type TemplateRolloutChangesItemRowsItemFrom2 struct {
+	Type  string `json:"type"`
+	Color string `json:"color"`
+}
+
+type TemplateRolloutChangesItemRowsItemFrom3 struct {
+	Type string `json:"type"`
+	At   int64  `json:"at"`
+}
+
+type TemplateRolloutChangesItemRowsItemFrom4 struct {
+	Type    string `json:"type"`
+	Version string `json:"version"`
+	Asset   string `json:"asset"`
+}
+
+type TemplateRolloutChangesItemRowsItemTo1 struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+type TemplateRolloutChangesItemRowsItemTo2 struct {
+	Type  string `json:"type"`
+	Color string `json:"color"`
+}
+
+type TemplateRolloutChangesItemRowsItemTo3 struct {
+	Type string `json:"type"`
+	At   int64  `json:"at"`
+}
+
+type TemplateRolloutChangesItemRowsItemTo4 struct {
+	Type    string `json:"type"`
+	Version string `json:"version"`
+	Asset   string `json:"asset"`
+}
+
+type TemplateRolloutFailedItem struct {
+	PassID string  `json:"passId"`
+	Title  *string `json:"title"`
+	Reason string  `json:"reason"`
+}
+
+type TemplateRolloutUpdatingItem struct {
+	Version string `json:"version"`
+	Count   int64  `json:"count"`
 }
 
 type TemplateSummary struct {
@@ -8120,11 +8388,20 @@ type TemplatesChannelsListRunsResultItem struct {
 	Waiting    map[string]any     `json:"waiting"`
 }
 
+type TemplatesChannelsResetPassesParams struct {
+	Channels []string `json:"channels,omitempty"`
+	DryRun   *bool    `json:"dryRun,omitempty"`
+	OrgID    *string  `json:"orgId,omitempty"`
+}
+
 type TemplatesChannelsRetrieveResult struct {
-	Channels  map[string]any                           `json:"channels"`
-	Revision  int64                                    `json:"revision"`
-	Effective TemplatesChannelsRetrieveResultEffective `json:"effective"`
-	Defaults  TemplatesChannelsRetrieveResultDefaults  `json:"defaults"`
+	Channels       map[string]any                           `json:"channels"`
+	Revision       int64                                    `json:"revision"`
+	Effective      TemplatesChannelsRetrieveResultEffective `json:"effective"`
+	Levels         TemplatesChannelsRetrieveResultLevels    `json:"levels"`
+	Overrides      TemplatesChannelsRetrieveResultOverrides `json:"overrides"`
+	OverridePasses int64                                    `json:"overridePasses"`
+	Defaults       TemplatesChannelsRetrieveResultDefaults  `json:"defaults"`
 }
 
 type TemplatesChannelsRetrieveResultDefaults struct {
@@ -8193,6 +8470,66 @@ type TemplatesChannelsRetrieveResultEffectiveSamsung struct {
 	RetiredCause *string `json:"retiredCause,omitempty"`
 }
 
+type TemplatesChannelsRetrieveResultLevels struct {
+	Mobile  []TemplatesChannelsRetrieveResultLevelsMobileItem  `json:"mobile,omitempty"`
+	Apple   []TemplatesChannelsRetrieveResultLevelsAppleItem   `json:"apple,omitempty"`
+	Google  []TemplatesChannelsRetrieveResultLevelsGoogleItem  `json:"google,omitempty"`
+	Samsung []TemplatesChannelsRetrieveResultLevelsSamsungItem `json:"samsung,omitempty"`
+	Paper   []TemplatesChannelsRetrieveResultLevelsPaperItem   `json:"paper,omitempty"`
+	NFC     []TemplatesChannelsRetrieveResultLevelsNfcItem     `json:"nfc,omitempty"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsAppleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsGoogleItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsMobileItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsNfcItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsPaperItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultLevelsSamsungItem struct {
+	Level     string  `json:"level"`
+	State     string  `json:"state"`
+	Reason    *string `json:"reason,omitempty"`
+	CanChange bool    `json:"canChange"`
+}
+
+type TemplatesChannelsRetrieveResultOverrides struct {
+	Mobile  *int64 `json:"mobile,omitempty"`
+	Apple   *int64 `json:"apple,omitempty"`
+	Google  *int64 `json:"google,omitempty"`
+	Samsung *int64 `json:"samsung,omitempty"`
+	Paper   *int64 `json:"paper,omitempty"`
+	NFC     *int64 `json:"nfc,omitempty"`
+}
+
 type TemplatesChannelsUpdateParams struct {
 	Channels        TemplatesChannelsUpdateParamsChannels `json:"channels"`
 	Revision        int64                                 `json:"revision"`
@@ -8254,11 +8591,16 @@ type TemplatesListPreviewsResultItemsItem struct {
 }
 
 type TemplatesListPreviewsResultItemsItemWarningsItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                                               `json:"severity"`
+	Code     string                                               `json:"code"`
+	Message  string                                               `json:"message"`
+	Path     *string                                              `json:"path,omitempty"`
+	Params   map[string]string                                    `json:"params,omitempty"`
+	Fix      *TemplatesListPreviewsResultItemsItemWarningsItemFix `json:"fix,omitempty"`
+}
+
+type TemplatesListPreviewsResultItemsItemWarningsItemFix struct {
+	Action string `json:"action"`
 }
 
 type TemplatesListQuery struct {
@@ -8288,11 +8630,16 @@ type TemplatesPreviewResult struct {
 }
 
 type TemplatesPreviewResultWarningsItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                                 `json:"severity"`
+	Code     string                                 `json:"code"`
+	Message  string                                 `json:"message"`
+	Path     *string                                `json:"path,omitempty"`
+	Params   map[string]string                      `json:"params,omitempty"`
+	Fix      *TemplatesPreviewResultWarningsItemFix `json:"fix,omitempty"`
+}
+
+type TemplatesPreviewResultWarningsItemFix struct {
+	Action string `json:"action"`
 }
 
 type TemplatesReleasesCreateBody = TemplatesReleasesCreateParams
@@ -8446,6 +8793,12 @@ type TemplatesRetrieveInputSchemaResult = TemplateInputSchema
 
 type TemplatesRetrieveResult = TemplateDetail
 
+type TemplatesRetrieveRolloutQuery struct {
+	Mode string `json:"mode"`
+}
+
+type TemplatesRetrieveRolloutResult = TemplateRollout
+
 type TemplatesRetrieveStampsImpactQuery struct {
 	Goal int64 `json:"goal"`
 }
@@ -8569,11 +8922,16 @@ type TemplatesVersionsRetrieveResultReport struct {
 }
 
 type TemplatesVersionsRetrieveResultReportIssuesItem struct {
-	Severity string            `json:"severity"`
-	Code     string            `json:"code"`
-	Message  string            `json:"message"`
-	Path     *string           `json:"path,omitempty"`
-	Params   map[string]string `json:"params,omitempty"`
+	Severity string                                              `json:"severity"`
+	Code     string                                              `json:"code"`
+	Message  string                                              `json:"message"`
+	Path     *string                                             `json:"path,omitempty"`
+	Params   map[string]string                                   `json:"params,omitempty"`
+	Fix      *TemplatesVersionsRetrieveResultReportIssuesItemFix `json:"fix,omitempty"`
+}
+
+type TemplatesVersionsRetrieveResultReportIssuesItemFix struct {
+	Action string `json:"action"`
 }
 
 type TerminalActBody = TerminalActParams
@@ -9132,6 +9490,8 @@ type WebhookEndpointsSendTestParams struct {
 
 type WebhookEndpointsSendTestResult = WebhookTestResult
 
+type WebhookEndpointsTestsListResult = WebhookTestAttemptPage
+
 type WebhookEndpointsUpdateBody = WebhookEndpointsUpdateParams
 
 type WebhookEndpointsUpdateParams struct {
@@ -9151,6 +9511,20 @@ type WebhookPassRef struct {
 	ID         string  `json:"id"`
 	ExternalID *string `json:"externalId"`
 	TemplateID string  `json:"templateId"`
+}
+
+type WebhookTestAttemptPage struct {
+	Items []WebhookTestAttemptPageItemsItem `json:"items"`
+}
+
+type WebhookTestAttemptPageItemsItem struct {
+	ID         string  `json:"id"`
+	Type       string  `json:"type"`
+	Ok         bool    `json:"ok"`
+	Status     *int64  `json:"status"`
+	ErrorCode  *string `json:"errorCode"`
+	DurationMs int64   `json:"durationMs"`
+	At         int64   `json:"at"`
 }
 
 type WebhookTestEvent struct {

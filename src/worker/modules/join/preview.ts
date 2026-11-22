@@ -5,7 +5,7 @@ import { type LayoutView, normalize, type PassView } from '../../../shared/pass-
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
-import { readBranding, tenantPassJson } from '../passes/branding.ts';
+import { appliedBranding, readBranding, tenantPassJson } from '../passes/branding.ts';
 import { depsOf } from '../passes/deps.ts';
 import { getOrg } from '../passes/repo-read-issuance.ts';
 import type { OpenRelease } from './issue.ts';
@@ -55,7 +55,7 @@ export async function joinPreview(
 ): Promise<PassView> {
   const { template, readiness } = open;
   const org = await getOrg(ctx.env.DB, link.orgId);
-  const branding = readBranding(org?.branding);
+  const branding = appliedBranding(readBranding(org?.branding), template.manifest);
   const input: Personalization = applyDefaults(template.manifest, {});
   for (const g of readiness.generated) input[g.key] = GENERATED;
   const tenant = {
@@ -99,7 +99,11 @@ export async function previewImage(
   if (!IMAGE.test(name)) throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
   const org = await getOrg(ctx.env.DB, link.orgId);
   const own = (
-    await brandingFiles(ctx.env.BUCKET, link.orgId, readBranding(org?.branding).images)
+    await brandingFiles(
+      ctx.env.BUCKET,
+      link.orgId,
+      appliedBranding(readBranding(org?.branding), open.template.manifest).images,
+    )
   ).find((f) => f.name === name);
   if (own) {
     const object = await ctx.env.BUCKET.get(own.r2Key);

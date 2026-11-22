@@ -44,10 +44,11 @@ export const SubscribableEventTypeSchema = z.enum(
 );
 
 /** Additive changes need no new version; a rename, removal or change of meaning does. */
-export const WEBHOOK_API_VERSIONS = ['2026-12-01'] as const;
+/** Oldest first. `2026-12-01` was stamped before it matched a changelog date; endpoints that carry it keep it. */
+export const WEBHOOK_API_VERSIONS = ['2026-12-01', '2026-11-20'] as const;
 export const WebhookApiVersionSchema = z.enum(WEBHOOK_API_VERSIONS);
 export type WebhookApiVersion = z.infer<typeof WebhookApiVersionSchema>;
-export const LATEST_WEBHOOK_API_VERSION: WebhookApiVersion = '2026-12-01';
+export const LATEST_WEBHOOK_API_VERSION: WebhookApiVersion = '2026-11-20';
 
 export const WEBHOOK_ENDPOINT_LIMIT = 10;
 export const WEBHOOK_MAX_TEMPLATES = 20;
@@ -56,6 +57,8 @@ export const WEBHOOK_MAX_BODY_BYTES = 8192;
 const Version = z.number().int().nonnegative();
 const Str = z.string().max(300);
 const Wallet = z.literal('apple');
+const RunId = Str.optional();
+const Flag = z.boolean().optional();
 
 /**
  * The `data` of each type is an allowlist: receivers must ignore unknown fields, and nothing about
@@ -69,9 +72,9 @@ export const WEBHOOK_DATA_SCHEMAS = {
     source: Str.nullable().optional(),
     notified: z.boolean().optional(),
   }),
-  'pass.voided': z.object({ actorType: Str.nullable().optional() }),
+  'pass.voided': z.object({ actorType: Str.nullable().optional(), runId: RunId }),
   'pass.unvoided': z.object({ actorType: Str.nullable().optional() }),
-  'pass.removed': z.object({ version: Version.optional(), message: z.boolean().optional() }),
+  'pass.removed': z.object({ version: Version.optional(), message: Flag, runId: RunId }),
   'pass.restored': z.object({ version: Version.optional() }),
   'pass.installed': z.object({
     wallet: Wallet,

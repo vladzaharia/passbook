@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ISSUANCE_OUTCOMES } from '../copy/email.ts';
-import { InputMatchSchema } from './broadcasts.ts';
+import { PassMatchSchema } from './broadcasts.ts';
 import { EffectiveChannelsSchema } from './channels.ts';
 import { IdSchema, JsonSchema, ModeSchema, pageOf, TimestampSchema } from './common.ts';
 import { REMOVE_MESSAGE_MAX } from './events.ts';
@@ -45,6 +45,8 @@ export const PassSummarySchema = z.object({
   serial: z.string(),
   title: z.string().nullable(),
   subtitle: z.string().nullable(),
+  /** With a `match` filter: the value of each input it names, for the list to show under the name. */
+  matched: z.array(z.object({ input: z.string(), value: z.string() })).optional(),
   externalId: z.string().nullable(),
   status: PassStatusSchema,
   mode: ModeSchema.default('live'),
@@ -166,6 +168,15 @@ export const PassDetailSchema = PassSummarySchema.extend({
 });
 export type PassDetailDto = z.infer<typeof PassDetailSchema>;
 
+const jsonParam = (what: string) => (raw: string, ctx: z.RefinementCtx) => {
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    ctx.addIssue({ code: 'custom', message: `Use a JSON ${what}.` });
+    return z.NEVER;
+  }
+};
+
 export const PassListQuerySchema = z.object({
   /** Literal `null` selects global scope for a global API key; org-bound keys may omit it. */
   orgId: IdSchema.transform((value) => (value === 'null' ? null : value)).optional(),
@@ -185,37 +196,20 @@ export const PassListQuerySchema = z.object({
   /** Exact match on the pass's externalId. */
   externalId: z.string().min(1).max(200).optional(),
   /** A ScanTarget as a JSON string: checked in at an event, or not scanned for 1 to 730 days. */
-  scan: z
-    .string()
-    .max(200)
-    .transform((raw, ctx) => {
-      try {
-        return JSON.parse(raw) as unknown;
-      } catch {
-        ctx.addIssue({ code: 'custom', message: 'Use a JSON scan target.' });
-        return z.NEVER;
-      }
-    })
-    .pipe(ScanTargetSchema)
-    .optional(),
-  /** An InputMatch as a JSON string: "Only passes where" rows. */
-  match: z
-    .string()
-    .max(2000)
-    .transform((raw, ctx) => {
-      try {
-        return JSON.parse(raw) as unknown;
-      } catch {
-        ctx.addIssue({ code: 'custom', message: 'Use a JSON match.' });
-        return z.NEVER;
-      }
-    })
-    .pipe(InputMatchSchema)
+  scan: z.string().max(200).transform(jsonParam('scan target')).pipe(ScanTargetSchema).optional(),
+  /** A PassMatch as a JSON string: up to 5 clauses on inputs, ANDed (text clauses start with or contain). */
+  match: z.string().max(2000).transform(jsonParam('match')).pipe(PassMatchSchema).optional(),
+  /** true: the answer also carries `count`, the number of passes the filters match. */
+  count: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
     .optional(),
   cursor: z.string().max(512).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
 });
-export const PassListSchema = pageOf(PassSummarySchema);
+export const PassListSchema = pageOf(PassSummarySchema).extend({
+  count: z.number().int().optional(),
+});
 
 export const CreatePassSchema = z.object({
   /** Org-bound API keys may omit it. */

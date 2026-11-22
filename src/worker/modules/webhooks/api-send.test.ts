@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { signWebhook } from '../../connectors/lib/hmac.ts';
-import { all } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
 import { type Api, BASE, GOOD, rowCount, setupApi, wipe } from './api-test-fixtures.ts';
 import { endpointOf, type Net, stubNet } from './deliver-test-fixtures.ts';
 import { clearResolverMemo } from './resolver-memo.ts';
@@ -155,5 +155,83 @@ describe('the test event', () => {
     );
     expect(net.calls).toEqual([]);
     expect(await rowCount(api.rig.db, 'webhook_attempts', "trigger = 'test'")).toBe(0);
+  });
+});
+
+describe('the test list', () => {
+  it('records each send with status, code and timing, newest first, and nothing of the request', async () => {
+    const a = await create('https://hooks.example.com/a');
+    await api.call('POST', `${BASE}/${a.endpoint.id}/test`, undefined, admin);
+    net.respond = () => new Response('no', { status: 500 });
+    await api.call('POST', `${BASE}/${a.endpoint.id}/test`, undefined, admin);
+    const res = await api.call('GET', `${BASE}/${a.endpoint.id}/tests`, undefined, admin);
+    expect(res.status).toBe(200);
+    const items = res.json.items as { id: string; ok: boolean; status: number | null }[];
+    expect(items.map((i) => [i.ok, i.status])).toEqual([
+      [false, 500],
+      [true, 200],
+    ]);
+    expect(Object.keys(items[0] ?? {}).sort()).toEqual([
+      'at',
+      'durationMs',
+      'errorCode',
+      'id',
+      'ok',
+      'status',
+      'type',
+    ]);
+  });
+
+  it('records the sample type of a send, and reads an older row as the plain test', async () => {
+    const test = await api.member(['org_admin'], { mode: 'test' });
+    const t = await create('https://hooks.example.com/t', test);
+    await api.call('POST', `${BASE}/${t.endpoint.id}/test`, { type: 'pass.updated' }, test);
+    await api.call('POST', `${BASE}/${t.endpoint.id}/test`, undefined, test);
+    await run(
+      api.rig.db,
+      'UPDATE webhook_attempts SET sample_type = NULL WHERE endpoint_id = ? AND at = (SELECT MIN(at) FROM webhook_attempts WHERE endpoint_id = ?)',
+      [t.endpoint.id, t.endpoint.id],
+    );
+    // A type that was removed from the schema since the row was written reads as the plain test too.
+    await run(
+      api.rig.db,
+      "UPDATE webhook_attempts SET sample_type = 'pass.gone' WHERE endpoint_id = ? AND sample_type IS NOT NULL",
+      [t.endpoint.id],
+    );
+    const res = await api.call('GET', `${BASE}/${t.endpoint.id}/tests`, undefined, test);
+    expect((res.json.items as { type: string }[]).map((i) => i.type).sort()).toEqual([
+      'webhook.test',
+      'webhook.test',
+    ]);
+  });
+
+  it('keeps the sample type when it is set', async () => {
+    const test = await api.member(['org_admin'], { mode: 'test' });
+    const t = await create('https://hooks.example.com/t2', test);
+    await api.call('POST', `${BASE}/${t.endpoint.id}/test`, { type: 'pass.issued' }, test);
+    const res = await api.call('GET', `${BASE}/${t.endpoint.id}/tests`, undefined, test);
+    expect((res.json.items as { type: string }[])[0]?.type).toBe('pass.issued');
+  });
+
+  it('is scoped to the endpoint of the caller', async () => {
+    const a = await create('https://hooks.example.com/a');
+    await api.call('POST', `${BASE}/${a.endpoint.id}/test`, undefined, admin);
+    const other = await api.member(['org_admin'], { mode: 'test' });
+    const res = await api.call('GET', `${BASE}/${a.endpoint.id}/tests`, undefined, other);
+    expect(res.status).toBeGreaterThanOrEqual(400);
+  });
+
+  it('stamps a new endpoint with the newest changelog date and leaves an older one as stored', async () => {
+    const a = await create('https://hooks.example.com/a');
+    await run(api.rig.db, "UPDATE webhook_endpoints SET api_version = '2026-12-01' WHERE id = ?", [
+      a.endpoint.id,
+    ]);
+    expect(
+      (await api.call('GET', `${BASE}/${a.endpoint.id}`, undefined, admin)).json.apiVersion,
+    ).toBe('2026-12-01');
+    const b = await create('https://hooks.example.com/b');
+    expect(
+      (await api.call('GET', `${BASE}/${b.endpoint.id}`, undefined, admin)).json.apiVersion,
+    ).toBe('2026-11-20');
   });
 });

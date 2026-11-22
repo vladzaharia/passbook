@@ -1,11 +1,14 @@
+import { Lock } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useState } from 'react';
-import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
-import { channelReasonText } from '@/shared/copy/channels.ts';
+import { chainLevelOf } from '@/shared/channels.ts';
+import type { ChainLevel, EffectiveChannels } from '@/shared/contracts/channels.ts';
+import { CHANNEL_LABEL, channelReasonText } from '@/shared/copy/channels.ts';
 import { PREVIEW_COPY, PREVIEW_LABEL } from '@/shared/copy/previews.ts';
 import { cn } from '../lib/cn.ts';
 import { useContainerWidth } from '../lib/container-width.ts';
 import { SegmentedControl } from '../ui/segmented-control.tsx';
 import { Skeleton } from '../ui/skeleton.tsx';
+import { LockedPreview } from './locked-preview.tsx';
 import './channel-switch.css';
 import { PREVIEW_CHANNELS, type PreviewChannel, type PreviewSource } from './types.ts';
 import { useWalletPreviews } from './use-wallet-previews.ts';
@@ -21,6 +24,10 @@ export interface ChannelPreviewsProps {
   channels?: EffectiveChannels | undefined;
   /** Shown with the empty state when every channel is off: where to turn one on. */
   emptyAction?: ReactNode;
+  /** A line above one channel's pane, e.g. a channel the template turns off that the designer still edits. */
+  notes?: Partial<Record<PreviewChannel, string>> | undefined;
+  /** The action on a locked channel's pane: a link to the level that stops it, or Ask PassBook. */
+  lockedAction?: ((info: { channel: PreviewChannel; level: ChainLevel }) => ReactNode) | undefined;
   /** The page picks the channel (and draws its own switcher): only that channel's pane shows. */
   value?: PreviewChannel | undefined;
   className?: string;
@@ -44,7 +51,7 @@ const MobilePreview = lazy(() =>
 
 /**
  * One switcher for every way a pass reaches a holder: Apple, Google, Samsung, Mobile and Paper.
- * A channel that is off or not available is a disabled tab that says why.
+ * A channel that is off or not available is a locked tab: its pane names the level that stops it.
  */
 export function ChannelPreviews({
   source,
@@ -52,23 +59,31 @@ export function ChannelPreviews({
   paper,
   channels,
   emptyAction,
+  lockedAction,
+  notes,
   value,
   className,
 }: ChannelPreviewsProps) {
   const shown = PREVIEW_CHANNELS.filter((c) => channels?.[c]?.on !== false);
-  const [picked, setPicked] = useState<PreviewChannel>('apple');
-  const current = value ?? (shown.includes(picked) ? picked : shown[0]);
+  const [picked, setPicked] = useState<PreviewChannel | null>(null);
+  // A locked tab can be opened to read why; with nothing on at all the empty state stands instead.
+  const current = value ?? (shown.length > 0 ? (picked ?? shown[0]) : undefined);
   const [width, measure] = useContainerWidth();
   // Five segments need about 19 rem; a narrower column gets the same choice as a menu.
   const compact = width > 0 && width < 300;
   const options = PREVIEW_CHANNELS.map((value) => {
     const status = channels?.[value];
     if (status?.on !== false) return { value, label: PREVIEW_LABEL[value] };
-    const reason = status.reason ? channelReasonText(status.reason) : PREVIEW_COPY.off;
-    return { value, label: PREVIEW_LABEL[value], reason };
+    const hint = status.reason ? channelReasonText(status.reason) : PREVIEW_COPY.off;
+    return { value, label: PREVIEW_LABEL[value], icon: Lock, hint };
   });
-  const menu = options.map((o) => (o.reason ? { ...o, disabled: true, title: o.reason } : o));
-  const wallets = useWalletPreviews(source, current === 'google' || current === 'samsung');
+  const menu = options.map((o) => ('hint' in o ? { ...o, title: o.hint } : o));
+  const stopped = current ? channels?.[current] : undefined;
+  const locked = stopped?.on === false;
+  const wallets = useWalletPreviews(
+    source,
+    !locked && (current === 'google' || current === 'samsung'),
+  );
   if (!current)
     return (
       <Suspense fallback={<Skeleton className="h-32 w-full rounded-md" />}>
@@ -98,8 +113,25 @@ export function ChannelPreviews({
         />
       )}
       <div className="w-full min-w-0" data-channel={current}>
-        {current === 'apple' ? apple : null}
-        {current === 'google' || current === 'samsung' ? (
+        {notes?.[current] ? (
+          <p className="mb-3 text-center text-xs text-fg-muted">{notes[current]}</p>
+        ) : null}
+        {locked && stopped ? (
+          <LockedPreview
+            title={`${CHANNEL_LABEL[current]}: ${
+              stopped.reason ? channelReasonText(stopped.reason) : PREVIEW_COPY.off
+            }`}
+            level={chainLevelOf(stopped.source, stopped.reason)}
+            card={apple}
+          >
+            {lockedAction?.({
+              channel: current,
+              level: chainLevelOf(stopped.source, stopped.reason),
+            })}
+          </LockedPreview>
+        ) : null}
+        {locked ? null : current === 'apple' ? apple : null}
+        {locked ? null : current === 'google' || current === 'samsung' ? (
           <Suspense
             fallback={<Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />}
           >
@@ -110,7 +142,7 @@ export function ChannelPreviews({
             />
           </Suspense>
         ) : null}
-        {current === 'mobile' ? (
+        {locked ? null : current === 'mobile' ? (
           source ? (
             <Suspense
               fallback={<Skeleton className="mx-auto aspect-[9/16] w-full max-w-xs rounded-3xl" />}
@@ -121,7 +153,7 @@ export function ChannelPreviews({
             <Skeleton className="mx-auto aspect-[9/16] w-full max-w-xs rounded-3xl" />
           )
         ) : null}
-        {current === 'paper' ? paper : null}
+        {locked ? null : current === 'paper' ? paper : null}
       </div>
     </div>
   );

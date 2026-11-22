@@ -5,6 +5,8 @@ import { ENTITLEMENT_LABEL } from '@/shared/copy/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '@/shared/entitlement-impact.ts';
 import { overrideConfirm, resetOverrideConfirm } from '@/web/lib/confirms-features.ts';
 import { ConfirmDialog, ErrorState, SkeletonRows, toast } from '@/web/ui/index.ts';
+import { PlatformAppleCard } from './apple-card.tsx';
+import { PlatformChannels } from './channels-card.tsx';
 import { EmptyFeatures } from './empty-features.tsx';
 import { FeatureList } from './feature-list.tsx';
 import { OverrideDialog } from './override-dialog.tsx';
@@ -80,6 +82,8 @@ function FeaturesBody({
           toast.success(`${next.presetLabel} applied`);
         }}
       />
+      <PlatformChannels orgId={orgId} orgName={orgName} onInclude={setEditing} />
+      <PlatformAppleCard orgId={orgId} />
       <FeatureList
         items={state.items}
         presetLabel={presetLabel}

@@ -41,7 +41,7 @@ export async function deleteTestBroadcastsBefore(
   return changes;
 }
 
-const UNRESERVED_BUNDLE = `
+export const UNRESERVED_BUNDLE = `
   NOT EXISTS (
     SELECT 1 FROM sandbox_forwards f
     WHERE f.bundle_id = bundles.id AND f.state IN ('sending', 'unknown')

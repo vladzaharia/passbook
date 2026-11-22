@@ -81,7 +81,8 @@ export const ScannerSchema = z.object({
   pairedLabel: z.string().nullable(),
   lastSeenAt: TimestampSchema.nullable(),
   expiresAt: TimestampSchema.nullable(),
-  staff: z.object({ id: IdSchema, name: z.string() }).nullable(),
+  /** `name` is null for an API key: keys get ids, not staff names. */
+  staff: z.object({ id: IdSchema, name: z.string().nullable() }).nullable(),
   today: z.number().int(),
   createdAt: TimestampSchema,
 });
@@ -226,8 +227,7 @@ export const ScanRecordSchema = z.object({
   override: z.boolean(),
   offline: z.boolean(),
   unverified: z.boolean().default(false),
-  /** A back-dated offline read: it counts at the time it synced. */
-  late: z.boolean().default(false),
+  late: z.boolean().default(false), // A back-dated offline read: it counts at the time it synced.
   actor: z.object({ type: z.enum(['scanner', 'user']), id: z.string() }),
   undoneAt: TimestampSchema.nullable(),
   undoneBy: z.string().nullable(),

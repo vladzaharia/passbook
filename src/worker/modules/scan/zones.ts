@@ -9,7 +9,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { addDueRecompute } from './occupancy/recompute.ts';
 import { addZoneTapOut } from './occupancy/service.ts';
 import { accessTemplates } from './repo-access.ts';
-import { adminGrant, audited } from './repo-admin-grant.ts';
+import { adminActorOf, adminGrant, audited } from './repo-admin-grant.ts';
 import { readOrgTimeZone } from './repo-org-clock.ts';
 import {
   addZoneArchive,
@@ -34,7 +34,7 @@ import {
 } from './zones-statements.ts';
 import { assertPlacement, indexZones, subtree, treeOrder } from './zones-tree.ts';
 
-type Query = z.infer<typeof ScanZoneListQuerySchema>;
+type Query = z.infer<typeof ScanZoneListQuerySchema> & { orgId: string };
 type Create = z.infer<typeof CreateScanZoneSchema>;
 type Update = z.infer<typeof UpdateScanZoneSchema>;
 
@@ -58,7 +58,16 @@ export async function listZones(
   const start = query.cursor ? shown.findIndex((r) => r.id === query.cursor) + 1 : 0;
   const page = shown.slice(start, start + query.limit);
   return {
-    items: page.map((r) => toDto(r, rows, plans.get(r.id) ?? [], checked.get(r.id) ?? [], clock)),
+    // The console keeps the count of every session that uses the zone; a key sees its own mode's.
+    items: page.map((r) =>
+      toDto(
+        authority.kind === 'api_key' ? { ...r, sessions: checked.get(r.id)?.length ?? 0 } : r,
+        rows,
+        plans.get(r.id) ?? [],
+        checked.get(r.id) ?? [],
+        clock,
+      ),
+    ),
     nextCursor: start + query.limit < shown.length ? (page.at(-1)?.id ?? null) : null,
   };
 }
@@ -88,7 +97,7 @@ export async function createZone(
   } catch (error) {
     mutationError(error);
   }
-  return committed(ctx, input.orgId, id, mode);
+  return committed(ctx, input.orgId, id, mode, authority.kind === 'api_key');
 }
 
 export async function updateZone(
@@ -199,8 +208,7 @@ export async function updateZone(
   g.add(
     audited(g, ctx, {
       orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: archive ? 'scan_zone.archive' : restore ? 'scan_zone.restore' : 'scan_zone.update',
       targetType: 'scan_zone',
       targetId: id,
@@ -212,7 +220,7 @@ export async function updateZone(
   } catch (error) {
     mutationError(error);
   }
-  return committed(ctx, orgId, id, mode);
+  return committed(ctx, orgId, id, mode, authority.kind === 'api_key');
 }
 
 export const archiveZone = (

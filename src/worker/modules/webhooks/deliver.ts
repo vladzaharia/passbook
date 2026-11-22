@@ -28,7 +28,7 @@ import {
 } from './repo-delivery-state.ts';
 import { type EndpointRow, getEndpoint } from './repo-endpoints.ts';
 import { activeSecrets } from './repo-secrets.ts';
-import { memoResolver } from './resolver-memo.ts';
+import { resolverFor } from './resolver-memo.ts';
 import { CLAIM_HOLD_MS, parseRetryAfter, randomUnit, retryDelay } from './schedule.ts';
 import { openSecret } from './secrets.ts';
 import { requestHeaders } from './sign.ts';
@@ -291,7 +291,7 @@ export async function runLane(
       platformHosts: platformHostsOf(ctx.env),
       timeoutMs,
       discardBody: true,
-      resolver: memoResolver(() => ctx.clock.now()),
+      resolver: resolverFor(ctx.env, () => ctx.clock.now()),
     }),
     ring: () => {
       ring ??= loadKekRing(ctx.env);

@@ -329,5 +329,21 @@
     "response": {
       "secret": "whsec_example_1111111111111111111111111111"
     }
+  },
+  "webhooks.getWebhookEndpointsByIdTests": {
+    "description": "The endpoint's recent test sends, newest first, up to 20: status, error code and timing. The request and its signature are not kept. Kept 7 days.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "type": "webhook.test",
+          "ok": true,
+          "status": 200,
+          "errorCode": null,
+          "durationMs": 12,
+          "at": 1795153318000
+        }
+      ]
+    }
   }
 }

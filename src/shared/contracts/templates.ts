@@ -29,6 +29,10 @@ export const ValidationIssueSchema = z.object({
   message: z.string(),
   path: z.string().optional(),
   params: z.record(z.string(), z.string()).optional(),
+  fix: z
+    .object({ action: z.enum(['upload_logo', 'upload_icon']) })
+    .optional()
+    .describe('An in-place fix: add the organization logo or icon.'),
 });
 export const ValidationReportSchema = z.object({
   ok: z.boolean(),

@@ -46,11 +46,12 @@
 @keyframes wl-spark {
   from {
     opacity: 1;
-    transform: rotate(var(--a)) translateY(0) scaleY(1);
+    transform: rotate(var(--a)) translateY(calc(-1 * var(--wl-spark-r, 0px))) scaleY(1);
   }
   to {
     opacity: 0;
-    transform: rotate(calc(var(--a) + 40deg)) translateY(-14px) scaleY(0.4);
+    transform: rotate(calc(var(--a) + 40deg))
+      translateY(calc(-1 * var(--wl-spark-r, 0px) - var(--wl-spark-d, 14px))) scaleY(0.4);
   }
 }
 
@@ -153,6 +154,15 @@
   height: 0;
   pointer-events: none;
 }
+.wl-sparks[data-size="lg"] {
+  --wl-spark-d: 22px;
+}
+.wl-sparks[data-size="lg"] .wl-spark {
+  top: -5px;
+  left: -1.5px;
+  width: 3px;
+  height: 10px;
+}
 .wl-spark {
   position: absolute;
   top: -3px;
@@ -163,7 +173,8 @@
   background: var(--wl-foil);
   opacity: 0;
   transform-origin: 50% 100%;
-  animation: wl-spark 640ms var(--wl-ease-out) calc(var(--i) * 40ms) backwards;
+  animation: wl-spark 640ms var(--wl-ease-out) calc(var(--wl-spark-delay, 0ms) + var(--i) * 40ms)
+    backwards;
 }
 
 @media (prefers-reduced-motion: reduce) {

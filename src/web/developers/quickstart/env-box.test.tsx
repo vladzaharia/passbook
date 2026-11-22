@@ -1,0 +1,41 @@
+import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { EnvBox } from './sandbox-step.tsx';
+
+const SECRET = 'pbp_test_Ab12CdEf34GhIj56KlMn78OpQrSt90amDQ';
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
+
+describe('the key box', () => {
+  it('shows the key once as text, masks it after Copy .env, and copies both lines', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { ...navigator, clipboard: { writeText } });
+    const { container } = render(
+      <EnvBox secret={SECRET} templateId="tpl-1" onNext={() => undefined} />,
+    );
+    expect(container.textContent).toContain(`PASSBOOK_KEY=${SECRET}`);
+    expect(screen.getByText('Shown once')).toBeTruthy();
+    // Only text nodes: no attribute carries the secret.
+    for (const el of container.querySelectorAll('*'))
+      for (const a of el.getAttributeNames()) expect(el.getAttribute(a)).not.toContain(SECRET);
+    await userEvent.click(screen.getByRole('button', { name: 'Copy .env' }));
+    expect(writeText).toHaveBeenCalledWith(`PASSBOOK_KEY=${SECRET}\nPASSBOOK_TEMPLATE_ID=tpl-1\n`);
+    expect(container.textContent).not.toContain(SECRET);
+    expect(container.textContent).toContain('pbp_test_…amDQ');
+    expect(screen.getByText('Key hidden')).toBeTruthy();
+  });
+
+  it('masks the key after a minute even if it was never copied', () => {
+    vi.useFakeTimers();
+    const { container } = render(
+      <EnvBox secret={SECRET} templateId="tpl-1" onNext={() => undefined} />,
+    );
+    expect(container.textContent).toContain(SECRET);
+    act(() => vi.advanceTimersByTime(60_000));
+    expect(container.textContent).not.toContain(SECRET);
+  });
+});

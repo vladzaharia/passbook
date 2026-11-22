@@ -120,8 +120,8 @@ export async function closeSandbox(
     where: { id: orgId, status: 'active', kind: 'developer' },
     returning: ['id'],
   });
-  if (by)
-    g.update('api_keys', { set: { revoked_at: now }, where: { org_id: orgId, revoked_at: null } });
+  // The idle sweep revokes too: a reopen must not bring back a key nobody has watched for a month.
+  g.update('api_keys', { set: { revoked_at: now }, where: { org_id: orgId, revoked_at: null } });
   g.update('developer_sandboxes', {
     set: { closed_at: now, close_reason: by ? 'user' : 'idle' },
     where: by

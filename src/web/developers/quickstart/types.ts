@@ -13,6 +13,11 @@ export type Call =
       requestId: string | null;
       replayed: boolean;
       at: number;
+      /** Where the call came from: a terminal (heard in the request log) or this page's Run here. */
+      via?: 'terminal' | 'here';
+      /** The caller's tool as the log names it (`curl/8.7.1`). */
+      client?: string | null;
+      etag?: string | null;
     }
   | { state: 'fail'; problem: Problem; requestId: string | null; at: number };
 

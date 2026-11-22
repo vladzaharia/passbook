@@ -10,6 +10,7 @@
       "!**/coverage",
       "!docs/api/openapi.v1.json",
       "!docs/api/errors.json",
+      "!docs/api/operation-codes.json",
       "!docs/api/webhook-events.json",
       "!docs/api/webhook-vectors.json",
       "!**/playwright-report",

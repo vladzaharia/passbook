@@ -7,17 +7,23 @@ import {
   RetiredApiKeySchema,
   RotatedApiKeySchema,
 } from '../../shared/contracts/api-keys.ts';
+import { BroadcastSchema } from '../../shared/contracts/broadcasts.ts';
+import { BroadcastUndoResultSchema } from '../../shared/contracts/broadcasts-change.ts';
 import { ProblemSchema } from '../../shared/contracts/common.ts';
+import { ConnectionPreviewSchema } from '../../shared/contracts/connection-preview.ts';
 import { OrgBrandingSchema, OrgSchema, OrgSummarySchema } from '../../shared/contracts/orgs.ts';
+import { BulkRunSchema, CurrentBulkRunSchema } from '../../shared/contracts/pass-bulk-runs.ts';
 import {
   PassImportUndoResultSchema,
   SavedImportMappingsResultSchema,
 } from '../../shared/contracts/pass-imports.ts';
+import { PassFilterSchema } from '../../shared/contracts/pass-selection.ts';
 import {
   PassSetupResultSchema,
   PassSetupSchema,
   StagedBrandAssetSchema,
 } from '../../shared/contracts/pass-setup.ts';
+import { PassViewListSchema } from '../../shared/contracts/pass-views.ts';
 import {
   PassDetailSchema,
   PassDeviceSchema,
@@ -75,6 +81,7 @@ import {
   ReviewTemplateSchema,
   TemplateReviewListSchema,
 } from '../../shared/contracts/template-release-flow.ts';
+import { TemplateRolloutSchema } from '../../shared/contracts/template-rollout.ts';
 import {
   TemplateDetailSchema,
   TemplateInputSchemaSchema,
@@ -87,6 +94,7 @@ import {
   WebhookCaptureListSchema,
   WebhookCaptureSchema,
 } from '../../shared/contracts/webhook-captures.ts';
+import { WebhookTestAttemptListSchema } from '../../shared/contracts/webhook-tests.ts';
 import {
   EventFeedPageSchema,
   WebhookDeliveryDetailSchema,
@@ -136,6 +144,10 @@ const names = {
   Org: OrgSchema,
   OrgSummary: OrgSummarySchema,
   OrgBranding: OrgBrandingSchema,
+  Broadcast: BroadcastSchema,
+  BroadcastUndo: BroadcastUndoResultSchema,
+  ConnectionPreview: ConnectionPreviewSchema,
+  TemplateRollout: TemplateRolloutSchema,
   PassImportMappings: SavedImportMappingsResultSchema,
   PassImportUndo: PassImportUndoResultSchema,
   PassSummary: PassSummarySchema,
@@ -143,6 +155,10 @@ const names = {
   PassVersion: PassVersionSchema,
   PassDevice: PassDeviceSchema,
   PassPage: PassListSchema,
+  PassViews: PassViewListSchema,
+  BulkRun: BulkRunSchema,
+  CurrentBulkRun: CurrentBulkRunSchema,
+  PassFilter: PassFilterSchema,
   ApiKeyCurrent: ApiKeyMeSchema,
   ApiKeyMinted: MintedApiKeySchema,
   ApiKeyRotation: RotatedApiKeySchema,
@@ -162,6 +178,7 @@ const names = {
   WebhookDeliveryPage: WebhookDeliveryListSchema,
   WebhookDeliveryDetail: WebhookDeliveryDetailSchema,
   WebhookTestResult: WebhookTestResultSchema,
+  WebhookTestAttemptPage: WebhookTestAttemptListSchema,
   WebhookCapture: WebhookCaptureSchema,
   WebhookCapturePage: WebhookCaptureListSchema,
   CaptureEndpointCreated: CaptureEndpointCreatedSchema,

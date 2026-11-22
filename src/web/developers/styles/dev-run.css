@@ -87,6 +87,9 @@
   justify-content: flex-end;
   min-inline-size: 12.5rem;
 }
+[data-island="org-chip"][hidden] {
+  display: none;
+}
 .orgchip {
   display: inline-flex;
   align-items: center;
@@ -121,6 +124,18 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* The run clock: a foil ring on the chip while the quickstart is open, the time inside. */
+.orgchip-clock {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--pk-text-strong);
+}
+.orgchip[data-running="true"] {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--pk-surface-raised), var(--pk-surface-raised)) padding-box,
+    var(--wl-foil) border-box;
 }
 .budget {
   display: inline-flex;

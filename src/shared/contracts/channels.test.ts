@@ -13,6 +13,7 @@ import {
 
 const status = { on: true, source: 'template' } as const;
 const effective = Object.fromEntries(CHANNELS.map((c) => [c, status]));
+const levels = Object.fromEntries(CHANNELS.map((c) => [c, []]));
 
 describe('channel contracts', () => {
   it('has copy for every channel and reason', () => {
@@ -80,11 +81,16 @@ describe('channel contracts', () => {
       ],
     };
     expect(
-      PassChannelsResponseSchema.safeParse({ effective, overrides: { paper: 'on' }, replace })
-        .success,
+      PassChannelsResponseSchema.safeParse({
+        effective,
+        levels,
+        overrides: { paper: 'on' },
+        replace,
+      }).success,
     ).toBe(true);
     expect(
-      PassChannelsResponseSchema.safeParse({ effective, overrides: { paper: 'on' } }).success,
+      PassChannelsResponseSchema.safeParse({ effective, levels, overrides: { paper: 'on' } })
+        .success,
     ).toBe(false);
   });
 

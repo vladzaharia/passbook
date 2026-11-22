@@ -259,8 +259,13 @@ export type BrandWebLogoUploadParams = {
   configRevision?: number;
 };
 
-export type BroadcastsCountRecipientsParams = {
+export type Broadcast = {
+  id: string;
   orgId: string;
+  mode: "live" | "test";
+  kind: "message" | "change";
+  name: string;
+  state: "draft" | "scheduled" | "sending" | "sent" | "partial" | "failed" | "cancelled";
   target: {
     templateIds: Array<string>;
     onDevice?: boolean;
@@ -285,15 +290,89 @@ export type BroadcastsCountRecipientsParams = {
       to?: string;
       timeZone: string;
     }>;
+    version?: string;
   };
+  patch: Record<string, unknown>;
+  notify: boolean;
+  at: number | null;
+  clearAfter: number | null;
+  parentId: string | null;
+  message?: string | null;
+  ruleId: string | null;
+  followUp: {
+    id: string;
+    at: number | null;
+  } | null;
+  counts: {
+    targeted: number;
+    updated: number;
+    unchanged: number;
+    overBudget: number;
+    failed: number;
+  };
+  errorCode: string | null;
+  createdAt: number;
+  startedAt: number | null;
+  finishedAt: number | null;
+};
+
+export type BroadcastUndo = {
+  id: string;
+  parentId: string;
+  restorable: number;
+  kept: number;
+};
+
+export type BroadcastsCountRecipientsParams = {
+  orgId: string;
+  target: {
+    templateIds?: Array<string>;
+    onDevice?: boolean;
+    holderState?: "unassigned" | "waiting" | "owned";
+    q?: string;
+    scan?: {
+      eventId: string;
+      checkedIn: boolean;
+    } | {
+      noScanDays: number;
+    };
+    match?: Array<{
+      input: string;
+      values: Array<string>;
+    } | {
+      input: string;
+      min?: number;
+      max?: number;
+    } | {
+      input: string;
+      from?: string;
+      to?: string;
+      timeZone: string;
+    } | {
+      input: string;
+      op: "startsWith" | "contains";
+      value: string;
+    }>;
+    version?: string;
+    passIds?: Array<string>;
+    importId?: string;
+    expectCount?: number;
+  };
+  patch?: Record<string, unknown>;
+  notify?: boolean;
+  message?: string;
 };
 
 export type BroadcastsCreateParams = {
   orgId: string;
   kind: "message" | "change";
   name?: string;
+  notify?: boolean;
+  send?: "draft" | "now" | "schedule";
+  at?: number;
+  clearAfter?: number | null;
   target: {
-    templateIds: Array<string>;
+    templateIds?: Array<string>;
     onDevice?: boolean;
     holderState?: "unassigned" | "waiting" | "owned";
     q?: string;
@@ -315,13 +394,18 @@ export type BroadcastsCreateParams = {
       from?: string;
       to?: string;
       timeZone: string;
+    } | {
+      input: string;
+      op: "startsWith" | "contains";
+      value: string;
     }>;
+    version?: string;
+    passIds?: Array<string>;
+    importId?: string;
+    expectCount?: number;
   };
   patch: Record<string, unknown>;
-  notify?: boolean;
-  send?: "draft" | "now" | "schedule";
-  at?: number;
-  clearAfter?: number | null;
+  message?: string;
 };
 
 export type BroadcastsSendParams = {
@@ -332,8 +416,12 @@ export type BroadcastsUpdateParams = {
   orgId: string;
   kind: "message" | "change";
   name?: string;
+  notify?: boolean;
+  send?: "draft" | "now" | "schedule";
+  at?: number;
+  clearAfter?: number | null;
   target: {
-    templateIds: Array<string>;
+    templateIds?: Array<string>;
     onDevice?: boolean;
     holderState?: "unassigned" | "waiting" | "owned";
     q?: string;
@@ -355,13 +443,43 @@ export type BroadcastsUpdateParams = {
       from?: string;
       to?: string;
       timeZone: string;
+    } | {
+      input: string;
+      op: "startsWith" | "contains";
+      value: string;
     }>;
+    version?: string;
+    passIds?: Array<string>;
+    importId?: string;
+    expectCount?: number;
   };
   patch: Record<string, unknown>;
-  notify?: boolean;
-  send?: "draft" | "now" | "schedule";
-  at?: number;
-  clearAfter?: number | null;
+  message?: string;
+};
+
+export type BulkRun = {
+  id: string;
+  orgId: string;
+  action: "void" | "send_email" | "remove";
+  state: "queued" | "running" | "done" | "stopped" | "failed";
+  total: number;
+  done: number;
+  skipped: number;
+  skippedBy: Record<string, number>;
+  stopRequested: boolean;
+  createdAt: number;
+  finishedAt: number | null;
+  code: string | null;
+};
+
+export type BulkRunsStartParams = {
+  action: "void" | "send_email" | "remove";
+  message?: string;
+  orgId?: string;
+  selection: {
+    filter: PassFilter;
+    expectCount: number;
+  };
 };
 
 export type BundlesCreateParams = {
@@ -417,6 +535,43 @@ export type CapturedEmailPage = {
   nextCursor: string | null;
 };
 
+export type ConnectionPreview = {
+  ok: boolean;
+  errorCode?: string;
+  records: number;
+  counts: {
+    create: number;
+    update: number;
+    unchanged: number;
+    skipped: number;
+    errors: number;
+    waiting: number;
+  };
+  releaseBlocked: string | null;
+  window: {
+    days: number;
+    limit: number;
+    since: number;
+    excluded: number;
+  };
+  samples: Array<{
+    ref: string;
+    action: "create" | "update" | "unchanged" | "skipped" | "error";
+    fields: Record<string, unknown>;
+    message?: string;
+  }>;
+  columns: Array<{
+    pointer: string;
+    label: string;
+    samples: Array<string>;
+    values: Array<{
+      value: string;
+      count: number;
+    }>;
+  }>;
+  durationMs: number;
+};
+
 export type ConnectionsCreateParams = {
   orgId: string;
   connectorType: string;
@@ -427,7 +582,7 @@ export type ConnectionsCreateParams = {
   mapping?: Record<string, {
     from: string;
     transform?: {
-      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
       options?: Record<string, unknown>;
     };
   }>;
@@ -452,6 +607,20 @@ export type ConnectionsTestConfigParams = {
   connectorType: string;
   config: Record<string, unknown>;
   secrets?: Record<string, string>;
+  mapping?: Record<string, {
+    from: string;
+    transform?: {
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+      options?: Record<string, unknown>;
+    };
+  }>;
+  voidWhen?: Array<{
+    from: string;
+    op: "in" | "present";
+    values?: Array<string | number | boolean>;
+  }>;
+  autoCreate?: boolean;
+  defaultTemplateId?: string;
 };
 
 export type ConnectionsUpdateParams = {
@@ -462,7 +631,7 @@ export type ConnectionsUpdateParams = {
   mapping?: Record<string, {
     from: string;
     transform?: {
-      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower";
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
       options?: Record<string, unknown>;
     };
   }>;
@@ -509,7 +678,7 @@ export type CreatedScanner = {
   expiresAt: number | null;
   staff: {
     id: string;
-    name: string;
+    name: string | null;
   } | null;
   today: number;
   createdAt: number;
@@ -550,10 +719,14 @@ export type CreatedScanningDevice = {
   } | null;
 };
 
+export type CurrentBulkRun = {
+  run?: BulkRun;
+};
+
 export type EmailFailedEvent = {
   id: string;
   type: "email.failed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1004,7 +1177,7 @@ export type OrgsUpdatePassSetupParams = {
 export type PassChannelsChangedEvent = {
   id: string;
   type: "pass.channels_changed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1027,6 +1200,10 @@ export type PassDetail = {
   serial: string;
   title: string | null;
   subtitle: string | null;
+  matched?: Array<{
+    input: string;
+    value: string;
+  }>;
   externalId: string | null;
   status: "active" | "voided";
   mode?: "live" | "test";
@@ -1145,6 +1322,9 @@ export type PassDetail = {
     message: string;
     path?: string;
     params?: Record<string, string>;
+    fix?: {
+      action: "upload_logo" | "upload_icon";
+    };
   }>;
   templateWarnings?: Array<{
     severity: "error" | "warning" | "info";
@@ -1152,6 +1332,9 @@ export type PassDetail = {
     message: string;
     path?: string;
     params?: Record<string, string>;
+    fix?: {
+      action: "upload_logo" | "upload_icon";
+    };
   }>;
 };
 
@@ -1163,6 +1346,41 @@ export type PassDevice = {
     state: "pending" | "enqueued" | "processing" | "sent" | "partial" | "failed" | "cancelled";
     at: number;
   } | null;
+};
+
+export type PassFilter = {
+  templateId?: string;
+  connectionId?: string;
+  importId?: string;
+  status?: "active" | "voided" | "removed";
+  holderEmail?: string;
+  holderState?: "unassigned" | "waiting" | "owned";
+  onDevice?: boolean;
+  q?: string;
+  externalId?: string;
+  scan?: {
+    eventId: string;
+    checkedIn: boolean;
+  } | {
+    noScanDays: number;
+  };
+  match?: Array<{
+    input: string;
+    values: Array<string>;
+  } | {
+    input: string;
+    min?: number;
+    max?: number;
+  } | {
+    input: string;
+    from?: string;
+    to?: string;
+    timeZone: string;
+  } | {
+    input: string;
+    op: "startsWith" | "contains";
+    value: string;
+  }>;
 };
 
 export type PassImportMappings = {
@@ -1339,7 +1557,7 @@ export type PassImportsUndoParams = Record<string, unknown>;
 export type PassInstalledEvent = {
   id: string;
   type: "pass.installed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1356,7 +1574,7 @@ export type PassInstalledEvent = {
 export type PassIssuedEvent = {
   id: string;
   type: "pass.issued";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1371,12 +1589,13 @@ export type PassIssuedEvent = {
 export type PassPage = {
   items: Array<PassSummary>;
   nextCursor: string | null;
+  count?: number;
 };
 
 export type PassPrintVoidedEvent = {
   id: string;
   type: "pass.print_voided";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1391,7 +1610,7 @@ export type PassPrintVoidedEvent = {
 export type PassPrintedEvent = {
   id: string;
   type: "pass.printed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1407,7 +1626,7 @@ export type PassPrintedEvent = {
 export type PassRemovedEvent = {
   id: string;
   type: "pass.removed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1415,6 +1634,7 @@ export type PassRemovedEvent = {
   data: {
     version?: number;
     message?: boolean;
+    runId?: string;
   };
   sample?: true;
 };
@@ -1422,7 +1642,7 @@ export type PassRemovedEvent = {
 export type PassRestoredEvent = {
   id: string;
   type: "pass.restored";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1436,7 +1656,7 @@ export type PassRestoredEvent = {
 export type PassScanRefusedEvent = {
   id: string;
   type: "pass.scan_refused";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1455,7 +1675,7 @@ export type PassScanRefusedEvent = {
 export type PassScanUndoneEvent = {
   id: string;
   type: "pass.scan_undone";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1471,7 +1691,7 @@ export type PassScanUndoneEvent = {
 export type PassScannedEvent = {
   id: string;
   type: "pass.scanned";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1935,6 +2155,10 @@ export type PassSummary = {
   serial: string;
   title: string | null;
   subtitle: string | null;
+  matched?: Array<{
+    input: string;
+    value: string;
+  }>;
   externalId: string | null;
   status: "active" | "voided";
   mode?: "live" | "test";
@@ -1954,7 +2178,7 @@ export type PassSummary = {
 export type PassUninstalledEvent = {
   id: string;
   type: "pass.uninstalled";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1972,7 +2196,7 @@ export type PassUninstalledEvent = {
 export type PassUnvoidedEvent = {
   id: string;
   type: "pass.unvoided";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -1986,7 +2210,7 @@ export type PassUnvoidedEvent = {
 export type PassUpdatedEvent = {
   id: string;
   type: "pass.updated";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -2011,16 +2235,36 @@ export type PassVersion = {
   purged: boolean;
 };
 
+export type PassViews = {
+  items: Array<{
+    id: string;
+    name: string;
+    filter: PassFilter;
+  }>;
+  revision: number;
+};
+
+export type PassViewsReplaceParams = {
+  items: Array<{
+    id: string;
+    name: string;
+    filter: PassFilter;
+  }>;
+  revision: number;
+  orgId?: string;
+};
+
 export type PassVoidedEvent = {
   id: string;
   type: "pass.voided";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
   pass: WebhookPassRef;
   data: {
     actorType?: string | null;
+    runId?: string;
   };
   sample?: true;
 };
@@ -2028,8 +2272,14 @@ export type PassVoidedEvent = {
 export type PassesBulkApplyParams = {
   action: "void" | "send_email" | "remove";
   message?: string;
-  ids: Array<string>;
   orgId?: string;
+  ids?: Array<string>;
+  selection?: {
+    ids: Array<string>;
+  } | {
+    filter: PassFilter;
+    expectCount: number;
+  };
 };
 
 export type PassesBulkReissueParams = {
@@ -2257,7 +2507,7 @@ export type Problem = {
 export type PushFailedEvent = {
   id: string;
   type: "push.failed";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";
@@ -3904,7 +4154,7 @@ export type Scanner = {
   expiresAt: number | null;
   staff: {
     id: string;
-    name: string;
+    name: string | null;
   } | null;
   today: number;
   createdAt: number;
@@ -4631,6 +4881,9 @@ export type TemplateDetail = {
         message: string;
         path?: string;
         params?: Record<string, string>;
+        fix?: {
+          action: "upload_logo" | "upload_icon";
+        };
       }>;
     };
     active: boolean;
@@ -4687,6 +4940,70 @@ export type TemplateReviewList = {
   nextCursor: string | null;
 };
 
+export type TemplateRollout = {
+  releaseVersion: string | null;
+  releaseId: string | null;
+  fromVersion: string | null;
+  total: number;
+  onRelease: number;
+  remaining: number;
+  updating: Array<{
+    version: string;
+    count: number;
+  }>;
+  failedCount: number;
+  failed: Array<{
+    passId: string;
+    title: string | null;
+    reason: string;
+  }>;
+  startedAt: number | null;
+  runId: string | null;
+  running: boolean;
+  stalled: boolean;
+  changes: Array<{
+    group: "colors" | "front" | "back" | "images" | "barcode";
+    rows: Array<{
+      label: string;
+      kind: "added" | "removed" | "changed";
+      from: {
+        type: "text";
+        text: string;
+      } | {
+        type: "color";
+        color: string;
+      } | {
+        type: "date";
+        at: number;
+      } | {
+        type: "image";
+        version: string;
+        asset: string;
+      } | null;
+      to: {
+        type: "text";
+        text: string;
+      } | {
+        type: "color";
+        color: string;
+      } | {
+        type: "date";
+        at: number;
+      } | {
+        type: "image";
+        version: string;
+        asset: string;
+      } | null;
+    }>;
+    more: number;
+  }>;
+  tell: {
+    text: string;
+    until: number;
+    key: string;
+  } | null;
+};
+
 export type TemplateSummary = {
   id: string;
   orgId: string | null;
@@ -4734,6 +5051,12 @@ export type TemplatesCandidatesPromoteParams = {
   mode: "live";
   provider: "apple";
   version: string;
+};
+
+export type TemplatesChannelsResetPassesParams = {
+  channels?: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
+  dryRun?: boolean;
+  orgId?: string;
 };
 
 export type TemplatesChannelsUpdateParams = {
@@ -5079,7 +5402,7 @@ export type WebhookEndpoint = {
   description: string;
   eventTypes: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
   templateIds: Array<string> | null;
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   status: "active" | "paused" | "disabled";
   target: "url" | "capture";
   failingSince: number | null;
@@ -5137,7 +5460,7 @@ export type WebhookEndpointsUpdateParams = {
   eventTypes?: Array<"pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed">;
   templateIds?: Array<string> | null;
   status?: "active" | "paused";
-  apiVersion?: "2026-12-01";
+  apiVersion?: "2026-12-01" | "2026-11-20";
 };
 
 export type WebhookEvent = PassIssuedEvent | PassUpdatedEvent | PassVoidedEvent | PassUnvoidedEvent | PassRemovedEvent | PassRestoredEvent | PassInstalledEvent | PassUninstalledEvent | PassScannedEvent | PassScanRefusedEvent | PassScanUndoneEvent | PassChannelsChangedEvent | PassPrintedEvent | PassPrintVoidedEvent | PushFailedEvent | EmailFailedEvent | WebhookTestEvent;
@@ -5148,10 +5471,22 @@ export type WebhookPassRef = {
   templateId: string;
 };
 
+export type WebhookTestAttemptPage = {
+  items: Array<{
+    id: string;
+    type: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+    ok: boolean;
+    status: number | null;
+    errorCode: string | null;
+    durationMs: number;
+    at: number;
+  }>;
+};
+
 export type WebhookTestEvent = {
   id: string;
   type: "webhook.test";
-  apiVersion: "2026-12-01";
+  apiVersion: "2026-12-01" | "2026-11-20";
   createdAt: number;
   orgId: string;
   mode: "live" | "test";

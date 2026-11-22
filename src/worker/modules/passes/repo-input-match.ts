@@ -1,8 +1,8 @@
-import type { InputMatch } from '../../../shared/contracts/broadcasts.ts';
+import type { PassMatch } from '../../../shared/contracts/broadcasts.ts';
 import { addDays, startOfDay } from '../../../shared/zoned.ts';
 import { eventMatchSql } from '../scan/repo-event-match.ts';
 
-type Clause = InputMatch[number];
+type Clause = PassMatch[number];
 /** A literal, never user text: the shape of a date-only value. */
 const DATE_ONLY = '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]';
 /** Numeric text such as "42" or "-1.5" from an import; first character is a digit or a minus. */
@@ -19,6 +19,23 @@ function inputRow(passAlias: string, predicate: string): string {
 }
 
 function clauseSql(clause: Clause, passAlias: string): Sql {
+  if ('op' in clause) {
+    // instr/substr, not LIKE: D1 refuses LIKE patterns over 50 bytes. Case-insensitive for ASCII.
+    const text = `lower(CAST(i.value AS TEXT))`;
+    const value = clause.value.toLowerCase();
+    return clause.op === 'contains'
+      ? {
+          sql: inputRow(passAlias, `i.type IN ('text','integer','real') AND instr(${text}, ?) > 0`),
+          params: [clause.input, value],
+        }
+      : {
+          sql: inputRow(
+            passAlias,
+            `i.type IN ('text','integer','real') AND substr(${text}, 1, length(?)) = ?`,
+          ),
+          params: [clause.input, value, value],
+        };
+  }
   if ('values' in clause) {
     // The scan-event predicate itself, fed one derived event row: the semantics cannot drift.
     return {
@@ -73,7 +90,7 @@ function clauseSql(clause: Clause, passAlias: string): Sql {
 }
 
 /** ANDed clauses over a pass's inputs. All user text is bound, never interpolated. */
-export function inputMatchSql(match: InputMatch, passAlias: string): Sql {
+export function inputMatchSql(match: PassMatch, passAlias: string): Sql {
   const parts = match.map((clause) => clauseSql(clause, passAlias));
   return {
     sql: parts.map((p) => `(${p.sql})`).join(' AND '),

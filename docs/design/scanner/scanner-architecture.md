@@ -1228,7 +1228,7 @@ routes assert the org (`assertOrg`).
 | `POST /api/v1/scanners/{id}/mode` | Go live / Move to Test mode; a test event is detached first |
 | `POST /api/v1/scanners/{id}/sample-pass` | test scanners only: one test pass of the first accepted template, sample inputs, no holder |
 | `GET /api/v1/scanners/{id}/stats` | `?range=7d\|30d` |
-| `GET`, `POST /api/v1/scan-events`; `GET`, `PATCH /{id}`; `POST /{id}/archive`; `POST /{id}/scanners` | assign moves scanners to the event; archive detaches them (`unassigned`). Templates, scanners and events must share the org (else 404) and scanners the event's mode (else 422 `SCAN_MODE_MISMATCH`) |
+| `GET`, `POST /api/v1/scan-events`; `GET`, `PATCH /{id}`; `POST /{id}/archive`; `POST /{id}/scanners` | assign moves scanners to the event; archive detaches them (`unassigned`). Templates, scanners and events must share the org (else 404) and scanners the event's mode (else 404 too: another mode's scanner or event is as good as unknown) |
 | `GET /api/v1/scan-events/{id}/live`, `/summary` | live polled every 5 s while visible |
 | `GET`, `POST /api/v1/scan-staff`; `PATCH /{id}`; `POST /{id}/pin` | PIN shown once |
 | `GET /api/v1/scans` | admin: `ScanRecord` rows. **API key `scans:read`** (`requireApiKeyOrAdmin('scans:read')`): `ScanFeedRow`, org-scoped keys see their org, mode from the key |

@@ -27,7 +27,6 @@ import {
   scannersAssignable,
 } from './repo-admin-grant.ts';
 import { attachedTemplateChecks } from './repo-event-authority.ts';
-import type { EventAuthority } from './repo-event-keyset.ts';
 import {
   addEventArchive,
   addEventAssign,
@@ -40,9 +39,6 @@ import {
 } from './repo-events-write.ts';
 import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
 import { newCapture } from './setup-capture.ts';
-
-const modeMismatch = (what: string) =>
-  new ValidationError(`${what} is in a different mode.`, [], 'SCAN_MODE_MISMATCH');
 
 export async function createEvent(
   ctx: ServiceContext,
@@ -75,7 +71,7 @@ export async function updateEvent(
   userId: string,
   id: string,
   input: z.infer<typeof UpdateScanEventSchema>,
-  authority: EventAuthority,
+  authority: TenantPassWrite,
 ) {
   const row = await loadManageEvent(ctx, id, userId, authority);
   const match =
@@ -151,8 +147,7 @@ export async function updateEvent(
   g.add(
     audited(g, ctx, {
       orgId: row.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: archive ? 'scan_event.archive' : 'scan_event.update',
       targetType: 'scan_event',
       targetId: id,
@@ -216,7 +211,7 @@ export async function assignScanners(
   userId: string,
   id: string,
   input: z.infer<typeof ScanEventAssignSchema>,
-  authority: EventAuthority,
+  authority: TenantPassWrite,
 ) {
   const db = ctx.env.DB;
   const row = await loadManageEvent(ctx, id, userId, authority);
@@ -226,7 +221,9 @@ export async function assignScanners(
   const found = await scannersInOrg(db, row.orgId, ids);
   if (found.length !== ids.length)
     throw new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND');
-  if (found.some((s) => s.mode !== row.mode)) throw modeMismatch('A scanner');
+  // Another mode's scanner is as good as unknown: no existence oracle within the org.
+  if (found.some((s) => s.mode !== row.mode))
+    throw new NotFoundError('Scanner not found.', 'SCANNER_NOT_FOUND');
   if (found.some((s) => s.deviceRole !== 'scan'))
     throw new ValidationError('Only scanning devices take an event.', [], 'SCANNER_CANNOT_SCAN');
   await Promise.all(ids.map((scannerId) => assertStandaloneSession(ctx, row.orgId, scannerId)));
@@ -262,8 +259,7 @@ export async function assignScanners(
     g.add(
       audited(g, ctx, {
         orgId: row.orgId,
-        actorType: 'user',
-        actorId: userId,
+        ...adminActorOf(authority, userId),
         action: 'scan_event.assign',
         targetType: 'scan_event',
         targetId: id,

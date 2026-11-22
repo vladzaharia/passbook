@@ -91,7 +91,10 @@ export function useUpdateSessionDevice(sessionId: string, id: string) {
   return useMutation({
     mutationFn: (body: z.input<typeof UpdateScanningDeviceSchema>) =>
       api.patch(`/api/v1/scanning-sessions/${sessionId}/devices/${id}`, ScanningDeviceSchema, body),
-    onSuccess: refresh,
+    // Not returned: the sheet closes when the save lands, not after the lists refetch (slow under load).
+    onSuccess: () => {
+      void refresh();
+    },
   });
 }
 export function useRevokeSessionDevice(id: string) {

@@ -52,7 +52,12 @@ export async function commitPublishArtifact(
       objectSize: artifact.bytes.length,
       contentHash: artifact.contentHash,
       cause: options.cause,
-      source: options.source ?? null,
+      // A run that must tell its own writes apart stamps its id after the source (`schedule:<run id>`).
+      source:
+        options.source && options.sourceRef
+          ? `${options.source}:${options.sourceRef}`
+          : (options.source ?? null),
+      writeRef: options.sourceRef,
       actorType: options.actor.type,
       actorId: options.actor.id,
       passJson: prepared.passJson,

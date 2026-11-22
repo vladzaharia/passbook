@@ -122,6 +122,7 @@ function TemplateDetailResource({ templateId, search }: { templateId: string; se
       template={template.data}
       tab={search.tab ?? 'overview'}
       review={search.review}
+      tryNow={search.try === '1'}
       crumbs={[
         { label: 'Templates', to: scope.orgId ? orgPath(scope.orgId, '/templates') : undefined },
         { label: template.data.name },

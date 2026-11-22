@@ -19,6 +19,7 @@ const searchSchema = z.object({
     ] as const satisfies readonly BroadcastState[])
     .optional()
     .catch(undefined),
+  kind: z.enum(['change']).optional().catch(undefined),
 });
 
 function MessagesRoute() {

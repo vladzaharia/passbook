@@ -39,7 +39,12 @@ export async function deletePassRows(
   pass: Pass,
   retention: PreparedScanRetentionDelete,
   credentialKeysetCommitment: string,
-  guard?: { testBefore: number; lifecycleGeneration: number },
+  guard?: {
+    testBefore: number;
+    lifecycleGeneration: number;
+    /** A sandbox reset: the sandbox must still be this person's, open, and the reset's stamp the track's start. */
+    claim?: { userId: string; stamp: number };
+  },
 ): Promise<DeletedPass> {
   if (
     typeof credentialKeysetCommitment !== 'string' ||
@@ -79,7 +84,8 @@ export async function deletePassRows(
       AND removed_at IS ? AND deleted_at IS ? AND test_data_quarantined = ?
       AND NOT ${purgeBlockedSql}
       AND ${providerRetirementCompleteSql('passes.id')}
-      ${guard ? "AND mode = 'test' AND created_at < ? AND lifecycle_generation = ?" : ''} RETURNING id`,
+      ${guard ? "AND mode = 'test' AND created_at < ? AND lifecycle_generation = ?" : ''}
+      ${guard?.claim ? 'AND EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.org_id = passes.org_id AND d.user_id = ? AND d.closed_at IS NULL AND d.track_started_at = ?)' : ''} RETURNING id`,
       [
         pass.id,
         pass.orgId,
@@ -92,6 +98,7 @@ export async function deletePassRows(
         pass.deletedAt,
         pass.testDataQuarantined ? 1 : 0,
         ...(guard ? [guard.testBefore, guard.lifecycleGeneration] : []),
+        ...(guard?.claim ? [guard.claim.userId, guard.claim.stamp] : []),
       ],
     ),
     clearScanRetentionDeleteStmt(db, retention),

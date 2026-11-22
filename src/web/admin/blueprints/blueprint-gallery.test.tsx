@@ -39,9 +39,31 @@ const CATALOG = [
   bp('store-card', 'Balance card', { group: 'save-spend', aliases: ['gift'] }),
   bp('generic', 'Membership card', { group: 'membership-id', aliases: ['library'] }),
 ];
+const baseDoc = sampleDoc();
+const version = () =>
+  json({
+    version: 'v1',
+    createdAt: 1,
+    createdBy: null,
+    assets: [],
+    report: { ok: true, issues: [] },
+    active: true,
+    displayOnly: false,
+    passCount: 0,
+    manifest: { ...baseDoc.manifest, blueprint: true },
+    passJson: baseDoc.passJson,
+  });
+/** The list, and what Make it yours reads for each blueprint: its page, preview and version. */
 const catalog = (items: unknown[]) => ({
   '/api/v1/templates': () => json({ items, nextCursor: null }),
   '/api/v1/templates/previews': previewsHandler,
+  ...Object.fromEntries(
+    (items as { id: string }[]).flatMap((b) => [
+      [`/api/v1/templates/${b.id}`, () => json(templateDetail(b))],
+      [`/api/v1/templates/${b.id}/preview`, preview],
+      [`/api/v1/templates/${b.id}/versions/v1`, version],
+    ]),
+  ),
 });
 const phone = () =>
   vi.stubGlobal('matchMedia', (query: string) => ({
@@ -187,7 +209,8 @@ describe('quick setup', () => {
       },
     });
     await user.click(await screen.findByRole('button', { name: 'Use Balance card' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Use blueprint' });
+    await screen.findByRole('heading', { name: 'Make it yours', level: 1 });
+    const dialog = document.body;
     expect(within(dialog).queryByRole('button', { name: 'Open designer' })).toBeNull();
     await user.upload(
       within(dialog).getByLabelText('Choose a PNG logo', { selector: 'input' }),
@@ -195,7 +218,7 @@ describe('quick setup', () => {
     );
     expect(await within(dialog).findByText('logo.png')).toBeInTheDocument();
     fireColor(within(dialog).getByLabelText('Custom colour'), '#aa3311');
-    await user.click(within(dialog).getByRole('button', { name: 'Create template' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     await waitFor(() => expect(bodies).toHaveLength(1));
     const [body] = bodies;
     expect(body).toMatchObject({ orgId: ORG.id, name: 'Balance card' });
@@ -203,7 +226,6 @@ describe('quick setup', () => {
     expect(body?.version.passJson.foregroundColor).toBe('rgb(255,255,255)');
     expect('blueprint' in (body?.version.manifest ?? {})).toBe(false);
     expect(body?.version.assets.some((a) => a.name.startsWith('logo') && a.upload)).toBe(true);
-    expect(await screen.findByText('Template created')).toBeInTheDocument();
   });
 
   it('offers the stamps goal and the currency, and sends the choices', async () => {
@@ -242,12 +264,13 @@ describe('quick setup', () => {
       },
     });
     await user.click(await screen.findByRole('button', { name: 'Use Balance card' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Use blueprint' });
+    await screen.findByRole('heading', { name: 'Make it yours', level: 1 });
+    const dialog = document.body;
     await user.click(await within(dialog).findByRole('combobox', { name: 'Stamps for a reward' }));
     await user.click(await screen.findByRole('option', { name: '8' }));
     await user.click(within(dialog).getByRole('combobox', { name: 'Currency' }));
     await user.click(await screen.findByRole('option', { name: 'CAD' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Create template' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
     await waitFor(() => expect(bodies).toHaveLength(1));
     const sent = bodies[0]?.version.manifest as {
       stamps: { goal: number };
@@ -266,7 +289,8 @@ describe('quick setup', () => {
       handlers: catalog([bp('store-card', 'Balance card', { group: 'save-spend' })]),
     });
     await user.click(await screen.findByRole('button', { name: 'Use Balance card' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Use blueprint' });
+    await screen.findByRole('heading', { name: 'Make it yours', level: 1 });
+    const dialog = document.body;
     await user.upload(
       within(dialog).getByLabelText('Choose a PNG logo', { selector: 'input' }),
       new File(['x'], 'logo.png', { type: 'image/png' }),
@@ -323,7 +347,7 @@ const COMBOS = [1440, 820, 390].flatMap((width) =>
 );
 
 describe.each(COMBOS)('axe at %i, %s theme', (width, theme) => {
-  it('gallery and the Use dialog', async () => {
+  it('gallery and Make it yours', async () => {
     document.documentElement.dataset.theme = theme;
     Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
     if (width < 640) phone();
@@ -336,7 +360,7 @@ describe.each(COMBOS)('axe at %i, %s theme', (width, theme) => {
     await screen.findByRole('list', { name: 'Get people in' });
     expect((await axe(container)).violations).toEqual([]);
     await user.click(screen.getAllByRole('button', { name: /^Use / })[0] as HTMLElement);
-    await screen.findByRole('dialog', { name: 'Use blueprint' });
+    await screen.findByRole('heading', { name: 'Make it yours', level: 1 });
     expect((await axe(document.body)).violations).toEqual([]);
   });
 });

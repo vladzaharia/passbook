@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { bakedTemplates } from '../../../generated/baked-templates.ts';
-import type { PassJson } from '../../../passkit/types.ts';
+import { type BrandPartName, ownBrandParts } from '../../../passkit/template/brand.ts';
+import type { PassJson, TemplateManifest } from '../../../passkit/types.ts';
 import type { BrandingImageRef } from '../orgs/branding-files.ts';
 import { sourceBlueprintAssets } from './repo-blueprint-art.ts';
 
@@ -93,6 +94,23 @@ export function tenantPassJson(
 }
 
 /**
+ * The org's branding as one template takes it: a part the template's `brand` block keeps its own of
+ * is left out, so the template's colours or image stand. No block: the branding unchanged.
+ */
+export function appliedBranding(
+  branding: TenantBranding,
+  manifest?: Pick<TemplateManifest, 'brand'> | null,
+): TenantBranding {
+  const own: readonly BrandPartName[] = ownBrandParts(manifest);
+  if (own.length === 0) return branding;
+  return {
+    ...branding,
+    colors: own.includes('colors') ? null : branding.colors,
+    images: branding.images.filter((i) => !(own as readonly string[]).includes(i.slot)),
+  };
+}
+
+/**
  * Blueprints ship placeholder logo and icon art that tenants must replace. A template made from a
  * blueprint carries the same files, so their hashes find it where an id cannot.
  */
@@ -151,15 +169,22 @@ export function placeholderSlots(
 const slotOfName = (name: string) => name.replace(/(@[23]x)?\.png$/, '');
 
 /**
- * PLATFORM_BRANDING when a tenant pass would ship a blueprint's logo or icon: neither the template,
- * the org branding nor a per-pass override replaces it.
+ * One PLATFORM_BRANDING per slot when a tenant pass would ship a blueprint's logo or icon: neither
+ * the template, the org branding nor a per-pass override replaces it. `fix` names the in-place
+ * action (the Logo sheet).
  */
 export function brandingWarnings(
   template: { id: string; assets: readonly { slot: string; sha1: string }[] },
   branding: TenantBranding,
   overrideNames: readonly string[],
   sourceHashes: ReadonlySet<string> = new Set(),
-): { severity: 'warning'; code: string; message: string; path?: string }[] {
+): {
+  severity: 'warning';
+  code: string;
+  message: string;
+  path: string;
+  fix: { action: 'upload_logo' | 'upload_icon' };
+}[] {
   const replaced = new Set([
     ...branding.images.map((i) => i.slot),
     ...overrideNames.map(slotOfName),
@@ -167,13 +192,11 @@ export function brandingWarnings(
   const missing = placeholderSlots(template.id, template.assets, sourceHashes).filter(
     (slot) => !replaced.has(slot),
   );
-  if (missing.length === 0) return [];
-  return [
-    {
-      severity: 'warning',
-      code: 'PLATFORM_BRANDING',
-      message: `Uses the placeholder ${missing.join(' and ')}. Add the organization's ${missing.join(' and ')} in Pass branding.`,
-      path: missing[0],
-    },
-  ];
+  return missing.map((slot) => ({
+    severity: 'warning',
+    code: 'PLATFORM_BRANDING',
+    message: `Uses the placeholder ${slot}. Add the organization's ${slot} in Brand and channels.`,
+    path: slot,
+    fix: { action: slot === 'logo' ? 'upload_logo' : 'upload_icon' },
+  }));
 }

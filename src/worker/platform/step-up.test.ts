@@ -234,6 +234,8 @@ describe('step-up route inventory', () => {
         "POST /api/v1/api-keys/:id/rotate",
         "POST /api/v1/connections",
         "POST /api/v1/connections/:id/webhook-secret",
+        "POST /api/v1/developer/sandbox/reopen",
+        "POST /api/v1/developer/sandbox/reset",
         "POST /api/v1/identities",
         "POST /api/v1/identities/:id/revoke-certificate",
         "POST /api/v1/identities/:id/rotate",

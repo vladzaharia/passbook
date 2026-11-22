@@ -2,11 +2,14 @@ import {
   type BroadcastState,
   BroadcastTargetSchema,
 } from '../../../shared/contracts/broadcasts.ts';
+import { changeRunDrifted } from '../../../shared/contracts/pass-selection.ts';
 import { jobGrant } from '../../platform/authority.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { finishRun } from '../../platform/workflow-runs.ts';
 import { actorOf, failInvalidTarget, safeTargetFilter } from './apply.ts';
+import { settlePending } from './change-intent.ts';
+import { snapshotTargets } from './change-snapshot.ts';
 import { countsOf } from './dto.ts';
 import {
   type BroadcastRow,
@@ -17,7 +20,10 @@ import {
   setTargeted,
 } from './repo.ts';
 import { creatorLive } from './repo-creator.ts';
+import { countRevertable } from './repo-items.ts';
+import { importTemplate, markSnapshot } from './repo-selection.ts';
 import { countTargeted } from './repo-target.ts';
+import { StoredBroadcastTargetSchema } from './stored-target.ts';
 
 /** First workflow step: counts the target. False when the broadcast cannot be sent (cancelled, already settled). */
 export async function startedBroadcast(
@@ -46,11 +52,36 @@ export async function startedBroadcast(
     });
     return false;
   }
-  await setTargeted(
-    ctx.env.DB,
-    broadcastId,
-    await countTargeted(ctx.env.DB, filter, ctx.clock.now()),
-  );
+  const stored = StoredBroadcastTargetSchema.parse(JSON.parse(row.target));
+  const refuse = async (code: string) => {
+    ctx.log.warn('broadcast.blocked', { broadcastId, code });
+    await casState(ctx.env.DB, broadcastId, ['sending'], 'failed', {
+      finishedAt: ctx.clock.now(),
+      errorCode: code,
+    });
+    await finishRun(ctx.env.DB, instanceId, 'errored', ctx.clock.now(), { errorCode: code });
+    return false;
+  };
+  if (row.kind === 'change' && !stored.revertOf && !stored.selection?.match(/^(ids|resume)$/)) {
+    // What a filter or an import matched is fixed once the run starts: its passes are snapshotted, so
+    // later pages cannot pick up passes created after the count (and an import still running is refused).
+    if (stored.importId) {
+      const imp = await importTemplate(ctx.env.DB, stored.importId, row.org_id, row.mode);
+      if (!imp?.ended) return refuse('IMPORT_NOT_ENDED');
+    }
+    // A start that died partway redoes the snapshot (adding is idempotent); done only after its last page.
+    if (row.snapshot_at === null) {
+      if (!(await snapshotTargets(ctx, row))) return refuse('MATCH_TOO_BROAD');
+      await markSnapshot(ctx.env.DB, broadcastId, ctx.clock.now());
+    }
+  }
+  const targeted = stored.revertOf
+    ? await countRevertable(ctx.env.DB, stored.revertOf, row.org_id, row.mode)
+    : await countTargeted(ctx.env.DB, filter, ctx.clock.now());
+  // The admin confirmed a count; a selection that moved since (a schedule, a retry) applies nothing.
+  if (stored.expectCount !== undefined && changeRunDrifted(stored.expectCount, targeted))
+    return refuse('SELECTION_CHANGED');
+  await setTargeted(ctx.env.DB, broadcastId, targeted);
   await finishRun(ctx.env.DB, instanceId, 'running', ctx.clock.now());
   return true;
 }
@@ -72,13 +103,12 @@ async function scheduleClear(ctx: ServiceContext, row: BroadcastRow): Promise<vo
     kind: 'message',
     name: `Clear: ${row.name}`.slice(0, 80),
     state: 'scheduled',
-    // A rule run clears only the passes it updated, not the window it targeted.
-    target: row.rule_id
-      ? {
-          templateIds: BroadcastTargetSchema.parse(JSON.parse(row.target)).templateIds,
-          sentBy: row.id,
-        }
-      : JSON.parse(row.target),
+    // Clears the passes this run updated, not what its target matches later: a pass that has moved to
+    // another version since (or no longer fits a filter) still loses the text.
+    target: {
+      templateIds: BroadcastTargetSchema.parse(JSON.parse(row.target)).templateIds,
+      sentBy: row.id,
+    },
     patch: { message: '' },
     notify: false,
     at,
@@ -100,20 +130,27 @@ export async function finishBroadcast(
 ): Promise<BroadcastState> {
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
   if (!row) return 'failed';
+  // Whatever ended the run, a pass written whose item was not recorded is settled first.
+  if (row.kind === 'change') await settlePending(ctx, row);
   const counts = countsOf(row, await countItems(ctx.env.DB, [broadcastId], row.org_id, row.mode));
-  const state = errorCode ? 'failed' : endState(counts);
+  // A stop asked for while sending ends the run as cancelled, after its last chunk.
+  const stopped = !errorCode && row.stop_at !== null;
+  const state = errorCode ? 'failed' : stopped ? 'cancelled' : endState(counts);
   const now = ctx.clock.now();
   const won = await casState(ctx.env.DB, broadcastId, ['sending'], state, {
     finishedAt: now,
-    errorCode,
+    errorCode: stopped ? 'BROADCAST_STOPPED' : errorCode,
   });
   if (won) ctx.log.info('broadcast.done', { broadcastId, state, ...counts });
   // A retry after a failed follow-up insert loses the CAS but still owes the follow-up; the
   // unique parent index makes the insert idempotent.
   const settled = won ? state : row.state;
-  if (settled === 'sent' || settled === 'partial') await scheduleClear(ctx, row);
+  // A stopped message that reached some passes still clears them.
+  if (settled === 'sent' || settled === 'partial' || (stopped && counts.updated > 0))
+    await scheduleClear(ctx, row);
   await finishRun(ctx.env.DB, instanceId, errorCode ? 'errored' : 'complete', now, {
-    errorCode: errorCode ?? (state === 'sent' ? null : 'PARTIAL_FAILURE'),
+    errorCode:
+      errorCode ?? (stopped ? 'BROADCAST_STOPPED' : state === 'sent' ? null : 'PARTIAL_FAILURE'),
   });
   return state;
 }
@@ -125,7 +162,7 @@ export async function finishBroadcast(
  */
 export async function sendStepAllowed(ctx: ServiceContext, broadcastId: string): Promise<boolean> {
   const row = await getBroadcast(ctx.env.DB, broadcastId, null);
-  if (row?.state !== 'sending') return false;
+  if (row?.state !== 'sending' || row.stop_at !== null) return false;
   try {
     await jobGrant(ctx, {
       purpose: 'org_mode.job.broadcast.send',

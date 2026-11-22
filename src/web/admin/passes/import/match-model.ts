@@ -65,6 +65,8 @@ export const DATE_FORMATS: { value: MappingDateFormat; label: string }[] = [
 
 const SAMPLE_ROWS = 3;
 const FORMATS = new Set<string>(DATE_FORMATS.map((f) => f.value));
+/** A choice value that issues no pass; only connections offer it (it becomes a void rule). */
+export const SKIP = '__skip__';
 export const rowKey = (role: string, target: string) => `${role}:${target}`;
 
 function kindOf(f: InputField | undefined, role: MappingFieldSuggestion['role']): RowKind {
@@ -127,7 +129,9 @@ function overlay(row: MatchRow, e: Entry | null | undefined): MatchRow {
 }
 
 /** The server's suggestion when it sent one; else the same pure matcher over the sample cells. */
-function suggestionOf(imp: PassImportDto, schema: unknown): MappingSuggestion {
+type Draft = Pick<PassImportDto, 'columns' | 'plan' | 'mapping'>;
+
+function suggestionOf(imp: Draft, schema: unknown): MappingSuggestion {
   if (imp.mapping) return imp.mapping;
   const grid = Array.from({ length: SAMPLE_ROWS }, (_, i) =>
     imp.columns.map((c) => c.samples[i] ?? ''),
@@ -148,7 +152,7 @@ function findOfPlan(plan: ImportPlan, rows: MatchRow[]): string {
 }
 
 /** The editable state of a draft: the suggestion, with the saved plan laid over it. */
-export function stateOfImport(imp: PassImportDto, schema: unknown): MatchState {
+export function stateOfImport(imp: Draft, schema: unknown): MatchState {
   const sugg = suggestionOf(imp, schema);
   const fields = new Map(inputFields(schema).map((f) => [f.key, f]));
   const plan = imp.plan;
@@ -185,7 +189,9 @@ export function entryOf(row: MatchRow): Entry | null {
   if (from === undefined) return null;
   if (others.length) return { from, transform: { kind: 'join', options: { with: others } } };
   if (row.kind === 'choice') {
-    const map = Object.fromEntries(row.values.flatMap((v) => (v.to ? [[v.value, v.to]] : [])));
+    const map = Object.fromEntries(
+      row.values.flatMap((v) => (v.to && v.to !== SKIP ? [[v.value, v.to]] : [])),
+    );
     const labels = Object.fromEntries(row.options.map((o) => [o.value, o.label]));
     const options: Record<string, Json> = Object.keys(map).length ? { labels, map } : { labels };
     return { from, transform: { kind: 'enum', options } };

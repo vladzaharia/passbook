@@ -1,8 +1,12 @@
-import type { Check } from '../../platform/authority-checks.ts';
+import { type Check, rawCheck } from '../../platform/authority-checks.ts';
 import { first } from '../../platform/db.ts';
-import { keyLive, withParams } from '../../platform/repo-api-key-sql.ts';
+import { keyHoldsScope, keyLive, withParams } from '../../platform/repo-api-key-sql.ts';
 import { rolesGranting } from '../orgs/access.ts';
 import type { BroadcastRow } from './repo.ts';
+
+/** What a creating key must still hold: messages:write, and passes:write to change passes. */
+const keyScopes = (kind: BroadcastRow['kind']) =>
+  kind === 'change' ? (['messages:write', 'passes:write'] as const) : (['messages:write'] as const);
 
 /**
  * False when the key that created a broadcast is revoked or expired, or the creating user is
@@ -20,11 +24,18 @@ export async function creatorIsActive(
   if (!row.created_by_id) return true;
   if (row.created_by_type === 'api_key') {
     const live = keyLive('k', now);
+    const scopes = keyScopes(row.kind);
     const key = await first<{ one: number }>(
       db,
       `SELECT 1 AS one FROM api_keys k WHERE k.id = ? AND (k.org_id IS NULL OR k.org_id = ?) AND k.mode = ?
-         AND ${live.sql}`,
-      [row.created_by_id, row.org_id, row.mode, ...live.params],
+         AND ${live.sql}${scopes.map((s) => ` AND ${keyHoldsScope('k', s).sql}`).join('')}`,
+      [
+        row.created_by_id,
+        row.org_id,
+        row.mode,
+        ...live.params,
+        ...scopes.flatMap((s) => keyHoldsScope('k', s).params),
+      ],
     );
     return key !== null;
   }
@@ -65,7 +76,10 @@ export function creatorLive(
       if (row.created_by_type === 'api_key')
         return `EXISTS (SELECT 1 FROM api_keys k WHERE k.id = ${b.bind(row.created_by_id)}
           AND (k.org_id IS NULL OR k.org_id = a.org_id) AND k.mode = ${b.bind(row.mode)}
-          AND ${withParams(b.params, keyLive('k', now))})`;
+          AND ${withParams(b.params, keyLive('k', now))}
+          ${keyScopes(row.kind)
+            .map((s) => `AND ${withParams(b.params, keyHoldsScope('k', s))}`)
+            .join(' ')})`;
       if (row.created_by_type !== 'user') return '1 = 1';
       const holds = (capability: 'messages:manage' | 'passes:operate') =>
         `EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.type = 'text'
@@ -77,3 +91,15 @@ export function creatorLive(
     },
   };
 }
+
+/**
+ * A run's write to a pass is refused once its item is recorded or its write is stamped: a step attempt that outlived a newer one (or a retry after its own write landed) stops
+ * instead of computing the change again on the moved pass. Evaluated inside the write.
+ */
+export const notWrittenYet = (runId: string, passId: string): Check =>
+  rawCheck(
+    'stale',
+    `NOT EXISTS (SELECT 1 FROM broadcast_items WHERE broadcast_id = ? AND pass_id = ?)
+     AND NOT EXISTS (SELECT 1 FROM broadcast_targets WHERE broadcast_id = ? AND pass_id = ? AND written_version IS NOT NULL)`,
+    [runId, passId, runId, passId],
+  );

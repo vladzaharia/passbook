@@ -6,7 +6,13 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { assertStandaloneSession } from './legacy-session.ts';
 import { kickScreen } from './live.ts';
-import { adminGrant, audited, scannerEpoch, sessionEpoch } from './repo-admin-grant.ts';
+import {
+  adminActorOf,
+  adminGrant,
+  audited,
+  scannerEpoch,
+  sessionEpoch,
+} from './repo-admin-grant.ts';
 import { assertAdminConfigurationAuthority } from './repo-scanner-configuration-authority.ts';
 import { addScannerPatchSessionSync } from './repo-scanner-configuration-sync.ts';
 import { addScannerMode } from './repo-scanners.ts';
@@ -33,14 +39,20 @@ export async function changeMode(
   authority: TenantPassWrite,
 ) {
   const db = ctx.env.DB;
-  const row = await loadScanner(ctx, id, authority.mode);
+  // A live key moves a scanner either way (console parity); a test key is refused by its grant.
+  const row = await loadScanner(ctx, id, authority.kind === 'api_key' ? undefined : authority.mode);
   if (row.mode === input.mode) {
-    await assertAdminConfigurationAuthority(db, row.orgId, {
-      kind: 'admin',
-      userId,
-      authority,
-      now: ctx.clock.now(),
-    });
+    await assertAdminConfigurationAuthority(
+      db,
+      row.orgId,
+      {
+        kind: 'admin',
+        userId,
+        authority,
+        now: ctx.clock.now(),
+      },
+      { key: true },
+    );
     return scannerView(ctx, id);
   }
   await assertStandaloneSession(ctx, row.orgId, id);
@@ -86,7 +98,7 @@ export async function changeMode(
     row.orgId,
     [
       scannerEpoch(id, row.configEpoch),
-      exactlyOne('scanners', { id, mode: authority.mode }, undefined, 'config'),
+      exactlyOne('scanners', { id, mode: row.mode }, undefined, 'config'),
       ...(parent ? [sessionEpoch(parent.id, parent.config_epoch)] : []),
     ],
     SCANNER_CODES,
@@ -115,8 +127,7 @@ export async function changeMode(
   g.add(
     audited(g, ctx, {
       orgId: row.orgId,
-      actorType: 'user',
-      actorId: userId,
+      ...adminActorOf(authority, userId),
       action: 'scanner.mode_change',
       targetType: 'scanner',
       targetId: id,

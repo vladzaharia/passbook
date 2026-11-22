@@ -12,6 +12,7 @@ import { baseUrl } from '../../platform/env.ts';
 import { AppError, ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import {
+  appliedBranding,
   brandingWarnings,
   readBranding,
   sourceArtHashes,
@@ -72,7 +73,7 @@ export async function preview(
   // A selected org brands the preview even when the body names none (the batch and released reads).
   const tenant = selectedOrgId ? await getPassOrg(ctx.env.DB, selectedOrgId) : null;
   const org = tenant ?? (row.orgId ? await getOrgName(ctx.env.DB, row.orgId) : null);
-  const branding = readBranding(tenant?.branding);
+  const branding = appliedBranding(readBranding(tenant?.branding), resolved.manifest);
   const template = tenant
     ? {
         ...resolved,

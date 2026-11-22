@@ -8,6 +8,9 @@ interface RunRow {
   outcome: 'running' | 'unchanged' | 'changed' | 'error' | 'skipped';
   recordsSeen: number | null;
   passesChanged: number | null;
+  passesCreated: number | null;
+  passesVoided: number | null;
+  recordsFailed: number | null;
   errorCode: string | null;
   errorDetail: string | null;
   httpStatus: number | null;
@@ -27,13 +30,16 @@ export async function listRuns(
     outcome: string;
     records_seen: number | null;
     passes_changed: number | null;
+    passes_created: number | null;
+    passes_voided: number | null;
+    records_failed: number | null;
     error_code: string | null;
     error_detail: string | null;
     http_status: number | null;
     duration_ms: number | null;
   }>(
     db,
-    `SELECT id, trigger, started_at, finished_at, outcome, records_seen, passes_changed, error_code, error_detail, http_status, duration_ms
+    `SELECT id, trigger, started_at, finished_at, outcome, records_seen, passes_changed, passes_created, passes_voided, records_failed, error_code, error_detail, http_status, duration_ms
      FROM connection_runs WHERE connection_id = ?
        ${q.cursor ? 'AND (started_at, id) < (SELECT started_at, id FROM connection_runs WHERE id = ?)' : ''}
      ORDER BY started_at DESC, id DESC LIMIT ?`,
@@ -47,6 +53,9 @@ export async function listRuns(
     outcome: r.outcome as RunRow['outcome'],
     recordsSeen: r.records_seen,
     passesChanged: r.passes_changed,
+    passesCreated: r.passes_created,
+    passesVoided: r.passes_voided,
+    recordsFailed: r.records_failed,
     errorCode: r.error_code,
     errorDetail: r.error_detail,
     httpStatus: r.http_status,

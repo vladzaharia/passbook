@@ -7,6 +7,8 @@ export const STAMP_FILE = 'dist/wallet/build-info.json';
 export interface BuildStamp {
   sha: string;
   dirty: boolean;
+  /** Written by tools/e2e-server.ts: this dist/ carries raised rate limits and must never ship. */
+  e2e?: true;
 }
 
 export interface GitState {
@@ -45,7 +47,11 @@ export function parseStamp(text: string): BuildStamp | null {
     const v: unknown = JSON.parse(text);
     if (v && typeof v === 'object' && 'sha' in v && 'dirty' in v)
       if (typeof v.sha === 'string' && typeof v.dirty === 'boolean')
-        return { sha: v.sha, dirty: v.dirty };
+        return {
+          sha: v.sha,
+          dirty: v.dirty,
+          ...('e2e' in v && v.e2e === true ? { e2e: true as const } : {}),
+        };
   } catch {
     // Not JSON: treated as no stamp.
   }
@@ -81,6 +87,7 @@ export function buildProblem({
   const built = stamp === null ? null : parseStamp(stamp);
   if (!built)
     return 'dist/ has no build stamp. Run npm run build (npm run check does) in this checkout.';
+  if (built.e2e) return 'dist/ is an e2e build (raised rate limits). Run npm run build.';
   if (built.dirty)
     return 'dist/ was built from a dirty tree. Run npm run build in the clean worktree.';
   if (built.sha !== git.head)

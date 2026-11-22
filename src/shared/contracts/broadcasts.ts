@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   IdSchema,
+  type Json,
   JsonSchema,
   ModeSchema,
   OrgIdSchema,
@@ -93,6 +94,8 @@ export const BroadcastTargetSchema = z.object({
   q: z.string().trim().max(200).optional(),
   scan: ScanTargetSchema.optional(),
   match: InputMatchSchema.optional(),
+  /** A message to one template's passes that are on this version or an equivalent build. */
+  version: z.string().min(1).max(64).optional(),
 });
 export type BroadcastTarget = z.infer<typeof BroadcastTargetSchema>;
 
@@ -126,8 +129,10 @@ export const BroadcastSchema = z.object({
   at: TimestampSchema.nullable(),
   /** Milliseconds after the start that the message is cleared; null keeps it. */
   clearAfter: z.number().int().positive().nullable(),
-  /** Set on the follow-up that clears another broadcast's message. */
+  /** Set on the follow-up that clears another broadcast's message, and on a change run's undo. */
   parentId: IdSchema.nullable(),
+  /** A change run's lock-screen text, with its `{Label}` tokens. */
+  message: z.string().nullable().optional(),
   /** The automatic message that made this one. */
   ruleId: IdSchema.nullable(),
   /** The follow-up that clears this message, once the send has finished. */
@@ -148,36 +153,47 @@ export const ClearAfterSchema = z
   .nullable()
   .optional();
 
+/** The create body's fields, apart from the target (a change run takes a wider one). */
+export const createBroadcastFields = {
+  orgId: OrgIdSchema,
+  kind: BroadcastKindSchema,
+  name: PlainLineSchema(80).optional(),
+  /** Message the holder sees on the lock screen. Ignored when the text is empty. */
+  notify: z.boolean().default(true),
+  /** `draft` saves, `now` starts at once, `schedule` waits for `at`. */
+  send: z.enum(['draft', 'now', 'schedule']).default('now'),
+  at: TimestampSchema.optional(),
+  clearAfter: ClearAfterSchema,
+};
+
+type CreateFacts = {
+  kind: BroadcastKind;
+  patch: Record<string, Json>;
+  send: 'draft' | 'now' | 'schedule';
+  at?: number | undefined;
+  clearAfter?: number | null | undefined;
+};
+
+/** Timing and message rules shared by create and the wider change-run body. */
+export function refineCreateBroadcast(body: CreateFacts, ctx: z.RefinementCtx): void {
+  const issue = (path: string, message: string) =>
+    ctx.addIssue({ code: 'custom', path: [path], message });
+  if (body.send === 'schedule' && body.at === undefined) issue('at', 'Pick a time.');
+  if (body.send !== 'schedule' && body.at !== undefined) issue('at', 'Only a schedule has a time.');
+  if (body.kind === 'message') {
+    const text = body.patch.message;
+    if (Object.keys(body.patch).length !== 1 || typeof text !== 'string')
+      issue('patch', 'A message sets only "message" to text.');
+    else if (text.length > BROADCAST_MESSAGE_MAX)
+      issue('patch', `Keep the message to ${BROADCAST_MESSAGE_MAX} characters or fewer.`);
+    else if (text.trim() === '' && body.clearAfter)
+      issue('clearAfter', 'An empty message has nothing to clear.');
+  } else if (body.clearAfter) issue('clearAfter', 'Only a message can be cleared later.');
+}
+
 export const CreateBroadcastSchema = z
-  .object({
-    orgId: OrgIdSchema,
-    kind: BroadcastKindSchema,
-    name: PlainLineSchema(80).optional(),
-    target: BroadcastTargetSchema,
-    patch: BroadcastPatchSchema,
-    /** Message the holder sees on the lock screen. Ignored when the text is empty. */
-    notify: z.boolean().default(true),
-    /** `draft` saves, `now` starts at once, `schedule` waits for `at`. */
-    send: z.enum(['draft', 'now', 'schedule']).default('now'),
-    at: TimestampSchema.optional(),
-    clearAfter: ClearAfterSchema,
-  })
-  .superRefine((body, ctx) => {
-    const issue = (path: string, message: string) =>
-      ctx.addIssue({ code: 'custom', path: [path], message });
-    if (body.send === 'schedule' && body.at === undefined) issue('at', 'Pick a time.');
-    if (body.send !== 'schedule' && body.at !== undefined)
-      issue('at', 'Only a schedule has a time.');
-    if (body.kind === 'message') {
-      const text = body.patch.message;
-      if (Object.keys(body.patch).length !== 1 || typeof text !== 'string')
-        issue('patch', 'A message sets only "message" to text.');
-      else if (text.length > BROADCAST_MESSAGE_MAX)
-        issue('patch', `Keep the message to ${BROADCAST_MESSAGE_MAX} characters or fewer.`);
-      else if (text.trim() === '' && body.clearAfter)
-        issue('clearAfter', 'An empty message has nothing to clear.');
-    } else if (body.clearAfter) issue('clearAfter', 'Only a message can be cleared later.');
-  });
+  .object({ ...createBroadcastFields, target: BroadcastTargetSchema, patch: BroadcastPatchSchema })
+  .superRefine(refineCreateBroadcast);
 export type CreateBroadcastBody = z.infer<typeof CreateBroadcastSchema>;
 
 /** Saves new values over a draft or a scheduled message that has not started. Same rules as create. */
@@ -207,6 +223,12 @@ export const BroadcastListQuerySchema = PageQuerySchema.extend({
   state: BroadcastStateSchema.optional(),
   /** `manual` (default) leaves out the runs of automatic messages; `rule` is those alone. */
   origin: z.enum(['manual', 'rule']).default('manual'),
+  /** Only messages, or only field changes (the console's Messages list hides changes by default). */
+  kind: BroadcastKindSchema.optional(),
+  /** Only the undo run of this change. */
+  parentId: IdSchema.optional(),
+  /** Only the run that resumed this change. */
+  retryOf: IdSchema.optional(),
 });
 export const BroadcastListSchema = pageOf(BroadcastSchema);
 

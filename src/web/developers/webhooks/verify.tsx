@@ -11,6 +11,8 @@ import {
 } from '../../../shared/webhook-verify.ts';
 import { Buddy } from '../../ui/art/buddy.tsx';
 import { UnpluggedArt } from '../../ui/art/unplugged.tsx';
+import { StepUp } from '../ui/step-up.tsx';
+import { stepUpOf } from './client.ts';
 
 const VECTORS = vectorFile.vectors as WebhookVector[];
 const mask = (s: string) => `${'•'.repeat(20)}${s.slice(-4)}`;
@@ -52,13 +54,19 @@ export function VerifyPanel({
   const [body, setBody] = useState('');
   const [steps, setSteps] = useState<VerifyStep[] | null>(null);
   const [error, setError] = useState(false);
+  const [stepUp, setStepUp] = useState<string | null>(null);
   const [vectors, setVectors] = useState<{ passed: number; total: number } | null>(null);
 
   useEffect(() => {
     let live = true;
     loadSecret().then(
       (s) => live && setSecret(s),
-      () => live && setError(true),
+      (e: unknown) => {
+        if (!live) return;
+        const asked = stepUpOf(e);
+        if (asked !== null) setStepUp(asked);
+        else setError(true);
+      },
     );
     return () => {
       live = false;
@@ -100,6 +108,7 @@ export function VerifyPanel({
           ) : null}
           <span className="xs muted push wh-hide-s">Checked here, in your browser</span>
         </div>
+        {stepUp !== null ? <StepUp signInUrl={stepUp} next="/developers/webhooks" /> : null}
         <details className="wh-try">
           <summary className="sm">Check what your receiver saw</summary>
           <div className="stack g2 mt2">

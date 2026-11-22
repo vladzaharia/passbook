@@ -3,6 +3,7 @@ import type { ChainLevel, Channel, ChannelLevel } from '../contracts/channels.ts
 import type { PassSetupField, SetupCheckCode, SetupFixAction } from '../contracts/pass-setup.ts';
 import { CHANNEL_LABEL } from './channels.ts';
 import { scanLine } from './scan.ts';
+import { WALLET_SETUP_LABEL } from './wallet-setup.ts';
 
 /** Brand and channels: the page, its checks and its review. `{x}` marks a value. */
 export const PASS_SETUP_COPY = {
@@ -72,7 +73,7 @@ export const PASS_SETUP_COPY = {
     renew_identity: 'Renew now',
     replace_certificate: 'Replace certificate',
     check_push: 'Check push',
-    setup_wallet_account: 'Set up',
+    setup_wallet_account: WALLET_SETUP_LABEL,
     allow_channel: 'Allow {channel}',
     review_template: 'Review',
   } satisfies Record<SetupFixAction, string>,

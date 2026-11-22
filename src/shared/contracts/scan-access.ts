@@ -64,7 +64,7 @@ export const ScanZoneSchema = OccupancyFieldsSchema.extend({
 export type ScanZone = z.infer<typeof ScanZoneSchema>;
 export const ScanZoneListSchema = pageOf(ScanZoneSchema);
 export const ScanZoneListQuerySchema = PageQuerySchema.extend({
-  orgId: IdSchema,
+  orgId: IdSchema.optional(),
   archived: z.enum(['true', 'false']).optional(),
 });
 export const CreateScanZoneSchema = OccupancyFieldsSchema.partial()

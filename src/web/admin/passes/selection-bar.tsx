@@ -1,13 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { X } from 'lucide-react';
+import { PencilLine, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { BUNDLE_MAX_PASSES } from '@/shared/contracts/bundles.ts';
+import { FILTER_RUN_MAX, type PassFilter } from '@/shared/contracts/pass-selection.ts';
 import type { PassSummaryDto } from '@/shared/contracts/passes.ts';
 import type { SessionResponse } from '@/shared/contracts/session.ts';
 import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
-import { errorMessage, UserMessageError } from '../../lib/errors.ts';
-import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
+import { errorMessage, isApiError, UserMessageError } from '../../lib/errors.ts';
+import { formatCount } from '../../lib/format.ts';
+import { BELOW_LG, PHONE, useMediaQuery } from '../../lib/media.ts';
 import { sessionQuery } from '../../lib/session.ts';
 import {
   Button,
@@ -22,8 +24,13 @@ import { passKeys, useBulkPassAction } from './api.ts';
 import { BulkChannelsDialog } from './bulk-channels-dialog.tsx';
 import { BulkPrintAction } from './bulk-print.tsx';
 import { BundleDialog } from './bundle-dialog.tsx';
+import { CHANGE_COPY } from './change/copy.ts';
+import { filterRefusal, filterSelection } from './change/selection.ts';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
+import { useStartBulkRun } from './find-api.ts';
+import { canonical } from './find-query.ts';
 import { fingerprint, newKey } from './format.ts';
+import { PhoneActions } from './selection-phone-actions.tsx';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -31,7 +38,7 @@ const CHANNELS_LIMIT = 100;
 const SHARE_HINT = `Up to ${BUNDLE_MAX_PASSES} passes of one organization.`;
 
 /**
- * Fixed at the bottom while rows are selected: n selected, then the bulk actions. Below lg the
+ * Fixed at the bottom while rows are selected: n selected, then the bulk actions. From lg the
  * primary two stay on the row and the rest go in More. Email and Void confirm with the count of
  * passes they will touch; Void uses the danger button.
  */
@@ -42,6 +49,9 @@ export function SelectionBar({
   bundleOrgId,
   onClear,
   onExport,
+  onChange,
+  all,
+  onRun,
 }: {
   /** The selected rows: what each action touches is counted from them. */
   picked: PassSummaryDto[];
@@ -51,23 +61,50 @@ export function SelectionBar({
   bundleOrgId: string | null;
   onClear: () => void;
   onExport: () => void;
+  /** Opens the change wizard with the active selected passes; absent when the person may not change passes. */
+  onChange?:
+    | ((passes: PassSummaryDto[], all?: { filter: PassFilter; count: number }) => void)
+    | undefined;
+  /** Every pass the filter matches is selected, not just the loaded rows. */
+  all?: { filter: PassFilter; count: number } | undefined;
+  /** A filter run too big to do inline started in the background: show its progress. */
+  onRun?: ((id: string) => void) | undefined;
 }) {
   const bulk = useBulkPassAction();
+  const start = useStartBulkRun();
   const queryClient = useQueryClient();
   const [ask, setAsk] = useState<'void' | 'send_email' | 'remove' | null>(null);
   const [sharing, setSharing] = useState(false);
   const [channels, setChannels] = useState(false);
   const emailKey = useRef<{ fp: string; key: string }>({ fp: '', key: newKey() });
   const barRef = useBottomBar<HTMLElement>();
+  // Change, Email, Share and Void stay on the bar from lg; the rest live in More at every width, so it is one row.
   const compact = useMediaQuery(BELOW_LG);
+  // On a phone only Change and More stay on the bar, so it is one row.
+  const phone = useMediaQuery(PHONE);
   const ids = picked.map((p) => p.id);
-  const n = ids.length;
-  const changeable = picked.filter((p) => p.removedAt === null).length;
-  const emailable = picked.filter((p) => p.holderEmail !== null).length;
-  const operable = Boolean(canOperate && orgId && picked.every((p) => p.orgId === orgId));
-  const canChannel = operable && changeable > 0 && n <= CHANNELS_LIMIT;
-  const canShare = n <= BUNDLE_MAX_PASSES && bundleOrgId !== null;
-  if (n === 0) return null;
+  const n = all?.count ?? ids.length;
+  // Counted from the rows on screen; for all matching the server skips what cannot change.
+  const changeable = all ? n : picked.filter((p) => p.removedAt === null).length;
+  const emailable = all ? n : picked.filter((p) => p.holderEmail !== null).length;
+  const operable = Boolean(canOperate && orgId && (all || picked.every((p) => p.orgId === orgId)));
+  const canChannel = !all && operable && changeable > 0 && n <= CHANNELS_LIMIT;
+  const canShare = !all && n <= BUNDLE_MAX_PASSES && bundleOrgId !== null;
+  const canChange =
+    operable &&
+    (all
+      ? filterSelection(all.filter, [...new Set(picked.map((p) => p.templateId))], all.count) !==
+        null
+      : changeable > 0 && new Set(picked.map((p) => p.templateId)).size <= 20);
+  // Why Change is off, in one line (the Share button beside it does the same).
+  const changeHint = canChange
+    ? undefined
+    : all
+      ? (filterRefusal(all.filter) ?? undefined)
+      : new Set(picked.map((p) => p.templateId)).size > 20
+        ? CHANGE_COPY.hint.templates
+        : undefined;
+  if (n === 0 && !all) return null;
 
   async function run(action: 'void' | 'send_email' | 'remove', message?: string) {
     if (!operable) throw new Error('Pass operation is not available in this organization.');
@@ -78,12 +115,29 @@ export function SelectionBar({
       const current = queryClient.getQueryData<SessionResponse>(sessionQuery.queryKey);
       return current?.authenticated === true && current.user.id === userId;
     };
-    const fp = fingerprint([...ids].sort());
+    if (all && all.count > FILTER_RUN_MAX && orgId) {
+      const run = await start
+        .mutateAsync({
+          action,
+          ...(message ? { message } : {}),
+          orgId,
+          selection: { filter: all.filter, expectCount: all.count },
+        })
+        .catch(async (error: unknown) => {
+          await queryClient.invalidateQueries({ queryKey: passKeys.all });
+          throw error;
+        });
+      if (!stillCurrent()) return;
+      onRun?.(run.id);
+      onClear();
+      return;
+    }
+    const fp = fingerprint(all ? [canonical(all)] : [...ids].sort());
     if (emailKey.current.fp !== fp) emailKey.current = { fp, key: newKey() };
     const result = await bulk
       .mutateAsync({
         action,
-        ids,
+        ...(all ? { selection: { filter: all.filter, expectCount: all.count } } : { ids }),
         ...(action === 'send_email' ? { key: emailKey.current.key } : {}),
         ...(message ? { message } : {}),
         ...(orgId ? { orgId } : {}),
@@ -92,6 +146,9 @@ export function SelectionBar({
         if (!stillCurrent()) return undefined;
         await queryClient.invalidateQueries({ queryKey: passKeys.all });
         if (!stillCurrent()) return undefined;
+        // Nothing ran: the count moved, and the message already says what to check.
+        if (isApiError(error) && error.code === 'SELECTION_CHANGED')
+          throw new UserMessageError(error.message);
         throw new UserMessageError(
           `${errorMessage(error)} Some selected passes may already have been processed. Check their status before retrying.`,
         );
@@ -120,38 +177,83 @@ export function SelectionBar({
       <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center gap-2 px-safe py-3 sm:[--wl-gutter:1.5rem]">
         <IconButton label="Clear selection" icon={<X aria-hidden />} onClick={onClear} />
         <p role="status" className="mr-auto text-sm font-medium text-fg-strong tabular-nums">
-          {n} selected
+          {formatCount(n)} selected
         </p>
-        <Button
-          variant="outline"
-          disabled={!operable || emailable === 0}
-          iconStart={<ACTION_ICON.sendEmail aria-hidden />}
-          onClick={() => setAsk('send_email')}
-        >
-          Send email
-        </Button>
-        <span title={canShare ? undefined : SHARE_HINT}>
+        {onChange ? (
+          <span title={canChange ? undefined : changeHint}>
+            <Button
+              disabled={!canChange}
+              aria-describedby={canChange || !changeHint ? undefined : 'change-hint'}
+              iconStart={<PencilLine aria-hidden />}
+              onClick={() =>
+                onChange(
+                  picked.filter((p) => p.removedAt === null),
+                  all,
+                )
+              }
+            >
+              Change
+            </Button>
+            {canChange || !changeHint ? null : (
+              <span id="change-hint" className="sr-only">
+                {changeHint}
+              </span>
+            )}
+          </span>
+        ) : null}
+        {phone ? null : (
+          <>
+            <Button
+              variant="outline"
+              disabled={!operable || emailable === 0}
+              iconStart={<ACTION_ICON.sendEmail aria-hidden />}
+              onClick={() => setAsk('send_email')}
+            >
+              Send email
+            </Button>
+            <span title={canShare ? undefined : SHARE_HINT}>
+              <Button
+                variant="outline"
+                disabled={!operable || !canShare}
+                aria-describedby={canShare ? undefined : 'share-hint'}
+                iconStart={<ACTION_ICON.bundle aria-hidden />}
+                onClick={() => setSharing(true)}
+              >
+                Share as bundle
+              </Button>
+              {canShare ? null : (
+                <span id="share-hint" className="sr-only">
+                  {SHARE_HINT}
+                </span>
+              )}
+            </span>
+          </>
+        )}
+        {compact ? null : (
           <Button
             variant="outline"
-            disabled={!operable || !canShare}
-            aria-describedby={canShare ? undefined : 'share-hint'}
-            iconStart={<ACTION_ICON.bundle aria-hidden />}
-            onClick={() => setSharing(true)}
+            disabled={!operable || changeable === 0}
+            iconStart={<ACTION_ICON.void aria-hidden />}
+            onClick={() => setAsk('void')}
           >
-            Share as bundle
+            Void
           </Button>
-          {canShare ? null : (
-            <span id="share-hint" className="sr-only">
-              {SHARE_HINT}
-            </span>
-          )}
-        </span>
-        {compact ? (
-          <MoreMenu>
-            <DropdownMenuItem disabled={!canChannel} onSelect={() => setChannels(true)}>
-              <ACTION_ICON.channels aria-hidden />
-              Channels…
-            </DropdownMenuItem>
+        )}
+        <MoreMenu>
+          {phone ? (
+            <PhoneActions
+              email={{
+                disabled: !operable || emailable === 0,
+                onSelect: () => setAsk('send_email'),
+              }}
+              share={{ disabled: !operable || !canShare, onSelect: () => setSharing(true) }}
+            />
+          ) : null}
+          <DropdownMenuItem disabled={!canChannel} onSelect={() => setChannels(true)}>
+            <ACTION_ICON.channels aria-hidden />
+            Channels…
+          </DropdownMenuItem>
+          {compact ? (
             <DropdownMenuItem
               disabled={!operable || changeable === 0}
               onSelect={() => setAsk('void')}
@@ -159,55 +261,20 @@ export function SelectionBar({
               <ACTION_ICON.void aria-hidden />
               Void
             </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={!operable || changeable === 0}
-              onSelect={() => setAsk('remove')}
-            >
-              <ACTION_ICON.removeFromWallet aria-hidden />
-              Remove from Wallet
-            </DropdownMenuItem>
-            <BulkPrintAction ids={ids} orgId={orgId} disabled={!operable} as="menu" />
-            <DropdownMenuItem onSelect={onExport}>
-              <ACTION_ICON.download aria-hidden />
-              Export CSV
-            </DropdownMenuItem>
-          </MoreMenu>
-        ) : (
-          <>
-            <Button
-              variant="outline"
-              disabled={!canChannel}
-              iconStart={<ACTION_ICON.channels aria-hidden />}
-              onClick={() => setChannels(true)}
-            >
-              Channels…
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!operable || changeable === 0}
-              iconStart={<ACTION_ICON.void aria-hidden />}
-              onClick={() => setAsk('void')}
-            >
-              Void
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!operable || changeable === 0}
-              iconStart={<ACTION_ICON.removeFromWallet aria-hidden />}
-              onClick={() => setAsk('remove')}
-            >
-              Remove from Wallet
-            </Button>
-            <BulkPrintAction ids={ids} orgId={orgId} disabled={!operable} as="button" />
-            <Button
-              variant="outline"
-              iconStart={<ACTION_ICON.download aria-hidden />}
-              onClick={onExport}
-            >
-              Export CSV
-            </Button>
-          </>
-        )}
+          ) : null}
+          <DropdownMenuItem
+            disabled={!operable || changeable === 0}
+            onSelect={() => setAsk('remove')}
+          >
+            <ACTION_ICON.removeFromWallet aria-hidden />
+            Remove from Wallet
+          </DropdownMenuItem>
+          <BulkPrintAction ids={ids} orgId={orgId} disabled={!operable || Boolean(all)} as="menu" />
+          <DropdownMenuItem disabled={Boolean(all)} onSelect={onExport}>
+            <ACTION_ICON.download aria-hidden />
+            Export CSV
+          </DropdownMenuItem>
+        </MoreMenu>
       </div>
       {bundleOrgId ? (
         <BundleDialog

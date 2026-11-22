@@ -24,8 +24,8 @@ export function insertRuleRunStmt(
   return stmt(
     db,
     `INSERT OR IGNORE INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, notify, at,
-       clear_after, expect, parent_id, rule_id, window_key, created_by_type, created_by_id, created_at, started_at)
-     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+       clear_after, expect, parent_id, rule_id, window_key, retry_of, created_by_type, created_by_id, created_at, started_at)
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
      WHERE (SELECT COUNT(*) FROM broadcasts WHERE ${live} AND rule_id = ?) = 0
        AND (SELECT COUNT(*) FROM broadcasts WHERE ${live} AND org_id = ? AND mode = ?) < ?
        AND (SELECT COUNT(*) FROM broadcasts WHERE ${live}) < ?`,

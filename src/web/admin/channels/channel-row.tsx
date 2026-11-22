@@ -22,6 +22,8 @@ export interface ChannelRowProps {
   label?: string;
   /** Replaces the generic reason, e.g. "Waiting for Apple approval". */
   reasonText?: string;
+  /** The chain of levels (ChainBadge) between the name and the control. */
+  chain?: ReactNode;
 }
 
 /** A left tooltip stays inside a narrow screen: the label sits at the right edge. */
@@ -43,6 +45,7 @@ export function ChannelRow({
   extra,
   label,
   reasonText,
+  chain,
 }: ChannelRowProps) {
   const why =
     !status.on && status.reason ? channelWhy(channel, status.reason, status.source) : null;
@@ -60,14 +63,28 @@ export function ChannelRow({
     .join('. ')
     .replace(/\.\./g, '.');
   return (
-    <li className="flex min-h-14 items-center justify-between gap-4 py-2">
+    <li
+      className={
+        chain
+          ? // Name and control on one line, the chain under them; wide enough, all three in a row.
+            'grid min-h-14 grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 py-2 @2xl:grid-cols-[auto_1fr_auto]'
+          : 'flex min-h-14 items-center justify-between gap-4 py-2'
+      }
+    >
       <p className="flex min-w-0 items-center gap-2 text-sm font-medium text-fg-strong">
         {label ?? CHANNEL_LABEL[channel]}
         <StatusPill status={state} tone={status.on ? 'success' : 'neutral'}>
           {status.on ? 'On' : 'Off'}
         </StatusPill>
       </p>
-      <div className="flex shrink-0 items-center gap-3">
+      {chain ? (
+        <div className="col-span-2 row-start-2 min-w-0 @2xl:col-span-1 @2xl:col-start-2 @2xl:row-start-1">
+          {chain}
+        </div>
+      ) : null}
+      <div
+        className={`flex shrink-0 items-center gap-3 ${chain ? 'col-start-2 row-start-1 @2xl:col-start-3' : ''}`}
+      >
         {locked ? (
           <Tooltip content={detail} side="left" className={TIP_WIDTH}>
             <button
@@ -91,5 +108,5 @@ export function ChannelRow({
 
 /** The list every channel control sits in. */
 export function ChannelList({ children }: { children: ReactNode }) {
-  return <ul className="divide-y divide-border">{children}</ul>;
+  return <ul className="@container divide-y divide-border">{children}</ul>;
 }

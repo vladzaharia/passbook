@@ -49,11 +49,10 @@ test('a template made from the Stamp card counts stamps, alerts once and serves 
   const name = `Coffee stamps ${uid('s')}`;
   await page.goto(`/admin/blueprints?orgId=${encodeURIComponent(seed.org.id)}`);
   await page.getByRole('button', { name: 'Use Stamp card' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Use blueprint' });
-  await dialog.getByRole('combobox', { name: /^Organization/ }).click();
-  await page.getByRole('option', { name: seed.org.name }).click();
-  await dialog.getByRole('textbox', { name: /^Name/ }).fill(name);
-  await dialog.getByRole('button', { name: 'Open designer' }).click();
+  // Use leads to Make it yours (the org is in scope); the designer is one button away.
+  await expect(page.getByRole('heading', { level: 1, name: 'Make it yours' })).toBeVisible();
+  await page.getByRole('textbox', { name: /^Name/ }).fill(name);
+  await page.getByRole('button', { name: 'Open designer' }).click();
   await page.waitForURL((u) => u.pathname.endsWith('/templates/new'));
   await expect(page.getByRole('region', { name: 'Issues' }).getByRole('status')).toHaveText(
     /to review|None/,

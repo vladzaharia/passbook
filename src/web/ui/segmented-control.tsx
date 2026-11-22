@@ -13,6 +13,8 @@ export interface SegmentOption<V extends string = string> {
   disabled?: boolean;
   /** Why it is unavailable: the segment stays visible and described but cannot be chosen (aria-disabled, skipped by arrow keys). */
   reason?: string;
+  /** Why it is locked but still open: the tooltip and the description. It stays selectable and keeps its name. */
+  hint?: string;
   /** The full name when the label is short: the tooltip and the accessible name. */
   title?: string;
 }
@@ -84,6 +86,7 @@ export function SegmentedControl<V extends string>({
         const checked = o.value === value;
         const blocked = Boolean(o.reason);
         const reasonId = `${id}-${o.value}`;
+        const described = o.reason ?? o.hint;
         return (
           // biome-ignore lint/a11y/useSemanticElements: a styled radiogroup with roving focus and a sliding thumb
           <button
@@ -92,10 +95,10 @@ export function SegmentedControl<V extends string>({
             role="radio"
             aria-checked={checked}
             data-value={o.value}
-            title={o.reason ?? o.title}
-            aria-label={o.title ?? (blocked ? o.label : undefined)}
+            title={described ?? o.title}
+            aria-label={o.title ?? (described ? o.label : undefined)}
             aria-disabled={blocked || undefined}
-            aria-describedby={blocked ? reasonId : undefined}
+            aria-describedby={described ? reasonId : undefined}
             tabIndex={checked ? 0 : -1}
             disabled={o.disabled}
             onClick={() => {
@@ -119,9 +122,9 @@ export function SegmentedControl<V extends string>({
               />
             ) : null}
             {o.label}
-            {o.reason ? (
+            {described ? (
               <span id={reasonId} className="sr-only">
-                {o.reason}
+                {described}
               </span>
             ) : null}
           </button>

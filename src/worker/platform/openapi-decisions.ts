@@ -30,6 +30,7 @@ const IDEMPOTENT = [
   'post /api/v1/passes',
   'post /api/v1/passes/{id}/resend-email',
   'post /api/v1/passes/bulk',
+  'post /api/v1/broadcasts',
   'post /api/v1/bundles/{id}/send-email',
   'post /api/v1/orgs/{orgId}/identities/apple',
   'patch /api/v1/orgs/{orgId}/pass-setup',
@@ -142,7 +143,16 @@ export function withIdempotencyKey(doc: Doc): Doc {
     if (op)
       op.parameters = [
         ...(op.parameters ?? []),
-        { $ref: '#/components/parameters/IdempotencyKey' },
+        name === 'post /api/v1/passes'
+          ? {
+              name: 'Idempotency-Key',
+              in: 'header',
+              required: false,
+              description:
+                '1 to 200 characters. A retry with the same key and body returns the first result. Keys starting broadcast-create:, bulk-send: or rollout-tell: are reserved (422 IDEMPOTENCY_KEY_RESERVED).',
+              schema: { type: 'string', minLength: 1, maxLength: 200 },
+            }
+          : { $ref: '#/components/parameters/IdempotencyKey' },
       ];
   }
   return doc;

@@ -1,13 +1,20 @@
 import { checkInput } from '../../../passkit/template/manifest.ts';
+import { BROADCAST_MAX_LEAD_MS } from '../../../shared/contracts/broadcasts.ts';
 import {
-  BROADCAST_MAX_LEAD_MS,
   type CreateBroadcastBody,
-} from '../../../shared/contracts/broadcasts.ts';
+  changeActionOf,
+  changeOpsOf,
+} from '../../../shared/contracts/broadcasts-change.ts';
+import type { Mode } from '../../../shared/contracts/common.ts';
+import { inputFields } from '../../../shared/issuing/fields.ts';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { assertWritableMode, type PassScope, type ScopeArg } from '../passes/scope.ts';
+import { activeRelease } from '../templates/releases.ts';
+import { opMisfit, tokensOf } from './change-ops.ts';
+import type { PreparedBody } from './change-target.ts';
 import * as repo from './repo.ts';
 
 /** Authorized tenant and mode, pass-change scope, and the write authority to fence mutations. */
@@ -33,8 +40,10 @@ export async function requireWritableBroadcast(ctx: ServiceContext, id: string, 
 /** Every targeted template must exist in the org and fit what the broadcast sets. */
 export async function checkTemplates(
   ctx: ServiceContext,
-  body: CreateBroadcastBody,
+  body: PreparedBody,
+  mode: Mode = 'live',
 ): Promise<void> {
+  const action = body.kind === 'change' ? changeActionOf(body.patch) : null;
   const defined = new Set<string>();
   for (const templateId of body.target.templateIds) {
     const { manifest } = await resolveTemplate(ctx, body.orgId, templateId);
@@ -48,17 +57,51 @@ export async function checkTemplates(
         );
       continue;
     }
+    if (action) {
+      // Latest design moves passes to the template's approved release: without one there is nothing to move to.
+      if (action === 'design' && !(await activeRelease(ctx, templateId, body.orgId, mode, 'apple')))
+        throw new ValidationError(
+          `${manifest.name} has no approved design to move to.`,
+          [],
+          'BROADCAST_NO_RELEASE',
+        );
+      continue;
+    }
     const known = new Set(Object.keys(manifest.inputs.properties ?? {}));
-    const unknown = Object.keys(body.patch).find((key) => !known.has(key));
+    const { ops } = changeOpsOf(body.patch);
+    const unknown = Object.keys(ops).find((key) => !known.has(key));
     if (unknown)
       throw new ValidationError(
         `${manifest.name} has no input "${unknown}".`,
         [{ path: `patch.${unknown}`, message: 'Unknown input.' }],
         'BROADCAST_UNKNOWN_INPUT',
       );
-    // Only the keys the change sets are checked; the rest of the input is each pass's own.
-    const bad = checkInput(manifest, body.patch).find((issue) =>
-      Object.hasOwn(body.patch, issue.path?.split('/')[0] ?? ''),
+    const fields = inputFields(manifest.inputs);
+    for (const [key, op] of Object.entries(ops)) {
+      const field = fields.find((f) => f.key === key);
+      const misfit = field ? opMisfit(field, op) : null;
+      if (misfit)
+        throw new ValidationError(
+          `${manifest.name}: ${misfit}`,
+          [{ path: `patch.${key}`, message: misfit }],
+          'BROADCAST_INVALID_OP',
+        );
+    }
+    const unlabeled = tokensOf(body.message ?? '').find(
+      (t) => !fields.some((f) => f.label.toLowerCase() === t.toLowerCase()),
+    );
+    if (unlabeled)
+      throw new ValidationError(
+        `${manifest.name} has no field "${unlabeled}".`,
+        [{ path: 'message', message: 'Unknown field.' }],
+        'BROADCAST_UNKNOWN_TOKEN',
+      );
+    // Only the values the change sets are checked; the rest of the input is each pass's own.
+    const setValues = Object.fromEntries(
+      Object.entries(ops).flatMap(([key, op]) => ('set' in op ? [[key, op.set]] : [])),
+    );
+    const bad = checkInput(manifest, setValues).find((issue) =>
+      Object.hasOwn(setValues, issue.path?.split('/')[0] ?? ''),
     );
     if (bad)
       throw new ValidationError(

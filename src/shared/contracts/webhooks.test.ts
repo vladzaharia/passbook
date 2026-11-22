@@ -19,7 +19,7 @@ import {
 
 const base = {
   id: '0193a1b2-0000-7000-8000-000000000001',
-  apiVersion: '2026-12-01',
+  apiVersion: '2026-11-20',
   createdAt: 1764000000000,
   orgId: 'org1',
   mode: 'live',

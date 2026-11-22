@@ -41,6 +41,8 @@ export interface WizardProps {
   formId?: string;
   /** "Next" on early steps, "Create" on the last. */
   nextLabel?: string;
+  /** The last step ends in something hard to take back (a void): the button wears the danger style. */
+  nextTone?: 'danger';
   /** Next or Create cannot run yet (the step explains why). */
   nextDisabled?: boolean;
   /** Why Next is off, in a few words; shown beside it while it is disabled. */
@@ -151,12 +153,21 @@ export function WizardBar({
   onNext,
   formId,
   nextLabel = 'Next',
+  nextTone,
   nextDisabled,
   nextHint,
   busy,
 }: Pick<
   WizardProps,
-  'onCancel' | 'onBack' | 'onNext' | 'formId' | 'nextLabel' | 'nextDisabled' | 'nextHint' | 'busy'
+  | 'onCancel'
+  | 'onBack'
+  | 'onNext'
+  | 'formId'
+  | 'nextLabel'
+  | 'nextTone'
+  | 'nextDisabled'
+  | 'nextHint'
+  | 'busy'
 >) {
   const hintId = useId();
   return (
@@ -183,6 +194,7 @@ export function WizardBar({
           ) : null}
           <Button
             type={formId ? 'submit' : 'button'}
+            variant={nextTone === 'danger' ? 'danger' : undefined}
             form={formId}
             loading={busy}
             disabled={nextDisabled}

@@ -6,6 +6,8 @@ import {
   DeveloperAccessSchema,
   DeveloperSandboxSchema,
   OkSchema,
+  ResetDeveloperSandboxSchema,
+  SandboxResetSchema,
   TryTokenSchema,
 } from '../../../shared/contracts/index.ts';
 import { hasDeveloperAccess } from '../../../shared/spaces.ts';
@@ -15,8 +17,10 @@ import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { verifyTurnstile } from '../auth/turnstile.ts';
 import { developerHome } from './home.ts';
+import { reopenOwnSandbox, resetSandbox } from './reset.ts';
 import { developerLogRoutes } from './routes-logs.ts';
 import { closeOwnSandbox, createSandbox, getSandbox } from './service.ts';
 import { mintTryToken, revokeTryTokens } from './try-token.ts';
@@ -144,6 +148,80 @@ register(
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
     return c.json(await closeOwnSandbox(serviceContext(c), auth));
+  },
+);
+
+register(
+  developerRoutes,
+  'developer',
+  {
+    method: 'post',
+    path: '/sandbox/reset',
+    summary:
+      'Start over: delete your sandbox test passes, captured webhooks and request log, restart the quickstart and replace the key',
+    operationId: 'developer.postSandboxReset',
+    auth: {
+      human: true,
+      signIn: 'strict',
+      developer: true,
+      stepUp: { maxAgeSec: STEP_UP_SECONDS },
+    },
+    body: ResetDeveloperSandboxSchema,
+    response: SandboxResetSchema,
+  },
+  async (c) => {
+    const ctx = serviceContext(c);
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    await enforceRateLimit(
+      c.env,
+      'RL_REFRESH',
+      `RL_REFRESH:developer-sandbox-reset:${auth.userId}`,
+    );
+    if (
+      !(await verifyTurnstile(
+        c.env,
+        c.req.valid('json').turnstileToken,
+        clientIp(c),
+        ctx.log,
+        fetch,
+        TURNSTILE_SANDBOX_ACTION,
+      ))
+    ) {
+      ctx.log.warn('developer.turnstile_failed', { code: 'TURNSTILE_FAILED' });
+      throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
+    }
+    c.header('cache-control', 'no-store');
+    return c.json(await resetSandbox(ctx, auth));
+  },
+);
+
+register(
+  developerRoutes,
+  'developer',
+  {
+    method: 'post',
+    path: '/sandbox/reopen',
+    summary: 'Reopen your closed sandbox inside its 30 days, with a new key',
+    operationId: 'developer.postSandboxReopen',
+    auth: {
+      human: true,
+      signIn: 'strict',
+      developer: true,
+      stepUp: { maxAgeSec: STEP_UP_SECONDS },
+    },
+    response: CreatedDeveloperSandboxSchema,
+  },
+  async (c) => {
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    await enforceRateLimit(
+      c.env,
+      'RL_REFRESH',
+      `RL_REFRESH:developer-sandbox-reopen:${auth.userId}`,
+    );
+    c.header('cache-control', 'no-store');
+    return c.json(await reopenOwnSandbox(serviceContext(c), auth));
   },
 );
 

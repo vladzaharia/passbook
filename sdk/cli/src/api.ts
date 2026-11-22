@@ -26,4 +26,8 @@ export interface Api {
     retrieve(id: string): Promise<{ name: string }>;
     retrieveInputSchema(id: string): Promise<Record<string, unknown>>;
   };
+  passes: {
+    create(body: object, options?: { idempotencyKey?: string }): Promise<unknown>;
+    update(id: string, body: object, options?: { idempotencyKey?: string }): Promise<unknown>;
+  };
 }

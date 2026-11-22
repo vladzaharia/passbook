@@ -188,8 +188,8 @@ class BroadcastsResource:
         body: m.BroadcastsCreateBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.BroadcastsCreateResult:
-        """Save, send or schedule a message or change `POST /api/v1/broadcasts`"""
-        return self._core.request("POST", "/api/v1/broadcasts", body=body, result=m.BroadcastsCreateResult, **opts)
+        """Save, send or schedule a message or change (Idempotency-Key) `POST /api/v1/broadcasts`"""
+        return self._core.request("POST", "/api/v1/broadcasts", body=body, idempotent=True, result=m.BroadcastsCreateResult, **opts)
 
     def list(
         self,
@@ -198,10 +198,13 @@ class BroadcastsResource:
         limit: int | None = None,
         state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | None = None,
         origin: _Literal["manual", "rule"] | None = None,
+        kind: _Literal["message", "change"] | None = None,
+        parent_id: str | None = None,
+        retry_of: str | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> Page[m.BroadcastsListItem]:
+    ) -> Page[m.Broadcast]:
         """List messages and scheduled changes `GET /api/v1/broadcasts`"""
-        return self._core.paginate("GET", "/api/v1/broadcasts", query={"cursor": cursor, "limit": limit, "state": state, "origin": origin}, result=m.BroadcastsListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", "/api/v1/broadcasts", query={"cursor": cursor, "limit": limit, "state": state, "origin": origin, "kind": kind, "parentId": parent_id, "retryOf": retry_of}, result=m.BroadcastsListResult, cursor_param="cursor", **opts)
 
     def retrieve(
         self,
@@ -214,10 +217,12 @@ class BroadcastsResource:
     def retry(
         self,
         id: str,
+        *,
+        expect_count: int | None | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.BroadcastsRetryResult:
-        """Send a failed or cancelled message again, as a new one in the same mode `POST /api/v1/broadcasts/{id}/retry`"""
-        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/retry", result=m.BroadcastsRetryResult, **opts)
+        """Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`"""
+        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/retry", query={"expectCount": expect_count}, result=m.BroadcastsRetryResult, **opts)
 
     def send(
         self,
@@ -227,6 +232,22 @@ class BroadcastsResource:
     ) -> m.BroadcastsSendResult:
         """Send a draft now or at a time `POST /api/v1/broadcasts/{id}/send`"""
         return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/send", body=body, result=m.BroadcastsSendResult, **opts)
+
+    def stop(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BroadcastsStopResult:
+        """Stop a sending message or change after its current chunk `POST /api/v1/broadcasts/{id}/stop`"""
+        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/stop", result=m.BroadcastsStopResult, **opts)
+
+    def undo(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BroadcastsUndoResult:
+        """Undo a change for 24 hours: restores passes still at the value the change set `POST /api/v1/broadcasts/{id}/undo`"""
+        return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/undo", result=m.BroadcastsUndoResult, **opts)
 
     def update(
         self,
@@ -378,6 +399,14 @@ class ConnectionsResource:
         """List connections `GET /api/v1/connections`"""
         return self._core.paginate("GET", "/api/v1/connections", query={"health": health, "q": q, "cursor": cursor, "limit": limit}, result=m.ConnectionsListResult, cursor_param="cursor", **opts)
 
+    def preview(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ConnectionsPreviewResult:
+        """Preview a sync `POST /api/v1/connections/{id}/preview`"""
+        return self._core.request("POST", f"/api/v1/connections/{_p(id)}/preview", result=m.ConnectionsPreviewResult, **opts)
+
     def retrieve(
         self,
         id: str,
@@ -430,10 +459,12 @@ class ConnectionsResource:
     def test_config(
         self,
         body: m.ConnectionsTestConfigBody | _Dict[str, _Any],
+        *,
+        preview: _Literal["true", "false"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.ConnectionsTestConfigResult:
         """Test an unsaved configuration `POST /api/v1/connections/test-config`"""
-        return self._core.request("POST", "/api/v1/connections/test-config", body=body, result=m.ConnectionsTestConfigResult, **opts)
+        return self._core.request("POST", "/api/v1/connections/test-config", body=body, query={"preview": preview}, result=m.ConnectionsTestConfigResult, **opts)
 
     def update(
         self,
@@ -492,7 +523,7 @@ class EventsResource:
         types: str | None = None,
         pass_id: str | None = None,
         limit: int | None = None,
-        api_version: _Literal["2026-12-01"] | None = None,
+        api_version: _Literal["2026-12-01", "2026-11-20"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.WebhookEvent]:
         """Event feed (cursor paging, ascending) `GET /api/v1/events`"""
@@ -502,7 +533,7 @@ class EventsResource:
         self,
         id: str,
         *,
-        api_version: _Literal["2026-12-01"] | None = None,
+        api_version: _Literal["2026-12-01", "2026-11-20"] | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.EventsRetrieveResult:
         """One event by id `GET /api/v1/events/{id}`"""
@@ -593,7 +624,7 @@ class MessageRulesRunsResource:
         cursor: str | None = None,
         limit: int | None = None,
         **opts: _Unpack[RequestOptions],
-    ) -> Page[m.MessageRulesRunsListItem]:
+    ) -> Page[m.Broadcast]:
         """The messages an automatic message sent `GET /api/v1/message-rules/{id}/runs`"""
         return self._core.paginate("GET", f"/api/v1/message-rules/{_p(id)}/runs", query={"cursor": cursor, "limit": limit}, result=m.MessageRulesRunsListResult, cursor_param="cursor", **opts)
 
@@ -1191,7 +1222,7 @@ class PassesResource:
         body: m.PassesBulkApplyBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.PassesBulkApplyResult:
-        """Void, email or remove up to 100 passes of one org (Idempotency-Key for email) `POST /api/v1/passes/bulk`"""
+        """Void, email or remove up to 100 passes of one org, or all passes a filter matches (Idempotency-Key for email) `POST /api/v1/passes/bulk`"""
         return self._core.request("POST", "/api/v1/passes/bulk", body=body, idempotent=True, result=m.PassesBulkApplyResult, **opts)
 
     def bulk_reissue(
@@ -1240,12 +1271,13 @@ class PassesResource:
         external_id: str | None = None,
         scan: str | None = None,
         match: str | None = None,
+        count: _Literal["true", "false"] | None = None,
         cursor: str | None = None,
         limit: int | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.PassSummary]:
         """List passes `GET /api/v1/passes`"""
-        return self._core.paginate("GET", "/api/v1/passes", query={"templateId": template_id, "connectionId": connection_id, "importId": import_id, "status": status, "holderEmail": holder_email, "holderState": holder_state, "onDevice": on_device, "q": q, "externalId": external_id, "scan": scan, "match": match, "cursor": cursor, "limit": limit}, result=m.PassesListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", "/api/v1/passes", query={"templateId": template_id, "connectionId": connection_id, "importId": import_id, "status": status, "holderEmail": holder_email, "holderState": holder_state, "onDevice": on_device, "q": q, "externalId": external_id, "scan": scan, "match": match, "count": count, "cursor": cursor, "limit": limit}, result=m.PassesListResult, cursor_param="cursor", **opts)
 
     def match_photos(
         self,
@@ -1385,6 +1417,62 @@ class PrintJobsResource:
         return self._core.request("GET", f"/api/v1/passes/bulk-print/{_p(job_id)}", result=m.PrintJobsRetrieveResult, **opts)
 
 
+class BulkRunsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def current(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BulkRunsCurrentResult:
+        """Get the organization's running bulk run, or the last one that ended within the hour `GET /api/v1/passes/bulk-runs/current`"""
+        return self._core.request("GET", "/api/v1/passes/bulk-runs/current", result=m.BulkRunsCurrentResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BulkRunsRetrieveResult:
+        """Get the progress of a bulk run `GET /api/v1/passes/bulk-runs/{id}`"""
+        return self._core.request("GET", f"/api/v1/passes/bulk-runs/{_p(id)}", result=m.BulkRunsRetrieveResult, **opts)
+
+    def start(
+        self,
+        body: m.BulkRunsStartBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BulkRunsStartResult:
+        """Void, email or remove every pass a filter matches, in the background `POST /api/v1/passes/bulk-runs`"""
+        return self._core.request("POST", "/api/v1/passes/bulk-runs", body=body, result=m.BulkRunsStartResult, **opts)
+
+    def stop(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.BulkRunsStopResult:
+        """Stop a bulk run after its current chunk `POST /api/v1/passes/bulk-runs/{id}/stop`"""
+        return self._core.request("POST", f"/api/v1/passes/bulk-runs/{_p(id)}/stop", result=m.BulkRunsStopResult, **opts)
+
+
+class PassViewsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassViewsListResult:
+        """List the saved views of the passes list `GET /api/v1/passes/views`"""
+        return self._core.request("GET", "/api/v1/passes/views", result=m.PassViewsListResult, **opts)
+
+    def replace(
+        self,
+        body: m.PassViewsReplaceBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassViewsReplaceResult:
+        """Replace the saved views of the passes list `PUT /api/v1/passes/views`"""
+        return self._core.request("PUT", "/api/v1/passes/views", body=body, result=m.PassViewsReplaceResult, **opts)
+
+
 class RollCallsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1439,6 +1527,65 @@ class RollCallsResource:
         return self._core.request("GET", "/api/v1/roll-calls", query={"sessionId": session_id}, result=m.RollCallsRetrieveOpenResult, **opts)
 
 
+class ScanEventsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def archive(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsArchiveResult:
+        """Archive a scan event (its scanners are detached) `POST /api/v1/scan-events/{id}/archive`"""
+        return self._core.request("POST", f"/api/v1/scan-events/{_p(id)}/archive", result=m.ScanEventsArchiveResult, **opts)
+
+    def attach_scanners(
+        self,
+        id: str,
+        body: m.ScanEventsAttachScannersBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsAttachScannersResult:
+        """Move scanners onto a scan event `POST /api/v1/scan-events/{id}/scanners`"""
+        return self._core.request("POST", f"/api/v1/scan-events/{_p(id)}/scanners", body=body, result=m.ScanEventsAttachScannersResult, **opts)
+
+    def create(
+        self,
+        body: m.ScanEventsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsCreateResult:
+        """Create a scan event `POST /api/v1/scan-events`"""
+        return self._core.request("POST", "/api/v1/scan-events", body=body, result=m.ScanEventsCreateResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        status: _Literal["upcoming", "live", "ended", "archived"] | None = None,
+        q: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanEvent]:
+        """List scan events `GET /api/v1/scan-events`"""
+        return self._core.paginate("GET", "/api/v1/scan-events", query={"cursor": cursor, "limit": limit, "status": status, "q": q}, result=m.ScanEventsListResult, cursor_param="cursor", **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsRetrieveResult:
+        """Get a scan event `GET /api/v1/scan-events/{id}`"""
+        return self._core.request("GET", f"/api/v1/scan-events/{_p(id)}", result=m.ScanEventsRetrieveResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanEventsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanEventsUpdateResult:
+        """Edit a scan event `PATCH /api/v1/scan-events/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scan-events/{_p(id)}", body=body, result=m.ScanEventsUpdateResult, **opts)
+
+
 class ScanSetupsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -1463,6 +1610,63 @@ class ScanSetupsResource:
     ) -> m.ScanSetupsRetrieveResult:
         """Scanner setup and view settings `GET /api/v1/scan-setups/{id}`"""
         return self._core.request("GET", f"/api/v1/scan-setups/{_p(id)}", result=m.ScanSetupsRetrieveResult, **opts)
+
+
+class ScanZonesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def archive(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesArchiveResult:
+        """Archive a zone and the zones below it `POST /api/v1/scan-zones/{id}/archive`"""
+        return self._core.request("POST", f"/api/v1/scan-zones/{_p(id)}/archive", result=m.ScanZonesArchiveResult, **opts)
+
+    def create(
+        self,
+        body: m.ScanZonesCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesCreateResult:
+        """Create a zone `POST /api/v1/scan-zones`"""
+        return self._core.request("POST", "/api/v1/scan-zones", body=body, result=m.ScanZonesCreateResult, **opts)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        archived: _Literal["true", "false"] | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanZonesListItem]:
+        """List zones `GET /api/v1/scan-zones`"""
+        return self._core.paginate("GET", "/api/v1/scan-zones", query={"cursor": cursor, "limit": limit, "archived": archived}, result=m.ScanZonesListResult, cursor_param="cursor", **opts)
+
+    def reset_visits(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesResetVisitsResult:
+        """Reset a pass’s visits `POST /api/v1/scan-zones/visits/{id}/reset`"""
+        return self._core.request("POST", f"/api/v1/scan-zones/visits/{_p(id)}/reset", result=m.ScanZonesResetVisitsResult, **opts)
+
+    def restore(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesRestoreResult:
+        """Restore a zone and the zones below it `POST /api/v1/scan-zones/{id}/restore`"""
+        return self._core.request("POST", f"/api/v1/scan-zones/{_p(id)}/restore", result=m.ScanZonesRestoreResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanZonesUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanZonesUpdateResult:
+        """Edit a zone `PATCH /api/v1/scan-zones/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scan-zones/{_p(id)}", body=body, result=m.ScanZonesUpdateResult, **opts)
 
 
 class TerminalScansResource:
@@ -1501,9 +1705,83 @@ class TerminalResource:
         return self._core.request("POST", "/api/v1/scan/resolve", body=body, result=m.TerminalResolveResult, **opts)
 
 
+class ScannersResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def revoke(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersRevokeResult:
+        """Remove a scanner from use `POST /api/v1/scanners/{id}/revoke`"""
+        return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/revoke", result=m.ScannersRevokeResult, **opts)
+
+    def set_mode(
+        self,
+        id: str,
+        body: m.ScannersSetModeBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersSetModeResult:
+        """Go live or move to test mode `POST /api/v1/scanners/{id}/mode`"""
+        return self._core.request("POST", f"/api/v1/scanners/{_p(id)}/mode", body=body, result=m.ScannersSetModeResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScannersUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScannersUpdateResult:
+        """Edit a scanner `PATCH /api/v1/scanners/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scanners/{_p(id)}", body=body, result=m.ScannersUpdateResult, **opts)
+
+
+class ScanningSessionsDevicesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def update(
+        self,
+        id: str,
+        device_id: str,
+        body: m.ScanningSessionsDevicesUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsDevicesUpdateResult:
+        """Configure one device `PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}`"""
+        return self._core.request("PATCH", f"/api/v1/scanning-sessions/{_p(id)}/devices/{_p(device_id)}", body=body, result=m.ScanningSessionsDevicesUpdateResult, **opts)
+
+
 class ScanningSessionsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
+        self.devices = ScanningSessionsDevicesResource(core)
+
+    def list(
+        self,
+        *,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.ScanningSession]:
+        """Scanning sessions `GET /api/v1/scanning-sessions`"""
+        return self._core.paginate("GET", "/api/v1/scanning-sessions", query={"cursor": cursor, "limit": limit}, result=m.ScanningSessionsListResult, cursor_param="cursor", **opts)
+
+    def override_hours(
+        self,
+        id: str,
+        body: m.ScanningSessionsOverrideHoursBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsOverrideHoursResult:
+        """Close now, open now or go back to the session hours `POST /api/v1/scanning-sessions/{id}/hold`"""
+        return self._core.request("POST", f"/api/v1/scanning-sessions/{_p(id)}/hold", body=body, result=m.ScanningSessionsOverrideHoursResult, **opts)
+
+    def retrieve(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsRetrieveResult:
+        """Session rules and devices `GET /api/v1/scanning-sessions/{id}`"""
+        return self._core.request("GET", f"/api/v1/scanning-sessions/{_p(id)}", result=m.ScanningSessionsRetrieveResult, **opts)
 
     def setup(
         self,
@@ -1514,6 +1792,15 @@ class ScanningSessionsResource:
     ) -> m.ScanningSessionsSetupResult:
         """Set up scanning in one call (Idempotency-Key supported) `POST /api/v1/scanning-sessions/setup`"""
         return self._core.request("POST", "/api/v1/scanning-sessions/setup", body=body, query={"dryRun": dry_run}, idempotent=True, result=m.ScanningSessionsSetupResult, **opts)
+
+    def update(
+        self,
+        id: str,
+        body: m.ScanningSessionsUpdateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.ScanningSessionsUpdateResult:
+        """Update shared session rules `PATCH /api/v1/scanning-sessions/{id}`"""
+        return self._core.request("PATCH", f"/api/v1/scanning-sessions/{_p(id)}", body=body, result=m.ScanningSessionsUpdateResult, **opts)
 
 
 class ScansResource:
@@ -1798,6 +2085,16 @@ class TemplatesResource:
         """Get the JSON Schema of a template's pass input `GET /api/v1/templates/{id}/input-schema`"""
         return self._core.request("GET", f"/api/v1/templates/{_p(id)}/input-schema", result=m.TemplatesRetrieveInputSchemaResult, **opts)
 
+    def retrieve_rollout(
+        self,
+        id: str,
+        *,
+        mode: _Literal["live", "test"],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TemplatesRetrieveRolloutResult:
+        """How far the approved release has reached the organization’s passes `GET /api/v1/templates/{id}/rollout`"""
+        return self._core.request("GET", f"/api/v1/templates/{_p(id)}/rollout", query={"mode": mode}, result=m.TemplatesRetrieveRolloutResult, **opts)
+
     def retrieve_stamps_impact(
         self,
         id: str,
@@ -2027,11 +2324,25 @@ class WebhookEndpointsDeliveriesResource:
         return self._core.request("GET", f"/api/v1/webhook-endpoints/{_p(id)}/deliveries/{_p(event_id)}", result=m.WebhookEndpointsDeliveriesRetrieveResult, **opts)
 
 
+class WebhookEndpointsTestsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.WebhookEndpointsTestsListResult:
+        """Recent test sends of an endpoint, newest first `GET /api/v1/webhook-endpoints/{id}/tests`"""
+        return self._core.request("GET", f"/api/v1/webhook-endpoints/{_p(id)}/tests", result=m.WebhookEndpointsTestsListResult, **opts)
+
+
 class WebhookEndpointsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
         self.captures = WebhookEndpointsCapturesResource(core)
         self.deliveries = WebhookEndpointsDeliveriesResource(core)
+        self.tests = WebhookEndpointsTestsResource(core)
 
     def create(
         self,
@@ -2123,9 +2434,14 @@ class Resources:
         self.pass_imports = PassImportsResource(core)
         self.passes = PassesResource(core)
         self.print_jobs = PrintJobsResource(core)
+        self.bulk_runs = BulkRunsResource(core)
+        self.pass_views = PassViewsResource(core)
         self.roll_calls = RollCallsResource(core)
+        self.scan_events = ScanEventsResource(core)
         self.scan_setups = ScanSetupsResource(core)
+        self.scan_zones = ScanZonesResource(core)
         self.terminal = TerminalResource(core)
+        self.scanners = ScannersResource(core)
         self.scanning_sessions = ScanningSessionsResource(core)
         self.scans = ScansResource(core)
         self.templates = TemplatesResource(core)

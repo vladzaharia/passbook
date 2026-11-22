@@ -6,8 +6,8 @@ import { PATHS } from '../../../shared/developers.ts';
 import { IconButton } from '../../ui/icon-button.tsx';
 import { Menubar, MenubarNav, MenubarSearch, SignInButton } from '../../ui/layout/menubar.tsx';
 import { Wordmark } from '../../ui/layout/wordmark.tsx';
-import { pagePath } from '../model/markdown.ts';
-import type { ResourcePage, Site } from '../model/types.ts';
+import { opPath, pagePath } from '../model/markdown.ts';
+import type { OpView, ResourcePage, Site } from '../model/types.ts';
 import { MethodPill } from '../ui/method-pill.tsx';
 
 export const SIGN_IN = '/login?next=%2Fdevelopers';
@@ -58,7 +58,7 @@ export function TopBar({ active }: { active?: NavKey }) {
         />
       }
       // The sandbox chip (island) when there is one; nothing otherwise.
-      controls={<span data-island="org-chip" className="empty:hidden" />}
+      controls={<span data-island="org-chip" />}
       account={
         <span data-island="account">
           <SignInButton>
@@ -97,10 +97,13 @@ export function SideNav({
   site,
   current,
   ops,
+  op,
 }: {
   site?: Site;
   current?: ResourcePage;
   ops?: boolean;
+  /** The operation on screen, when the page is one operation's. */
+  op?: OpView;
 }) {
   return (
     <nav
@@ -114,13 +117,20 @@ export function SideNav({
           <h4>{g.label}</h4>
           {g.pages.map((p) => (
             <div key={p.slug} className="stack">
-              <a href={pagePath(p)} aria-current={p === current && !ops ? 'page' : undefined}>
+              <a
+                href={pagePath(p)}
+                aria-current={p === current && !(ops && op) ? 'page' : undefined}
+              >
                 {p.label}
               </a>
               {p === current && ops ? (
                 <div className="stack subnav">
                   {p.ops.map((o) => (
-                    <a key={o.anchor} href={`#${o.anchor}`}>
+                    <a
+                      key={o.anchor}
+                      href={opPath(p, o)}
+                      aria-current={o === op ? 'page' : undefined}
+                    >
                       <span>{o.title}</span>
                       <MethodPill method={o.method} />
                     </a>

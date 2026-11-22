@@ -279,6 +279,7 @@ export function NewPassWizardView({ model }: { model: NewPassWizardModel }) {
               org={displayOrg?.name ?? 'Unknown organization'}
               mode={mode}
               template={name}
+              setup={{ orgId, templateId, onFixed: live.retry }}
               release={
                 release
                   ? {

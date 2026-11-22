@@ -96,6 +96,7 @@ export async function publishUnchangedAttempt(
     holder: options.holder,
     commit: options.commit,
     extraChecks: options.extraChecks,
+    writeRef: options.sourceRef,
     clock: ctx.clock,
   });
   if (written === null) {

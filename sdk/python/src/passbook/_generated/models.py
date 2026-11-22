@@ -59,101 +59,68 @@ __all__ = [
     "BrandWebLogoUploadBody",
     "BrandWebLogoUploadParams",
     "BrandWebLogoUploadResult",
+    "Broadcast",
+    "BroadcastCounts",
+    "BroadcastTarget",
+    "BroadcastTargetMatchItem1",
+    "BroadcastTargetMatchItem2",
+    "BroadcastTargetMatchItem3",
+    "BroadcastTargetScan1",
+    "BroadcastTargetScan2",
+    "BroadcastUndo",
     "BroadcastsCancelResult",
-    "BroadcastsCancelResultCounts",
-    "BroadcastsCancelResultTarget",
-    "BroadcastsCancelResultTargetMatchItem1",
-    "BroadcastsCancelResultTargetMatchItem2",
-    "BroadcastsCancelResultTargetMatchItem3",
-    "BroadcastsCancelResultTargetScan1",
-    "BroadcastsCancelResultTargetScan2",
     "BroadcastsCountRecipientsBody",
     "BroadcastsCountRecipientsParams",
     "BroadcastsCountRecipientsParamsTarget",
     "BroadcastsCountRecipientsParamsTargetMatchItem1",
     "BroadcastsCountRecipientsParamsTargetMatchItem2",
     "BroadcastsCountRecipientsParamsTargetMatchItem3",
+    "BroadcastsCountRecipientsParamsTargetMatchItem4",
     "BroadcastsCountRecipientsParamsTargetScan1",
     "BroadcastsCountRecipientsParamsTargetScan2",
     "BroadcastsCountRecipientsResult",
+    "BroadcastsCountRecipientsResultBlockedItem",
+    "BroadcastsCountRecipientsResultSamplesItem",
+    "BroadcastsCountRecipientsResultSamplesItemChangesItem",
     "BroadcastsCreateBody",
     "BroadcastsCreateParams",
     "BroadcastsCreateParamsTarget",
     "BroadcastsCreateParamsTargetMatchItem1",
     "BroadcastsCreateParamsTargetMatchItem2",
     "BroadcastsCreateParamsTargetMatchItem3",
+    "BroadcastsCreateParamsTargetMatchItem4",
     "BroadcastsCreateParamsTargetScan1",
     "BroadcastsCreateParamsTargetScan2",
     "BroadcastsCreateResult",
-    "BroadcastsCreateResultCounts",
-    "BroadcastsCreateResultTarget",
-    "BroadcastsCreateResultTargetMatchItem1",
-    "BroadcastsCreateResultTargetMatchItem2",
-    "BroadcastsCreateResultTargetMatchItem3",
-    "BroadcastsCreateResultTargetScan1",
-    "BroadcastsCreateResultTargetScan2",
-    "BroadcastsListItem",
-    "BroadcastsListItemCounts",
-    "BroadcastsListItemTarget",
-    "BroadcastsListItemTargetMatchItem1",
-    "BroadcastsListItemTargetMatchItem2",
-    "BroadcastsListItemTargetMatchItem3",
-    "BroadcastsListItemTargetScan1",
-    "BroadcastsListItemTargetScan2",
     "BroadcastsListResult",
-    "BroadcastsListResultItemsItem",
-    "BroadcastsListResultItemsItemCounts",
-    "BroadcastsListResultItemsItemTarget",
-    "BroadcastsListResultItemsItemTargetMatchItem1",
-    "BroadcastsListResultItemsItemTargetMatchItem2",
-    "BroadcastsListResultItemsItemTargetMatchItem3",
-    "BroadcastsListResultItemsItemTargetScan1",
-    "BroadcastsListResultItemsItemTargetScan2",
     "BroadcastsRecipientsListItem",
     "BroadcastsRecipientsListResult",
     "BroadcastsRecipientsListResultItemsItem",
     "BroadcastsRetrieveResult",
-    "BroadcastsRetrieveResultCounts",
-    "BroadcastsRetrieveResultTarget",
-    "BroadcastsRetrieveResultTargetMatchItem1",
-    "BroadcastsRetrieveResultTargetMatchItem2",
-    "BroadcastsRetrieveResultTargetMatchItem3",
-    "BroadcastsRetrieveResultTargetScan1",
-    "BroadcastsRetrieveResultTargetScan2",
     "BroadcastsRetryResult",
-    "BroadcastsRetryResultCounts",
-    "BroadcastsRetryResultTarget",
-    "BroadcastsRetryResultTargetMatchItem1",
-    "BroadcastsRetryResultTargetMatchItem2",
-    "BroadcastsRetryResultTargetMatchItem3",
-    "BroadcastsRetryResultTargetScan1",
-    "BroadcastsRetryResultTargetScan2",
     "BroadcastsSendBody",
     "BroadcastsSendParams",
     "BroadcastsSendResult",
-    "BroadcastsSendResultCounts",
-    "BroadcastsSendResultTarget",
-    "BroadcastsSendResultTargetMatchItem1",
-    "BroadcastsSendResultTargetMatchItem2",
-    "BroadcastsSendResultTargetMatchItem3",
-    "BroadcastsSendResultTargetScan1",
-    "BroadcastsSendResultTargetScan2",
+    "BroadcastsStopResult",
+    "BroadcastsUndoResult",
     "BroadcastsUpdateBody",
     "BroadcastsUpdateParams",
     "BroadcastsUpdateParamsTarget",
     "BroadcastsUpdateParamsTargetMatchItem1",
     "BroadcastsUpdateParamsTargetMatchItem2",
     "BroadcastsUpdateParamsTargetMatchItem3",
+    "BroadcastsUpdateParamsTargetMatchItem4",
     "BroadcastsUpdateParamsTargetScan1",
     "BroadcastsUpdateParamsTargetScan2",
     "BroadcastsUpdateResult",
-    "BroadcastsUpdateResultCounts",
-    "BroadcastsUpdateResultTarget",
-    "BroadcastsUpdateResultTargetMatchItem1",
-    "BroadcastsUpdateResultTargetMatchItem2",
-    "BroadcastsUpdateResultTargetMatchItem3",
-    "BroadcastsUpdateResultTargetScan1",
-    "BroadcastsUpdateResultTargetScan2",
+    "BulkRun",
+    "BulkRunsCurrentResult",
+    "BulkRunsRetrieveResult",
+    "BulkRunsStartBody",
+    "BulkRunsStartParams",
+    "BulkRunsStartParamsSelection",
+    "BulkRunsStartResult",
+    "BulkRunsStopResult",
     "BundlesCreateBody",
     "BundlesCreateParams",
     "BundlesCreateResult",
@@ -176,6 +143,12 @@ __all__ = [
     "CapturedEmail",
     "CapturedEmailDetail",
     "CapturedEmailPage",
+    "ConnectionPreview",
+    "ConnectionPreviewColumnsItem",
+    "ConnectionPreviewColumnsItemValuesItem",
+    "ConnectionPreviewCounts",
+    "ConnectionPreviewSamplesItem",
+    "ConnectionPreviewWindow",
     "ConnectionsCreateBody",
     "ConnectionsCreateParams",
     "ConnectionsCreateParamsMappingValue",
@@ -195,6 +168,7 @@ __all__ = [
     "ConnectionsListResultItemsItemMappingValue",
     "ConnectionsListResultItemsItemMappingValueTransform",
     "ConnectionsListResultItemsItemVoidWhenItem",
+    "ConnectionsPreviewResult",
     "ConnectionsRetrieveResult",
     "ConnectionsRetrieveResultMappingValue",
     "ConnectionsRetrieveResultMappingValueTransform",
@@ -217,8 +191,16 @@ __all__ = [
     "ConnectionsSyncResult",
     "ConnectionsTestConfigBody",
     "ConnectionsTestConfigParams",
+    "ConnectionsTestConfigParamsMappingValue",
+    "ConnectionsTestConfigParamsMappingValueTransform",
+    "ConnectionsTestConfigParamsVoidWhenItem",
     "ConnectionsTestConfigResult",
+    "ConnectionsTestConfigResultColumnsItem",
+    "ConnectionsTestConfigResultColumnsItemValuesItem",
+    "ConnectionsTestConfigResultCounts",
     "ConnectionsTestConfigResultSampleItem",
+    "ConnectionsTestConfigResultSamplesItem",
+    "ConnectionsTestConfigResultWindow",
     "ConnectionsTestResult",
     "ConnectionsTestResultSampleItem",
     "ConnectionsUpdateBody",
@@ -269,6 +251,7 @@ __all__ = [
     "CreatedScannerAccepts3",
     "CreatedScanningDevice",
     "CreatedScanningDeviceOverrides",
+    "CurrentBulkRun",
     "DeliveriesListResult",
     "DeliveriesListResultItemsItem",
     "EmailFailedEvent",
@@ -364,33 +347,10 @@ __all__ = [
     "MessageRulesRetrieveResultMatchItem2",
     "MessageRulesRetrieveResultMatchItem3",
     "MessageRulesRetrieveResultOffset",
-    "MessageRulesRunsListItem",
-    "MessageRulesRunsListItemCounts",
-    "MessageRulesRunsListItemTarget",
-    "MessageRulesRunsListItemTargetMatchItem1",
-    "MessageRulesRunsListItemTargetMatchItem2",
-    "MessageRulesRunsListItemTargetMatchItem3",
-    "MessageRulesRunsListItemTargetScan1",
-    "MessageRulesRunsListItemTargetScan2",
     "MessageRulesRunsListResult",
-    "MessageRulesRunsListResultItemsItem",
-    "MessageRulesRunsListResultItemsItemCounts",
-    "MessageRulesRunsListResultItemsItemTarget",
-    "MessageRulesRunsListResultItemsItemTargetMatchItem1",
-    "MessageRulesRunsListResultItemsItemTargetMatchItem2",
-    "MessageRulesRunsListResultItemsItemTargetMatchItem3",
-    "MessageRulesRunsListResultItemsItemTargetScan1",
-    "MessageRulesRunsListResultItemsItemTargetScan2",
     "MessageRulesSendTestBody",
     "MessageRulesSendTestParams",
     "MessageRulesSendTestResult",
-    "MessageRulesSendTestResultCounts",
-    "MessageRulesSendTestResultTarget",
-    "MessageRulesSendTestResultTargetMatchItem1",
-    "MessageRulesSendTestResultTargetMatchItem2",
-    "MessageRulesSendTestResultTargetMatchItem3",
-    "MessageRulesSendTestResultTargetScan1",
-    "MessageRulesSendTestResultTargetScan2",
     "MessageRulesUpdateBody",
     "MessageRulesUpdateParams",
     "MessageRulesUpdateParamsAnchor1",
@@ -471,10 +431,20 @@ __all__ = [
     "PassDetailChannelsSamsung",
     "PassDetailDeliveriesItem",
     "PassDetailEmail",
+    "PassDetailMatchedItem",
     "PassDetailPushBudget",
     "PassDetailTemplateWarningsItem",
+    "PassDetailTemplateWarningsItemFix",
     "PassDetailWarningsItem",
+    "PassDetailWarningsItemFix",
     "PassDevice",
+    "PassFilter",
+    "PassFilterMatchItem1",
+    "PassFilterMatchItem2",
+    "PassFilterMatchItem3",
+    "PassFilterMatchItem4",
+    "PassFilterScan1",
+    "PassFilterScan2",
     "PassImportMappings",
     "PassImportMappingsSavedItem",
     "PassImportMappingsSavedItemPlan",
@@ -673,6 +643,7 @@ __all__ = [
     "PassSetupTemplatesItemChannelsPaper",
     "PassSetupTemplatesItemChannelsSamsung",
     "PassSummary",
+    "PassSummaryMatchedItem",
     "PassUninstalledEvent",
     "PassUninstalledEventData",
     "PassUnvoidedEvent",
@@ -680,6 +651,13 @@ __all__ = [
     "PassUpdatedEvent",
     "PassUpdatedEventData",
     "PassVersion",
+    "PassViews",
+    "PassViewsItemsItem",
+    "PassViewsListResult",
+    "PassViewsReplaceBody",
+    "PassViewsReplaceParams",
+    "PassViewsReplaceParamsItemsItem",
+    "PassViewsReplaceResult",
     "PassVoidedEvent",
     "PassVoidedEventData",
     "PassesActivityListItem",
@@ -692,6 +670,8 @@ __all__ = [
     "PassesAssetsUploadResult",
     "PassesBulkApplyBody",
     "PassesBulkApplyParams",
+    "PassesBulkApplyParamsSelection1",
+    "PassesBulkApplyParamsSelection2",
     "PassesBulkApplyResult",
     "PassesBulkApplyResultSkippedItem",
     "PassesBulkReissueBody",
@@ -712,6 +692,13 @@ __all__ = [
     "PassesChannelsRetrieveResultEffectiveNfc",
     "PassesChannelsRetrieveResultEffectivePaper",
     "PassesChannelsRetrieveResultEffectiveSamsung",
+    "PassesChannelsRetrieveResultLevels",
+    "PassesChannelsRetrieveResultLevelsAppleItem",
+    "PassesChannelsRetrieveResultLevelsGoogleItem",
+    "PassesChannelsRetrieveResultLevelsMobileItem",
+    "PassesChannelsRetrieveResultLevelsNfcItem",
+    "PassesChannelsRetrieveResultLevelsPaperItem",
+    "PassesChannelsRetrieveResultLevelsSamsungItem",
     "PassesChannelsRetrieveResultOverrides",
     "PassesChannelsRetrieveResultReplace",
     "PassesChannelsRetrieveResultReplaceWindowsItem",
@@ -726,6 +713,13 @@ __all__ = [
     "PassesChannelsUpdateResultEffectiveNfc",
     "PassesChannelsUpdateResultEffectivePaper",
     "PassesChannelsUpdateResultEffectiveSamsung",
+    "PassesChannelsUpdateResultLevels",
+    "PassesChannelsUpdateResultLevelsAppleItem",
+    "PassesChannelsUpdateResultLevelsGoogleItem",
+    "PassesChannelsUpdateResultLevelsMobileItem",
+    "PassesChannelsUpdateResultLevelsNfcItem",
+    "PassesChannelsUpdateResultLevelsPaperItem",
+    "PassesChannelsUpdateResultLevelsSamsungItem",
     "PassesChannelsUpdateResultOverrides",
     "PassesChannelsUpdateResultReplace",
     "PassesChannelsUpdateResultReplaceWindowsItem",
@@ -898,10 +892,19 @@ __all__ = [
     "ScanCountsByTypeItem",
     "ScanDeviceCapabilities",
     "ScanEvent",
+    "ScanEventsArchiveResult",
+    "ScanEventsAttachScannersBody",
     "ScanEventsAttachScannersParams",
+    "ScanEventsAttachScannersResult",
+    "ScanEventsCreateBody",
     "ScanEventsCreateParams",
+    "ScanEventsCreateResult",
+    "ScanEventsListResult",
     "ScanEventsMarkOutParams",
+    "ScanEventsRetrieveResult",
+    "ScanEventsUpdateBody",
     "ScanEventsUpdateParams",
+    "ScanEventsUpdateResult",
     "ScanFeedRow",
     "ScanLookupRow",
     "ScanOutcome",
@@ -994,9 +997,31 @@ __all__ = [
     "ScanSummaryOverridesLatestItem",
     "ScanTemplateRef",
     "ScanWorkspace",
+    "ScanZonesArchiveResult",
+    "ScanZonesArchiveResultCheckedAtItem",
+    "ScanZonesArchiveResultPlansItem",
+    "ScanZonesCreateBody",
     "ScanZonesCreateParams",
+    "ScanZonesCreateResult",
+    "ScanZonesCreateResultCheckedAtItem",
+    "ScanZonesCreateResultPlansItem",
+    "ScanZonesListItem",
+    "ScanZonesListItemCheckedAtItem",
+    "ScanZonesListItemPlansItem",
+    "ScanZonesListResult",
+    "ScanZonesListResultItemsItem",
+    "ScanZonesListResultItemsItemCheckedAtItem",
+    "ScanZonesListResultItemsItemPlansItem",
     "ScanZonesMarkOutParams",
+    "ScanZonesResetVisitsResult",
+    "ScanZonesRestoreResult",
+    "ScanZonesRestoreResultCheckedAtItem",
+    "ScanZonesRestoreResultPlansItem",
+    "ScanZonesUpdateBody",
     "ScanZonesUpdateParams",
+    "ScanZonesUpdateResult",
+    "ScanZonesUpdateResultCheckedAtItem",
+    "ScanZonesUpdateResultPlansItem",
     "Scanner",
     "ScannerAccepts1",
     "ScannerAccepts2",
@@ -1010,13 +1035,18 @@ __all__ = [
     "ScannersCreateParamsSettings",
     "ScannersCreateParamsSettingsCheckIn",
     "ScannersCreateParamsSettingsTags",
+    "ScannersRevokeResult",
+    "ScannersSetModeBody",
     "ScannersSetModeParams",
+    "ScannersSetModeResult",
+    "ScannersUpdateBody",
     "ScannersUpdateParams",
     "ScannersUpdateParamsAccepts1",
     "ScannersUpdateParamsAccepts2",
     "ScannersUpdateParamsSettings",
     "ScannersUpdateParamsSettingsCheckIn",
     "ScannersUpdateParamsSettingsTags",
+    "ScannersUpdateResult",
     "ScanningDevice",
     "ScanningDeviceOverrides",
     "ScanningSession",
@@ -1048,12 +1078,18 @@ __all__ = [
     "ScanningSessionsCreateParamsSettingsTags",
     "ScanningSessionsDevicesCreateParams",
     "ScanningSessionsDevicesCreateParamsOverrides",
+    "ScanningSessionsDevicesUpdateBody",
     "ScanningSessionsDevicesUpdateParams",
     "ScanningSessionsDevicesUpdateParamsOverrides",
+    "ScanningSessionsDevicesUpdateResult",
+    "ScanningSessionsListResult",
+    "ScanningSessionsOverrideHoursBody",
     "ScanningSessionsOverrideHoursParams",
     "ScanningSessionsOverrideHoursParams1",
     "ScanningSessionsOverrideHoursParams2",
     "ScanningSessionsOverrideHoursParams3",
+    "ScanningSessionsOverrideHoursResult",
+    "ScanningSessionsRetrieveResult",
     "ScanningSessionsSetupBody",
     "ScanningSessionsSetupParams",
     "ScanningSessionsSetupParamsDoorsItem",
@@ -1074,6 +1110,7 @@ __all__ = [
     "ScanningSessionsSetupParamsPlacesItem2",
     "ScanningSessionsSetupParamsStaffItem",
     "ScanningSessionsSetupResult",
+    "ScanningSessionsUpdateBody",
     "ScanningSessionsUpdateParams",
     "ScanningSessionsUpdateParamsAccepts1",
     "ScanningSessionsUpdateParamsAccepts2",
@@ -1082,6 +1119,7 @@ __all__ = [
     "ScanningSessionsUpdateParamsSettingsCheckIn",
     "ScanningSessionsUpdateParamsSettingsCustomer",
     "ScanningSessionsUpdateParamsSettingsTags",
+    "ScanningSessionsUpdateResult",
     "ScansListResult",
     "ScansListResult1",
     "ScansListResult2",
@@ -1100,6 +1138,7 @@ __all__ = [
     "TemplateDetailVersionsItemAssetsItem",
     "TemplateDetailVersionsItemReport",
     "TemplateDetailVersionsItemReportIssuesItem",
+    "TemplateDetailVersionsItemReportIssuesItemFix",
     "TemplateImportsListItem",
     "TemplateImportsListResult",
     "TemplateImportsListResultItemsItem",
@@ -1108,6 +1147,19 @@ __all__ = [
     "TemplatePage",
     "TemplateReviewList",
     "TemplateReviewListItemsItem",
+    "TemplateRollout",
+    "TemplateRolloutChangesItem",
+    "TemplateRolloutChangesItemRowsItem",
+    "TemplateRolloutChangesItemRowsItemFrom1",
+    "TemplateRolloutChangesItemRowsItemFrom2",
+    "TemplateRolloutChangesItemRowsItemFrom3",
+    "TemplateRolloutChangesItemRowsItemFrom4",
+    "TemplateRolloutChangesItemRowsItemTo1",
+    "TemplateRolloutChangesItemRowsItemTo2",
+    "TemplateRolloutChangesItemRowsItemTo3",
+    "TemplateRolloutChangesItemRowsItemTo4",
+    "TemplateRolloutFailedItem",
+    "TemplateRolloutUpdatingItem",
     "TemplateSummary",
     "TemplatesCandidatesApproveBody",
     "TemplatesCandidatesApproveParams",
@@ -1124,6 +1176,7 @@ __all__ = [
     "TemplatesCandidatesPromoteParams",
     "TemplatesChannelsListRunsResult",
     "TemplatesChannelsListRunsResultItem",
+    "TemplatesChannelsResetPassesParams",
     "TemplatesChannelsRetrieveResult",
     "TemplatesChannelsRetrieveResultDefaults",
     "TemplatesChannelsRetrieveResultEffective",
@@ -1133,6 +1186,14 @@ __all__ = [
     "TemplatesChannelsRetrieveResultEffectiveNfc",
     "TemplatesChannelsRetrieveResultEffectivePaper",
     "TemplatesChannelsRetrieveResultEffectiveSamsung",
+    "TemplatesChannelsRetrieveResultLevels",
+    "TemplatesChannelsRetrieveResultLevelsAppleItem",
+    "TemplatesChannelsRetrieveResultLevelsGoogleItem",
+    "TemplatesChannelsRetrieveResultLevelsMobileItem",
+    "TemplatesChannelsRetrieveResultLevelsNfcItem",
+    "TemplatesChannelsRetrieveResultLevelsPaperItem",
+    "TemplatesChannelsRetrieveResultLevelsSamsungItem",
+    "TemplatesChannelsRetrieveResultOverrides",
     "TemplatesChannelsUpdateParams",
     "TemplatesChannelsUpdateParamsChannels",
     "TemplatesCloneParams",
@@ -1142,11 +1203,13 @@ __all__ = [
     "TemplatesListPreviewsResult",
     "TemplatesListPreviewsResultItemsItem",
     "TemplatesListPreviewsResultItemsItemWarningsItem",
+    "TemplatesListPreviewsResultItemsItemWarningsItemFix",
     "TemplatesListResult",
     "TemplatesPreviewBody",
     "TemplatesPreviewParams",
     "TemplatesPreviewResult",
     "TemplatesPreviewResultWarningsItem",
+    "TemplatesPreviewResultWarningsItemFix",
     "TemplatesReleasesCreateBody",
     "TemplatesReleasesCreateParams",
     "TemplatesReleasesCreateResult",
@@ -1166,6 +1229,7 @@ __all__ = [
     "TemplatesReleasesRollbackParams",
     "TemplatesRetrieveInputSchemaResult",
     "TemplatesRetrieveResult",
+    "TemplatesRetrieveRolloutResult",
     "TemplatesRetrieveStampsImpactResult",
     "TemplatesReviewsApproveBody",
     "TemplatesReviewsApproveResult",
@@ -1186,6 +1250,7 @@ __all__ = [
     "TemplatesVersionsRetrieveResultAssetsItem",
     "TemplatesVersionsRetrieveResultReport",
     "TemplatesVersionsRetrieveResultReportIssuesItem",
+    "TemplatesVersionsRetrieveResultReportIssuesItemFix",
     "TerminalActBody",
     "TerminalActParams",
     "TerminalActParamsApproval",
@@ -1281,11 +1346,14 @@ __all__ = [
     "WebhookEndpointsSendTestBody",
     "WebhookEndpointsSendTestParams",
     "WebhookEndpointsSendTestResult",
+    "WebhookEndpointsTestsListResult",
     "WebhookEndpointsUpdateBody",
     "WebhookEndpointsUpdateParams",
     "WebhookEndpointsUpdateResult",
     "WebhookEvent",
     "WebhookPassRef",
+    "WebhookTestAttemptPage",
+    "WebhookTestAttemptPageItemsItem",
     "WebhookTestEvent",
     "WebhookTestEventData",
     "WebhookTestResult",
@@ -1609,75 +1677,90 @@ class BrandWebLogoUploadParams(_Model):
     png: str
     configRevision: int | None = None
 
-class BroadcastsCancelResult(_Model):
+class Broadcast(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     kind: _Literal["message", "change"] | str
     name: str
     state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: BroadcastsCancelResultTarget
+    target: BroadcastTarget
     patch: _Dict[str, _Any]
     notify: bool
     at: int | None
     clearAfter: int | None
     parentId: str | None
+    message: str | None = None
     ruleId: str | None
     followUp: _Dict[str, _Any] | None
-    counts: BroadcastsCancelResultCounts
+    counts: BroadcastCounts
     errorCode: str | None
     createdAt: int
     startedAt: int | None
     finishedAt: int | None
 
-class BroadcastsCancelResultCounts(_Model):
+class BroadcastCounts(_Model):
     targeted: int
     updated: int
     unchanged: int
     overBudget: int
     failed: int
 
-class BroadcastsCancelResultTarget(_Model):
+class BroadcastTarget(_Model):
     templateIds: _List[str]
     onDevice: bool | None = None
     holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
-    scan: BroadcastsCancelResultTargetScan1 | BroadcastsCancelResultTargetScan2 | None = None
-    match: _List[BroadcastsCancelResultTargetMatchItem1 | BroadcastsCancelResultTargetMatchItem2 | BroadcastsCancelResultTargetMatchItem3] | None = None
+    scan: BroadcastTargetScan1 | BroadcastTargetScan2 | None = None
+    match: _List[BroadcastTargetMatchItem1 | BroadcastTargetMatchItem2 | BroadcastTargetMatchItem3] | None = None
+    version: str | None = None
 
-class BroadcastsCancelResultTargetMatchItem1(_Model):
+class BroadcastTargetMatchItem1(_Model):
     input: str
     values: _List[str]
 
-class BroadcastsCancelResultTargetMatchItem2(_Model):
+class BroadcastTargetMatchItem2(_Model):
     input: str
     min: float | None = None
     max: float | None = None
 
-class BroadcastsCancelResultTargetMatchItem3(_Model):
+class BroadcastTargetMatchItem3(_Model):
     input: str
     from_: str | None = _Field(default=None, alias="from")
     to: str | None = None
     timeZone: str
 
-class BroadcastsCancelResultTargetScan1(_Model):
+class BroadcastTargetScan1(_Model):
     eventId: str
     checkedIn: bool
 
-class BroadcastsCancelResultTargetScan2(_Model):
+class BroadcastTargetScan2(_Model):
     noScanDays: int
+
+class BroadcastUndo(_Model):
+    id: str
+    parentId: str
+    restorable: int
+    kept: int
 
 class BroadcastsCountRecipientsParams(_Model):
     orgId: str
     target: BroadcastsCountRecipientsParamsTarget
+    patch: _Dict[str, _Any] | None = None
+    notify: bool | None = None
+    message: str | None = None
 
 class BroadcastsCountRecipientsParamsTarget(_Model):
-    templateIds: _List[str]
+    templateIds: _List[str] | None = None
     onDevice: bool | None = None
     holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsCountRecipientsParamsTargetScan1 | BroadcastsCountRecipientsParamsTargetScan2 | None = None
-    match: _List[BroadcastsCountRecipientsParamsTargetMatchItem1 | BroadcastsCountRecipientsParamsTargetMatchItem2 | BroadcastsCountRecipientsParamsTargetMatchItem3] | None = None
+    match: _List[BroadcastsCountRecipientsParamsTargetMatchItem1 | BroadcastsCountRecipientsParamsTargetMatchItem2 | BroadcastsCountRecipientsParamsTargetMatchItem3 | BroadcastsCountRecipientsParamsTargetMatchItem4] | None = None
+    version: str | None = None
+    passIds: _List[str] | None = None
+    importId: str | None = None
+    expectCount: int | None = None
 
 class BroadcastsCountRecipientsParamsTargetMatchItem1(_Model):
     input: str
@@ -1694,6 +1777,11 @@ class BroadcastsCountRecipientsParamsTargetMatchItem3(_Model):
     to: str | None = None
     timeZone: str
 
+class BroadcastsCountRecipientsParamsTargetMatchItem4(_Model):
+    input: str
+    op: _Literal["startsWith", "contains"] | str
+    value: str
+
 class BroadcastsCountRecipientsParamsTargetScan1(_Model):
     eventId: str
     checkedIn: bool
@@ -1706,25 +1794,51 @@ class BroadcastsCountRecipientsResult(_Model):
     onDevice: int
     overBudget: int
     limit: int
+    samples: _List[BroadcastsCountRecipientsResultSamplesItem]
+    unchanged: int
+    blocked: _List[BroadcastsCountRecipientsResultBlockedItem]
+    notified: int
+    silent: int
+    estimated: bool | None = None
+
+class BroadcastsCountRecipientsResultBlockedItem(_Model):
+    code: str
+    count: int
+
+class BroadcastsCountRecipientsResultSamplesItem(_Model):
+    passId: str
+    title: str | None
+    changes: _List[BroadcastsCountRecipientsResultSamplesItemChangesItem]
+
+class BroadcastsCountRecipientsResultSamplesItemChangesItem(_Model):
+    key: str
+    label: str
+    from_: str | None = _Field(alias="from")
+    to: str | None
 
 class BroadcastsCreateParams(_Model):
     orgId: str
     kind: _Literal["message", "change"] | str
     name: str | None = None
-    target: BroadcastsCreateParamsTarget
-    patch: _Dict[str, _Any]
     notify: bool | None = None
     send: _Literal["draft", "now", "schedule"] | str | None = None
     at: int | None = None
     clearAfter: int | None = None
+    target: BroadcastsCreateParamsTarget
+    patch: _Dict[str, _Any]
+    message: str | None = None
 
 class BroadcastsCreateParamsTarget(_Model):
-    templateIds: _List[str]
+    templateIds: _List[str] | None = None
     onDevice: bool | None = None
     holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsCreateParamsTargetScan1 | BroadcastsCreateParamsTargetScan2 | None = None
-    match: _List[BroadcastsCreateParamsTargetMatchItem1 | BroadcastsCreateParamsTargetMatchItem2 | BroadcastsCreateParamsTargetMatchItem3] | None = None
+    match: _List[BroadcastsCreateParamsTargetMatchItem1 | BroadcastsCreateParamsTargetMatchItem2 | BroadcastsCreateParamsTargetMatchItem3 | BroadcastsCreateParamsTargetMatchItem4] | None = None
+    version: str | None = None
+    passIds: _List[str] | None = None
+    importId: str | None = None
+    expectCount: int | None = None
 
 class BroadcastsCreateParamsTargetMatchItem1(_Model):
     input: str
@@ -1741,6 +1855,11 @@ class BroadcastsCreateParamsTargetMatchItem3(_Model):
     to: str | None = None
     timeZone: str
 
+class BroadcastsCreateParamsTargetMatchItem4(_Model):
+    input: str
+    op: _Literal["startsWith", "contains"] | str
+    value: str
+
 class BroadcastsCreateParamsTargetScan1(_Model):
     eventId: str
     checkedIn: bool
@@ -1748,183 +1867,9 @@ class BroadcastsCreateParamsTargetScan1(_Model):
 class BroadcastsCreateParamsTargetScan2(_Model):
     noScanDays: int
 
-class BroadcastsCreateResult(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["message", "change"] | str
-    name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: BroadcastsCreateResultTarget
-    patch: _Dict[str, _Any]
-    notify: bool
-    at: int | None
-    clearAfter: int | None
-    parentId: str | None
-    ruleId: str | None
-    followUp: _Dict[str, _Any] | None
-    counts: BroadcastsCreateResultCounts
-    errorCode: str | None
-    createdAt: int
-    startedAt: int | None
-    finishedAt: int | None
-
-class BroadcastsCreateResultCounts(_Model):
-    targeted: int
-    updated: int
-    unchanged: int
-    overBudget: int
-    failed: int
-
-class BroadcastsCreateResultTarget(_Model):
-    templateIds: _List[str]
-    onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
-    q: str | None = None
-    scan: BroadcastsCreateResultTargetScan1 | BroadcastsCreateResultTargetScan2 | None = None
-    match: _List[BroadcastsCreateResultTargetMatchItem1 | BroadcastsCreateResultTargetMatchItem2 | BroadcastsCreateResultTargetMatchItem3] | None = None
-
-class BroadcastsCreateResultTargetMatchItem1(_Model):
-    input: str
-    values: _List[str]
-
-class BroadcastsCreateResultTargetMatchItem2(_Model):
-    input: str
-    min: float | None = None
-    max: float | None = None
-
-class BroadcastsCreateResultTargetMatchItem3(_Model):
-    input: str
-    from_: str | None = _Field(default=None, alias="from")
-    to: str | None = None
-    timeZone: str
-
-class BroadcastsCreateResultTargetScan1(_Model):
-    eventId: str
-    checkedIn: bool
-
-class BroadcastsCreateResultTargetScan2(_Model):
-    noScanDays: int
-
-class BroadcastsListItem(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["message", "change"] | str
-    name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: BroadcastsListItemTarget
-    patch: _Dict[str, _Any]
-    notify: bool
-    at: int | None
-    clearAfter: int | None
-    parentId: str | None
-    ruleId: str | None
-    followUp: _Dict[str, _Any] | None
-    counts: BroadcastsListItemCounts
-    errorCode: str | None
-    createdAt: int
-    startedAt: int | None
-    finishedAt: int | None
-
-class BroadcastsListItemCounts(_Model):
-    targeted: int
-    updated: int
-    unchanged: int
-    overBudget: int
-    failed: int
-
-class BroadcastsListItemTarget(_Model):
-    templateIds: _List[str]
-    onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
-    q: str | None = None
-    scan: BroadcastsListItemTargetScan1 | BroadcastsListItemTargetScan2 | None = None
-    match: _List[BroadcastsListItemTargetMatchItem1 | BroadcastsListItemTargetMatchItem2 | BroadcastsListItemTargetMatchItem3] | None = None
-
-class BroadcastsListItemTargetMatchItem1(_Model):
-    input: str
-    values: _List[str]
-
-class BroadcastsListItemTargetMatchItem2(_Model):
-    input: str
-    min: float | None = None
-    max: float | None = None
-
-class BroadcastsListItemTargetMatchItem3(_Model):
-    input: str
-    from_: str | None = _Field(default=None, alias="from")
-    to: str | None = None
-    timeZone: str
-
-class BroadcastsListItemTargetScan1(_Model):
-    eventId: str
-    checkedIn: bool
-
-class BroadcastsListItemTargetScan2(_Model):
-    noScanDays: int
-
 class BroadcastsListResult(_Model):
-    items: _List[BroadcastsListResultItemsItem]
+    items: _List[Broadcast]
     nextCursor: str | None
-
-class BroadcastsListResultItemsItem(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["message", "change"] | str
-    name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: BroadcastsListResultItemsItemTarget
-    patch: _Dict[str, _Any]
-    notify: bool
-    at: int | None
-    clearAfter: int | None
-    parentId: str | None
-    ruleId: str | None
-    followUp: _Dict[str, _Any] | None
-    counts: BroadcastsListResultItemsItemCounts
-    errorCode: str | None
-    createdAt: int
-    startedAt: int | None
-    finishedAt: int | None
-
-class BroadcastsListResultItemsItemCounts(_Model):
-    targeted: int
-    updated: int
-    unchanged: int
-    overBudget: int
-    failed: int
-
-class BroadcastsListResultItemsItemTarget(_Model):
-    templateIds: _List[str]
-    onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
-    q: str | None = None
-    scan: BroadcastsListResultItemsItemTargetScan1 | BroadcastsListResultItemsItemTargetScan2 | None = None
-    match: _List[BroadcastsListResultItemsItemTargetMatchItem1 | BroadcastsListResultItemsItemTargetMatchItem2 | BroadcastsListResultItemsItemTargetMatchItem3] | None = None
-
-class BroadcastsListResultItemsItemTargetMatchItem1(_Model):
-    input: str
-    values: _List[str]
-
-class BroadcastsListResultItemsItemTargetMatchItem2(_Model):
-    input: str
-    min: float | None = None
-    max: float | None = None
-
-class BroadcastsListResultItemsItemTargetMatchItem3(_Model):
-    input: str
-    from_: str | None = _Field(default=None, alias="from")
-    to: str | None = None
-    timeZone: str
-
-class BroadcastsListResultItemsItemTargetScan1(_Model):
-    eventId: str
-    checkedIn: bool
-
-class BroadcastsListResultItemsItemTargetScan2(_Model):
-    noScanDays: int
 
 class BroadcastsRecipientsListItem(_Model):
     passId: str
@@ -1944,201 +1889,32 @@ class BroadcastsRecipientsListResultItemsItem(_Model):
     outcome: _Literal["updated", "unchanged", "failed"] | str
     silent: bool
 
-class BroadcastsRetrieveResult(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["message", "change"] | str
-    name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: BroadcastsRetrieveResultTarget
-    patch: _Dict[str, _Any]
-    notify: bool
-    at: int | None
-    clearAfter: int | None
-    parentId: str | None
-    ruleId: str | None
-    followUp: _Dict[str, _Any] | None
-    counts: BroadcastsRetrieveResultCounts
-    errorCode: str | None
-    createdAt: int
-    startedAt: int | None
-    finishedAt: int | None
-
-class BroadcastsRetrieveResultCounts(_Model):
-    targeted: int
-    updated: int
-    unchanged: int
-    overBudget: int
-    failed: int
-
-class BroadcastsRetrieveResultTarget(_Model):
-    templateIds: _List[str]
-    onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
-    q: str | None = None
-    scan: BroadcastsRetrieveResultTargetScan1 | BroadcastsRetrieveResultTargetScan2 | None = None
-    match: _List[BroadcastsRetrieveResultTargetMatchItem1 | BroadcastsRetrieveResultTargetMatchItem2 | BroadcastsRetrieveResultTargetMatchItem3] | None = None
-
-class BroadcastsRetrieveResultTargetMatchItem1(_Model):
-    input: str
-    values: _List[str]
-
-class BroadcastsRetrieveResultTargetMatchItem2(_Model):
-    input: str
-    min: float | None = None
-    max: float | None = None
-
-class BroadcastsRetrieveResultTargetMatchItem3(_Model):
-    input: str
-    from_: str | None = _Field(default=None, alias="from")
-    to: str | None = None
-    timeZone: str
-
-class BroadcastsRetrieveResultTargetScan1(_Model):
-    eventId: str
-    checkedIn: bool
-
-class BroadcastsRetrieveResultTargetScan2(_Model):
-    noScanDays: int
-
-class BroadcastsRetryResult(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["message", "change"] | str
-    name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: BroadcastsRetryResultTarget
-    patch: _Dict[str, _Any]
-    notify: bool
-    at: int | None
-    clearAfter: int | None
-    parentId: str | None
-    ruleId: str | None
-    followUp: _Dict[str, _Any] | None
-    counts: BroadcastsRetryResultCounts
-    errorCode: str | None
-    createdAt: int
-    startedAt: int | None
-    finishedAt: int | None
-
-class BroadcastsRetryResultCounts(_Model):
-    targeted: int
-    updated: int
-    unchanged: int
-    overBudget: int
-    failed: int
-
-class BroadcastsRetryResultTarget(_Model):
-    templateIds: _List[str]
-    onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
-    q: str | None = None
-    scan: BroadcastsRetryResultTargetScan1 | BroadcastsRetryResultTargetScan2 | None = None
-    match: _List[BroadcastsRetryResultTargetMatchItem1 | BroadcastsRetryResultTargetMatchItem2 | BroadcastsRetryResultTargetMatchItem3] | None = None
-
-class BroadcastsRetryResultTargetMatchItem1(_Model):
-    input: str
-    values: _List[str]
-
-class BroadcastsRetryResultTargetMatchItem2(_Model):
-    input: str
-    min: float | None = None
-    max: float | None = None
-
-class BroadcastsRetryResultTargetMatchItem3(_Model):
-    input: str
-    from_: str | None = _Field(default=None, alias="from")
-    to: str | None = None
-    timeZone: str
-
-class BroadcastsRetryResultTargetScan1(_Model):
-    eventId: str
-    checkedIn: bool
-
-class BroadcastsRetryResultTargetScan2(_Model):
-    noScanDays: int
-
 class BroadcastsSendParams(_Model):
     at: int | None = None
-
-class BroadcastsSendResult(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["message", "change"] | str
-    name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: BroadcastsSendResultTarget
-    patch: _Dict[str, _Any]
-    notify: bool
-    at: int | None
-    clearAfter: int | None
-    parentId: str | None
-    ruleId: str | None
-    followUp: _Dict[str, _Any] | None
-    counts: BroadcastsSendResultCounts
-    errorCode: str | None
-    createdAt: int
-    startedAt: int | None
-    finishedAt: int | None
-
-class BroadcastsSendResultCounts(_Model):
-    targeted: int
-    updated: int
-    unchanged: int
-    overBudget: int
-    failed: int
-
-class BroadcastsSendResultTarget(_Model):
-    templateIds: _List[str]
-    onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
-    q: str | None = None
-    scan: BroadcastsSendResultTargetScan1 | BroadcastsSendResultTargetScan2 | None = None
-    match: _List[BroadcastsSendResultTargetMatchItem1 | BroadcastsSendResultTargetMatchItem2 | BroadcastsSendResultTargetMatchItem3] | None = None
-
-class BroadcastsSendResultTargetMatchItem1(_Model):
-    input: str
-    values: _List[str]
-
-class BroadcastsSendResultTargetMatchItem2(_Model):
-    input: str
-    min: float | None = None
-    max: float | None = None
-
-class BroadcastsSendResultTargetMatchItem3(_Model):
-    input: str
-    from_: str | None = _Field(default=None, alias="from")
-    to: str | None = None
-    timeZone: str
-
-class BroadcastsSendResultTargetScan1(_Model):
-    eventId: str
-    checkedIn: bool
-
-class BroadcastsSendResultTargetScan2(_Model):
-    noScanDays: int
 
 class BroadcastsUpdateParams(_Model):
     orgId: str
     kind: _Literal["message", "change"] | str
     name: str | None = None
-    target: BroadcastsUpdateParamsTarget
-    patch: _Dict[str, _Any]
     notify: bool | None = None
     send: _Literal["draft", "now", "schedule"] | str | None = None
     at: int | None = None
     clearAfter: int | None = None
+    target: BroadcastsUpdateParamsTarget
+    patch: _Dict[str, _Any]
+    message: str | None = None
 
 class BroadcastsUpdateParamsTarget(_Model):
-    templateIds: _List[str]
+    templateIds: _List[str] | None = None
     onDevice: bool | None = None
     holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
     q: str | None = None
     scan: BroadcastsUpdateParamsTargetScan1 | BroadcastsUpdateParamsTargetScan2 | None = None
-    match: _List[BroadcastsUpdateParamsTargetMatchItem1 | BroadcastsUpdateParamsTargetMatchItem2 | BroadcastsUpdateParamsTargetMatchItem3] | None = None
+    match: _List[BroadcastsUpdateParamsTargetMatchItem1 | BroadcastsUpdateParamsTargetMatchItem2 | BroadcastsUpdateParamsTargetMatchItem3 | BroadcastsUpdateParamsTargetMatchItem4] | None = None
+    version: str | None = None
+    passIds: _List[str] | None = None
+    importId: str | None = None
+    expectCount: int | None = None
 
 class BroadcastsUpdateParamsTargetMatchItem1(_Model):
     input: str
@@ -2155,6 +1931,11 @@ class BroadcastsUpdateParamsTargetMatchItem3(_Model):
     to: str | None = None
     timeZone: str
 
+class BroadcastsUpdateParamsTargetMatchItem4(_Model):
+    input: str
+    op: _Literal["startsWith", "contains"] | str
+    value: str
+
 class BroadcastsUpdateParamsTargetScan1(_Model):
     eventId: str
     checkedIn: bool
@@ -2162,63 +1943,29 @@ class BroadcastsUpdateParamsTargetScan1(_Model):
 class BroadcastsUpdateParamsTargetScan2(_Model):
     noScanDays: int
 
-class BroadcastsUpdateResult(_Model):
+class BulkRun(_Model):
     id: str
     orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["message", "change"] | str
-    name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: BroadcastsUpdateResultTarget
-    patch: _Dict[str, _Any]
-    notify: bool
-    at: int | None
-    clearAfter: int | None
-    parentId: str | None
-    ruleId: str | None
-    followUp: _Dict[str, _Any] | None
-    counts: BroadcastsUpdateResultCounts
-    errorCode: str | None
+    action: _Literal["void", "send_email", "remove"] | str
+    state: _Literal["queued", "running", "done", "stopped", "failed"] | str
+    total: int
+    done: int
+    skipped: int
+    skippedBy: _Dict[str, int]
+    stopRequested: bool
     createdAt: int
-    startedAt: int | None
     finishedAt: int | None
+    code: str | None
 
-class BroadcastsUpdateResultCounts(_Model):
-    targeted: int
-    updated: int
-    unchanged: int
-    overBudget: int
-    failed: int
+class BulkRunsStartParams(_Model):
+    action: _Literal["void", "send_email", "remove"] | str
+    message: str | None = None
+    orgId: str | None = None
+    selection: BulkRunsStartParamsSelection
 
-class BroadcastsUpdateResultTarget(_Model):
-    templateIds: _List[str]
-    onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
-    q: str | None = None
-    scan: BroadcastsUpdateResultTargetScan1 | BroadcastsUpdateResultTargetScan2 | None = None
-    match: _List[BroadcastsUpdateResultTargetMatchItem1 | BroadcastsUpdateResultTargetMatchItem2 | BroadcastsUpdateResultTargetMatchItem3] | None = None
-
-class BroadcastsUpdateResultTargetMatchItem1(_Model):
-    input: str
-    values: _List[str]
-
-class BroadcastsUpdateResultTargetMatchItem2(_Model):
-    input: str
-    min: float | None = None
-    max: float | None = None
-
-class BroadcastsUpdateResultTargetMatchItem3(_Model):
-    input: str
-    from_: str | None = _Field(default=None, alias="from")
-    to: str | None = None
-    timeZone: str
-
-class BroadcastsUpdateResultTargetScan1(_Model):
-    eventId: str
-    checkedIn: bool
-
-class BroadcastsUpdateResultTargetScan2(_Model):
-    noScanDays: int
+class BulkRunsStartParamsSelection(_Model):
+    filter: PassFilter
+    expectCount: int
 
 class BundlesCreateParams(_Model):
     orgId: str
@@ -2361,6 +2108,47 @@ class CapturedEmailPage(_Model):
     items: _List[CapturedEmail]
     nextCursor: str | None
 
+class ConnectionPreview(_Model):
+    ok: bool
+    errorCode: str | None = None
+    records: int
+    counts: ConnectionPreviewCounts
+    releaseBlocked: str | None
+    window: ConnectionPreviewWindow
+    samples: _List[ConnectionPreviewSamplesItem]
+    columns: _List[ConnectionPreviewColumnsItem]
+    durationMs: int
+
+class ConnectionPreviewColumnsItem(_Model):
+    pointer: str
+    label: str
+    samples: _List[str]
+    values: _List[ConnectionPreviewColumnsItemValuesItem]
+
+class ConnectionPreviewColumnsItemValuesItem(_Model):
+    value: str
+    count: int
+
+class ConnectionPreviewCounts(_Model):
+    create: int
+    update: int
+    unchanged: int
+    skipped: int
+    errors: int
+    waiting: int
+
+class ConnectionPreviewSamplesItem(_Model):
+    ref: str
+    action: _Literal["create", "update", "unchanged", "skipped", "error"] | str
+    fields: _Dict[str, _Any]
+    message: str | None = None
+
+class ConnectionPreviewWindow(_Model):
+    days: int
+    limit: int
+    since: int
+    excluded: int
+
 class ConnectionsCreateParams(_Model):
     orgId: str
     connectorType: str
@@ -2385,7 +2173,7 @@ class ConnectionsCreateParamsMappingValue(_Model):
     transform: ConnectionsCreateParamsMappingValueTransform | None = None
 
 class ConnectionsCreateParamsMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsCreateParamsVoidWhenItem(_Model):
@@ -2433,7 +2221,7 @@ class ConnectionsCreateResultMappingValue(_Model):
     transform: ConnectionsCreateResultMappingValueTransform | None = None
 
 class ConnectionsCreateResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsCreateResultVoidWhenItem(_Model):
@@ -2484,7 +2272,7 @@ class ConnectionsListItemMappingValue(_Model):
     transform: ConnectionsListItemMappingValueTransform | None = None
 
 class ConnectionsListItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsListItemVoidWhenItem(_Model):
@@ -2536,7 +2324,7 @@ class ConnectionsListResultItemsItemMappingValue(_Model):
     transform: ConnectionsListResultItemsItemMappingValueTransform | None = None
 
 class ConnectionsListResultItemsItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsListResultItemsItemVoidWhenItem(_Model):
@@ -2585,7 +2373,7 @@ class ConnectionsRetrieveResultMappingValue(_Model):
     transform: ConnectionsRetrieveResultMappingValueTransform | None = None
 
 class ConnectionsRetrieveResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsRetrieveResultMetrics(_Model):
@@ -2602,6 +2390,9 @@ class ConnectionsRetrieveResultRunsItem(_Model):
     outcome: _Literal["running", "unchanged", "changed", "error", "skipped"] | str
     recordsSeen: int | None
     passesChanged: int | None
+    passesCreated: int | None
+    passesVoided: int | None
+    recordsFailed: int | None
     errorCode: str | None
     errorDetail: str | None = None
     httpStatus: int | None
@@ -2664,7 +2455,7 @@ class ConnectionsRevokePreviousWebhookSecretResultMappingValue(_Model):
     transform: ConnectionsRevokePreviousWebhookSecretResultMappingValueTransform | None = None
 
 class ConnectionsRevokePreviousWebhookSecretResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsRevokePreviousWebhookSecretResultVoidWhenItem(_Model):
@@ -2712,7 +2503,7 @@ class ConnectionsRotateWebhookSecretResultMappingValue(_Model):
     transform: ConnectionsRotateWebhookSecretResultMappingValueTransform | None = None
 
 class ConnectionsRotateWebhookSecretResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsRotateWebhookSecretResultVoidWhenItem(_Model):
@@ -2728,6 +2519,9 @@ class ConnectionsRunsListItem(_Model):
     outcome: _Literal["running", "unchanged", "changed", "error", "skipped"] | str
     recordsSeen: int | None
     passesChanged: int | None
+    passesCreated: int | None
+    passesVoided: int | None
+    recordsFailed: int | None
     errorCode: str | None
     errorDetail: str | None = None
     httpStatus: int | None
@@ -2745,6 +2539,9 @@ class ConnectionsRunsListResultItemsItem(_Model):
     outcome: _Literal["running", "unchanged", "changed", "error", "skipped"] | str
     recordsSeen: int | None
     passesChanged: int | None
+    passesCreated: int | None
+    passesVoided: int | None
+    recordsFailed: int | None
     errorCode: str | None
     errorDetail: str | None = None
     httpStatus: int | None
@@ -2759,6 +2556,23 @@ class ConnectionsTestConfigParams(_Model):
     connectorType: str
     config: _Dict[str, _Any]
     secrets: _Dict[str, str] | None = None
+    mapping: _Dict[str, ConnectionsTestConfigParamsMappingValue] | None = None
+    voidWhen: _List[ConnectionsTestConfigParamsVoidWhenItem] | None = None
+    autoCreate: bool | None = None
+    defaultTemplateId: str | None = None
+
+class ConnectionsTestConfigParamsMappingValue(_Model):
+    from_: str = _Field(alias="from")
+    transform: ConnectionsTestConfigParamsMappingValueTransform | None = None
+
+class ConnectionsTestConfigParamsMappingValueTransform(_Model):
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
+    options: _Dict[str, _Any] | None = None
+
+class ConnectionsTestConfigParamsVoidWhenItem(_Model):
+    from_: str = _Field(alias="from")
+    op: _Literal["in", "present"] | str
+    values: _List[str | float | bool] | None = None
 
 class ConnectionsTestConfigResult(_Model):
     ok: bool
@@ -2766,10 +2580,46 @@ class ConnectionsTestConfigResult(_Model):
     errorCode: str | None = None
     durationMs: int
     sample: _List[ConnectionsTestConfigResultSampleItem] | None = None
+    records: int | None = None
+    counts: ConnectionsTestConfigResultCounts | None = None
+    releaseBlocked: str | None = None
+    window: ConnectionsTestConfigResultWindow | None = None
+    samples: _List[ConnectionsTestConfigResultSamplesItem] | None = None
+    columns: _List[ConnectionsTestConfigResultColumnsItem] | None = None
+
+class ConnectionsTestConfigResultColumnsItem(_Model):
+    pointer: str
+    label: str
+    samples: _List[str]
+    values: _List[ConnectionsTestConfigResultColumnsItemValuesItem]
+
+class ConnectionsTestConfigResultColumnsItemValuesItem(_Model):
+    value: str
+    count: int
+
+class ConnectionsTestConfigResultCounts(_Model):
+    create: int
+    update: int
+    unchanged: int
+    skipped: int
+    errors: int
+    waiting: int
 
 class ConnectionsTestConfigResultSampleItem(_Model):
     pointer: str
     preview: str
+
+class ConnectionsTestConfigResultSamplesItem(_Model):
+    ref: str
+    action: _Literal["create", "update", "unchanged", "skipped", "error"] | str
+    fields: _Dict[str, _Any]
+    message: str | None = None
+
+class ConnectionsTestConfigResultWindow(_Model):
+    days: int
+    limit: int
+    since: int
+    excluded: int
 
 class ConnectionsTestResult(_Model):
     ok: bool
@@ -2806,7 +2656,7 @@ class ConnectionsUpdateParamsMappingValue(_Model):
     transform: ConnectionsUpdateParamsMappingValueTransform | None = None
 
 class ConnectionsUpdateParamsMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsUpdateParamsVoidWhenItem(_Model):
@@ -2854,7 +2704,7 @@ class ConnectionsUpdateResultMappingValue(_Model):
     transform: ConnectionsUpdateResultMappingValueTransform | None = None
 
 class ConnectionsUpdateResultMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectionsUpdateResultVoidWhenItem(_Model):
@@ -2939,7 +2789,7 @@ class ConnectorsListItemRecipesItemMappingValue(_Model):
     transform: ConnectorsListItemRecipesItemMappingValueTransform | None = None
 
 class ConnectorsListItemRecipesItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectorsListItemRecipesItemOutputFieldsValue(_Model):
@@ -2998,7 +2848,7 @@ class ConnectorsListResultItemsItemRecipesItemMappingValue(_Model):
     transform: ConnectorsListResultItemsItemRecipesItemMappingValueTransform | None = None
 
 class ConnectorsListResultItemsItemRecipesItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectorsListResultItemsItemRecipesItemOutputFieldsValue(_Model):
@@ -3053,7 +2903,7 @@ class ConnectorsRetrieveResultRecipesItemMappingValue(_Model):
     transform: ConnectorsRetrieveResultRecipesItemMappingValueTransform | None = None
 
 class ConnectorsRetrieveResultRecipesItemMappingValueTransform(_Model):
-    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower"] | str
+    kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
 class ConnectorsRetrieveResultRecipesItemOutputFieldsValue(_Model):
@@ -3122,6 +2972,9 @@ class CreatedScanningDeviceOverrides(_Model):
     lookup: bool | None = None
     showPhoto: bool | None = None
 
+class CurrentBulkRun(_Model):
+    run: BulkRun | None = None
+
 class DeliveriesListResult(_Model):
     items: _List[DeliveriesListResultItemsItem]
 
@@ -3137,7 +2990,7 @@ class DeliveriesListResultItemsItem(_Model):
 class EmailFailedEvent(_Model):
     id: str
     type: _Literal["email.failed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -3680,186 +3533,12 @@ class MessageRulesRetrieveResultOffset(_Model):
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
 
-class MessageRulesRunsListItem(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["message", "change"] | str
-    name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: MessageRulesRunsListItemTarget
-    patch: _Dict[str, _Any]
-    notify: bool
-    at: int | None
-    clearAfter: int | None
-    parentId: str | None
-    ruleId: str | None
-    followUp: _Dict[str, _Any] | None
-    counts: MessageRulesRunsListItemCounts
-    errorCode: str | None
-    createdAt: int
-    startedAt: int | None
-    finishedAt: int | None
-
-class MessageRulesRunsListItemCounts(_Model):
-    targeted: int
-    updated: int
-    unchanged: int
-    overBudget: int
-    failed: int
-
-class MessageRulesRunsListItemTarget(_Model):
-    templateIds: _List[str]
-    onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
-    q: str | None = None
-    scan: MessageRulesRunsListItemTargetScan1 | MessageRulesRunsListItemTargetScan2 | None = None
-    match: _List[MessageRulesRunsListItemTargetMatchItem1 | MessageRulesRunsListItemTargetMatchItem2 | MessageRulesRunsListItemTargetMatchItem3] | None = None
-
-class MessageRulesRunsListItemTargetMatchItem1(_Model):
-    input: str
-    values: _List[str]
-
-class MessageRulesRunsListItemTargetMatchItem2(_Model):
-    input: str
-    min: float | None = None
-    max: float | None = None
-
-class MessageRulesRunsListItemTargetMatchItem3(_Model):
-    input: str
-    from_: str | None = _Field(default=None, alias="from")
-    to: str | None = None
-    timeZone: str
-
-class MessageRulesRunsListItemTargetScan1(_Model):
-    eventId: str
-    checkedIn: bool
-
-class MessageRulesRunsListItemTargetScan2(_Model):
-    noScanDays: int
-
 class MessageRulesRunsListResult(_Model):
-    items: _List[MessageRulesRunsListResultItemsItem]
+    items: _List[Broadcast]
     nextCursor: str | None
-
-class MessageRulesRunsListResultItemsItem(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["message", "change"] | str
-    name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: MessageRulesRunsListResultItemsItemTarget
-    patch: _Dict[str, _Any]
-    notify: bool
-    at: int | None
-    clearAfter: int | None
-    parentId: str | None
-    ruleId: str | None
-    followUp: _Dict[str, _Any] | None
-    counts: MessageRulesRunsListResultItemsItemCounts
-    errorCode: str | None
-    createdAt: int
-    startedAt: int | None
-    finishedAt: int | None
-
-class MessageRulesRunsListResultItemsItemCounts(_Model):
-    targeted: int
-    updated: int
-    unchanged: int
-    overBudget: int
-    failed: int
-
-class MessageRulesRunsListResultItemsItemTarget(_Model):
-    templateIds: _List[str]
-    onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
-    q: str | None = None
-    scan: MessageRulesRunsListResultItemsItemTargetScan1 | MessageRulesRunsListResultItemsItemTargetScan2 | None = None
-    match: _List[MessageRulesRunsListResultItemsItemTargetMatchItem1 | MessageRulesRunsListResultItemsItemTargetMatchItem2 | MessageRulesRunsListResultItemsItemTargetMatchItem3] | None = None
-
-class MessageRulesRunsListResultItemsItemTargetMatchItem1(_Model):
-    input: str
-    values: _List[str]
-
-class MessageRulesRunsListResultItemsItemTargetMatchItem2(_Model):
-    input: str
-    min: float | None = None
-    max: float | None = None
-
-class MessageRulesRunsListResultItemsItemTargetMatchItem3(_Model):
-    input: str
-    from_: str | None = _Field(default=None, alias="from")
-    to: str | None = None
-    timeZone: str
-
-class MessageRulesRunsListResultItemsItemTargetScan1(_Model):
-    eventId: str
-    checkedIn: bool
-
-class MessageRulesRunsListResultItemsItemTargetScan2(_Model):
-    noScanDays: int
 
 class MessageRulesSendTestParams(_Model):
     passId: str
-
-class MessageRulesSendTestResult(_Model):
-    id: str
-    orgId: str
-    mode: _Literal["live", "test"] | str
-    kind: _Literal["message", "change"] | str
-    name: str
-    state: _Literal["draft", "scheduled", "sending", "sent", "partial", "failed", "cancelled"] | str
-    target: MessageRulesSendTestResultTarget
-    patch: _Dict[str, _Any]
-    notify: bool
-    at: int | None
-    clearAfter: int | None
-    parentId: str | None
-    ruleId: str | None
-    followUp: _Dict[str, _Any] | None
-    counts: MessageRulesSendTestResultCounts
-    errorCode: str | None
-    createdAt: int
-    startedAt: int | None
-    finishedAt: int | None
-
-class MessageRulesSendTestResultCounts(_Model):
-    targeted: int
-    updated: int
-    unchanged: int
-    overBudget: int
-    failed: int
-
-class MessageRulesSendTestResultTarget(_Model):
-    templateIds: _List[str]
-    onDevice: bool | None = None
-    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
-    q: str | None = None
-    scan: MessageRulesSendTestResultTargetScan1 | MessageRulesSendTestResultTargetScan2 | None = None
-    match: _List[MessageRulesSendTestResultTargetMatchItem1 | MessageRulesSendTestResultTargetMatchItem2 | MessageRulesSendTestResultTargetMatchItem3] | None = None
-
-class MessageRulesSendTestResultTargetMatchItem1(_Model):
-    input: str
-    values: _List[str]
-
-class MessageRulesSendTestResultTargetMatchItem2(_Model):
-    input: str
-    min: float | None = None
-    max: float | None = None
-
-class MessageRulesSendTestResultTargetMatchItem3(_Model):
-    input: str
-    from_: str | None = _Field(default=None, alias="from")
-    to: str | None = None
-    timeZone: str
-
-class MessageRulesSendTestResultTargetScan1(_Model):
-    eventId: str
-    checkedIn: bool
-
-class MessageRulesSendTestResultTargetScan2(_Model):
-    noScanDays: int
 
 class MessageRulesUpdateParams(_Model):
     orgId: str
@@ -4206,7 +3885,7 @@ class OrgsEntitlementsRetrieveResult(_Model):
     items: _List[OrgsEntitlementsRetrieveResultItemsItem]
 
 class OrgsEntitlementsRetrieveResultItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     value: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
 
@@ -4260,7 +3939,7 @@ class OrgsUpdatePassSetupParamsChannels(_Model):
 class PassChannelsChangedEvent(_Model):
     id: str
     type: _Literal["pass.channels_changed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -4283,6 +3962,7 @@ class PassDetail(_Model):
     serial: str
     title: str | None
     subtitle: str | None
+    matched: _List[PassDetailMatchedItem] | None = None
     externalId: str | None
     status: _Literal["active", "voided"] | str
     mode: _Literal["live", "test"] | str | None = None
@@ -4390,6 +4070,10 @@ class PassDetailEmail(_Model):
     outcome: _Literal["queued", "deferred", "limited_org", "limited_recipient", "cancelled", "none"] | str
     cap: _Literal["org", "recipient"] | str | None = None
 
+class PassDetailMatchedItem(_Model):
+    input: str
+    value: str
+
 class PassDetailPushBudget(_Model):
     used: int
     limit: int
@@ -4401,6 +4085,10 @@ class PassDetailTemplateWarningsItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: PassDetailTemplateWarningsItemFix | None = None
+
+class PassDetailTemplateWarningsItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class PassDetailWarningsItem(_Model):
     severity: _Literal["error", "warning", "info"] | str
@@ -4408,12 +4096,56 @@ class PassDetailWarningsItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: PassDetailWarningsItemFix | None = None
+
+class PassDetailWarningsItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class PassDevice(_Model):
     shortId: str
     device: str
     createdAt: int
     lastPush: _Dict[str, _Any] | None
+
+class PassFilter(_Model):
+    templateId: str | None = None
+    connectionId: str | None = None
+    importId: str | None = None
+    status: _Literal["active", "voided", "removed"] | str | None = None
+    holderEmail: str | None = None
+    holderState: _Literal["unassigned", "waiting", "owned"] | str | None = None
+    onDevice: bool | None = None
+    q: str | None = None
+    externalId: str | None = None
+    scan: PassFilterScan1 | PassFilterScan2 | None = None
+    match: _List[PassFilterMatchItem1 | PassFilterMatchItem2 | PassFilterMatchItem3 | PassFilterMatchItem4] | None = None
+
+class PassFilterMatchItem1(_Model):
+    input: str
+    values: _List[str]
+
+class PassFilterMatchItem2(_Model):
+    input: str
+    min: float | None = None
+    max: float | None = None
+
+class PassFilterMatchItem3(_Model):
+    input: str
+    from_: str | None = _Field(default=None, alias="from")
+    to: str | None = None
+    timeZone: str
+
+class PassFilterMatchItem4(_Model):
+    input: str
+    op: _Literal["startsWith", "contains"] | str
+    value: str
+
+class PassFilterScan1(_Model):
+    eventId: str
+    checkedIn: bool
+
+class PassFilterScan2(_Model):
+    noScanDays: int
 
 class PassImportMappings(_Model):
     saved: _List[PassImportMappingsSavedItem]
@@ -5117,7 +4849,7 @@ class PassImportsUndoParams(_Model):
 class PassInstalledEvent(_Model):
     id: str
     type: _Literal["pass.installed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5134,7 +4866,7 @@ class PassInstalledEventData(_Model):
 class PassIssuedEvent(_Model):
     id: str
     type: _Literal["pass.issued"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5149,11 +4881,12 @@ class PassIssuedEventData(_Model):
 class PassPage(_Model):
     items: _List[PassSummary]
     nextCursor: str | None
+    count: int | None = None
 
 class PassPrintVoidedEvent(_Model):
     id: str
     type: _Literal["pass.print_voided"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5168,7 +4901,7 @@ class PassPrintVoidedEventData(_Model):
 class PassPrintedEvent(_Model):
     id: str
     type: _Literal["pass.printed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5184,7 +4917,7 @@ class PassPrintedEventData(_Model):
 class PassRemovedEvent(_Model):
     id: str
     type: _Literal["pass.removed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5195,11 +4928,12 @@ class PassRemovedEvent(_Model):
 class PassRemovedEventData(_Model):
     version: int | None = None
     message: bool | None = None
+    runId: str | None = None
 
 class PassRestoredEvent(_Model):
     id: str
     type: _Literal["pass.restored"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5213,7 +4947,7 @@ class PassRestoredEventData(_Model):
 class PassScanRefusedEvent(_Model):
     id: str
     type: _Literal["pass.scan_refused"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5232,7 +4966,7 @@ class PassScanRefusedEventData(_Model):
 class PassScanUndoneEvent(_Model):
     id: str
     type: _Literal["pass.scan_undone"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5248,7 +4982,7 @@ class PassScanUndoneEventData(_Model):
 class PassScannedEvent(_Model):
     id: str
     type: _Literal["pass.scanned"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5717,6 +5451,7 @@ class PassSummary(_Model):
     serial: str
     title: str | None
     subtitle: str | None
+    matched: _List[PassSummaryMatchedItem] | None = None
     externalId: str | None
     status: _Literal["active", "voided"] | str
     mode: _Literal["live", "test"] | str | None = None
@@ -5732,10 +5467,14 @@ class PassSummary(_Model):
     modifiedAt: int
     createdAt: int
 
+class PassSummaryMatchedItem(_Model):
+    input: str
+    value: str
+
 class PassUninstalledEvent(_Model):
     id: str
     type: _Literal["pass.uninstalled"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5753,7 +5492,7 @@ class PassUninstalledEventData(_Model):
 class PassUnvoidedEvent(_Model):
     id: str
     type: _Literal["pass.unvoided"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5767,7 +5506,7 @@ class PassUnvoidedEventData(_Model):
 class PassUpdatedEvent(_Model):
     id: str
     type: _Literal["pass.updated"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5791,10 +5530,29 @@ class PassVersion(_Model):
     createdAt: int
     purged: bool
 
+class PassViews(_Model):
+    items: _List[PassViewsItemsItem]
+    revision: int
+
+class PassViewsItemsItem(_Model):
+    id: str
+    name: str
+    filter: PassFilter
+
+class PassViewsReplaceParams(_Model):
+    items: _List[PassViewsReplaceParamsItemsItem]
+    revision: int
+    orgId: str | None = None
+
+class PassViewsReplaceParamsItemsItem(_Model):
+    id: str
+    name: str
+    filter: PassFilter
+
 class PassVoidedEvent(_Model):
     id: str
     type: _Literal["pass.voided"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -5804,6 +5562,7 @@ class PassVoidedEvent(_Model):
 
 class PassVoidedEventData(_Model):
     actorType: str | None = None
+    runId: str | None = None
 
 class PassesActivityListItem(_Model):
     id: str
@@ -5865,8 +5624,16 @@ class PassesAssetsUploadResult(_Model):
 class PassesBulkApplyParams(_Model):
     action: _Literal["void", "send_email", "remove"] | str
     message: str | None = None
-    ids: _List[str]
     orgId: str | None = None
+    ids: _List[str] | None = None
+    selection: PassesBulkApplyParamsSelection1 | PassesBulkApplyParamsSelection2 | None = None
+
+class PassesBulkApplyParamsSelection1(_Model):
+    ids: _List[str]
+
+class PassesBulkApplyParamsSelection2(_Model):
+    filter: PassFilter
+    expectCount: int
 
 class PassesBulkApplyResult(_Model):
     done: int
@@ -5927,6 +5694,7 @@ class PassesBulkUpdateChannelsResultSkippedItem(_Model):
 
 class PassesChannelsRetrieveResult(_Model):
     effective: PassesChannelsRetrieveResultEffective
+    levels: PassesChannelsRetrieveResultLevels
     overrides: PassesChannelsRetrieveResultOverrides
     replace: PassesChannelsRetrieveResultReplace
 
@@ -5980,6 +5748,50 @@ class PassesChannelsRetrieveResultEffectiveSamsung(_Model):
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
+class PassesChannelsRetrieveResultLevels(_Model):
+    mobile: _List[PassesChannelsRetrieveResultLevelsMobileItem] | None = None
+    apple: _List[PassesChannelsRetrieveResultLevelsAppleItem] | None = None
+    google: _List[PassesChannelsRetrieveResultLevelsGoogleItem] | None = None
+    samsung: _List[PassesChannelsRetrieveResultLevelsSamsungItem] | None = None
+    paper: _List[PassesChannelsRetrieveResultLevelsPaperItem] | None = None
+    nfc: _List[PassesChannelsRetrieveResultLevelsNfcItem] | None = None
+
+class PassesChannelsRetrieveResultLevelsAppleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsRetrieveResultLevelsGoogleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsRetrieveResultLevelsMobileItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsRetrieveResultLevelsNfcItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsRetrieveResultLevelsPaperItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsRetrieveResultLevelsSamsungItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
 class PassesChannelsRetrieveResultOverrides(_Model):
     mobile: _Literal["on", "off"] | str | None = None
     apple: _Literal["on", "off"] | str | None = None
@@ -6020,6 +5832,7 @@ class PassesChannelsUpdateParamsChannels(_Model):
 
 class PassesChannelsUpdateResult(_Model):
     effective: PassesChannelsUpdateResultEffective
+    levels: PassesChannelsUpdateResultLevels
     overrides: PassesChannelsUpdateResultOverrides
     replace: PassesChannelsUpdateResultReplace
 
@@ -6072,6 +5885,50 @@ class PassesChannelsUpdateResultEffectiveSamsung(_Model):
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
+
+class PassesChannelsUpdateResultLevels(_Model):
+    mobile: _List[PassesChannelsUpdateResultLevelsMobileItem] | None = None
+    apple: _List[PassesChannelsUpdateResultLevelsAppleItem] | None = None
+    google: _List[PassesChannelsUpdateResultLevelsGoogleItem] | None = None
+    samsung: _List[PassesChannelsUpdateResultLevelsSamsungItem] | None = None
+    paper: _List[PassesChannelsUpdateResultLevelsPaperItem] | None = None
+    nfc: _List[PassesChannelsUpdateResultLevelsNfcItem] | None = None
+
+class PassesChannelsUpdateResultLevelsAppleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsUpdateResultLevelsGoogleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsUpdateResultLevelsMobileItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsUpdateResultLevelsNfcItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsUpdateResultLevelsPaperItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class PassesChannelsUpdateResultLevelsSamsungItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
 
 class PassesChannelsUpdateResultOverrides(_Model):
     mobile: _Literal["on", "off"] | str | None = None
@@ -6513,7 +6370,7 @@ class ProblemIssuesItem(_Model):
 class PushFailedEvent(_Model):
     id: str
     type: _Literal["push.failed"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -6970,6 +6827,10 @@ class ScanEventsCreateParams(_Model):
     reentry: bool | None = None
     hardLimit: bool | None = None
     note: str | None = None
+
+class ScanEventsListResult(_Model):
+    items: _List[ScanEvent]
+    nextCursor: str | None
 
 class ScanEventsMarkOutParams(_Model):
     passId: str
@@ -7688,6 +7549,37 @@ class ScanSummaryOverridesLatestItem(_Model):
     approvedBy: str | None
     reason: str | None
 
+class ScanZonesArchiveResult(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesArchiveResultCheckedAtItem]
+    plans: _List[ScanZonesArchiveResultPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesArchiveResultCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesArchiveResultPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
+
 class ScanZonesCreateParams(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str | None = None
     capacity: int | None = None
@@ -7701,9 +7593,141 @@ class ScanZonesCreateParams(_Model):
     timeZone: str | None = None
     sort: int | None = None
 
+class ScanZonesCreateResult(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesCreateResultCheckedAtItem]
+    plans: _List[ScanZonesCreateResultPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesCreateResultCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesCreateResultPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
+
+class ScanZonesListItem(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesListItemCheckedAtItem]
+    plans: _List[ScanZonesListItemPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesListItemCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesListItemPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
+
+class ScanZonesListResult(_Model):
+    items: _List[ScanZonesListResultItemsItem]
+    nextCursor: str | None
+
+class ScanZonesListResultItemsItem(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesListResultItemsItemCheckedAtItem]
+    plans: _List[ScanZonesListResultItemsItemPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesListResultItemsItemCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesListResultItemsItemPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
+
 class ScanZonesMarkOutParams(_Model):
     passId: str
     place: str
+
+class ScanZonesResetVisitsResult(_Model):
+    passId: str
+    visits: _Literal[0]
+
+class ScanZonesRestoreResult(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesRestoreResultCheckedAtItem]
+    plans: _List[ScanZonesRestoreResultPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesRestoreResultCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesRestoreResultPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
 
 class ScanZonesUpdateParams(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str | None = None
@@ -7716,6 +7740,37 @@ class ScanZonesUpdateParams(_Model):
     timeZone: str | None = None
     sort: int | None = None
     archived: bool | None = None
+
+class ScanZonesUpdateResult(_Model):
+    occupancy: _Literal["off", "track", "enforce"] | str
+    capacity: int | None
+    maxStayMinutes: int | None
+    hardLimit: bool | None = None
+    clearAt: str | None
+    id: str
+    orgId: str
+    key: str
+    name: str
+    parentId: str | None
+    timeZone: str | None
+    effectiveTimeZone: str | None
+    sort: int
+    depth: int
+    sessions: int
+    checkedAt: _List[ScanZonesUpdateResultCheckedAtItem]
+    plans: _List[ScanZonesUpdateResultPlansItem]
+    inNow: int | None
+    archivedAt: int | None
+
+class ScanZonesUpdateResultCheckedAtItem(_Model):
+    id: str
+    name: str
+
+class ScanZonesUpdateResultPlansItem(_Model):
+    templateId: str
+    templateName: str
+    planId: str
+    label: str
 
 class Scanner(_Model):
     id: str
@@ -8177,6 +8232,10 @@ class ScanningSessionsDevicesUpdateParamsOverrides(_Model):
     lookup: bool | None = None
     showPhoto: bool | None = None
 
+class ScanningSessionsListResult(_Model):
+    items: _List[ScanningSession]
+    nextCursor: str | None
+
 class ScanningSessionsOverrideHoursParams1(_Model):
     action: _Literal["close"] | str
     revision: int | None = None
@@ -8509,6 +8568,10 @@ class TemplateDetailVersionsItemReportIssuesItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: TemplateDetailVersionsItemReportIssuesItemFix | None = None
+
+class TemplateDetailVersionsItemReportIssuesItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class TemplateImportsListItem(_Model):
     uploadId: str
@@ -8558,6 +8621,77 @@ class TemplateReviewListItemsItem(_Model):
     version: str
     requestedBy: str | None
     requestedAt: int
+
+class TemplateRollout(_Model):
+    releaseVersion: str | None
+    releaseId: str | None
+    fromVersion: str | None
+    total: int
+    onRelease: int
+    remaining: int
+    updating: _List[TemplateRolloutUpdatingItem]
+    failedCount: int
+    failed: _List[TemplateRolloutFailedItem]
+    startedAt: int | None
+    runId: str | None
+    running: bool
+    stalled: bool
+    changes: _List[TemplateRolloutChangesItem]
+    tell: _Dict[str, _Any] | None
+
+class TemplateRolloutChangesItem(_Model):
+    group: _Literal["colors", "front", "back", "images", "barcode"] | str
+    rows: _List[TemplateRolloutChangesItemRowsItem]
+    more: int
+
+class TemplateRolloutChangesItemRowsItem(_Model):
+    label: str
+    kind: _Literal["added", "removed", "changed"] | str
+    from_: TemplateRolloutChangesItemRowsItemFrom1 | TemplateRolloutChangesItemRowsItemFrom2 | TemplateRolloutChangesItemRowsItemFrom3 | TemplateRolloutChangesItemRowsItemFrom4 | None = _Field(alias="from")
+    to: TemplateRolloutChangesItemRowsItemTo1 | TemplateRolloutChangesItemRowsItemTo2 | TemplateRolloutChangesItemRowsItemTo3 | TemplateRolloutChangesItemRowsItemTo4 | None
+
+class TemplateRolloutChangesItemRowsItemFrom1(_Model):
+    type: _Literal["text"]
+    text: str
+
+class TemplateRolloutChangesItemRowsItemFrom2(_Model):
+    type: _Literal["color"]
+    color: str
+
+class TemplateRolloutChangesItemRowsItemFrom3(_Model):
+    type: _Literal["date"]
+    at: int
+
+class TemplateRolloutChangesItemRowsItemFrom4(_Model):
+    type: _Literal["image"]
+    version: str
+    asset: str
+
+class TemplateRolloutChangesItemRowsItemTo1(_Model):
+    type: _Literal["text"]
+    text: str
+
+class TemplateRolloutChangesItemRowsItemTo2(_Model):
+    type: _Literal["color"]
+    color: str
+
+class TemplateRolloutChangesItemRowsItemTo3(_Model):
+    type: _Literal["date"]
+    at: int
+
+class TemplateRolloutChangesItemRowsItemTo4(_Model):
+    type: _Literal["image"]
+    version: str
+    asset: str
+
+class TemplateRolloutFailedItem(_Model):
+    passId: str
+    title: str | None
+    reason: str
+
+class TemplateRolloutUpdatingItem(_Model):
+    version: str
+    count: int
 
 class TemplateSummary(_Model):
     id: str
@@ -8729,10 +8863,18 @@ class TemplatesChannelsListRunsResultItem(_Model):
     errorCode: str | None
     waiting: _Dict[str, _Any] | None
 
+class TemplatesChannelsResetPassesParams(_Model):
+    channels: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str] | None = None
+    dryRun: bool | None = None
+    orgId: str | None = None
+
 class TemplatesChannelsRetrieveResult(_Model):
     channels: _Dict[str, _Any] | None
     revision: int
     effective: TemplatesChannelsRetrieveResultEffective
+    levels: TemplatesChannelsRetrieveResultLevels
+    overrides: TemplatesChannelsRetrieveResultOverrides
+    overridePasses: int
     defaults: TemplatesChannelsRetrieveResultDefaults
 
 class TemplatesChannelsRetrieveResultDefaults(_Model):
@@ -8792,6 +8934,58 @@ class TemplatesChannelsRetrieveResultEffectiveSamsung(_Model):
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
+
+class TemplatesChannelsRetrieveResultLevels(_Model):
+    mobile: _List[TemplatesChannelsRetrieveResultLevelsMobileItem] | None = None
+    apple: _List[TemplatesChannelsRetrieveResultLevelsAppleItem] | None = None
+    google: _List[TemplatesChannelsRetrieveResultLevelsGoogleItem] | None = None
+    samsung: _List[TemplatesChannelsRetrieveResultLevelsSamsungItem] | None = None
+    paper: _List[TemplatesChannelsRetrieveResultLevelsPaperItem] | None = None
+    nfc: _List[TemplatesChannelsRetrieveResultLevelsNfcItem] | None = None
+
+class TemplatesChannelsRetrieveResultLevelsAppleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultLevelsGoogleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultLevelsMobileItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultLevelsNfcItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultLevelsPaperItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultLevelsSamsungItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsRetrieveResultOverrides(_Model):
+    mobile: int | None = None
+    apple: int | None = None
+    google: int | None = None
+    samsung: int | None = None
+    paper: int | None = None
+    nfc: int | None = None
 
 class TemplatesChannelsUpdateParams(_Model):
     channels: TemplatesChannelsUpdateParamsChannels
@@ -8857,6 +9051,10 @@ class TemplatesListPreviewsResultItemsItemWarningsItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: TemplatesListPreviewsResultItemsItemWarningsItemFix | None = None
+
+class TemplatesListPreviewsResultItemsItemWarningsItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class TemplatesPreviewParams(_Model):
     version: str | None = None
@@ -8876,6 +9074,10 @@ class TemplatesPreviewResultWarningsItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: TemplatesPreviewResultWarningsItemFix | None = None
+
+class TemplatesPreviewResultWarningsItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class TemplatesReleasesCreateParams(_Model):
     orgId: str
@@ -9107,6 +9309,10 @@ class TemplatesVersionsRetrieveResultReportIssuesItem(_Model):
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
+    fix: TemplatesVersionsRetrieveResultReportIssuesItemFix | None = None
+
+class TemplatesVersionsRetrieveResultReportIssuesItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class TerminalActParams(_Model):
     idempotencyKey: str
@@ -9469,7 +9675,7 @@ class WebhookEndpoint(_Model):
     description: str
     eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
     templateIds: _List[str] | None
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     status: _Literal["active", "paused", "disabled"] | str
     target: _Literal["url", "capture"] | str
     failingSince: int | None
@@ -9545,17 +9751,29 @@ class WebhookEndpointsUpdateParams(_Model):
     eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str] | None = None
     templateIds: _List[str] | None = None
     status: _Literal["active", "paused"] | str | None = None
-    apiVersion: _Literal["2026-12-01"] | str | None = None
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str | None = None
 
 class WebhookPassRef(_Model):
     id: str
     externalId: str | None
     templateId: str
 
+class WebhookTestAttemptPage(_Model):
+    items: _List[WebhookTestAttemptPageItemsItem]
+
+class WebhookTestAttemptPageItemsItem(_Model):
+    id: str
+    type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | str
+    ok: bool
+    status: int | None
+    errorCode: str | None
+    durationMs: int
+    at: int
+
 class WebhookTestEvent(_Model):
     id: str
     type: _Literal["webhook.test"]
-    apiVersion: _Literal["2026-12-01"] | str
+    apiVersion: _Literal["2026-12-01", "2026-11-20"] | str
     createdAt: int
     orgId: str
     mode: _Literal["live", "test"] | str
@@ -9620,19 +9838,47 @@ BrandWebLogoUploadBody = BrandWebLogoUploadParams
 
 BrandWebLogoUploadResult = Org
 
+BroadcastsCancelResult = Broadcast
+
 BroadcastsCountRecipientsBody = BroadcastsCountRecipientsParams
 
 BroadcastsCreateBody = BroadcastsCreateParams
 
+BroadcastsCreateResult = Broadcast
+
+BroadcastsRetrieveResult = Broadcast
+
+BroadcastsRetryResult = Broadcast
+
 BroadcastsSendBody = BroadcastsSendParams
 
+BroadcastsSendResult = Broadcast
+
+BroadcastsStopResult = Broadcast
+
+BroadcastsUndoResult = BroadcastUndo
+
 BroadcastsUpdateBody = BroadcastsUpdateParams
+
+BroadcastsUpdateResult = Broadcast
+
+BulkRunsCurrentResult = CurrentBulkRun
+
+BulkRunsRetrieveResult = BulkRun
+
+BulkRunsStartBody = BulkRunsStartParams
+
+BulkRunsStartResult = BulkRun
+
+BulkRunsStopResult = BulkRun
 
 BundlesCreateBody = BundlesCreateParams
 
 BundlesSendEmailBody = BundlesSendEmailParams
 
 ConnectionsCreateBody = ConnectionsCreateParams
+
+ConnectionsPreviewResult = ConnectionPreview
 
 ConnectionsTestConfigBody = ConnectionsTestConfigParams
 
@@ -9661,6 +9907,8 @@ MessageRulesCountDueBody = MessageRulesCountDueParams
 MessageRulesCreateBody = MessageRulesCreateParams
 
 MessageRulesSendTestBody = MessageRulesSendTestParams
+
+MessageRulesSendTestResult = Broadcast
 
 MessageRulesUpdateBody = MessageRulesUpdateParams
 
@@ -9705,6 +9953,12 @@ PassImportsSendEmailsBody = PassImportsSendEmailsParams
 PassImportsUndoBody = PassImportsUndoParams
 
 PassImportsUndoResult = PassImportUndo
+
+PassViewsListResult = PassViews
+
+PassViewsReplaceBody = PassViewsReplaceParams
+
+PassViewsReplaceResult = PassViews
 
 PassesBulkApplyBody = PassesBulkApplyParams
 
@@ -9774,6 +10028,22 @@ ScanCard = _Dict[str, _Any] | None
 
 ScanDeviceCapabilities = _Dict[str, _Any] | None
 
+ScanEventsArchiveResult = ScanEvent
+
+ScanEventsAttachScannersBody = ScanEventsAttachScannersParams
+
+ScanEventsAttachScannersResult = ScanEvent
+
+ScanEventsCreateBody = ScanEventsCreateParams
+
+ScanEventsCreateResult = ScanEvent
+
+ScanEventsRetrieveResult = ScanEvent
+
+ScanEventsUpdateBody = ScanEventsUpdateParams
+
+ScanEventsUpdateResult = ScanEvent
+
 ScanPrevious = _Dict[str, _Any] | None
 
 ScanSetupAnswer = ScanSetupAnswer1 | ScanSetupAnswer2
@@ -9782,11 +10052,39 @@ ScanTemplateRef = _Dict[str, _Any] | None
 
 ScanWorkspace = _Dict[str, _Any] | None
 
+ScanZonesCreateBody = ScanZonesCreateParams
+
+ScanZonesUpdateBody = ScanZonesUpdateParams
+
+ScannersRevokeResult = Scanner
+
+ScannersSetModeBody = ScannersSetModeParams
+
+ScannersSetModeResult = Scanner
+
+ScannersUpdateBody = ScannersUpdateParams
+
+ScannersUpdateResult = Scanner
+
+ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
+
+ScanningSessionsDevicesUpdateResult = ScanningDevice
+
 ScanningSessionsOverrideHoursParams = ScanningSessionsOverrideHoursParams1 | ScanningSessionsOverrideHoursParams2 | ScanningSessionsOverrideHoursParams3
+
+ScanningSessionsOverrideHoursBody = ScanningSessionsOverrideHoursParams
+
+ScanningSessionsOverrideHoursResult = ScanningSessionDetail
+
+ScanningSessionsRetrieveResult = ScanningSessionDetail
 
 ScanningSessionsSetupBody = ScanningSessionsSetupParams
 
 ScanningSessionsSetupResult = ScanSetupAnswer
+
+ScanningSessionsUpdateBody = ScanningSessionsUpdateParams
+
+ScanningSessionsUpdateResult = ScanningSessionDetail
 
 ScansListResult = ScansListResult1 | ScansListResult2
 
@@ -9811,6 +10109,8 @@ TemplatesReleasesReleaseResult = ReleaseResponse
 TemplatesRetrieveInputSchemaResult = TemplateInputSchema
 
 TemplatesRetrieveResult = TemplateDetail
+
+TemplatesRetrieveRolloutResult = TemplateRollout
 
 TemplatesReviewsApproveBody = ReviewTemplate
 
@@ -9879,6 +10179,8 @@ WebhookEndpointsRotateSecretBody = WebhookEndpointsRotateSecretParams
 WebhookEndpointsSendTestBody = WebhookEndpointsSendTestParams
 
 WebhookEndpointsSendTestResult = WebhookTestResult
+
+WebhookEndpointsTestsListResult = WebhookTestAttemptPage
 
 WebhookEndpointsUpdateBody = WebhookEndpointsUpdateParams
 

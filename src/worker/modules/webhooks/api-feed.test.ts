@@ -40,7 +40,7 @@ describe('GET /events', () => {
     expect(p1.json.nextCursor).toMatch(/^ev2\.[A-Za-z0-9_-]{22}$/);
     expect(p1.json.items[0]).toMatchObject({
       type: 'pass.issued',
-      apiVersion: '2026-12-01',
+      apiVersion: '2026-11-20',
       orgId: s.orgId,
       mode: 'live',
       pass: { id: s.passes[0]?.id, templateId: expect.any(String) },
@@ -129,7 +129,7 @@ describe('GET /events', () => {
       '?apiVersion=2020-01-01',
     ])
       expect((await s.get(q)).status, q).toBe(422);
-    expect((await s.get('?apiVersion=2026-12-01')).status).toBe(200);
+    expect((await s.get('?apiVersion=2026-11-20')).status).toBe(200);
   });
 
   it('fences by org and by mode', async () => {
@@ -191,7 +191,7 @@ describe('GET /events/{id}', () => {
     expect(one.status).toBe(200);
     expect(one.json).toEqual(event);
     expect(
-      (await api.call('GET', `${EVENTS}/${event.id}?apiVersion=2026-12-01`, undefined, s.key))
+      (await api.call('GET', `${EVENTS}/${event.id}?apiVersion=2026-11-20`, undefined, s.key))
         .status,
     ).toBe(200);
     expect((await api.call('GET', `${EVENTS}/${event.id}`, undefined, other.key)).status).toBe(404);

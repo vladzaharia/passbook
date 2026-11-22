@@ -45,7 +45,7 @@ export async function makeOrg(
   const id = overrides.id ?? f.ids.id();
   const row = {
     id,
-    slug: overrides.slug ?? `org-${id.slice(-6)}`,
+    slug: overrides.slug ?? `org-${id.slice(-12)}`,
     name: overrides.name ?? 'Test Org',
   };
   const now = f.clock.now();

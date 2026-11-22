@@ -32,7 +32,9 @@ describe('the index', () => {
 
   it('links every row to a page the portal has, with the anchors the pages carry', () => {
     const anchors = new Set(
-      site.pages.flatMap((p) => p.ops.map((o) => `${PATHS.reference}/${p.slug}#${o.anchor}`)),
+      site.pages.flatMap((p) =>
+        p.ops.map((o) => `${PATHS.reference}/${p.slug}/${o.anchor.toLowerCase()}`),
+      ),
     );
     for (const o of index.ops) expect(anchors.has(o.href), o.href).toBe(true);
     for (const e of index.errors) expect(e.href).toBe(`${PATHS.errors}/${e.code}`);

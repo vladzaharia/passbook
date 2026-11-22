@@ -22,7 +22,11 @@ import { localDayStart } from './counts.ts';
 import { parseSettings } from './dto-console.ts';
 import { captureConsoleFeed } from './feed-console-page.ts';
 import { scannerHasTemplates } from './repo-device.ts';
-import { type ScanReadAuthority, scanReadAuthority } from './repo-read-authority.ts';
+import {
+  keyScanReadAuthority,
+  type ScanReadAuthority,
+  scanReadAuthority,
+} from './repo-read-authority.ts';
 import { getConsoleScanner } from './repo-scanners.ts';
 import type { ScanningDeviceRow } from './repo-scanning-devices.ts';
 import { type ScanningSessionRow, scanningSessionStats } from './repo-scanning-sessions.ts';
@@ -48,6 +52,8 @@ export interface SessionReadAuthority {
   sessionId?: string;
   /** Present only for a console read, bound to its exact membership and session. */
   tenant?: Extract<TenantPassWrite, { kind: 'session' }>;
+  /** An org-bound API key read: counts and rules, no activity feed. */
+  key?: true;
   at(now: number): ScanReadAuthority;
 }
 
@@ -77,6 +83,19 @@ export async function captureConsoleSessionCountAuthority(
     mode: original.mode,
     tenant: original,
     at: (now) => scanReadAuthority(actor, { now }),
+  };
+}
+
+/** The count fence of an org-bound `scan-setup:read` key: its own live row, scope and org, no console session. */
+export function keySessionCountAuthority(
+  authority: Extract<TenantPassWrite, { kind: 'api_key' }>,
+): SessionReadAuthority {
+  keyScanReadAuthority(authority, 0);
+  return {
+    orgId: authority.orgId,
+    mode: authority.mode,
+    key: true,
+    at: (now) => keyScanReadAuthority(authority, now),
   };
 }
 

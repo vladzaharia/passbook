@@ -70,7 +70,7 @@ describe('create, read, update, delete', () => {
       description: 'Door',
       eventTypes: GOOD.eventTypes,
       templateIds: null,
-      apiVersion: '2026-12-01',
+      apiVersion: '2026-11-20',
       status: 'active',
     });
     expect(await openAll(endpoint.id)).toEqual([secret]);

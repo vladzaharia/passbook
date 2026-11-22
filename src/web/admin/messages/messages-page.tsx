@@ -33,6 +33,8 @@ const ALL = 'all';
 
 export interface MessagesSearch {
   state?: BroadcastState | undefined;
+  /** `change` shows field changes; without it the list is messages only. */
+  kind?: 'change' | undefined;
 }
 
 export function MessagesPage({
@@ -70,7 +72,7 @@ function ScopedMessagesPage({
   search: MessagesSearch;
   onSearch: (patch: Partial<MessagesSearch>) => void;
 }) {
-  const list = useBroadcastPages({ orgId, state: search.state });
+  const list = useBroadcastPages({ orgId, state: search.state, kind: search.kind ?? 'message' });
   const rules = useRules(orgId);
   const [editing, setEditing] = useState<EditingRule>(null);
   const rows = useMemo(() => list.data?.pages.flatMap((p) => p.items) ?? [], [list.data]);
@@ -137,8 +139,8 @@ function ScopedMessagesPage({
     [mixed],
   );
 
-  const filtered = Boolean(search.state);
-  const clear = () => onSearch({ state: undefined });
+  const filtered = Boolean(search.state || search.kind);
+  const clear = () => onSearch({ state: undefined, kind: undefined });
   const create = (variant: 'primary' | 'outline') =>
     canCreate ? (
       <Button asChild variant={variant} iconStart={<Plus aria-hidden />}>
@@ -207,6 +209,18 @@ function ScopedMessagesPage({
                           ],
                           onChange: (v) =>
                             onSearch({ state: v === ALL ? undefined : (v as BroadcastState) }),
+                        },
+                        {
+                          id: 'kind',
+                          label: 'Show',
+                          value: search.kind ?? 'message',
+                          defaultValue: 'message',
+                          options: [
+                            { value: 'message', label: 'Messages' },
+                            { value: 'change', label: 'Field changes' },
+                          ],
+                          onChange: (v) =>
+                            onSearch({ kind: v === 'change' ? 'change' : undefined }),
                         },
                       ]}
                       onClear={clear}

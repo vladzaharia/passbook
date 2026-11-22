@@ -50,7 +50,7 @@ export function logRecordsSkipped(
 /** Capture once before fetching; never adopt a later release for this run. */
 export async function captureConnectionRelease(
   sctx: ServiceContext,
-  conn: ConnectionRow,
+  conn: Pick<ConnectionRow, 'autoCreate' | 'defaultTemplateId' | 'orgId'>,
 ): Promise<ConnectionReleaseSnapshot> {
   if (!conn.autoCreate || !conn.defaultTemplateId) return null;
   // A connection left on a blueprint keeps its passes updating; new records wait for a template.

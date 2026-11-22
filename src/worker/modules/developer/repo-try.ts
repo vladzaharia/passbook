@@ -1,3 +1,4 @@
+import type { Amr } from '../../platform/auth.ts';
 import { first } from '../../platform/db.ts';
 import { consoleSessionSql } from '../../platform/repo-session-strength-sql.ts';
 import { RESOLVED_KEY_COLUMNS, type ResolvedKeyRow } from '../api-keys/repo.ts';
@@ -24,16 +25,16 @@ export const tryKeyOf = (db: D1Database, userId: string, now: number) =>
 /**
  * The key row behind a try token, only while every binding holds: a personal Test key of a developer org, whose
  * sandbox is open at the token's generation, held by the sandbox's person, whose session named in the token is
- * live. The key's own rules (revoked, expired, org and member live) are applied by `keyAuthOf`.
+ * live; with that session's `auth_time`, which step-up reads. The key's own rules (revoked, expired, org and member live) are applied by `keyAuthOf`.
  */
 export const tryTokenKeyRow = (
   db: D1Database,
   claims: { keyId: string; sessionIdHash: string; generation: number },
   now: number,
 ) =>
-  first<ResolvedKeyRow>(
+  first<ResolvedKeyRow & { session_auth_time: number | null; session_amr: Amr }>(
     db,
-    `SELECT ${RESOLVED_KEY_COLUMNS}
+    `SELECT ${RESOLVED_KEY_COLUMNS}, s.auth_time AS session_auth_time, s.amr AS session_amr
      FROM api_keys k
      JOIN orgs o ON o.id = k.org_id AND o.kind = 'developer'
      JOIN developer_sandboxes d ON d.org_id = k.org_id AND d.closed_at IS NULL AND d.try_generation = ?3

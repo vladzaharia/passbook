@@ -25,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	result, err := pb.Connections.TestConfig(ctx, &body)
+	result, err := pb.Connections.TestConfig(ctx, &body, nil)
 	if err != nil {
 		panic(err)
 	}

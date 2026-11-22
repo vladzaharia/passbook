@@ -45,6 +45,7 @@ import {
 } from './callouts.tsx';
 import type { PassDetailSearch as Search, PassDetailTab as Tab } from './detail-types.ts';
 import { HeaderActionsView } from './header-actions.tsx';
+import { type Notice, NotifyPreview, orgLine } from './notify-preview.tsx';
 import { PassHold } from './pass-hold.tsx';
 import { PassTabs } from './pass-tabs.tsx';
 import { useStageMotion } from './stage-state.ts';
@@ -102,6 +103,7 @@ export function LoadedPassDetail({
   const picked = search.v !== undefined && search.v !== p.version ? search.v : undefined;
   const version = usePassVersion(p.id, picked);
   const [draft, setDraft] = useState<Record<string, unknown> | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
   const draftPreview = useDraftPreview(draft ? p.templateId : undefined, draft ?? {}, {
     orgId: p.orgId,
     version: p.templateVersion,
@@ -142,6 +144,7 @@ export function LoadedPassDetail({
         // A sandbox pass is a preview on every channel, so every channel shows, each with its band.
         channels={p.testPreview ? undefined : p.channels}
         channelsTab="holder"
+        own="pass"
         apple={
           <PassPreviewPanel
             passJson={source.passJson}
@@ -188,6 +191,13 @@ export function LoadedPassDetail({
           />
         }
       />
+      {notice ? (
+        <NotifyPreview
+          notice={notice}
+          passJson={source.passJson}
+          title={orgLine(source.passJson) ?? entityLabel(p.title, 'Pass')}
+        />
+      ) : null}
     </div>
   );
 
@@ -310,6 +320,7 @@ export function LoadedPassDetail({
             picked={picked}
             onPick={(v) => setSearch({ v })}
             onDraft={setDraft}
+            onNotice={setNotice}
           />
         </Tabs>
       </PreviewLayout>

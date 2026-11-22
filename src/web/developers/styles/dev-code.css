@@ -67,6 +67,7 @@
 }
 .samples:has([data-lang="curl"]:checked) [data-panel="curl"],
 .samples:has([data-lang="ts"]:checked) [data-panel="ts"],
+.samples:has([data-lang="cli"]:checked) [data-panel="cli"],
 .samples:has([data-lang="py"]:checked) [data-panel="py"],
 .samples:has([data-lang="go"]:checked) [data-panel="go"] {
   display: block;
@@ -246,6 +247,14 @@ pre.src .ln.hl {
 }
 .page-errors {
   margin-top: 48px;
+}
+.soon-dot {
+  width: 6px;
+  height: 6px;
+  margin: -6px 0 0 4px;
+  border-radius: 50%;
+  background: var(--pk-accent);
+  flex: none;
 }
 
 .code-f {

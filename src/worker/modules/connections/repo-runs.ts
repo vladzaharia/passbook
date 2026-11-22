@@ -199,6 +199,9 @@ export async function finishRun(
     outcome: 'unchanged' | 'changed' | 'error' | 'skipped';
     recordsSeen: number;
     passesChanged: number;
+    passesCreated?: number;
+    passesVoided?: number;
+    recordsFailed?: number;
     errorCode: string | null;
     errorDetail: string | null;
     httpStatus: number | null;
@@ -276,6 +279,9 @@ export async function finishRun(
     outcome: r.outcome,
     records_seen: r.recordsSeen,
     passes_changed: r.passesChanged,
+    ...(r.passesCreated === undefined ? {} : { passes_created: r.passesCreated }),
+    ...(r.passesVoided === undefined ? {} : { passes_voided: r.passesVoided }),
+    ...(r.recordsFailed === undefined ? {} : { records_failed: r.recordsFailed }),
     error_code: r.errorCode,
     error_detail: r.errorDetail,
     http_status: r.httpStatus,

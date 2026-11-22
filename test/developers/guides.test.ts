@@ -87,8 +87,8 @@ describe('guides', () => {
     doc: parseGuide(text, path),
   }));
 
-  it('has the ten guides', () => {
-    expect(files.length).toBe(10);
+  it('has the eleven guides', () => {
+    expect(files.length).toBe(11);
   });
 
   for (const { path, doc } of files) {

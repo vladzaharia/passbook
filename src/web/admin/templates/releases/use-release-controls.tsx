@@ -1,11 +1,10 @@
 import { lazy, Suspense, useState } from 'react';
-import { toast } from '../../../ui/index.ts';
-import { useReleaseFlow } from './flow-api.ts';
 
+const TrySheet = lazy(() => import('./try-sheet.tsx'));
 const ReleaseFlowDialog = lazy(() => import('./release-flow-dialog.tsx'));
 const ReviewDialog = lazy(() => import('./review-dialog.tsx'));
 
-/** Try (Test only, one call) and the Release dialog, for the strip, the header and Saved versions. */
+/** Try (the sheet: Test release, a Test pass, a device watch) and the Release dialog, for the strip, the header and Saved versions. */
 export function useReleaseControls(
   templateId: string,
   orgId: string | undefined,
@@ -22,22 +21,25 @@ export function useReleaseControls(
   const [releasing, setReleasing] = useState<string | null>(null);
   const [localReview, setReviewing] = useState<string | null>(null);
   const reviewing = review?.open ?? localReview;
-  const flow = useReleaseFlow(templateId, orgId ?? '');
-  async function tryVersion(version: string) {
-    try {
-      await flow.mutateAsync({ version, modes: ['test'] });
-      toast.success(`${name(version)} is in Test`);
-    } catch (cause) {
-      toast.error(cause, `Could not try ${name(version)}`);
-    }
-  }
+  const [trying, setTrying] = useState<string | null>(null);
   return {
-    tryVersion,
-    trying: flow.isPending,
+    tryVersion: setTrying,
     release: setReleasing,
     startReview: setReviewing,
     dialog: orgId ? (
       <>
+        {trying ? (
+          <Suspense fallback={null}>
+            <TrySheet
+              templateId={templateId}
+              orgId={orgId}
+              version={trying}
+              name={name}
+              onClose={() => setTrying(null)}
+              onRelease={setReleasing}
+            />
+          </Suspense>
+        ) : null}
         {releasing ? (
           <Suspense fallback={null}>
             <ReleaseFlowDialog

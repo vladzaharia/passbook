@@ -130,7 +130,7 @@ export async function countStalePasses(
     `SELECT COUNT(*) AS n FROM passes p
      LEFT JOIN template_versions pinned ON pinned.template_id = p.template_id AND pinned.version = p.template_version
      LEFT JOIN template_versions target ON target.template_id = p.template_id AND target.version = ?
-     WHERE p.template_id = ? AND p.template_version != ? AND p.status = 'active' AND p.deleted_at IS NULL
+     WHERE p.template_id = ? AND p.template_version != ? AND p.status = 'active' AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
        ${orgId === undefined ? '' : 'AND p.org_id = ?'}
        ${mode === undefined ? '' : 'AND p.mode = ?'}
        AND (pinned.build_key IS NULL OR target.build_key IS NULL OR pinned.build_key != target.build_key)`,
@@ -170,7 +170,7 @@ export async function olderLivePasses(
      LEFT JOIN template_versions pinned ON pinned.template_id = p.template_id AND pinned.version = p.template_version
      LEFT JOIN template_versions active ON active.template_id = t.id AND active.version = r.version
      WHERE p.template_version != r.version
-       AND p.status = 'active' AND p.deleted_at IS NULL
+       AND p.status = 'active' AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
        AND ${validActiveRelease}
        AND (pinned.build_key IS NULL OR active.build_key IS NULL OR pinned.build_key != active.build_key)`,
     [templateId, mode, ...(orgId === undefined ? [] : [orgId])],

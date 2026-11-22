@@ -25,6 +25,9 @@ const channels = (paper: ReturnType<typeof status>) => () => {
   const on = { on: true, source: 'template' };
   return json({
     effective: { mobile: on, apple: on, google: on, samsung: on, nfc: on, paper },
+    levels: Object.fromEntries(
+      ['mobile', 'apple', 'google', 'samsung', 'paper', 'nfc'].map((c) => [c, []]),
+    ),
     overrides: {},
     replace: { supported: true, owed: false, blocked: null, lastDigital: [], windows: [] },
   });

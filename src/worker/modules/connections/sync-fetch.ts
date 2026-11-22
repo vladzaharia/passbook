@@ -98,7 +98,11 @@ export function stalePassCode(expected: SyncPass, current: SyncPass | null | und
 }
 
 export function recordOutcome(totals: Totals, extra: ApplyExtra, result: Applied): void {
-  addOutcome(totals, result.outcome);
+  addOutcome(
+    totals,
+    result.outcome,
+    result.status === 'voided' && (result.outcome === 'changed' || result.outcome === 'missing'),
+  );
   if (result.outcome === 'fenced' || result.outcome === 'deferred') {
     markStale(
       extra,

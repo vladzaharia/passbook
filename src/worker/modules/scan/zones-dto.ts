@@ -1,5 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanZone } from '../../../shared/contracts/scan-access.ts';
+import { scopeExercises } from '../../platform/api-scopes.ts';
 import { ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -9,7 +10,8 @@ import { checkedAtByZone, orgZoneRows, type ZoneRow } from './repo-zones.ts';
 import { plansByZone } from './zones-plans.ts';
 import { depthOf, effectiveTimeZone, indexZones } from './zones-tree.ts';
 
-export type Authority = Extract<TenantPassWrite, { kind: 'session' }>;
+/** A console session, or a key whose verified scope `tenantAuthorityOf` proved for the capability. */
+export type Authority = TenantPassWrite;
 export const notFound = () => new NotFoundError('Zone not found.', 'ZONE_NOT_FOUND');
 
 export function assertAuthority(
@@ -18,9 +20,9 @@ export function assertAuthority(
   capability: 'scanning:read' | 'scanning:manage',
 ): void {
   if (
-    authority.kind !== 'session' ||
     authority.orgId !== orgId ||
-    authority.capability !== capability
+    (authority.kind === 'session' && authority.capability !== capability) ||
+    (authority.kind === 'api_key' && !scopeExercises(authority.scope, capability))
   )
     throw new ForbiddenError();
 }
@@ -61,6 +63,8 @@ export async function committed(
   orgId: string,
   id: string,
   mode: Mode,
+  /** A key's answer counts only its own mode's sessions, like its list. */
+  perMode = false,
 ): Promise<ScanZone> {
   const [rows, templates, checked, clock] = await Promise.all([
     orgZoneRows(ctx.env.DB, orgId),
@@ -70,5 +74,11 @@ export async function committed(
   ]);
   const row = rows.find((r) => r.id === id);
   if (!row) throw notFound();
-  return toDto(row, rows, plansByZone(rows, templates).get(id) ?? [], checked.get(id) ?? [], clock);
+  return toDto(
+    perMode ? { ...row, sessions: checked.get(id)?.length ?? 0 } : row,
+    rows,
+    plansByZone(rows, templates).get(id) ?? [],
+    checked.get(id) ?? [],
+    clock,
+  );
 }

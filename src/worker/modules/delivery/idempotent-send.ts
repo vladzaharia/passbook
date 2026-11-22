@@ -1,4 +1,5 @@
-import { BadRequestError, ConflictError, ValidationError } from '../../platform/errors.ts';
+import { ConflictError, ValidationError } from '../../platform/errors.ts';
+import { idempotencyKeyHeader } from '../../platform/idempotency.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
@@ -9,14 +10,7 @@ const DONE = 'done:';
 
 /** The trimmed `Idempotency-Key` header, or undefined when absent. */
 export function idempotencyKeyOf(header: string | undefined): string | undefined {
-  const raw = header?.trim();
-  if (raw === undefined) return undefined;
-  if (raw.length < 1 || raw.length > 200)
-    throw new BadRequestError(
-      'Idempotency-Key must be 1 to 200 characters.',
-      'IDEMPOTENCY_KEY_INVALID',
-    );
-  return raw;
+  return idempotencyKeyHeader(header);
 }
 
 const IN_PROGRESS_MS = 15 * 60_000;
@@ -38,13 +32,22 @@ export async function sendOnce<T>(
     request: unknown;
     authority: TenantPassWrite;
     progress?: () => boolean;
+    /**
+     * One reservation for the whole organization (a send that must happen once, like Tell holders). Only
+     * the principal who claimed it replays; any other gets 409 `TELL_ALREADY_SENT` and no stored body.
+     */
+    shared?: boolean;
   },
   send: () => Promise<T>,
 ): Promise<{ replayed: boolean; value: T }> {
   const db = ctx.env.DB;
   const principal =
     input.authority.kind === 'session' ? input.authority.userId : input.authority.keyId;
-  const key = `${input.scope}:${principal}:${input.key}`;
+  const key = input.shared
+    ? `${input.scope}:${input.key}`
+    : `${input.scope}:${principal}:${input.key}`;
+  // A shared reservation also leaves this principal's own row, which is how the claimant is known.
+  const ownKey = `${input.scope}:${principal}:${input.key}`;
   const hash = await sha256Hex(JSON.stringify(input.request));
   const replay = async (): Promise<{ replayed: true; value: T } | null> => {
     const existing = await idempotencyRow(db, input.orgId, key);
@@ -56,8 +59,13 @@ export async function sendOnce<T>(
         [],
         'IDEMPOTENCY_KEY_REUSED',
       );
-    if (existing.resource_id?.startsWith(DONE))
+    if (existing.resource_id?.startsWith(DONE)) {
+      // The claimant's own row counts only as a finished Tell claim of this same request.
+      const own = input.shared ? await idempotencyRow(db, input.orgId, ownKey) : null;
+      if (input.shared && !(own?.request_hash === hash && own.resource_id === `${DONE}{}`))
+        throw new ConflictError('Holders were already told for this release.', 'TELL_ALREADY_SENT');
       return { replayed: true, value: JSON.parse(existing.resource_id.slice(DONE.length)) as T };
+    }
     if (ctx.clock.now() - existing.created_at < IN_PROGRESS_MS)
       throw new ConflictError('The first request is still running.', 'IDEMPOTENCY_IN_PROGRESS');
     await reclaimIdempotencyKey(db, input.orgId, key, existing.created_at, DONE);
@@ -84,13 +92,20 @@ export async function sendOnce<T>(
     if (done) return done;
     throw new ConflictError('The first request is still running.', 'IDEMPOTENCY_IN_PROGRESS');
   }
+  const own = input.shared ? ctx.ids.id() : null;
+  if (own)
+    await claimIdempotencyKey(db, input.orgId, ownKey, hash, own, ctx.clock.now(), input.authority);
   let value: T;
   try {
     value = await send();
   } catch (error) {
-    if (!input.progress?.()) await releaseIdempotencyKey(db, input.orgId, key, reservation, hash);
+    if (!input.progress?.()) {
+      await releaseIdempotencyKey(db, input.orgId, key, reservation, hash);
+      if (own) await releaseIdempotencyKey(db, input.orgId, ownKey, own, hash);
+    }
     throw error;
   }
+  if (own) await settleIdempotencyKey(db, input.orgId, ownKey, own, `${DONE}{}`);
   await settleIdempotencyKey(db, input.orgId, key, reservation, `${DONE}${JSON.stringify(value)}`);
   return { replayed: false, value };
 }

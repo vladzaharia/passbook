@@ -99,7 +99,10 @@ export async function insertIssuedPassEmail(
       mode: pass.mode,
       passId: pass.id,
       outboxId: input.id,
-      data: { attached: input.payload.attach === true },
+      data: {
+        attached: input.payload.attach === true,
+        ...(typeof input.payload.runId === 'string' ? { runId: input.payload.runId } : {}),
+      },
     });
   return result;
 }

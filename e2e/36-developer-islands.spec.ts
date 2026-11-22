@@ -6,6 +6,25 @@ const shot = async (page: import('@playwright/test').Page, name: string) => {
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` });
 };
 
+/** Every width and theme, for the visual check. */
+const shots = async (page: import('@playwright/test').Page, name: string) => {
+  if (!SHOTS) return;
+  const before = page.viewportSize();
+  for (const [w, h] of [
+    [1440, 900],
+    [820, 1100],
+    [390, 844],
+  ] as const) {
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.setViewportSize({ width: w, height: h });
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.waitForTimeout(250);
+      await page.screenshot({ path: `${SHOTS}/${name}-${w}-${scheme}.png`, fullPage: true });
+    }
+  }
+  if (before) await page.setViewportSize(before);
+};
+
 /** Runs after 35, which makes the builder's sandbox; this one signs in as the same person and uses it. */
 test('developer portal islands: signed out is quiet, signed in the tester, playground and search work', async ({
   page,
@@ -63,13 +82,12 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   await page.waitForURL((u) => u.pathname === '/developers/quickstart');
   const create = page.getByRole('button', { name: 'Create sandbox' });
   // Polaris ID lands straight on the page, so wait for the island to pick a state.
-  await create
-    .or(page.getByRole('button', { name: 'Run', exact: true }).and(page.locator(':enabled')))
-    .waitFor();
+  await create.or(page.getByRole('radio', { name: 'Run here' })).waitFor();
   if (await create.isVisible({ timeout: 3000 }).catch(() => false)) {
     await create.click();
-    await expect(page.getByText(/^PASSBOOK_KEY=pbp_test_/)).toBeVisible();
+    await expect(page.locator('.qs-env-v')).toContainText(/PASSBOOK_KEY=pbp_test_/);
   }
+  await page.getByRole('radio', { name: 'Run here' }).click();
   const requestId = await (async () => {
     const run = page.waitForResponse(
       (r) => r.url().endsWith('/api/v1/passes') && r.request().method() === 'POST',
@@ -81,6 +99,13 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
     return (await run.catch(() => null))?.headers()['x-request-id'] ?? null;
   })();
 
+  // D10: Try it on an operation page is bound to the sandbox, and runs there.
+  await page.goto('/developers/reference/passes/create');
+  await expect(page.locator('[data-sandbox]')).toHaveText(/^test · \S+/);
+  await expect(
+    page.locator('.try').getByRole('button', { name: 'Run', exact: true }),
+  ).toBeVisible();
+
   // D1: the webhook tester renders, with no Trusted Types error.
   await page.goto('/developers/webhooks');
   await expect(page.getByRole('tab', { name: 'Python' })).toBeVisible();
@@ -90,6 +115,44 @@ test('developer portal islands: signed out is quiet, signed in the tester, playg
   await page.waitForTimeout(500);
   await shot(page, 'webhooks-signed-in');
   expect(errors).toEqual([]);
+
+  // D8: a URL endpoint is added for real (the e2e server pins hooks.example.com, see WEBHOOK_TEST_DNS), its secret
+  // shows once, a test send is listed tagged Test, and the secret can be rotated.
+  const tester = page.locator('[data-island="webhook-tester"]');
+  await tester.getByRole('button', { name: 'Add endpoint' }).click();
+  await tester.getByLabel('URL').fill('https://nowhere.example.net/passbook');
+  await tester.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(tester.getByRole('alert')).toContainText('does not resolve');
+  await shots(page, 'webhooks-add-refused');
+  await tester.getByLabel('URL').fill('https://hooks.example.com/passbook');
+  await tester.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(tester.getByText('Shown once')).toBeVisible();
+  await shots(page, 'webhooks-secret');
+  await tester.getByRole('button', { name: 'Done' }).click();
+  await expect(tester.getByText('Shown once')).toHaveCount(0);
+  await expect(tester.locator('.wh-ep')).toHaveCount(2);
+  await tester.getByRole('button', { name: 'Send test event' }).click();
+  await expect(tester.getByText('Test', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+  await shots(page, 'webhooks-url-test');
+  await tester.getByRole('button', { name: 'Rotate' }).click();
+  await expect(tester.getByText(/The old one keeps signing for 24 hours/)).toBeVisible();
+  await shots(page, 'webhooks-rotate-confirm');
+  await tester.getByRole('button', { name: 'Rotate' }).click();
+  await expect(tester.getByText('Shown once')).toBeVisible();
+  await shots(page, 'webhooks-rotated');
+  await tester.getByRole('button', { name: 'Done' }).click();
+  await expect(tester.getByText('Shown once')).toHaveCount(0);
+  expect(errors).toEqual([]);
+
+  // The same test send is listed in Admin, tagged the same way.
+  await page.goto('/admin/connections');
+  await page.getByRole('tab', { name: 'Webhook endpoints' }).click();
+  await page
+    .getByRole('link', { name: /hooks\.example\.com/ })
+    .first()
+    .click();
+  await expect(page.getByRole('main').getByText('Test', { exact: true }).first()).toBeVisible();
+  await shots(page, 'admin-webhook-deliveries');
 
   // D10: the playground offers the sandbox instead of asking to sign in.
   await page.goto('/developers/playground');

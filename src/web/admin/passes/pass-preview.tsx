@@ -27,7 +27,7 @@ export function usePassView(
   assetBaseUrl: string,
   assetNames?: readonly string[],
   removed = false,
-  urls?: Record<string, string>,
+  urls?: Record<string, string> | undefined,
 ): PassView | null {
   return useMemo(() => {
     try {
@@ -51,6 +51,8 @@ export function usePassView(
 export interface PassPreviewProps {
   passJson: Record<string, unknown>;
   assetBaseUrl: string;
+  /** Image URLs that replace the base's own (a logo chosen but not yet saved). */
+  assetUrls?: Record<string, string> | undefined;
   /** Image files the pass has, from the API; omit to guess. */
   assetNames?: readonly string[];
   face?: PassSide;
@@ -80,6 +82,7 @@ export function PassPreview({
   passJson,
   assetBaseUrl,
   assetNames,
+  assetUrls,
   face = 'front',
   target = '27',
   flippable = false,
@@ -93,7 +96,7 @@ export function PassPreview({
   transitionName,
   className,
 }: PassPreviewProps) {
-  const view = usePassView(passJson, assetBaseUrl, assetNames, removed);
+  const view = usePassView(passJson, assetBaseUrl, assetNames, removed, assetUrls);
   if (!view) {
     return (
       <p role="alert" className="text-sm text-danger">
@@ -156,6 +159,7 @@ export function PassPreviewPanel({
     preview.assetBaseUrl,
     preview.assetNames,
     preview.removed,
+    preview.assetUrls,
   );
   const differ = view?.hasAlternate ?? false;
   const shown = differ ? target : '27';

@@ -9,7 +9,7 @@ import { type HolderChannels, holderChannels } from '../channels/gate.ts';
 import { orgBranding } from '../delivery/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { replacedBy } from '../passes/assets.ts';
-import { readBranding } from '../passes/branding.ts';
+import { appliedBranding, readBranding } from '../passes/branding.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
 import { parseStoredPassJson } from '../passes/detail.ts';
@@ -102,7 +102,7 @@ export async function passImages(ctx: ServiceContext, pass: Pass): Promise<PassI
   const branded = await brandingFiles(
     ctx.env.BUCKET,
     pass.orgId,
-    readBranding(org?.branding).images,
+    appliedBranding(readBranding(org?.branding), template.manifest).images,
   );
   const own = replacedBy(passOverrides.map((a) => a.name));
   const orgFiles = branded.filter((f) => !own(f.name));
@@ -198,15 +198,19 @@ export async function openPublicAsset(
     return { body: object.body, etag: `"${override.sha1}"` };
   }
   const org = await getOrg(ctx.env.DB, pass.orgId);
+  const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
   const file = (
-    await brandingFiles(ctx.env.BUCKET, pass.orgId, readBranding(org?.branding).images)
+    await brandingFiles(
+      ctx.env.BUCKET,
+      pass.orgId,
+      appliedBranding(readBranding(org?.branding), template.manifest).images,
+    )
   ).find((f) => f.name === name);
   if (file) {
     const object = await ctx.env.BUCKET.get(file.r2Key);
     if (!object) throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');
     return { body: object.body, etag: `"${file.version}-${name}"` };
   }
-  const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
   const stored = stampedName(template, name, stampCountOf(template, pass.personalization));
   const entry = template.assets.find((a) => a.name === stored);
   if (!entry) throw new NotFoundError('Image not found.', 'ASSET_NOT_FOUND');

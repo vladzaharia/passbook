@@ -1,3 +1,4 @@
+import type { SqlValue } from '../../platform/db.ts';
 import type { TenantPassWrite } from './http.ts';
 import type { PassStatus } from './repo.ts';
 import type { Pass } from './repo-map.ts';
@@ -22,6 +23,8 @@ export interface RemovalState extends RemovalInput {
 export interface RemovalFence {
   version: number;
   noScans: boolean;
+  /** A deferred run's starter proof (a bare SELECT): the trusted claim commits only while it holds. */
+  proof?: { sql: string; params: readonly SqlValue[] };
 }
 
 export interface RemovalGuard {

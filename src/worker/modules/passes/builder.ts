@@ -20,7 +20,7 @@ import { isPreviewOnlyOrg, PREVIEW_PASS_IDENTITY } from '../developer/fence.ts';
 import type { IdentityRow } from '../identities/repo.ts';
 import { brandingFiles } from '../orgs/branding-files.ts';
 import { parseAssetName, replacedBy } from './assets.ts';
-import { readBranding, type TenantBranding } from './branding.ts';
+import { appliedBranding, readBranding, type TenantBranding } from './branding.ts';
 import { type PrefetchedAuthSeal, plainAuthToken } from './build-auth-token.ts';
 import { type BuildInputs, readBuildInputs } from './build-reads.ts';
 import { artifactOf, editPass, tenantOf } from './builder-finish.ts';
@@ -55,7 +55,7 @@ export interface BuildRequest {
    * An editor's save: without `notify` no field carries a changeMessage; with it only fields whose
    * value differs from `previous` do. Omitted (syncs, upgrades), the template's messages stay.
    */
-  changeMessages?: { previous: PassJson | null; notify: boolean };
+  changeMessages?: { previous: PassJson | null; notify: boolean; text?: string };
   /** Strips every changeMessage: the update reaches devices without a notification. */
   silent?: boolean;
   /** Set while the pass is removed from Wallet: every build stays the stripped, voided version. */
@@ -216,7 +216,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
     : row && row.id === req.identityId && deps.identities.byRow
       ? await deps.identities.byRow(row)
       : await deps.identities.byId(req.identityId);
-  const branding = readBranding(req.branding);
+  const branding = appliedBranding(readBranding(req.branding), resolved.manifest);
   const [{ overrides: originalOverrides, photo, artHashes }, contacts, authToken] =
     await Promise.all([
       req.prefetched && resolved.id === req.templateId && !req.omitPassAssets

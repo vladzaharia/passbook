@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 import type { z } from 'zod';
 import { OkSchema } from '@/shared/contracts/common.ts';
+import { WebhookTestAttemptListSchema } from '@/shared/contracts/webhook-tests.ts';
 import {
   type CreateWebhookEndpointSchema,
   type UpdateWebhookEndpointSchema,
@@ -38,6 +39,7 @@ export const webhookKeys = {
   detail: (id: string, mode: string) => ['admin', 'webhooks', 'detail', id, mode] as const,
   deliveries: (id: string, mode: string, filter: DeliveryFilter) =>
     ['admin', 'webhooks', 'deliveries', id, mode, filter] as const,
+  tests: (id: string, mode: string) => ['admin', 'webhooks', 'tests', id, mode] as const,
   delivery: (id: string, eventId: string, mode: string) =>
     ['admin', 'webhooks', 'delivery', id, eventId, mode] as const,
 };
@@ -83,6 +85,16 @@ export function useDeliveries(id: string, filter: DeliveryFilter) {
       }),
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     placeholderData: (previous) => previous,
+  });
+}
+
+/** Recent test sends, listed beside the deliveries. */
+export function useTestSends(id: string) {
+  const mode = useMode();
+  return useQuery({
+    queryKey: webhookKeys.tests(id, mode),
+    queryFn: ({ signal }) =>
+      api.get(`${BASE}/${id}/tests`, WebhookTestAttemptListSchema, { signal }),
   });
 }
 

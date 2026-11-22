@@ -10,6 +10,7 @@ import {
   OkSchema,
   RotateWebhookSecretQuerySchema,
   SyncNowResponseSchema,
+  TestConfigQuerySchema,
   TestConfigResponseSchema,
   TestConfigSchema,
   TestConnectionResponseSchema,
@@ -20,6 +21,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { actorOf } from '../../platform/context.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import { createRouter, guard, register } from '../../platform/openapi.ts';
+import { declareKeyAccess } from '../../platform/openapi-security.ts';
 import { clientIp, rateLimit } from '../../platform/rate-limit.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
@@ -28,6 +30,8 @@ import { authorizeConnection, authorizeStoredConnection as authorizeStored } fro
 import * as actions from './actions.ts';
 import { registerConnectorCatalogRoutes } from './catalog-routes.ts';
 import { registerConnectionListRoutes } from './list-routes.ts';
+import { previewUnsaved } from './preview.ts';
+import { registerConnectionPreviewRoute } from './preview-routes.ts';
 import * as service from './service.ts';
 import { testConfig } from './test-config.ts';
 import { registerConnectionWebhookRoutes } from './webhook-ingress-routes.ts';
@@ -56,10 +60,15 @@ function assertLive(c: C): void {
 
 /** /api/v1/connections */
 export const connectionsRoutes = createRouter();
+registerConnectionPreviewRoute(connectionsRoutes);
+// The preview route (above) takes read scopes on a POST; this guard documents the rest.
 guard(
   connectionsRoutes,
-  requireTenantSessionOrApiKey(
-    methodScope({ read: 'connections:read', write: 'connections:write' }),
+  declareKeyAccess(
+    requireTenantSessionOrApiKey(
+      methodScope({ read: 'connections:read', write: 'connections:write' }),
+    ),
+    { read: ['connections:read'], write: ['connections:write'], only: /^(?!.*\/preview$)/ },
   ),
 );
 // A new webhook secret is a credential: a recent sign-in, for a person (not a key).
@@ -171,6 +180,7 @@ register(
     method: 'post',
     path: '/test-config',
     summary: 'Test an unsaved configuration',
+    query: TestConfigQuerySchema,
     body: TestConfigSchema,
     response: TestConfigResponseSchema,
   },
@@ -184,6 +194,8 @@ register(
       input.orgId,
       'integrations:manage',
     );
+    if (c.req.valid('query').preview === 'true')
+      return c.json(await previewUnsaved(ctx, input, authority));
     return c.json(await testConfig(ctx, actor(c), input, authority));
   },
 );

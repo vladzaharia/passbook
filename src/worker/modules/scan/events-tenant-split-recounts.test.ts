@@ -124,11 +124,11 @@ describe('scan event tenant routes', () => {
     expect(created.status).toBe(201);
     expect(ScanEventSchema.parse(await created.json()).mode).toBe('test');
     const key = await makeApiKey(f, { orgId, scopes: ['scans:read'] });
-    expect((await call(key, 'GET', `?orgId=${orgId}`)).status).toBe(401);
+    expect((await call(key, 'GET', `?orgId=${orgId}`)).status).toBe(403);
     const globalKey = await makeApiKey(f, { orgId: null, scopes: ['scans:read'] });
-    expect((await call(globalKey, 'GET', `?orgId=${orgId}`)).status).toBe(401);
-    expect((await call(globalKey, 'GET', `/${eventId}`)).status).toBe(401);
-    expect((await call(globalKey, 'PATCH', `/${eventId}`, { name: 'Forbidden' })).status).toBe(401);
+    expect((await call(globalKey, 'GET', `?orgId=${orgId}`)).status).toBe(403);
+    expect((await call(globalKey, 'GET', `/${eventId}`)).status).toBe(403);
+    expect((await call(globalKey, 'PATCH', `/${eventId}`, { name: 'Forbidden' })).status).toBe(403);
     const scanner = await makeScanner(f, { orgId, kind: 'terminal' });
     expect((await call(scanner, 'GET', `?orgId=${orgId}`)).status).toBe(401);
   });

@@ -1,15 +1,42 @@
+import type { z } from 'zod';
 import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
-import type { WebhookEndpointDto } from '../../../shared/contracts/webhooks.ts';
+import type { WebhookTestAttemptSchema } from '../../../shared/contracts/webhook-tests.ts';
+import type {
+  WebhookDeliveryDetailSchema,
+  WebhookDeliverySchema,
+  WebhookEndpointDto,
+} from '../../../shared/contracts/webhooks.ts';
+
+export type DeliveryDto = z.infer<typeof WebhookDeliverySchema>;
+export type DeliveryDetailDto = z.infer<typeof WebhookDeliveryDetailSchema>;
+export type TestAttemptDto = z.infer<typeof WebhookTestAttemptSchema>;
+export interface TestSent {
+  captureId: string | null;
+  ok: boolean;
+  status: number | null;
+  errorCode: string | null;
+}
 
 /** A problem+json answer. `code` is the API's stable code. */
 export class ApiProblem extends Error {
   readonly status: number;
   readonly code: string;
-  constructor(status: number, code: string, message: string) {
+  /** Set on `STEP_UP_REQUIRED`: where the sign-in goes. */
+  readonly signInUrl: string | undefined;
+  constructor(status: number, code: string, message: string, signInUrl?: string) {
     super(message);
     this.status = status;
     this.code = code;
+    this.signInUrl = signInUrl;
   }
+}
+
+/** The sign-in URL when the server asked for a recent sign-in (possibly empty), else null. */
+export function stepUpOf(e: unknown): string | null {
+  return e instanceof ApiProblem &&
+    (e.code === 'STEP_UP_REQUIRED' || e.code === 'IDP_SIGN_IN_REQUIRED')
+    ? (e.signInUrl ?? '')
+    : null;
 }
 
 export type TesterAuth =
@@ -22,7 +49,18 @@ export interface TesterApi {
   /** The sandbox's capture endpoint, made if it has none. */
   ensureCapture(): Promise<WebhookEndpointDto>;
   captures(id: string, type?: string): Promise<WebhookCaptureDto[]>;
-  sendTest(id: string, type: string): Promise<{ captureId: string | null; ok: boolean }>;
+  sendTest(id: string, type: string): Promise<TestSent>;
+  /** A URL endpoint, signed with a secret that shows once. */
+  createEndpoint(
+    url: string,
+    eventTypes: string[],
+  ): Promise<{ endpoint: WebhookEndpointDto; secret: string }>;
+  deliveries(id: string): Promise<DeliveryDto[]>;
+  delivery(id: string, eventId: string): Promise<DeliveryDetailDto>;
+  tests(id: string): Promise<TestAttemptDto[]>;
+  replayDelivery(id: string, eventId: string): Promise<void>;
+  /** A new signing secret, returned once; the old one keeps signing for `overlapHours`. */
+  rotate(id: string, overlapHours: 0 | 24 | 72): Promise<string>;
   replay(id: string, captureId: string): Promise<WebhookCaptureDto>;
   secret(id: string): Promise<string>;
 }
@@ -30,7 +68,7 @@ export interface TesterApi {
 const REFRESH_BEFORE_MS = 60_000;
 
 async function problem(res: Response): Promise<ApiProblem> {
-  let body: { code?: unknown; detail?: unknown; title?: unknown } = {};
+  let body: { code?: unknown; detail?: unknown; title?: unknown; signInUrl?: unknown } = {};
   try {
     body = (await res.json()) as typeof body;
   } catch {
@@ -41,6 +79,7 @@ async function problem(res: Response): Promise<ApiProblem> {
     res.status,
     typeof body.code === 'string' ? body.code : 'ERROR',
     typeof text === 'string' ? text : `The request failed (${res.status}).`,
+    typeof body.signInUrl === 'string' ? body.signInUrl : undefined,
   );
 }
 
@@ -109,8 +148,23 @@ export async function connect(
             `${base(id)}/captures?limit=50${type ? `&type=${encodeURIComponent(type)}` : ''}`,
           )
         ).items,
-      sendTest: (id, type) =>
-        call<{ captureId: string | null; ok: boolean }>('POST', `${base(id)}/test`, { type }),
+      sendTest: (id, type) => call<TestSent>('POST', `${base(id)}/test`, { type }),
+      createEndpoint: (url, eventTypes) =>
+        call<{ endpoint: WebhookEndpointDto; secret: string }>('POST', '/webhook-endpoints', {
+          url,
+          eventTypes,
+        }),
+      deliveries: async (id) =>
+        (await call<{ items: DeliveryDto[] }>('GET', `${base(id)}/deliveries?limit=30`)).items,
+      delivery: (id, eventId) =>
+        call<DeliveryDetailDto>('GET', `${base(id)}/deliveries/${encodeURIComponent(eventId)}`),
+      replayDelivery: async (id, eventId) => {
+        await call('POST', `${base(id)}/deliveries/${encodeURIComponent(eventId)}/replay`);
+      },
+      rotate: async (id, overlapHours) =>
+        (await call<{ secret: string }>('POST', `${base(id)}/secret`, { overlapHours })).secret,
+      tests: async (id) =>
+        (await call<{ items: TestAttemptDto[] }>('GET', `${base(id)}/tests`)).items,
       replay: (id, captureId) =>
         call<WebhookCaptureDto>(
           'POST',

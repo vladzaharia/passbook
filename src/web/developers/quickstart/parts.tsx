@@ -70,23 +70,28 @@ export function Layout({
   progress,
   steps,
   stage,
+  wide,
 }: {
   progress: ReactNode;
   steps: ReactNode;
-  stage: ReactNode;
+  stage?: ReactNode;
+  /** The finished page: `steps` is the whole body, with no step list and no stage. */
+  wide?: boolean;
 }) {
   return (
-    <div className="qs">
+    <div className={wide ? 'qs qs-wide' : 'qs'}>
       <div className="qs-main">
         <div className="eyebrow">{QS_COPY.eyebrow}</div>
         <h1 className="h1 page-h">{QS_COPY.title}</h1>
         <p className="lede muted mt2">{QS_COPY.lede}</p>
         {progress}
-        <ol className="qs-steps">{steps}</ol>
+        {wide ? steps : <ol className="qs-steps">{steps}</ol>}
       </div>
-      <aside className="qs-stage" aria-label={QS_COPY.stage.title}>
-        {stage}
-      </aside>
+      {wide ? null : (
+        <aside className="qs-stage" aria-label={QS_COPY.stage.title}>
+          {stage}
+        </aside>
+      )}
     </div>
   );
 }

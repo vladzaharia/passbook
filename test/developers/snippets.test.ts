@@ -44,11 +44,14 @@ const ABSENT = new Set(['DNS_FAILED', 'VISITOR_HOST_UNKNOWN']);
 const reached = (c: Call) =>
   ABSENT.has(c.code ?? '') || (c.status < 500 && ![400, 401, 403, 405, 422].includes(c.status));
 
+/** Zones belong to the org, not a mode: a test key may not write them, and the world's key is a test key. */
+const LIVE_ONLY = new Set(['scan-zones.postScanZones']);
+
 /** One line per call the API refused. */
 function failures(id: string, calls: Call[]): string[] {
   if (calls.length === 0) return [`${id}: made no request`];
   return calls
-    .filter((c) => !reached(c))
+    .filter((c) => !reached(c) && !(LIVE_ONLY.has(id) && c.code === 'SCAN_ZONE_LIVE_ONLY'))
     .map((c) => `${id}: ${c.method} ${c.path} ${c.status} ${c.code} ${c.detail ?? ''}`);
 }
 

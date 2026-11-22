@@ -1,8 +1,8 @@
 import type { z } from 'zod';
 import {
   type CreateWebhookEndpointSchema,
+  LATEST_WEBHOOK_API_VERSION,
   type UpdateWebhookEndpointSchema,
-  WEBHOOK_API_VERSIONS,
   type WebhookEndpointDto,
 } from '../../../shared/contracts/webhooks.ts';
 import { authorityDenial, type Grant, grant } from '../../platform/authority.ts';
@@ -31,7 +31,7 @@ import {
   updateEndpoint,
 } from './repo-endpoints.ts';
 import { insertSecret } from './repo-secrets.ts';
-import { memoResolver } from './resolver-memo.ts';
+import { resolverFor } from './resolver-memo.ts';
 import { newEndpointSecret, sealSecret } from './secrets.ts';
 import { hostOf, maskUrl, normalizeEndpointUrl } from './url.ts';
 
@@ -138,7 +138,7 @@ async function checkedUrl(ctx: ServiceContext, raw: string): Promise<string> {
   const url = normalizeEndpointUrl(raw, platformHostsOf(ctx.env));
   await assertPublicHost(
     new URL(url).hostname,
-    memoResolver(() => ctx.clock.now()),
+    resolverFor(ctx.env, () => ctx.clock.now()),
   );
   return url;
 }
@@ -216,7 +216,7 @@ export async function makeEndpoint(
     description: input.description,
     eventTypes: input.eventTypes,
     templateIds: input.templateIds,
-    apiVersion: WEBHOOK_API_VERSIONS[WEBHOOK_API_VERSIONS.length - 1] as EndpointRow['apiVersion'],
+    apiVersion: LATEST_WEBHOOK_API_VERSION,
     createdBy: actor.type === 'user' ? actor.id : null,
     now,
   });
