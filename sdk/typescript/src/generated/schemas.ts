@@ -8516,6 +8516,7 @@ export type ScanOutcome = {
   flags: Array<string>;
   channel?: "mobile" | "apple" | "google" | "samsung" | "paper" | "nfc" | null;
   overridable: boolean;
+  exitAllowed?: boolean;
   approvals: boolean;
   group: {
     total: number;
@@ -8817,6 +8818,7 @@ export type ScanRecord = {
   passVersion: number | null;
   override: boolean;
   offline: boolean;
+  passState?: "voided" | "expired" | "suspended" | null;
   unverified?: boolean;
   late?: boolean;
   actor: {

@@ -82,6 +82,8 @@ export function prepareSnapshotFence(
   release: ReleaseSnapshot | null | undefined,
   snapshotRaw: string | null | undefined,
   requiredStatus?: WalletStatus,
+  /** A tap-out of a voided or ended pass (OC4): the read keeps every other part of the live standing. */
+  exit?: boolean,
 ): PreparedActionPassFence | null {
   const passJsonSnapshot = passJsonOf(release);
   const identityPassTypeIdentifier = release?.identityPassTypeIdentifier;
@@ -138,8 +140,12 @@ export function prepareSnapshotFence(
   // A live pass is disclosed under F8; a refused or heads-up answer may name a voided or removed
   // one, which stays the same pass: not deleted or quarantined, at its generations, no transfer.
   const standing =
-    requiredStatus === 'active'
-      ? passVisibleSql('p', { credential: '?', lifecycle: '?' })
+    requiredStatus === 'active' || exit
+      ? passVisibleSql('p', {
+          credential: '?',
+          lifecycle: '?',
+          ...(exit ? { anyStatus: true } : {}),
+        })
       : `(p.deleted_at IS NULL AND p.test_data_quarantined = 0
         AND p.credential_generation = ? AND p.lifecycle_generation = ?
         AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers pv_t
@@ -281,8 +287,15 @@ export function prepareActionPassFence(
   env: object,
   release: ReleaseSnapshot | null | undefined,
   snapshotRaw: string | null | undefined,
+  /**
+   * OC4: a tap-out of a voided or ended pass may read it. Evaluation sets it for any inactive Found on a
+   * scanner that can tap out, before it decides; only an exit is kept (`evaluate` refuses the rest, and
+   * commit throws unless the state is `out`). The pass is still fenced to its evaluated status at commit
+   * (`scanPassChecks`). Every other action keeps the live-only fence below.
+   */
+  exit?: boolean,
 ): PreparedActionPassFence | null {
-  if (pass.status !== 'active' || pass.removedAt !== null) return null;
+  if (pass.removedAt !== null || (pass.status !== 'active' && !exit)) return null;
   return prepareSnapshotFence(
     db,
     pass,
@@ -295,6 +308,7 @@ export function prepareActionPassFence(
     env,
     release,
     snapshotRaw,
-    'active',
+    exit ? undefined : 'active',
+    exit,
   );
 }

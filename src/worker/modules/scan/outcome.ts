@@ -114,7 +114,7 @@ export function safeDisplay(
     access?: ScanAccess | null;
   } = {},
 ): ScanDisplay | null {
-  if (!pass) return null;
+  if (!pass || more.found?.inactive) return null;
   try {
     return buildDisplay(ctx, {
       actor,
@@ -241,9 +241,11 @@ export function stopOutcome(
     ...(stop.occupancy ? { occupancy: stop.occupancy } : {}),
     flags: details.flags,
     ...(stop.channel ? { channel: stop.channel } : {}),
+    ...(stop.exitAllowed ? { exitAllowed: true } : {}),
     checkIn: stop.found?.admission?.state,
     overridable:
       stop.hard !== true &&
+      !stop.found?.inactive &&
       stop.kind === 'heads_up' &&
       details.action !== null &&
       canOverride(actor, stop.reason, options.action, read.approvals, stop.kind),

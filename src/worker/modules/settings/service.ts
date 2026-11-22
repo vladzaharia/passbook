@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import { OrgSettingsSchema, PlatformSettingsSchema } from '../../../shared/contracts/settings.ts';
 import { featureNotIncluded } from '../../../shared/copy/entitlements.ts';
+import { ORG_WEBSITE_INVALID } from '../../../shared/copy/org-website.ts';
 import { checkFromName } from '../../../shared/email-from-name.ts';
 import type { Actor } from '../../platform/context.ts';
 import { entitlementsOf } from '../../platform/entitlements.ts';
@@ -10,6 +11,7 @@ import {
   NotFoundError,
   ValidationError,
 } from '../../platform/errors.ts';
+import { platformHostsOf, urlRefusal } from '../../platform/safe-fetch.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { orgIsReadable } from '../orgs/repo.ts';
@@ -151,6 +153,11 @@ export async function listSettings(ctx: ServiceContext, scope: string): Promise<
     : inherit(entries, await getPlatformSettings(ctx), await entitlementsOf(ctx, orgId));
 }
 
+/** Private, local and platform hosts are no org website. */
+function websiteRefusal(ctx: ServiceContext, url: string): string | null {
+  return urlRefusal(new URL(url), platformHostsOf(ctx.env)) ? ORG_WEBSITE_INVALID : null;
+}
+
 /** The schema checks the name against "PassBook"; this also checks the platform's current sender name. */
 async function fromNameRefusal(ctx: ServiceContext, name: string): Promise<string | null> {
   const platform = await getPlatformSettings(ctx);
@@ -185,9 +192,11 @@ export async function checkValues(
         ? null
         : key === 'email.fromName'
           ? await fromNameRefusal(ctx, parsed.data as string)
-          : key === 'support.email' && isPlatformAddress(ctx.env, parsed.data as string)
-            ? 'Use an address on your own domain.'
-            : null;
+          : key === 'org.website'
+            ? websiteRefusal(ctx, parsed.data as string)
+            : key === 'support.email' && isPlatformAddress(ctx.env, parsed.data as string)
+              ? 'Use an address on your own domain.'
+              : null;
       if (refused) issues.push({ path: key, message: refused });
       else if (parsed.success) upserts[key] = parsed.data;
       else issues.push({ path: key, message: parsed.error.issues[0]?.message ?? 'Invalid value.' });

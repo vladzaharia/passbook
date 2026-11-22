@@ -97,6 +97,8 @@ export async function ledgerAuthoritySnapshot(
         scanAt: claimAt,
         presenceScope,
         nonQuarantined: !pass.testDataQuarantined,
+        // A tap-out of a voided or ended pass (OC4) says so: the audit shows who left under which state.
+        ...(options.found?.inactive ? { passState: options.found.inactive } : {}),
         passJsonHash: authority.passFence?.passJsonHash ?? null,
         walletVersion: authority.passFence?.walletVersion ?? null,
         walletTemplateVersion: authority.passFence?.walletTemplateVersion ?? null,

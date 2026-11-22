@@ -153,6 +153,28 @@ export function platformHostsOf(env: {
 
 const bare = (host: string) => host.toLowerCase().replace(/\.+$/, '');
 
+/** The first static rule a parsed URL breaks (spec section 9), or null. Pure: no errors, no network I/O. */
+export function urlRefusal(url: URL, platformHosts: string[] = []): string | null {
+  // A trailing dot is the same name (`wallet.plrs.im.` resolves publicly): every rule sees it without.
+  const host = bare(url.hostname);
+  if (url.protocol !== 'https:') return 'Only https URLs are allowed.';
+  if (url.port && url.port !== '443') return 'Only port 443 is allowed.';
+  if (url.username || url.password) return 'URLs with credentials are not allowed.';
+  if (isIpLiteral(host)) return 'IP addresses are not allowed.';
+  if (
+    !host.includes('.') ||
+    host.endsWith('.local') ||
+    host.endsWith('.internal') ||
+    host.endsWith('.localhost')
+  ) {
+    return 'The host is not allowed.';
+  }
+  if (platformHosts.some((p) => host === bare(p) || host.endsWith(`.${bare(p)}`))) {
+    return 'The host is not allowed.';
+  }
+  return null;
+}
+
 /** Static URL rules (spec section 9). Throws ValidationError; performs no network I/O. */
 export function assertSafeUrl(raw: string, platformHosts: string[] = []): URL {
   let url: URL;
@@ -161,27 +183,8 @@ export function assertSafeUrl(raw: string, platformHosts: string[] = []): URL {
   } catch {
     throw new ValidationError('The URL is invalid.', [], 'UNSAFE_URL');
   }
-  // A trailing dot is the same name (`wallet.plrs.im.` resolves publicly): every rule sees it without.
-  const host = bare(url.hostname);
-  if (url.protocol !== 'https:')
-    throw new ValidationError('Only https URLs are allowed.', [], 'UNSAFE_URL');
-  if (url.port && url.port !== '443')
-    throw new ValidationError('Only port 443 is allowed.', [], 'UNSAFE_URL');
-  if (url.username || url.password)
-    throw new ValidationError('URLs with credentials are not allowed.', [], 'UNSAFE_URL');
-  if (isIpLiteral(host))
-    throw new ValidationError('IP addresses are not allowed.', [], 'UNSAFE_URL');
-  if (
-    !host.includes('.') ||
-    host.endsWith('.local') ||
-    host.endsWith('.internal') ||
-    host.endsWith('.localhost')
-  ) {
-    throw new ValidationError('The host is not allowed.', [], 'UNSAFE_URL');
-  }
-  if (platformHosts.some((p) => host === bare(p) || host.endsWith(`.${bare(p)}`))) {
-    throw new ValidationError('The host is not allowed.', [], 'UNSAFE_URL');
-  }
+  const refusal = urlRefusal(url, platformHosts);
+  if (refusal) throw new ValidationError(refusal, [], 'UNSAFE_URL');
   // URL parsing normalizes dot segments away, so check the raw input.
   if (/(?:^|\/)(?:\.\.|%2e%2e)(?:[/?#]|$)/i.test(raw)) {
     throw new ValidationError('The URL path is not allowed.', [], 'UNSAFE_URL');
