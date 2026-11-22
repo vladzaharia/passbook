@@ -74,6 +74,7 @@ export const checked = (over: Record<string, unknown> = {}) =>
         column: 'Email',
         field: null,
         code: 'EMAIL_INVALID',
+        value: 'bad@',
         message: 'Email is not valid.',
         severity: 'error',
       },

@@ -29,6 +29,9 @@ function staticBlock(): Map<string, string> {
 }
 
 const TURNSTILE = ' https://challenges.cloudflare.com';
+/** The static SPA always may load Turnstile, so it names the policy the Worker's default leaves at none. */
+const STATIC_TT = 'trusted-types passbook-turnstile';
+const WORKER_TT = "trusted-types 'none'";
 
 describe('security header parity', () => {
   const block = staticBlock();
@@ -39,7 +42,7 @@ describe('security header parity', () => {
       .map((d) => d.trim())
       .filter(Boolean)
       .filter((d) => !d.startsWith('object-src'))
-      .map((d) => d.replace(TURNSTILE, ''));
+      .map((d) => d.replace(TURNSTILE, '').replace(STATIC_TT, WORKER_TT));
     const worker = contentSecurityPolicy()
       .split(';')
       .map((d) => d.trim());
@@ -113,6 +116,8 @@ describe('the scanner document and its decoder worker', () => {
     const csp = scan.get('content-security-policy')?.[0] ?? '';
     expect(csp).toContain("'wasm-unsafe-eval'");
     expect(csp).toContain("worker-src 'self'");
+    expect(csp).toContain("require-trusted-types-for 'script'");
+    expect(csp).toContain('trusted-types passbook-turnstile passbook-worker;');
     expect(csp).toContain("connect-src 'self' ");
   });
 
@@ -128,7 +133,11 @@ describe('the scanner document and its decoder worker', () => {
       .map((d) => d.trim())
       .filter(Boolean)
       .filter((d) => !d.startsWith('object-src'))
-      .map((d) => d.replace(TURNSTILE, ''));
+      .map((d) =>
+        d
+          .replace(TURNSTILE, '')
+          .replace(`${STATIC_TT} passbook-worker`, 'trusted-types passbook-worker'),
+      );
     const code = scanContentSecurityPolicy()
       .split(';')
       .map((d) => d.trim());
@@ -156,6 +165,22 @@ describe('the scanner document and its decoder worker', () => {
   });
 });
 
+describe('trusted types on the pass pages', () => {
+  it('lets the barcode page make the worker policy and no other page', async () => {
+    const app = new Hono<AppBindings>();
+    app.use('*', securityHeaders);
+    app.get('*', (c) => c.text('ok'));
+    for (const path of ['/p/abc/barcode', '/b/abc/barcode']) {
+      const csp = (await app.request(path)).headers.get('content-security-policy') ?? '';
+      expect(csp, path).toContain(
+        "require-trusted-types-for 'script'; trusted-types passbook-worker;",
+      );
+    }
+    const other = (await app.request('/auth/magic')).headers.get('content-security-policy') ?? '';
+    expect(other).toContain("trusted-types 'none'");
+  });
+});
+
 describe('join page CSP', () => {
   const TURNSTILE_ORIGIN = 'https://challenges.cloudflare.com';
   const probe = async (path: string) => {
@@ -170,15 +195,20 @@ describe('join page CSP', () => {
     const csp = join.headers.get('content-security-policy') ?? '';
     expect(csp).toContain(`script-src 'self' ${TURNSTILE_ORIGIN}`);
     expect(csp).toContain(`frame-src 'self' ${TURNSTILE_ORIGIN}`);
+    expect(csp).toContain("require-trusted-types-for 'script'");
+    expect(csp).toContain('trusted-types passbook-turnstile;');
     expect(join.headers.get('referrer-policy')).toBe(REFERRER_ORIGIN_ONLY);
-    for (const path of ['/p/abc', '/auth/magic', '/api/v1/join-links/t', '/jx', '/joined/x', '/']) {
+    for (const path of ['/auth/magic', '/api/v1/join-links/t', '/jx', '/joined/x', '/']) {
       const other = await probe(path);
-      expect(other.headers.get('content-security-policy'), path).not.toContain(TURNSTILE_ORIGIN);
+      const otherCsp = other.headers.get('content-security-policy') ?? '';
+      expect(otherCsp, path).not.toContain(TURNSTILE_ORIGIN);
+      expect(otherCsp, path).toContain("require-trusted-types-for 'script'; trusted-types 'none'");
     }
   });
 
   it('leaves every other directive as the default policy', () => {
-    const strip = (v: string) => v.replaceAll(` ${TURNSTILE_ORIGIN}`, '');
+    const strip = (v: string) =>
+      v.replaceAll(` ${TURNSTILE_ORIGIN}`, '').replace(STATIC_TT, WORKER_TT);
     expect(strip(contentSecurityPolicy('n', { turnstile: true }))).toBe(contentSecurityPolicy('n'));
     expect(contentSecurityPolicy()).not.toContain(TURNSTILE_ORIGIN);
   });

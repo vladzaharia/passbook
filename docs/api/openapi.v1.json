@@ -2520,6 +2520,36 @@
           },
           "running": {
             "type": "boolean"
+          },
+          "tell": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "enum": [
+                  "change",
+                  "message"
+                ]
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "until": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "path",
+              "text",
+              "until"
+            ]
           }
         },
         "required": [
@@ -2531,7 +2561,8 @@
           "failedCount",
           "startedAt",
           "runId",
-          "running"
+          "running",
+          "tell"
         ]
       },
       "ReleaseResponse": {
@@ -3490,6 +3521,374 @@
           "version"
         ],
         "additionalProperties": false
+      },
+      "ReviewResult": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "approved": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "live",
+                "test"
+              ]
+            }
+          },
+          "release": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "modes": {
+                "type": "object",
+                "properties": {
+                  "test": {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "enum": [
+                          "released",
+                          "kept",
+                          "current",
+                          "review_requested"
+                        ]
+                      },
+                      "releaseId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "generation": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "approvalKind": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "peer",
+                          "sole",
+                          "test",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "releaseId",
+                      "generation",
+                      "approvalKind"
+                    ]
+                  },
+                  "live": {
+                    "type": "object",
+                    "properties": {
+                      "outcome": {
+                        "type": "string",
+                        "enum": [
+                          "released",
+                          "kept",
+                          "current",
+                          "review_requested"
+                        ]
+                      },
+                      "releaseId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "minLength": 1,
+                        "maxLength": 64
+                      },
+                      "generation": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "approvalKind": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "enum": [
+                          "peer",
+                          "sole",
+                          "test",
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "outcome",
+                      "releaseId",
+                      "generation",
+                      "approvalKind"
+                    ]
+                  }
+                }
+              },
+              "state": {
+                "type": "object",
+                "properties": {
+                  "live": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "by": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at",
+                      "by"
+                    ]
+                  },
+                  "test": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "state": {
+                        "type": "string",
+                        "enum": [
+                          "following",
+                          "ahead"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at",
+                      "state"
+                    ]
+                  },
+                  "draft": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "at"
+                    ]
+                  },
+                  "review": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "none"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "state"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "open",
+                              "approved"
+                            ]
+                          },
+                          "version": {
+                            "type": "string"
+                          },
+                          "by": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "at": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "state",
+                          "version",
+                          "by",
+                          "at"
+                        ]
+                      }
+                    ]
+                  },
+                  "alone": {
+                    "type": "boolean"
+                  },
+                  "next": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "design",
+                      "try",
+                      "release",
+                      "request_review",
+                      "review",
+                      "wait",
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "live",
+                  "test",
+                  "draft",
+                  "review",
+                  "alone",
+                  "next"
+                ]
+              }
+            },
+            "required": [
+              "version",
+              "modes",
+              "state"
+            ]
+          }
+        },
+        "required": [
+          "version",
+          "approved",
+          "release"
+        ]
+      },
+      "ReviewTemplate": {
+        "type": "object",
+        "properties": {
+          "orgId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "release": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "TemplateReviewList": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "templateId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "templateName": {
+                  "type": "string"
+                },
+                "orgId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "version": {
+                  "type": "string"
+                },
+                "requestedBy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "requestedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "templateId",
+                "templateName",
+                "orgId",
+                "version",
+                "requestedBy",
+                "requestedAt"
+              ]
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
       },
       "PassPage": {
         "type": "object",
@@ -18007,6 +18406,9 @@
               "trial",
               "standard"
             ]
+          },
+          "addMe": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -44474,6 +44876,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -44610,6 +45013,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -44823,6 +45227,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45054,6 +45459,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45175,6 +45581,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45374,6 +45781,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45691,6 +46099,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45856,6 +46265,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -45975,6 +46385,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -46103,6 +46514,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -46224,6 +46636,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -46345,6 +46758,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -46540,6 +46954,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -46686,6 +47101,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -46808,6 +47224,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -47098,6 +47515,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -47252,6 +47670,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -47782,6 +48201,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -48432,6 +48852,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -48642,6 +49063,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -48923,6 +49345,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -49089,6 +49512,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -49216,6 +49640,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -49497,6 +49922,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -49685,6 +50111,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -49796,6 +50223,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -49907,6 +50335,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -50028,6 +50457,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -50383,6 +50813,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -50683,6 +51114,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -50979,6 +51411,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -51161,6 +51594,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -51644,6 +52078,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -51914,6 +52349,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -52292,6 +52728,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -52364,7 +52801,12 @@
                   "failedCount": 0,
                   "startedAt": 1764086400000,
                   "runId": "0193a1b2-7c00-7000-8000-0000000000d4",
-                  "running": true
+                  "running": true,
+                  "tell": {
+                    "path": "change",
+                    "text": null,
+                    "until": 1764172800000
+                  }
                 }
               }
             }
@@ -52385,7 +52827,7 @@
           "resource": "templates",
           "method": "retrieveRollout"
         },
-        "description": "How far the approved release has reached the organization's passes in the request's mode. `remaining` counts active passes on a different, non-equivalent build, the ones the automatic rollout moves. Once every rebuild since the release has finished, passes still left behind are listed in `failed` (the first 50; `failedCount` has the total).",
+        "description": "How far the approved release has reached the organization's passes in the request's mode. `remaining` counts active passes on a different, non-equivalent build, the ones the automatic rollout moves. Once every rebuild since the release has finished, passes still left behind are listed in `failed` (the first 50; `failedCount` has the total) with the reason the rebuild recorded. `tell` says what Tell holders would do for 24 hours after the release: `change` (a latest-design run that notifies) while passes are still moving, `message` (send `text` to the template's passes) once they have moved.",
         "security": [
           {
             "apiKey": [
@@ -52444,6 +52886,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -52710,6 +53153,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -52886,6 +53330,7 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -53020,7 +53465,7 @@
           "resource": "templates.reviews",
           "method": "request"
         },
-        "description": "Create or reuse the Test and Live candidates of a saved version without approving them, so another reviewer can approve. Reviewers are told when notification ships. Send `Idempotency-Key`.",
+        "description": "Create or reuse the Test and Live candidates of a saved version without approving them, and email the org's other reviewers. A newer request replaces an older open one. Send `Idempotency-Key`.",
         "x-sign-in": "idp",
         "x-codes": [
           "ARCHIVE_TOO_LARGE",
@@ -53069,6 +53514,312 @@
           "TEMPLATE_RELEASE_CONFLICT",
           "TEMPLATE_RELEASE_NOT_FOUND",
           "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
+          "TEMPLATE_REVIEW_REQUIRED",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/templates/{id}/review": {
+      "post": {
+        "security": [
+          {
+            "apiKey": [
+              "templates:review"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Approve a requested template version in Test and Live, and release it when asked",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewTemplate"
+              },
+              "example": {
+                "version": "4",
+                "release": true,
+                "note": "Looks right."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewResult"
+                },
+                "example": {
+                  "version": "4",
+                  "approved": [
+                    "test",
+                    "live"
+                  ],
+                  "release": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.postTemplatesByIdReview",
+        "x-sdk": {
+          "resource": "templates.reviews",
+          "method": "approve"
+        },
+        "description": "Approve a requested version in Test and Live as a peer. A Test key approves Test only. Set `release` to also release it when you can publish. You cannot approve your own work.",
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_CONFLICT",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NOT_FOUND",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
+          "TEMPLATE_REVIEW_REQUIRED",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
+    "/api/v1/template-reviews": {
+      "get": {
+        "summary": "List template versions waiting for review",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "open"
+              ],
+              "default": "open"
+            },
+            "required": false,
+            "name": "state",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateReviewList"
+                },
+                "example": {
+                  "items": [
+                    {
+                      "templateId": "0197a3e4-5c1b-7d2e-9f10-2b6a8c4d5e6f",
+                      "templateName": "Member card",
+                      "orgId": "0197a3e4-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+                      "version": "4",
+                      "requestedBy": "Ada Example",
+                      "requestedAt": 1764086400000
+                    }
+                  ],
+                  "nextCursor": null
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.getTemplateReviews",
+        "x-sdk": {
+          "resource": "templates.reviews",
+          "method": "list"
+        },
+        "description": "Versions waiting for a review in an organization: the newest version of each template, with your own requests left out. Newest request first.",
+        "security": [
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_CONFLICT",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_NOT_FOUND",
           "TEMPLATE_REVIEW_REQUIRED",
           "TEMPLATE_SLUG_CONFLICT",
           "TEMPLATE_USED_BY_OTHER_ORG",
@@ -96830,6 +97581,9 @@
                         "approvedTemplates": {
                           "type": "integer"
                         },
+                        "releasedTemplates": {
+                          "type": "integer"
+                        },
                         "walletPasses": {
                           "type": "integer"
                         },
@@ -96853,6 +97607,7 @@
                         "assignedTemplates",
                         "passes",
                         "approvedTemplates",
+                        "releasedTemplates",
                         "walletPasses",
                         "passEmailsSent",
                         "latestPassId",
@@ -97417,6 +98172,9 @@
                         "approvedTemplates": {
                           "type": "integer"
                         },
+                        "releasedTemplates": {
+                          "type": "integer"
+                        },
                         "walletPasses": {
                           "type": "integer"
                         },
@@ -97440,6 +98198,7 @@
                         "assignedTemplates",
                         "passes",
                         "approvedTemplates",
+                        "releasedTemplates",
                         "walletPasses",
                         "passEmailsSent",
                         "latestPassId",

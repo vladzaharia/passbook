@@ -12,3 +12,9 @@ export function versionNumber(t: Pick<Template, 'versions'>, hash: string | null
 }
 
 export const versionName = (n: number | null): string => (n ? `Version ${n}` : 'Version');
+
+/** "v2": the short name the release strip, dialog and timeline use. */
+export const shortVersion = (n: number | null): string => (n ? `v${n}` : 'Earlier');
+
+export const vOf = (t: Pick<Template, 'versions'>, hash: string | null): string =>
+  shortVersion(versionNumber(t, hash));

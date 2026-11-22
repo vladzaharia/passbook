@@ -14,6 +14,15 @@ export const RolloutFailedPassSchema = z.object({
   reason: z.string(),
 });
 
+/** What Tell holders would do now: `change` before passes move (the template's change messages), `message` after. */
+export const RolloutTellSchema = z.object({
+  path: z.enum(['change', 'message']),
+  /** `message` only: the lock-screen text to send. */
+  text: z.string().nullable(),
+  /** The offer ends 24 hours after the release. */
+  until: TimestampSchema,
+});
+
 /** How far the approved release has reached the org's live passes, computed on each read. */
 export const TemplateRolloutSchema = z.object({
   /** Null while the scope has no approved release. */
@@ -34,5 +43,7 @@ export const TemplateRolloutSchema = z.object({
   runId: z.string().nullable(),
   /** A rebuild is still moving passes. */
   running: z.boolean(),
+  /** Null when there is nothing to tell, the offer has ended, or there is no release. */
+  tell: RolloutTellSchema.nullable(),
 });
 export type TemplateRollout = z.infer<typeof TemplateRolloutSchema>;

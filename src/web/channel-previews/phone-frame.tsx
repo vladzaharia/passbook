@@ -2,7 +2,6 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '../lib/cn.ts';
 
-const SEED = '<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>';
 const ROOT_ATTRS = ['class', 'data-theme', 'style', 'lang'] as const;
 
 /** The app's own sheets and theme, kept in step, so the frame draws what the page draws. */
@@ -63,13 +62,7 @@ export function PhoneFrame({
   useFrameChrome(doc);
   return (
     <>
-      <iframe
-        ref={frame}
-        title={title}
-        srcDoc={SEED}
-        onLoad={attach}
-        className={cn('wp-phone', className)}
-      />
+      <iframe ref={frame} title={title} onLoad={attach} className={cn('wp-phone', className)} />
       {doc ? createPortal(children, doc.body) : null}
     </>
   );

@@ -15,7 +15,7 @@ import {
   StatusPill,
 } from '../../../ui/index.ts';
 import { useReleaseLists, useWalletEnrolments } from './api.ts';
-import { offReason, PROVIDER } from './labels.ts';
+import { PROVIDER } from './labels.ts';
 import { type ReleaseVersion, versionLabel } from './types.ts';
 
 const WALLETS: readonly TemplateReleaseProvider[] = ['apple', 'google', 'samsung'];
@@ -32,7 +32,6 @@ interface RowState {
   pill: 'success' | 'neutral' | 'warning';
   label: string;
   meta: string;
-  off?: boolean;
 }
 
 function releasedState(
@@ -92,7 +91,6 @@ function WalletRow({ provider, selected, onSelect, state }: RowProps & { state: 
         <Button
           size="sm"
           variant="outline"
-          disabled={state.off}
           aria-pressed={selected === provider}
           aria-label={`Review ${name}`}
           onClick={() => onSelect(provider)}
@@ -115,39 +113,28 @@ export function WalletRows({
   apple: { active: TemplateRelease | null; candidates: readonly TemplateCandidate[] };
 }) {
   const enrolments = useWalletEnrolments(orgId, props.mode);
+  // Google and Samsung ship dark: a row exists only once the wallet is on for this organization.
+  const on = WALLETS.filter(
+    (provider) =>
+      provider !== 'apple' &&
+      enrolments.data?.items.some(
+        (e) => e.provider === provider && e.state === 'on' && e.issuance.state === 'enabled',
+      ),
+  );
+  if (on.length === 0) return null;
   return (
     <Card>
       <CardHeader title="Wallets" />
       <CardBody>
         <ListRows label="Wallets">
-          {WALLETS.map((provider) => {
-            const row = { ...props, provider };
-            if (provider === 'apple')
-              return (
-                <WalletRow
-                  key={provider}
-                  {...row}
-                  state={releasedState(apple.active, apple.candidates, props.versions)}
-                />
-              );
-            const enrolment = enrolments.data?.items.find((e) => e.provider === provider);
-            if (enrolment?.state === 'on' && enrolment.issuance.state === 'enabled')
-              return <OnRow key={provider} {...row} orgId={orgId} />;
-            const released = enrolment?.issuance.state === 'enabled';
-            return (
-              <WalletRow
-                key={provider}
-                {...row}
-                state={{
-                  status: 'off',
-                  pill: 'neutral',
-                  label: 'Off',
-                  meta: enrolments.isPending ? 'Checking.' : offReason(provider, released),
-                  off: true,
-                }}
-              />
-            );
-          })}
+          <WalletRow
+            {...props}
+            provider="apple"
+            state={releasedState(apple.active, apple.candidates, props.versions)}
+          />
+          {on.map((provider) => (
+            <OnRow key={provider} {...props} provider={provider} orgId={orgId} />
+          ))}
         </ListRows>
       </CardBody>
     </Card>

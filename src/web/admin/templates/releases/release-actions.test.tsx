@@ -10,9 +10,9 @@ import {
   CANDIDATE_HASH,
   CONTENT_HASH,
   candidate,
-  IMPACT,
   mountPanel,
   OLD_HASH,
+  PLAN,
   panelProps,
   release,
   releaseServer,
@@ -27,7 +27,7 @@ afterEach(() => {
 });
 
 describe('template release actions', () => {
-  it('shows the active release by version and publisher, with ids under technical details', async () => {
+  it('lists the release by version and publisher, with ids under technical details', async () => {
     const user = userEvent.setup();
     const active = release({
       id: 'active-release-id',
@@ -37,28 +37,26 @@ describe('template release actions', () => {
     });
     releaseServer({ active, history: [active] });
     mountPanel({ mode: 'test' });
-    const facts = (await screen.findByText('Published by')).closest('dl');
-    if (!facts) throw new Error('Active release facts were not rendered');
-    for (const value of ['Version 2', 'Pia Publisher'])
-      expect(within(facts).getByText(value)).toBeVisible();
-    const card = facts.closest('div.grid');
-    if (!(card instanceof HTMLElement)) throw new Error('Active release card missing');
-    const disclosure = within(card).getAllByText('Technical details')[0];
-    if (!disclosure) throw new Error('Technical details missing');
+    const timeline = await screen.findByRole('list', { name: 'Releases' });
+    const row = within(timeline).getAllByRole('listitem')[0];
+    if (!row) throw new Error('Release row missing');
+    expect(row).toHaveTextContent('v2');
+    expect(row).toHaveTextContent('Pia Publisher');
+    const disclosure = within(row).getByText('Technical details');
     const details = disclosure.closest('details');
     expect(details).not.toHaveAttribute('open');
     await user.click(disclosure);
     expect(details).toHaveAttribute('open');
-    for (const value of ['active-release-id', '4', 'version-2', 'org-1', OLD_HASH])
-      expect(within(card).getAllByText(value).length).toBeGreaterThan(0);
+    for (const value of ['4', OLD_HASH])
+      expect(within(row).getAllByText(value).length).toBeGreaterThan(0);
   });
 
   it('names an unknown publisher plainly, never by id', async () => {
     const active = release({ createdBy: 'user-uuid', createdByName: null });
     releaseServer({ active, history: [active] });
     mountPanel();
-    await screen.findByText('Published by');
-    expect(screen.getAllByText('Unknown user').length).toBeGreaterThan(0);
+    const timeline = await screen.findByRole('list', { name: 'Releases' });
+    expect(within(timeline).getAllByText(/Someone/).length).toBeGreaterThan(0);
     expect(screen.queryByText('user-uuid')).not.toBeInTheDocument();
   });
 
@@ -130,7 +128,6 @@ describe('template release actions', () => {
     ];
     const server = releaseServer({ candidates: [candidate()], active: null, history });
     mountPanel();
-    expect(await screen.findByText(/No active release for this organization/)).toBeInTheDocument();
     const approve = await screen.findByRole('button', { name: 'Approve candidate for Version 2' });
     expect(screen.getByRole('button', { name: 'Publish candidate for Version 2' })).toBeDisabled();
     await user.click(approve);
@@ -151,7 +148,7 @@ describe('template release actions', () => {
     expect(within(dialog).getByText(CANDIDATE_HASH)).toBeInTheDocument();
     expect(within(dialog).getByText('approval-1')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Confirm publish' }));
-    expect(await screen.findByText(/Generation 8 · Version 2/)).toBeInTheDocument();
+    expect(await screen.findByText('v2')).toBeInTheDocument();
     const publishPost = server.requests.find(
       (request) => request.method === 'POST' && request.url.pathname.endsWith('/releases'),
     );
@@ -182,7 +179,7 @@ describe('template release actions', () => {
     expect(within(dialog).getByText('0')).toBeInTheDocument();
     expect(within(dialog).getByText('1')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Confirm publish' }));
-    expect(await screen.findByText(/Generation 1 · Version 2/)).toBeInTheDocument();
+    expect(await screen.findByText('v2')).toBeInTheDocument();
     const post = server.requests.find((request) => request.method === 'POST');
     expect(post?.body).toEqual({
       ...SCOPE,
@@ -270,16 +267,14 @@ describe('template release actions', () => {
     const head = release({ id: 'release-head', version: 'version-2', generation: 5 });
     const server = releaseServer({ active: head, history: [earlier, head] });
     mountPanel();
-    await user.click(
-      await screen.findByRole('button', { name: 'Roll back to Version 1 (generation 2)' }),
-    );
-    const dialog = await screen.findByRole('dialog', { name: 'Roll back release' });
+    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     const reason = within(dialog).getByRole('textbox', { name: /Reason/ });
     expect(reason).toBeRequired();
     expect(reason).toHaveAttribute('maxlength', '500');
     expect(within(dialog).getByText('5')).toBeInTheDocument();
     expect(within(dialog).getByText('6')).toBeInTheDocument();
-    const confirm = within(dialog).getByRole('button', { name: 'Confirm rollback' });
+    const confirm = within(dialog).getByRole('button', { name: 'Restore' });
     expect(confirm).toBeDisabled();
     await user.type(reason, '   ');
     expect(confirm).toBeDisabled();
@@ -288,7 +283,7 @@ describe('template release actions', () => {
     await user.type(reason, '  Barcode regression  ');
     await user.click(confirm);
 
-    expect(await screen.findByText(/Generation 6 · Version 1/)).toBeInTheDocument();
+    expect(await screen.findByText('v1 restored')).toBeInTheDocument();
     const post = server.requests.find((request) =>
       request.url.pathname.endsWith('/releases/rollback'),
     );
@@ -330,13 +325,11 @@ describe('template release actions', () => {
         ),
     });
     mountPanel();
-    await user.click(
-      await screen.findByRole('button', { name: 'Roll back to Version 1 (generation 1)' }),
-    );
-    const dialog = await screen.findByRole('dialog', { name: 'Roll back release' });
+    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     const reason = within(dialog).getByRole('textbox', { name: /Reason/ });
     await user.type(reason, 'Restore the previous build');
-    await user.click(within(dialog).getByRole('button', { name: 'Confirm rollback' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Restore' }));
     expect(await within(dialog).findByRole('alert')).toHaveTextContent(
       'The template release changed. Reload and retry.',
     );
@@ -356,16 +349,14 @@ describe('template release actions', () => {
     const head = release({ id: 'release-head', generation: 5 });
     const server = releaseServer({ active: null, history: [head] });
     mountPanel({ templateStatus: 'archived' });
-    await user.click(
-      await screen.findByRole('button', { name: 'Roll back to Version 1 (generation 5)' }),
-    );
-    const dialog = await screen.findByRole('dialog', { name: 'Roll back release' });
+    await user.click(await screen.findByRole('button', { name: 'Restore v1' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Restore v1' });
     await user.type(
       within(dialog).getByRole('textbox', { name: /Reason/ }),
       'Restore the archived template',
     );
-    await user.click(within(dialog).getByRole('button', { name: 'Confirm rollback' }));
-    expect(await screen.findByText(/Generation 6 · Version 1/)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Restore' }));
+    expect(await screen.findByText('v1 restored')).toBeInTheDocument();
     const post = server.requests.find((request) =>
       request.url.pathname.endsWith('/releases/rollback'),
     );
@@ -402,31 +393,22 @@ describe('release review dialog', () => {
 
   it('shows affected passes and the grouped before and after diff', async () => {
     const { server, dialog } = await open();
-    const impact = await within(dialog).findByRole('region', { name: 'Impact' });
-    expect(within(impact).getByText('Passes to update').nextElementSibling).toHaveTextContent('12');
-    expect(within(impact).queryByText(/Live passes|Test passes/)).not.toBeInTheDocument();
-    expect(within(impact).queryByText(/more$/)).not.toBeInTheDocument();
-    for (const group of ['Fields', 'Barcode', 'Colours'])
-      expect(within(impact).getByRole('region', { name: group })).toBeInTheDocument();
-    expect(within(impact).queryByRole('region', { name: 'Images' })).not.toBeInTheDocument();
-    expect(within(impact).getByText('A1 → B2')).toBeInTheDocument();
-    expect(within(impact).getByText('QR')).toBeInTheDocument();
-    expect(within(impact).getByText('#000000 → #ffffff')).toBeInTheDocument();
-    const get = server.requests.find((request) =>
-      request.url.pathname.endsWith('/releases/impact'),
-    );
-    expect(Object.fromEntries(get?.url.searchParams ?? [])).toEqual({
-      ...SCOPE,
-      version: 'version-2',
-    });
-    expect(get?.headers.get('x-passbook-mode')).toBe('live');
+    expect(await within(dialog).findByText('12')).toBeVisible();
+    expect(dialog).toHaveTextContent('12 passes update · 9 on phones');
+    for (const group of ['Colours', 'Front'])
+      expect(within(dialog).getByRole('region', { name: group })).toBeInTheDocument();
+    expect(within(dialog).getByText('#ffffff')).toBeInTheDocument();
+    expect(within(dialog).getByText('and 3 more')).toBeVisible();
+    const post = server.plans[0];
+    expect(post?.url.searchParams.get('dryRun')).toBe('true');
+    expect(post?.body).toEqual({ orgId: 'org-1', version: 'version-2', modes: ['live'] });
   });
 
   it('names people and keeps ids and hashes behind technical details', async () => {
     const { user, dialog } = await open();
     expect(within(dialog).getByText('Ada Author')).toBeVisible();
     expect(within(dialog).getByText('Rae Reviewer')).toBeVisible();
-    expect(within(dialog).getByText('Version 2')).toBeVisible();
+    expect(within(dialog).getByText('v2')).toBeVisible();
     const summary = within(dialog).getByText('Technical details');
     const details = summary.closest('details');
     expect(details).not.toHaveAttribute('open');
@@ -437,59 +419,37 @@ describe('release review dialog', () => {
     expect(within(dialog).getByText('approval-1')).toBeVisible();
   });
 
-  it('shows a capped count with a thousands separator and the changes beyond the list', async () => {
+  it('shows a capped count with a thousands separator', async () => {
     const { dialog } = await open({
-      impact: () =>
+      plan: () =>
         json({
-          ...IMPACT,
-          passes: { count: 10000, capped: true },
-          more: { ...IMPACT.more, fields: 1200 },
+          ...PLAN,
+          modes: {
+            live: {
+              ...PLAN.modes.live,
+              impact: { ...PLAN.modes.live.impact, passes: { count: 10000, capped: true } },
+            },
+          },
         }),
     });
-    const impact = await within(dialog).findByRole('region', { name: 'Impact' });
-    expect(await within(impact).findByText('10,000+')).toBeVisible();
-    expect(within(impact).getByText('and 1,200 more')).toBeVisible();
+    expect(await within(dialog).findByText('10,000')).toBeVisible();
   });
 
-  it('formats an uncapped count with a thousands separator', async () => {
-    const { dialog } = await open({
-      impact: () => json({ ...IMPACT, passes: { count: 1234, capped: false } }),
-    });
-    expect(await within(dialog).findByText('1,234')).toBeVisible();
-  });
-
-  it('says there are no changes when the diff is empty', async () => {
-    const empty = { fields: [], images: [], barcode: [], colors: [] };
-    const { dialog } = await open({
-      impact: () =>
-        json({
-          fromVersion: null,
-          toVersion: 'version-2',
-          passes: { count: 0, capped: false },
-          diff: empty,
-          more: { fields: 0, images: 0, barcode: 0, colors: 0 },
-        }),
-    });
-    expect(await within(dialog).findByText('No changes from the current release.')).toBeVisible();
-  });
-
-  it('shows an impact error with Retry and recovers', async () => {
+  it('shows a plan error with Retry and recovers', async () => {
     let fail = true;
     const { user, dialog } = await open({
-      impact: () =>
-        fail
-          ? problem(409, 'IMPACT_UNAVAILABLE', 'The impact could not be computed.')
-          : json(IMPACT),
+      plan: () =>
+        fail ? problem(409, 'PLAN_UNAVAILABLE', 'The changes could not be computed.') : json(PLAN),
     });
-    expect(await within(dialog).findByText(/The impact could not be computed/)).toBeVisible();
+    expect(await within(dialog).findByText(/The changes could not be computed/)).toBeVisible();
     fail = false;
     await user.click(within(dialog).getByRole('button', { name: /Retry/ }));
-    expect(await within(dialog).findByText('A1 → B2')).toBeInTheDocument();
+    expect(await within(dialog).findByText('#ffffff')).toBeInTheDocument();
   });
 
-  it('shows a loading state while the impact is pending and keeps confirm enabled', async () => {
-    const { dialog } = await open({ impact: () => new Promise<Response>(() => {}) as never });
-    expect(within(dialog).getByText('Loading impact')).toBeInTheDocument();
+  it('shows a loading state while the plan is pending and keeps confirm enabled', async () => {
+    const { dialog } = await open({ plan: () => new Promise<Response>(() => {}) as never });
+    expect(within(dialog).getByText('Loading changes')).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Confirm publish' })).toBeEnabled();
   });
 

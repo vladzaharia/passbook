@@ -78,7 +78,7 @@
     }
   },
   "templates.getTemplatesByIdRollout": {
-    "description": "How far the approved release has reached the organization's passes in the request's mode. `remaining` counts active passes on a different, non-equivalent build, the ones the automatic rollout moves. Once every rebuild since the release has finished, passes still left behind are listed in `failed` (the first 50; `failedCount` has the total).",
+    "description": "How far the approved release has reached the organization's passes in the request's mode. `remaining` counts active passes on a different, non-equivalent build, the ones the automatic rollout moves. Once every rebuild since the release has finished, passes still left behind are listed in `failed` (the first 50; `failedCount` has the total) with the reason the rebuild recorded. `tell` says what Tell holders would do for 24 hours after the release: `change` (a latest-design run that notifies) while passes are still moving, `message` (send `text` to the template's passes) once they have moved.",
     "response": {
       "releaseVersion": "4",
       "total": 1240,
@@ -88,7 +88,12 @@
       "failedCount": 0,
       "startedAt": 1764086400000,
       "runId": "0193a1b2-7c00-7000-8000-0000000000d4",
-      "running": true
+      "running": true,
+      "tell": {
+        "path": "change",
+        "text": null,
+        "until": 1764172800000
+      }
     }
   },
   "templates.getTemplatesByIdSampleCsv": {
@@ -127,7 +132,7 @@
     }
   },
   "templates.postTemplatesByIdReviewRequests": {
-    "description": "Create or reuse the Test and Live candidates of a saved version without approving them, so another reviewer can approve. Reviewers are told when notification ships. Send `Idempotency-Key`.",
+    "description": "Create or reuse the Test and Live candidates of a saved version without approving them, and email the org's other reviewers. A newer request replaces an older open one. Send `Idempotency-Key`.",
     "request": {
       "version": "4"
     },
@@ -165,6 +170,35 @@
         "alone": true,
         "next": null
       }
+    }
+  },
+  "templates.postTemplatesByIdReview": {
+    "description": "Approve a requested version in Test and Live as a peer. A Test key approves Test only. Set `release` to also release it when you can publish. You cannot approve your own work.",
+    "request": {
+      "version": "4",
+      "release": true,
+      "note": "Looks right."
+    },
+    "response": {
+      "version": "4",
+      "approved": ["test", "live"],
+      "release": null
+    }
+  },
+  "templates.getTemplateReviews": {
+    "description": "Versions waiting for a review in an organization: the newest version of each template, with your own requests left out. Newest request first.",
+    "response": {
+      "items": [
+        {
+          "templateId": "0197a3e4-5c1b-7d2e-9f10-2b6a8c4d5e6f",
+          "templateName": "Member card",
+          "orgId": "0197a3e4-1a2b-7c3d-8e4f-5a6b7c8d9e0f",
+          "version": "4",
+          "requestedBy": "Ada Example",
+          "requestedAt": 1764086400000
+        }
+      ],
+      "nextCursor": null
     }
   }
 }

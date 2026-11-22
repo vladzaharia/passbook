@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { BroadcastSchema } from '@/shared/contracts/broadcasts.ts';
 import { MODE_HEADER, type Mode } from '@/shared/contracts/common.ts';
-import { TemplateRolloutSchema } from '@/shared/contracts/template-rollout.ts';
+import {
+  type TemplateRollout,
+  TemplateRolloutSchema,
+} from '@/shared/contracts/template-rollout.ts';
 import { api } from '../../../lib/api.ts';
 
 const key = (templateId: string, orgId: string, mode: Mode) =>
@@ -29,24 +32,29 @@ export function useRollout(templateId: string, orgId: string, mode: Mode) {
   });
 }
 
-/** A latest-design change run that notifies: the template's change message goes out as each pass moves. */
+type Tell = NonNullable<TemplateRollout['tell']>;
+
+/**
+ * Tell holders: before passes move, a latest-design change run that notifies; after, a message to the
+ * template's passes with `text`. Both are the ordinary create, so its checks apply.
+ */
 export function useTellHolders(templateId: string, orgId: string, mode: Mode) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (idempotencyKey: string) =>
+    mutationFn: ({ tell, text, idem }: { tell: Tell; text: string; idem: string }) =>
       api.post(
         '/api/v1/broadcasts',
         BroadcastSchema,
         {
           orgId,
-          kind: 'change',
           name: 'Template update',
-          notify: true,
           send: 'now',
           target: { templateIds: [templateId] },
-          patch: { $design: true },
+          ...(tell.path === 'change'
+            ? { kind: 'change', notify: true, patch: { $design: true } }
+            : { kind: 'message', notify: true, patch: { message: text } }),
         },
-        { headers: { [MODE_HEADER]: mode, 'idempotency-key': idempotencyKey } },
+        { headers: { [MODE_HEADER]: mode, 'idempotency-key': idem } },
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: key(templateId, orgId, mode) }),
   });

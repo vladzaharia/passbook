@@ -1,26 +1,33 @@
-import { useNavigate } from '@tanstack/react-router';
-import { useState } from 'react';
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Code2, FileText, Plug, X } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { PASS_IMPORT_MAX_BYTES } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
+import { parseCsv } from '@/shared/csv/parse.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { useMode } from '../../../lib/mode.ts';
+import { orgPath } from '../../../lib/scope.ts';
 import {
   Button,
   Callout,
-  Card,
-  CardBody,
   FileDrop,
   FormField,
+  IconButton,
   Input,
+  OptionTile,
   SegmentedControl,
   Select,
   Skeleton,
   Textarea,
+  Wizard,
 } from '../../../ui/index.ts';
 import { rememberImportLink } from '../../connections/import-handoff.ts';
 import { useCreateImport, useImportTemplates } from './api.ts';
+import { markFresh } from './fresh.ts';
 import { SampleCsv } from './sample-csv.tsx';
+import { IMPORT_STEPS, STEP } from './steps.ts';
 
+type Way = 'file' | 'connection' | 'api';
 type Kind = 'file' | 'paste' | 'link';
 const KINDS = [
   { value: 'file', label: C.fileTab },
@@ -36,13 +43,24 @@ export function fileProblem(file: { name: string; size: number }): string | null
   return file.size > PASS_IMPORT_MAX_BYTES ? C.tooBig : null;
 }
 
-/** Template and spreadsheet: a file, pasted rows or a published sheet link. */
-export function SourceStep({ orgId }: { orgId: string }) {
+/** "450 rows · 9 columns", or nothing when the text does not parse (the server says why). */
+function shape(csv: string): string | null {
+  try {
+    const p = parseCsv(csv);
+    return C.source.shape(p.rows.length, p.header.length);
+  } catch {
+    return null;
+  }
+}
+
+/** Step one: the template and where the rows come from. */
+export function SourceStep({ orgId, children }: { orgId: string; children?: ReactNode }) {
   const navigate = useNavigate();
   const mode = useMode();
   const templates = useImportTemplates(orgId);
   const create = useCreateImport(orgId);
   const [templateId, setTemplateId] = useState<string>();
+  const [way, setWay] = useState<Way>('file');
   const [kind, setKind] = useState<Kind>('file');
   const [file, setFile] = useState<{ name: string; csv: string }>();
   const [pasted, setPasted] = useState('');
@@ -60,6 +78,7 @@ export function SourceStep({ orgId }: { orgId: string }) {
         : kind === 'link' && url.trim()
           ? ({ kind: 'url', url: url.trim() } as const)
           : undefined;
+  const ready = way === 'file' && Boolean(chosen && source);
 
   async function take([picked]: File[]) {
     if (!picked) return;
@@ -79,12 +98,13 @@ export function SourceStep({ orgId }: { orgId: string }) {
   }
 
   function start() {
-    if (!chosen || !source) return;
+    if (!chosen || !source) return false;
     create.mutate(
-      { templateId: chosen, source },
+      { templateId: chosen, source, mapping: 'auto' },
       {
         onSuccess: (imp) => {
           if (source.kind === 'url') rememberImportLink(imp.id, source.url);
+          markFresh(imp.id);
           void navigate({
             to: '/admin/o/$orgId/passes/import/$importId',
             params: { orgId, importId: imp.id },
@@ -92,98 +112,159 @@ export function SourceStep({ orgId }: { orgId: string }) {
         },
       },
     );
+    return undefined;
   }
 
   return (
-    <Card>
-      <CardBody className="flex flex-col gap-4">
-        {mode === 'test' ? <Callout tone="info">{C.testNote}</Callout> : null}
-        {templates.isPending ? (
-          <Skeleton className="h-9 sm:max-w-sm" />
-        ) : (
-          <FormField
-            label={C.template}
-            error={templates.isError ? errorMessage(templates.error) : undefined}
-            help={items.length === 0 && !templates.isError ? C.noTemplates : undefined}
-          >
-            {(c) => (
-              <Select
-                {...c}
-                className="sm:max-w-sm"
-                value={chosen}
-                onValueChange={setTemplateId}
-                disabled={items.length === 0}
-                placeholder={C.chooseTemplate}
-                options={items.map((t) => ({ value: t.templateId, label: t.name }))}
-              />
-            )}
-          </FormField>
-        )}
-        <SegmentedControl
-          label="Source"
-          options={KINDS}
-          value={kind}
-          onValueChange={(next) => {
-            setKind(next);
-            setProblem(undefined);
-          }}
-        />
-        {kind === 'file' ? (
-          <div className="flex flex-col gap-2">
-            <FileDrop
-              label={
-                <>
-                  {C.dropLead} <span className="text-accent-fg underline">{C.dropChoose}</span>
-                </>
-              }
-              art="mapping"
-              invalid={Boolean(problem)}
-              onFiles={take}
+    <Wizard
+      steps={IMPORT_STEPS}
+      current={STEP.source}
+      onStep={() => undefined}
+      onCancel={() => void navigate({ href: orgPath(orgId, '/passes') })}
+      onNext={start}
+      nextLabel={create.isPending ? C.starting : C.start}
+      nextDisabled={!ready}
+      nextHint={C.needInput}
+      busy={create.isPending}
+    >
+      {mode === 'test' ? <Callout tone="info">{C.testNote}</Callout> : null}
+      {templates.isPending ? (
+        <Skeleton className="h-9 sm:max-w-sm" />
+      ) : (
+        <FormField
+          label={C.template}
+          error={templates.isError ? errorMessage(templates.error) : undefined}
+          help={items.length === 0 && !templates.isError ? C.noTemplates : undefined}
+        >
+          {(c) => (
+            <Select
+              {...c}
+              className="sm:max-w-sm"
+              value={chosen}
+              onValueChange={setTemplateId}
+              disabled={items.length === 0}
+              placeholder={C.chooseTemplate}
+              options={items.map((t) => ({ value: t.templateId, label: t.name }))}
             />
-            {file ? <p className="text-sm text-fg-muted">{file.name}</p> : null}
-          </div>
-        ) : kind === 'paste' ? (
-          <FormField label={C.pasteLabel}>
-            {(c) => (
-              <Textarea
-                {...c}
-                rows={8}
-                className="font-mono text-xs"
-                value={pasted}
-                placeholder={C.pastePlaceholder}
-                onChange={(e) => setPasted(e.target.value)}
-              />
-            )}
-          </FormField>
-        ) : (
-          <FormField label={C.linkLabel} help={C.linkHelp}>
-            {(c) => (
-              <Input
-                {...c}
-                type="url"
-                inputMode="url"
-                className="sm:max-w-lg"
-                value={url}
-                placeholder="https://docs.google.com/spreadsheets/…"
-                onChange={(e) => setUrl(e.target.value)}
-              />
-            )}
-          </FormField>
-        )}
-        {problem || (kind === 'paste' && pastedTooBig) ? (
-          <Callout tone="danger">{problem ?? C.tooBig}</Callout>
-        ) : null}
-        {create.isError ? <Callout tone="danger">{errorMessage(create.error)}</Callout> : null}
-        <div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <Button disabled={!chosen || !source} loading={create.isPending} onClick={start}>
-              {create.isPending ? C.starting : C.start}
-            </Button>
-            {!chosen || !source ? <p className="text-sm text-fg-muted">{C.needInput}</p> : null}
-            {chosen ? <SampleCsv templateId={chosen} orgId={orgId} /> : null}
-          </div>
+          )}
+        </FormField>
+      )}
+      <div
+        role="radiogroup"
+        aria-label={C.source.way}
+        className="wl-deal grid gap-3 md:grid-cols-3"
+      >
+        {(
+          [
+            ['file', FileText, C.source.file, C.source.fileHint],
+            ['connection', Plug, C.source.connection, C.source.connectionHint],
+            ['api', Code2, C.source.api, C.source.apiHint],
+          ] as const
+        ).map(([value, icon, label, description]) => (
+          <OptionTile
+            key={value}
+            name="source-way"
+            value={value}
+            label={label}
+            description={description}
+            icon={icon}
+            checked={way === value}
+            onSelect={(v) => setWay(v as Way)}
+          />
+        ))}
+      </div>
+      {way === 'connection' ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-raised p-4">
+          <p className="text-sm text-fg-muted">{C.source.connectionBody}</p>
+          <Button asChild variant="outline">
+            <Link to={orgPath(orgId, '/connections/new')}>{C.source.connectionGo}</Link>
+          </Button>
         </div>
-      </CardBody>
-    </Card>
+      ) : null}
+      {way === 'api' ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface-raised p-4">
+          <code className="font-mono text-sm text-fg-strong">POST /api/v1/pass-imports</code>
+          <Button asChild variant="outline">
+            <a href="/developers">{C.source.apiGo}</a>
+          </Button>
+        </div>
+      ) : null}
+      {way === 'file' ? (
+        <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface-raised p-4">
+          <SegmentedControl
+            label="Source"
+            options={KINDS}
+            value={kind}
+            onValueChange={(next) => {
+              setKind(next);
+              setProblem(undefined);
+            }}
+          />
+          {kind === 'file' ? (
+            file ? (
+              <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-surface-sunken px-4 py-3">
+                <p className="flex min-w-0 flex-wrap items-baseline gap-x-3 text-sm">
+                  <span className="truncate font-semibold text-fg-strong">{file.name}</span>
+                  <span className="text-xs text-fg-muted">{shape(file.csv)}</span>
+                </p>
+                <IconButton
+                  label={C.source.remove}
+                  icon={<X aria-hidden />}
+                  onClick={() => setFile(undefined)}
+                />
+              </div>
+            ) : (
+              <FileDrop
+                label={
+                  <>
+                    {C.dropLead} <span className="text-accent-fg underline">{C.dropChoose}</span>
+                  </>
+                }
+                art="mapping"
+                invalid={Boolean(problem)}
+                onFiles={take}
+              />
+            )
+          ) : kind === 'paste' ? (
+            <FormField label={C.pasteLabel}>
+              {(c) => (
+                <Textarea
+                  {...c}
+                  rows={8}
+                  className="font-mono text-xs"
+                  value={pasted}
+                  placeholder={C.pastePlaceholder}
+                  onChange={(e) => setPasted(e.target.value)}
+                />
+              )}
+            </FormField>
+          ) : (
+            <FormField label={C.linkLabel} help={C.linkHelp}>
+              {(c) => (
+                <Input
+                  {...c}
+                  type="url"
+                  inputMode="url"
+                  className="sm:max-w-lg"
+                  value={url}
+                  placeholder="https://docs.google.com/spreadsheets/…"
+                  onChange={(e) => setUrl(e.target.value)}
+                />
+              )}
+            </FormField>
+          )}
+          {problem || (kind === 'paste' && pastedTooBig) ? (
+            <Callout tone="danger">{problem ?? C.tooBig}</Callout>
+          ) : null}
+          {chosen ? (
+            <div>
+              <SampleCsv templateId={chosen} orgId={orgId} />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      {create.isError ? <Callout tone="danger">{errorMessage(create.error)}</Callout> : null}
+      {children}
+    </Wizard>
   );
 }

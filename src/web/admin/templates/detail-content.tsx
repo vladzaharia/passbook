@@ -1,19 +1,15 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import type { z } from 'zod';
 import type { TemplateDetailSchema } from '@/shared/contracts/templates.ts';
 import { ChannelStage } from '../../channel-previews/channel-stage.tsx';
 import { previewSource } from '../../channel-previews/source.ts';
-import { BELOW_LG, PHONE, useMediaQuery } from '../../lib/media.ts';
 import { useMode } from '../../lib/mode.ts';
 import { useMintedOnArrival } from '../../lib/motion.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useSession } from '../../lib/session.ts';
 import {
   Buddy,
-  Button,
-  Card,
-  CardBody,
   type Crumb,
   EmptyState,
   ErrorState,
@@ -32,8 +28,11 @@ import { useTemplateChannels } from './channels/api.ts';
 import { TemplateChannelsPanel } from './channels/channels-panel.tsx';
 import { TemplateDetailHeader } from './detail-header.tsx';
 import { ManifestEditor } from './manifest-editor.tsx';
+import { PreviewToggle, type PreviewView } from './preview-toggle.tsx';
+import { ReleaseStrip } from './releases/release-strip.tsx';
 import { RolloutCard } from './releases/rollout-card.tsx';
 import { TemplateReleasesPanel } from './releases/template-releases-panel.tsx';
+import { useReleaseControls } from './releases/use-release-controls.tsx';
 import type { templateDetailSearchSchema } from './search.ts';
 import { DuplicateDialog, OrgDialog } from './template-dialogs.tsx';
 import {
@@ -43,7 +42,7 @@ import {
 } from './template-lifecycle.tsx';
 import { TemplateInputs, TemplateOverview } from './template-overview.tsx';
 import { useScanPasses } from './use-scan-passes.ts';
-import { versionName, versionNumber } from './versions.ts';
+import { versionName, versionNumber, vOf } from './versions.ts';
 import { VersionsPanel } from './versions-panel.tsx';
 
 type Template = z.infer<typeof TemplateDetailSchema>;
@@ -68,13 +67,21 @@ export function TemplateDetailContent({
     (scope.membership?.capabilities.includes('templates:publish') ?? false) &&
     (t.orgId !== null || isAdmin);
   const canOperate = scope.membership?.capabilities.includes('passes:operate') ?? false;
+  // Live and a newer draft: the preview toggles between them, the draft first.
+  const [view, setView] = useState<PreviewView>('draft');
+  const newerDraft = t.release?.draft
+    ? t.versions.find((v) => v.version === t.release?.draft?.version)
+    : undefined;
+  const toggle = Boolean(t.activeVersion && newerDraft);
   const candidate =
     t.activeVersion === null
       ? t.versions.reduce<Template['versions'][number] | undefined>(
           (latest, version) => (!latest || version.createdAt > latest.createdAt ? version : latest),
           undefined,
         )
-      : undefined;
+      : toggle && view === 'draft'
+        ? newerDraft
+        : undefined;
   const preview = useTemplatePreview(
     t.activeVersion || candidate ? t.id : '',
     scope.orgId,
@@ -87,6 +94,16 @@ export function TemplateDetailContent({
     [preview.data, t, candidate?.version],
   );
   const life = useTemplateLifecycle(t, canPublish);
+  const state = t.release;
+  const draftHash = state?.draft?.version ?? '';
+  const draftName = draftHash ? vOf(t, draftHash) : '';
+  const controls = useReleaseControls(t.id, scope.orgId, (hash) => vOf(t, hash));
+  const alt =
+    state?.next === 'try'
+      ? 'release'
+      : state?.next === 'release' && state.test?.version !== draftHash
+        ? 'try'
+        : null;
   const scanning = useScanPasses(t);
   const created = useCreated<TemplateCreated>(`template:${t.id}`);
   const importedVersion = useCreated<string>(`template:${t.id}:version`);
@@ -102,10 +119,6 @@ export function TemplateDetailContent({
     if (minted) setMint(1);
   }, [minted]);
   const [duplicate, setDuplicate] = useState(false);
-  // The tablet layout shows the version beside the pass; the card above would repeat it.
-  const belowLg = useMediaQuery(BELOW_LG);
-  const phone = useMediaQuery(PHONE);
-  const tablet = belowLg && !phone;
   const [changingOrg, setChangingOrg] = useState(false);
   const canAssign = canAuthor && isAdmin;
   const baked = t.origin === 'baked';
@@ -116,15 +129,9 @@ export function TemplateDetailContent({
     const n = versionNumber(t, hash ?? null);
     return n ? versionName(n) : null;
   };
-  const activeLabel = labelOf(t.activeVersion);
-  const draft = t.versions.reduce<Template['versions'][number] | undefined>(
-    (latest, v) => (!v.active && (!latest || v.createdAt > latest.createdAt) ? v : latest),
-    undefined,
-  );
-  const draftLabel = labelOf(draft?.version);
   const importedLabel = labelOf(importedVersion.mark);
 
-  const stage = (size: 'column' | 'card' | 'sheet') =>
+  const panel = (size: 'column' | 'card' | 'sheet') =>
     !t.activeVersion && !candidate ? (
       <EmptyState inline art="template" title="No preview available" />
     ) : preview.data ? (
@@ -159,26 +166,14 @@ export function TemplateDetailContent({
       <Skeleton className="mx-auto aspect-[320/420] w-full max-w-xs rounded-xl" />
     );
 
-  const versionBlock = (
-    <div className="grid gap-3">
-      <h2 className="text-xl font-semibold">{activeLabel ?? 'No active version'}</h2>
-      {draftLabel ? (
-        <p className="text-sm">
-          <span className="text-fg-muted">Latest draft: </span>
-          {draftLabel}
-        </p>
-      ) : null}
-      <div className="flex flex-wrap gap-2">
-        {canEdit && !baked && !archived ? (
-          <Button asChild>
-            <Link to="/admin/templates/upload" search={{ templateId: t.id, orgId: scope.orgId }}>
-              Upload version
-            </Link>
-          </Button>
-        ) : null}
-      </div>
-    </div>
-  );
+  const stage = (size: 'column' | 'card' | 'sheet') =>
+    toggle ? (
+      <PreviewToggle view={view} onView={setView}>
+        {panel(size)}
+      </PreviewToggle>
+    ) : (
+      panel(size)
+    );
 
   return (
     <>
@@ -195,12 +190,22 @@ export function TemplateDetailContent({
         onChangeOrg={canAssign ? () => setChangingOrg(true) : undefined}
         onScanPasses={scanning.canScan ? scanning.scan : undefined}
         scanPending={scanning.pending}
+        draftName={draftName}
+        onTry={() => void controls.tryVersion(draftHash)}
+        onRelease={() => controls.release(draftHash)}
+        onReview={() => void navigate({ to: '.', search: { tab: 'versions' }, replace: true })}
+        tryPending={controls.trying}
       />
-      {tablet ? null : (
-        <Card className="mb-6">
-          <CardBody>{versionBlock}</CardBody>
-        </Card>
-      )}
+      {state && !archived ? (
+        <ReleaseStrip
+          state={state}
+          name={(hash) => vOf(t, hash)}
+          alt={alt}
+          releaseLabel={state.alone ? 'Release' : 'Request review'}
+          onTry={() => void controls.tryVersion(draftHash)}
+          onRelease={() => controls.release(draftHash)}
+        />
+      ) : null}
       {life.notice}
       {canAuthor && created.shown && created.mark ? (
         <div className="mb-6">
@@ -227,7 +232,6 @@ export function TemplateDetailContent({
             />
           ) : null
         }
-        summary={versionBlock}
       >
         <Tabs
           value={tab}
@@ -238,7 +242,7 @@ export function TemplateDetailContent({
         >
           <TabsList aria-label="Template sections">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="versions">Versions</TabsTrigger>
+            <TabsTrigger value="versions">Releases</TabsTrigger>
             <TabsTrigger value="channels">Channels</TabsTrigger>
             <TabsTrigger value="manifest">Manifest</TabsTrigger>
             <TabsTrigger value="inputs">Inputs</TabsTrigger>
@@ -247,19 +251,6 @@ export function TemplateDetailContent({
             <TemplateOverview template={t} canAssign={canAssign} />
           </TabsContent>
           <TabsContent value="versions">
-            {scope.orgId && scope.membership ? (
-              <RolloutCard
-                key={`rollout:${scope.orgId}:${mode}`}
-                templateId={t.id}
-                orgId={scope.orgId}
-                mode={mode}
-                versions={t.versions}
-                canTell={
-                  scope.membership.capabilities.includes('messages:manage') &&
-                  scope.membership.capabilities.includes('passes:operate')
-                }
-              />
-            ) : null}
             {scope.orgId && scope.membership ? (
               <TemplateReleasesPanel
                 key={`${scope.orgId}:${mode}`}
@@ -272,9 +263,36 @@ export function TemplateDetailContent({
                 versions={t.versions}
                 capabilities={scope.membership.capabilities}
                 currentUserId={authed?.user.id ?? null}
+                release={state}
               />
             ) : null}
-            <VersionsPanel template={t} />
+            <VersionsPanel
+              template={t}
+              rollout={
+                scope.orgId && scope.membership ? (
+                  <RolloutCard
+                    key={`rollout:${scope.orgId}:${mode}`}
+                    templateId={t.id}
+                    orgId={scope.orgId}
+                    mode={mode}
+                    name={(hash) => vOf(t, hash)}
+                    canTell={
+                      scope.membership.capabilities.includes('messages:manage') &&
+                      scope.membership.capabilities.includes('passes:operate')
+                    }
+                  />
+                ) : undefined
+              }
+              draft={draftHash || undefined}
+              onTry={
+                state?.next && state.next !== 'wait' && !archived
+                  ? (v) => void controls.tryVersion(v)
+                  : undefined
+              }
+              onRelease={
+                state?.next && state.next !== 'wait' && !archived ? controls.release : undefined
+              }
+            />
           </TabsContent>
           <TabsContent value="channels">
             {scope.orgId ? (
@@ -315,6 +333,7 @@ export function TemplateDetailContent({
         />
       ) : null}
       {life.dialogs}
+      {controls.dialog}
     </>
   );
 }

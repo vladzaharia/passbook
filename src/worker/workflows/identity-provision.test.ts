@@ -80,6 +80,7 @@ describe('provision', () => {
     ]);
     expect(h.apple.count('createPassType')).toBe(1);
     expect(h.apple.count('createCertificate')).toBe(1);
+    expect(h.apple.reported).toEqual(['asc-cert-1']);
     expect(await auditActions(h.env.DB, h.org.id)).toEqual([
       'identity.provision_requested',
       'identity.pass_type_created',

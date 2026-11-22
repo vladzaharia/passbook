@@ -132,7 +132,6 @@ function NewFromBlueprint({ blueprintId, name }: { blueprintId: string; name: st
     <Designer
       key={`${blueprintId}:${orgId}`}
       template={{ ...blueprint.data, name, orgId, orgName: membership.orgName, blueprint: false }}
-      canPublish={false}
       selectedOrg={orgId}
       draftKey={draftKey(authed?.user.id ?? 'anonymous', orgId, `new:${blueprintId}`)}
       base={{ version: version.data.version, doc: base }}

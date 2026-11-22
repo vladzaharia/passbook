@@ -101,6 +101,7 @@ describe('build-developers', () => {
     const served = new Set(Object.keys(manifest));
     const outside = [
       '/login',
+      '/auth/',
       '/api/v1/openapi.json',
       '/favicon',
       '/apple-touch-icon.png',

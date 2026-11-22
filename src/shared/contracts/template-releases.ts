@@ -264,6 +264,8 @@ export {
   type ReleaseTemplate,
   ReleaseTemplateQuerySchema,
   ReleaseTemplateSchema,
+  type ReviewResult,
+  ReviewResultSchema,
   type ReviewTemplate,
   ReviewTemplateSchema,
   type TemplateReleaseState,

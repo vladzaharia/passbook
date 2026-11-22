@@ -68,6 +68,9 @@ import {
 import {
   ReleaseResponseSchema,
   ReleaseTemplateSchema,
+  ReviewResultSchema,
+  ReviewTemplateSchema,
+  TemplateReviewListSchema,
 } from '../../shared/contracts/template-release-flow.ts';
 import { TemplateRolloutSchema } from '../../shared/contracts/template-rollout.ts';
 import {
@@ -168,6 +171,9 @@ const names = {
   ScanSetupAnswer: ScanSetupAnswerSchema,
   ReleaseTemplate: ReleaseTemplateSchema,
   ReleaseResponse: ReleaseResponseSchema,
+  ReviewTemplate: ReviewTemplateSchema,
+  ReviewResult: ReviewResultSchema,
+  TemplateReviewList: TemplateReviewListSchema,
 };
 
 for (const [refId, schema] of Object.entries(names))

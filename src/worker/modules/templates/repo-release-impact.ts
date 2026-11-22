@@ -1,4 +1,4 @@
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 
 interface ImpactInput {
   templateId: string;
@@ -65,17 +65,88 @@ export async function countActivePasses(
   return row?.n ?? 0;
 }
 
-/** The first passes the cron would move, oldest first. */
-export async function listPassesNotOnVersion(
+/**
+ * Passes the cron would move that stayed behind: those with a recorded failure for `releaseId`
+ * and, when every rebuild has finished (`settled`), the others too. Recorded ones come first.
+ */
+export async function listLeftBehind(
   db: D1Database,
-  input: ImpactInput,
-): Promise<{ id: string; title: string | null }[]> {
-  return all<{ id: string; title: string | null }>(
+  input: ImpactInput & { releaseId: string; settled: boolean },
+): Promise<{ id: string; title: string | null; message: string | null }[]> {
+  return all<{ id: string; title: string | null; message: string | null }>(
     db,
-    `SELECT p.id, p.display_title AS title FROM passes p ${versionJoins}
-     WHERE ${MOVES_WITH_RELEASE}
-     ORDER BY p.created_at, p.id LIMIT ?`,
-    args(input),
+    `SELECT p.id, p.display_title AS title, f.message FROM passes p ${versionJoins}
+     LEFT JOIN template_rollout_failures f ON f.pass_id = p.id AND f.release_id = ?
+     WHERE ${MOVES_WITH_RELEASE} AND (? = 1 OR f.pass_id IS NOT NULL)
+     ORDER BY f.pass_id IS NULL, p.created_at, p.id LIMIT ?`,
+    [
+      input.version,
+      input.releaseId,
+      input.templateId,
+      input.orgId,
+      input.mode,
+      input.version,
+      input.settled ? 1 : 0,
+      input.limit,
+    ],
+  );
+}
+
+/** How many of those passes have a recorded failure for `releaseId`. */
+export async function countRecordedFailures(
+  db: D1Database,
+  input: ImpactInput & { releaseId: string },
+): Promise<number> {
+  const row = await first<{ n: number }>(
+    db,
+    `SELECT COUNT(*) AS n FROM (
+       SELECT 1 FROM passes p ${versionJoins}
+       JOIN template_rollout_failures f ON f.pass_id = p.id AND f.release_id = ?
+       WHERE ${MOVES_WITH_RELEASE}
+       LIMIT ?)`,
+    [
+      input.version,
+      input.releaseId,
+      input.templateId,
+      input.orgId,
+      input.mode,
+      input.version,
+      input.limit,
+    ],
+  );
+  return row?.n ?? 0;
+}
+
+/** The reissue workflow's note of why it could not move a pass; tenant-checked against the pass row. */
+export async function recordRolloutFailure(
+  db: D1Database,
+  input: {
+    passId: string;
+    orgId: string;
+    mode: string;
+    templateId: string;
+    releaseId: string;
+    code: string;
+    message: string;
+    at: number;
+  },
+): Promise<void> {
+  await run(
+    db,
+    `INSERT INTO template_rollout_failures (pass_id, release_id, code, message, at)
+     SELECT id, ?, ?, ?, ? FROM passes WHERE id = ? AND org_id = ? AND mode = ? AND template_id = ?
+     ON CONFLICT (pass_id) DO UPDATE SET
+       release_id = excluded.release_id, code = excluded.code, message = excluded.message, at = excluded.at`,
+    [
+      input.releaseId,
+      input.code,
+      input.message.slice(0, 200),
+      input.at,
+      input.passId,
+      input.orgId,
+      input.mode,
+      input.templateId,
+    ],
   );
 }
 

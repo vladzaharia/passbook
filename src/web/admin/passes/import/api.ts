@@ -4,11 +4,9 @@ import { OkSchema } from '@/shared/contracts/common.ts';
 import {
   type CheckPassImportSchema,
   type CreatePassImportSchema,
-  type PassImportCommitSchema,
   type PassImportDto,
   PassImportEmailRestResultSchema,
   PassImportPageSchema,
-  PassImportRemoveResultSchema,
   PassImportRowsPageSchema,
   PassImportSchema,
 } from '@/shared/contracts/pass-imports.ts';
@@ -39,7 +37,10 @@ export function useImport(id: string, orgId: string | undefined) {
     queryFn: ({ signal }) =>
       api.get(`${BASE}/${id}`, PassImportSchema, { query: { orgId }, signal }),
     enabled: Boolean(orgId),
-    refetchInterval: (query) => (RUNNING.has(query.state.data?.state ?? '') ? POLL_MS : false),
+    refetchInterval: (query) =>
+      RUNNING.has(query.state.data?.state ?? '') || query.state.data?.undo?.state === 'running'
+        ? POLL_MS
+        : false,
   });
 }
 
@@ -92,16 +93,6 @@ export function useCheckImport(id: string, orgId: string | undefined) {
   });
 }
 
-export function useCommitImport(id: string, orgId: string | undefined) {
-  const qc = useQueryClient();
-  const mode = useMode();
-  return useMutation({
-    mutationFn: (body: z.input<typeof PassImportCommitSchema>) =>
-      api.post(`${BASE}/${id}/commit`, PassImportSchema, body, { query: { orgId } }),
-    onSuccess: (imp) => keep(qc, orgId, mode, imp),
-  });
-}
-
 export function useDiscardImport(id: string, orgId: string | undefined) {
   const qc = useQueryClient();
   return useMutation({
@@ -121,32 +112,6 @@ export function useFailedRows(id: string, orgId: string | undefined, enabled: bo
       }),
     enabled: enabled && Boolean(orgId),
   });
-}
-
-/** Removes what the import created, 50 passes a call, until the server has no more. */
-export async function removeCreated(
-  qc: QueryClient,
-  id: string,
-  orgId: string,
-  onPage?: (total: { removed: number; skipped: number }) => void,
-): Promise<{ removed: number; skipped: number }> {
-  const total = { removed: 0, skipped: 0 };
-  let cursor: string | null = null;
-  do {
-    const page: z.infer<typeof PassImportRemoveResultSchema> = await api.post(
-      `${BASE}/${id}/remove-created`,
-      PassImportRemoveResultSchema,
-      { cursor },
-      { query: { orgId } },
-    );
-    total.removed += page.removed;
-    total.skipped += page.skipped.length;
-    cursor = page.nextCursor;
-    onPage?.({ ...total });
-  } while (cursor);
-  await qc.invalidateQueries({ queryKey: importKeys.all });
-  await qc.invalidateQueries({ queryKey: ['admin', 'passes'] });
-  return total;
 }
 
 /** Emails the passes created without mail, 50 a call on the server's cursor; the server marks each row, so a repeat sends nothing. */

@@ -98,7 +98,7 @@ describe('developer portal route', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('application/json; charset=utf-8');
     expect(await res.json()).toEqual({ origin: ORIGIN, ops: [] });
-    expect(res.headers.get('content-security-policy')).not.toContain('trusted-types');
+    expect(res.headers.get('content-security-policy')).not.toContain('passbook-turnstile');
   });
 
   it('serves the home page for /developers, and a markdown twin', async () => {
@@ -107,7 +107,7 @@ describe('developer portal route', () => {
     expect(await res.text()).toBe(PAGE);
     const md = await call('/developers/reference/passes.md');
     expect(md.headers.get('content-type')).toBe('text/markdown; charset=utf-8');
-    expect(md.headers.get('content-security-policy')).not.toContain('trusted-types');
+    expect(md.headers.get('content-security-policy')).not.toContain('passbook-turnstile');
   });
 
   it('answers 404 for a path the manifest does not list, never the SPA shell', async () => {

@@ -157,7 +157,7 @@ describe('playground, anonymous', () => {
   it('reaches for the API only when the visitor asks for their sandbox', async () => {
     stubFetch((url) =>
       url === '/api/v1/session'
-        ? json({ authenticated: true, csrfToken: 'c' })
+        ? json({ authenticated: true, csrfToken: 'c', roles: ['developer'] })
         : json({ sandbox: null }),
     );
     const user = userEvent.setup();

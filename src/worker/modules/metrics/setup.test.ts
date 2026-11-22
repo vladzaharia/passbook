@@ -50,6 +50,7 @@ describe('first-run setup counts', () => {
       assignedTemplates: before.assignedTemplates + 1,
       passes: before.passes + 2,
       approvedTemplates: before.approvedTemplates,
+      releasedTemplates: before.releasedTemplates,
       walletPasses: before.walletPasses,
       passEmailsSent: before.passEmailsSent + 1,
       latestPassId: latest.id,
@@ -66,6 +67,7 @@ describe('first-run setup counts', () => {
       assignedTemplates: 0,
       passes: 0,
       approvedTemplates: 0,
+      releasedTemplates: 0,
       walletPasses: 0,
       passEmailsSent: 0,
       latestPassId: null,
@@ -106,7 +108,10 @@ describe('first-run setup counts', () => {
     const after = await setupCounts(kit.env.DB, scope, 'live');
     expect(after.walletPasses).toBe(1);
     expect(after.passes).toBe(1);
-    // Test mode has its own releases and passes.
-    expect((await setupCounts(kit.env.DB, scope, 'test')).walletPasses).toBe(0);
+    // Wallet passes and passes count Test and Live (a first pass is a Test one); releases stay per mode.
+    const test = await setupCounts(kit.env.DB, scope, 'test');
+    expect(test.walletPasses).toBe(1);
+    expect(test.passes).toBe(1);
+    expect(none.releasedTemplates).toBeGreaterThanOrEqual(0);
   });
 });

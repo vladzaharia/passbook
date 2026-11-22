@@ -719,6 +719,8 @@ __all__ = [
     "ReleaseResponse2StateReview2",
     "ReleaseTemplate",
     "ReleaseTemplateExpected",
+    "ReviewResult",
+    "ReviewTemplate",
     "RollCallsCreateResult",
     "RollCallsCreateResultCounts",
     "RollCallsCreateResultPeopleItem",
@@ -955,6 +957,8 @@ __all__ = [
     "TemplateImportsRetrieveResult",
     "TemplateInputSchema",
     "TemplatePage",
+    "TemplateReviewList",
+    "TemplateReviewListItemsItem",
     "TemplateRollout",
     "TemplateRolloutFailedItem",
     "TemplateSummary",
@@ -1017,6 +1021,10 @@ __all__ = [
     "TemplatesRetrieveResult",
     "TemplatesRetrieveRolloutResult",
     "TemplatesRetrieveStampsImpactResult",
+    "TemplatesReviewsApproveBody",
+    "TemplatesReviewsApproveResult",
+    "TemplatesReviewsListItem",
+    "TemplatesReviewsListResult",
     "TemplatesReviewsRequestBody",
     "TemplatesReviewsRequestResult",
     "TemplatesSetUpScanningBody",
@@ -5240,6 +5248,7 @@ class PlatformOrgsCreateParams(_Model):
     defaultIdentityId: str | None = None
     branding: OrgBranding | None = None
     preset: _Literal["legacy", "trial", "standard"] | str | None = None
+    addMe: bool | None = None
 
 class PlatformOrgsEntitlementsUpdateParams(_Model):
     expectedRevision: int
@@ -5548,6 +5557,17 @@ class ReleaseTemplate(_Model):
 class ReleaseTemplateExpected(_Model):
     live: int | None = None
     test: int | None = None
+
+class ReviewResult(_Model):
+    version: str
+    approved: _List[_Literal["live", "test"] | str]
+    release: _Dict[str, _Any] | None
+
+class ReviewTemplate(_Model):
+    orgId: str | None = None
+    version: str
+    release: bool | None = None
+    note: str | None = None
 
 class RollCallsCreateResult(_Model):
     id: str
@@ -7369,6 +7389,18 @@ class TemplatePage(_Model):
     items: _List[TemplateSummary]
     nextCursor: str | None
 
+class TemplateReviewList(_Model):
+    items: _List[TemplateReviewListItemsItem]
+    nextCursor: str | None
+
+class TemplateReviewListItemsItem(_Model):
+    templateId: str
+    templateName: str
+    orgId: str
+    version: str
+    requestedBy: str | None
+    requestedAt: int
+
 class TemplateRollout(_Model):
     releaseVersion: str | None
     total: int
@@ -7379,6 +7411,7 @@ class TemplateRollout(_Model):
     startedAt: int | None
     runId: str | None
     running: bool
+    tell: _Dict[str, _Any] | None
 
 class TemplateRolloutFailedItem(_Model):
     passId: str
@@ -7853,6 +7886,14 @@ class TemplatesRetrieveStampsImpactResult(_Model):
     newlyReady: int
     highest: int
     highestKept: int
+
+class TemplatesReviewsListItem(_Model):
+    templateId: str
+    templateName: str
+    orgId: str
+    version: str
+    requestedBy: str | None
+    requestedAt: int
 
 class TemplatesSetUpScanningParams(_Model):
     orgId: str
@@ -8639,6 +8680,12 @@ TemplatesRetrieveInputSchemaResult = TemplateInputSchema
 TemplatesRetrieveResult = TemplateDetail
 
 TemplatesRetrieveRolloutResult = TemplateRollout
+
+TemplatesReviewsApproveBody = ReviewTemplate
+
+TemplatesReviewsApproveResult = ReviewResult
+
+TemplatesReviewsListResult = TemplateReviewList
 
 TemplatesReviewsRequestBody = ReleaseTemplate
 

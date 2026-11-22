@@ -39,7 +39,7 @@ const CREDENTIALS =
 /** Every file that holds a primitive and no fence of its own, with why that is safe. */
 const EXEMPT: Record<string, Exempt> = {
   'src/worker/modules/passes/import-read.ts': { reason: IMPORT_FILE },
-  'src/worker/modules/passes/import-service.ts': { reason: IMPORT_FILE },
+  'src/worker/modules/passes/import-check-run.ts': { reason: IMPORT_FILE },
   'src/worker/modules/templates/import-pipeline.ts': { reason: IMPORT_FILE },
   'src/worker/modules/wallet-providers/sync-operation-google.ts': {
     reason: CREDENTIALS,
@@ -106,6 +106,10 @@ const EXEMPT: Record<string, Exempt> = {
   },
   'src/worker/modules/delivery/apns.ts': {
     reason: 'the transport itself: every send site is fenced',
+  },
+  'src/worker/modules/auth/account-claims.ts': {
+    reason:
+      "tells a person's own verified addresses that Polaris ID was linked to their account: no org or pass is involved",
   },
   'src/worker/modules/delivery/mailer.ts': {
     reason: 'the mailer itself: every send site is fenced',

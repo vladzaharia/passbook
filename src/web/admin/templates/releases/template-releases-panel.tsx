@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type {
   TemplateCandidate,
+  TemplateRelease,
   TemplateReleaseProvider,
   TemplateReleaseScope,
 } from '@/shared/contracts/template-releases.ts';
@@ -9,13 +10,17 @@ import { Callout, Card, CardBody, ErrorState, Skeleton, toast } from '../../../u
 import { useReleaseActions, useReleaseLists } from './api.ts';
 import { CandidateSection } from './candidates.tsx';
 import { eligibleApproval, selfApproved } from './eligibility.ts';
-import { PROVIDER } from './labels.ts';
 import { ReleaseDialog, type ReleaseOperation } from './release-dialog.tsx';
-import { ReleaseHistory } from './release-history.tsx';
-import type { TemplateReleasesPanelProps } from './types.ts';
+import { ReleaseTimeline, timelineEntries } from './release-timeline.tsx';
+import { type TemplateReleasesPanelProps, versionShort } from './types.ts';
 import { WalletRows } from './wallet-rows.tsx';
 
 export type { TemplateReleasesPanelProps } from './types.ts';
+
+const LIVE = { mode: 'live', provider: 'apple' } as const;
+const TEST = { mode: 'test', provider: 'apple' } as const;
+const latest = (items: readonly TemplateRelease[]) =>
+  items.reduce((max, release) => Math.max(max, release.generation), 0);
 
 function ScopedPanel({
   templateId,
@@ -27,21 +32,25 @@ function ScopedPanel({
   versions,
   capabilities,
   currentUserId,
+  release,
 }: TemplateReleasesPanelProps & { orgId: string }) {
   const [provider, setProvider] = useState<TemplateReleaseProvider>('apple');
   const scope: TemplateReleaseScope = { orgId, mode, provider };
   const apple = provider === 'apple';
   const { releases, candidates } = useReleaseLists(templateId, scope);
-  const appleLists = useReleaseLists(templateId, { orgId, mode, provider: 'apple' });
+  const liveLists = useReleaseLists(templateId, { orgId, ...LIVE });
+  const testLists = useReleaseLists(templateId, { orgId, ...TEST });
   const actions = useReleaseActions(templateId, scope);
+  const liveActions = useReleaseActions(templateId, { orgId, ...LIVE });
+  const testActions = useReleaseActions(templateId, { orgId, ...TEST });
   const [operation, setOperation] = useState<ReleaseOperation | null>(null);
   const [error, setError] = useState<string>();
   const busy =
     actions.create.isPending ||
-    actions.promote.isPending ||
     actions.approve.isPending ||
     actions.publish.isPending ||
-    actions.rollback.isPending;
+    liveActions.rollback.isPending ||
+    testActions.rollback.isPending;
   const ownScope = templateOrgId === null || templateOrgId === orgId;
   const editable = ownScope && templateOrigin === 'uploaded' && templateStatus === 'active';
   const releasable =
@@ -50,21 +59,13 @@ function ScopedPanel({
     (templateStatus === 'active' ||
       (templateStatus === 'archived' && mode === 'live' && templateOrgId === orgId));
   const canPublish = capabilities.includes('templates:publish') && releasable;
+  const name = (hash: string) => versionShort(versions, hash);
 
   async function create(version: string) {
     setError(undefined);
     try {
       await actions.create.mutateAsync({ ...scope, version });
       toast.success('Candidate created');
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
-  }
-  async function promote(version: string) {
-    setError(undefined);
-    try {
-      await actions.promote.mutateAsync({ orgId, mode: 'live', provider: 'apple', version });
-      toast.success('Candidate created from Test');
     } catch (cause) {
       setError(errorMessage(cause));
     }
@@ -92,64 +93,85 @@ function ScopedPanel({
         expectedGeneration: selected.generation,
       });
       toast.success('Release published');
-    } else {
-      await actions.rollback.mutateAsync({
-        ...scope,
-        releaseId: selected.release.id,
-        candidateHash: selected.release.candidateHash,
-        expectedGeneration: selected.generation,
-        reason,
-      });
-      toast.success('Rollback published');
+      return;
     }
+    const { release: target } = selected;
+    await liveActions.rollback.mutateAsync({
+      orgId,
+      ...LIVE,
+      releaseId: target.id,
+      candidateHash: target.candidateHash,
+      expectedGeneration: selected.generation,
+      reason,
+    });
+    // Test follows Live when it was following.
+    const twin = testLists.releases.data?.items.find(
+      (r) =>
+        r.version === target.version && r.source === 'approved' && r.candidateId && r.approvalId,
+    );
+    if (release?.test?.state === 'following' && twin) {
+      try {
+        await testActions.rollback.mutateAsync({
+          orgId,
+          ...TEST,
+          releaseId: twin.id,
+          candidateHash: twin.candidateHash,
+          expectedGeneration: latest(testLists.releases.data?.items ?? []),
+          reason,
+        });
+      } catch (cause) {
+        toast.error(cause, 'Live restored. Test was not');
+        return;
+      }
+    }
+    toast.success(`${name(target.version)} restored`);
   }
 
-  if (releases.isError || candidates.isError) {
+  const failed = [releases, candidates, liveLists.releases, testLists.releases].find(
+    (q) => q.isError,
+  );
+  if (failed) {
     return (
-      <div className="grid gap-4">
-        <ErrorState
-          inline
-          subject="template releases"
-          error={releases.error ?? candidates.error}
-          onRetry={() => Promise.all([releases.refetch(), candidates.refetch()])}
-        />
+      <ErrorState
+        inline
+        subject="template releases"
+        error={failed.error}
+        onRetry={() =>
+          Promise.all([
+            releases.refetch(),
+            candidates.refetch(),
+            liveLists.releases.refetch(),
+            testLists.releases.refetch(),
+          ])
+        }
+      />
+    );
+  }
+  if (!releases.data || !candidates.data || !liveLists.releases.data || !testLists.releases.data) {
+    return (
+      <div role="status" aria-busy className="grid gap-2">
+        <span className="sr-only">Loading releases</span>
+        <Skeleton className="h-24 w-full" />
       </div>
     );
   }
-  if (!releases.data || !candidates.data) {
-    return (
-      <div className="grid gap-4">
-        <div role="status" aria-busy className="grid gap-2">
-          <span className="sr-only">Loading releases and candidates</span>
-          <Skeleton className="h-24 w-full" />
-        </div>
-      </div>
-    );
-  }
-  // The effective head can be null even if an older, now invalid head occupies a generation.
-  const generation = releases.data.items.reduce(
-    (latest, release) => Math.max(latest, release.generation),
-    0,
-  );
-  const releasedCandidates = new Set(releases.data.items.map((release) => release.candidateId));
-  const pending = candidates.data.items.filter(
-    (candidate) => !releasedCandidates.has(candidate.id),
-  );
+  const live = liveLists.releases.data;
+  const liveGeneration = latest(live.items);
+  const generation = latest(releases.data.items);
+  const releasedCandidates = new Set(releases.data.items.map((r) => r.candidateId));
   const selfApprovals = new Set(
     candidates.data.items.flatMap((c) => c.approvals.filter(selfApproved).map((a) => a.id)),
   );
-  const nextStep = pending.some(eligibleApproval)
-    ? 'A publisher can release an approved candidate below.'
-    : pending.length
-      ? 'A different reviewer must approve a candidate, or the only reviewer approves their own. Then a publisher releases it.'
-      : 'Create a candidate from a saved version, get it approved, then publish it.';
-  const blocked = !apple
-    ? `${PROVIDER[provider]} Wallet has no release.`
-    : templateOrigin === 'baked'
-      ? 'No active system release, so issuing passes is blocked. Ask a platform administrator.'
-      : templateStatus !== 'active'
-        ? 'No active release.'
-        : `No active release for this organization and mode, so issuing passes is blocked. ${nextStep}`;
+  const pending = candidates.data.items.filter((c) => !releasedCandidates.has(c.id));
+  // Solo releasers use the strip; a team reviews here.
+  const showCandidates = !release?.alone || pending.some(eligibleApproval);
+  const restorable = (r: TemplateRelease) =>
+    (r.generation < liveGeneration ||
+      (templateStatus === 'archived' && r.generation === liveGeneration)) &&
+    r.source === 'approved' &&
+    r.candidateId !== null &&
+    r.approvalId !== null &&
+    r.id !== live.active?.id;
   return (
     <div className="grid gap-4">
       <WalletRows
@@ -160,8 +182,8 @@ function ScopedPanel({
         selected={provider}
         onSelect={setProvider}
         apple={{
-          active: appleLists.releases.data?.active ?? null,
-          candidates: appleLists.candidates.data?.items ?? [],
+          active: (mode === 'live' ? live : testLists.releases.data).active ?? null,
+          candidates: candidates.data.items,
         }}
       />
       {error ? <Callout tone="danger">{error}</Callout> : null}
@@ -170,44 +192,47 @@ function ScopedPanel({
           Built-in releases are managed by the system. Duplicate to release your own.
         </Callout>
       ) : null}
-      <ReleaseHistory
-        active={releases.data.active}
-        releases={releases.data.items}
-        versions={versions}
-        generation={generation}
+      <ReleaseTimeline
+        entries={timelineEntries(live.items, testLists.releases.data.items)}
+        name={name}
+        liveId={live.active?.id ?? null}
+        testId={testLists.releases.data.active?.id ?? null}
         selfApprovals={selfApprovals}
-        blockedMessage={blocked}
-        allowHeadRollback={templateStatus === 'archived' && releasable}
-        canPublish={canPublish}
+        canRestore={canPublish}
         busy={busy}
-        onRollback={(release) => setOperation({ kind: 'rollback', release, generation })}
-      />
-      <CandidateSection
-        candidates={candidates.data.items}
-        releasedCandidates={releasedCandidates}
-        active={releases.data.active}
-        versions={versions}
-        currentUserId={currentUserId}
-        canAuthor={apple && capabilities.includes('templates:author')}
-        canReview={capabilities.includes('templates:review')}
-        canPublish={capabilities.includes('templates:publish')}
-        editable={editable}
-        releasable={releasable}
-        busy={busy}
-        promotable={apple ? (releases.data.promotable ?? []) : []}
-        onCreate={create}
-        onPromote={promote}
-        onApprove={approve}
-        onPublish={(candidate, approval) =>
-          setOperation({ kind: 'publish', candidate, approval, generation })
+        restorable={restorable}
+        onRestore={(r) =>
+          setOperation({ kind: 'rollback', release: r, generation: liveGeneration })
         }
       />
+      {showCandidates ? (
+        <CandidateSection
+          candidates={candidates.data.items}
+          releasedCandidates={releasedCandidates}
+          active={releases.data.active}
+          versions={versions}
+          currentUserId={currentUserId}
+          canAuthor={apple && capabilities.includes('templates:author')}
+          canReview={capabilities.includes('templates:review')}
+          canPublish={capabilities.includes('templates:publish')}
+          editable={editable}
+          releasable={releasable}
+          busy={busy}
+          promotable={[]}
+          onCreate={create}
+          onPromote={async () => undefined}
+          onApprove={approve}
+          onPublish={(candidate, approval) =>
+            setOperation({ kind: 'publish', candidate, approval, generation })
+          }
+        />
+      ) : null}
       {operation ? (
         <ReleaseDialog
           operation={operation}
-          currentGeneration={generation}
+          currentGeneration={operation.kind === 'rollback' ? liveGeneration : generation}
           templateId={templateId}
-          scope={scope}
+          scope={operation.kind === 'rollback' ? { orgId, ...LIVE } : scope}
           versions={versions}
           available={canPublish}
           busy={busy}
@@ -223,23 +248,19 @@ function ScopedPanel({
 export function TemplateReleasesPanel(props: TemplateReleasesPanelProps) {
   if (!props.orgId)
     return (
-      <div className="grid gap-4">
-        <Card>
-          <CardBody>
-            <p className="text-sm text-fg-muted">Select an organization.</p>
-          </CardBody>
-        </Card>
-      </div>
+      <Card>
+        <CardBody>
+          <p className="text-sm text-fg-muted">Select an organization.</p>
+        </CardBody>
+      </Card>
     );
   if (props.templateOrgId !== null && props.templateOrgId !== props.orgId)
     return (
-      <div className="grid gap-4">
-        <Card>
-          <CardBody>
-            <p className="text-sm text-fg-muted">Select the owning organization.</p>
-          </CardBody>
-        </Card>
-      </div>
+      <Card>
+        <CardBody>
+          <p className="text-sm text-fg-muted">Select the owning organization.</p>
+        </CardBody>
+      </Card>
     );
   return (
     <ScopedPanel

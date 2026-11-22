@@ -5,6 +5,8 @@ const FILL = {
   success: 'bg-success',
   warning: 'bg-warning',
   danger: 'bg-danger',
+  /** The run's bar: teal, violet, gold. The only bar that wears the foil. */
+  foil: 'bg-(image:--wl-foil)',
 } as const;
 
 export interface ProgressBarProps {

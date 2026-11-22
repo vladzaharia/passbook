@@ -1230,6 +1230,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"templates.reviews.list", "GET", "/api/v1/template-reviews", false,
+		"", `{"items":[{"templateId":"x","templateName":"x","orgId":"x","version":"x","requestedBy":"x","requestedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Templates.Reviews.List(ctx, nil).All(ctx)
+		},
+	},
+	{
 		"templates.list", "GET", "/api/v1/templates", false,
 		"", `{"items":[{"id":"x","orgId":"x","orgName":"x","slug":"x","name":"x","description":"x","origin":"baked","status":"active","activeVersion":"x","styles":["generic"],"passCount":0,"createdAt":0,"updatedAt":0}],"nextCursor":null}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
@@ -1376,6 +1383,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"templates.reviews.approve", "POST", "/api/v1/templates/id1/review", false,
+		`{"version":"x"}`, `{"version":"x","approved":["live"],"release":{"version":"x","modes":{},"state":{"live":{"version":"x","at":0,"by":"x"},"test":{"version":"x","at":0,"state":"following"},"draft":{"version":"x","at":0},"review":{"state":"none"},"alone":false,"next":"design"}}}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b TemplatesReviewsApproveBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Templates.Reviews.Approve(ctx, "id1", &b)
+		},
+	},
+	{
 		"templates.reviews.request", "POST", "/api/v1/templates/id1/review-requests", true,
 		`{"version":"x"}`, `{"version":"x","modes":{},"state":{"live":{"version":"x","at":0,"by":"x"},"test":{"version":"x","at":0,"state":"following"},"draft":{"version":"x","at":0},"review":{"state":"none"},"alone":false,"next":"design"}}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
@@ -1388,7 +1406,7 @@ var generatedOps = []opCase{
 	},
 	{
 		"templates.retrieveRollout", "GET", "/api/v1/templates/id1/rollout", false,
-		"", `{"releaseVersion":"x","total":0,"onRelease":0,"remaining":0,"failed":[{"passId":"x","title":"x","reason":"x"}],"failedCount":0,"startedAt":0,"runId":"x","running":false}`,
+		"", `{"releaseVersion":"x","total":0,"onRelease":0,"remaining":0,"failed":[{"passId":"x","title":"x","reason":"x"}],"failedCount":0,"startedAt":0,"runId":"x","running":false,"tell":{"path":"change","text":"x","until":0}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {
 			return c.Templates.RetrieveRollout(ctx, "id1", nil)
 		},
