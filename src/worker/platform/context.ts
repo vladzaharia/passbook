@@ -22,6 +22,8 @@ export interface AppVariables {
   nonce: string;
   stores: AuthStores;
   auth?: AuthContext;
+  /** Why the route gate refused a key; `request.done` carries it. */
+  refusal?: Record<string, string | null>;
 }
 
 export interface AppBindings {
@@ -71,6 +73,7 @@ export function requestContext(options: ContextOptions) {
         status,
         ms: clock.now() - started,
         ...(c.var.auth?.kind === 'api_key' && c.var.auth.via ? { via: c.var.auth.via } : {}),
+        ...c.var.refusal,
       });
   });
 }

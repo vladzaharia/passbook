@@ -12,6 +12,7 @@ import { useOrgList } from '../orgs/queries.ts';
 import { ComponentRow } from './component-row.tsx';
 import { dataItems } from './data-items.ts';
 import { groupComponents, problems, splitColumns } from './groups.ts';
+import { Incidents } from './incidents.tsx';
 import { sortBySeverity, useRecheck, useStatus } from './queries.ts';
 import { Summary } from './summary.tsx';
 import { WorkflowRuns } from './workflow-runs.tsx';
@@ -94,6 +95,7 @@ export function StatusPage() {
               </div>
             )}
           </section>
+          <Incidents />
           <WorkflowRuns orgName={orgName} />
         </div>
       )}

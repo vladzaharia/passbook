@@ -512,6 +512,22 @@
     "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
+    "key": "GET /api/v1/nfc/tags optional parameter query:binding added",
+    "class": "additive",
+    "operationId": "nfc-tags.getNfcTags",
+    "op": "GET /api/v1/nfc/tags",
+    "change": "optional parameter query:binding added",
+    "note": "With status=spare and passId: the tag scope the spare is assigned as; defaults to pass."
+  },
+  {
+    "key": "GET /api/v1/nfc/tags optional parameter query:passId added",
+    "class": "additive",
+    "operationId": "nfc-tags.getNfcTags",
+    "op": "GET /api/v1/nfc/tags",
+    "change": "optional parameter query:passId added",
+    "note": "With status=spare: lists only the spare tags this pass takes by its tag-type policy."
+  },
+  {
     "key": "GET /api/v1/orgs 200.items[].personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgs",
@@ -902,6 +918,14 @@
     "op": "GET /api/v1/settings",
     "change": "200.oidc.platformAdminGroup: field added",
     "note": "Settings oidc reports platformAdminGroup, developerGroup and consoleGroupRequired."
+  },
+  {
+    "key": "GET /api/v1/status/incidents new operation",
+    "class": "additive",
+    "operationId": "status.getStatusIncidents",
+    "op": "GET /api/v1/status/incidents",
+    "change": "new operation",
+    "note": "Lists the incident notes on the public status page. Platform admins only."
   },
   {
     "key": "GET /api/v1/template-reviews new operation",
@@ -2165,6 +2189,22 @@
     "note": "Callable with a live, org-bound nfc:keys key."
   },
   {
+    "key": "POST /api/v1/nfc/keysets/{id}/import 200.problems[].reason: enum value \"not_on_keyset\" added",
+    "class": "notable",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
+    "op": "POST /api/v1/nfc/keysets/{id}/import",
+    "change": "200.problems[].reason: enum value \"not_on_keyset\" added",
+    "note": "With replace, a line for a tag that is not on this keyset (or holds no key of its own) is listed as not_on_keyset."
+  },
+  {
+    "key": "POST /api/v1/nfc/keysets/{id}/import body.replace: optional input field added",
+    "class": "additive",
+    "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
+    "op": "POST /api/v1/nfc/keysets/{id}/import",
+    "change": "body.replace: optional input field added",
+    "note": "replace: true swaps keys of tags on the keyset; a console session needs a recent sign-in (not a dry run)."
+  },
+  {
     "key": "POST /api/v1/nfc/keysets/{id}/import callable by nfc:keys key",
     "class": "additive",
     "operationId": "nfc-keysets.postNfcKeysetsByIdImport",
@@ -2739,6 +2779,22 @@
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "new operation",
     "note": "Set up scanning in one call: places, events, staff, sessions and devices."
+  },
+  {
+    "key": "POST /api/v1/status/incidents new operation",
+    "class": "additive",
+    "operationId": "status.postStatusIncidents",
+    "op": "POST /api/v1/status/incidents",
+    "change": "new operation",
+    "note": "Opens an incident note on the public status page. Platform admins only."
+  },
+  {
+    "key": "POST /api/v1/status/incidents/{id}/resolve new operation",
+    "class": "additive",
+    "operationId": "status.postStatusIncidentsByIdResolve",
+    "op": "POST /api/v1/status/incidents/{id}/resolve",
+    "change": "new operation",
+    "note": "Resolves an incident note; it stays on the page for 14 days."
   },
   {
     "key": "POST /api/v1/templates/{id}/archive 200.openReview: field added",

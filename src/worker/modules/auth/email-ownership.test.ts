@@ -282,6 +282,18 @@ describe('isOwnedByOther', () => {
     const verified = await makeUser(fixtures(h.env));
     expect(await isOwnedByOther(h.env.DB, verified.primaryEmail, asker.id)).toBe(true);
   });
+
+  it('matches a legacy mixed-case primary whatever the asked case', async () => {
+    const asker = await makeUser(fixtures(h.env));
+    const holder = await makeUser(fixtures(h.env), { verified: false });
+    await run(h.env.DB, 'UPDATE users SET primary_email = ? WHERE id = ?', [
+      `Mixed-${uniq()}@Example.Test`,
+      holder.id,
+    ]);
+    const stored = (await primaryOf(holder.id)) ?? '';
+    expect(await isOwnedByOther(h.env.DB, stored.toLowerCase(), asker.id)).toBe(true);
+    expect(await isOwnedByOther(h.env.DB, stored.toUpperCase(), asker.id)).toBe(true);
+  });
 });
 
 describe('signInOidc directly', () => {

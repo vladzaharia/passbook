@@ -1,0 +1,5 @@
+{
+  "offboard.postOffboard": {
+    "description": "Offboards a person: voids or removes their passes and lets go of their tags."
+  }
+}

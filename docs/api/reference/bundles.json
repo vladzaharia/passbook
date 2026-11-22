@@ -1,0 +1,20 @@
+{
+  "bundles.getBundles": {
+    "description": "Lists bundles."
+  },
+  "bundles.postBundles": {
+    "description": "Creates a bundle of up to 10 passes with one link."
+  },
+  "bundles.getBundlesById": {
+    "description": "One bundle."
+  },
+  "bundles.deleteBundlesById": {
+    "description": "Deletes the bundle and revokes its link. The passes are kept."
+  },
+  "bundles.postBundlesByIdSendEmail": {
+    "description": "Emails the bundle link. Send an `Idempotency-Key` to retry safely."
+  },
+  "bundles.postBundlesByIdRotateLink": {
+    "description": "Replaces the bundle link. The old link stops working."
+  }
+}
