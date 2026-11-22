@@ -126695,6 +126695,7 @@
                     "photoUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
                   },
                   "ownerAccount": false,
+                  "opensDefault": "pass",
                   "skipped": [
                     "no_email"
                   ],

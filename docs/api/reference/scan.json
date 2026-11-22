@@ -3519,6 +3519,7 @@
         "photoUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
       },
       "ownerAccount": false,
+      "opensDefault": "pass",
       "skipped": ["no_email"],
       "warnings": ["replaces_pass_tag"],
       "lostAt": 1795570500000,
