@@ -118,3 +118,12 @@
 .op-next .push {
   margin-left: auto;
 }
+/* An operation title can be a sentence: it wraps inside the screen instead of widening the page. */
+.op-next .btn {
+  max-width: 100%;
+  height: auto;
+  min-height: 32px;
+  padding-block: 6px;
+  white-space: normal;
+  text-align: left;
+}
