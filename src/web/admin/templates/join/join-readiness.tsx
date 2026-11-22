@@ -30,7 +30,7 @@ export function JoinReadiness({
                 to="/admin/templates/$templateId"
                 params={{ templateId }}
                 search={{ orgId, tab: 'versions' }}
-                className="text-accent-fg underline-offset-2 hover:underline"
+                className="text-accent-fg underline underline-offset-2"
               >
                 Releases
               </Link>
@@ -39,7 +39,7 @@ export function JoinReadiness({
                 to="/admin/templates/$templateId/design"
                 params={{ templateId }}
                 search={{ orgId }}
-                className="text-accent-fg underline-offset-2 hover:underline"
+                className="text-accent-fg underline underline-offset-2"
               >
                 Design
               </Link>
@@ -66,7 +66,7 @@ export function JoinNeedsCode({
         to="/admin/templates/$templateId/design"
         params={{ templateId }}
         search={{ orgId }}
-        className="text-accent-fg underline-offset-2 hover:underline"
+        className="text-accent-fg underline underline-offset-2"
       >
         Design
       </Link>
