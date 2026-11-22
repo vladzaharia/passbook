@@ -16,6 +16,9 @@
   gap: 24px;
   align-items: start;
 }
+.logs-grid:not(:has(.logs-rail)) {
+  grid-template-columns: minmax(0, 1fr);
+}
 .logs-main {
   grid-area: main;
   min-width: 0;

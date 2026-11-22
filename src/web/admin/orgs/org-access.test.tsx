@@ -184,7 +184,7 @@ describe('organization people and service access', () => {
     ).toBeInTheDocument();
   });
 
-  it('shows no expiry on an accepted invitation', async () => {
+  it('does not list an accepted invitation: that person is a member', async () => {
     await renderApp('/admin/o/o1/members', {
       session: 'admin',
       handlers: handlers({
@@ -202,8 +202,8 @@ describe('organization people and service access', () => {
           }),
       }),
     });
-    expect(await screen.findByText('accepted@example.test')).toBeInTheDocument();
-    expect(listItem('Invitations', 'accepted@example.test')).not.toHaveTextContent('Expires');
+    expect(await screen.findByText('pending@example.test')).toBeInTheDocument();
+    expect(screen.queryByText('accepted@example.test')).toBeNull();
     expect(listItem('Invitations', 'pending@example.test')).toHaveTextContent('Expires');
   });
 
@@ -273,7 +273,6 @@ describe('organization people and service access', () => {
     expect(listItem('Invitations', 'pending@example.test')).toHaveTextContent('Read only');
     for (const [email, state] of [
       ['pending@example.test', 'Pending'],
-      ['accepted@example.test', 'Accepted'],
       ['revoked@example.test', 'Revoked'],
       ['expired@example.test', 'Expired'],
     ] as const) {
@@ -282,7 +281,10 @@ describe('organization people and service access', () => {
         expect(screen.queryByRole('button', { name: `Revoke invitation for ${email}` })).toBeNull();
       }
     }
-    expect(screen.getByRole('heading', { name: 'Members', level: 2 })).toBeInTheDocument();
+    // An accepted invitation is a member, listed once above.
+    expect(screen.queryByText('accepted@example.test')).toBeNull();
+    // The page's h1 says Members: the card's heading names the list for assistive tech only.
+    expect(screen.getByRole('heading', { name: 'Members', level: 2 })).toHaveClass('sr-only');
     expect(screen.getByRole('heading', { name: 'Invitations' })).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: 'Revoke membership for Ada Lovelace' }),

@@ -174,9 +174,21 @@ function InsideScenario({ scenario }: { scenario: AccessScenario }) {
 
 export function AccessVisual({ scenario }: { scenario: AccessScenario }) {
   const outcome = verdicts[scenario];
-  if (scenario === 'roll-call-start') return <InsideScenario scenario={scenario} />;
-  if (scenario.startsWith('inside')) return <InsideScenario scenario={scenario} />;
-  if (scenario.startsWith('roll-call')) return <RollScenario scenario={scenario} />;
+  // A sheet over the loop: the loop names the page, so the gallery names it here.
+  if (scenario === 'roll-call-start' || scenario.startsWith('inside'))
+    return (
+      <>
+        <h1 className="sr-only">Front desk</h1>
+        <InsideScenario scenario={scenario} />
+      </>
+    );
+  if (scenario.startsWith('roll-call'))
+    return (
+      <>
+        <h1 className="sr-only">Front desk</h1>
+        <RollScenario scenario={scenario} />
+      </>
+    );
   return (
     <>
       <ScanAppView

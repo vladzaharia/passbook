@@ -83,6 +83,8 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
     },
   });
   const [revoking, setRevoking] = useState<Revoking | null>(null);
+  // An accepted invitation is a member now, in the list above: it is not listed twice.
+  const open = invitations.data?.items.filter((i) => i.acceptedAt === null) ?? [];
 
   const sendInvite: SendInvite = async (body) => {
     const session = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
@@ -96,7 +98,8 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
     <Card>
       <CardBody className="flex flex-col gap-5">
         <section aria-labelledby="org-members-heading" className="flex flex-col gap-3">
-          <h2 id="org-members-heading" className="text-sm font-semibold text-fg-strong">
+          {/* The page's h1 says Members: the heading stays for assistive tech and names the list. */}
+          <h2 id="org-members-heading" className="sr-only">
             Members
           </h2>
           {members.isPending ? (
@@ -161,29 +164,23 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
               error={invitations.error}
               onRetry={() => invitations.refetch()}
             />
-          ) : invitations.data.items.length === 0 ? (
+          ) : open.length === 0 ? (
             <p className="text-sm text-fg-muted">No invitations.</p>
           ) : (
             <ListRows label="Invitations">
-              {invitations.data.items.map((invitation) => {
+              {open.map((invitation) => {
                 const status =
                   invitation.revokedAt !== null
                     ? 'Revoked'
-                    : invitation.acceptedAt !== null
-                      ? 'Accepted'
-                      : invitation.expiresAt <= Date.now()
-                        ? 'Expired'
-                        : 'Pending';
+                    : invitation.expiresAt <= Date.now()
+                      ? 'Expired'
+                      : 'Pending';
                 const roles = invitation.roles.map((role) => ROLE_LABELS[role]).join(', ');
                 return (
                   <ListRow
                     key={invitation.id}
                     title={invitation.email}
-                    meta={`${roles} · ${
-                      status === 'Accepted'
-                        ? status
-                        : `${status} · Expires ${formatDateTime(invitation.expiresAt)}`
-                    }`}
+                    meta={`${roles} · ${status} · Expires ${formatDateTime(invitation.expiresAt)}`}
                     trailing={
                       status === 'Pending' ? (
                         <RowActions

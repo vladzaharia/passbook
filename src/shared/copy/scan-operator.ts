@@ -17,7 +17,6 @@ export const OPERATOR_COPY = {
     line: 'Ready to scan',
     offline: 'Name search needs a connection',
     paused: 'Scanning is paused',
-    move: '{keys} to move · {open} to open',
   },
   tabs: {
     activity: 'Activity',

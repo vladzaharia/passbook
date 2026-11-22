@@ -155,12 +155,12 @@ export function TemplateStep({
   hasMore,
   onRetry,
   templateId,
-  previewVersion,
   onSelect,
   onCommit,
   choiceError,
 }: {
-  templates: (GroupableTemplate & { id: string })[];
+  /** Each with the release a pass would be made from: its tile shows that card. */
+  templates: (GroupableTemplate & { id: string; version: string })[];
   orgId: string | undefined;
   principalId: string | undefined;
   mode: 'live' | 'test';
@@ -171,7 +171,6 @@ export function TemplateStep({
   hasMore: boolean;
   onRetry: () => void;
   templateId: string | undefined;
-  previewVersion: string | undefined;
   onSelect: (id: string) => void;
   onCommit: (id: string) => void;
   /** Next was pressed with nothing chosen. */
@@ -226,11 +225,11 @@ export function TemplateStep({
                   onSelect={onSelect}
                   onCommit={onCommit}
                   media={
-                    orgId && principalId && t.id === templateId && previewVersion ? (
+                    orgId && principalId && t.version ? (
                       <TemplateStill
                         id={t.id}
                         orgId={orgId}
-                        version={previewVersion}
+                        version={t.version}
                         principalId={principalId}
                         mode={mode}
                       />

@@ -162,6 +162,42 @@ describe('Change wizard', () => {
     expect(sent[1]?.key).toBe(sent[0]?.key);
   });
 
+  it('shows a rate-limited create as the error card with its wait, keeps the selection, and retries the same call', async () => {
+    const sent: Sent[] = [];
+    setup((body, key) => {
+      sent.push({ body, key });
+      if (sent.length > 1) return json(run(), 201);
+      const res = problem(429, 'RATE_LIMITED', 'Too many requests. Try again later.');
+      res.headers.set('retry-after', '120');
+      return res;
+    });
+    const user = userEvent.setup();
+    await user.click(await toReview(user));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Too many requests. Try again in 2 minutes.');
+    // The wizard is out of the way, not gone: Back to review shows the same step and selection.
+    await user.click(screen.getByRole('button', { name: 'Back to review' }));
+    expect(await screen.findByRole('button', { name: 'Change 2 passes' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Change 2 passes' }));
+    await waitFor(() => expect(sent).toHaveLength(2));
+    expect(sent[1]?.key).toBe(sent[0]?.key);
+    expect(sent[1]?.body).toEqual(sent[0]?.body);
+  });
+
+  it('retries a rate-limited create from the error card', async () => {
+    const sent: Sent[] = [];
+    setup((body, key) => {
+      sent.push({ body, key });
+      return sent.length > 1 ? json(run(), 201) : problem(429, 'RATE_LIMITED', 'x');
+    });
+    const user = userEvent.setup();
+    await user.click(await toReview(user));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Try again in a minute.');
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await waitFor(() => expect(sent).toHaveLength(2));
+    expect(sent[1]?.key).toBe(sent[0]?.key);
+  });
+
   it('says who is told is an estimate from the 200 newest, and asks for the text after Next', async () => {
     setup(() => json(run(), 201), {
       previews: () => ({ targeted: 500, notified: 300, silent: 200 }),

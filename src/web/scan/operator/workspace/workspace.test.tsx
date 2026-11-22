@@ -153,6 +153,14 @@ describe('the workspace', () => {
     });
   });
 
+  it('shows the search keys once, in the status bar, not again under the field', async () => {
+    setup();
+    fireEvent.change(field(), { target: { value: 'ok' } });
+    await waitFor(() => expect(screen.getAllByText('Move').length).toBeGreaterThan(0));
+    expect(screen.queryByText(/to move/)).not.toBeInTheDocument();
+    expect(screen.getAllByText('Move')).toHaveLength(1);
+  });
+
   it('a short wrong code and Enter says nothing matched, and search still works (H2)', async () => {
     const { lookup } = setup();
     fireEvent.change(field(), { target: { value: 'zz' } });

@@ -54,6 +54,9 @@ async function openReview(options: {
   versionDetail?: (version: string) => Response;
   sessionResponse?: () => Response | Promise<Response>;
   membershipResponse?: () => Response | Promise<Response>;
+  /** Return with the template tiles showing, before one is chosen. */
+  atTemplates?: boolean;
+  previewed?: (templateId: string) => void;
 }) {
   const user = userEvent.setup();
   const eligibleFor = (url: URL) => {
@@ -84,10 +87,24 @@ async function openReview(options: {
         json(templateVersionDetail({ version: 'ffeeddccbbaa9988' })),
       '/api/v1/templates/tpl2/versions/a1b2c3d4e5f6a7b8': () => json(templateVersionDetail()),
       '/api/v1/templates/previews': previewsHandler,
-      '/api/v1/templates/tpl1/preview': () =>
-        json({ passJson: SAMPLE_PASS_JSON, warnings: [], assetBaseUrl: '/a', assetNames: [] }),
-      '/api/v1/templates/tpl2/preview': () =>
-        json({ passJson: SAMPLE_PASS_JSON, warnings: [], assetBaseUrl: '/a', assetNames: [] }),
+      '/api/v1/templates/tpl1/preview': () => {
+        options.previewed?.('tpl1');
+        return json({
+          passJson: SAMPLE_PASS_JSON,
+          warnings: [],
+          assetBaseUrl: '/a',
+          assetNames: [],
+        });
+      },
+      '/api/v1/templates/tpl2/preview': () => {
+        options.previewed?.('tpl2');
+        return json({
+          passJson: SAMPLE_PASS_JSON,
+          warnings: [],
+          assetBaseUrl: '/a',
+          assetNames: [],
+        });
+      },
       '/api/v1/connections': () => json({ items: [], nextCursor: null }),
       '/api/v1/passes': (url, init) => {
         if ((init?.method ?? 'GET').toUpperCase() === 'POST') return options.post(init);
@@ -112,6 +129,7 @@ async function openReview(options: {
       ])?.status,
     ).toBe('success'),
   );
+  if (options.atTemplates) return { user, ...app };
   await user.click(await screen.findByRole('radio', { name: /Copper card/ }));
   await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
   await user.click(screen.getByRole('button', { name: 'Next' }));
@@ -124,6 +142,24 @@ async function openReview(options: {
 }
 
 describe('reviewed pass issuance', () => {
+  it('shows each template tile as its card before one is chosen', async () => {
+    const asked: string[] = [];
+    await openReview({
+      atTemplates: true,
+      post: () => json({}),
+      templates: () =>
+        json({
+          items: [
+            eligibleTemplate(),
+            eligibleTemplate({ templateId: 'tpl2', name: 'Silver card', releaseId: 'release2' }),
+          ],
+          nextCursor: null,
+        }),
+      previewed: (id) => asked.push(id),
+    });
+    await waitFor(() => expect(asked.sort()).toEqual(['tpl1', 'tpl2']));
+  });
+
   it('sends the displayed mode and version, reuses a key only for the same intent', async () => {
     const version = 'a1b2c3d4e5f6a7b8';
     const requests: { body: Record<string, unknown>; key: string | null }[] = [];
