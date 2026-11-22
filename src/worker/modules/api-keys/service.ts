@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 import type { ApiKeyListQuerySchema } from '../../../shared/contracts/index.ts';
 import { apiKeyPrefixOf } from '../../platform/api-key-token.ts';
-import { rolesCapableOf } from '../../platform/api-scopes.ts';
+import { CREDENTIAL_SCOPES, rolesCapableOf } from '../../platform/api-scopes.ts';
 import type { ApiKeyAuth, ApiKeyStore, KeyCaller } from '../../platform/auth.ts';
 import {
   keyInBrowserMode,
@@ -21,7 +21,7 @@ import { seesAccountEmails } from '../passes/account-email.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId } from './access.ts';
 import * as repo from './repo.ts';
 import { selfSuccessors } from './repo-family.ts';
-import { invalid } from './service-create.ts';
+import { invalid, MAX_LIFETIME_MS } from './service-create.ts';
 import { type ApiKeyDto, parseRoles, parseScopes, type Resources, toDto } from './service-dto.ts';
 
 export { createApiKey } from './service-create.ts';
@@ -235,7 +235,15 @@ export async function keyAuthOf(
       code: 'API_KEY_PLATFORM_UNBOUNDED',
       keyId: row.id,
     });
-  const held = parseScopes(row.scopes);
+  // A credential scope counts only on a key that satisfies the mint rule (no role, expiry within 91 days, no parent): a key made by an older version holds it in vain.
+  const credentialOk =
+    parseRoles(row.roles).length === 0 &&
+    row.parent_key_id === null &&
+    row.expires_at !== null &&
+    row.expires_at <= row.created_at + MAX_LIFETIME_MS;
+  const held = parseScopes(row.scopes).filter(
+    (s) => credentialOk || !(CREDENTIAL_SCOPES as readonly string[]).includes(s),
+  );
   const memberRoles = row.member_roles ? parseRoles(row.member_roles) : null;
   const auth: ApiKeyAuth = {
     kind: 'api_key',
