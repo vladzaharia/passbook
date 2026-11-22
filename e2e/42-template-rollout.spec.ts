@@ -41,6 +41,8 @@ async function shoot(page: Page, url: string, name: string, ready: () => Promise
       await page.setViewportSize({ width, height });
       await page.goto(url);
       await ready();
+      // The Releases panel shows a loading skeleton first: shoot once it has painted.
+      await expect(page.getByRole('list', { name: 'Releases' })).toBeVisible();
       await page.screenshot({
         path: `${SHOTS}/${name}-${width}-${colorScheme}.png`,
         fullPage: true,
@@ -120,8 +122,8 @@ test('Tell holders messages the passes on the release, once, and never the ones 
     await expect(page.getByText('Updating passes to v2: 2 of 5')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Updating passes to v2' })).toBeVisible();
     await expect(page.getByRole('progressbar', { name: 'Passes on the release' })).toBeVisible();
-    await expect(page.getByText('v2 · 2')).toBeVisible();
-    await expect(page.getByText('v1 · 3')).toBeVisible();
+    await expect(page.getByRole('listitem').filter({ hasText: /^v2 · 2$/ })).toBeVisible();
+    await expect(page.getByRole('listitem').filter({ hasText: /^v1 · 3$/ })).toBeVisible();
 
     const card = page.getByRole('progressbar', { name: 'Passes on the release' });
     await shoot(page, url, 'rollout', () => expect(card).toBeVisible());
