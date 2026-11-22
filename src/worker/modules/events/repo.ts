@@ -55,12 +55,14 @@ export interface PassReadFence {
   mode: Mode | null;
 }
 
-const passReadFenceSql = `EXISTS (SELECT 1 FROM passes p
-  WHERE p.id = ? AND p.org_id = ? AND (? IS NULL OR p.mode = ?)
+function passReadFenceSql(fence: PassReadFence): string {
+  return `EXISTS (SELECT 1 FROM passes p
+  WHERE p.id = ? AND p.org_id = ?${fence.mode === null ? '' : ' AND p.mode = ?'}
     AND p.deleted_at IS NULL AND p.test_data_quarantined = 0)`;
+}
 
 function passReadFenceParams(passId: string, fence: PassReadFence) {
-  return [passId, fence.orgId, fence.mode, fence.mode];
+  return fence.mode === null ? [passId, fence.orgId] : [passId, fence.orgId, fence.mode];
 }
 
 export interface EventFilter {
@@ -74,7 +76,7 @@ export interface EventFilter {
 
 /** Newest first. The (pass_id, at) index serves the order; id breaks ties. */
 export function listEvents(db: D1Database, f: EventFilter): Promise<EventRow[]> {
-  const where = ['pass_id = ?', passReadFenceSql];
+  const where = ['pass_id = ?', passReadFenceSql(f.fence)];
   const params: (string | number | null)[] = [f.passId, ...passReadFenceParams(f.passId, f.fence)];
   if (f.kinds?.length) {
     where.push(`kind IN (${f.kinds.map(() => '?').join(', ')})`);
@@ -130,7 +132,7 @@ export function latestDeviceEvents(
        FROM pass_events
        WHERE pass_id = ? AND device IS NOT NULL
          AND kind IN ('device.registered', 'device.unregistered', 'device.fetched', 'push.sent', 'push.failed')
-         AND ${passReadFenceSql})
+         AND ${passReadFenceSql(fence)})
      WHERE rn = 1`,
     [passId, ...passReadFenceParams(passId, fence)],
   );
@@ -144,7 +146,7 @@ export function registrationsOfPass(
 ): Promise<{ device_id: string; created_at: number }[]> {
   return all(
     db,
-    `SELECT device_id, created_at FROM registrations WHERE pass_id = ? AND ${passReadFenceSql}`,
+    `SELECT device_id, created_at FROM registrations WHERE pass_id = ? AND ${passReadFenceSql(fence)}`,
     [passId, ...passReadFenceParams(passId, fence)],
   );
 }

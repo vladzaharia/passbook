@@ -37,17 +37,24 @@ export interface ConnectionPassContext {
 }
 
 /** SQL and parameters shared by every final connector-owned write. */
-export const connectionPassPredicate = `org_id = ? AND mode = ? AND mode = 'live'
-  AND status = ? AND version = ? AND (? IS NULL OR row_version = ?) AND deleted_at IS NULL AND removed_at IS NULL AND test_data_quarantined = 0
+export const connectionPassPredicate = (context: ConnectionPassContext): string => {
+  const proof = context.retainedReleaseProof ? 'AND (release_id = ? AND template_version = ?)' : '';
+  const binding = context.retainedBinding
+    ? 'AND (passes.template_id = ? AND passes.release_id IS ? AND passes.template_version = ?)'
+    : '';
+  const rowVersion = context.expectedRowVersion === undefined ? '' : 'AND row_version = ?';
+  return `org_id = ? AND mode = ? AND mode = 'live'
+  AND status = ? AND version = ? ${rowVersion} AND deleted_at IS NULL AND removed_at IS NULL AND test_data_quarantined = 0
   AND connection_id = ? AND external_ref = ? AND owner_user_id IS ? AND link_generation = ?
   AND identity_id = ? AND credential_generation = ? AND lifecycle_generation = ?
   AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = passes.id AND t.state = 'pending')
-  AND (? IS NULL OR (release_id = ? AND template_version = ?))
-  AND (? IS NULL OR (passes.template_id = ? AND passes.release_id IS ? AND passes.template_version = ?))
+  ${proof}
+  ${binding}
   AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = passes.org_id AND o.status = 'active')
   AND EXISTS (SELECT 1 FROM connections c WHERE c.id = passes.connection_id
     AND c.org_id = passes.org_id AND c.enabled = 1 AND c.generation = ?
     AND c.mode = ?)`;
+};
 
 export function connectionPassParams(context: ConnectionPassContext): SqlValue[] {
   return [
@@ -55,8 +62,7 @@ export function connectionPassParams(context: ConnectionPassContext): SqlValue[]
     context.mode,
     context.status,
     context.expectedVersion,
-    context.expectedRowVersion ?? null,
-    context.expectedRowVersion ?? null,
+    ...(context.expectedRowVersion === undefined ? [] : [context.expectedRowVersion]),
     context.connectionId,
     context.externalRef,
     context.ownerUserId,
@@ -64,13 +70,16 @@ export function connectionPassParams(context: ConnectionPassContext): SqlValue[]
     context.identityId,
     context.credentialGeneration,
     context.lifecycleGeneration,
-    context.retainedReleaseProof?.id ?? null,
-    context.retainedReleaseProof?.id ?? null,
-    context.retainedReleaseProof?.version ?? null,
-    context.retainedBinding?.templateId ?? null,
-    context.retainedBinding?.templateId ?? null,
-    context.retainedBinding?.releaseId ?? null,
-    context.retainedBinding?.templateVersion ?? null,
+    ...(context.retainedReleaseProof
+      ? [context.retainedReleaseProof.id, context.retainedReleaseProof.version]
+      : []),
+    ...(context.retainedBinding
+      ? [
+          context.retainedBinding.templateId,
+          context.retainedBinding.releaseId,
+          context.retainedBinding.templateVersion,
+        ]
+      : []),
     context.generation,
     context.expectedConnectionMode,
   ];

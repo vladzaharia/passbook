@@ -45,13 +45,12 @@ export function decodeStaffCursor(raw: string | undefined): StaffCursor | undefi
   );
 }
 
-/** Rows after the cursor in the list's order, for the staff alias `st`. Six binds. */
+/** Rows after the cursor in the list's order, for the staff alias `st`. Five binds, none without a cursor. */
 export function afterCursorSql(cursor: StaffCursor | undefined) {
+  if (!cursor) return { sql: '', params: [] };
   return {
-    sql: `AND (? IS NULL OR (st.disabled_at IS NOT NULL) > ? OR ((st.disabled_at IS NOT NULL) = ?
+    sql: `AND ((st.disabled_at IS NOT NULL) > ? OR ((st.disabled_at IS NOT NULL) = ?
       AND (st.name COLLATE NOCASE > ? OR (st.name COLLATE NOCASE = ? AND st.id > ?))))`,
-    params: cursor
-      ? [1, +cursor.disabled, +cursor.disabled, cursor.name, cursor.name, cursor.id]
-      : [null, 0, 0, '', '', ''],
+    params: [+cursor.disabled, +cursor.disabled, cursor.name, cursor.name, cursor.id],
   };
 }
