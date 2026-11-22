@@ -25,18 +25,18 @@
           {
             "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
             "holder": "Ada Example",
-            "plan": "Day pass",
-            "host": "passbook.mobile",
+            "plan": "Always open",
+            "host": null,
             "place": "zone:main-hall",
-            "placeName": "Front entrance",
-            "since": 1794362400000,
+            "placeName": "Main hall",
+            "since": 1795570500000,
             "basis": "in_now",
             "presence": "in",
             "late": false,
             "mark": {
               "status": "present",
               "by": "Sam Rivera",
-              "at": 1795570500000
+              "at": 1795571940000
             },
             "notConfirmedOut": false
           }
@@ -69,19 +69,15 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
-          "plan": "Day pass",
-          "host": "passbook.mobile",
+          "plan": "Always open",
+          "host": null,
           "place": "zone:main-hall",
-          "placeName": "Front entrance",
-          "since": 1794362400000,
+          "placeName": "Main hall",
+          "since": 1795570500000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
-          "mark": {
-            "status": "present",
-            "by": "Sam Rivera",
-            "at": 1795570500000
-          },
+          "mark": null,
           "notConfirmedOut": false
         }
       ]
@@ -112,18 +108,18 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
-          "plan": "Day pass",
-          "host": "passbook.mobile",
+          "plan": "Always open",
+          "host": null,
           "place": "zone:main-hall",
-          "placeName": "Front entrance",
-          "since": 1794362400000,
+          "placeName": "Main hall",
+          "since": 1795570500000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 1795570500000
+            "at": 1795571940000
           },
           "notConfirmedOut": false
         }
@@ -165,18 +161,18 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
-          "plan": "Day pass",
-          "host": "passbook.mobile",
+          "plan": "Always open",
+          "host": null,
           "place": "zone:main-hall",
-          "placeName": "Front entrance",
-          "since": 1794362400000,
+          "placeName": "Main hall",
+          "since": 1795570500000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 1795570500000
+            "at": 1795571940000
           },
           "notConfirmedOut": false
         }
@@ -215,18 +211,18 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
-          "plan": "Day pass",
-          "host": "passbook.mobile",
+          "plan": "Always open",
+          "host": null,
           "place": "zone:main-hall",
-          "placeName": "Front entrance",
-          "since": 1794362400000,
+          "placeName": "Main hall",
+          "since": 1795570500000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 1795570500000
+            "at": 1795571940000
           },
           "notConfirmedOut": false
         }

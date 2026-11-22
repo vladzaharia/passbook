@@ -5,66 +5,69 @@
         {
           "mode": "live",
           "provider": "google",
-          "accountId": "0193a1b2-7c00-7000-8000-bb07b66550ce",
-          "source": "platform",
+          "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+          "source": "org",
           "platformAvailable": false,
           "state": "off",
-          "enrolmentRevision": 3,
+          "enrolmentRevision": 2,
           "prerequisites": {
-            "check": false,
+            "check": true,
             "roundTrip": false
           },
           "hold": null,
           "issuance": {
-            "state": "enabled"
+            "state": "disabled",
+            "reason": "not_released"
           }
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider": {
     "request": {
-      "source": "platform",
-      "expectedRevision": 3
+      "source": "org",
+      "expectedRevision": 2
     },
     "response": {
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-3291ea9eb556",
-      "source": "platform",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "source": "org",
       "platformAvailable": false,
       "state": "off",
       "enrolmentRevision": 3,
       "prerequisites": {
-        "check": false,
+        "check": true,
         "roundTrip": false
       },
       "hold": null,
       "issuance": {
-        "state": "enabled"
+        "state": "disabled",
+        "reason": "not_released"
       }
     }
   },
   "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable": {
     "request": {
-      "expectedRevision": 3
+      "expectedRevision": 2
     },
     "response": {
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-38f2b2edade6",
-      "source": "platform",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "source": "org",
       "platformAvailable": false,
-      "state": "off",
+      "state": "on",
       "enrolmentRevision": 3,
       "prerequisites": {
-        "check": false,
+        "check": true,
         "roundTrip": false
       },
       "hold": null,
       "issuance": {
-        "state": "enabled"
+        "state": "disabled",
+        "reason": "not_released"
       }
     }
   },
@@ -75,40 +78,42 @@
     "response": {
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-af3148b2513e",
-      "source": "platform",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "source": "org",
       "platformAvailable": false,
       "state": "off",
-      "enrolmentRevision": 3,
+      "enrolmentRevision": 4,
       "prerequisites": {
-        "check": false,
+        "check": true,
         "roundTrip": false
       },
       "hold": null,
       "issuance": {
-        "state": "enabled"
+        "state": "disabled",
+        "reason": "not_released"
       }
     }
   },
   "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke": {
     "request": {
-      "expectedRevision": 3
+      "expectedRevision": 4
     },
     "response": {
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-be696cf031d0",
-      "source": "platform",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "source": "org",
       "platformAvailable": false,
-      "state": "off",
-      "enrolmentRevision": 3,
+      "state": "revoked",
+      "enrolmentRevision": 5,
       "prerequisites": {
-        "check": false,
+        "check": true,
         "roundTrip": false
       },
       "hold": null,
       "issuance": {
-        "state": "enabled"
+        "state": "disabled",
+        "reason": "not_released"
       }
     }
   }

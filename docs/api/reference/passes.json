@@ -1266,13 +1266,13 @@
         },
         "google": {
           "on": false,
-          "source": "org",
-          "reason": "not_enrolled"
+          "source": "platform",
+          "reason": "not_released"
         },
         "samsung": {
           "on": false,
-          "source": "org",
-          "reason": "not_enrolled"
+          "source": "platform",
+          "reason": "not_released"
         },
         "paper": {
           "on": true,
@@ -1342,7 +1342,8 @@
         "google": [
           {
             "level": "passbook",
-            "state": "ok",
+            "state": "locked",
+            "reason": "not_released",
             "canChange": false
           },
           {
@@ -1352,8 +1353,7 @@
           },
           {
             "level": "org",
-            "state": "needs",
-            "reason": "not_enrolled",
+            "state": "ok",
             "canChange": true
           },
           {
@@ -1370,7 +1370,8 @@
         "samsung": [
           {
             "level": "passbook",
-            "state": "ok",
+            "state": "locked",
+            "reason": "not_released",
             "canChange": false
           },
           {
@@ -1380,8 +1381,7 @@
           },
           {
             "level": "org",
-            "state": "needs",
-            "reason": "not_enrolled",
+            "state": "ok",
             "canChange": true
           },
           {
@@ -1451,14 +1451,7 @@
           }
         ]
       },
-      "overrides": {
-        "mobile": "on",
-        "apple": "on",
-        "google": "on",
-        "samsung": "on",
-        "paper": "on",
-        "nfc": "on"
-      },
+      "overrides": {},
       "replace": {
         "supported": false,
         "windows": [],
@@ -1492,13 +1485,13 @@
         },
         "google": {
           "on": false,
-          "source": "org",
-          "reason": "not_enrolled"
+          "source": "platform",
+          "reason": "not_released"
         },
         "samsung": {
           "on": false,
-          "source": "org",
-          "reason": "not_enrolled"
+          "source": "platform",
+          "reason": "not_released"
         },
         "paper": {
           "on": false,
@@ -1569,7 +1562,8 @@
         "google": [
           {
             "level": "passbook",
-            "state": "ok",
+            "state": "locked",
+            "reason": "not_released",
             "canChange": false
           },
           {
@@ -1579,8 +1573,7 @@
           },
           {
             "level": "org",
-            "state": "needs",
-            "reason": "not_enrolled",
+            "state": "ok",
             "canChange": true
           },
           {
@@ -1597,7 +1590,8 @@
         "samsung": [
           {
             "level": "passbook",
-            "state": "ok",
+            "state": "locked",
+            "reason": "not_released",
             "canChange": false
           },
           {
@@ -1607,8 +1601,7 @@
           },
           {
             "level": "org",
-            "state": "needs",
-            "reason": "not_enrolled",
+            "state": "ok",
             "canChange": true
           },
           {
@@ -1755,11 +1748,11 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000053",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "generation": 3,
-      "status": "active",
-      "createdAt": 1794362400000,
-      "voidedAt": null,
-      "voidCause": null
+      "generation": 1,
+      "status": "voided",
+      "createdAt": 1795399200000,
+      "voidedAt": 1795572000000,
+      "voidCause": "manual"
     }
   },
   "passes.getPassesByIdPrint": {

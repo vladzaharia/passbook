@@ -36,21 +36,21 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-420ba519bec4",
+          "id": "0193a1b2-7c00-7000-8000-73a0e7354b73",
           "scope": "platform",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "mode": "live",
           "provider": "google",
-          "identityHint": "Northwind signing identity",
+          "identityHint": "Issuer 3388000000022843210",
           "provenance": "platform",
-          "revision": 3,
-          "verifiedAt": 1795570500000,
+          "revision": 2,
+          "verifiedAt": 1795399200000,
           "revokedAt": null,
           "createdAt": 1794362400000,
           "updatedAt": 1795399200000
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "wallet-platform.putPlatformWalletCredentials": {
@@ -82,21 +82,21 @@
   },
   "wallet-platform.postPlatformWalletCredentialsByIdRevoke": {
     "request": {
-      "expectedRevision": 3
+      "expectedRevision": 2
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-00e7a199ffe7",
+      "id": "0193a1b2-7c00-7000-8000-73a0e7354b73",
       "scope": "platform",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "google",
-      "identityHint": "Northwind signing identity",
+      "identityHint": "Issuer 3388000000022843210",
       "provenance": "platform",
       "revision": 3,
-      "verifiedAt": 1795570500000,
-      "revokedAt": null,
+      "verifiedAt": 1795399200000,
+      "revokedAt": 1795572000000,
       "createdAt": 1794362400000,
-      "updatedAt": 1795399200000
+      "updatedAt": 1795572000000
     }
   },
   "wallet-platform.postPlatformWalletCredentialsByIdCheck": {
@@ -134,13 +134,13 @@
           "orgName": "Northwind Climbing",
           "mode": "live",
           "provider": "google",
-          "source": "platform",
+          "source": "org",
           "state": "off",
           "hold": null,
           "updatedAt": 1795399200000
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "wallet-platform.getPlatformWalletCredentialsMigrate": {

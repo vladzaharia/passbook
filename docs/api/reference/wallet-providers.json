@@ -20,7 +20,8 @@
             "at": 1795570500000
           },
           "issuance": {
-            "state": "enabled"
+            "state": "disabled",
+            "reason": "not_released"
           }
         },
         {
@@ -39,7 +40,8 @@
             "at": 1795570500000
           },
           "issuance": {
-            "state": "enabled"
+            "state": "disabled",
+            "reason": "not_released"
           }
         }
       ]
@@ -47,9 +49,9 @@
   },
   "wallet-providers.postWalletProvidersAccountsVerify": {
     "response": {
-      "verified": false,
-      "verifiedAt": 1795570500000,
-      "expiresAt": 1798790399999
+      "verified": true,
+      "verifiedAt": 1795572000000,
+      "expiresAt": 1798164000000
     },
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
@@ -63,12 +65,13 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-6110aee99d1e",
-      "revision": 3,
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "revision": 2,
       "state": "configured",
       "externalApprovalVerified": false,
       "issuance": {
-        "state": "enabled"
+        "state": "disabled",
+        "reason": "not_released"
       },
       "updatedAt": 1795399200000
     }
@@ -78,7 +81,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "google",
-      "expectedRevision": 3,
+      "expectedRevision": 2,
       "credentials": {
         "issuerId": "3388000000022843210",
         "serviceAccountEmail": "wallet-issuer@example.com",
@@ -90,14 +93,15 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "google",
-      "accountId": "0193a1b2-7c00-7000-8000-8be9e1a1350a",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
       "revision": 3,
       "state": "configured",
       "externalApprovalVerified": false,
       "issuance": {
-        "state": "enabled"
+        "state": "disabled",
+        "reason": "not_released"
       },
-      "updatedAt": 1795399200000
+      "updatedAt": 1795572000000
     }
   },
   "wallet-providers.postWalletProvidersAccountsRevoke": {
@@ -116,7 +120,8 @@
       "state": "configured",
       "externalApprovalVerified": false,
       "issuance": {
-        "state": "enabled"
+        "state": "disabled",
+        "reason": "not_released"
       },
       "updatedAt": 1795399200000
     }

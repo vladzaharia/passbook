@@ -95,7 +95,7 @@
   },
   "users.postUsersByIdEmails": {
     "request": {
-      "email": "ada@example.com"
+      "email": "sam.rivera@example.com"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000011",

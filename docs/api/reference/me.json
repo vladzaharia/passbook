@@ -211,12 +211,12 @@
       "items": [
         {
           "email": "ada@example.com",
-          "verifiedAt": 1795570500000,
+          "verifiedAt": 1794362400000,
           "verifiedVia": "magic_link",
-          "primary": false
+          "primary": true
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "me.postMeEmailsByEmailPrimary": {

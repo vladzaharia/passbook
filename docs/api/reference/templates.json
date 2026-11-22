@@ -610,13 +610,13 @@
         },
         "google": {
           "on": false,
-          "source": "org",
-          "reason": "not_enrolled"
+          "source": "platform",
+          "reason": "not_released"
         },
         "samsung": {
           "on": false,
-          "source": "org",
-          "reason": "not_enrolled"
+          "source": "platform",
+          "reason": "not_released"
         },
         "paper": {
           "on": true,
@@ -686,7 +686,8 @@
         "google": [
           {
             "level": "passbook",
-            "state": "ok",
+            "state": "locked",
+            "reason": "not_released",
             "canChange": false
           },
           {
@@ -696,8 +697,7 @@
           },
           {
             "level": "org",
-            "state": "needs",
-            "reason": "not_enrolled",
+            "state": "ok",
             "canChange": true
           },
           {
@@ -714,7 +714,8 @@
         "samsung": [
           {
             "level": "passbook",
-            "state": "ok",
+            "state": "locked",
+            "reason": "not_released",
             "canChange": false
           },
           {
@@ -724,8 +725,7 @@
           },
           {
             "level": "org",
-            "state": "needs",
-            "reason": "not_enrolled",
+            "state": "ok",
             "canChange": true
           },
           {
@@ -795,14 +795,7 @@
           }
         ]
       },
-      "overrides": {
-        "mobile": 13,
-        "apple": 38,
-        "google": 11,
-        "samsung": 10,
-        "paper": 29,
-        "nfc": 32
-      },
+      "overrides": {},
       "overridePasses": 31,
       "defaults": {
         "mobile": "on",
@@ -1213,22 +1206,22 @@
   "templates.postTemplatesByIdClone": {
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Day pass"
+      "name": "Day pass (kids)"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "id": "0193a1b2-7c00-7000-8000-1379b97f73dc",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "orgName": "Northwind Climbing",
-      "slug": "day-pass",
-      "name": "Day pass",
+      "slug": "day-pass-kids",
+      "name": "Day pass (kids)",
       "description": "A day pass for the climbing gym, scanned at the front desk.",
       "origin": "uploaded",
       "status": "active",
       "activeVersion": "3",
       "styles": ["generic"],
-      "passCount": 128,
-      "createdAt": 1794362400000,
-      "updatedAt": 1795399200000,
+      "passCount": 0,
+      "createdAt": 1795572000000,
+      "updatedAt": 1795572000000,
       "sample": {
         "name": "Ada Example",
         "tier": "Day pass",
@@ -1237,7 +1230,7 @@
       "versions": [
         {
           "version": "3",
-          "createdAt": 1795399200000,
+          "createdAt": 1795572000000,
           "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
           "assets": [],
           "report": {
@@ -1246,7 +1239,7 @@
           },
           "active": true,
           "displayOnly": false,
-          "passCount": 128
+          "passCount": 0
         }
       ]
     }
@@ -1254,7 +1247,21 @@
   "templates.putTemplatesByIdManifest": {
     "request": {
       "manifest": {
-        "tier": {}
+        "fields": {
+          "name": {
+            "type": "string",
+            "label": "Guest",
+            "required": true
+          },
+          "tier": {
+            "type": "string",
+            "label": "Pass"
+          },
+          "validUntil": {
+            "type": "date",
+            "label": "Valid until"
+          }
+        }
       }
     },
     "response": {
@@ -1296,13 +1303,11 @@
   "templates.putTemplatesByIdChannels": {
     "request": {
       "channels": {
-        "mobile": "on",
-        "apple": "on"
+        "paper": "off"
       },
       "revision": 3,
       "dryRun": false,
-      "replaceCodes": false,
-      "expectedCleared": 10
+      "replaceCodes": false
     },
     "response": {
       "channels": {
@@ -1310,10 +1315,10 @@
         "apple": "on",
         "google": "on",
         "samsung": "on",
-        "paper": "on",
+        "paper": "off",
         "nfc": "on"
       },
-      "revision": 3,
+      "revision": 4,
       "effective": {
         "mobile": {
           "on": true,
@@ -1325,17 +1330,18 @@
         },
         "google": {
           "on": false,
-          "source": "org",
-          "reason": "not_enrolled"
+          "source": "platform",
+          "reason": "not_released"
         },
         "samsung": {
           "on": false,
-          "source": "org",
-          "reason": "not_enrolled"
+          "source": "platform",
+          "reason": "not_released"
         },
         "paper": {
-          "on": true,
-          "source": "template"
+          "on": false,
+          "source": "template",
+          "reason": "template_off"
         },
         "nfc": {
           "on": false,
@@ -1401,7 +1407,8 @@
         "google": [
           {
             "level": "passbook",
-            "state": "ok",
+            "state": "locked",
+            "reason": "not_released",
             "canChange": false
           },
           {
@@ -1411,8 +1418,7 @@
           },
           {
             "level": "org",
-            "state": "needs",
-            "reason": "not_enrolled",
+            "state": "ok",
             "canChange": true
           },
           {
@@ -1429,7 +1435,8 @@
         "samsung": [
           {
             "level": "passbook",
-            "state": "ok",
+            "state": "locked",
+            "reason": "not_released",
             "canChange": false
           },
           {
@@ -1439,8 +1446,7 @@
           },
           {
             "level": "org",
-            "state": "needs",
-            "reason": "not_enrolled",
+            "state": "ok",
             "canChange": true
           },
           {
@@ -1472,7 +1478,8 @@
           },
           {
             "level": "template",
-            "state": "ok",
+            "state": "off",
+            "reason": "template_off",
             "canChange": true
           },
           {
@@ -1510,15 +1517,8 @@
           }
         ]
       },
-      "overrides": {
-        "mobile": 13,
-        "apple": 38,
-        "google": 11,
-        "samsung": 10,
-        "paper": 29,
-        "nfc": 32
-      },
-      "overridePasses": 31,
+      "overrides": {},
+      "overridePasses": 1,
       "defaults": {
         "mobile": "on",
         "apple": "on",
@@ -1554,30 +1554,24 @@
   },
   "templates.postTemplatesByIdChannelsResetPasses": {
     "request": {
-      "channels": ["mobile"],
-      "dryRun": false,
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1"
+      "channels": ["paper"],
+      "dryRun": false
     },
     "response": {
       "overrides": {
-        "mobile": 13,
-        "apple": 38,
-        "google": 11,
-        "samsung": 10,
-        "paper": 29,
-        "nfc": 32
+        "paper": 1
       },
-      "passes": 37,
-      "done": 39,
-      "skipped": 7,
-      "remaining": 17
+      "passes": 1,
+      "done": 1,
+      "skipped": 0,
+      "remaining": 0
     }
   },
   "templates.postTemplatesByIdVersions": {
     "response": {
-      "saved": false,
-      "version": "3",
-      "created": false,
+      "saved": true,
+      "version": "4",
+      "created": true,
       "displayOnly": false,
       "report": {
         "ok": true,
@@ -1726,16 +1720,38 @@
         }
       },
       "manifest": {
-        "tier": {}
+        "fields": {
+          "name": {
+            "type": "string",
+            "label": "Guest",
+            "required": true
+          },
+          "tier": {
+            "type": "string",
+            "label": "Pass"
+          },
+          "validUntil": {
+            "type": "date",
+            "label": "Valid until"
+          }
+        }
       },
       "assets": [
         {
+          "name": "icon.png",
+          "sha1": "27fb038614999199b74c8ad7572a3980f88331b4"
+        },
+        {
+          "name": "icon@2x.png",
+          "sha1": "8bfd9766f5c143dcbd199b5e8fcef0c36dfbffb2"
+        },
+        {
           "name": "logo.png",
-          "sha1": "eb463e387cdd880820a1da5b7513ba8d498c7a0b"
+          "sha1": "ad9876757a905c5b30777075b0f9b1b93fbca70d"
         }
       ],
       "dryRun": false,
-      "parentVersion": "2"
+      "parentVersion": "3"
     }
   },
   "templates.postTemplatesByIdUseCheck": {
@@ -1902,8 +1918,7 @@
             "sha1": "3099a2091b1dcc923ba4d623f8a0ed6ebbf93ec1"
           }
         ]
-      },
-      "baseVersion": "3"
+      }
     }
   },
   "templates.postTemplatesByIdArchive": {
@@ -1915,12 +1930,12 @@
       "name": "Day pass",
       "description": "A day pass for the climbing gym, scanned at the front desk.",
       "origin": "uploaded",
-      "status": "active",
+      "status": "archived",
       "activeVersion": "3",
       "styles": ["generic"],
       "passCount": 128,
       "createdAt": 1794362400000,
-      "updatedAt": 1795399200000,
+      "updatedAt": 1795572000000,
       "sample": {
         "name": "Ada Example",
         "tier": "Day pass",
@@ -1957,7 +1972,7 @@
       "styles": ["generic"],
       "passCount": 128,
       "createdAt": 1794362400000,
-      "updatedAt": 1795399200000,
+      "updatedAt": 1795572000000,
       "sample": {
         "name": "Ada Example",
         "tier": "Day pass",
@@ -1985,7 +2000,7 @@
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
       "provider": "apple",
-      "version": "3"
+      "version": "4"
     },
     "response": {
       "id": "0193a1b2-7c00-7000-8000-cc58496f0eab",

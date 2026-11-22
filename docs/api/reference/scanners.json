@@ -587,13 +587,7 @@
           "name": "Front desk tablet",
           "surface": "auto",
           "effectiveSurface": "phone",
-          "overrides": {
-            "flow": "auto",
-            "reader": "barcode",
-            "direction": "in",
-            "lookup": false,
-            "showPhoto": false
-          },
+          "overrides": {},
           "settings": {
             "checkIn": {
               "mode": "daily"
@@ -763,13 +757,7 @@
           "name": "Front desk tablet",
           "surface": "auto",
           "effectiveSurface": "phone",
-          "overrides": {
-            "flow": "auto",
-            "reader": "barcode",
-            "direction": "in",
-            "lookup": false,
-            "showPhoto": false
-          },
+          "overrides": {},
           "settings": {
             "checkIn": {
               "mode": "daily"
@@ -943,13 +931,7 @@
           "name": "Front desk tablet",
           "surface": "auto",
           "effectiveSurface": "phone",
-          "overrides": {
-            "flow": "auto",
-            "reader": "barcode",
-            "direction": "in",
-            "lookup": false,
-            "showPhoto": false
-          },
+          "overrides": {},
           "settings": {
             "checkIn": {
               "mode": "daily"
@@ -1064,13 +1046,7 @@
       "name": "Front desk tablet",
       "surface": "auto",
       "effectiveSurface": "phone",
-      "overrides": {
-        "flow": "auto",
-        "reader": "barcode",
-        "direction": "in",
-        "lookup": false,
-        "showPhoto": false
-      },
+      "overrides": {},
       "settings": {
         "checkIn": {
           "mode": "daily"
@@ -1184,13 +1160,7 @@
       "name": "Front desk tablet",
       "surface": "auto",
       "effectiveSurface": "phone",
-      "overrides": {
-        "flow": "auto",
-        "reader": "barcode",
-        "direction": "in",
-        "lookup": false,
-        "showPhoto": false
-      },
+      "overrides": {},
       "settings": {
         "checkIn": {
           "mode": "daily"
@@ -1635,13 +1605,7 @@
           "name": "Front desk tablet",
           "surface": "auto",
           "effectiveSurface": "phone",
-          "overrides": {
-            "flow": "auto",
-            "reader": "barcode",
-            "direction": "in",
-            "lookup": false,
-            "showPhoto": false
-          },
+          "overrides": {},
           "settings": {
             "checkIn": {
               "mode": "daily"

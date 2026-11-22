@@ -3,67 +3,59 @@
     "response": {
       "items": [
         {
-          "scope": "platform",
-          "key": "tier",
-          "value": "standard",
-          "default": "standard",
+          "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
+          "key": "org.timeZone",
+          "value": "America/Los_Angeles",
+          "default": "UTC",
           "source": "org",
-          "ceiling": 24,
-          "planBlocked": ["mobile"],
-          "updatedAt": 1795399200000,
+          "updatedAt": 1794362400000,
           "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
+        },
+        {
+          "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
+          "key": "email.orgCapPerDay",
+          "value": 500,
+          "default": 500,
+          "source": "default",
+          "ceiling": 2000,
+          "updatedAt": null,
+          "updatedBy": null
         }
       ],
-      "configRevision": 3,
-      "oidc": {
-        "issuer": "https://id.example.com",
-        "platformAdminGroup": "passbook-admins",
-        "adminGroup": "northwind-admins",
-        "developerGroup": "northwind-developers",
-        "userGroup": "northwind-staff",
-        "consoleGroupRequired": false
-      },
-      "released": {
-        "google": false,
-        "samsung": false
-      }
+      "configRevision": 3
     }
   },
   "settings.putSettings": {
     "request": {
-      "scope": "platform",
+      "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
       "values": {
-        "tier": {}
+        "org.timeZone": "America/Los_Angeles"
       },
-      "configRevision": 3
+      "configRevision": 2
     },
     "response": {
       "items": [
         {
-          "scope": "platform",
-          "key": "tier",
-          "value": "standard",
-          "default": "standard",
+          "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
+          "key": "org.timeZone",
+          "value": "America/Los_Angeles",
+          "default": "UTC",
           "source": "org",
-          "ceiling": 24,
-          "planBlocked": ["mobile"],
-          "updatedAt": 1795399200000,
+          "updatedAt": 1795572000000,
           "updatedBy": "0193a1b2-7c00-7000-8000-000000000011"
+        },
+        {
+          "scope": "org:0193a1b2-7c00-7000-8000-0000000000a1",
+          "key": "email.orgCapPerDay",
+          "value": 500,
+          "default": 500,
+          "source": "default",
+          "ceiling": 2000,
+          "updatedAt": null,
+          "updatedBy": null
         }
       ],
-      "configRevision": 3,
-      "oidc": {
-        "issuer": "https://id.example.com",
-        "platformAdminGroup": "passbook-admins",
-        "adminGroup": "northwind-admins",
-        "developerGroup": "northwind-developers",
-        "userGroup": "northwind-staff",
-        "consoleGroupRequired": false
-      },
-      "released": {
-        "google": false,
-        "samsung": false
-      }
+      "configRevision": 3
     }
   },
   "settings.getSettingsImpact": {

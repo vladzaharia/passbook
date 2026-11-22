@@ -386,47 +386,61 @@
     "response": {
       "ok": true,
       "detail": "3 rows. Columns: Booking ID, Name, Email, Plan, Valid until",
-      "durationMs": 1240,
+      "durationMs": 1650,
       "sample": [
         {
-          "pointer": "/input/tier",
-          "preview": "Day pass"
+          "pointer": "/Name",
+          "preview": "Mei Tanaka"
         }
       ],
-      "records": 71,
+      "records": 3,
       "counts": {
-        "create": 15,
-        "update": 38,
-        "unchanged": 11,
-        "skipped": 7,
+        "create": 1,
+        "update": 1,
+        "unchanged": 1,
+        "skipped": 0,
         "errors": 0,
         "waiting": 0
       },
-      "releaseBlocked": "no_release",
+      "releaseBlocked": null,
       "window": {
-        "days": 18,
-        "limit": 25,
-        "since": 1794362400000,
-        "excluded": 3
+        "days": 30,
+        "limit": 200,
+        "since": 1792980000000,
+        "excluded": 0
       },
       "samples": [
         {
-          "ref": "booking_8841",
+          "ref": "B-2041",
           "action": "create",
           "fields": {
-            "tier": {}
+            "name": "Mei Tanaka",
+            "tier": "Day pass"
+          }
+        },
+        {
+          "ref": "B-2038",
+          "action": "update",
+          "fields": {
+            "validUntil": "2027-01-31"
           }
         }
       ],
       "columns": [
         {
-          "pointer": "/input/tier",
+          "pointer": "/Booking ID",
+          "label": "Booking ID",
+          "samples": ["B-2041", "B-2038"],
+          "values": []
+        },
+        {
+          "pointer": "/Plan",
           "label": "Plan",
           "samples": ["Day pass"],
           "values": [
             {
               "value": "Day pass",
-              "count": 12
+              "count": 3
             }
           ]
         }

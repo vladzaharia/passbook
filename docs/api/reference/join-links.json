@@ -49,9 +49,9 @@
   "join-links.putJoinLinksByTemplateId": {
     "request": {
       "enabled": true,
-      "nameInput": "Northwind Climbing",
-      "askEmail": false,
-      "revision": 3
+      "nameInput": "name",
+      "askEmail": true,
+      "revision": 2
     },
     "response": {
       "link": {

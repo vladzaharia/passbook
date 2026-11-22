@@ -109,7 +109,8 @@
             },
             "hold": null,
             "issuance": {
-              "state": "enabled"
+              "state": "disabled",
+              "reason": "not_released"
             }
           }
         },
@@ -143,7 +144,8 @@
             },
             "hold": null,
             "issuance": {
-              "state": "enabled"
+              "state": "disabled",
+              "reason": "not_released"
             }
           }
         },
@@ -177,7 +179,8 @@
             },
             "hold": null,
             "issuance": {
-              "state": "enabled"
+              "state": "disabled",
+              "reason": "not_released"
             }
           }
         },
@@ -211,7 +214,8 @@
             },
             "hold": null,
             "issuance": {
-              "state": "enabled"
+              "state": "disabled",
+              "reason": "not_released"
             }
           }
         },
@@ -245,7 +249,8 @@
             },
             "hold": null,
             "issuance": {
-              "state": "enabled"
+              "state": "disabled",
+              "reason": "not_released"
             }
           }
         },
@@ -279,7 +284,8 @@
             },
             "hold": null,
             "issuance": {
-              "state": "enabled"
+              "state": "disabled",
+              "reason": "not_released"
             }
           }
         }
@@ -305,19 +311,19 @@
         "sharedIdentifier": "pass.mobile.passbook.northwind",
         "push": "healthy",
         "run": {
-          "id": "0193a1b2-7c00-7000-8000-000000000023",
+          "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-          "kind": "provision",
+          "kind": "rotate",
           "targetType": "identity",
-          "targetId": "0193a1b2-7c00-7000-8000-a7d5d406ee66",
+          "targetId": "0193a1b2-7c00-7000-8000-0000000000d1",
           "state": "succeeded",
           "step": "done",
           "attempt": 1,
           "waitingFor": null,
           "errorCode": null,
-          "createdAt": 1794362400000,
-          "updatedAt": 1795399200000,
-          "finishedAt": 1795570500000
+          "createdAt": 1795571820000,
+          "updatedAt": 1795571940000,
+          "finishedAt": 1795571940000
         },
         "managedAllowed": false,
         "passesOnShared": 24
@@ -500,7 +506,8 @@
               },
               "hold": null,
               "issuance": {
-                "state": "enabled"
+                "state": "disabled",
+                "reason": "not_released"
               }
             }
           },
@@ -534,7 +541,8 @@
               },
               "hold": null,
               "issuance": {
-                "state": "enabled"
+                "state": "disabled",
+                "reason": "not_released"
               }
             }
           },
@@ -568,7 +576,8 @@
               },
               "hold": null,
               "issuance": {
-                "state": "enabled"
+                "state": "disabled",
+                "reason": "not_released"
               }
             }
           },
@@ -602,7 +611,8 @@
               },
               "hold": null,
               "issuance": {
-                "state": "enabled"
+                "state": "disabled",
+                "reason": "not_released"
               }
             }
           },
@@ -636,7 +646,8 @@
               },
               "hold": null,
               "issuance": {
-                "state": "enabled"
+                "state": "disabled",
+                "reason": "not_released"
               }
             }
           },
@@ -670,7 +681,8 @@
               },
               "hold": null,
               "issuance": {
-                "state": "enabled"
+                "state": "disabled",
+                "reason": "not_released"
               }
             }
           }
@@ -696,19 +708,19 @@
           "sharedIdentifier": "pass.mobile.passbook.northwind",
           "push": "healthy",
           "run": {
-            "id": "0193a1b2-7c00-7000-8000-000000000023",
+            "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
             "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-            "kind": "provision",
+            "kind": "rotate",
             "targetType": "identity",
-            "targetId": "0193a1b2-7c00-7000-8000-ff536f447809",
+            "targetId": "0193a1b2-7c00-7000-8000-0000000000d1",
             "state": "succeeded",
             "step": "done",
             "attempt": 1,
             "waitingFor": null,
             "errorCode": null,
-            "createdAt": 1794362400000,
-            "updatedAt": 1795399200000,
-            "finishedAt": 1795570500000
+            "createdAt": 1795571820000,
+            "updatedAt": 1795571940000,
+            "finishedAt": 1795571940000
           },
           "managedAllowed": false,
           "passesOnShared": 24

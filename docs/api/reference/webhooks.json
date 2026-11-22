@@ -227,32 +227,31 @@
   "webhooks.postWebhookEndpointsCapture": {
     "description": "Returns the capture endpoint of your sandbox, making it if there is none. A capture endpoint stores the signed requests PassBook would send, so you can read and verify them; it sends nothing and takes nothing from outside. Sandbox orgs in Test mode only. The signing `secret` is shown once, on creation; later calls return `secret: null`.",
     "request": {
-      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "eventTypes": ["pass.issued"]
+      "eventTypes": ["pass.issued", "pass.scanned"]
     },
     "response": {
       "endpoint": {
-        "id": "0193a1b2-7c00-7000-8000-000000000061",
+        "id": "0193a1b2-7c00-7000-8000-898f07df88ec",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "mode": "live",
-        "url": "https://bookings.northwind.example.com/hooks/passbook",
-        "urlMasked": "https://bookings.northwind.example.com/…",
-        "description": "Front-desk check-in sync",
+        "mode": "test",
+        "url": null,
+        "urlMasked": "",
+        "description": "",
         "eventTypes": ["pass.issued", "pass.scanned"],
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "templateIds": null,
         "apiVersion": "2026-12-01",
         "status": "active",
-        "target": "url",
+        "target": "capture",
         "failingSince": null,
         "disabledAt": null,
-        "lastSuccessAt": 1795570500000,
-        "lastFailureAt": 1795399200000,
-        "lastStatus": 200,
-        "secretCreatedAt": 1794362400000,
+        "lastSuccessAt": null,
+        "lastFailureAt": null,
+        "lastStatus": null,
+        "secretCreatedAt": 1795572000000,
         "previousSecretExpiresAt": null,
-        "createdAt": 1794362400000
+        "createdAt": 1795572000000
       },
-      "secret": "whsec_demo_northwind_712fb5"
+      "secret": "whsec_demo_northwind_37b294"
     }
   },
   "webhooks.getWebhookEndpointsByIdCaptures": {

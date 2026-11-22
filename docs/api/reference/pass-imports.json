@@ -976,7 +976,7 @@
   "pass-imports.postPassImportsByIdEmailRest": {
     "description": "Sends now the mail of created passes that were not emailed, including held mail ahead of its wait. 50 a call; a repeat emails nobody twice.",
     "request": {
-      "cursor": "c1.4812"
+      "cursor": null
     },
     "response": {
       "sent": 0,

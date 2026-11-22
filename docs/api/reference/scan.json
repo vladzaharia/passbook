@@ -829,17 +829,7 @@
           "reason": null,
           "actionLabel": "Admit",
           "title": "Day pass",
-          "value": {
-            "input": "tier",
-            "label": "Days left",
-            "before": {},
-            "after": {},
-            "goal": 6,
-            "format": "number",
-            "currency": "USD",
-            "counter": false,
-            "need": 13
-          },
+          "value": null,
           "undoable": false
         }
       ]
@@ -923,13 +913,7 @@
           "name": "Front desk tablet",
           "surface": "auto",
           "effectiveSurface": "phone",
-          "overrides": {
-            "flow": "auto",
-            "reader": "barcode",
-            "direction": "in",
-            "lookup": false,
-            "showPhoto": false
-          },
+          "overrides": {},
           "settings": {
             "checkIn": {
               "mode": "daily"
@@ -1220,13 +1204,7 @@
           "name": "Front desk tablet",
           "surface": "auto",
           "effectiveSurface": "phone",
-          "overrides": {
-            "flow": "auto",
-            "reader": "barcode",
-            "direction": "in",
-            "lookup": false,
-            "showPhoto": false
-          },
+          "overrides": {},
           "settings": {
             "checkIn": {
               "mode": "daily"
@@ -1538,13 +1516,7 @@
           "name": "Front desk tablet",
           "surface": "auto",
           "effectiveSurface": "phone",
-          "overrides": {
-            "flow": "auto",
-            "reader": "barcode",
-            "direction": "in",
-            "lookup": false,
-            "showPhoto": false
-          },
+          "overrides": {},
           "settings": {
             "checkIn": {
               "mode": "daily"
@@ -1835,13 +1807,7 @@
           "name": "Front desk tablet",
           "surface": "auto",
           "effectiveSurface": "phone",
-          "overrides": {
-            "flow": "auto",
-            "reader": "barcode",
-            "direction": "in",
-            "lookup": false,
-            "showPhoto": false
-          },
+          "overrides": {},
           "settings": {
             "checkIn": {
               "mode": "daily"
@@ -2134,13 +2100,7 @@
             "name": "Front desk tablet",
             "surface": "auto",
             "effectiveSurface": "phone",
-            "overrides": {
-              "flow": "auto",
-              "reader": "barcode",
-              "direction": "in",
-              "lookup": false,
-              "showPhoto": false
-            },
+            "overrides": {},
             "settings": {
               "checkIn": {
                 "mode": "daily"
@@ -2393,18 +2353,18 @@
           {
             "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
             "holder": "Ada Example",
-            "plan": "Day pass",
-            "host": "passbook.mobile",
+            "plan": "Always open",
+            "host": null,
             "place": "zone:main-hall",
-            "placeName": "Front entrance",
-            "since": 1794362400000,
+            "placeName": "Main hall",
+            "since": 1795570500000,
             "basis": "in_now",
             "presence": "in",
             "late": false,
             "mark": {
               "status": "present",
               "by": "Sam Rivera",
-              "at": 1795570500000
+              "at": 1795571940000
             },
             "notConfirmedOut": false
           }
@@ -2416,11 +2376,11 @@
     "response": {
       "id": "0193a1b2-7c00-7000-8000-000000000072",
       "placeNames": ["Main hall"],
-      "startedAt": 1795571640000,
+      "startedAt": 1795572000000,
       "startedBy": "0193a1b2-7c00-7000-8000-000000000011",
       "endedAt": null,
       "endedBy": null,
-      "rev": 7,
+      "rev": 0,
       "serverNow": 1795572000000,
       "counts": {
         "total": 38,
@@ -2436,19 +2396,15 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
-          "plan": "Day pass",
-          "host": "passbook.mobile",
+          "plan": "Always open",
+          "host": null,
           "place": "zone:main-hall",
-          "placeName": "Front entrance",
-          "since": 1794362400000,
+          "placeName": "Main hall",
+          "since": 1795570500000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
-          "mark": {
-            "status": "present",
-            "by": "Sam Rivera",
-            "at": 1795570500000
-          },
+          "mark": null,
           "notConfirmedOut": false
         }
       ]
@@ -2478,18 +2434,18 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
-          "plan": "Day pass",
-          "host": "passbook.mobile",
+          "plan": "Always open",
+          "host": null,
           "place": "zone:main-hall",
-          "placeName": "Front entrance",
-          "since": 1794362400000,
+          "placeName": "Main hall",
+          "since": 1795570500000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 1795570500000
+            "at": 1795571940000
           },
           "notConfirmedOut": false
         }
@@ -2503,7 +2459,7 @@
           "rollCallId": "0193a1b2-7c00-7000-8000-000000000072",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "status": "present",
-          "at": 1795570500000
+          "at": 1795571940000
         }
       ]
     },
@@ -2530,18 +2486,18 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
-          "plan": "Day pass",
-          "host": "passbook.mobile",
+          "plan": "Always open",
+          "host": null,
           "place": "zone:main-hall",
-          "placeName": "Front entrance",
-          "since": 1794362400000,
+          "placeName": "Main hall",
+          "since": 1795570500000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 1795570500000
+            "at": 1795571940000
           },
           "notConfirmedOut": false
         }
@@ -2579,18 +2535,18 @@
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "holder": "Ada Example",
-          "plan": "Day pass",
-          "host": "passbook.mobile",
+          "plan": "Always open",
+          "host": null,
           "place": "zone:main-hall",
-          "placeName": "Front entrance",
-          "since": 1794362400000,
+          "placeName": "Main hall",
+          "since": 1795570500000,
           "basis": "in_now",
           "presence": "in",
           "late": false,
           "mark": {
             "status": "present",
             "by": "Sam Rivera",
-            "at": 1795570500000
+            "at": 1795571940000
           },
           "notConfirmedOut": false
         }
@@ -3142,14 +3098,14 @@
           "hostName": "Sam Rivera",
           "windowFrom": 1795568400000,
           "windowUntil": 1795575600000,
-          "note": "Trial session with a coach",
+          "note": null,
           "status": "in",
           "statusAt": 1795568700000,
           "autoOut": true,
           "hasEmail": true
         }
       ],
-      "nextCursor": "c1.4812"
+      "nextCursor": null
     }
   },
   "scan.postScanSignOut": {
@@ -3231,13 +3187,7 @@
           "name": "Front desk tablet",
           "surface": "auto",
           "effectiveSurface": "phone",
-          "overrides": {
-            "flow": "auto",
-            "reader": "barcode",
-            "direction": "in",
-            "lookup": false,
-            "showPhoto": false
-          },
+          "overrides": {},
           "settings": {
             "checkIn": {
               "mode": "daily"
@@ -3506,7 +3456,7 @@
     },
     "response": {
       "status": "preview",
-      "hint": "E23E",
+      "hint": "A3F9",
       "assurance": "basic",
       "scope": "pass",
       "type": {
@@ -3514,20 +3464,20 @@
         "name": "Member wristband",
         "use": "member"
       },
-      "bindingId": "0193a1b2-7c00-7000-8000-66dbb7184ff5",
+      "bindingId": null,
       "card": {
         "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
         "title": "Day pass",
         "subtitle": "Ada Example",
         "templateName": "Day pass",
         "holderName": "Ada Example",
-        "photoUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
+        "photoUrl": "/api/v1/passes/0193a1b2-7c00-7000-8000-0000000000c1/member-photo/image?v=1"
       },
       "ownerAccount": false,
       "opensDefault": "pass",
-      "skipped": ["no_email"],
-      "warnings": ["replaces_pass_tag"],
-      "lostAt": 1795570500000,
+      "skipped": [],
+      "warnings": [],
+      "lostAt": null,
       "undoUntil": null
     }
   },
@@ -3915,11 +3865,11 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-6e6541b28b0f",
+          "id": "0193a1b2-7c00-7000-8000-6bb5cfed12b0",
           "at": 1795570500000,
           "body": "Waiver signed on paper; scan it to the file.",
           "by": "Sam Rivera",
-          "own": false,
+          "own": true,
           "edited": false
         }
       ]
@@ -3931,11 +3881,11 @@
       "idempotencyKey": "0193a1b2-7c00-7000-8000-0000000000aa"
     },
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000043",
-      "at": 1795570500000,
+      "id": "0193a1b2-7c00-7000-8000-6bb5cfed12b0",
+      "at": 1795572000000,
       "body": "Waiver signed on paper; scan it to the file.",
       "by": "Sam Rivera",
-      "own": false,
+      "own": true,
       "edited": false
     }
   },
@@ -4110,13 +4060,7 @@
         "name": "Front desk tablet",
         "surface": "auto",
         "effectiveSurface": "phone",
-        "overrides": {
-          "flow": "auto",
-          "reader": "barcode",
-          "direction": "in",
-          "lookup": false,
-          "showPhoto": false
-        },
+        "overrides": {},
         "settings": {
           "checkIn": {
             "mode": "daily"
