@@ -6,7 +6,7 @@ import {
 } from '../src/shared/contracts/templates.ts';
 import { apiAs, createPass, GENERIC_BLUEPRINT, uid } from './helpers/api.ts';
 import { stateFile } from './helpers/auth.ts';
-import { runMinuteCron } from './helpers/cron.ts';
+import { recordRolloutFailure, runMinuteCron } from './helpers/cron.ts';
 import { frame, shoot, THEMES, WIDTHS } from './helpers/issuing.ts';
 import {
   approveTemplateCandidate,
@@ -33,6 +33,10 @@ type Rollout = {
 };
 
 /** Opens `url` in each frame and shoots once `ready` holds; a resize would close a dialog. */
+/** The bar's segments by key, with their share of the bar (flex-grow is the pass count). */
+const segments = (page: Page) =>
+  page.getByRole('progressbar', { name: 'Passes on the release' }).locator('[data-segment]');
+
 /** The version tab is lazy: the Releases list and the pass preview paint after the card. */
 const loaded = (page: Page) => expect(page.getByText('Technical details').first()).toBeVisible();
 
@@ -117,6 +121,10 @@ test('the rollout card: mid-rollout, Tell holders, settled, then told', async ({
     await expect(page.getByText('Updating passes to v2: 2 of 5')).toBeVisible();
     await expect(page.getByText('v2 · 2')).toBeVisible();
     await expect(page.getByText('v1 · 3')).toBeVisible();
+    // One segment for the release, one for the version still moving, sized by their passes.
+    await expect(segments(page)).toHaveCount(2);
+    await expect(page.locator('[data-segment="release"]')).toHaveCSS('flex-grow', '2');
+    await expect(segments(page).nth(1)).toHaveCSS('flex-grow', '3');
     await sweep(page, url, 'rollout-1-updating', async () => {
       await expect(bar(page)).toBeVisible();
       await loaded(page);
@@ -155,6 +163,9 @@ test('the rollout card: mid-rollout, Tell holders, settled, then told', async ({
     await page.goto(url);
     await expect(settled).toBeVisible();
     await expect(page.getByText('5 of 5')).toBeVisible();
+    // Only the release is left: the bar is one segment.
+    await expect(segments(page)).toHaveCount(1);
+    await expect(page.locator('[data-segment="release"]')).toHaveCSS('flex-grow', '5');
     await sweep(page, url, 'rollout-3-settled', async () => {
       await expect(settled).toBeVisible();
       await loaded(page);
@@ -174,6 +185,94 @@ test('the rollout card: mid-rollout, Tell holders, settled, then told', async ({
     await sweep(page, url, 'rollout-4-told', async () => {
       await expect(page.getByText('Saved versions')).toBeVisible();
       await loaded(page);
+    });
+    await reviewer.dispose();
+  } finally {
+    await ctx.close();
+    await author.dispose();
+  }
+});
+
+test("the rollout card: a pass that can't take the release is named, with the reason", async ({
+  browser,
+}) => {
+  const author = await apiAs('admin');
+  const ctx = await browser.newContext({ storageState: stateFile('admin') });
+  try {
+    const slug = uid('rollout-c').toLowerCase();
+    const org = await createOrgWithRoles(author, { slug, name: `Rollout ${slug}` });
+    const reviewer = await templateReviewer(author, org.id);
+    const clone = TemplateDetailSchema.parse(
+      await author.send(
+        'POST',
+        `/api/v1/templates/${encodeURIComponent(GENERIC_BLUEPRINT)}/clone`,
+        {
+          orgId: org.id,
+          name: uid('Rollout left behind'),
+        },
+      ),
+    );
+    const first = clone.versions[0]?.version;
+    if (!first) throw new Error('The clone has no version');
+    const path = `/api/v1/templates/${encodeURIComponent(clone.id)}`;
+    const release = async (version: string, generation: number) => {
+      const candidate = await createTemplateCandidate(author, org.id, clone.id, version, 'live');
+      const approval = await approveTemplateCandidate(reviewer, candidate);
+      return publishTemplateCandidate(author, candidate, approval, generation);
+    };
+    const v1 = await release(first, 0);
+    const stuck = await createPass(author, org.id, {
+      templateId: clone.id,
+      release: v1,
+      mode: 'live',
+      holder: 'Too many stamps',
+    });
+    const detail = TemplateVersionDetailSchema.parse(
+      await author.get(`${path}/versions/${encodeURIComponent(first)}`),
+    );
+    const saved = SaveVersionResponseSchema.parse(
+      await author.send('POST', `${path}/versions`, {
+        manifest: detail.manifest,
+        passJson: { ...detail.passJson, description: 'Second release' },
+        assets: detail.assets.map(({ name, sha1 }) => ({ name, sha1 })),
+      }),
+    );
+    if (!saved.version) throw new Error('The second version was not saved');
+    const v2 = await release(saved.version, v1.generation);
+    await createPass(author, org.id, { templateId: clone.id, release: v2, mode: 'live' });
+    // The rebuild could not move one card: the row it writes for the rollout view.
+    recordRolloutFailure({
+      passId: stuck.id,
+      releaseId: v2.id,
+      code: 'STAMPS_ABOVE_MAX',
+      message: 'The card has 9 stamps; this version allows 5. Raise the maximum or redeem first.',
+    });
+
+    const url = `/admin/templates/${encodeURIComponent(clone.id)}?orgId=${encodeURIComponent(org.id)}&tab=versions`;
+    const page = await ctx.newPage();
+    const heading = page.getByRole('heading', { name: "1 pass can't move to v2" });
+    const ready = async () => {
+      await expect(heading).toBeVisible();
+      await loaded(page);
+    };
+    await frame(page, 1440, 'light');
+    await page.goto(url);
+    await ready();
+    // The bar names the pass left behind in its own segment, beside the release.
+    await expect(page.locator('[data-segment="release"]')).toHaveCSS('flex-grow', '1');
+    await expect(page.locator('[data-segment="left"]')).toHaveCSS('flex-grow', '1');
+    await expect(page.getByText("Can't update · 1")).toBeVisible();
+    const show = page.getByRole('button', { name: "Show 1 that can't update" });
+    await show.click();
+    const list = page.getByRole('list', { name: "Passes that can't update" });
+    await expect(list.getByText('Too many stamps')).toBeVisible();
+    await expect(list.getByText(/9 stamps; this version allows 5/)).toBeVisible();
+    await sweep(page, url, 'rollout-5-cant', async () => {
+      await ready();
+      // The list opens on a click and a navigation keeps it open: open it only if it is shut.
+      const shut = page.getByRole('button', { name: "Show 1 that can't update" });
+      if (await shut.isVisible()) await shut.click();
+      await expect(list.getByText('Too many stamps')).toBeVisible();
     });
     await reviewer.dispose();
   } finally {

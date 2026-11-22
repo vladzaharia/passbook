@@ -199,6 +199,14 @@ test(`Change ${COUNT} passes, then undo`, async ({ browser }) => {
   await page.getByRole('button', { name: 'Change 1,240 passes' }).click();
   await expect(page.getByText('1,240 changed')).toBeVisible({ timeout: 300_000 });
   await sweep(page, 'change-4-done');
+  // On a phone the undo note keeps a readable line of its own above the button.
+  await frame(page, 390, 'light');
+  const note = await page
+    .getByText(/Restores silently/)
+    .first()
+    .boundingBox();
+  expect(note?.width ?? 0).toBeGreaterThan(200);
+  await frame(page, 1440, 'light');
   expect(await tierOf(0)).toBe('Pro');
   expect(await tierOf(COUNT - 1)).toBe('Pro');
 
