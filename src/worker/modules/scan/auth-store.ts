@@ -47,8 +47,13 @@ export function createScannerStore(env: AppEnv, clock: Clock = systemClock): Sca
         throw new UnauthenticatedError('This scanner was removed.', 'SCANNER_REVOKED');
       if (scannerExpired(row, now))
         throw new UnauthenticatedError('This scanner needs to be paired again.', 'SCANNER_EXPIRED');
-      if (row.lastSeenAt === null || row.lastSeenAt <= now - TOUCH_EVERY_MS)
-        await touchScanner(env.DB, row.id, now, meta?.ipPrefix ?? null, TOUCH_EVERY_MS);
+      const contact = meta?.contact !== false;
+      if (
+        row.lastSeenAt === null ||
+        row.lastSeenAt <= now - TOUCH_EVERY_MS ||
+        (contact && (row.contactAt === null || row.contactAt <= now - TOUCH_EVERY_MS))
+      )
+        await touchScanner(env.DB, row.id, now, meta?.ipPrefix ?? null, TOUCH_EVERY_MS, contact);
       const auth: ScannerAuth = {
         kind: 'scanner',
         scannerId: row.id,

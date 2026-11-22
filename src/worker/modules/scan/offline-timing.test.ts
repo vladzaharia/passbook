@@ -87,7 +87,7 @@ async function listed(
     [sessionId],
   );
   // Paired and last seen before the list was served, as on a real door (the test clock starts at pairing).
-  await run(kit.env.DB, 'UPDATE scanners SET last_seen_at = ? WHERE id = ?', [
+  await run(kit.env.DB, 'UPDATE scanners SET contact_at = ? WHERE id = ?', [
     now - 45 * MIN,
     scannerId,
   ]);
