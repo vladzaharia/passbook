@@ -9,6 +9,8 @@ export interface ApiErrorInit {
   requestId?: string;
   fields?: Record<string, string>;
   signInUrl?: string;
+  /** A 429's Retry-After, in seconds. */
+  retryAfter?: number;
 }
 
 export class ApiError extends Error {
@@ -20,6 +22,8 @@ export class ApiError extends Error {
   readonly fields: Record<string, string>;
   /** STEP_UP_REQUIRED and IDP_SIGN_IN_REQUIRED: where Polaris ID signs the person in. */
   readonly signInUrl: string | undefined;
+  /** A 429's Retry-After, in seconds; absent when the server sent none. */
+  readonly retryAfter: number | undefined;
 
   constructor(init: ApiErrorInit) {
     super(init.detail ?? init.title ?? init.code);
@@ -30,6 +34,7 @@ export class ApiError extends Error {
     this.requestId = init.requestId;
     this.fields = init.fields ?? {};
     this.signInUrl = init.signInUrl;
+    this.retryAfter = init.retryAfter;
   }
 
   get isForbidden(): boolean {
@@ -62,7 +67,7 @@ export function isApiError(error: unknown): error is ApiError {
 }
 
 /** Maps a non-2xx response body (problem+json or anything else) to an ApiError. */
-export function problemToError(status: number, body: unknown): ApiError {
+export function problemToError(status: number, body: unknown, retryAfter?: number): ApiError {
   const parsed = ProblemSchema.safeParse(body);
   if (parsed.success) {
     const p = parsed.data;
@@ -78,12 +83,14 @@ export function problemToError(status: number, body: unknown): ApiError {
       requestId: p.requestId,
       fields,
       signInUrl: p.signInUrl,
+      ...(retryAfter !== undefined ? { retryAfter } : {}),
     });
   }
   return new ApiError({
     status,
     code: status >= 500 ? 'server_error' : 'request_failed',
     detail: status >= 500 ? STATE_COPY.error : 'Request failed.',
+    ...(retryAfter !== undefined ? { retryAfter } : {}),
   });
 }
 

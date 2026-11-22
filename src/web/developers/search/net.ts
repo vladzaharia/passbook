@@ -1,5 +1,6 @@
 import { PATHS } from '../../../shared/developers.ts';
 import { missTerm } from '../../../shared/developers-search.ts';
+import { loadSession } from '../console/session.ts';
 import type { SearchIndex } from './types.ts';
 
 /**
@@ -71,6 +72,8 @@ const DAY = 86_400_000;
 /** How often an error code shows in the sandbox's log in the last day; null signed out or without a sandbox. */
 export async function codeActivity(code: string, signal?: AbortSignal): Promise<Activity | null> {
   try {
+    // Without a sandbox there is no log: asking would only log a 404.
+    if ((await loadSession()).kind !== 'ready') return null;
     const res = await fetch(`${API}/logs?${new URLSearchParams({ code, limit: '100' })}`, {
       credentials: 'same-origin',
       headers: json,
