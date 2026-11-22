@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it } from 'vitest';
 import { z } from 'zod';
 import { expectProblem } from '../../../test/helpers/denial.ts';
 import { handleError } from './error-handler.ts';
