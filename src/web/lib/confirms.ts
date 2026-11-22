@@ -94,6 +94,16 @@ export function clearHolderConfirm(owner: string | null): ConfirmCopy {
   };
 }
 
+/** Replacing the keys of tags already on a keyset: taps from tags still written with the old keys fail. */
+export function rekeyTagsConfirm(count: number): ConfirmCopy {
+  return {
+    title: `Re-key ${count} ${count === 1 ? 'tag' : 'tags'}?`,
+    confirmLabel: 'Re-key',
+    description: `Taps with the old keys stop working. Rewrite each tag with its new key.`,
+    typed: false,
+  };
+}
+
 /** A new scan code: a copy of the old barcode stops working at every scanner. */
 export function newCodeConfirm(): ConfirmCopy {
   return {

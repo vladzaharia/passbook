@@ -124,7 +124,11 @@ export async function importTags(
           targetId: keyset.id,
           detail: {
             count: added - before,
-            tagIds: tags.filter((_, n) => done[n]).map((t) => t.tagId),
+            // Capped so the row fits the audit size limit; `count` is the whole.
+            tagIds: tags
+              .filter((_, n) => done[n])
+              .map((t) => t.tagId)
+              .slice(0, 100),
           },
         });
     }

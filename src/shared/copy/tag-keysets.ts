@@ -61,5 +61,9 @@ export const KEYSET_COPY = {
     ready: '{ok} of {rows} rows ready',
     go: 'Import {n} tags',
     added: '{n} tags imported',
+    replace: 'Replace keys for tags already on this keyset',
+    replaceReady: '{ok} of {rows} rows will re-key a tag',
+    replaceGo: 'Re-key {n} tags',
+    replaced: '{n} tags re-keyed',
   },
 } as const;

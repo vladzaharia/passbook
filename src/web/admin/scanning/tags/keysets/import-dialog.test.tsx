@@ -57,6 +57,35 @@ describe('Import tags', () => {
     expect(document.body.textContent).not.toContain(KEY);
   });
 
+  it('replaces keys: dry run with replace, confirm with the count, then toast', async () => {
+    const { user, dialog, upload, fetchMock } = await openImport();
+    await upload();
+    await within(dialog).findByText('2 of 3 rows ready');
+    await user.click(
+      within(dialog).getByRole('checkbox', {
+        name: 'Replace keys for tags already on this keyset',
+      }),
+    );
+    expect(await within(dialog).findByText('2 of 3 rows will re-key a tag')).toBeInTheDocument();
+    expect(bodyOf(posted(fetchMock, '/k2/import')[1])).toEqual({
+      csv: CSV,
+      dryRun: true,
+      replace: true,
+    });
+    await user.click(within(dialog).getByRole('button', { name: 'Re-key 2 tags' }));
+    const confirm = await screen.findByRole('alertdialog', { name: 'Re-key 2 tags?' });
+    expect(within(confirm).getByText(/Taps with the old keys stop working/)).toBeInTheDocument();
+    expect(posted(fetchMock, '/k2/import')).toHaveLength(2);
+    await user.click(within(confirm).getByRole('button', { name: 'Re-key' }));
+    await waitFor(() => expect(posted(fetchMock, '/k2/import')).toHaveLength(3));
+    expect(bodyOf(posted(fetchMock, '/k2/import')[2])).toEqual({
+      csv: CSV,
+      dryRun: false,
+      replace: true,
+    });
+    expect(await screen.findByText('2 tags re-keyed')).toBeInTheDocument();
+  });
+
   it('shows the server’s refusal of a file and keeps Import off', async () => {
     const { dialog, upload } = await openImport(() =>
       json(

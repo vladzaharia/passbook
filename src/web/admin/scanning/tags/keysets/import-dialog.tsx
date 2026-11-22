@@ -1,14 +1,24 @@
 import { useState } from 'react';
 import { TAG_IMPORT_MAX_CHARS } from '@/shared/contracts/nfc-tag-keysets.ts';
 import { KEYSET_COPY } from '@/shared/copy/tag-keysets.ts';
+import { rekeyTagsConfirm } from '@/web/lib/confirms.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
-import { Button, Callout, Dialog, DialogContent, FileDrop, toast } from '@/web/ui/index.ts';
+import {
+  Button,
+  Callout,
+  CheckboxField,
+  ConfirmDialog,
+  Dialog,
+  DialogContent,
+  FileDrop,
+  toast,
+} from '@/web/ui/index.ts';
 import type { ImportResult, Keyset } from './api.ts';
 import { fill } from './words.ts';
 
 const C = KEYSET_COPY.import;
 
-type Run = (body: { csv: string; dryRun: boolean }) => Promise<ImportResult>;
+type Run = (body: { csv: string; dryRun: boolean; replace?: boolean }) => Promise<ImportResult>;
 
 /**
  * Import supplier-personalised tags: pick the CSV, see what a dry run finds (rows ready, then each bad or
@@ -28,7 +38,25 @@ export function ImportDialog({
   const [result, setResult] = useState<ImportResult>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [replace, setReplace] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
+  async function dryRun(text: string, on: boolean) {
+    setBusy(true);
+    setError('');
+    setResult(undefined);
+    try {
+      setResult(await run({ csv: text, dryRun: true, ...(on ? { replace: true } : {}) }));
+    } catch (cause) {
+      setError(errorMessage(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function toggle(on: boolean) {
+    setReplace(on);
+    if (csv) await dryRun(csv, on);
+  }
   async function check(file: File) {
     setBusy(true);
     setError('');
@@ -37,20 +65,21 @@ export function ImportDialog({
       const text = await file.text();
       setCsv(text);
       setName(file.name);
-      setResult(await run({ csv: text, dryRun: true }));
+      setBusy(false);
+      await dryRun(text, replace);
+      return;
     } catch (cause) {
       setCsv('');
       setError(errorMessage(cause));
-    } finally {
-      setBusy(false);
     }
+    setBusy(false);
   }
   async function add() {
     setBusy(true);
     setError('');
     try {
-      const done = await run({ csv, dryRun: false });
-      toast.success(fill(C.added, { n: done.added }));
+      const done = await run({ csv, dryRun: false, ...(replace ? { replace: true } : {}) });
+      toast.success(fill(replace ? C.replaced : C.added, { n: done.added }));
       onClose();
     } catch (cause) {
       setError(errorMessage(cause));
@@ -70,8 +99,12 @@ export function ImportDialog({
             <Button variant="outline" disabled={busy} onClick={onClose}>
               Cancel
             </Button>
-            <Button loading={busy} disabled={!result || result.ok === 0} onClick={() => void add()}>
-              {fill(C.go, { n: result?.ok ?? 0 })}
+            <Button
+              loading={busy}
+              disabled={!result || result.ok === 0}
+              onClick={() => (replace ? setConfirming(true) : void add())}
+            >
+              {fill(replace ? C.replaceGo : C.go, { n: result?.ok ?? 0 })}
             </Button>
           </>
         }
@@ -85,19 +118,36 @@ export function ImportDialog({
             disabled={busy}
             onFiles={([file]) => file && void check(file)}
           />
-          {result ? <Findings result={result} /> : null}
+          <CheckboxField
+            label={C.replace}
+            checked={replace}
+            disabled={busy}
+            onCheckedChange={(on) => void toggle(on === true)}
+          />
+          {result ? <Findings result={result} replace={replace} /> : null}
         </div>
       </DialogContent>
+      {confirming ? (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setConfirming(false)}
+          {...rekeyTagsConfirm(result?.ok ?? 0)}
+          destructive
+          onConfirm={async () => {
+            await add();
+          }}
+        />
+      ) : null}
     </Dialog>
   );
 }
 
-function Findings({ result }: { result: ImportResult }) {
+function Findings({ result, replace }: { result: ImportResult; replace: boolean }) {
   const bad = result.problems.length + result.moreProblems;
   return (
     <div className="grid gap-3" aria-live="polite">
       <p className="text-sm font-medium text-fg-strong">
-        {fill(C.ready, { ok: result.ok, rows: result.rows })}
+        {fill(replace ? C.replaceReady : C.ready, { ok: result.ok, rows: result.rows })}
       </p>
       {bad > 0 ? (
         <div className="max-h-64 overflow-auto rounded-md border border-border">
