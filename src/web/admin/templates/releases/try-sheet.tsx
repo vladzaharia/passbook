@@ -153,7 +153,7 @@ function Stage({ phase, watch, onRetry }: { phase: TryPhase; watch: Watch; onRet
       <div className="wl-rise flex flex-col items-center gap-3 py-4">
         <span className="wl-step-done relative grid size-14 place-items-center rounded-full bg-success text-white">
           <Check aria-hidden className="size-7" />
-          <Celebrate when radius={30} delay={150} />
+          <Celebrate when radius={30} delay={150} size="lg" />
         </span>
         <p className="text-sm font-semibold text-fg-strong">On your phone</p>
       </div>

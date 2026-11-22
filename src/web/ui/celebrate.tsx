@@ -11,10 +11,13 @@ export function Celebrate({
   when,
   radius = 0,
   delay = 0,
+  size = 'sm',
 }: {
   when: boolean;
   radius?: number;
   delay?: number;
+  /** lg: 3 × 10 px marks that travel 22 px, for a larger target such as a 56 px circle. */
+  size?: 'sm' | 'lg';
 }) {
   const [phase, setPhase] = useState<'idle' | 'on' | 'done'>('idle');
   useEffect(() => {
@@ -36,6 +39,7 @@ export function Celebrate({
     <span
       aria-hidden
       className="wl-sparks"
+      data-size={size}
       style={{ '--wl-spark-r': `${radius}px`, '--wl-spark-delay': `${delay}ms` } as CSSProperties}
     >
       {[0, 1, 2, 3, 4, 5].map((i) => (

@@ -49,8 +49,8 @@ function useDragToClose(side: 'left' | 'right' | 'bottom') {
   const overlay = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; t: number; dx: number; on: boolean } | null>(null);
   const dir = side === 'left' ? -1 : 1;
-  // The bottom sheet closes by its button, Esc or the overlay; no horizontal drag.
-  const draggable = side !== 'bottom';
+  // The bottom sheet drags down from its header (its body scrolls); the side sheets drag sideways.
+  const vertical = side === 'bottom';
   const reset = (el: HTMLElement) => {
     el.style.transition = 'transform 200ms var(--wl-ease-spring)';
     el.style.transform = '';
@@ -62,17 +62,19 @@ function useDragToClose(side: 'left' | 'right' | 'bottom') {
     overlay,
     handlers: {
       onPointerDown: (e: PointerEvent<HTMLDivElement>) => {
-        if (e.pointerType !== 'touch' || !close || !draggable) return;
+        if (e.pointerType !== 'touch' || !close) return;
+        if (vertical && !(e.target as HTMLElement).closest('[data-sheet-grip]')) return;
         drag.current = { x: e.clientX, y: e.clientY, t: e.timeStamp, dx: 0, on: false };
       },
       onPointerMove: (e: PointerEvent<HTMLDivElement>) => {
         const d = drag.current;
         const el = content.current;
         if (!d || !el) return;
-        const dx = e.clientX - d.x;
+        const dx = vertical ? e.clientY - d.y : e.clientX - d.x;
         if (!d.on) {
           // A vertical gesture is a scroll; give it back.
-          if (Math.abs(e.clientY - d.y) > 8 && Math.abs(e.clientY - d.y) > Math.abs(dx)) {
+          const cross = vertical ? e.clientX - d.x : e.clientY - d.y;
+          if (Math.abs(cross) > 8 && Math.abs(cross) > Math.abs(dx)) {
             drag.current = null;
             return;
           }
@@ -80,11 +82,13 @@ function useDragToClose(side: 'left' | 'right' | 'bottom') {
           d.on = true;
           el.setPointerCapture(e.pointerId);
         }
-        d.dx = dir < 0 ? Math.min(0, dx) : Math.max(0, dx);
+        d.dx = vertical || dir > 0 ? Math.max(0, dx) : Math.min(0, dx);
         if (prefersReducedMotion()) return;
-        el.style.transform = `translateX(${d.dx}px)`;
+        el.style.transform = vertical ? `translateY(${d.dx}px)` : `translateX(${d.dx}px)`;
         if (overlay.current) {
-          overlay.current.style.opacity = String(1 - Math.abs(d.dx) / el.offsetWidth);
+          overlay.current.style.opacity = String(
+            1 - Math.abs(d.dx) / (vertical ? el.offsetHeight : el.offsetWidth),
+          );
         }
       },
       onPointerUp: (e: PointerEvent<HTMLDivElement>) => {
@@ -93,7 +97,8 @@ function useDragToClose(side: 'left' | 'right' | 'bottom') {
         drag.current = null;
         if (!d?.on || !el) return;
         const speed = Math.abs(d.dx) / Math.max(1, e.timeStamp - d.t);
-        if (Math.abs(d.dx) > el.offsetWidth * 0.4 || speed > 0.5) close?.();
+        if (Math.abs(d.dx) > (vertical ? el.offsetHeight : el.offsetWidth) * 0.4 || speed > 0.5)
+          close?.();
         else reset(el);
       },
       onPointerCancel: () => {
@@ -140,7 +145,10 @@ export function SheetContent({
         )}
         {...props}
       >
-        <div className="flex min-h-14 items-center justify-between gap-2 border-b border-border px-4 py-2">
+        <div
+          data-sheet-grip=""
+          className="flex min-h-14 items-center justify-between gap-2 border-b border-border px-4 py-2"
+        >
           {header}
           <DialogPrimitive.Title className={cn(OVERLAY_TITLE, (hideTitle || header) && 'sr-only')}>
             {title}

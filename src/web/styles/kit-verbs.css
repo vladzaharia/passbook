@@ -50,8 +50,8 @@
   }
   to {
     opacity: 0;
-    transform: rotate(calc(var(--a) + 40deg)) translateY(calc(-1 * var(--wl-spark-r, 0px) - 14px))
-      scaleY(0.4);
+    transform: rotate(calc(var(--a) + 40deg))
+      translateY(calc(-1 * var(--wl-spark-r, 0px) - var(--wl-spark-d, 14px))) scaleY(0.4);
   }
 }
 
@@ -153,6 +153,15 @@
   width: 0;
   height: 0;
   pointer-events: none;
+}
+.wl-sparks[data-size="lg"] {
+  --wl-spark-d: 22px;
+}
+.wl-sparks[data-size="lg"] .wl-spark {
+  top: -5px;
+  left: -1.5px;
+  width: 3px;
+  height: 10px;
 }
 .wl-spark {
   position: absolute;

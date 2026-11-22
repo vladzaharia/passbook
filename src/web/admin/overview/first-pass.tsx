@@ -97,7 +97,11 @@ function Track({ setup, from }: { setup: MetricsOverview['setup']; from: number 
             className="fp-step relative flex flex-col items-center gap-2 text-center"
           >
             {i > 0 && stepDone(setup, PATH_STEPS[i - 1]?.id ?? 'blueprint') ? (
-              <span aria-hidden className="fp-seg" data-fresh={fresh || undefined} />
+              <span
+                aria-hidden
+                className="fp-seg"
+                data-fresh={(from !== null && i - 1 >= from) || undefined}
+              />
             ) : null}
             <Mark index={i} state={state} fresh={fresh} />
             <span
@@ -224,7 +228,15 @@ function NextTile({ icon, children }: { icon: ReactNode; children: ReactNode }) 
 }
 
 /** Once the path is done: the payoff, the three next things, in a card the viewer can close. */
-export function NextRow({ orgId, onDismiss }: { orgId: string; onDismiss: () => void }) {
+export function NextRow({
+  orgId,
+  setup,
+  onDismiss,
+}: {
+  orgId: string;
+  setup: MetricsOverview['setup'];
+  onDismiss: () => void;
+}) {
   const { own } = useOwnTemplate(orgId, true);
   // Arriving here from an unfinished path is the moment: the buddy cheers, sparks fly once.
   const from = useSeenProgress(orgId, 3);
@@ -249,7 +261,7 @@ export function NextRow({ orgId, onDismiss }: { orgId: string; onDismiss: () => 
           <Celebrate when={from !== null} radius={90} />
         </h2>
         <ul className="m-0 mb-5 flex list-none flex-wrap justify-center gap-x-5 gap-y-1 p-0 text-sm text-fg-muted">
-          {PATH_STEPS.map((step) => (
+          {PATH_STEPS.filter((step) => stepDone(setup, step.id)).map((step) => (
             <li key={step.id} className="flex items-center gap-1.5">
               <Tick className="size-4 text-accent-fg" />
               {step.done}

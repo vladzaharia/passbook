@@ -99,15 +99,19 @@ function Loaded({
   const orgName = useOrgScope().membership?.orgName;
   const passJson = preview.data ? recolor(preview.data.passJson, quick.color, orgName) : undefined;
   // A chosen logo shows at once: its local URL stands in for the logo files.
-  const assetUrls =
-    preview.data && quick.logo
-      ? {
-          ...assetMap(preview.data.assetBaseUrl, preview.data.assetNames),
-          'logo.png': quick.logo.url,
-          'logo@2x.png': quick.logo.url,
-          'logo@3x.png': quick.logo.url,
-        }
-      : undefined;
+  const logoUrl = quick.logo?.url;
+  const assetUrls = useMemo(
+    () =>
+      preview.data && logoUrl
+        ? {
+            ...assetMap(preview.data.assetBaseUrl, preview.data.assetNames),
+            'logo.png': logoUrl,
+            'logo@2x.png': logoUrl,
+            'logo@3x.png': logoUrl,
+          }
+        : undefined,
+    [preview.data, logoUrl],
+  );
   const phone = useMediaQuery(PHONE);
   const coarse = useMediaQuery('(pointer: coarse)');
   const router = useRouter();
@@ -174,7 +178,6 @@ function Loaded({
               {phone ? null : (
                 <Button
                   variant="ghost"
-                  disabled={quick.touched}
                   onClick={() => {
                     const next = name.trim();
                     if (!next) return setError('Enter a name.');
@@ -203,6 +206,11 @@ function Loaded({
                 Create
               </Button>
             </div>
+            {quick.touched && !phone ? (
+              <p className="text-right text-xs text-fg-muted">
+                Your choices here won't carry over to the designer.
+              </p>
+            ) : null}
           </CardBody>
         </Card>
         <div className="order-first min-w-0 lg:order-none lg:sticky lg:top-4">

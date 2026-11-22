@@ -136,8 +136,8 @@ export function OrgOverviewPage({
       <FirstPassCard orgId={orgId} setup={setup.data.setup} />
     ) : null;
   const next =
-    orgId && canOperate && step === null && !dismissed ? (
-      <NextRow orgId={orgId} onDismiss={dismiss} />
+    orgId && canOperate && setup.data && step === null && !dismissed ? (
+      <NextRow orgId={orgId} setup={setup.data.setup} onDismiss={dismiss} />
     ) : null;
   const picker = (
     <Select
