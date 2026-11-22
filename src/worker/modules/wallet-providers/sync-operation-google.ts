@@ -7,6 +7,7 @@ import { getApprovedProjection } from './projection-service.ts';
 import { renderGoogleProjection } from './render-projection.ts';
 import { getGoogleBindingClass, hadSucceededUpsert } from './repo-google-class.ts';
 import { readPassSnapshot } from './repo-instance.ts';
+import { priorSucceededOperation } from './repo-instance-prior.ts';
 import {
   inactivateGoogleRuntimeObject,
   upsertGoogleRuntimeClass,
@@ -19,6 +20,7 @@ import type {
   WalletSyncOperationExecution,
   WalletSyncRunResult,
 } from './sync-operation-context.ts';
+import { sendGoogleChangeMessage } from './sync-operation-google-messages.ts';
 import { completeWalletSyncOperation as complete } from './sync-operation-retirement.ts';
 
 export async function runGoogleWalletProviderOperation(
@@ -169,11 +171,15 @@ export async function runGoogleWalletProviderOperation(
             orgId: op.orgId,
           });
         await assertCurrent();
+        // An upsert that undoes a void drops the voided message the revoke left on the object.
+        const unvoid =
+          (await priorSucceededOperation(ctx.env.DB, op.instanceId, op.version))?.kind === 'revoke';
         await upsertGoogleRuntimeObject(ctx, binding.scope, {
           ...identity,
           ...partition,
-          projection: compiled.objectBody,
+          projection: unvoid ? { ...compiled.objectBody, messages: [] } : compiled.objectBody,
         });
+        await sendGoogleChangeMessage(execution, binding.scope, partition);
         return complete(ctx, claim, op, { kind: 'success' });
       }
       const rendered = renderGoogleProjection(approved.projection, passJson);

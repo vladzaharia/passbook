@@ -114,6 +114,9 @@ const GOOGLE_CLASS_PATH =
   /^\/walletobjects\/v1\/(?:generic|eventTicket|loyalty|giftCard|offer)Class(?:\/[^/]+)?$/;
 const GOOGLE_OBJECT_PATH =
   /^\/walletobjects\/v1\/(?:generic|eventTicket|loyalty|giftCard|offer)Object(?:\/[^/]+)?$/;
+// A message goes to one object's own method and nothing else: never a class (it reaches every holder).
+const GOOGLE_MESSAGE_PATH =
+  /^\/walletobjects\/v1\/(?:generic|eventTicket|loyalty|giftCard|offer)Object\/[^/]+(?:\/addMessage)?$/;
 
 export function runtimeExecution(
   ctx: ServiceContext,
@@ -143,7 +146,8 @@ export function runtimeExecution(
         provider === 'google' &&
         url.origin === 'https://walletobjects.googleapis.com' &&
         ((capture.stage === 'google-class' && GOOGLE_CLASS_PATH.test(url.pathname)) ||
-          (capture.stage === 'google-object' && GOOGLE_OBJECT_PATH.test(url.pathname)));
+          (capture.stage === 'google-object' && GOOGLE_OBJECT_PATH.test(url.pathname)) ||
+          (capture.stage === 'google-message' && GOOGLE_MESSAGE_PATH.test(url.pathname)));
       const validSamsung =
         provider === 'samsung' &&
         capture.stage === 'samsung-update' &&

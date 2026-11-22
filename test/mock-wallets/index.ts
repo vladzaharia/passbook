@@ -96,8 +96,11 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
   let failures: (MockFailure & { left: number })[] = [];
   let requests: MockRequestLog[] = [];
   let counter = 0;
+  const notifyCounts = new Map<string, number>();
+  const NOTIFY_LIMIT = 3;
 
   function reset(): void {
+    notifyCounts.clear();
     for (const store of Object.values(google)) store.clear();
     tokens.clear();
     saves.length = 0;
@@ -136,7 +139,7 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
   ): Promise<Response> {
     const token = bearer(request);
     if (!token || !tokens.has(token)) return googleError(401, 'Invalid credentials');
-    const [kind, rawId] = segments;
+    const [kind, rawId, action] = segments;
     const id = rawId ? decodeURIComponent(rawId) : undefined;
     if (kind === 'issuer' && id && request.method === 'GET')
       return json(200, { issuerId: id, name: `Mock issuer ${id}` });
@@ -155,6 +158,28 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
         return googleError(404, `Class ${String(body.classId)} not found`);
       store.set(newId, structuredClone(body));
       return json(200, body);
+    }
+    if (request.method === 'POST' && id && action === 'addMessage') {
+      const doc = store.get(id);
+      if (!doc || !isObject) return googleError(404, `${kind} ${id} not found`);
+      const message = structuredClone(body?.message ?? {}) as Doc;
+      const held = Array.isArray(doc.messages) ? (doc.messages as Doc[]) : [];
+      if (held.length >= 10) return googleError(400, 'Too many messages');
+      if (message.messageType === 'TEXT_AND_NOTIFY') {
+        // Google lets an object notify three times in 24 h; the mock does not model the clock.
+        const used = notifyCounts.get(id) ?? 0;
+        if (used >= NOTIFY_LIMIT)
+          return json(429, {
+            error: {
+              code: 429,
+              message: 'QuotaExceededException: notify',
+              status: 'RESOURCE_EXHAUSTED',
+            },
+          });
+        notifyCounts.set(id, used + 1);
+      }
+      doc.messages = [...held, message];
+      return json(200, { resource: doc });
     }
     if (request.method === 'PATCH' && id) {
       const doc = store.get(id);
@@ -372,6 +397,11 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
       const times = failure.times ?? 1;
       failures.push({ ...failure, times, left: times });
     },
+    /** Notifications an object has already sent, for a quota PassBook did not count. */
+    seedNotifyCount(objectId: string, count: number): void {
+      notifyCounts.set(objectId, count);
+    },
+    notifyCount: (objectId: string): number => notifyCounts.get(objectId) ?? 0,
     setSamsungTemplate(cardId: string, template: MockSamsungTemplate): void {
       samsungTemplates.set(cardId, template);
     },

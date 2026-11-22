@@ -137,6 +137,52 @@ export async function patchGoogleObjectBody(
   await request(ctx, GOOGLE_RESOURCES[type].object, 'PATCH', objectId, copyGoogleProjection(body));
 }
 
+export interface GoogleMessageSend extends GoogleRevokeMessage {
+  messageType: 'TEXT' | 'TEXT_AND_NOTIFY';
+}
+
+/** The messages Google holds on the object, oldest first. */
+export async function readGoogleObjectMessages(
+  ctx: GoogleWalletRestContext,
+  type: GoogleType,
+  scope: GoogleObjectScope,
+): Promise<{ id: string; messageType: string }[]> {
+  const { objectId } = await googleObjectIds(ctx.account.issuerId, ctx.objectIdHmacKey, scope);
+  const held = await verifyIdentity(ctx, GOOGLE_RESOURCES[type].object, objectId);
+  const messages = Array.isArray(held.messages) ? held.messages : [];
+  return messages.flatMap((m) =>
+    m && typeof m.id === 'string'
+      ? [{ id: m.id, messageType: typeof m.messageType === 'string' ? m.messageType : 'TEXT' }]
+      : [],
+  );
+}
+
+/** Keeps the object's newest `keep` messages, so the next `addMessage` has a slot (Google holds at most 10). */
+export async function trimGoogleObjectMessages(
+  ctx: GoogleWalletRestContext,
+  type: GoogleType,
+  scope: GoogleObjectScope,
+  keep: number,
+): Promise<void> {
+  const { objectId } = await googleObjectIds(ctx.account.issuerId, ctx.objectIdHmacKey, scope);
+  const resource = GOOGLE_RESOURCES[type].object;
+  const held = await verifyIdentity(ctx, resource, objectId);
+  const messages = Array.isArray(held.messages) ? held.messages : [];
+  if (messages.length > keep)
+    await request(ctx, resource, 'PATCH', objectId, { messages: messages.slice(-keep) });
+}
+
+/** The one notifying call Google documents (google-messages.md section 1); never inside a PATCH or PUT. */
+export async function addGoogleObjectMessage(
+  ctx: GoogleWalletRestContext,
+  type: GoogleType,
+  scope: GoogleObjectScope,
+  message: GoogleMessageSend,
+): Promise<void> {
+  const { objectId } = await googleObjectIds(ctx.account.issuerId, ctx.objectIdHmacKey, scope);
+  await request(ctx, GOOGLE_RESOURCES[type].object, 'POST', objectId, { message }, 'addMessage');
+}
+
 const NOT_SENT = ['barcode', 'rotatingBarcode', 'classReference', 'smartTapRedemptionValue'];
 const OUTPUT_ONLY = ['hasUsers', 'kind', 'version'];
 const gone = (value: Record<string, unknown>) =>

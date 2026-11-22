@@ -34,6 +34,7 @@ export const EVENT_KINDS = [
   'device.log',
   'wallet.saved',
   'wallet.removed',
+  'wallet.messaged',
   'push.queued',
   'push.sent',
   'push.failed',
@@ -86,6 +87,7 @@ export const EVENT_GROUPS = {
     'push.queued',
     'push.sent',
     'push.failed',
+    'wallet.messaged',
   ],
   devices: [
     'device.registered',

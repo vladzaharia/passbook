@@ -1,5 +1,10 @@
 import type { GoogleValidatedAccount } from './google-credentials.ts';
-import { GoogleWalletError, googleFetch, googleHttpError } from './google-errors.ts';
+import {
+  GoogleWalletError,
+  googleFetch,
+  googleHttpError,
+  isGoogleNotifyQuota,
+} from './google-errors.ts';
 import {
   type DerivedGoogleId,
   type GoogleClassScope,
@@ -55,12 +60,23 @@ export function clearGoogleRestMemo(): void {
   knownResources.clear();
 }
 
+/** The error body is read, up to 8 KiB, only to tell a notification quota from other refusals; never logged. */
+async function isQuotaRefusal(response: Response): Promise<boolean> {
+  try {
+    return isGoogleNotifyQuota(response.status, (await response.text()).slice(0, 8192));
+  } catch {
+    return false;
+  }
+}
+
 export async function request(
   ctx: GoogleWalletRestContext,
   resource: Resource,
   method: 'GET' | 'POST' | 'PATCH' | 'PUT',
   id?: DerivedGoogleId,
   body?: Record<string, unknown>,
+  /** A method of the object, appended to its path (`addMessage`). */
+  action?: 'addMessage',
 ): Promise<Response> {
   if (!isGoogleBearerToken(ctx.accessToken)) throw new GoogleWalletError('invalid_input', 'rest');
   // An id outside the source issuer's namespace is another issuer's resource, whatever its brand.
@@ -69,7 +85,7 @@ export async function request(
   const operation = `${resource} ${method}`;
   const response = await googleFetch(
     ctx.fetcher ?? globalThis.fetch,
-    `${WALLET_API}/${resource}${id ? `/${encodeURIComponent(id)}` : ''}`,
+    `${WALLET_API}/${resource}${id ? `/${encodeURIComponent(id)}` : ''}${action ? `/${action}` : ''}`,
     {
       method,
       headers: {
@@ -89,6 +105,7 @@ export async function request(
       response.headers,
       ctx.now?.(),
       response.status === 401 && ctx.tokenCached === true,
+      action === 'addMessage' && (await isQuotaRefusal(response)),
     );
   }
   return response;

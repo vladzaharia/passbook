@@ -18,6 +18,7 @@ import type {
   WalletSyncRunResult,
 } from './sync-operation-context.ts';
 import { completeWalletSyncOperation as complete } from './sync-operation-retirement.ts';
+import { recordSamsungMessageOutcome } from './sync-samsung-message.ts';
 import { samsungOperationState } from './sync-samsung-state.ts';
 
 /**
@@ -185,5 +186,8 @@ export async function runSamsungWalletProviderOperation(
   if (results.some((target) => target.state === 'failed')) {
     return complete(ctx, claim, op, { kind: 'failure', reason: 'rejected', retryable: false });
   }
-  return complete(ctx, claim, op, { kind: 'success' });
+  const done = await complete(ctx, claim, op, { kind: 'success' });
+  if (done === 'completed' && state !== 'DELETED' && state !== 'CANCELED')
+    await recordSamsungMessageOutcome(execution);
+  return done;
 }

@@ -14,8 +14,10 @@ import {
   purgeExpiredWalletOffers,
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
+import { nextInstanceBoundary } from './lifecycle-boundary.ts';
 import { walletProviderEnabled, walletProviderReleaseReason } from './provider-policy.ts';
 import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback-replay.ts';
+import { deferDirtyInstance } from './repo-instance.ts';
 import { refreshExpiringSamsungEvidence } from './repo-samsung-evidence-refresh.ts';
 import { ackCleanWalletPlaceholder, deferWalletSyncOperation } from './repo-sync-queue.ts';
 import { listUncertainOperations } from './repo-sync-uncertain.ts';
@@ -68,8 +70,12 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
         continue;
       }
       const result = await reconcileWalletInstance(ctx, instance, undefined, false);
-      if (result === 'scheduled' || result === 'unchanged') await ackDirtyWalletInstance(db, item);
-      else if (instance.lifecycle === 'revoked' && instance.retirementCause === 'channel_off')
+      if (result === 'scheduled' || result === 'unchanged') {
+        // A pass that expires or rolls to its next event is recompiled then, with no edit to trigger it.
+        const next = await nextInstanceBoundary(ctx, instance.passId);
+        if (next === null) await ackDirtyWalletInstance(db, item);
+        else await deferDirtyInstance(db, { ...item, nextAttemptAt: next });
+      } else if (instance.lifecycle === 'revoked' && instance.retirementCause === 'channel_off')
         // A settled channel-off copy has nothing left to schedule; a successor is a different row.
         await ackDirtyWalletInstance(db, item);
       else if (

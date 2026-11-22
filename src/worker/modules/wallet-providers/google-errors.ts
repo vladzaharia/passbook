@@ -22,6 +22,8 @@ export class GoogleWalletError extends Error {
   readonly retryAfterMs: number | undefined;
   /** A 401 on a REST call that used a cached token: a fresh token may succeed. */
   readonly staleToken: boolean;
+  /** An `addMessage` refused over Google's notification quota (`isGoogleNotifyQuota`). */
+  readonly quota: boolean;
 
   constructor(
     code: GoogleWalletErrorCode,
@@ -29,6 +31,7 @@ export class GoogleWalletError extends Error {
     status?: number,
     retryAfterMs?: number,
     staleToken = false,
+    quota = false,
   ) {
     super(`Google Wallet ${operation} failed (${code}).`);
     this.name = 'GoogleWalletError';
@@ -37,6 +40,7 @@ export class GoogleWalletError extends Error {
     this.status = status;
     this.retryAfterMs = retryAfterMs;
     this.staleToken = staleToken;
+    this.quota = quota;
   }
 }
 
@@ -61,6 +65,7 @@ export function googleHttpError(
   headers?: Headers,
   nowMs?: number,
   staleToken = false,
+  quota = false,
 ): GoogleWalletError {
   const code: GoogleWalletErrorCode =
     status === 400
@@ -82,7 +87,7 @@ export function googleHttpError(
     status === 429 || status === 503
       ? parseRetryAfter(headers?.get('retry-after') ?? null, nowMs)
       : undefined;
-  return new GoogleWalletError(code, operation, status, retryAfterMs, staleToken);
+  return new GoogleWalletError(code, operation, status, retryAfterMs, staleToken, quota);
 }
 
 export async function googleFetch(

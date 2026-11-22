@@ -7,6 +7,18 @@ export async function providerNotifiedSince(
   provider: string,
   since: number,
 ): Promise<{ used: number; oldest: number | null }> {
+  // Google's own ledger is the truth (google-messages.md section 7): a message counts once Google took it.
+  if (provider === 'google') {
+    const rows = await all<{ at: number }>(
+      db,
+      `SELECT m.settled_at AS at FROM wallet_google_messages m
+      JOIN wallet_provider_instances i ON i.id = m.instance_id
+      WHERE i.pass_id = ? AND i.provider = 'google' AND m.state = 'notified' AND m.settled_at > ?
+      ORDER BY m.settled_at`,
+      [passId, since],
+    );
+    return { used: rows.length, oldest: rows[0]?.at ?? null };
+  }
   const rows = await all<{ at: number }>(
     db,
     `SELECT at FROM pass_events
