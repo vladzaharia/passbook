@@ -38,7 +38,8 @@ export function RunningCard({
   stopBusy: boolean;
 }) {
   const total = Math.max(b.counts.targeted, 1);
-  const done = Math.min(handledOf(b), total);
+  // Booked to start now: nothing has run, whatever the counters were last read as.
+  const done = starting ? 0 : Math.min(handledOf(b), total);
   return (
     <Card>
       <CardBody className="flex flex-col gap-5 p-6">

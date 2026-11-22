@@ -22,6 +22,7 @@ import {
 } from '../../../ui/index.ts';
 import { ForbiddenPage } from '../../../ui/layout/error-pages.tsx';
 import { broadcastQuery, useBroadcastActions } from '../../messages/api.ts';
+import { RunProgress } from '../run-kit.tsx';
 import { useChangeActions, useFollowRun } from './api.ts';
 import { CHANGE_COPY as C } from './copy.ts';
 import { refusalText, runFailure } from './refusal.ts';
@@ -161,19 +162,25 @@ export function ChangeRunPage({ runId }: { runId: string }) {
     body = (
       <DoneCard b={b} undone={undone}>
         {undo ? (
-          <div
-            role="status"
-            className="rounded-md border border-border bg-surface-sunken p-4 text-sm font-medium text-fg-strong"
-          >
-            {undo.state === 'sending'
-              ? C.run.undoRunning(
-                  undo.counts.updated + undo.counts.unchanged + undo.counts.failed,
-                  undo.counts.targeted,
-                )
-              : undone
+          undo.state === 'sending' ? (
+            <RunProgress
+              done={undo.counts.updated + undo.counts.unchanged + undo.counts.failed}
+              total={undo.counts.targeted}
+              text={C.run.undoRunning(
+                undo.counts.updated + undo.counts.unchanged + undo.counts.failed,
+                undo.counts.targeted,
+              )}
+            />
+          ) : (
+            <div
+              role="status"
+              className="rounded-md border border-border bg-surface-sunken p-4 text-sm font-medium text-fg-strong"
+            >
+              {undone
                 ? C.run.undone(undo.counts.updated, undo.counts.unchanged)
                 : C.run.undoFailed(undo.counts.updated)}
-          </div>
+            </div>
+          )
         ) : action === 'design' ? (
           <p className="text-sm text-fg-muted">{C.run.notUndoable}</p>
         ) : undoable && open ? (

@@ -33,10 +33,10 @@ function Tile({ label, value, i }: { label: string; value: number; i: number }) 
       style={{ '--i': i } as CSSProperties}
       className="flex flex-col-reverse rounded-lg border border-border bg-surface-sunken p-3"
     >
+      <dt className="text-xs text-fg-muted">{label}</dt>
       <dd className="text-2xl font-semibold text-fg-strong">
         <CountUp value={value} />
       </dd>
-      <dt className="text-xs text-fg-muted">{label}</dt>
     </div>
   );
 }
