@@ -413,16 +413,16 @@ describe('syncing queued reads', () => {
       expect(await contactOf(scanner.id)).toBe(t0);
     });
 
-    it('is not moved by POST /device sent just before the upload', async () => {
-      const { scanner, headers, roster, t0, reads } = await outage();
+    it('keeps the reads on time when POST /device is sent just before the upload', async () => {
+      const { scanner, headers, roster, reads } = await outage();
       await kit.post(headers, '/device', {});
-      expect(await contactOf(scanner.id)).toBe(t0);
+      expect(await contactOf(scanner.id)).toBe(kit.clock.now());
       const sent = await batchOf(await batch(headers, reads, roster));
       expect(sent.items.map((i) => i.outcome.kind)).toEqual(Array(4).fill('ok'));
       expect(await lateCount(reads.map((r) => r.idempotencyKey))).toBe(0);
     });
 
-    it('is moved by a session poll, and a device that only uploads gains nothing', async () => {
+    it('is moved by a session poll, which the reconnect grace covers; a device that only uploads gains nothing', async () => {
       const { tpl, scanner, headers, roster, t0, reads } = await outage();
       // Uploads only: reads dated before the last contact stay late however many batches it sends.
       const before = item((await kit.scanPass(tpl)).scanCode ?? '', {
@@ -438,11 +438,11 @@ describe('syncing queued reads', () => {
       expect(await contactOf(scanner.id)).toBe(kit.clock.now());
       const polled = await batchOf(await batch(headers, reads, roster));
       expect(polled.items.map((i) => i.outcome.kind)).toEqual(Array(4).fill('ok'));
-      expect(await lateCount(reads.map((r) => r.idempotencyKey))).toBe(4);
+      expect(await lateCount(reads.map((r) => r.idempotencyKey))).toBe(0);
     });
   });
 
-  it('a door that sends its queue first keeps every listed read; once the server has seen the door in between, the reads are taken at sync time', async () => {
+  it('a door that sends its queue first keeps every listed read; once the server has seen the door in between after a long silence, the grace still keeps them on time', async () => {
     const { tpl, scanner, headers } = await door();
     const roster = await rosterOf(headers);
     kit.clock.advance(2 * 3_600_000);
@@ -462,13 +462,13 @@ describe('syncing queued reads', () => {
     const sent = await batchOf(await batch(headers, first, roster));
     expect(sent.items.map((i) => i.outcome.kind)).toEqual(['ok', 'ok', 'ok']);
     expect(await lateOf(first[0]?.idempotencyKey ?? '')).toEqual([{ late: 0 }]);
-    // The server saw the door after the reads were dated: they are still admitted, at server time, marked late.
+    // The server saw the door after a long silence: the grace keeps the pre-gap contact, so the reads stay on time.
     const second = await queued();
     const live = await kit.scanPass(tpl);
     expect((await act(headers, { code: live.scanCode ?? '', method: 'camera' })).status).toBe(200);
     const after = await batchOf(await batch(headers, second, roster));
     expect(after.items.map((i) => i.outcome.kind)).toEqual(['ok', 'ok', 'ok']);
-    expect(await lateOf(second[0]?.idempotencyKey ?? '')).toEqual([{ late: 1 }]);
+    expect(await lateOf(second[0]?.idempotencyKey ?? '')).toEqual([{ late: 0 }]);
     expect(scanner.id).toBeTruthy();
   });
 

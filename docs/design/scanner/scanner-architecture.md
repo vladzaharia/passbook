@@ -1848,6 +1848,21 @@ changes nothing. A late
   duplicate is recorded as heads-up `already_done` after the fact (the Ticketmaster rule). A row leaves the queue only
   on its per-item outcome. Triggers: `online`, `visible`, every 15 s while rows remain, after any success, **Sync now**.
   Backoff 2, 4 … 60 s. The pending chip turns amber after 10 min.
+- **Time floor for a queued read** (`batch.ts`, `repo-device.ts`). A `listed` read dated before the floor, less 5 min of
+  clock slack, was made when the door could not have been offline: it is taken at server time and marked `late`. The
+  floor is the later of the list's `roster_at` and the door's last contact. The server stamps `scanners.contact_at`
+  on every scanner request except `POST /batch` (an upload), at most once a minute, and the batch reads it as it was
+  before the request. Those stamps cannot be ordered by a device (polls, the socket, sign-in, a refused sync), so the
+  floor has a reconnect grace:
+  - a request that arrives 3 min (`CONTACT_GAP_MS`) or more after the last one keeps that last contact in
+    `contact_prev_at` and sets `online_since` to now;
+  - for 20 min (`CONTACT_GRACE_MS`) after `online_since`, the contact half of the floor is the pre-gap
+    `contact_prev_at`, not `contact_at`; after that it is `contact_at` again;
+  - a row with no `contact_at` (before 0175) uses `last_seen_at`, then 0.
+  Bound: a floor is never earlier than the last contact the server saw before a real silence of 3 min or more, and it
+  holds for 20 min after the reconnect. A device silent for that stretch has the same floor, so the grace gives a
+  dishonest door nothing but the 20 min it was in contact for, and only behind a gap it really had. A door in steady
+  contact (no 3-min silence) is held to its latest contact, as before.
 - **Wipe** on revoke, unpair, a different `scannerId`, or a new event: roster and queue deleted; foreign rows listed
   once with **Discard**.
 - iOS has no Background Sync: the queue drains only while `/scan` is open. Said once on the console setting.
