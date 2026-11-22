@@ -18,6 +18,13 @@ export function DropdownMenuContent({
   const mount = useCallback((node: HTMLDivElement | null) => {
     restore.current?.();
     restore.current = node ? inertOutside(node) : null;
+    // Radix's popper wrapper sits in the body outside every landmark; naming it a region keeps the
+    // menu inside one (axe `region`).
+    const wrapper = node?.parentElement;
+    if (wrapper?.hasAttribute('data-radix-popper-content-wrapper')) {
+      wrapper.setAttribute('role', 'region');
+      wrapper.setAttribute('aria-label', 'Menu');
+    }
   }, []);
   return (
     <Primitive.Portal>
