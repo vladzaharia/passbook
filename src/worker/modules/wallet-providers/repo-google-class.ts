@@ -1,37 +1,9 @@
 import type { GoogleType } from '../../../passkit/wallets/google/types.ts';
-import { first, run } from '../../platform/db.ts';
+import { first } from '../../platform/db.ts';
 
 export interface GoogleClassWrite {
   releaseId: string;
   releaseGeneration: number;
-}
-
-export function getGoogleClassWrite(
-  db: D1Database,
-  classIdHash: string,
-): Promise<GoogleClassWrite | null> {
-  return first(
-    db,
-    `SELECT release_id AS releaseId, release_generation AS releaseGeneration
-    FROM wallet_google_classes WHERE class_id_hash = ?`,
-    [classIdHash],
-  );
-}
-
-/** Records the release that wrote the class; a later write by a newer release replaces it. */
-export async function putGoogleClassWrite(
-  db: D1Database,
-  input: GoogleClassWrite & { classIdHash: string; now: number },
-): Promise<void> {
-  await run(
-    db,
-    `INSERT INTO wallet_google_classes (class_id_hash, release_id, release_generation, written_at)
-    VALUES (?, ?, ?, ?) ON CONFLICT (class_id_hash) DO UPDATE SET
-      release_id = excluded.release_id, release_generation = excluded.release_generation,
-      written_at = excluded.written_at
-    WHERE excluded.release_generation > wallet_google_classes.release_generation`,
-    [input.classIdHash, input.releaseId, input.releaseGeneration, input.now],
-  );
 }
 
 /** What an instance's binding recorded about its class, for a revoke and for refusing a changed class key. */

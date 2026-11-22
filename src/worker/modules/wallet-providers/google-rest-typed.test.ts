@@ -2,7 +2,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createMockWallets } from '../../../../test/mock-wallets/index.ts';
 import type { GoogleType } from '../../../passkit/wallets/google/types.ts';
-import { upsertClassForRelease } from './google-class-release.ts';
 import type { GoogleValidatedAccount } from './google-credentials.ts';
 import { GOOGLE_WALLET_SCOPE, validateGoogleAccount } from './google-credentials.ts';
 import { googleClassId, googleClassKeyDigest, googleObjectIds } from './google-ids.ts';
@@ -422,36 +421,5 @@ describe('revoke: PUT inactive, then GET to confirm', () => {
       'absent',
     );
     expect(mock.requests.filter((r) => r.method === 'PUT')).toEqual([]);
-  });
-});
-
-describe('a class across releases', () => {
-  const classScope = { tenantId: 't', releaseId: 'r' };
-  const body = BODIES.event.classBody as never;
-  const gen = (n: number) => ({ releaseId: `release-${n}`, releaseGeneration: n });
-  const patches = () =>
-    mock.requests.filter((r) => r.method === 'PATCH' && r.path.includes('Class'));
-
-  it('rewrites a changed body once for a newer release, and never for the same one', async () => {
-    const { env } = await import('cloudflare:workers');
-    const ctx = await rest();
-    const up = (b: object, n: number) =>
-      upsertClassForRelease(ctx, env.DB, 1, 'event', classScope, b as never, gen(n));
-    expect(await up(body, 1)).toBe('ok');
-    const renamed = { ...(body as object), eventName: text('Gala 2') };
-    // Release 1 again, another body: two passes of one release disagree. Nothing is written.
-    expect(await up(renamed, 1)).toBe('drift');
-    expect(patches()).toEqual([]);
-    // Release 2 changed the event name: the class follows, exactly once.
-    expect(await up(renamed, 2)).toBe('rewritten');
-    expect(patches()).toHaveLength(1);
-    expect([...mock.google.eventTicketClass.values()][0]).toMatchObject({
-      eventName: text('Gala 2'),
-    });
-    // A fresh isolate, the same release 2 body, and a pass of release 2 with another body.
-    clearGoogleClassMemo();
-    expect(await up(renamed, 2)).toBe('ok');
-    expect(await up({ ...renamed, eventName: text('Other') }, 2)).toBe('drift');
-    expect(patches()).toHaveLength(1);
   });
 });

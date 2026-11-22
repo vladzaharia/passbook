@@ -2,7 +2,11 @@ import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import type { WalletOperation } from '../modules/wallet-providers/instance-types.ts';
 import { jobGrant } from '../platform/authority.ts';
-import { createJobContext, createServiceContext } from '../platform/service-context.ts';
+import {
+  createJobContext,
+  createServiceContext,
+  isJobContext,
+} from '../platform/service-context.ts';
 import { runFirstTapUpsert } from './wallet-first-tap.ts';
 
 const op = (over: Partial<WalletOperation>) =>
@@ -36,6 +40,10 @@ describe('a narrowed job context', () => {
       expect(() => jobGrant(ctx, { purpose, job: 'x', orgId: 'o', mode: 'live' } as never)).toThrow(
         /may not use/,
       );
+  });
+  it('is no job context for the deferred grants and creates that need the full one', () => {
+    expect(isJobContext(ctx)).toBe(false);
+    expect(isJobContext(createJobContext(env, 'x'))).toBe(true);
   });
   it('lets its own purpose through the check', () => {
     expect(() =>
