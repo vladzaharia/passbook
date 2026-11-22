@@ -18,6 +18,7 @@ import {
 } from './pairing-token.ts';
 import { adminGrant, audited } from './repo-admin-grant.ts';
 import { credentialEpochOf, getScannerByPrefix } from './repo-device.ts';
+import { clearDeviceDayPart } from './repo-pin-tag.ts';
 import { type ConsoleScannerRow, scannerSlot } from './repo-scanners.ts';
 import {
   addCodeCredential,
@@ -213,8 +214,10 @@ export async function completePairing(
       principal: { kind: 'scanner', scannerId: hit.id, credentialEpoch: hit.credentialEpoch },
       target: hit.id,
       codes: REDEEM_CODES,
+      tables: ['scanners', 'counters'],
     });
     addCodeCredential(g, hit.id, hash, c);
+    g.include(clearDeviceDayPart(hit.id));
     g.add(
       audited(g, ctx, {
         orgId: hit.orgId,
