@@ -37,6 +37,8 @@ const TONE = {
   needs: 'border-warning-border bg-warning-subtle text-warning',
   off: 'border-border-strong bg-state-hover-tint text-fg-muted',
   locked: 'border-dashed border-border-strong bg-transparent text-fg-muted',
+  /** After the stopping level: quiet by colour, never by opacity, so the text keeps its contrast. */
+  after: 'border-dashed border-border bg-transparent text-fg-muted',
 } as const;
 
 function Pill({
@@ -69,12 +71,12 @@ function Pill({
       data-level={level.level}
       data-state={level.state}
       data-stop={stop || undefined}
+      data-after={dim || undefined}
       aria-current={stop ? 'step' : undefined}
       className={cn(
         'inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium whitespace-nowrap [&_svg]:size-3.5',
-        TONE[level.state],
+        TONE[dim ? 'after' : level.state],
         stop && 'ring-2 ring-border-strong ring-offset-1 ring-offset-surface-raised',
-        dim && 'opacity-45',
       )}
     >
       {icon}
@@ -110,7 +112,7 @@ export function ChainBadge({
             {i > 0 ? (
               <span
                 aria-hidden
-                className={cn('h-px w-3 bg-border-strong', at !== -1 && i > at && 'opacity-45')}
+                className={cn('h-px w-3', at !== -1 && i > at ? 'bg-border' : 'bg-border-strong')}
               />
             ) : null}
             <Pill

@@ -2,6 +2,7 @@ import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo, useRef, useState } from 'react';
 import { useDebounced } from '../../../lib/debounce.ts';
+import type { ApiError } from '../../../lib/errors.ts';
 import { orgPath } from '../../../lib/scope.ts';
 import { localZone } from '../../../lib/timezones.ts';
 import type { DateTimeValue } from '../../../ui/index.ts';
@@ -11,7 +12,7 @@ import { fingerprint, newKey } from '../format.ts';
 import { localToIso } from '../schema-form/datetime.ts';
 import { type ChangeBody, useChangeActions, useChangePreview } from './api.ts';
 import { type ChangeKind, type FieldRow, patchOf } from './model.ts';
-import { isDrift, refusalText } from './refusal.ts';
+import { isDrift, isRateLimited, refusalText } from './refusal.ts';
 import { type ChangeSelection, clearSelection, targetOf, templatesOf } from './selection.ts';
 import { SETTABLE } from './value-control.tsx';
 
@@ -47,6 +48,8 @@ export function useChangeWizard(
   const [start, setStart] = useState<Start>('now');
   const [at, setAt] = useState<DateTimeValue>({ local: '', zone: localZone() });
   const [refusal, setRefusal] = useState<string | null>(null);
+  /** The create answered 429: the page says so with a Retry, and the selection and step stay. */
+  const [limited, setLimited] = useState<ApiError | null>(null);
   const [drift, setDrift] = useState<number | null>(null);
   const key = useRef<{ fp: string; key: string }>({ fp: '', key: newKey() });
   const actions = useChangeActions();
@@ -91,6 +94,7 @@ export function useChangeWizard(
     const fp = fingerprint([body, expectCount, start === 'later' ? atMs : null]);
     if (key.current.fp !== fp) key.current = { fp, key: newKey() };
     setRefusal(null);
+    setLimited(null);
     try {
       const run = await actions.create.mutateAsync({
         body: { ...body, expectCount },
@@ -105,6 +109,7 @@ export function useChangeWizard(
         setDrift(again.data?.targeted ?? 0);
         return;
       }
+      if (isRateLimited(error)) setLimited(error);
       setRefusal(refusalText(error));
     }
   }
@@ -134,6 +139,8 @@ export function useChangeWizard(
     startMs: Number.isFinite(atMs) ? atMs : null,
     refusal,
     setRefusal,
+    limited,
+    setLimited,
     drift,
     setDrift,
     submit,

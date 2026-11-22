@@ -40,3 +40,18 @@ describe('the Try it skeleton', () => {
     expect(css).toMatch(/\.try \.body \{[^}]*min-block-size: 14rem/);
   });
 });
+
+describe('the held console and quickstart slots', () => {
+  const held = rules('[data-hydrating]::before');
+  it('draw the loading pattern while the session is read, out of the flow', () => {
+    expect(
+      held.some((d) => d.includes('visibility: visible') && d.includes('position: absolute')),
+    ).toBe(true);
+  });
+  it('show it after a delay and in opacity only, with nothing finite under reduced motion', () => {
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion: no-preference\)\s*\{\s*:is\([^)]*\)\[data-hydrating\]::before\s*\{\s*animation:\s*dp-sk-in 200ms ease-out 150ms backwards/,
+    );
+    expect(css.match(/@keyframes dp-sk-in\s*\{[\s\S]*?\}\s*\}/)?.[0]).toMatch(/opacity: 0/);
+  });
+});
