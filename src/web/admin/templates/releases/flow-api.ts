@@ -44,6 +44,7 @@ export function useReleaseFlow(templateId: string, orgId: string) {
       Promise.all([
         client.invalidateQueries({ queryKey: ['admin', 'templates'] }),
         client.invalidateQueries({ queryKey: ['admin', 'template-releases', templateId] }),
+        client.invalidateQueries({ queryKey: ['admin', 'join-link', templateId] }),
       ]),
   });
 }
@@ -61,6 +62,7 @@ export function useReviewFlow(templateId: string, orgId: string) {
       Promise.all([
         client.invalidateQueries({ queryKey: ['admin', 'templates'] }),
         client.invalidateQueries({ queryKey: ['admin', 'template-releases', templateId] }),
+        client.invalidateQueries({ queryKey: ['admin', 'join-link', templateId] }),
         client.invalidateQueries({ queryKey: reviewInboxKey(orgId) }),
       ]),
   });
