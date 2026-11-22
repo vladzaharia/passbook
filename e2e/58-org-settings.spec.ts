@@ -32,14 +32,14 @@ test.describe('org settings', () => {
   test('another org setting round-trips', async ({ page }) => {
     const org = readSeed().org;
     await page.goto(`/admin/o/${org.id}/settings`);
-    const from = page.getByLabel('Emails per day');
+    const from = page.getByRole('spinbutton', { name: 'Emails per day' });
     await from.fill('250');
     await page.getByRole('button', { name: 'Save' }).first().click();
     await page.reload();
-    await expect(page.getByLabel('Emails per day')).toHaveValue('250');
-    await page.getByLabel('Emails per day').fill('');
+    await expect(page.getByRole('spinbutton', { name: 'Emails per day' })).toHaveValue('250');
+    await page.getByRole('button', { name: 'Use default for Emails per day' }).click();
     await page.getByRole('button', { name: 'Save' }).first().click();
     await page.reload();
-    await expect(page.getByLabel('Emails per day')).toHaveValue('');
+    await expect(page.getByRole('spinbutton', { name: 'Emails per day' })).toHaveValue('');
   });
 });
