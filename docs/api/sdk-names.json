@@ -1929,6 +1929,10 @@
     "resource": "templates.releases",
     "method": "retrieveImpact"
   },
+  "templates.getTemplatesByIdRollout": {
+    "resource": "templates",
+    "method": "retrieveRollout"
+  },
   "templates.getTemplatesByIdSampleCsv": {
     "resource": "templates",
     "method": "downloadSample"

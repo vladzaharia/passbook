@@ -7394,6 +7394,28 @@ type TemplatesRetrieveInputSchemaResult = TemplateInputSchema
 
 type TemplatesRetrieveResult = TemplateDetail
 
+type TemplatesRetrieveRolloutQuery struct {
+	Mode string `json:"mode"`
+}
+
+type TemplatesRetrieveRolloutResult struct {
+	ReleaseVersion *string                                    `json:"releaseVersion"`
+	Total          int64                                      `json:"total"`
+	OnRelease      int64                                      `json:"onRelease"`
+	Remaining      int64                                      `json:"remaining"`
+	Failed         []TemplatesRetrieveRolloutResultFailedItem `json:"failed"`
+	FailedCount    int64                                      `json:"failedCount"`
+	StartedAt      *int64                                     `json:"startedAt"`
+	RunID          *string                                    `json:"runId"`
+	Running        bool                                       `json:"running"`
+}
+
+type TemplatesRetrieveRolloutResultFailedItem struct {
+	PassID string  `json:"passId"`
+	Title  *string `json:"title"`
+	Reason string  `json:"reason"`
+}
+
 type TemplatesRetrieveStampsImpactQuery struct {
 	Goal int64 `json:"goal"`
 }

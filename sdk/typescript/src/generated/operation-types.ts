@@ -3652,6 +3652,28 @@ export type TemplatesReviewsRequestQuery = {
 /** Response of `templates.reviews.request`. */
 export type TemplatesReviewsRequestResult = ReleaseResponse;
 
+/** Query of `templates.retrieveRollout`. */
+export type TemplatesRetrieveRolloutQuery = {
+  mode: "live" | "test";
+};
+
+/** Response of `templates.retrieveRollout`. */
+export type TemplatesRetrieveRolloutResult = {
+  releaseVersion: string | null;
+  total: number;
+  onRelease: number;
+  remaining: number;
+  failed: Array<{
+    passId: string;
+    title: string | null;
+    reason: string;
+  }>;
+  failedCount: number;
+  startedAt: number | null;
+  runId: string | null;
+  running: boolean;
+};
+
 /** Request body of `templates.setUpScanning`. */
 export type TemplatesSetUpScanningBody = TemplatesSetUpScanningParams;
 

@@ -576,6 +576,14 @@
     "note": "A template carries its release state: release says which version is current, pending or rolled back."
   },
   {
+    "key": "GET /api/v1/templates/{id}/rollout new operation",
+    "class": "additive",
+    "operationId": "templates.getTemplatesByIdRollout",
+    "op": "GET /api/v1/templates/{id}/rollout",
+    "change": "new operation",
+    "note": "Shows how many of the organization's passes are on the approved release and which could not update."
+  },
+  {
     "key": "GET /api/v1/templates/{id}/sample.csv new operation",
     "class": "additive",
     "operationId": "templates.getTemplatesByIdSampleCsv",

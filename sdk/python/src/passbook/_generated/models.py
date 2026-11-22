@@ -1013,6 +1013,8 @@ __all__ = [
     "TemplatesReleasesRollbackParams",
     "TemplatesRetrieveInputSchemaResult",
     "TemplatesRetrieveResult",
+    "TemplatesRetrieveRolloutResult",
+    "TemplatesRetrieveRolloutResultFailedItem",
     "TemplatesRetrieveStampsImpactResult",
     "TemplatesReviewsRequestBody",
     "TemplatesReviewsRequestResult",
@@ -7825,6 +7827,22 @@ class TemplatesReleasesRollbackParams(_Model):
     releaseId: str
     candidateHash: str
     expectedGeneration: int
+    reason: str
+
+class TemplatesRetrieveRolloutResult(_Model):
+    releaseVersion: str | None
+    total: int
+    onRelease: int
+    remaining: int
+    failed: _List[TemplatesRetrieveRolloutResultFailedItem]
+    failedCount: int
+    startedAt: int | None
+    runId: str | None
+    running: bool
+
+class TemplatesRetrieveRolloutResultFailedItem(_Model):
+    passId: str
+    title: str | None
     reason: str
 
 class TemplatesRetrieveStampsImpactResult(_Model):

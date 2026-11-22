@@ -52224,6 +52224,225 @@
         ]
       }
     },
+    "/api/v1/templates/{id}/rollout": {
+      "get": {
+        "summary": "How far the approved release has reached the organization’s passes",
+        "tags": [
+          "templates"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "orgId",
+            "in": "query",
+            "x-platform-only": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "live",
+                "test"
+              ]
+            },
+            "required": true,
+            "name": "mode",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "releaseVersion": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "onRelease": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "remaining": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "failed": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "passId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 64
+                          },
+                          "title": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "passId",
+                          "title",
+                          "reason"
+                        ]
+                      },
+                      "maxItems": 50
+                    },
+                    "failedCount": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "startedAt": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": 0
+                    },
+                    "runId": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "running": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "releaseVersion",
+                    "total",
+                    "onRelease",
+                    "remaining",
+                    "failed",
+                    "failedCount",
+                    "startedAt",
+                    "runId",
+                    "running"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "templates.getTemplatesByIdRollout",
+        "x-sdk": {
+          "resource": "templates",
+          "method": "retrieveRollout"
+        },
+        "security": [
+          {
+            "apiKey": [
+              "templates:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "x-sign-in": "idp",
+        "x-codes": [
+          "ARCHIVE_TOO_LARGE",
+          "ASSETS_INVALID",
+          "ASSET_NOT_FOUND",
+          "FORBIDDEN",
+          "IDEMPOTENCY_KEY_REQUIRED",
+          "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
+          "IMPORT_CONFLICT",
+          "INVALID_API_KEY",
+          "INVALID_CURSOR",
+          "INVALID_INPUT",
+          "KEY_CREATOR_GONE",
+          "KEY_CREATOR_NOT_MEMBER",
+          "KEY_TEST_ONLY",
+          "MANIFEST_INVALID",
+          "MISSING_SCOPE",
+          "NOT_A_ZIP",
+          "NOT_FOUND",
+          "NO_FILE",
+          "ORG_NOT_FOUND",
+          "ORG_REQUIRED",
+          "RATE_LIMITED",
+          "STAMPS_ABOVE_MAX",
+          "STAMPS_NONE",
+          "STAMPS_QUERY",
+          "STAMPS_REDRAW",
+          "TEMPLATE_ARCHIVED",
+          "TEMPLATE_ASSET_CONFLICT",
+          "TEMPLATE_BAKED",
+          "TEMPLATE_BLUEPRINT_INACTIVE",
+          "TEMPLATE_CANDIDATE_NOT_FOUND",
+          "TEMPLATE_CONFLICT",
+          "TEMPLATE_CONTENT_CHANGED",
+          "TEMPLATE_EXISTS",
+          "TEMPLATE_IN_USE",
+          "TEMPLATE_IS_BLUEPRINT",
+          "TEMPLATE_MODE_MISMATCH",
+          "TEMPLATE_NOT_BLUEPRINT",
+          "TEMPLATE_NOT_FOUND",
+          "TEMPLATE_NOT_SHAREABLE",
+          "TEMPLATE_NOT_TESTED",
+          "TEMPLATE_ORG_REQUIRED",
+          "TEMPLATE_PROVIDER_UNSUPPORTED",
+          "TEMPLATE_RELEASE_CONFLICT",
+          "TEMPLATE_RELEASE_NOT_FOUND",
+          "TEMPLATE_RELEASE_REQUIRED",
+          "TEMPLATE_REVIEW_REQUIRED",
+          "TEMPLATE_SLUG_CONFLICT",
+          "TEMPLATE_USED_BY_OTHER_ORG",
+          "TEMPLATE_VERSION_CONFLICT",
+          "TEMPLATE_VERSION_CONTENT_CONFLICT",
+          "TEMPLATE_VERSION_NOT_FOUND",
+          "UNAUTHENTICATED",
+          "UPLOAD_NOT_FOUND",
+          "VALIDATION",
+          "VERSION_INVALID",
+          "WORKFLOW_START"
+        ]
+      }
+    },
     "/api/v1/templates/{id}/releases/rollback": {
       "post": {
         "summary": "Roll back to a prior template release",

@@ -1387,6 +1387,13 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"templates.retrieveRollout", "GET", "/api/v1/templates/id1/rollout", false,
+		"", `{"releaseVersion":"x","total":0,"onRelease":0,"remaining":0,"failed":[{"passId":"x","title":"x","reason":"x"}],"failedCount":0,"startedAt":0,"runId":"x","running":false}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Templates.RetrieveRollout(ctx, "id1", nil)
+		},
+	},
+	{
 		"templates.downloadSample", "GET", "/api/v1/templates/id1/sample.csv", false,
 		"", "",
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

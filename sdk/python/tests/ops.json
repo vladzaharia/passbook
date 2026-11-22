@@ -7287,6 +7287,47 @@
   }
  },
  {
+  "id": "templates.getTemplatesByIdRollout",
+  "call": "templates.retrieve_rollout",
+  "http": "GET",
+  "path": "/api/v1/templates/{id}/rollout",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [
+   {
+    "name": "mode",
+    "py": "mode",
+    "value": "live"
+   }
+  ],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "releaseVersion": "x",
+   "total": 0,
+   "onRelease": 0,
+   "remaining": 0,
+   "failed": [
+    {
+     "passId": "x",
+     "title": "x",
+     "reason": "x"
+    }
+   ],
+   "failedCount": 0,
+   "startedAt": 0,
+   "runId": "x",
+   "running": false
+  }
+ },
+ {
   "id": "templates.getTemplatesByIdSampleCsv",
   "call": "templates.download_sample",
   "http": "GET",
