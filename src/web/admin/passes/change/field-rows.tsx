@@ -59,7 +59,9 @@ export function FieldRows({
                 )}
               </FormField>
               {row.op === 'clear' ? (
-                <p className="self-end pb-2 text-sm text-fg-muted">{field?.label} is emptied.</p>
+                <p className="self-end pb-2 text-sm text-fg-muted">
+                  {C.fields.emptied(field?.label ?? row.key)}
+                </p>
               ) : row.op === 'set' && field ? (
                 <FormField label="Value" error={error}>
                   {(control) => (

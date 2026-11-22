@@ -13,9 +13,18 @@ const KINDS = [
 ] as const satisfies readonly { kind: ChangeKind; icon: unknown }[];
 
 /** C1: what to do to the passes: set fields, move to the latest design, or void. */
-export function ChangeStep({ w, showErrors }: { w: ChangeWizard; showErrors: boolean }) {
+export function ChangeStep({
+  w,
+  which,
+  showErrors,
+}: {
+  w: ChangeWizard;
+  which: string;
+  showErrors: boolean;
+}) {
   return (
     <div className="flex flex-col gap-6">
+      <p className="text-sm font-medium text-fg-strong">{which}</p>
       <div
         role="radiogroup"
         aria-label="Kind of change"
@@ -31,10 +40,7 @@ export function ChangeStep({ w, showErrors }: { w: ChangeWizard; showErrors: boo
               description={C.kindHelp[kind]}
               checked={w.kind === kind}
               className="w-full"
-              onSelect={() => {
-                w.setKind(kind);
-                if (kind === 'void') w.setNotify(false);
-              }}
+              onSelect={() => w.chooseKind(kind)}
             />
           </div>
         ))}

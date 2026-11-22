@@ -112,15 +112,15 @@ export function PassesListPage({
     });
   }, [rows]);
 
-  const toggle = useCallback(
-    (id: string) =>
-      setSelected((s) => {
-        const next = new Set(s);
-        if (!next.delete(id)) next.add(id);
-        return next;
-      }),
-    [],
-  );
+  // Unticking a row after "Select all matching" drops back to the ticked rows: the person's intent wins.
+  const toggle = useCallback((id: string) => {
+    setAllMatching(false);
+    setSelected((s) => {
+      const next = new Set(s);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }, []);
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
   const toggleAll = useCallback(() => {
     setAllMatching(false);

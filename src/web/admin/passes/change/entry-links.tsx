@@ -30,7 +30,7 @@ export function TellHoldersLink({ orgId, templateId }: { orgId: string; template
       <Link
         to="/admin/o/$orgId/passes/change"
         params={{ orgId }}
-        search={{ templateId, kind: 'design' }}
+        search={{ templateId, kind: 'design', tell: true }}
       >
         {C.entry.tellHolders}
       </Link>

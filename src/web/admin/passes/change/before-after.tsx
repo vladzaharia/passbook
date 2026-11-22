@@ -65,7 +65,7 @@ export function BeforeAfter({
         </div>
       </div>
       <div
-        key={`${sample.passId}-${side}`}
+        key={sample.passId}
         className="wl-sheen wl-deal overflow-hidden rounded-2xl border border-border bg-surface-raised p-4 shadow-elevation-2"
       >
         <p className="truncate text-base font-semibold text-fg-strong">
@@ -74,8 +74,11 @@ export function BeforeAfter({
         <dl className="mt-3 grid gap-2">
           {sample.changes.map((c) => (
             <div
-              key={c.key}
-              className={cn('wl-changed px-2 py-1.5', side === 'before' && 'opacity-80')}
+              key={`${c.key}-${side}`}
+              className={cn(
+                'wl-changed wl-stage-swap px-2 py-1.5',
+                side === 'before' && 'opacity-80',
+              )}
             >
               <dt className="text-xs text-fg-muted">{c.label}</dt>
               <dd className="break-words text-sm font-medium text-fg-strong">

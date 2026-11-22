@@ -5,8 +5,8 @@ import { ChangePage } from '../../../../../../admin/passes/change/change-page.ts
 const opt = <T extends z.ZodType>(schema: T) => schema.optional().catch(undefined);
 
 function ChangeRoute() {
-  const { importId, templateId, kind } = Route.useSearch();
-  return <ChangePage search={{ importId, templateId, kind }} />;
+  const { importId, templateId, kind, tell } = Route.useSearch();
+  return <ChangePage search={{ importId, templateId, kind, tell }} />;
 }
 
 export const Route = createFileRoute('/admin/o/$orgId/passes/change/')({
@@ -14,6 +14,7 @@ export const Route = createFileRoute('/admin/o/$orgId/passes/change/')({
     importId: opt(z.string()),
     templateId: opt(z.string()),
     kind: opt(z.enum(['fields', 'design', 'void'])),
+    tell: opt(z.boolean()),
   }),
   component: ChangeRoute,
 });

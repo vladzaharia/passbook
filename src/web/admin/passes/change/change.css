@@ -7,25 +7,16 @@
 
 @media (prefers-reduced-motion: no-preference) {
   .wl-changed {
-    animation: wl-change-pulse 1200ms var(--wl-ease-out) 2;
+    animation: wl-change-pulse var(--wl-dur-highlight) var(--wl-ease-out) 2;
   }
   .wl-sheen {
-    animation: wl-sheen 900ms var(--wl-ease-out) 1;
+    animation: wl-sheen var(--wl-dur-sheen) var(--wl-ease-out) 1;
   }
 }
 
 @keyframes wl-change-pulse {
-  from {
-    outline-offset: 2px;
-    outline-color: var(--pk-accent);
-  }
   50% {
-    outline-offset: 5px;
     outline-color: transparent;
-  }
-  to {
-    outline-offset: 2px;
-    outline-color: var(--pk-accent);
   }
 }
 @keyframes wl-sheen {

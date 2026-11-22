@@ -9,7 +9,6 @@ export const CHANGE_COPY = {
   passes: (c: number) => n(c, 'pass', 'passes'),
   noSelection: 'Pick passes to change first.',
   toList: 'Back to passes',
-  forbidden: 'You need to operate passes and manage messages to change passes.',
   kinds: { fields: 'Set fields', design: 'Latest design', void: 'Void' },
   kindHelp: {
     fields: 'Set, clear, extend or add to a field on every pass.',
@@ -25,8 +24,7 @@ export const CHANGE_COPY = {
     add: 'Add a field',
     remove: (label: string) => `Remove ${label}`,
     none: 'No fields in common.',
-    pick: 'Choose a field',
-    allUsed: 'Every field is in use.',
+    emptied: (label: string) => `${label} is emptied.`,
   },
   ops: {
     set: 'set to',
@@ -37,14 +35,25 @@ export const CHANGE_COPY = {
     subtract: 'subtract',
   },
   units: { D: 'days', W: 'weeks', M: 'months', Y: 'years' },
-  design: (from: string, to: string) => `${from} to ${to}`,
+  hint: {
+    filter: 'Change takes a template or import with value filters.',
+    status: 'Change takes Active passes only.',
+    match: 'Change takes up to 3 value or range filters.',
+    template: 'Filter by one template to change all matching.',
+    templates: 'Change takes passes of up to 20 templates.',
+  },
+  which: {
+    ids: (c: number) => `${n(c, 'selected pass', 'selected passes')}`,
+    import: 'The passes of this import',
+    template: (name: string) => `All active passes of ${name}`,
+    filter: (c: number, name: string) => `${n(c, 'matching pass', 'matching passes')} of ${name}`,
+  },
   holders: {
     notify: 'Notify holders',
-    notifyHelp: 'Off by default. Holders are told only when this is on.',
+    notifyHelp: 'Holders are told only when this is on.',
     message: 'Message',
     tokens: 'Use {Label} for a field’s new value.',
     silent: 'Passes update quietly. Nobody is told.',
-    voidSilent: 'A void never notifies.',
     estimate: (notified: number, silent: number) =>
       `About ${formatCount(notified)} get a notification, ${formatCount(silent)} update silently.`,
     from200: 'Estimated from the 200 newest passes.',
@@ -55,6 +64,8 @@ export const CHANGE_COPY = {
     later: 'Later',
     at: 'Start at',
     needMessage: 'Write the message or turn Notify off.',
+    needTime: 'Pick a start time.',
+    insert: (label: string) => `Insert ${label}`,
   },
   review: {
     willChange: 'Will change',
@@ -65,6 +76,8 @@ export const CHANGE_COPY = {
     samples: 'Sample passes',
     summary: 'Summary',
     which: 'Passes',
+    start: 'Start',
+    startNow: 'Now',
     change: 'Change',
     holders: 'Holders',
     undo: 'Undo',
@@ -73,8 +86,12 @@ export const CHANGE_COPY = {
     notifyLine: 'Told with a message',
     silentLine: 'Not told',
     nothing: 'Nothing would change.',
+    estimated: 'Counts are estimated from the 200 newest passes.',
+    ofSelected: (can: number, picked: number) =>
+      `${formatCount(can)} of the ${formatCount(picked)} selected can change.`,
     checking: 'Checking the passes',
     run: (c: number) => `Change ${n(c, 'pass', 'passes')}`,
+    void: (c: number) => `Void ${n(c, 'pass', 'passes')}`,
     blocked: {
       PASS_VOIDED: 'voided',
       PASS_REMOVED: 'removed',
@@ -82,21 +99,18 @@ export const CHANGE_COPY = {
     } as Record<string, string>,
     blockedOther: 'can’t be changed',
   },
-  confirm: {
-    title: 'The selection changed',
-    body: (now: number) => `It now matches ${n(now, 'pass', 'passes')}. Run on those?`,
-    confirm: 'Run',
-    cancel: 'Review again',
-  },
   refusal: {
     SELECTION_CHANGED: 'The selection changed while you were reviewing.',
     BROADCAST_NOT_RETRYABLE: 'This run can’t be resumed. Start a new change.',
     MISSING_SCOPE: 'Your key can’t change passes. It needs passes:write and messages:write.',
     KEY_TEST_ONLY: 'Only a Test key can do this. Use a person for Live.',
-    BROADCAST_NOT_UNDOABLE: 'This change can’t be undone.',
     BROADCAST_NO_RELEASE: 'A template has no current design to move to.',
     IMPORT_NOT_ENDED: 'The import is still running.',
     EXPECT_COUNT_REQUIRED: 'Review the passes again before resuming.',
+    MATCH_TOO_BROAD: 'More than 20,000 passes match. Narrow the filter.',
+    BROADCAST_TARGET_INVALID: 'The passes could not be read. Pick them again.',
+    CREATOR_REVOKED: 'The person who started this lost access, so it stopped.',
+    BROADCAST_FAILED: 'The run stopped before it finished. Resume it for the rest.',
   } as Record<string, string>,
   run: {
     title: 'Change run',
@@ -111,14 +125,10 @@ export const CHANGE_COPY = {
     unchanged: 'Already set',
     failed: 'Failed',
     silent: 'Silent',
-    resume: 'Resume',
     resumeLeft: (c: number) => `Resume ${n(c, 'pass', 'passes')}`,
     undo: 'Undo change',
     undoUntil: (when: string) => `Until ${when}`,
     undoSilent: 'Restores silently.',
-    undoConfirmTitle: 'Undo this change?',
-    undoConfirm: (c: number) =>
-      `${n(c, 'pass', 'passes')} go back to their old values. Passes edited since stay as they are. Nobody is told.`,
     undoing: 'Undoing',
     undone: (restored: number, kept: number) =>
       kept > 0
@@ -126,7 +136,12 @@ export const CHANGE_COPY = {
         : `Restored ${formatCount(restored)}.`,
     undoExpired: 'The undo window has passed.',
     notUndoable: 'Moving to the latest design can’t be undone.',
-    again: 'Change more passes',
+    resumedRun: 'Open the resumed run',
+    starting: 'Starting',
+    cancel: 'Cancel',
+    undoRunning: (done: number, total: number) =>
+      `Undoing: ${formatCount(done)} of ${formatCount(total)}`,
+    undoFailed: (restored: number) => `The undo stopped. Restored ${formatCount(restored)}.`,
     toPasses: 'Back to passes',
     undoneTitle: 'Change undone',
     states: {
@@ -143,7 +158,6 @@ export const CHANGE_COPY = {
     couldNot: (verb: string) => `Could not ${verb}`,
   },
   entry: {
-    change: 'Change',
     tellHolders: 'Tell holders',
     changeThese: 'Change these',
   },

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useMemo, useState } from 'react';
+import { selectionMovedConfirm, voidConfirm } from '../../../lib/confirms.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import { orgPath } from '../../../lib/scope.ts';
 import {
@@ -19,8 +20,8 @@ import { ChangeStep } from './change-step.tsx';
 import { CHANGE_COPY as C } from './copy.ts';
 import { HoldersStep } from './holders-step.tsx';
 import type { ChangeKind } from './model.ts';
-import { ReviewStep, willChange } from './review-step.tsx';
-import { type ChangeSelection, canChangePasses, takeSelection } from './selection.ts';
+import { ReviewStep } from './review-step.tsx';
+import { type ChangeSelection, canChangePasses, takeSelection, targetOf } from './selection.ts';
 import { useChangeWizard } from './use-change-wizard.ts';
 
 const STEPS = [
@@ -33,6 +34,16 @@ export interface ChangeSearch {
   importId?: string | undefined;
   templateId?: string | undefined;
   kind?: ChangeKind | undefined;
+  /** Opened from Tell holders: Notify starts on. */
+  tell?: boolean | undefined;
+}
+
+/** Which passes, in a line: the source the run reads, so the person can see what it will touch. */
+function whichOf(selection: ChangeSelection, templateName: string): string {
+  if (selection.kind === 'ids') return C.which.ids(selection.ids.length);
+  if (selection.kind === 'import') return C.which.import;
+  if (selection.kind === 'template') return C.which.template(templateName);
+  return C.which.filter(selection.count, templateName);
 }
 
 function Wiz({
@@ -40,24 +51,29 @@ function Wiz({
   orgName,
   selection,
   initial,
+  tell,
 }: {
   orgId: string;
   orgName: string;
   selection: ChangeSelection;
   initial: ChangeKind;
+  tell: boolean;
 }) {
   const navigate = useNavigate();
-  const w = useChangeWizard(orgId, selection, initial);
+  const w = useChangeWizard(orgId, selection, initial, tell);
   const [showErrors, setShowErrors] = useState(false);
+  const [holderAttempt, setHolderAttempt] = useState(false);
+  const [askVoid, setAskVoid] = useState(false);
   const { step, kind } = w;
   const skipHolders = kind === 'void';
   const lastStep = STEPS.length - 1;
   const p = w.preview.data;
-  const will = p ? willChange(p) : 0;
+  const targeted = p?.targeted ?? 0;
   const needsText = w.notify && kind === 'fields' && w.message.trim() === '';
   const loading = w.details.some((d) => d.isPending);
   const failed = w.details.find((d) => d.isError);
   const toList = () => void navigate({ href: orgPath(orgId, '/passes') });
+  const which = whichOf(selection, w.details[0]?.data?.name ?? 'the template');
 
   if (failed?.error)
     return (
@@ -66,6 +82,12 @@ function Wiz({
   if (loading) return <Skeleton className="h-64" />;
 
   const go = (to: number) => w.setStep(to);
+  /** The count the person selected is the one the run takes: a different one is confirmed first. */
+  const run = () => {
+    if (!p) return;
+    if (selection.kind === 'filter' && p.targeted !== selection.count) w.setDrift(p.targeted);
+    else void w.submit(p.targeted);
+  };
   const next = () => {
     if (step === 0) {
       if (kind === 'fields' && !w.patch) {
@@ -74,17 +96,23 @@ function Wiz({
       }
       go(skipHolders ? 2 : 1);
     } else if (step === 1) {
+      setHolderAttempt(true);
       if (needsText || !w.whenOk) return false;
       go(2);
-    } else if (p) void w.submit(p.targeted);
+    } else if (kind === 'void') setAskVoid(true);
+    else run();
     return undefined;
   };
-  const stepsHint =
-    step === 1 && needsText
-      ? C.holders.needMessage
-      : step === 2 && p && will === 0
+  const reviewing = step === lastStep;
+  const hint = reviewing
+    ? !p || !w.fresh
+      ? C.review.checking
+      : targeted === 0
         ? C.review.nothing
-        : undefined;
+        : undefined
+    : step === 1 && !w.whenOk
+      ? C.holders.needTime
+      : undefined;
   return (
     <>
       <Wizard
@@ -95,9 +123,14 @@ function Wiz({
         onCancel={toList}
         {...(step > 0 ? { onBack: () => go(step === 2 && skipHolders ? 0 : step - 1) } : {})}
         onNext={next}
-        nextLabel={step === lastStep ? C.review.run(will) : 'Next'}
-        nextDisabled={step === lastStep && (!p || will === 0 || w.preview.isFetching)}
-        {...(stepsHint ? { nextHint: stepsHint } : {})}
+        nextLabel={
+          reviewing ? (kind === 'void' ? C.review.void(targeted) : C.review.run(targeted)) : 'Next'
+        }
+        {...(reviewing && kind === 'void' ? { nextTone: 'danger' as const } : {})}
+        nextDisabled={
+          (reviewing && (!p || !w.fresh || targeted === 0)) || (step === 1 && !w.whenOk)
+        }
+        {...(hint ? { nextHint: hint } : {})}
         busy={w.submitting}
         asideLabel="Before and after"
         aside={
@@ -110,15 +143,21 @@ function Wiz({
           ) : undefined
         }
       >
-        {step === 0 ? <ChangeStep w={w} showErrors={showErrors} /> : null}
+        {step === 0 ? <ChangeStep w={w} which={which} showErrors={showErrors} /> : null}
         {step === 1 ? (
           <HoldersStep
             w={w}
             org={{ id: orgId, name: orgName }}
-            error={needsText ? C.holders.needMessage : undefined}
+            error={holderAttempt && needsText ? C.holders.needMessage : undefined}
           />
         ) : null}
-        {step === 2 ? <ReviewStep w={w} orgName={orgName} /> : null}
+        {step === 2 ? (
+          <ReviewStep
+            w={w}
+            which={which}
+            picked={selection.kind === 'filter' ? selection.count : undefined}
+          />
+        ) : null}
         {w.refusal ? (
           <Callout
             tone="danger"
@@ -135,15 +174,22 @@ function Wiz({
       <ConfirmDialog
         open={w.drift !== null}
         onOpenChange={(open) => !open && w.setDrift(null)}
-        title={C.confirm.title}
-        description={C.confirm.body(w.drift ?? 0)}
-        confirmLabel={C.confirm.confirm}
-        cancelLabel={C.confirm.cancel}
+        {...selectionMovedConfirm(w.drift ?? 0)}
         confirmDisabled={(w.drift ?? 0) === 0}
         onConfirm={async () => {
           const now = w.drift ?? 0;
           w.setDrift(null);
           await w.submit(now);
+        }}
+      />
+      <ConfirmDialog
+        open={askVoid}
+        onOpenChange={setAskVoid}
+        {...voidConfirm(targeted)}
+        destructive
+        onConfirm={() => {
+          setAskVoid(false);
+          run();
         }}
       />
     </>
@@ -156,14 +202,21 @@ export function ChangePage({ search }: { search: ChangeSearch }) {
   const orgId = !scope.isLoading && !scope.isError ? scope.orgId : undefined;
   const allowed = canChangePasses(scope.membership?.capabilities);
   const imported = useImport(search.importId ?? '', search.importId ? orgId : undefined);
-  const handed = useMemo(() => (orgId ? takeSelection(orgId) : undefined), [orgId]);
-  const selection: ChangeSelection | undefined =
+  // An entry point's own target wins: a list hand-off left in the tab never replaces it.
+  const explicit = Boolean(search.importId || search.templateId);
+  const handed = useMemo(
+    () => (orgId && !explicit ? takeSelection(orgId) : undefined),
+    [orgId, explicit],
+  );
+  const candidate: ChangeSelection | undefined =
     handed ??
     (search.templateId
       ? { kind: 'template', templateId: search.templateId }
       : imported.data
         ? { kind: 'import', importId: imported.data.id, templateIds: [imported.data.templateId] }
         : undefined);
+  // A filter a run cannot take is refused, never widened to the template.
+  const selection = candidate && targetOf(candidate) === null ? undefined : candidate;
   const header = (
     <PageHeader
       title={C.title}
@@ -204,6 +257,7 @@ export function ChangePage({ search }: { search: ChangeSearch }) {
         orgName={scope.membership?.orgName ?? 'Organization'}
         selection={selection}
         initial={search.kind ?? 'fields'}
+        tell={search.tell === true}
       />
     );
   return (

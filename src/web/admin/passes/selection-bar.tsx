@@ -9,7 +9,7 @@ import { ACTION_ICON } from '../../lib/action-icons.ts';
 import { voidConfirm } from '../../lib/confirms.ts';
 import { errorMessage, isApiError, UserMessageError } from '../../lib/errors.ts';
 import { formatCount } from '../../lib/format.ts';
-import { BELOW_WIDE, useMediaQuery } from '../../lib/media.ts';
+import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
 import { sessionQuery } from '../../lib/session.ts';
 import {
   Button,
@@ -24,7 +24,8 @@ import { passKeys, useBulkPassAction } from './api.ts';
 import { BulkChannelsDialog } from './bulk-channels-dialog.tsx';
 import { BulkPrintAction } from './bulk-print.tsx';
 import { BundleDialog } from './bundle-dialog.tsx';
-import { filterSelection } from './change/selection.ts';
+import { CHANGE_COPY } from './change/copy.ts';
+import { filterRefusal, filterSelection } from './change/selection.ts';
 import { RemoveDialog } from './detail/remove-dialog.tsx';
 import { useStartBulkRun } from './find-api.ts';
 import { canonical } from './find-query.ts';
@@ -36,7 +37,7 @@ const CHANNELS_LIMIT = 100;
 const SHARE_HINT = `Up to ${BUNDLE_MAX_PASSES} passes of one organization.`;
 
 /**
- * Fixed at the bottom while rows are selected: n selected, then the bulk actions. Below lg the
+ * Fixed at the bottom while rows are selected: n selected, then the bulk actions. From lg the
  * primary two stay on the row and the rest go in More. Email and Void confirm with the count of
  * passes they will touch; Void uses the danger button.
  */
@@ -76,8 +77,8 @@ export function SelectionBar({
   const [channels, setChannels] = useState(false);
   const emailKey = useRef<{ fp: string; key: string }>({ fp: '', key: newKey() });
   const barRef = useBottomBar<HTMLElement>();
-  // Eight actions need about 1300 px; below 1536 the rest go in More so the bar stays one row.
-  const compact = useMediaQuery(BELOW_WIDE);
+  // Change, Email, Share and Void stay on the bar from lg; the rest live in More at every width, so it is one row.
+  const compact = useMediaQuery(BELOW_LG);
   const ids = picked.map((p) => p.id);
   const n = all?.count ?? ids.length;
   // Counted from the rows on screen; for all matching the server skips what cannot change.
@@ -92,6 +93,14 @@ export function SelectionBar({
       ? filterSelection(all.filter, [...new Set(picked.map((p) => p.templateId))], all.count) !==
         null
       : changeable > 0 && new Set(picked.map((p) => p.templateId)).size <= 20);
+  // Why Change is off, in one line (the Share button beside it does the same).
+  const changeHint = canChange
+    ? undefined
+    : all
+      ? (filterRefusal(all.filter) ?? undefined)
+      : new Set(picked.map((p) => p.templateId)).size > 20
+        ? CHANGE_COPY.hint.templates
+        : undefined;
   if (n === 0 && !all) return null;
 
   async function run(action: 'void' | 'send_email' | 'remove', message?: string) {
@@ -168,18 +177,26 @@ export function SelectionBar({
           {formatCount(n)} selected
         </p>
         {onChange ? (
-          <Button
-            disabled={!canChange}
-            iconStart={<PencilLine aria-hidden />}
-            onClick={() =>
-              onChange(
-                picked.filter((p) => p.removedAt === null),
-                all,
-              )
-            }
-          >
-            Change
-          </Button>
+          <span title={canChange ? undefined : changeHint}>
+            <Button
+              disabled={!canChange}
+              aria-describedby={canChange || !changeHint ? undefined : 'change-hint'}
+              iconStart={<PencilLine aria-hidden />}
+              onClick={() =>
+                onChange(
+                  picked.filter((p) => p.removedAt === null),
+                  all,
+                )
+              }
+            >
+              Change
+            </Button>
+            {canChange || !changeHint ? null : (
+              <span id="change-hint" className="sr-only">
+                {changeHint}
+              </span>
+            )}
+          </span>
         ) : null}
         <Button
           variant="outline"
@@ -205,12 +222,22 @@ export function SelectionBar({
             </span>
           )}
         </span>
-        {compact ? (
-          <MoreMenu>
-            <DropdownMenuItem disabled={!canChannel} onSelect={() => setChannels(true)}>
-              <ACTION_ICON.channels aria-hidden />
-              Channels…
-            </DropdownMenuItem>
+        {compact ? null : (
+          <Button
+            variant="outline"
+            disabled={!operable || changeable === 0}
+            iconStart={<ACTION_ICON.void aria-hidden />}
+            onClick={() => setAsk('void')}
+          >
+            Void
+          </Button>
+        )}
+        <MoreMenu>
+          <DropdownMenuItem disabled={!canChannel} onSelect={() => setChannels(true)}>
+            <ACTION_ICON.channels aria-hidden />
+            Channels…
+          </DropdownMenuItem>
+          {compact ? (
             <DropdownMenuItem
               disabled={!operable || changeable === 0}
               onSelect={() => setAsk('void')}
@@ -218,66 +245,20 @@ export function SelectionBar({
               <ACTION_ICON.void aria-hidden />
               Void
             </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled={!operable || changeable === 0}
-              onSelect={() => setAsk('remove')}
-            >
-              <ACTION_ICON.removeFromWallet aria-hidden />
-              Remove from Wallet
-            </DropdownMenuItem>
-            <BulkPrintAction
-              ids={ids}
-              orgId={orgId}
-              disabled={!operable || Boolean(all)}
-              as="menu"
-            />
-            <DropdownMenuItem disabled={Boolean(all)} onSelect={onExport}>
-              <ACTION_ICON.download aria-hidden />
-              Export CSV
-            </DropdownMenuItem>
-          </MoreMenu>
-        ) : (
-          <>
-            <Button
-              variant="outline"
-              disabled={!canChannel}
-              iconStart={<ACTION_ICON.channels aria-hidden />}
-              onClick={() => setChannels(true)}
-            >
-              Channels…
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!operable || changeable === 0}
-              iconStart={<ACTION_ICON.void aria-hidden />}
-              onClick={() => setAsk('void')}
-            >
-              Void
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!operable || changeable === 0}
-              iconStart={<ACTION_ICON.removeFromWallet aria-hidden />}
-              onClick={() => setAsk('remove')}
-            >
-              Remove from Wallet
-            </Button>
-            <BulkPrintAction
-              ids={ids}
-              orgId={orgId}
-              disabled={!operable || Boolean(all)}
-              as="button"
-            />
-            <Button
-              variant="outline"
-              disabled={Boolean(all)}
-              iconStart={<ACTION_ICON.download aria-hidden />}
-              onClick={onExport}
-            >
-              Export CSV
-            </Button>
-          </>
-        )}
+          ) : null}
+          <DropdownMenuItem
+            disabled={!operable || changeable === 0}
+            onSelect={() => setAsk('remove')}
+          >
+            <ACTION_ICON.removeFromWallet aria-hidden />
+            Remove from Wallet
+          </DropdownMenuItem>
+          <BulkPrintAction ids={ids} orgId={orgId} disabled={!operable || Boolean(all)} as="menu" />
+          <DropdownMenuItem disabled={Boolean(all)} onSelect={onExport}>
+            <ACTION_ICON.download aria-hidden />
+            Export CSV
+          </DropdownMenuItem>
+        </MoreMenu>
       </div>
       {bundleOrgId ? (
         <BundleDialog

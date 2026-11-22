@@ -28,8 +28,11 @@ export function RunningCard({
   stopping,
   onStop,
   stopBusy,
+  starting = false,
 }: {
   b: BroadcastDto;
+  /** Booked to start now: the minute cron has not picked it up yet. */
+  starting?: boolean;
   stopping: boolean;
   onStop?: (() => void) | undefined;
   stopBusy: boolean;
@@ -42,7 +45,7 @@ export function RunningCard({
         <RunProgress
           done={done}
           total={total}
-          text={C.run.running(done, b.counts.targeted)}
+          text={starting ? C.run.starting : C.run.running(done, b.counts.targeted)}
           aside={<p className="text-sm text-fg-muted">{stopping ? C.run.stopping : C.run.leave}</p>}
         />
         <Counters b={b} />

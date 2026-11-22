@@ -114,10 +114,20 @@ describe('pass capability affordances', () => {
     expect(screen.queryByRole('link', { name: 'New pass' })).toBeNull();
     await user.click(screen.getByRole('checkbox', { name: 'Select Sam Jones' }));
     const selection = screen.getByRole('region', { name: 'Selection' });
-    expect(within(selection).getByRole('button', { name: 'Export CSV' })).toBeEnabled();
-    for (const name of ['Send email', 'Share as bundle', 'Void', 'Remove from Wallet']) {
+    for (const name of ['Send email', 'Share as bundle', 'Void']) {
       expect(within(selection).getByRole('button', { name })).toBeDisabled();
     }
+    // The rest live in More at every width: export stays open to a reader, removing does not.
+    await user.click(within(selection).getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: 'Export CSV' })).not.toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(screen.getByRole('menuitem', { name: 'Remove from Wallet' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    await user.keyboard('{Escape}');
     await user.click(screen.getByRole('button', { name: 'Actions for Sam Jones' }));
     await waitFor(() =>
       expect(screen.getByRole('menuitem', { name: 'Download .pkpass' })).not.toHaveAttribute(

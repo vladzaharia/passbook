@@ -73,7 +73,17 @@ describe('find passes', () => {
     expect(await screen.findByText('All 40 matching selected')).toBeInTheDocument();
     const bar = screen.getByRole('region', { name: 'Selection' });
     expect(within(bar).getByText('40 selected')).toBeInTheDocument();
-    expect(within(bar).getByRole('button', { name: 'Export CSV' })).toBeDisabled();
+    // Change takes one template: with none in the filter it is off, and says why.
+    expect(within(bar).getByRole('button', { name: 'Change' })).toBeDisabled();
+    expect(
+      within(bar).getByText('Filter by one template to change all matching.'),
+    ).toBeInTheDocument();
+    await user.click(within(bar).getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: 'Export CSV' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    await user.keyboard('{Escape}');
     await user.click(within(bar).getByRole('button', { name: 'Void' }));
     const ask = await screen.findByRole('alertdialog', { name: 'Void 40 passes?' });
     await user.click(within(ask).getByRole('button', { name: 'Void' }));
@@ -182,5 +192,26 @@ describe('find passes', () => {
       }),
     });
     expect(await screen.findByText('Voiding 40 of 150')).toBeInTheDocument();
+  });
+
+  it('drops back to the ticked rows when a row is unticked after Select all matching', async () => {
+    const user = userEvent.setup();
+    const rows = ['p1', 'p2'].map((id, i) => passSummary({ id, title: `Pass ${i + 1}` }));
+    await renderApp('/admin/passes?status=active', {
+      session: 'admin',
+      ...orgScope,
+      handlers: handlers({
+        '/api/v1/passes': () => json({ items: rows, nextCursor: 'c', count: 40 }),
+      }),
+    });
+    await user.click(
+      await screen.findByRole('checkbox', { name: 'Select all passes on this page' }),
+    );
+    await user.click(await screen.findByRole('button', { name: 'Select all 40 matching' }));
+    const bar = screen.getByRole('region', { name: 'Selection' });
+    expect(within(bar).getByText('40 selected')).toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'Select Pass 1' }));
+    expect(within(bar).getByText('1 selected')).toBeInTheDocument();
+    expect(screen.queryByText('All 40 matching selected')).not.toBeInTheDocument();
   });
 });
