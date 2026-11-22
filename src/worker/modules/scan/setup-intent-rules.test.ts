@@ -48,6 +48,7 @@ const send = (headers: Record<string, string>, body: unknown, key: string | null
       headers: {
         ...headers,
         'content-type': 'application/json',
+        'cf-connecting-ip': '203.0.113.7',
         ...(key ? { 'idempotency-key': key } : {}),
       },
       body: JSON.stringify(body),
@@ -241,6 +242,13 @@ describe('who may call', () => {
       [result.sessions[0]?.id ?? ''],
     );
     expect(audit?.actor_type).toBe('api_key');
+    // Every credential row the setup writes carries the caller's network prefix.
+    const rows = await all<{ ip_prefix: string | null }>(
+      fixture.kit.env.DB,
+      "SELECT ip_prefix FROM audit_log WHERE actor_type = 'api_key' AND action IN ('scan_staff.create', 'scanner.pairing_create', 'scan.setup.apply') AND target_id IN (SELECT id FROM scan_staff UNION SELECT id FROM scanners UNION SELECT id FROM scanning_sessions)",
+    );
+    expect(rows.length).toBeGreaterThanOrEqual(3);
+    for (const r of rows) expect(r.ip_prefix).toBe('203.0.113.0/24');
     expect(JSON.parse(audit?.detail ?? '{}')).toMatchObject({ pins: 1, pairingCodes: 1 });
   });
 

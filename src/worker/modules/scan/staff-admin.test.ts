@@ -27,7 +27,7 @@ beforeEach(() => {
 });
 
 describe('staff administration authorization', () => {
-  it('requires a tenant session, not an unauthenticated request, API key or scanner', async () => {
+  it('requires a tenant session or a scanning:admin key, not an unauthenticated request, another key or a scanner', async () => {
     const person = await makeScanStaff(f, { orgId, pin: '482913' });
     const before = await credential(person.id);
     const requests: [string, string, unknown?][] = [
@@ -38,8 +38,9 @@ describe('staff administration authorization', () => {
     ];
     const principals = [
       { headers: {}, status: 401 },
-      { headers: fake.apiKey({ orgId, scopes: ['scans:read'] }), status: 401 },
-      { headers: fake.apiKey(), status: 401 },
+      // A key without `scanning:admin` is refused for its scope (a key with it has its own suite).
+      { headers: fake.apiKey({ orgId, scopes: ['scans:read'] }), status: 403 },
+      { headers: fake.apiKey(), status: 403 },
       { headers: fake.scanner({ orgId }), status: 401 },
       { headers: fake.scanner({ orgId, transport: 'bearer' }), status: 401 },
     ];

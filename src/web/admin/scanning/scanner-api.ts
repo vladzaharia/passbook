@@ -18,6 +18,12 @@ import { scanningKeys } from './queries.ts';
 /** Console scanners write API (SA 5.2). The list and detail reads live in queries.ts. */
 const base = (id: string) => `/api/v1/scanners/${encodeURIComponent(id)}`;
 
+/** A secret the call that made it must show: null only on an Idempotency-Key replay, which the console never sends. */
+export function issued<T>(secret: T | null): T {
+  if (secret === null) throw new Error('The server did not return the secret.');
+  return secret;
+}
+
 /** Pairing polls every 2 s while the face is open and the tab is visible. */
 export const PAIRING_POLL_MS = 2000;
 
@@ -34,7 +40,10 @@ export function useUpdateScanner(id: string) {
 export function useNewPairing(id: string) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: () => api.post(`${base(id)}/pairing`, ScannerPairingSchema),
+    mutationFn: async () => {
+      const p = await api.post(`${base(id)}/pairing`, ScannerPairingSchema);
+      return { ...p, code: issued(p.code), url: issued(p.url) };
+    },
     onSuccess: () => client.invalidateQueries({ queryKey: scanningKeys.pairing(id) }),
   });
 }
@@ -71,7 +80,12 @@ export const useScannerMode = (id: string, mode: 'live' | 'test') =>
 
 /** A till's token: shown once; asking again replaces it. */
 export function useReplaceToken(id: string) {
-  return useMutation({ mutationFn: () => api.post(`${base(id)}/token`, TerminalTokenSchema) });
+  return useMutation({
+    mutationFn: async () => {
+      const t = await api.post(`${base(id)}/token`, TerminalTokenSchema);
+      return { ...t, token: issued(t.token) };
+    },
+  });
 }
 
 const EventListSchema = pageOf(ScanEventSchema);
