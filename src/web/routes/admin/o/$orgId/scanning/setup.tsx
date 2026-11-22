@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { lazy, Suspense } from 'react';
 import { z } from 'zod';
+import { SkeletonDetail } from '../../../../../ui/index.ts';
 
 // The wizard is its own chunk: it loads only when someone sets up scanning.
 const SetupWizard = lazy(() =>
@@ -12,7 +13,7 @@ const SetupWizard = lazy(() =>
 function SetupRoute() {
   const { preset, fromTemplate } = Route.useSearch();
   return (
-    <Suspense fallback={<p role="status">Loading setup…</p>}>
+    <Suspense fallback={<SkeletonDetail label="Loading setup" />}>
       <SetupWizard preset={preset} fromTemplate={fromTemplate} />
     </Suspense>
   );

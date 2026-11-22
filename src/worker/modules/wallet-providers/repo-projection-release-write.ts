@@ -71,7 +71,7 @@ export async function writeProjectionRelease(
           AND c.adapter_revision = ${p(policy.adapterRevision)}
           AND c.adapter_capabilities = ${p(JSON.stringify(policy.adapterCapabilities))}
           AND c.audience_policy_revision = ${p(policy.audiencePolicyRevision)}
-          AND json_extract(c.projection_json, '$.schema') = CASE c.provider WHEN 'google' THEN 2 ELSE 1 END
+          AND (json_extract(c.projection_json, '$.schema') = 2 OR (c.provider = 'samsung' AND json_extract(c.projection_json, '$.schema') = 1))
           AND (${currentSourceAndAccount('c')})
           AND ((${p(input.action)} = 'release' AND ${p(input.targetReleaseId)} IS NULL
               AND NOT EXISTS (SELECT 1 FROM template_releases r WHERE r.candidate_id = c.id))
@@ -80,7 +80,7 @@ export async function writeProjectionRelease(
                 AND r.candidate_id = c.id AND r.approval_id = ap.id AND r.candidate_hash = c.candidate_hash
                 AND r.credential_keyset_commitment = c.credential_keyset_commitment))))`,
     ),
-    // Samsung evidence is checked at publish only (and by the release trigger): queues do not read it.
+    // Samsung schema 1 evidence is checked at publish only (and by the release trigger); a compiled card has none.
     check(
       'release',
       (

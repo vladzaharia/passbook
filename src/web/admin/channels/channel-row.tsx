@@ -90,7 +90,7 @@ export function ChannelRow({
             <button
               type="button"
               aria-label={`${word}. ${detail}`}
-              className="cursor-default text-sm text-fg-muted"
+              className="cursor-default text-sm text-fg-muted pointer-coarse:min-h-11 pointer-coarse:min-w-11"
             >
               {word}
             </button>

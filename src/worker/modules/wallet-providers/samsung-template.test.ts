@@ -184,6 +184,32 @@ describe('Samsung template evidence', () => {
       ).rejects.toMatchObject({ code: 'not_eligible' });
   });
 
+  it('compares a sub type and market only when the caller pinned them (a compiled card pins neither)', async () => {
+    const { subType: _subType, countryCode: _countryCode, ...compiled } = input;
+    await expect(
+      probeSamsungActiveTemplate(
+        account,
+        compiled,
+        fetchPage(response({ ...template, countryCode: 'GB' })),
+      ),
+    ).resolves.toMatchObject({ cardType: 'loyalty', countryCode: undefined });
+    // The card type is still the compiled one: another type's card is not this card.
+    await expect(
+      probeSamsungActiveTemplate(
+        account,
+        compiled,
+        fetchPage(response({ ...template, cardType: 'ticket' })),
+      ),
+    ).rejects.toMatchObject({ code: 'not_eligible' });
+    await expect(
+      probeSamsungActiveTemplate(
+        account,
+        { ...compiled, subType: 'Bad' },
+        fetchPage(response(template)),
+      ),
+    ).rejects.toMatchObject({ code: 'invalid_input' });
+  });
+
   it('sends the caller-supplied request id, bounded by the request timeout', async () => {
     const timeout = vi.spyOn(AbortSignal, 'timeout');
     try {

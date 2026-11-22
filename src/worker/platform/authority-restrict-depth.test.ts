@@ -44,7 +44,7 @@ describe('limited-key conditions leave depth headroom on D1', () => {
       if (await fits(deepest, mid)) lo = mid;
       else hi = mid;
     }
-    expect(lo).toBeGreaterThanOrEqual(HEADROOM);
+    expect(lo).toBeGreaterThan(HEADROOM);
     expect(lo).toBeLessThan(100);
   });
 });

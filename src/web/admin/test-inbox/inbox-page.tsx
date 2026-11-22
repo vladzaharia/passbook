@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { ChevronRight, FlaskConical, Package, Plus } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
+import { pluralize } from '@/web/lib/format.ts';
 import { ENTITY } from '../../lib/entities.ts';
 import { setMode, useMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -30,7 +31,7 @@ function PlatformRetention() {
     (item) => item.key === 'sandbox.purgeDays',
   )?.value;
   return typeof kept === 'number' ? (
-    <>Normally kept {kept} days; unresolved sends may be retained longer.</>
+    <>Normally kept {pluralize(kept, 'day')}; unresolved sends may be retained longer.</>
   ) : null;
 }
 

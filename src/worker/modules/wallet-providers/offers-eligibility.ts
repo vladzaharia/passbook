@@ -15,11 +15,14 @@ import { type ApprovedProjection, getApprovedProjection } from './projection-ser
 import { walletProviderEnabled } from './provider-policy.ts';
 import { canRenderProjection } from './render-projection.ts';
 import { walletOfferSnapshotCurrent } from './repo-offers.ts';
+import { getProjectionCandidate } from './repo-projection-store.ts';
 import {
   assertWalletRuntimeAccount,
   WalletRuntimeError,
   type WalletRuntimeScope,
 } from './runtime.ts';
+import { compileSamsungCard } from './samsung-compiled.ts';
+import { samsungCardFresh } from './samsung-verification.ts';
 
 let runtimeAccountCheck = assertWalletRuntimeAccount;
 
@@ -223,6 +226,35 @@ export async function eligibleWalletProvider(
     providerIdentityHash: approved.release.providerIdentityHash,
   };
   if (!canRenderProjection(approved.projection, snapshot.passJson)) return null;
+  if (approved.projection.schema === 2 && provider === 'samsung') {
+    // Compiled cards: the pass must compile to the approved type and the stored card read must be
+    // fresh. A request path never calls Samsung; the sync job keeps the row current.
+    const candidate = await getProjectionCandidate(ctx.env.DB, approved.release.candidateId ?? '');
+    if (!candidate || !(await samsungCardFresh(ctx, candidate))) return null;
+    try {
+      if (
+        !(await compileSamsungCard(ctx, {
+          projection: approved.projection,
+          pass,
+          passJson: snapshot.passJson,
+          refId: '0'.repeat(32),
+          createdAt: ctx.clock.now(),
+          revisedAt: pass.modifiedAt,
+          art: 'dry',
+          candidateId: candidate.id,
+        }))
+      )
+        return null;
+    } catch (error) {
+      // A pass that cannot be compiled is not offered; the page still renders.
+      ctx.log.warn('wallet.samsung_compile_failed', {
+        code: 'WALLET_SAMSUNG_COMPILE_FAILED',
+        orgId: pass.orgId,
+        error,
+      });
+      return null;
+    }
+  }
   const result = { snapshot, approved, runtimeScope };
   return (await offerStillCurrent(ctx, result)) ? result : null;
 }

@@ -426,7 +426,7 @@ export function scanFile(
 const JOB_CONTEXT_SITES = /^src\/worker\/(?:jobs|workflows)\//;
 export function scanJobContext(rel: string, text: string): Finding[] {
   if (
-    skipFile(rel) ||
+    notProduction(rel) ||
     JOB_CONTEXT_SITES.test(rel) ||
     rel === 'src/worker/platform/service-context.ts'
   )
@@ -456,6 +456,7 @@ export const JOB_FACTORY_IMPORTERS: Record<string, string | string[]> = {
     'src/worker/modules/developer/repo-grants.ts',
     'src/worker/modules/developer/repo-grants-reset.ts',
   ],
+  'wallet-first-tap': 'src/worker/modules/wallet-providers/offers-google.ts',
   'webhook-ingress': [
     'src/worker/modules/connections/repo-grants.ts',
     'src/worker/modules/connections/webhooks.ts',
@@ -468,23 +469,29 @@ const BRAND_IMPORTERS = new Set([
   'src/worker/platform/authority.ts',
 ]);
 export function scanBrandImport(rel: string, text: string): Finding[] {
-  if (skipFile(rel) || BRAND_IMPORTERS.has(rel)) return [];
+  if (notProduction(rel) || BRAND_IMPORTERS.has(rel)) return [];
   const found: Finding[] = [];
-  if (/from\s+'[^']*job-authority(?:\.ts)?'/.test(text))
-    found.push({ rule: 'job-authority-import', file: rel, detail: 'imports job-authority.ts' });
-  if (/\bprepareGrantForTest\b/.test(text))
-    found.push({ rule: 'job-authority-import', file: rel, detail: 'uses prepareGrantForTest' });
+  // The factories are checked everywhere in the worker, the wallet module included: it is exempt from the
+  // write lint, not from who may mint authority.
   for (const [factory, importer] of Object.entries(JOB_FACTORY_IMPORTERS))
     if (
-      rel.startsWith('src/worker/modules/') &&
+      rel !== `src/worker/jobs/${factory}.ts` &&
       ![importer].flat().includes(rel) &&
-      new RegExp(`from\\s+'[^']*jobs/${factory}(?:\\.ts)?'`).test(text)
+      // `import`, `export ... from` (a re-export) and a dynamic `import()` all name the module the same way.
+      new RegExp(`(?:from\\s+|import\\s*\\(\\s*)'(?:[^']*jobs/|\\./)${factory}(?:\\.ts)?'`).test(
+        text,
+      )
     )
       found.push({
         rule: 'job-authority-import',
         file: rel,
         detail: `imports the ${factory} grant factory; only ${[importer].flat().join(' or ')} may`,
       });
+  if (skipFile(rel)) return found;
+  if (/from\s+'[^']*job-authority(?:\.ts)?'/.test(text))
+    found.push({ rule: 'job-authority-import', file: rel, detail: 'imports job-authority.ts' });
+  if (/\bprepareGrantForTest\b/.test(text))
+    found.push({ rule: 'job-authority-import', file: rel, detail: 'uses prepareGrantForTest' });
   if (!isAuthorityFile(rel) && /\bnew\s+GrantedStatement\s*\(/.test(text))
     found.push({
       rule: 'forged-statement',

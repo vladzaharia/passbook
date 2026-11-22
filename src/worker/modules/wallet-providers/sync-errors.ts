@@ -82,6 +82,15 @@ export function classifyWalletSyncFailure(
         retryAfterMs: null,
       };
     }
+    if (error.code === 'invalid_response' && error.operation === 'confirm') {
+      // The read back of a revoke did not show it yet. The PUT is a full replace, so it is sent again.
+      return {
+        reason: 'invalid_response',
+        disposition: canRetry ? 'retry' : 'failed',
+        status,
+        retryAfterMs: canRetry ? retryDelay(attempt) : null,
+      };
+    }
     if (error.code === 'rate_limited') {
       return {
         reason: 'rate_limited',

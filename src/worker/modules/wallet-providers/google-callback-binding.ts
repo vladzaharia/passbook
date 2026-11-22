@@ -53,6 +53,9 @@ export async function registerGoogleCallbackBinding(
       passId: capturedInput.passId,
       credentialGeneration: capturedInput.credentialGeneration,
       channelEpoch: capturedInput.channelEpoch,
+      ...(capturedInput.classType === undefined
+        ? {}
+        : { type: capturedInput.classType, classKey: capturedInput.classKey }),
     });
     if (
       !(await putGoogleCallbackBinding(

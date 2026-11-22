@@ -144,3 +144,9 @@ export async function deleteWalletArt(env: AppEnv, sha256: string): Promise<void
   const head = await env.BUCKET.head(`${IMAGE_PREFIX}${sha256}`);
   if (head?.customMetadata?.kind === KIND) await env.BUCKET.delete(`${IMAGE_PREFIX}${sha256}`);
 }
+
+/** Whether the public copy for a hash is stored; a claim checks this instead of cutting the image again. */
+export async function walletArtExists(env: AppEnv, sha256: string): Promise<boolean> {
+  const head = await env.BUCKET.head(`${IMAGE_PREFIX}${sha256}`);
+  return head?.customMetadata?.kind === KIND;
+}

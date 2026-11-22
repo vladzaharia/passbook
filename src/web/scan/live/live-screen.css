@@ -113,6 +113,11 @@
   padding-inline: clamp(12px, 1.2vw, 32px);
   font-size: clamp(14px, 1.2vw, 30px);
 }
+@media (pointer: coarse) {
+  .scan-live-header > button:not(.scan-live-brand) {
+    min-height: max(44px, clamp(36px, 2.8vw, 72px));
+  }
+}
 .scan-live-staff {
   font-size: clamp(14px, 1.2vw, 30px);
 }

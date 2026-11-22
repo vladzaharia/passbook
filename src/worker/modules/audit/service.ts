@@ -6,6 +6,7 @@ import { ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireOrgCapability } from '../orgs/access.ts';
 import { redactForRead, safeLabel } from './redact.ts';
+import { REKEYED_ACTION, rekeyedDetail } from './rekeyed-detail.ts';
 import { type AuditRow, auditStmt, labelKey, listAuditRows, loadLabels } from './repo.ts';
 import { tenantSettingsDetail } from './settings-detail.ts';
 import type { AuditEntry } from './types.ts';
@@ -63,12 +64,14 @@ function toDto(row: AuditRow, labels: Map<string, string | null>, tenant: boolea
     targetLabel: targetId && targetKey ? (labels.get(targetKey) ?? null) : null,
     requestId: safeId(row.request_id),
     detail: row.detail
-      ? (redactForRead(
-          tenant && row.action === 'settings.update'
-            ? tenantSettingsDetail(JSON.parse(row.detail))
-            : JSON.parse(row.detail),
-          tenant,
-        ) as Dto['detail'])
+      ? row.action === REKEYED_ACTION
+        ? (rekeyedDetail(JSON.parse(row.detail)) as Dto['detail'])
+        : (redactForRead(
+            tenant && row.action === 'settings.update'
+              ? tenantSettingsDetail(JSON.parse(row.detail))
+              : JSON.parse(row.detail),
+            tenant,
+          ) as Dto['detail'])
       : null,
   };
 }

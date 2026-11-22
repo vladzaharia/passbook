@@ -35,4 +35,6 @@ export interface PreviewSource {
   input: Personalization;
   /** A pass in a developer org: every channel carries the TEST PREVIEW band. */
   testBand?: boolean | undefined;
+  /** The organization's `org.website`: the Samsung app link, else the holder portal. */
+  website?: string | undefined;
 }

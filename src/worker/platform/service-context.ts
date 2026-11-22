@@ -3,7 +3,7 @@ import { type Clock, systemClock } from './clock.ts';
 import type { AppBindings } from './context.ts';
 import type { AppEnv } from './env.ts';
 import { createIds, type Ids } from './ids.ts';
-import { hasJobAuthority, type JobAuthority, withJobAuthority } from './job-authority.ts';
+import { hasFullJobAuthority, type JobAuthority, withJobAuthority } from './job-authority.ts';
 import { createLogger, type Logger } from './log.ts';
 
 /**
@@ -19,6 +19,8 @@ export interface ServiceContext {
   requestId: string | null;
   /** Set by `createJobContext` only; `jobGrant` refuses a context without it. */
   job?: JobAuthority;
+  /** The job kind a job context was made for, so a grant's audit row names it. */
+  jobName?: string;
   /** The request's key came as a developer try token: its audit rows carry `via: 'try'`. */
   via?: 'try';
   waitUntil(promise: Promise<unknown>): void;
@@ -74,17 +76,22 @@ export function createDetachedContext(env: AppEnv, options: ContextOptions = {})
 
 /** True for a context built by `createJobContext`; the brand cannot be forged outside this module. */
 export const isJobContext = (ctx: { job?: JobAuthority | undefined }): boolean =>
-  hasJobAuthority(ctx);
+  hasFullJobAuthority(ctx);
 
 /** Queue, cron and workflow entry points only (`tools/authority-scope.ts` lints other callers). */
 export function createJobContext(
   env: AppEnv,
   kind: string,
-  options: ContextOptions = {},
+  options: ContextOptions & { allowedPurposes?: readonly string[] } = {},
 ): ServiceContext {
-  return withJobAuthority(
-    createDetachedContext(env, { ...options, base: { job: kind, ...options.base } }),
-  );
+  const { allowedPurposes, ...rest } = options;
+  return {
+    ...withJobAuthority(
+      createDetachedContext(env, { ...rest, base: { job: kind, ...rest.base } }),
+      allowedPurposes,
+    ),
+    jobName: kind,
+  };
 }
 
 /** The detached form, kept for tests and fixtures that need a plain context. */

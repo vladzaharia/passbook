@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { actionOf } from '@/web/lib/actions.ts';
-import { formatDateTime, formatDay } from '@/web/lib/format.ts';
+import { formatDateTime, formatDay, pluralize } from '@/web/lib/format.ts';
 import { CopyButton } from '@/web/ui/copy-button.tsx';
 import {
   Badge,
@@ -65,7 +65,7 @@ export function AccessCard({
           {
             label: 'Limited to',
             value: [
-              k.templateIds.length ? `${k.templateIds.length} templates` : '',
+              k.templateIds.length ? pluralize(k.templateIds.length, 'template') : '',
               k.passStyles.length ? k.passStyles.join(', ') : '',
             ]
               .filter(Boolean)

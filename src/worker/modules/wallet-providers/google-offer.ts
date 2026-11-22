@@ -1,12 +1,16 @@
+import type { GoogleType } from '../../../passkit/wallets/google/types.ts';
 import type { GoogleValidatedAccount } from './google-credentials.ts';
 import { googleIssuedAt, signGoogleJwt } from './google-crypto.ts';
 import { GoogleWalletError } from './google-errors.ts';
 import { type GoogleObjectScope, googleObjectIds } from './google-ids.ts';
+import { GOOGLE_RESOURCES } from './google-rest.ts';
 
 export interface GoogleSaveOfferOptions {
   origins: readonly string[];
   issuedAt: number;
   lifetimeSeconds?: number;
+  /** The object's type; Generic when absent. */
+  type?: GoogleType;
 }
 
 export interface GoogleSaveOffer {
@@ -53,7 +57,10 @@ export async function createGoogleSaveOffer(
   }
   const origins = googleOrigins(options.origins);
   const { objectId } = await googleObjectIds(account.issuerId, idSecret, scope);
-  const payload = { genericObjects: [{ id: objectId }] };
+  // The payload key is the object collection's name, pluralised (genericObjects, loyaltyObjects, ...).
+  const payload = {
+    [`${GOOGLE_RESOURCES[options.type ?? 'generic'].object}s`]: [{ id: objectId }],
+  };
   // Google does not document exp enforcement; callers must expire their own offer endpoint.
   const expiresAt = issuedAt + lifetime;
   const jwt = await signGoogleJwt(account, {

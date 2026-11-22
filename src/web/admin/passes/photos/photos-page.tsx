@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
+import { pluralize } from '@/web/lib/format.ts';
 import { useOrgScope } from '../../../lib/org-filter.tsx';
 import {
   Badge,
@@ -124,7 +125,7 @@ export function PhotosPage() {
           </Card>
           {entries.length > 0 ? (
             <Card>
-              <CardHeader title={`${entries.length} files`} />
+              <CardHeader title={pluralize(entries.length, 'file')} />
               <CardBody className="flex flex-col gap-3">
                 <Button
                   className="self-start"

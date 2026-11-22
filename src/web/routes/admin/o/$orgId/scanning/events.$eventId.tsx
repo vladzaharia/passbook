@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { lazy, Suspense } from 'react';
+import { SkeletonDetail } from '../../../../../ui/index.ts';
 
 const EventPage = lazy(() =>
   import('../../../../../admin/scanning/event-page.tsx').then((m) => ({ default: m.EventPage })),
@@ -7,7 +8,7 @@ const EventPage = lazy(() =>
 
 function EventRoute() {
   return (
-    <Suspense fallback={<p role="status">Loading event…</p>}>
+    <Suspense fallback={<SkeletonDetail label="Loading event" />}>
       <EventPage eventId={Route.useParams().eventId} />
     </Suspense>
   );

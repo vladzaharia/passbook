@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { lazy, Suspense } from 'react';
 import { z } from 'zod';
+import { SkeletonDetail } from '../../../../../ui/index.ts';
 
 const SessionPage = lazy(() =>
   import('../../../../../admin/scanning/sessions/session-page.tsx').then((m) => ({
@@ -11,7 +12,7 @@ function SessionRoute() {
   const { sessionId } = Route.useParams();
   const { addDevice, deviceId } = Route.useSearch();
   return (
-    <Suspense fallback={<p role="status">Loading session…</p>}>
+    <Suspense fallback={<SkeletonDetail label="Loading session" />}>
       <SessionPage sessionId={sessionId} deviceId={deviceId} addDevice={addDevice === '1'} />
     </Suspense>
   );

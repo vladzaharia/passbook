@@ -31,7 +31,7 @@ function Face({ m, testBand }: { m: SamsungModel; testBand?: boolean | undefined
           <Img src={m.logo} className="wp-s-logo" />
           <span className="wp-s-provider">{m.provider}</span>
         </div>
-        <h3 className="wp-s-title">{m.title}</h3>
+        <p className="wp-s-title">{m.title}</p>
         {m.amounts.length > 0 ? (
           <dl className="wp-s-amounts">
             {m.amounts.map((f) => (

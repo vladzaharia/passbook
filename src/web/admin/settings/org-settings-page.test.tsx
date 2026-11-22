@@ -67,7 +67,7 @@ describe('org settings inheritance', () => {
     const input = await screen.findByLabelText('Scans');
     expect(input).toHaveValue(null);
     expect(input).toHaveAttribute('placeholder', '396');
-    expect(screen.getByText('Up to 1095 days · Default')).toBeInTheDocument();
+    expect(screen.getByText(/Up to 1095 days · Default/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Use default for Scans' })).toBeNull();
   });
 

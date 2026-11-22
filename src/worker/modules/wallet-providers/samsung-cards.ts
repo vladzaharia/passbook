@@ -8,7 +8,19 @@ type CardCredentials = Pick<SamsungWalletCredentials, 'cardId' | 'cardIds'>;
 
 /** The card for one pass type: its own entry, else the default card. Never another type's card. */
 export function samsungCardId(credentials: CardCredentials, cardType: string): string {
-  return credentials.cardIds?.[cardType] ?? credentials.cardId;
+  const own = credentials.cardIds;
+  return own && Object.hasOwn(own, cardType)
+    ? (own[cardType] ?? credentials.cardId)
+    : credentials.cardId;
+}
+
+/**
+ * Whether a compiled card of this type has a card to ride. Loyalty may use the default card (a
+ * generic or gift-card template compiles as loyalty, Q14); every other type needs its own entry,
+ * or it would pin another type's card.
+ */
+export function samsungTypeHasCard(credentials: CardCredentials, cardType: string): boolean {
+  return cardType === 'loyalty' || Object.hasOwn(credentials.cardIds ?? {}, cardType);
 }
 
 /** Every type the credential names, the default included, with its card id. */

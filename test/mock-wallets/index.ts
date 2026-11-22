@@ -45,8 +45,17 @@ const DEFAULT_TEMPLATE: MockSamsungTemplate = {
 };
 
 const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/wallet_object.issuer';
-const RESOURCES = ['genericClass', 'genericObject'] as const;
-type Resource = (typeof RESOURCES)[number];
+/** Each type's class and object collection (google-wallet.md section 1). */
+const CLASS_OF = {
+  genericObject: 'genericClass',
+  eventTicketObject: 'eventTicketClass',
+  loyaltyObject: 'loyaltyClass',
+  giftCardObject: 'giftCardClass',
+  offerObject: 'offerClass',
+} as const;
+type ObjectResource = keyof typeof CLASS_OF;
+type Resource = ObjectResource | (typeof CLASS_OF)[ObjectResource];
+const RESOURCES = [...Object.keys(CLASS_OF), ...Object.values(CLASS_OF)] as Resource[];
 
 const json = (status: number, body: unknown, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), {
@@ -75,10 +84,10 @@ function decodeJwt(token: string): { header: Doc; payload: Doc } | null {
  * Signatures are not verified: tokens and JWTs are checked for shape, not provenance.
  */
 export function createMockWallets(options: MockWalletsOptions = {}) {
-  const google: Record<Resource, Map<string, Doc>> = {
-    genericClass: new Map(),
-    genericObject: new Map(),
-  };
+  const google = Object.fromEntries(RESOURCES.map((name) => [name, new Map()])) as Record<
+    Resource,
+    Map<string, Doc>
+  >;
   const tokens = new Set<string>();
   const saves: { objectIds: string[]; issuer: string; typ: unknown }[] = [];
   const samsungTemplates = new Map<string, MockSamsungTemplate>();
@@ -133,6 +142,7 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
       return json(200, { issuerId: id, name: `Mock issuer ${id}` });
     if (!RESOURCES.includes(kind as Resource)) return googleError(404, 'Not found');
     const store = google[kind as Resource];
+    const isObject = kind !== undefined && kind in CLASS_OF;
     if (request.method === 'GET' && id) {
       const doc = store.get(id);
       return doc ? json(200, doc) : googleError(404, `${kind} ${id} not found`);
@@ -141,7 +151,7 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
       const newId = body?.id;
       if (!body || typeof newId !== 'string' || !newId) return googleError(400, 'id is required');
       if (store.has(newId)) return googleError(409, `${kind} ${newId} already exists`);
-      if (kind === 'genericObject' && !google.genericClass.has(String(body.classId)))
+      if (isObject && !google[CLASS_OF[kind as ObjectResource]].has(String(body.classId)))
         return googleError(404, `Class ${String(body.classId)} not found`);
       store.set(newId, structuredClone(body));
       return json(200, body);
@@ -152,17 +162,31 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
       Object.assign(doc, structuredClone(body ?? {}), { id });
       return json(200, doc);
     }
+    // PUT replaces the whole resource: fields left out are gone, as on Google.
+    if (request.method === 'PUT' && id) {
+      if (!store.has(id)) return googleError(404, `${kind} ${id} not found`);
+      if (!body || (body.id !== undefined && body.id !== id))
+        return googleError(400, 'id mismatch');
+      if (isObject && !google[CLASS_OF[kind as ObjectResource]].has(String(body.classId)))
+        return googleError(404, `Class ${String(body.classId)} not found`);
+      store.set(id, { ...structuredClone(body), id });
+      return json(200, store.get(id));
+    }
     return googleError(405, 'Method not allowed');
   }
 
   function savePage(jwtText: string): Response {
     const jwt = decodeJwt(jwtText);
-    const payload = jwt?.payload.payload as { genericObjects?: { id?: string }[] } | undefined;
-    const ids = (payload?.genericObjects ?? []).map((o) => String(o.id));
-    if (jwt?.payload.typ !== 'savetowallet' || jwt.payload.aud !== 'google' || !ids.length)
+    const payload = (jwt?.payload.payload ?? {}) as Record<string, { id?: string }[] | undefined>;
+    // The payload key is the object collection pluralised: genericObjects, loyaltyObjects, ...
+    const refs = (Object.keys(CLASS_OF) as ObjectResource[]).flatMap((kind) =>
+      (payload[`${kind}s`] ?? []).map((o) => ({ kind, id: String(o.id) })),
+    );
+    if (jwt?.payload.typ !== 'savetowallet' || jwt.payload.aud !== 'google' || !refs.length)
       return googleError(400, 'Invalid save JWT');
-    const missing = ids.filter((id) => !google.genericObject.has(id));
-    if (missing.length) return googleError(404, `Object ${missing[0]} not found`);
+    const missing = refs.filter((ref) => !google[ref.kind].has(ref.id));
+    if (missing.length) return googleError(404, `Object ${missing[0]?.id} not found`);
+    const ids = refs.map((ref) => ref.id);
     saves.push({ objectIds: ids, issuer: String(jwt.payload.iss), typ: jwt.payload.typ });
     return new Response('<!doctype html><title>Saved</title><p>Saved to Google Wallet (mock).', {
       status: 200,
@@ -211,8 +235,7 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
     if (name === 'state' && request.method === 'GET')
       return json(200, {
         google: {
-          genericClass: Object.fromEntries(google.genericClass),
-          genericObject: Object.fromEntries(google.genericObject),
+          ...Object.fromEntries(RESOURCES.map((name) => [name, Object.fromEntries(google[name])])),
           saves,
         },
         samsung: {
