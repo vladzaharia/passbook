@@ -105,6 +105,21 @@ const applied = async (passId: string) =>
   ).map((r) => JSON.parse(r.data) as { providers?: Record<string, string> });
 
 describe('broadcast budget per wallet', () => {
+  it('reads only the Google gate and instance', async () => {
+    const instance = await import('../wallet-providers/instance.ts');
+    const policy = await import('../wallet-providers/provider-policy.ts');
+    const pass = await kit.makePass();
+    vi.mocked(instance.getWalletInstance).mockClear();
+    vi.mocked(policy.walletProviderDisabledReason).mockClear();
+    await providerBudgets(kit.ctx, (await getPass(kit.env.DB, pass.id)) ?? pass);
+    const providers = [
+      ...vi.mocked(instance.getWalletInstance).mock.calls.map((c) => c[1].provider),
+      ...vi.mocked(policy.walletProviderDisabledReason).mock.calls.map((c) => c[1]),
+    ];
+    expect(providers.length).toBeGreaterThan(0);
+    expect(providers.every((p) => p === 'google')).toBe(true);
+  });
+
   it('defers instead of sending, counts nothing, and would skip over a full budget', async () => {
     const pass = await kit.makePass();
     const budgets = async () =>

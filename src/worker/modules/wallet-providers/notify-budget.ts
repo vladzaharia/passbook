@@ -25,7 +25,7 @@ export async function providerBudgets(
   pass: Pass,
 ): Promise<Partial<Record<'google', PushBudgetDto>>> {
   const out: Partial<Record<'google', PushBudgetDto>> = {};
-  if (!(await removalWallets(ctx, pass)).includes('google')) return out;
+  if (!(await removalWallets(ctx, pass, ['google'])).includes('google')) return out;
   const since = ctx.clock.now() - BUDGET_WINDOW_MS;
   const { used, oldest } = await providerNotifiedSince(ctx.env.DB, pass.id, 'google', since);
   out.google = {

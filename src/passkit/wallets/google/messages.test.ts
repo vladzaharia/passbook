@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import { planPass } from '../../build.ts';
 import type { PassJson } from '../../schema/pass-types.ts';
+import { bakedBehaviors, loadBaked } from '../../template/baked-fixtures.ts';
+import { FIXTURE_IDENTITY } from '../../testing/fixture-identity.ts';
+import type { SigningMaterial } from '../../types.ts';
+import { formatWhen } from '../when.ts';
 import { type DeliveredMessage, googleChangeMessage, withMessageHistory } from './messages.ts';
 import type { GoogleObjectCommon } from './types.ts';
 
@@ -62,7 +67,7 @@ describe('googleChangeMessage', () => {
       pass([date('2026-12-01T10:00:00Z')]),
       pass([date('2026-12-02T10:00:00Z')]),
     ]);
-    expect(when?.body).toMatch(/^Moved to .*2026/u);
+    expect(when?.body).toBe(`Moved to ${formatWhen('2026-12-02T10:00:00Z', 'PKDateStyleMedium')}`);
     const cash = (v: number) => ({
       key: 'c',
       value: v,
@@ -180,17 +185,29 @@ describe('googleChangeMessage edge cases', () => {
     expect(googleChangeMessage([v1, v2])).toBeNull();
   });
 
-  it('lists a field once when a poster carries it in two dictionaries', () => {
-    const f = (v: string) => tier(v, 'Your tier is now %@.');
-    const poster = (v: string) =>
-      ({
-        ...pass([f(v)]),
-        posterGeneric: { primaryFields: [f(v)] },
-      }) as unknown as PassJson;
-    expect(googleChangeMessage([poster('Silver'), poster('Gold')])?.body).toBe(
-      'Your tier is now Gold.',
+  it('lists a field once on the baked poster template', async () => {
+    const { template, registry } = await loadBaked('starter-poster-generic', { strips: false });
+    const planned = (tier: string) =>
+      planPass({
+        template,
+        registry,
+        input: { ...template.manifest.sample, tier },
+        server: {
+          serial: 'S',
+          authToken: 'a'.repeat(32),
+          webServiceURL: 'https://wallet.example/wallet',
+          organizationName: 'PassBook',
+          identity: FIXTURE_IDENTITY,
+          scanCode: 'X',
+        },
+        signing: {} as SigningMaterial,
+        behaviors: bakedBehaviors,
+        now: new Date('2026-11-17T10:00:00Z'),
+      }).passJson;
+    expect(googleChangeMessage([planned('Plus'), planned('Pro')])?.body).toBe(
+      'Your tier is now Pro.',
     );
-  });
+  }, 120_000);
 
   it('lists identical lines once across different keys (Henry fields)', () => {
     const f = (key: string, v: string): F => ({ key, value: v, changeMessage: 'Now %@' });
@@ -202,26 +219,20 @@ describe('googleChangeMessage edge cases', () => {
   });
 
   it("words a date as the target's style shows it", () => {
-    const date = (style: string): F => ({
+    const d1 = '2026-12-01T10:00:00Z';
+    const d2 = '2026-12-02T10:00:00Z';
+    const date = (value: string, style: string, changeMessage?: string): F => ({
       key: 'd',
-      value: '2026-12-02T10:00:00Z',
+      value,
       dateStyle: style,
-      changeMessage: 'Moved to %@',
+      ...(changeMessage ? { changeMessage } : {}),
     });
-    const short = googleChangeMessage([
-      pass([date('PKDateStyleShort')]),
-      pass([date('PKDateStyleShort')]),
+    const msg = googleChangeMessage([
+      pass([date(d1, 'PKDateStyleShort')]),
+      pass([date(d2, 'PKDateStyleShort', 'Moved to %@')]),
+      pass([date(d2, 'PKDateStyleFull')]),
     ]);
-    expect(short).toBeNull();
-    const target = pass([{ ...date('PKDateStyleFull'), changeMessage: 'Moved to %@' }]);
-    const base = pass([{ ...date('PKDateStyleShort'), value: '2026-12-01T10:00:00Z' }]);
-    const full = googleChangeMessage([base, target])?.body;
-    const medium = googleChangeMessage([
-      pass([{ ...date('PKDateStyleMedium'), value: '2026-12-01T10:00:00Z' }]),
-      pass([date('PKDateStyleMedium')]),
-    ])?.body;
-    expect(full).not.toBe(medium);
-    expect(full).toMatch(/December/u);
+    expect(msg?.body).toBe(`Moved to ${formatWhen(d2, 'PKDateStyleFull')}`);
   });
 
   it('gives no message for a field that moves silently and then back', () => {
