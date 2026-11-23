@@ -188,12 +188,17 @@ export function Incidents() {
                 <p className="font-medium text-fg-strong">{n.title}</p>
                 <p className="text-sm text-fg-muted">{n.note}</p>
                 <p className="text-xs text-fg-muted">
+                  {n.resolvedAt ? `${n.impact}, ` : ''}
                   {formatDateTime(n.startedAt)}
                   {n.resolvedAt ? `, resolved ${formatDateTime(n.resolvedAt)}` : ''}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge tone={TONE[n.impact]}>{n.impact}</Badge>
+                {n.resolvedAt ? (
+                  <Badge tone="neutral">Resolved</Badge>
+                ) : (
+                  <Badge tone={TONE[n.impact]}>{n.impact}</Badge>
+                )}
                 {n.resolvedAt ? null : (
                   <Button
                     size="sm"
