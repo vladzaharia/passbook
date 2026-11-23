@@ -80,7 +80,7 @@ describe('a message step that cannot do its work', () => {
     expect(await upserts(t)).toEqual(['succeeded', 'succeeded']);
   });
 
-  it('a pending row at the try cap is left alone and the operation completes', async () => {
+  it('a pending row at the try cap settles failed, rate limited, and the operation completes', async () => {
     const t = await messageKit(restore);
     t.mock.failNext({ status: 429, match: 'POST .*/addMessage' });
     await t.edit('One');
@@ -88,7 +88,39 @@ describe('a message step that cannot do its work', () => {
     t.kit.clock.advance(120_000);
     await t.drain();
     expect(t.sent()).toHaveLength(1);
-    expect(await t.ledger()).toMatchObject([{ state: 'pending', tries: 8 }]);
+    expect(await t.ledger()).toMatchObject([{ state: 'failed', reason: 'rate_limited', tries: 8 }]);
+    expect(await upserts(t)).toEqual(['succeeded', 'succeeded']);
+  });
+
+  it('a message that never left is failed as not_sent, logged, and the write is not retried', async () => {
+    const t = await messageKit(restore);
+    // The token exchange (a cached token is dropped first) fails only for the message step.
+    const real = globalThis.fetch;
+    let armed = false;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (armed && String(input).includes('oauth2.googleapis.com'))
+        throw new TypeError('token endpoint down');
+      if (init?.method === 'PATCH') armed = true;
+      return real(input, init);
+    });
+    const { dropGoogleAccessToken } = await import('./google-oauth.ts');
+    const account = await t.db
+      .prepare("SELECT id FROM wallet_provider_accounts WHERE provider = 'google'")
+      .first<{ id: string }>();
+    const warn = logged(t, 'warn');
+    const mark = t.mock.requests.length;
+    // Drop the token after the PATCH so the message call must mint a new one.
+    const patchThenDrop = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+      const response = await patchThenDrop(input, init);
+      if (init?.method === 'PATCH') dropGoogleAccessToken(String(account?.id));
+      return response;
+    });
+    await t.edit('One');
+    expect(t.sent()).toEqual([]);
+    expect(await t.ledger()).toMatchObject([{ state: 'failed', reason: 'not_sent' }]);
+    expect(codes(warn)).toContain('WALLET_GOOGLE_MESSAGE_NOT_SENT');
+    expect(t.calls(mark)).toEqual(['PATCH genericObject']);
     expect(await upserts(t)).toEqual(['succeeded', 'succeeded']);
   });
 

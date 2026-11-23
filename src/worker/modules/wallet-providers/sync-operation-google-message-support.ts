@@ -17,7 +17,7 @@ import {
   getGoogleMessage,
   readPassVersionRange,
 } from './repo-google-messages.ts';
-import { beginGoogleMessage } from './repo-google-messages-write.ts';
+import { beginGoogleMessage, settleGoogleMessage } from './repo-google-messages-write.ts';
 import { googleNotifiedSince } from './repo-notify-budget.ts';
 import {
   findGoogleRuntimeMessage,
@@ -28,6 +28,7 @@ import type { WalletSyncOperationExecution } from './sync-operation-context.ts';
 
 /** Google's own limit on notifying messages per object (PROVIDER_NOTIFY_LIMIT.google, section 7). */
 const NOTIFY_LIMIT = 3;
+const MAX_TRIES = 8;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** What the Google runtime needs to name the object. */
@@ -87,6 +88,17 @@ export async function beginMessage(
   const existing = await getGoogleMessage(db, op.instanceId, base, target);
   // A settled pair is never sent again (a re-queue of the same versions); a pending one is a rate-limited retry.
   if (existing && existing.state !== 'pending') return null;
+  if (existing && existing.tries >= MAX_TRIES) {
+    // The rate-limit retries ran out: settle it rather than leave a row no begin will take.
+    await settleGoogleMessage(ctx, claim, op, {
+      id: existing.id,
+      state: 'failed',
+      reason: 'rate_limited',
+      httpStatus: null,
+      targetVersion: target,
+    });
+    return null;
+  }
   let text: GoogleMessageText | null;
   if (existing) text = (await openGoogleMessages(ctx, [existing]))[0] ?? null;
   else {
@@ -112,7 +124,6 @@ export async function beginMessage(
     notify,
     envelope: existing?.envelope ?? (await sealGoogleMessage(ctx, op.instanceId, id, text)),
   });
-  if (!begun) return;
   if (!begun) return null;
   return { begun, id, text, notify };
 }
