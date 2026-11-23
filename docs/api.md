@@ -35,6 +35,9 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles, `POST /passes/bulk-reissue` (an org key rebuilds its own org, `orgId` defaults to it; a platform key must name the org; a test key rebuilds test mode; one active run per target, else 409 `BULK_RUN_ACTIVE` with the run id; 6 starts per key per hour, then 429) |
 | `holders:write` | assign, reassign, unassign holders |
 | `templates:read` | GET templates |
+| `templates:write` | clone a blueprint, create a version, request review. A Test key acts as its creator, who must hold `templates:author`; a Live key may only request review |
+| `templates:review` | approve a candidate. Test keys only; the key acts as its creator, who must hold `templates:review` |
+| `templates:publish` | release a candidate. Test keys only; the key acts as its creator, who must hold `templates:publish` |
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
 | `scans:read` | scoped scanner event and scan-log reads; read a roll call |
 | `scans:write` | scan from a till as one named terminal (see Scan from a till); start, confirm and end a roll call; org-bound keys only |

@@ -40,6 +40,13 @@ export const KEY_PRESETS = [
     label: 'Integrations',
     scopes: ['connections:read', 'connections:write', 'webhooks:manage'],
   },
+  { id: 'templates', label: 'Template authoring', scopes: ['templates:read', 'templates:write'] },
+  /** Review and publish work in Test only: a Live key may request review, never release. */
+  {
+    id: 'release',
+    label: 'Release templates',
+    scopes: ['templates:read', 'templates:write', 'templates:review', 'templates:publish'],
+  },
   { id: 'brand', label: 'Brand', scopes: ['brand:manage', 'org:read'] },
   {
     id: 'scanner-setup',
@@ -70,6 +77,9 @@ export const MINTABLE_SCOPE_CAPABILITY: Record<(typeof MINTABLE_SCOPES)[number],
   'passes:write': 'passes:operate',
   'holders:write': 'passes:operate',
   'templates:read': 'templates:read',
+  'templates:write': 'templates:author',
+  'templates:review': 'templates:review',
+  'templates:publish': 'templates:publish',
   'messages:write': 'messages:manage',
   'scans:read': 'scanning:read',
   'scans:write': 'passes:operate',

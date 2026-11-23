@@ -1,7 +1,17 @@
+import { Info } from 'lucide-react';
 import { MINTABLE_SCOPES } from '@/shared/contracts/api-keys.ts';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { adminPresets, holdableScopes, selectedPreset } from '@/shared/developers-keys.ts';
-import { Button, Checkbox, Label, Tooltip } from '@/web/ui/index.ts';
+import {
+  Button,
+  Checkbox,
+  IconButton,
+  Label,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Tooltip,
+} from '@/web/ui/index.ts';
 import { SCOPE_LABEL, useTerminals } from './queries.ts';
 
 export const SCOPES = MINTABLE_SCOPES;
@@ -13,6 +23,7 @@ export function ScopeRows({
   platform,
   kind = 'service',
   capabilities = null,
+  note,
 }: {
   value: readonly string[];
   onChange: (next: string[]) => void;
@@ -23,8 +34,11 @@ export function ScopeRows({
   kind?: 'service' | 'personal';
   /** The creating member's capabilities; null for a platform admin. */
   capabilities?: readonly OrgCapability[] | null;
+  /** Scopes the last change of key kind removed, said once. */
+  note?: string | undefined;
 }) {
-  const offered = platform ? SCOPES.filter((s) => s !== 'scans:write') : SCOPES;
+  const offered =
+    platform || kind === 'personal' ? SCOPES.filter((s) => s !== 'scans:write') : SCOPES;
   // Presets the creator can't hold are left out, not disabled.
   const presets = adminPresets(holdableScopes(platform ? 'platform' : kind, capabilities));
   const picked = selectedPreset(presets, value);
@@ -53,7 +67,29 @@ export function ScopeRows({
             </Button>
           </Tooltip>
         ))}
+        <Popover>
+          <PopoverTrigger asChild>
+            <IconButton size="sm" label="Preset scopes" icon={<Info aria-hidden />} />
+          </PopoverTrigger>
+          <PopoverContent className="max-h-80 w-80 overflow-y-auto">
+            <dl className="flex flex-col gap-2">
+              {presets.map((p) => (
+                <div key={p.id}>
+                  <dt className="font-medium text-fg-strong">{p.label}</dt>
+                  <dd className="break-words font-mono text-xs text-fg-muted">
+                    {p.scopes.join(', ')}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </PopoverContent>
+        </Popover>
       </div>
+      {note ? (
+        <p role="status" className="mb-2 text-xs text-fg-muted">
+          {note}
+        </p>
+      ) : null}
       <ul className="divide-y divide-border rounded-md border border-border-strong">
         {offered.map((s, i) => {
           const id = `scope-${s.replace(':', '-')}`;

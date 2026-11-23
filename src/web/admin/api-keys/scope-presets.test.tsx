@@ -66,4 +66,28 @@ describe('scope presets', () => {
     await user.click(await screen.findByRole('option', { name: /Personal/ }));
     expect(within(scopes).queryByRole('button', { name: 'Till' })).toBeNull();
   });
+
+  it('untick what a personal key cannot hold, say so, and re-evaluate the selected preset', async () => {
+    const { user, dialog, scopes } = await openDialog();
+    const till = within(scopes).getByRole('button', { name: 'Till' });
+    await user.click(till);
+    await user.click(within(scopes).getByRole('button', { name: 'Issue passes' }));
+    await user.click(till);
+    expect(ticked(scopes)).toContain('scope-scans-write');
+    await user.click(within(dialog).getByRole('combobox', { name: 'Type' }));
+    await user.click(await screen.findByRole('option', { name: /Personal/ }));
+    expect(ticked(scopes).sort()).toEqual(['scope-passes-read', 'scope-scans-read']);
+    expect(within(scopes).getByRole('status')).toHaveTextContent('Removed: Scan as a terminal.');
+    expect(within(scopes).queryByRole('checkbox', { name: 'Scan as a terminal' })).toBeNull();
+    await user.click(within(scopes).getByRole('checkbox', { name: 'Read templates' }));
+    expect(within(scopes).queryByRole('status')).toBeNull();
+  });
+
+  it('lists every preset scope in a popover opened by tap', async () => {
+    const { user, scopes } = await openDialog();
+    await user.click(within(scopes).getByRole('button', { name: 'Preset scopes' }));
+    const list = await screen.findByText('Holder support');
+    expect(list.closest('div')).toHaveTextContent('passes:read, holders:write, messages:write');
+    expect(screen.getByText('Template authoring')).toBeInTheDocument();
+  });
 });

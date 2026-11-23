@@ -27,6 +27,8 @@ describe('the admin key presets', () => {
       adminPresets(holdableScopes('personal', ROLE_GRANTS[role])).map((p) => p.id);
     expect(ids('read_only')).toEqual(['read']);
     expect(ids('integration_admin')).toEqual(['webhooks', 'integrations']);
+    expect(ids('template_author')).toEqual(['templates']);
+    expect(ids('template_publisher')).toEqual([]);
     expect(ids('pass_operator')).toContain('issue');
     expect(ids('pass_operator')).not.toContain('webhooks');
     expect(ids('org_admin')).toContain('full');

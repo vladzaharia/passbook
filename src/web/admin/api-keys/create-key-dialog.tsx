@@ -2,6 +2,7 @@ import { KeyRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
+import { holdableScopes } from '@/shared/developers-keys.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import { getMode } from '@/web/lib/mode.ts';
 import {
@@ -18,6 +19,7 @@ import {
 import { ROLE_LABELS, ROLES } from '../orgs/org-roles.ts';
 import { KeyDisclosure } from './key-disclosure.tsx';
 import { KindFields, SHORT_EXPIRY } from './key-kind-fields.tsx';
+import { KeyReview } from './key-review.tsx';
 import { type ApiKey, SCOPE_LABEL, useCreateKey } from './queries.ts';
 import { type SCOPES, ScopeRows, TerminalRows } from './scope-rows.tsx';
 
@@ -59,6 +61,7 @@ export function CreateKeyDialog({
   const scansWrite = scopes.includes('scans:write');
   const [expiry, setExpiry] = useState('90');
   const [kind, setKind] = useState<'service' | 'personal'>('service');
+  const [removed, setRemoved] = useState<string[]>([]);
   const [access, setAccess] = useState('scopes');
   const [ips, setIps] = useState('');
   const role = ROLES.find((r) => r === access);
@@ -92,6 +95,7 @@ export function CreateKeyDialog({
     setTerminalIds([]);
     setExpiry('90');
     setKind('service');
+    setRemoved([]);
     setAccess('scopes');
     setIps('');
     setKeyMode(getMode());
@@ -100,6 +104,15 @@ export function CreateKeyDialog({
     setFormError(undefined);
     setCreated(undefined);
     setReviewKey(false);
+  }
+
+  // A key kind that cannot hold a ticked scope drops it, and says so.
+  function changeKind(next: 'service' | 'personal') {
+    setKind(next);
+    const holdable = holdableScopes(orgId === null ? 'platform' : next, capabilities);
+    const gone = scopes.filter((s) => !holdable.includes(s));
+    setRemoved(gone);
+    if (gone.length) setScopes(scopes.filter((s) => holdable.includes(s)));
   }
 
   async function submit() {
@@ -224,7 +237,7 @@ export function CreateKeyDialog({
           <KindFields
             orgId={orgId}
             kind={kind}
-            onKind={setKind}
+            onKind={changeKind}
             access={access}
             onAccess={setAccess}
             ips={ips}
@@ -259,7 +272,15 @@ export function CreateKeyDialog({
           {role ? null : (
             <ScopeRows
               value={scopes}
-              onChange={setScopes}
+              onChange={(next) => {
+                setRemoved([]);
+                setScopes(next);
+              }}
+              note={
+                removed.length
+                  ? `Removed: ${removed.map((s) => SCOPE_LABEL[s] ?? s).join(', ')}.`
+                  : undefined
+              }
               error={errors.scopes}
               platform={orgId === null}
               kind={kind}
@@ -288,39 +309,18 @@ export function CreateKeyDialog({
               : 'Review service key'
         }
         description={
-          <span className="block">
-            <span className="block">
-              {orgId === null ? (
-                <>
-                  This key can access all organizations in {keyMode === 'test' ? 'Test' : 'Live'}{' '}
-                  mode.
-                </>
-              ) : (
-                <>
-                  This key is bound to {orgName} in {keyMode === 'test' ? 'Test' : 'Live'} mode.
-                </>
-              )}
-            </span>
-            <span className="mt-3 block">Name: {name.trim()}</span>
-            <span className="block">
-              {kind === 'personal' && orgId !== null ? 'Type: personal, acts as you.' : null}
-            </span>
-            <span className="block">
-              Permissions:{' '}
-              {role ? ROLE_LABELS[role] : scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', ')}
-            </span>
-            {ipAllow.length ? (
-              <span className="block">Allowed IPs: {ipAllow.join(', ')}</span>
-            ) : null}
-            <span className="block">
-              {days === 'never'
-                ? 'It will not expire.'
-                : `It expires after ${days === '365' ? '1 year' : `${days} days`}.`}
-            </span>
-            <span className="mt-3 block">
-              No secret has been issued yet. It will be shown once after creation.
-            </span>
-          </span>
+          <KeyReview
+            orgId={orgId}
+            orgName={orgName}
+            mode={keyMode}
+            name={name.trim()}
+            personal={kind === 'personal'}
+            permissions={
+              role ? ROLE_LABELS[role] : scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', ')
+            }
+            ipAllow={ipAllow}
+            days={days}
+          />
         }
         confirmLabel="Create key"
         onConfirm={submit}
