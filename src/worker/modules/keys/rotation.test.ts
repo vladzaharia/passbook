@@ -31,11 +31,13 @@ import { hashPin, pinMatches } from '../scan/staff-pin.ts';
 import { readSystemValue, writeSystemValue } from '../settings/repo.ts';
 import { checkKeys } from '../status/checks-keys.ts';
 import { setupSamsungCallbacks } from '../wallet-providers/callbacks-test-fixtures.ts';
+import { googleMessageAad } from '../wallet-providers/google-message-aad.ts';
 import { openSecret, sealSecret } from '../webhooks/secrets.ts';
 import { seedEndpoint } from '../webhooks/webhooks-test-fixtures.ts';
 import { recordMacRoots } from './mac-root-check.ts';
 import { packedEnvelopeColumns } from './packed-scan-test-fixtures.ts';
 import { DONE, rewrapEnvelopes } from './rewrap.ts';
+import { seedGoogleMessage } from './rotation-message-test-fixtures.ts';
 import { rowsOnKek, type Samsung, seedEnvelopes, seedTransfer } from './rotation-test-fixtures.ts';
 
 const kek = (byte: number) => btoa(String.fromCharCode(...new Uint8Array(32).fill(byte)));
@@ -199,6 +201,7 @@ async function rotate(macKeyRotation: boolean) {
     delete env.MAC_KEY_VERSION_PREVIOUS;
   }
   seeded.plain.push(await seedTransfer(t, kek1));
+  seeded.plain.push(...(await seedGoogleMessage(t, kek1)));
   const epochsBefore = await epochs(db);
 
   // 3. The rewrap moves every envelope; nothing else changes.
@@ -370,7 +373,9 @@ async function expectEverythingOpens(r: Rotated) {
           wrappedDek: new Uint8Array(row?.wrapped_dek ?? []),
           ciphertext: new Uint8Array(row?.ciphertext ?? []),
         },
-        credentialAad(p.id, p.org, p.kind),
+        p.table === 'wallet_google_messages'
+          ? googleMessageAad(p.kind, p.id)
+          : credentialAad(p.id, p.org, p.kind),
       ),
       p.table,
     ).toBe(p.text);

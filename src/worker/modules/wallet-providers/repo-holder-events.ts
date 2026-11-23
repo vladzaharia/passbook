@@ -64,3 +64,45 @@ export function samsungHolderEventStmt(
     },
   });
 }
+
+/**
+ * The pass log's record that a Google change message settled (`wallet.messaged`). The id is the ledger row's, so it
+ * is written once; it holds only when the row is settled in that state. Never the text (google-messages.md section 9).
+ */
+export function walletMessagedEventStmt(
+  db: D1Database,
+  input: {
+    orgId: string;
+    passId: string;
+    mode: Mode;
+    messageId: string;
+    outcome: 'notified' | 'text' | 'failed' | 'unknown';
+    reason?: 'budget' | 'quota';
+    version: number;
+    at: number;
+  },
+): D1PreparedStatement {
+  const row = eventRowOf(
+    {
+      orgId: input.orgId,
+      passId: input.passId,
+      mode: input.mode,
+      kind: 'wallet.messaged',
+      actor: { type: 'system', id: null },
+      data: {
+        provider: 'google',
+        outcome: input.outcome,
+        version: input.version,
+        ...(input.reason ? { reason: input.reason } : {}),
+      },
+      at: input.at,
+    },
+    input.messageId,
+    null,
+  );
+  return insertEventStmt(db, row, {
+    sql: `EXISTS (SELECT 1 FROM wallet_google_messages WHERE id = ? AND state = ?)
+      AND NOT EXISTS (SELECT 1 FROM pass_events WHERE id = ?)`,
+    params: [input.messageId, input.outcome, input.messageId],
+  });
+}

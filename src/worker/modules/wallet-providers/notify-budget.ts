@@ -13,11 +13,11 @@ import { providerNotifiedSince } from './repo-notify-budget.ts';
 export const PROVIDER_NOTIFY_LIMIT = { google: 3 } as const;
 
 /**
- * What a message did in a wallet. No provider message is sent yet (the sends are WA7's), so a
- * message that fits its budget is `deferred`, never `sent`: only `sent` counts against the limit.
- * WA7's send calls providerBudgets and budgetOutcomes before sending and records `sent`.
+ * What a message would do in a wallet: a message that fits its budget is `deferred` to the Google send that
+ * follows the update; over the limit it goes as text only. The message ledger and `wallet.messaged` record what
+ * actually happened.
  */
-export type BudgetOutcome = 'deferred' | 'over' | 'sent';
+export type BudgetOutcome = 'deferred' | 'over';
 
 /** The live Google copy of the pass against its own daily limit; Apple's is not here. */
 export async function providerBudgets(
@@ -27,11 +27,22 @@ export async function providerBudgets(
   const out: Partial<Record<'google', PushBudgetDto>> = {};
   if (!(await removalWallets(ctx, pass, ['google'])).includes('google')) return out;
   const since = ctx.clock.now() - BUDGET_WINDOW_MS;
-  const { used, oldest } = await providerNotifiedSince(ctx.env.DB, pass.id, 'google', since);
+  const { used, oldest, quotaAt } = await providerNotifiedSince(
+    ctx.env.DB,
+    pass.id,
+    'google',
+    since,
+  );
+  // A quota refusal spends the object's budget until 24 h after it, whatever PassBook counted.
   out.google = {
-    used,
+    used: quotaAt === null ? used : Math.max(used, PROVIDER_NOTIFY_LIMIT.google),
     limit: PROVIDER_NOTIFY_LIMIT.google,
-    resetsAt: oldest === null ? null : oldest + BUDGET_WINDOW_MS,
+    resetsAt:
+      quotaAt !== null
+        ? quotaAt + BUDGET_WINDOW_MS
+        : oldest === null
+          ? null
+          : oldest + BUDGET_WINDOW_MS,
   };
   return out;
 }

@@ -157,7 +157,7 @@ Files: `src/worker/modules/wallet-providers/`.
 | G12 | `routes-google-callbacks.ts:10-12` | Callbacks are rate limited with `RL_APPLE_IP` per client IP; Google sends from a small crawler IP pool and could be throttled | Use a separate binding with a high limit, or exempt verified Google IPs after signature check |
 | G13 | `google-rest.ts:24-49` | No `Retry-After`/backoff in the client; relies on `sync-errors.ts` classification (not reviewed here) for 429 (20 rps documented) | Verify backoff and a global concurrency cap of about 15 rps per issuer |
 | G14 | `google-rest.ts:77-97` | Create-then-409-then-PATCH costs 3 requests on updates (POST, GET, PATCH) | After the first success, PATCH directly; use `GET` only when POST conflicts |
-| G15 | `google-rest.ts` (whole) | No `addMessage` call, no PUT, no GET-by-id for state reconciliation beyond `verifyIdentity` | Add `addMessage` for change notifications (Apple change-message parity) |
+| G15 | `google-rest.ts` (whole) | Fixed by GM2: `addMessage` for change notifications (`google-messages.md`), PUT and GET-by-id came with CW9b | Done |
 | G16 | `projection-contract.ts:44`, `render-projection.ts:178-181` | `logoUrl` is any HTTPS URL up to 256 chars; no check that it is a public PNG >= 660x660 without redirect | Validate at projection review time (fetch, content type, dimensions) |
 | G17 | `google-credentials.ts:20` | Issuer id regex `[0-9]{1,32}`; real issuer ids are numeric (length UNCONFIRMED), fine | none |
 | G18 | `public/robots.txt` | Googlebot and Google-Valuables are allowed on `/wallet/v1/google/` as required | none (satisfies the robots.txt rule) |

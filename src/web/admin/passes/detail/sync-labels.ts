@@ -22,6 +22,7 @@ export const SINGLE_TITLE: Record<string, string> = {
   'device.log': 'Wallet log line',
   'wallet.saved': 'Holder saved the pass',
   'wallet.removed': 'Holder removed the pass',
+  'wallet.messaged': 'Wallet message',
   'push.sent': 'Push sent',
   'push.failed': 'Push failed',
   'push.queued': 'Push queued',
@@ -50,6 +51,21 @@ export function walletDetail(e: PassEventDto): string | null {
       .join(', ');
   const provider = e.data.provider;
   return e.kind.startsWith('wallet.') && typeof provider === 'string' ? walletName(provider) : null;
+}
+
+const MESSAGED_FACT: Record<string, { text: string; tone: 'info' | 'warning' }> = {
+  notified: { text: 'Notified', tone: 'info' },
+  text: { text: 'Daily limit reached', tone: 'warning' },
+  failed: { text: 'Not accepted', tone: 'warning' },
+  unknown: { text: 'Not confirmed', tone: 'warning' },
+};
+
+/** What a wallet did with a message: told the holder, showed it on the card only, refused it, or never said. */
+export function messagedFacts(
+  data: PassEventDto['data'],
+): { text: string; tone: 'info' | 'warning' }[] {
+  const fact = typeof data.outcome === 'string' ? MESSAGED_FACT[data.outcome] : undefined;
+  return fact ? [fact] : [];
 }
 
 /** A wallet whose own daily limit a message hit. */
