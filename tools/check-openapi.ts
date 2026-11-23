@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { hasNewVersion, type Versions, versionedBreaks } from './lib/changelog.ts';
 import { readPending } from './lib/changelog-files.ts';
+import { exampleFailures } from './lib/example-lint.ts';
 import { showAt } from './lib/git-show.ts';
 import { breakingChanges, type Doc } from './lib/openapi-diff.ts';
 import { coverage, FLAGS, ratchetFailures, type SdkNames } from './lib/openapi-ratchet.ts';
@@ -43,6 +44,7 @@ if (prev) {
   console.log(
     `check-openapi: no ${SNAPSHOT} on ${base}; breaking-change and coverage checks skipped`,
   );
+failures.push(...exampleFailures(next));
 const counts = coverage(next);
 console.log(
   `check-openapi: key-callable coverage ${FLAGS.map((f) => `${f} ${counts[f][0]}/${counts[f][1]}`).join(', ')}`,

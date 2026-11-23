@@ -4,6 +4,6 @@ curl -X POST "https://passbook.mobile/api/v1/webhook-endpoints/capture" \
   -d '{
   "eventTypes": [
     "pass.issued",
-    "pass.updated"
+    "pass.scanned"
   ]
 }'

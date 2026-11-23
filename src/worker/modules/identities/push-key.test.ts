@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { pemBlock } from '../../../../test/helpers/pem.ts';
 import { checkKeyId, readP8 } from './push-key.ts';
 import { makeP8, makeRsaPem } from './push-key-fixtures.ts';
 
@@ -19,18 +20,14 @@ describe('readP8', () => {
     expect(await code(readP8('-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----'))).toBe(
       'PUSH_KEY_FORMAT',
     );
-    expect(
-      await code(readP8('-----BEGIN EC PRIVATE KEY-----\nAAAA\n-----END EC PRIVATE KEY-----')),
-    ).toBe('PUSH_KEY_FORMAT');
+    expect(await code(readP8(pemBlock('EC PRIVATE KEY', 'AAAA')))).toBe('PUSH_KEY_FORMAT');
   });
 
   it('rejects invalid base64 and garbage DER', async () => {
     expect(await code(readP8('-----BEGIN PRIVATE KEY-----\n!!!!\n-----END PRIVATE KEY-----'))).toBe(
       'PUSH_KEY_FORMAT',
     );
-    expect(
-      await code(readP8('-----BEGIN PRIVATE KEY-----\nAAAAAAAA\n-----END PRIVATE KEY-----')),
-    ).toBe('PUSH_KEY_CURVE');
+    expect(await code(readP8(pemBlock('PRIVATE KEY', 'AAAAAAAA')))).toBe('PUSH_KEY_CURVE');
   });
 
   it('rejects other curves and RSA keys', async () => {

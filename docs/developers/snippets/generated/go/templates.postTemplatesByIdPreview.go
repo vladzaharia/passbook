@@ -17,7 +17,14 @@ func main() {
 	}
 
 	var body passbook.TemplatesPreviewBody
-	if err := json.Unmarshal([]byte(`{}`), &body); err != nil {
+	if err := json.Unmarshal([]byte(`{
+  "version": "3",
+  "input": {
+    "name": "Ada Example",
+    "tier": "Day pass",
+    "validUntil": "2026-12-31"
+  }
+}`), &body); err != nil {
 		panic(err)
 	}
 

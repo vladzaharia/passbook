@@ -9,7 +9,7 @@ const created = (over: Record<string, unknown> = {}) => ({
   orgId: 'o1',
   name: 'Mine',
   prefix: 'abc12345',
-  secretPrefix: 'pbp_live_abc12345',
+  secretPrefix: 'pbp_test_demo0001',
   scopes: ['passes:read'],
   createdBy: 'u1',
   createdByName: null,
@@ -17,7 +17,7 @@ const created = (over: Record<string, unknown> = {}) => ({
   lastUsedAt: null,
   expiresAt: null,
   revokedAt: null,
-  secret: 'pbp_live_abc12345_SECRET',
+  secret: 'pbp_test_demo0001_demo',
   ...over,
 });
 
@@ -106,7 +106,7 @@ describe('key type, role and expiry', () => {
           }),
       },
     });
-    expect(await screen.findByText('pbp_live_abc12345')).toBeInTheDocument();
+    expect(await screen.findByText('pbp_test_demo0001')).toBeInTheDocument();
     expect(screen.getByText('Personal')).toBeInTheDocument();
     expect(screen.getByText('Read only')).toBeInTheDocument();
     expect(screen.getByText('wlt_zzz99999')).toBeInTheDocument();

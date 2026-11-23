@@ -1,0 +1,128 @@
+{
+  "organization-memberships.getOrgsByIdMemberships": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-3e0e18c914ca",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "orgSlug": "northwind-climbing",
+          "personal": false,
+          "testOnly": false,
+          "userId": "0193a1b2-7c00-7000-8000-000000000011",
+          "roles": ["org_admin"],
+          "capabilities": ["org:read"],
+          "createdAt": 1794362400000,
+          "revokedAt": null,
+          "userName": "Sam Rivera",
+          "userEmail": "sam@example.com"
+        },
+        {
+          "id": "0193a1b2-7c00-7000-8000-8b789f087de1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "orgSlug": "northwind-climbing",
+          "personal": false,
+          "testOnly": false,
+          "userId": "0193a1b2-7c00-7000-8000-67921d38ff5e",
+          "roles": ["pass_operator"],
+          "capabilities": ["org:read"],
+          "createdAt": 1795399200000,
+          "revokedAt": null,
+          "userName": "Priya Nair",
+          "userEmail": "priya@example.com"
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "organization-memberships.getOrgsByIdInvitations": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-9be99f782636",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "email": "priya@example.com",
+          "roles": ["pass_operator"],
+          "createdAt": 1795399200000,
+          "expiresAt": 1796004000000,
+          "revokedAt": null,
+          "acceptedAt": null
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "organization-memberships.postOrgsByIdInvitations": {
+    "request": {
+      "email": "priya@example.com",
+      "roles": ["org_admin"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-9be99f782636",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "email": "priya@example.com",
+      "roles": ["org_admin"],
+      "createdAt": 1795572000000,
+      "expiresAt": 1796176800000,
+      "revokedAt": null,
+      "acceptedAt": null
+    }
+  },
+  "organization-memberships.deleteOrgsByIdInvitationsByInvitationId": {
+    "response": {
+      "ok": true
+    }
+  },
+  "organization-memberships.deleteOrgsByIdMembershipsByMembershipId": {
+    "response": {
+      "ok": true
+    }
+  },
+  "organization-memberships.postOrgsInvitationsAccept": {
+    "request": {
+      "token": "demo-token-northwind-55f338f9e7b2f2370b6b75"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-8b789f087de1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "orgName": "Northwind Climbing",
+      "orgSlug": "northwind-climbing",
+      "personal": false,
+      "testOnly": false,
+      "userId": "0193a1b2-7c00-7000-8000-67921d38ff5e",
+      "roles": ["pass_operator"],
+      "capabilities": ["org:read"],
+      "createdAt": 1795572000000,
+      "revokedAt": null
+    }
+  },
+  "organization-memberships.postOrgsInvitationsPreview": {
+    "request": {
+      "token": "demo-token-northwind-6f0b87be0c2906bafb1ffb"
+    },
+    "response": {
+      "orgName": "Northwind Climbing"
+    }
+  },
+  "organization-memberships.getOrgsMembershipsMe": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-3e0e18c914ca",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "orgSlug": "northwind-climbing",
+          "personal": false,
+          "testOnly": false,
+          "userId": "0193a1b2-7c00-7000-8000-000000000011",
+          "roles": ["org_admin"],
+          "capabilities": ["org:read"],
+          "createdAt": 1794362400000,
+          "revokedAt": null
+        }
+      ],
+      "nextCursor": null
+    }
+  }
+}

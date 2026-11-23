@@ -10,7 +10,7 @@ result = pb.templates.candidates.create(
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
         "mode": "test",
         "provider": "apple",
-        "version": "Example",
+        "version": "4",
     },
 )
 print(result)

@@ -141,7 +141,7 @@ class BrandResource:
         body: m.BrandUpdateBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.BrandUpdateResult:
-        """Set the accent colour and mark level `PATCH /api/v1/brand`"""
+        """Set the accent color and mark level `PATCH /api/v1/brand`"""
         return self._core.request("PATCH", "/api/v1/brand", body=body, result=m.BrandUpdateResult, **opts)
 
 
@@ -221,7 +221,7 @@ class BroadcastsResource:
         expect_count: int | None | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> m.BroadcastsRetryResult:
-        """Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`"""
+        """Send a failed or canceled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`"""
         return self._core.request("POST", f"/api/v1/broadcasts/{_p(id)}/retry", query={"expectCount": expect_count}, result=m.BroadcastsRetryResult, **opts)
 
     def send(
@@ -730,7 +730,7 @@ class NfcKeysetsResource:
         body: m.NfcKeysetsImportTagsBody | _Dict[str, _Any],
         **opts: _Unpack[RequestOptions],
     ) -> m.NfcKeysetsImportTagsResult:
-        """Import supplier-personalised tags (dry run or add) `POST /api/v1/nfc/keysets/{id}/import`"""
+        """Import supplier-personalized tags (dry run or add) `POST /api/v1/nfc/keysets/{id}/import`"""
         return self._core.request("POST", f"/api/v1/nfc/keysets/{_p(id)}/import", body=body, result=m.NfcKeysetsImportTagsResult, **opts)
 
     def list(

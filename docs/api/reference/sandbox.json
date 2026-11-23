@@ -1,0 +1,7 @@
+{
+  "sandbox.postTestInboxByIdSendToMe": {
+    "response": {
+      "to": "ada@example.com"
+    }
+  }
+}

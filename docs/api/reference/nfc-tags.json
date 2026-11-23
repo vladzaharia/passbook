@@ -1,14 +1,754 @@
 {
   "nfc-tags.getNfcTagTypes": {
-    "description": "The tag types of an organization."
+    "description": "The tag types of an organization.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-69938372af56",
+          "system": "uid",
+          "name": "Member wristband",
+          "use": "member",
+          "scopes": "pass",
+          "perPass": 1,
+          "bindingDays": null,
+          "confirm": "staff",
+          "typed": false,
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "version": 1,
+          "tagCount": 40,
+          "createdAt": 1794362400000,
+          "updatedAt": 1794362400000,
+          "archivedAt": null
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "nfc-tags.postNfcTagTypes": {
-    "description": "Creates a tag type."
+    "description": "Creates a tag type.",
+    "request": {
+      "name": "Member wristband",
+      "use": "member",
+      "scopes": "pass",
+      "perPass": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-69938372af56",
+      "system": "uid",
+      "name": "Member wristband",
+      "use": "member",
+      "scopes": "pass",
+      "perPass": 1,
+      "bindingDays": null,
+      "confirm": "staff",
+      "typed": false,
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "version": 1,
+      "tagCount": 0,
+      "createdAt": 1795572000000,
+      "updatedAt": 1795572000000,
+      "archivedAt": null
+    }
   },
   "nfc-tags.patchNfcTagTypesById": {
-    "description": "Changes a tag type. Send the version you read."
+    "description": "Changes a tag type. Send the version you read.",
+    "request": {
+      "version": 1,
+      "perPass": 2
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-69938372af56",
+      "system": "uid",
+      "name": "Member wristband",
+      "use": "member",
+      "scopes": "pass",
+      "perPass": 2,
+      "bindingDays": null,
+      "confirm": "staff",
+      "typed": false,
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "version": 2,
+      "tagCount": 40,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000,
+      "archivedAt": null
+    }
   },
   "nfc-tags.postNfcTagTypesByIdArchive": {
-    "description": "Archives a tag type. Its tags keep working."
+    "description": "Archives a tag type. Its tags keep working.",
+    "request": {
+      "version": 1
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-69938372af56",
+      "system": "uid",
+      "name": "Member wristband",
+      "use": "member",
+      "scopes": "pass",
+      "perPass": 1,
+      "bindingDays": null,
+      "confirm": "staff",
+      "typed": false,
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "version": 1,
+      "tagCount": 40,
+      "createdAt": 1794362400000,
+      "updatedAt": 1794362400000,
+      "archivedAt": 1795572000000
+    }
+  },
+  "nfc-tags.postNfcPassesByPassIdTags": {
+    "request": {
+      "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+      "binding": "pass"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+        "name": "Member wristband",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "7559",
+      "label": "Wristband 14",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
+      "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-a6b9ba56d38b",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      }
+    }
+  },
+  "nfc-tags.patchNfcBindingsByBindingId": {
+    "request": {
+      "binding": "pass",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+        "name": "Member wristband",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "3856",
+      "label": "Wristband 14",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
+      "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-6e665619e12e",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      }
+    }
+  },
+  "nfc-tags.patchNfcTagsById": {
+    "request": {
+      "label": "Wristband 14",
+      "pool": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+        "name": "Member wristband",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "FB0A",
+      "label": "Wristband 14",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
+      "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-523e30953507",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      }
+    }
+  },
+  "nfc-tags.getNfcScanners": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-72f29278da35",
+          "name": "Key fob 3",
+          "sessionName": "Evening shift",
+          "role": "door",
+          "online": false,
+          "unavailable": "offline",
+          "secureOnly": false,
+          "lastUsedAt": 1795570500000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "nfc-tags.postNfcPassesByPassIdEnrollments": {
+    "request": {
+      "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
+      "binding": "pass"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
+      "scannerName": "Front desk",
+      "scope": "pass",
+      "state": "done",
+      "createdAt": 1794362400000,
+      "expiresAt": 1798790399999,
+      "endedAt": null,
+      "shownAt": 1795570500000,
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-2d8f29398284",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      },
+      "errorCode": null,
+      "hint": "CE32"
+    }
+  },
+  "nfc-tags.postNfcPassesByPassIdTagsAssign": {
+    "request": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "format": "hex",
+      "binding": "pass",
+      "label": "Wristband 14"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+        "name": "Member wristband",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "D701",
+      "label": "Wristband 14",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
+      "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-5cb63b59239c",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      }
+    }
+  },
+  "nfc-tags.getNfcTagsByIdHistory": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-1e900ad0b365",
+          "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+          "scope": "pass",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "passTitle": "Day pass",
+          "userId": "0193a1b2-7c00-7000-8000-000000000011",
+          "holderName": "Ada Example",
+          "source": "scanner",
+          "lent": false,
+          "boundAt": 1795570500000,
+          "boundByName": "Priya Nair",
+          "scannerName": "Side door",
+          "expiresAt": 1798790399999,
+          "endedAt": null,
+          "endCause": null
+        }
+      ],
+      "nextCursor": "c1.4812",
+      "events": [
+        {
+          "at": 1795570500000,
+          "action": "lost",
+          "actorName": "Sam Rivera"
+        }
+      ]
+    }
+  },
+  "nfc-tags.getNfcPassesByPassIdTags": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-9b7b4eb41f51",
+          "mode": "live",
+          "kind": "uid",
+          "system": "uid",
+          "type": {
+            "id": "0193a1b2-7c00-7000-8000-69938372af56",
+            "name": "Member wristband",
+            "use": "member"
+          },
+          "assurance": "basic",
+          "hint": "B98B",
+          "label": "Wristband 14",
+          "pool": false,
+          "status": "active",
+          "state": "assigned",
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
+          "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+          "binding": {
+            "id": "0193a1b2-7c00-7000-8000-1ca0454186c5",
+            "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+            "scope": "pass",
+            "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "passTitle": "Day pass",
+            "userId": null,
+            "holderName": "Ada Example",
+            "source": "scanner",
+            "lent": false,
+            "boundAt": 1795570500000,
+            "boundByName": "Marcus Webb",
+            "scannerName": "Gear shop till",
+            "expiresAt": 1798790399999,
+            "endedAt": null,
+            "endCause": null
+          }
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "nfc-tags.deleteNfcBindingsByBindingId": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+        "name": "Member wristband",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "1260",
+      "label": "Wristband 14",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
+      "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-195c813ac6a4",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      }
+    }
+  },
+  "nfc-tags.getNfcTags": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-d688d06d4534",
+          "mode": "live",
+          "kind": "uid",
+          "system": "uid",
+          "type": {
+            "id": "0193a1b2-7c00-7000-8000-69938372af56",
+            "name": "Member wristband",
+            "use": "member"
+          },
+          "assurance": "basic",
+          "hint": "A7E2",
+          "label": "Wristband 14",
+          "pool": false,
+          "status": "active",
+          "state": "assigned",
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
+          "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+          "binding": {
+            "id": "0193a1b2-7c00-7000-8000-cd7ff2147503",
+            "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+            "scope": "pass",
+            "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "passTitle": "Day pass",
+            "userId": null,
+            "holderName": "Ada Example",
+            "source": "scanner",
+            "lent": false,
+            "boundAt": 1795570500000,
+            "boundByName": "Priya Nair",
+            "scannerName": "Cafe counter",
+            "expiresAt": 1798790399999,
+            "endedAt": null,
+            "endCause": null
+          }
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "nfc-tags.getNfcTagsById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+        "name": "Member wristband",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "081D",
+      "label": "Wristband 14",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
+      "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-0054a582b75a",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      }
+    }
+  },
+  "nfc-tags.postNfcTagsByIdRetire": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+        "name": "Member wristband",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "5D8B",
+      "label": "Wristband 14",
+      "pool": false,
+      "status": "retired",
+      "state": "retired",
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
+      "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-3c6640f5d11b",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      }
+    }
+  },
+  "nfc-tags.postNfcTagsByIdRestore": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+        "name": "Member wristband",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "2CB1",
+      "label": "Wristband 14",
+      "pool": false,
+      "status": "active",
+      "state": "assigned",
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
+      "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-016a4c9211b7",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      }
+    }
+  },
+  "nfc-tags.postNfcTagsByIdLost": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "mode": "live",
+      "kind": "uid",
+      "system": "uid",
+      "type": {
+        "id": "0193a1b2-7c00-7000-8000-69938372af56",
+        "name": "Member wristband",
+        "use": "member"
+      },
+      "assurance": "basic",
+      "hint": "E938",
+      "label": "Wristband 14",
+      "pool": false,
+      "status": "active",
+      "state": "lost",
+      "createdAt": 1794362400000,
+      "lastSeenAt": 1795570500000,
+      "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-6544de72d0ee",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      }
+    }
+  },
+  "nfc-tags.getNfcPassesByPassIdEnrollmentsById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
+      "scannerName": "Front desk",
+      "scope": "pass",
+      "state": "done",
+      "createdAt": 1794362400000,
+      "expiresAt": 1798790399999,
+      "endedAt": null,
+      "shownAt": 1795570500000,
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-a3f4b606cab0",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      },
+      "errorCode": null,
+      "hint": "07A0"
+    }
+  },
+  "nfc-tags.deleteNfcPassesByPassIdEnrollmentsById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000082",
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "scannerId": "0193a1b2-7c00-7000-8000-000000000031",
+      "scannerName": "Front desk",
+      "scope": "pass",
+      "state": "done",
+      "createdAt": 1794362400000,
+      "expiresAt": 1798790399999,
+      "endedAt": null,
+      "shownAt": 1795570500000,
+      "binding": {
+        "id": "0193a1b2-7c00-7000-8000-5a6a3cf2770d",
+        "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+        "scope": "pass",
+        "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+        "passTitle": "Day pass",
+        "userId": null,
+        "holderName": "Ada Example",
+        "source": "scanner",
+        "lent": false,
+        "boundAt": 1795570500000,
+        "boundByName": "Sam Rivera",
+        "scannerName": "Front desk",
+        "expiresAt": 1798790399999,
+        "endedAt": null,
+        "endCause": null
+      },
+      "errorCode": null,
+      "hint": "965E"
+    }
+  },
+  "nfc-tags.getNfcUsersByUserIdTags": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-e8f5edd5a82f",
+          "mode": "live",
+          "kind": "uid",
+          "system": "uid",
+          "type": {
+            "id": "0193a1b2-7c00-7000-8000-69938372af56",
+            "name": "Member wristband",
+            "use": "member"
+          },
+          "assurance": "basic",
+          "hint": "9578",
+          "label": "Wristband 14",
+          "pool": false,
+          "status": "active",
+          "state": "assigned",
+          "createdAt": 1794362400000,
+          "lastSeenAt": 1795570500000,
+          "keysetId": "0193a1b2-7c00-7000-8000-000000000041",
+          "binding": {
+            "id": "0193a1b2-7c00-7000-8000-bb916af58dae",
+            "tagId": "0193a1b2-7c00-7000-8000-000000000082",
+            "scope": "pass",
+            "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+            "passTitle": "Day pass",
+            "userId": null,
+            "holderName": "Ada Example",
+            "source": "scanner",
+            "lent": false,
+            "boundAt": 1795570500000,
+            "boundByName": "Sam Rivera",
+            "scannerName": "Side door",
+            "expiresAt": 1798790399999,
+            "endedAt": null,
+            "endCause": null
+          },
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   }
 }

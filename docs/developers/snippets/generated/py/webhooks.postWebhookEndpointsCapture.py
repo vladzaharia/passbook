@@ -8,7 +8,7 @@ result = pb.webhook_endpoints.ensure_capture(
     {
         "eventTypes": [
             "pass.issued",
-            "pass.updated",
+            "pass.scanned",
         ],
     },
 )

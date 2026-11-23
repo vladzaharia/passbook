@@ -1,29 +1,327 @@
 {
   "message-rules.getMessageRules": {
-    "description": "Lists automatic messages."
+    "description": "Lists automatic messages.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000052",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "name": "Renewal reminder",
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "anchor": {
+            "kind": "input",
+            "input": "validUntil"
+          },
+          "offset": {
+            "amount": 7,
+            "unit": "day",
+            "when": "before"
+          },
+          "yearly": false,
+          "sendAt": "09:00",
+          "timeZone": "America/Los_Angeles",
+          "message": "Your membership renews in 7 days.",
+          "clearAfter": 604800000,
+          "on": true,
+          "state": "on",
+          "pausedCode": null,
+          "nextCheckAt": 1795626000000,
+          "sent": 42,
+          "skipped": 3,
+          "createdAt": 1794362400000,
+          "updatedAt": 1795399200000,
+          "version": 2
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "message-rules.postMessageRules": {
-    "description": "Creates an automatic message."
+    "description": "Creates an automatic message.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "anchor": {
+        "kind": "input",
+        "input": "validUntil"
+      },
+      "offset": {
+        "amount": 7,
+        "unit": "day",
+        "when": "before"
+      },
+      "sendAt": "09:00",
+      "timeZone": "America/Los_Angeles",
+      "message": "Your membership renews in 7 days."
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "anchor": {
+        "kind": "input",
+        "input": "validUntil"
+      },
+      "offset": {
+        "amount": 7,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "sendAt": "09:00",
+      "timeZone": "America/Los_Angeles",
+      "message": "Your membership renews in 7 days.",
+      "clearAfter": 604800000,
+      "on": true,
+      "state": "on",
+      "pausedCode": null,
+      "nextCheckAt": 1795626000000,
+      "sent": 42,
+      "skipped": 3,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "version": 2
+    }
   },
   "message-rules.getMessageRulesById": {
-    "description": "One automatic message."
+    "description": "One automatic message.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "anchor": {
+        "kind": "input",
+        "input": "validUntil"
+      },
+      "offset": {
+        "amount": 7,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "sendAt": "09:00",
+      "timeZone": "America/Los_Angeles",
+      "message": "Your membership renews in 7 days.",
+      "clearAfter": 604800000,
+      "on": true,
+      "state": "on",
+      "pausedCode": null,
+      "nextCheckAt": 1795626000000,
+      "sent": 42,
+      "skipped": 3,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "version": 2
+    }
   },
   "message-rules.putMessageRulesById": {
-    "description": "Saves an automatic message. Saving resumes a paused one."
+    "description": "Saves an automatic message. Saving resumes a paused one.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "anchor": {
+        "kind": "input",
+        "input": "validUntil"
+      },
+      "offset": {
+        "amount": 7,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "sendAt": "09:00",
+      "timeZone": "America/Los_Angeles",
+      "message": "Your membership renews in 7 days.",
+      "version": 2
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "anchor": {
+        "kind": "input",
+        "input": "validUntil"
+      },
+      "offset": {
+        "amount": 7,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "sendAt": "09:00",
+      "timeZone": "America/Los_Angeles",
+      "message": "Your membership renews in 7 days.",
+      "clearAfter": 604800000,
+      "on": true,
+      "state": "on",
+      "pausedCode": null,
+      "nextCheckAt": 1795626000000,
+      "sent": 42,
+      "skipped": 3,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000,
+      "version": 3
+    }
   },
   "message-rules.deleteMessageRulesById": {
-    "description": "Deletes an automatic message and cancels its runs that have not started."
+    "description": "Deletes an automatic message and cancels its runs that have not started.",
+    "response": {
+      "ok": true
+    }
   },
   "message-rules.postMessageRulesByIdPause": {
-    "description": "Pauses an automatic message. Save it to resume."
+    "description": "Pauses an automatic message. Save it to resume.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000052",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "anchor": {
+        "kind": "input",
+        "input": "validUntil"
+      },
+      "offset": {
+        "amount": 7,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "sendAt": "09:00",
+      "timeZone": "America/Los_Angeles",
+      "message": "Your membership renews in 7 days.",
+      "clearAfter": 604800000,
+      "on": false,
+      "state": "paused",
+      "pausedCode": null,
+      "nextCheckAt": null,
+      "sent": 42,
+      "skipped": 3,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000,
+      "version": 2
+    }
   },
   "message-rules.getMessageRulesByIdRuns": {
-    "description": "The messages an automatic message sent."
+    "description": "The messages an automatic message sent.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-1c3512308696",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "kind": "message",
+          "name": "Renewal reminder",
+          "state": "sent",
+          "target": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+          },
+          "patch": {},
+          "notify": true,
+          "at": 1795539600000,
+          "clearAfter": 604800000,
+          "parentId": null,
+          "message": "Your membership renews in 7 days.",
+          "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
+          "followUp": null,
+          "counts": {
+            "targeted": 9,
+            "updated": 9,
+            "unchanged": 0,
+            "overBudget": 0,
+            "failed": 0
+          },
+          "errorCode": null,
+          "createdAt": 1795539600000,
+          "startedAt": 1795539600000,
+          "finishedAt": 1795539640000
+        }
+      ],
+      "nextCursor": null
+    }
   },
   "message-rules.postMessageRulesPreview": {
-    "description": "Counts the passes due each of the next 14 days."
+    "description": "Counts the passes due each of the next 14 days.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Renewal reminder",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "anchor": {
+        "kind": "input",
+        "input": "validUntil"
+      },
+      "offset": {
+        "amount": 7,
+        "unit": "day",
+        "when": "before"
+      },
+      "yearly": false,
+      "sendAt": "09:00",
+      "timeZone": "America/Los_Angeles",
+      "message": "Your membership renews in 7 days."
+    },
+    "response": {
+      "days": [
+        {
+          "date": "2026-11-25",
+          "count": 3
+        },
+        {
+          "date": "2026-11-26",
+          "count": 2
+        },
+        {
+          "date": "2026-11-28",
+          "count": 4
+        }
+      ],
+      "total": 9,
+      "atLimit": 0
+    }
   },
   "message-rules.postMessageRulesByIdTest": {
-    "description": "Sends the text now to one pass."
+    "description": "Sends the text now to one pass.",
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-6d159574a6dd",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "message",
+      "name": "Renewal reminder",
+      "state": "sent",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+      },
+      "patch": {},
+      "notify": true,
+      "at": 1795572000000,
+      "clearAfter": 604800000,
+      "parentId": null,
+      "message": "Your membership renews in 7 days.",
+      "ruleId": "0193a1b2-7c00-7000-8000-000000000052",
+      "followUp": null,
+      "counts": {
+        "targeted": 1,
+        "updated": 1,
+        "unchanged": 0,
+        "overBudget": 0,
+        "failed": 0
+      },
+      "errorCode": null,
+      "createdAt": 1795572000000,
+      "startedAt": 1795572000000,
+      "finishedAt": 1795572002000
+    }
   }
 }

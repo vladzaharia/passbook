@@ -1,5 +1,5 @@
 import { setCharacterSpacing } from 'pdf-lib';
-import { drawable } from './pdf-fonts.ts';
+import { drawable, runs } from './pdf-fonts.ts';
 import { PenBase, PT, type TextStyle } from './pdf-pen.ts';
 
 export { type Box, COLORS, PT, type TextStyle } from './pdf-pen.ts';
@@ -13,8 +13,12 @@ export class Pen extends PenBase {
   /** Width of one line in mm. */
   measure(text: string, st: TextStyle): number {
     const s = this.raw(text, st);
-    const face = this.fonts[st.font].font;
-    return face.widthOfTextAtSize(s, st.size * PT) / PT + (st.ls ?? 0) * st.size * [...s].length;
+    const face = this.fonts[st.font];
+    const wide = runs(face, s).reduce(
+      (w, r) => w + r.font.widthOfTextAtSize(r.text, st.size * PT),
+      0,
+    );
+    return wide / PT + (st.ls ?? 0) * st.size * [...s].length;
   }
 
   lineHeight(st: TextStyle): number {
@@ -40,14 +44,21 @@ export class Pen extends PenBase {
     const baseline =
       top + (lineH - (face.ascent + face.descent) * st.size) / 2 + face.ascent * st.size;
     this.save(
-      () =>
-        this.page.drawText(s, {
-          x: this.px(left),
-          y: this.py(baseline),
-          size: st.size * PT,
-          font: face.font,
-          color: this.color(st.color),
-        }),
+      () => {
+        let at = left;
+        for (const r of runs(face, s)) {
+          this.page.drawText(r.text, {
+            x: this.px(at),
+            y: this.py(baseline),
+            size: st.size * PT,
+            font: r.font,
+            color: this.color(st.color),
+          });
+          at +=
+            r.font.widthOfTextAtSize(r.text, st.size * PT) / PT +
+            (st.ls ?? 0) * st.size * [...r.text].length;
+        }
+      },
       ...(st.ls ? [setCharacterSpacing(st.ls * st.size * PT)] : []),
     );
     return width;

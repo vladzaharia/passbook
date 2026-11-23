@@ -18,16 +18,10 @@ func main() {
 
 	var body passbook.OrgsUpdatePassSetupBody
 	if err := json.Unmarshal([]byte(`{
-  "expectedRevision": "r1",
+  "expectedRevision": "4",
   "brand": {
-    "logo": {
-      "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    },
-    "passColors": {
-      "background": "#0f172a",
-      "foreground": "#ffffff",
-      "label": "#fbbf24"
-    }
+    "accent": "#ffc400",
+    "mark": "full"
   }
 }`), &body); err != nil {
 		panic(err)

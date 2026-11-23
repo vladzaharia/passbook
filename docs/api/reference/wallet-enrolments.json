@@ -1,0 +1,120 @@
+{
+  "wallet-enrolments.getOrgsByOrgIdWalletEnrolments": {
+    "response": {
+      "items": [
+        {
+          "mode": "live",
+          "provider": "google",
+          "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+          "source": "org",
+          "platformAvailable": false,
+          "state": "off",
+          "enrolmentRevision": 2,
+          "prerequisites": {
+            "check": true,
+            "roundTrip": false
+          },
+          "hold": null,
+          "issuance": {
+            "state": "disabled",
+            "reason": "not_released"
+          }
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "wallet-enrolments.putOrgsByOrgIdWalletEnrolmentsByProvider": {
+    "request": {
+      "source": "org",
+      "expectedRevision": 2
+    },
+    "response": {
+      "mode": "live",
+      "provider": "google",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "source": "org",
+      "platformAvailable": false,
+      "state": "off",
+      "enrolmentRevision": 3,
+      "prerequisites": {
+        "check": true,
+        "roundTrip": false
+      },
+      "hold": null,
+      "issuance": {
+        "state": "disabled",
+        "reason": "not_released"
+      }
+    }
+  },
+  "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderEnable": {
+    "request": {
+      "expectedRevision": 2
+    },
+    "response": {
+      "mode": "live",
+      "provider": "google",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "source": "org",
+      "platformAvailable": false,
+      "state": "on",
+      "enrolmentRevision": 3,
+      "prerequisites": {
+        "check": true,
+        "roundTrip": false
+      },
+      "hold": null,
+      "issuance": {
+        "state": "disabled",
+        "reason": "not_released"
+      }
+    }
+  },
+  "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderDisable": {
+    "request": {
+      "expectedRevision": 3
+    },
+    "response": {
+      "mode": "live",
+      "provider": "google",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "source": "org",
+      "platformAvailable": false,
+      "state": "off",
+      "enrolmentRevision": 4,
+      "prerequisites": {
+        "check": true,
+        "roundTrip": false
+      },
+      "hold": null,
+      "issuance": {
+        "state": "disabled",
+        "reason": "not_released"
+      }
+    }
+  },
+  "wallet-enrolments.postOrgsByOrgIdWalletEnrolmentsByProviderRevoke": {
+    "request": {
+      "expectedRevision": 4
+    },
+    "response": {
+      "mode": "live",
+      "provider": "google",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "source": "org",
+      "platformAvailable": false,
+      "state": "revoked",
+      "enrolmentRevision": 5,
+      "prerequisites": {
+        "check": true,
+        "roundTrip": false
+      },
+      "hold": null,
+      "issuance": {
+        "state": "disabled",
+        "reason": "not_released"
+      }
+    }
+  }
+}

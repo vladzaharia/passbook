@@ -2,46 +2,43 @@
   "broadcasts.postBroadcastsByIdUndo": {
     "description": "Undoes a change run for 24 hours after it ends, as a silent background run. Each pass gets back the inputs the change touched, but only while they still hold the value the change set: a pass edited since keeps its edit, and any other input it holds. Nothing notifies. Asking again returns the same undo; one that ended on an error runs again. A run that is still sending must be stopped first. Read the result from GET /broadcasts/{id} on the returned `id`.",
     "response": {
-      "id": "01JABCDEF0123456789UNDO",
-      "parentId": "01JABCDEF0123456789CHNG",
-      "restorable": 1240,
+      "id": "0193a1b2-7c00-7000-8000-b0e462939389",
+      "parentId": "0193a1b2-7c00-7000-8000-000000000042",
+      "restorable": 121,
       "kept": 0
     }
   },
   "broadcasts.postBroadcastsByIdStop": {
-    "description": "Stops a sending message or change after its current chunk of passes. The run ends cancelled with errorCode BROADCAST_STOPPED, and what it already changed stays (a change can still be undone). Asking twice is the same ask.",
+    "description": "Stops a sending message or change after its current chunk of passes. The run ends in state `cancelled` with errorCode BROADCAST_STOPPED, and what it already changed stays (a change can still be undone). Asking twice is the same ask.",
     "response": {
-      "id": "01JABCDEF0123456789CHNG",
-      "orgId": "org_1",
+      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "kind": "change",
-      "name": "Scheduled change",
-      "state": "sending",
+      "kind": "message",
+      "name": "Holiday hours",
+      "state": "partial",
       "target": {
-        "templateIds": ["tpl_1"]
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
       },
-      "patch": {
-        "plan": {
-          "set": "monthly"
-        }
-      },
+      "patch": {},
       "notify": true,
-      "at": 1795000000000,
-      "clearAfter": null,
+      "at": 1795570500000,
+      "clearAfter": 2678400000,
       "parentId": null,
+      "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": null,
       "followUp": null,
       "counts": {
-        "targeted": 1240,
-        "updated": 300,
+        "targeted": 128,
+        "updated": 64,
         "unchanged": 0,
         "overBudget": 0,
         "failed": 0
       },
       "errorCode": null,
-      "createdAt": 1795000000000,
-      "startedAt": 1795000000000,
-      "finishedAt": null
+      "createdAt": 1795569900000,
+      "startedAt": 1795570500000,
+      "finishedAt": 1795572000000
     }
   },
   "broadcasts.postBroadcastsPreview": {
@@ -52,323 +49,309 @@
         "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
       },
       "patch": {
-        "plan": {
-          "set": "monthly"
-        }
+        "validUntil": "2027-01-31"
       },
-      "notify": false
-    },
-    "requests": {
-      "Set an input": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "target": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
-        },
-        "patch": {
-          "plan": {
-            "set": "monthly"
-          }
-        },
-        "notify": false
-      },
-      "Shift a date": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "target": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
-        },
-        "patch": {
-          "startsAt": {
-            "shift": "P1D"
-          }
-        }
-      },
-      "Chosen passes": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "target": {
-          "passIds": ["0193a1b2-7c00-7000-8000-0000000000c1"]
-        },
-        "patch": {
-          "seat": {
-            "clear": true
-          }
-        },
-        "notify": false
-      },
-      "Count only": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "target": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "onDevice": true
-        }
-      }
+      "notify": true
     },
     "response": {
-      "targeted": 1240,
-      "onDevice": 1102,
+      "targeted": 128,
+      "onDevice": 121,
       "overBudget": 0,
-      "limit": 3,
+      "limit": 500,
       "samples": [
         {
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "title": "Harbor Night",
+          "title": "Day pass",
           "changes": [
             {
-              "key": "plan",
-              "label": "Plan",
-              "from": "Annual",
-              "to": "Monthly"
+              "key": "validUntil",
+              "label": "Valid until",
+              "from": "2026-12-31",
+              "to": "2027-01-31"
             }
           ]
         }
       ],
-      "unchanged": 12,
-      "blocked": [
-        {
-          "code": "NO_VALUE",
-          "count": 3
-        }
-      ],
-      "notified": 0,
-      "silent": 1228,
-      "estimated": true
+      "unchanged": 0,
+      "blocked": [],
+      "notified": 121,
+      "silent": 7
     }
   },
   "broadcasts.postBroadcasts": {
     "description": "Saves, sends or schedules a message or a change run. A change sets inputs on many passes: one target (`templateIds` with filters, `passIds` up to 5,000, or the `importId` of an ended import), `patch` operations (`set`, `clear`, `shift`, `add`, or `$void` or `$design` alone) and an optional `message` for the lock screen (needs `notify`). `target.expectCount` is the count a preview showed: when the server's count differs by more than 2% the run does not start and the answer is 409 `SELECTION_CHANGED`. More than 20,000 passes is 422 `MATCH_TOO_BROAD`. A target key it does not define is 422 `BROADCAST_UNSUPPORTED_FILTER`, never ignored. Needs `messages:write` and, for a change, `passes:write`. Send an `Idempotency-Key`; the same key and body returns the same run.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "kind": "change",
-      "name": "Move to Pier 9",
+      "kind": "message",
+      "name": "Holiday hours",
+      "notify": true,
       "send": "now",
-      "notify": false,
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "match": [
-          {
-            "input": "venueName",
-            "values": ["Sample Hall"]
-          }
-        ],
-        "expectCount": 1240
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
       },
-      "patch": {
-        "venueName": {
-          "set": "Pier 9"
-        }
-      }
-    },
-    "requests": {
-      "Change by filter": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "kind": "change",
-        "name": "Move to Pier 9",
-        "send": "now",
-        "notify": false,
-        "target": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "match": [
-            {
-              "input": "venueName",
-              "values": ["Sample Hall"]
-            }
-          ],
-          "expectCount": 1240
-        },
-        "patch": {
-          "venueName": {
-            "set": "Pier 9"
-          }
-        }
-      },
-      "Change chosen passes": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "kind": "change",
-        "send": "now",
-        "target": {
-          "passIds": ["0193a1b2-7c00-7000-8000-0000000000c1"],
-          "expectCount": 1
-        },
-        "patch": {
-          "venueRoom": {
-            "set": "Main hall"
-          },
-          "seat": {
-            "clear": true
-          }
-        }
-      },
-      "Shift a date": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "kind": "change",
-        "name": "One day later",
-        "send": "now",
-        "target": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "expectCount": 1240
-        },
-        "patch": {
-          "startsAt": {
-            "shift": "P1D"
-          },
-          "endsAt": {
-            "shift": "P1D"
-          }
-        }
-      },
-      "Tell holders": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "kind": "change",
-        "send": "now",
-        "notify": true,
-        "message": "Venue is now {Venue}.",
-        "target": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "expectCount": 1240
-        },
-        "patch": {
-          "venueName": {
-            "set": "Pier 9"
-          }
-        }
-      },
-      "Change an import's passes": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "kind": "change",
-        "send": "now",
-        "target": {
-          "importId": "0193a1b2-7c00-7000-8000-0000000000e1"
-        },
-        "patch": {
-          "admission": {
-            "set": "VIP"
-          }
-        }
-      },
-      "Void passes": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "kind": "change",
-        "send": "now",
-        "target": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-          "expectCount": 1240
-        },
-        "patch": {
-          "$void": true
-        }
-      },
-      "Send a message": {
-        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "kind": "message",
-        "name": "Doors open",
-        "send": "draft",
-        "target": {
-          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
-        },
-        "patch": {
-          "message": "Doors open at 6 PM."
-        }
-      }
+      "patch": {},
+      "message": "The gym closes at 18:00 on 24 December."
     },
     "response": {
-      "id": "01JABCDEF0123456789CHNG",
+      "id": "0193a1b2-7c00-7000-8000-000000000042",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "kind": "change",
-      "name": "Move to Pier 9",
-      "state": "sending",
+      "kind": "message",
+      "name": "Holiday hours",
+      "state": "sent",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "match": [
-          {
-            "input": "venueName",
-            "values": ["Sample Hall"]
-          }
-        ]
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
       },
-      "patch": {
-        "venueName": {
-          "set": "Pier 9"
-        }
-      },
-      "notify": false,
-      "at": 1795000000000,
-      "clearAfter": null,
+      "patch": {},
+      "notify": true,
+      "at": 1795570500000,
+      "clearAfter": 2678400000,
       "parentId": null,
-      "message": null,
+      "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": null,
       "followUp": null,
       "counts": {
-        "targeted": 0,
+        "targeted": 128,
+        "updated": 121,
+        "unchanged": 0,
+        "overBudget": 0,
+        "failed": 7
+      },
+      "errorCode": null,
+      "createdAt": 1795569900000,
+      "startedAt": 1795570500000,
+      "finishedAt": 1795570680000
+    }
+  },
+  "broadcasts.getBroadcastsById": {
+    "description": "One message or change with its progress. A run's `state` goes `scheduled`, `sending`, then `sent`, `partial`, `failed` or `cancelled`; `counts` fills in as chunks finish.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "message",
+      "name": "Holiday hours",
+      "state": "sent",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+      },
+      "patch": {},
+      "notify": true,
+      "at": 1795570500000,
+      "clearAfter": 2678400000,
+      "parentId": null,
+      "message": "The gym closes at 18:00 on 24 December.",
+      "ruleId": null,
+      "followUp": null,
+      "counts": {
+        "targeted": 128,
+        "updated": 121,
+        "unchanged": 0,
+        "overBudget": 0,
+        "failed": 7
+      },
+      "errorCode": null,
+      "createdAt": 1795569900000,
+      "startedAt": 1795570500000,
+      "finishedAt": 1795570680000
+    }
+  },
+  "broadcasts.getBroadcasts": {
+    "description": "Lists messages and scheduled changes.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000042",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "kind": "message",
+          "name": "Holiday hours",
+          "state": "sent",
+          "target": {
+            "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+          },
+          "patch": {},
+          "notify": true,
+          "at": 1795570500000,
+          "clearAfter": 2678400000,
+          "parentId": null,
+          "message": "The gym closes at 18:00 on 24 December.",
+          "ruleId": null,
+          "followUp": null,
+          "counts": {
+            "targeted": 128,
+            "updated": 121,
+            "unchanged": 0,
+            "overBudget": 0,
+            "failed": 7
+          },
+          "errorCode": null,
+          "createdAt": 1795569900000,
+          "startedAt": 1795570500000,
+          "finishedAt": 1795570680000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "broadcasts.patchBroadcastsById": {
+    "description": "Edits a draft, or a scheduled message that has not started.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "message",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+        "onDevice": false
+      },
+      "patch": {},
+      "message": "The gym closes at 18:00 on 24 December."
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "message",
+      "name": "Holiday hours",
+      "state": "draft",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+      },
+      "patch": {},
+      "notify": true,
+      "at": null,
+      "clearAfter": 2678400000,
+      "parentId": null,
+      "message": "The gym closes at 18:00 on 24 December.",
+      "ruleId": null,
+      "followUp": null,
+      "counts": {
+        "targeted": 128,
         "updated": 0,
         "unchanged": 0,
         "overBudget": 0,
         "failed": 0
       },
       "errorCode": null,
-      "createdAt": 1795000000000,
-      "startedAt": 1795000000000,
+      "createdAt": 1795569900000,
+      "startedAt": null,
       "finishedAt": null
     }
   },
-  "broadcasts.getBroadcastsById": {
-    "description": "One message or change with its progress. A run's `state` goes `scheduled`, `sending`, then `sent`, `partial`, `failed` or `cancelled`; `counts` fills in as chunks finish.",
+  "broadcasts.postBroadcastsByIdSend": {
+    "description": "Sends a draft now or at a time.",
+    "request": {
+      "at": 1798045200000
+    },
     "response": {
-      "id": "01JABCDEF0123456789CHNG",
+      "id": "0193a1b2-7c00-7000-8000-000000000042",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "mode": "live",
-      "kind": "change",
-      "name": "Move to Pier 9",
-      "state": "sent",
+      "kind": "message",
+      "name": "Holiday hours",
+      "state": "scheduled",
       "target": {
-        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
-        "match": [
-          {
-            "input": "venueName",
-            "values": ["Sample Hall"]
-          }
-        ]
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
       },
-      "patch": {
-        "venueName": {
-          "set": "Pier 9"
-        }
-      },
-      "notify": false,
-      "at": 1795000000000,
-      "clearAfter": null,
+      "patch": {},
+      "notify": true,
+      "at": 1798045200000,
+      "clearAfter": 2678400000,
       "parentId": null,
-      "message": null,
+      "message": "The gym closes at 18:00 on 24 December.",
       "ruleId": null,
       "followUp": null,
       "counts": {
-        "targeted": 1240,
-        "updated": 1228,
-        "unchanged": 12,
+        "targeted": 128,
+        "updated": 0,
+        "unchanged": 0,
         "overBudget": 0,
         "failed": 0
       },
       "errorCode": null,
-      "createdAt": 1795000000000,
-      "startedAt": 1795000000000,
-      "finishedAt": 1795000090000
+      "createdAt": 1795569900000,
+      "startedAt": null,
+      "finishedAt": null
     }
   },
-  "broadcasts.getBroadcasts": {
-    "description": "Lists messages and scheduled changes."
-  },
-  "broadcasts.patchBroadcastsById": {
-    "description": "Edits a draft, or a scheduled message that has not started."
-  },
-  "broadcasts.postBroadcastsByIdSend": {
-    "description": "Sends a draft now or at a time."
-  },
   "broadcasts.postBroadcastsByIdCancel": {
-    "description": "Cancels a draft or a scheduled message."
+    "description": "Cancels a draft or a scheduled message.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "message",
+      "name": "Holiday hours",
+      "state": "cancelled",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+      },
+      "patch": {},
+      "notify": true,
+      "at": 1798045200000,
+      "clearAfter": 2678400000,
+      "parentId": null,
+      "message": "The gym closes at 18:00 on 24 December.",
+      "ruleId": null,
+      "followUp": null,
+      "counts": {
+        "targeted": 128,
+        "updated": 0,
+        "unchanged": 0,
+        "overBudget": 0,
+        "failed": 0
+      },
+      "errorCode": null,
+      "createdAt": 1795569900000,
+      "startedAt": null,
+      "finishedAt": 1795572000000
+    }
   },
   "broadcasts.postBroadcastsByIdRetry": {
-    "description": "Sends a failed or cancelled message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size."
+    "description": "Sends a failed or canceled (state `cancelled`) message again, as a new one in the same mode. A change resumes; send `expectCount` to confirm the size.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000042",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "kind": "message",
+      "name": "Holiday hours",
+      "state": "sending",
+      "target": {
+        "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"]
+      },
+      "patch": {},
+      "notify": true,
+      "at": 1795570500000,
+      "clearAfter": 2678400000,
+      "parentId": null,
+      "message": "The gym closes at 18:00 on 24 December.",
+      "ruleId": null,
+      "followUp": null,
+      "counts": {
+        "targeted": 128,
+        "updated": 121,
+        "unchanged": 0,
+        "overBudget": 0,
+        "failed": 0
+      },
+      "errorCode": null,
+      "createdAt": 1795569900000,
+      "startedAt": 1795570500000,
+      "finishedAt": null
+    }
   },
   "broadcasts.getBroadcastsByIdItems": {
-    "description": "The passes a message reached: updated, unchanged or failed."
+    "description": "The passes a message reached: updated, unchanged or failed.",
+    "response": {
+      "items": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "title": "Day pass",
+          "holderEmail": "ada@example.com",
+          "outcome": "updated",
+          "silent": false
+        }
+      ],
+      "nextCursor": null
+    }
   }
 }

@@ -231,7 +231,7 @@ export function registerKeysetRoutes(nfcRoutes: OpenAPIHono<AppBindings>): void 
     {
       method: 'post',
       path: '/keysets/{id}/import',
-      summary: 'Import supplier-personalised tags (dry run or add)',
+      summary: 'Import supplier-personalized tags (dry run or add)',
       // Replacing own-key tags' keys hands the caller their taps: a session needs a recent sign-in, as on rotate.
       auth: {
         ...WRITE,

@@ -178,7 +178,7 @@ describe('woocommerce-orders adapter', () => {
 });
 
 describe('woocommerce-orders verification', () => {
-  const secret = 'woo-secret-0123456789';
+  const secret = 'woo-demo-secret';
   const body = JSON.stringify(order());
 
   it('valid: verifies, the id is the body digest, the signed time is the body time', async () => {
@@ -307,7 +307,7 @@ describe('tickettailor-tickets adapter', () => {
 });
 
 describe('tickettailor-tickets verification', () => {
-  const secret = 'tt-secret-0123456789';
+  const secret = 'tt-demo-secret';
   const body = JSON.stringify(hook());
 
   it('valid: the event id is the signed webhook id and the time is the header time', async () => {

@@ -1,0 +1,185 @@
+{
+  "retention.getOrgsByOrgIdRetentionHolds": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-37b8d2fe882b",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "passLabel": "Day pass",
+          "placedByKind": "org",
+          "placedByLabel": "Sam Rivera",
+          "reason": "Chargeback dispute: keep records until the bank closes it.",
+          "createdAt": 1794362400000,
+          "releasedAt": null,
+          "releasedByLabel": null,
+          "canRelease": true
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "retention.postOrgsByOrgIdRetentionHolds": {
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "reason": "Chargeback dispute: keep records until the bank closes it."
+    },
+    "response": {
+      "ok": true
+    }
+  },
+  "retention.postOrgsByOrgIdRetentionHoldsByHoldIdRelease": {
+    "response": {
+      "ok": true
+    }
+  },
+  "retention.getOrgsByOrgIdRetentionReceipts": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-f6551f7b876e",
+          "cls": "ok",
+          "kind": "sweep",
+          "ranAt": 1795570500000,
+          "cutoffAt": 1764034500000,
+          "policyDays": 365,
+          "deleted": 27,
+          "anonymised": 19,
+          "verified": true
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "retention.getOrgsByOrgIdRetentionReceiptsByReceiptIdDownload": {
+    "response": {
+      "receipt": {
+        "id": "0193a1b2-7c00-7000-8000-368e2792563b",
+        "cls": "ok",
+        "kind": "sweep",
+        "ranAt": 1795570500000,
+        "cutoffAt": 1764034500000,
+        "policyDays": 365,
+        "deleted": 27,
+        "anonymised": 19,
+        "verified": true,
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "seq": 2,
+        "prevMac": "a54faf92d5b000d8fd2846e2d5565f79daa638b9a3460fba096f3931d1ce7d9e",
+        "mac": "61e2a1edcf52a551b2de80acf83f6fdff2afb5e3a4c1976bf9149cc60e9610cb",
+        "refsDigest": "e3fc59cb3b7e152402dccd638b82c831a1bbe0d89726781d14dee7cc2ead9f71",
+        "requestId": "0193a1b2-7c00-7000-8000-8a466ac8eb12"
+      }
+    }
+  },
+  "retention.getPlatformOrgsByOrgIdRetentionHolds": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-874751e896b9",
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "passLabel": "Day pass",
+          "placedByKind": "org",
+          "placedByLabel": "Sam Rivera",
+          "reason": "Chargeback dispute: keep records until the bank closes it.",
+          "createdAt": 1794362400000,
+          "releasedAt": null,
+          "releasedByLabel": null,
+          "canRelease": true
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "retention.postPlatformOrgsByOrgIdRetentionHolds": {
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "reason": "Chargeback dispute: keep records until the bank closes it."
+    },
+    "response": {
+      "ok": true
+    }
+  },
+  "retention.postPlatformOrgsByOrgIdRetentionHoldsByHoldIdRelease": {
+    "response": {
+      "ok": true
+    }
+  },
+  "retention.getPlatformOrgsByOrgIdRetentionReceipts": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-25493e2b3dac",
+          "cls": "ok",
+          "kind": "sweep",
+          "ranAt": 1795570500000,
+          "cutoffAt": 1764034500000,
+          "policyDays": 365,
+          "deleted": 27,
+          "anonymised": 19,
+          "verified": true
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "retention.getPlatformOrgsByOrgIdRetentionReceiptsByReceiptIdDownload": {
+    "response": {
+      "receipt": {
+        "id": "0193a1b2-7c00-7000-8000-4e4ff0287162",
+        "cls": "ok",
+        "kind": "sweep",
+        "ranAt": 1795570500000,
+        "cutoffAt": 1764034500000,
+        "policyDays": 365,
+        "deleted": 27,
+        "anonymised": 19,
+        "verified": true,
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "seq": 2,
+        "prevMac": "ed9c0b001cffea2eeb6948bfa307f1a2911d4840f6010b216285732832f6c337",
+        "mac": "10c05d3ee91f9c6394c2c652da323dd5da79a1d08352f036dc6c00e97f280489",
+        "refsDigest": "17ba53cc91276453d527368a25be22f1015d19dd3e47d03ad373d22ff9dea049",
+        "requestId": "0193a1b2-7c00-7000-8000-3f387215eb53"
+      }
+    }
+  },
+  "retention.getPlatformRetentionReceipts": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-db650d7d22e4",
+          "cls": "ok",
+          "kind": "sweep",
+          "ranAt": 1795570500000,
+          "cutoffAt": 1764034500000,
+          "policyDays": 365,
+          "deleted": 27,
+          "anonymised": 19,
+          "verified": true
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "retention.getPlatformRetentionReceiptsByReceiptIdDownload": {
+    "response": {
+      "receipt": {
+        "id": "0193a1b2-7c00-7000-8000-d6f41259f7ba",
+        "cls": "ok",
+        "kind": "sweep",
+        "ranAt": 1795570500000,
+        "cutoffAt": 1764034500000,
+        "policyDays": 365,
+        "deleted": 27,
+        "anonymised": 19,
+        "verified": true,
+        "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+        "seq": 2,
+        "prevMac": "0374efadcfdb622ae67ba41d29d085f3925bc64fe315cdc628ccc6b116ba01ee",
+        "mac": "d513dc924406e68deec022ce4c4fd699faeb7bb9ec736e943dc658a0edbc541a",
+        "refsDigest": "949a44a719772bc7ded59aed95194af2746c24050ad2e125dad2d9172c4b6502",
+        "requestId": "0193a1b2-7c00-7000-8000-e68355b46ed8"
+      }
+    }
+  }
+}

@@ -11,6 +11,8 @@ import { buildSearchIndex } from './build.ts';
 import * as nav from './nav.ts';
 import type { SearchIndex } from './types.ts';
 
+const DEMO = 'pb_test_demo_demo_demo_demo';
+
 vi.mock('./nav.ts', () => ({ goTo: vi.fn(), openTab: vi.fn() }));
 // The sandbox's count is read only with a sandbox: signed out (the default here) nothing is asked.
 let session: Session = { kind: 'out' };
@@ -25,7 +27,7 @@ const SECRETS = [
   'pbo_9fK2xQ7mLp3sD8vA',
   'pbtry_eyJ2MTprZXk6c2Vz.9fK2xQ7mLp3sD8vA',
   'wlt_9fK2xQ7mLp3sD8vA',
-  'curl -H "Authorization: Bearer pb_live_ab12_9fK2xQ7mLp3sD8vA"',
+  `curl -H "Authorization: Bearer ${DEMO}"`,
 ];
 const ID = '0193a1b2-7c00-7000-8000-0000000000c1';
 

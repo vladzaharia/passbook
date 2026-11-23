@@ -17,7 +17,10 @@ func main() {
 	}
 
 	var body passbook.ScanningSessionsDevicesCreateBody
-	if err := json.Unmarshal([]byte(`{}`), &body); err != nil {
+	if err := json.Unmarshal([]byte(`{
+  "name": "Side door phone",
+  "surface": "auto"
+}`), &body); err != nil {
 		panic(err)
 	}
 

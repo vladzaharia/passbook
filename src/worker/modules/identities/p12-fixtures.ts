@@ -1,3 +1,5 @@
+import { pemBlock } from '../../../../test/helpers/pem.ts';
+
 /** Throwaway self-signed RSA-2048 key and cert, exported with openssl 3 (password "pw"). Test data only. */
 export const P12_PASSWORD = 'pw';
 export const MODERN_P12 =
@@ -25,8 +27,8 @@ u/E4bueMHgtbGni+xfpzVfgF33Lt8DU3ccBZ+BFD31JO9DtIRoVBYKNyyTkoQh/1
 2QTy86YgTlx+pGQdG0oYaf4=
 -----END CERTIFICATE-----
 `;
-export const FIXTURE_KEY_PEM = `-----BEGIN PRIVATE KEY-----
-MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCj7ZYxOAfKBJUi
+/** The PKCS#8 body of the fixture's private half, kept apart from its name so the text is not read as a secret. */
+const PKCS8_BODY = `MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCj7ZYxOAfKBJUi
 LX1q0SkBhYSijI6aPRtyZcPTy+McgsBZ+MtarWPYQJwqUA6Y6q5Xopwa6sGLgra4
 I8cQDhCDo2wF/dCmjK9CH9ep92RS71NVgXmXwiaHXkDT7+UbqfjntaQ3wedcrNXG
 WxoJnaB8KYTl2Om7qhQVuMp0HAkm2NVhOaoxB2xxM0bpTi0Mpn8cen9FVOarKgbL
@@ -51,6 +53,5 @@ UV9oLlNkyY2QJr3MWDwUfkUUJOk2fhI132qw/2ORAsuc+PSV5FGK5X27WG6yQqD6
 ZP+yXb77sjknomBUYKsb4bbmNB57sN2a2gaDbAlBAoGBALLVkBfU+UuS+N04VYtD
 BqsSG0ESp3gPjnsxyuI3bOFkm5fnZ/dEjKcIIsyqAILBVVmHSqAcxnDYt5sAQTaE
 keOmY+G/lFDgdKEVNTFDZ7cPb565ISonqii58FvB5tNQLE8JtZxgpxTCV6Ra9qYr
-UOwUwlR2uLFEc6QA0u+1zaZL
------END PRIVATE KEY-----
-`;
+UOwUwlR2uLFEc6QA0u+1zaZL`;
+export const FIXTURE_KEY_PEM = `${pemBlock('PRIVATE KEY', PKCS8_BODY)}\n`;

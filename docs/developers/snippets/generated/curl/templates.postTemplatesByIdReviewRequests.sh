@@ -3,5 +3,11 @@ curl -X POST "https://passbook.mobile/api/v1/templates/0193a1b2-7c00-7000-8000-0
   -H "Idempotency-Key: $(uuidgen)" \
   -H "Content-Type: application/json" \
   -d '{
-  "version": "4"
+  "version": "4",
+  "modes": [
+    "test"
+  ],
+  "expected": {
+    "test": 3
+  }
 }'

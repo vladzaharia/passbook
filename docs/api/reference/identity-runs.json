@@ -1,0 +1,95 @@
+{
+  "identity-runs.getIdentityRuns": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "kind": "rotate",
+          "targetType": "identity",
+          "targetId": "0193a1b2-7c00-7000-8000-0000000000d1",
+          "state": "succeeded",
+          "step": "done",
+          "attempt": 1,
+          "waitingFor": null,
+          "errorCode": null,
+          "createdAt": 1795571820000,
+          "updatedAt": 1795571940000,
+          "finishedAt": 1795571940000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "identity-runs.getIdentityRunsById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "rotate",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "state": "succeeded",
+      "step": "done",
+      "attempt": 1,
+      "waitingFor": null,
+      "errorCode": null,
+      "createdAt": 1795571820000,
+      "updatedAt": 1795571940000,
+      "finishedAt": 1795571940000
+    }
+  },
+  "identity-runs.postIdentityRunsByIdRetry": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "rotate",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "state": "succeeded",
+      "step": "done",
+      "attempt": 1,
+      "waitingFor": null,
+      "errorCode": null,
+      "createdAt": 1795571820000,
+      "updatedAt": 1795571940000,
+      "finishedAt": 1795571940000
+    }
+  },
+  "identity-runs.postIdentityRunsByIdCancel": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "rotate",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "state": "succeeded",
+      "step": "done",
+      "attempt": 1,
+      "waitingFor": null,
+      "errorCode": null,
+      "createdAt": 1795571820000,
+      "updatedAt": 1795571940000,
+      "finishedAt": 1795571940000
+    }
+  },
+  "identity-runs.postOrgsByOrgIdIdentitiesApple": {
+    "request": {
+      "handle": "northwind"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "rotate",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "state": "succeeded",
+      "step": "done",
+      "attempt": 1,
+      "waitingFor": null,
+      "errorCode": null,
+      "createdAt": 1795571820000,
+      "updatedAt": 1795571940000,
+      "finishedAt": 1795571940000
+    }
+  }
+}

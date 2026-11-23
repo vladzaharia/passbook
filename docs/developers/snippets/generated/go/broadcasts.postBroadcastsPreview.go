@@ -25,11 +25,9 @@ func main() {
     ]
   },
   "patch": {
-    "plan": {
-      "set": "monthly"
-    }
+    "validUntil": "2027-01-31"
   },
-  "notify": false
+  "notify": true
 }`), &body); err != nil {
 		panic(err)
 	}

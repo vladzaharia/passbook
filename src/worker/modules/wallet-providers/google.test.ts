@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { pemBlock } from '../../../../test/helpers/pem.ts';
 import {
   GOOGLE_WALLET_SCOPE,
   type GoogleAccountCredentials,
@@ -85,8 +86,8 @@ describe('Google account credentials and scoped IDs', () => {
       { serviceAccountEmail: 'bad\n@developer.gserviceaccount.com' },
       { scopes: [] },
       { scopes: [GOOGLE_WALLET_SCOPE, 'https://www.googleapis.com/auth/cloud-platform'] },
-      { privateKeyPem: '-----BEGIN RSA PRIVATE KEY-----\nAAAA\n-----END RSA PRIVATE KEY-----' },
-      { privateKeyPem: '-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----' },
+      { privateKeyPem: pemBlock('RSA PRIVATE KEY', 'AAAA') },
+      { privateKeyPem: pemBlock('PRIVATE KEY', 'AAAA') },
     ];
     for (const changes of invalid) {
       await expect(validateGoogleAccount({ ...credentials, ...changes })).rejects.toMatchObject({

@@ -7,7 +7,8 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 result = pb.passes.match_photos(
     {
         "keys": [
-            "Example",
+            "NW-1001",
+            "NW-1002",
         ],
     },
 )
