@@ -185,6 +185,7 @@ function PreviewBody({ view, wallets, paper, passTitle }: PreviewPageProps) {
                 content={paper.content}
                 design={paper.design}
                 code="PSAMPLEABCDEFGHIJKLMNOPQRST"
+                mark="full"
                 drawing={paper.drawing}
                 assets={paper.assets}
                 testBand

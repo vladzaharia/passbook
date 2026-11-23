@@ -1,9 +1,11 @@
 import type { PaperDesign } from '../../../passkit/template/paper.ts';
 import type { PaperContent } from '../../../passkit/template/paper-content.ts';
+import type { BrandMark } from '../../../shared/contracts/orgs.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { existingChannels } from '../channels/door.ts';
 import { passChannels } from '../channels/service.ts';
+import { orgBrandOf } from '../orgs/brand.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { getOrg } from '../passes/repo-read-issuance.ts';
 import { assertPassSnapshot, capturePassSnapshot } from '../public/snapshot.ts';
@@ -28,6 +30,8 @@ export type PrintPageModel = { orgName: string; mode: Pass['mode'] } & (
       code: string;
       generation: number;
       printId: string;
+      /** The org's footer choice. */
+      mark: BrandMark;
     }
 );
 
@@ -44,11 +48,12 @@ export async function printPageModel(
   if (pass.status !== 'active' || pass.removedAt !== null || pass.deletedAt !== null)
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
   const snapshot = audience === 'holder' ? await capturePassSnapshot(ctx, pass) : null;
-  const [channels, existing, org, ticket] = await Promise.all([
+  const [channels, existing, org, ticket, brand] = await Promise.all([
     passChannels(ctx, pass),
     existingChannels(ctx, pass),
     getOrg(ctx.env.DB, pass.orgId),
     paperTicket(ctx, pass),
+    orgBrandOf(ctx, pass.orgId),
   ]);
   const base = { orgName: org?.name ?? '', mode: pass.mode };
   let model: PrintPageModel = { ...base, state: 'unavailable' };
@@ -65,6 +70,7 @@ export async function printPageModel(
           printedAt: print.createdAt,
           generation: print.generation,
           printId: print.id,
+          mark: brand.mark,
           code: await printCodeOf(ctx.env, {
             id: print.id,
             passId: pass.id,

@@ -1,5 +1,5 @@
 import { EMAIL_TOKENS as T } from '../../generated/resolved-tokens.ts';
-import { HOLDER_COPY } from '../../shared/copy/holder.ts';
+import { passbookCredit } from '../../shared/copy/passbook-credit.ts';
 import {
   type BuddyTier,
   EMAIL_BADGE,
@@ -133,18 +133,15 @@ export interface EmailBrand {
 }
 
 /** The foot line for a mark level, or null at `none`. */
-export const markLine = (mark: EmailBrand['mark'] | undefined) =>
-  mark === 'full'
-    ? `${HOLDER_COPY.issuedWith} PassBook`
-    : mark === 'small'
-      ? HOLDER_COPY.poweredBy
-      : null;
+export const markLine = (mark: EmailBrand['mark'] | undefined) => {
+  const credit = passbookCredit(mark);
+  return credit ? [credit.lead, credit.name].filter(Boolean).join(' ') : null;
+};
 
 const markHtml = (mark: EmailBrand['mark'] | undefined) => {
-  const line = markLine(mark);
-  if (!line) return '';
-  const text =
-    mark === 'full' ? `${escapeHtml(HOLDER_COPY.issuedWith)} <b>PassBook</b>` : escapeHtml(line);
+  const credit = passbookCredit(mark);
+  if (!credit) return '';
+  const text = `${escapeHtml(credit.lead)}${credit.name ? ` <b>${escapeHtml(credit.name)}</b>` : ''}`;
   return `<tr><td class="e-muted" align="center" style="padding:16px 0 0;${type('xs')};color:${EMAIL_LIGHT.muted}">${text}</td></tr>`;
 };
 

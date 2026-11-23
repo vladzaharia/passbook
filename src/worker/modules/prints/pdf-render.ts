@@ -7,6 +7,7 @@ import { PDFDocument } from 'pdf-lib';
 import { PAPER_SPECS, type PaperDesign } from '../../../passkit/template/paper.ts';
 import type { PaperContent } from '../../../passkit/template/paper-content.ts';
 import { COUPON_BAND } from '../../../passkit/template/paper-geometry.ts';
+import type { BrandMark } from '../../../shared/contracts/orgs.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
 import { drawPaperCode } from '../../../web/paper/drawing.ts';
 import type { Issued } from '../../../web/paper/ticket-text.ts';
@@ -35,6 +36,8 @@ export interface PrintSheet {
   code: string;
   mode?: 'live' | 'test';
   issued?: Issued;
+  /** The org's footer choice. */
+  mark: BrandMark;
   images?: { logo?: ImageSource; art?: ImageSource };
 }
 
@@ -113,6 +116,7 @@ export async function renderPdf(
         code: s.code,
         drawing: drawPaperCode(toSvg, s.design.barcode, s.code),
         issued: s.issued,
+        mark: s.mark,
         mode: s.mode,
         images,
       },

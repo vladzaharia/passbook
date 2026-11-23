@@ -1,5 +1,6 @@
 import type { PaperDesign } from '../../../passkit/template/paper.ts';
 import type { PaperContent } from '../../../passkit/template/paper-content.ts';
+import type { BrandMark } from '../../../shared/contracts/orgs.ts';
 import type { PaperDrawing } from '../../../web/paper/drawing.ts';
 import type { Issued } from '../../../web/paper/ticket-text.ts';
 import type { PdfPicture } from './pdf-png.ts';
@@ -16,6 +17,7 @@ export interface Sheet {
   code: string;
   drawing: PaperDrawing | undefined;
   issued?: Issued | undefined;
+  mark: BrandMark;
   mode?: 'live' | 'test' | undefined;
   images: PdfImages;
 }
