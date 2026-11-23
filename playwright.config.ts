@@ -23,7 +23,9 @@ export default defineConfig({
     { name: 'setup', testMatch: /auth\.setup\.ts/, use: { ...devices['Desktop Chrome'] } },
     {
       name: 'e2e',
-      testIgnore: /auth\.setup\.ts|17-scan-camera\.spec|18-scan-native-camera\.spec\.ts/,
+      // Camera and wallet specs need their own servers (playwright.camera.config.ts, playwright.wallets.config.ts).
+      testIgnore:
+        /auth\.setup\.ts|17-scan-camera\.spec|18-scan-native-camera\.spec\.ts|\d+-wallets-[\w-]+\.spec\.ts/,
       dependencies: ['setup'],
       use: { ...devices['Desktop Chrome'] },
     },
