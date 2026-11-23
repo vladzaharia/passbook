@@ -58,3 +58,13 @@ export function reissueWalletPassesConfirm(name: string): ConfirmCopy {
     typed: false,
   };
 }
+
+/** A Samsung card id is permanent: it cannot be changed once it is set. */
+export function setSamsungCardConfirm(type: string, cardId: string): ConfirmCopy {
+  return {
+    title: `Set the ${type} card to ${cardId}?`,
+    confirmLabel: 'Set card',
+    description: `The card for ${type} passes cannot be changed once it is set.`,
+    typed: false,
+  };
+}

@@ -7,7 +7,12 @@ import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 import { credential, enrolment, renderOrgAccounts } from './wallet-accounts-test-fixtures.ts';
 
-const MANAGE: OrgCapability[] = ['org:read', 'integrations:read', 'integrations:manage'];
+const MANAGE: OrgCapability[] = [
+  'org:read',
+  'integrations:read',
+  'integrations:manage',
+  'passes:operate',
+];
 const READ: OrgCapability[] = ['org:read', 'integrations:read'];
 const member = (capabilities: OrgCapability[]) =>
   membershipFixture('o1', { orgName: 'North', capabilities });
@@ -82,6 +87,15 @@ describe('wallet reissue', () => {
     expect(screen.queryByRole('button', { name: 'Update passes' })).toBeNull();
   });
 
+  it('is not offered to a member who manages accounts but cannot operate passes', async () => {
+    await renderOrgAccounts({
+      memberships: [member(['org:read', 'integrations:read', 'integrations:manage'])],
+      handlers: orgHandlers(),
+    });
+    await screen.findByRole('region', { name: 'Google Wallet' });
+    expect(screen.queryByRole('button', { name: 'Update passes' })).toBeNull();
+  });
+
   it('is not offered while the wallet is off', async () => {
     await renderOrgAccounts({
       memberships: [member(MANAGE)],
@@ -126,6 +140,11 @@ describe('Samsung cards per type on the platform tab', () => {
     await user.clear(within(list).getAllByLabelText(/Card ID for/)[0] as HTMLElement);
     await user.type(within(list).getAllByLabelText(/Card ID for/)[0] as HTMLElement, 'ticketcard');
     await user.click(within(list).getAllByRole('button', { name: 'Set' })[0] as HTMLElement);
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText('Set the ticket card to ticketcard?')).toBeInTheDocument();
+    expect(within(dialog).getByText(/cannot be changed/)).toBeInTheDocument();
+    expect(saved).toEqual([]);
+    await user.click(within(dialog).getByRole('button', { name: 'Set card' }));
     await waitFor(() =>
       expect(saved).toEqual([{ type: 'ticket', cardId: 'ticketcard', expectedRevision: 1 }]),
     );

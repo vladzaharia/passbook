@@ -124,9 +124,11 @@ export const JobSchema = z.discriminatedUnion('kind', [
     mode: ModeSchema,
     provider: z.enum(['google', 'samsung']),
     templateId: z.string().min(1).max(64).optional(),
-    /** Where the last run stopped (an instance id), and how many runs this reissue has used. */
+    /** Where the last run stopped (an instance id, exclusive); the copy after it is the first this run takes. */
     after: z.string().max(64).optional(),
-    runs: z.number().int().nonnegative().optional(),
+    /** The copy that failed the last run and how many times it has: a copy is retried, then skipped, never lost. */
+    failedId: z.string().max(64).optional(),
+    failures: z.number().int().nonnegative().optional(),
   }),
   /** A claim found a release's wallet art missing: cut and store it again, as publication did. */
   z.object({ kind: z.literal('wallet.google_art'), candidateId: z.string().min(1).max(64) }),

@@ -3,6 +3,23 @@
 -- state, not only its testing mode). The evidence tables stay as history; nothing writes them any more.
 -- Tombstones and retirement keep 0199's definitions: their schema 1 branches only match rows that cannot be
 -- created now.
+-- The code no longer revokes or retires a Samsung schema 1 release (its field mappings are retired), so none may
+-- exist when this runs. The CHECK refuses the guard row, and so the migration, if one does; see docs/operations.md.
+CREATE TABLE _cw11_no_samsung_schema1 (x INTEGER CHECK (x = 0));
+INSERT INTO _cw11_no_samsung_schema1
+  SELECT 1 FROM template_releases r JOIN template_candidates c ON c.id = r.candidate_id
+  WHERE r.provider = 'samsung' AND json_extract(c.projection_json, '$.schema') = 1 LIMIT 1;
+DROP TABLE _cw11_no_samsung_schema1;
+
+-- One row per continuation a wallet reissue has sent, so a redelivered message does not fork its chain.
+CREATE TABLE wallet_reissue_steps (
+  reissue_id TEXT NOT NULL,
+  after_id TEXT NOT NULL,
+  sent_at INTEGER,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (reissue_id, after_id)
+) WITHOUT ROWID;
+
 DROP TRIGGER template_provider_releases_insert;
 CREATE TRIGGER template_provider_releases_insert BEFORE INSERT ON template_releases
 WHEN NEW.provider IN ('google', 'samsung')
@@ -57,7 +74,7 @@ BEGIN
     WHERE c.id = NEW.candidate_id AND st.candidate_hash = c.candidate_hash
       AND st.account_id = c.provider_account_id AND st.account_epoch = c.provider_account_epoch
       AND st.card_type = json_extract(c.projection_json, '$.type')
-      AND ((st.state = 'ACTIVE' AND st.testing_mode_off = 'Y') OR (NEW.mode = 'test' AND st.state != 'BLOCKED'))
+      AND ((st.state = 'ACTIVE' AND st.testing_mode_off = 'Y') OR (NEW.mode = 'test' AND st.state IN ('ACTIVE', 'DRAFT', 'VERIFYING', 'VERIFIED')))
       AND st.verified_at <= NEW.created_at AND NEW.created_at < st.expires_at
   ) THEN RAISE(ABORT, 'invalid provider release approval or source') END;
   SELECT CASE WHEN NEW.action = 'release' AND EXISTS (
@@ -78,3 +95,18 @@ BEGIN
       AND r.org_id = NEW.org_id AND r.mode = NEW.mode AND r.provider = NEW.provider
     ORDER BY r.generation DESC LIMIT 1), 0) THEN RAISE(ABORT, 'stale provider policy') END;
 END;
+
+-- BEFORE triggers fire newest first: recreate the keyset check unchanged so it still runs first.
+DROP TRIGGER wallet_provider_release_keyset_insert;
+CREATE TRIGGER wallet_provider_release_keyset_insert BEFORE INSERT ON template_releases
+WHEN NEW.provider IN ('google', 'samsung') AND NOT EXISTS (
+  SELECT 1 FROM template_candidates c JOIN credential_ref_keyset keyset
+    ON keyset.id = 1 AND keyset.commitment = c.credential_keyset_commitment
+  JOIN template_approvals approval ON approval.id = NEW.approval_id AND approval.candidate_id = c.id
+  WHERE c.id = NEW.candidate_id AND c.provider = NEW.provider
+    AND c.credential_keyset_commitment = NEW.credential_keyset_commitment
+    AND approval.credential_keyset_commitment = NEW.credential_keyset_commitment
+    AND (NEW.action != 'rollback' OR EXISTS (SELECT 1 FROM template_releases prior
+      WHERE prior.id = NEW.rollback_of_release_id
+        AND prior.credential_keyset_commitment = NEW.credential_keyset_commitment)))
+BEGIN SELECT RAISE(ABORT, 'provider release keyset unavailable'); END;

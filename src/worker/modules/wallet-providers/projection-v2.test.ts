@@ -212,7 +212,7 @@ describe('schema 1 and the Google publish path', () => {
     expect(sql).not.toContain('wallet_provider_projection_evidence');
     expect(sql).not.toContain("'$.schema') = 1");
     expect(sql).toContain(
-      "((st.state = 'ACTIVE' AND st.testing_mode_off = 'Y') OR (NEW.mode = 'test' AND st.state != 'BLOCKED'))",
+      "((st.state = 'ACTIVE' AND st.testing_mode_off = 'Y') OR (NEW.mode = 'test' AND st.state IN ('ACTIVE', 'DRAFT', 'VERIFYING', 'VERIFIED')))",
     );
     expect(sql).toContain("THEN RAISE(ABORT, 'invalid provider release approval or source')");
   });

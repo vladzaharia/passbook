@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react';
 import { SAMSUNG_CARD_TYPES, type WalletCredential } from '@/shared/contracts/wallet-providers.ts';
-import { Button, FormField, Input, StatusPill, toast } from '@/web/ui/index.ts';
+import { setSamsungCardConfirm } from '@/web/lib/confirms-wallet.ts';
+import { Button, ConfirmDialog, FormField, Input, StatusPill, toast } from '@/web/ui/index.ts';
 import { safeError } from './copy.ts';
 import { useWalletActions } from './queries.ts';
 
@@ -9,23 +10,24 @@ const CARD_ID = /^[A-Za-z0-9_-]{1,32}$/;
 function CardRow({ credential, type }: { credential: WalletCredential; type: string }) {
   const actions = useWalletActions();
   const [value, setValue] = useState('');
-  const [busy, setBusy] = useState(false);
   const set = credential.cardTypes.includes(type);
   const invalid = value !== '' && !CARD_ID.test(value);
 
-  async function submit(event: FormEvent) {
+  const [confirming, setConfirming] = useState(false);
+
+  function submit(event: FormEvent) {
     event.preventDefault();
-    if (!CARD_ID.test(value)) return;
-    setBusy(true);
+    if (CARD_ID.test(value)) setConfirming(true);
+  }
+
+  async function save() {
     try {
       await actions.setCard(credential, type, value);
-      setValue('');
-      toast.success(`Card set for ${type}`);
     } catch (cause) {
-      toast.error(safeError(cause), 'Could not set the card');
-    } finally {
-      setBusy(false);
+      throw safeError(cause);
     }
+    setValue('');
+    toast.success(`Card set for ${type}`);
   }
 
   return (
@@ -52,15 +54,15 @@ function CardRow({ credential, type }: { credential: WalletCredential; type: str
               />
             )}
           </FormField>
-          <Button
-            type="submit"
-            size="sm"
-            variant="outline"
-            loading={busy}
-            disabled={!CARD_ID.test(value)}
-          >
+          <Button type="submit" size="sm" variant="outline" disabled={!CARD_ID.test(value)}>
             Set
           </Button>
+          <ConfirmDialog
+            open={confirming}
+            onOpenChange={setConfirming}
+            {...setSamsungCardConfirm(type, value)}
+            onConfirm={save}
+          />
         </form>
       )}
     </li>

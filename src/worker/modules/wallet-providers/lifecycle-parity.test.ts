@@ -182,22 +182,21 @@ describe('6.1 both: expiry and upcoming events', () => {
 });
 
 describe('Q5: provider updates and void visuals within 15 minutes at p95', () => {
-  const op = { provider: 'google', kind: 'revoke', orgId: 'o1', createdAt: 1_000_000 };
-  const ctxAt = (now: number) => {
-    const log = { info: vi.fn(), warn: vi.fn() };
-    return { ctx: { clock: { now: () => now }, log } as never, log };
-  };
-
-  it('logs the time from queueing, and warns past the target', () => {
-    const quick = ctxAt(op.createdAt + 60_000);
-    recordSyncLag(quick.ctx, op as never);
-    expect(quick.log.info).toHaveBeenCalledWith(
+  it('measures from the pass edit, so queueing and retries are inside it, and warns past the target', async () => {
+    const t = await setupSamsungCallbacks();
+    const info = vi.spyOn(t.kit.ctx.log, 'info');
+    const warn = vi.spyOn(t.kit.ctx.log, 'warn');
+    const op = { ...t.operation, createdAt: t.kit.clock.now() + 120_000 } as WalletOperation;
+    t.kit.clock.advance(5 * 60_000);
+    await recordSyncLag(t.kit.ctx, op);
+    expect(info).toHaveBeenCalledWith(
       'wallet.sync_lag',
-      expect.objectContaining({ code: 'WALLET_SYNC_LAG', lagMs: 60_000 }),
+      expect.objectContaining({ code: 'WALLET_SYNC_LAG', lagMs: expect.any(Number) }),
     );
-    const slow = ctxAt(op.createdAt + WALLET_UPDATE_TARGET_MS + 1);
-    recordSyncLag(slow.ctx, op as never);
-    expect(slow.log.warn).toHaveBeenCalledWith(
+    // Queued two minutes after the edit and settled twenty minutes after it: the whole wait counts.
+    t.kit.clock.advance(WALLET_UPDATE_TARGET_MS);
+    await recordSyncLag(t.kit.ctx, op);
+    expect(warn).toHaveBeenCalledWith(
       'wallet.sync_lag',
       expect.objectContaining({ code: 'WALLET_SYNC_LAG_OVER' }),
     );

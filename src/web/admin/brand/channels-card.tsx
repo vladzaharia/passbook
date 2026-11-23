@@ -21,10 +21,12 @@ function ProviderAccount({
   orgId,
   provider,
   canManage,
+  canReissue,
 }: {
   orgId: string;
   provider: 'google' | 'samsung';
   canManage: boolean;
+  canReissue: boolean;
 }) {
   const mode = useMode();
   const enrolments = useOrgEnrolments(orgId);
@@ -39,7 +41,13 @@ function ProviderAccount({
       {provider === 'google' && enrolment.source === null && own === undefined ? (
         <AccountTiles orgId={orgId} canManage={canManage} />
       ) : null}
-      <OrgProviderCard orgId={orgId} enrolment={enrolment} own={own} canManage={canManage} />
+      <OrgProviderCard
+        orgId={orgId}
+        enrolment={enrolment}
+        own={own}
+        canManage={canManage}
+        canReissue={canReissue}
+      />
     </div>
   );
 }
@@ -58,6 +66,7 @@ export function ChannelsCard({
   canEdit,
   canManageApple,
   accounts,
+  canOperatePasses = false,
 }: {
   orgId: string;
   orgName: string;
@@ -69,6 +78,8 @@ export function ChannelsCard({
   canManageApple: boolean;
   /** What the member may do with wallet accounts (integrations:read, integrations:manage). */
   accounts: 'none' | 'read' | 'manage';
+  /** passes:operate, which a wallet reissue needs (the API asks for it, not integrations:manage). */
+  canOperatePasses?: boolean;
 }) {
   const mode = useMode();
   const [open, setOpen] = useState<ReadonlySet<Channel>>(new Set());
@@ -111,7 +122,12 @@ export function ChannelsCard({
                 c === 'apple' ? (
                   <AppleIdentity orgId={orgId} apple={view.apple} canManage={canManageApple} />
                 ) : (c === 'google' || c === 'samsung') && released && accounts !== 'none' ? (
-                  <ProviderAccount orgId={orgId} provider={c} canManage={accounts === 'manage'} />
+                  <ProviderAccount
+                    orgId={orgId}
+                    provider={c}
+                    canManage={accounts === 'manage'}
+                    canReissue={canOperatePasses}
+                  />
                 ) : null
               }
               ask={stop?.level === 'plan' ? <AskPassbook channel={c} orgName={orgName} /> : null}

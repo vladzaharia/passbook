@@ -32,7 +32,7 @@ export async function recordSamsungMessageOutcome(
       mode: op.mode,
       kind: 'wallet.messaged',
       actor: { type: 'system', id: null },
-      data: { provider: 'samsung', outcome: 'updated' },
+      data: { provider: 'samsung', outcome: 'updated', version: op.passVersion },
       at: ctx.clock.now(),
     },
     id,

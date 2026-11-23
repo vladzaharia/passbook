@@ -14,6 +14,20 @@ export function priorSucceededOperation(
   );
 }
 
+/** When the pass version was written (its edit), or null once purged. */
+export async function passVersionCreatedAt(
+  db: D1Database,
+  passId: string,
+  version: number,
+): Promise<number | null> {
+  const row = await first<{ at: number }>(
+    db,
+    'SELECT created_at AS at FROM pass_versions WHERE pass_id = ? AND version = ?',
+    [passId, version],
+  );
+  return row?.at ?? null;
+}
+
 const MAX_RANGE = 21;
 
 /**

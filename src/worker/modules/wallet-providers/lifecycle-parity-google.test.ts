@@ -3,6 +3,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { all, first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
+import { getHolderPass } from '../holders/repo.ts';
+import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { removePass, restorePass } from '../passes/remove.ts';
 import { deletePass, unvoidPass, updatePass, voidPass } from '../passes/service.ts';
 import { configureWalletProviderAccount, getWalletProviderReadiness } from './account-service.ts';
@@ -129,6 +131,31 @@ describe('6.1 Google: void, unvoid, remove, delete', () => {
     expect(mock.requests.filter((r) => r.method === 'DELETE')).toEqual([]);
   });
 
+  it('transfer: the old holder copy goes inactive and the old generation retires', async () => {
+    const { f, jobCtx } = await issued();
+    const holder = await getHolderPass(f.kit.env.DB, f.pass.id, null);
+    if (!holder) throw new Error('Missing holder snapshot');
+    const transfer = await startCredentialTransfer(
+      jobCtx,
+      system,
+      f.pass.id,
+      { holderEmail: 'new-holder@example.test', ownerUserId: null },
+      null,
+      { kind: 'tenant-holder', expected: holder },
+    );
+    expect(transfer.state).toBe('pending');
+    await drainWalletProviderSync(jobCtx);
+    await drainWalletProviderSync(jobCtx);
+    expect(only('genericObject')).toMatchObject({ state: 'INACTIVE' });
+    const rows = await all<{ lifecycle: string; credential_generation: number }>(
+      f.kit.env.DB,
+      `SELECT lifecycle, credential_generation FROM wallet_provider_instances
+       WHERE pass_id = ? AND provider = 'google' ORDER BY credential_generation`,
+      [f.pass.id],
+    );
+    expect(rows[0]?.lifecycle).toMatch(/revok|retired/);
+  });
+
   it('quarantine: as void', async () => {
     const { f, jobCtx } = await issued();
     await run(f.kit.env.DB, 'UPDATE passes SET test_data_quarantined = 1 WHERE id = ?', [
@@ -201,6 +228,32 @@ describe('6.1 Google: keyset rotation and event roll-over', () => {
     await voidPass(jobCtx, system, f.pass.id, live(f));
     await drainWalletProviderSync(jobCtx);
     expect(only('genericObject')).toMatchObject({ state: 'INACTIVE' });
+  });
+
+  it('a KEK ring rotation (a new current key, the old one kept) does not stop a void', async () => {
+    const { f, jobCtx } = await issued();
+    const env = f.kit.env as unknown as Record<string, unknown>;
+    env.KEK_V2 = btoa(String.fromCharCode(...new Uint8Array(32).fill(9)));
+    try {
+      const readiness = await getWalletProviderReadiness(f.kit.ctx, {
+        orgId: f.kit.org.id,
+        mode: 'live',
+        provider: 'google',
+      });
+      // The new version is sealed under the new current key; the retained sealed copy still opens.
+      await configureWalletProviderAccount(f.kit.ctx, f.auth, {
+        orgId: f.kit.org.id,
+        mode: 'live',
+        provider: 'google',
+        expectedRevision: readiness.revision,
+        credentials: f.google,
+      });
+      await voidPass(jobCtx, system, f.pass.id, live(f));
+      await drainWalletProviderSync(jobCtx);
+      expect(only('genericObject')).toMatchObject({ state: 'INACTIVE' });
+    } finally {
+      delete env.KEK_V2;
+    }
   });
 
   it('parks the instance until the next upcoming event date, then recompiles', async () => {

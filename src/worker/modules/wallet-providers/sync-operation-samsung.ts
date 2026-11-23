@@ -101,7 +101,7 @@ export async function runSamsungWalletProviderOperation(
         attempt,
         assertCurrent,
         onProviderResponse,
-        ...(state === 'DELETED'
+        ...(op.kind === 'revoke'
           ? { retirement }
           : { refresh: { instanceId: op.instanceId, operationVersion: op.version } }),
       });
@@ -130,7 +130,7 @@ export async function runSamsungWalletProviderOperation(
         return 'uncertain';
       }
       if (
-        state === 'DELETED' &&
+        op.kind === 'revoke' &&
         error instanceof SamsungNotificationError &&
         error.status === 204
       ) {

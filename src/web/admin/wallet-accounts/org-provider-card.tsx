@@ -48,12 +48,15 @@ export function OrgProviderCard({
   enrolment: e,
   own,
   canManage,
+  canReissue,
 }: {
   orgId: string;
   enrolment: WalletEnrolment;
   /** The organization's active own credential for this mode and provider. */
   own: WalletCredential | undefined;
   canManage: boolean;
+  /** passes:operate: sending every copy again is a pass action, not an account one. */
+  canReissue: boolean;
 }) {
   const mode = useMode();
   const actions = useWalletActions();
@@ -157,7 +160,7 @@ export function OrgProviderCard({
             ))}
           </ul>
         </div>
-        {canManage && on ? (
+        {canReissue && on ? (
           <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
             <Button size="sm" variant="outline" onClick={() => setReissuing(true)}>
               {COPY.reissue}
