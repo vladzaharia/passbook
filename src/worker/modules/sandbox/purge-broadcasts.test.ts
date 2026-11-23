@@ -54,3 +54,29 @@ describe('daily purge of test broadcasts', () => {
     expect((await all(kit.env.DB, 'SELECT id FROM passes WHERE id = ?', [pass.id])).length).toBe(1);
   });
 });
+
+describe('purge of a large test-broadcast backlog', () => {
+  it('removes one bounded slice per run and finishes the next day', async () => {
+    const old = kit.clock.now() - 40 * DAY;
+    const ids = Array.from({ length: 620 }, () => kit.fx.ids.id());
+    for (let i = 0; i < ids.length; i += 50) {
+      await Promise.all(
+        ids.slice(i, i + 50).map((id) =>
+          run(
+            kit.env.DB,
+            `INSERT INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, created_at)
+             VALUES (?, ?, 'test', 'message', 'Bulk', 'sent', '{"templateIds":["t"]}', '{"message":"Hi"}', ?)`,
+            [id, kit.org.id, old],
+          ),
+        ),
+      );
+    }
+    const left = async () =>
+      (await all<{ id: string }>(kit.env.DB, "SELECT id FROM broadcasts WHERE name = 'Bulk'"))
+        .length;
+    await dailySandbox(jobCtxOf(kit));
+    expect(await left()).toBe(120);
+    await dailySandbox(jobCtxOf(kit));
+    expect(await left()).toBe(0);
+  });
+});
