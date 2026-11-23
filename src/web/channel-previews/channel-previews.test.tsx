@@ -47,79 +47,85 @@ describe('ChannelPreviews', () => {
   const off = { on: false, source: 'template' as const, reason: 'template_off' as const };
   const gone = { on: false, source: 'org' as const, reason: 'not_enrolled' as const };
   const tab = (name: string) => screen.getByRole('radio', { name });
+  const names = () => screen.getAllByRole('radio').map((r) => r.textContent);
 
-  it('keeps every channel that is off as a locked tab with its reason', () => {
+  it('keeps a channel the template or pass turns off as a quiet tab with its reason', () => {
     show({
       channels: channels({
         google: { on: false, source: 'pass', reason: 'pass_off' },
-        samsung: gone,
         mobile: { on: false, source: 'template', reason: 'never' },
-        paper: { on: false, source: 'platform', reason: 'printing_off' },
+        paper: { on: false, source: 'template', reason: 'no_design' },
       }),
     });
-    expect(screen.getAllByRole('radio').map((r) => r.textContent)).toEqual([
+    expect(names()).toEqual([
       'Apple',
       'GoogleOff for this pass',
-      'SamsungOrganization not enrolled',
+      'Samsung',
       'MobileNever on for this template',
-      'PaperPrinting off for all organizations',
+      'PaperNo design for this template',
     ]);
     for (const [name, text] of [
       ['Google', 'Off for this pass'],
-      ['Samsung', 'Organization not enrolled'],
       ['Mobile', 'Never on for this template'],
-      ['Paper', 'Printing off for all organizations'],
+      ['Paper', 'No design for this template'],
     ] as const) {
       const t = tab(name);
+      expect(t).toHaveAttribute('data-off');
       expect(t).not.toHaveAttribute('aria-disabled');
-      expect(t).toHaveAttribute('title', text);
+      expect(t).not.toHaveAttribute('title');
       expect(t).toHaveAccessibleDescription(text);
+      // No lock or any other icon: the hatch says it.
+      expect(t.querySelector('svg')).toBeNull();
     }
-    expect(tab('Apple')).not.toHaveAttribute('aria-disabled');
+    expect(tab('Apple')).not.toHaveAttribute('data-off');
+    expect(tab('Samsung')).not.toHaveAttribute('data-off');
+  });
+
+  it('has no tab for a channel PassBook, the plan or the organization stops', () => {
+    show({
+      channels: channels({
+        google: { on: false, source: 'platform', reason: 'not_released' },
+        samsung: gone,
+        paper: { on: false, source: 'platform', reason: 'not_included' },
+      }),
+    });
+    expect(names()).toEqual(['Apple', 'Mobile']);
+    expect(screen.queryByRole('radio', { name: 'Google' })).toBeNull();
+    expect(document.querySelector('[data-locked]')).toBeNull();
   });
 
   it('says Off when a channel is off without a reason', () => {
     show({ channels: channels({ google: { on: false, source: 'template' } }) });
-    expect(tab('Google')).toHaveAttribute('title', 'Off');
+    expect(tab('Google')).toHaveAccessibleDescription('Off');
   });
 
-  it('opens a locked tab to name the level that stops it', async () => {
+  it('opens an off tab to say why and where it turns back on, with no lock on the choice', async () => {
     const user = userEvent.setup();
     show({
-      channels: channels({ google: off, samsung: gone }),
+      channels: channels({
+        google: off,
+        mobile: { on: false, source: 'pass', reason: 'pass_off' },
+      }),
       lockedAction: ({ level }) => <a href="#fix">Fix at {level}</a>,
     });
     await user.click(tab('Google'));
     expect(tab('Google')).toBeChecked();
-    const pane = screen.getByText('Google Wallet: Off for this template').closest('[data-locked]');
+    expect(tab('Google').querySelector('svg')).toBeNull();
+    const pane = screen.getByText('Google Wallet').closest('[data-locked]');
     expect(pane).toHaveAttribute('data-locked', 'template');
-    expect(pane).toHaveTextContent('Template stops it');
+    expect(pane).toHaveTextContent('Off for this template');
     expect(screen.getByRole('link', { name: 'Fix at template' })).toBeInTheDocument();
     // The card stays behind the veil, greyed and hidden from assistive tech.
     expect(screen.getByTestId('apple-pane').parentElement).toHaveAttribute('aria-hidden', 'true');
-    await user.click(tab('Samsung'));
-    expect(
-      screen.getByText('Samsung Wallet: Organization not enrolled').closest('[data-locked]'),
-    ).toHaveAttribute('data-locked', 'org');
+    await user.click(tab('Mobile'));
+    const passPane = document.querySelector('[data-locked]');
+    expect(passPane).toHaveAttribute('data-locked', 'pass');
+    expect(passPane).toHaveTextContent('MobileOff for this pass');
     await user.click(tab('Apple'));
     expect(screen.queryByRole('link', { name: /Fix at/ })).toBeNull();
   });
 
-  it('names PassBook or Plan for a platform stop and a plan refusal', async () => {
-    const user = userEvent.setup();
-    show({
-      channels: channels({
-        paper: { on: false, source: 'platform', reason: 'printing_off' },
-        samsung: { on: false, source: 'platform', reason: 'not_included' },
-      }),
-    });
-    await user.click(tab('Paper'));
-    expect(document.querySelector('[data-locked]')).toHaveAttribute('data-locked', 'passbook');
-    await user.click(tab('Samsung'));
-    expect(document.querySelector('[data-locked]')).toHaveAttribute('data-locked', 'plan');
-  });
-
-  it('arrow keys move through locked tabs too', async () => {
+  it('arrow keys move through off tabs too', async () => {
     const user = userEvent.setup();
     show({ channels: channels({ google: off, samsung: off }) });
     tab('Apple').focus();
@@ -132,6 +138,22 @@ describe('ChannelPreviews', () => {
   it('starts on the first enabled channel', () => {
     show({ channels: channels({ apple: off, google: off }) });
     expect(tab('Samsung')).toBeChecked();
+  });
+
+  it('moves the selection when the selected channel loses its tab', async () => {
+    const user = userEvent.setup();
+    const { rerender } = show();
+    await user.click(tab('Samsung'));
+    rerender(
+      <ChannelPreviews
+        source={source}
+        apple={<div data-testid="apple-pane" />}
+        paper={<div data-testid="paper-pane" />}
+        channels={channels({ samsung: gone })}
+      />,
+    );
+    expect(tab('Apple')).toBeChecked();
+    expect(screen.queryByRole('radio', { name: 'Samsung' })).toBeNull();
   });
 
   it('moves the selection when the selected channel turns off', () => {
@@ -152,9 +174,7 @@ describe('ChannelPreviews', () => {
   it('shows the same tabs for a pass and a template with the same channels', () => {
     const same = channels({ apple: off, paper: gone });
     const read = () =>
-      screen
-        .getAllByRole('radio')
-        .map((r) => [r.textContent, r.getAttribute('aria-disabled'), r.getAttribute('title')]);
+      screen.getAllByRole('radio').map((r) => [r.textContent, r.hasAttribute('data-off')]);
     const pass = show({ channels: same });
     const first = read();
     pass.unmount();

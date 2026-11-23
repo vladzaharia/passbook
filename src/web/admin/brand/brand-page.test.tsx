@@ -209,17 +209,16 @@ describe('Brand and channels', () => {
     expect(screen.queryByRole('button', { name: 'Add logo' })).toBeNull();
   });
 
-  it('greys a plan-locked preview under its reason with Ask PassBook, and draws Paper otherwise', async () => {
-    const user = userEvent.setup();
+  it('has no preview tab for a channel the plan or PassBook stops', async () => {
     await setup(viewOf(readyFacts()));
     const tabs = await screen.findByRole('radiogroup', { name: 'Preview' });
-    await user.click(within(tabs).getByRole('radio', { name: /Paper/ }));
+    expect(
+      within(tabs)
+        .getAllByRole('radio')
+        .map((r) => r.textContent),
+    ).toEqual(['Apple', 'Page', 'Email']);
     const stage = screen.getByRole('region', { name: 'Preview' });
-    expect(within(stage).getByText('Paper: Not in your plan')).toBeInTheDocument();
-    expect(within(stage).getByText('Plan stops it')).toBeInTheDocument();
-    expect(within(stage).getByRole('link', { name: 'Ask PassBook' })).toBeInTheDocument();
-    await user.click(within(tabs).getByRole('radio', { name: /Google/ }));
-    expect(within(stage).getByText('Google Wallet: Not available yet')).toBeInTheDocument();
+    expect(stage.querySelector('[data-locked]')).toBeNull();
     expect(within(stage).queryByRole('link', { name: 'Ask PassBook' })).toBeNull();
   });
 
