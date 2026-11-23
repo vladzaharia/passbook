@@ -28,6 +28,8 @@ const SLOT_READS: Record<string, string> = {
     'retention by generation: deletes every settled row older than the pass generation',
   'repo-instance-slot-sql.ts':
     'the insert guard: older epochs must be settled channel-off predecessors',
+  'repo-notify-budget.ts':
+    'budget by pass: the latest generation among live google rows (MAX subselect), or by instance id',
   'repo-instance-retirement-staging.ts':
     'by instance id; channel-off staging also by pass generation',
 };
