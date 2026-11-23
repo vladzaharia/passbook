@@ -39,7 +39,7 @@ Send `modes: ["test"]` and an Idempotency-Key. A Test key may name only `test`. 
 
 {{show release-try}}
 
-The second call replays the first: same key, same body, same answer, one release. The same key with another body is 409 `IDEMPOTENCY_KEY_REUSED`. A repeat while the first still runs is 409 `IDEMPOTENCY_IN_PROGRESS`.
+The second call replays the first: same key, same body, same answer, one release. The same key with another body is 422 `IDEMPOTENCY_KEY_REUSED`. A repeat while the first still runs is 409 `IDEMPOTENCY_IN_PROGRESS`.
 
 ## Release
 

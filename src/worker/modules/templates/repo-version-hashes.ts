@@ -62,15 +62,14 @@ export function versionHashesSql(
      WHERE v.template_id = ? AND v.version = ?
        AND NOT EXISTS (SELECT 1 FROM template_version_hashes h
          WHERE h.template_id = v.template_id AND h.version = v.version)
-       AND (? IS NULL OR EXISTS (SELECT 1 FROM template_candidates c WHERE c.id = ?))`,
+       ${candidateId === undefined ? '' : 'AND EXISTS (SELECT 1 FROM template_candidates c WHERE c.id = ?)'}`,
     params: [
       hashes.contentHash,
       JSON.stringify(hashes.assetHashes),
       now,
       templateId,
       version,
-      candidateId ?? null,
-      candidateId ?? null,
+      ...(candidateId === undefined ? [] : [candidateId]),
     ],
   };
 }

@@ -77,7 +77,7 @@ export async function reserveWorkflowReleases(
          JOIN orgs expected_org ON expected_org.id = expected_scope.org_id AND expected_org.status = 'active'
          JOIN template_releases expected_release
            ON expected_release.id = ? AND expected_release.generation = ? AND expected_release.version = ?
-         WHERE (? IS NULL OR expected_release.version = ?)
+         WHERE ${q.version === null ? '1 = 1' : 'expected_release.version = ?'}
            AND expected_release.id = (${effectiveReleaseIdSql({
              templateIdSql: 'expected_scope.template_id',
              orgIdSql: 'expected_scope.org_id',
@@ -94,8 +94,7 @@ export async function reserveWorkflowReleases(
         q.expectedRelease.id,
         q.expectedRelease.generation,
         q.expectedRelease.version,
-        q.version,
-        q.version,
+        ...(q.version === null ? [] : [q.version]),
       ]
     : [];
 
@@ -155,8 +154,8 @@ export async function reserveWorkflowReleases(
          JOIN orgs o ON o.id = pass_scope.org_id AND o.status = 'active'
          JOIN template_releases r
            ON r.template_id = pass_scope.template_id AND r.mode = pass_scope.mode AND r.provider = 'apple'
-         WHERE (? IS NULL OR r.version = ?) AND ${effectiveHeadSql}`,
-        [q.instanceId, ...scopeParams, q.version, q.version],
+         WHERE ${q.version === null ? '1 = 1' : 'r.version = ?'} AND ${effectiveHeadSql}`,
+        [q.instanceId, ...scopeParams, ...(q.version === null ? [] : [q.version])],
       ),
       stmt(
         db,

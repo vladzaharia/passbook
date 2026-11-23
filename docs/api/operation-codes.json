@@ -5848,6 +5848,7 @@
   "scan post /tags/bind": [
     "ACTOR_CHANGED",
     "API_KEY_NO_APPROVAL",
+    "API_VERSION_UNKNOWN",
     "AUTHORITY_DENIED",
     "CONFLICT",
     "FEATURE_LIMIT_REACHED",
