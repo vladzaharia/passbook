@@ -125,9 +125,9 @@ pre.src .ln.hl {
 }
 /* The caller's own key never renders: a chip that reads the environment. */
 .envchip {
-  display: inline-flex;
-  align-items: center;
   padding: 0 5px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
   border-radius: 4px;
   color: var(--pk-accent-fg);
   background: var(--pk-accent-subtle);
@@ -290,8 +290,12 @@ pre.src .ln.hl {
 }
 .examples {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin-top: 16px;
+}
+.example {
+  min-width: 0;
 }
 .example > summary {
   cursor: pointer;

@@ -28,7 +28,16 @@ export function CopyButton({ label }: { label: string }) {
  * Language tabs without script: radios and labels, the panel shown by :has(:checked). The island
  * keeps every block on the language you chose last.
  */
-export function SampleTabs({ id, samples }: { id: string; samples: Sample[] }) {
+/** `name` makes each code region's label unique on a page that holds several blocks. */
+export function SampleTabs({
+  id,
+  samples,
+  name,
+}: {
+  id: string;
+  samples: Sample[];
+  name?: string;
+}) {
   return (
     <div className="code samples" data-samples>
       <div className="code-h" role="radiogroup" aria-label="Language">
@@ -58,7 +67,7 @@ export function SampleTabs({ id, samples }: { id: string; samples: Sample[] }) {
       </div>
       {samples.map((s) => (
         <div key={s.lang} className="panel" data-panel={s.lang}>
-          <CodeRegion html={highlight(s.code, s.lang)} label={`${s.label} sample`} />
+          <CodeRegion html={highlight(s.code, s.lang)} label={`${name ? `${name}: ` : ''}${s.label} sample`} />
         </div>
       ))}
       {samples.length > 1 ? (
