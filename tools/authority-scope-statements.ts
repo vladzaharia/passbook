@@ -54,8 +54,9 @@ export function stripComments(source: string, cx?: Cx): Stripped {
     }
     if (ch === '/' && next === '*') {
       const end = source.indexOf('*/', i + 2);
+      const skipped = source.slice(i, end === -1 ? source.length : end + 2);
       i = end === -1 ? source.length : end + 1;
-      text += ' ';
+      text += ` ${'\n'.repeat(skipped.split('\n').length - 1)}`;
       continue;
     }
     if (ch === "'" || ch === '"') {
@@ -160,6 +161,10 @@ function constantBody(stripped: Stripped, name: string, at: number, depth: numbe
       literal[0],
       depth + 1,
     );
+  const init = start === -1 ? -1 : stripped.text.indexOf(';', start);
+  const ternary = init === -1 ? null : ternaryBodies(stripped.text.slice(start, init));
+  if (ternary)
+    return `${expand(stripped, ternary[0], start, depth + 1)}|${expand(stripped, ternary[1], start, depth + 1)}`;
   const cx = stripped.cx;
   const imported = importsOf(stripped).find((i) => i.local === name);
   if (!cx || !imported) return null;
@@ -177,6 +182,41 @@ function constantBody(stripped: Stripped, name: string, at: number, depth: numbe
   return lit ? expand(other, other.text.slice(lit[0] + 1, lit[1] - 1), lit[0], depth + 1) : null;
 }
 
+/** The body of a whole string or template literal, or null when `s` is anything else. */
+function literalBody(s: string): string | null {
+  const q = s[0];
+  if (q !== "'" && q !== '"' && q !== '`') return null;
+  for (let i = 1; i < s.length; i++) {
+    if (s[i] === '\\') i++;
+    else if (q === '`' && s[i] === '$' && s[i + 1] === '{') i = closeBrace(s, i + 2);
+    else if (s[i] === q) return i === s.length - 1 ? s.slice(1, i) : null;
+  }
+  return null;
+}
+
+/** `cond ? 'a' : 'b'` where both branches are whole literals: their bodies. Anything else is null. */
+function ternaryBodies(expr: string): [string, string] | null {
+  let quote = '';
+  let q = -1;
+  for (let i = 0; i < expr.length; i++) {
+    const c = expr[i];
+    if (quote) {
+      if (c === '\\') i++;
+      else if (quote === '`' && c === '$' && expr[i + 1] === '{') i = closeBrace(expr, i + 2);
+      else if (c === quote) quote = '';
+    } else if (c === "'" || c === '"' || c === '`') quote = c;
+    else if (c === '(' || c === '[' || c === '{') return null;
+    else if (c === '?' && expr[i + 1] === '.') i++;
+    else if (c === '?' && q === -1) q = i;
+    else if (c === ':' && q !== -1) {
+      const a = literalBody(expr.slice(q + 1, i).trim());
+      const b = literalBody(expr.slice(i + 1).trim());
+      return a !== null && b !== null ? [a, b] : null;
+    }
+  }
+  return null;
+}
+
 /** Interpolations: a same-file constant is inlined, anything else keeps its whitespace-collapsed text. */
 function expand(stripped: Stripped, raw: string, at: number, depth: number): string {
   let out = '';
@@ -187,7 +227,11 @@ function expand(stripped: Stripped, raw: string, at: number, depth: number): str
         .slice(i + 2, end)
         .replace(/\s+/g, ' ')
         .trim();
-      const body = IDENT.test(expr) ? constantBody(stripped, expr, at, depth) : null;
+      const branches = depth < MAX_INLINE_DEPTH ? ternaryBodies(expr) : null;
+      const body = IDENT.test(expr)
+        ? constantBody(stripped, expr, at, depth)
+        : branches &&
+          `${expand(stripped, branches[0], at, depth + 1)}|${expand(stripped, branches[1], at, depth + 1)}`;
       out += body === null ? `\${${expr}}` : `(${body})`;
       i = end;
     } else out += raw[i];
@@ -232,7 +276,7 @@ function concatenatedTail(stripped: Stripped, from: number): string {
 export function describeStatement(
   stripped: Stripped,
   from: number,
-): { text: string; holder: string | null; exported: boolean } {
+): { text: string; holder: string | null; exported: boolean; calls: string[] } {
   const literal = stripped.literals.find(([start, end]) => start <= from && from < end);
   const end = literal ? literal[1] - 1 : Math.min(stripped.text.length, from + 400);
   const semicolon = stripped.text.indexOf(';', from);
@@ -240,7 +284,27 @@ export function describeStatement(
   const raw = stripped.text.slice(from, cut ? semicolon : end);
   let text = expand(stripped, raw, from, 0);
   if (literal && !cut) text += expand(stripped, concatenatedTail(stripped, literal[1]), from, 0);
-  return { text, ...holderOf(stripped, from) };
+  return { text, calls: opaqueInterpolations(text), ...holderOf(stripped, from) };
+}
+
+/**
+ * Interpolations `expand()` left as text. Their SQL is not in what is hashed, so a pin over one would
+ * survive any change to it: the caller must fail instead of trusting the pin.
+ */
+export function opaqueInterpolations(expanded: string): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < expanded.length; i++)
+    if (expanded[i] === '$' && expanded[i + 1] === '{') {
+      const end = closeBrace(expanded, i + 2);
+      out.push(
+        expanded
+          .slice(i + 2, end)
+          .replace(/\s+/g, ' ')
+          .trim(),
+      );
+      i = end;
+    }
+  return out;
 }
 
 /** The `const NAME = <literal | { ... } | [ ... ]>` that holds a statement, when no `;` lies between. */

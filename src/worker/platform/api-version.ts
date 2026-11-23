@@ -1,4 +1,4 @@
-import type { Context } from 'hono';
+import type { Context, Next } from 'hono';
 import versions from '../../../docs/api/versions.json' with { type: 'json' };
 import { ValidationError } from './errors-core.ts';
 
@@ -20,6 +20,12 @@ export function pinnedVersion(c: Context): string | null {
     );
   return raw;
 }
+
+/** Middleware: refuses an unlisted `PassBook-Version` before the route runs. */
+export const apiVersionGate = async (c: Context, next: Next): Promise<void> => {
+  pinnedVersion(c);
+  await next();
+};
 
 /** True when the request pins `date` or a later version. */
 export const atLeast = (c: Context, date: string): boolean => {

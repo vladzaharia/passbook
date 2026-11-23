@@ -248,7 +248,7 @@ test('a release replayed with its key answers the same and releases nothing twic
 
     // The key belongs to its body.
     const reused = await release(api, templateId, { ...body, modes: ['test'] }, key);
-    expect(reused.status).toBe(409);
+    expect(reused.status).toBe(422);
     expect(reused.json.code).toBe('IDEMPOTENCY_KEY_REUSED');
 
     // A key is required to release, and a dry run needs none.

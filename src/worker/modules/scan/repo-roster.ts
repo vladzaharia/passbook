@@ -45,8 +45,12 @@ export const rosterPage = (
      FROM passes p
      WHERE p.org_id = ? AND p.mode = ? AND p.id > ?
        AND p.template_id IN (SELECT value FROM json_each(?))
-       AND (? IS NULL OR p.modified_at >= ?
-            OR EXISTS (SELECT 1 FROM scan_gates c WHERE c.pass_id = p.id AND c.kind = 'check_in' AND c.last_at >= ?))
+       ${
+         scope.since === null
+           ? ''
+           : `AND (p.modified_at >= ?
+            OR EXISTS (SELECT 1 FROM scan_gates c WHERE c.pass_id = p.id AND c.kind = 'check_in' AND c.last_at >= ?))`
+       }
      ORDER BY p.id LIMIT ?`,
     [
       JSON.stringify(['', ...scope.gateScopes]),
@@ -54,9 +58,7 @@ export const rosterPage = (
       scope.mode,
       after,
       JSON.stringify(scope.templateIds),
-      scope.since,
-      scope.since,
-      scope.since,
+      ...(scope.since === null ? [] : [scope.since, scope.since]),
       limit,
     ],
   );

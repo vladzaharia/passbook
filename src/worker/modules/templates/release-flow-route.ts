@@ -8,13 +8,7 @@ import {
 import { modeOf } from '../../platform/auth.ts';
 import { proveCapability } from '../../platform/auth-capability.ts';
 import type { AppBindings } from '../../platform/context.ts';
-import {
-  BadRequestError,
-  ConflictError,
-  ForbiddenError,
-  toProblem,
-  ValidationError,
-} from '../../platform/errors.ts';
+import { BadRequestError, ForbiddenError, toProblem } from '../../platform/errors.ts';
 import { idempotencyKeyHeader, idempotentJson, principalOf } from '../../platform/idempotency.ts';
 import { register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
@@ -45,17 +39,6 @@ export function reviewRequiredResponse(error: ReviewRequiredError, requestId: st
       },
     },
   );
-}
-
-async function once<T>(run: () => Promise<T>): Promise<T> {
-  try {
-    return await run();
-  } catch (error) {
-    // Why: this route answers a reused key with 409, like every other conflict of the release.
-    if (error instanceof ValidationError && error.code === 'IDEMPOTENCY_KEY_REUSED')
-      throw new ConflictError(error.message, 'IDEMPOTENCY_KEY_REUSED');
-    throw error;
-  }
 }
 
 export function registerTemplateReleaseFlow(router: Router): void {
@@ -118,14 +101,12 @@ export function registerTemplateReleaseFlow(router: Router): void {
           );
         if (idempotencyKeyHeader(c.req.header('idempotency-key')) === undefined)
           throw new BadRequestError('Send an Idempotency-Key header.', 'IDEMPOTENCY_KEY_REQUIRED');
-        return await once(() =>
-          idempotentJson(
-            c,
-            ctx,
-            { orgId, mode: 'release', principal: principalOf(auth), body },
-            200,
-            () => releaseTemplate(ctx, auth, id, orgId, body, { ...options, dryRun: false }),
-          ),
+        return await idempotentJson(
+          c,
+          ctx,
+          { orgId, mode: 'release', principal: principalOf(auth), body },
+          200,
+          () => releaseTemplate(ctx, auth, id, orgId, body, { ...options, dryRun: false }),
         );
       } catch (error) {
         if (error instanceof ReviewRequiredError)

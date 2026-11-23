@@ -1,6 +1,7 @@
+import { env } from 'cloudflare:workers';
 import { Hono } from 'hono';
 import { describe, expect, it } from 'vitest';
-import { API_VERSIONS, atLeast, pinnedVersion } from './api-version.ts';
+import { API_VERSIONS, apiVersionGate, atLeast, pinnedVersion } from './api-version.ts';
 import type { AppBindings } from './context.ts';
 import { handleError } from './error-handler.ts';
 
@@ -26,5 +27,48 @@ describe('PassBook-Version', () => {
     const res = await get({ 'PassBook-Version': '2026-01-01' });
     expect(res.status).toBe(422);
     expect(((await res.json()) as { code: string }).code).toBe('API_VERSION_UNKNOWN');
+  });
+
+  it('refuses an unlisted date in middleware, before the handler writes', async () => {
+    let ran = false;
+    const gated = new Hono<AppBindings>();
+    gated.onError((e, c) => handleError(e, c) as Response);
+    gated.use('*', apiVersionGate);
+    gated.post('/', (c) => {
+      ran = true;
+      return c.json({});
+    });
+    const post = (headers: Record<string, string> = {}) =>
+      gated.request('/', { method: 'POST', headers });
+    const res = await post({ 'PassBook-Version': '2026-01-01' });
+    expect(res.status).toBe(422);
+    expect(((await res.json()) as { code: string }).code).toBe('API_VERSION_UNKNOWN');
+    expect(ran).toBe(false);
+    expect((await post({ 'PassBook-Version': '2026-11-22' })).status).toBe(200);
+    expect(ran).toBe(true);
+    ran = false;
+    expect((await post()).status).toBe(200);
+    expect(ran).toBe(true);
+  });
+
+  it('is wired ahead of every /api/v1 route', async () => {
+    const { createApp } = await import('../app.ts');
+    const res = await createApp().request(
+      'https://wallet.test/api/v1/passes',
+      { headers: { 'PassBook-Version': '2026-01-01' } },
+      env,
+    );
+    expect(res.status).toBe(422);
+    expect(((await res.json()) as { code: string }).code).toBe('API_VERSION_UNKNOWN');
+  });
+
+  it('does not gate a route outside /api/v1', async () => {
+    const { createApp } = await import('../app.ts');
+    const res = await createApp().request(
+      'https://wallet.test/health',
+      { headers: { 'PassBook-Version': '2026-01-01' } },
+      env,
+    );
+    expect(res.status).toBe(200);
   });
 });

@@ -314,7 +314,7 @@ describe('release in one call', () => {
       await send(`/${t.templateId}/release`, { ...body, modes: ['test'] }, owner, {
         key: 'same-key',
       }),
-      409,
+      422,
       'IDEMPOTENCY_KEY_REUSED',
     );
     await expectProblem(
