@@ -212,6 +212,8 @@ test('blocking Mobile shows the counts and stops the /p code', async ({ page, br
   expect((await anon.request.get(code)).status()).toBe(200);
 
   await page.goto(brandUrl(org.id));
+  await page.locator('#channels').scrollIntoViewIfNeeded();
+  await shoot(page, 'o10-3-channels');
   // Paper and NFC are on for the org but no template uses them: the dot reads off, the switch stays on.
   for (const channel of ['paper', 'nfc']) {
     const row = page.locator(`[data-channel="${channel}"]`);
@@ -228,7 +230,8 @@ test('blocking Mobile shows the counts and stops the /p code', async ({ page, br
   await shoot(page, 'o10-3-block-review');
   await dialog.getByRole('button', { name: 'Block and save' }).click();
   await expect(dialog).toBeHidden();
-  await expect(mobile).toContainText('Blocked');
+  await expect(mobile.getByRole('switch')).not.toBeChecked();
+  await expect(mobile).not.toContainText('Blocked');
   await shoot(page, 'o10-3-blocked');
 
   expect((await anon.request.get(code)).status()).toBe(404);
