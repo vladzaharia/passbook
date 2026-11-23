@@ -67,7 +67,10 @@ export function SampleTabs({
       </div>
       {samples.map((s) => (
         <div key={s.lang} className="panel" data-panel={s.lang}>
-          <CodeRegion html={highlight(s.code, s.lang)} label={`${name ? `${name}: ` : ''}${s.label} sample`} />
+          <CodeRegion
+            html={highlight(s.code, s.lang)}
+            label={`${name ? `${name}: ` : ''}${s.label} sample`}
+          />
         </div>
       ))}
       {samples.length > 1 ? (
