@@ -5,9 +5,11 @@ import {
   ENTITLEMENT_KEYS,
   ENTITLEMENT_PRESETS,
   type EntitlementKey,
+  type EntitlementPreset,
   entitlementJson,
   presetValues,
 } from '../../shared/contracts/entitlements.ts';
+import { PRESET_LABEL } from '../../shared/copy/entitlements.ts';
 import { templateSyncGrant } from '../jobs/template-sync.ts';
 import { grant } from './authority.ts';
 import type { Check } from './authority-checks.ts';
@@ -62,8 +64,49 @@ describe('storage and seed', () => {
       for (const r of rows)
         expect(r.value, `${preset} ${r.key}`).toBe(entitlementJson(want[r.key as EntitlementKey]));
     }
-    const meta = await all<{ preset: string }>(db, 'SELECT preset FROM entitlement_preset_meta');
+    const meta = await all<{ preset: string; label: string; is_plan: number }>(
+      db,
+      'SELECT preset, label, is_plan FROM entitlement_preset_meta',
+    );
     expect(meta.map((m) => m.preset).sort()).toEqual([...ENTITLEMENT_PRESETS].sort());
+    for (const m of meta) {
+      expect(m.label, m.preset).toBe(PRESET_LABEL[m.preset as EntitlementPreset]);
+      expect(m.is_plan, m.preset).toBe(m.preset === 'developer' ? 0 : 1);
+    }
+  });
+
+  it('0204 keeps a small footer on a plan that keeps the full one, and nobody else', async () => {
+    const migration = (
+      env as unknown as { TEST_MIGRATIONS: { name: string; queries: string[] }[] }
+    ).TEST_MIGRATIONS.find((m) => m.name === '0204_plans.sql');
+    const keep = migration?.queries.filter(
+      (q) => /org_entitlement(_overrides|s)\b/.test(q) && /Kept the small/.test(q),
+    );
+    expect(keep?.length).toBe(2);
+    const orgs: [string, string, string][] = [
+      ['pl-trial', 'trial', '{"mark":"small"}'],
+      ['pl-full', 'trial', '{"mark":"full"}'],
+      ['pl-std', 'standard', '{"mark":"small"}'],
+      ['pl-unl', 'legacy', '{"mark":"small"}'],
+    ];
+    for (const [id, preset, branding] of orgs) {
+      await run(
+        db,
+        'INSERT INTO orgs (id, slug, name, branding, created_at, updated_at) VALUES (?, ?, ?, ?, 1, 1)',
+        [id, id, id, branding],
+      );
+      await run(db, 'INSERT INTO org_entitlements (org_id, preset, updated_at) VALUES (?, ?, 1)', [
+        id,
+        preset,
+      ]);
+    }
+    for (const q of keep ?? []) await run(db, q);
+    const rows = await all<{ org_id: string; value: string; revision: number }>(
+      db,
+      `SELECT o.org_id, o.value, e.revision FROM org_entitlement_overrides o
+       JOIN org_entitlements e ON e.org_id = o.org_id WHERE o.org_id LIKE 'pl-%' AND o.key = 'brand.mark'`,
+    );
+    expect(rows).toEqual([{ org_id: 'pl-trial', value: '"quiet"', revision: 2 }]);
   });
 
   it('every existing org gets a legacy row from the migration, and a row already there stays', async () => {

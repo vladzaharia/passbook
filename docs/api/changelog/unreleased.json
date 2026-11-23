@@ -2293,6 +2293,22 @@
     "note": "addMe (default true) makes the creating admin an org_admin of the new org, with the invitation and membership written in the create batch."
   },
   {
+    "key": "POST /api/v1/orgs body.preset: enum value \"premium\" added",
+    "class": "additive",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "body.preset: enum value \"premium\" added",
+    "note": "Presets starter and premium join trial, standard and legacy. legacy is labelled Unlimited in the console; its id is unchanged."
+  },
+  {
+    "key": "POST /api/v1/orgs body.preset: enum value \"starter\" added",
+    "class": "additive",
+    "operationId": "orgs.postOrgs",
+    "op": "POST /api/v1/orgs",
+    "change": "body.preset: enum value \"starter\" added",
+    "note": "Presets starter and premium join trial, standard and legacy. legacy is labelled Unlimited in the console; its id is unchanged."
+  },
+  {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.postOrgsByIdStatus",

@@ -529,7 +529,7 @@ ORDER BY a.id
 
 ### Entitlements gate
 
-`npm run deploy -- --apply` (and `--promote --apply`) runs `entitlements-gate` remotely after the migrations and refuses to promote while it lists an org. Each row is an org with no `org_entitlements` row: every key call and guarded session call of that org is refused (`FEATURE_NOT_INCLUDED`), and so are wallet enable and offers, new prints and tag binds (the plan fails closed everywhere). Repair: Features tab, apply a preset (platform admin), or insert `legacy` by hand.
+`npm run deploy -- --apply` (and `--promote --apply`) runs `entitlements-gate` remotely after the migrations and refuses to promote while it lists an org. Each row is an org with no `org_entitlements` row: every key call and guarded session call of that org is refused (`FEATURE_NOT_INCLUDED`), and so are wallet enable and offers, new prints and tag binds (the plan fails closed everywhere). Repair: Features tab, apply a plan (platform admin), or insert `legacy` (Unlimited) by hand.
 
 ```sql entitlements-gate
 SELECT o.id FROM orgs o WHERE NOT EXISTS (SELECT 1 FROM org_entitlements e WHERE e.org_id = o.id) ORDER BY o.id

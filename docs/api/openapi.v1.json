@@ -22999,9 +22999,11 @@
           "preset": {
             "type": "string",
             "enum": [
-              "legacy",
               "trial",
-              "standard"
+              "starter",
+              "standard",
+              "premium",
+              "legacy"
             ]
           },
           "addMe": {

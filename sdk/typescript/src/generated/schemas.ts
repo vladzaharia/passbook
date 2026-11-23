@@ -6692,7 +6692,7 @@ export type PlatformOrgsCreateParams = {
   name: string;
   defaultIdentityId?: string | null;
   branding?: OrgBranding;
-  preset?: "legacy" | "trial" | "standard";
+  preset?: "trial" | "starter" | "standard" | "premium" | "legacy";
   addMe?: boolean;
 };
 

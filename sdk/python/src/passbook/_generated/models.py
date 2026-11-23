@@ -8283,7 +8283,7 @@ class PlatformOrgsCreateParams(_Model):
     name: str
     defaultIdentityId: str | None = None
     branding: OrgBranding | None = None
-    preset: _Literal["legacy", "trial", "standard"] | str | None = None
+    preset: _Literal["trial", "starter", "standard", "premium", "legacy"] | str | None = None
     addMe: bool | None = None
 
 class PlatformOrgsDeleteResponse(_Model):
