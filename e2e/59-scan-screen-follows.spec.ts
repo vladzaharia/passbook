@@ -1,9 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 import { apiAs, createPass, uid } from './helpers/api.ts';
+import { stateFile } from './helpers/auth.ts';
 import { pairScanner } from './helpers/pair.ts';
 import { readSeed } from './helpers/seed.ts';
-import { shots } from './helpers/shots.ts';
 
 test('a customer screen follows only the door it is bound to', async ({ browser }) => {
   const api = await apiAs('admin');
@@ -48,6 +48,11 @@ test('a customer screen follows only the door it is bound to', async ({ browser 
       await field.press('Enter');
       await expect(door.getByTestId('scan-result')).toBeVisible();
     };
+    for (const screen of [screenN, screenA])
+      await expect(screen.getByTestId('duo-customer-display')).toHaveAttribute(
+        'data-status',
+        'ready',
+      );
     for (const door of [doorN, doorS]) await door.getByTestId('scan-start').click();
     const southId = uid('SOUTH').toUpperCase();
     await createPass(api, orgId, { holder: uid('South Guest'), memberId: southId });
@@ -64,8 +69,13 @@ test('a customer screen follows only the door it is bound to', async ({ browser 
   }
 });
 
-test('the admin picks the scanners a customer screen follows', async ({ page }) => {
+test('the admin picks the scanners a customer screen follows', async ({ browser }) => {
   const api = await apiAs('admin');
+  const context = await browser.newContext({
+    storageState: stateFile('admin'),
+    reducedMotion: 'reduce',
+  });
+  const page = await context.newPage();
   try {
     const orgId = readSeed().org.id;
     const session = await api.send('POST', '/api/v1/scanning-sessions', {
@@ -87,12 +97,40 @@ test('the admin picks the scanners a customer screen follows', async ({ page }) 
       .getByRole('button', { name: 'Configure device', exact: true })
       .click();
     const sheet = page.getByRole('dialog', { name: `Configure ${screen.name}` });
+    const sheetShots = async (name: string) => {
+      const dir = process.env.SHOTS_DIR;
+      if (!dir) return;
+      await sheet.getByRole('heading', { name: 'Scanners shown' }).scrollIntoViewIfNeeded();
+      for (const [width, height] of [
+        [1440, 900],
+        [834, 1112],
+        [390, 844],
+      ] as const)
+        for (const scheme of ['light', 'dark'] as const) {
+          await page.setViewportSize({ width, height });
+          await page.emulateMedia({ colorScheme: scheme });
+          await page.waitForTimeout(250);
+          await sheet.getByRole('heading', { name: 'Scanners shown' }).scrollIntoViewIfNeeded();
+          await sheet.evaluate((el) => {
+            for (const n of [el, ...el.querySelectorAll('*')])
+              if (
+                n.scrollHeight > n.clientHeight + 10 &&
+                /auto|scroll/.test(getComputedStyle(n).overflowY)
+              )
+                n.scrollTop = n.scrollHeight;
+          });
+          await page.waitForTimeout(150);
+          await page.screenshot({ path: `${dir}/${name}-${width}-${scheme}.png` });
+        }
+      await page.setViewportSize({ width: 1280, height: 720 });
+      await page.emulateMedia({ colorScheme: 'light' });
+    };
     const all = sheet.getByRole('switch', { name: 'All scanners in this session' });
     await expect(all).toBeChecked();
-    await shots(page, 'follows-all');
+    await sheetShots('follows-all');
     await all.click();
     await sheet.getByRole('checkbox', { name: north.name, exact: true }).click();
-    await shots(page, 'follows-chosen');
+    await sheetShots('follows-chosen');
     for (const scheme of ['light', 'dark'] as const) {
       await page.emulateMedia({ colorScheme: scheme });
       const results = await new AxeBuilder({ page }).analyze();
@@ -108,6 +146,7 @@ test('the admin picks the scanners a customer screen follows', async ({ page }) 
       stored.devices.find((d: { id: string }) => d.id === screen.id).overrides.follows,
     ).toEqual([south.id]);
   } finally {
+    await context.close();
     await api.dispose();
   }
 });
