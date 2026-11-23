@@ -75,8 +75,7 @@ describe('designer Paper tab', () => {
     await waitFor(() => expect(container.querySelector('.pp-cr80')).not.toBeNull());
   });
 
-  it('locks the Paper tab with its reason when paper is blocked for the platform', async () => {
-    const user = userEvent.setup();
+  it('has no Paper tab when printing is off for every organization', async () => {
     const { container } = renderTags(stage(), {
       '/api/v1/templates/t1/channels': channels({
         on: false,
@@ -84,15 +83,12 @@ describe('designer Paper tab', () => {
         reason: 'printing_off',
       }),
     });
-    const paper = await screen.findByRole('radio', { name: 'Paper' });
-    await waitFor(() =>
-      expect(paper).toHaveAccessibleDescription('Printing off for all organizations'),
-    );
-    await user.click(paper);
-    // The pane names the level that stops it, and no paper sheet is drawn behind it.
-    expect(container.querySelector('[data-locked="passbook"]')).not.toBeNull();
+    expect(await screen.findByTestId('wallet-card')).toBeInTheDocument();
+    // PassBook stops it, so it is not the author's to turn on: no tab, no pane, no sheet.
+    await waitFor(() => expect(screen.queryByRole('radio', { name: 'Paper' })).toBeNull());
+    expect(screen.getByRole('radio', { name: 'Apple' })).toBeChecked();
+    expect(container.querySelector('[data-locked]')).toBeNull();
     expect(container.querySelector('.pp-sheet')).toBeNull();
-    expect(screen.queryByRole('radiogroup', { name: 'Paper size' })).toBeNull();
   });
 
   it('shows a sandbox pass on paper with its TEST band, whatever the organization has off', async () => {

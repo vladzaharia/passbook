@@ -1,14 +1,13 @@
 import { Link } from '@tanstack/react-router';
-import { ChevronDown, CircleHelp, Nfc, Printer, Smartphone, Wallet } from 'lucide-react';
+import { ChevronDown, Nfc, Printer, Smartphone, Wallet } from 'lucide-react';
 import { type ReactNode, useId } from 'react';
 import { stoppingLevel } from '@/shared/channels.ts';
 import type { Channel } from '@/shared/contracts/channels.ts';
 import type { SetupChannel, SetupTemplate } from '@/shared/contracts/pass-setup.ts';
 import { CHANNEL_LABEL } from '@/shared/copy/channels.ts';
-import { channelStatusLine, PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
+import { PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { Button, StatusPill, Switch } from '@/web/ui/index.ts';
-import { ChainBadge, LockPill } from './chain-badge.tsx';
 
 export const CHANNEL_ICON = {
   apple: Wallet,
@@ -59,9 +58,9 @@ function TemplateList({
 }
 
 /**
- * One channel: icon, name, the lock pill of a level above the org, a status line, the one Allowed
- * switch (hidden while a level above stops the channel, so it never saves what cannot take
- * effect), and the chain, the channel's own part and its templates once open.
+ * One channel the org can use: icon, name, one fact (the templates that use it) and the Allowed
+ * switch; the channel's own part and its templates open under it. A channel PassBook or the plan
+ * stops never reaches this row: the card hides it.
  */
 export function ChannelRow({
   orgId,
@@ -73,7 +72,6 @@ export function ChannelRow({
   canEdit,
   onAllowed,
   part,
-  ask,
 }: {
   orgId: string;
   channel: Channel;
@@ -85,17 +83,20 @@ export function ChannelRow({
   onAllowed: (allowed: boolean) => void;
   /** The channel's own part: the Apple ID, a wallet account. */
   part?: ReactNode;
-  /** Plan-locked: where to ask for it. */
-  ask?: ReactNode;
 }) {
   const id = useId();
   const Icon = CHANNEL_ICON[channel];
   const stop = stoppingLevel(row.levels);
-  const above = stop?.state === 'locked';
-  const status = channelStatusLine({ levels: row.levels, templates: row.templates });
   const state = row.on ? 'on' : (stop?.state ?? 'off');
-  // On at the organization, but no template uses it: the dot reads as off.
-  const unused = row.on && row.templates.total > 0 && row.templates.on === 0;
+  const using = templates.filter((t) => t.channels[channel].on).map((t) => t.name);
+  const fact =
+    stop?.state === 'needs'
+      ? PASS_SETUP_COPY.status.accountNeeded
+      : using.length > 0
+        ? using.join(', ')
+        : COPY.noTemplates;
+  // Allowed, but no template uses it: the dot reads as off.
+  const unused = row.on && using.length === 0;
   return (
     <li
       data-channel={channel}
@@ -118,15 +119,14 @@ export function ChannelRow({
             <Icon className="size-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="flex flex-wrap items-center gap-2 text-sm font-medium text-fg-strong">
+            <span className="block text-sm font-medium text-fg-strong">
               {CHANNEL_LABEL[channel]}
-              <LockPill levels={row.levels} />
             </span>
             <span className="flex items-center gap-1.5 text-xs text-fg-muted">
               <span
                 aria-hidden
                 className={cn(
-                  'size-1.5 rounded-full',
+                  'size-1.5 shrink-0 rounded-full',
                   row.on && !unused
                     ? 'bg-success'
                     : stop?.state === 'needs'
@@ -134,7 +134,7 @@ export function ChannelRow({
                       : 'bg-border-strong',
                 )}
               />
-              {status}
+              <span className="truncate">{fact}</span>
             </span>
           </span>
           <ChevronDown
@@ -145,38 +145,19 @@ export function ChannelRow({
             )}
           />
         </button>
-        {above ? null : (
-          <Switch
-            aria-label={`${CHANNEL_LABEL[channel]} ${PASS_SETUP_COPY.allowed.toLowerCase()}`}
-            checked={row.allowed}
-            disabled={!canEdit}
-            onCheckedChange={onAllowed}
-          />
-        )}
+        <Switch
+          aria-label={`${CHANNEL_LABEL[channel]} ${PASS_SETUP_COPY.allowed.toLowerCase()}`}
+          checked={row.allowed}
+          disabled={!canEdit}
+          onCheckedChange={onAllowed}
+        />
       </div>
       {open ? (
         <div id={id} className="wl-rise flex flex-col gap-4 pt-3 pl-[3.25rem] max-sm:pl-0">
-          <ChainBadge levels={row.levels} templates={row.templates} />
           {part}
-          {above ? ask : <TemplateList orgId={orgId} channel={channel} templates={templates} />}
+          <TemplateList orgId={orgId} channel={channel} templates={templates} />
         </div>
       ) : null}
     </li>
-  );
-}
-
-/** Ask PassBook: a mailto to PassBook's support, for a channel the plan does not include. */
-export function AskPassbook({ channel, orgName }: { channel: Channel; orgName: string }) {
-  const subject = encodeURIComponent(
-    orgName ? `${CHANNEL_LABEL[channel]} for ${orgName}` : CHANNEL_LABEL[channel],
-  );
-  return (
-    <div>
-      <Button asChild variant="outline" size="sm" iconStart={<CircleHelp aria-hidden />}>
-        <a href={`mailto:${PASS_SETUP_COPY.support.emailPlaceholder}?subject=${subject}`}>
-          {COPY.askPassbook}
-        </a>
-      </Button>
-    </div>
   );
 }

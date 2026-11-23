@@ -63,6 +63,10 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
   44 on touch).
 - One segmented control size: 36 (44 on touch), 14 px text. The SSR side toggle (`.pc-seg`) and
   the kit `SegmentedControl` (`.wl-seg`) share `pass-card/stage-seg.css`.
+- A segment that is off but still open (`hint`) is a hatched tile with a quieter label and its
+  reason in the tooltip and description; no icon. Chosen, it looks like any choice. A channel
+  PassBook, the plan or the organization stops has no preview tab at all; only a template or pass
+  off is a tab.
 - Everything in one row shares one height. Fields are always `md`.
 - Under `pointer: coarse`: tabs, menu items, nav links and icon buttons are at least 44 px; inline
   text links get padding to a 44 px hit height.
