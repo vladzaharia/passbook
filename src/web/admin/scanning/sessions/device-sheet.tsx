@@ -1,9 +1,6 @@
 import { QrCode, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
-import type {
-  ScanningDevice,
-  ScanningSessionDetail,
-} from '@/shared/contracts/scanning-sessions.ts';
+import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { DiscardDialog } from '@/web/ui/alert-dialog.tsx';
 import { Badge, Button, Callout, FormField, Input, Sheet, SheetContent } from '@/web/ui/index.ts';
@@ -11,6 +8,7 @@ import { useUpdateSessionDevice } from './api.ts';
 import { DeviceFollows, followable } from './device-follows.tsx';
 import { DeviceOverrides } from './device-overrides.tsx';
 import { HardwareBadges } from './hardware-badges.tsx';
+import type { SessionDetailData } from './session-live.ts';
 import { SurfacePicker } from './surface-picker.tsx';
 
 export function DeviceSheet({
@@ -22,7 +20,7 @@ export function DeviceSheet({
   onRevoke,
 }: {
   device: ScanningDevice;
-  session: ScanningSessionDetail;
+  session: SessionDetailData;
   canManage: boolean;
   onClose: () => void;
   onPair: () => void;
