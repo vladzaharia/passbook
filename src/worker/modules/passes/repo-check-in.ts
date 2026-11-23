@@ -32,6 +32,7 @@ export function savePassCheckIn(
       : fence.authority.scope !== 'passes:write')
   )
     return Promise.resolve({ changes: 0 });
+  const eventId = rules.eventId ?? null;
   const values = fence
     ? `SELECT p.id, p.org_id, ?, ? FROM passes p
        WHERE p.id = ? AND p.org_id = ? AND p.mode = ? AND p.version = ?
@@ -39,10 +40,14 @@ export function savePassCheckIn(
          AND p.holder_email IS ? AND p.owner_user_id IS ? AND p.link_generation = ?
          AND p.status = ? AND p.removed_at IS ? AND p.deleted_at IS NULL
          AND p.test_data_quarantined = 0
-         AND (? IS NULL OR EXISTS (
+         ${
+           eventId !== null
+             ? `AND EXISTS (
            SELECT 1 FROM scan_events e WHERE e.id = ? AND e.org_id = p.org_id
              AND e.mode = p.mode AND e.archived_at IS NULL
-         ))
+         )`
+             : ''
+         }
          AND ${tenantPassAuthoritySql(fence.authority, 'p')}
          AND p.mode = ?`
     : 'VALUES(?,?,?,?)';
@@ -63,8 +68,7 @@ export function savePassCheckIn(
         fence.pass.linkGeneration,
         fence.pass.status,
         fence.pass.removedAt,
-        rules.eventId ?? null,
-        rules.eventId ?? null,
+        ...(eventId !== null ? [eventId] : []),
         ...tenantPassAuthorityParams(fence.authority, at),
         fence.authority.mode,
       ]
