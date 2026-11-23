@@ -34,10 +34,15 @@ export async function creatorMembership(
   const row = await first<{ id: string }>(
     db,
     `SELECT m.id FROM org_memberships m JOIN users u ON u.id = m.user_id
-     WHERE m.org_id = ? AND m.user_id = ? AND (? IS NULL OR m.id = ?)
+     WHERE m.org_id = ? AND m.user_id = ?${membershipId === null ? '' : ' AND m.id = ?'}
        AND m.revoked_at IS NULL AND u.status = 'active'
        AND EXISTS (SELECT 1 FROM json_each(m.roles) r JOIN json_each(?) g ON g.value = r.value WHERE r.type = 'text')`,
-    [orgId, userId, membershipId, membershipId, JSON.stringify(rolesGranting(capability))],
+    [
+      orgId,
+      userId,
+      ...(membershipId === null ? [] : [membershipId]),
+      JSON.stringify(rolesGranting(capability)),
+    ],
   );
   return row?.id ?? null;
 }

@@ -3,6 +3,7 @@ import type { TenantPassWrite } from './http.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from './repo-authority.ts';
 import {
   type RefreshSnapshot,
+  refreshConnectionFence,
   refreshParams,
   refreshPredicate,
   validRefreshEpochs,
@@ -35,9 +36,10 @@ export async function matchesRefreshSnapshot(
     (authority && (now === undefined || !permitsTenantPassMutation(authority)))
   )
     return false;
+  const fence = refreshConnectionFence(snapshot);
   const row = await first<{ id: string }>(
     db,
-    `SELECT id FROM passes WHERE id = ? AND ${refreshPredicate}
+    `SELECT id FROM passes WHERE id = ? AND ${refreshPredicate} ${fence}
       ${authority ? `AND mode = ? AND ${tenantPassAuthoritySql(authority, 'passes')}` : ''}`,
     [
       snapshot.passId,

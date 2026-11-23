@@ -1,6 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, chunk, first, placeholders } from '../../platform/db.ts';
-import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
+import { type ScopeArg, scopeAnd } from '../passes/scope.ts';
 import { type HolderDbRow, type HolderPass, mapHolder, SELECT_HOLDER } from './repo.ts';
 
 /** Missing or out-of-scope ids are absent from the result. */
@@ -9,16 +9,15 @@ export async function getHolderPasses(
   passIds: string[],
   scope: ScopeArg,
 ): Promise<Map<string, HolderPass>> {
-  const orgScope = scopeOrg(scope);
-  const mode = readMode(scope);
+  const s = scopeAnd(scope, 'p');
   const out = new Map<string, HolderPass>();
   for (const ids of chunk([...new Set(passIds)], 90)) {
     const rows = await all<HolderDbRow>(
       db,
       `${SELECT_HOLDER} WHERE p.id IN (${placeholders(ids.length)}) AND p.deleted_at IS NULL
          AND p.test_data_quarantined = 0
-         AND (? IS NULL OR p.org_id = ?) AND (? IS NULL OR p.mode = ?)`,
-      [...ids, orgScope, orgScope, mode, mode],
+         ${s.sql}`,
+      [...ids, ...s.params],
     );
     for (const row of rows) out.set(row.id, mapHolder(row));
   }

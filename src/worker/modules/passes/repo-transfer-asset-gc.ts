@@ -116,7 +116,6 @@ export async function recoverExpiredPassAssetCandidate(
     AND p.version = c.source_version AND p.revision = c.source_revision
     AND p.image_generation = r.image_generation AND p.link_generation = r.link_generation
     AND p.image_generation >= c.source_image_generation`;
-  const prior = (index: number) => `json_extract(c.prior_row, '$[${index}]')`;
   const assetRow =
     'json_array(a.pass_id,a.name,a.r2_key,a.sha1,a.size,a.width,a.height,a.crc32,a.created_at)';
   const photoRow =
@@ -138,7 +137,7 @@ export async function recoverExpiredPassAssetCandidate(
     stmt(
       db,
       `UPDATE pass_assets AS a SET (r2_key,sha1,size,width,height,crc32,created_at) =
-      (SELECT ${prior(2)},${prior(3)},${prior(4)},${prior(5)},${prior(6)},${prior(7)},${prior(8)}
+      (SELECT json_extract(c.prior_row, '$[2]'),json_extract(c.prior_row, '$[3]'),json_extract(c.prior_row, '$[4]'),json_extract(c.prior_row, '$[5]'),json_extract(c.prior_row, '$[6]'),json_extract(c.prior_row, '$[7]'),json_extract(c.prior_row, '$[8]')
        FROM pass_transfer_asset_candidates c WHERE c.id = ?1)
       WHERE EXISTS (SELECT 1 FROM pass_transfer_asset_candidates c
         JOIN pass_transfer_asset_recoveries r ON r.candidate_id = c.id JOIN passes p ON p.id = c.pass_id
@@ -154,8 +153,8 @@ export async function recoverExpiredPassAssetCandidate(
     stmt(
       db,
       `INSERT INTO pass_assets(pass_id,name,r2_key,sha1,size,width,height,crc32,created_at)
-      SELECT ${prior(0)},${prior(1)},${prior(2)},${prior(3)},${prior(4)},${prior(5)},
-        ${prior(6)},${prior(7)},${prior(8)}
+      SELECT json_extract(c.prior_row, '$[0]'),json_extract(c.prior_row, '$[1]'),json_extract(c.prior_row, '$[2]'),json_extract(c.prior_row, '$[3]'),json_extract(c.prior_row, '$[4]'),json_extract(c.prior_row, '$[5]'),
+        json_extract(c.prior_row, '$[6]'),json_extract(c.prior_row, '$[7]'),json_extract(c.prior_row, '$[8]')
       FROM pass_transfer_asset_candidates c
       JOIN pass_transfer_asset_recoveries r ON r.candidate_id = c.id JOIN passes p ON p.id = c.pass_id
       WHERE ${source} AND c.kind = 'asset' AND c.next_row IS NULL
@@ -170,7 +169,7 @@ export async function recoverExpiredPassAssetCandidate(
     stmt(
       db,
       `UPDATE member_photos AS m SET (org_id,r2_key,sha1,size,crc32,include_in_pass,version,updated_at) =
-      (SELECT ${prior(1)},${prior(2)},${prior(3)},${prior(4)},${prior(5)},${prior(6)},${prior(7)},${prior(8)}
+      (SELECT json_extract(c.prior_row, '$[1]'),json_extract(c.prior_row, '$[2]'),json_extract(c.prior_row, '$[3]'),json_extract(c.prior_row, '$[4]'),json_extract(c.prior_row, '$[5]'),json_extract(c.prior_row, '$[6]'),json_extract(c.prior_row, '$[7]'),json_extract(c.prior_row, '$[8]')
        FROM pass_transfer_asset_candidates c WHERE c.id = ?1)
       WHERE EXISTS (SELECT 1 FROM pass_transfer_asset_candidates c
         JOIN pass_transfer_asset_recoveries r ON r.candidate_id = c.id JOIN passes p ON p.id = c.pass_id
@@ -186,8 +185,8 @@ export async function recoverExpiredPassAssetCandidate(
     stmt(
       db,
       `INSERT INTO member_photos(pass_id,org_id,r2_key,sha1,size,crc32,include_in_pass,version,updated_at)
-      SELECT ${prior(0)},${prior(1)},${prior(2)},${prior(3)},${prior(4)},${prior(5)},
-        ${prior(6)},${prior(7)},${prior(8)}
+      SELECT json_extract(c.prior_row, '$[0]'),json_extract(c.prior_row, '$[1]'),json_extract(c.prior_row, '$[2]'),json_extract(c.prior_row, '$[3]'),json_extract(c.prior_row, '$[4]'),json_extract(c.prior_row, '$[5]'),
+        json_extract(c.prior_row, '$[6]'),json_extract(c.prior_row, '$[7]'),json_extract(c.prior_row, '$[8]')
       FROM pass_transfer_asset_candidates c
       JOIN pass_transfer_asset_recoveries r ON r.candidate_id = c.id JOIN passes p ON p.id = c.pass_id
       WHERE ${source} AND c.kind = 'photo' AND c.next_row IS NULL

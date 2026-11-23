@@ -15,7 +15,7 @@ import {
   snapshotParams,
   snapshotSql,
 } from './repo-remove-snapshot.ts';
-import { readMode, type ScopeArg, scopeOrg } from './scope.ts';
+import { type ScopeArg, scopeAnd } from './scope.ts';
 
 export { reinstateRemoval, releaseRemoval } from './repo-remove-compensate.ts';
 export type { RemovalFence, RemovalState } from './repo-remove-snapshot.ts';
@@ -203,16 +203,17 @@ export async function removalVersion(
   passId: string,
   scope: ScopeArg = null,
 ): Promise<number | null> {
+  const s = scopeAnd(scope, 'p');
   const row = await first<{ version: number }>(
     db,
     `SELECT v.version FROM pass_versions v JOIN passes p ON p.id = v.pass_id
      WHERE v.pass_id = ? AND v.source = 'remove' AND v.version <= p.version
        AND p.removed_at IS NOT NULL AND p.status = 'voided'
        AND p.deleted_at IS NULL AND p.test_data_quarantined = 0
-       AND (? IS NULL OR p.org_id = ?) AND (? IS NULL OR p.mode = ?)
+       ${s.sql}
        AND p.removal_published_generation = p.lifecycle_generation
      ORDER BY v.version DESC LIMIT 1`,
-    [passId, scopeOrg(scope), scopeOrg(scope), readMode(scope), readMode(scope)],
+    [passId, ...s.params],
   );
   return row?.version ?? null;
 }

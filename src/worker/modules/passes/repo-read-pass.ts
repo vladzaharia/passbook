@@ -3,16 +3,15 @@ import { all, first, stmt } from '../../platform/db.ts';
 import { knownEmailSql } from '../../platform/known-email-sql.ts';
 import { userLabelSql } from '../orgs/repo-user-label.ts';
 import { mapPass, PASS_SELECT, type Pass, type PassDbRow } from './repo-map.ts';
-import { readMode, type ScopeArg, scopeOrg } from './scope.ts';
+import { type ScopeArg, scopeAnd } from './scope.ts';
 
 /** Null scope = platform-wide. A pass outside the scope (org, or an API key's mode) reads as missing. */
 export function getPassStmt(db: D1Database, id: string, scope: ScopeArg = null) {
-  const orgScope = scopeOrg(scope);
-  const mode = readMode(scope);
+  const s = scopeAnd(scope);
   return stmt(
     db,
-    `${PASS_SELECT} WHERE id = ? AND (? IS NULL OR org_id = ?) AND (? IS NULL OR mode = ?) AND deleted_at IS NULL AND test_data_quarantined = 0`,
-    [id, orgScope, orgScope, mode, mode],
+    `${PASS_SELECT} WHERE id = ?${s.sql} AND deleted_at IS NULL AND test_data_quarantined = 0`,
+    [id, ...s.params],
   );
 }
 
