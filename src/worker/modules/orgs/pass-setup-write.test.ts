@@ -37,6 +37,7 @@ beforeEach(async () => {
 afterEach(async () => {
   await run(api.rig.db, "UPDATE orgs SET branding = '{}', name = 'Test Gym' WHERE id = ?", [orgId]);
   await run(api.rig.db, 'DELETE FROM settings WHERE scope = ?', [`org:${orgId}`]);
+  await run(api.rig.db, "DELETE FROM org_entitlement_overrides WHERE key = 'brand.mark'");
   await run(api.rig.db, 'DELETE FROM audit_log WHERE action = ?', ['org.pass_setup_update']);
   await run(api.rig.db, 'DELETE FROM branding_gc_queue');
   await run(api.rig.db, 'DROP TRIGGER IF EXISTS test_boom');
@@ -147,6 +148,14 @@ describe('PATCH pass-setup: input and scopes', () => {
 });
 
 describe('PATCH pass-setup: dry run and apply', () => {
+  // The change picks the small footer: the plan must allow it.
+  beforeEach(async () => {
+    await run(
+      api.rig.db,
+      "INSERT INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'brand.mark', '\"quiet\"', 1)",
+      [orgId],
+    );
+  });
   const change = {
     brand: {
       name: 'Acme Fitness',

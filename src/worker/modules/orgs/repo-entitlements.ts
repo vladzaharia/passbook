@@ -88,6 +88,8 @@ export interface EntitlementsWrite {
   /** The preset's revision, which the org is now aligned to. */
   presetRevision: number;
   now: number;
+  /** The org's branding when the plan moves its footer choice, in the same batch; null leaves it. */
+  branding: string | null;
   /** Keys whose override is removed (including an expired one still stored). */
   remove: string[];
   /** Overrides to insert or change, values as stored JSON. */
@@ -127,6 +129,8 @@ export async function writeEntitlements(ctx: ServiceContext, w: EntitlementsWrit
       where: { org_id: w.orgId, revision: w.expectedRevision },
       require: 'one',
     });
+  if (w.branding !== null)
+    g.update('orgs', { set: { branding: w.branding, updated_at: w.now }, where: { id: w.orgId } });
   if (w.remove.length > 0)
     g.delete('org_entitlement_overrides', {
       where: { org_id: w.orgId, key: inList(w.remove) },

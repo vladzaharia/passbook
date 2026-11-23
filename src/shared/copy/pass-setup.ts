@@ -167,8 +167,11 @@ export const PASS_SETUP_COPY = {
     accent: 'Accent',
     accentHelp: 'Pages and emails',
     mark: 'PassBook footer',
-    markOptions: { full: 'Issued with PassBook', small: 'Powered by PassBook', none: 'None' },
-    markLocked: 'Not in your plan.',
+    markOptions: {
+      full: 'Issued with PassBook',
+      small: 'Powered by PassBook',
+      none: 'No PassBook footer',
+    },
   },
   support: {
     email: 'Support email',

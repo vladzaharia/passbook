@@ -82,11 +82,9 @@ export function BrandCard({ orgId, view, draft, canEdit, errors, edit, setImage 
   );
   const colorErr = colorErrors(v);
   const planMark = b.mark.allowed.length < 3;
-  const markOptions = (['full', 'small', 'none'] as const).map((value) => ({
-    value,
-    label: COPY.markOptions[value],
-    ...(b.mark.allowed.includes(value) ? {} : { reason: COPY.markLocked }),
-  }));
+  const markOptions = (['full', 'small', 'none'] as const)
+    .filter((value) => b.mark.allowed.includes(value))
+    .map((value) => ({ value, label: COPY.markOptions[value] }));
   const imageTag = (slot: 'logo' | 'icon') => {
     const row = b[slot];
     const set = draft.images?.[slot];

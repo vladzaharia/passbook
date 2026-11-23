@@ -51,6 +51,14 @@ describe('every size renders', () => {
   });
 });
 
+const COMBOS_PDF = [
+  ['admission', 'a4'],
+  ['admission', 'half'],
+  ['membership', 'cr80'],
+  ['permit', 'half'],
+  ['coupon', 'half'],
+] as const;
+
 describe('text', () => {
   it('shows who, what, when, where and the print code as real text', async () => {
     const text = await pdfText(await render(sheet('admission', 'a4')));
@@ -70,6 +78,19 @@ describe('text', () => {
     ])
       expect(text).toContain(want);
     expect(text.replace(/\s/g, '')).toContain(SAMPLE_CODE);
+  });
+
+  it.each(COMBOS_PDF)('draws the footer credit by mark on %s %s', async (kind, size) => {
+    const full = await pdfText(await render(sheet(kind, size)));
+    expect(full).toContain('Issued with');
+    expect(full).toContain('PassBook');
+    const small = await pdfText(await render(sheet(kind, size, { mark: 'small' })));
+    expect(small).toContain('Powered by PassBook');
+    expect(small).not.toContain('Issued with');
+    const none = await pdfText(await render(sheet(kind, size, { mark: 'none' })));
+    expect(none).not.toContain('PassBook');
+    expect(none).not.toContain('Issued with');
+    expect(none.replace(/\s/g, '')).toContain(SAMPLE_CODE);
   });
 
   it('says the venue once on a half sheet, and never twice in one line', async () => {

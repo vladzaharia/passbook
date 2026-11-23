@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { PAPER_SPECS, type PaperDesign } from '../../passkit/template/paper.ts';
 import type { PaperContent } from '../../passkit/template/paper-content.ts';
+import type { BrandMark } from '../../shared/contracts/orgs.ts';
+import { passbookCredit } from '../../shared/copy/passbook-credit.ts';
 import { groupPrintCode, PAPER_COPY, PRINT_COPY } from '../../shared/copy/print.ts';
 import type { PaperDrawing } from './drawing.ts';
 import { buddyPose, TicketBuddy } from './ticket-buddy.tsx';
@@ -13,6 +15,8 @@ export interface TicketProps {
   code: string;
   drawing: PaperDrawing | undefined;
   issued?: Issued | undefined;
+  /** The org's footer choice (`orgBrandOf`). */
+  mark: BrandMark;
   /** `test` adds the dashed outline, the strip and the watermark around the door panel. */
   mode?: 'live' | 'test' | undefined;
   /** A sandbox pass: the TEST PREVIEW band across the top of every page. */
@@ -135,6 +139,22 @@ export function BuddyCameo({ p }: { p: TicketProps }) {
   return pose ? <TicketBuddy pose={pose} mono={c.ink === 'mono'} /> : null;
 }
 
+/** "Issued with PassBook" or "Powered by PassBook" by the org's footer choice; nothing at `none`. */
+export function Credit({ mark }: { mark: BrandMark | undefined }) {
+  const credit = passbookCredit(mark);
+  return credit ? (
+    <span className="pp-passbook">
+      {credit.lead}
+      {credit.name && (
+        <>
+          {' '}
+          <b>{credit.name}</b>
+        </>
+      )}
+    </span>
+  ) : null;
+}
+
 /** Footer: print number and issue time, then "Issued with PassBook" with the optional buddy above. */
 export function Foot({
   p,
@@ -151,9 +171,7 @@ export function Foot({
       <span className="pp-meta">
         {[footMeta(p.content, p.issued), extra].filter(Boolean).join(' · ')}
       </span>
-      <span className="pp-passbook">
-        {PAPER_COPY.issuedWith} <b>PassBook</b>
-      </span>
+      <Credit mark={p.mark} />
     </div>
   );
 }

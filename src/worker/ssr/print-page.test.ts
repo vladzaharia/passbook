@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DERIVED_PAPER, type PaperDesign } from '../../passkit/template/paper.ts';
 import { paperContent } from '../../passkit/template/paper-content.ts';
 import { EVENT_MANIFEST, EVENT_PASS } from '../../passkit/template/paper-fixtures.ts';
+import type { BrandMark } from '../../shared/contracts/orgs.ts';
 import { pageRule } from '../../web/paper/css.ts';
 import type { PrintPageModel } from '../modules/prints/page.ts';
 import { PRINT_HEADERS, renderPrintPage } from './print-page.tsx';
@@ -16,7 +17,7 @@ const content = (d: PaperDesign) =>
     design: d,
     holderName: 'Ada',
   });
-const ready = (d: PaperDesign): PrintPageModel => ({
+const ready = (d: PaperDesign, mark: BrandMark = 'full'): PrintPageModel => ({
   state: 'ready',
   orgName: 'Northwind Hall',
   mode: 'live',
@@ -25,6 +26,7 @@ const ready = (d: PaperDesign): PrintPageModel => ({
   content: content(d),
   code: CODE,
   generation: 1,
+  mark,
   printedAt: Date.UTC(2026, 10, 19, 1, 2),
   files: { logo: 'logo@3x.png', art: 'artwork@3x.png' },
 });
@@ -130,6 +132,15 @@ describe('print page for a holder', () => {
     expect(html).not.toContain('class="band"');
     expect(html.match(/PassBook/g)).toHaveLength(1);
     expect(html).toContain('Issued with <b>PassBook</b>');
+  });
+
+  it('follows the org footer choice: small is one quiet line, none says nothing', () => {
+    const small = page(ready(design(), 'small'));
+    expect(small).toContain('Powered by PassBook');
+    expect(small).not.toContain('Issued with');
+    const none = page(ready(design(), 'none'));
+    expect(none).not.toContain('PassBook');
+    expect(none).not.toContain('Issued with');
   });
 
   it('puts the lede and the actions, Print first, before the sheet', () => {

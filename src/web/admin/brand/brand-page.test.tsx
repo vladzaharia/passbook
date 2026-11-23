@@ -209,6 +209,28 @@ describe('Brand and channels', () => {
     expect(screen.queryByRole('button', { name: 'Add logo' })).toBeNull();
   });
 
+  it.each([
+    [['full'], ['Issued with PassBook']],
+    [
+      ['small', 'full'],
+      ['Powered by PassBook', 'Issued with PassBook'],
+    ],
+    [
+      ['none', 'small', 'full'],
+      ['No PassBook footer', 'Powered by PassBook', 'Issued with PassBook'],
+    ],
+  ] as const)('offers only the PassBook footers the plan allows: %j', async (allowed, labels) => {
+    const view = viewOf(readyFacts());
+    view.brand.mark = { chosen: 'full', effective: 'full', allowed: [...allowed] };
+    await setup(view);
+    const group = await screen.findByRole('radiogroup', { name: 'PassBook footer' });
+    const shown = within(group)
+      .getAllByRole('radio')
+      .map((r) => r.getAttribute('aria-label') ?? r.textContent?.trim());
+    expect(shown.sort()).toEqual([...labels].sort());
+    expect(within(group).queryByText('Not in your plan.')).toBeNull();
+  });
+
   it('greys a plan-locked preview under its reason with Ask PassBook, and draws Paper otherwise', async () => {
     const user = userEvent.setup();
     await setup(viewOf(readyFacts()));

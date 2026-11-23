@@ -1,6 +1,8 @@
 import { setGraphicsState } from 'pdf-lib';
 import { PAPER_SPECS, type PaperSpec } from '../../../passkit/template/paper.ts';
-import { groupPrintCode, PAPER_COPY, PRINT_COPY } from '../../../shared/copy/print.ts';
+import type { BrandMark } from '../../../shared/contracts/orgs.ts';
+import { passbookCredit } from '../../../shared/copy/passbook-credit.ts';
+import { groupPrintCode, PRINT_COPY } from '../../../shared/copy/print.ts';
 import { codeLabel } from '../../../web/paper/ticket-parts.tsx';
 import { footMeta } from '../../../web/paper/ticket-text.ts';
 import { drawCode } from './pdf-code.ts';
@@ -125,26 +127,30 @@ export function codeMark(
   return centre;
 }
 
-/** `Issued with PassBook`, right-aligned to `right`, on the text baseline `baseline`. */
+/** The PassBook credit for `mark`, right-aligned to `right`, on the text baseline `baseline`; nothing at `none`. */
 export function passbookLine(
   pen: Pen,
+  mark: BrandMark,
   right: number,
   baseline: number,
   size = PASSBOOK.size,
 ): number {
+  const credit = passbookCredit(mark);
+  if (!credit) return 0;
   const plain = { ...PASSBOOK, size };
   const bold = { ...PASSBOOK_NAME, size };
-  const a = pen.measure(`${PAPER_COPY.issuedWith} `, plain);
-  const b = pen.measure('PassBook', bold);
+  const lead = credit.name ? `${credit.lead} ` : credit.lead;
+  const a = pen.measure(lead, plain);
+  const b = credit.name ? pen.measure(credit.name, bold) : 0;
   const x = right - a - b;
-  pen.text(`${PAPER_COPY.issuedWith} `, x, pen.topFor(plain, baseline), plain);
-  pen.text('PassBook', x + a, pen.topFor(bold, baseline), bold);
+  pen.text(lead, x, pen.topFor(plain, baseline), plain);
+  if (credit.name) pen.text(credit.name, x + a, pen.topFor(bold, baseline), bold);
   return a + b;
 }
 
 export const META: TextStyle = { size: 2.3989, font: 'regular', color: COLORS.muted };
 
-/** Footer row: the print number and issue time on the left, "Issued with PassBook" on the right. */
+/** Footer row: the print number and issue time on the left, the PassBook credit on the right. */
 export function footRow(
   pen: Pen,
   s: Sheet,
@@ -155,7 +161,10 @@ export function footRow(
   reserve = 0,
 ): void {
   const meta = [footMeta(s.content, s.issued), extra].filter(Boolean).join(' · ');
-  const used = pen.measure('Issued with PassBook', PASSBOOK);
-  pen.text(pen.wrap(meta, w - used - 6 - reserve, META, 1)[0] ?? '', x, top, META);
-  passbookLine(pen, x + w, pen.baselineOf(META, top));
+  const credit = passbookCredit(s.mark);
+  const used = credit
+    ? pen.measure([credit.lead, credit.name].filter(Boolean).join(' '), PASSBOOK) + 6
+    : 0;
+  pen.text(pen.wrap(meta, w - used - reserve, META, 1)[0] ?? '', x, top, META);
+  passbookLine(pen, s.mark, x + w, pen.baselineOf(META, top));
 }

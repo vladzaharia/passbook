@@ -172,6 +172,7 @@ export function PaperPreview({
                 content={content}
                 design={design}
                 code={SAMPLE_CODE}
+                mark="full"
                 drawing={drawing}
                 assets={files}
                 testBand={testBand}
