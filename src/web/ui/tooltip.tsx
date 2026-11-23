@@ -1,5 +1,6 @@
 import {
   type ComponentType,
+  cloneElement,
   createContext,
   type ReactElement,
   type ReactNode,
@@ -22,6 +23,8 @@ export interface TooltipProps {
   children: ReactElement;
   side?: 'top' | 'right' | 'bottom' | 'left';
   className?: string;
+  /** Plain (mounted before the chunk), a text tip becomes the child's native title, so it still shows. */
+  plainTitle?: boolean;
 }
 
 type Impl = ComponentType<TooltipProps & { config: TooltipConfig }>;
@@ -52,11 +55,14 @@ export function loadTooltips(): Promise<void> {
  * (lost focus, a menu closing under the click). A control that mounted before the chunk arrived
  * stays plain until it remounts; its aria-label still names it.
  */
-export function Tooltip({ content, children, side, className }: TooltipProps) {
+export function Tooltip({ content, children, side, className, plainTitle }: TooltipProps) {
   const [Loaded] = useState(() => impl);
   const config = useContext(ConfigContext);
   if (content === null || content === undefined || content === '') return children;
-  if (!Loaded) return children;
+  if (!Loaded)
+    return plainTitle && typeof content === 'string'
+      ? cloneElement(children as ReactElement<{ title?: string }>, { title: content })
+      : children;
   return (
     <Loaded content={content} side={side} className={className} config={config}>
       {children}

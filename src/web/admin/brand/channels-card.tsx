@@ -10,7 +10,7 @@ import { OrgProviderCard } from '../wallet-accounts/org-provider-card.tsx';
 import { useOrgCredentials, useOrgEnrolments } from '../wallet-accounts/queries.ts';
 import { AccountTiles } from './account-tiles.tsx';
 import { AppleIdentity } from './apple-identity.tsx';
-import { AskPassbook, ChannelRow } from './channel-row.tsx';
+import { ChannelRow } from './channel-row.tsx';
 import type { Draft } from './draft.ts';
 
 /** The order the page lists them in. */
@@ -44,13 +44,18 @@ function ProviderAccount({
   );
 }
 
+/** PassBook or the plan stops it: the org never sees it. */
+const hidden = (levels: SetupFacts['channels'][Channel]['levels']) => {
+  const level = stoppingLevel(levels)?.level;
+  return level === 'passbook' || level === 'plan';
+};
+
 /**
- * The org's six channels, in the view's mode. Each row's switch is a draft: it saves with the
- * rest of the page, after the review shows what it stops.
+ * The channels the org can use, in the view's mode; the rest are not listed. Each row's switch is
+ * a draft: it saves with the rest of the page, after the review shows what it stops.
  */
 export function ChannelsCard({
   orgId,
-  orgName,
   view,
   draftFacts,
   draft,
@@ -60,7 +65,6 @@ export function ChannelsCard({
   accounts,
 }: {
   orgId: string;
-  orgName: string;
   view: PassSetup;
   draftFacts: SetupFacts;
   draft: Draft;
@@ -90,10 +94,8 @@ export function ChannelsCard({
         actions={<Badge>{PASS_SETUP_COPY.page.mode[mode]}</Badge>}
       />
       <ul className="m-0 flex list-none flex-col divide-y divide-border p-4">
-        {ORDER.map((c) => {
+        {ORDER.filter((c) => !hidden(draftFacts.channels[c].levels)).map((c) => {
           const row = draftFacts.channels[c];
-          const stop = stoppingLevel(row.levels);
-          const released = stop?.level !== 'passbook' && stop?.level !== 'plan';
           return (
             <ChannelRow
               key={c}
@@ -110,11 +112,10 @@ export function ChannelsCard({
               part={
                 c === 'apple' ? (
                   <AppleIdentity orgId={orgId} apple={view.apple} canManage={canManageApple} />
-                ) : (c === 'google' || c === 'samsung') && released && accounts !== 'none' ? (
+                ) : (c === 'google' || c === 'samsung') && accounts !== 'none' ? (
                   <ProviderAccount orgId={orgId} provider={c} canManage={accounts === 'manage'} />
                 ) : null
               }
-              ask={stop?.level === 'plan' ? <AskPassbook channel={c} orgName={orgName} /> : null}
             />
           );
         })}

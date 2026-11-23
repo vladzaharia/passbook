@@ -125,7 +125,6 @@ export const PASS_SETUP_COPY = {
     discard: 'Discard',
     cards: { brand: 'Brand', support: 'Support and email', channels: 'Channels' },
     mode: { live: 'Live', test: 'Test' },
-    askPassbook: 'Ask PassBook',
     previewHolder: 'Preview as holder',
     copyRequest: 'Copy as API request',
     auditLog: 'Audit log',

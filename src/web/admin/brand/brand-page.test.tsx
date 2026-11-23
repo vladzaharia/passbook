@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import type { PassSetup, PassSetupResult } from '@/shared/contracts/pass-setup.ts';
-import { newOrgFacts, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
+import { channelOf, newOrgFacts, readyFacts, viewOf } from '@/shared/pass-setup-test-fixtures.ts';
 import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
 
 const me = (capabilities?: Parameters<typeof membershipFixture>[1]) =>
@@ -55,38 +55,38 @@ describe('Brand and channels', () => {
     expect(screen.getByText('412 passes')).toBeInTheDocument();
   });
 
-  it('hides the Allowed switch while a level above stops the channel and names that level', async () => {
-    await setup(viewOf(readyFacts()));
+  it('hides a channel PassBook or the plan stops: no row, lock or explanation', async () => {
+    const { container } = await setup(viewOf(readyFacts()));
     const channels = await screen.findByRole('region', { name: 'Channels' });
-    const row = (name: string) => within(channels).getByText(name).closest('li') as HTMLElement;
-    for (const [name, level, status] of [
-      ['Google Wallet', 'PassBook', 'Not available yet'],
-      ['Samsung Wallet', 'PassBook', 'Not available yet'],
-      ['Paper', 'Plan', 'Not in your plan'],
-    ] as const) {
-      expect(within(row(name)).getByText(level)).toBeInTheDocument();
-      expect(within(row(name)).getByText(status)).toBeInTheDocument();
-      expect(within(row(name)).queryByRole('switch')).toBeNull();
+    for (const name of ['Google Wallet', 'Samsung Wallet', 'Paper']) {
+      expect(within(channels).queryByText(name)).toBeNull();
     }
-    expect(
-      within(row('Apple Wallet')).getByRole('switch', { name: /Apple Wallet allowed/ }),
-    ).toBeChecked();
-    expect(within(row('Mobile')).getByRole('switch')).toBeChecked();
+    for (const text of ['Not available yet', 'Not in your plan', 'Blocked', 'PassBook', 'Plan'])
+      expect(within(channels).queryByText(text)).toBeNull();
+    expect(within(channels).queryByRole('list', { name: 'Chain' })).toBeNull();
+    expect(within(channels).getAllByRole('switch')).toHaveLength(3);
+    expect(within(channels).getByRole('switch', { name: /Apple Wallet allowed/ })).toBeChecked();
+    expect(within(channels).getByRole('switch', { name: /Mobile allowed/ })).toBeChecked();
+    expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('opens a row to its chain, templates and Ask PassBook', async () => {
+  it('shows what the org turned off as its own switch, off, never Blocked', async () => {
+    const view = viewOf(readyFacts());
+    view.channels.mobile = channelOf({ level: 'org', reason: 'blocked' });
+    await setup(view);
+    const channels = await screen.findByRole('region', { name: 'Channels' });
+    expect(within(channels).getByRole('switch', { name: /Mobile allowed/ })).not.toBeChecked();
+    expect(within(channels).queryByText('Blocked')).toBeNull();
+  });
+
+  it('names the templates that use a channel and opens to their list', async () => {
     const user = userEvent.setup();
     await setup(viewOf(readyFacts()));
     const channels = await screen.findByRole('region', { name: 'Channels' });
-    await user.click(within(channels).getByRole('button', { name: /^Paper/ }));
-    expect(await within(channels).findByRole('link', { name: 'Ask PassBook' })).toHaveAttribute(
-      'href',
-      expect.stringContaining('mailto:'),
-    );
     await user.click(within(channels).getByRole('button', { name: /^Apple Wallet/ }));
-    const chain = await within(channels).findAllByRole('list', { name: 'Chain' });
-    expect(within(chain[0] as HTMLElement).getByText('Templates 2/2')).toBeInTheDocument();
+    expect(within(channels).queryByRole('list', { name: 'Chain' })).toBeNull();
     expect(within(channels).getByText('pass.mobile.passbook.acmefitness')).toBeInTheDocument();
+    expect(within(channels).getAllByRole('link', { name: 'Edit' }).length).toBeGreaterThan(0);
   });
 
   it('stages a block, reviews it with the dry run, and saves with the revision', async () => {
@@ -157,6 +157,7 @@ describe('Brand and channels', () => {
 
   it('draws a channel no template uses with the off dot, and keeps its switch on', async () => {
     const view = viewOf(readyFacts());
+    for (const t of view.templates) t.channels.mobile = { ...t.channels.mobile, on: false };
     view.channels.mobile.templates = { on: 0, off: 2, never: 0, total: 2 };
     await setup(view);
     const channels = await screen.findByRole('region', { name: 'Channels' });
@@ -209,17 +210,16 @@ describe('Brand and channels', () => {
     expect(screen.queryByRole('button', { name: 'Add logo' })).toBeNull();
   });
 
-  it('greys a plan-locked preview under its reason with Ask PassBook, and draws Paper otherwise', async () => {
-    const user = userEvent.setup();
+  it('has no preview tab for a channel the plan or PassBook stops', async () => {
     await setup(viewOf(readyFacts()));
     const tabs = await screen.findByRole('radiogroup', { name: 'Preview' });
-    await user.click(within(tabs).getByRole('radio', { name: /Paper/ }));
+    expect(
+      within(tabs)
+        .getAllByRole('radio')
+        .map((r) => r.textContent),
+    ).toEqual(['Apple', 'Page', 'Email']);
     const stage = screen.getByRole('region', { name: 'Preview' });
-    expect(within(stage).getByText('Paper: Not in your plan')).toBeInTheDocument();
-    expect(within(stage).getByText('Plan stops it')).toBeInTheDocument();
-    expect(within(stage).getByRole('link', { name: 'Ask PassBook' })).toBeInTheDocument();
-    await user.click(within(tabs).getByRole('radio', { name: /Google/ }));
-    expect(within(stage).getByText('Google Wallet: Not available yet')).toBeInTheDocument();
+    expect(stage.querySelector('[data-locked]')).toBeNull();
     expect(within(stage).queryByRole('link', { name: 'Ask PassBook' })).toBeNull();
   });
 
@@ -239,12 +239,13 @@ describe('Brand and channels', () => {
     );
   });
 
-  it('shows no account tiles for a wallet that is not released', async () => {
+  it('lists no wallet that is not released, so no account tiles', async () => {
     const user = userEvent.setup();
     const { fetchMock } = await setup(viewOf(readyFacts()));
     const channels = await screen.findByRole('region', { name: 'Channels' });
-    await user.click(within(channels).getByRole('button', { name: /^Google Wallet/ }));
-    await user.click(within(channels).getByRole('button', { name: /^Samsung Wallet/ }));
+    expect(within(channels).queryByRole('button', { name: /^Google Wallet/ })).toBeNull();
+    expect(within(channels).queryByRole('button', { name: /^Samsung Wallet/ })).toBeNull();
+    await user.click(within(channels).getByRole('button', { name: /^Apple Wallet/ }));
     expect(screen.queryByRole('radio', { name: /Managed by PassBook/ })).toBeNull();
     expect(screen.queryByRole('radio', { name: /Share your issuer/ })).toBeNull();
     expect(screen.queryByRole('region', { name: 'Google Wallet' })).toBeNull();
