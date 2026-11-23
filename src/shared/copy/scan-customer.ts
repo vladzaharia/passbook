@@ -23,7 +23,10 @@ export const CUSTOMER_COPY = {
   rewardReady: 'Reward ready',
   toPay: 'To pay {amount}',
   balanceAfter: 'Balance after: {balance}',
-  adding: { one: 'Adding {n} stamp', other: 'Adding {n} stamps' },
+  adding: 'Adding {amount}',
+  balance: 'Balance {balance}',
+  plus: '+{n} {label}',
+  ofGoal: '{n} of {goal}',
 } as const;
 
 /**

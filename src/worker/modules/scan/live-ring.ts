@@ -44,6 +44,8 @@ export interface LiveRingRow {
    * It names the holder's pass, so it is dropped with the identity.
    */
   customer?: Pick<ScanCustomerView, 'chips' | 'panel' | 'lines' | 'milestone'> | null;
+  /** What a committed value scan says on a customer screen (Paid $12.00). It names the value, so it is dropped with the identity. */
+  receipt?: { headline: string; sub: string | null } | null;
   /** A refusal or hold a desk may let in (SA 20.9). */
   overridable?: boolean;
 }
@@ -66,6 +68,7 @@ export function scrubbedEntry(e: LiveRingRow): LiveRingRow {
     eventId: e.eventId ?? null,
     zoneIds: e.zoneIds ?? [],
     customer: null,
+    receipt: null,
   };
 }
 

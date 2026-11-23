@@ -7,7 +7,7 @@ import { ScanChipSchema, ScanDisplayPanelSchema, ScanIconSchema } from './scan-d
  */
 export const ScanCustomerViewSchema = z.strictObject({
   v: z.literal(1),
-  screen: z.enum(['ready', 'ok', 'see_desk']),
+  screen: z.enum(['ready', 'review', 'ok', 'see_desk']),
   ref: z.string().min(1).max(64),
   at: z.number().int().nonnegative(),
   where: z.string().max(40),
@@ -15,7 +15,7 @@ export const ScanCustomerViewSchema = z.strictObject({
     headline: z.string().max(40),
     sub: z.string().max(40).nullable(),
   }),
-  /** The first name only, on ok and ready. */
+  /** The first name only, on ok, review and ready. */
   greet: z.string().max(24).nullable(),
   chips: z.array(ScanChipSchema).max(2),
   panel: ScanDisplayPanelSchema.nullable(),
