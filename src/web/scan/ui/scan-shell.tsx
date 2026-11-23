@@ -10,6 +10,7 @@ import './scan-capsule.css';
 import './scan-dock.css';
 import './scan-duo.css';
 import './scan-phone.css';
+import './scan-landscape.css';
 import './scan-sun.css';
 import { type Announcement, LiveAnnouncer } from './live-announcer.tsx';
 import { type Tint, VerdictRing, VerdictTint } from './verdict-tint.tsx';
