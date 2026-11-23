@@ -1,8 +1,4 @@
-export type WalletRuntimeResponseStage =
-  | 'google-class'
-  | 'google-object'
-  | 'google-message'
-  | 'samsung-update';
+export type WalletRuntimeResponseStage = 'google-class' | 'google-object' | 'samsung-update';
 
 /** Server-only sensitive response. Persist encrypted immediately; never log or return its body. */
 export interface WalletRuntimeProviderResponse {

@@ -2,8 +2,7 @@ import type { PassJson } from '../../../passkit/types.ts';
 import { googleChangeMessage } from '../../../passkit/wallets/google/messages.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { eventRowOf } from '../events/record.ts';
-import { passJsonsBetween } from './repo-google-messages.ts';
-import { priorSucceededOperation } from './repo-instance-prior.ts';
+import { passJsonsBetween, priorSucceededOperation } from './repo-instance-prior.ts';
 import { insertWalletMessagedEvent } from './repo-wallet-messaged.ts';
 import type { WalletSyncOperationExecution } from './sync-operation-context.ts';
 

@@ -88,7 +88,7 @@ const partition = ({ type, classKey }: GoogleRuntimePartition): GoogleRuntimePar
 });
 
 /** The object's identity under a verified scope; a partition makes it a typed class's object. */
-export const objectScope = (s: WalletRuntimeScope, i: GoogleRuntimeObjectIdentity) => ({
+const objectScope = (s: WalletRuntimeScope, i: GoogleRuntimeObjectIdentity) => ({
   tenantId: s.orgId,
   mode: s.mode,
   releaseId: i.releaseId,
@@ -140,7 +140,7 @@ export async function createGoogleRuntimeOffer(
   });
 }
 
-export async function withGoogleRest<T>(
+async function withGoogleRest<T>(
   ctx: ServiceContext,
   inputScope: WalletRuntimeScope,
   assertCurrent: (() => Promise<void>) | undefined,

@@ -22,7 +22,6 @@ export const SINGLE_TITLE: Record<string, string> = {
   'device.log': 'Wallet log line',
   'wallet.saved': 'Holder saved the pass',
   'wallet.removed': 'Holder removed the pass',
-  'wallet.messaged': 'Wallet message',
   'push.sent': 'Push sent',
   'push.failed': 'Push failed',
   'push.queued': 'Push queued',
@@ -63,22 +62,4 @@ export function budgetFacts(data: PassEventDto['data']): { text: string; tone: '
       text: `${walletName(provider)}: daily limit reached`,
       tone: 'warning',
     }));
-}
-
-const MESSAGED: Record<string, { text: string; tone: 'info' | 'warning' }> = {
-  notified: { text: 'Notified', tone: 'info' },
-  updated: { text: 'Updated only', tone: 'info' },
-  text: { text: 'Updated only', tone: 'warning' },
-  failed: { text: 'Not accepted', tone: 'warning' },
-  unknown: { text: 'Not confirmed', tone: 'warning' },
-};
-
-/** What a wallet did with a message: told the holder, only changed the card, or did neither. */
-export function messagedFacts(
-  data: PassEventDto['data'],
-): { text: string; tone: 'info' | 'warning' }[] {
-  const fact = typeof data.outcome === 'string' ? MESSAGED[data.outcome] : undefined;
-  if (!fact) return [];
-  const reason = data.reason === 'budget' || data.reason === 'quota' ? ': daily limit reached' : '';
-  return [{ ...fact, text: `${fact.text}${reason}` }];
 }

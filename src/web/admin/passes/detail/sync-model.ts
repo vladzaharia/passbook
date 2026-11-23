@@ -1,6 +1,6 @@
 import type { PassEventDto } from '@/shared/contracts/events.ts';
 import { humanizeStatus } from '../../../lib/status.ts';
-import { budgetFacts, messagedFacts, SINGLE_TITLE, walletDetail } from './sync-labels.ts';
+import { budgetFacts, SINGLE_TITLE, walletDetail } from './sync-labels.ts';
 
 /** First 8 of the 12 hex characters: enough to tell devices apart in a row. */
 export const shortDevice = (hash: string) => hash.slice(0, 8);
@@ -150,11 +150,7 @@ function single(e: PassEventDto): SyncRow {
     title: singleTitle(e),
     group: false,
     tone: FAILED.has(e.kind) ? 'danger' : 'neutral',
-    facts: message
-      ? notifyFacts(e.data)
-      : e.kind === 'wallet.messaged'
-        ? messagedFacts(e.data)
-        : [],
+    facts: message ? notifyFacts(e.data) : [],
     events: [e],
     ...(broadcastId ? { broadcastId } : {}),
   };
