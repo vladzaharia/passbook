@@ -1,10 +1,14 @@
 import { QrCode, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
-import type { ScanningDevice, ScanningSession } from '@/shared/contracts/scanning-sessions.ts';
+import type {
+  ScanningDevice,
+  ScanningSessionDetail,
+} from '@/shared/contracts/scanning-sessions.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { DiscardDialog } from '@/web/ui/alert-dialog.tsx';
 import { Badge, Button, Callout, FormField, Input, Sheet, SheetContent } from '@/web/ui/index.ts';
 import { useUpdateSessionDevice } from './api.ts';
+import { DeviceFollows, followable } from './device-follows.tsx';
 import { DeviceOverrides } from './device-overrides.tsx';
 import { HardwareBadges } from './hardware-badges.tsx';
 import { SurfacePicker } from './surface-picker.tsx';
@@ -18,7 +22,7 @@ export function DeviceSheet({
   onRevoke,
 }: {
   device: ScanningDevice;
-  session: ScanningSession;
+  session: ScanningSessionDetail;
   canManage: boolean;
   onClose: () => void;
   onPair: () => void;
@@ -182,9 +186,14 @@ export function DeviceSheet({
                   <DeviceOverrides value={overrides} onChange={setOverrides} session={session} />
                 </section>
               ) : (
-                <p className="text-sm text-fg-muted">
-                  This display follows scanners in the same session and cannot check anyone in.
-                </p>
+                <>
+                  <p className="text-sm text-fg-muted">This display cannot check anyone in.</p>
+                  <DeviceFollows
+                    value={overrides}
+                    onChange={setOverrides}
+                    scanners={followable(session.devices)}
+                  />
+                </>
               )}
             </fieldset>
             {canManage ? (

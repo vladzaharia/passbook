@@ -1441,6 +1441,7 @@ export type CreatedScanningDevice = {
     direction?: "in" | "out" | "both";
     lookup?: boolean;
     showPhoto?: boolean;
+    follows?: Array<string>;
   };
   settings: ScannerSettings;
   capabilities: ScanDeviceCapabilities;
@@ -9089,6 +9090,7 @@ export type ScanSetupAnswer = {
         direction?: "in" | "out" | "both";
         lookup?: boolean;
         showPhoto?: boolean;
+        follows?: Array<string>;
       };
       ref: string;
       role: "scan" | "customer" | "monitor";
@@ -9953,6 +9955,7 @@ export type ScanningDevice = {
     direction?: "in" | "out" | "both";
     lookup?: boolean;
     showPhoto?: boolean;
+    follows?: Array<string>;
   };
   settings: ScannerSettings;
   capabilities: ScanDeviceCapabilities;
@@ -10230,6 +10233,7 @@ export type ScanningSessionsDevicesCreateParams = {
     direction?: "in" | "out" | "both";
     lookup?: boolean;
     showPhoto?: boolean;
+    follows?: Array<string>;
   };
 };
 
@@ -10242,6 +10246,7 @@ export type ScanningSessionsDevicesUpdateParams = {
     direction?: "in" | "out" | "both";
     lookup?: boolean;
     showPhoto?: boolean;
+    follows?: Array<string>;
   };
   revision?: number;
 };

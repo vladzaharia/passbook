@@ -101,6 +101,7 @@ export const ScanDeviceOverridesSchema = ScannerSettingsSchema.pick({
   lookup: true,
   showPhoto: true,
 })
+  .extend({ follows: z.array(IdSchema).min(1).max(16).optional() }) // a screen's scanners; absent: all
   .partial()
   .strict();
 export type ScanDeviceOverrides = z.infer<typeof ScanDeviceOverridesSchema>;

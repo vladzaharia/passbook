@@ -12806,6 +12806,16 @@
               },
               "showPhoto": {
                 "type": "boolean"
+              },
+              "follows": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "minItems": 1,
+                "maxItems": 16
               }
             },
             "additionalProperties": false
@@ -20329,6 +20339,16 @@
                               },
                               "showPhoto": {
                                 "type": "boolean"
+                              },
+                              "follows": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 64
+                                },
+                                "minItems": 1,
+                                "maxItems": 16
                               }
                             },
                             "additionalProperties": false
@@ -21384,6 +21404,16 @@
               },
               "showPhoto": {
                 "type": "boolean"
+              },
+              "follows": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "minItems": 1,
+                "maxItems": 16
               }
             },
             "additionalProperties": false
@@ -63931,6 +63961,16 @@
               },
               "showPhoto": {
                 "type": "boolean"
+              },
+              "follows": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "minItems": 1,
+                "maxItems": 16
               }
             },
             "additionalProperties": false
@@ -63992,6 +64032,16 @@
               },
               "showPhoto": {
                 "type": "boolean"
+              },
+              "follows": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "minItems": 1,
+                "maxItems": 16
               }
             },
             "default": {},
@@ -91956,6 +92006,7 @@
           "SCANNER_ROLE_INVALID",
           "SCANNER_WATCH_INVALID",
           "SCANNER_WATCH_NOT_FOUND",
+          "SCANNING_FOLLOWS_INVALID",
           "SCANNING_SESSION_CHANGED",
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_PAUSED",
@@ -134518,6 +134569,7 @@
           "SCANNER_ROLE_INVALID",
           "SCANNER_WATCH_INVALID",
           "SCANNER_WATCH_NOT_FOUND",
+          "SCANNING_FOLLOWS_INVALID",
           "SCANNING_SESSION_CHANGED",
           "SCANNING_SESSION_PAUSED",
           "SCANNING_SESSION_SCOPE_INVALID",
@@ -136019,6 +136071,7 @@
           "SCANNER_NOT_FOUND",
           "SCANNING_DEVICE_CHANGED",
           "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_FOLLOWS_INVALID",
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_SETTINGS_INVALID",
           "SCAN_CONFIG_CHANGED",
@@ -136252,6 +136305,7 @@
           "SCANNER_WATCH_INVALID",
           "SCANNER_WATCH_NOT_FOUND",
           "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_FOLLOWS_INVALID",
           "SCANNING_SESSION_CHANGED",
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_PAUSED",
@@ -136393,6 +136447,7 @@
           "SCANNER_WATCH_INVALID",
           "SCANNER_WATCH_NOT_FOUND",
           "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_FOLLOWS_INVALID",
           "SCANNING_SESSION_CHANGED",
           "SCANNING_SESSION_NOT_FOUND",
           "SCANNING_SESSION_PAUSED",
@@ -139597,6 +139652,7 @@
           "SCANNER_WATCH_NOT_FOUND",
           "SCANNING_DEVICE_CHANGED",
           "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_FOLLOWS_INVALID",
           "SCANNING_HOLD_RANGE",
           "SCANNING_HOURS_NONE",
           "SCANNING_SESSION_CHANGED",
@@ -139846,6 +139902,7 @@
           "SCANNER_WATCH_NOT_FOUND",
           "SCANNING_DEVICE_CHANGED",
           "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_FOLLOWS_INVALID",
           "SCANNING_HOLD_RANGE",
           "SCANNING_HOURS_NONE",
           "SCANNING_SESSION_CHANGED",
@@ -141442,6 +141499,7 @@
           "SCANNER_WATCH_NOT_FOUND",
           "SCANNING_DEVICE_CHANGED",
           "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_FOLLOWS_INVALID",
           "SCANNING_HOLD_RANGE",
           "SCANNING_HOURS_NONE",
           "SCANNING_SESSION_CHANGED",
@@ -141691,6 +141749,7 @@
           "SCANNER_WATCH_NOT_FOUND",
           "SCANNING_DEVICE_CHANGED",
           "SCANNING_DEVICE_NOT_FOUND",
+          "SCANNING_FOLLOWS_INVALID",
           "SCANNING_HOLD_RANGE",
           "SCANNING_HOURS_NONE",
           "SCANNING_SESSION_CHANGED",

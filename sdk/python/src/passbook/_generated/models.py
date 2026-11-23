@@ -3537,6 +3537,7 @@ class CreatedScanningDeviceOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+    follows: _List[str] | None = None
 
 class CurrentBulkRun(_Model):
     run: BulkRun | None = None
@@ -9905,6 +9906,7 @@ class ScanSetupAnswer2SessionsItemDevicesItemOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+    follows: _List[str] | None = None
 
 class ScanSetupAnswer2SessionsItemSettings(_Model):
     checkIn: ScanSetupAnswer2SessionsItemSettingsCheckIn | None = None
@@ -10823,6 +10825,7 @@ class ScanningDeviceOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+    follows: _List[str] | None = None
 
 class ScanningSession(_Model):
     id: str
@@ -11078,6 +11081,7 @@ class ScanningSessionsDevicesCreateParamsOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+    follows: _List[str] | None = None
 
 class ScanningSessionsDevicesUpdateParams(_Model):
     name: str | None = None
@@ -11091,6 +11095,7 @@ class ScanningSessionsDevicesUpdateParamsOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+    follows: _List[str] | None = None
 
 class ScanningSessionsListResponse(_Model):
     items: _List[ScanningSession]

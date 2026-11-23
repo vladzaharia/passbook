@@ -1,9 +1,10 @@
 import type { z } from 'zod';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
 import type { CreateScanningDeviceSchema } from '../../../shared/contracts/scanning-sessions.ts';
-import { roleForSurface } from '../../../shared/scan-surfaces.ts';
+import { roleForSurface, surfaceFor } from '../../../shared/scan-surfaces.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { assertFollows } from './device-follows.ts';
 import { scanningDeviceRows } from './repo-scanning-devices.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 import { takenScannerNames } from './repo-setup-intent.ts';
@@ -64,6 +65,15 @@ export async function planScanningDevice(
     throw new ValidationError(
       `This session already has ${SESSION_DEVICE_CAP} devices. Remove an unused device.`,
     );
+  if (input.overrides.follows) {
+    if (made)
+      throw new ValidationError(
+        'Pick scanners after the session exists.',
+        [],
+        'SCANNING_FOLLOWS_INVALID',
+      );
+    assertFollows(input.overrides, surfaceFor(input.surface, null), stored);
+  }
   const settings = ScannerSettingsSchema.parse({
     ...parentSettings,
     ...input.overrides,
