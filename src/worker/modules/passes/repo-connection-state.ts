@@ -1,6 +1,7 @@
 import { first } from '../../platform/db.ts';
 import {
   type ConnectionPassContext,
+  connectionPassFences,
   connectionPassParams,
   connectionPassPredicate,
   validConnectionPassContext,
@@ -47,6 +48,7 @@ export async function applyConnectionState(
           proof.version,
         )
       : undefined;
+  const fences = connectionPassFences(context);
   const row = await first<{
     holder_email: string | null;
     owner_user_id: string | null;
@@ -55,8 +57,8 @@ export async function applyConnectionState(
   }>(
     db,
     `UPDATE passes SET sync_error_code = ?
-     WHERE id = ? AND holder_email IS ? AND owner_user_id IS ? AND ${connectionPassPredicate}
-       ${fence ? `AND template_id = ? AND ${fence.sql}` : ''}
+     WHERE id = ? AND holder_email IS ? AND owner_user_id IS ? AND ${connectionPassPredicate} ${fences}
+       ${fence ? `AND template_id = ? AND (${fence.sql})` : ''}
      RETURNING holder_email, owner_user_id, link_generation, version`,
     [
       code,

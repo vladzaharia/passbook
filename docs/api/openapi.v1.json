@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "PassBook API",
-    "version": "2026-11-20"
+    "version": "2026-11-22"
   },
   "servers": [
     {
@@ -127402,6 +127402,7 @@
         "x-codes": [
           "ACTOR_CHANGED",
           "API_KEY_NO_APPROVAL",
+          "API_VERSION_UNKNOWN",
           "AUTHORITY_DENIED",
           "CONFLICT",
           "FEATURE_LIMIT_REACHED",

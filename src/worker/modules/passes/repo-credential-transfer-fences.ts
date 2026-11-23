@@ -8,16 +8,17 @@ import type { CredentialTransferTarget } from './repo-credential-transfer-read.t
 /** The target owner is the unique unblocked verified owner of the holder email (or there is none). */
 export function eligibleOwner(passId: string, t: CredentialTransferTarget): Check {
   const owner = t.ownerUserId;
+  if (owner === null) return rawCheck('lineage', '1 = 1', []);
   return rawCheck(
     'lineage',
-    `(? IS NULL OR (? IS NOT NULL AND EXISTS (
+    `(EXISTS (
       SELECT 1 FROM users u JOIN user_emails e ON e.user_id = u.id
       WHERE u.id = ? AND u.status = 'active' AND e.email = ?)
     AND NOT EXISTS (SELECT 1 FROM pass_attach_blocks b WHERE b.pass_id = ? AND b.user_id = ?)
     AND NOT EXISTS (SELECT 1 FROM users u JOIN user_emails e ON e.user_id = u.id
       WHERE u.id != ? AND u.status = 'active' AND e.email = ?
-        AND NOT EXISTS (SELECT 1 FROM pass_attach_blocks b WHERE b.pass_id = ? AND b.user_id = u.id))))`,
-    [owner, owner, owner, t.holderEmail, passId, owner, owner, t.holderEmail, passId],
+        AND NOT EXISTS (SELECT 1 FROM pass_attach_blocks b WHERE b.pass_id = ? AND b.user_id = u.id)))`,
+    [owner, t.holderEmail, passId, owner, owner, t.holderEmail, passId],
   );
 }
 

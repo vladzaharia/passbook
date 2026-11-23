@@ -1,6 +1,6 @@
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, batch, chunk, first, placeholders, stmt } from '../../platform/db.ts';
-import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
+import { type ScopeArg, scopeAnd } from '../passes/scope.ts';
 import { type MutationAudit, mutationAudit } from './repo-blocks.ts';
 
 /** userSql/emailSql are trusted SQL expressions, never request data. */
@@ -117,12 +117,12 @@ export async function getHolderPass(
   passId: string,
   scope: ScopeArg,
 ): Promise<HolderPass | null> {
-  const orgScope = scopeOrg(scope);
+  const s = scopeAnd(scope, 'p');
   const row = await first<HolderDbRow>(
     db,
-    `${SELECT_HOLDER} WHERE p.id = ? AND (? IS NULL OR p.org_id = ?) AND (? IS NULL OR p.mode = ?)
+    `${SELECT_HOLDER} WHERE p.id = ?${s.sql}
        AND p.deleted_at IS NULL AND p.test_data_quarantined = 0`,
-    [passId, orgScope, orgScope, readMode(scope), readMode(scope)],
+    [passId, ...s.params],
   );
   return row ? mapHolder(row) : null;
 }

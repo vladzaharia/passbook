@@ -1,3 +1,4 @@
+// biome-ignore-all lint/suspicious/noTemplateCurlyInString: SQL and source text matched as strings
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
@@ -14,6 +15,7 @@ import {
   scanJobContext,
   scanTree,
   UNTENANTED_CHECK_ALLOWLIST,
+  uninlinedWriteCalls,
   untenantedChecks,
 } from './authority-scope.ts';
 import { scanBans } from './authority-scope-bans.ts';
@@ -205,6 +207,116 @@ describe('authority-scope', () => {
     const interp = (e: string) => `run(db, \`DELETE FROM sessions WHERE $\{${e}}\`)`;
     expect(rawWriteStatements(interp('a'))).not.toEqual(rawWriteStatements(interp('b')));
     expect(rawWriteStatements(interp(' a '))).toEqual(rawWriteStatements(interp('a')));
+  });
+
+  it('pins the connection write through the imported predicate constant', () => {
+    const rel = 'src/worker/modules/passes/repo-connection-state.ts';
+    const ctx = 'src/worker/modules/passes/repo-connection-context.ts';
+    const files = new Map(treeFiles());
+    const findings = (map: Map<string, string>) =>
+      scanFile(rel, map.get(rel) ?? '', owners, map).filter((f) => f.rule === 'raw-guarded-write');
+    expect(findings(files)).toEqual([]);
+    const source = files.get(ctx) ?? '';
+    expect(source).toContain('const connectionPassPredicate = `org_id = ? AND mode = ?');
+    const dropped = new Map(files).set(
+      ctx,
+      source.replace('`org_id = ? AND mode = ?', '`mode = ?'),
+    );
+    expect(findings(dropped)).not.toEqual([]);
+  });
+
+  it('pins the claimRefresh connection fence, so dropping a term from it fails', () => {
+    const rel = 'src/worker/modules/passes/repo-pass-trusted.ts';
+    const snap = 'src/worker/modules/passes/repo-refresh-snapshot.ts';
+    const files = new Map(treeFiles());
+    const findings = (map: Map<string, string>) =>
+      scanFile(rel, map.get(rel) ?? '', owners, map).filter((f) => f.rule === 'raw-guarded-write');
+    expect(findings(files)).toEqual([]);
+    const source = files.get(snap) ?? '';
+    for (const term of ['AND c.org_id = passes.org_id', "AND mode = 'live'"]) {
+      expect(source).toContain(term);
+      expect(findings(new Map(files).set(snap, source.replace(term, '')))).not.toEqual([]);
+    }
+  });
+
+  it('fails an interpolation the pin cannot see into, unless reviewed', () => {
+    const rel = 'src/worker/modules/passes/repo-connection-state.ts';
+    const ctx = 'src/worker/modules/passes/repo-connection-context.ts';
+    const files = new Map(treeFiles());
+    const text = files.get(rel) ?? '';
+    const findings = (map: Map<string, string>, source: string) =>
+      scanFile(rel, source, owners, map).filter((f) => f.rule === 'raw-guarded-write');
+    // The reviewer's probe: strip the org term out of the constant before it is interpolated.
+    const probe = text
+      .replace('${connectionPassPredicate} ${fences}', '${pred} ${fences}')
+      .replace(
+        'const fences =',
+        'const pred = connectionPassPredicate.replace("org_id = ? AND ", "");\n  const fences =',
+      );
+    expect(probe).not.toBe(text);
+    expect(findings(files, probe).some((f) => f.detail.includes('${pred}'))).toBe(true);
+    // A reviewed interpolation is pinned to the source behind it: editing a dependency fails.
+    const edited = new Map(files).set(
+      ctx,
+      `${files.get(ctx) ?? ''}\n// not a comment-only change: x`,
+    );
+    expect(findings(edited, text)).toEqual([]);
+    const changed = new Map(files).set(ctx, `${files.get(ctx) ?? ''}\nexport const extra = 1;`);
+    expect(findings(changed, text).some((f) => f.detail.includes('source behind'))).toBe(true);
+  });
+
+  it('fails when the source of a caller-built fragment gains an OR', () => {
+    const files = new Map(treeFiles());
+    const mod = 'src/worker/modules/';
+    const cases: [string, string, string, string][] = [
+      [
+        `${mod}passes/repo-connection-state.ts`,
+        `${mod}passes/repo-release.ts`,
+        'sql: `',
+        'sql: `1 OR ',
+      ],
+      [
+        `${mod}events/repo.ts`,
+        `${mod}wallet-providers/repo-holder-events.ts`,
+        'WHERE id = ?)',
+        'WHERE id = ?) OR 1',
+      ],
+    ];
+    for (const [rel, dep, from, to] of cases) {
+      const findings = (map: Map<string, string>) =>
+        scanFile(rel, map.get(rel) ?? '', owners, map).filter(
+          (f) => f.rule === 'raw-guarded-write',
+        );
+      expect(findings(files)).toEqual([]);
+      const source = files.get(dep) ?? '';
+      expect(source).toContain(from);
+      const changed = new Map(files).set(dep, source.replaceAll(from, to));
+      expect(findings(changed).some((f) => f.detail.includes('source behind'))).toBe(true);
+    }
+  });
+
+  it('inlines a ternary of literals, and a constant that is one', () => {
+    const same = (a: string, b: string) =>
+      expect(rawWriteStatements(a)).toEqual(rawWriteStatements(b));
+    const base = (cond: string) =>
+      `run(db, \`DELETE FROM sessions WHERE id = ?$\{x ? ' AND ${cond}' : ''}\`)`;
+    same(base('a = ?'), base('a = ?'));
+    expect(rawWriteStatements(base('a = ?'))).not.toEqual(rawWriteStatements(base('a = 1')));
+    const held = (cond: string) =>
+      `const held = x ? ' AND ${cond}' : '';\nrun(db, \`DELETE FROM sessions WHERE id = ?$\{held}\`)`;
+    expect(uninlinedWriteCalls(held('a = ?'))).toEqual([]);
+    expect(rawWriteStatements(held('a = ?'))).not.toEqual(rawWriteStatements(held('a = 1')));
+  });
+
+  it('fails a pinned statement that calls a function the pin cannot see into', () => {
+    const rel = 'src/worker/modules/auth/repo-sessions.ts';
+    const text = new Map(treeFiles()).get(rel) ?? '';
+    expect(uninlinedWriteCalls(text)).toEqual([]);
+    const called = `${text}\nrun(db, \`DELETE FROM sessions WHERE $\{scopeSql(x)}\`, []);`;
+    expect(uninlinedWriteCalls(called)).toEqual(['sessions:scopeSql(x)']);
+    expect(
+      scanFile(rel, called, owners).filter((f) => f.detail.includes('scopeSql(x)')),
+    ).toHaveLength(1);
   });
 
   it('pins a concatenated tail and a constant run from a new call site', () => {
