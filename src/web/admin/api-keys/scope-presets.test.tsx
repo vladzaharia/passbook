@@ -54,7 +54,7 @@ describe('scope presets', () => {
       capabilities: ['org:read', 'integrations:read', 'integrations:manage', 'templates:read'],
     });
     const names = within(scopes)
-      .getAllByRole('button')
+      .getAllByRole('button', { name: /^(?!Preset scopes)/ })
       .map((b) => b.textContent);
     expect(names).toEqual(['Webhooks', 'Integrations']);
   });
@@ -86,8 +86,8 @@ describe('scope presets', () => {
   it('lists every preset scope in a popover opened by tap', async () => {
     const { user, scopes } = await openDialog();
     await user.click(within(scopes).getByRole('button', { name: 'Preset scopes' }));
-    const list = await screen.findByText('Holder support');
-    expect(list.closest('div')).toHaveTextContent('passes:read, holders:write, messages:write');
-    expect(screen.getByText('Template authoring')).toBeInTheDocument();
+    const term = (await screen.findAllByText('Holder support')).find((e) => e.tagName === 'DT');
+    expect(term?.closest('div')).toHaveTextContent('passes:read, holders:write, messages:write');
+    expect(screen.getAllByText('Template authoring').some((e) => e.tagName === 'DT')).toBe(true);
   });
 });

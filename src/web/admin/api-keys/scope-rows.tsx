@@ -71,7 +71,11 @@ export function ScopeRows({
           <PopoverTrigger asChild>
             <IconButton size="sm" label="Preset scopes" icon={<Info aria-hidden />} />
           </PopoverTrigger>
-          <PopoverContent className="max-h-80 w-80 overflow-y-auto">
+          <PopoverContent
+            className="max-h-80 w-80 overflow-y-auto"
+            tabIndex={0}
+            aria-label="Preset scopes"
+          >
             <dl className="flex flex-col gap-2">
               {presets.map((p) => (
                 <div key={p.id}>
