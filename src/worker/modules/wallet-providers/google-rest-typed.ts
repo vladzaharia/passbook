@@ -137,6 +137,42 @@ export async function patchGoogleObjectBody(
   await request(ctx, GOOGLE_RESOURCES[type].object, 'PATCH', objectId, copyGoogleProjection(body));
 }
 
+/** What `addMessage` sends: the message PassBook owns, whose id is the ledger row's. */
+export interface GoogleAddMessage {
+  id: string;
+  header: string;
+  body: string;
+  messageType: 'TEXT' | 'TEXT_AND_NOTIFY';
+}
+
+/** The only call Google documents as notifying: object `addMessage` (google-messages.md section 0). */
+export async function addGoogleObjectMessage(
+  ctx: GoogleWalletRestContext,
+  type: GoogleType,
+  scope: GoogleObjectScope,
+  message: GoogleAddMessage,
+): Promise<void> {
+  const { objectId } = await googleObjectIds(ctx.account.issuerId, ctx.objectIdHmacKey, scope);
+  await request(ctx, GOOGLE_RESOURCES[type].object, 'POST', objectId, { message }, 'addMessage');
+}
+
+/** The messageType Google holds for one of our messages on the object, or null when it has none by that id. */
+export async function findGoogleObjectMessage(
+  ctx: GoogleWalletRestContext,
+  type: GoogleType,
+  scope: GoogleObjectScope,
+  messageId: string,
+): Promise<GoogleAddMessage['messageType'] | null> {
+  const { objectId } = await googleObjectIds(ctx.account.issuerId, ctx.objectIdHmacKey, scope);
+  const held = await verifyIdentity(ctx, GOOGLE_RESOURCES[type].object, objectId);
+  const messages = Array.isArray(held.messages) ? (held.messages as unknown[]) : [];
+  const hit = messages.find((m) => (m as { id?: unknown } | null)?.id === messageId) as
+    | { messageType?: unknown }
+    | undefined;
+  if (!hit) return null;
+  return hit.messageType === 'TEXT_AND_NOTIFY' ? 'TEXT_AND_NOTIFY' : 'TEXT';
+}
+
 const NOT_SENT = ['barcode', 'rotatingBarcode', 'classReference', 'smartTapRedemptionValue'];
 const OUTPUT_ONLY = ['hasUsers', 'kind', 'version'];
 const gone = (value: Record<string, unknown>) =>

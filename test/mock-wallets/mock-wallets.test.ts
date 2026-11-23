@@ -13,6 +13,7 @@ import {
   upsertGoogleGenericClass,
   upsertGoogleGenericObject,
 } from '../../src/worker/modules/wallet-providers/google-rest.ts';
+import { addGoogleObjectMessage } from '../../src/worker/modules/wallet-providers/google-rest-typed.ts';
 import { mockProviderInput } from '../../src/worker/modules/wallet-providers/mock-endpoint.ts';
 import { createMockWallets } from './index.ts';
 
@@ -122,6 +123,56 @@ describe('mock Google Wallet with the real client code', () => {
     await expect(upsertGoogleGenericClass(ctx, scope, projection)).rejects.toMatchObject({
       code: 'unauthorized',
     });
+  });
+});
+
+describe('object addMessage', () => {
+  const message = (id: string, messageType: 'TEXT' | 'TEXT_AND_NOTIFY') => ({
+    id,
+    header: 'Club',
+    body: 'Tier is now Gold',
+    messageType,
+  });
+  async function seeded() {
+    const ctx = await rest();
+    await upsertGoogleGenericClass(ctx, scope, projection);
+    await upsertGoogleGenericObject(ctx, scope, projection);
+    return ctx;
+  }
+
+  it('appends the message to the object and counts notifications per object', async () => {
+    const ctx = await seeded();
+    await addGoogleObjectMessage(ctx, 'generic', scope, message('m1', 'TEXT_AND_NOTIFY'));
+    await addGoogleObjectMessage(ctx, 'generic', scope, message('m2', 'TEXT'));
+    const [object] = [...mock.google.genericObject.values()];
+    expect(object?.messages).toMatchObject([{ id: 'm1' }, { id: 'm2' }]);
+    expect([...mock.notifications.values()].map((t) => t.length)).toEqual([1]);
+  });
+
+  it('refuses the fourth notification in 24 hours as a quota error, and a plain 429 stays rate limiting', async () => {
+    const ctx = await seeded();
+    for (const id of ['a', 'b', 'c'])
+      await addGoogleObjectMessage(ctx, 'generic', scope, message(id, 'TEXT_AND_NOTIFY'));
+    await expect(
+      addGoogleObjectMessage(ctx, 'generic', scope, message('d', 'TEXT_AND_NOTIFY')),
+    ).rejects.toMatchObject({ code: 'quota_exceeded', status: 429 });
+    mock.failNext({ status: 429, match: 'addMessage' });
+    await expect(
+      addGoogleObjectMessage(ctx, 'generic', scope, message('e', 'TEXT')),
+    ).rejects.toMatchObject({ code: 'rate_limited' });
+  });
+
+  it('refuses an eleventh message and an object that is not there', async () => {
+    const ctx = await seeded();
+    for (let i = 0; i < 10; i++)
+      await addGoogleObjectMessage(ctx, 'generic', scope, message(`t${i}`, 'TEXT'));
+    await expect(
+      addGoogleObjectMessage(ctx, 'generic', scope, message('t10', 'TEXT')),
+    ).rejects.toMatchObject({ code: 'bad_request' });
+    mock.reset();
+    await expect(
+      addGoogleObjectMessage(await rest(), 'generic', scope, message('x', 'TEXT')),
+    ).rejects.toMatchObject({ code: 'not_found' });
   });
 });
 

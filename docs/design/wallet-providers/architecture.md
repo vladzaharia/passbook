@@ -226,7 +226,7 @@ Reuses instances, desired-state operations, dirty triggers, sync drain, callback
 | Event | Apple | Google | Samsung |
 | --- | --- | --- | --- |
 | Field edit, connection sync, reissue | APNs push | `upsert`: PATCH object (and class when class content changed) with full arrays | `upsert`: Update Notification `UPDATED`; Samsung pulls Get Card Data |
-| Message / broadcast | `changeMessage` | `addMessage` `TEXT_AND_NOTIFY`, oldest dropped past 10 | `noticeDesc` updated; ledger `updated only` |
+| Message / broadcast | `changeMessage` | Object `addMessage` after the object write, one per operation; see `google-messages.md` (GM2 built it) | `noticeDesc` updated; ledger `updated only` |
 | Expiry | `expirationDate` | `validTimeInterval.end`; Google moves it to Expired | `endDate`/`expiry`; `EXPIRED` state at the date |
 | Void | `voided` + server deny | deny first, then PUT object `state: INACTIVE`, barcode removed, message `This pass is no longer valid.` | deny first, then state `CANCELED` |
 | Unvoid | `voided: false` | PUT `ACTIVE` with barcode | `ACTIVE` |
@@ -246,7 +246,7 @@ Denial at the door always commits before provider fan-out (product rule). Bundle
 
 ### 6.3 Messages
 
-`addMessage` per changed `changeMessage` field and per broadcast, message id = operation id (idempotent). Notification rate per object is Google's (unconfirmed); the outcome ledger records `notified` only when `TEXT_AND_NOTIFY` was accepted, else `updated only`.
+Google messages: see `google-messages.md` (it replaces this section for Google; one object `addMessage` per sync operation, the ledger `wallet_google_messages`, `wallet.messaged` events). Samsung has no notifying call.
 
 ### 6.4 Samsung blockers (`samsung-wallet.md` section 10)
 

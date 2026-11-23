@@ -57,7 +57,7 @@ interface GoogleRuntimeObjectInput extends GoogleRuntimeClassInput {
   channelEpoch: number;
 }
 
-interface GoogleRuntimeObjectIdentity extends GoogleRuntimePartition {
+export interface GoogleRuntimeObjectIdentity extends GoogleRuntimePartition {
   releaseId: string;
   passId: string;
   credentialGeneration: number;
@@ -88,7 +88,7 @@ const partition = ({ type, classKey }: GoogleRuntimePartition): GoogleRuntimePar
 });
 
 /** The object's identity under a verified scope; a partition makes it a typed class's object. */
-const objectScope = (s: WalletRuntimeScope, i: GoogleRuntimeObjectIdentity) => ({
+export const objectScope = (s: WalletRuntimeScope, i: GoogleRuntimeObjectIdentity) => ({
   tenantId: s.orgId,
   mode: s.mode,
   releaseId: i.releaseId,
@@ -140,7 +140,7 @@ export async function createGoogleRuntimeOffer(
   });
 }
 
-async function withGoogleRest<T>(
+export async function withGoogleRest<T>(
   ctx: ServiceContext,
   inputScope: WalletRuntimeScope,
   assertCurrent: (() => Promise<void>) | undefined,

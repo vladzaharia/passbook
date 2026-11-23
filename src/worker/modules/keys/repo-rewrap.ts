@@ -1,4 +1,5 @@
 import { all, batch, type SqlValue, stmt } from '../../platform/db.ts';
+import { GOOGLE_MESSAGES_SELECT, GOOGLE_MESSAGES_UPDATE } from './repo-rewrap-messages.ts';
 import type { PlaceTable, Raw } from './rewrap-tables.ts';
 
 // Raw writes of cron keys.rewrap: one literal statement per envelope place, pinned in
@@ -28,6 +29,7 @@ const SELECT: Record<PlaceTable, string> = {
       (SELECT i.org_id FROM wallet_provider_instance_operations o JOIN wallet_provider_instances i ON i.id = o.instance_id
         WHERE o.id = t.operation_id) AS x1, NULL AS x2, NULL AS x3, NULL AS x4
     FROM wallet_provider_instance_outcomes t WHERE t.id > ? AND t.kek_version < ? ORDER BY t.id LIMIT ?`,
+  wallet_google_messages: GOOGLE_MESSAGES_SELECT,
   wallet_samsung_fetch_refs: `SELECT t.id AS pk, t.kek_version, t.wrapped_dek,
       (SELECT i.org_id FROM wallet_provider_instances i WHERE i.id = t.instance_id) AS x1,
       (SELECT i.mode FROM wallet_provider_instances i WHERE i.id = t.instance_id) AS x2,
@@ -138,6 +140,7 @@ const CAS: Record<PlaceTable, (db: D1Database, m: Move) => D1PreparedStatement> 
        WHERE id = ? AND kek_version = ? AND wrapped_dek = ? RETURNING id`,
       params(m),
     ),
+  wallet_google_messages: (db, m) => stmt(db, GOOGLE_MESSAGES_UPDATE, params(m)),
   wallet_samsung_fetch_refs: (db, m) =>
     stmt(
       db,
