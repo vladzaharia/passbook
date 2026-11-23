@@ -3,7 +3,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { all, first, placeholders, run, type SqlValue, stmt } from '../../platform/db.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { tenantPassAuthorityParams, tenantPassAuthoritySql } from '../passes/repo-authority.ts';
-import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
+import { type ScopeArg, scopeAnd } from '../passes/scope.ts';
 import { planGate } from './repo-day-limit.ts';
 
 export { followUpsOf } from './repo-followup.ts';
@@ -148,12 +148,13 @@ export function insertAuthorizedBroadcastStmt(
 }
 
 /** Outside the org reads as missing. API keys read their own mode, sessions either. */
-export const getBroadcast = (db: D1Database, id: string, scope: ScopeArg) =>
-  first<BroadcastRow>(
-    db,
-    'SELECT * FROM broadcasts WHERE id = ? AND (? IS NULL OR org_id = ?) AND (? IS NULL OR mode = ?)',
-    [id, scopeOrg(scope), scopeOrg(scope), readMode(scope), readMode(scope)],
-  );
+export const getBroadcast = (db: D1Database, id: string, scope: ScopeArg) => {
+  const s = scopeAnd(scope);
+  return first<BroadcastRow>(db, `SELECT * FROM broadcasts WHERE id = ?${s.sql}`, [
+    id,
+    ...s.params,
+  ]);
+};
 
 /** Moves a broadcast between states only if it is still in `from`. True when this caller won. */
 export async function casState(

@@ -128,9 +128,13 @@ export function livePhotoStmt(
       WHERE ${auth.ok} AND p.id = ? AND ${auth.tenant('p', 'passes')}
         AND ${passVisibleSql('p', { credential: '?', lifecycle: '?' })}
         AND p.image_generation = ? AND ${effectiveReleaseIdSql('p')} IS ? AND ${scope.sql}
-        AND (? IS NULL OR EXISTS (SELECT 1 FROM scans s
+        ${
+          entry.scanId !== null
+            ? `AND EXISTS (SELECT 1 FROM scans s
           WHERE s.id = ? AND ${auth.tenant('s', 'scans')} AND s.pass_id = p.id
-            AND s.state = 'done' AND NOT ${scanRetentionExcludedSql('s')}))
+            AND s.state = 'done' AND NOT ${scanRetentionExcludedSql('s')})`
+            : ''
+        }
         ${borrowed ? 'AND EXISTS (SELECT 1 FROM scan_staff st WHERE st.id = ? AND st.org_id = p.org_id AND st.auth_epoch = ? AND st.disabled_at IS NULL)' : ''}
         ${
           prefixes.length
@@ -146,8 +150,7 @@ export function livePhotoStmt(
       gen.image,
       entry.release,
       ...scope.params,
-      entry.scanId,
-      entry.scanId,
+      ...(entry.scanId !== null ? [entry.scanId] : []),
       ...(borrowed && entry.sourceStaff ? [entry.sourceStaff.id, entry.sourceStaff.authEpoch] : []),
       ...prefixes.flatMap((prefix) => [prefix + '0'.repeat(48), prefix + 'f'.repeat(48)]),
     ],

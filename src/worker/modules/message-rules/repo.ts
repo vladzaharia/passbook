@@ -197,11 +197,9 @@ export const cancelScheduledRuns = (db: D1Database, ruleId: string, orgId: strin
   );
 
 export const getRule = (db: D1Database, id: string, orgId: string | null) =>
-  first<RuleRow>(db, 'SELECT * FROM message_rules WHERE id = ? AND (? IS NULL OR org_id = ?)', [
-    id,
-    orgId,
-    orgId,
-  ]);
+  orgId === null
+    ? first<RuleRow>(db, 'SELECT * FROM message_rules WHERE id = ?', [id])
+    : first<RuleRow>(db, 'SELECT * FROM message_rules WHERE id = ? AND org_id = ?', [id, orgId]);
 
 export async function listRules(
   db: D1Database,

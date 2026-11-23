@@ -2,7 +2,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { tokenKeys } from '../../platform/capability-token.ts';
 import { all, chunk, first, placeholders } from '../../platform/db.ts';
 import type { PassDbRow } from '../passes/repo-map.ts';
-import { readMode, type ScopeArg, scopeOrg } from '../passes/scope.ts';
+import { type ScopeArg, scopeAnd } from '../passes/scope.ts';
 
 const noQuarantinedMembers = (bundleId: string) =>
   `NOT EXISTS (SELECT 1 FROM bundle_passes quarantine_bp
@@ -30,13 +30,12 @@ export interface MemberRow {
 
 /** Null scope = platform-wide. A bundle outside the scope (org, or an API key's mode) reads as missing. */
 export function getBundle(db: D1Database, id: string, scope: ScopeArg) {
-  const orgScope = scopeOrg(scope);
-  const mode = readMode(scope);
+  const s = scopeAnd(scope);
   return first<BundleRow>(
     db,
-    `SELECT * FROM bundles WHERE id = ? AND (? IS NULL OR org_id = ?) AND (? IS NULL OR mode = ?)
+    `SELECT * FROM bundles WHERE id = ?${s.sql}
      AND ${noQuarantinedMembers('bundles.id')}`,
-    [id, orgScope, orgScope, mode, mode],
+    [id, ...s.params],
   );
 }
 
@@ -58,20 +57,23 @@ export interface BundleListFilter {
 
 /** Every list is scoped to an explicit organization. */
 export function listBundleRows(db: D1Database, f: BundleListFilter) {
+  const passFilter =
+    f.passId === undefined
+      ? ''
+      : `AND EXISTS (SELECT 1 FROM bundle_passes bp WHERE bp.bundle_id = bundles.id AND bp.pass_id = ?
+         AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = bp.pass_id AND t.state = 'pending'))`;
   return all<BundleRow>(
     db,
     `SELECT * FROM bundles
      WHERE mode = ? AND org_id = ?
        AND ${noQuarantinedMembers('bundles.id')}
-       AND (? IS NULL OR EXISTS (SELECT 1 FROM bundle_passes bp WHERE bp.bundle_id = bundles.id AND bp.pass_id = ?
-         AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = bp.pass_id AND t.state = 'pending')))
+       ${passFilter}
        ${f.cursor === undefined ? '' : 'AND id < ?'}
      ORDER BY id DESC LIMIT ?`,
     [
       f.mode,
       f.orgId,
-      f.passId ?? null,
-      f.passId ?? null,
+      ...(f.passId === undefined ? [] : [f.passId]),
       ...(f.cursor === undefined ? [] : [f.cursor]),
       f.limit,
     ],
