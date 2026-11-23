@@ -3181,6 +3181,24 @@
       ]
     },
     {
+      "code": "PRESET_MOVING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "PRESET_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "PRIMARY_EMAIL",
       "statuses": [
         409

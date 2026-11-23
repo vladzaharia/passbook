@@ -17,6 +17,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
 import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
+import { parseValuesJson } from './preset-values.ts';
 import {
   orgEntitlementsRow,
   orgExists,
@@ -36,7 +37,11 @@ const notFound = () => new NotFoundError('Organization not found.', 'ORG_NOT_FOU
 const changed = () =>
   new ConflictError('The features changed. Reload and retry.', 'ENTITLEMENTS_CHANGED');
 
-function parseStored(ctx: ServiceContext, key: string, text: string): EntitlementValue | undefined {
+export function parseStored(
+  ctx: ServiceContext,
+  key: string,
+  text: string,
+): EntitlementValue | undefined {
   const known = ENTITLEMENT_KEYS.find((k) => k === key);
   if (known === undefined) return undefined;
   let raw: unknown;
@@ -58,7 +63,15 @@ interface State {
   /** 0 for an org with no row. */
   revision: number;
   updatedAt: number | null;
-  presets: { preset: string; label: string; orgCount: number; values: EntitlementValues }[];
+  /** The preset as it stood before an edit that has not reached the org yet; null once it has. */
+  lagging: EntitlementValues | null;
+  presets: {
+    preset: string;
+    label: string;
+    revision: number;
+    orgCount: number;
+    values: EntitlementValues;
+  }[];
   presetValues: EntitlementValues;
   overrides: Map<
     string,
@@ -92,6 +105,7 @@ async function stateOf(ctx: ServiceContext, orgId: string): Promise<State> {
     .map((p) => ({
       preset: p.preset,
       label: p.label,
+      revision: p.revision,
       orgCount: p.org_count,
       values: byPreset.get(p.preset) ?? {},
     }))
@@ -110,6 +124,13 @@ async function stateOf(ctx: ServiceContext, orgId: string): Promise<State> {
     presetLabel: row ? (current?.label ?? row.preset) : null,
     revision: row?.revision ?? 0,
     updatedAt: row?.updated_at ?? null,
+    lagging:
+      row && current && row.preset_revision < current.revision
+        ? parseValuesJson(
+            ctx,
+            allPresets.find((p) => p.preset === row.preset)?.previous_values ?? null,
+          )
+        : null,
     presets: list,
     presetValues: current?.values ?? {},
     overrides,
@@ -117,7 +138,7 @@ async function stateOf(ctx: ServiceContext, orgId: string): Promise<State> {
 }
 
 /** The resolved values: the preset's, with a standing override over any key the preset carries. */
-function resolve(
+export function resolve(
   presetValues: EntitlementValues,
   overrides: ReadonlyMap<string, { value: EntitlementValue }>,
 ): EntitlementValues {
@@ -157,7 +178,10 @@ export async function readOrgEntitlements(
     revision: s.revision,
     updatedAt: s.updatedAt,
     items,
-    presets: s.presets.map((p) => ({ ...p, values: p.values as Record<string, EntitlementValue> })),
+    presets: s.presets.map(({ revision: _revision, ...p }) => ({
+      ...p,
+      values: p.values as Record<string, EntitlementValue>,
+    })),
   };
 }
 
@@ -220,7 +244,7 @@ export async function setOrgEntitlements(
   const noOp = !create && input.preset === before.preset && put.length === 0 && remove.length === 0;
   if (noOp) return readOrgEntitlements(ctx, orgId);
 
-  const was = resolve(before.presetValues, before.overrides);
+  const was = resolve(before.lagging ?? before.presetValues, before.overrides);
   const after = resolve(target.values, next);
   const impact = entitlementImpact(was, after);
   const touched = new Set([...put.map(([k]) => k), ...remove, ...impact.changes.map((c) => c.key)]);
@@ -241,6 +265,7 @@ export async function setOrgEntitlements(
       admin,
       expectedRevision: before.revision,
       preset: input.preset,
+      presetRevision: target.revision,
       now,
       remove,
       put: put.map(([key, o]) => ({

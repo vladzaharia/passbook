@@ -168,6 +168,7 @@ describe('platform write', () => {
         admin,
         expectedRevision: before.revision,
         preset: 'standard',
+        presetRevision: 1,
         now: rk.kit.clock.now(),
         remove: [],
         put: [{ key: 'api', value: '"off"', note: null, expiresAt: null }],

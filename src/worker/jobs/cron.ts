@@ -18,6 +18,7 @@ import { tickMessageRules } from '../modules/message-rules/tick.ts';
 import { expireBindings } from '../modules/nfc/expiry.ts';
 import { dailyOrgLifecycle } from '../modules/org-lifecycle/jobs.ts';
 import { sweepBrandingGc } from '../modules/orgs/branding-gc.ts';
+import { expireEntitlementOverrides } from '../modules/orgs/entitlement-expiry.ts';
 import { sweepBulkRuns } from '../modules/passes/bulk-run.ts';
 import { resumePendingCredentialTransfers } from '../modules/passes/credential-transfer-resume.ts';
 import { dailyImports } from '../modules/passes/import-retention.ts';
@@ -66,6 +67,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'broadcasts.start', run: startDueBroadcasts },
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },
     { name: 'channels.apply_sweep', run: sweepChannelApply },
+    { name: 'entitlements.override_expiry', run: expireEntitlementOverrides },
     { name: 'message_rules.tick', run: tickMessageRules },
     { name: 'scan.reconcile', run: reconcileScans },
     { name: 'scan.backfill', run: backfillScanLookups },
