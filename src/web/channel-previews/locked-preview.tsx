@@ -36,7 +36,10 @@ export function LockedPreview({
         {card}
       </div>
       <div className="absolute inset-0 isolate flex flex-col items-center justify-center gap-1 overflow-hidden rounded-xl bg-surface-raised/85 p-4 text-center backdrop-blur-sm">
-        <span aria-hidden className="wl-hatch absolute inset-0 -z-10 opacity-60" />
+        <span
+          aria-hidden
+          className="wl-hatch absolute inset-0 -z-10 opacity-60 [mask-image:linear-gradient(to_bottom,#000_55%,transparent)]"
+        />
         <ToggleLeft aria-hidden className="mb-1 size-5 text-fg-muted" />
         <p className="text-sm font-medium text-fg-strong">{channel}</p>
         <p className="text-xs text-fg-muted">{reason}</p>
