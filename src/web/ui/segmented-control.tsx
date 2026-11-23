@@ -6,6 +6,7 @@ import { ActiveIndicator } from './active-indicator.tsx';
 import { Tooltip } from './tooltip.tsx';
 // Geometry shared with the SSR side toggle (.pc-seg), so both are one size.
 import '../pass-card/stage-seg.css';
+import '../styles/hatch.css';
 
 export interface SegmentOption<V extends string = string> {
   value: V;
@@ -38,7 +39,7 @@ export interface SegmentedControlProps<V extends string = string> {
  * A radiogroup on a sunken track; the raised thumb (ActiveIndicator, 280 ms spring) slides to the
  * selection. Arrow keys move and select, Home/End jump. One size: 36 tall with 14 px text, 44 on
  * touch. The geometry lives in pass-card/stage-seg.css (.wl-seg), shared with the SSR fallback (a
- * radio pair, .pc-seg); the hatch of an off segment in kit-controls.css. A reason, hint or title is
+ * radio pair, .pc-seg); the hatch of an off segment in styles/hatch.css. A reason, hint or title is
  * the kit tooltip.
  */
 export function SegmentedControl<V extends string>({

@@ -1,5 +1,6 @@
 import { ToggleLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
+import '../styles/hatch.css';
 
 /** Where an author turns a channel off. A channel stopped above them (PassBook, plan, org) has no tab at all. */
 export type OffLevel = 'template' | 'pass';
