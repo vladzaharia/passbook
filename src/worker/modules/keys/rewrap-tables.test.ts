@@ -182,6 +182,10 @@ const SITES: Record<string, { calls: Record<string, number>; tables: string[] | 
     calls: { encryptSecret: 1 },
     tables: ['wallet_google_callback_receipts'],
   },
+  'modules/wallet-providers/google-message-seal.ts': {
+    calls: { encryptSecret: 1 },
+    tables: ['wallet_google_messages'],
+  },
   'modules/wallet-providers/instance-claims.ts': {
     calls: { encryptSecret: 2 },
     tables: ['wallet_provider_instance_outcomes'],

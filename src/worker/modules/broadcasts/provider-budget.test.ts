@@ -9,7 +9,7 @@ import type {
 } from '../wallet-providers/notify-budget.ts';
 import type { BroadcastAuth, BroadcastKit, broadcastKit as MakeKit } from './test-kit.ts';
 
-// Google and Samsung copies are stubbed as live; the provider runtime itself is tested elsewhere.
+// The Google copy is stubbed as live; the provider runtime itself is tested elsewhere.
 vi.mock('../wallet-providers/instance.ts', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   getWalletInstance: vi.fn(async () => ({ lifecycle: 'active' })),
@@ -120,7 +120,7 @@ describe('broadcast budget per wallet', () => {
     expect(providers.every((p) => p === 'google')).toBe(true);
   });
 
-  it('defers instead of sending, counts nothing, and would skip over a full budget', async () => {
+  it('defers a message that fits and counts nothing the ledger does not hold', async () => {
     const pass = await kit.makePass();
     const budgets = async () =>
       providerBudgets(kit.ctx, (await getPass(kit.env.DB, pass.id)) ?? pass);
@@ -131,7 +131,7 @@ describe('broadcast budget per wallet', () => {
       await send(text);
       kit.clock.advance(1000);
     }
-    // No provider message exists yet: every message is deferred and nothing is counted.
+    // Nothing is in the ledger: every message is deferred and nothing is counted.
     const events = await applied(pass.id);
     expect(events.map((e) => e.providers?.google)).toEqual([
       'deferred',
@@ -141,23 +141,8 @@ describe('broadcast budget per wallet', () => {
     ]);
     expect(events.every((e) => !('samsung' in (e.providers ?? {})))).toBe(true);
     expect((await budgets()).google).toMatchObject({ used: 0, limit: 3 });
-    // The gate a real send calls: three sent messages in the window fill Google's budget.
-    for (let i = 0; i < 3; i++)
-      await run(
-        kit.env.DB,
-        "INSERT INTO pass_events (id, org_id, pass_id, mode, kind, actor_type, data, at) VALUES (?, ?, ?, 'live', 'message.applied', 'system', ?, ?)",
-        [
-          `sent-${i}`,
-          kit.org.id,
-          pass.id,
-          JSON.stringify({ providers: { google: 'sent' } }),
-          kit.clock.now(),
-        ],
-      );
-    const full = await budgets();
-    expect(full.google).toMatchObject({ used: 3, limit: 3 });
-    expect(budgetOutcomes(full)).toEqual({ google: 'over' });
-    kit.clock.advance(25 * 3_600_000);
-    expect(budgetOutcomes(await budgets())).toMatchObject({ google: 'deferred' });
+    // The ledger (wallet_google_messages) is what a real send fills: wallet-providers/google-messages-history.test.ts
+    // proves the budget fills, spends on a quota refusal and rolls on.
+    expect(budgetOutcomes(await budgets())).toEqual({ google: 'deferred' });
   });
 });

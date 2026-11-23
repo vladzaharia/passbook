@@ -5,10 +5,9 @@ import { all, first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { removePass, restorePass } from '../passes/remove.ts';
 import { deletePass, unvoidPass, updatePass, voidPass } from '../passes/service.ts';
+import { configureWalletProviderAccount, getWalletProviderReadiness } from './account-service.ts';
 import { fixture, mock, restore, tokenOf } from './google-runtime-test-fixtures.ts';
 import { issueWalletOffer } from './offers.ts';
-import { markInstanceDirty } from './repo-google-reconcile.ts';
-import { providerNotifiedSince } from './repo-notify-budget.ts';
 import { drainWalletProviderSync } from './sync.ts';
 
 afterEach(() => {
@@ -64,99 +63,6 @@ describe('6.1 Google: edit, connection sync, reissue', () => {
     await drainWalletProviderSync(jobCtx);
     expect(sent(mark)).toEqual(['PATCH genericObject']);
     expect(await all(f.kit.env.DB, 'SELECT 1 FROM wallet_google_messages')).toEqual([]);
-  });
-});
-
-describe('6.1 Google: message and broadcast', () => {
-  it('adds the change message as TEXT_AND_NOTIFY once, after the object write', async () => {
-    const { f, jobCtx } = await issued();
-    const mark = mock.requests.length;
-    await edit(f, 'Notified Member');
-    await drainWalletProviderSync(jobCtx);
-    expect(sent(mark)).toEqual([
-      'PATCH genericObject',
-      'GET genericObject',
-      'POST genericObject/addMessage',
-    ]);
-    expect(only('genericObject')?.messages).toMatchObject([
-      { body: 'Member is now Notified Member', messageType: 'TEXT_AND_NOTIFY' },
-    ]);
-    expect(
-      await all(f.kit.env.DB, 'SELECT state, reason, notify FROM wallet_google_messages'),
-    ).toEqual([{ state: 'notified', reason: null, notify: 1 }]);
-    expect(
-      await all(f.kit.env.DB, "SELECT data FROM pass_events WHERE kind = 'wallet.messaged'"),
-    ).toEqual([{ data: JSON.stringify({ provider: 'google', outcome: 'notified' }) }]);
-    // The budget the broadcast forecast reads is this ledger: one notification counted.
-    expect(await providerNotifiedSince(f.kit.env.DB, f.pass.id, 'google', 0)).toMatchObject({
-      used: 1,
-    });
-    // A replay of the same operation, and a re-queue of the same pass version, send nothing again.
-    const again = mock.requests.length;
-    const instance = await first<{ id: string }>(
-      f.kit.env.DB,
-      'SELECT id FROM wallet_provider_instances',
-    );
-    await markInstanceDirty(f.kit.env.DB, instance?.id ?? '');
-    await drainWalletProviderSync(jobCtx);
-    expect(sent(again).filter((r) => r.startsWith('POST'))).toEqual([]);
-  });
-
-  it('sends text only when Google refuses a fourth notification, in the same operation', async () => {
-    const { f, jobCtx } = await issued();
-    mock.seedNotifyCount(String(only('genericObject')?.id), 3);
-    await edit(f, 'Fourth Member');
-    await drainWalletProviderSync(jobCtx);
-    expect(only('genericObject')?.messages).toMatchObject([{ messageType: 'TEXT' }]);
-    expect(await all(f.kit.env.DB, 'SELECT state, reason FROM wallet_google_messages')).toEqual([
-      { state: 'text', reason: 'quota' },
-    ]);
-    // The object's budget is spent: the next message inside 24 h goes as text without trying.
-    const mark = mock.requests.length;
-    await edit(f, 'Fifth Member');
-    await drainWalletProviderSync(jobCtx);
-    expect(mock.requests.slice(mark).filter((r) => r.method === 'POST')).toHaveLength(1);
-    expect(
-      await all(
-        f.kit.env.DB,
-        'SELECT state, reason FROM wallet_google_messages ORDER BY created_at',
-      ),
-    ).toEqual([
-      { state: 'text', reason: 'quota' },
-      { state: 'text', reason: 'budget' },
-    ]);
-  });
-
-  it('drops the oldest message once the object holds ten', async () => {
-    const { f, jobCtx } = await issued();
-    const object = only('genericObject');
-    Object.assign(object ?? {}, {
-      messages: Array.from({ length: 10 }, (_, i) => ({
-        id: `old${i}`,
-        header: 'H',
-        body: `B${i}`,
-        messageType: 'TEXT',
-      })),
-    });
-    await edit(f, 'Eleventh Member');
-    await drainWalletProviderSync(jobCtx);
-    const messages = only('genericObject')?.messages as { id: string }[];
-    expect(messages).toHaveLength(10);
-    expect(messages[0]?.id).toBe('old1');
-    expect(messages[9]).toMatchObject({ body: 'Member is now Eleventh Member' });
-  });
-
-  it('settles an unconfirmed message with one read and never sends it twice', async () => {
-    const { f, jobCtx } = await issued();
-    mock.failNext({ status: 503, match: 'POST /walletobjects/v1/genericObject', times: 1 });
-    await edit(f, 'Slow Member');
-    await drainWalletProviderSync(jobCtx);
-    expect(await all(f.kit.env.DB, 'SELECT state, reason FROM wallet_google_messages')).toEqual([
-      { state: 'unknown', reason: 'unconfirmed' },
-    ]);
-    expect(mock.requests.filter((r) => r.path.endsWith('/addMessage') && !r.injected)).toHaveLength(
-      0,
-    );
   });
 });
 
@@ -273,5 +179,58 @@ describe('Q4: provider objects are created at the first tap, not at issue', () =
     expect(mock.google.genericObject.size).toBe(0);
     await issueWalletOffer(f.kit.ctx, await tokenOf(f), 'google');
     expect(mock.google.genericObject.size).toBe(1);
+  });
+});
+
+describe('6.1 Google: keyset rotation and event roll-over', () => {
+  it('a same-identity account rotation does not stop a void', async () => {
+    const { f, jobCtx } = await issued();
+    const readiness = await getWalletProviderReadiness(f.kit.ctx, {
+      orgId: f.kit.org.id,
+      mode: 'live',
+      provider: 'google',
+    });
+    await configureWalletProviderAccount(f.kit.ctx, f.auth, {
+      orgId: f.kit.org.id,
+      mode: 'live',
+      provider: 'google',
+      expectedRevision: readiness.revision,
+      credentials: f.google,
+    });
+    // The door denial and the inactive object do not wait for a new release: a revoke needs only the identity.
+    await voidPass(jobCtx, system, f.pass.id, live(f));
+    await drainWalletProviderSync(jobCtx);
+    expect(only('genericObject')).toMatchObject({ state: 'INACTIVE' });
+  });
+
+  it('parks the instance until the next upcoming event date, then recompiles', async () => {
+    const { f, jobCtx } = await issued();
+    const first_ = f.kit.clock.now() + 2 * 3_600_000;
+    const second = f.kit.clock.now() + 5 * 3_600_000;
+    const events = [first_, second].map((at) => ({
+      dateInformation: { date: new Date(at).toISOString() },
+    }));
+    const patch = () =>
+      run(
+        f.kit.env.DB,
+        `UPDATE pass_versions SET pass_json = json_set(pass_json, '$.upcomingPassInformation', json(?)) WHERE pass_id = ?`,
+        [JSON.stringify(events), f.pass.id],
+      );
+    await edit(f, 'Event Member', true);
+    await patch();
+    await drainWalletProviderSync(jobCtx);
+    const parked = () =>
+      first<{ next_attempt_at: number }>(
+        f.kit.env.DB,
+        'SELECT next_attempt_at FROM wallet_provider_instance_dirty',
+      );
+    expect((await parked())?.next_attempt_at).toBe(first_);
+    const mark = mock.requests.length;
+    f.kit.clock.advance(2 * 3_600_000 + 1);
+    await drainWalletProviderSync(jobCtx);
+    await drainWalletProviderSync(jobCtx);
+    expect(sent(mark)).toContain('PATCH genericObject');
+    // The next boundary is the second event.
+    expect((await parked())?.next_attempt_at).toBe(second);
   });
 });

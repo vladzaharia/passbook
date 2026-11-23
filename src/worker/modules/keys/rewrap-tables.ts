@@ -1,5 +1,6 @@
 import { credentialAad } from '../../platform/crypto.ts';
 import { tagKeyKind, versionKind } from '../nfc/keyset-seal.ts';
+import { googleMessageAad } from '../wallet-providers/google-message-aad.ts';
 
 export type PlaceTable =
   | 'credentials'
@@ -9,6 +10,7 @@ export type PlaceTable =
   | 'connection_webhook_legacy_sources'
   | 'wallet_provider_credentials'
   | 'wallet_provider_instance_outcomes'
+  | 'wallet_google_messages'
   | 'wallet_samsung_fetch_refs'
   | 'wallet_samsung_callback_receipts'
   | 'wallet_google_callback_receipts'
@@ -80,6 +82,11 @@ export const PLACES: readonly Place[] = [
   {
     table: 'wallet_provider_instance_outcomes',
     aad: (r) => credentialAad(r.pk, text(r.x1), 'wallet.provider.outcome'),
+  },
+  {
+    // x1 the instance: the AAD google-messages.ts sealed it under.
+    table: 'wallet_google_messages',
+    aad: (r) => googleMessageAad(String(r.x1), r.pk),
   },
   {
     table: 'wallet_samsung_fetch_refs',

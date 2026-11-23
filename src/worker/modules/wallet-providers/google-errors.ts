@@ -9,6 +9,7 @@ export type GoogleWalletErrorCode =
   | 'not_found'
   | 'conflict'
   | 'rate_limited'
+  | 'quota_exceeded'
   | 'server_error'
   | 'provider_error'
   | 'invalid_response';
