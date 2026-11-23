@@ -38,11 +38,14 @@ function radixNoInlineStyles(): Plugin {
         return code.replace('function makeStyleTag() {', 'function makeStyleTag() { return null;');
       }
       if (/node_modules\/@radix-ui\/react-select\/dist\/index\.mjs/.test(id)) {
-        // No dangerouslySetInnerHTML at all: Trusted Types refuses even an empty string (base.css has the rules).
-        return code.replace(
-          /dangerouslySetInnerHTML: \{\s*__html: `\[data-radix-select-viewport\][^`]*`\s*\}/,
-          'hidden: true',
+        // The whole <style> element goes: Trusted Types refuses even an empty string, and CSP still
+        // blocks an empty element (base.css has the rules).
+        const out = code.replace(
+          /\/\* @__PURE__ \*\/ jsx\(\s*"style",\s*\{\s*dangerouslySetInnerHTML: \{\s*__html: `\[data-radix-select-viewport\][^`]*`\s*\},\s*nonce\s*\}\s*\),/,
+          'null,',
         );
+        if (out === code) this.error('radix-no-inline-styles: Select viewport <style> not found');
+        return out;
       }
       return null;
     },
