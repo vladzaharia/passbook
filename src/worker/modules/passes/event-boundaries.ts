@@ -119,7 +119,9 @@ async function refresh(ctx: ServiceContext, work: BoundaryWork, claim: BoundaryC
   try {
     rendered = retimePass(built, input, config, template.manifest.lookups ?? {}, at);
   } catch (error) {
-    throw new AppError('BOUNDARY_RENDER_INVALID', 422, (error as Error).message);
+    // The behavior refuses the inputs now (a later code change): retrying cannot help.
+    await retire(ctx, work, claim, 'BOUNDARY_RENDER_INVALID', error);
+    return;
   }
   const keys = timedKeysOf(rendered);
   const shown = work.render === null ? timedKeysOf(built) : (JSON.parse(work.render) as TimedKeys);
@@ -187,7 +189,22 @@ async function failed(
     await backoff(ctx, work, claim, code);
     return;
   }
-  ctx.log.error('pass.boundary_retired', { orgId: work.pass.orgId, passId: claim.passId, code });
+  await retire(ctx, work, claim, code);
+}
+
+async function retire(
+  ctx: ServiceContext,
+  work: BoundaryWork,
+  claim: BoundaryClaim,
+  code: string,
+  error?: unknown,
+) {
+  ctx.log.error('pass.boundary_retired', {
+    orgId: work.pass.orgId,
+    passId: claim.passId,
+    code,
+    ...(error ? { error } : {}),
+  });
   // A render already made keeps serving; the row is only no longer worked.
   if (work.renderedAt === 0) await dropBoundary(ctx.env.DB, claim);
   else await moveBoundary(ctx.env.DB, claim, null);

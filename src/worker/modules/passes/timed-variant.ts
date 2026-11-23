@@ -5,7 +5,7 @@ import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { depsOf } from './deps.ts';
-import type { PassFileVariant } from './file.ts';
+import { type PassFileVariant, servePassFile } from './file.ts';
 import { currentRender } from './repo-boundaries.ts';
 import type { Pass } from './repo-map.ts';
 
@@ -30,6 +30,17 @@ export async function timedVariant(
     modifiedAt: row.stampedAt,
     render: () => renderTimed(ctx, pass, JSON.parse(row.render) as TimedKeys),
   };
+}
+
+/** The pass file a device or holder downloads: `variant` (the voided Apple copy) first, else the render. */
+export async function serveCurrentPassFile(
+  ctx: ServiceContext,
+  pass: Pass,
+  request: Request,
+  variant?: PassFileVariant,
+): Promise<Response> {
+  const chosen = variant ?? (await timedVariant(ctx, pass)) ?? undefined;
+  return servePassFile(ctx.env.BUCKET, pass, request, {}, chosen);
 }
 
 /** Signed again on each fetch: a device fetches once per render, so nothing is stored. */

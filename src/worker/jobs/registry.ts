@@ -4,9 +4,9 @@ import { handleAppleBump, handleReplaceCode } from '../modules/channels/jobs.ts'
 import { handleConnectionWebhook, handlePassRefresh } from '../modules/connections/jobs.ts';
 import { handleEmailSend, handlePushDeliver } from '../modules/delivery/jobs.ts';
 import { handleJoinResend } from '../modules/join/jobs.ts';
-import { handleBoundaryRefresh } from '../modules/passes/event-boundaries.ts';
 import { handleHolderMail } from '../modules/me/jobs.ts';
 import { handleMessageRuleCheck } from '../modules/message-rules/jobs.ts';
+import { handleBoundaryRefresh } from '../modules/passes/event-boundaries.ts';
 import { handlePrintsBulk } from '../modules/prints/jobs.ts';
 import { handleRetentionNotice } from '../modules/retention/jobs.ts';
 import { handleForkUpdate } from '../modules/templates/fork-updates-job.ts';

@@ -30,12 +30,6 @@ beforeEach(async () => {
   await run(kit.env.DB, 'DELETE FROM pass_boundaries');
 });
 
-const dueNow = (passId: string) =>
-  run(kit.env.DB, 'UPDATE pass_boundaries SET due_at = ? WHERE pass_id = ?', [
-    kit.clock.now(),
-    passId,
-  ]);
-
 describe('boundary rows that cannot move', () => {
   it('wait while the org is suspended and move once it is active again', async () => {
     const now = kit.clock.now();

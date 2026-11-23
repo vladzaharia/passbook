@@ -4233,6 +4233,10 @@
   ],
   "public get /{token}/pass.pkpass": [
     "CHANNEL_OFF",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "LINK_NOT_FOUND",
     "PASS_FILE_MISSING",
     "PASS_NOT_FOUND"
@@ -4292,6 +4296,10 @@
   ],
   "public get /{token}/{passId}/pass.pkpass": [
     "CHANNEL_OFF",
+    "IDENTITY_EXPIRED",
+    "IDENTITY_NOT_CONFIGURED",
+    "IDENTITY_NOT_FOUND",
+    "IDENTITY_RETIRED",
     "LINK_NOT_FOUND",
     "PASS_FILE_MISSING"
   ],

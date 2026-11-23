@@ -2952,7 +2952,8 @@
         500
       ],
       "modules": [
-        "apple"
+        "apple",
+        "passes"
       ]
     },
     {
