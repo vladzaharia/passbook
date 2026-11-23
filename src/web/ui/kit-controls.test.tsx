@@ -21,7 +21,7 @@ import { FieldGroup, FormGrid, FormSpan } from './form-grid.tsx';
 import { Input } from './input.tsx';
 import { NumberField } from './number-field.tsx';
 import { SegmentedControl } from './segmented-control.tsx';
-import { TooltipProvider } from './tooltip.tsx';
+import { loadTooltips, TooltipProvider } from './tooltip.tsx';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -225,5 +225,45 @@ describe('FormGrid and FieldGroup', () => {
       </FieldGroup>,
     );
     expect(screen.getByRole('heading', { name: 'Links' })).toBeInTheDocument();
+  });
+});
+
+// Last in the file: it loads the Radix tooltip for every test after it.
+describe('SegmentedControl off segment', () => {
+  function Channels() {
+    const [v, setV] = useState('apple');
+    return (
+      <TooltipProvider delayDuration={0}>
+        <SegmentedControl
+          label="Channel"
+          value={v}
+          onValueChange={setV}
+          options={[
+            { value: 'apple', label: 'Apple' },
+            { value: 'paper', label: 'Paper', hint: 'Off for this template' },
+          ]}
+        />
+      </TooltipProvider>
+    );
+  }
+
+  it('is hatched and quiet with its reason in a tooltip, and chosen like any other', async () => {
+    await loadTooltips();
+    const user = userEvent.setup();
+    const { container } = render(<Channels />);
+    const paper = screen.getByRole('radio', { name: 'Paper' });
+    expect(paper).toHaveAttribute('data-off');
+    expect(paper).not.toHaveAttribute('title');
+    expect(paper).toHaveAccessibleDescription('Off for this template');
+    expect(paper.className).toContain('text-fg-subtle');
+    expect(paper.querySelector('svg')).toBeNull();
+    screen.getByRole('radio', { name: 'Apple' }).focus();
+    await user.keyboard('{ArrowRight}');
+    expect(paper).toBeChecked();
+    // Focus says it too: the reason shows as the kit tooltip.
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Off for this template');
+    expect(paper.className).toContain('text-fg-strong');
+    expect(paper.querySelector('svg')).toBeNull();
+    expect((await axe(container)).violations).toEqual([]);
   });
 });
