@@ -39,7 +39,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'caller-supplied pass-read guard from wallet-providers/repo-holder-events.ts, parenthesized; org_id and the fence are literal in the statement',
     exprs: ['guard.sql'],
     deps: ['src/worker/modules/wallet-providers/repo-holder-events.ts'],
-    hash: 'dba79525715f',
+    hash: 'f1be1ee511c1',
   },
   'src/worker/modules/passes/repo-remove-compensate.ts': {
     reason: 'removal proof SQL from repo-remove-snapshot.ts',
