@@ -132,8 +132,16 @@ describe('PATCH pass-setup: input and scopes', () => {
   });
 
   it('refuses a mark the plan does not allow', async () => {
-    const res = await patch({ brand: { mark: 'none' } });
-    expect(res).toMatchObject({ status: 403, json: { code: 'BRAND_MARK_NOT_ALLOWED' } });
+    // Unlimited (the rig's plan) can drop the footer; Standard can only shrink it.
+    const plan = (preset: string) =>
+      run(api.rig.db, 'UPDATE org_entitlements SET preset = ? WHERE org_id = ?', [preset, orgId]);
+    await plan('standard');
+    try {
+      const res = await patch({ brand: { mark: 'none' } });
+      expect(res).toMatchObject({ status: 403, json: { code: 'BRAND_MARK_NOT_ALLOWED' } });
+    } finally {
+      await plan('legacy');
+    }
   });
 
   it('refuses invalid settings as the settings route does', async () => {
