@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { ChevronDown, CircleHelp, Nfc, Printer, Smartphone, Wallet } from 'lucide-react';
+import { ChevronDown, Nfc, Printer, Smartphone, Wallet } from 'lucide-react';
 import { type ReactNode, useId } from 'react';
 import { stoppingLevel } from '@/shared/channels.ts';
 import type { Channel } from '@/shared/contracts/channels.ts';
@@ -159,21 +159,5 @@ export function ChannelRow({
         </div>
       ) : null}
     </li>
-  );
-}
-
-/** Ask PassBook: a mailto to PassBook's support, for a channel the plan does not include. */
-export function AskPassbook({ channel, orgName }: { channel: Channel; orgName: string }) {
-  const subject = encodeURIComponent(
-    orgName ? `${CHANNEL_LABEL[channel]} for ${orgName}` : CHANNEL_LABEL[channel],
-  );
-  return (
-    <div>
-      <Button asChild variant="outline" size="sm" iconStart={<CircleHelp aria-hidden />}>
-        <a href={`mailto:${PASS_SETUP_COPY.support.emailPlaceholder}?subject=${subject}`}>
-          {COPY.askPassbook}
-        </a>
-      </Button>
-    </div>
   );
 }
