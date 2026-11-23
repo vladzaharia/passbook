@@ -1,3 +1,4 @@
+import { DEFAULT_EVENT_MINUTES } from '../../boundaries.ts';
 import type { BehaviorPlugin, Json, JsonSchemaObject, PassJson } from '../../types.ts';
 
 export interface UpcomingEventsConfig {
@@ -159,7 +160,7 @@ export const upcomingEvents: BehaviorPlugin<UpcomingEventsConfig> = {
     }
     if (!Array.isArray(supplied)) throw new Error(`${config.input} is not a list.`);
     const now = ctx.now.getTime();
-    const fallback = (config.fallbackMinutes ?? 180) * MINUTE;
+    const fallback = (config.fallbackMinutes ?? DEFAULT_EVENT_MINUTES) * MINUTE;
     const images = config.images ? ctx.lookups[config.images] : undefined;
     const ids = new Set<string>();
 
