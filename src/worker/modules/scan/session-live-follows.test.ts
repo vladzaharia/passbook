@@ -62,7 +62,7 @@ describe('customer screen follows', () => {
     expect(!!recipient && watches(recipient, await withSourceProof(row(stranger.id)))).toBe(false);
   });
 
-  it('rejects a follow outside the session, and on a scanner', async () => {
+  it('rejects a follow outside the session', async () => {
     const { kit, authority, parent, child } = fixtures;
     const other = await parent('Elsewhere');
     const stranger = await child(other.id, 'Elsewhere door');
@@ -74,16 +74,6 @@ describe('customer screen follows', () => {
         session.id,
         screen,
         { overrides: { follows: [stranger.id] } },
-        authority,
-      ),
-    ).rejects.toMatchObject({ code: 'SCANNING_FOLLOWS_INVALID' });
-    await expect(
-      updateScanningDevice(
-        kit.ctx,
-        'admin-1',
-        session.id,
-        a.id,
-        { overrides: { follows: [a.id] } },
         authority,
       ),
     ).rejects.toMatchObject({ code: 'SCANNING_FOLLOWS_INVALID' });

@@ -12815,7 +12815,7 @@
                   "maxLength": 64
                 },
                 "minItems": 1,
-                "maxItems": 16
+                "maxItems": 64
               }
             },
             "additionalProperties": false
@@ -20348,7 +20348,7 @@
                                   "maxLength": 64
                                 },
                                 "minItems": 1,
-                                "maxItems": 16
+                                "maxItems": 64
                               }
                             },
                             "additionalProperties": false
@@ -21413,7 +21413,7 @@
                   "maxLength": 64
                 },
                 "minItems": 1,
-                "maxItems": 16
+                "maxItems": 64
               }
             },
             "additionalProperties": false
@@ -63970,7 +63970,7 @@
                   "maxLength": 64
                 },
                 "minItems": 1,
-                "maxItems": 16
+                "maxItems": 64
               }
             },
             "additionalProperties": false
@@ -64041,7 +64041,7 @@
                   "maxLength": 64
                 },
                 "minItems": 1,
-                "maxItems": 16
+                "maxItems": 64
               }
             },
             "default": {},

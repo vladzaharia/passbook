@@ -1,9 +1,10 @@
-import type { z } from 'zod';
-import { ZodError } from 'zod';
+import { ZodError, z } from 'zod';
+import { IdSchema } from '../../../shared/contracts/common.ts';
 import { ScanWatchSchema } from '../../../shared/contracts/scan-setups.ts';
 import {
   ScanDeviceOverridesSchema,
   ScanningSessionSettingsSchema,
+  SESSION_DEVICE_CAP,
   type SessionCustomerSettings,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -156,6 +157,11 @@ function validLiveAttachment(a: LiveAttachment): boolean {
   return true;
 }
 
+/** A session's own scanners are bounded by the session, not by the stored-watch cap. */
+const SessionWatchSchema = ScanWatchSchema.extend({
+  scannerIds: z.array(IdSchema).max(SESSION_DEVICE_CAP).default([]),
+});
+
 /** The watch a screen row stores, or its session's scanners; null when malformed. */
 function parseWatch(
   actor: ScanActor,
@@ -172,7 +178,7 @@ function parseWatch(
         new Set(ids).size !== ids.length
       )
         return null;
-      return ScanWatchSchema.parse({
+      return SessionWatchSchema.parse({
         scannerIds: followed(row.screen_overrides, ids),
         allOrg: false,
       });
@@ -187,7 +193,7 @@ function parseWatch(
 
 /** The scanners a screen follows within its session; no `follows` is all of them. Malformed: none. */
 function followed(raw: unknown, sessionScanners: string[]): string[] {
-  if (typeof raw !== 'string') return sessionScanners;
+  if (typeof raw !== 'string') return [];
   const parsed = ScanDeviceOverridesSchema.safeParse(safeJson(raw));
   if (!parsed.success) return [];
   const follows = parsed.data.follows;

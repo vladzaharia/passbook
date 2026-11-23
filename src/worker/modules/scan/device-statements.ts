@@ -1,10 +1,13 @@
 import type { z } from 'zod';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
-import type { CreateScanningDeviceSchema } from '../../../shared/contracts/scanning-sessions.ts';
+import {
+  type CreateScanningDeviceSchema,
+  SESSION_DEVICE_CAP,
+} from '../../../shared/contracts/scanning-sessions.ts';
 import { roleForSurface, surfaceFor } from '../../../shared/scan-surfaces.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
-import { assertFollows } from './device-follows.ts';
+import { resolveFollows } from './device-follows.ts';
 import { scanningDeviceRows } from './repo-scanning-devices.ts';
 import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 import { takenScannerNames } from './repo-setup-intent.ts';
@@ -18,7 +21,6 @@ import { numberedName } from './setup-names.ts';
 import { planSetup, type SetupPlan, setupStatements } from './setup-statements.ts';
 
 /** A session takes this many live devices. */
-export const SESSION_DEVICE_CAP = 64;
 
 /**
  * The reads and rules of a device create under a session: it is active, its scope and settings
@@ -65,18 +67,16 @@ export async function planScanningDevice(
     throw new ValidationError(
       `This session already has ${SESSION_DEVICE_CAP} devices. Remove an unused device.`,
     );
-  if (input.overrides.follows) {
-    if (made)
-      throw new ValidationError(
-        'Pick scanners after the session exists.',
-        [],
-        'SCANNING_FOLLOWS_INVALID',
-      );
-    assertFollows(input.overrides, surfaceFor(input.surface, null), stored);
-  }
+  if (input.overrides.follows && made)
+    throw new ValidationError(
+      'Pick scanners after the session exists.',
+      [],
+      'SCANNING_FOLLOWS_INVALID',
+    );
+  const overrides = resolveFollows(input.overrides, surfaceFor(input.surface, null), stored);
   const settings = ScannerSettingsSchema.parse({
     ...parentSettings,
-    ...input.overrides,
+    ...overrides,
     ...(scope.restricted ? { acceptAllTemplates: false } : {}),
   });
   const role = roleForSurface(input.surface);
@@ -100,7 +100,7 @@ export async function planScanningDevice(
     {
       sessionId: parent.id,
       surface: input.surface,
-      overrides: input.overrides,
+      overrides,
       deviceKey: admin?.deviceKey,
     },
     parent,

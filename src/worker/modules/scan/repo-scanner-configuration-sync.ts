@@ -8,13 +8,13 @@ import type { ScanningSessionRow } from './repo-scanning-sessions.ts';
 
 type Json = Record<string, unknown>;
 
-/** RFC 7396 merge patch, as `json_patch` applies it: objects merge, null removes. */
 /** `follows` steers a screen's live watch; it is not a scanner setting. */
 function withoutFollows(overrides: Record<string, unknown>): Record<string, unknown> {
   const { follows: _follows, ...rest } = overrides;
   return rest;
 }
 
+/** RFC 7396 merge patch, as `json_patch` applies it: objects merge, null removes. */
 function mergePatch(base: unknown, patch: unknown): unknown {
   if (patch === null || typeof patch !== 'object' || Array.isArray(patch)) return patch;
   const out: Json =

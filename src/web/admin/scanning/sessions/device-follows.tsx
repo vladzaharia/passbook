@@ -17,6 +17,8 @@ export function DeviceFollows({
   scanners: readonly ScanningDevice[];
 }) {
   const chosen = value.follows;
+  // Ids of revoked scanners stay stored but are not shown; an edit drops them.
+  const known = chosen?.filter((id) => scanners.some((d) => d.id === id));
   const set = (follows: string[] | undefined) => {
     const { follows: _drop, ...rest } = value;
     onChange(follows ? { ...rest, follows } : rest);
@@ -35,15 +37,15 @@ export function DeviceFollows({
         <fieldset className="grid min-w-0 gap-1">
           <legend className="sr-only">Scanners shown</legend>
           {scanners.map((d) => {
-            const on = chosen?.includes(d.id) ?? false;
+            const on = known?.includes(d.id) ?? false;
             return (
               <CheckboxField
                 key={d.id}
                 label={d.name}
                 checked={on}
-                disabled={on && chosen?.length === 1}
+                disabled={on && known?.length === 1}
                 onCheckedChange={(next) =>
-                  set(next ? [...(chosen ?? []), d.id] : (chosen ?? []).filter((id) => id !== d.id))
+                  set(next ? [...(known ?? []), d.id] : (known ?? []).filter((id) => id !== d.id))
                 }
               />
             );

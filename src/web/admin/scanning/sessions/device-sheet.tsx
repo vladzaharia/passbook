@@ -42,7 +42,14 @@ export function DeviceSheet({
   async function submit() {
     setError('');
     try {
-      await save.mutateAsync({ name: name.trim(), surface, overrides, revision });
+      // Only a customer screen follows scanners.
+      const { follows: _follows, ...scanOverrides } = overrides;
+      await save.mutateAsync({
+        name: name.trim(),
+        surface,
+        overrides: layout === 'customer' ? overrides : scanOverrides,
+        revision,
+      });
       onClose();
     } catch (cause) {
       setError(errorMessage(cause));

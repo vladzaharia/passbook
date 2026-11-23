@@ -45,4 +45,13 @@ describe('Scanners shown', () => {
     await userEvent.click(screen.getByRole('switch', { name: 'All scanners in this session' }));
     expect(value()).toEqual({});
   });
+
+  it('drops ids of revoked scanners on the next edit, and never widens to all', async () => {
+    render(<Harness start={{ follows: ['a', 'gone'] }} />);
+    expect(
+      (screen.getByRole('checkbox', { name: 'North door' }) as HTMLInputElement).disabled,
+    ).toBe(true);
+    await userEvent.click(screen.getByRole('checkbox', { name: 'South door' }));
+    expect(value()).toEqual({ follows: ['a', 'b'] });
+  });
 });

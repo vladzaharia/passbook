@@ -93,6 +93,7 @@ export const ScanDeviceCapabilitiesSchema = z.strictObject({
 });
 export type ScanDeviceCapabilities = z.infer<typeof ScanDeviceCapabilitiesSchema>;
 
+export const SESSION_DEVICE_CAP = 64;
 /** Admission, staff rights, accepted passes and time zone always belong to the session. */
 export const ScanDeviceOverridesSchema = ScannerSettingsSchema.pick({
   flow: true,
@@ -101,7 +102,7 @@ export const ScanDeviceOverridesSchema = ScannerSettingsSchema.pick({
   lookup: true,
   showPhoto: true,
 })
-  .extend({ follows: z.array(IdSchema).min(1).max(16).optional() }) // a screen's scanners; absent: all
+  .extend({ follows: z.array(IdSchema).min(1).max(SESSION_DEVICE_CAP).optional() }) // absent: all
   .partial()
   .strict();
 export type ScanDeviceOverrides = z.infer<typeof ScanDeviceOverridesSchema>;

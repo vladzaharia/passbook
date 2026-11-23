@@ -13,7 +13,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { getUser } from '../users/repo.ts';
-import { assertFollows } from './device-follows.ts';
+import { resolveFollows } from './device-follows.ts';
 import { planScanningDevice, scanningDeviceStatements } from './device-statements.ts';
 import { kickScreen } from './live.ts';
 import {
@@ -146,13 +146,13 @@ export async function updateScanningDevice(
       [],
       'SCAN_SURFACE_UNSUPPORTED',
     );
-  const overrides = input.overrides ?? JSON.parse(device.overrides);
-  if (overrides.follows)
-    assertFollows(
-      overrides,
-      effective,
-      await scanningDeviceRows(ctx.env.DB, parent.org_id, parent.id),
-    );
+  const storedOverrides = JSON.parse(device.overrides);
+  const overrides = resolveFollows(
+    input.overrides ?? storedOverrides,
+    effective,
+    await scanningDeviceRows(ctx.env.DB, parent.org_id, parent.id),
+    storedOverrides.follows,
+  );
   const scope = await resolveSessionScope(ctx, parent);
   const parentSettings = input.overrides === undefined ? null : effectiveSessionSettings(parent);
   if (input.overrides !== undefined && !parentSettings)
