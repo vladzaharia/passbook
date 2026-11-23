@@ -237,6 +237,17 @@ pre.src .ln.hl {
   color: var(--pk-accent-fg);
 }
 
+/* A phone keeps the table whole: the code wraps instead of pushing the fix out of view. */
+@media (max-width: 560px) {
+  .errs td.mono {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .errs td:first-child {
+    min-width: 8.5rem;
+  }
+}
+
 .op-errors summary {
   cursor: pointer;
   font-weight: 600;

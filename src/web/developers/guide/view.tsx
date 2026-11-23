@@ -40,8 +40,18 @@ export function Inline({ text }: { text: string }): ReactNode {
   });
 }
 
-function Steps({ guide, example, k }: { guide: Guide; example: Example; k: string }) {
-  return <SampleTabs id={`${guide.meta.id}-${k}`} samples={exampleSamples(example)} />;
+function Steps({
+  guide,
+  example,
+  k,
+  name,
+}: {
+  guide: Guide;
+  example: Example;
+  k: string;
+  name: string;
+}) {
+  return <SampleTabs id={`${guide.meta.id}-${k}`} samples={exampleSamples(example)} name={name} />;
 }
 
 function ConsoleLink({ href }: { href: string }) {
@@ -139,7 +149,7 @@ function BlockView({
           <div className="code json">
             <CodeRegion
               html={highlight(b.text, LANGS[b.lang] ?? 'json')}
-              label={`${b.lang} request`}
+              label={`Step ${n + 1}: ${b.lang} request`}
             />
           </div>
           {href ? <ConsoleLink href={href} /> : null}
@@ -154,7 +164,12 @@ function BlockView({
       return (
         <div className="gstep">
           <div className="h3 gstep-h">{example.title}</div>
-          <Steps guide={guide} example={example} k={`${b.snippet}-${n}`} />
+          <Steps
+            guide={guide}
+            example={example}
+            k={`${b.snippet}-${n}`}
+            name={`Step ${n + 1}: ${example.title}`}
+          />
           {step ? <ConsoleLink href={step.href} /> : null}
         </div>
       );

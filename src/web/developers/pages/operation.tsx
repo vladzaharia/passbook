@@ -155,7 +155,7 @@ function Rail({ op, site, slug }: { op: OpView; site: Site; slug: string }) {
               <SampleTabs
                 id={`e-${op.anchor}-${e.id}`}
                 samples={exampleSamples(e)}
-                name={e.title}
+                name={`Example: ${e.title}`}
               />
             </details>
           ))}
