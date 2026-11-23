@@ -40,7 +40,7 @@ export interface SegmentedControlProps<V extends string = string> {
  * selection. Arrow keys move and select, Home/End jump. One size: 36 tall with 14 px text, 44 on
  * touch. The geometry lives in pass-card/stage-seg.css (.wl-seg), shared with the SSR fallback (a
  * radio pair, .pc-seg); the hatch of an off segment in styles/hatch.css. A reason, hint or title is
- * the kit tooltip.
+ * the kit tooltip (a native title on a control drawn before the tooltip chunk).
  */
 export function SegmentedControl<V extends string>({
   label,
@@ -94,7 +94,7 @@ export function SegmentedControl<V extends string>({
         const reasonId = `${id}-${o.value}`;
         const described = o.reason ?? o.hint;
         return (
-          <Tooltip key={o.value} content={described ?? o.title}>
+          <Tooltip key={o.value} content={described ?? o.title} plainTitle>
             {/* biome-ignore lint/a11y/useSemanticElements: a styled radiogroup with roving focus and a sliding thumb */}
             <button
               type="button"

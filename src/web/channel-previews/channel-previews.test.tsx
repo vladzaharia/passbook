@@ -72,7 +72,8 @@ describe('ChannelPreviews', () => {
       const t = tab(name);
       expect(t).toHaveAttribute('data-off');
       expect(t).not.toHaveAttribute('aria-disabled');
-      expect(t).not.toHaveAttribute('title');
+      // The tooltip chunk is not loaded here: the reason is the native title.
+      expect(t).toHaveAttribute('title', text);
       expect(t).toHaveAccessibleDescription(text);
       // No lock or any other icon: the hatch says it.
       expect(t.querySelector('svg')).toBeNull();
