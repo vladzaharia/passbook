@@ -1,104 +1,194 @@
+import type { UpcomingEventsConfig } from '../../../passkit/behaviors/upcoming-events/index.ts';
+import {
+  retimePass,
+  sameTimedKeys,
+  type TimedKeys,
+  timedKeysOf,
+} from '../../../passkit/behaviors/upcoming-events/timed.ts';
 import { nextBoundary, passBoundaries } from '../../../passkit/boundaries.ts';
+import { applyDefaults } from '../../../passkit/template/manifest.ts';
+import type { PassJson, Personalization } from '../../../passkit/types.ts';
+import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { dispatchSafely } from '../delivery/issuance-intent.ts';
+import { getPlatformSettings } from '../settings/service.ts';
 import { resolveTemplate } from './builder.ts';
-import { publishPass } from './publish.ts';
 import {
   BOUNDARY_LEASE_MS,
+  type BoundaryClaim,
+  type BoundaryWork,
+  claimDueBoundaries,
   dropBoundary,
-  dueBoundaries,
-  latestPassJson,
   moveBoundary,
-  unsettledBoundaries,
+  readBoundaryWork,
 } from './repo-boundaries.ts';
-import type { Pass } from './repo-map.ts';
-import { getPass } from './repo-read-pass.ts';
+import { stampBoundary } from './repo-boundary-stamp.ts';
 
-/** Passes handled per tick and step; the rest wait for the next minute. */
-export const BOUNDARY_BATCH = 25;
-
-/** A pass that can still change on its own: live, not removed from Wallet. */
-async function livePass(ctx: ServiceContext, passId: string): Promise<Pass | null> {
-  const pass = await getPass(ctx.env.DB, passId);
-  if (pass?.status !== 'active' || pass.removedAt !== null) {
-    await dropBoundary(ctx.env.DB, passId);
-    return null;
-  }
-  return pass;
-}
-
-async function boundariesOf(ctx: ServiceContext, pass: Pass): Promise<number[]> {
-  const raw = await latestPassJson(ctx.env.DB, pass.id);
-  if (raw === null) return [];
-  const template = await resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion);
-  const events = template.manifest.behaviors?.find((b) => b.use === 'upcoming-events');
-  const config = events?.config as { fallbackMinutes?: unknown } | undefined;
-  const minutes = config?.fallbackMinutes;
-  return passBoundaries(raw, typeof minutes === 'number' ? { fallbackMinutes: minutes } : {});
-}
+const MINUTE = 60_000;
+/** Renders of one pass are at least this far apart; boundaries closer together share one. */
+export const BOUNDARY_FLOOR_MS = 5 * MINUTE;
+/** The cron's and the job's clocks differ a little: a boundary this close counts as passed. */
+export const BOUNDARY_SKEW_MS = 5_000;
+const BACKOFF_MS = MINUTE;
+const BACKOFF_CAP_MS = 60 * MINUTE;
+/** Queues take at most 100 messages a call. */
+const SEND_BATCH = 100;
 
 /**
- * A new version that lists events: its first boundary after it was built. One already behind us
- * (an old pass, or a version built just before one) is due now.
+ * Minute hook: claims the passes whose next event start or end has passed and queues one job each,
+ * so each runs in its own invocation with its own query budget and queue retries. One query a tick.
  */
-async function settle(ctx: ServiceContext, passId: string): Promise<void> {
-  const pass = await livePass(ctx, passId);
-  if (!pass) return;
-  const next = nextBoundary(await boundariesOf(ctx, pass), pass.modifiedAt);
-  await moveBoundary(ctx.env.DB, passId, 0, next);
-}
-
-/** Rebuilds a pass whose boundary passed. True when it published a new version. */
-async function rebuild(ctx: ServiceContext, passId: string, dueAt: number): Promise<boolean> {
-  const db = ctx.env.DB;
-  const pass = await livePass(ctx, passId);
-  if (!pass) return false;
-  // The lease keeps another tick off this pass; a new version resets the row and wins over it.
-  const lease = ctx.clock.now() + BOUNDARY_LEASE_MS;
-  if (!(await moveBoundary(db, passId, dueAt, lease))) return false;
-  const published = await publishPass(ctx, {
-    passId,
-    orgScope: { orgId: pass.orgId, mode: pass.mode, principal: 'session' },
-    cause: 'admin',
-    source: 'schedule',
-    sourceRef: 'event-boundary',
-    actor: { type: 'system', id: null },
-    dispatch: false,
-    notify: false,
-    mutate: () => ({}),
+export async function claimBoundaries(ctx: ServiceContext): Promise<void> {
+  const settings = await getPlatformSettings(ctx);
+  const now = ctx.clock.now();
+  const lease = now + BOUNDARY_LEASE_MS;
+  const ids = await claimDueBoundaries(ctx.env.DB, {
+    now,
+    lease,
+    limit: settings['passes.boundaryClaim'],
+    perOrg: settings['passes.boundaryOrgShare'],
   });
-  const next = nextBoundary(await boundariesOf(ctx, published.pass), ctx.clock.now());
-  await moveBoundary(db, passId, lease, next);
-  return published.changed;
+  if (ids.length === 0) return;
+  try {
+    for (let i = 0; i < ids.length; i += SEND_BATCH)
+      await ctx.env.JOBS.sendBatch(
+        ids
+          .slice(i, i + SEND_BATCH)
+          .map((passId) => ({ body: { kind: 'pass.boundary_refresh' as const, passId, lease } })),
+      );
+  } catch (error) {
+    // The claimed rows come back when their lease ends.
+    ctx.log.error('pass.boundary_enqueue_failed', { code: 'BOUNDARY_ENQUEUE', error });
+    return;
+  }
+  ctx.log.info('pass.boundaries_claimed', { count: ids.length });
 }
 
+/** A refusal retrying cannot fix: the row is retired. Conflicts and limits retry with a backoff. */
+const permanent = (error: unknown) =>
+  error instanceof AppError &&
+  error.status >= 400 &&
+  error.status < 500 &&
+  error.status !== 409 &&
+  error.status !== 429;
+
 /**
- * Minute hook. A pass that lists upcoming events has a `pass_boundaries` row; at its next start or end
- * the pass is rebuilt through the normal publish, so `isActive` and the next-event highlight move on
- * the device with no edit. A rebuild that changes nothing publishes and pushes nothing.
+ * Queue job: works out the timed keys of the pass's artifact at the current time. When they moved, the
+ * render is stored with a new update tag and a push, so devices fetch it; no version is made. Then the
+ * row waits for the next start or end. A failure never throws past one pass: it backs off, or retires
+ * the row when retrying cannot help.
  */
-export async function refreshAtBoundaries(ctx: ServiceContext): Promise<void> {
+export async function handleBoundaryRefresh(
+  job: JobOf<'pass.boundary_refresh'>,
+  ctx: ServiceContext,
+): Promise<void> {
+  const work = await readBoundaryWork(ctx.env.DB, job.passId);
+  // A new artifact or a later claim took the row over.
+  if (!work || work.dueAt !== job.lease) return;
+  const claim = { passId: job.passId, objectKey: work.objectKey, lease: job.lease };
+  try {
+    await refresh(ctx, work, claim);
+  } catch (error) {
+    await failed(ctx, work, claim, error);
+  }
+}
+
+async function refresh(ctx: ServiceContext, work: BoundaryWork, claim: BoundaryClaim) {
   const db = ctx.env.DB;
-  for (const { passId } of await unsettledBoundaries(db, BOUNDARY_BATCH)) {
-    try {
-      await settle(ctx, passId);
-    } catch (error) {
-      if (!(error instanceof AppError)) throw error;
-      ctx.log.warn('pass.boundary_settle_failed', { passId, code: error.code });
-    }
+  const p = work.pass;
+  const live =
+    p.status === 'active' && p.removedAt === null && p.deletedAt === null && !p.quarantined;
+  // A voided, removed or deleted pass stays as it was; a pass on another artifact has its own row.
+  if (!live || p.objectKey !== work.objectKey || work.passJson === null) {
+    await dropBoundary(db, claim);
+    return;
   }
-  let changed = 0;
-  let failed = 0;
-  for (const { passId, dueAt } of await dueBoundaries(db, ctx.clock.now(), BOUNDARY_BATCH)) {
-    try {
-      if (await rebuild(ctx, passId, dueAt)) changed++;
-    } catch (error) {
-      if (!(error instanceof AppError)) throw error;
-      failed++;
-      ctx.log.warn('pass.boundary_refresh_failed', { passId, code: error.code });
-    }
+  const template = await resolveTemplate(ctx, p.orgId, p.templateId, p.templateVersion);
+  const use = template.manifest.behaviors?.find((b) => b.use === 'upcoming-events');
+  // Events written by a binding alone do not move with the clock.
+  if (!use) {
+    await dropBoundary(db, claim);
+    return;
   }
-  if (changed > 0) await dispatchSafely(ctx);
-  if (changed + failed > 0) ctx.log.info('pass.boundary_refresh', { changed, failed });
+  const config = use.config as unknown as UpcomingEventsConfig;
+  const built = JSON.parse(work.passJson) as PassJson;
+  const input = applyDefaults(template.manifest, JSON.parse(p.personalization) as Personalization);
+  const at = ctx.clock.now() + BOUNDARY_SKEW_MS;
+  let rendered: PassJson;
+  try {
+    rendered = retimePass(built, input, config, template.manifest.lookups ?? {}, at);
+  } catch (error) {
+    throw new AppError('BOUNDARY_RENDER_INVALID', 422, (error as Error).message);
+  }
+  const keys = timedKeysOf(rendered);
+  const shown = work.render === null ? timedKeysOf(built) : (JSON.parse(work.render) as TimedKeys);
+  const minutes = config.fallbackMinutes;
+  const upcoming = nextBoundary(
+    passBoundaries(rendered, typeof minutes === 'number' ? { fallbackMinutes: minutes } : {}),
+    at,
+  );
+  const now = ctx.clock.now();
+  if (sameTimedKeys(keys, shown)) {
+    // Nothing moved: an event past the cap started, or the boundary is a second run's.
+    const floor = work.stampedAt > 0 ? work.stampedAt + BOUNDARY_FLOOR_MS : 0;
+    const due = upcoming === null ? null : Math.max(upcoming, floor);
+    if (due === null && work.renderedAt === 0) await dropBoundary(db, claim);
+    else await moveBoundary(db, claim, due);
+    return;
+  }
+  const outcome = await stampBoundary(
+    ctx,
+    claim,
+    p,
+    {
+      renderedAt: at,
+      render: JSON.stringify(keys),
+      dueAt: upcoming === null ? null : Math.max(upcoming, now + BOUNDARY_FLOOR_MS),
+      now,
+    },
+    `push:${claim.passId}:boundary:${ctx.ids.id()}`,
+  );
+  if (outcome === 'stamped') await dispatchSafely(ctx, { passId: claim.passId });
+  else if (outcome === 'refused') await backoff(ctx, work, claim, 'BOUNDARY_REFUSED');
+}
+
+async function backoff(
+  ctx: ServiceContext,
+  work: BoundaryWork,
+  claim: BoundaryClaim,
+  code: string,
+) {
+  const attempts = work.attempts + 1;
+  const delay = Math.min(BACKOFF_MS * 2 ** (attempts - 1), BACKOFF_CAP_MS);
+  await moveBoundary(ctx.env.DB, claim, ctx.clock.now() + delay, attempts);
+  ctx.log.warn('pass.boundary_backoff', {
+    orgId: work.pass.orgId,
+    passId: claim.passId,
+    code,
+    attempts,
+  });
+}
+
+async function failed(
+  ctx: ServiceContext,
+  work: BoundaryWork,
+  claim: BoundaryClaim,
+  error: unknown,
+) {
+  const code = error instanceof AppError ? error.code : 'BOUNDARY_REFRESH_FAILED';
+  if (!permanent(error)) {
+    ctx.log.error('pass.boundary_refresh_failed', {
+      orgId: work.pass.orgId,
+      passId: claim.passId,
+      code,
+      error,
+    });
+    await backoff(ctx, work, claim, code);
+    return;
+  }
+  ctx.log.error('pass.boundary_retired', { orgId: work.pass.orgId, passId: claim.passId, code });
+  // A render already made keeps serving; the row is only no longer worked.
+  if (work.renderedAt === 0) await dropBoundary(ctx.env.DB, claim);
+  else await moveBoundary(ctx.env.DB, claim, null);
 }

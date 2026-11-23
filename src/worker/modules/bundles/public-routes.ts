@@ -27,6 +27,7 @@ import {
 import { appleFileGate, recordCopy } from '../channels/gate.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
 import { servePassFile } from '../passes/file.ts';
+import { timedVariant } from '../passes/timed-variant.ts';
 import { svc } from '../passes/http.ts';
 import { presentationForPass } from '../public/presentation.ts';
 import { EMAILED, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
@@ -180,7 +181,8 @@ register(
     const bundle = await bundleForToken(ctx, p.token);
     const pass = await addablePass(ctx, bundle, p.passId);
     await appleFileGate(ctx, pass);
-    const response = await servePassFile(c.env.BUCKET, pass, c.req.raw);
+    const timed = (await timedVariant(ctx, pass)) ?? undefined;
+    const response = await servePassFile(c.env.BUCKET, pass, c.req.raw, {}, timed);
     try {
       await assertBundleMember(ctx, bundle, pass);
       if (response.status === 200) {

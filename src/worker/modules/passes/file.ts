@@ -31,10 +31,16 @@ export interface PassFileVariant {
   name: string;
   /** Builds the object; runs only when bytes are served, never for a 304. */
   ensure?: () => Promise<void>;
+  /** Builds the bytes in place of reading `objectKey` (a timed render); runs only when bytes are served. */
+  render?: () => Promise<Uint8Array>;
+  /** When the variant changed after the pass's own publish: Last-Modified moves with it. */
+  modifiedAt?: number;
 }
 
 const etagOf = (pass: Pass, variant?: PassFileVariant) =>
   `"${pass.objectSha256 ?? `v${pass.version}`}${variant ? `-${variant.name}` : ''}"`;
+
+const second = (ms: number) => Math.floor(ms / 1000);
 
 function matchesEtag(header: string, etag: string): boolean {
   if (header.trim() === '*') return true;
@@ -55,7 +61,11 @@ export async function servePassFile(
 ): Promise<Response> {
   assertSignedObject(variant?.objectKey ?? pass.objectKey);
   const etag = etagOf(pass, variant);
-  const modifiedSeconds = Math.floor(pass.modifiedAt / 1000);
+  const later = variant?.modifiedAt !== undefined && variant.modifiedAt > pass.modifiedAt;
+  const modifiedSeconds = second(later ? (variant?.modifiedAt ?? 0) : pass.modifiedAt);
+  // A variant made in the second of the publish it follows cannot be told apart by the timestamp.
+  const collision =
+    pass.modifiedCollision || (later && modifiedSeconds === second(pass.modifiedAt));
   const headers = new Headers({
     'content-type': PKPASS_CONTENT_TYPE,
     etag,
@@ -69,13 +79,21 @@ export async function servePassFile(
   const sinceMs = since ? Date.parse(since) : Number.NaN;
   const notModified = noneMatch
     ? matchesEtag(noneMatch, etag)
-    : !pass.modifiedCollision && Number.isFinite(sinceMs) && modifiedSeconds * 1000 <= sinceMs;
+    : !collision && Number.isFinite(sinceMs) && modifiedSeconds * 1000 <= sinceMs;
   if (notModified) return new Response(null, { status: 304, headers });
+  headers.set('content-disposition', `attachment; filename="${passFileName(pass)}"`);
+  if (variant?.render) {
+    const bytes = await variant.render();
+    headers.set('content-length', String(bytes.byteLength));
+    return new Response(request.method === 'HEAD' ? null : (bytes as BodyInit), {
+      status: 200,
+      headers,
+    });
+  }
   await variant?.ensure?.();
   const object = await bucket.get(variant?.objectKey ?? pass.objectKey);
   if (!object) throw new NotFoundError('The pass file is missing.', 'PASS_FILE_MISSING');
   headers.set('content-length', String(object.size));
-  headers.set('content-disposition', `attachment; filename="${passFileName(pass)}"`);
   if (request.method === 'HEAD') {
     await object.body.cancel();
     return new Response(null, { status: 200, headers });

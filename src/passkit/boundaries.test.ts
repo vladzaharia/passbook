@@ -7,6 +7,7 @@ import {
 } from './boundaries.ts';
 
 const MIN = 60_000;
+const HOUR = 60 * MIN;
 const at = (iso: string) => Date.parse(iso);
 const event = (date: string, end?: string) => ({
   dateInformation: { date },
@@ -48,6 +49,32 @@ describe('passBoundaries', () => {
     expect(passBoundaries('{nope')).toEqual([]);
     expect(passBoundaries(null)).toEqual([]);
     expect(passBoundaries('7')).toEqual([]);
+  });
+
+  it('reads any zone offset and fractional seconds as the same instant', () => {
+    const start = at('2030-06-01T10:00:00Z');
+    for (const date of [
+      '2030-06-01T03:00:00-07:00',
+      '2030-06-01T15:30:00+05:30',
+      '2030-06-01T15:30:00+0530',
+      '2030-06-01T10:00:00.000Z',
+    ])
+      expect(passBoundaries({ upcomingPassInformation: [event(date)] })[0], date).toBe(start);
+    const ends = passBoundaries({
+      upcomingPassInformation: [event('2030-06-01T03:00:00-07:00', '2030-06-01T16:30:00+05:30')],
+    });
+    expect(ends).toEqual([start, start + HOUR + 1]);
+  });
+
+  it('skips all-day and date-only events: they have no instant of their own', () => {
+    expect(
+      passBoundaries({
+        upcomingPassInformation: [
+          { dateInformation: { date: '2030-06-01T00:00:00Z', isAllDay: true } },
+          event('2030-06-02'),
+        ],
+      }),
+    ).toEqual([]);
   });
 
   it('counts the expiry only when asked', () => {

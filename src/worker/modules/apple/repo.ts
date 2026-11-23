@@ -192,15 +192,19 @@ export async function serialsSince(
     credential_generation: number;
   }>(
     db,
-    `SELECT p.serial, p.revision, p.id AS pass_id, p.org_id, p.mode, p.version, p.credential_generation
-     FROM registrations r JOIN passes p ON p.id = r.pass_id
-       AND r.credential_generation = p.credential_generation
-     JOIN orgs o ON o.id = p.org_id AND ${ORG_SERVES_SQL}
-     WHERE r.device_id = ? AND r.identity_id = ? AND p.identity_id = r.identity_id AND p.revision > ?
-       AND p.test_data_quarantined = 0
-       AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
-         WHERE t.pass_id = p.id AND t.state = 'pending')
-     ORDER BY p.revision LIMIT ?`,
+    // A timed render of the current artifact (pass_boundaries) carries a later tag than its publish.
+    `SELECT * FROM (
+       SELECT p.serial, MAX(p.revision, COALESCE(b.stamp, 0)) AS revision, p.id AS pass_id, p.org_id,
+         p.mode, p.version, p.credential_generation
+       FROM registrations r JOIN passes p ON p.id = r.pass_id
+         AND r.credential_generation = p.credential_generation
+       JOIN orgs o ON o.id = p.org_id AND ${ORG_SERVES_SQL}
+       LEFT JOIN pass_boundaries b ON b.pass_id = p.id AND b.object_key = p.object_key
+       WHERE r.device_id = ? AND r.identity_id = ? AND p.identity_id = r.identity_id
+         AND p.test_data_quarantined = 0
+         AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t
+           WHERE t.pass_id = p.id AND t.state = 'pending'))
+     WHERE revision > ? ORDER BY revision LIMIT ?`,
     [deviceId, identityId, since, limit],
   );
   return rows.map((r) => ({

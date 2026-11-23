@@ -30,6 +30,9 @@ export function estimateQueries(job: Job): number {
       return 10 + 10 * job.passIds.length;
     case 'message_rule.check':
       return 14;
+    // Row, template, commit, dispatch.
+    case 'pass.boundary_refresh':
+      return 8;
     default:
       return 15;
   }
