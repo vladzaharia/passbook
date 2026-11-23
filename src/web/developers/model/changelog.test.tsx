@@ -40,8 +40,8 @@ describe('changelog model', () => {
     expect(site.changelog.length).toBeGreaterThan(10);
     const d12 = site.changelog.find((e) => e.breaking);
     expect(d12?.version).toBe('2026-11-20');
-    expect(site.versions[0]?.date).toBe('2026-11-20');
-    expect(site.version).toBe('2026-11-20');
+    expect(site.versions[0]?.date).toBe('2026-11-22');
+    expect(site.version).toBe('2026-11-22');
   });
 
   it('badges the operation a changelog entry names', () => {
@@ -99,6 +99,6 @@ describe('changelog page', () => {
     expect(html).toContain('data-breaking="1"');
   });
   it('shows the version in the footer chip', () => {
-    expect(renderToStaticMarkup(<Footer site={site} />)).toContain('#version-2026-11-20');
+    expect(renderToStaticMarkup(<Footer site={site} />)).toContain('#version-2026-11-22');
   });
 });

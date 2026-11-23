@@ -241,7 +241,7 @@ management check and must not be used as a general tenant capability grant.
 
 ## Changes for existing clients
 
-Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog/`, one file per release date). `/api/v1` changes additively unless a dated `PassBook-Version` carries the change (`docs/api/versions.json`). Send `PassBook-Version: 2026-11-20` to opt in; without it behaviour is unchanged, and an unlisted date answers `422 API_VERSION_UNKNOWN`. `info.version` in the reference is the newest version date. A fix that stops a request from reaching more than it asked (a refused filter, say) ships to every client without a version and is listed as breaking in the changelog.
+Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog/`, one file per release date). `/api/v1` changes additively unless a dated `PassBook-Version` carries the change (`docs/api/versions.json`). Send `PassBook-Version: 2026-11-22` to opt in to every dated change (`2026-11-20` for the first only); without it behaviour is unchanged, and an unlisted date answers `422 API_VERSION_UNKNOWN`. `info.version` in the reference is the newest version date. A fix that stops a request from reaching more than it asked (a refused filter, say) ships to every client without a version and is listed as breaking in the changelog.
 
 - **Unreleased, managed Apple identities**: `GET /wallet-identities`, `POST /orgs/{orgId}/identities/apple`
   (202, `Idempotency-Key`, needs the `identity.managed` feature), `POST /identities/{id}/renew`,
@@ -352,7 +352,7 @@ cannot release). Test runs first, then Live. Each mode creates or reuses its can
 head newer than Live's previous version stays and answers `test: kept`. Without a usable approval the answer is 409
 `TEMPLATE_REVIEW_REQUIRED` with `plan`; what already ran stays, and the same call resumes. `modes` defaults to `["live","test"]`
 for a person and `["test"]` for a key or a developer org, which may not name Live. `Idempotency-Key` is required: the same key and
-body replays the first answer, the same key with another body is 409 `IDEMPOTENCY_KEY_REUSED`. `?dryRun=true` returns `{version,
+body replays the first answer, the same key with another body is 422 `IDEMPOTENCY_KEY_REUSED`. `?dryRun=true` returns `{version,
 modes, diff, fromVersion, state}` (steps, passes and devices reached per mode, a grouped diff) and writes nothing. `request: true`,
 or `POST /templates/{id}/review-requests` (`templates:write`), creates or reuses the candidates without approving.
 `GET /templates/{id}/releases/impact?orgId&mode&provider&version` returns what a publish or rollback to

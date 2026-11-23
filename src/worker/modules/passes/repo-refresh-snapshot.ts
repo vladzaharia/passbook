@@ -32,11 +32,23 @@ export const refreshPredicate = `org_id = ? AND mode = ? AND status = ? AND vers
   AND credential_generation = ? AND lifecycle_generation = ?
   AND template_id = ? AND template_version = ? AND release_id IS ?
   AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = passes.id AND t.state = 'pending')
-  AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = passes.org_id AND o.status = 'active')
-  AND ((connection_id IS NULL AND external_ref IS NULL AND ? IS NULL AND ? IS NULL)
-    OR (mode = 'live' AND status = 'active' AND connection_id IS NOT NULL AND external_ref IS NOT NULL
-      AND EXISTS (SELECT 1 FROM connections c WHERE c.id = passes.connection_id
-        AND c.org_id = passes.org_id AND c.enabled = 1 AND c.generation = ? AND c.mode = ?)))`;
+  AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = passes.org_id AND o.status = 'active')`;
+
+/** An unbound pass has no connection. Literals, so a pinned statement that uses one hashes its terms. */
+export const REFRESH_UNBOUND_FENCE = 'AND connection_id IS NULL AND external_ref IS NULL';
+
+/** A connector-bound pass must still be live, active and on its enabled connection. */
+export const REFRESH_BOUND_FENCE = `AND mode = 'live' AND status = 'active' AND connection_id IS NOT NULL AND external_ref IS NOT NULL
+    AND EXISTS (SELECT 1 FROM connections c WHERE c.id = passes.connection_id
+      AND c.org_id = passes.org_id AND c.enabled = 1 AND c.generation = ? AND c.mode = ?)`;
+
+/** An unbound snapshot carries no connection generation or mode; one that does never matches. */
+export const refreshFenceMismatch = (snapshot: RefreshSnapshot): boolean =>
+  snapshot.connectionId === null &&
+  (snapshot.generation !== null || snapshot.connectionMode !== null);
+
+export const refreshConnectionFence = (snapshot: RefreshSnapshot): string =>
+  snapshot.connectionId === null ? REFRESH_UNBOUND_FENCE : REFRESH_BOUND_FENCE;
 
 export function refreshParams(snapshot: RefreshSnapshot): SqlValue[] {
   return [
@@ -54,10 +66,7 @@ export function refreshParams(snapshot: RefreshSnapshot): SqlValue[] {
     snapshot.templateId,
     snapshot.templateVersion,
     snapshot.releaseId,
-    snapshot.generation,
-    snapshot.connectionMode,
-    snapshot.generation,
-    snapshot.connectionMode,
+    ...(snapshot.connectionId === null ? [] : [snapshot.generation, snapshot.connectionMode]),
   ];
 }
 

@@ -160,8 +160,8 @@ export async function parkUnexpectedBinding(
        p.template_id, p.release_id, p.template_version,
        EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = p.id AND t.state = 'pending') AS transfer_pending
      FROM passes p WHERE p.org_id = ? AND p.connection_id = ? AND p.external_ref = ?
-       AND (? IS NULL OR p.id = ?) LIMIT 1`,
-    [row.orgId, row.connectionId, ref, expectedPassId, expectedPassId],
+       ${expectedPassId === null ? '' : 'AND p.id = ?'} LIMIT 1`,
+    [row.orgId, row.connectionId, ref, ...(expectedPassId === null ? [] : [expectedPassId])],
   );
   const claimed = current.claim_pass_id !== null;
   const snapshot = pass

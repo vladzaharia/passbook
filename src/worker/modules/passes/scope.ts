@@ -26,6 +26,27 @@ export function readMode(scope: ScopeArg): Mode | null {
     : null;
 }
 
+/**
+ * `AND <alias>.org_id = ? AND <alias>.mode = ?` for the filters the scope carries, or nothing for a
+ * platform-wide system caller. Append to a WHERE that already has a condition.
+ */
+export function scopeAnd(scope: ScopeArg, alias = ''): { sql: string; params: string[] } {
+  const col = alias ? `${alias}.` : '';
+  const org = scopeOrg(scope);
+  const mode = readMode(scope);
+  const parts: string[] = [];
+  const params: string[] = [];
+  if (org !== null) {
+    parts.push(` AND ${col}org_id = ?`);
+    params.push(org);
+  }
+  if (mode !== null) {
+    parts.push(` AND ${col}mode = ?`);
+    params.push(mode);
+  }
+  return { sql: parts.join(''), params };
+}
+
 const NOUNS = {
   pass: ['Pass not found.', 'PASS_NOT_FOUND'],
   bundle: ['Bundle not found.', 'BUNDLE_NOT_FOUND'],

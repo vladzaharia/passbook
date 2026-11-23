@@ -77,6 +77,7 @@ import { walletProviderStatusRoutes } from './modules/wallet-providers/routes-st
 import { webhookKick } from './modules/webhooks/kick.ts';
 import { webhookEndpointsRoutes } from './modules/webhooks/routes.ts';
 import { eventFeedRoutes } from './modules/webhooks/routes-feed.ts';
+import { apiVersionGate } from './platform/api-version.ts';
 import { type AuthStores, denyAllStores, SESSION_COOKIE } from './platform/auth.ts';
 import type { Clock } from './platform/clock.ts';
 import { type AppBindings, requestContext } from './platform/context.ts';
@@ -142,6 +143,8 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.use('*', webhookKick);
   // PX16: every API-key call is logged after the response (modules/developer/request-log.ts).
   app.use('/api/v1/*', requestLog);
+  // An unknown PassBook-Version is refused here, before any handler commits a write.
+  app.use('/api/v1/*', apiVersionGate);
   app.onError((error, c) => asBrowserPage(c, handleError(error, c) as Response));
   app.notFound(async (c) => (await spaPage(c)) ?? asBrowserPage(c, notFoundHandler(c)));
 

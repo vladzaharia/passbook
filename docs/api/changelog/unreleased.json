@@ -2685,6 +2685,14 @@
     "note": "opensDefault says what a new tag opens when nobody chooses: user for a staff template where this scanner and tag type may bind a person, pass otherwise."
   },
   {
+    "key": "POST /api/v1/scan/tags/bind 409.IDEMPOTENCY_KEY_REUSED: now 422",
+    "class": "breaking",
+    "operationId": "scan.postScanTagsBind",
+    "op": "POST /api/v1/scan/tags/bind",
+    "change": "409.IDEMPOTENCY_KEY_REUSED: now 422",
+    "note": "Pinned to 2026-11-22, a reused key answers 422, not 409; the SDKs raise ValidationError, not ConflictError."
+  },
+  {
     "key": "POST /api/v1/scanners 200.staff.name: now nullable",
     "class": "notable",
     "operationId": "scanners.postScanners",
