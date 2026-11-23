@@ -7,9 +7,9 @@ import type { AuditEntry } from '../audit/types.ts';
 
 /** Organizations on `preset` whose features an earlier edit has not reached (a suspended org moves too; a deleted one does not). */
 export const pendingOrgs = (db: D1Database, preset: string, revision: number, limit: number) =>
-  all<{ org_id: string; revision: number }>(
+  all<{ org_id: string; revision: number; preset_revision: number }>(
     db,
-    `SELECT e.org_id, e.revision FROM org_entitlements e JOIN orgs o ON o.id = e.org_id
+    `SELECT e.org_id, e.revision, e.preset_revision FROM org_entitlements e JOIN orgs o ON o.id = e.org_id
      WHERE e.preset = ? AND e.preset_revision < ? AND o.status != 'deleted' ORDER BY e.org_id LIMIT ?`,
     [preset, revision, limit],
   );

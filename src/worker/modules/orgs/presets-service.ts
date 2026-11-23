@@ -7,6 +7,7 @@ import {
   ENTITLEMENT_KEYS,
   ENTITLEMENT_PRESETS,
   type EntitlementValue,
+  presetValues,
 } from '../../../shared/contracts/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '../../../shared/entitlement-impact.ts';
 import type { Actor } from '../../platform/context.ts';
@@ -80,7 +81,7 @@ async function moveOrg(
     before: EntitlementValues;
     after: EntitlementValues;
   },
-  org: { org_id: string; revision: number },
+  org: { org_id: string; revision: number; preset_revision: number },
 ): Promise<boolean> {
   const now = ctx.clock.now();
   // The journal's before holds every stored override and its after the standing ones, so an override that
@@ -90,7 +91,17 @@ async function moveOrg(
     await storedOverrides(ctx.env.DB, org.org_id),
     now,
   );
-  const was = resolve(p.before, all);
+  // `previous_values` is one edit back. An org further behind (an org save raced two edits) has no recorded
+  // before: journal it as a full re-evaluation from everything on, so every channel the plan blocks now is stopped.
+  const gap = org.preset_revision < p.presetRevision - 1;
+  if (gap)
+    ctx.log.warn('entitlement.preset_gap', {
+      orgId: org.org_id,
+      preset: p.preset,
+      code: 'PRESET_GAP',
+      behind: p.presetRevision - org.preset_revision,
+    });
+  const was = resolve(gap ? presetValues('legacy') : p.before, all);
   const after = resolve(p.after, standing);
   const impact = entitlementImpact(was, after);
   const revision = org.revision + 1;
@@ -112,6 +123,7 @@ async function moveOrg(
         targetId: org.org_id,
         detail: {
           via: 'preset',
+          ...(gap ? { gap: true } : {}),
           preset: p.preset,
           changes: Object.fromEntries(
             impact.changes.map((c) => [c.key, { from: c.from ?? null, to: c.to ?? null }]),

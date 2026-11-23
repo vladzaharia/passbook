@@ -46,7 +46,12 @@ const preset = (over: Partial<EntitlementPresetDto> = {}): EntitlementPresetDto 
   ...over,
 });
 
-function open(presets: EntitlementPresetDto[], puts: unknown[], conflict = false) {
+function open(
+  presets: EntitlementPresetDto[],
+  puts: unknown[],
+  conflict = false,
+  reply?: (n: number) => { moved: number; pendingOrgs: number },
+) {
   return renderApp('/admin/platform/orgs/o1?tab=features', {
     session: 'admin',
     handlers: {
@@ -65,7 +70,11 @@ function open(presets: EntitlementPresetDto[], puts: unknown[], conflict = false
         if (init?.method !== 'PUT') return json({ presets });
         puts.push(JSON.parse(String(init.body)));
         if (conflict) return problem(409, 'ENTITLEMENTS_CHANGED', 'The preset changed. Reload.');
-        return json({ preset: preset({ revision: 5 }), moved: 2 });
+        const r = reply?.(puts.length) ?? { moved: 2, pendingOrgs: 0 };
+        return json({
+          preset: preset({ revision: 5, pendingOrgs: r.pendingOrgs }),
+          moved: r.moved,
+        });
       },
     },
   });
@@ -103,5 +112,31 @@ describe('Edit presets', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Move the rest' }));
     await waitFor(() => expect(puts).toHaveLength(1));
     expect(puts[0]).toEqual({ preset: 'trial', expectedRevision: 4, values: {} });
+  });
+
+  it('keeps calling with no values until none wait, and reports the sum', async () => {
+    const user = userEvent.setup();
+    const puts: unknown[] = [];
+    const steps = [
+      { moved: 50, pendingOrgs: 80 },
+      { moved: 50, pendingOrgs: 30 },
+      { moved: 30, pendingOrgs: 0 },
+    ];
+    await open([preset({ pendingOrgs: 130 })], puts, false, (n) => steps[n - 1] ?? steps[2]!);
+    await user.click(await screen.findByRole('button', { name: 'Edit presets' }));
+    await user.click(await screen.findByRole('button', { name: 'Move the rest' }));
+    await waitFor(() => expect(puts).toHaveLength(3));
+    expect(puts[1]).toEqual({ preset: 'trial', expectedRevision: 5, values: {} });
+    expect(await screen.findByText('130 organizations moved')).toBeVisible();
+  });
+
+  it('stops when a call moves nobody', async () => {
+    const user = userEvent.setup();
+    const puts: unknown[] = [];
+    await open([preset({ pendingOrgs: 5 })], puts, false, () => ({ moved: 0, pendingOrgs: 5 }));
+    await user.click(await screen.findByRole('button', { name: 'Edit presets' }));
+    await user.click(await screen.findByRole('button', { name: 'Move the rest' }));
+    await waitFor(() => expect(puts).toHaveLength(1));
+    expect(puts).toHaveLength(1);
   });
 });
