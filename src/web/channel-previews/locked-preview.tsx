@@ -27,7 +27,7 @@ export function LockedPreview({
       data-locked={level}
       className="relative mx-auto flex w-full max-w-60 flex-col items-center"
     >
-      <div aria-hidden className="pointer-events-none w-full opacity-40 grayscale">
+      <div aria-hidden inert className="pointer-events-none w-full opacity-40 grayscale">
         {card}
       </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-surface-raised/85 p-4 text-center backdrop-blur-sm">
