@@ -10,7 +10,13 @@ export type GoogleMessageState =
   | 'failed'
   | 'unknown'
   | 'superseded';
-export type GoogleMessageReason = 'budget' | 'quota' | 'refused' | 'unconfirmed' | 'rate_limited';
+export type GoogleMessageReason =
+  | 'budget'
+  | 'quota'
+  | 'refused'
+  | 'unconfirmed'
+  | 'rate_limited'
+  | 'not_sent';
 
 export interface GoogleMessageRow {
   id: string;

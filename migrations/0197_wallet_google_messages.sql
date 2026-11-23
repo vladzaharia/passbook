@@ -10,7 +10,7 @@ CREATE TABLE wallet_google_messages (
   target_version INTEGER NOT NULL CHECK (target_version > base_version),
   notify INTEGER NOT NULL CHECK (notify IN (0, 1)),
   state TEXT NOT NULL CHECK (state IN ('pending', 'sending', 'notified', 'text', 'failed', 'unknown', 'superseded')),
-  reason TEXT CHECK (reason IS NULL OR reason IN ('budget', 'quota', 'refused', 'unconfirmed', 'rate_limited')),
+  reason TEXT CHECK (reason IS NULL OR reason IN ('budget', 'quota', 'refused', 'unconfirmed', 'rate_limited', 'not_sent')),
   http_status INTEGER CHECK (http_status IS NULL OR http_status BETWEEN 100 AND 599),
   tries INTEGER NOT NULL DEFAULT 0 CHECK (tries BETWEEN 0 AND 8),
   kek_version INTEGER NOT NULL,

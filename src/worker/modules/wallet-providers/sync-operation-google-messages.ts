@@ -244,8 +244,12 @@ async function sendUnguarded(
         throw error;
       }
       if (failure.kind === 'not_sent') {
-        // Never left, and the object write is done: leave the row pending for the next operation.
-        await releaseGoogleMessage(ctx, claim, op, id, null);
+        // Never left, and the object write is done (and must not be retried): the message is dropped, visibly.
+        ctx.log.warn('wallet.google_message_not_sent', {
+          code: 'WALLET_GOOGLE_MESSAGE_NOT_SENT',
+          orgId: op.orgId,
+        });
+        await settle('failed', 'not_sent', failure.status);
         return;
       }
       if (failure.kind === 'refused' || failure.kind === 'quota') {
