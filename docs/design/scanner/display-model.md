@@ -1633,7 +1633,7 @@ type ScanOp =
 ### 10.7 Open questions
 
 1. **Real-pass preview.** Decided in the plan: `GET /api/v1/scan-display/preview?orgId&mode&templateId&passId&role` (DS.5, M3), returning `{ scope }` with the role-filtered scope, never a rendered display. The explicit mode must match the console session's mode.
-2. **Inline editing on the canvas.** Should bound text be editable on the canvas through a token-aware input? The proposal keeps canvas editing to literal text, to avoid a second token editor.
+2. **Inline editing on the canvas.** Decided 2026-11-22: literal text only; bindings and tokens are edited in the outline, never on the canvas, so there is one token editor. Built as less than that: the canvas has no text input at all. Its `button[data-preview-target]` elements select a row or action (`scan-overlay.tsx:80`, `scan-mode.tsx:97`) and all text and binding edits happen in the outline panels (`scan-fields.tsx`, `scan-row-editor.tsx`). Literal-text inline editing is not built; add it only if wanted.
 
 ---
 
