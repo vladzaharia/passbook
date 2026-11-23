@@ -1,0 +1,18 @@
+{
+  "session.getSession": {
+    "response": {
+      "authenticated": true,
+      "user": {
+        "id": "0193a1b2-7c00-7000-8000-000000000011",
+        "name": "Sam Rivera",
+        "primaryEmail": "sam@example.com"
+      },
+      "roles": ["admin"],
+      "csrfToken": "csrf_demo_northwind",
+      "amr": "oidc",
+      "consoleUntil": 1798790399999,
+      "consoleGroupRequired": false,
+      "expiresAt": 1798790399999
+    }
+  }
+}

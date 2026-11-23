@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { classify, isSecret, missTerm, routeMatches } from './developers-search.ts';
 
+const DEMO = 'pb_test_demo_demo_demo_demo';
+
 const SECRETS = [
   'pb_test_9fK2xQ7mLp3sD8vA9fK2',
   'pb_live_ab12cd_9fK2xQ7mLp3sD8vA',
@@ -9,7 +11,7 @@ const SECRETS = [
   'pbtry_eyJ2MTprZXk6c2Vz.9fK2xQ7mLp3sD8vA',
   'wlt_9fK2xQ7mLp3sD8vA',
   'whsec_9fK2xQ7mLp3sD8vA9fK2xQ7mLp3sD8vA9fK2xQ7mLp',
-  'curl -H "Authorization: Bearer pb_live_ab12_9fK2xQ7mLp3sD8vA" https://x',
+  `curl -H "Authorization: Bearer ${DEMO}" https://x`,
 ];
 
 describe('classify', () => {

@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.NfcKeysetsReenrollBody
 	if err := json.Unmarshal([]byte(`{
-  "toKeysetId": "0193a1b2-7c00-7000-8000-0000000000e1"
+  "toKeysetId": "0193a1b2-7c00-7000-8000-000000000041"
 }`), &body); err != nil {
 		panic(err)
 	}

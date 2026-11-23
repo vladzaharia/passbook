@@ -4,15 +4,15 @@
     "response": {
       "items": [
         {
-          "id": "0193a1b2-7c00-7000-8000-000000000101",
+          "id": "0193a1b2-7c00-7000-8000-00f4510d86a3",
           "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
           "kind": "pass",
           "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
           "bundleId": null,
           "to": "ada@example.com",
-          "subject": "Your ticket to Example Events",
-          "attached": true,
-          "createdAt": 1764000000000
+          "subject": "Your Northwind Climbing pass",
+          "attached": false,
+          "createdAt": 1795570500000
         }
       ],
       "nextCursor": null
@@ -21,17 +21,17 @@
   "sandbox.getTestInboxById": {
     "description": "One captured email with its HTML and text.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000101",
+      "id": "0193a1b2-7c00-7000-8000-00f4510d86a3",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
       "kind": "pass",
       "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
       "bundleId": null,
       "to": "ada@example.com",
-      "subject": "Your ticket to Example Events",
-      "attached": true,
-      "createdAt": 1764000000000,
-      "html": "<p>Your ticket is ready.</p>",
-      "text": "Your ticket is ready.",
+      "subject": "Your Northwind Climbing pass",
+      "attached": false,
+      "createdAt": 1795570500000,
+      "html": "<p>Your pass is ready.</p><p>Day pass for Ada Example.</p>",
+      "text": "Your pass is ready. Day pass for Ada Example.",
       "forwarding": "none"
     }
   }

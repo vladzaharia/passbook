@@ -192,3 +192,4 @@ INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
 DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
+public/fonts/noto/*.woff2 (the print sheet's fallback font, tools/build-ssr-tokens.ts) are the vietnamese, greek and cyrillic subsets of Noto Sans from @fontsource-variable/noto-sans, unchanged. Copyright 2022 The Noto Project Authors (github.com/notofonts/latin-greek-cyrillic). SIL Open Font License 1.1; the license text ships beside them as OFL-NotoSans.txt.

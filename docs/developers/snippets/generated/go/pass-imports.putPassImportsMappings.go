@@ -18,29 +18,45 @@ func main() {
 
 	var body passbook.PassImportsMappingsSaveBody
 	if err := json.Unmarshal([]byte(`{
-  "templateId": "0197f1c2-6f3a-7b11-9c1e-2a5d4c8e9b10",
-  "name": "Gym export",
+  "name": "Members export",
   "columns": [
-    "Member #",
+    "Holder email",
     "Name",
-    "Holder email"
+    "Tier",
+    "Valid until",
+    "Member ID"
   ],
   "plan": {
     "mapping": {
-      "memberName": {
+      "name": {
         "from": "/Name"
+      },
+      "tier": {
+        "from": "/Tier"
+      },
+      "validUntil": {
+        "from": "/Valid until",
+        "transform": {
+          "kind": "date",
+          "options": {
+            "input": "iso",
+            "output": "iso"
+          }
+        }
       }
     },
     "holderEmail": {
       "from": "/Holder email"
     },
     "externalId": {
-      "from": "/Member #"
+      "from": "/Member ID"
     },
     "match": "externalId",
     "keepManual": false,
-    "save": true
-  }
+    "save": true,
+    "overrides": {}
+  },
+  "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
 }`), &body); err != nil {
 		panic(err)
 	}

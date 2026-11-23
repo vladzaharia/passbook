@@ -2,29 +2,28 @@
   "api-keys.getApiKeysById": {
     "description": "One key with its parent, the key that replaced it, how many child keys it has, and where it was last used from. Never the secret.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000201",
+      "id": "0193a1b2-7c00-7000-8000-000000000021",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Order system",
-      "prefix": "k3v9",
-      "secretPrefix": "pb_live_k3v9",
-      "scopes": ["passes:read", "passes:write"],
-      "mode": "live",
-      "createdBy": "0193a1b2-7c00-7000-8000-000000000101",
-      "createdByName": "Ana Reyes",
-      "createdAt": 1764000000000,
-      "lastUsedAt": 1764000060000,
+      "name": "Server integration",
+      "prefix": "k3Qx9Zt2",
+      "secretPrefix": "pb_test_k3Qx9Zt2",
+      "scopes": ["passes:read", "passes:write", "templates:read"],
+      "mode": "test",
+      "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "createdByName": "Sam Rivera",
+      "createdAt": 1794362400000,
+      "lastUsedAt": 1795570500000,
       "expiresAt": null,
       "revokedAt": null,
       "kind": "service",
-      "roles": [],
       "retireAt": null,
       "ipAllow": [],
       "templateIds": [],
       "passStyles": [],
-      "rateTier": null,
+      "rateTier": "standard",
       "parentKeyId": null,
       "rotatedFrom": null,
-      "lastIpPrefix": "203.0.113.0/24",
+      "lastIpPrefix": "203.0.113",
       "parent": null,
       "replacedBy": null,
       "childCount": 0
@@ -33,30 +32,50 @@
   "api-keys.getApiKeysByIdActivity": {
     "description": "What a key did lately: calls by action over the last 30 days and the latest calls. No request bodies, no secrets.",
     "response": {
-      "lastUsedAt": 1764000060000,
-      "lastIpPrefix": "203.0.113.0/24",
+      "lastUsedAt": 1795570500000,
+      "lastIpPrefix": "203.0.113",
       "summary": {
-        "since": 1761408000000,
+        "since": 1794362400000,
         "calls": 412,
-        "denied": 3,
+        "denied": 1,
         "actions": [
           {
             "action": "pass.create",
-            "count": 390,
-            "lastAt": 1764000060000
+            "count": 128,
+            "lastAt": 1795570500000
+          },
+          {
+            "action": "pass.update",
+            "count": 41,
+            "lastAt": 1795399200000
+          },
+          {
+            "action": "auth.denied",
+            "count": 1,
+            "lastAt": 1795399200000
           }
         ]
       },
       "recent": [
         {
-          "id": 9120,
-          "at": 1764000060000,
+          "id": 90412,
+          "at": 1795570500000,
           "action": "pass.create",
           "outcome": "allowed",
           "targetType": "pass",
           "targetId": "0193a1b2-7c00-7000-8000-0000000000c1",
-          "ipPrefix": "203.0.113.0/24",
+          "ipPrefix": "203.0.113",
           "code": null
+        },
+        {
+          "id": 90377,
+          "at": 1795399200000,
+          "action": "auth.denied",
+          "outcome": "denied",
+          "targetType": null,
+          "targetId": null,
+          "ipPrefix": "203.0.113",
+          "code": "MISSING_SCOPE"
         }
       ]
     }
@@ -64,22 +83,24 @@
   "api-keys.getApiKeysMe": {
     "description": "The key this request used: its scopes, organization and mode. Use it to check a key works.",
     "response": {
-      "id": "0193a1b2-7c00-7000-8000-000000000201",
+      "id": "0193a1b2-7c00-7000-8000-000000000021",
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "name": "Order system",
-      "prefix": "wlt_k3v9",
-      "scopes": ["passes:read", "passes:write"],
-      "mode": "live",
-      "createdAt": 1764000000000,
-      "lastUsedAt": 1764000060000,
-      "expiresAt": null
+      "name": "Server integration",
+      "prefix": "k3Qx9Zt2",
+      "scopes": ["passes:read", "passes:write", "templates:read"],
+      "mode": "test",
+      "createdAt": 1794362400000,
+      "lastUsedAt": 1795570500000,
+      "expiresAt": null,
+      "kind": "service",
+      "retireAt": null
     }
   },
   "api-keys.postApiKeysByIdRetire": {
     "description": "Set the instant a key stops working, earlier than its expiry. Set once; the key works until then.",
     "request": {
       "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-      "retireAt": 1764090000000
+      "retireAt": 1795570500000
     },
     "response": {
       "ok": true
@@ -93,51 +114,49 @@
     },
     "response": {
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-000000000202",
+        "id": "0193a1b2-7c00-7000-8000-000000000024",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Order system",
-        "prefix": "m4q2",
-        "secretPrefix": "pb_live_m4q2",
-        "scopes": ["passes:read", "passes:write"],
-        "mode": "live",
-        "createdBy": "0193a1b2-7c00-7000-8000-000000000101",
-        "createdByName": "Ana Reyes",
-        "createdAt": 1764003600000,
+        "name": "Server integration",
+        "prefix": "p7Wm4Hn8",
+        "secretPrefix": "pb_test_p7Wm4Hn8",
+        "scopes": ["passes:read", "passes:write", "templates:read"],
+        "mode": "test",
+        "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+        "createdByName": "Sam Rivera",
+        "createdAt": 1795572000000,
         "lastUsedAt": null,
         "expiresAt": null,
         "revokedAt": null,
         "kind": "service",
-        "roles": [],
         "retireAt": null,
         "ipAllow": [],
         "templateIds": [],
         "passStyles": [],
-        "rateTier": null,
+        "rateTier": "standard",
         "parentKeyId": null,
-        "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000201",
-        "secret": "pb_live_m4q2_Zk3x9Qe7LwT1uV5bN8cR2dFh"
+        "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000021",
+        "secret": "pb_test_p7Wm4Hn8_northwind-demo-key-do-not-use-b270a237a93e"
       },
       "previous": {
-        "id": "0193a1b2-7c00-7000-8000-000000000201",
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Order system",
-        "prefix": "k3v9",
-        "secretPrefix": "pb_live_k3v9",
-        "scopes": ["passes:read", "passes:write"],
-        "mode": "live",
-        "createdBy": "0193a1b2-7c00-7000-8000-000000000101",
-        "createdByName": "Ana Reyes",
-        "createdAt": 1764000000000,
-        "lastUsedAt": 1764000060000,
+        "name": "Server integration",
+        "prefix": "k3Qx9Zt2",
+        "secretPrefix": "pb_test_k3Qx9Zt2",
+        "scopes": ["passes:read", "passes:write", "templates:read"],
+        "mode": "test",
+        "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+        "createdByName": "Sam Rivera",
+        "createdAt": 1794362400000,
+        "lastUsedAt": 1795570500000,
         "expiresAt": null,
         "revokedAt": null,
         "kind": "service",
-        "roles": [],
-        "retireAt": 1764090000000,
+        "retireAt": 1795658400000,
         "ipAllow": [],
         "templateIds": [],
         "passStyles": [],
-        "rateTier": null,
+        "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": null
       }
@@ -150,63 +169,124 @@
     },
     "response": {
       "key": {
-        "id": "0193a1b2-7c00-7000-8000-000000000202",
+        "id": "0193a1b2-7c00-7000-8000-000000000024",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Order system",
-        "prefix": "m4q2",
-        "secretPrefix": "pb_live_m4q2",
-        "scopes": ["passes:read", "passes:write"],
-        "mode": "live",
-        "createdBy": "0193a1b2-7c00-7000-8000-000000000101",
-        "createdByName": "Ana Reyes",
-        "createdAt": 1764003600000,
+        "name": "Server integration",
+        "prefix": "p7Wm4Hn8",
+        "secretPrefix": "pb_test_p7Wm4Hn8",
+        "scopes": ["passes:read", "passes:write", "templates:read"],
+        "mode": "test",
+        "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+        "createdByName": "Sam Rivera",
+        "createdAt": 1795572000000,
         "lastUsedAt": null,
         "expiresAt": null,
         "revokedAt": null,
         "kind": "service",
-        "roles": [],
         "retireAt": null,
         "ipAllow": [],
         "templateIds": [],
         "passStyles": [],
-        "rateTier": null,
+        "rateTier": "standard",
         "parentKeyId": null,
-        "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000201",
-        "secret": "pb_live_m4q2_Zk3x9Qe7LwT1uV5bN8cR2dFh"
+        "rotatedFrom": "0193a1b2-7c00-7000-8000-000000000021",
+        "secret": "pb_test_p7Wm4Hn8_northwind-demo-key-do-not-use-b270a237a93e"
       },
       "previous": {
-        "id": "0193a1b2-7c00-7000-8000-000000000201",
+        "id": "0193a1b2-7c00-7000-8000-000000000021",
         "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-        "name": "Order system",
-        "prefix": "k3v9",
-        "secretPrefix": "pb_live_k3v9",
-        "scopes": ["passes:read", "passes:write"],
-        "mode": "live",
-        "createdBy": "0193a1b2-7c00-7000-8000-000000000101",
-        "createdByName": "Ana Reyes",
-        "createdAt": 1764000000000,
-        "lastUsedAt": 1764000060000,
+        "name": "Server integration",
+        "prefix": "k3Qx9Zt2",
+        "secretPrefix": "pb_test_k3Qx9Zt2",
+        "scopes": ["passes:read", "passes:write", "templates:read"],
+        "mode": "test",
+        "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+        "createdByName": "Sam Rivera",
+        "createdAt": 1794362400000,
+        "lastUsedAt": 1795570500000,
         "expiresAt": null,
         "revokedAt": null,
         "kind": "service",
-        "roles": [],
-        "retireAt": 1764090000000,
+        "retireAt": 1795658400000,
         "ipAllow": [],
         "templateIds": [],
         "passStyles": [],
-        "rateTier": null,
+        "rateTier": "standard",
         "parentKeyId": null,
         "rotatedFrom": null
       }
     }
   },
   "api-keys.deleteApiKeysById": {
-    "description": "Revokes a key for an authorized organization, or a platform-wide key with `orgId=null`."
+    "description": "Revokes a key for an authorized organization, or a platform-wide key with `orgId=null`.",
+    "response": {
+      "ok": true
+    }
   },
   "api-keys.getApiKeys": {
-    "description": "Lists keys for an authorized organization, or platform-wide keys with `orgId=null`."
+    "description": "Lists keys for an authorized organization, or platform-wide keys with `orgId=null`.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000021",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Server integration",
+          "prefix": "k3Qx9Zt2",
+          "secretPrefix": "pb_test_k3Qx9Zt2",
+          "scopes": ["passes:read", "passes:write", "templates:read"],
+          "mode": "test",
+          "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+          "createdByName": "Sam Rivera",
+          "createdAt": 1794362400000,
+          "lastUsedAt": 1795570500000,
+          "expiresAt": null,
+          "revokedAt": null,
+          "kind": "service",
+          "retireAt": null,
+          "ipAllow": [],
+          "templateIds": [],
+          "passStyles": [],
+          "rateTier": "standard",
+          "parentKeyId": null,
+          "rotatedFrom": null
+        }
+      ],
+      "nextCursor": null,
+      "revokedCount": 1
+    }
   },
   "api-keys.postApiKeys": {
-    "description": "Creates an organization or platform API key. The secret is shown once."
+    "description": "Creates an organization or platform API key. The secret is shown once.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Server integration",
+      "kind": "service",
+      "scopes": ["passes:read", "passes:write", "templates:read"],
+      "mode": "test"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000021",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Server integration",
+      "prefix": "k3Qx9Zt2",
+      "secretPrefix": "pb_test_k3Qx9Zt2",
+      "scopes": ["passes:read", "passes:write", "templates:read"],
+      "mode": "test",
+      "createdBy": "0193a1b2-7c00-7000-8000-000000000011",
+      "createdByName": "Sam Rivera",
+      "createdAt": 1795572000000,
+      "lastUsedAt": null,
+      "expiresAt": null,
+      "revokedAt": null,
+      "kind": "service",
+      "retireAt": null,
+      "ipAllow": [],
+      "templateIds": [],
+      "passStyles": [],
+      "rateTier": "standard",
+      "parentKeyId": null,
+      "rotatedFrom": null,
+      "secret": "pb_test_k3Qx9Zt2_northwind-demo-key-do-not-use-3eae7039cab3"
+    }
   }
 }

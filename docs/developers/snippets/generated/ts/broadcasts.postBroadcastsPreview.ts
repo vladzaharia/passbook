@@ -10,10 +10,8 @@ const result = await pb.broadcasts.countRecipients({
     ],
   },
   patch: {
-    plan: {
-      set: 'monthly',
-    },
+    validUntil: '2027-01-31',
   },
-  notify: false,
+  notify: true,
 });
 console.log(result);

@@ -53,7 +53,7 @@ export const supplierFixture = (over: Partial<Keyset> = {}) =>
     ...over,
   });
 
-export const KEY = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
+export const KEY = '00112233445566778899aabbccddeeff';
 const empty = () => json({ items: [], nextCursor: null });
 
 /** The Tags tab on its Secure keys view; `keysets` answer the list. */

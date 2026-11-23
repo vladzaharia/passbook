@@ -18,7 +18,13 @@ func main() {
 
 	var body passbook.TemplatesReviewsRequestBody
 	if err := json.Unmarshal([]byte(`{
-  "version": "4"
+  "version": "4",
+  "modes": [
+    "test"
+  ],
+  "expected": {
+    "test": 3
+  }
 }`), &body); err != nil {
 		panic(err)
 	}

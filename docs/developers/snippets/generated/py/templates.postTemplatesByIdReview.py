@@ -9,7 +9,7 @@ result = pb.templates.reviews.approve(
     {
         "version": "4",
         "release": True,
-        "note": "Looks right.",
+        "note": "Logo and colors match the brand guide.",
     },
 )
 print(result)

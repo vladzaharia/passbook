@@ -386,7 +386,7 @@ describe('settings api', () => {
       'https://localhost/',
       'https://10.0.0.1/',
       'https://intranet.internal/',
-      'https://gym.example/' + 'a'.repeat(2048),
+      `https://gym.example/${'a'.repeat(2048)}`,
       '',
       5,
     ])

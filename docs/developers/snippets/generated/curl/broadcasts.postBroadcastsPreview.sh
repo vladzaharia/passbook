@@ -9,9 +9,7 @@ curl -X POST "https://passbook.mobile/api/v1/broadcasts/preview" \
     ]
   },
   "patch": {
-    "plan": {
-      "set": "monthly"
-    }
+    "validUntil": "2027-01-31"
   },
-  "notify": false
+  "notify": true
 }'

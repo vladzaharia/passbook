@@ -259,7 +259,7 @@ describe('/p renders the portal HolderPassView', () => {
   );
 
   describe('save to this phone', () => {
-    const TOKEN = 'abcdefghijklmnop0123';
+    const TOKEN = 'demodemodemodemodemo';
     const android = {
       device: { device: 'android', inApp: false },
       barcodeHref: `/p/${TOKEN}/barcode`,

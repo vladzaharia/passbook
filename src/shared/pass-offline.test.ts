@@ -8,7 +8,7 @@ import {
 } from './pass-offline.ts';
 
 const ORIGIN = 'https://wallet.test';
-const TOKEN = 'abcdefghijklmnop0123';
+const TOKEN = 'demodemodemodemodemo';
 const PATH = `/p/${TOKEN}/barcode`;
 const URL_ = `${ORIGIN}${PATH}`;
 const DAY = 864e5;
@@ -344,7 +344,7 @@ describe('the save controls', () => {
 
   it('refuses a door on another origin or another path, and does nothing without service workers', async () => {
     for (const href of [
-      'https://evil.test/p/abcdefghijklmnop0123/barcode',
+      'https://evil.test/p/demodemodemodemodemo/barcode',
       '/p/short/barcode',
       '/passes/1',
     ]) {

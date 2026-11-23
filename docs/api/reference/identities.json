@@ -1,0 +1,335 @@
+{
+  "identities.getIdentities": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "label": "Northwind signing identity",
+          "passTypeIdentifier": "pass.mobile.passbook.northwind",
+          "teamIdentifier": "A1B2C3D4E5",
+          "source": "db",
+          "certSha256": "7e8ff4610157decfb257d5d756086d648ee31efdfc023064c64cb2c2d17ee1e5",
+          "certSubject": "CN=Pass Type ID: pass.mobile.passbook.northwind",
+          "certSerial": "2e91b094e6a40a1f",
+          "notBefore": 1767168000000,
+          "notAfter": 1798790399999,
+          "daysRemaining": 37,
+          "apnsBinding": "production",
+          "apnsAvailable": true,
+          "pushMethod": "certificate",
+          "pushKey": null,
+          "apnsHealth": "healthy",
+          "apnsCheckedAt": 1795570500000,
+          "apnsReason": "BadDeviceToken",
+          "passCount": 131,
+          "nfcEnabled": false,
+          "nfcKeys": [],
+          "isDefault": true,
+          "createdAt": 1767168000000,
+          "kind": "managed",
+          "status": "active",
+          "rotation": "auto",
+          "issuing": true,
+          "nextRotationAt": 1796198399999,
+          "handle": "northwind"
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "identities.postIdentities": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "label": "Northwind signing identity",
+      "certificatePem": "-----BEGIN CERTIFICATE-----\n…\n-----END CERTIFICATE-----",
+      "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "label": "Northwind signing identity",
+      "passTypeIdentifier": "pass.mobile.passbook.northwind",
+      "teamIdentifier": "A1B2C3D4E5",
+      "source": "db",
+      "certSha256": "7e8ff4610157decfb257d5d756086d648ee31efdfc023064c64cb2c2d17ee1e5",
+      "certSubject": "CN=Pass Type ID: pass.mobile.passbook.northwind",
+      "certSerial": "2e91b094e6a40a1f",
+      "notBefore": 1767168000000,
+      "notAfter": 1798790399999,
+      "daysRemaining": 37,
+      "apnsBinding": "production",
+      "apnsAvailable": true,
+      "pushMethod": "certificate",
+      "pushKey": null,
+      "apnsHealth": "healthy",
+      "apnsCheckedAt": 1795570500000,
+      "apnsReason": "BadDeviceToken",
+      "passCount": 131,
+      "nfcEnabled": false,
+      "nfcKeys": [],
+      "isDefault": true,
+      "createdAt": 1767168000000,
+      "kind": "managed",
+      "status": "active",
+      "rotation": "auto",
+      "issuing": true,
+      "nextRotationAt": 1796198399999,
+      "handle": "northwind"
+    }
+  },
+  "identities.patchIdentitiesById": {
+    "request": {
+      "label": "Northwind signing identity",
+      "isDefault": true,
+      "nfcEnabled": false
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "label": "Northwind signing identity",
+      "passTypeIdentifier": "pass.mobile.passbook.northwind",
+      "teamIdentifier": "A1B2C3D4E5",
+      "source": "db",
+      "certSha256": "7e8ff4610157decfb257d5d756086d648ee31efdfc023064c64cb2c2d17ee1e5",
+      "certSubject": "CN=Pass Type ID: pass.mobile.passbook.northwind",
+      "certSerial": "2e91b094e6a40a1f",
+      "notBefore": 1767168000000,
+      "notAfter": 1798790399999,
+      "daysRemaining": 37,
+      "apnsBinding": "production",
+      "apnsAvailable": true,
+      "pushMethod": "certificate",
+      "pushKey": null,
+      "apnsHealth": "healthy",
+      "apnsCheckedAt": 1795570500000,
+      "apnsReason": "BadDeviceToken",
+      "passCount": 131,
+      "nfcEnabled": false,
+      "nfcKeys": [],
+      "isDefault": true,
+      "createdAt": 1767168000000,
+      "kind": "managed",
+      "status": "active",
+      "rotation": "auto",
+      "issuing": true,
+      "nextRotationAt": 1796198399999,
+      "handle": "northwind"
+    }
+  },
+  "identities.deleteIdentitiesById": {
+    "response": {
+      "ok": true
+    }
+  },
+  "identities.postIdentitiesByIdRotate": {
+    "request": {
+      "certificatePem": "-----BEGIN CERTIFICATE-----\n…\n-----END CERTIFICATE-----",
+      "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
+      "pkcs12Base64": "MIIKcQIBAzCCCjcGCSqGSIb3DQEHAaCC…"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "label": "Northwind signing identity",
+      "passTypeIdentifier": "pass.mobile.passbook.northwind",
+      "teamIdentifier": "A1B2C3D4E5",
+      "source": "db",
+      "certSha256": "7e8ff4610157decfb257d5d756086d648ee31efdfc023064c64cb2c2d17ee1e5",
+      "certSubject": "CN=Pass Type ID: pass.mobile.passbook.northwind",
+      "certSerial": "2e91b094e6a40a1f",
+      "notBefore": 1767168000000,
+      "notAfter": 1798790399999,
+      "daysRemaining": 37,
+      "apnsBinding": "production",
+      "apnsAvailable": true,
+      "pushMethod": "certificate",
+      "pushKey": null,
+      "apnsHealth": "healthy",
+      "apnsCheckedAt": 1795570500000,
+      "apnsReason": "BadDeviceToken",
+      "passCount": 131,
+      "nfcEnabled": false,
+      "nfcKeys": [],
+      "isDefault": true,
+      "createdAt": 1767168000000,
+      "kind": "managed",
+      "status": "active",
+      "rotation": "auto",
+      "issuing": true,
+      "nextRotationAt": 1796198399999,
+      "handle": "northwind"
+    }
+  },
+  "identities.postIdentitiesByIdApnsCheck": {
+    "response": {
+      "health": "healthy",
+      "status": 400,
+      "reason": "BadDeviceToken",
+      "checkedAt": 1795570500000,
+      "method": "certificate"
+    }
+  },
+  "identities.putIdentitiesByIdPushKey": {
+    "request": {
+      "keyId": "A1B2C3D4E5",
+      "p8": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "label": "Northwind signing identity",
+      "passTypeIdentifier": "pass.mobile.passbook.northwind",
+      "teamIdentifier": "A1B2C3D4E5",
+      "source": "db",
+      "certSha256": "7e8ff4610157decfb257d5d756086d648ee31efdfc023064c64cb2c2d17ee1e5",
+      "certSubject": "CN=Pass Type ID: pass.mobile.passbook.northwind",
+      "certSerial": "2e91b094e6a40a1f",
+      "notBefore": 1767168000000,
+      "notAfter": 1798790399999,
+      "daysRemaining": 37,
+      "apnsBinding": "production",
+      "apnsAvailable": true,
+      "pushMethod": "certificate",
+      "pushKey": null,
+      "apnsHealth": "healthy",
+      "apnsCheckedAt": 1795570500000,
+      "apnsReason": "BadDeviceToken",
+      "passCount": 131,
+      "nfcEnabled": false,
+      "nfcKeys": [],
+      "isDefault": true,
+      "createdAt": 1767168000000,
+      "kind": "managed",
+      "status": "active",
+      "rotation": "auto",
+      "issuing": true,
+      "nextRotationAt": 1796198399999,
+      "handle": "northwind"
+    }
+  },
+  "identities.postIdentitiesByIdRenew": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "rotate",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "state": "succeeded",
+      "step": "done",
+      "attempt": 1,
+      "waitingFor": null,
+      "errorCode": null,
+      "createdAt": 1795571820000,
+      "updatedAt": 1795571940000,
+      "finishedAt": 1795571940000
+    }
+  },
+  "identities.getIdentitiesByIdCertificates": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-447106b12dd9",
+          "state": "active",
+          "origin": "upload",
+          "certSha256": "1d5343b2cb5b4d2f6ffe011e91696a02677478eb55435f34445cae1c55fb9aff",
+          "notBefore": 1794362400000,
+          "notAfter": 1798790399999,
+          "createdAt": 1794362400000,
+          "activatedAt": 1795570500000,
+          "endedAt": null
+        }
+      ]
+    }
+  },
+  "identities.postIdentitiesByIdRevokeCertificate": {
+    "request": {
+      "certificateId": "0193a1b2-7c00-7000-8000-130785cb51ab",
+      "reason": "compromised",
+      "confirm": "pass.mobile.passbook.northwind"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-7e7ede679888",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "kind": "revoke",
+      "targetType": "identity",
+      "targetId": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "state": "succeeded",
+      "step": "done",
+      "attempt": 1,
+      "waitingFor": null,
+      "errorCode": null,
+      "createdAt": 1795571820000,
+      "updatedAt": 1795571940000,
+      "finishedAt": 1795571940000
+    }
+  },
+  "identities.getIdentitiesById": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "label": "Northwind signing identity",
+      "passTypeIdentifier": "pass.mobile.passbook.northwind",
+      "teamIdentifier": "A1B2C3D4E5",
+      "source": "db",
+      "certSha256": "7e8ff4610157decfb257d5d756086d648ee31efdfc023064c64cb2c2d17ee1e5",
+      "certSubject": "CN=Pass Type ID: pass.mobile.passbook.northwind",
+      "certSerial": "2e91b094e6a40a1f",
+      "notBefore": 1767168000000,
+      "notAfter": 1798790399999,
+      "daysRemaining": 37,
+      "apnsBinding": "production",
+      "apnsAvailable": true,
+      "pushMethod": "certificate",
+      "pushKey": null,
+      "apnsHealth": "healthy",
+      "apnsCheckedAt": 1795570500000,
+      "apnsReason": "BadDeviceToken",
+      "passCount": 131,
+      "nfcEnabled": false,
+      "nfcKeys": [],
+      "isDefault": true,
+      "createdAt": 1767168000000,
+      "kind": "managed",
+      "status": "active",
+      "rotation": "auto",
+      "issuing": true,
+      "nextRotationAt": 1796198399999,
+      "handle": "northwind"
+    }
+  },
+  "identities.deleteIdentitiesByIdPushKey": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000d1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "label": "Northwind signing identity",
+      "passTypeIdentifier": "pass.mobile.passbook.northwind",
+      "teamIdentifier": "A1B2C3D4E5",
+      "source": "db",
+      "certSha256": "7e8ff4610157decfb257d5d756086d648ee31efdfc023064c64cb2c2d17ee1e5",
+      "certSubject": "CN=Pass Type ID: pass.mobile.passbook.northwind",
+      "certSerial": "2e91b094e6a40a1f",
+      "notBefore": 1767168000000,
+      "notAfter": 1798790399999,
+      "daysRemaining": 37,
+      "apnsBinding": "production",
+      "apnsAvailable": true,
+      "pushMethod": "certificate",
+      "pushKey": null,
+      "apnsHealth": "healthy",
+      "apnsCheckedAt": 1795570500000,
+      "apnsReason": "BadDeviceToken",
+      "passCount": 131,
+      "nfcEnabled": false,
+      "nfcKeys": [],
+      "isDefault": true,
+      "createdAt": 1767168000000,
+      "kind": "managed",
+      "status": "active",
+      "rotation": "auto",
+      "issuing": true,
+      "nextRotationAt": 1796198399999,
+      "handle": "northwind"
+    }
+  }
+}

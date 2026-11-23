@@ -88,7 +88,7 @@ describe('webhook sender picker', () => {
       await screen.findByText('A Stripe signing secret starts with whsec_.'),
     ).toBeInTheDocument();
     await user.clear(screen.getByLabelText(/Signing secret/));
-    await user.type(screen.getByLabelText(/Signing secret/), 'whsec_0123456789abcdef');
+    await user.type(screen.getByLabelText(/Signing secret/), 'whsec_demo_demo_demo');
     await next(user);
     await next(user);
     // Lifecycle: holder email and the void rule come from the sender.
@@ -104,7 +104,7 @@ describe('webhook sender picker', () => {
     expect(posts[0]).toMatchObject({
       connectorType: 'webhook-push',
       config: { recipe: 'stripe-subscriptions' },
-      webhookSecret: 'whsec_0123456789abcdef',
+      webhookSecret: 'whsec_demo_demo_demo',
       holderEmailField: '/email',
       mapping: { tier: { from: '/plan' } },
       voidWhen: [{ from: '/status', op: 'in', values: ['canceled', 'incomplete_expired'] }],

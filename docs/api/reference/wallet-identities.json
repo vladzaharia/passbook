@@ -1,0 +1,44 @@
+{
+  "wallet-identities.getWalletIdentities": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-035e09af762f",
+          "provider": "apple",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "label": "Northwind staging identity",
+          "identifier": "pass.mobile.passbook.northwind",
+          "kind": "platform",
+          "status": "active",
+          "notBefore": 1794362400000,
+          "notAfter": 1798790399999,
+          "rotation": "auto",
+          "nextRotationAt": 1795570500000,
+          "issuing": true,
+          "isDefault": true,
+          "passCount": 16,
+          "createdAt": 1794362400000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "wallet-identities.getPlatformAppleCalls": {
+    "response": {
+      "items": [
+        {
+          "id": 1042,
+          "callId": "0193a1b2-7c00-7000-8000-17d516605678",
+          "phase": "provision",
+          "method": "POST",
+          "target": "certificates",
+          "caller": "identity-run",
+          "status": "201",
+          "durationMs": 640,
+          "at": 1794362400000
+        }
+      ],
+      "available": true
+    }
+  }
+}

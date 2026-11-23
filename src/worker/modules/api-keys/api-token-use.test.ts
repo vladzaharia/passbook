@@ -312,7 +312,7 @@ describe('a key refused by the other key guards', () => {
     const spy = vi
       .spyOn(console, 'info')
       .mockImplementation((line) => void seen.push(String(line)));
-    const bad = 'Bearer pb_live_ABCDEFGH_0123456789012345678901234567890123456789012';
+    const bad = `Bearer pb_live_ABCDEFGH_${'0123456789'.repeat(4)}012`;
     try {
       expect(
         (await h.call('/api/v1/api-keys/me', { headers: { authorization: bad } })).status,

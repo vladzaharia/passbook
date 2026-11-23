@@ -32,7 +32,7 @@ export class BrandResource {
     return this.core.request({ method: 'GET', path: '/api/v1/brand' }, options);
   }
 
-  /** Set the accent colour and mark level `PATCH /api/v1/brand` */
+  /** Set the accent color and mark level `PATCH /api/v1/brand` */
   update(body: BrandUpdateBody, options?: RequestOptions): Promise<BrandUpdateResult> {
     return this.core.request({ method: 'PATCH', path: '/api/v1/brand', body }, options);
   }
