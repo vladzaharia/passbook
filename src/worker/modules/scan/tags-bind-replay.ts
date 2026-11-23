@@ -3,7 +3,7 @@ import type {
   ScanTagBindRequestSchema,
   ScanTagBindResultSchema,
 } from '../../../shared/contracts/nfc-tags.ts';
-import { ConflictError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
+import { ForbiddenError, ValidationError } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { assuranceOfSystem } from '../nfc/systems/registry.ts';
@@ -59,8 +59,9 @@ export async function replay(
   const row = await replayRow(ctx.env.DB, scannerId, req.idempotencyKey);
   if (!row) return null;
   if (row.requestHash !== (await requestHash(req, ref)))
-    throw new ConflictError(
+    throw new ValidationError(
       'That request key was used for another assign.',
+      [],
       'IDEMPOTENCY_KEY_REUSED',
     );
   const live = row.endedAt === null && ctx.clock.now() - row.boundAt <= TAG_UNDO_MS;

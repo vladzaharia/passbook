@@ -120,7 +120,10 @@ export async function passesForReissue(
   return all<{ id: string }>(
     db,
     `SELECT id FROM passes WHERE ${scope.map(([column]) => `${column} = ? AND `).join('')}id > ? AND deleted_at IS NULL AND test_data_quarantined = 0
-       AND (? IS NULL OR (template_version != ? AND NOT EXISTS (
+       ${
+         q.skipVersion === null
+           ? ''
+           : `AND template_version != ? AND NOT EXISTS (
          SELECT 1 FROM template_versions current_version
          JOIN template_versions target_version
            ON target_version.template_id = current_version.template_id
@@ -128,14 +131,13 @@ export async function passesForReissue(
           AND target_version.build_key = current_version.build_key
          WHERE current_version.template_id = passes.template_id
            AND current_version.version = passes.template_version
-       )))
+       )`
+       }
        AND (? = 0 OR status = 'active') ORDER BY id LIMIT ?`,
     [
       ...scope.map(([, value]) => value),
       q.afterId ?? '',
-      q.skipVersion,
-      q.skipVersion,
-      q.skipVersion,
+      ...(q.skipVersion === null ? [] : [q.skipVersion, q.skipVersion]),
       q.activeOnly ? 1 : 0,
       q.limit,
     ],

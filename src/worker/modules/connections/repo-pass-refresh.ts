@@ -40,7 +40,9 @@ export type RefreshSnapshot = Pick<
   | 'generation'
 >;
 
-const REFRESH_GUARD = `id = ? AND org_id = ? AND identity_id = ? AND mode = ? AND status = ? AND version = ?
+const refreshGuard = (
+  p: RefreshSnapshot,
+) => `id = ? AND org_id = ? AND identity_id = ? AND mode = ? AND status = ? AND version = ?
   AND credential_generation = ? AND lifecycle_generation = ?
   AND template_id = ? AND template_version = ? AND release_id IS ?
   AND owner_user_id IS ? AND link_generation = ? AND connection_id IS ? AND external_ref IS ?
@@ -48,8 +50,12 @@ const REFRESH_GUARD = `id = ? AND org_id = ? AND identity_id = ? AND mode = ? AN
   AND NOT EXISTS (SELECT 1 FROM pass_credential_transfers pct
     WHERE pct.pass_id = passes.id AND pct.state = 'pending')
   AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = ? AND o.status = 'active')
-  AND (? IS NULL OR EXISTS (SELECT 1 FROM connections c
-    WHERE c.id = ? AND c.org_id = ? AND c.enabled = 1 AND c.generation = ? AND c.mode = ?))`;
+  ${
+    p.connectionId === null
+      ? ''
+      : `AND EXISTS (SELECT 1 FROM connections c
+    WHERE c.id = ? AND c.org_id = ? AND c.enabled = 1 AND c.generation = ? AND c.mode = ?)`
+  }`;
 
 function refreshParams(p: RefreshSnapshot): (string | number | null)[] {
   return [
@@ -69,11 +75,7 @@ function refreshParams(p: RefreshSnapshot): (string | number | null)[] {
     p.connectionId,
     p.externalRef,
     p.orgId,
-    p.connectionId,
-    p.connectionId,
-    p.orgId,
-    p.generation,
-    p.connectionMode,
+    ...(p.connectionId === null ? [] : [p.connectionId, p.orgId, p.generation, p.connectionMode]),
   ];
 }
 
@@ -122,6 +124,6 @@ export function validRefreshSnapshot(p: RefreshSnapshot): boolean {
 export async function refreshSnapshotCurrent(db: D1Database, p: RefreshSnapshot): Promise<boolean> {
   if (!validRefreshSnapshot(p)) return false;
   return (
-    (await first(db, `SELECT 1 FROM passes WHERE ${REFRESH_GUARD}`, refreshParams(p))) !== null
+    (await first(db, `SELECT 1 FROM passes WHERE ${refreshGuard(p)}`, refreshParams(p))) !== null
   );
 }

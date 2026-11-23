@@ -15,6 +15,8 @@ import {
   UNTENANTED_CHECK_ALLOWLIST,
 } from './authority-scope-allowlists.ts';
 import { scanBans } from './authority-scope-bans.ts';
+import { opaqueFindings, opaqueHash } from './authority-scope-opaque.ts';
+import { OPAQUE_ALLOWLIST } from './authority-scope-opaque-allowlist.ts';
 import {
   type Cx,
   describeStatement,
@@ -289,15 +291,21 @@ export function ownerOf(rel: string, owners: Owners): string | null {
 function writeEntries(
   source: string,
   cx?: Cx,
-): { table: string; id: string; holder: string | null; exported: boolean }[] {
+): { table: string; id: string; holder: string | null; exported: boolean; calls: string[] }[] {
   const stripped = stripComments(source, cx);
   const { text } = stripped;
-  const out: { table: string; id: string; holder: string | null; exported: boolean }[] = [];
+  const out: {
+    table: string;
+    id: string;
+    holder: string | null;
+    exported: boolean;
+    calls: string[];
+  }[] = [];
   for (const m of text.matchAll(WRITE)) {
     if (m[2] && STAMP_ONLY.test(m[3] ?? '')) continue;
     const table = m[1] ?? m[2] ?? '';
-    const { text: statement, holder, exported } = describeStatement(stripped, m.index ?? 0);
-    out.push({ table, id: `${table}:${fingerprint(statement)}`, holder, exported });
+    const { text: statement, holder, exported, calls } = describeStatement(stripped, m.index ?? 0);
+    out.push({ table, id: `${table}:${fingerprint(statement)}`, holder, exported, calls });
   }
   for (const m of text.matchAll(HELPER_WRITE)) {
     const open = (m.index ?? 0) + m[0].indexOf('(');
@@ -306,9 +314,19 @@ function writeEntries(
       id: `${m[1] ?? ''}:${fingerprint(group(text, open))}`,
       holder: null,
       exported: false,
+      calls: [],
     });
   }
   return out;
+}
+
+/** Calls interpolated into the raw writes of a file that its pins cannot see into, as `table:fn`. */
+export function uninlinedWriteCalls(
+  source: string,
+  where?: { rel: string; files: ReadonlyMap<string, string> },
+): string[] {
+  const cx = where && { ...where, seen: new Set<string>() };
+  return writeEntries(source, cx).flatMap((e) => e.calls.map((c) => `${e.table}:${c}`));
 }
 
 /**
@@ -368,6 +386,14 @@ export function scanFile(
     add('updated-at-predicate', 'updated_at = ? in a WHERE clause (a timestamp is not an epoch)');
   // An allowlisted file may hold exactly the reviewed statements: a new one, or a changed one, is a finding.
   const pinned = [...(RAW_WRITE_ALLOWLIST[rel]?.writes ?? [])];
+  if (rel in RAW_WRITE_ALLOWLIST)
+    for (const detail of opaqueFindings(
+      rel,
+      uninlinedWriteCalls(text, files && { rel, files }).map((c) => c.slice(c.indexOf(':') + 1)),
+      OPAQUE_ALLOWLIST[rel],
+      files,
+    ))
+      add('raw-guarded-write', detail);
   for (const id of rawWriteStatements(text, files && { rel, files })) {
     const at = pinned.indexOf(id);
     if (at !== -1) {
@@ -553,6 +579,11 @@ if (import.meta.main) {
         process.stdout.write(
           `${rel} ${rawWriteStatements(text, { rel, files: new Map(files) }).join(' ')}\n`,
         );
+    process.exit(0);
+  }
+  if (process.argv.includes('--opaque')) {
+    for (const [rel, entry] of Object.entries(OPAQUE_ALLOWLIST))
+      process.stdout.write(`${rel} ${opaqueHash(rel, entry.deps ?? [], new Map(files))}\n`);
     process.exit(0);
   }
   const findings = scanTree(readFileSync(join(root, DOC), 'utf8'), files);
