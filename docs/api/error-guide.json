@@ -1985,6 +1985,12 @@
     "fix": "Fetch the device and send your change again.",
     "retryable": true
   },
+  "SCANNING_FOLLOWS_INVALID": {
+    "title": "Scanners to follow not allowed",
+    "when": "A screen follows a scanner outside its session, or a scanner was given scanners to follow.",
+    "fix": "Pick live scanners from the same session for a customer screen.",
+    "retryable": false
+  },
   "SCANNING_DEVICE_NOT_FOUND": {
     "title": "Scanning device not found",
     "when": "No device with this id exists in this mode and organization.",
