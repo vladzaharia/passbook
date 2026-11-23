@@ -292,16 +292,23 @@ export function describeStatement(
  * survive any change to it: the caller must fail instead of trusting the pin.
  */
 export function opaqueInterpolations(expanded: string): string[] {
-  const out: string[] = [];
+  return opaqueSpans(expanded).map((s) => s.expr);
+}
+
+/** The `${...}` interpolations of expanded statement text: whitespace-collapsed expression and the `start`..`end` of its braces. */
+export function opaqueSpans(expanded: string): { expr: string; start: number; end: number }[] {
+  const out: { expr: string; start: number; end: number }[] = [];
   for (let i = 0; i < expanded.length; i++)
     if (expanded[i] === '$' && expanded[i + 1] === '{') {
       const end = closeBrace(expanded, i + 2);
-      out.push(
-        expanded
+      out.push({
+        expr: expanded
           .slice(i + 2, end)
           .replace(/\s+/g, ' ')
           .trim(),
-      );
+        start: i,
+        end,
+      });
       i = end;
     }
   return out;

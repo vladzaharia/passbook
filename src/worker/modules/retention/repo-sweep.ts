@@ -136,7 +136,7 @@ export function deleteChunkStmt(
 ): D1PreparedStatement {
   const e = eligible(cls, scope, cutoffs);
   const params = [JSON.stringify(ids), ...e.params, receiptId];
-  const where = `${IN_IDS(cls)} AND ${e.sql} AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
+  const where = `${IN_IDS(cls)} AND (${e.sql}) AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
   switch (cls) {
     case 'scans':
       return stmt(db, `DELETE FROM scans WHERE ${where}`, params);
@@ -232,7 +232,7 @@ export function deleteRollCallsStmt(
   const e = rollCallsEligible(scope, cutoffs);
   return stmt(
     db,
-    `DELETE FROM roll_calls WHERE roll_calls.id IN (SELECT value FROM json_each(?)) AND ${e.sql} AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`,
+    `DELETE FROM roll_calls WHERE roll_calls.id IN (SELECT value FROM json_each(?)) AND (${e.sql}) AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`,
     [JSON.stringify(ids), ...e.params, receiptId],
   );
 }

@@ -203,7 +203,7 @@ export async function matchesPublishSnapshot(
     db,
     `SELECT id FROM passes WHERE id = ? AND version = ? AND ${publishSnapshotPredicate}
       ${releaseFence ? `AND ${releaseFence.sql}` : ''}
-      ${connectionContext ? `AND ${connectionPassPredicate} ${connectionPassFences(connectionContext)}` : ''}
+      ${connectionContext ? `AND ${connectionPassPredicate} AND (${connectionPassFences(connectionContext) || '1 = 1'})` : ''}
       ${authority ? `AND ${tenantPassWriteSql(authority)}` : ''}
       ${requireRemovalClaim ? `AND ${removalClaimPredicate}` : ''}`,
     [

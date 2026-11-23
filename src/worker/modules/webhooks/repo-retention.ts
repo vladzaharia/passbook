@@ -96,7 +96,7 @@ export function deleteChunkStmt(
   receiptId: string,
 ): D1PreparedStatement {
   const e = eligible(kind, scope, cutoff);
-  const where = `${IN_ROWS(e.table)} AND ${e.sql} AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
+  const where = `${IN_ROWS(e.table)} AND (${e.sql}) AND EXISTS (SELECT 1 FROM retention_receipts WHERE id = ?)`;
   const params = [JSON.stringify(ids), ...e.params, receiptId];
   switch (kind) {
     case 'feed':
