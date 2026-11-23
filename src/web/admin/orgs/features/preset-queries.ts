@@ -20,8 +20,20 @@ export const usePresets = () =>
 export function useSetPreset() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (input: SetEntitlementPresetInput) =>
-      api.put(PATH, SetEntitlementPresetResultSchema, input),
+    // One call moves a bounded number of orgs: carry on with no values until none wait (or none can move).
+    mutationFn: async (input: SetEntitlementPresetInput) => {
+      let out = await api.put(PATH, SetEntitlementPresetResultSchema, input);
+      let moved = out.moved;
+      while (out.preset.pendingOrgs > 0 && out.moved > 0) {
+        out = await api.put(PATH, SetEntitlementPresetResultSchema, {
+          preset: input.preset,
+          expectedRevision: out.preset.revision,
+          values: {},
+        });
+        moved += out.moved;
+      }
+      return { ...out, moved };
+    },
     onSuccess: () => {
       void client.invalidateQueries({ queryKey: KEY });
       // Every org's Features tab and the audit log read what moved.

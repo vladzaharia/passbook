@@ -3,6 +3,7 @@ import { dailyAudit } from '../modules/audit/jobs.ts';
 import { dailyAuth } from '../modules/auth/jobs.ts';
 import { failStuckBroadcasts, startDueBroadcasts } from '../modules/broadcasts/start.ts';
 import { dailyChannels, sweepChannelApply } from '../modules/channels/apply-start.ts';
+import { sweepEntitlementJournal } from '../modules/channels/entitlement-sweep.ts';
 import { dailyConnections, reconcileConnections } from '../modules/connections/jobs.ts';
 import { dailyDelivery, sweepDelivery } from '../modules/delivery/jobs.ts';
 import { dailyDeveloperSandbox } from '../modules/developer/jobs.ts';
@@ -68,6 +69,7 @@ export const CRON_HOOKS: Record<string, { name: string; run: CronHook }[]> = {
     { name: 'broadcasts.stuck', run: failStuckBroadcasts },
     { name: 'channels.apply_sweep', run: sweepChannelApply },
     { name: 'entitlements.override_expiry', run: expireEntitlementOverrides },
+    { name: 'entitlements.journal_sweep', run: sweepEntitlementJournal },
     { name: 'message_rules.tick', run: tickMessageRules },
     { name: 'scan.reconcile', run: reconcileScans },
     { name: 'scan.backfill', run: backfillScanLookups },

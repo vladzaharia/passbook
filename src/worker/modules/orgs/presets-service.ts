@@ -3,23 +3,26 @@ import type {
   SetEntitlementPresetInput,
   SetEntitlementPresetResult,
 } from '../../../shared/contracts/entitlement-presets.ts';
-import { ENTITLEMENT_KEYS, type EntitlementValue } from '../../../shared/contracts/entitlements.ts';
+import {
+  ENTITLEMENT_KEYS,
+  ENTITLEMENT_PRESETS,
+  type EntitlementValue,
+} from '../../../shared/contracts/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '../../../shared/entitlement-impact.ts';
 import type { Actor } from '../../platform/context.ts';
-import { classifyD1Error } from '../../platform/db.ts';
 import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
 import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
-import { parseValuesJson } from './preset-values.ts';
+import { overrideMaps, parseStored, parseValuesJson } from './preset-values.ts';
 import {
   presetRows,
   presetValueRows,
-  standingOverrides,
+  storedOverrides,
   writeEntitlements,
 } from './repo-entitlements.ts';
 import { pendingCount, pendingCounts, pendingOrgs, writePreset } from './repo-presets.ts';
-import { parseStored, resolve } from './service-entitlements.ts';
+import { resolve } from './service-entitlements.ts';
 
 /** Organizations one call moves: each is a grant, an audit row and a queue send. The rest wait for the next call. */
 export const FANOUT_MAX = 50;
@@ -41,6 +44,13 @@ export async function loadPresetValues(
   return byPreset;
 }
 
+const rank = (p: string) => {
+  const at = (ENTITLEMENT_PRESETS as readonly string[]).indexOf(p);
+  return at < 0 ? ENTITLEMENT_PRESETS.length : at;
+};
+const byRegistry = (a: { preset: string }, b: { preset: string }) =>
+  rank(a.preset) - rank(b.preset) || a.preset.localeCompare(b.preset);
+
 /** Platform: every preset with its values and how many organizations are on it. */
 export async function listPresets(ctx: ServiceContext): Promise<EntitlementPresetDto[]> {
   const [rows, values, pending] = await Promise.all([
@@ -48,7 +58,7 @@ export async function listPresets(ctx: ServiceContext): Promise<EntitlementPrese
     loadPresetValues(ctx),
     pendingCounts(ctx.env.DB),
   ]);
-  return rows.map((p) => ({
+  return [...rows].sort(byRegistry).map((p) => ({
     preset: p.preset,
     label: p.label,
     revision: p.revision,
@@ -73,13 +83,15 @@ async function moveOrg(
   org: { org_id: string; revision: number },
 ): Promise<boolean> {
   const now = ctx.clock.now();
-  const overrides = new Map<string, { value: EntitlementValue }>();
-  for (const o of await standingOverrides(ctx.env.DB, org.org_id, now)) {
-    const value = parseStored(ctx, o.key, o.value);
-    if (value !== undefined) overrides.set(o.key, { value });
-  }
-  const was = resolve(p.before, overrides);
-  const after = resolve(p.after, overrides);
+  // The journal's before holds every stored override and its after the standing ones, so an override that
+  // expired since the last tick is journaled here and removed with the move.
+  const { all, standing, expired } = overrideMaps(
+    ctx,
+    await storedOverrides(ctx.env.DB, org.org_id),
+    now,
+  );
+  const was = resolve(p.before, all);
+  const after = resolve(p.after, standing);
   const impact = entitlementImpact(was, after);
   const revision = org.revision + 1;
   try {
@@ -90,7 +102,7 @@ async function moveOrg(
       preset: p.preset,
       presetRevision: p.presetRevision,
       now,
-      remove: [],
+      remove: expired,
       put: [],
       audit: {
         ...auditActor(actor),
@@ -114,10 +126,7 @@ async function moveOrg(
     });
   } catch (error) {
     // An org save landed in between: the org stays pending and the next call moves it.
-    if (
-      (error instanceof ConflictError && error.code === 'ENTITLEMENTS_CHANGED') ||
-      classifyD1Error(error)?.kind === 'unique'
-    ) {
+    if (error instanceof ConflictError && error.code === 'ENTITLEMENTS_CHANGED') {
       ctx.log.info('org.preset_move_skipped', { orgId: org.org_id, code: 'ENTITLEMENTS_CHANGED' });
       return false;
     }
@@ -149,6 +158,11 @@ export async function setPreset(
     ([key, value]) => !same(current[key as keyof EntitlementValues], value),
   );
   const waiting = await pendingCount(db, input.preset, meta.revision);
+  if (waiting > 0 && meta.previous_values === null)
+    throw new ConflictError(
+      'This preset has no record of its last change. Ask an engineer to move its organizations.',
+      'PRESET_MOVING',
+    );
   let revision = meta.revision;
   let before = parseValuesJson(ctx, meta.previous_values);
   let after = current;
@@ -200,8 +214,19 @@ export async function setPreset(
 
   let moved = 0;
   const move = { preset: input.preset, presetRevision: revision, before, after };
-  for (const org of await pendingOrgs(db, input.preset, revision, limit))
-    if (await moveOrg(ctx, admin, actor, move, org)) moved++;
+  for (const org of await pendingOrgs(db, input.preset, revision, limit)) {
+    try {
+      if (await moveOrg(ctx, admin, actor, move, org)) moved++;
+    } catch (error) {
+      // The edit is committed: report what moved, and the rest stays pending for the next call.
+      ctx.log.error('entitlement.preset_move_failed', {
+        orgId: org.org_id,
+        preset: input.preset,
+        code: 'PRESET_MOVE_FAILED',
+        error,
+      });
+    }
+  }
   ctx.log.info('entitlement.preset_set', { preset: input.preset, revision, moved });
   return { preset: await presetOf(ctx, input.preset), moved };
 }

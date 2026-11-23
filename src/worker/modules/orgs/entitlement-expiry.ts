@@ -1,16 +1,16 @@
-import type { EntitlementValue } from '../../../shared/contracts/entitlements.ts';
 import { entitlementImpact } from '../../../shared/entitlement-impact.ts';
 import { jobGrant } from '../../platform/authority.ts';
-import { inList } from '../../platform/authority-expr.ts';
+import { inList, lte } from '../../platform/authority-expr.ts';
 import { ENTITLEMENT_EXPIRY_PURPOSE } from '../../platform/authority-tables.ts';
 import { ConflictError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
+import { overrideMaps, parseValuesJson } from './preset-values.ts';
 import { loadPresetValues } from './presets-service.ts';
-import { BATCH, expiredOrgs, storedOverrides } from './repo-entitlement-expiry.ts';
-import { orgEntitlementsRow } from './repo-entitlements.ts';
-import { parseStored, resolve } from './service-entitlements.ts';
+import { BATCH, expiredOrgs } from './repo-entitlement-expiry.ts';
+import { orgEntitlementsRow, presetRows, storedOverrides } from './repo-entitlements.ts';
+import { resolve } from './service-entitlements.ts';
 
 /**
  * Minute hook `entitlements.override_expiry`. An override that expires changes the org's features with no
@@ -23,23 +23,22 @@ export async function expireEntitlementOverrides(ctx: ServiceContext): Promise<v
   const now = ctx.clock.now();
   const orgs = await expiredOrgs(ctx.env.DB, now, BATCH);
   if (orgs.length === 0) return;
-  const presets = await loadPresetValues(ctx);
+  const [presets, metas] = await Promise.all([loadPresetValues(ctx), presetRows(ctx.env.DB)]);
   for (const { org_id: orgId } of orgs) {
     const row = await orgEntitlementsRow(ctx.env.DB, orgId);
     if (!row) continue;
-    const stored = await storedOverrides(ctx.env.DB, orgId);
-    const every = new Map<string, { value: EntitlementValue }>();
-    const standing = new Map<string, { value: EntitlementValue }>();
-    const expired: string[] = [];
-    for (const o of stored) {
-      const value = parseStored(ctx, o.key, o.value);
-      if (o.expires_at !== null && o.expires_at <= now) expired.push(o.key);
-      if (value === undefined) continue;
-      every.set(o.key, { value });
-      if (o.expires_at === null || o.expires_at > now) standing.set(o.key, { value });
-    }
-    const base = presets.get(row.preset) ?? {};
-    const was = resolve(base, every);
+    const { all, standing, expired } = overrideMaps(
+      ctx,
+      await storedOverrides(ctx.env.DB, orgId),
+      now,
+    );
+    // An org an earlier preset edit has not moved yet is still on the previous values: its move journals that change.
+    const meta = metas.find((m) => m.preset === row.preset);
+    const base =
+      meta && row.preset_revision < meta.revision
+        ? parseValuesJson(ctx, meta.previous_values)
+        : (presets.get(row.preset) ?? {});
+    const was = resolve(base, all);
     const after = resolve(base, standing);
     const impact = entitlementImpact(was, after);
     const revision = row.revision + 1;
@@ -47,15 +46,18 @@ export async function expireEntitlementOverrides(ctx: ServiceContext): Promise<v
       purpose: ENTITLEMENT_EXPIRY_PURPOSE,
       job: 'entitlement-expiry',
       orgId,
+      tables: ['org_entitlements', 'org_entitlement_overrides'],
       codes: { lineage: 'ENTITLEMENTS_CHANGED' },
     });
     g.update('org_entitlements', {
-      set: { updated_at: now },
+      set: { updated_at: now, updated_by: null },
       inc: ['revision'],
       where: { revision: row.revision },
       require: 'one',
     });
-    g.delete('org_entitlement_overrides', { where: { key: inList(expired) } });
+    g.delete('org_entitlement_overrides', {
+      where: { key: inList(expired), expires_at: lte(now) },
+    });
     grantedAudit(g, ctx, {
       actorType: 'system',
       orgId,

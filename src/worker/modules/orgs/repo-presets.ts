@@ -1,17 +1,16 @@
 // Single-purpose file: every grant here is `platform.entitlement_preset.update`, written by a live platform admin.
-// The authority-scope allowlist exempts this file from the "names org_id" lint on that basis.
 import { grant } from '../../platform/authority.ts';
 import { all, first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { AuditEntry } from '../audit/types.ts';
 
-/** Organizations on `preset` whose features an earlier edit has not reached (active ones: others cannot be written). */
+/** Organizations on `preset` whose features an earlier edit has not reached (a suspended org moves too; a deleted one does not). */
 export const pendingOrgs = (db: D1Database, preset: string, revision: number, limit: number) =>
   all<{ org_id: string; revision: number }>(
     db,
     `SELECT e.org_id, e.revision FROM org_entitlements e JOIN orgs o ON o.id = e.org_id
-     WHERE e.preset = ? AND e.preset_revision < ? AND o.status = 'active' ORDER BY e.org_id LIMIT ?`,
+     WHERE e.preset = ? AND e.preset_revision < ? AND o.status != 'deleted' ORDER BY e.org_id LIMIT ?`,
     [preset, revision, limit],
   );
 
@@ -22,7 +21,7 @@ export const pendingCounts = async (db: D1Database): Promise<Map<string, number>
         db,
         `SELECT e.preset, count(*) AS n FROM org_entitlements e
          JOIN entitlement_preset_meta m ON m.preset = e.preset JOIN orgs o ON o.id = e.org_id
-         WHERE e.preset_revision < m.revision AND o.status = 'active' GROUP BY e.preset`,
+         WHERE e.preset_revision < m.revision AND o.status != 'deleted' GROUP BY e.preset`,
       )
     ).map((r) => [r.preset, r.n]),
   );
@@ -39,7 +38,7 @@ export const pendingCount = async (db: D1Database, preset: string, revision: num
     await first<{ n: number }>(
       db,
       `SELECT count(*) AS n FROM org_entitlements e JOIN orgs o ON o.id = e.org_id
-       WHERE e.preset = ? AND e.preset_revision < ? AND o.status = 'active'`,
+       WHERE e.preset = ? AND e.preset_revision < ? AND o.status != 'deleted'`,
       [preset, revision],
     )
   )?.n ?? 0;
