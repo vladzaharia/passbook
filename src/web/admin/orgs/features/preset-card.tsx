@@ -22,6 +22,7 @@ import {
   OptionTile,
 } from '@/web/ui/index.ts';
 import { ImpactList, ImpactSummary } from './impact-view.tsx';
+import { PresetEditor } from './preset-editor.tsx';
 import { type OverrideMap, resolved, valuesOf } from './values.ts';
 
 const ICON: Record<string, LucideIcon> = {
@@ -60,7 +61,10 @@ export function PresetCard({
       <CardHeader
         title="Preset"
         actions={
-          <span className="text-xs text-fg-muted">Updated {formatDateTime(state.updatedAt)}</span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-fg-muted">Updated {formatDateTime(state.updatedAt)}</span>
+            <PresetEditor />
+          </div>
         }
       />
       <CardBody className="flex flex-col gap-4">

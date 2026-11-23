@@ -102,6 +102,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'holder.resend': a('Holder asked for the pass again', I.sendEmail, 'info'),
   'holder.unassign': a('Holder unassignment requested', UserX, 'info'),
   'identity.apns_probe': a('Push connection checked', I.recheck, 'info'),
+  'entitlement_preset.update': a('Preset changed', SlidersHorizontal, 'info'),
   'identity.delete': a('Identity deleted', I.delete, 'danger'),
   'identity.rotate': a('Identity rotated', I.rotate, 'info'),
   'identity.update': a('Identity updated', I.edit, 'info'),

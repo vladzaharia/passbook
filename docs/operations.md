@@ -535,7 +535,7 @@ ORDER BY a.id
 SELECT o.id FROM orgs o WHERE NOT EXISTS (SELECT 1 FROM org_entitlements e WHERE e.org_id = o.id) ORDER BY o.id
 ```
 
-A plan change that moves a delivery channel (Google, Samsung, Paper, NFC) queues `channel.entitlement`, keyed on the entitlement revision: one apply run per template and mode journals the flips once, in any job order and under retry. Two gaps are known: an override that expires changes the channels live without a run (no journal), and a preset edit must call `onEntitlementsChanged` for each org it moves (`PUT /platform/entitlement-presets` is not built yet).
+A plan change that moves a delivery channel (Google, Samsung, Paper, NFC) queues `channel.entitlement`, keyed on the entitlement revision: one apply run per template and mode journals the flips once, in any job order and under retry. An override that expires goes through the same path: the minute hook `entitlements.override_expiry` removes it, makes a revision and an audit row (actor `system`), and queues the run. A preset edit (`PUT /platform/entitlement-presets`, platform admin, step-up when orgs are on it) moves at most 50 organizations per call, each with its own revision, audit row and run. If more are on the preset, the response shows `pendingOrgs`; repeat the call with no `values` to carry on. A different change is refused (`PRESET_MOVING`) until every org has moved. Suspended orgs are skipped and picked up by the next call after they are active.
 
 
 ### Large connection syncs

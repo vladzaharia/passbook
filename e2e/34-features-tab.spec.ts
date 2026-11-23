@@ -1,4 +1,5 @@
 import { mkdirSync } from 'node:fs';
+import AxeBuilder from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 import { apiAs, uid } from './helpers/api.ts';
 
@@ -179,6 +180,98 @@ test.describe('org features', () => {
         await expect(page.getByRole('heading', { name: 'Overview', level: 2 })).toBeVisible();
       });
     } finally {
+      await api.dispose();
+    }
+  });
+
+  test('a platform admin edits a preset: it moves the orgs on it, and the dialog passes axe', async ({
+    page,
+  }) => {
+    const api = await apiAs('admin');
+    const name = uid('Presets');
+    const org = await api.send<{ id: string }>('POST', '/api/v1/orgs', {
+      name,
+      slug: name.toLowerCase(),
+      preset: 'trial',
+    });
+    const presetOf = async () =>
+      (
+        await api.get<{
+          presets: { preset: string; revision: number; values: Record<string, unknown> }[];
+        }>('/api/v1/platform/entitlement-presets')
+      ).presets.find((p) => p.preset === 'trial');
+    const before = await presetOf();
+    const url = `/admin/platform/orgs/${org.id}?tab=features`;
+    try {
+      await page.goto(url);
+      await page.getByRole('button', { name: 'Edit presets' }).click();
+      const dialog = page.getByRole('dialog', { name: 'Edit presets' });
+      await expect(dialog.getByRole('combobox', { name: /Feature/ })).toBeVisible();
+      await sweep(
+        page,
+        url,
+        'presets-dialog',
+        async () => {
+          await page.getByRole('button', { name: 'Edit presets' }).click();
+          await expect(dialog.getByRole('combobox', { name: /Feature/ })).toBeVisible();
+          await page.waitForTimeout(300);
+        },
+        false,
+      );
+      for (const scheme of ['light', 'dark'] as const) {
+        await page.emulateMedia({ colorScheme: scheme });
+        const found = await new AxeBuilder({ page })
+          .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+          .analyze();
+        expect(
+          found.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical'),
+          scheme,
+        ).toEqual([]);
+      }
+      await page.goto(url);
+      await page.getByRole('button', { name: 'Edit presets' }).click();
+      await dialog.getByRole('combobox', { name: /Feature/ }).click();
+      await page.getByRole('option', { name: /^Members/ }).click();
+      await dialog.getByLabel('Limit').fill('4');
+      await dialog.getByRole('button', { name: 'Continue' }).click();
+      const confirm = page.getByRole('alertdialog');
+      await expect(confirm.getByRole('heading', { name: 'Change Trial?' })).toBeVisible();
+      await sweep(
+        page,
+        url,
+        'presets-confirm',
+        async () => {
+          await page.getByRole('button', { name: 'Edit presets' }).click();
+          await dialog.getByRole('combobox', { name: /Feature/ }).click();
+          await page.getByRole('option', { name: /^Members/ }).click();
+          await dialog.getByLabel('Limit').fill('4');
+          await dialog.getByRole('button', { name: 'Continue' }).click();
+          await expect(page.getByRole('alertdialog')).toBeVisible();
+          await page.waitForTimeout(300);
+        },
+        false,
+      );
+      await page.goto(url);
+      await page.getByRole('button', { name: 'Edit presets' }).click();
+      await dialog.getByRole('combobox', { name: /Feature/ }).click();
+      await page.getByRole('option', { name: /^Members/ }).click();
+      await dialog.getByLabel('Limit').fill('4');
+      await dialog.getByRole('button', { name: 'Continue' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Change' }).click();
+      await expect.poll(async () => (await presetOf())?.values.members).toBe(4);
+      const moved = await api.get<{ items: { key: string; value: unknown }[] }>(
+        `/api/v1/platform/orgs/${org.id}/entitlements`,
+      );
+      expect(moved.items.find((i) => i.key === 'members')?.value).toBe(4);
+    } finally {
+      // The preset is shared with other specs: put it back.
+      const now = await presetOf();
+      if (now && before && now.values.members !== before.values.members)
+        await api.send('PUT', '/api/v1/platform/entitlement-presets', {
+          preset: 'trial',
+          expectedRevision: now.revision,
+          values: { members: before.values.members },
+        });
       await api.dispose();
     }
   });
