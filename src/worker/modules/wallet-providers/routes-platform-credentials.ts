@@ -170,7 +170,7 @@ register(
   {
     method: 'post',
     path: '/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/hold',
-    summary: 'Hold a wallet provider enrolment',
+    summary: 'Hold a wallet provider enrollment',
     params: PlatformWalletEnrolmentParamsSchema,
     body: HoldWalletEnrolmentSchema,
     response: WalletEnrolmentHoldResultSchema,
@@ -192,7 +192,7 @@ register(
   {
     method: 'post',
     path: '/orgs/{orgId}/wallet-enrolments/{mode}/{provider}/release',
-    summary: 'Release a held wallet provider enrolment',
+    summary: 'Release a held wallet provider enrollment',
     params: PlatformWalletEnrolmentParamsSchema,
     response: WalletEnrolmentHoldResultSchema,
   },
@@ -208,7 +208,7 @@ register(
   {
     method: 'get',
     path: '/wallet-enrolments',
-    summary: 'List every organization enrolment of a wallet provider',
+    summary: 'List every organization enrollment of a wallet provider',
     query: PlatformWalletEnrolmentQuerySchema.extend(CursorQuerySchema.shape),
     response: PlatformWalletEnrolmentListSchema,
   },

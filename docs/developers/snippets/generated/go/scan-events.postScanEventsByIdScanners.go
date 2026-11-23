@@ -18,7 +18,9 @@ func main() {
 
 	var body passbook.ScanEventsAttachScannersBody
 	if err := json.Unmarshal([]byte(`{
-  "scannerIds": []
+  "scannerIds": [
+    "0193a1b2-7c00-7000-8000-000000000031"
+  ]
 }`), &body); err != nil {
 		panic(err)
 	}

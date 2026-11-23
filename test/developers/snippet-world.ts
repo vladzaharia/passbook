@@ -245,10 +245,30 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
         /("anchor"\s*:\s*\{\s*"kind"\s*:\s*"input"\s*,\s*"input"\s*:\s*)"Example"/g,
         '$1"startsAt"',
       );
+  // The docs describe a gym's Day pass (tools/lib/example-world.ts: name, tier, validUntil); this world's template
+  // is the event ticket, so a request's inputs become the ticket's own sample and its date input `startsAt`.
+  const sample = (used.manifest.sample ?? {}) as Record<string, unknown>;
+  const DOCS_INPUTS = new Set(['name', 'tier', 'validUntil']);
+  const isDocsInput = (v: unknown): v is Record<string, unknown> =>
+    !!v &&
+    typeof v === 'object' &&
+    !Array.isArray(v) &&
+    Object.keys(v).every((k) => DOCS_INPUTS.has(k));
+  const adapt = (v: unknown): unknown => {
+    if (Array.isArray(v)) return v.map(adapt);
+    if (!v || typeof v !== 'object') return v;
+    const o = Object.fromEntries(Object.entries(v).map(([k, x]) => [k, adapt(x)]));
+    if (isDocsInput(o.input) && Object.keys(o.input).length) o.input = sample;
+    if (isDocsInput(o.patch) && 'validUntil' in o.patch) o.patch = { startsAt: sample.startsAt };
+    if (o.kind === 'input' && o.input === 'validUntil') o.input = 'startsAt';
+    return o;
+  };
+  const adaptInputs = (text: string): string =>
+    text.trimStart().startsWith('{') ? JSON.stringify(adapt(JSON.parse(text))) : text;
   const calls: Call[] = [];
   const fetchLike = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
     const url = new URL(swap(String(input instanceof Request ? input.url : input)));
-    const body = typeof init.body === 'string' ? swap(init.body) : init.body;
+    const body = typeof init.body === 'string' ? adaptInputs(swap(init.body)) : init.body;
     const headers = new Headers(init.headers);
     // The pairing poll is a read (`scan-setup:read`): the sandbox key keeps it.
     const poll = (init.method ?? 'GET') === 'GET' && url.pathname.endsWith('/pairing');

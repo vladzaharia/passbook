@@ -1,0 +1,212 @@
+{
+  "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManaged": {
+    "request": {
+      "mode": "live"
+    },
+    "response": {
+      "runId": "0193a1b2-7c00-7000-8000-000000000023",
+      "state": "succeeded",
+      "step": "done",
+      "waitingFor": null,
+      "errorCode": null,
+      "issuerId": "3388000000022843210",
+      "updatedAt": 1795399200000
+    }
+  },
+  "wallet-platform.postPlatformOrgsByOrgIdWalletAccountsGoogleManagedComplete": {
+    "request": {
+      "issuerId": "3388000000022843210"
+    },
+    "response": {
+      "runId": "0193a1b2-7c00-7000-8000-000000000023",
+      "state": "succeeded",
+      "step": "done",
+      "waitingFor": null,
+      "errorCode": null,
+      "issuerId": "3388000000022843210",
+      "updatedAt": 1795399200000
+    }
+  },
+  "wallet-platform.postPlatformWalletCredentialsByIdRotateKey": {
+    "response": {
+      "runId": "0193a1b2-7c00-7000-8000-000000000023"
+    }
+  },
+  "wallet-platform.getPlatformWalletCredentials": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+          "scope": "platform",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "provider": "google",
+          "identityHint": "Issuer 3388000000022843210",
+          "provenance": "platform",
+          "revision": 2,
+          "verifiedAt": 1795399200000,
+          "revokedAt": null,
+          "createdAt": 1794362400000,
+          "updatedAt": 1795399200000,
+          "cardTypes": ["northwind"]
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "wallet-platform.putPlatformWalletCredentials": {
+    "request": {
+      "provider": "google",
+      "expectedRevision": 3,
+      "credentials": {
+        "issuerId": "3388000000022843210",
+        "serviceAccountEmail": "wallet-issuer@example.com",
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
+        "scopes": ["https://www.googleapis.com/auth/wallet_object.issuer"]
+      },
+      "mode": "live"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-40544cbd1cc6",
+      "scope": "platform",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "identityHint": "Northwind signing identity",
+      "provenance": "platform",
+      "revision": 3,
+      "verifiedAt": 1795570500000,
+      "revokedAt": null,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "cardTypes": ["northwind"]
+    }
+  },
+  "wallet-platform.postPlatformWalletCredentialsByIdRevoke": {
+    "request": {
+      "expectedRevision": 2
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "scope": "platform",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "identityHint": "Issuer 3388000000022843210",
+      "provenance": "platform",
+      "revision": 3,
+      "verifiedAt": 1795399200000,
+      "revokedAt": 1795572000000,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000,
+      "cardTypes": ["northwind"]
+    }
+  },
+  "wallet-platform.postPlatformWalletCredentialsByIdCheck": {
+    "response": {
+      "checkId": "0193a1b2-7c00-7000-8000-2574b3003129",
+      "status": "queued"
+    }
+  },
+  "wallet-platform.getPlatformWalletCredentialsByIdChecksByCheckId": {
+    "response": {
+      "checkId": "0193a1b2-7c00-7000-8000-24ec580e7ea8",
+      "status": "ok",
+      "code": null,
+      "checkedAt": 1795570500000
+    }
+  },
+  "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderHold": {
+    "request": {
+      "reason": "Issuer account under review by Google."
+    },
+    "response": {
+      "status": "held"
+    }
+  },
+  "wallet-platform.postPlatformOrgsByOrgIdWalletEnrolmentsByModeByProviderRelease": {
+    "response": {
+      "status": "released"
+    }
+  },
+  "wallet-platform.getPlatformWalletEnrolments": {
+    "response": {
+      "items": [
+        {
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "orgName": "Northwind Climbing",
+          "mode": "live",
+          "provider": "google",
+          "source": "org",
+          "state": "off",
+          "hold": null,
+          "updatedAt": 1795399200000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "wallet-platform.getPlatformWalletCredentialsMigrate": {
+    "response": {
+      "pending": 0,
+      "migrated": 1,
+      "items": [
+        {
+          "accountId": "0193a1b2-7c00-7000-8000-8c8745ea6340",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "provider": "google",
+          "state": "ready",
+          "reason": null,
+          "identityShared": [
+            {
+              "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+              "mode": "live",
+              "provider": "google"
+            }
+          ]
+        }
+      ],
+      "nextCursor": "c1.4812",
+      "next": "/account"
+    }
+  },
+  "wallet-platform.postPlatformWalletCredentialsMigrate": {
+    "response": {
+      "queued": 1
+    }
+  },
+  "wallet-platform.postPlatformWalletCredentialsMigrateResolve": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "action": "assign_platform"
+    },
+    "response": {
+      "accounts": 1
+    }
+  },
+  "wallet-platform.putPlatformWalletCredentialsByIdCards": {
+    "request": {
+      "type": "loyalty",
+      "cardId": "northwind",
+      "expectedRevision": 3
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-13a7e9559214",
+      "scope": "platform",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "identityHint": "Northwind signing identity",
+      "provenance": "platform",
+      "revision": 3,
+      "verifiedAt": 1795570500000,
+      "revokedAt": null,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "cardTypes": ["northwind"]
+    }
+  }
+}

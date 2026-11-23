@@ -18,7 +18,8 @@ func main() {
 
 	var body passbook.ScanningSessionsOverrideHoursBody
 	if err := json.Unmarshal([]byte(`{
-  "action": "close"
+  "action": "close",
+  "revision": 3
 }`), &body); err != nil {
 		panic(err)
 	}

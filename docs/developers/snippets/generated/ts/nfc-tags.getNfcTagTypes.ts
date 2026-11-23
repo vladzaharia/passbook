@@ -2,5 +2,6 @@ import { PassBook } from '@passbook/sdk';
 
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
-const result = await pb.nfc.tagTypes.list();
-console.log(result);
+for await (const item of pb.nfc.tagTypes.list({
+  limit: 25,
+})) console.log(item);

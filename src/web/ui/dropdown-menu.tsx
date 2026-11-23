@@ -2,6 +2,7 @@ import * as Primitive from '@radix-ui/react-dropdown-menu';
 import { type ComponentProps, type PointerEvent, useCallback, useRef } from 'react';
 import { cn } from '../lib/cn.ts';
 import { inertOutside } from './inert-outside.ts';
+import { nameWrapper } from './popper-region.ts';
 
 export const DropdownMenu = Primitive.Root;
 export const DropdownMenuTrigger = Primitive.Trigger;
@@ -18,6 +19,7 @@ export function DropdownMenuContent({
   const mount = useCallback((node: HTMLDivElement | null) => {
     restore.current?.();
     restore.current = node ? inertOutside(node) : null;
+    nameWrapper(node, 'Menu');
   }, []);
   return (
     <Primitive.Portal>

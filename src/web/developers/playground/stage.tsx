@@ -106,7 +106,13 @@ export function Stage({
       </div>
       <div className="stage stage-grid chanwrap">
         {channel === 'all' ? (
-          <div className="chan" data-testid="all-channels">
+          <section
+            className="chan"
+            data-testid="all-channels"
+            aria-label="All channels"
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: scrolls sideways on a phone, so the keyboard must reach it
+            tabIndex={0}
+          >
             <figure data-channel="apple">
               {apple}
               <figcaption>{CAPTION.apple}</figcaption>
@@ -123,7 +129,7 @@ export function Stage({
               {paper}
               <figcaption>{CAPTION.paper}</figcaption>
             </figure>
-          </div>
+          </section>
         ) : (
           <div className="one">
             <ChannelPreviews source={source} apple={apple} paper={paper} value={channel} />

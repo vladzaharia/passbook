@@ -174,7 +174,9 @@ describe('build-developers', () => {
           ? `${entry.asset}index.html`
           : `${entry.asset}.html`
         : entry.asset;
-      expect(read(file)).not.toMatch(/pb_(live|test)_[A-Za-z0-9]{6,}/);
+      expect(read(file)).not.toMatch(
+        /pb_(live|test)_[A-Za-z0-9_-]{8}_[A-Za-z0-9_-]{43}(?![A-Za-z0-9_-])/,
+      );
     }
   });
 

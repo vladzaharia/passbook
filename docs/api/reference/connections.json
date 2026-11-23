@@ -3,108 +3,598 @@
     "description": "A dry run of the next sync over the last 30 days of records, at most 200: what it would create, update, leave unchanged, skip or reject. New records wait (`counts.waiting`) while the template has no approved release (`releaseBlocked`). It reads the source and the connection's passes and writes nothing: no cursor moves and no run is recorded. `columns` lists the source's fields with up to three sample cells and, for a field with few distinct values, those values and their counts. Needs connections:read and passes:read.",
     "response": {
       "ok": true,
-      "records": 115,
+      "records": 3,
       "counts": {
-        "create": 98,
-        "update": 4,
-        "unchanged": 0,
-        "skipped": 13,
+        "create": 1,
+        "update": 1,
+        "unchanged": 1,
+        "skipped": 0,
         "errors": 0,
         "waiting": 0
       },
+      "releaseBlocked": null,
+      "window": {
+        "days": 30,
+        "limit": 200,
+        "since": 1792980000000,
+        "excluded": 0
+      },
       "samples": [
         {
-          "ref": "o-1001",
+          "ref": "B-2041",
           "action": "create",
           "fields": {
-            "memberName": "Maya Chen",
-            "plan": "monthly"
+            "name": "Mei Tanaka",
+            "tier": "Day pass"
           }
         },
         {
-          "ref": "o-1002",
-          "action": "skipped",
+          "ref": "B-2038",
+          "action": "update",
           "fields": {
-            "memberName": "Sam Ortiz"
+            "validUntil": "2027-01-31"
           }
         }
       ],
       "columns": [
         {
-          "pointer": "/memberName",
-          "label": "memberName",
-          "samples": ["Maya Chen", "Sam Ortiz", "Ana Ruiz"],
+          "pointer": "/Booking ID",
+          "label": "Booking ID",
+          "samples": ["B-2041", "B-2038"],
           "values": []
         },
         {
-          "pointer": "/plan",
-          "label": "plan",
-          "samples": ["Monthly membership", "Gift card", "Monthly membership"],
+          "pointer": "/Plan",
+          "label": "Plan",
+          "samples": ["Day pass"],
           "values": [
             {
-              "value": "Monthly membership",
-              "count": 84
-            },
-            {
-              "value": "Gift card",
-              "count": 13
+              "value": "Day pass",
+              "count": 3
             }
           ]
         }
       ],
-      "durationMs": 412,
+      "durationMs": 1650
+    }
+  },
+  "connections.getConnectionsByIdWebhookFailures": {
+    "description": "Lists retained webhook status for a connection.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-1267fd6615d3",
+          "eventRef": "evt_20261123_0412",
+          "generation": 1,
+          "connectionMode": "webhook",
+          "state": "failed",
+          "errorCode": "WEBHOOK_UPSTREAM",
+          "uncertainItems": 0,
+          "receivedAt": 1795399200000,
+          "updatedAt": 1795399500000
+        }
+      ],
+      "nextCursor": null
+    }
+  },
+  "connections.postConnectionsByIdWebhookFailuresByRetentionIdReplay": {
+    "description": "Replays a retained webhook.",
+    "response": {
+      "ok": true
+    }
+  },
+  "connections.postConnectionsByIdWebhookFailuresByRetentionIdResolve": {
+    "description": "Marks an uncertain webhook resolved after you have checked the source system.",
+    "response": {
+      "ok": true,
+      "resolved": 1,
+      "state": "resolved"
+    }
+  },
+  "connections.getConnections": {
+    "description": "Lists connections.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000051",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "connectorType": "csv-url",
+          "connectorVersion": 1,
+          "name": "Booking sheet",
+          "config": {
+            "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+            "idColumn": "Booking ID"
+          },
+          "hasCredential": false,
+          "hasWebhookSecret": false,
+          "mapping": {
+            "name": {
+              "from": "/Name"
+            },
+            "tier": {
+              "from": "/Plan"
+            },
+            "validUntil": {
+              "from": "/Valid until"
+            }
+          },
+          "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "holderEmailField": "/Email",
+          "autoCreate": true,
+          "autoEmail": true,
+          "onMissing": "keep",
+          "voidWhen": [],
+          "webhookPrevUntil": null,
+          "mode": "poll",
+          "intervalSeconds": 900,
+          "maxConcurrency": 1,
+          "requestsPerMinute": 6,
+          "enabled": true,
+          "health": "healthy",
+          "consecutiveFailures": 0,
+          "breakerOpenUntil": null,
+          "nextRunAt": 1795571400000,
+          "lastRunAt": 1795570500000,
+          "lastSuccessAt": 1795570500000,
+          "lastErrorCode": null,
+          "lastErrorAt": null,
+          "webhookUrl": null,
+          "createdAt": 1794362400000,
+          "updatedAt": 1795399200000
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "connections.postConnections": {
+    "description": "Creates a connection.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "csv-url",
+      "name": "Booking sheet",
+      "config": {
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
+      },
+      "mapping": {
+        "name": {
+          "from": "/Name"
+        },
+        "tier": {
+          "from": "/Plan"
+        },
+        "validUntil": {
+          "from": "/Valid until"
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Email",
+      "mode": "poll"
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "csv-url",
+      "connectorVersion": 1,
+      "name": "Booking sheet",
+      "config": {
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
+      },
+      "hasCredential": false,
+      "hasWebhookSecret": false,
+      "mapping": {
+        "name": {
+          "from": "/Name"
+        },
+        "tier": {
+          "from": "/Plan"
+        },
+        "validUntil": {
+          "from": "/Valid until"
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Email",
+      "autoCreate": true,
+      "autoEmail": true,
+      "onMissing": "keep",
+      "voidWhen": [],
+      "webhookPrevUntil": null,
+      "mode": "poll",
+      "intervalSeconds": 900,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 6,
+      "enabled": true,
+      "health": "unknown",
+      "consecutiveFailures": 0,
+      "breakerOpenUntil": null,
+      "nextRunAt": 1795572000000,
+      "lastRunAt": null,
+      "lastSuccessAt": null,
+      "lastErrorCode": null,
+      "lastErrorAt": null,
+      "webhookUrl": null,
+      "createdAt": 1795572000000,
+      "updatedAt": 1795572000000
+    }
+  },
+  "connections.getConnectionsSummary": {
+    "description": "A health summary across connections.",
+    "response": {
+      "total": 1,
+      "byHealth": {
+        "healthy": 1
+      },
+      "attention": []
+    }
+  },
+  "connections.getConnectionsById": {
+    "description": "A connection with its runs and metrics.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "csv-url",
+      "connectorVersion": 1,
+      "name": "Booking sheet",
+      "config": {
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
+      },
+      "hasCredential": false,
+      "hasWebhookSecret": false,
+      "mapping": {
+        "name": {
+          "from": "/Name"
+        },
+        "tier": {
+          "from": "/Plan"
+        },
+        "validUntil": {
+          "from": "/Valid until"
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Email",
+      "autoCreate": true,
+      "autoEmail": true,
+      "onMissing": "keep",
+      "voidWhen": [],
+      "webhookPrevUntil": null,
+      "mode": "poll",
+      "intervalSeconds": 900,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 6,
+      "enabled": true,
+      "health": "healthy",
+      "consecutiveFailures": 0,
+      "breakerOpenUntil": null,
+      "nextRunAt": 1795571400000,
+      "lastRunAt": 1795570500000,
+      "lastSuccessAt": 1795570500000,
+      "lastErrorCode": null,
+      "lastErrorAt": null,
+      "webhookUrl": null,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795399200000,
+      "runs": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000023",
+          "trigger": "schedule",
+          "startedAt": 1795570500000,
+          "finishedAt": 1795570501800,
+          "outcome": "changed",
+          "recordsSeen": 3,
+          "passesChanged": 1,
+          "passesCreated": 1,
+          "passesVoided": 0,
+          "recordsFailed": 0,
+          "errorCode": null,
+          "errorDetail": null,
+          "httpStatus": 200,
+          "durationMs": 1800
+        }
+      ],
+      "metrics": {
+        "p50Ms": 1650,
+        "p95Ms": 2400,
+        "errorRate": 0,
+        "passCount": 3
+      }
+    }
+  },
+  "connections.patchConnectionsById": {
+    "description": "Updates a connection.",
+    "request": {
+      "intervalSeconds": 1800
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "csv-url",
+      "connectorVersion": 1,
+      "name": "Booking sheet",
+      "config": {
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
+      },
+      "hasCredential": false,
+      "hasWebhookSecret": false,
+      "mapping": {
+        "name": {
+          "from": "/Name"
+        },
+        "tier": {
+          "from": "/Plan"
+        },
+        "validUntil": {
+          "from": "/Valid until"
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Email",
+      "autoCreate": true,
+      "autoEmail": true,
+      "onMissing": "keep",
+      "voidWhen": [],
+      "webhookPrevUntil": null,
+      "mode": "poll",
+      "intervalSeconds": 1800,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 6,
+      "enabled": true,
+      "health": "healthy",
+      "consecutiveFailures": 0,
+      "breakerOpenUntil": null,
+      "nextRunAt": 1795571400000,
+      "lastRunAt": 1795570500000,
+      "lastSuccessAt": 1795570500000,
+      "lastErrorCode": null,
+      "lastErrorAt": null,
+      "webhookUrl": null,
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000
+    }
+  },
+  "connections.deleteConnectionsById": {
+    "description": "Deletes a connection.",
+    "response": {
+      "ok": true
+    }
+  },
+  "connections.postConnectionsTestConfig": {
+    "description": "Tests an unsaved configuration without saving it.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "csv-url",
+      "config": {
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
+      },
+      "mapping": {
+        "name": {
+          "from": "/Name"
+        },
+        "tier": {
+          "from": "/Plan"
+        },
+        "validUntil": {
+          "from": "/Valid until"
+        }
+      }
+    },
+    "response": {
+      "ok": true,
+      "detail": "3 rows. Columns: Booking ID, Name, Email, Plan, Valid until",
+      "durationMs": 1650,
+      "sample": [
+        {
+          "pointer": "/Name",
+          "preview": "Mei Tanaka"
+        }
+      ],
+      "records": 3,
+      "counts": {
+        "create": 1,
+        "update": 1,
+        "unchanged": 1,
+        "skipped": 0,
+        "errors": 0,
+        "waiting": 0
+      },
       "releaseBlocked": null,
       "window": {
         "days": 30,
         "limit": 200,
-        "since": 1788000000000,
+        "since": 1792980000000,
         "excluded": 0
-      }
+      },
+      "samples": [
+        {
+          "ref": "B-2041",
+          "action": "create",
+          "fields": {
+            "name": "Mei Tanaka",
+            "tier": "Day pass"
+          }
+        },
+        {
+          "ref": "B-2038",
+          "action": "update",
+          "fields": {
+            "validUntil": "2027-01-31"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "pointer": "/Booking ID",
+          "label": "Booking ID",
+          "samples": ["B-2041", "B-2038"],
+          "values": []
+        },
+        {
+          "pointer": "/Plan",
+          "label": "Plan",
+          "samples": ["Day pass"],
+          "values": [
+            {
+              "value": "Day pass",
+              "count": 3
+            }
+          ]
+        }
+      ]
     }
   },
-  "connections.getConnectionsByIdWebhookFailures": {
-    "description": "Lists retained webhook status for a connection."
-  },
-  "connections.postConnectionsByIdWebhookFailuresByRetentionIdReplay": {
-    "description": "Replays a retained webhook."
-  },
-  "connections.postConnectionsByIdWebhookFailuresByRetentionIdResolve": {
-    "description": "Marks an uncertain webhook resolved after you have checked the source system."
-  },
-  "connections.getConnections": {
-    "description": "Lists connections."
-  },
-  "connections.postConnections": {
-    "description": "Creates a connection."
-  },
-  "connections.getConnectionsSummary": {
-    "description": "A health summary across connections."
-  },
-  "connections.getConnectionsById": {
-    "description": "A connection with its runs and metrics."
-  },
-  "connections.patchConnectionsById": {
-    "description": "Updates a connection."
-  },
-  "connections.deleteConnectionsById": {
-    "description": "Deletes a connection."
-  },
-  "connections.postConnectionsTestConfig": {
-    "description": "Tests an unsaved configuration without saving it."
-  },
   "connections.postConnectionsByIdTest": {
-    "description": "Tests the saved connection against its source."
+    "description": "Tests the saved connection against its source.",
+    "response": {
+      "ok": true,
+      "detail": "3 rows. Columns: Booking ID, Name, Email, Plan, Valid until",
+      "durationMs": 1650,
+      "sample": [
+        {
+          "pointer": "/Name",
+          "preview": "Mei Tanaka"
+        }
+      ]
+    }
   },
   "connections.postConnectionsByIdSync": {
-    "description": "Syncs now instead of waiting for the schedule."
+    "description": "Syncs now instead of waiting for the schedule.",
+    "response": {
+      "runId": "0193a1b2-7c00-7000-8000-000000000023",
+      "workflowInstanceId": "0193a1b2-7c00-7000-8000-77d7e7d2234c"
+    }
   },
   "connections.getConnectionsByIdRuns": {
-    "description": "Lists the runs of a connection."
+    "description": "Lists the runs of a connection.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000023",
+          "trigger": "schedule",
+          "startedAt": 1795570500000,
+          "finishedAt": 1795570501800,
+          "outcome": "changed",
+          "recordsSeen": 3,
+          "passesChanged": 1,
+          "passesCreated": 1,
+          "passesVoided": 0,
+          "recordsFailed": 0,
+          "errorCode": null,
+          "errorDetail": null,
+          "httpStatus": 200,
+          "durationMs": 1800
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "connections.postConnectionsByIdWebhookSecret": {
-    "description": "Generates a new webhook secret. It is shown once."
+    "description": "Generates a new webhook secret. It is shown once.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "csv-url",
+      "connectorVersion": 1,
+      "name": "Booking sheet",
+      "config": {
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
+      },
+      "hasCredential": false,
+      "hasWebhookSecret": true,
+      "mapping": {
+        "name": {
+          "from": "/Name"
+        },
+        "tier": {
+          "from": "/Plan"
+        },
+        "validUntil": {
+          "from": "/Valid until"
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Email",
+      "autoCreate": true,
+      "autoEmail": true,
+      "onMissing": "keep",
+      "voidWhen": [],
+      "webhookPrevUntil": 1795658400000,
+      "mode": "hybrid",
+      "intervalSeconds": 900,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 6,
+      "enabled": true,
+      "health": "healthy",
+      "consecutiveFailures": 0,
+      "breakerOpenUntil": null,
+      "nextRunAt": 1795571400000,
+      "lastRunAt": 1795570500000,
+      "lastSuccessAt": 1795570500000,
+      "lastErrorCode": null,
+      "lastErrorAt": null,
+      "webhookUrl": "https://passbook.mobile/hooks/connections/0193a1b2-7c00-7000-8000-000000000051",
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000
+    }
   },
   "connections.deleteConnectionsByIdWebhookSecretPrevious": {
-    "description": "Stops accepting the previous webhook secret now."
+    "description": "Stops accepting the previous webhook secret now.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-000000000051",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "connectorType": "csv-url",
+      "connectorVersion": 1,
+      "name": "Booking sheet",
+      "config": {
+        "url": "https://docs.google.com/spreadsheets/d/e/2PACX-northwind-bookings/pub?output=csv",
+        "idColumn": "Booking ID"
+      },
+      "hasCredential": false,
+      "hasWebhookSecret": true,
+      "mapping": {
+        "name": {
+          "from": "/Name"
+        },
+        "tier": {
+          "from": "/Plan"
+        },
+        "validUntil": {
+          "from": "/Valid until"
+        }
+      },
+      "defaultTemplateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+      "holderEmailField": "/Email",
+      "autoCreate": true,
+      "autoEmail": true,
+      "onMissing": "keep",
+      "voidWhen": [],
+      "webhookPrevUntil": null,
+      "mode": "hybrid",
+      "intervalSeconds": 900,
+      "maxConcurrency": 1,
+      "requestsPerMinute": 6,
+      "enabled": true,
+      "health": "healthy",
+      "consecutiveFailures": 0,
+      "breakerOpenUntil": null,
+      "nextRunAt": 1795571400000,
+      "lastRunAt": 1795570500000,
+      "lastSuccessAt": 1795570500000,
+      "lastErrorCode": null,
+      "lastErrorAt": null,
+      "webhookUrl": "https://passbook.mobile/hooks/connections/0193a1b2-7c00-7000-8000-000000000051",
+      "createdAt": 1794362400000,
+      "updatedAt": 1795572000000
+    }
+  },
+  "connections.postHooksConnectionsById": {
+    "response": {
+      "accepted": true
+    }
   }
 }

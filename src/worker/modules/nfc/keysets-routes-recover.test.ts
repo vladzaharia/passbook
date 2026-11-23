@@ -8,7 +8,7 @@ beforeAll(async () => {
 
 type Org = Awaited<ReturnType<typeof f.org>>;
 const json = async (r: Response) => (await r.json()) as Record<string, unknown> & { code?: string };
-const KEY = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
+const KEY = '00112233445566778899aabbccddeeff';
 const CSV = `uid,key\n04aa0000000001,${KEY}\n`;
 
 async function keyset(

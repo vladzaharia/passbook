@@ -155,7 +155,7 @@ func (r *BrandResource) Retrieve(ctx context.Context, opts ...RequestOption) (*B
 	return &out, nil
 }
 
-// Update Set the accent colour and mark level `PATCH /api/v1/brand`
+// Update Set the accent color and mark level `PATCH /api/v1/brand`
 func (r *BrandResource) Update(ctx context.Context, body *BrandUpdateBody, opts ...RequestOption) (*BrandUpdateResult, error) {
 	var out BrandUpdateResult
 	if err := r.c.do(ctx, call{method: "PATCH", path: "/api/v1/brand", body: body}, &out, opts); err != nil {
@@ -232,7 +232,7 @@ func (r *BroadcastsResource) Retrieve(ctx context.Context, id string, opts ...Re
 	return &out, nil
 }
 
-// Retry Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`
+// Retry Send a failed or canceled message again, as a new one in the same mode; a change resumes (expectCount) `POST /api/v1/broadcasts/{id}/retry`
 func (r *BroadcastsResource) Retry(ctx context.Context, id string, query *BroadcastsRetryQuery, opts ...RequestOption) (*BroadcastsRetryResult, error) {
 	var out BroadcastsRetryResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/broadcasts/" + pathEscape(id) + "/retry", query: queryValues(query)}, &out, opts); err != nil {
@@ -769,7 +769,7 @@ func (r *NfcKeysetsResource) Disable(ctx context.Context, id string, opts ...Req
 	return &out, nil
 }
 
-// ImportTags Import supplier-personalised tags (dry run or add) `POST /api/v1/nfc/keysets/{id}/import`
+// ImportTags Import supplier-personalized tags (dry run or add) `POST /api/v1/nfc/keysets/{id}/import`
 func (r *NfcKeysetsResource) ImportTags(ctx context.Context, id string, body *NfcKeysetsImportTagsBody, opts ...RequestOption) (*NfcKeysetsImportTagsResult, error) {
 	var out NfcKeysetsImportTagsResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/nfc/keysets/" + pathEscape(id) + "/import", body: body}, &out, opts); err != nil {
@@ -1467,15 +1467,6 @@ func (r *PassesResource) Refresh(ctx context.Context, id string, opts ...Request
 	return &out, nil
 }
 
-// ReissueProviderCopies Send every active Google or Samsung copy of an organization's passes again; a key needs passes:write `POST /api/v1/wallet-providers/reissue`
-func (r *PassesResource) ReissueProviderCopies(ctx context.Context, body *PassesReissueProviderCopiesBody, opts ...RequestOption) (*PassesReissueProviderCopiesResult, error) {
-	var out PassesReissueProviderCopiesResult
-	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/wallet-providers/reissue", body: body}, &out, opts); err != nil {
-		return nil, err
-	}
-	return &out, nil
-}
-
 // Remove Remove from Wallet: publish a voided, expired final version `POST /api/v1/passes/{id}/remove`
 func (r *PassesResource) Remove(ctx context.Context, id string, body *PassesRemoveBody, opts ...RequestOption) (*PassesRemoveResult, error) {
 	var out PassesRemoveResult
@@ -1489,6 +1480,15 @@ func (r *PassesResource) Remove(ctx context.Context, id string, body *PassesRemo
 func (r *PassesResource) Renew(ctx context.Context, id string, body *PassesRenewBody, opts ...RequestOption) (*PassesRenewResult, error) {
 	var out PassesRenewResult
 	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/" + pathEscape(id) + "/renew", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+// ResendProviderCopies Send every active Google or Samsung copy of an organization's passes again; a key needs passes:write `POST /api/v1/wallet-providers/reissue`
+func (r *PassesResource) ResendProviderCopies(ctx context.Context, body *PassesResendProviderCopiesBody, opts ...RequestOption) (*PassesResendProviderCopiesResult, error) {
+	var out PassesResendProviderCopiesResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/wallet-providers/reissue", body: body}, &out, opts); err != nil {
 		return nil, err
 	}
 	return &out, nil

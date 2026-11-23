@@ -1,5 +1,6 @@
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { cn } from '../lib/cn.ts';
+import { nameWrapper } from './popper-region.ts';
 import type { TooltipConfig, TooltipProps } from './tooltip.tsx';
 
 /**
@@ -20,6 +21,7 @@ export function TooltipImpl({
         <TooltipPrimitive.Trigger asChild>{children}</TooltipPrimitive.Trigger>
         <TooltipPrimitive.Portal>
           <TooltipPrimitive.Content
+            ref={(node) => nameWrapper(node, 'Tip')}
             side={side}
             sideOffset={6}
             className={cn(

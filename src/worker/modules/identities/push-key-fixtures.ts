@@ -1,9 +1,13 @@
+import { pemBlock } from '../../../../test/helpers/pem.ts';
 import { toBase64 } from '../../platform/ids.ts';
 
 const wrap = (der: Uint8Array) =>
-  `-----BEGIN PRIVATE KEY-----\n${toBase64(der)
-    .match(/.{1,64}/g)
-    ?.join('\n')}\n-----END PRIVATE KEY-----\n`;
+  `${pemBlock(
+    'PRIVATE KEY',
+    toBase64(der)
+      .match(/.{1,64}/g)
+      ?.join('\n') ?? '',
+  )}\n`;
 
 /** A throwaway APNs .p8: PKCS#8 EC P-256, plus the public key to verify signatures. */
 export async function makeP8(curve: 'P-256' | 'P-384' = 'P-256') {

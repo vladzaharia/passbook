@@ -16,7 +16,7 @@ func main() {
 		panic(err)
 	}
 
-	var body passbook.PassesReissueProviderCopiesBody
+	var body passbook.PassesResendProviderCopiesBody
 	if err := json.Unmarshal([]byte(`{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
   "provider": "google",
@@ -25,7 +25,7 @@ func main() {
 		panic(err)
 	}
 
-	result, err := pb.Passes.ReissueProviderCopies(ctx, &body)
+	result, err := pb.Passes.ResendProviderCopies(ctx, &body)
 	if err != nil {
 		panic(err)
 	}

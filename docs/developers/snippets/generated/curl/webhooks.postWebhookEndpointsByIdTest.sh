@@ -2,5 +2,5 @@ curl -X POST "https://passbook.mobile/api/v1/webhook-endpoints/0193a1b2-7c00-700
   -H "Authorization: Bearer $PASSBOOK_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-  "type": "pass.updated"
+  "type": "pass.issued"
 }'

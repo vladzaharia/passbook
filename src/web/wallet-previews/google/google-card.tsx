@@ -55,7 +55,7 @@ export function GoogleCard({
         </header>
         <div className="wp-g-title">
           {m.subheader ? <p className="wp-g-sub">{m.subheader}</p> : null}
-          <h3 className="wp-g-heading">{m.heading}</h3>
+          <p className="wp-g-heading">{m.heading}</p>
         </div>
         {m.facts.length > 0 ? (
           <dl className="wp-g-facts">

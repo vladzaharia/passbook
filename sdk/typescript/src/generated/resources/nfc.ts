@@ -18,7 +18,7 @@ export class NfcKeysetsResource {
     return this.core.request({ method: 'POST', path: `/api/v1/nfc/keysets/${encodeURIComponent(id)}/disable` }, options);
   }
 
-  /** Import supplier-personalised tags (dry run or add) `POST /api/v1/nfc/keysets/{id}/import` */
+  /** Import supplier-personalized tags (dry run or add) `POST /api/v1/nfc/keysets/{id}/import` */
   importTags(id: string, body: NfcKeysetsImportTagsBody, options?: RequestOptions): Promise<NfcKeysetsImportTagsResult> {
     return this.core.request({ method: 'POST', path: `/api/v1/nfc/keysets/${encodeURIComponent(id)}/import`, body }, options);
   }

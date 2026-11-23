@@ -13,11 +13,9 @@ result = pb.broadcasts.count_recipients(
             ],
         },
         "patch": {
-            "plan": {
-                "set": "monthly",
-            },
+            "validUntil": "2027-01-31",
         },
-        "notify": False,
+        "notify": True,
     },
 )
 print(result)

@@ -1950,14 +1950,14 @@ var generatedOps = []opCase{
 		},
 	},
 	{
-		"passes.reissueProviderCopies", "POST", "/api/v1/wallet-providers/reissue", false,
+		"passes.resendProviderCopies", "POST", "/api/v1/wallet-providers/reissue", false,
 		`{"provider":"google"}`, `{"reissueId":"x","instances":0}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
-			var b PassesReissueProviderCopiesBody
+			var b PassesResendProviderCopiesBody
 			if err := json.Unmarshal(body, &b); err != nil {
 				return nil, err
 			}
-			return c.Passes.ReissueProviderCopies(ctx, &b)
+			return c.Passes.ResendProviderCopies(ctx, &b)
 		},
 	},
 	{

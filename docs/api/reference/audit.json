@@ -1,0 +1,48 @@
+{
+  "audit.getAudit": {
+    "response": {
+      "items": [
+        {
+          "id": 14,
+          "at": 1795570500000,
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "actorType": "user",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000011",
+          "actorLabel": "Sam Rivera",
+          "action": "pass.create",
+          "targetType": "pass",
+          "targetId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "targetLabel": "Day pass",
+          "requestId": "0193a1b2-7c00-7000-8000-7e8e665c70aa",
+          "detail": {
+            "externalId": "booking_8841"
+          }
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "audit.getAuditPlatform": {
+    "response": {
+      "items": [
+        {
+          "id": 14,
+          "at": 1795570500000,
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "actorType": "user",
+          "actorId": "0193a1b2-7c00-7000-8000-000000000011",
+          "actorLabel": "Sam Rivera",
+          "action": "pass.create",
+          "targetType": "pass",
+          "targetId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "targetLabel": "Day pass",
+          "requestId": "0193a1b2-7c00-7000-8000-ff724fab02df",
+          "detail": {
+            "externalId": "booking_8841"
+          }
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  }
+}

@@ -1,6 +1,112 @@
 {
   "wallet-providers.getWalletProvidersPassesById": {
-    "description": "The local provider instance status of a pass."
+    "description": "The local provider instance status of a pass.",
+    "response": {
+      "credentialGeneration": 1,
+      "providers": [
+        {
+          "provider": "google",
+          "lifecycle": "absent",
+          "desiredOperation": null,
+          "priorGenerationRetirementPending": false,
+          "installation": "unknown",
+          "issuance": {
+            "state": "disabled",
+            "reason": "not_released"
+          }
+        },
+        {
+          "provider": "samsung",
+          "lifecycle": "absent",
+          "desiredOperation": null,
+          "priorGenerationRetirementPending": false,
+          "installation": "unknown",
+          "issuance": {
+            "state": "disabled",
+            "reason": "not_released"
+          }
+        }
+      ]
+    }
+  },
+  "wallet-providers.postWalletProvidersAccountsVerify": {
+    "response": {
+      "verified": true,
+      "verifiedAt": 1795572000000,
+      "expiresAt": 1798164000000
+    },
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "candidateId": "0193a1b2-7c00-7000-8000-000000000092",
+      "candidateHash": "19be0d5aeb3bd6a9f2a030101d47d4fd9ef476a5809f7e6b376f9b06821b8711"
+    }
+  },
+  "wallet-providers.getWalletProvidersAccounts": {
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "revision": 2,
+      "state": "configured",
+      "externalApprovalVerified": false,
+      "issuance": {
+        "state": "disabled",
+        "reason": "not_released"
+      },
+      "updatedAt": 1795399200000
+    }
+  },
+  "wallet-providers.putWalletProvidersAccounts": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "expectedRevision": 2,
+      "credentials": {
+        "issuerId": "3388000000022843210",
+        "serviceAccountEmail": "wallet-issuer@example.com",
+        "privateKeyPem": "-----BEGIN PRIVATE KEY-----\n…\n-----END PRIVATE KEY-----",
+        "scopes": ["https://www.googleapis.com/auth/wallet_object.issuer"]
+      }
+    },
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "accountId": "0193a1b2-7c00-7000-8000-73a0e7354b73",
+      "revision": 3,
+      "state": "configured",
+      "externalApprovalVerified": false,
+      "issuance": {
+        "state": "disabled",
+        "reason": "not_released"
+      },
+      "updatedAt": 1795572000000
+    }
+  },
+  "wallet-providers.postWalletProvidersAccountsRevoke": {
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "expectedRevision": 3
+    },
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "provider": "google",
+      "accountId": "0193a1b2-7c00-7000-8000-151cfa908069",
+      "revision": 3,
+      "state": "configured",
+      "externalApprovalVerified": false,
+      "issuance": {
+        "state": "disabled",
+        "reason": "not_released"
+      },
+      "updatedAt": 1795399200000
+    }
   },
   "wallet-providers.postWalletProvidersReissue": {
     "description": "Sends every active Google or Samsung copy of an organization's passes again, so a changed release, art or compiler reaches cards whose passes did not change. Passes nobody has added to a wallet have no copy yet and are skipped. A key needs `passes:write`.",
@@ -10,8 +116,8 @@
       "templateId": "0193a1b2-7c00-7000-8000-0000000000b1"
     },
     "response": {
-      "reissueId": "0193a1b2-7c00-7000-8000-0000000000c1",
-      "instances": 12
+      "reissueId": "0193a1b2-7c00-7000-8000-5e1a0cc4f25e",
+      "instances": 38
     }
   }
 }

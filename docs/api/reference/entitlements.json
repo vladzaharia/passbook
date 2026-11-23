@@ -1,5 +1,96 @@
 {
   "entitlements.getOrgsByIdEntitlements": {
-    "description": "The features and limits of the organization's plan, and how much of each it has used."
+    "description": "The features and limits of the organization's plan, and how much of each it has used.",
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "preset": "standard",
+      "label": null,
+      "items": [
+        {
+          "key": "api.keys",
+          "value": 10,
+          "source": "preset"
+        },
+        {
+          "key": "webhooks.endpoints",
+          "value": 5,
+          "source": "preset"
+        },
+        {
+          "key": "nfc",
+          "value": 0,
+          "source": "preset"
+        }
+      ]
+    }
+  },
+  "entitlements.getPlatformOrgsByIdEntitlements": {
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "preset": "standard",
+      "presetLabel": "Standard",
+      "revision": 3,
+      "updatedAt": 1795399200000,
+      "items": [
+        {
+          "key": "api",
+          "value": 15,
+          "presetValue": 20,
+          "source": "preset",
+          "note": "Pilot pricing through March.",
+          "expiresAt": 1798790399999
+        }
+      ],
+      "presets": [
+        {
+          "preset": "standard",
+          "label": "Standard",
+          "orgCount": 8,
+          "values": {
+            "tier": 8
+          }
+        }
+      ]
+    }
+  },
+  "entitlements.putPlatformOrgsByIdEntitlements": {
+    "request": {
+      "expectedRevision": 3,
+      "preset": "standard",
+      "overrides": {
+        "tier": {
+          "value": 15,
+          "note": "Pilot pricing through March.",
+          "expiresAt": 1798790399999
+        }
+      }
+    },
+    "response": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "preset": "standard",
+      "presetLabel": "Standard",
+      "revision": 3,
+      "updatedAt": 1795399200000,
+      "items": [
+        {
+          "key": "api",
+          "value": 15,
+          "presetValue": 20,
+          "source": "preset",
+          "note": "Pilot pricing through March.",
+          "expiresAt": 1798790399999
+        }
+      ],
+      "presets": [
+        {
+          "preset": "standard",
+          "label": "Standard",
+          "orgCount": 8,
+          "values": {
+            "tier": 8
+          }
+        }
+      ]
+    }
   }
 }

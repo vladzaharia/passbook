@@ -1,0 +1,302 @@
+{
+  "developer.getLogs": {
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-69c83086e6e0",
+          "requestId": "0193a1b2-7c00-7000-8000-137ee11a36e0",
+          "at": 1795570500000,
+          "method": "GET",
+          "route": "/api/v1/passes",
+          "path": "/api/v1/passes",
+          "query": "limit=25",
+          "status": 200,
+          "code": null,
+          "durationMs": 84,
+          "keyId": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+          "mode": "test",
+          "via": "try",
+          "client": "@passbook/sdk 1.4.2",
+          "hasBodies": true
+        }
+      ],
+      "nextCursor": null,
+      "capped": null
+    }
+  },
+  "developer.getLog": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-69c83086e6e0",
+      "requestId": "0193a1b2-7c00-7000-8000-137ee11a36e0",
+      "at": 1795570500000,
+      "method": "GET",
+      "route": "/api/v1/passes",
+      "path": "/api/v1/passes",
+      "query": "limit=25",
+      "status": 200,
+      "code": null,
+      "durationMs": 84,
+      "keyId": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+      "mode": "test",
+      "via": "try",
+      "client": "@passbook/sdk 1.4.2",
+      "hasBodies": true,
+      "requestBody": null,
+      "responseBody": "{\"items\":[],\"nextCursor\":null}",
+      "bodiesExpireAt": 1796175300000
+    }
+  },
+  "developer.getRail": {
+    "response": {
+      "mode": "test",
+      "scopes": ["passes:read", "passes:write", "templates:read", "webhooks:manage"],
+      "tier": "standard",
+      "limitPerMinute": 60,
+      "callsLastHour": 11,
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+        "name": "Sandbox key",
+        "prefix": "s4Ndb0xK"
+      }
+    }
+  },
+  "developer.getResolve": {
+    "response": {
+      "kind": "request",
+      "href": "https://passbook.mobile/developers/logs",
+      "label": "Server integration"
+    }
+  },
+  "developer.getAccess": {
+    "response": {
+      "access": "yes",
+      "signInUrl": "https://passbook.mobile/login"
+    }
+  },
+  "developer.getHome": {
+    "response": {
+      "now": 1795572000000,
+      "state": "open",
+      "sandbox": {
+        "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+        "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+        "orgSlug": "northwind-sandbox",
+        "name": "Northwind sandbox",
+        "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+        "mode": "test",
+        "previewOnly": true,
+        "createdAt": 1794362400000,
+        "closedAt": null,
+        "closeReason": null,
+        "reopenUntil": null,
+        "limits": {
+          "passes": 100,
+          "templates": 5,
+          "endpoints": 3,
+          "keys": 3
+        }
+      },
+      "progress": {
+        "startedAt": 1794362400000,
+        "restartedAt": null,
+        "sandboxAt": 1794362460000,
+        "keyCallAt": 1794362700000,
+        "passAt": 1794362880000,
+        "changeAt": 1794363120000,
+        "webhookAt": 1794363300000,
+        "doneAt": 1794363300000,
+        "doneMs": 900000,
+        "next": null
+      },
+      "usage": {
+        "calls24h": 38,
+        "errors24h": 5,
+        "captures24h": 6,
+        "passes": 9,
+        "series": {
+          "from": 1795489200000,
+          "calls": [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 4, 4, 4, 4, 4, 4, 2, 2, 2, 1, 1],
+          "errors": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1]
+        }
+      },
+      "keys": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+          "name": "Sandbox key",
+          "secretPrefix": "pb_test_s4Ndb0xK",
+          "scopes": ["passes:read", "passes:write", "templates:read", "webhooks:manage"],
+          "createdAt": 1794362400000,
+          "expiresAt": 1796954400000,
+          "lastUsedAt": 1795570500000,
+          "retireAt": null,
+          "sandboxKey": true
+        }
+      ],
+      "calls": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-69c83086e6e0",
+          "requestId": "0193a1b2-7c00-7000-8000-137ee11a36e0",
+          "at": 1795570500000,
+          "method": "GET",
+          "route": "/api/v1/passes",
+          "path": "/api/v1/passes",
+          "query": "limit=25",
+          "status": 200,
+          "code": null,
+          "durationMs": 84,
+          "keyId": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+          "mode": "test",
+          "via": "try",
+          "client": "@passbook/sdk 1.4.2",
+          "hasBodies": true
+        }
+      ],
+      "endpoints": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-000000000061",
+          "target": "capture",
+          "url": "https://bookings.northwind.example.com/hooks/passbook",
+          "status": "active",
+          "eventTypes": ["pass.issued"],
+          "lastAt": 1795570500000,
+          "lastOk": false
+        }
+      ],
+      "passes": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-bea24862df73",
+          "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+          "title": "Day pass",
+          "subtitle": "Ada Example",
+          "status": "active",
+          "version": 3,
+          "createdAt": 1794362400000,
+          "modifiedAt": 1795399200000,
+          "previewUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ"
+        }
+      ],
+      "liveOrgs": [
+        {
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "name": "Northwind Climbing",
+          "slug": "northwind-climbing",
+          "roles": ["org_admin"],
+          "canMintLive": true
+        }
+      ]
+    }
+  },
+  "developer.postSandbox": {
+    "request": {
+      "turnstileToken": "0.demo-turnstile-response-northwind",
+      "viewedAt": 1795570500000
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+      "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+      "orgSlug": "northwind-sandbox",
+      "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+      "previewOnly": true,
+      "createdAt": 1794362400000,
+      "closedAt": null,
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+        "name": "Sandbox key",
+        "secret": "pb_test_s4Ndb0xK_northwind-demo-key-do-not-use-4949b36517b4",
+        "mode": "test",
+        "expiresAt": 1796954400000
+      },
+      "previousKey": null
+    }
+  },
+  "developer.getSandbox": {
+    "response": {
+      "sandbox": {
+        "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+        "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+        "orgSlug": "northwind-sandbox",
+        "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+        "previewOnly": true,
+        "createdAt": 1794362400000,
+        "closedAt": null
+      },
+      "turnstileSiteKey": "0x4AAAAAAAdemoNorthwind"
+    }
+  },
+  "developer.deleteSandbox": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+      "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+      "orgSlug": "northwind-sandbox",
+      "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+      "previewOnly": true,
+      "createdAt": 1794362400000,
+      "closedAt": 1795572000000
+    }
+  },
+  "developer.postSandboxReset": {
+    "request": {
+      "turnstileToken": "0.demo-turnstile-response-northwind"
+    },
+    "response": {
+      "sandbox": {
+        "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+        "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+        "orgSlug": "northwind-sandbox",
+        "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+        "previewOnly": true,
+        "createdAt": 1794362400000,
+        "closedAt": null
+      },
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
+        "name": "Sandbox key",
+        "secret": "pb_test_r3SetK3y_northwind-demo-key-do-not-use-a6e145602636",
+        "mode": "test",
+        "expiresAt": 1796954400000
+      },
+      "deleted": {
+        "passes": 9,
+        "captures": 6,
+        "calls": 38,
+        "other": 2
+      },
+      "kept": 0,
+      "more": false,
+      "resetsLeft": 2
+    }
+  },
+  "developer.postSandboxReopen": {
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-6c26ea772999",
+      "orgId": "0193a1b2-7c00-7000-8000-48d90aea7a20",
+      "orgSlug": "northwind-sandbox",
+      "templateId": "0193a1b2-7c00-7000-8000-16e3b75a1a4f",
+      "previewOnly": true,
+      "createdAt": 1794362400000,
+      "closedAt": null,
+      "key": {
+        "id": "0193a1b2-7c00-7000-8000-fb61fdffc0cd",
+        "name": "Sandbox key",
+        "secret": "pb_test_r3SetK3y_northwind-demo-key-do-not-use-a6e145602636",
+        "mode": "test",
+        "expiresAt": 1796954400000
+      },
+      "previousKey": {
+        "id": "0193a1b2-7c00-7000-8000-30eb2c612dce",
+        "name": "Sandbox key"
+      }
+    }
+  },
+  "developer.postTryToken": {
+    "response": {
+      "token": "pbtry_northwind-demo-try.b2ffd2f7017601efcf580b",
+      "expiresAt": 1795572900000
+    }
+  },
+  "developer.deleteTryToken": {
+    "response": {
+      "ok": true
+    }
+  }
+}

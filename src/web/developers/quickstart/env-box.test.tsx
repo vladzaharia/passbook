@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EnvBox } from './sandbox-step.tsx';
 
-const SECRET = 'pbp_test_Ab12CdEf34GhIj56KlMn78OpQrSt90amDQ';
+const SECRET = 'pbp_test_demo0001_demo-demo-demo-demo';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -25,7 +25,7 @@ describe('the key box', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Copy .env' }));
     expect(writeText).toHaveBeenCalledWith(`PASSBOOK_KEY=${SECRET}\nPASSBOOK_TEMPLATE_ID=tpl-1\n`);
     expect(container.textContent).not.toContain(SECRET);
-    expect(container.textContent).toContain('pbp_test_…amDQ');
+    expect(container.textContent).toContain('pbp_test_…demo');
     expect(screen.getByText('Key hidden')).toBeTruthy();
   });
 

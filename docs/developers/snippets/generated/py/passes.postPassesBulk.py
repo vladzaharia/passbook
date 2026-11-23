@@ -6,9 +6,10 @@ pb = PassBook(api_key=os.environ["PASSBOOK_KEY"])
 
 result = pb.passes.bulk_apply(
     {
-        "action": "void",
+        "action": "send_email",
         "ids": [
             "0193a1b2-7c00-7000-8000-0000000000c1",
+            "0193a1b2-7c00-7000-8000-f3f85c24ee38",
         ],
     },
 )

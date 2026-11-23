@@ -2279,7 +2279,7 @@
   },
   "wallet-providers.postWalletProvidersReissue": {
     "resource": "passes",
-    "method": "reissueProviderCopies"
+    "method": "resendProviderCopies"
   },
   "wallet-providers.putWalletProvidersAccounts": {
     "resource": "walletProviderAccounts",

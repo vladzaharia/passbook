@@ -50,7 +50,7 @@ export function TechnicalDetails({
 }) {
   return (
     <details className={cn('text-sm', className)}>
-      <summary className="cursor-pointer text-fg-muted pointer-coarse:min-h-11">
+      <summary className="cursor-pointer text-fg-muted min-h-6 pointer-coarse:min-h-11">
         Technical details
       </summary>
       <KeyValue

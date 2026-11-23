@@ -10318,7 +10318,7 @@
  },
  {
   "id": "wallet-providers.postWalletProvidersReissue",
-  "call": "passes.reissue_provider_copies",
+  "call": "passes.resend_provider_copies",
   "http": "POST",
   "path": "/api/v1/wallet-providers/reissue",
   "pathParams": [],

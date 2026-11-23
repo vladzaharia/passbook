@@ -12,7 +12,7 @@ import {
 import { first, run } from './db.ts';
 import { readSeal } from './repo-capability-token.ts';
 
-const TOKEN = 'Ab3dE6gH9jK2mN5pQ8sTvw';
+const TOKEN = 'demodemodemodemodemode';
 
 describe('capability token purpose join', () => {
   it('its MAC never verifies as another purpose, and theirs never as join', async () => {

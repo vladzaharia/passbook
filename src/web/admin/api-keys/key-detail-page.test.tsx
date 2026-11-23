@@ -12,7 +12,7 @@ const base = {
   orgId: 'o1',
   name: 'Deploy job',
   prefix: 'abc123',
-  secretPrefix: 'pb_live_abc123',
+  secretPrefix: 'pb_test_demo01',
   scopes: ['passes:read', 'api-keys:write'],
   mode: 'live',
   createdBy: 'u1',
@@ -105,7 +105,7 @@ describe('API key page', () => {
       handlers: handlers(),
     });
     expect(await screen.findByRole('heading', { name: 'Deploy job' })).toBeInTheDocument();
-    expect(screen.getByText('pb_live_abc123')).toBeInTheDocument();
+    expect(screen.getByText('pb_test_demo01')).toBeInTheDocument();
     expect(screen.getByText(/from 198\.51\.100/)).toBeInTheDocument();
     expect(screen.getByText('198.51.100.0/24')).toBeInTheDocument();
     expect(await screen.findByText('5 calls in 30 days')).toBeInTheDocument();

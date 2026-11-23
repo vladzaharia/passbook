@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BUNDLE_SAVE_SOURCE, PASS_SAVE_SOURCE } from '../../shared/pass-offline.ts';
 import { clearAll, mount } from './save-client.ts';
 
-const TOKEN = 'abcdefghijklmnop0123';
+const TOKEN = 'demodemodemodemodemo';
 const PATH = `/p/${TOKEN}/barcode`;
 
 function stubBrowser(
@@ -75,7 +75,7 @@ describe('the app save client', () => {
   it('refuses another origin or path, and clears every copy and door worker on sign-out', async () => {
     const { stores, reg } = stubBrowser();
     document.body.innerHTML =
-      '<div data-save-phone="https://evil.test/p/abcdefghijklmnop0123/barcode"></div>';
+      '<div data-save-phone="https://evil.test/p/demodemodemodemodemo/barcode"></div>';
     mount();
     expect(document.querySelector('[data-save-ready]')).toBeNull();
     stores.set('barcode:x', new Map());

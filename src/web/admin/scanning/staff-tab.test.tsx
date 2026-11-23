@@ -118,7 +118,7 @@ describe('Scanning staff', () => {
     ).toBeInTheDocument();
     expect(within(samRow as HTMLElement).queryByRole('link')).not.toBeInTheDocument();
     expect(screen.getByText(/Shared by Live and Test/)).toHaveTextContent(
-      "each scanner's local midnight",
+      'scans today, not undone',
     );
     expect(
       fetchMock.mock.calls.some(([url]) => String(url) === '/api/v1/scan-staff?orgId=o1&limit=50'),

@@ -26,13 +26,15 @@ __all__ = [
     "ApiKeysCreateParams",
     "ApiKeysCreateResult",
     "ApiKeysListItem",
+    "ApiKeysListResponse",
+    "ApiKeysListResponseItemsItem",
     "ApiKeysListResult",
-    "ApiKeysListResultItemsItem",
     "ApiKeysRetireBody",
     "ApiKeysRetireParams",
     "ApiKeysRetireResult",
     "ApiKeysRetrieveCurrentResult",
     "ApiKeysRetrieveResult",
+    "ApiKeysRevokeResponse",
     "ApiKeysRevokeResult",
     "ApiKeysRotateBody",
     "ApiKeysRotateCurrentBody",
@@ -40,10 +42,17 @@ __all__ = [
     "ApiKeysRotateCurrentResult",
     "ApiKeysRotateParams",
     "ApiKeysRotateResult",
+    "AuditEntriesListResponse",
+    "AuditEntriesListResponseItemsItem",
     "BlueprintsCheckUseParams",
     "BlueprintsCheckUseParamsVersion",
     "BlueprintsCheckUseParamsVersionAssetsItem1",
     "BlueprintsCheckUseParamsVersionAssetsItem2",
+    "BlueprintsCheckUseResponse",
+    "BlueprintsCheckUseResponseAssetsItem",
+    "BlueprintsCheckUseResponseReport",
+    "BlueprintsCheckUseResponseReportIssuesItem",
+    "BlueprintsCheckUseResponseReportIssuesItemFix",
     "BlueprintsUseBody",
     "BlueprintsUseParams",
     "BlueprintsUseParamsVersion",
@@ -51,6 +60,7 @@ __all__ = [
     "BlueprintsUseParamsVersionAssetsItem2",
     "BlueprintsUseResult",
     "BrandPassImagesUploadParams",
+    "BrandRetrieveResponse",
     "BrandRetrieveResult",
     "BrandUpdateBody",
     "BrandUpdateParams",
@@ -78,10 +88,11 @@ __all__ = [
     "BroadcastsCountRecipientsParamsTargetMatchItem4",
     "BroadcastsCountRecipientsParamsTargetScan1",
     "BroadcastsCountRecipientsParamsTargetScan2",
+    "BroadcastsCountRecipientsResponse",
+    "BroadcastsCountRecipientsResponseBlockedItem",
+    "BroadcastsCountRecipientsResponseSamplesItem",
+    "BroadcastsCountRecipientsResponseSamplesItemChangesItem",
     "BroadcastsCountRecipientsResult",
-    "BroadcastsCountRecipientsResultBlockedItem",
-    "BroadcastsCountRecipientsResultSamplesItem",
-    "BroadcastsCountRecipientsResultSamplesItemChangesItem",
     "BroadcastsCreateBody",
     "BroadcastsCreateParams",
     "BroadcastsCreateParamsTarget",
@@ -92,10 +103,12 @@ __all__ = [
     "BroadcastsCreateParamsTargetScan1",
     "BroadcastsCreateParamsTargetScan2",
     "BroadcastsCreateResult",
+    "BroadcastsListResponse",
     "BroadcastsListResult",
     "BroadcastsRecipientsListItem",
+    "BroadcastsRecipientsListResponse",
+    "BroadcastsRecipientsListResponseItemsItem",
     "BroadcastsRecipientsListResult",
-    "BroadcastsRecipientsListResultItemsItem",
     "BroadcastsRetrieveResult",
     "BroadcastsRetryResult",
     "BroadcastsSendBody",
@@ -123,20 +136,26 @@ __all__ = [
     "BulkRunsStopResult",
     "BundlesCreateBody",
     "BundlesCreateParams",
+    "BundlesCreateResponse",
+    "BundlesCreateResponsePassesItem",
     "BundlesCreateResult",
-    "BundlesCreateResultPassesItem",
+    "BundlesDeleteResponse",
     "BundlesDeleteResult",
     "BundlesListItem",
     "BundlesListItemPassesItem",
+    "BundlesListResponse",
+    "BundlesListResponseItemsItem",
+    "BundlesListResponseItemsItemPassesItem",
     "BundlesListResult",
-    "BundlesListResultItemsItem",
-    "BundlesListResultItemsItemPassesItem",
+    "BundlesRetrieveResponse",
+    "BundlesRetrieveResponsePassesItem",
     "BundlesRetrieveResult",
-    "BundlesRetrieveResultPassesItem",
+    "BundlesRotateLinkResponse",
+    "BundlesRotateLinkResponsePassesItem",
     "BundlesRotateLinkResult",
-    "BundlesRotateLinkResultPassesItem",
     "BundlesSendEmailBody",
     "BundlesSendEmailParams",
+    "BundlesSendEmailResponse",
     "BundlesSendEmailResult",
     "CaptureEndpointCreated",
     "CaptureSecret",
@@ -154,68 +173,83 @@ __all__ = [
     "ConnectionsCreateParamsMappingValue",
     "ConnectionsCreateParamsMappingValueTransform",
     "ConnectionsCreateParamsVoidWhenItem",
+    "ConnectionsCreateResponse",
+    "ConnectionsCreateResponseMappingValue",
+    "ConnectionsCreateResponseMappingValueTransform",
+    "ConnectionsCreateResponseVoidWhenItem",
     "ConnectionsCreateResult",
-    "ConnectionsCreateResultMappingValue",
-    "ConnectionsCreateResultMappingValueTransform",
-    "ConnectionsCreateResultVoidWhenItem",
+    "ConnectionsDeleteResponse",
     "ConnectionsDeleteResult",
     "ConnectionsListItem",
     "ConnectionsListItemMappingValue",
     "ConnectionsListItemMappingValueTransform",
     "ConnectionsListItemVoidWhenItem",
+    "ConnectionsListResponse",
+    "ConnectionsListResponseItemsItem",
+    "ConnectionsListResponseItemsItemMappingValue",
+    "ConnectionsListResponseItemsItemMappingValueTransform",
+    "ConnectionsListResponseItemsItemVoidWhenItem",
     "ConnectionsListResult",
-    "ConnectionsListResultItemsItem",
-    "ConnectionsListResultItemsItemMappingValue",
-    "ConnectionsListResultItemsItemMappingValueTransform",
-    "ConnectionsListResultItemsItemVoidWhenItem",
     "ConnectionsPreviewResult",
+    "ConnectionsRetrieveResponse",
+    "ConnectionsRetrieveResponseMappingValue",
+    "ConnectionsRetrieveResponseMappingValueTransform",
+    "ConnectionsRetrieveResponseMetrics",
+    "ConnectionsRetrieveResponseRunsItem",
+    "ConnectionsRetrieveResponseVoidWhenItem",
     "ConnectionsRetrieveResult",
-    "ConnectionsRetrieveResultMappingValue",
-    "ConnectionsRetrieveResultMappingValueTransform",
-    "ConnectionsRetrieveResultMetrics",
-    "ConnectionsRetrieveResultRunsItem",
-    "ConnectionsRetrieveResultVoidWhenItem",
+    "ConnectionsRetrieveSummaryResponse",
+    "ConnectionsRetrieveSummaryResponseAttentionItem",
     "ConnectionsRetrieveSummaryResult",
-    "ConnectionsRetrieveSummaryResultAttentionItem",
+    "ConnectionsRevokePreviousWebhookSecretResponse",
+    "ConnectionsRevokePreviousWebhookSecretResponseMappingValue",
+    "ConnectionsRevokePreviousWebhookSecretResponseMappingValueTransform",
+    "ConnectionsRevokePreviousWebhookSecretResponseVoidWhenItem",
     "ConnectionsRevokePreviousWebhookSecretResult",
-    "ConnectionsRevokePreviousWebhookSecretResultMappingValue",
-    "ConnectionsRevokePreviousWebhookSecretResultMappingValueTransform",
-    "ConnectionsRevokePreviousWebhookSecretResultVoidWhenItem",
+    "ConnectionsRotateWebhookSecretResponse",
+    "ConnectionsRotateWebhookSecretResponseMappingValue",
+    "ConnectionsRotateWebhookSecretResponseMappingValueTransform",
+    "ConnectionsRotateWebhookSecretResponseVoidWhenItem",
     "ConnectionsRotateWebhookSecretResult",
-    "ConnectionsRotateWebhookSecretResultMappingValue",
-    "ConnectionsRotateWebhookSecretResultMappingValueTransform",
-    "ConnectionsRotateWebhookSecretResultVoidWhenItem",
     "ConnectionsRunsListItem",
+    "ConnectionsRunsListResponse",
+    "ConnectionsRunsListResponseItemsItem",
     "ConnectionsRunsListResult",
-    "ConnectionsRunsListResultItemsItem",
+    "ConnectionsSyncResponse",
     "ConnectionsSyncResult",
     "ConnectionsTestConfigBody",
     "ConnectionsTestConfigParams",
     "ConnectionsTestConfigParamsMappingValue",
     "ConnectionsTestConfigParamsMappingValueTransform",
     "ConnectionsTestConfigParamsVoidWhenItem",
+    "ConnectionsTestConfigResponse",
+    "ConnectionsTestConfigResponseColumnsItem",
+    "ConnectionsTestConfigResponseColumnsItemValuesItem",
+    "ConnectionsTestConfigResponseCounts",
+    "ConnectionsTestConfigResponseSampleItem",
+    "ConnectionsTestConfigResponseSamplesItem",
+    "ConnectionsTestConfigResponseWindow",
     "ConnectionsTestConfigResult",
-    "ConnectionsTestConfigResultColumnsItem",
-    "ConnectionsTestConfigResultColumnsItemValuesItem",
-    "ConnectionsTestConfigResultCounts",
-    "ConnectionsTestConfigResultSampleItem",
-    "ConnectionsTestConfigResultSamplesItem",
-    "ConnectionsTestConfigResultWindow",
+    "ConnectionsTestResponse",
+    "ConnectionsTestResponseSampleItem",
     "ConnectionsTestResult",
-    "ConnectionsTestResultSampleItem",
     "ConnectionsUpdateBody",
     "ConnectionsUpdateParams",
     "ConnectionsUpdateParamsMappingValue",
     "ConnectionsUpdateParamsMappingValueTransform",
     "ConnectionsUpdateParamsVoidWhenItem",
+    "ConnectionsUpdateResponse",
+    "ConnectionsUpdateResponseMappingValue",
+    "ConnectionsUpdateResponseMappingValueTransform",
+    "ConnectionsUpdateResponseVoidWhenItem",
     "ConnectionsUpdateResult",
-    "ConnectionsUpdateResultMappingValue",
-    "ConnectionsUpdateResultMappingValueTransform",
-    "ConnectionsUpdateResultVoidWhenItem",
     "ConnectionsWebhookFailuresListItem",
+    "ConnectionsWebhookFailuresListResponse",
+    "ConnectionsWebhookFailuresListResponseItemsItem",
     "ConnectionsWebhookFailuresListResult",
-    "ConnectionsWebhookFailuresListResultItemsItem",
+    "ConnectionsWebhookFailuresReplayResponse",
     "ConnectionsWebhookFailuresReplayResult",
+    "ConnectionsWebhookFailuresResolveResponse",
     "ConnectionsWebhookFailuresResolveResult",
     "ConnectorsListItem",
     "ConnectorsListItemCapabilities",
@@ -226,25 +260,27 @@ __all__ = [
     "ConnectorsListItemRecipesItemMappingValueTransform",
     "ConnectorsListItemRecipesItemOutputFieldsValue",
     "ConnectorsListItemRecipesItemVoidWhenItem",
+    "ConnectorsListResponse",
+    "ConnectorsListResponseItemsItem",
+    "ConnectorsListResponseItemsItemCapabilities",
+    "ConnectorsListResponseItemsItemDefaults",
+    "ConnectorsListResponseItemsItemOutputFieldsValue",
+    "ConnectorsListResponseItemsItemRecipesItem",
+    "ConnectorsListResponseItemsItemRecipesItemMappingValue",
+    "ConnectorsListResponseItemsItemRecipesItemMappingValueTransform",
+    "ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue",
+    "ConnectorsListResponseItemsItemRecipesItemVoidWhenItem",
     "ConnectorsListResult",
-    "ConnectorsListResultItemsItem",
-    "ConnectorsListResultItemsItemCapabilities",
-    "ConnectorsListResultItemsItemDefaults",
-    "ConnectorsListResultItemsItemOutputFieldsValue",
-    "ConnectorsListResultItemsItemRecipesItem",
-    "ConnectorsListResultItemsItemRecipesItemMappingValue",
-    "ConnectorsListResultItemsItemRecipesItemMappingValueTransform",
-    "ConnectorsListResultItemsItemRecipesItemOutputFieldsValue",
-    "ConnectorsListResultItemsItemRecipesItemVoidWhenItem",
+    "ConnectorsRetrieveResponse",
+    "ConnectorsRetrieveResponseCapabilities",
+    "ConnectorsRetrieveResponseDefaults",
+    "ConnectorsRetrieveResponseOutputFieldsValue",
+    "ConnectorsRetrieveResponseRecipesItem",
+    "ConnectorsRetrieveResponseRecipesItemMappingValue",
+    "ConnectorsRetrieveResponseRecipesItemMappingValueTransform",
+    "ConnectorsRetrieveResponseRecipesItemOutputFieldsValue",
+    "ConnectorsRetrieveResponseRecipesItemVoidWhenItem",
     "ConnectorsRetrieveResult",
-    "ConnectorsRetrieveResultCapabilities",
-    "ConnectorsRetrieveResultDefaults",
-    "ConnectorsRetrieveResultOutputFieldsValue",
-    "ConnectorsRetrieveResultRecipesItem",
-    "ConnectorsRetrieveResultRecipesItemMappingValue",
-    "ConnectorsRetrieveResultRecipesItemMappingValueTransform",
-    "ConnectorsRetrieveResultRecipesItemOutputFieldsValue",
-    "ConnectorsRetrieveResultRecipesItemVoidWhenItem",
     "CreatedScanner",
     "CreatedScannerAccepts1",
     "CreatedScannerAccepts2",
@@ -252,8 +288,9 @@ __all__ = [
     "CreatedScanningDevice",
     "CreatedScanningDeviceOverrides",
     "CurrentBulkRun",
+    "DeliveriesListResponse",
+    "DeliveriesListResponseItemsItem",
     "DeliveriesListResult",
-    "DeliveriesListResultItemsItem",
     "EmailFailedEvent",
     "EmailFailedEventData",
     "EventPage",
@@ -261,37 +298,92 @@ __all__ = [
     "EventsRetrieveResult",
     "HoldersAssignBody",
     "HoldersAssignParams",
+    "HoldersAssignResponse",
     "HoldersAssignResult",
     "HoldersBulkAssignBody",
     "HoldersBulkAssignParams",
     "HoldersBulkAssignParamsItemsItem",
+    "HoldersBulkAssignResponse",
+    "HoldersBulkAssignResponseItemsItem",
     "HoldersBulkAssignResult",
-    "HoldersBulkAssignResultItemsItem",
     "HoldersClearBlockBody",
     "HoldersClearBlockParams",
+    "HoldersClearBlockResponse",
     "HoldersClearBlockResult",
     "HoldersListItem",
+    "HoldersListResponse",
+    "HoldersListResponseItemsItem",
     "HoldersListResult",
-    "HoldersListResultItemsItem",
     "HoldersOffboardBody",
     "HoldersOffboardParams",
+    "HoldersOffboardResponse",
     "HoldersOffboardResult",
     "HoldersReassignBody",
     "HoldersReassignParams",
+    "HoldersReassignResponse",
     "HoldersReassignResult",
+    "HoldersRetrieveResponse",
     "HoldersRetrieveResult",
     "HoldersUnassignBody",
     "HoldersUnassignParams",
+    "HoldersUnassignResponse",
     "HoldersUnassignResult",
+    "IdentitiesCertificatesListResponse",
+    "IdentitiesCertificatesListResponseItemsItem",
     "IdentitiesCertificatesRevokeParams",
+    "IdentitiesCertificatesRevokeResponse",
+    "IdentitiesCheckApnsResponse",
     "IdentitiesCreateParams",
+    "IdentitiesCreateResponse",
+    "IdentitiesCreateResponseNfcKeysItem",
+    "IdentitiesDeleteResponse",
+    "IdentitiesListResponse",
+    "IdentitiesListResponse1",
+    "IdentitiesListResponse1ItemsItem",
+    "IdentitiesListResponse1ItemsItemNfcKeysItem",
+    "IdentitiesListResponse2",
+    "IdentitiesListResponse2ItemsItem",
+    "IdentitiesPushKeyDeleteResponse",
+    "IdentitiesPushKeyDeleteResponseNfcKeysItem",
     "IdentitiesPushKeyUploadParams",
+    "IdentitiesPushKeyUploadResponse",
+    "IdentitiesPushKeyUploadResponseNfcKeysItem",
+    "IdentitiesRenewResponse",
+    "IdentitiesRetrieveResponse",
+    "IdentitiesRetrieveResponseNfcKeysItem",
     "IdentitiesRotateParams",
+    "IdentitiesRotateResponse",
+    "IdentitiesRotateResponseNfcKeysItem",
     "IdentitiesUpdateParams",
+    "IdentitiesUpdateResponse",
+    "IdentitiesUpdateResponseNfcKeysItem",
+    "IdentityRunsCancelResponse",
+    "IdentityRunsListResponse",
+    "IdentityRunsListResponseItemsItem",
+    "IdentityRunsRetrieveResponse",
+    "IdentityRunsRetryResponse",
     "IdentityRunsStartManagedParams",
+    "IdentityRunsStartManagedResponse",
     "InvitationsCreateParams",
+    "InvitationsCreateResponse",
+    "InvitationsListResponse",
+    "InvitationsListResponseItemsItem",
+    "InvitationsRevokeResponse",
+    "JoinLinksRetrieveResponse",
+    "JoinLinksRetrieveResponseIssuesItem",
+    "JoinLinksRotateResponse",
+    "JoinLinksRotateResponseIssuesItem",
     "JoinLinksUpsertParams",
+    "JoinLinksUpsertResponse",
+    "JoinLinksUpsertResponseIssuesItem",
     "LegalHoldsCreateParams",
+    "LegalHoldsCreateResponse",
+    "LegalHoldsListResponse",
+    "LegalHoldsListResponseItemsItem",
+    "LegalHoldsReleaseResponse",
+    "MembershipsListResponse",
+    "MembershipsListResponseItemsItem",
+    "MembershipsRevokeResponse",
     "MessageRulesCountDueBody",
     "MessageRulesCountDueParams",
     "MessageRulesCountDueParamsAnchor1",
@@ -300,8 +392,9 @@ __all__ = [
     "MessageRulesCountDueParamsMatchItem2",
     "MessageRulesCountDueParamsMatchItem3",
     "MessageRulesCountDueParamsOffset",
+    "MessageRulesCountDueResponse",
+    "MessageRulesCountDueResponseDaysItem",
     "MessageRulesCountDueResult",
-    "MessageRulesCountDueResultDaysItem",
     "MessageRulesCreateBody",
     "MessageRulesCreateParams",
     "MessageRulesCreateParamsAnchor1",
@@ -310,13 +403,15 @@ __all__ = [
     "MessageRulesCreateParamsMatchItem2",
     "MessageRulesCreateParamsMatchItem3",
     "MessageRulesCreateParamsOffset",
+    "MessageRulesCreateResponse",
+    "MessageRulesCreateResponseAnchor1",
+    "MessageRulesCreateResponseAnchor2",
+    "MessageRulesCreateResponseMatchItem1",
+    "MessageRulesCreateResponseMatchItem2",
+    "MessageRulesCreateResponseMatchItem3",
+    "MessageRulesCreateResponseOffset",
     "MessageRulesCreateResult",
-    "MessageRulesCreateResultAnchor1",
-    "MessageRulesCreateResultAnchor2",
-    "MessageRulesCreateResultMatchItem1",
-    "MessageRulesCreateResultMatchItem2",
-    "MessageRulesCreateResultMatchItem3",
-    "MessageRulesCreateResultOffset",
+    "MessageRulesDeleteResponse",
     "MessageRulesDeleteResult",
     "MessageRulesListItem",
     "MessageRulesListItemAnchor1",
@@ -325,28 +420,32 @@ __all__ = [
     "MessageRulesListItemMatchItem2",
     "MessageRulesListItemMatchItem3",
     "MessageRulesListItemOffset",
+    "MessageRulesListResponse",
+    "MessageRulesListResponseItemsItem",
+    "MessageRulesListResponseItemsItemAnchor1",
+    "MessageRulesListResponseItemsItemAnchor2",
+    "MessageRulesListResponseItemsItemMatchItem1",
+    "MessageRulesListResponseItemsItemMatchItem2",
+    "MessageRulesListResponseItemsItemMatchItem3",
+    "MessageRulesListResponseItemsItemOffset",
     "MessageRulesListResult",
-    "MessageRulesListResultItemsItem",
-    "MessageRulesListResultItemsItemAnchor1",
-    "MessageRulesListResultItemsItemAnchor2",
-    "MessageRulesListResultItemsItemMatchItem1",
-    "MessageRulesListResultItemsItemMatchItem2",
-    "MessageRulesListResultItemsItemMatchItem3",
-    "MessageRulesListResultItemsItemOffset",
+    "MessageRulesPauseResponse",
+    "MessageRulesPauseResponseAnchor1",
+    "MessageRulesPauseResponseAnchor2",
+    "MessageRulesPauseResponseMatchItem1",
+    "MessageRulesPauseResponseMatchItem2",
+    "MessageRulesPauseResponseMatchItem3",
+    "MessageRulesPauseResponseOffset",
     "MessageRulesPauseResult",
-    "MessageRulesPauseResultAnchor1",
-    "MessageRulesPauseResultAnchor2",
-    "MessageRulesPauseResultMatchItem1",
-    "MessageRulesPauseResultMatchItem2",
-    "MessageRulesPauseResultMatchItem3",
-    "MessageRulesPauseResultOffset",
+    "MessageRulesRetrieveResponse",
+    "MessageRulesRetrieveResponseAnchor1",
+    "MessageRulesRetrieveResponseAnchor2",
+    "MessageRulesRetrieveResponseMatchItem1",
+    "MessageRulesRetrieveResponseMatchItem2",
+    "MessageRulesRetrieveResponseMatchItem3",
+    "MessageRulesRetrieveResponseOffset",
     "MessageRulesRetrieveResult",
-    "MessageRulesRetrieveResultAnchor1",
-    "MessageRulesRetrieveResultAnchor2",
-    "MessageRulesRetrieveResultMatchItem1",
-    "MessageRulesRetrieveResultMatchItem2",
-    "MessageRulesRetrieveResultMatchItem3",
-    "MessageRulesRetrieveResultOffset",
+    "MessageRulesRunsListResponse",
     "MessageRulesRunsListResult",
     "MessageRulesSendTestBody",
     "MessageRulesSendTestParams",
@@ -359,77 +458,147 @@ __all__ = [
     "MessageRulesUpdateParamsMatchItem2",
     "MessageRulesUpdateParamsMatchItem3",
     "MessageRulesUpdateParamsOffset",
+    "MessageRulesUpdateResponse",
+    "MessageRulesUpdateResponseAnchor1",
+    "MessageRulesUpdateResponseAnchor2",
+    "MessageRulesUpdateResponseMatchItem1",
+    "MessageRulesUpdateResponseMatchItem2",
+    "MessageRulesUpdateResponseMatchItem3",
+    "MessageRulesUpdateResponseOffset",
     "MessageRulesUpdateResult",
-    "MessageRulesUpdateResultAnchor1",
-    "MessageRulesUpdateResultAnchor2",
-    "MessageRulesUpdateResultMatchItem1",
-    "MessageRulesUpdateResultMatchItem2",
-    "MessageRulesUpdateResultMatchItem3",
-    "MessageRulesUpdateResultOffset",
+    "MetricsRetrieveActivityResponse",
+    "MetricsRetrieveActivityResponseSeries",
+    "MetricsRetrieveActivityResponseSeriesIssuedItem",
+    "MetricsRetrieveActivityResponseSeriesScansItem",
+    "MetricsRetrieveActivityResponseTemplatesItem",
+    "MetricsRetrieveActivityResponseTotals",
+    "MetricsRetrieveOverviewResponse",
+    "MetricsRetrieveOverviewResponseDirectory",
+    "MetricsRetrieveOverviewResponseLiveItem",
+    "MetricsRetrieveOverviewResponseRecentItem",
+    "MetricsRetrieveOverviewResponseSeries",
+    "MetricsRetrieveOverviewResponseSeriesDownloadsItem",
+    "MetricsRetrieveOverviewResponseSeriesEmailFailuresItem",
+    "MetricsRetrieveOverviewResponseSeriesEmailUnknownItem",
+    "MetricsRetrieveOverviewResponseSeriesEmailsItem",
+    "MetricsRetrieveOverviewResponseSeriesIssuedItem",
+    "MetricsRetrieveOverviewResponseSeriesPushFailuresItem",
+    "MetricsRetrieveOverviewResponseSeriesPushesItem",
+    "MetricsRetrieveOverviewResponseSeriesRefreshesItem",
+    "MetricsRetrieveOverviewResponseSeriesRegistrationsItem",
+    "MetricsRetrieveOverviewResponseSeriesScansItem",
+    "MetricsRetrieveOverviewResponseSeriesSignInsItem",
+    "MetricsRetrieveOverviewResponseSeriesSyncRunsItem",
+    "MetricsRetrieveOverviewResponseSeriesUpdatedItem",
+    "MetricsRetrieveOverviewResponseSetup",
+    "MetricsRetrieveOverviewResponseTotals",
+    "NfcBindingsDeleteResponse",
     "NfcBindingsUpdateParams",
+    "NfcBindingsUpdateResponse",
+    "NfcEnrollmentsCancelResponse",
     "NfcEnrollmentsCreateParams",
+    "NfcEnrollmentsCreateResponse",
+    "NfcEnrollmentsListScannersResponse",
+    "NfcEnrollmentsListScannersResponseItemsItem",
+    "NfcEnrollmentsRetrieveResponse",
     "NfcKeysetsCreateBody",
     "NfcKeysetsCreateParams",
     "NfcKeysetsCreateParams1",
     "NfcKeysetsCreateParams2",
     "NfcKeysetsCreateParams3",
+    "NfcKeysetsCreateResponse",
+    "NfcKeysetsCreateResponseVersionsItem",
     "NfcKeysetsCreateResult",
-    "NfcKeysetsCreateResultVersionsItem",
+    "NfcKeysetsDisableResponse",
+    "NfcKeysetsDisableResponseVersionsItem",
     "NfcKeysetsDisableResult",
-    "NfcKeysetsDisableResultVersionsItem",
     "NfcKeysetsImportTagsBody",
     "NfcKeysetsImportTagsParams",
+    "NfcKeysetsImportTagsResponse",
+    "NfcKeysetsImportTagsResponseProblemsItem",
     "NfcKeysetsImportTagsResult",
-    "NfcKeysetsImportTagsResultProblemsItem",
     "NfcKeysetsListItem",
     "NfcKeysetsListItemVersionsItem",
+    "NfcKeysetsListResponse",
+    "NfcKeysetsListResponseItemsItem",
+    "NfcKeysetsListResponseItemsItemVersionsItem",
     "NfcKeysetsListResult",
-    "NfcKeysetsListResultItemsItem",
-    "NfcKeysetsListResultItemsItemVersionsItem",
     "NfcKeysetsReenrollBody",
     "NfcKeysetsReenrollParams",
+    "NfcKeysetsReenrollResponse",
+    "NfcKeysetsReenrollResponseKeyset",
+    "NfcKeysetsReenrollResponseKeysetVersionsItem",
     "NfcKeysetsReenrollResult",
-    "NfcKeysetsReenrollResultKeyset",
-    "NfcKeysetsReenrollResultKeysetVersionsItem",
+    "NfcKeysetsRetireKeyResponse",
+    "NfcKeysetsRetireKeyResponseVersionsItem",
     "NfcKeysetsRetireKeyResult",
-    "NfcKeysetsRetireKeyResultVersionsItem",
+    "NfcKeysetsRevokeKeyResponse",
+    "NfcKeysetsRevokeKeyResponseVersionsItem",
     "NfcKeysetsRevokeKeyResult",
-    "NfcKeysetsRevokeKeyResultVersionsItem",
     "NfcKeysetsRotateBody",
     "NfcKeysetsRotateParams",
     "NfcKeysetsRotateParams1",
     "NfcKeysetsRotateParams2",
     "NfcKeysetsRotateParams3",
+    "NfcKeysetsRotateResponse",
+    "NfcKeysetsRotateResponseVersionsItem",
     "NfcKeysetsRotateResult",
-    "NfcKeysetsRotateResultVersionsItem",
     "NfcTagTypesArchiveBody",
     "NfcTagTypesArchiveParams",
+    "NfcTagTypesArchiveResponse",
     "NfcTagTypesArchiveResult",
     "NfcTagTypesCreateBody",
     "NfcTagTypesCreateParams",
+    "NfcTagTypesCreateResponse",
     "NfcTagTypesCreateResult",
     "NfcTagTypesListItem",
+    "NfcTagTypesListResponse",
+    "NfcTagTypesListResponseItemsItem",
     "NfcTagTypesListResult",
-    "NfcTagTypesListResultItemsItem",
     "NfcTagTypesUpdateBody",
     "NfcTagTypesUpdateParams",
+    "NfcTagTypesUpdateResponse",
     "NfcTagTypesUpdateResult",
     "NfcTagsAssignParams",
     "NfcTagsAssignParams1",
     "NfcTagsAssignParams2",
+    "NfcTagsAssignResponse",
+    "NfcTagsListForPassResponse",
+    "NfcTagsListForPassResponseItemsItem",
+    "NfcTagsListForUserResponse",
+    "NfcTagsListForUserResponseItemsItem",
+    "NfcTagsListHistoryResponse",
+    "NfcTagsListHistoryResponseEventsItem",
+    "NfcTagsListHistoryResponseItemsItem",
+    "NfcTagsListResponse",
+    "NfcTagsListResponseItemsItem",
     "NfcTagsRebindParams",
+    "NfcTagsRebindResponse",
+    "NfcTagsReportLostResponse",
+    "NfcTagsRestoreResponse",
+    "NfcTagsRetireResponse",
+    "NfcTagsRetrieveResponse",
     "NfcTagsUpdateParams",
+    "NfcTagsUpdateResponse",
     "Org",
     "OrgBranding",
     "OrgBrandingIcon",
     "OrgBrandingLogo",
     "OrgBrandingPassColors",
     "OrgBrandingWeb",
+    "OrgExportsCreateLinkResponse",
+    "OrgExportsCreateResponse",
+    "OrgExportsListResponse",
+    "OrgExportsListResponseItemsItem",
     "OrgSummary",
     "OrgSummaryCounts",
     "OrgsCloseParams",
+    "OrgsCloseResponse",
+    "OrgsEntitlementsRetrieveResponse",
+    "OrgsEntitlementsRetrieveResponseItemsItem",
     "OrgsEntitlementsRetrieveResult",
-    "OrgsEntitlementsRetrieveResultItemsItem",
+    "OrgsReopenResponse",
+    "OrgsRetrieveLifecycleResponse",
     "OrgsRetrievePassSetupResult",
     "OrgsStageBrandAssetBody",
     "OrgsStageBrandAssetParams",
@@ -481,30 +650,32 @@ __all__ = [
     "PassImportsCheckParamsPlan",
     "PassImportsCheckParamsPlanMappingValue",
     "PassImportsCheckParamsPlanMappingValueTransform",
+    "PassImportsCheckResponse",
+    "PassImportsCheckResponseColumnsItem",
+    "PassImportsCheckResponseMapping",
+    "PassImportsCheckResponseMappingFieldsItem",
+    "PassImportsCheckResponseMappingFieldsItemValuesItem",
+    "PassImportsCheckResponseMappingUnusedItem",
+    "PassImportsCheckResponsePreviewsItem",
+    "PassImportsCheckResponseProblemTotals",
+    "PassImportsCheckResponseProblemsItem",
+    "PassImportsCheckResponseSource",
     "PassImportsCheckResult",
-    "PassImportsCheckResultColumnsItem",
-    "PassImportsCheckResultMapping",
-    "PassImportsCheckResultMappingFieldsItem",
-    "PassImportsCheckResultMappingFieldsItemValuesItem",
-    "PassImportsCheckResultMappingUnusedItem",
-    "PassImportsCheckResultPreviewsItem",
-    "PassImportsCheckResultProblemTotals",
-    "PassImportsCheckResultProblemsItem",
-    "PassImportsCheckResultSource",
     "PassImportsCommitBody",
     "PassImportsCommitParams",
     "PassImportsCommitParamsEmail2",
     "PassImportsCommitParamsEmail3",
+    "PassImportsCommitResponse",
+    "PassImportsCommitResponseColumnsItem",
+    "PassImportsCommitResponseMapping",
+    "PassImportsCommitResponseMappingFieldsItem",
+    "PassImportsCommitResponseMappingFieldsItemValuesItem",
+    "PassImportsCommitResponseMappingUnusedItem",
+    "PassImportsCommitResponsePreviewsItem",
+    "PassImportsCommitResponseProblemTotals",
+    "PassImportsCommitResponseProblemsItem",
+    "PassImportsCommitResponseSource",
     "PassImportsCommitResult",
-    "PassImportsCommitResultColumnsItem",
-    "PassImportsCommitResultMapping",
-    "PassImportsCommitResultMappingFieldsItem",
-    "PassImportsCommitResultMappingFieldsItemValuesItem",
-    "PassImportsCommitResultMappingUnusedItem",
-    "PassImportsCommitResultPreviewsItem",
-    "PassImportsCommitResultProblemTotals",
-    "PassImportsCommitResultProblemsItem",
-    "PassImportsCommitResultSource",
     "PassImportsCreateBody",
     "PassImportsCreateParams",
     "PassImportsCreateParamsPlan",
@@ -512,16 +683,18 @@ __all__ = [
     "PassImportsCreateParamsPlanMappingValueTransform",
     "PassImportsCreateParamsSource1",
     "PassImportsCreateParamsSource2",
+    "PassImportsCreateResponse",
+    "PassImportsCreateResponseColumnsItem",
+    "PassImportsCreateResponseMapping",
+    "PassImportsCreateResponseMappingFieldsItem",
+    "PassImportsCreateResponseMappingFieldsItemValuesItem",
+    "PassImportsCreateResponseMappingUnusedItem",
+    "PassImportsCreateResponsePreviewsItem",
+    "PassImportsCreateResponseProblemTotals",
+    "PassImportsCreateResponseProblemsItem",
+    "PassImportsCreateResponseSource",
     "PassImportsCreateResult",
-    "PassImportsCreateResultColumnsItem",
-    "PassImportsCreateResultMapping",
-    "PassImportsCreateResultMappingFieldsItem",
-    "PassImportsCreateResultMappingFieldsItemValuesItem",
-    "PassImportsCreateResultMappingUnusedItem",
-    "PassImportsCreateResultPreviewsItem",
-    "PassImportsCreateResultProblemTotals",
-    "PassImportsCreateResultProblemsItem",
-    "PassImportsCreateResultSource",
+    "PassImportsDeleteResponse",
     "PassImportsDeleteResult",
     "PassImportsListItem",
     "PassImportsListItemColumnsItem",
@@ -533,17 +706,18 @@ __all__ = [
     "PassImportsListItemProblemTotals",
     "PassImportsListItemProblemsItem",
     "PassImportsListItemSource",
+    "PassImportsListResponse",
+    "PassImportsListResponseItemsItem",
+    "PassImportsListResponseItemsItemColumnsItem",
+    "PassImportsListResponseItemsItemMapping",
+    "PassImportsListResponseItemsItemMappingFieldsItem",
+    "PassImportsListResponseItemsItemMappingFieldsItemValuesItem",
+    "PassImportsListResponseItemsItemMappingUnusedItem",
+    "PassImportsListResponseItemsItemPreviewsItem",
+    "PassImportsListResponseItemsItemProblemTotals",
+    "PassImportsListResponseItemsItemProblemsItem",
+    "PassImportsListResponseItemsItemSource",
     "PassImportsListResult",
-    "PassImportsListResultItemsItem",
-    "PassImportsListResultItemsItemColumnsItem",
-    "PassImportsListResultItemsItemMapping",
-    "PassImportsListResultItemsItemMappingFieldsItem",
-    "PassImportsListResultItemsItemMappingFieldsItemValuesItem",
-    "PassImportsListResultItemsItemMappingUnusedItem",
-    "PassImportsListResultItemsItemPreviewsItem",
-    "PassImportsListResultItemsItemProblemTotals",
-    "PassImportsListResultItemsItemProblemsItem",
-    "PassImportsListResultItemsItemSource",
     "PassImportsMappingsDeleteResult",
     "PassImportsMappingsListResult",
     "PassImportsMappingsSaveBody",
@@ -553,23 +727,28 @@ __all__ = [
     "PassImportsMappingsSaveParamsPlanMappingValueTransform",
     "PassImportsMappingsSaveResult",
     "PassImportsRemoveCreatedParams",
+    "PassImportsRemoveCreatedResponse",
+    "PassImportsRemoveCreatedResponseSkippedItem",
+    "PassImportsRetrieveResponse",
+    "PassImportsRetrieveResponseColumnsItem",
+    "PassImportsRetrieveResponseMapping",
+    "PassImportsRetrieveResponseMappingFieldsItem",
+    "PassImportsRetrieveResponseMappingFieldsItemValuesItem",
+    "PassImportsRetrieveResponseMappingUnusedItem",
+    "PassImportsRetrieveResponsePreviewsItem",
+    "PassImportsRetrieveResponseProblemTotals",
+    "PassImportsRetrieveResponseProblemsItem",
+    "PassImportsRetrieveResponseSource",
     "PassImportsRetrieveResult",
-    "PassImportsRetrieveResultColumnsItem",
-    "PassImportsRetrieveResultMapping",
-    "PassImportsRetrieveResultMappingFieldsItem",
-    "PassImportsRetrieveResultMappingFieldsItemValuesItem",
-    "PassImportsRetrieveResultMappingUnusedItem",
-    "PassImportsRetrieveResultPreviewsItem",
-    "PassImportsRetrieveResultProblemTotals",
-    "PassImportsRetrieveResultProblemsItem",
-    "PassImportsRetrieveResultSource",
     "PassImportsRowsListItem",
     "PassImportsRowsListItemChangesItem",
+    "PassImportsRowsListResponse",
+    "PassImportsRowsListResponseItemsItem",
+    "PassImportsRowsListResponseItemsItemChangesItem",
     "PassImportsRowsListResult",
-    "PassImportsRowsListResultItemsItem",
-    "PassImportsRowsListResultItemsItemChangesItem",
     "PassImportsSendEmailsBody",
     "PassImportsSendEmailsParams",
+    "PassImportsSendEmailsResponse",
     "PassImportsSendEmailsResult",
     "PassImportsUndoBody",
     "PassImportsUndoParams",
@@ -685,130 +864,156 @@ __all__ = [
     "PassVoidedEvent",
     "PassVoidedEventData",
     "PassesActivityListItem",
+    "PassesActivityListResponse",
+    "PassesActivityListResponseItemsItem",
     "PassesActivityListResult",
-    "PassesActivityListResultItemsItem",
+    "PassesAssetsDeleteResponse",
     "PassesAssetsDeleteResult",
     "PassesAssetsListItem",
+    "PassesAssetsListResponse",
+    "PassesAssetsListResponseItemsItem",
     "PassesAssetsListResult",
-    "PassesAssetsListResultItemsItem",
+    "PassesAssetsUploadResponse",
     "PassesAssetsUploadResult",
     "PassesBulkApplyBody",
     "PassesBulkApplyParams",
     "PassesBulkApplyParamsSelection1",
     "PassesBulkApplyParamsSelection2",
+    "PassesBulkApplyResponse",
+    "PassesBulkApplyResponseSkippedItem",
     "PassesBulkApplyResult",
-    "PassesBulkApplyResultSkippedItem",
     "PassesBulkReissueBody",
     "PassesBulkReissueParams",
+    "PassesBulkReissueResponse",
     "PassesBulkReissueResult",
     "PassesBulkUpdateChannelsBody",
     "PassesBulkUpdateChannelsParams",
+    "PassesBulkUpdateChannelsResponse",
+    "PassesBulkUpdateChannelsResponsePreview",
+    "PassesBulkUpdateChannelsResponsePreviewImpactItem",
+    "PassesBulkUpdateChannelsResponsePreviewWindowsItem",
+    "PassesBulkUpdateChannelsResponseSkippedItem",
     "PassesBulkUpdateChannelsResult",
-    "PassesBulkUpdateChannelsResultPreview",
-    "PassesBulkUpdateChannelsResultPreviewImpactItem",
-    "PassesBulkUpdateChannelsResultPreviewWindowsItem",
-    "PassesBulkUpdateChannelsResultSkippedItem",
+    "PassesChannelsRetrieveResponse",
+    "PassesChannelsRetrieveResponseEffective",
+    "PassesChannelsRetrieveResponseEffectiveApple",
+    "PassesChannelsRetrieveResponseEffectiveGoogle",
+    "PassesChannelsRetrieveResponseEffectiveMobile",
+    "PassesChannelsRetrieveResponseEffectiveNfc",
+    "PassesChannelsRetrieveResponseEffectivePaper",
+    "PassesChannelsRetrieveResponseEffectiveSamsung",
+    "PassesChannelsRetrieveResponseLevels",
+    "PassesChannelsRetrieveResponseLevelsAppleItem",
+    "PassesChannelsRetrieveResponseLevelsGoogleItem",
+    "PassesChannelsRetrieveResponseLevelsMobileItem",
+    "PassesChannelsRetrieveResponseLevelsNfcItem",
+    "PassesChannelsRetrieveResponseLevelsPaperItem",
+    "PassesChannelsRetrieveResponseLevelsSamsungItem",
+    "PassesChannelsRetrieveResponseOverrides",
+    "PassesChannelsRetrieveResponseReplace",
+    "PassesChannelsRetrieveResponseReplaceWindowsItem",
     "PassesChannelsRetrieveResult",
-    "PassesChannelsRetrieveResultEffective",
-    "PassesChannelsRetrieveResultEffectiveApple",
-    "PassesChannelsRetrieveResultEffectiveGoogle",
-    "PassesChannelsRetrieveResultEffectiveMobile",
-    "PassesChannelsRetrieveResultEffectiveNfc",
-    "PassesChannelsRetrieveResultEffectivePaper",
-    "PassesChannelsRetrieveResultEffectiveSamsung",
-    "PassesChannelsRetrieveResultLevels",
-    "PassesChannelsRetrieveResultLevelsAppleItem",
-    "PassesChannelsRetrieveResultLevelsGoogleItem",
-    "PassesChannelsRetrieveResultLevelsMobileItem",
-    "PassesChannelsRetrieveResultLevelsNfcItem",
-    "PassesChannelsRetrieveResultLevelsPaperItem",
-    "PassesChannelsRetrieveResultLevelsSamsungItem",
-    "PassesChannelsRetrieveResultOverrides",
-    "PassesChannelsRetrieveResultReplace",
-    "PassesChannelsRetrieveResultReplaceWindowsItem",
     "PassesChannelsUpdateBody",
     "PassesChannelsUpdateParams",
     "PassesChannelsUpdateParamsChannels",
+    "PassesChannelsUpdateResponse",
+    "PassesChannelsUpdateResponseEffective",
+    "PassesChannelsUpdateResponseEffectiveApple",
+    "PassesChannelsUpdateResponseEffectiveGoogle",
+    "PassesChannelsUpdateResponseEffectiveMobile",
+    "PassesChannelsUpdateResponseEffectiveNfc",
+    "PassesChannelsUpdateResponseEffectivePaper",
+    "PassesChannelsUpdateResponseEffectiveSamsung",
+    "PassesChannelsUpdateResponseLevels",
+    "PassesChannelsUpdateResponseLevelsAppleItem",
+    "PassesChannelsUpdateResponseLevelsGoogleItem",
+    "PassesChannelsUpdateResponseLevelsMobileItem",
+    "PassesChannelsUpdateResponseLevelsNfcItem",
+    "PassesChannelsUpdateResponseLevelsPaperItem",
+    "PassesChannelsUpdateResponseLevelsSamsungItem",
+    "PassesChannelsUpdateResponseOverrides",
+    "PassesChannelsUpdateResponseReplace",
+    "PassesChannelsUpdateResponseReplaceWindowsItem",
     "PassesChannelsUpdateResult",
-    "PassesChannelsUpdateResultEffective",
-    "PassesChannelsUpdateResultEffectiveApple",
-    "PassesChannelsUpdateResultEffectiveGoogle",
-    "PassesChannelsUpdateResultEffectiveMobile",
-    "PassesChannelsUpdateResultEffectiveNfc",
-    "PassesChannelsUpdateResultEffectivePaper",
-    "PassesChannelsUpdateResultEffectiveSamsung",
-    "PassesChannelsUpdateResultLevels",
-    "PassesChannelsUpdateResultLevelsAppleItem",
-    "PassesChannelsUpdateResultLevelsGoogleItem",
-    "PassesChannelsUpdateResultLevelsMobileItem",
-    "PassesChannelsUpdateResultLevelsNfcItem",
-    "PassesChannelsUpdateResultLevelsPaperItem",
-    "PassesChannelsUpdateResultLevelsSamsungItem",
-    "PassesChannelsUpdateResultOverrides",
-    "PassesChannelsUpdateResultReplace",
-    "PassesChannelsUpdateResultReplaceWindowsItem",
+    "PassesCheckInRulesRetrieveResponse",
+    "PassesCheckInRulesRetrieveResponseDefaults",
+    "PassesCheckInRulesRetrieveResponseEffective",
+    "PassesCheckInRulesRetrieveResponseRules",
     "PassesCheckInRulesRetrieveResult",
-    "PassesCheckInRulesRetrieveResultDefaults",
-    "PassesCheckInRulesRetrieveResultEffective",
-    "PassesCheckInRulesRetrieveResultRules",
     "PassesCheckInRulesUpdateBody",
     "PassesCheckInRulesUpdateParams",
     "PassesCheckInRulesUpdateParamsRules",
+    "PassesCheckInRulesUpdateResponse",
+    "PassesCheckInRulesUpdateResponseDefaults",
+    "PassesCheckInRulesUpdateResponseEffective",
+    "PassesCheckInRulesUpdateResponseRules",
     "PassesCheckInRulesUpdateResult",
-    "PassesCheckInRulesUpdateResultDefaults",
-    "PassesCheckInRulesUpdateResultEffective",
-    "PassesCheckInRulesUpdateResultRules",
     "PassesConnectionUpdateBody",
     "PassesConnectionUpdateParams",
     "PassesConnectionUpdateResult",
     "PassesCreateBody",
     "PassesCreateParams",
     "PassesCreateResult",
+    "PassesDeleteResponse",
     "PassesDeleteResult",
+    "PassesDevicesListResponse",
+    "PassesDevicesListResponseDevicesItem",
     "PassesDevicesListResult",
-    "PassesDevicesListResultDevicesItem",
     "PassesListResult",
     "PassesMatchPhotosBody",
     "PassesMatchPhotosParams",
+    "PassesMatchPhotosResponse",
+    "PassesMatchPhotosResponseMatchesItem",
     "PassesMatchPhotosResult",
-    "PassesMatchPhotosResultMatchesItem",
+    "PassesMemberPhotoDeleteResponse",
     "PassesMemberPhotoDeleteResult",
+    "PassesMemberPhotoRetrieveResponse",
     "PassesMemberPhotoRetrieveResult",
     "PassesMemberPhotoUpdateBody",
     "PassesMemberPhotoUpdateParams",
+    "PassesMemberPhotoUpdateResponse",
     "PassesMemberPhotoUpdateResult",
     "PassesMemberPhotoUploadBody",
     "PassesMemberPhotoUploadParams",
+    "PassesMemberPhotoUploadResponse",
     "PassesMemberPhotoUploadResult",
+    "PassesPrintsCreateResponse",
     "PassesPrintsCreateResult",
+    "PassesPrintsListResponse",
+    "PassesPrintsListResponsePrintsItem",
     "PassesPrintsListResult",
-    "PassesPrintsListResultPrintsItem",
+    "PassesPrintsVoidResponse",
     "PassesPrintsVoidResult",
+    "PassesRefreshResponse",
     "PassesRefreshResult",
-    "PassesReissueProviderCopiesBody",
-    "PassesReissueProviderCopiesParams",
-    "PassesReissueProviderCopiesResult",
     "PassesRemoveBody",
     "PassesRemoveParams",
     "PassesRemoveResult",
     "PassesRenewBody",
     "PassesRenewParams",
     "PassesRenewResult",
+    "PassesResendProviderCopiesBody",
+    "PassesResendProviderCopiesParams",
+    "PassesResendProviderCopiesResult",
     "PassesRestoreResult",
+    "PassesRetrieveProviderStatusResponse",
+    "PassesRetrieveProviderStatusResponseProviders1",
+    "PassesRetrieveProviderStatusResponseProviders1Issuance1",
+    "PassesRetrieveProviderStatusResponseProviders1Issuance2",
+    "PassesRetrieveProviderStatusResponseProviders1Reported",
+    "PassesRetrieveProviderStatusResponseProviders2",
+    "PassesRetrieveProviderStatusResponseProviders2Issuance1",
+    "PassesRetrieveProviderStatusResponseProviders2Issuance2",
+    "PassesRetrieveProviderStatusResponseProviders2Reported",
     "PassesRetrieveProviderStatusResult",
-    "PassesRetrieveProviderStatusResultProviders1",
-    "PassesRetrieveProviderStatusResultProviders1Issuance1",
-    "PassesRetrieveProviderStatusResultProviders1Issuance2",
-    "PassesRetrieveProviderStatusResultProviders1Reported",
-    "PassesRetrieveProviderStatusResultProviders2",
-    "PassesRetrieveProviderStatusResultProviders2Issuance1",
-    "PassesRetrieveProviderStatusResultProviders2Issuance2",
-    "PassesRetrieveProviderStatusResultProviders2Reported",
     "PassesRetrieveResult",
+    "PassesRotateCodeResponse",
     "PassesRotateCodeResult",
+    "PassesRotateLinkResponse",
     "PassesRotateLinkResult",
     "PassesSendEmailBody",
     "PassesSendEmailParams",
+    "PassesSendEmailResponse",
     "PassesSendEmailResult",
     "PassesStampsApplyBody",
     "PassesStampsApplyParams",
@@ -819,35 +1024,148 @@ __all__ = [
     "PassesUpdateBody",
     "PassesUpdateParams",
     "PassesUpdateResult",
+    "PassesVersionsDiffResponse",
+    "PassesVersionsDiffResponseChangesItem",
     "PassesVersionsDiffResult",
-    "PassesVersionsDiffResultChangesItem",
     "PassesVersionsRetrieveResult",
     "PassesVoidResult",
+    "PlatformAppleCallsListResponse",
+    "PlatformAppleCallsListResponseItemsItem",
+    "PlatformAuditEntriesListResponse",
+    "PlatformAuditEntriesListResponseItemsItem",
+    "PlatformMetricsRetrieveOverviewResponse",
+    "PlatformMetricsRetrieveOverviewResponseDirectory",
+    "PlatformMetricsRetrieveOverviewResponseLiveItem",
+    "PlatformMetricsRetrieveOverviewResponseRecentItem",
+    "PlatformMetricsRetrieveOverviewResponseSeries",
+    "PlatformMetricsRetrieveOverviewResponseSeriesDownloadsItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesEmailFailuresItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesEmailUnknownItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesEmailsItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesIssuedItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesPushFailuresItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesPushesItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesRefreshesItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesRegistrationsItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesScansItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesSignInsItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesSyncRunsItem",
+    "PlatformMetricsRetrieveOverviewResponseSeriesUpdatedItem",
+    "PlatformMetricsRetrieveOverviewResponseSetup",
+    "PlatformMetricsRetrieveOverviewResponseTotals",
     "PlatformOrgsCreateParams",
+    "PlatformOrgsDeleteResponse",
+    "PlatformOrgsEntitlementsRetrieveResponse",
+    "PlatformOrgsEntitlementsRetrieveResponseItemsItem",
+    "PlatformOrgsEntitlementsRetrieveResponsePresetsItem",
     "PlatformOrgsEntitlementsUpdateParams",
     "PlatformOrgsEntitlementsUpdateParamsOverridesValue",
+    "PlatformOrgsEntitlementsUpdateResponse",
+    "PlatformOrgsEntitlementsUpdateResponseItemsItem",
+    "PlatformOrgsEntitlementsUpdateResponsePresetsItem",
     "PlatformOrgsLegalHoldsCreateParams",
+    "PlatformOrgsLegalHoldsCreateResponse",
+    "PlatformOrgsLegalHoldsListResponse",
+    "PlatformOrgsLegalHoldsListResponseItemsItem",
+    "PlatformOrgsLegalHoldsReleaseResponse",
+    "PlatformOrgsListClosedResponse",
+    "PlatformOrgsListClosedResponseItemsItem",
+    "PlatformOrgsListResponse",
+    "PlatformOrgsListResponseItemsItem",
+    "PlatformOrgsListResponseItemsItemCounts",
+    "PlatformOrgsRetentionReceiptsDownloadResponse",
+    "PlatformOrgsRetentionReceiptsDownloadResponseReceipt",
+    "PlatformOrgsRetentionReceiptsListResponse",
+    "PlatformOrgsRetentionReceiptsListResponseItemsItem",
+    "PlatformOrgsRetrieveResponse",
+    "PlatformOrgsRetrieveResponseCounts",
     "PlatformOrgsSetStatusParams",
+    "PlatformOrgsSetStatusResponse",
+    "PlatformOrgsSetStatusResponseCounts",
     "PlatformOrgsWalletEnrollmentsHoldParams",
+    "PlatformOrgsWalletEnrollmentsHoldResponse",
+    "PlatformOrgsWalletEnrollmentsReleaseResponse",
+    "PlatformRetentionReceiptsDownloadResponse",
+    "PlatformRetentionReceiptsDownloadResponseReceipt",
+    "PlatformRetentionReceiptsListResponse",
+    "PlatformRetentionReceiptsListResponseItemsItem",
+    "PlatformSettingsRetrieveImpactResponse",
+    "PlatformStatusListIncidentsResponse",
+    "PlatformStatusListIncidentsResponseItemsItem",
+    "PlatformStatusListWorkflowRunsResponse",
+    "PlatformStatusListWorkflowRunsResponseItemsItem",
     "PlatformStatusOpenIncidentParams",
+    "PlatformStatusOpenIncidentResponse",
+    "PlatformStatusResolveIncidentResponse",
+    "PlatformStatusRetrieveResponse",
+    "PlatformStatusRetrieveResponseBuild",
+    "PlatformStatusRetrieveResponseComponentsItem",
     "PlatformTemplatesAssignParams",
     "PlatformTemplatesShareParams",
     "PlatformUsersEmailsCreateParams",
+    "PlatformUsersEmailsCreateResponse",
+    "PlatformUsersEmailsCreateResponseEmailsItem",
+    "PlatformUsersEmailsCreateResponseIdentitiesItem",
+    "PlatformUsersEmailsCreateResponsePassesItem",
+    "PlatformUsersEmailsCreateResponseRecentAuditItem",
+    "PlatformUsersEmailsCreateResponseSessionsItem",
+    "PlatformUsersEmailsDeleteResponse",
+    "PlatformUsersEmailsDeleteResponseEmailsItem",
+    "PlatformUsersEmailsDeleteResponseIdentitiesItem",
+    "PlatformUsersEmailsDeleteResponsePassesItem",
+    "PlatformUsersEmailsDeleteResponseRecentAuditItem",
+    "PlatformUsersEmailsDeleteResponseSessionsItem",
+    "PlatformUsersEmailsMakePrimaryResponse",
+    "PlatformUsersEmailsMakePrimaryResponseEmailsItem",
+    "PlatformUsersEmailsMakePrimaryResponseIdentitiesItem",
+    "PlatformUsersEmailsMakePrimaryResponsePassesItem",
+    "PlatformUsersEmailsMakePrimaryResponseRecentAuditItem",
+    "PlatformUsersEmailsMakePrimaryResponseSessionsItem",
+    "PlatformUsersListResponse",
+    "PlatformUsersListResponseItemsItem",
+    "PlatformUsersRetrieveResponse",
+    "PlatformUsersRetrieveResponseEmailsItem",
+    "PlatformUsersRetrieveResponseIdentitiesItem",
+    "PlatformUsersRetrieveResponsePassesItem",
+    "PlatformUsersRetrieveResponseRecentAuditItem",
+    "PlatformUsersRetrieveResponseSessionsItem",
+    "PlatformUsersSessionsRevokeAllResponse",
+    "PlatformUsersSessionsRevokeResponse",
     "PlatformUsersUpdateParams",
+    "PlatformUsersUpdateResponse",
     "PlatformWalletAccountsGoogleManagedCompleteParams",
+    "PlatformWalletAccountsGoogleManagedCompleteResponse",
     "PlatformWalletAccountsGoogleManagedCreateParams",
+    "PlatformWalletAccountsGoogleManagedCreateResponse",
+    "PlatformWalletCredentialsChecksCreateResponse",
+    "PlatformWalletCredentialsChecksRetrieveResponse",
+    "PlatformWalletCredentialsListResponse",
+    "PlatformWalletCredentialsListResponseItemsItem",
+    "PlatformWalletCredentialsMigrateResponse",
     "PlatformWalletCredentialsResolveMigrationParams",
+    "PlatformWalletCredentialsResolveMigrationResponse",
+    "PlatformWalletCredentialsRetrieveMigrationResponse",
+    "PlatformWalletCredentialsRetrieveMigrationResponseItemsItem",
+    "PlatformWalletCredentialsRetrieveMigrationResponseItemsItemIdentitySharedItem",
     "PlatformWalletCredentialsRevokeParams",
+    "PlatformWalletCredentialsRevokeResponse",
+    "PlatformWalletCredentialsRotateKeyResponse",
     "PlatformWalletCredentialsSetSamsungCardParams",
+    "PlatformWalletCredentialsSetSamsungCardResponse",
     "PlatformWalletCredentialsUpsertParams",
     "PlatformWalletCredentialsUpsertParams1",
     "PlatformWalletCredentialsUpsertParams1Credentials",
     "PlatformWalletCredentialsUpsertParams2",
     "PlatformWalletCredentialsUpsertParams2Credentials",
+    "PlatformWalletCredentialsUpsertResponse",
+    "PlatformWalletEnrollmentsListResponse",
+    "PlatformWalletEnrollmentsListResponseItemsItem",
     "PrintJobsCreateBody",
     "PrintJobsCreateParams",
+    "PrintJobsCreateResponse",
+    "PrintJobsCreateResponseSkippedItem",
     "PrintJobsCreateResult",
-    "PrintJobsCreateResultSkippedItem",
+    "PrintJobsRetrieveResponse",
     "PrintJobsRetrieveResult",
     "Problem",
     "ProblemIssuesItem",
@@ -890,25 +1208,34 @@ __all__ = [
     "ReleaseResponse2StateReview2",
     "ReleaseTemplate",
     "ReleaseTemplateExpected",
+    "RetentionReceiptsDownloadResponse",
+    "RetentionReceiptsDownloadResponseReceipt",
+    "RetentionReceiptsListResponse",
+    "RetentionReceiptsListResponseItemsItem",
     "ReviewResult",
     "ReviewTemplate",
+    "RollCallsCreateResponse",
+    "RollCallsCreateResponseCounts",
+    "RollCallsCreateResponsePeopleItem",
     "RollCallsCreateResult",
-    "RollCallsCreateResultCounts",
-    "RollCallsCreateResultPeopleItem",
+    "RollCallsEndResponse",
+    "RollCallsEndResponseCounts",
+    "RollCallsEndResponsePeopleItem",
     "RollCallsEndResult",
-    "RollCallsEndResultCounts",
-    "RollCallsEndResultPeopleItem",
     "RollCallsMarkBody",
     "RollCallsMarkParams",
     "RollCallsMarkParamsMarksItem",
+    "RollCallsMarkResponse",
+    "RollCallsMarkResponseCounts",
+    "RollCallsMarkResponsePeopleItem",
+    "RollCallsMarkResponseResultsItem",
     "RollCallsMarkResult",
-    "RollCallsMarkResultCounts",
-    "RollCallsMarkResultPeopleItem",
-    "RollCallsMarkResultResultsItem",
+    "RollCallsRetrieveOpenResponse",
     "RollCallsRetrieveOpenResult",
+    "RollCallsRetrieveResponse",
+    "RollCallsRetrieveResponseCounts",
+    "RollCallsRetrieveResponsePeopleItem",
     "RollCallsRetrieveResult",
-    "RollCallsRetrieveResultCounts",
-    "RollCallsRetrieveResultPeopleItem",
     "ScanBatchResult",
     "ScanBatchResultItemsItem",
     "ScanBranding",
@@ -920,6 +1247,7 @@ __all__ = [
     "ScanCounts",
     "ScanCountsByTypeItem",
     "ScanDeviceCapabilities",
+    "ScanDisplaysPreviewResponse",
     "ScanEvent",
     "ScanEventsArchiveResult",
     "ScanEventsAttachScannersBody",
@@ -928,6 +1256,10 @@ __all__ = [
     "ScanEventsCreateBody",
     "ScanEventsCreateParams",
     "ScanEventsCreateResult",
+    "ScanEventsListInsideResponse",
+    "ScanEventsListInsideResponseItemsItem",
+    "ScanEventsListInsideResponsePlacesItem",
+    "ScanEventsListResponse",
     "ScanEventsListResult",
     "ScanEventsMarkOutParams",
     "ScanEventsRetrieveResult",
@@ -993,31 +1325,45 @@ __all__ = [
     "ScanSetupsCreateParamsSettings",
     "ScanSetupsCreateParamsSettingsCheckIn",
     "ScanSetupsCreateParamsSettingsTags",
+    "ScanSetupsCreateResponse",
+    "ScanSetupsCreateResponseAccepts1",
+    "ScanSetupsCreateResponseAccepts2",
+    "ScanSetupsCreateResponseAccepts3",
     "ScanSetupsListItem",
     "ScanSetupsListItemAccepts1",
     "ScanSetupsListItemAccepts2",
     "ScanSetupsListItemAccepts3",
+    "ScanSetupsListResponse",
+    "ScanSetupsListResponseItemsItem",
+    "ScanSetupsListResponseItemsItemAccepts1",
+    "ScanSetupsListResponseItemsItemAccepts2",
+    "ScanSetupsListResponseItemsItemAccepts3",
     "ScanSetupsListResult",
-    "ScanSetupsListResultItemsItem",
-    "ScanSetupsListResultItemsItemAccepts1",
-    "ScanSetupsListResultItemsItemAccepts2",
-    "ScanSetupsListResultItemsItemAccepts3",
+    "ScanSetupsRetrieveResponse",
+    "ScanSetupsRetrieveResponseAccepts1",
+    "ScanSetupsRetrieveResponseAccepts2",
+    "ScanSetupsRetrieveResponseAccepts3",
     "ScanSetupsRetrieveResult",
-    "ScanSetupsRetrieveResultAccepts1",
-    "ScanSetupsRetrieveResultAccepts2",
-    "ScanSetupsRetrieveResultAccepts3",
     "ScanSetupsUpdateParams",
     "ScanSetupsUpdateParamsAccepts1",
     "ScanSetupsUpdateParamsAccepts2",
     "ScanSetupsUpdateParamsSettings",
     "ScanSetupsUpdateParamsSettingsCheckIn",
     "ScanSetupsUpdateParamsSettingsTags",
+    "ScanSetupsUpdateResponse",
+    "ScanSetupsUpdateResponseAccepts1",
+    "ScanSetupsUpdateResponseAccepts2",
+    "ScanSetupsUpdateResponseAccepts3",
     "ScanStaff",
     "ScanStaffCreateBody",
     "ScanStaffCreateParams",
+    "ScanStaffCreateResponse",
     "ScanStaffCreateResult",
+    "ScanStaffListResponse",
     "ScanStaffListResult",
+    "ScanStaffResetPinResponse",
     "ScanStaffResetPinResult",
+    "ScanStaffResetUntaggedResponse",
     "ScanStaffUpdateBody",
     "ScanStaffUpdateParams",
     "ScanStaffUpdateResult",
@@ -1032,31 +1378,40 @@ __all__ = [
     "ScanSummaryOverridesLatestItem",
     "ScanTemplateRef",
     "ScanWorkspace",
+    "ScanZonesArchiveResponse",
+    "ScanZonesArchiveResponseCheckedAtItem",
+    "ScanZonesArchiveResponsePlansItem",
     "ScanZonesArchiveResult",
-    "ScanZonesArchiveResultCheckedAtItem",
-    "ScanZonesArchiveResultPlansItem",
     "ScanZonesCreateBody",
     "ScanZonesCreateParams",
+    "ScanZonesCreateResponse",
+    "ScanZonesCreateResponseCheckedAtItem",
+    "ScanZonesCreateResponsePlansItem",
     "ScanZonesCreateResult",
-    "ScanZonesCreateResultCheckedAtItem",
-    "ScanZonesCreateResultPlansItem",
+    "ScanZonesListInsideResponse",
+    "ScanZonesListInsideResponseItemsItem",
+    "ScanZonesListInsideResponsePlacesItem",
     "ScanZonesListItem",
     "ScanZonesListItemCheckedAtItem",
     "ScanZonesListItemPlansItem",
+    "ScanZonesListResponse",
+    "ScanZonesListResponseItemsItem",
+    "ScanZonesListResponseItemsItemCheckedAtItem",
+    "ScanZonesListResponseItemsItemPlansItem",
     "ScanZonesListResult",
-    "ScanZonesListResultItemsItem",
-    "ScanZonesListResultItemsItemCheckedAtItem",
-    "ScanZonesListResultItemsItemPlansItem",
     "ScanZonesMarkOutParams",
+    "ScanZonesResetVisitsResponse",
     "ScanZonesResetVisitsResult",
+    "ScanZonesRestoreResponse",
+    "ScanZonesRestoreResponseCheckedAtItem",
+    "ScanZonesRestoreResponsePlansItem",
     "ScanZonesRestoreResult",
-    "ScanZonesRestoreResultCheckedAtItem",
-    "ScanZonesRestoreResultPlansItem",
     "ScanZonesUpdateBody",
     "ScanZonesUpdateParams",
+    "ScanZonesUpdateResponse",
+    "ScanZonesUpdateResponseCheckedAtItem",
+    "ScanZonesUpdateResponsePlansItem",
     "ScanZonesUpdateResult",
-    "ScanZonesUpdateResultCheckedAtItem",
-    "ScanZonesUpdateResultPlansItem",
     "Scanner",
     "ScannerAccepts1",
     "ScannerAccepts2",
@@ -1072,9 +1427,14 @@ __all__ = [
     "ScannersCreateParamsSettingsCheckIn",
     "ScannersCreateParamsSettingsTags",
     "ScannersCreateResult",
+    "ScannersCreateSamplePassResponse",
+    "ScannersListResponse",
+    "ScannersPairingCreateResponse",
     "ScannersPairingCreateResult",
+    "ScannersPairingRetrieveResponse",
     "ScannersPairingRetrieveResult",
     "ScannersRevokeResult",
+    "ScannersRotateTokenResponse",
     "ScannersRotateTokenResult",
     "ScannersSetModeBody",
     "ScannersSetModeParams",
@@ -1124,6 +1484,7 @@ __all__ = [
     "ScanningSessionsDevicesUpdateParams",
     "ScanningSessionsDevicesUpdateParamsOverrides",
     "ScanningSessionsDevicesUpdateResult",
+    "ScanningSessionsListResponse",
     "ScanningSessionsListResult",
     "ScanningSessionsOverrideHoursBody",
     "ScanningSessionsOverrideHoursParams",
@@ -1162,15 +1523,27 @@ __all__ = [
     "ScanningSessionsUpdateParamsSettingsCustomer",
     "ScanningSessionsUpdateParamsSettingsTags",
     "ScanningSessionsUpdateResult",
+    "ScansListResponse",
+    "ScansListResponse1",
+    "ScansListResponse2",
     "ScansListResult",
-    "ScansListResult1",
-    "ScansListResult2",
     "ScansUndoParams",
     "SessionActivity",
     "SessionActivityItemsItem",
     "SettingsReplyToConfirmParams",
+    "SettingsReplyToConfirmResponse",
     "SettingsReplyToResendConfirmationParams",
+    "SettingsReplyToResendConfirmationResponse",
+    "SettingsReplyToRetrieveResponse",
+    "SettingsRetrieveResponse",
+    "SettingsRetrieveResponseItemsItem",
+    "SettingsRetrieveResponseOidc",
+    "SettingsRetrieveResponseReleased",
     "SettingsUpdateParams",
+    "SettingsUpdateResponse",
+    "SettingsUpdateResponseItemsItem",
+    "SettingsUpdateResponseOidc",
+    "SettingsUpdateResponseReleased",
     "StagedBrandAsset",
     "TemplateDetail",
     "TemplateDetailRelease",
@@ -1181,9 +1554,12 @@ __all__ = [
     "TemplateDetailVersionsItemReport",
     "TemplateDetailVersionsItemReportIssuesItem",
     "TemplateDetailVersionsItemReportIssuesItemFix",
+    "TemplateImportsCreateResponse",
     "TemplateImportsListItem",
+    "TemplateImportsListResponse",
+    "TemplateImportsListResponseItemsItem",
     "TemplateImportsListResult",
-    "TemplateImportsListResultItemsItem",
+    "TemplateImportsRetrieveResponse",
     "TemplateImportsRetrieveResult",
     "TemplateInputSchema",
     "TemplatePage",
@@ -1205,73 +1581,110 @@ __all__ = [
     "TemplateSummary",
     "TemplatesCandidatesApproveBody",
     "TemplatesCandidatesApproveParams",
+    "TemplatesCandidatesApproveResponse",
     "TemplatesCandidatesApproveResult",
     "TemplatesCandidatesCreateBody",
     "TemplatesCandidatesCreateParams",
+    "TemplatesCandidatesCreateResponse",
+    "TemplatesCandidatesCreateResponseApprovalsItem",
     "TemplatesCandidatesCreateResult",
-    "TemplatesCandidatesCreateResultApprovalsItem",
     "TemplatesCandidatesListItem",
     "TemplatesCandidatesListItemApprovalsItem",
+    "TemplatesCandidatesListResponse",
+    "TemplatesCandidatesListResponseItemsItem",
+    "TemplatesCandidatesListResponseItemsItemApprovalsItem",
     "TemplatesCandidatesListResult",
-    "TemplatesCandidatesListResultItemsItem",
-    "TemplatesCandidatesListResultItemsItemApprovalsItem",
     "TemplatesCandidatesPromoteParams",
+    "TemplatesCandidatesPromoteResponse",
+    "TemplatesCandidatesPromoteResponseApprovalsItem",
+    "TemplatesChannelsListRunsResponse",
+    "TemplatesChannelsListRunsResponseItem",
     "TemplatesChannelsListRunsResult",
-    "TemplatesChannelsListRunsResultItem",
     "TemplatesChannelsResetPassesParams",
+    "TemplatesChannelsResetPassesResponse",
+    "TemplatesChannelsResetPassesResponseOverrides",
+    "TemplatesChannelsRetrieveResponse",
+    "TemplatesChannelsRetrieveResponseDefaults",
+    "TemplatesChannelsRetrieveResponseEffective",
+    "TemplatesChannelsRetrieveResponseEffectiveApple",
+    "TemplatesChannelsRetrieveResponseEffectiveGoogle",
+    "TemplatesChannelsRetrieveResponseEffectiveMobile",
+    "TemplatesChannelsRetrieveResponseEffectiveNfc",
+    "TemplatesChannelsRetrieveResponseEffectivePaper",
+    "TemplatesChannelsRetrieveResponseEffectiveSamsung",
+    "TemplatesChannelsRetrieveResponseLevels",
+    "TemplatesChannelsRetrieveResponseLevelsAppleItem",
+    "TemplatesChannelsRetrieveResponseLevelsGoogleItem",
+    "TemplatesChannelsRetrieveResponseLevelsMobileItem",
+    "TemplatesChannelsRetrieveResponseLevelsNfcItem",
+    "TemplatesChannelsRetrieveResponseLevelsPaperItem",
+    "TemplatesChannelsRetrieveResponseLevelsSamsungItem",
+    "TemplatesChannelsRetrieveResponseOverrides",
     "TemplatesChannelsRetrieveResult",
-    "TemplatesChannelsRetrieveResultDefaults",
-    "TemplatesChannelsRetrieveResultEffective",
-    "TemplatesChannelsRetrieveResultEffectiveApple",
-    "TemplatesChannelsRetrieveResultEffectiveGoogle",
-    "TemplatesChannelsRetrieveResultEffectiveMobile",
-    "TemplatesChannelsRetrieveResultEffectiveNfc",
-    "TemplatesChannelsRetrieveResultEffectivePaper",
-    "TemplatesChannelsRetrieveResultEffectiveSamsung",
-    "TemplatesChannelsRetrieveResultLevels",
-    "TemplatesChannelsRetrieveResultLevelsAppleItem",
-    "TemplatesChannelsRetrieveResultLevelsGoogleItem",
-    "TemplatesChannelsRetrieveResultLevelsMobileItem",
-    "TemplatesChannelsRetrieveResultLevelsNfcItem",
-    "TemplatesChannelsRetrieveResultLevelsPaperItem",
-    "TemplatesChannelsRetrieveResultLevelsSamsungItem",
-    "TemplatesChannelsRetrieveResultOverrides",
     "TemplatesChannelsUpdateParams",
     "TemplatesChannelsUpdateParamsChannels",
+    "TemplatesChannelsUpdateResponse",
+    "TemplatesChannelsUpdateResponseDefaults",
+    "TemplatesChannelsUpdateResponseEffective",
+    "TemplatesChannelsUpdateResponseEffectiveApple",
+    "TemplatesChannelsUpdateResponseEffectiveGoogle",
+    "TemplatesChannelsUpdateResponseEffectiveMobile",
+    "TemplatesChannelsUpdateResponseEffectiveNfc",
+    "TemplatesChannelsUpdateResponseEffectivePaper",
+    "TemplatesChannelsUpdateResponseEffectiveSamsung",
+    "TemplatesChannelsUpdateResponseImpactItem",
+    "TemplatesChannelsUpdateResponseLevels",
+    "TemplatesChannelsUpdateResponseLevelsAppleItem",
+    "TemplatesChannelsUpdateResponseLevelsGoogleItem",
+    "TemplatesChannelsUpdateResponseLevelsMobileItem",
+    "TemplatesChannelsUpdateResponseLevelsNfcItem",
+    "TemplatesChannelsUpdateResponseLevelsPaperItem",
+    "TemplatesChannelsUpdateResponseLevelsSamsungItem",
+    "TemplatesChannelsUpdateResponseOverrides",
+    "TemplatesChannelsUpdateResponseWindowsItem",
     "TemplatesCloneParams",
+    "TemplatesDeleteResponse",
     "TemplatesListEligibleItem",
+    "TemplatesListEligibleResponse",
+    "TemplatesListEligibleResponseItemsItem",
     "TemplatesListEligibleResult",
-    "TemplatesListEligibleResultItemsItem",
+    "TemplatesListPreviewsResponse",
+    "TemplatesListPreviewsResponseItemsItem",
+    "TemplatesListPreviewsResponseItemsItemWarningsItem",
+    "TemplatesListPreviewsResponseItemsItemWarningsItemFix",
     "TemplatesListPreviewsResult",
-    "TemplatesListPreviewsResultItemsItem",
-    "TemplatesListPreviewsResultItemsItemWarningsItem",
-    "TemplatesListPreviewsResultItemsItemWarningsItemFix",
     "TemplatesListResult",
     "TemplatesPreviewBody",
     "TemplatesPreviewParams",
+    "TemplatesPreviewResponse",
+    "TemplatesPreviewResponseWarningsItem",
+    "TemplatesPreviewResponseWarningsItemFix",
     "TemplatesPreviewResult",
-    "TemplatesPreviewResultWarningsItem",
-    "TemplatesPreviewResultWarningsItemFix",
     "TemplatesReleasesCreateBody",
     "TemplatesReleasesCreateParams",
+    "TemplatesReleasesCreateResponse",
     "TemplatesReleasesCreateResult",
     "TemplatesReleasesListItem",
+    "TemplatesReleasesListResponse",
+    "TemplatesReleasesListResponseItemsItem",
     "TemplatesReleasesListResult",
-    "TemplatesReleasesListResultItemsItem",
     "TemplatesReleasesReleaseBody",
     "TemplatesReleasesReleaseResult",
+    "TemplatesReleasesRetrieveImpactResponse",
+    "TemplatesReleasesRetrieveImpactResponseDiff",
+    "TemplatesReleasesRetrieveImpactResponseDiffBarcodeItem",
+    "TemplatesReleasesRetrieveImpactResponseDiffColorsItem",
+    "TemplatesReleasesRetrieveImpactResponseDiffFieldsItem",
+    "TemplatesReleasesRetrieveImpactResponseDiffImagesItem",
+    "TemplatesReleasesRetrieveImpactResponseMore",
+    "TemplatesReleasesRetrieveImpactResponsePasses",
     "TemplatesReleasesRetrieveImpactResult",
-    "TemplatesReleasesRetrieveImpactResultDiff",
-    "TemplatesReleasesRetrieveImpactResultDiffBarcodeItem",
-    "TemplatesReleasesRetrieveImpactResultDiffColorsItem",
-    "TemplatesReleasesRetrieveImpactResultDiffFieldsItem",
-    "TemplatesReleasesRetrieveImpactResultDiffImagesItem",
-    "TemplatesReleasesRetrieveImpactResultMore",
-    "TemplatesReleasesRetrieveImpactResultPasses",
     "TemplatesReleasesRollbackParams",
+    "TemplatesReleasesRollbackResponse",
     "TemplatesRetrieveInputSchemaResult",
     "TemplatesRetrieveResult",
     "TemplatesRetrieveRolloutResult",
+    "TemplatesRetrieveStampsImpactResponse",
     "TemplatesRetrieveStampsImpactResult",
     "TemplatesReviewsApproveBody",
     "TemplatesReviewsApproveResult",
@@ -1281,18 +1694,25 @@ __all__ = [
     "TemplatesReviewsRequestResult",
     "TemplatesSetUpScanningBody",
     "TemplatesSetUpScanningParams",
+    "TemplatesSetUpScanningResponse",
+    "TemplatesSetUpScanningResponseEventsItem",
+    "TemplatesSetUpScanningResponseSession",
     "TemplatesSetUpScanningResult",
-    "TemplatesSetUpScanningResultEventsItem",
-    "TemplatesSetUpScanningResultSession",
     "TemplatesVersionsCreateFromManifestParams",
     "TemplatesVersionsCreateParams",
     "TemplatesVersionsCreateParamsAssetsItem1",
     "TemplatesVersionsCreateParamsAssetsItem2",
+    "TemplatesVersionsCreateResponse",
+    "TemplatesVersionsCreateResponseAssetsItem",
+    "TemplatesVersionsCreateResponseReport",
+    "TemplatesVersionsCreateResponseReportIssuesItem",
+    "TemplatesVersionsCreateResponseReportIssuesItemFix",
+    "TemplatesVersionsRetrieveResponse",
+    "TemplatesVersionsRetrieveResponseAssetsItem",
+    "TemplatesVersionsRetrieveResponseReport",
+    "TemplatesVersionsRetrieveResponseReportIssuesItem",
+    "TemplatesVersionsRetrieveResponseReportIssuesItemFix",
     "TemplatesVersionsRetrieveResult",
-    "TemplatesVersionsRetrieveResultAssetsItem",
-    "TemplatesVersionsRetrieveResultReport",
-    "TemplatesVersionsRetrieveResultReportIssuesItem",
-    "TemplatesVersionsRetrieveResultReportIssuesItemFix",
     "TerminalActBody",
     "TerminalActParams",
     "TerminalActParamsApproval",
@@ -1320,39 +1740,89 @@ __all__ = [
     "TestEmailsListResult",
     "TestEmailsRetrieveResult",
     "UnknownWebhookEvent",
+    "VisitorsCancelResponse",
     "VisitorsCancelResult",
+    "VisitorsCheckOutResponse",
     "VisitorsCheckOutResult",
     "VisitorsCreateBody",
     "VisitorsCreateParams",
+    "VisitorsCreateResponse",
     "VisitorsCreateResult",
     "VisitorsListHostsItem",
+    "VisitorsListHostsResponse",
+    "VisitorsListHostsResponseItemsItem",
     "VisitorsListHostsResult",
-    "VisitorsListHostsResultItemsItem",
     "VisitorsListItem",
+    "VisitorsListResponse",
+    "VisitorsListResponseItemsItem",
     "VisitorsListResult",
-    "VisitorsListResultItemsItem",
     "VisitorsSendHostEmailBody",
     "VisitorsSendHostEmailParams",
+    "VisitorsSendHostEmailResponse",
     "VisitorsSendHostEmailResult",
     "WalletAccountsGoogleManagedCreateParams",
+    "WalletAccountsGoogleManagedCreateResponse",
+    "WalletAccountsGoogleManagedRetrieveResponse",
     "WalletAccountsGoogleSharedCreateParams",
+    "WalletAccountsGoogleSharedCreateResponse",
+    "WalletAccountsGoogleSharedCreateResponseCredential",
+    "WalletAccountsGoogleSharedRetrieveResponse",
+    "WalletCredentialsChecksCreateResponse",
+    "WalletCredentialsChecksRetrieveResponse",
+    "WalletCredentialsListResponse",
+    "WalletCredentialsListResponseItemsItem",
     "WalletCredentialsRevokeParams",
+    "WalletCredentialsRevokeResponse",
     "WalletCredentialsUpsertParams",
     "WalletCredentialsUpsertParams1",
     "WalletCredentialsUpsertParams1Credentials",
     "WalletCredentialsUpsertParams2",
     "WalletCredentialsUpsertParams2Credentials",
+    "WalletCredentialsUpsertResponse",
     "WalletEnrollmentsDisableParams",
+    "WalletEnrollmentsDisableResponse",
+    "WalletEnrollmentsDisableResponseIssuance1",
+    "WalletEnrollmentsDisableResponseIssuance2",
+    "WalletEnrollmentsDisableResponsePrerequisites",
     "WalletEnrollmentsEnableParams",
+    "WalletEnrollmentsEnableResponse",
+    "WalletEnrollmentsEnableResponseIssuance1",
+    "WalletEnrollmentsEnableResponseIssuance2",
+    "WalletEnrollmentsEnableResponsePrerequisites",
+    "WalletEnrollmentsListResponse",
+    "WalletEnrollmentsListResponseItemsItem",
+    "WalletEnrollmentsListResponseItemsItemIssuance1",
+    "WalletEnrollmentsListResponseItemsItemIssuance2",
+    "WalletEnrollmentsListResponseItemsItemPrerequisites",
     "WalletEnrollmentsRevokeParams",
+    "WalletEnrollmentsRevokeResponse",
+    "WalletEnrollmentsRevokeResponseIssuance1",
+    "WalletEnrollmentsRevokeResponseIssuance2",
+    "WalletEnrollmentsRevokeResponsePrerequisites",
     "WalletEnrollmentsUpdateParams",
+    "WalletEnrollmentsUpdateResponse",
+    "WalletEnrollmentsUpdateResponseIssuance1",
+    "WalletEnrollmentsUpdateResponseIssuance2",
+    "WalletEnrollmentsUpdateResponsePrerequisites",
+    "WalletIdentitiesListResponse",
+    "WalletIdentitiesListResponseItemsItem",
+    "WalletProviderAccountsRetrieveResponse",
+    "WalletProviderAccountsRetrieveResponseIssuance1",
+    "WalletProviderAccountsRetrieveResponseIssuance2",
     "WalletProviderAccountsRevokeParams",
+    "WalletProviderAccountsRevokeResponse",
+    "WalletProviderAccountsRevokeResponseIssuance1",
+    "WalletProviderAccountsRevokeResponseIssuance2",
     "WalletProviderAccountsUpsertParams",
     "WalletProviderAccountsUpsertParams1",
     "WalletProviderAccountsUpsertParams1Credentials",
     "WalletProviderAccountsUpsertParams2",
     "WalletProviderAccountsUpsertParams2Credentials",
+    "WalletProviderAccountsUpsertResponse",
+    "WalletProviderAccountsUpsertResponseIssuance1",
+    "WalletProviderAccountsUpsertResponseIssuance2",
     "WalletProviderAccountsVerifyParams",
+    "WalletProviderAccountsVerifyResponse",
     "WalletReissue",
     "WebhookCapture",
     "WebhookCapturePage",
@@ -1370,12 +1840,15 @@ __all__ = [
     "WebhookEndpointsCreateBody",
     "WebhookEndpointsCreateParams",
     "WebhookEndpointsCreateResult",
+    "WebhookEndpointsDeleteResponse",
     "WebhookEndpointsDeleteResult",
     "WebhookEndpointsDeliveriesBulkReplayBody",
     "WebhookEndpointsDeliveriesBulkReplayParams",
+    "WebhookEndpointsDeliveriesBulkReplayResponse",
     "WebhookEndpointsDeliveriesBulkReplayResult",
     "WebhookEndpointsDeliveriesListItem",
     "WebhookEndpointsDeliveriesListResult",
+    "WebhookEndpointsDeliveriesReplayResponse",
     "WebhookEndpointsDeliveriesReplayResult",
     "WebhookEndpointsDeliveriesRetrieveResult",
     "WebhookEndpointsEnsureCaptureBody",
@@ -1385,6 +1858,7 @@ __all__ = [
     "WebhookEndpointsRetrieveResult",
     "WebhookEndpointsRotateSecretBody",
     "WebhookEndpointsRotateSecretParams",
+    "WebhookEndpointsRotateSecretResponse",
     "WebhookEndpointsRotateSecretResult",
     "WebhookEndpointsSendTestBody",
     "WebhookEndpointsSendTestParams",
@@ -1613,12 +2087,12 @@ class ApiKeysListItem(_Model):
     parentKeyId: str | None = None
     rotatedFrom: str | None = None
 
-class ApiKeysListResult(_Model):
-    items: _List[ApiKeysListResultItemsItem]
+class ApiKeysListResponse(_Model):
+    items: _List[ApiKeysListResponseItemsItem]
     nextCursor: str | None
     revokedCount: int | None = None
 
-class ApiKeysListResultItemsItem(_Model):
+class ApiKeysListResponseItemsItem(_Model):
     id: str
     orgId: str | None
     name: str
@@ -1646,7 +2120,7 @@ class ApiKeysRetireParams(_Model):
     orgId: str | None
     retireAt: int
 
-class ApiKeysRevokeResult(_Model):
+class ApiKeysRevokeResponse(_Model):
     ok: _Literal[True]
 
 class ApiKeysRotateCurrentParams(_Model):
@@ -1655,6 +2129,24 @@ class ApiKeysRotateCurrentParams(_Model):
 class ApiKeysRotateParams(_Model):
     orgId: str | None
     overlapHours: int | None = None
+
+class AuditEntriesListResponse(_Model):
+    items: _List[AuditEntriesListResponseItemsItem]
+    nextCursor: str | None
+
+class AuditEntriesListResponseItemsItem(_Model):
+    id: int
+    at: int
+    orgId: str | None
+    actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
+    actorId: str | None
+    actorLabel: str | None = None
+    action: str
+    targetType: str | None
+    targetId: str | None
+    targetLabel: str | None = None
+    requestId: str | None
+    detail: _Any | None = None
 
 class BlueprintsCheckUseParams(_Model):
     orgId: str
@@ -1674,6 +2166,43 @@ class BlueprintsCheckUseParamsVersionAssetsItem1(_Model):
 class BlueprintsCheckUseParamsVersionAssetsItem2(_Model):
     name: str
     upload: str
+
+class BlueprintsCheckUseResponse(_Model):
+    saved: bool
+    version: str | None
+    created: bool
+    displayOnly: bool
+    behindTip: bool | None = None
+    report: BlueprintsCheckUseResponseReport
+    assets: _List[BlueprintsCheckUseResponseAssetsItem]
+    passJson: _Dict[str, _Any] | None
+    template: TemplateDetail | None
+
+class BlueprintsCheckUseResponseAssetsItem(_Model):
+    name: str
+    slot: str
+    scale: _Literal[1] | _Literal[2] | _Literal[3]
+    locale: str | None = None
+    size: int
+    sha1: str
+    crc32: int
+    width: int | None = None
+    height: int | None = None
+
+class BlueprintsCheckUseResponseReport(_Model):
+    ok: bool
+    issues: _List[BlueprintsCheckUseResponseReportIssuesItem]
+
+class BlueprintsCheckUseResponseReportIssuesItem(_Model):
+    severity: _Literal["error", "warning", "info"] | str
+    code: str
+    message: str
+    path: str | None = None
+    params: _Dict[str, str] | None = None
+    fix: BlueprintsCheckUseResponseReportIssuesItemFix | None = None
+
+class BlueprintsCheckUseResponseReportIssuesItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
 
 class BlueprintsUseParams(_Model):
     orgId: str
@@ -1699,7 +2228,7 @@ class BrandPassImagesUploadParams(_Model):
     x2: str | None = None
     configRevision: int | None = None
 
-class BrandRetrieveResult(_Model):
+class BrandRetrieveResponse(_Model):
     orgId: str
     name: str
     accent: str | None
@@ -1832,28 +2361,28 @@ class BroadcastsCountRecipientsParamsTargetScan1(_Model):
 class BroadcastsCountRecipientsParamsTargetScan2(_Model):
     noScanDays: int
 
-class BroadcastsCountRecipientsResult(_Model):
+class BroadcastsCountRecipientsResponse(_Model):
     targeted: int
     onDevice: int
     overBudget: int
     limit: int
-    samples: _List[BroadcastsCountRecipientsResultSamplesItem]
+    samples: _List[BroadcastsCountRecipientsResponseSamplesItem]
     unchanged: int
-    blocked: _List[BroadcastsCountRecipientsResultBlockedItem]
+    blocked: _List[BroadcastsCountRecipientsResponseBlockedItem]
     notified: int
     silent: int
     estimated: bool | None = None
 
-class BroadcastsCountRecipientsResultBlockedItem(_Model):
+class BroadcastsCountRecipientsResponseBlockedItem(_Model):
     code: str
     count: int
 
-class BroadcastsCountRecipientsResultSamplesItem(_Model):
+class BroadcastsCountRecipientsResponseSamplesItem(_Model):
     passId: str
     title: str | None
-    changes: _List[BroadcastsCountRecipientsResultSamplesItemChangesItem]
+    changes: _List[BroadcastsCountRecipientsResponseSamplesItemChangesItem]
 
-class BroadcastsCountRecipientsResultSamplesItemChangesItem(_Model):
+class BroadcastsCountRecipientsResponseSamplesItemChangesItem(_Model):
     key: str
     label: str
     from_: str | None = _Field(alias="from")
@@ -1910,7 +2439,7 @@ class BroadcastsCreateParamsTargetScan1(_Model):
 class BroadcastsCreateParamsTargetScan2(_Model):
     noScanDays: int
 
-class BroadcastsListResult(_Model):
+class BroadcastsListResponse(_Model):
     items: _List[Broadcast]
     nextCursor: str | None
 
@@ -1921,11 +2450,11 @@ class BroadcastsRecipientsListItem(_Model):
     outcome: _Literal["updated", "unchanged", "failed"] | str
     silent: bool
 
-class BroadcastsRecipientsListResult(_Model):
-    items: _List[BroadcastsRecipientsListResultItemsItem]
+class BroadcastsRecipientsListResponse(_Model):
+    items: _List[BroadcastsRecipientsListResponseItemsItem]
     nextCursor: str | None
 
-class BroadcastsRecipientsListResultItemsItem(_Model):
+class BroadcastsRecipientsListResponseItemsItem(_Model):
     passId: str
     title: str | None
     holderEmail: str | None
@@ -2017,24 +2546,24 @@ class BundlesCreateParams(_Model):
     holderEmail: str | None = None
     sendEmail: bool | None = None
 
-class BundlesCreateResult(_Model):
+class BundlesCreateResponse(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     name: str
     url: str | None
     holderEmail: str | None
-    passes: _List[BundlesCreateResultPassesItem]
+    passes: _List[BundlesCreateResponsePassesItem]
     createdAt: int
     linkRotatedAt: int | None
 
-class BundlesCreateResultPassesItem(_Model):
+class BundlesCreateResponsePassesItem(_Model):
     id: str
     title: str
     status: _Literal["active", "voided"] | str
     removedAt: int | None = None
 
-class BundlesDeleteResult(_Model):
+class BundlesDeleteResponse(_Model):
     ok: _Literal[True]
 
 class BundlesListItem(_Model):
@@ -2054,56 +2583,56 @@ class BundlesListItemPassesItem(_Model):
     status: _Literal["active", "voided"] | str
     removedAt: int | None = None
 
-class BundlesListResult(_Model):
-    items: _List[BundlesListResultItemsItem]
+class BundlesListResponse(_Model):
+    items: _List[BundlesListResponseItemsItem]
     nextCursor: str | None
 
-class BundlesListResultItemsItem(_Model):
+class BundlesListResponseItemsItem(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     name: str
     url: str | None
     holderEmail: str | None
-    passes: _List[BundlesListResultItemsItemPassesItem]
+    passes: _List[BundlesListResponseItemsItemPassesItem]
     createdAt: int
     linkRotatedAt: int | None
 
-class BundlesListResultItemsItemPassesItem(_Model):
+class BundlesListResponseItemsItemPassesItem(_Model):
     id: str
     title: str
     status: _Literal["active", "voided"] | str
     removedAt: int | None = None
 
-class BundlesRetrieveResult(_Model):
+class BundlesRetrieveResponse(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     name: str
     url: str | None
     holderEmail: str | None
-    passes: _List[BundlesRetrieveResultPassesItem]
+    passes: _List[BundlesRetrieveResponsePassesItem]
     createdAt: int
     linkRotatedAt: int | None
 
-class BundlesRetrieveResultPassesItem(_Model):
+class BundlesRetrieveResponsePassesItem(_Model):
     id: str
     title: str
     status: _Literal["active", "voided"] | str
     removedAt: int | None = None
 
-class BundlesRotateLinkResult(_Model):
+class BundlesRotateLinkResponse(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     name: str
     url: str | None
     holderEmail: str | None
-    passes: _List[BundlesRotateLinkResultPassesItem]
+    passes: _List[BundlesRotateLinkResponsePassesItem]
     createdAt: int
     linkRotatedAt: int | None
 
-class BundlesRotateLinkResultPassesItem(_Model):
+class BundlesRotateLinkResponsePassesItem(_Model):
     id: str
     title: str
     status: _Literal["active", "voided"] | str
@@ -2112,7 +2641,7 @@ class BundlesRotateLinkResultPassesItem(_Model):
 class BundlesSendEmailParams(_Model):
     to: str | None = None
 
-class BundlesSendEmailResult(_Model):
+class BundlesSendEmailResponse(_Model):
     ok: _Literal[True]
 
 class CaptureEndpointCreated(_Model):
@@ -2224,7 +2753,7 @@ class ConnectionsCreateParamsVoidWhenItem(_Model):
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
-class ConnectionsCreateResult(_Model):
+class ConnectionsCreateResponse(_Model):
     id: str
     orgId: str
     connectorType: str
@@ -2233,13 +2762,13 @@ class ConnectionsCreateResult(_Model):
     config: _Dict[str, _Any]
     hasCredential: bool
     hasWebhookSecret: bool
-    mapping: _Dict[str, ConnectionsCreateResultMappingValue] | None
+    mapping: _Dict[str, ConnectionsCreateResponseMappingValue] | None
     defaultTemplateId: str | None
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
     onMissing: _Literal["keep", "flag", "void"] | str
-    voidWhen: _List[ConnectionsCreateResultVoidWhenItem]
+    voidWhen: _List[ConnectionsCreateResponseVoidWhenItem]
     webhookPrevUntil: int | None
     mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
@@ -2259,20 +2788,20 @@ class ConnectionsCreateResult(_Model):
     updatedAt: int
     webhookSecret: str | None = None
 
-class ConnectionsCreateResultMappingValue(_Model):
+class ConnectionsCreateResponseMappingValue(_Model):
     from_: str = _Field(alias="from")
-    transform: ConnectionsCreateResultMappingValueTransform | None = None
+    transform: ConnectionsCreateResponseMappingValueTransform | None = None
 
-class ConnectionsCreateResultMappingValueTransform(_Model):
+class ConnectionsCreateResponseMappingValueTransform(_Model):
     kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
-class ConnectionsCreateResultVoidWhenItem(_Model):
+class ConnectionsCreateResponseVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
-class ConnectionsDeleteResult(_Model):
+class ConnectionsDeleteResponse(_Model):
     ok: _Literal[True]
 
 class ConnectionsListItem(_Model):
@@ -2323,11 +2852,11 @@ class ConnectionsListItemVoidWhenItem(_Model):
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
-class ConnectionsListResult(_Model):
-    items: _List[ConnectionsListResultItemsItem]
+class ConnectionsListResponse(_Model):
+    items: _List[ConnectionsListResponseItemsItem]
     nextCursor: str | None
 
-class ConnectionsListResultItemsItem(_Model):
+class ConnectionsListResponseItemsItem(_Model):
     id: str
     orgId: str
     connectorType: str
@@ -2336,13 +2865,13 @@ class ConnectionsListResultItemsItem(_Model):
     config: _Dict[str, _Any]
     hasCredential: bool
     hasWebhookSecret: bool
-    mapping: _Dict[str, ConnectionsListResultItemsItemMappingValue] | None
+    mapping: _Dict[str, ConnectionsListResponseItemsItemMappingValue] | None
     defaultTemplateId: str | None
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
     onMissing: _Literal["keep", "flag", "void"] | str
-    voidWhen: _List[ConnectionsListResultItemsItemVoidWhenItem]
+    voidWhen: _List[ConnectionsListResponseItemsItemVoidWhenItem]
     webhookPrevUntil: int | None
     mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
@@ -2362,20 +2891,20 @@ class ConnectionsListResultItemsItem(_Model):
     updatedAt: int
     passCount: int | None = None
 
-class ConnectionsListResultItemsItemMappingValue(_Model):
+class ConnectionsListResponseItemsItemMappingValue(_Model):
     from_: str = _Field(alias="from")
-    transform: ConnectionsListResultItemsItemMappingValueTransform | None = None
+    transform: ConnectionsListResponseItemsItemMappingValueTransform | None = None
 
-class ConnectionsListResultItemsItemMappingValueTransform(_Model):
+class ConnectionsListResponseItemsItemMappingValueTransform(_Model):
     kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
-class ConnectionsListResultItemsItemVoidWhenItem(_Model):
+class ConnectionsListResponseItemsItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
-class ConnectionsRetrieveResult(_Model):
+class ConnectionsRetrieveResponse(_Model):
     id: str
     orgId: str
     connectorType: str
@@ -2384,13 +2913,13 @@ class ConnectionsRetrieveResult(_Model):
     config: _Dict[str, _Any]
     hasCredential: bool
     hasWebhookSecret: bool
-    mapping: _Dict[str, ConnectionsRetrieveResultMappingValue] | None
+    mapping: _Dict[str, ConnectionsRetrieveResponseMappingValue] | None
     defaultTemplateId: str | None
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
     onMissing: _Literal["keep", "flag", "void"] | str
-    voidWhen: _List[ConnectionsRetrieveResultVoidWhenItem]
+    voidWhen: _List[ConnectionsRetrieveResponseVoidWhenItem]
     webhookPrevUntil: int | None
     mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
@@ -2408,24 +2937,24 @@ class ConnectionsRetrieveResult(_Model):
     webhookUrl: str | None
     createdAt: int
     updatedAt: int
-    runs: _List[ConnectionsRetrieveResultRunsItem]
-    metrics: ConnectionsRetrieveResultMetrics
+    runs: _List[ConnectionsRetrieveResponseRunsItem]
+    metrics: ConnectionsRetrieveResponseMetrics
 
-class ConnectionsRetrieveResultMappingValue(_Model):
+class ConnectionsRetrieveResponseMappingValue(_Model):
     from_: str = _Field(alias="from")
-    transform: ConnectionsRetrieveResultMappingValueTransform | None = None
+    transform: ConnectionsRetrieveResponseMappingValueTransform | None = None
 
-class ConnectionsRetrieveResultMappingValueTransform(_Model):
+class ConnectionsRetrieveResponseMappingValueTransform(_Model):
     kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
-class ConnectionsRetrieveResultMetrics(_Model):
+class ConnectionsRetrieveResponseMetrics(_Model):
     p50Ms: float | None
     p95Ms: float | None
     errorRate: float | None
     passCount: int
 
-class ConnectionsRetrieveResultRunsItem(_Model):
+class ConnectionsRetrieveResponseRunsItem(_Model):
     id: str
     trigger: _Literal["schedule", "webhook", "admin", "user", "test", "backfill"] | str
     startedAt: int
@@ -2441,17 +2970,17 @@ class ConnectionsRetrieveResultRunsItem(_Model):
     httpStatus: int | None
     durationMs: int | None
 
-class ConnectionsRetrieveResultVoidWhenItem(_Model):
+class ConnectionsRetrieveResponseVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
-class ConnectionsRetrieveSummaryResult(_Model):
+class ConnectionsRetrieveSummaryResponse(_Model):
     total: int
     byHealth: _Dict[str, int]
-    attention: _List[ConnectionsRetrieveSummaryResultAttentionItem]
+    attention: _List[ConnectionsRetrieveSummaryResponseAttentionItem]
 
-class ConnectionsRetrieveSummaryResultAttentionItem(_Model):
+class ConnectionsRetrieveSummaryResponseAttentionItem(_Model):
     id: str
     orgId: str
     name: str
@@ -2459,7 +2988,7 @@ class ConnectionsRetrieveSummaryResultAttentionItem(_Model):
     lastErrorCode: str | None
     lastErrorAt: int | None
 
-class ConnectionsRevokePreviousWebhookSecretResult(_Model):
+class ConnectionsRevokePreviousWebhookSecretResponse(_Model):
     id: str
     orgId: str
     connectorType: str
@@ -2468,13 +2997,13 @@ class ConnectionsRevokePreviousWebhookSecretResult(_Model):
     config: _Dict[str, _Any]
     hasCredential: bool
     hasWebhookSecret: bool
-    mapping: _Dict[str, ConnectionsRevokePreviousWebhookSecretResultMappingValue] | None
+    mapping: _Dict[str, ConnectionsRevokePreviousWebhookSecretResponseMappingValue] | None
     defaultTemplateId: str | None
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
     onMissing: _Literal["keep", "flag", "void"] | str
-    voidWhen: _List[ConnectionsRevokePreviousWebhookSecretResultVoidWhenItem]
+    voidWhen: _List[ConnectionsRevokePreviousWebhookSecretResponseVoidWhenItem]
     webhookPrevUntil: int | None
     mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
@@ -2493,20 +3022,20 @@ class ConnectionsRevokePreviousWebhookSecretResult(_Model):
     createdAt: int
     updatedAt: int
 
-class ConnectionsRevokePreviousWebhookSecretResultMappingValue(_Model):
+class ConnectionsRevokePreviousWebhookSecretResponseMappingValue(_Model):
     from_: str = _Field(alias="from")
-    transform: ConnectionsRevokePreviousWebhookSecretResultMappingValueTransform | None = None
+    transform: ConnectionsRevokePreviousWebhookSecretResponseMappingValueTransform | None = None
 
-class ConnectionsRevokePreviousWebhookSecretResultMappingValueTransform(_Model):
+class ConnectionsRevokePreviousWebhookSecretResponseMappingValueTransform(_Model):
     kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
-class ConnectionsRevokePreviousWebhookSecretResultVoidWhenItem(_Model):
+class ConnectionsRevokePreviousWebhookSecretResponseVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
-class ConnectionsRotateWebhookSecretResult(_Model):
+class ConnectionsRotateWebhookSecretResponse(_Model):
     id: str
     orgId: str
     connectorType: str
@@ -2515,13 +3044,13 @@ class ConnectionsRotateWebhookSecretResult(_Model):
     config: _Dict[str, _Any]
     hasCredential: bool
     hasWebhookSecret: bool
-    mapping: _Dict[str, ConnectionsRotateWebhookSecretResultMappingValue] | None
+    mapping: _Dict[str, ConnectionsRotateWebhookSecretResponseMappingValue] | None
     defaultTemplateId: str | None
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
     onMissing: _Literal["keep", "flag", "void"] | str
-    voidWhen: _List[ConnectionsRotateWebhookSecretResultVoidWhenItem]
+    voidWhen: _List[ConnectionsRotateWebhookSecretResponseVoidWhenItem]
     webhookPrevUntil: int | None
     mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
@@ -2541,15 +3070,15 @@ class ConnectionsRotateWebhookSecretResult(_Model):
     updatedAt: int
     webhookSecret: str | None = None
 
-class ConnectionsRotateWebhookSecretResultMappingValue(_Model):
+class ConnectionsRotateWebhookSecretResponseMappingValue(_Model):
     from_: str = _Field(alias="from")
-    transform: ConnectionsRotateWebhookSecretResultMappingValueTransform | None = None
+    transform: ConnectionsRotateWebhookSecretResponseMappingValueTransform | None = None
 
-class ConnectionsRotateWebhookSecretResultMappingValueTransform(_Model):
+class ConnectionsRotateWebhookSecretResponseMappingValueTransform(_Model):
     kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
-class ConnectionsRotateWebhookSecretResultVoidWhenItem(_Model):
+class ConnectionsRotateWebhookSecretResponseVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
@@ -2570,11 +3099,11 @@ class ConnectionsRunsListItem(_Model):
     httpStatus: int | None
     durationMs: int | None
 
-class ConnectionsRunsListResult(_Model):
-    items: _List[ConnectionsRunsListResultItemsItem]
+class ConnectionsRunsListResponse(_Model):
+    items: _List[ConnectionsRunsListResponseItemsItem]
     nextCursor: str | None
 
-class ConnectionsRunsListResultItemsItem(_Model):
+class ConnectionsRunsListResponseItemsItem(_Model):
     id: str
     trigger: _Literal["schedule", "webhook", "admin", "user", "test", "backfill"] | str
     startedAt: int
@@ -2590,7 +3119,7 @@ class ConnectionsRunsListResultItemsItem(_Model):
     httpStatus: int | None
     durationMs: int | None
 
-class ConnectionsSyncResult(_Model):
+class ConnectionsSyncResponse(_Model):
     runId: str
     workflowInstanceId: str
 
@@ -2617,30 +3146,30 @@ class ConnectionsTestConfigParamsVoidWhenItem(_Model):
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
-class ConnectionsTestConfigResult(_Model):
+class ConnectionsTestConfigResponse(_Model):
     ok: bool
     detail: str | None = None
     errorCode: str | None = None
     durationMs: int
-    sample: _List[ConnectionsTestConfigResultSampleItem] | None = None
+    sample: _List[ConnectionsTestConfigResponseSampleItem] | None = None
     records: int | None = None
-    counts: ConnectionsTestConfigResultCounts | None = None
+    counts: ConnectionsTestConfigResponseCounts | None = None
     releaseBlocked: str | None = None
-    window: ConnectionsTestConfigResultWindow | None = None
-    samples: _List[ConnectionsTestConfigResultSamplesItem] | None = None
-    columns: _List[ConnectionsTestConfigResultColumnsItem] | None = None
+    window: ConnectionsTestConfigResponseWindow | None = None
+    samples: _List[ConnectionsTestConfigResponseSamplesItem] | None = None
+    columns: _List[ConnectionsTestConfigResponseColumnsItem] | None = None
 
-class ConnectionsTestConfigResultColumnsItem(_Model):
+class ConnectionsTestConfigResponseColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
-    values: _List[ConnectionsTestConfigResultColumnsItemValuesItem]
+    values: _List[ConnectionsTestConfigResponseColumnsItemValuesItem]
 
-class ConnectionsTestConfigResultColumnsItemValuesItem(_Model):
+class ConnectionsTestConfigResponseColumnsItemValuesItem(_Model):
     value: str
     count: int
 
-class ConnectionsTestConfigResultCounts(_Model):
+class ConnectionsTestConfigResponseCounts(_Model):
     create: int
     update: int
     unchanged: int
@@ -2648,30 +3177,30 @@ class ConnectionsTestConfigResultCounts(_Model):
     errors: int
     waiting: int
 
-class ConnectionsTestConfigResultSampleItem(_Model):
+class ConnectionsTestConfigResponseSampleItem(_Model):
     pointer: str
     preview: str
 
-class ConnectionsTestConfigResultSamplesItem(_Model):
+class ConnectionsTestConfigResponseSamplesItem(_Model):
     ref: str
     action: _Literal["create", "update", "unchanged", "skipped", "error"] | str
     fields: _Dict[str, _Any]
     message: str | None = None
 
-class ConnectionsTestConfigResultWindow(_Model):
+class ConnectionsTestConfigResponseWindow(_Model):
     days: int
     limit: int
     since: int
     excluded: int
 
-class ConnectionsTestResult(_Model):
+class ConnectionsTestResponse(_Model):
     ok: bool
     detail: str | None = None
     errorCode: str | None = None
     durationMs: int
-    sample: _List[ConnectionsTestResultSampleItem] | None = None
+    sample: _List[ConnectionsTestResponseSampleItem] | None = None
 
-class ConnectionsTestResultSampleItem(_Model):
+class ConnectionsTestResponseSampleItem(_Model):
     pointer: str
     preview: str
 
@@ -2707,7 +3236,7 @@ class ConnectionsUpdateParamsVoidWhenItem(_Model):
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
-class ConnectionsUpdateResult(_Model):
+class ConnectionsUpdateResponse(_Model):
     id: str
     orgId: str
     connectorType: str
@@ -2716,13 +3245,13 @@ class ConnectionsUpdateResult(_Model):
     config: _Dict[str, _Any]
     hasCredential: bool
     hasWebhookSecret: bool
-    mapping: _Dict[str, ConnectionsUpdateResultMappingValue] | None
+    mapping: _Dict[str, ConnectionsUpdateResponseMappingValue] | None
     defaultTemplateId: str | None
     holderEmailField: str | None
     autoCreate: bool
     autoEmail: bool
     onMissing: _Literal["keep", "flag", "void"] | str
-    voidWhen: _List[ConnectionsUpdateResultVoidWhenItem]
+    voidWhen: _List[ConnectionsUpdateResponseVoidWhenItem]
     webhookPrevUntil: int | None
     mode: _Literal["poll", "webhook", "hybrid", "manual", "snapshot"] | str
     intervalSeconds: int | None
@@ -2742,15 +3271,15 @@ class ConnectionsUpdateResult(_Model):
     updatedAt: int
     webhookSecret: str | None = None
 
-class ConnectionsUpdateResultMappingValue(_Model):
+class ConnectionsUpdateResponseMappingValue(_Model):
     from_: str = _Field(alias="from")
-    transform: ConnectionsUpdateResultMappingValueTransform | None = None
+    transform: ConnectionsUpdateResponseMappingValueTransform | None = None
 
-class ConnectionsUpdateResultMappingValueTransform(_Model):
+class ConnectionsUpdateResponseMappingValueTransform(_Model):
     kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
-class ConnectionsUpdateResultVoidWhenItem(_Model):
+class ConnectionsUpdateResponseVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
@@ -2766,11 +3295,11 @@ class ConnectionsWebhookFailuresListItem(_Model):
     receivedAt: float
     updatedAt: float
 
-class ConnectionsWebhookFailuresListResult(_Model):
-    items: _List[ConnectionsWebhookFailuresListResultItemsItem]
+class ConnectionsWebhookFailuresListResponse(_Model):
+    items: _List[ConnectionsWebhookFailuresListResponseItemsItem]
     nextCursor: str | None
 
-class ConnectionsWebhookFailuresListResultItemsItem(_Model):
+class ConnectionsWebhookFailuresListResponseItemsItem(_Model):
     id: str
     eventRef: str
     generation: int
@@ -2781,10 +3310,10 @@ class ConnectionsWebhookFailuresListResultItemsItem(_Model):
     receivedAt: float
     updatedAt: float
 
-class ConnectionsWebhookFailuresReplayResult(_Model):
+class ConnectionsWebhookFailuresReplayResponse(_Model):
     ok: _Literal[True]
 
-class ConnectionsWebhookFailuresResolveResult(_Model):
+class ConnectionsWebhookFailuresResolveResponse(_Model):
     ok: _Literal[True]
     resolved: int
     state: _Literal["failed", "blocked", "resolved"] | str
@@ -2844,116 +3373,116 @@ class ConnectorsListItemRecipesItemVoidWhenItem(_Model):
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
-class ConnectorsListResult(_Model):
-    items: _List[ConnectorsListResultItemsItem]
+class ConnectorsListResponse(_Model):
+    items: _List[ConnectorsListResponseItemsItem]
     nextCursor: str | None
 
-class ConnectorsListResultItemsItem(_Model):
+class ConnectorsListResponseItemsItem(_Model):
     type: str
     version: int
     displayName: str
     description: str | None = None
-    capabilities: ConnectorsListResultItemsItemCapabilities
+    capabilities: ConnectorsListResponseItemsItemCapabilities
     configSchema: _Any | None = None
     secretSchema: _Any | None = None
-    outputFields: _Dict[str, ConnectorsListResultItemsItemOutputFieldsValue]
-    defaults: ConnectorsListResultItemsItemDefaults
-    recipes: _List[ConnectorsListResultItemsItemRecipesItem] | None = None
+    outputFields: _Dict[str, ConnectorsListResponseItemsItemOutputFieldsValue]
+    defaults: ConnectorsListResponseItemsItemDefaults
+    recipes: _List[ConnectorsListResponseItemsItemRecipesItem] | None = None
 
-class ConnectorsListResultItemsItemCapabilities(_Model):
+class ConnectorsListResponseItemsItemCapabilities(_Model):
     poll: bool
     delta: bool
     webhook: bool
     import_: bool = _Field(alias="import")
     snapshot: bool
 
-class ConnectorsListResultItemsItemDefaults(_Model):
+class ConnectorsListResponseItemsItemDefaults(_Model):
     intervalSeconds: int
     maxConcurrency: int
     requestsPerMinute: int
     timeoutMs: int
 
-class ConnectorsListResultItemsItemOutputFieldsValue(_Model):
+class ConnectorsListResponseItemsItemOutputFieldsValue(_Model):
     type: _Literal["string", "number", "boolean", "date"] | str
     description: str | None = None
 
-class ConnectorsListResultItemsItemRecipesItem(_Model):
+class ConnectorsListResponseItemsItemRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
     pasteSecret: bool
-    outputFields: _Dict[str, ConnectorsListResultItemsItemRecipesItemOutputFieldsValue]
-    mapping: _Dict[str, ConnectorsListResultItemsItemRecipesItemMappingValue]
+    outputFields: _Dict[str, ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue]
+    mapping: _Dict[str, ConnectorsListResponseItemsItemRecipesItemMappingValue]
     holderEmailField: str
-    voidWhen: _List[ConnectorsListResultItemsItemRecipesItemVoidWhenItem]
+    voidWhen: _List[ConnectorsListResponseItemsItemRecipesItemVoidWhenItem]
 
-class ConnectorsListResultItemsItemRecipesItemMappingValue(_Model):
+class ConnectorsListResponseItemsItemRecipesItemMappingValue(_Model):
     from_: str = _Field(alias="from")
-    transform: ConnectorsListResultItemsItemRecipesItemMappingValueTransform | None = None
+    transform: ConnectorsListResponseItemsItemRecipesItemMappingValueTransform | None = None
 
-class ConnectorsListResultItemsItemRecipesItemMappingValueTransform(_Model):
+class ConnectorsListResponseItemsItemRecipesItemMappingValueTransform(_Model):
     kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
-class ConnectorsListResultItemsItemRecipesItemOutputFieldsValue(_Model):
+class ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue(_Model):
     type: _Literal["string", "number", "boolean", "date"] | str
     description: str | None = None
 
-class ConnectorsListResultItemsItemRecipesItemVoidWhenItem(_Model):
+class ConnectorsListResponseItemsItemRecipesItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
 
-class ConnectorsRetrieveResult(_Model):
+class ConnectorsRetrieveResponse(_Model):
     type: str
     version: int
     displayName: str
     description: str | None = None
-    capabilities: ConnectorsRetrieveResultCapabilities
+    capabilities: ConnectorsRetrieveResponseCapabilities
     configSchema: _Any | None = None
     secretSchema: _Any | None = None
-    outputFields: _Dict[str, ConnectorsRetrieveResultOutputFieldsValue]
-    defaults: ConnectorsRetrieveResultDefaults
-    recipes: _List[ConnectorsRetrieveResultRecipesItem] | None = None
+    outputFields: _Dict[str, ConnectorsRetrieveResponseOutputFieldsValue]
+    defaults: ConnectorsRetrieveResponseDefaults
+    recipes: _List[ConnectorsRetrieveResponseRecipesItem] | None = None
 
-class ConnectorsRetrieveResultCapabilities(_Model):
+class ConnectorsRetrieveResponseCapabilities(_Model):
     poll: bool
     delta: bool
     webhook: bool
     import_: bool = _Field(alias="import")
     snapshot: bool
 
-class ConnectorsRetrieveResultDefaults(_Model):
+class ConnectorsRetrieveResponseDefaults(_Model):
     intervalSeconds: int
     maxConcurrency: int
     requestsPerMinute: int
     timeoutMs: int
 
-class ConnectorsRetrieveResultOutputFieldsValue(_Model):
+class ConnectorsRetrieveResponseOutputFieldsValue(_Model):
     type: _Literal["string", "number", "boolean", "date"] | str
     description: str | None = None
 
-class ConnectorsRetrieveResultRecipesItem(_Model):
+class ConnectorsRetrieveResponseRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
     pasteSecret: bool
-    outputFields: _Dict[str, ConnectorsRetrieveResultRecipesItemOutputFieldsValue]
-    mapping: _Dict[str, ConnectorsRetrieveResultRecipesItemMappingValue]
+    outputFields: _Dict[str, ConnectorsRetrieveResponseRecipesItemOutputFieldsValue]
+    mapping: _Dict[str, ConnectorsRetrieveResponseRecipesItemMappingValue]
     holderEmailField: str
-    voidWhen: _List[ConnectorsRetrieveResultRecipesItemVoidWhenItem]
+    voidWhen: _List[ConnectorsRetrieveResponseRecipesItemVoidWhenItem]
 
-class ConnectorsRetrieveResultRecipesItemMappingValue(_Model):
+class ConnectorsRetrieveResponseRecipesItemMappingValue(_Model):
     from_: str = _Field(alias="from")
-    transform: ConnectorsRetrieveResultRecipesItemMappingValueTransform | None = None
+    transform: ConnectorsRetrieveResponseRecipesItemMappingValueTransform | None = None
 
-class ConnectorsRetrieveResultRecipesItemMappingValueTransform(_Model):
+class ConnectorsRetrieveResponseRecipesItemMappingValueTransform(_Model):
     kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
-class ConnectorsRetrieveResultRecipesItemOutputFieldsValue(_Model):
+class ConnectorsRetrieveResponseRecipesItemOutputFieldsValue(_Model):
     type: _Literal["string", "number", "boolean", "date"] | str
     description: str | None = None
 
-class ConnectorsRetrieveResultRecipesItemVoidWhenItem(_Model):
+class ConnectorsRetrieveResponseRecipesItemVoidWhenItem(_Model):
     from_: str = _Field(alias="from")
     op: _Literal["in", "present"] | str
     values: _List[str | float | bool] | None = None
@@ -3018,10 +3547,10 @@ class CreatedScanningDeviceOverrides(_Model):
 class CurrentBulkRun(_Model):
     run: BulkRun | None = None
 
-class DeliveriesListResult(_Model):
-    items: _List[DeliveriesListResultItemsItem]
+class DeliveriesListResponse(_Model):
+    items: _List[DeliveriesListResponseItemsItem]
 
-class DeliveriesListResultItemsItem(_Model):
+class DeliveriesListResponseItemsItem(_Model):
     id: str
     kind: _Literal["push", "email"] | str
     state: _Literal["pending", "enqueued", "processing", "sent", "partial", "failed", "cancelled"] | str
@@ -3053,7 +3582,7 @@ class HoldersAssignParams(_Model):
     passId: str
     email: str
 
-class HoldersAssignResult(_Model):
+class HoldersAssignResponse(_Model):
     passId: str
     state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
@@ -3071,11 +3600,11 @@ class HoldersBulkAssignParamsItemsItem(_Model):
     passId: str
     email: str
 
-class HoldersBulkAssignResult(_Model):
-    items: _List[HoldersBulkAssignResultItemsItem]
+class HoldersBulkAssignResponse(_Model):
+    items: _List[HoldersBulkAssignResponseItemsItem]
     nextCursor: str | None
 
-class HoldersBulkAssignResultItemsItem(_Model):
+class HoldersBulkAssignResponseItemsItem(_Model):
     passId: str
     state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
@@ -3090,7 +3619,7 @@ class HoldersClearBlockParams(_Model):
     passId: str
     userId: str
 
-class HoldersClearBlockResult(_Model):
+class HoldersClearBlockResponse(_Model):
     ok: _Literal[True]
 
 class HoldersListItem(_Model):
@@ -3104,11 +3633,11 @@ class HoldersListItem(_Model):
     reissueRequired: bool
     updatedAt: int
 
-class HoldersListResult(_Model):
-    items: _List[HoldersListResultItemsItem]
+class HoldersListResponse(_Model):
+    items: _List[HoldersListResponseItemsItem]
     nextCursor: str | None
 
-class HoldersListResultItemsItem(_Model):
+class HoldersListResponseItemsItem(_Model):
     passId: str
     state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
@@ -3126,7 +3655,7 @@ class HoldersOffboardParams(_Model):
     tags: _Literal["spare", "lost"] | str | None = None
     dryRun: bool | None = None
 
-class HoldersOffboardResult(_Model):
+class HoldersOffboardResponse(_Model):
     dryRun: bool
     holders: int
     passes: int
@@ -3136,7 +3665,7 @@ class HoldersReassignParams(_Model):
     passId: str
     email: str | None
 
-class HoldersReassignResult(_Model):
+class HoldersReassignResponse(_Model):
     passId: str
     state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
@@ -3147,7 +3676,7 @@ class HoldersReassignResult(_Model):
     reissueRequired: bool
     updatedAt: int
 
-class HoldersRetrieveResult(_Model):
+class HoldersRetrieveResponse(_Model):
     passId: str
     state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
@@ -3161,7 +3690,7 @@ class HoldersRetrieveResult(_Model):
 class HoldersUnassignParams(_Model):
     passId: str
 
-class HoldersUnassignResult(_Model):
+class HoldersUnassignResponse(_Model):
     passId: str
     state: _Literal["unassigned", "waiting", "owned"] | str
     email: str | None
@@ -3172,10 +3701,46 @@ class HoldersUnassignResult(_Model):
     reissueRequired: bool
     updatedAt: int
 
+class IdentitiesCertificatesListResponse(_Model):
+    items: _List[IdentitiesCertificatesListResponseItemsItem]
+
+class IdentitiesCertificatesListResponseItemsItem(_Model):
+    id: str
+    state: _Literal["pending", "active", "superseded", "revoked", "failed"] | str
+    origin: _Literal["upload", "asc", "csr", "env"] | str
+    certSha256: str | None
+    notBefore: int | None
+    notAfter: int | None
+    createdAt: int
+    activatedAt: int | None
+    endedAt: int | None
+
 class IdentitiesCertificatesRevokeParams(_Model):
     certificateId: str
     reason: _Literal["compromised"] | str
     confirm: str
+
+class IdentitiesCertificatesRevokeResponse(_Model):
+    id: str
+    orgId: str | None
+    kind: _Literal["provision", "rotate", "revoke"] | str
+    targetType: _Literal["identity", "org", "wallet_credential"] | str
+    targetId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    attempt: int
+    waitingFor: str | None
+    errorCode: str | None
+    createdAt: int
+    updatedAt: int
+    finishedAt: int | None
+
+class IdentitiesCheckApnsResponse(_Model):
+    health: _Literal["healthy", "failing", "inconclusive", "unavailable"] | str
+    status: int
+    reason: str | None
+    checkedAt: int
+    method: _Literal["certificate", "key", "none"] | str | None = None
 
 class IdentitiesCreateParams(_Model):
     orgId: str | None = None
@@ -3186,15 +3751,318 @@ class IdentitiesCreateParams(_Model):
     pkcs12Password: str | None = None
     nfcEnabled: bool | None = None
 
+class IdentitiesCreateResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[IdentitiesCreateResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class IdentitiesCreateResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
+class IdentitiesDeleteResponse(_Model):
+    ok: _Literal[True]
+
+class IdentitiesListResponse1(_Model):
+    items: _List[IdentitiesListResponse1ItemsItem]
+    nextCursor: str | None
+
+class IdentitiesListResponse1ItemsItem(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[IdentitiesListResponse1ItemsItemNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class IdentitiesListResponse1ItemsItemNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
+class IdentitiesListResponse2(_Model):
+    items: _List[IdentitiesListResponse2ItemsItem]
+    nextCursor: str | None
+
+class IdentitiesListResponse2ItemsItem(_Model):
+    id: str
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsAvailable: bool
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+
+class IdentitiesPushKeyDeleteResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[IdentitiesPushKeyDeleteResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class IdentitiesPushKeyDeleteResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
 class IdentitiesPushKeyUploadParams(_Model):
     keyId: str
     p8: str
+
+class IdentitiesPushKeyUploadResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[IdentitiesPushKeyUploadResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class IdentitiesPushKeyUploadResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
+class IdentitiesRenewResponse(_Model):
+    id: str
+    orgId: str | None
+    kind: _Literal["provision", "rotate", "revoke"] | str
+    targetType: _Literal["identity", "org", "wallet_credential"] | str
+    targetId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    attempt: int
+    waitingFor: str | None
+    errorCode: str | None
+    createdAt: int
+    updatedAt: int
+    finishedAt: int | None
+
+class IdentitiesRetrieveResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[IdentitiesRetrieveResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class IdentitiesRetrieveResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
 
 class IdentitiesRotateParams(_Model):
     certificatePem: str | None = None
     privateKeyPem: str | None = None
     pkcs12Base64: str | None = None
     pkcs12Password: str | None = None
+
+class IdentitiesRotateResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[IdentitiesRotateResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class IdentitiesRotateResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
 
 class IdentitiesUpdateParams(_Model):
     label: str | None = None
@@ -3204,12 +4072,182 @@ class IdentitiesUpdateParams(_Model):
     rotation: _Literal["auto", "manual"] | str | None = None
     issuing: bool | None = None
 
+class IdentitiesUpdateResponse(_Model):
+    id: str
+    orgId: str | None
+    label: str
+    passTypeIdentifier: str
+    teamIdentifier: str
+    source: _Literal["env", "db"] | str
+    certSha256: str | None
+    certSubject: str | None
+    certSerial: str | None
+    notBefore: int | None
+    notAfter: int | None
+    daysRemaining: int | None
+    apnsBinding: str | None
+    apnsAvailable: bool
+    pushMethod: _Literal["certificate", "key", "none"] | str | None = None
+    pushKey: _Dict[str, _Any] | None = None
+    apnsHealth: _Literal["unknown", "healthy", "failing"] | str
+    apnsCheckedAt: int | None = None
+    apnsReason: str | None = None
+    passCount: int | None = None
+    nfcEnabled: bool
+    nfcKeys: _List[IdentitiesUpdateResponseNfcKeysItem] | None = None
+    isDefault: bool
+    createdAt: int
+    kind: _Literal["platform", "managed", "own"] | str | None = None
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str | None = None
+    rotation: _Literal["auto", "csr", "manual"] | str | None = None
+    issuing: bool | None = None
+    nextRotationAt: int | None = None
+    handle: str | None = None
+
+class IdentitiesUpdateResponseNfcKeysItem(_Model):
+    id: str
+    identityId: str
+    orgId: str
+    keyId: str
+    state: _Literal["active", "retiring", "retired"] | str
+    createdAt: int
+    activatedAt: int
+    retiredAt: int | None
+    passCount: int
+    passesLeft: int | None
+
+class IdentityRunsCancelResponse(_Model):
+    id: str
+    orgId: str | None
+    kind: _Literal["provision", "rotate", "revoke"] | str
+    targetType: _Literal["identity", "org", "wallet_credential"] | str
+    targetId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    attempt: int
+    waitingFor: str | None
+    errorCode: str | None
+    createdAt: int
+    updatedAt: int
+    finishedAt: int | None
+
+class IdentityRunsListResponse(_Model):
+    items: _List[IdentityRunsListResponseItemsItem]
+    nextCursor: str | None
+
+class IdentityRunsListResponseItemsItem(_Model):
+    id: str
+    orgId: str | None
+    kind: _Literal["provision", "rotate", "revoke"] | str
+    targetType: _Literal["identity", "org", "wallet_credential"] | str
+    targetId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    attempt: int
+    waitingFor: str | None
+    errorCode: str | None
+    createdAt: int
+    updatedAt: int
+    finishedAt: int | None
+
+class IdentityRunsRetrieveResponse(_Model):
+    id: str
+    orgId: str | None
+    kind: _Literal["provision", "rotate", "revoke"] | str
+    targetType: _Literal["identity", "org", "wallet_credential"] | str
+    targetId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    attempt: int
+    waitingFor: str | None
+    errorCode: str | None
+    createdAt: int
+    updatedAt: int
+    finishedAt: int | None
+
+class IdentityRunsRetryResponse(_Model):
+    id: str
+    orgId: str | None
+    kind: _Literal["provision", "rotate", "revoke"] | str
+    targetType: _Literal["identity", "org", "wallet_credential"] | str
+    targetId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    attempt: int
+    waitingFor: str | None
+    errorCode: str | None
+    createdAt: int
+    updatedAt: int
+    finishedAt: int | None
+
 class IdentityRunsStartManagedParams(_Model):
     handle: str | None = None
+
+class IdentityRunsStartManagedResponse(_Model):
+    id: str
+    orgId: str | None
+    kind: _Literal["provision", "rotate", "revoke"] | str
+    targetType: _Literal["identity", "org", "wallet_credential"] | str
+    targetId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    attempt: int
+    waitingFor: str | None
+    errorCode: str | None
+    createdAt: int
+    updatedAt: int
+    finishedAt: int | None
 
 class InvitationsCreateParams(_Model):
     email: str
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+
+class InvitationsCreateResponse(_Model):
+    id: str
+    orgId: str
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    createdAt: int
+    expiresAt: int
+    revokedAt: int | None
+    acceptedAt: int | None
+
+class InvitationsListResponse(_Model):
+    items: _List[InvitationsListResponseItemsItem]
+    nextCursor: str | None
+
+class InvitationsListResponseItemsItem(_Model):
+    id: str
+    orgId: str
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    createdAt: int
+    expiresAt: int
+    revokedAt: int | None
+    acceptedAt: int | None
+
+class InvitationsRevokeResponse(_Model):
+    ok: _Literal[True]
+
+class JoinLinksRetrieveResponse(_Model):
+    link: _Dict[str, _Any] | None
+    ready: bool
+    issues: _List[JoinLinksRetrieveResponseIssuesItem]
+
+class JoinLinksRetrieveResponseIssuesItem(_Model):
+    code: _Literal["no_release", "barcode_input", "input_needed", "archived"] | str
+    input: str | None = None
+    label: str | None = None
+
+class JoinLinksRotateResponse(_Model):
+    link: _Dict[str, _Any] | None
+    ready: bool
+    issues: _List[JoinLinksRotateResponseIssuesItem]
+
+class JoinLinksRotateResponseIssuesItem(_Model):
+    code: _Literal["no_release", "barcode_input", "input_needed", "archived"] | str
+    input: str | None = None
+    label: str | None = None
 
 class JoinLinksUpsertParams(_Model):
     enabled: bool | None = None
@@ -3218,9 +4256,63 @@ class JoinLinksUpsertParams(_Model):
     dailyLimit: int | None = None
     revision: int
 
+class JoinLinksUpsertResponse(_Model):
+    link: _Dict[str, _Any] | None
+    ready: bool
+    issues: _List[JoinLinksUpsertResponseIssuesItem]
+
+class JoinLinksUpsertResponseIssuesItem(_Model):
+    code: _Literal["no_release", "barcode_input", "input_needed", "archived"] | str
+    input: str | None = None
+    label: str | None = None
+
 class LegalHoldsCreateParams(_Model):
     passId: str | None = None
     reason: str
+
+class LegalHoldsCreateResponse(_Model):
+    ok: _Literal[True]
+
+class LegalHoldsListResponse(_Model):
+    items: _List[LegalHoldsListResponseItemsItem]
+    nextCursor: str | None
+
+class LegalHoldsListResponseItemsItem(_Model):
+    id: str
+    passId: str | None
+    passLabel: str | None
+    placedByKind: _Literal["org", "platform"] | str
+    placedByLabel: str
+    reason: str | None
+    createdAt: int
+    releasedAt: int | None
+    releasedByLabel: str | None
+    canRelease: bool
+
+class LegalHoldsReleaseResponse(_Model):
+    ok: _Literal[True]
+
+class MembershipsListResponse(_Model):
+    items: _List[MembershipsListResponseItemsItem]
+    nextCursor: str | None
+
+class MembershipsListResponseItemsItem(_Model):
+    id: str
+    orgId: str
+    orgName: str
+    orgSlug: str
+    personal: bool | None = None
+    testOnly: bool | None = None
+    userId: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    capabilities: _List[_Literal["org:read", "org:manage", "members:read", "members:manage", "integrations:read", "integrations:manage", "templates:read", "templates:author", "templates:review", "templates:publish", "passes:read", "passes:operate", "messages:read", "messages:manage", "scanning:read", "scanning:manage", "audit:read"] | str]
+    createdAt: int
+    revokedAt: int | None
+    userName: str | None
+    userEmail: str | None
+
+class MembershipsRevokeResponse(_Model):
+    ok: _Literal[True]
 
 class MessageRulesCountDueParams(_Model):
     orgId: str
@@ -3264,12 +4356,12 @@ class MessageRulesCountDueParamsOffset(_Model):
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
 
-class MessageRulesCountDueResult(_Model):
-    days: _List[MessageRulesCountDueResultDaysItem]
+class MessageRulesCountDueResponse(_Model):
+    days: _List[MessageRulesCountDueResponseDaysItem]
     total: int
     atLimit: int
 
-class MessageRulesCountDueResultDaysItem(_Model):
+class MessageRulesCountDueResponseDaysItem(_Model):
     date: str
     count: int
 
@@ -3314,15 +4406,15 @@ class MessageRulesCreateParamsOffset(_Model):
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
 
-class MessageRulesCreateResult(_Model):
+class MessageRulesCreateResponse(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
-    match: _List[MessageRulesCreateResultMatchItem1 | MessageRulesCreateResultMatchItem2 | MessageRulesCreateResultMatchItem3] | None = None
-    anchor: MessageRulesCreateResultAnchor1 | MessageRulesCreateResultAnchor2
-    offset: MessageRulesCreateResultOffset
+    match: _List[MessageRulesCreateResponseMatchItem1 | MessageRulesCreateResponseMatchItem2 | MessageRulesCreateResponseMatchItem3] | None = None
+    anchor: MessageRulesCreateResponseAnchor1 | MessageRulesCreateResponseAnchor2
+    offset: MessageRulesCreateResponseOffset
     yearly: bool
     sendAt: str
     timeZone: str
@@ -3338,34 +4430,34 @@ class MessageRulesCreateResult(_Model):
     updatedAt: int
     version: int
 
-class MessageRulesCreateResultAnchor1(_Model):
+class MessageRulesCreateResponseAnchor1(_Model):
     kind: _Literal["input"] | str
     input: str
 
-class MessageRulesCreateResultAnchor2(_Model):
+class MessageRulesCreateResponseAnchor2(_Model):
     kind: _Literal["lastScan"] | str
 
-class MessageRulesCreateResultMatchItem1(_Model):
+class MessageRulesCreateResponseMatchItem1(_Model):
     input: str
     values: _List[str]
 
-class MessageRulesCreateResultMatchItem2(_Model):
+class MessageRulesCreateResponseMatchItem2(_Model):
     input: str
     min: float | None = None
     max: float | None = None
 
-class MessageRulesCreateResultMatchItem3(_Model):
+class MessageRulesCreateResponseMatchItem3(_Model):
     input: str
     from_: str | None = _Field(default=None, alias="from")
     to: str | None = None
     timeZone: str
 
-class MessageRulesCreateResultOffset(_Model):
+class MessageRulesCreateResponseOffset(_Model):
     amount: int
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
 
-class MessageRulesDeleteResult(_Model):
+class MessageRulesDeleteResponse(_Model):
     ok: _Literal[True]
 
 class MessageRulesListItem(_Model):
@@ -3419,19 +4511,19 @@ class MessageRulesListItemOffset(_Model):
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
 
-class MessageRulesListResult(_Model):
-    items: _List[MessageRulesListResultItemsItem]
+class MessageRulesListResponse(_Model):
+    items: _List[MessageRulesListResponseItemsItem]
     nextCursor: str | None
 
-class MessageRulesListResultItemsItem(_Model):
+class MessageRulesListResponseItemsItem(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
-    match: _List[MessageRulesListResultItemsItemMatchItem1 | MessageRulesListResultItemsItemMatchItem2 | MessageRulesListResultItemsItemMatchItem3] | None = None
-    anchor: MessageRulesListResultItemsItemAnchor1 | MessageRulesListResultItemsItemAnchor2
-    offset: MessageRulesListResultItemsItemOffset
+    match: _List[MessageRulesListResponseItemsItemMatchItem1 | MessageRulesListResponseItemsItemMatchItem2 | MessageRulesListResponseItemsItemMatchItem3] | None = None
+    anchor: MessageRulesListResponseItemsItemAnchor1 | MessageRulesListResponseItemsItemAnchor2
+    offset: MessageRulesListResponseItemsItemOffset
     yearly: bool
     sendAt: str
     timeZone: str
@@ -3447,42 +4539,42 @@ class MessageRulesListResultItemsItem(_Model):
     updatedAt: int
     version: int
 
-class MessageRulesListResultItemsItemAnchor1(_Model):
+class MessageRulesListResponseItemsItemAnchor1(_Model):
     kind: _Literal["input"] | str
     input: str
 
-class MessageRulesListResultItemsItemAnchor2(_Model):
+class MessageRulesListResponseItemsItemAnchor2(_Model):
     kind: _Literal["lastScan"] | str
 
-class MessageRulesListResultItemsItemMatchItem1(_Model):
+class MessageRulesListResponseItemsItemMatchItem1(_Model):
     input: str
     values: _List[str]
 
-class MessageRulesListResultItemsItemMatchItem2(_Model):
+class MessageRulesListResponseItemsItemMatchItem2(_Model):
     input: str
     min: float | None = None
     max: float | None = None
 
-class MessageRulesListResultItemsItemMatchItem3(_Model):
+class MessageRulesListResponseItemsItemMatchItem3(_Model):
     input: str
     from_: str | None = _Field(default=None, alias="from")
     to: str | None = None
     timeZone: str
 
-class MessageRulesListResultItemsItemOffset(_Model):
+class MessageRulesListResponseItemsItemOffset(_Model):
     amount: int
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
 
-class MessageRulesPauseResult(_Model):
+class MessageRulesPauseResponse(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
-    match: _List[MessageRulesPauseResultMatchItem1 | MessageRulesPauseResultMatchItem2 | MessageRulesPauseResultMatchItem3] | None = None
-    anchor: MessageRulesPauseResultAnchor1 | MessageRulesPauseResultAnchor2
-    offset: MessageRulesPauseResultOffset
+    match: _List[MessageRulesPauseResponseMatchItem1 | MessageRulesPauseResponseMatchItem2 | MessageRulesPauseResponseMatchItem3] | None = None
+    anchor: MessageRulesPauseResponseAnchor1 | MessageRulesPauseResponseAnchor2
+    offset: MessageRulesPauseResponseOffset
     yearly: bool
     sendAt: str
     timeZone: str
@@ -3498,42 +4590,42 @@ class MessageRulesPauseResult(_Model):
     updatedAt: int
     version: int
 
-class MessageRulesPauseResultAnchor1(_Model):
+class MessageRulesPauseResponseAnchor1(_Model):
     kind: _Literal["input"] | str
     input: str
 
-class MessageRulesPauseResultAnchor2(_Model):
+class MessageRulesPauseResponseAnchor2(_Model):
     kind: _Literal["lastScan"] | str
 
-class MessageRulesPauseResultMatchItem1(_Model):
+class MessageRulesPauseResponseMatchItem1(_Model):
     input: str
     values: _List[str]
 
-class MessageRulesPauseResultMatchItem2(_Model):
+class MessageRulesPauseResponseMatchItem2(_Model):
     input: str
     min: float | None = None
     max: float | None = None
 
-class MessageRulesPauseResultMatchItem3(_Model):
+class MessageRulesPauseResponseMatchItem3(_Model):
     input: str
     from_: str | None = _Field(default=None, alias="from")
     to: str | None = None
     timeZone: str
 
-class MessageRulesPauseResultOffset(_Model):
+class MessageRulesPauseResponseOffset(_Model):
     amount: int
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
 
-class MessageRulesRetrieveResult(_Model):
+class MessageRulesRetrieveResponse(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
-    match: _List[MessageRulesRetrieveResultMatchItem1 | MessageRulesRetrieveResultMatchItem2 | MessageRulesRetrieveResultMatchItem3] | None = None
-    anchor: MessageRulesRetrieveResultAnchor1 | MessageRulesRetrieveResultAnchor2
-    offset: MessageRulesRetrieveResultOffset
+    match: _List[MessageRulesRetrieveResponseMatchItem1 | MessageRulesRetrieveResponseMatchItem2 | MessageRulesRetrieveResponseMatchItem3] | None = None
+    anchor: MessageRulesRetrieveResponseAnchor1 | MessageRulesRetrieveResponseAnchor2
+    offset: MessageRulesRetrieveResponseOffset
     yearly: bool
     sendAt: str
     timeZone: str
@@ -3549,34 +4641,34 @@ class MessageRulesRetrieveResult(_Model):
     updatedAt: int
     version: int
 
-class MessageRulesRetrieveResultAnchor1(_Model):
+class MessageRulesRetrieveResponseAnchor1(_Model):
     kind: _Literal["input"] | str
     input: str
 
-class MessageRulesRetrieveResultAnchor2(_Model):
+class MessageRulesRetrieveResponseAnchor2(_Model):
     kind: _Literal["lastScan"] | str
 
-class MessageRulesRetrieveResultMatchItem1(_Model):
+class MessageRulesRetrieveResponseMatchItem1(_Model):
     input: str
     values: _List[str]
 
-class MessageRulesRetrieveResultMatchItem2(_Model):
+class MessageRulesRetrieveResponseMatchItem2(_Model):
     input: str
     min: float | None = None
     max: float | None = None
 
-class MessageRulesRetrieveResultMatchItem3(_Model):
+class MessageRulesRetrieveResponseMatchItem3(_Model):
     input: str
     from_: str | None = _Field(default=None, alias="from")
     to: str | None = None
     timeZone: str
 
-class MessageRulesRetrieveResultOffset(_Model):
+class MessageRulesRetrieveResponseOffset(_Model):
     amount: int
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
 
-class MessageRulesRunsListResult(_Model):
+class MessageRulesRunsListResponse(_Model):
     items: _List[Broadcast]
     nextCursor: str | None
 
@@ -3625,15 +4717,15 @@ class MessageRulesUpdateParamsOffset(_Model):
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
 
-class MessageRulesUpdateResult(_Model):
+class MessageRulesUpdateResponse(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     name: str
     templateIds: _List[str]
-    match: _List[MessageRulesUpdateResultMatchItem1 | MessageRulesUpdateResultMatchItem2 | MessageRulesUpdateResultMatchItem3] | None = None
-    anchor: MessageRulesUpdateResultAnchor1 | MessageRulesUpdateResultAnchor2
-    offset: MessageRulesUpdateResultOffset
+    match: _List[MessageRulesUpdateResponseMatchItem1 | MessageRulesUpdateResponseMatchItem2 | MessageRulesUpdateResponseMatchItem3] | None = None
+    anchor: MessageRulesUpdateResponseAnchor1 | MessageRulesUpdateResponseAnchor2
+    offset: MessageRulesUpdateResponseOffset
     yearly: bool
     sendAt: str
     timeZone: str
@@ -3649,40 +4741,300 @@ class MessageRulesUpdateResult(_Model):
     updatedAt: int
     version: int
 
-class MessageRulesUpdateResultAnchor1(_Model):
+class MessageRulesUpdateResponseAnchor1(_Model):
     kind: _Literal["input"] | str
     input: str
 
-class MessageRulesUpdateResultAnchor2(_Model):
+class MessageRulesUpdateResponseAnchor2(_Model):
     kind: _Literal["lastScan"] | str
 
-class MessageRulesUpdateResultMatchItem1(_Model):
+class MessageRulesUpdateResponseMatchItem1(_Model):
     input: str
     values: _List[str]
 
-class MessageRulesUpdateResultMatchItem2(_Model):
+class MessageRulesUpdateResponseMatchItem2(_Model):
     input: str
     min: float | None = None
     max: float | None = None
 
-class MessageRulesUpdateResultMatchItem3(_Model):
+class MessageRulesUpdateResponseMatchItem3(_Model):
     input: str
     from_: str | None = _Field(default=None, alias="from")
     to: str | None = None
     timeZone: str
 
-class MessageRulesUpdateResultOffset(_Model):
+class MessageRulesUpdateResponseOffset(_Model):
     amount: int
     unit: _Literal["day", "hour"] | str
     when: _Literal["before", "after"] | str
+
+class MetricsRetrieveActivityResponse(_Model):
+    range: _Literal["24h", "7d", "30d"] | str
+    bucketMs: int
+    totals: MetricsRetrieveActivityResponseTotals
+    series: MetricsRetrieveActivityResponseSeries
+    templates: _List[MetricsRetrieveActivityResponseTemplatesItem]
+
+class MetricsRetrieveActivityResponseSeries(_Model):
+    issued: _List[MetricsRetrieveActivityResponseSeriesIssuedItem]
+    scans: _List[MetricsRetrieveActivityResponseSeriesScansItem]
+
+class MetricsRetrieveActivityResponseSeriesIssuedItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveActivityResponseSeriesScansItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveActivityResponseTemplatesItem(_Model):
+    templateId: str
+    name: str
+    issued: int
+    added: int
+    removed: int
+    scans: int
+    redemptions: int
+    inWallet: int
+    notAdded: int
+
+class MetricsRetrieveActivityResponseTotals(_Model):
+    issued: int
+    added: int
+    removed: int
+    scans: int
+    redemptions: int
+    inWallet: int
+    notAdded: int
+
+class MetricsRetrieveOverviewResponse(_Model):
+    source: _Literal["analytics_engine", "d1"] | str
+    range: _Literal["24h", "7d", "30d"] | str
+    bucketMs: int
+    unavailable: _List[str]
+    totals: MetricsRetrieveOverviewResponseTotals
+    series: MetricsRetrieveOverviewResponseSeries
+    setup: MetricsRetrieveOverviewResponseSetup
+    directory: MetricsRetrieveOverviewResponseDirectory | None = None
+    live: _List[MetricsRetrieveOverviewResponseLiveItem]
+    recent: _List[MetricsRetrieveOverviewResponseRecentItem]
+
+class MetricsRetrieveOverviewResponseDirectory(_Model):
+    users: int
+    walletAccounts: int
+
+class MetricsRetrieveOverviewResponseLiveItem(_Model):
+    eventId: str
+    name: str
+    arrived: int
+    expected: int
+    ratePerMin: float
+
+class MetricsRetrieveOverviewResponseRecentItem(_Model):
+    at: int
+    action: str
+    orgId: str | None
+    targetId: str | None
+
+class MetricsRetrieveOverviewResponseSeries(_Model):
+    issued: _List[MetricsRetrieveOverviewResponseSeriesIssuedItem]
+    updated: _List[MetricsRetrieveOverviewResponseSeriesUpdatedItem]
+    downloads: _List[MetricsRetrieveOverviewResponseSeriesDownloadsItem]
+    registrations: _List[MetricsRetrieveOverviewResponseSeriesRegistrationsItem]
+    refreshes: _List[MetricsRetrieveOverviewResponseSeriesRefreshesItem]
+    pushes: _List[MetricsRetrieveOverviewResponseSeriesPushesItem]
+    pushFailures: _List[MetricsRetrieveOverviewResponseSeriesPushFailuresItem]
+    emails: _List[MetricsRetrieveOverviewResponseSeriesEmailsItem]
+    emailFailures: _List[MetricsRetrieveOverviewResponseSeriesEmailFailuresItem]
+    emailUnknown: _List[MetricsRetrieveOverviewResponseSeriesEmailUnknownItem] | None = None
+    syncRuns: _List[MetricsRetrieveOverviewResponseSeriesSyncRunsItem]
+    signIns: _List[MetricsRetrieveOverviewResponseSeriesSignInsItem]
+    scans: _List[MetricsRetrieveOverviewResponseSeriesScansItem]
+
+class MetricsRetrieveOverviewResponseSeriesDownloadsItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesEmailFailuresItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesEmailUnknownItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesEmailsItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesIssuedItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesPushFailuresItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesPushesItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesRefreshesItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesRegistrationsItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesScansItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesSignInsItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesSyncRunsItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSeriesUpdatedItem(_Model):
+    t: int
+    v: float
+
+class MetricsRetrieveOverviewResponseSetup(_Model):
+    orgs: int
+    assignedTemplates: int
+    passes: int
+    approvedTemplates: int
+    releasedTemplates: int
+    walletPasses: int
+    passEmailsSent: int
+    latestPassId: str | None
+    scanners: int
+
+class MetricsRetrieveOverviewResponseTotals(_Model):
+    passes: int
+    activePasses: int
+    voidedPasses: int
+    holders: int
+    devices: int
+    issued: int
+    updated: int
+    downloads: int
+    registrations: int
+    refreshes: int
+    pushes: int
+    pushFailures: int
+    emails: int
+    emailFailures: int
+    emailUnknown: int | None = None
+    syncRuns: int
+    signIns: int
+    scans: int
+    scanRefused: int
+
+class NfcBindingsDeleteResponse(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
 
 class NfcBindingsUpdateParams(_Model):
     binding: _Literal["pass", "user"] | str
     passId: str | None = None
 
+class NfcBindingsUpdateResponse(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+
+class NfcEnrollmentsCancelResponse(_Model):
+    id: str
+    passId: str
+    scannerId: str
+    scannerName: str
+    scope: _Literal["pass", "user"] | str
+    state: _Literal["pending", "done", "cancelled", "declined", "expired", "failed"] | str
+    createdAt: int
+    expiresAt: int
+    endedAt: int | None
+    shownAt: int | None
+    binding: _Dict[str, _Any] | None
+    errorCode: _Literal["TAG_LOST", "TAG_SECURE_REQUIRED", "TAG_CHECK_FAILED", "TAG_ALREADY_ASSIGNED", "TAG_REQUEST_BUSY", "TAG_REQUEST_EXPIRED", "TAG_HELD_BY_OTHER", "TAG_NO_ACCOUNT", "TAG_RETIRED", "TAG_UID_RANDOM", "TAG_BINDING_LIMIT", "TAG_LIMIT", "TAG_ASSURANCE_LOW", "TAG_HOLDER_CHANGED", "SCANNER_OFFLINE", "TAG_UNDO_EXPIRED", "TAG_PASS_VOIDED", "TAG_PASS_REMOVED", "TAG_PASS_EXPIRED", "TAG_TYPE_MISMATCH", "TAG_TYPE_LIMIT", "TAG_USE_MISMATCH", "TAG_SECURE_NEEDS_TAP", "TAG_TYPE_SET", "TAG_TYPE_SYSTEM", "TAG_TYPE_SCOPE", "TAG_TYPED_OFF", "TAG_TYPE_CHOOSE", None] | str
+    hint: str | None
+
 class NfcEnrollmentsCreateParams(_Model):
     scannerId: str
     binding: _Literal["pass", "user"] | str | None = None
+
+class NfcEnrollmentsCreateResponse(_Model):
+    id: str
+    passId: str
+    scannerId: str
+    scannerName: str
+    scope: _Literal["pass", "user"] | str
+    state: _Literal["pending", "done", "cancelled", "declined", "expired", "failed"] | str
+    createdAt: int
+    expiresAt: int
+    endedAt: int | None
+    shownAt: int | None
+    binding: _Dict[str, _Any] | None
+    errorCode: _Literal["TAG_LOST", "TAG_SECURE_REQUIRED", "TAG_CHECK_FAILED", "TAG_ALREADY_ASSIGNED", "TAG_REQUEST_BUSY", "TAG_REQUEST_EXPIRED", "TAG_HELD_BY_OTHER", "TAG_NO_ACCOUNT", "TAG_RETIRED", "TAG_UID_RANDOM", "TAG_BINDING_LIMIT", "TAG_LIMIT", "TAG_ASSURANCE_LOW", "TAG_HOLDER_CHANGED", "SCANNER_OFFLINE", "TAG_UNDO_EXPIRED", "TAG_PASS_VOIDED", "TAG_PASS_REMOVED", "TAG_PASS_EXPIRED", "TAG_TYPE_MISMATCH", "TAG_TYPE_LIMIT", "TAG_USE_MISMATCH", "TAG_SECURE_NEEDS_TAP", "TAG_TYPE_SET", "TAG_TYPE_SYSTEM", "TAG_TYPE_SCOPE", "TAG_TYPED_OFF", "TAG_TYPE_CHOOSE", None] | str
+    hint: str | None
+
+class NfcEnrollmentsListScannersResponse(_Model):
+    items: _List[NfcEnrollmentsListScannersResponseItemsItem]
+    nextCursor: str | None
+
+class NfcEnrollmentsListScannersResponseItemsItem(_Model):
+    id: str
+    name: str
+    sessionName: str | None
+    role: _Literal["door", "desk", "manager", None] | str
+    online: bool
+    unavailable: _Literal["offline", "no_tags", "requests_off", "busy", "mode", "screen", None] | str
+    secureOnly: bool
+    lastUsedAt: int | None
+
+class NfcEnrollmentsRetrieveResponse(_Model):
+    id: str
+    passId: str
+    scannerId: str
+    scannerName: str
+    scope: _Literal["pass", "user"] | str
+    state: _Literal["pending", "done", "cancelled", "declined", "expired", "failed"] | str
+    createdAt: int
+    expiresAt: int
+    endedAt: int | None
+    shownAt: int | None
+    binding: _Dict[str, _Any] | None
+    errorCode: _Literal["TAG_LOST", "TAG_SECURE_REQUIRED", "TAG_CHECK_FAILED", "TAG_ALREADY_ASSIGNED", "TAG_REQUEST_BUSY", "TAG_REQUEST_EXPIRED", "TAG_HELD_BY_OTHER", "TAG_NO_ACCOUNT", "TAG_RETIRED", "TAG_UID_RANDOM", "TAG_BINDING_LIMIT", "TAG_LIMIT", "TAG_ASSURANCE_LOW", "TAG_HOLDER_CHANGED", "SCANNER_OFFLINE", "TAG_UNDO_EXPIRED", "TAG_PASS_VOIDED", "TAG_PASS_REMOVED", "TAG_PASS_EXPIRED", "TAG_TYPE_MISMATCH", "TAG_TYPE_LIMIT", "TAG_USE_MISMATCH", "TAG_SECURE_NEEDS_TAP", "TAG_TYPE_SET", "TAG_TYPE_SYSTEM", "TAG_TYPE_SCOPE", "TAG_TYPED_OFF", "TAG_TYPE_CHOOSE", None] | str
+    hint: str | None
 
 class NfcKeysetsCreateParams1(_Model):
     name: str
@@ -3700,7 +5052,7 @@ class NfcKeysetsCreateParams3(_Model):
     perTag: _Literal[True]
     metaKey: str
 
-class NfcKeysetsCreateResult(_Model):
+class NfcKeysetsCreateResponse(_Model):
     id: str
     name: str
     slug: str
@@ -3709,9 +5061,9 @@ class NfcKeysetsCreateResult(_Model):
     createdAt: int
     disabledAt: int | None
     keys: _Dict[str, _Any] | None
-    versions: _List[NfcKeysetsCreateResultVersionsItem]
+    versions: _List[NfcKeysetsCreateResponseVersionsItem]
 
-class NfcKeysetsCreateResultVersionsItem(_Model):
+class NfcKeysetsCreateResponseVersionsItem(_Model):
     version: int
     state: _Literal["active", "retiring", "retired"] | str
     createdAt: int
@@ -3719,7 +5071,7 @@ class NfcKeysetsCreateResultVersionsItem(_Model):
     revokedAt: int | None
     tags: int
 
-class NfcKeysetsDisableResult(_Model):
+class NfcKeysetsDisableResponse(_Model):
     id: str
     name: str
     slug: str
@@ -3727,9 +5079,9 @@ class NfcKeysetsDisableResult(_Model):
     perTag: bool
     createdAt: int
     disabledAt: int | None
-    versions: _List[NfcKeysetsDisableResultVersionsItem]
+    versions: _List[NfcKeysetsDisableResponseVersionsItem]
 
-class NfcKeysetsDisableResultVersionsItem(_Model):
+class NfcKeysetsDisableResponseVersionsItem(_Model):
     version: int
     state: _Literal["active", "retiring", "retired"] | str
     createdAt: int
@@ -3742,15 +5094,15 @@ class NfcKeysetsImportTagsParams(_Model):
     dryRun: bool
     replace: bool | None = None
 
-class NfcKeysetsImportTagsResult(_Model):
+class NfcKeysetsImportTagsResponse(_Model):
     dryRun: bool
     rows: int
     ok: int
     added: int
-    problems: _List[NfcKeysetsImportTagsResultProblemsItem]
+    problems: _List[NfcKeysetsImportTagsResponseProblemsItem]
     moreProblems: int
 
-class NfcKeysetsImportTagsResultProblemsItem(_Model):
+class NfcKeysetsImportTagsResponseProblemsItem(_Model):
     line: int
     uid: str | None
     reason: _Literal["bad_uid", "bad_key", "weak_key", "dup_file", "dup_key", "meta_key", "exists", "not_on_keyset"] | str
@@ -3773,11 +5125,11 @@ class NfcKeysetsListItemVersionsItem(_Model):
     revokedAt: int | None
     tags: int
 
-class NfcKeysetsListResult(_Model):
-    items: _List[NfcKeysetsListResultItemsItem]
+class NfcKeysetsListResponse(_Model):
+    items: _List[NfcKeysetsListResponseItemsItem]
     nextCursor: str | None
 
-class NfcKeysetsListResultItemsItem(_Model):
+class NfcKeysetsListResponseItemsItem(_Model):
     id: str
     name: str
     slug: str
@@ -3785,9 +5137,9 @@ class NfcKeysetsListResultItemsItem(_Model):
     perTag: bool
     createdAt: int
     disabledAt: int | None
-    versions: _List[NfcKeysetsListResultItemsItemVersionsItem]
+    versions: _List[NfcKeysetsListResponseItemsItemVersionsItem]
 
-class NfcKeysetsListResultItemsItemVersionsItem(_Model):
+class NfcKeysetsListResponseItemsItemVersionsItem(_Model):
     version: int
     state: _Literal["active", "retiring", "retired"] | str
     createdAt: int
@@ -3798,12 +5150,12 @@ class NfcKeysetsListResultItemsItemVersionsItem(_Model):
 class NfcKeysetsReenrollParams(_Model):
     toKeysetId: str
 
-class NfcKeysetsReenrollResult(_Model):
+class NfcKeysetsReenrollResponse(_Model):
     moved: int
     ownKey: int
-    keyset: NfcKeysetsReenrollResultKeyset
+    keyset: NfcKeysetsReenrollResponseKeyset
 
-class NfcKeysetsReenrollResultKeyset(_Model):
+class NfcKeysetsReenrollResponseKeyset(_Model):
     id: str
     name: str
     slug: str
@@ -3811,9 +5163,9 @@ class NfcKeysetsReenrollResultKeyset(_Model):
     perTag: bool
     createdAt: int
     disabledAt: int | None
-    versions: _List[NfcKeysetsReenrollResultKeysetVersionsItem]
+    versions: _List[NfcKeysetsReenrollResponseKeysetVersionsItem]
 
-class NfcKeysetsReenrollResultKeysetVersionsItem(_Model):
+class NfcKeysetsReenrollResponseKeysetVersionsItem(_Model):
     version: int
     state: _Literal["active", "retiring", "retired"] | str
     createdAt: int
@@ -3821,7 +5173,7 @@ class NfcKeysetsReenrollResultKeysetVersionsItem(_Model):
     revokedAt: int | None
     tags: int
 
-class NfcKeysetsRetireKeyResult(_Model):
+class NfcKeysetsRetireKeyResponse(_Model):
     id: str
     name: str
     slug: str
@@ -3829,9 +5181,9 @@ class NfcKeysetsRetireKeyResult(_Model):
     perTag: bool
     createdAt: int
     disabledAt: int | None
-    versions: _List[NfcKeysetsRetireKeyResultVersionsItem]
+    versions: _List[NfcKeysetsRetireKeyResponseVersionsItem]
 
-class NfcKeysetsRetireKeyResultVersionsItem(_Model):
+class NfcKeysetsRetireKeyResponseVersionsItem(_Model):
     version: int
     state: _Literal["active", "retiring", "retired"] | str
     createdAt: int
@@ -3839,7 +5191,7 @@ class NfcKeysetsRetireKeyResultVersionsItem(_Model):
     revokedAt: int | None
     tags: int
 
-class NfcKeysetsRevokeKeyResult(_Model):
+class NfcKeysetsRevokeKeyResponse(_Model):
     id: str
     name: str
     slug: str
@@ -3847,9 +5199,9 @@ class NfcKeysetsRevokeKeyResult(_Model):
     perTag: bool
     createdAt: int
     disabledAt: int | None
-    versions: _List[NfcKeysetsRevokeKeyResultVersionsItem]
+    versions: _List[NfcKeysetsRevokeKeyResponseVersionsItem]
 
-class NfcKeysetsRevokeKeyResultVersionsItem(_Model):
+class NfcKeysetsRevokeKeyResponseVersionsItem(_Model):
     version: int
     state: _Literal["active", "retiring", "retired"] | str
     createdAt: int
@@ -3867,7 +5219,7 @@ class NfcKeysetsRotateParams2(_Model):
 class NfcKeysetsRotateParams3(_Model):
     metaKey: str
 
-class NfcKeysetsRotateResult(_Model):
+class NfcKeysetsRotateResponse(_Model):
     id: str
     name: str
     slug: str
@@ -3876,9 +5228,9 @@ class NfcKeysetsRotateResult(_Model):
     createdAt: int
     disabledAt: int | None
     keys: _Dict[str, _Any] | None
-    versions: _List[NfcKeysetsRotateResultVersionsItem]
+    versions: _List[NfcKeysetsRotateResponseVersionsItem]
 
-class NfcKeysetsRotateResultVersionsItem(_Model):
+class NfcKeysetsRotateResponseVersionsItem(_Model):
     version: int
     state: _Literal["active", "retiring", "retired"] | str
     createdAt: int
@@ -3889,7 +5241,7 @@ class NfcKeysetsRotateResultVersionsItem(_Model):
 class NfcTagTypesArchiveParams(_Model):
     version: int
 
-class NfcTagTypesArchiveResult(_Model):
+class NfcTagTypesArchiveResponse(_Model):
     id: str
     system: _Literal["uid", "sun"] | str
     name: str
@@ -3917,7 +5269,7 @@ class NfcTagTypesCreateParams(_Model):
     templateIds: _List[str] | None = None
     system: _Literal["uid", "sun"] | str | None = None
 
-class NfcTagTypesCreateResult(_Model):
+class NfcTagTypesCreateResponse(_Model):
     id: str
     system: _Literal["uid", "sun"] | str
     name: str
@@ -3951,11 +5303,11 @@ class NfcTagTypesListItem(_Model):
     updatedAt: int
     archivedAt: int | None
 
-class NfcTagTypesListResult(_Model):
-    items: _List[NfcTagTypesListResultItemsItem]
+class NfcTagTypesListResponse(_Model):
+    items: _List[NfcTagTypesListResponseItemsItem]
     nextCursor: str | None
 
-class NfcTagTypesListResultItemsItem(_Model):
+class NfcTagTypesListResponseItemsItem(_Model):
     id: str
     system: _Literal["uid", "sun"] | str
     name: str
@@ -3983,7 +5335,7 @@ class NfcTagTypesUpdateParams(_Model):
     typed: bool | None = None
     templateIds: _List[str] | None = None
 
-class NfcTagTypesUpdateResult(_Model):
+class NfcTagTypesUpdateResponse(_Model):
     id: str
     system: _Literal["uid", "sun"] | str
     name: str
@@ -4010,13 +5362,224 @@ class NfcTagsAssignParams2(_Model):
     tagId: str
     binding: _Literal["pass", "user"] | str
 
+class NfcTagsAssignResponse(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+
+class NfcTagsListForPassResponse(_Model):
+    items: _List[NfcTagsListForPassResponseItemsItem]
+    nextCursor: str | None
+
+class NfcTagsListForPassResponseItemsItem(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+
+class NfcTagsListForUserResponse(_Model):
+    items: _List[NfcTagsListForUserResponseItemsItem]
+    nextCursor: str | None
+
+class NfcTagsListForUserResponseItemsItem(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+    orgId: str
+    orgName: str
+
+class NfcTagsListHistoryResponse(_Model):
+    items: _List[NfcTagsListHistoryResponseItemsItem]
+    nextCursor: str | None
+    events: _List[NfcTagsListHistoryResponseEventsItem]
+
+class NfcTagsListHistoryResponseEventsItem(_Model):
+    at: int
+    action: _Literal["lost", "retire", "restore", "update"] | str
+    actorName: str | None
+
+class NfcTagsListHistoryResponseItemsItem(_Model):
+    id: str
+    tagId: str
+    scope: _Literal["pass", "user"] | str
+    passId: str
+    passTitle: str | None
+    userId: str | None
+    holderName: str | None
+    source: _Literal["scanner", "remote", "admin"] | str
+    lent: bool | None = None
+    boundAt: int
+    boundByName: str | None
+    scannerName: str | None
+    expiresAt: int | None = None
+    endedAt: int | None
+    endCause: _Literal["admin", "staff", "undo", "lost", "replaced", "moved", "holder_changed", "pass_deleted", "no_passes", "offboard", "visitor_out", "pass_ended", "tag_retired", "channel_off", "expired", "type_changed", None] | str
+
+class NfcTagsListResponse(_Model):
+    items: _List[NfcTagsListResponseItemsItem]
+    nextCursor: str | None
+
+class NfcTagsListResponseItemsItem(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+
 class NfcTagsRebindParams(_Model):
     tagId: str
     binding: _Literal["pass", "user"] | str
 
+class NfcTagsRebindResponse(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+
+class NfcTagsReportLostResponse(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+
+class NfcTagsRestoreResponse(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+
+class NfcTagsRetireResponse(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+
+class NfcTagsRetrieveResponse(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+
 class NfcTagsUpdateParams(_Model):
     label: str | None = None
     pool: bool | None = None
+
+class NfcTagsUpdateResponse(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
 
 class Org(_Model):
     id: str
@@ -4063,6 +5626,34 @@ class OrgBrandingWeb(_Model):
     w: int
     h: int
 
+class OrgExportsCreateLinkResponse(_Model):
+    url: str
+    expiresAt: int
+
+class OrgExportsCreateResponse(_Model):
+    id: str
+    state: _Literal["queued", "running", "ready", "failed", "expired"] | str
+    createdAt: int
+    finishedAt: int | None
+    expiresAt: int | None
+    bytes: int | None
+    entities: _Dict[str, int] | None
+    errorCode: str | None
+
+class OrgExportsListResponse(_Model):
+    items: _List[OrgExportsListResponseItemsItem]
+    nextCursor: str | None
+
+class OrgExportsListResponseItemsItem(_Model):
+    id: str
+    state: _Literal["queued", "running", "ready", "failed", "expired"] | str
+    createdAt: int
+    finishedAt: int | None
+    expiresAt: int | None
+    bytes: int | None
+    entities: _Dict[str, int] | None
+    errorCode: str | None
+
 class OrgSummary(_Model):
     id: str
     slug: str
@@ -4090,16 +5681,46 @@ class OrgSummaryCounts(_Model):
 class OrgsCloseParams(_Model):
     confirmSlug: str | None = None
 
-class OrgsEntitlementsRetrieveResult(_Model):
+class OrgsCloseResponse(_Model):
+    orgId: str
+    status: _Literal["active", "suspended", "closed"] | str
+    closedAt: int | None
+    purgeAfter: int | None
+    purging: bool
+    purged: bool
+    held: bool
+    canReopen: bool
+
+class OrgsEntitlementsRetrieveResponse(_Model):
     orgId: str
     preset: str | None
     label: str | None
-    items: _List[OrgsEntitlementsRetrieveResultItemsItem]
+    items: _List[OrgsEntitlementsRetrieveResponseItemsItem]
 
-class OrgsEntitlementsRetrieveResultItemsItem(_Model):
+class OrgsEntitlementsRetrieveResponseItemsItem(_Model):
     key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     value: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
+
+class OrgsReopenResponse(_Model):
+    orgId: str
+    status: _Literal["active", "suspended", "closed"] | str
+    closedAt: int | None
+    purgeAfter: int | None
+    purging: bool
+    purged: bool
+    held: bool
+    canReopen: bool
+
+class OrgsRetrieveLifecycleResponse(_Model):
+    orgId: str
+    status: _Literal["active", "suspended", "closed"] | str
+    closedAt: int | None
+    purgeAfter: int | None
+    purging: bool
+    purged: bool
+    held: bool
+    canReopen: bool
 
 class OrgsStageBrandAssetParams(_Model):
     slot: _Literal["logo", "icon", "webLogo"] | str
@@ -4418,19 +6039,19 @@ class PassImportsCheckParamsPlanMappingValueTransform(_Model):
     kind: _Literal["enum", "bool-status", "date", "constant", "trim", "upper", "lower", "join"] | str
     options: _Dict[str, _Any] | None = None
 
-class PassImportsCheckResult(_Model):
+class PassImportsCheckResponse(_Model):
     id: str
     templateId: str
     templateVersion: str | None
     mode: _Literal["live", "test"] | str
     state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
-    source: PassImportsCheckResultSource
-    columns: _List[PassImportsCheckResultColumnsItem]
+    source: PassImportsCheckResponseSource
+    columns: _List[PassImportsCheckResponseColumnsItem]
     plan: _Dict[str, _Any] | None
     counts: _Dict[str, _Any] | None
-    previews: _List[PassImportsCheckResultPreviewsItem]
-    problems: _List[PassImportsCheckResultProblemsItem]
-    problemTotals: PassImportsCheckResultProblemTotals
+    previews: _List[PassImportsCheckResponsePreviewsItem]
+    problems: _List[PassImportsCheckResponseProblemsItem]
+    problemTotals: PassImportsCheckResponseProblemTotals
     problemsTruncated: bool
     emailBudget: int | None
     email: bool
@@ -4442,24 +6063,24 @@ class PassImportsCheckResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
-    mapping: PassImportsCheckResultMapping | None = None
+    mapping: PassImportsCheckResponseMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
     unrevertable: int | None = None
 
-class PassImportsCheckResultColumnsItem(_Model):
+class PassImportsCheckResponseColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
 
-class PassImportsCheckResultMapping(_Model):
-    fields: _List[PassImportsCheckResultMappingFieldsItem]
-    unused: _List[PassImportsCheckResultMappingUnusedItem]
+class PassImportsCheckResponseMapping(_Model):
+    fields: _List[PassImportsCheckResponseMappingFieldsItem]
+    unused: _List[PassImportsCheckResponseMappingUnusedItem]
     columns: int
     used: int
     missing: _List[str]
 
-class PassImportsCheckResultMappingFieldsItem(_Model):
+class PassImportsCheckResponseMappingFieldsItem(_Model):
     role: _Literal["holderEmail", "externalId", "input"] | str
     target: str
     label: str
@@ -4468,28 +6089,28 @@ class PassImportsCheckResultMappingFieldsItem(_Model):
     confidence: _Literal["exact", "similar", "values", "join", None] | str
     matchBy: bool
     entry: _Dict[str, _Any] | None
-    values: _List[PassImportsCheckResultMappingFieldsItemValuesItem]
+    values: _List[PassImportsCheckResponseMappingFieldsItemValuesItem]
     date: _Dict[str, _Any] | None
 
-class PassImportsCheckResultMappingFieldsItemValuesItem(_Model):
+class PassImportsCheckResponseMappingFieldsItemValuesItem(_Model):
     value: str
     count: int
     to: str | None
 
-class PassImportsCheckResultMappingUnusedItem(_Model):
+class PassImportsCheckResponseMappingUnusedItem(_Model):
     pointer: str
     label: str
 
-class PassImportsCheckResultPreviewsItem(_Model):
+class PassImportsCheckResponsePreviewsItem(_Model):
     row: int
     action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
-class PassImportsCheckResultProblemTotals(_Model):
+class PassImportsCheckResponseProblemTotals(_Model):
     errors: int
     warnings: int
 
-class PassImportsCheckResultProblemsItem(_Model):
+class PassImportsCheckResponseProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
@@ -4499,7 +6120,7 @@ class PassImportsCheckResultProblemsItem(_Model):
     message: str
     severity: _Literal["error", "warning"] | str
 
-class PassImportsCheckResultSource(_Model):
+class PassImportsCheckResponseSource(_Model):
     kind: _Literal["file", "url"] | str
     name: str
 
@@ -4514,19 +6135,19 @@ class PassImportsCommitParamsEmail3(_Model):
     send: _Literal["held"] | str
     holdMs: int | None = None
 
-class PassImportsCommitResult(_Model):
+class PassImportsCommitResponse(_Model):
     id: str
     templateId: str
     templateVersion: str | None
     mode: _Literal["live", "test"] | str
     state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
-    source: PassImportsCommitResultSource
-    columns: _List[PassImportsCommitResultColumnsItem]
+    source: PassImportsCommitResponseSource
+    columns: _List[PassImportsCommitResponseColumnsItem]
     plan: _Dict[str, _Any] | None
     counts: _Dict[str, _Any] | None
-    previews: _List[PassImportsCommitResultPreviewsItem]
-    problems: _List[PassImportsCommitResultProblemsItem]
-    problemTotals: PassImportsCommitResultProblemTotals
+    previews: _List[PassImportsCommitResponsePreviewsItem]
+    problems: _List[PassImportsCommitResponseProblemsItem]
+    problemTotals: PassImportsCommitResponseProblemTotals
     problemsTruncated: bool
     emailBudget: int | None
     email: bool
@@ -4538,24 +6159,24 @@ class PassImportsCommitResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
-    mapping: PassImportsCommitResultMapping | None = None
+    mapping: PassImportsCommitResponseMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
     unrevertable: int | None = None
 
-class PassImportsCommitResultColumnsItem(_Model):
+class PassImportsCommitResponseColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
 
-class PassImportsCommitResultMapping(_Model):
-    fields: _List[PassImportsCommitResultMappingFieldsItem]
-    unused: _List[PassImportsCommitResultMappingUnusedItem]
+class PassImportsCommitResponseMapping(_Model):
+    fields: _List[PassImportsCommitResponseMappingFieldsItem]
+    unused: _List[PassImportsCommitResponseMappingUnusedItem]
     columns: int
     used: int
     missing: _List[str]
 
-class PassImportsCommitResultMappingFieldsItem(_Model):
+class PassImportsCommitResponseMappingFieldsItem(_Model):
     role: _Literal["holderEmail", "externalId", "input"] | str
     target: str
     label: str
@@ -4564,28 +6185,28 @@ class PassImportsCommitResultMappingFieldsItem(_Model):
     confidence: _Literal["exact", "similar", "values", "join", None] | str
     matchBy: bool
     entry: _Dict[str, _Any] | None
-    values: _List[PassImportsCommitResultMappingFieldsItemValuesItem]
+    values: _List[PassImportsCommitResponseMappingFieldsItemValuesItem]
     date: _Dict[str, _Any] | None
 
-class PassImportsCommitResultMappingFieldsItemValuesItem(_Model):
+class PassImportsCommitResponseMappingFieldsItemValuesItem(_Model):
     value: str
     count: int
     to: str | None
 
-class PassImportsCommitResultMappingUnusedItem(_Model):
+class PassImportsCommitResponseMappingUnusedItem(_Model):
     pointer: str
     label: str
 
-class PassImportsCommitResultPreviewsItem(_Model):
+class PassImportsCommitResponsePreviewsItem(_Model):
     row: int
     action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
-class PassImportsCommitResultProblemTotals(_Model):
+class PassImportsCommitResponseProblemTotals(_Model):
     errors: int
     warnings: int
 
-class PassImportsCommitResultProblemsItem(_Model):
+class PassImportsCommitResponseProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
@@ -4595,7 +6216,7 @@ class PassImportsCommitResultProblemsItem(_Model):
     message: str
     severity: _Literal["error", "warning"] | str
 
-class PassImportsCommitResultSource(_Model):
+class PassImportsCommitResponseSource(_Model):
     kind: _Literal["file", "url"] | str
     name: str
 
@@ -4631,19 +6252,19 @@ class PassImportsCreateParamsSource2(_Model):
     kind: _Literal["url"] | str
     url: str
 
-class PassImportsCreateResult(_Model):
+class PassImportsCreateResponse(_Model):
     id: str
     templateId: str
     templateVersion: str | None
     mode: _Literal["live", "test"] | str
     state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
-    source: PassImportsCreateResultSource
-    columns: _List[PassImportsCreateResultColumnsItem]
+    source: PassImportsCreateResponseSource
+    columns: _List[PassImportsCreateResponseColumnsItem]
     plan: _Dict[str, _Any] | None
     counts: _Dict[str, _Any] | None
-    previews: _List[PassImportsCreateResultPreviewsItem]
-    problems: _List[PassImportsCreateResultProblemsItem]
-    problemTotals: PassImportsCreateResultProblemTotals
+    previews: _List[PassImportsCreateResponsePreviewsItem]
+    problems: _List[PassImportsCreateResponseProblemsItem]
+    problemTotals: PassImportsCreateResponseProblemTotals
     problemsTruncated: bool
     emailBudget: int | None
     email: bool
@@ -4655,24 +6276,24 @@ class PassImportsCreateResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
-    mapping: PassImportsCreateResultMapping | None = None
+    mapping: PassImportsCreateResponseMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
     unrevertable: int | None = None
 
-class PassImportsCreateResultColumnsItem(_Model):
+class PassImportsCreateResponseColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
 
-class PassImportsCreateResultMapping(_Model):
-    fields: _List[PassImportsCreateResultMappingFieldsItem]
-    unused: _List[PassImportsCreateResultMappingUnusedItem]
+class PassImportsCreateResponseMapping(_Model):
+    fields: _List[PassImportsCreateResponseMappingFieldsItem]
+    unused: _List[PassImportsCreateResponseMappingUnusedItem]
     columns: int
     used: int
     missing: _List[str]
 
-class PassImportsCreateResultMappingFieldsItem(_Model):
+class PassImportsCreateResponseMappingFieldsItem(_Model):
     role: _Literal["holderEmail", "externalId", "input"] | str
     target: str
     label: str
@@ -4681,28 +6302,28 @@ class PassImportsCreateResultMappingFieldsItem(_Model):
     confidence: _Literal["exact", "similar", "values", "join", None] | str
     matchBy: bool
     entry: _Dict[str, _Any] | None
-    values: _List[PassImportsCreateResultMappingFieldsItemValuesItem]
+    values: _List[PassImportsCreateResponseMappingFieldsItemValuesItem]
     date: _Dict[str, _Any] | None
 
-class PassImportsCreateResultMappingFieldsItemValuesItem(_Model):
+class PassImportsCreateResponseMappingFieldsItemValuesItem(_Model):
     value: str
     count: int
     to: str | None
 
-class PassImportsCreateResultMappingUnusedItem(_Model):
+class PassImportsCreateResponseMappingUnusedItem(_Model):
     pointer: str
     label: str
 
-class PassImportsCreateResultPreviewsItem(_Model):
+class PassImportsCreateResponsePreviewsItem(_Model):
     row: int
     action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
-class PassImportsCreateResultProblemTotals(_Model):
+class PassImportsCreateResponseProblemTotals(_Model):
     errors: int
     warnings: int
 
-class PassImportsCreateResultProblemsItem(_Model):
+class PassImportsCreateResponseProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
@@ -4712,11 +6333,11 @@ class PassImportsCreateResultProblemsItem(_Model):
     message: str
     severity: _Literal["error", "warning"] | str
 
-class PassImportsCreateResultSource(_Model):
+class PassImportsCreateResponseSource(_Model):
     kind: _Literal["file", "url"] | str
     name: str
 
-class PassImportsDeleteResult(_Model):
+class PassImportsDeleteResponse(_Model):
     ok: _Literal[True]
 
 class PassImportsListItem(_Model):
@@ -4804,23 +6425,23 @@ class PassImportsListItemSource(_Model):
     kind: _Literal["file", "url"] | str
     name: str
 
-class PassImportsListResult(_Model):
-    items: _List[PassImportsListResultItemsItem]
+class PassImportsListResponse(_Model):
+    items: _List[PassImportsListResponseItemsItem]
     nextCursor: str | None
 
-class PassImportsListResultItemsItem(_Model):
+class PassImportsListResponseItemsItem(_Model):
     id: str
     templateId: str
     templateVersion: str | None
     mode: _Literal["live", "test"] | str
     state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
-    source: PassImportsListResultItemsItemSource
-    columns: _List[PassImportsListResultItemsItemColumnsItem]
+    source: PassImportsListResponseItemsItemSource
+    columns: _List[PassImportsListResponseItemsItemColumnsItem]
     plan: _Dict[str, _Any] | None
     counts: _Dict[str, _Any] | None
-    previews: _List[PassImportsListResultItemsItemPreviewsItem]
-    problems: _List[PassImportsListResultItemsItemProblemsItem]
-    problemTotals: PassImportsListResultItemsItemProblemTotals
+    previews: _List[PassImportsListResponseItemsItemPreviewsItem]
+    problems: _List[PassImportsListResponseItemsItemProblemsItem]
+    problemTotals: PassImportsListResponseItemsItemProblemTotals
     problemsTruncated: bool
     emailBudget: int | None
     email: bool
@@ -4832,24 +6453,24 @@ class PassImportsListResultItemsItem(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
-    mapping: PassImportsListResultItemsItemMapping | None = None
+    mapping: PassImportsListResponseItemsItemMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
     unrevertable: int | None = None
 
-class PassImportsListResultItemsItemColumnsItem(_Model):
+class PassImportsListResponseItemsItemColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
 
-class PassImportsListResultItemsItemMapping(_Model):
-    fields: _List[PassImportsListResultItemsItemMappingFieldsItem]
-    unused: _List[PassImportsListResultItemsItemMappingUnusedItem]
+class PassImportsListResponseItemsItemMapping(_Model):
+    fields: _List[PassImportsListResponseItemsItemMappingFieldsItem]
+    unused: _List[PassImportsListResponseItemsItemMappingUnusedItem]
     columns: int
     used: int
     missing: _List[str]
 
-class PassImportsListResultItemsItemMappingFieldsItem(_Model):
+class PassImportsListResponseItemsItemMappingFieldsItem(_Model):
     role: _Literal["holderEmail", "externalId", "input"] | str
     target: str
     label: str
@@ -4858,28 +6479,28 @@ class PassImportsListResultItemsItemMappingFieldsItem(_Model):
     confidence: _Literal["exact", "similar", "values", "join", None] | str
     matchBy: bool
     entry: _Dict[str, _Any] | None
-    values: _List[PassImportsListResultItemsItemMappingFieldsItemValuesItem]
+    values: _List[PassImportsListResponseItemsItemMappingFieldsItemValuesItem]
     date: _Dict[str, _Any] | None
 
-class PassImportsListResultItemsItemMappingFieldsItemValuesItem(_Model):
+class PassImportsListResponseItemsItemMappingFieldsItemValuesItem(_Model):
     value: str
     count: int
     to: str | None
 
-class PassImportsListResultItemsItemMappingUnusedItem(_Model):
+class PassImportsListResponseItemsItemMappingUnusedItem(_Model):
     pointer: str
     label: str
 
-class PassImportsListResultItemsItemPreviewsItem(_Model):
+class PassImportsListResponseItemsItemPreviewsItem(_Model):
     row: int
     action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
-class PassImportsListResultItemsItemProblemTotals(_Model):
+class PassImportsListResponseItemsItemProblemTotals(_Model):
     errors: int
     warnings: int
 
-class PassImportsListResultItemsItemProblemsItem(_Model):
+class PassImportsListResponseItemsItemProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
@@ -4889,7 +6510,7 @@ class PassImportsListResultItemsItemProblemsItem(_Model):
     message: str
     severity: _Literal["error", "warning"] | str
 
-class PassImportsListResultItemsItemSource(_Model):
+class PassImportsListResponseItemsItemSource(_Model):
     kind: _Literal["file", "url"] | str
     name: str
 
@@ -4919,19 +6540,28 @@ class PassImportsMappingsSaveParamsPlanMappingValueTransform(_Model):
 class PassImportsRemoveCreatedParams(_Model):
     cursor: str | None
 
-class PassImportsRetrieveResult(_Model):
+class PassImportsRemoveCreatedResponse(_Model):
+    removed: int
+    skipped: _List[PassImportsRemoveCreatedResponseSkippedItem]
+    nextCursor: str | None
+
+class PassImportsRemoveCreatedResponseSkippedItem(_Model):
+    passId: str
+    code: str
+
+class PassImportsRetrieveResponse(_Model):
     id: str
     templateId: str
     templateVersion: str | None
     mode: _Literal["live", "test"] | str
     state: _Literal["mapping", "checking", "ready", "committing", "done", "failed", "stale", "expired", "discarded"] | str
-    source: PassImportsRetrieveResultSource
-    columns: _List[PassImportsRetrieveResultColumnsItem]
+    source: PassImportsRetrieveResponseSource
+    columns: _List[PassImportsRetrieveResponseColumnsItem]
     plan: _Dict[str, _Any] | None
     counts: _Dict[str, _Any] | None
-    previews: _List[PassImportsRetrieveResultPreviewsItem]
-    problems: _List[PassImportsRetrieveResultProblemsItem]
-    problemTotals: PassImportsRetrieveResultProblemTotals
+    previews: _List[PassImportsRetrieveResponsePreviewsItem]
+    problems: _List[PassImportsRetrieveResponseProblemsItem]
+    problemTotals: PassImportsRetrieveResponseProblemTotals
     problemsTruncated: bool
     emailBudget: int | None
     email: bool
@@ -4943,24 +6573,24 @@ class PassImportsRetrieveResult(_Model):
     committedAt: int | None
     finishedAt: int | None
     expiresAt: int
-    mapping: PassImportsRetrieveResultMapping | None = None
+    mapping: PassImportsRetrieveResponseMapping | None = None
     emailHoldUntil: int | None = None
     undo: PassImportUndo | None = None
     unrevertable: int | None = None
 
-class PassImportsRetrieveResultColumnsItem(_Model):
+class PassImportsRetrieveResponseColumnsItem(_Model):
     pointer: str
     label: str
     samples: _List[str]
 
-class PassImportsRetrieveResultMapping(_Model):
-    fields: _List[PassImportsRetrieveResultMappingFieldsItem]
-    unused: _List[PassImportsRetrieveResultMappingUnusedItem]
+class PassImportsRetrieveResponseMapping(_Model):
+    fields: _List[PassImportsRetrieveResponseMappingFieldsItem]
+    unused: _List[PassImportsRetrieveResponseMappingUnusedItem]
     columns: int
     used: int
     missing: _List[str]
 
-class PassImportsRetrieveResultMappingFieldsItem(_Model):
+class PassImportsRetrieveResponseMappingFieldsItem(_Model):
     role: _Literal["holderEmail", "externalId", "input"] | str
     target: str
     label: str
@@ -4969,28 +6599,28 @@ class PassImportsRetrieveResultMappingFieldsItem(_Model):
     confidence: _Literal["exact", "similar", "values", "join", None] | str
     matchBy: bool
     entry: _Dict[str, _Any] | None
-    values: _List[PassImportsRetrieveResultMappingFieldsItemValuesItem]
+    values: _List[PassImportsRetrieveResponseMappingFieldsItemValuesItem]
     date: _Dict[str, _Any] | None
 
-class PassImportsRetrieveResultMappingFieldsItemValuesItem(_Model):
+class PassImportsRetrieveResponseMappingFieldsItemValuesItem(_Model):
     value: str
     count: int
     to: str | None
 
-class PassImportsRetrieveResultMappingUnusedItem(_Model):
+class PassImportsRetrieveResponseMappingUnusedItem(_Model):
     pointer: str
     label: str
 
-class PassImportsRetrieveResultPreviewsItem(_Model):
+class PassImportsRetrieveResponsePreviewsItem(_Model):
     row: int
     action: _Literal["create", "update"] | str
     input: _Dict[str, _Any]
 
-class PassImportsRetrieveResultProblemTotals(_Model):
+class PassImportsRetrieveResponseProblemTotals(_Model):
     errors: int
     warnings: int
 
-class PassImportsRetrieveResultProblemsItem(_Model):
+class PassImportsRetrieveResponseProblemsItem(_Model):
     row: int
     column: str | None
     field: str | None
@@ -5000,7 +6630,7 @@ class PassImportsRetrieveResultProblemsItem(_Model):
     message: str
     severity: _Literal["error", "warning"] | str
 
-class PassImportsRetrieveResultSource(_Model):
+class PassImportsRetrieveResponseSource(_Model):
     kind: _Literal["file", "url"] | str
     name: str
 
@@ -5023,11 +6653,11 @@ class PassImportsRowsListItemChangesItem(_Model):
     from_: str | None = _Field(alias="from")
     to: str | None
 
-class PassImportsRowsListResult(_Model):
-    items: _List[PassImportsRowsListResultItemsItem]
+class PassImportsRowsListResponse(_Model):
+    items: _List[PassImportsRowsListResponseItemsItem]
     nextCursor: str | None
 
-class PassImportsRowsListResultItemsItem(_Model):
+class PassImportsRowsListResponseItemsItem(_Model):
     row: int
     action: _Literal["create", "update", "unchanged", "error"] | str
     state: _Literal["planned", "done", "failed", "skipped"] | str
@@ -5037,10 +6667,10 @@ class PassImportsRowsListResultItemsItem(_Model):
     code: str | None
     message: str | None
     emailed: bool
-    changes: _List[PassImportsRowsListResultItemsItemChangesItem] | None = None
+    changes: _List[PassImportsRowsListResponseItemsItemChangesItem] | None = None
     wouldBe: _Literal["create", "update", None] | str = None
 
-class PassImportsRowsListResultItemsItemChangesItem(_Model):
+class PassImportsRowsListResponseItemsItemChangesItem(_Model):
     key: str
     label: str
     from_: str | None = _Field(alias="from")
@@ -5049,7 +6679,7 @@ class PassImportsRowsListResultItemsItemChangesItem(_Model):
 class PassImportsSendEmailsParams(_Model):
     cursor: str | None
 
-class PassImportsSendEmailsResult(_Model):
+class PassImportsSendEmailsResponse(_Model):
     sent: int
     skipped: int
     alreadyQueued: int | None = None
@@ -5787,11 +7417,11 @@ class PassesActivityListItem(_Model):
     data: _Dict[str, _Any]
     at: int
 
-class PassesActivityListResult(_Model):
-    items: _List[PassesActivityListResultItemsItem]
+class PassesActivityListResponse(_Model):
+    items: _List[PassesActivityListResponseItemsItem]
     nextCursor: str | None
 
-class PassesActivityListResultItemsItem(_Model):
+class PassesActivityListResponseItemsItem(_Model):
     id: str
     passId: str
     mode: _Literal["live", "test"] | str
@@ -5802,7 +7432,7 @@ class PassesActivityListResultItemsItem(_Model):
     data: _Dict[str, _Any]
     at: int
 
-class PassesAssetsDeleteResult(_Model):
+class PassesAssetsDeleteResponse(_Model):
     ok: _Literal[True]
 
 class PassesAssetsListItem(_Model):
@@ -5813,11 +7443,11 @@ class PassesAssetsListItem(_Model):
     height: int | None
     createdAt: int
 
-class PassesAssetsListResult(_Model):
-    items: _List[PassesAssetsListResultItemsItem]
+class PassesAssetsListResponse(_Model):
+    items: _List[PassesAssetsListResponseItemsItem]
     nextCursor: str | None
 
-class PassesAssetsListResultItemsItem(_Model):
+class PassesAssetsListResponseItemsItem(_Model):
     name: str
     sha1: str
     size: int
@@ -5825,7 +7455,7 @@ class PassesAssetsListResultItemsItem(_Model):
     height: int | None
     createdAt: int
 
-class PassesAssetsUploadResult(_Model):
+class PassesAssetsUploadResponse(_Model):
     name: str
     sha1: str
     size: int
@@ -5847,11 +7477,11 @@ class PassesBulkApplyParamsSelection2(_Model):
     filter: PassFilter
     expectCount: int
 
-class PassesBulkApplyResult(_Model):
+class PassesBulkApplyResponse(_Model):
     done: int
-    skipped: _List[PassesBulkApplyResultSkippedItem]
+    skipped: _List[PassesBulkApplyResponseSkippedItem]
 
-class PassesBulkApplyResultSkippedItem(_Model):
+class PassesBulkApplyResponseSkippedItem(_Model):
     id: str
     code: str
 
@@ -5862,7 +7492,7 @@ class PassesBulkReissueParams(_Model):
     cause: _Literal["template_upgrade", "resign"] | str | None = None
     identityId: str | None = None
 
-class PassesBulkReissueResult(_Model):
+class PassesBulkReissueResponse(_Model):
     workflowInstanceId: str
 
 class PassesBulkUpdateChannelsParams(_Model):
@@ -5874,24 +7504,24 @@ class PassesBulkUpdateChannelsParams(_Model):
     dryRun: bool | None = None
     orgId: str | None = None
 
-class PassesBulkUpdateChannelsResult(_Model):
+class PassesBulkUpdateChannelsResponse(_Model):
     done: int
-    skipped: _List[PassesBulkUpdateChannelsResultSkippedItem]
-    preview: PassesBulkUpdateChannelsResultPreview | None = None
+    skipped: _List[PassesBulkUpdateChannelsResponseSkippedItem]
+    preview: PassesBulkUpdateChannelsResponsePreview | None = None
 
-class PassesBulkUpdateChannelsResultPreview(_Model):
-    impact: _List[PassesBulkUpdateChannelsResultPreviewImpactItem]
+class PassesBulkUpdateChannelsResponsePreview(_Model):
+    impact: _List[PassesBulkUpdateChannelsResponsePreviewImpactItem]
     unsupported: int
     allOff: int
     blocked: _Dict[str, _Any] | None
-    windows: _List[PassesBulkUpdateChannelsResultPreviewWindowsItem]
+    windows: _List[PassesBulkUpdateChannelsResponsePreviewWindowsItem]
 
-class PassesBulkUpdateChannelsResultPreviewImpactItem(_Model):
+class PassesBulkUpdateChannelsResponsePreviewImpactItem(_Model):
     channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str
     passes: int
     rotated: int
 
-class PassesBulkUpdateChannelsResultPreviewWindowsItem(_Model):
+class PassesBulkUpdateChannelsResponsePreviewWindowsItem(_Model):
     kind: _Literal["event", "session"] | str
     id: str
     name: str
@@ -5900,111 +7530,111 @@ class PassesBulkUpdateChannelsResultPreviewWindowsItem(_Model):
     open: bool
     scheduled: bool
 
-class PassesBulkUpdateChannelsResultSkippedItem(_Model):
+class PassesBulkUpdateChannelsResponseSkippedItem(_Model):
     id: str
     code: str
 
-class PassesChannelsRetrieveResult(_Model):
-    effective: PassesChannelsRetrieveResultEffective
-    levels: PassesChannelsRetrieveResultLevels
-    overrides: PassesChannelsRetrieveResultOverrides
-    replace: PassesChannelsRetrieveResultReplace
+class PassesChannelsRetrieveResponse(_Model):
+    effective: PassesChannelsRetrieveResponseEffective
+    levels: PassesChannelsRetrieveResponseLevels
+    overrides: PassesChannelsRetrieveResponseOverrides
+    replace: PassesChannelsRetrieveResponseReplace
 
-class PassesChannelsRetrieveResultEffective(_Model):
-    mobile: PassesChannelsRetrieveResultEffectiveMobile | None = None
-    apple: PassesChannelsRetrieveResultEffectiveApple | None = None
-    google: PassesChannelsRetrieveResultEffectiveGoogle | None = None
-    samsung: PassesChannelsRetrieveResultEffectiveSamsung | None = None
-    paper: PassesChannelsRetrieveResultEffectivePaper | None = None
-    nfc: PassesChannelsRetrieveResultEffectiveNfc | None = None
+class PassesChannelsRetrieveResponseEffective(_Model):
+    mobile: PassesChannelsRetrieveResponseEffectiveMobile | None = None
+    apple: PassesChannelsRetrieveResponseEffectiveApple | None = None
+    google: PassesChannelsRetrieveResponseEffectiveGoogle | None = None
+    samsung: PassesChannelsRetrieveResponseEffectiveSamsung | None = None
+    paper: PassesChannelsRetrieveResponseEffectivePaper | None = None
+    nfc: PassesChannelsRetrieveResponseEffectiveNfc | None = None
 
-class PassesChannelsRetrieveResultEffectiveApple(_Model):
+class PassesChannelsRetrieveResponseEffectiveApple(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsRetrieveResultEffectiveGoogle(_Model):
+class PassesChannelsRetrieveResponseEffectiveGoogle(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsRetrieveResultEffectiveMobile(_Model):
+class PassesChannelsRetrieveResponseEffectiveMobile(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsRetrieveResultEffectiveNfc(_Model):
+class PassesChannelsRetrieveResponseEffectiveNfc(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsRetrieveResultEffectivePaper(_Model):
+class PassesChannelsRetrieveResponseEffectivePaper(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsRetrieveResultEffectiveSamsung(_Model):
+class PassesChannelsRetrieveResponseEffectiveSamsung(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsRetrieveResultLevels(_Model):
-    mobile: _List[PassesChannelsRetrieveResultLevelsMobileItem] | None = None
-    apple: _List[PassesChannelsRetrieveResultLevelsAppleItem] | None = None
-    google: _List[PassesChannelsRetrieveResultLevelsGoogleItem] | None = None
-    samsung: _List[PassesChannelsRetrieveResultLevelsSamsungItem] | None = None
-    paper: _List[PassesChannelsRetrieveResultLevelsPaperItem] | None = None
-    nfc: _List[PassesChannelsRetrieveResultLevelsNfcItem] | None = None
+class PassesChannelsRetrieveResponseLevels(_Model):
+    mobile: _List[PassesChannelsRetrieveResponseLevelsMobileItem] | None = None
+    apple: _List[PassesChannelsRetrieveResponseLevelsAppleItem] | None = None
+    google: _List[PassesChannelsRetrieveResponseLevelsGoogleItem] | None = None
+    samsung: _List[PassesChannelsRetrieveResponseLevelsSamsungItem] | None = None
+    paper: _List[PassesChannelsRetrieveResponseLevelsPaperItem] | None = None
+    nfc: _List[PassesChannelsRetrieveResponseLevelsNfcItem] | None = None
 
-class PassesChannelsRetrieveResultLevelsAppleItem(_Model):
+class PassesChannelsRetrieveResponseLevelsAppleItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsRetrieveResultLevelsGoogleItem(_Model):
+class PassesChannelsRetrieveResponseLevelsGoogleItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsRetrieveResultLevelsMobileItem(_Model):
+class PassesChannelsRetrieveResponseLevelsMobileItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsRetrieveResultLevelsNfcItem(_Model):
+class PassesChannelsRetrieveResponseLevelsNfcItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsRetrieveResultLevelsPaperItem(_Model):
+class PassesChannelsRetrieveResponseLevelsPaperItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsRetrieveResultLevelsSamsungItem(_Model):
+class PassesChannelsRetrieveResponseLevelsSamsungItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsRetrieveResultOverrides(_Model):
+class PassesChannelsRetrieveResponseOverrides(_Model):
     mobile: _Literal["on", "off"] | str | None = None
     apple: _Literal["on", "off"] | str | None = None
     google: _Literal["on", "off"] | str | None = None
@@ -6012,14 +7642,14 @@ class PassesChannelsRetrieveResultOverrides(_Model):
     paper: _Literal["on", "off"] | str | None = None
     nfc: _Literal["on", "off"] | str | None = None
 
-class PassesChannelsRetrieveResultReplace(_Model):
+class PassesChannelsRetrieveResponseReplace(_Model):
     supported: bool
-    windows: _List[PassesChannelsRetrieveResultReplaceWindowsItem]
+    windows: _List[PassesChannelsRetrieveResponseReplaceWindowsItem]
     owed: bool
     blocked: _Dict[str, _Any] | None
     lastDigital: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str]
 
-class PassesChannelsRetrieveResultReplaceWindowsItem(_Model):
+class PassesChannelsRetrieveResponseReplaceWindowsItem(_Model):
     kind: _Literal["event", "session"] | str
     id: str
     name: str
@@ -6042,107 +7672,107 @@ class PassesChannelsUpdateParamsChannels(_Model):
     paper: _Literal["on", "off", None] | str = None
     nfc: _Literal["on", "off", None] | str = None
 
-class PassesChannelsUpdateResult(_Model):
-    effective: PassesChannelsUpdateResultEffective
-    levels: PassesChannelsUpdateResultLevels
-    overrides: PassesChannelsUpdateResultOverrides
-    replace: PassesChannelsUpdateResultReplace
+class PassesChannelsUpdateResponse(_Model):
+    effective: PassesChannelsUpdateResponseEffective
+    levels: PassesChannelsUpdateResponseLevels
+    overrides: PassesChannelsUpdateResponseOverrides
+    replace: PassesChannelsUpdateResponseReplace
 
-class PassesChannelsUpdateResultEffective(_Model):
-    mobile: PassesChannelsUpdateResultEffectiveMobile | None = None
-    apple: PassesChannelsUpdateResultEffectiveApple | None = None
-    google: PassesChannelsUpdateResultEffectiveGoogle | None = None
-    samsung: PassesChannelsUpdateResultEffectiveSamsung | None = None
-    paper: PassesChannelsUpdateResultEffectivePaper | None = None
-    nfc: PassesChannelsUpdateResultEffectiveNfc | None = None
+class PassesChannelsUpdateResponseEffective(_Model):
+    mobile: PassesChannelsUpdateResponseEffectiveMobile | None = None
+    apple: PassesChannelsUpdateResponseEffectiveApple | None = None
+    google: PassesChannelsUpdateResponseEffectiveGoogle | None = None
+    samsung: PassesChannelsUpdateResponseEffectiveSamsung | None = None
+    paper: PassesChannelsUpdateResponseEffectivePaper | None = None
+    nfc: PassesChannelsUpdateResponseEffectiveNfc | None = None
 
-class PassesChannelsUpdateResultEffectiveApple(_Model):
+class PassesChannelsUpdateResponseEffectiveApple(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsUpdateResultEffectiveGoogle(_Model):
+class PassesChannelsUpdateResponseEffectiveGoogle(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsUpdateResultEffectiveMobile(_Model):
+class PassesChannelsUpdateResponseEffectiveMobile(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsUpdateResultEffectiveNfc(_Model):
+class PassesChannelsUpdateResponseEffectiveNfc(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsUpdateResultEffectivePaper(_Model):
+class PassesChannelsUpdateResponseEffectivePaper(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsUpdateResultEffectiveSamsung(_Model):
+class PassesChannelsUpdateResponseEffectiveSamsung(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class PassesChannelsUpdateResultLevels(_Model):
-    mobile: _List[PassesChannelsUpdateResultLevelsMobileItem] | None = None
-    apple: _List[PassesChannelsUpdateResultLevelsAppleItem] | None = None
-    google: _List[PassesChannelsUpdateResultLevelsGoogleItem] | None = None
-    samsung: _List[PassesChannelsUpdateResultLevelsSamsungItem] | None = None
-    paper: _List[PassesChannelsUpdateResultLevelsPaperItem] | None = None
-    nfc: _List[PassesChannelsUpdateResultLevelsNfcItem] | None = None
+class PassesChannelsUpdateResponseLevels(_Model):
+    mobile: _List[PassesChannelsUpdateResponseLevelsMobileItem] | None = None
+    apple: _List[PassesChannelsUpdateResponseLevelsAppleItem] | None = None
+    google: _List[PassesChannelsUpdateResponseLevelsGoogleItem] | None = None
+    samsung: _List[PassesChannelsUpdateResponseLevelsSamsungItem] | None = None
+    paper: _List[PassesChannelsUpdateResponseLevelsPaperItem] | None = None
+    nfc: _List[PassesChannelsUpdateResponseLevelsNfcItem] | None = None
 
-class PassesChannelsUpdateResultLevelsAppleItem(_Model):
+class PassesChannelsUpdateResponseLevelsAppleItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsUpdateResultLevelsGoogleItem(_Model):
+class PassesChannelsUpdateResponseLevelsGoogleItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsUpdateResultLevelsMobileItem(_Model):
+class PassesChannelsUpdateResponseLevelsMobileItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsUpdateResultLevelsNfcItem(_Model):
+class PassesChannelsUpdateResponseLevelsNfcItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsUpdateResultLevelsPaperItem(_Model):
+class PassesChannelsUpdateResponseLevelsPaperItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsUpdateResultLevelsSamsungItem(_Model):
+class PassesChannelsUpdateResponseLevelsSamsungItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class PassesChannelsUpdateResultOverrides(_Model):
+class PassesChannelsUpdateResponseOverrides(_Model):
     mobile: _Literal["on", "off"] | str | None = None
     apple: _Literal["on", "off"] | str | None = None
     google: _Literal["on", "off"] | str | None = None
@@ -6150,14 +7780,14 @@ class PassesChannelsUpdateResultOverrides(_Model):
     paper: _Literal["on", "off"] | str | None = None
     nfc: _Literal["on", "off"] | str | None = None
 
-class PassesChannelsUpdateResultReplace(_Model):
+class PassesChannelsUpdateResponseReplace(_Model):
     supported: bool
-    windows: _List[PassesChannelsUpdateResultReplaceWindowsItem]
+    windows: _List[PassesChannelsUpdateResponseReplaceWindowsItem]
     owed: bool
     blocked: _Dict[str, _Any] | None
     lastDigital: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str]
 
-class PassesChannelsUpdateResultReplaceWindowsItem(_Model):
+class PassesChannelsUpdateResponseReplaceWindowsItem(_Model):
     kind: _Literal["event", "session"] | str
     id: str
     name: str
@@ -6166,15 +7796,15 @@ class PassesChannelsUpdateResultReplaceWindowsItem(_Model):
     open: bool
     scheduled: bool
 
-class PassesCheckInRulesRetrieveResult(_Model):
+class PassesCheckInRulesRetrieveResponse(_Model):
     passId: str
     orgId: str
-    rules: PassesCheckInRulesRetrieveResultRules
-    defaults: PassesCheckInRulesRetrieveResultDefaults
-    effective: PassesCheckInRulesRetrieveResultEffective
+    rules: PassesCheckInRulesRetrieveResponseRules
+    defaults: PassesCheckInRulesRetrieveResponseDefaults
+    effective: PassesCheckInRulesRetrieveResponseEffective
     updatedAt: int | None
 
-class PassesCheckInRulesRetrieveResultDefaults(_Model):
+class PassesCheckInRulesRetrieveResponseDefaults(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
@@ -6183,7 +7813,7 @@ class PassesCheckInRulesRetrieveResultDefaults(_Model):
     durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
-class PassesCheckInRulesRetrieveResultEffective(_Model):
+class PassesCheckInRulesRetrieveResponseEffective(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
@@ -6192,7 +7822,7 @@ class PassesCheckInRulesRetrieveResultEffective(_Model):
     durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
-class PassesCheckInRulesRetrieveResultRules(_Model):
+class PassesCheckInRulesRetrieveResponseRules(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
@@ -6213,15 +7843,15 @@ class PassesCheckInRulesUpdateParamsRules(_Model):
     durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
-class PassesCheckInRulesUpdateResult(_Model):
+class PassesCheckInRulesUpdateResponse(_Model):
     passId: str
     orgId: str
-    rules: PassesCheckInRulesUpdateResultRules
-    defaults: PassesCheckInRulesUpdateResultDefaults
-    effective: PassesCheckInRulesUpdateResultEffective
+    rules: PassesCheckInRulesUpdateResponseRules
+    defaults: PassesCheckInRulesUpdateResponseDefaults
+    effective: PassesCheckInRulesUpdateResponseEffective
     updatedAt: int | None
 
-class PassesCheckInRulesUpdateResultDefaults(_Model):
+class PassesCheckInRulesUpdateResponseDefaults(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
@@ -6230,7 +7860,7 @@ class PassesCheckInRulesUpdateResultDefaults(_Model):
     durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
-class PassesCheckInRulesUpdateResultEffective(_Model):
+class PassesCheckInRulesUpdateResponseEffective(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
@@ -6239,7 +7869,7 @@ class PassesCheckInRulesUpdateResultEffective(_Model):
     durationFrom: _Literal["first_scan", "issued"] | str | None = None
     days: int | None = None
 
-class PassesCheckInRulesUpdateResultRules(_Model):
+class PassesCheckInRulesUpdateResponseRules(_Model):
     mode: _Literal["single", "daily", "unlimited", "in_out"] | str | None = None
     eventId: str | None = None
     validFrom: int | None = None
@@ -6269,15 +7899,15 @@ class PassesCreateParams(_Model):
     externalRef: str | None = None
     sendEmail: bool | None = None
 
-class PassesDeleteResult(_Model):
+class PassesDeleteResponse(_Model):
     ok: _Literal[True]
 
-class PassesDevicesListResult(_Model):
+class PassesDevicesListResponse(_Model):
     version: int
-    devices: _List[PassesDevicesListResultDevicesItem]
+    devices: _List[PassesDevicesListResponseDevicesItem]
     removal: _Dict[str, _Any] | None
 
-class PassesDevicesListResultDevicesItem(_Model):
+class PassesDevicesListResponseDevicesItem(_Model):
     device: str
     status: _Literal["current", "waiting", "push_failing", "removed", "unknown"] | str
     registeredAt: int | None
@@ -6290,15 +7920,15 @@ class PassesMatchPhotosParams(_Model):
     orgId: str | None = None
     keys: _List[str]
 
-class PassesMatchPhotosResult(_Model):
-    matches: _List[PassesMatchPhotosResultMatchesItem]
+class PassesMatchPhotosResponse(_Model):
+    matches: _List[PassesMatchPhotosResponseMatchesItem]
 
-class PassesMatchPhotosResultMatchesItem(_Model):
+class PassesMatchPhotosResponseMatchesItem(_Model):
     key: str
     passId: str | None
     state: _Literal["matched", "none", "ambiguous"] | str
 
-class PassesMemberPhotoDeleteResult(_Model):
+class PassesMemberPhotoDeleteResponse(_Model):
     passId: str
     orgId: str
     url: str | None
@@ -6306,7 +7936,7 @@ class PassesMemberPhotoDeleteResult(_Model):
     walletSupported: bool
     updatedAt: int | None
 
-class PassesMemberPhotoRetrieveResult(_Model):
+class PassesMemberPhotoRetrieveResponse(_Model):
     passId: str
     orgId: str
     url: str | None
@@ -6317,7 +7947,7 @@ class PassesMemberPhotoRetrieveResult(_Model):
 class PassesMemberPhotoUpdateParams(_Model):
     includeInPass: bool
 
-class PassesMemberPhotoUpdateResult(_Model):
+class PassesMemberPhotoUpdateResponse(_Model):
     passId: str
     orgId: str
     url: str | None
@@ -6329,7 +7959,7 @@ class PassesMemberPhotoUploadParams(_Model):
     png: str
     includeInPass: bool | None = None
 
-class PassesMemberPhotoUploadResult(_Model):
+class PassesMemberPhotoUploadResponse(_Model):
     passId: str
     orgId: str
     url: str | None
@@ -6337,7 +7967,7 @@ class PassesMemberPhotoUploadResult(_Model):
     walletSupported: bool
     updatedAt: int | None
 
-class PassesPrintsCreateResult(_Model):
+class PassesPrintsCreateResponse(_Model):
     id: str
     passId: str
     generation: int
@@ -6347,10 +7977,10 @@ class PassesPrintsCreateResult(_Model):
     voidCause: str | None
     code: str
 
-class PassesPrintsListResult(_Model):
-    prints: _List[PassesPrintsListResultPrintsItem]
+class PassesPrintsListResponse(_Model):
+    prints: _List[PassesPrintsListResponsePrintsItem]
 
-class PassesPrintsListResultPrintsItem(_Model):
+class PassesPrintsListResponsePrintsItem(_Model):
     id: str
     passId: str
     generation: int
@@ -6359,7 +7989,7 @@ class PassesPrintsListResultPrintsItem(_Model):
     voidedAt: int | None
     voidCause: str | None
 
-class PassesPrintsVoidResult(_Model):
+class PassesPrintsVoidResponse(_Model):
     id: str
     passId: str
     generation: int
@@ -6368,14 +7998,9 @@ class PassesPrintsVoidResult(_Model):
     voidedAt: int | None
     voidCause: str | None
 
-class PassesRefreshResult(_Model):
+class PassesRefreshResponse(_Model):
     accepted: _Literal[True]
     requestedAt: int
-
-class PassesReissueProviderCopiesParams(_Model):
-    orgId: str | None = None
-    provider: _Literal["google", "samsung"] | str
-    templateId: str | None = None
 
 class PassesRemoveParams(_Model):
     message: str | None = None
@@ -6383,54 +8008,59 @@ class PassesRemoveParams(_Model):
 class PassesRenewParams(_Model):
     pass
 
-class PassesRetrieveProviderStatusResult(_Model):
-    credentialGeneration: int
-    providers: _Tuple[PassesRetrieveProviderStatusResultProviders1, PassesRetrieveProviderStatusResultProviders2]
+class PassesResendProviderCopiesParams(_Model):
+    orgId: str | None = None
+    provider: _Literal["google", "samsung"] | str
+    templateId: str | None = None
 
-class PassesRetrieveProviderStatusResultProviders1(_Model):
+class PassesRetrieveProviderStatusResponse(_Model):
+    credentialGeneration: int
+    providers: _Tuple[PassesRetrieveProviderStatusResponseProviders1, PassesRetrieveProviderStatusResponseProviders2]
+
+class PassesRetrieveProviderStatusResponseProviders1(_Model):
     provider: _Literal["google"] | str
     lifecycle: _Literal["absent", "blocked", "ready", "active", "revoking", "revoked", "retired"] | str
     desiredOperation: _Dict[str, _Any] | None
     priorGenerationRetirementPending: bool
     installation: _Literal["unknown"] | str
-    reported: PassesRetrieveProviderStatusResultProviders1Reported | None = None
-    issuance: PassesRetrieveProviderStatusResultProviders1Issuance1 | PassesRetrieveProviderStatusResultProviders1Issuance2
+    reported: PassesRetrieveProviderStatusResponseProviders1Reported | None = None
+    issuance: PassesRetrieveProviderStatusResponseProviders1Issuance1 | PassesRetrieveProviderStatusResponseProviders1Issuance2
 
-class PassesRetrieveProviderStatusResultProviders1Issuance1(_Model):
+class PassesRetrieveProviderStatusResponseProviders1Issuance1(_Model):
     state: _Literal["disabled"] | str
     reason: _Literal["not_released"] | str
 
-class PassesRetrieveProviderStatusResultProviders1Issuance2(_Model):
+class PassesRetrieveProviderStatusResponseProviders1Issuance2(_Model):
     state: _Literal["enabled"] | str
 
-class PassesRetrieveProviderStatusResultProviders1Reported(_Model):
+class PassesRetrieveProviderStatusResponseProviders1Reported(_Model):
     event: _Literal["saved", "removed"] | str
     at: int
 
-class PassesRetrieveProviderStatusResultProviders2(_Model):
+class PassesRetrieveProviderStatusResponseProviders2(_Model):
     provider: _Literal["samsung"] | str
     lifecycle: _Literal["absent", "blocked", "ready", "active", "revoking", "revoked", "retired"] | str
     desiredOperation: _Dict[str, _Any] | None
     priorGenerationRetirementPending: bool
     installation: _Literal["unknown"] | str
-    reported: PassesRetrieveProviderStatusResultProviders2Reported | None = None
-    issuance: PassesRetrieveProviderStatusResultProviders2Issuance1 | PassesRetrieveProviderStatusResultProviders2Issuance2
+    reported: PassesRetrieveProviderStatusResponseProviders2Reported | None = None
+    issuance: PassesRetrieveProviderStatusResponseProviders2Issuance1 | PassesRetrieveProviderStatusResponseProviders2Issuance2
 
-class PassesRetrieveProviderStatusResultProviders2Issuance1(_Model):
+class PassesRetrieveProviderStatusResponseProviders2Issuance1(_Model):
     state: _Literal["disabled"] | str
     reason: _Literal["not_released"] | str
 
-class PassesRetrieveProviderStatusResultProviders2Issuance2(_Model):
+class PassesRetrieveProviderStatusResponseProviders2Issuance2(_Model):
     state: _Literal["enabled"] | str
 
-class PassesRetrieveProviderStatusResultProviders2Reported(_Model):
+class PassesRetrieveProviderStatusResponseProviders2Reported(_Model):
     event: _Literal["saved", "removed"] | str
     at: int
 
-class PassesRotateCodeResult(_Model):
+class PassesRotateCodeResponse(_Model):
     ok: _Literal[True]
 
-class PassesRotateLinkResult(_Model):
+class PassesRotateLinkResponse(_Model):
     downloadUrl: str
     publicUrl: str
 
@@ -6438,7 +8068,7 @@ class PassesSendEmailParams(_Model):
     to: str | None = None
     attach: bool | None = None
 
-class PassesSendEmailResult(_Model):
+class PassesSendEmailResponse(_Model):
     ok: _Literal[True]
 
 class PassesStampsApplyParams1(_Model):
@@ -6455,13 +8085,174 @@ class PassesUpdateParams(_Model):
     resetToConnection: _List[str] | None = None
     notify: bool | None = None
 
-class PassesVersionsDiffResult(_Model):
-    changes: _List[PassesVersionsDiffResultChangesItem]
+class PassesVersionsDiffResponse(_Model):
+    changes: _List[PassesVersionsDiffResponseChangesItem]
 
-class PassesVersionsDiffResultChangesItem(_Model):
+class PassesVersionsDiffResponseChangesItem(_Model):
     path: str
     from_: _Any | None = _Field(default=None, alias="from")
     to: _Any | None = None
+
+class PlatformAppleCallsListResponse(_Model):
+    items: _List[PlatformAppleCallsListResponseItemsItem]
+    available: bool
+
+class PlatformAppleCallsListResponseItemsItem(_Model):
+    id: int
+    callId: str
+    phase: str
+    method: str
+    target: str | None
+    caller: str | None
+    status: str | None
+    durationMs: int | None
+    at: int
+
+class PlatformAuditEntriesListResponse(_Model):
+    items: _List[PlatformAuditEntriesListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformAuditEntriesListResponseItemsItem(_Model):
+    id: int
+    at: int
+    orgId: str | None
+    actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
+    actorId: str | None
+    actorLabel: str | None = None
+    action: str
+    targetType: str | None
+    targetId: str | None
+    targetLabel: str | None = None
+    requestId: str | None
+    detail: _Any | None = None
+
+class PlatformMetricsRetrieveOverviewResponse(_Model):
+    source: _Literal["analytics_engine", "d1"] | str
+    range: _Literal["24h", "7d", "30d"] | str
+    bucketMs: int
+    unavailable: _List[str]
+    totals: PlatformMetricsRetrieveOverviewResponseTotals
+    series: PlatformMetricsRetrieveOverviewResponseSeries
+    setup: PlatformMetricsRetrieveOverviewResponseSetup
+    directory: PlatformMetricsRetrieveOverviewResponseDirectory | None = None
+    live: _List[PlatformMetricsRetrieveOverviewResponseLiveItem]
+    recent: _List[PlatformMetricsRetrieveOverviewResponseRecentItem]
+
+class PlatformMetricsRetrieveOverviewResponseDirectory(_Model):
+    users: int
+    walletAccounts: int
+
+class PlatformMetricsRetrieveOverviewResponseLiveItem(_Model):
+    eventId: str
+    name: str
+    arrived: int
+    expected: int
+    ratePerMin: float
+
+class PlatformMetricsRetrieveOverviewResponseRecentItem(_Model):
+    at: int
+    action: str
+    orgId: str | None
+    targetId: str | None
+
+class PlatformMetricsRetrieveOverviewResponseSeries(_Model):
+    issued: _List[PlatformMetricsRetrieveOverviewResponseSeriesIssuedItem]
+    updated: _List[PlatformMetricsRetrieveOverviewResponseSeriesUpdatedItem]
+    downloads: _List[PlatformMetricsRetrieveOverviewResponseSeriesDownloadsItem]
+    registrations: _List[PlatformMetricsRetrieveOverviewResponseSeriesRegistrationsItem]
+    refreshes: _List[PlatformMetricsRetrieveOverviewResponseSeriesRefreshesItem]
+    pushes: _List[PlatformMetricsRetrieveOverviewResponseSeriesPushesItem]
+    pushFailures: _List[PlatformMetricsRetrieveOverviewResponseSeriesPushFailuresItem]
+    emails: _List[PlatformMetricsRetrieveOverviewResponseSeriesEmailsItem]
+    emailFailures: _List[PlatformMetricsRetrieveOverviewResponseSeriesEmailFailuresItem]
+    emailUnknown: _List[PlatformMetricsRetrieveOverviewResponseSeriesEmailUnknownItem] | None = None
+    syncRuns: _List[PlatformMetricsRetrieveOverviewResponseSeriesSyncRunsItem]
+    signIns: _List[PlatformMetricsRetrieveOverviewResponseSeriesSignInsItem]
+    scans: _List[PlatformMetricsRetrieveOverviewResponseSeriesScansItem]
+
+class PlatformMetricsRetrieveOverviewResponseSeriesDownloadsItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesEmailFailuresItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesEmailUnknownItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesEmailsItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesIssuedItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesPushFailuresItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesPushesItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesRefreshesItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesRegistrationsItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesScansItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesSignInsItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesSyncRunsItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSeriesUpdatedItem(_Model):
+    t: int
+    v: float
+
+class PlatformMetricsRetrieveOverviewResponseSetup(_Model):
+    orgs: int
+    assignedTemplates: int
+    passes: int
+    approvedTemplates: int
+    releasedTemplates: int
+    walletPasses: int
+    passEmailsSent: int
+    latestPassId: str | None
+    scanners: int
+
+class PlatformMetricsRetrieveOverviewResponseTotals(_Model):
+    passes: int
+    activePasses: int
+    voidedPasses: int
+    holders: int
+    devices: int
+    issued: int
+    updated: int
+    downloads: int
+    registrations: int
+    refreshes: int
+    pushes: int
+    pushFailures: int
+    emails: int
+    emailFailures: int
+    emailUnknown: int | None = None
+    syncRuns: int
+    signIns: int
+    scans: int
+    scanRefused: int
 
 class PlatformOrgsCreateParams(_Model):
     slug: str
@@ -6470,6 +8261,32 @@ class PlatformOrgsCreateParams(_Model):
     branding: OrgBranding | None = None
     preset: _Literal["legacy", "trial", "standard"] | str | None = None
     addMe: bool | None = None
+
+class PlatformOrgsDeleteResponse(_Model):
+    ok: _Literal[True]
+
+class PlatformOrgsEntitlementsRetrieveResponse(_Model):
+    orgId: str
+    preset: str | None
+    presetLabel: str | None
+    revision: int
+    updatedAt: int | None
+    items: _List[PlatformOrgsEntitlementsRetrieveResponseItemsItem]
+    presets: _List[PlatformOrgsEntitlementsRetrieveResponsePresetsItem]
+
+class PlatformOrgsEntitlementsRetrieveResponseItemsItem(_Model):
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    value: float | str | _List[str] | None
+    presetValue: float | str | _List[str] | None
+    source: _Literal["preset", "override"] | str
+    note: str | None
+    expiresAt: int | None
+
+class PlatformOrgsEntitlementsRetrieveResponsePresetsItem(_Model):
+    preset: str
+    label: str
+    orgCount: int
+    values: _Dict[str, float | str | _List[str] | None]
 
 class PlatformOrgsEntitlementsUpdateParams(_Model):
     expectedRevision: int
@@ -6481,21 +8298,280 @@ class PlatformOrgsEntitlementsUpdateParamsOverridesValue(_Model):
     note: str | None = None
     expiresAt: int | None = None
 
+class PlatformOrgsEntitlementsUpdateResponse(_Model):
+    orgId: str
+    preset: str | None
+    presetLabel: str | None
+    revision: int
+    updatedAt: int | None
+    items: _List[PlatformOrgsEntitlementsUpdateResponseItemsItem]
+    presets: _List[PlatformOrgsEntitlementsUpdateResponsePresetsItem]
+
+class PlatformOrgsEntitlementsUpdateResponseItemsItem(_Model):
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    value: float | str | _List[str] | None
+    presetValue: float | str | _List[str] | None
+    source: _Literal["preset", "override"] | str
+    note: str | None
+    expiresAt: int | None
+
+class PlatformOrgsEntitlementsUpdateResponsePresetsItem(_Model):
+    preset: str
+    label: str
+    orgCount: int
+    values: _Dict[str, float | str | _List[str] | None]
+
 class PlatformOrgsLegalHoldsCreateParams(_Model):
     passId: str | None = None
     reason: str
 
+class PlatformOrgsLegalHoldsCreateResponse(_Model):
+    ok: _Literal[True]
+
+class PlatformOrgsLegalHoldsListResponse(_Model):
+    items: _List[PlatformOrgsLegalHoldsListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformOrgsLegalHoldsListResponseItemsItem(_Model):
+    id: str
+    passId: str | None
+    passLabel: str | None
+    placedByKind: _Literal["org", "platform"] | str
+    placedByLabel: str
+    reason: str | None
+    createdAt: int
+    releasedAt: int | None
+    releasedByLabel: str | None
+    canRelease: bool
+
+class PlatformOrgsLegalHoldsReleaseResponse(_Model):
+    ok: _Literal[True]
+
+class PlatformOrgsListClosedResponse(_Model):
+    items: _List[PlatformOrgsListClosedResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformOrgsListClosedResponseItemsItem(_Model):
+    id: str
+    slug: str
+    name: str
+    closedAt: int
+    purgeAfter: int
+    purging: bool
+    held: bool
+
+class PlatformOrgsListResponse(_Model):
+    items: _List[PlatformOrgsListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformOrgsListResponseItemsItem(_Model):
+    id: str
+    slug: str
+    name: str
+    status: _Literal["active", "suspended", "deleted"] | str
+    personal: bool | None = None
+    personalOwner: _Dict[str, _Any] | None = None
+    createdAt: int
+    counts: PlatformOrgsListResponseItemsItemCounts
+    countsCapped: bool
+
+class PlatformOrgsListResponseItemsItemCounts(_Model):
+    passes: int
+    templates: int
+    connections: int
+    apiKeys: int
+    members: int | None = None
+
+class PlatformOrgsRetentionReceiptsDownloadResponse(_Model):
+    receipt: PlatformOrgsRetentionReceiptsDownloadResponseReceipt
+
+class PlatformOrgsRetentionReceiptsDownloadResponseReceipt(_Model):
+    id: str
+    cls: str
+    kind: _Literal["sweep", "visitor", "erasure"] | str
+    ranAt: int
+    cutoffAt: int | None
+    policyDays: int | None
+    deleted: int
+    anonymised: int
+    verified: bool
+    orgId: str | None
+    seq: int
+    prevMac: str | None
+    mac: str
+    refsDigest: str | None
+    requestId: str | None
+
+class PlatformOrgsRetentionReceiptsListResponse(_Model):
+    items: _List[PlatformOrgsRetentionReceiptsListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformOrgsRetentionReceiptsListResponseItemsItem(_Model):
+    id: str
+    cls: str
+    kind: _Literal["sweep", "visitor", "erasure"] | str
+    ranAt: int
+    cutoffAt: int | None
+    policyDays: int | None
+    deleted: int
+    anonymised: int
+    verified: bool
+
+class PlatformOrgsRetrieveResponse(_Model):
+    id: str
+    slug: str
+    name: str
+    status: _Literal["active", "suspended", "deleted"] | str
+    personal: bool | None = None
+    personalOwner: _Dict[str, _Any] | None = None
+    createdAt: int
+    counts: PlatformOrgsRetrieveResponseCounts
+    countsCapped: bool
+
+class PlatformOrgsRetrieveResponseCounts(_Model):
+    passes: int
+    templates: int
+    connections: int
+    apiKeys: int
+    members: int | None = None
+
 class PlatformOrgsSetStatusParams(_Model):
     status: _Literal["active", "suspended"] | str
 
+class PlatformOrgsSetStatusResponse(_Model):
+    id: str
+    slug: str
+    name: str
+    status: _Literal["active", "suspended", "deleted"] | str
+    personal: bool | None = None
+    personalOwner: _Dict[str, _Any] | None = None
+    createdAt: int
+    counts: PlatformOrgsSetStatusResponseCounts
+    countsCapped: bool
+
+class PlatformOrgsSetStatusResponseCounts(_Model):
+    passes: int
+    templates: int
+    connections: int
+    apiKeys: int
+    members: int | None = None
+
 class PlatformOrgsWalletEnrollmentsHoldParams(_Model):
     reason: str
+
+class PlatformOrgsWalletEnrollmentsHoldResponse(_Model):
+    status: _Literal["held", "released", "queued"] | str
+
+class PlatformOrgsWalletEnrollmentsReleaseResponse(_Model):
+    status: _Literal["held", "released", "queued"] | str
+
+class PlatformRetentionReceiptsDownloadResponse(_Model):
+    receipt: PlatformRetentionReceiptsDownloadResponseReceipt
+
+class PlatformRetentionReceiptsDownloadResponseReceipt(_Model):
+    id: str
+    cls: str
+    kind: _Literal["sweep", "visitor", "erasure"] | str
+    ranAt: int
+    cutoffAt: int | None
+    policyDays: int | None
+    deleted: int
+    anonymised: int
+    verified: bool
+    orgId: str | None
+    seq: int
+    prevMac: str | None
+    mac: str
+    refsDigest: str | None
+    requestId: str | None
+
+class PlatformRetentionReceiptsListResponse(_Model):
+    items: _List[PlatformRetentionReceiptsListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformRetentionReceiptsListResponseItemsItem(_Model):
+    id: str
+    cls: str
+    kind: _Literal["sweep", "visitor", "erasure"] | str
+    ranAt: int
+    cutoffAt: int | None
+    policyDays: int | None
+    deleted: int
+    anonymised: int
+    verified: bool
+
+class PlatformSettingsRetrieveImpactResponse(_Model):
+    emailOnlyUsers: int
+
+class PlatformStatusListIncidentsResponse(_Model):
+    items: _List[PlatformStatusListIncidentsResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformStatusListIncidentsResponseItemsItem(_Model):
+    id: str
+    title: str
+    note: str
+    component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str
+    impact: _Literal["notice", "degraded", "outage"] | str
+    startedAt: int
+    resolvedAt: int | None
+
+class PlatformStatusListWorkflowRunsResponse(_Model):
+    items: _List[PlatformStatusListWorkflowRunsResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformStatusListWorkflowRunsResponseItemsItem(_Model):
+    instanceId: str
+    kind: _Literal["template_import", "bulk_reissue", "connection_sync", "broadcast", "pass_import"] | str
+    orgId: str | None
+    targetId: str | None
+    status: _Literal["queued", "running", "complete", "errored", "terminated"] | str
+    startedAt: int
+    finishedAt: int | None
+    errorCode: str | None
 
 class PlatformStatusOpenIncidentParams(_Model):
     title: str
     note: str
     component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str = None
     impact: _Literal["notice", "degraded", "outage"] | str
+
+class PlatformStatusOpenIncidentResponse(_Model):
+    id: str
+    title: str
+    note: str
+    component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str
+    impact: _Literal["notice", "degraded", "outage"] | str
+    startedAt: int
+    resolvedAt: int | None
+
+class PlatformStatusResolveIncidentResponse(_Model):
+    id: str
+    title: str
+    note: str
+    component: _Literal["api", "apple_push", "email", "webhooks", "google", "samsung", None] | str
+    impact: _Literal["notice", "degraded", "outage"] | str
+    startedAt: int
+    resolvedAt: int | None
+
+class PlatformStatusRetrieveResponse(_Model):
+    overall: _Literal["failing", "degraded", "not_configured", "configured", "not_in_use", "verified"] | str
+    build: PlatformStatusRetrieveResponseBuild
+    components: _List[PlatformStatusRetrieveResponseComponentsItem]
+
+class PlatformStatusRetrieveResponseBuild(_Model):
+    id: str | None
+    tag: str | None
+    timestamp: str | None
+
+class PlatformStatusRetrieveResponseComponentsItem(_Model):
+    id: str
+    kind: _Literal["database", "storage", "queue", "workflow", "identity", "email", "oidc", "connection", "cron", "build"] | str
+    label: str
+    state: _Literal["failing", "degraded", "not_configured", "configured", "not_in_use", "verified"] | str
+    detail: str | None
+    checkedAt: int
+    data: _Dict[str, str | float | bool | None] | None = None
 
 class PlatformTemplatesAssignParams(_Model):
     orgId: str | None
@@ -6506,14 +8582,314 @@ class PlatformTemplatesShareParams(_Model):
 class PlatformUsersEmailsCreateParams(_Model):
     email: str
 
+class PlatformUsersEmailsCreateResponse(_Model):
+    id: str
+    name: str | None
+    primaryEmail: str | None
+    status: _Literal["active", "disabled"] | str
+    lastRoles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastLoginAt: int | None
+    signInMethods: _List[_Literal["oidc", "magic_link", "breakglass"] | str]
+    emails: _List[PlatformUsersEmailsCreateResponseEmailsItem]
+    identities: _List[PlatformUsersEmailsCreateResponseIdentitiesItem]
+    sessions: _List[PlatformUsersEmailsCreateResponseSessionsItem]
+    passes: _List[PlatformUsersEmailsCreateResponsePassesItem]
+    passCount: int
+    recentAudit: _List[PlatformUsersEmailsCreateResponseRecentAuditItem]
+
+class PlatformUsersEmailsCreateResponseEmailsItem(_Model):
+    email: str
+    verifiedVia: _Literal["magic_link", "oidc", "admin"] | str
+    verifiedAt: int
+
+class PlatformUsersEmailsCreateResponseIdentitiesItem(_Model):
+    provider: str
+    subject: str
+    emailClaim: str | None
+    emailVerified: bool
+    groups: _List[str]
+    lastUsedAt: int | None
+
+class PlatformUsersEmailsCreateResponsePassesItem(_Model):
+    id: str
+    title: str
+    templateName: str
+    orgName: str
+    status: _Literal["active", "voided"] | str
+
+class PlatformUsersEmailsCreateResponseRecentAuditItem(_Model):
+    id: int
+    at: int
+    action: str
+    actorType: str
+    actorId: str | None
+
+class PlatformUsersEmailsCreateResponseSessionsItem(_Model):
+    id: str
+    amr: _Literal["oidc", "magic_link", "breakglass"] | str
+    roles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastSeenAt: int
+    expiresAt: int
+    revokedAt: int | None
+    userAgent: str | None
+    current: bool
+    method: str
+
+class PlatformUsersEmailsDeleteResponse(_Model):
+    id: str
+    name: str | None
+    primaryEmail: str | None
+    status: _Literal["active", "disabled"] | str
+    lastRoles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastLoginAt: int | None
+    signInMethods: _List[_Literal["oidc", "magic_link", "breakglass"] | str]
+    emails: _List[PlatformUsersEmailsDeleteResponseEmailsItem]
+    identities: _List[PlatformUsersEmailsDeleteResponseIdentitiesItem]
+    sessions: _List[PlatformUsersEmailsDeleteResponseSessionsItem]
+    passes: _List[PlatformUsersEmailsDeleteResponsePassesItem]
+    passCount: int
+    recentAudit: _List[PlatformUsersEmailsDeleteResponseRecentAuditItem]
+
+class PlatformUsersEmailsDeleteResponseEmailsItem(_Model):
+    email: str
+    verifiedVia: _Literal["magic_link", "oidc", "admin"] | str
+    verifiedAt: int
+
+class PlatformUsersEmailsDeleteResponseIdentitiesItem(_Model):
+    provider: str
+    subject: str
+    emailClaim: str | None
+    emailVerified: bool
+    groups: _List[str]
+    lastUsedAt: int | None
+
+class PlatformUsersEmailsDeleteResponsePassesItem(_Model):
+    id: str
+    title: str
+    templateName: str
+    orgName: str
+    status: _Literal["active", "voided"] | str
+
+class PlatformUsersEmailsDeleteResponseRecentAuditItem(_Model):
+    id: int
+    at: int
+    action: str
+    actorType: str
+    actorId: str | None
+
+class PlatformUsersEmailsDeleteResponseSessionsItem(_Model):
+    id: str
+    amr: _Literal["oidc", "magic_link", "breakglass"] | str
+    roles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastSeenAt: int
+    expiresAt: int
+    revokedAt: int | None
+    userAgent: str | None
+    current: bool
+    method: str
+
+class PlatformUsersEmailsMakePrimaryResponse(_Model):
+    id: str
+    name: str | None
+    primaryEmail: str | None
+    status: _Literal["active", "disabled"] | str
+    lastRoles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastLoginAt: int | None
+    signInMethods: _List[_Literal["oidc", "magic_link", "breakglass"] | str]
+    emails: _List[PlatformUsersEmailsMakePrimaryResponseEmailsItem]
+    identities: _List[PlatformUsersEmailsMakePrimaryResponseIdentitiesItem]
+    sessions: _List[PlatformUsersEmailsMakePrimaryResponseSessionsItem]
+    passes: _List[PlatformUsersEmailsMakePrimaryResponsePassesItem]
+    passCount: int
+    recentAudit: _List[PlatformUsersEmailsMakePrimaryResponseRecentAuditItem]
+
+class PlatformUsersEmailsMakePrimaryResponseEmailsItem(_Model):
+    email: str
+    verifiedVia: _Literal["magic_link", "oidc", "admin"] | str
+    verifiedAt: int
+
+class PlatformUsersEmailsMakePrimaryResponseIdentitiesItem(_Model):
+    provider: str
+    subject: str
+    emailClaim: str | None
+    emailVerified: bool
+    groups: _List[str]
+    lastUsedAt: int | None
+
+class PlatformUsersEmailsMakePrimaryResponsePassesItem(_Model):
+    id: str
+    title: str
+    templateName: str
+    orgName: str
+    status: _Literal["active", "voided"] | str
+
+class PlatformUsersEmailsMakePrimaryResponseRecentAuditItem(_Model):
+    id: int
+    at: int
+    action: str
+    actorType: str
+    actorId: str | None
+
+class PlatformUsersEmailsMakePrimaryResponseSessionsItem(_Model):
+    id: str
+    amr: _Literal["oidc", "magic_link", "breakglass"] | str
+    roles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastSeenAt: int
+    expiresAt: int
+    revokedAt: int | None
+    userAgent: str | None
+    current: bool
+    method: str
+
+class PlatformUsersListResponse(_Model):
+    items: _List[PlatformUsersListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformUsersListResponseItemsItem(_Model):
+    id: str
+    name: str | None
+    primaryEmail: str | None
+    status: _Literal["active", "disabled"] | str
+    lastRoles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastLoginAt: int | None
+    passCount: int | None = None
+    signInMethods: _List[_Literal["oidc", "magic_link", "breakglass"] | str] | None = None
+
+class PlatformUsersRetrieveResponse(_Model):
+    id: str
+    name: str | None
+    primaryEmail: str | None
+    status: _Literal["active", "disabled"] | str
+    lastRoles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastLoginAt: int | None
+    signInMethods: _List[_Literal["oidc", "magic_link", "breakglass"] | str]
+    emails: _List[PlatformUsersRetrieveResponseEmailsItem]
+    identities: _List[PlatformUsersRetrieveResponseIdentitiesItem]
+    sessions: _List[PlatformUsersRetrieveResponseSessionsItem]
+    passes: _List[PlatformUsersRetrieveResponsePassesItem]
+    passCount: int
+    recentAudit: _List[PlatformUsersRetrieveResponseRecentAuditItem]
+
+class PlatformUsersRetrieveResponseEmailsItem(_Model):
+    email: str
+    verifiedVia: _Literal["magic_link", "oidc", "admin"] | str
+    verifiedAt: int
+
+class PlatformUsersRetrieveResponseIdentitiesItem(_Model):
+    provider: str
+    subject: str
+    emailClaim: str | None
+    emailVerified: bool
+    groups: _List[str]
+    lastUsedAt: int | None
+
+class PlatformUsersRetrieveResponsePassesItem(_Model):
+    id: str
+    title: str
+    templateName: str
+    orgName: str
+    status: _Literal["active", "voided"] | str
+
+class PlatformUsersRetrieveResponseRecentAuditItem(_Model):
+    id: int
+    at: int
+    action: str
+    actorType: str
+    actorId: str | None
+
+class PlatformUsersRetrieveResponseSessionsItem(_Model):
+    id: str
+    amr: _Literal["oidc", "magic_link", "breakglass"] | str
+    roles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastSeenAt: int
+    expiresAt: int
+    revokedAt: int | None
+    userAgent: str | None
+    current: bool
+    method: str
+
+class PlatformUsersSessionsRevokeAllResponse(_Model):
+    ok: _Literal[True]
+
+class PlatformUsersSessionsRevokeResponse(_Model):
+    ok: _Literal[True]
+
 class PlatformUsersUpdateParams(_Model):
     status: _Literal["active", "disabled"] | str
+
+class PlatformUsersUpdateResponse(_Model):
+    id: str
+    name: str | None
+    primaryEmail: str | None
+    status: _Literal["active", "disabled"] | str
+    lastRoles: _List[_Literal["admin", "user", "developer", "console"] | str]
+    createdAt: int
+    lastLoginAt: int | None
 
 class PlatformWalletAccountsGoogleManagedCompleteParams(_Model):
     issuerId: str
 
+class PlatformWalletAccountsGoogleManagedCompleteResponse(_Model):
+    runId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    waitingFor: str | None
+    errorCode: str | None
+    issuerId: str | None
+    updatedAt: int
+
 class PlatformWalletAccountsGoogleManagedCreateParams(_Model):
     mode: _Literal["live"] | str
+
+class PlatformWalletAccountsGoogleManagedCreateResponse(_Model):
+    runId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    waitingFor: str | None
+    errorCode: str | None
+    issuerId: str | None
+    updatedAt: int
+
+class PlatformWalletCredentialsChecksCreateResponse(_Model):
+    checkId: str
+    status: _Literal["queued"] | str
+
+class PlatformWalletCredentialsChecksRetrieveResponse(_Model):
+    checkId: str
+    status: _Literal["pending", "ok", "failed"] | str
+    code: str | None
+    checkedAt: int | None
+
+class PlatformWalletCredentialsListResponse(_Model):
+    items: _List[PlatformWalletCredentialsListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformWalletCredentialsListResponseItemsItem(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
+
+class PlatformWalletCredentialsMigrateResponse(_Model):
+    queued: int
 
 class PlatformWalletCredentialsResolveMigrationParams(_Model):
     orgId: str
@@ -6521,13 +8897,70 @@ class PlatformWalletCredentialsResolveMigrationParams(_Model):
     provider: _Literal["google", "samsung"] | str
     action: _Literal["assign_platform", "merge", "retire"] | str
 
+class PlatformWalletCredentialsResolveMigrationResponse(_Model):
+    accounts: int
+
+class PlatformWalletCredentialsRetrieveMigrationResponse(_Model):
+    pending: int
+    migrated: int
+    items: _List[PlatformWalletCredentialsRetrieveMigrationResponseItemsItem]
+    nextCursor: str | None
+    next: str | None
+
+class PlatformWalletCredentialsRetrieveMigrationResponseItemsItem(_Model):
+    accountId: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    state: _Literal["ready", "refused"] | str
+    reason: _Literal["identity_shared", "org_credential_exists", "unreadable", "unproven_claim", None] | str
+    identityShared: _List[PlatformWalletCredentialsRetrieveMigrationResponseItemsItemIdentitySharedItem]
+
+class PlatformWalletCredentialsRetrieveMigrationResponseItemsItemIdentitySharedItem(_Model):
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+
 class PlatformWalletCredentialsRevokeParams(_Model):
     expectedRevision: int
+
+class PlatformWalletCredentialsRevokeResponse(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
+
+class PlatformWalletCredentialsRotateKeyResponse(_Model):
+    runId: str
 
 class PlatformWalletCredentialsSetSamsungCardParams(_Model):
     type: _Literal["loyalty", "ticket", "coupon"] | str
     cardId: str
     expectedRevision: int
+
+class PlatformWalletCredentialsSetSamsungCardResponse(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
 
 class PlatformWalletCredentialsUpsertParams1(_Model):
     provider: _Literal["google"] | str
@@ -6556,21 +8989,50 @@ class PlatformWalletCredentialsUpsertParams2Credentials(_Model):
     partnerCertificatePem: str
     samsungCertificatePem: str
 
+class PlatformWalletCredentialsUpsertResponse(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
+
+class PlatformWalletEnrollmentsListResponse(_Model):
+    items: _List[PlatformWalletEnrollmentsListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformWalletEnrollmentsListResponseItemsItem(_Model):
+    orgId: str
+    orgName: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    source: _Literal["platform", "org", None] | str
+    state: _Literal["off", "on", "held", "revoked"] | str
+    hold: _Dict[str, _Any] | None
+    updatedAt: int
+
 class PrintJobsCreateParams(_Model):
     ids: _List[str]
     orgId: str
 
-class PrintJobsCreateResult(_Model):
+class PrintJobsCreateResponse(_Model):
     jobId: str
     count: int
-    skipped: _List[PrintJobsCreateResultSkippedItem]
+    skipped: _List[PrintJobsCreateResponseSkippedItem]
 
-class PrintJobsCreateResultSkippedItem(_Model):
+class PrintJobsCreateResponseSkippedItem(_Model):
     id: str
     code: str
     reason: str | None = None
 
-class PrintJobsRetrieveResult(_Model):
+class PrintJobsRetrieveResponse(_Model):
     state: _Literal["pending", "ready", "failed"] | str
     count: int
     skipped: int
@@ -6790,6 +9252,41 @@ class ReleaseTemplateExpected(_Model):
     live: int | None = None
     test: int | None = None
 
+class RetentionReceiptsDownloadResponse(_Model):
+    receipt: RetentionReceiptsDownloadResponseReceipt
+
+class RetentionReceiptsDownloadResponseReceipt(_Model):
+    id: str
+    cls: str
+    kind: _Literal["sweep", "visitor", "erasure"] | str
+    ranAt: int
+    cutoffAt: int | None
+    policyDays: int | None
+    deleted: int
+    anonymised: int
+    verified: bool
+    orgId: str | None
+    seq: int
+    prevMac: str | None
+    mac: str
+    refsDigest: str | None
+    requestId: str | None
+
+class RetentionReceiptsListResponse(_Model):
+    items: _List[RetentionReceiptsListResponseItemsItem]
+    nextCursor: str | None
+
+class RetentionReceiptsListResponseItemsItem(_Model):
+    id: str
+    cls: str
+    kind: _Literal["sweep", "visitor", "erasure"] | str
+    ranAt: int
+    cutoffAt: int | None
+    policyDays: int | None
+    deleted: int
+    anonymised: int
+    verified: bool
+
 class ReviewResult(_Model):
     version: str
     approved: _List[_Literal["live", "test"] | str]
@@ -6801,7 +9298,7 @@ class ReviewTemplate(_Model):
     release: bool | None = None
     note: str | None = None
 
-class RollCallsCreateResult(_Model):
+class RollCallsCreateResponse(_Model):
     id: str
     placeNames: _List[str]
     startedAt: int
@@ -6810,10 +9307,10 @@ class RollCallsCreateResult(_Model):
     endedBy: str | None
     rev: int
     serverNow: int
-    counts: RollCallsCreateResultCounts
-    people: _List[RollCallsCreateResultPeopleItem]
+    counts: RollCallsCreateResponseCounts
+    people: _List[RollCallsCreateResponsePeopleItem]
 
-class RollCallsCreateResultCounts(_Model):
+class RollCallsCreateResponseCounts(_Model):
     total: int
     present: int
     out: int
@@ -6823,7 +9320,7 @@ class RollCallsCreateResultCounts(_Model):
     inNow: int
     tappedIn: int
 
-class RollCallsCreateResultPeopleItem(_Model):
+class RollCallsCreateResponsePeopleItem(_Model):
     passId: str
     holder: str | None
     plan: str | None
@@ -6837,7 +9334,7 @@ class RollCallsCreateResultPeopleItem(_Model):
     mark: _Dict[str, _Any] | None
     notConfirmedOut: bool
 
-class RollCallsEndResult(_Model):
+class RollCallsEndResponse(_Model):
     id: str
     placeNames: _List[str]
     startedAt: int
@@ -6846,10 +9343,10 @@ class RollCallsEndResult(_Model):
     endedBy: str | None
     rev: int
     serverNow: int
-    counts: RollCallsEndResultCounts
-    people: _List[RollCallsEndResultPeopleItem]
+    counts: RollCallsEndResponseCounts
+    people: _List[RollCallsEndResponsePeopleItem]
 
-class RollCallsEndResultCounts(_Model):
+class RollCallsEndResponseCounts(_Model):
     total: int
     present: int
     out: int
@@ -6859,7 +9356,7 @@ class RollCallsEndResultCounts(_Model):
     inNow: int
     tappedIn: int
 
-class RollCallsEndResultPeopleItem(_Model):
+class RollCallsEndResponsePeopleItem(_Model):
     passId: str
     holder: str | None
     plan: str | None
@@ -6882,7 +9379,7 @@ class RollCallsMarkParamsMarksItem(_Model):
     status: _Literal["present", "out", "none"] | str
     at: int | None = None
 
-class RollCallsMarkResult(_Model):
+class RollCallsMarkResponse(_Model):
     id: str
     placeNames: _List[str]
     startedAt: int
@@ -6891,11 +9388,11 @@ class RollCallsMarkResult(_Model):
     endedBy: str | None
     rev: int
     serverNow: int
-    counts: RollCallsMarkResultCounts
-    people: _List[RollCallsMarkResultPeopleItem]
-    results: _List[RollCallsMarkResultResultsItem]
+    counts: RollCallsMarkResponseCounts
+    people: _List[RollCallsMarkResponsePeopleItem]
+    results: _List[RollCallsMarkResponseResultsItem]
 
-class RollCallsMarkResultCounts(_Model):
+class RollCallsMarkResponseCounts(_Model):
     total: int
     present: int
     out: int
@@ -6905,7 +9402,7 @@ class RollCallsMarkResultCounts(_Model):
     inNow: int
     tappedIn: int
 
-class RollCallsMarkResultPeopleItem(_Model):
+class RollCallsMarkResponsePeopleItem(_Model):
     passId: str
     holder: str | None
     plan: str | None
@@ -6919,16 +9416,16 @@ class RollCallsMarkResultPeopleItem(_Model):
     mark: _Dict[str, _Any] | None
     notConfirmedOut: bool
 
-class RollCallsMarkResultResultsItem(_Model):
+class RollCallsMarkResponseResultsItem(_Model):
     rollCallId: str
     passId: str
     status: _Literal["applied", "refused"] | str
     code: str | None = None
 
-class RollCallsRetrieveOpenResult(_Model):
+class RollCallsRetrieveOpenResponse(_Model):
     rollCall: _Dict[str, _Any] | None
 
-class RollCallsRetrieveResult(_Model):
+class RollCallsRetrieveResponse(_Model):
     id: str
     placeNames: _List[str]
     startedAt: int
@@ -6937,10 +9434,10 @@ class RollCallsRetrieveResult(_Model):
     endedBy: str | None
     rev: int
     serverNow: int
-    counts: RollCallsRetrieveResultCounts
-    people: _List[RollCallsRetrieveResultPeopleItem]
+    counts: RollCallsRetrieveResponseCounts
+    people: _List[RollCallsRetrieveResponsePeopleItem]
 
-class RollCallsRetrieveResultCounts(_Model):
+class RollCallsRetrieveResponseCounts(_Model):
     total: int
     present: int
     out: int
@@ -6950,7 +9447,7 @@ class RollCallsRetrieveResultCounts(_Model):
     inNow: int
     tappedIn: int
 
-class RollCallsRetrieveResultPeopleItem(_Model):
+class RollCallsRetrieveResponsePeopleItem(_Model):
     passId: str
     holder: str | None
     plan: str | None
@@ -7021,6 +9518,9 @@ class ScanCountsByTypeItem(_Model):
     name: str | None
     count: int
 
+class ScanDisplaysPreviewResponse(_Model):
+    scope: _Dict[str, _Any]
+
 class ScanEvent(_Model):
     id: str
     orgId: str
@@ -7056,7 +9556,36 @@ class ScanEventsCreateParams(_Model):
     hardLimit: bool | None = None
     note: str | None = None
 
-class ScanEventsListResult(_Model):
+class ScanEventsListInsideResponse(_Model):
+    items: _List[ScanEventsListInsideResponseItemsItem]
+    count: int
+    rev: int
+    places: _List[ScanEventsListInsideResponsePlacesItem]
+    nextCursor: str | None
+
+class ScanEventsListInsideResponseItemsItem(_Model):
+    passId: str
+    holder: str | None
+    photoUrl: str | None
+    plan: str | None
+    type: str | None
+    host: str | None
+    place: str
+    placeName: str
+    parentName: str | None
+    since: int
+    dueAt: int | None
+    via: str | None
+    flags: _List[_Literal["long_stay", "pass_ended"] | str]
+
+class ScanEventsListInsideResponsePlacesItem(_Model):
+    name: str
+    inNow: int
+    capacity: int | None
+    place: str
+    rev: int
+
+class ScanEventsListResponse(_Model):
     items: _List[ScanEvent]
     nextCursor: str | None
 
@@ -7537,6 +10066,41 @@ class ScanSetupsCreateParamsSettingsTags(_Model):
     types: _List[str | _Literal["standard"] | str] | None = None
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
+class ScanSetupsCreateResponse(_Model):
+    id: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    name: str
+    accepts: ScanSetupsCreateResponseAccepts1 | ScanSetupsCreateResponseAccepts2 | ScanSetupsCreateResponseAccepts3 | None
+    settings: ScannerSettings
+    timeZone: str
+    status: _Literal["not_paired", "paired", "revoked"] | str
+    online: bool
+    pairedAt: int | None
+    pairedLabel: str | None
+    lastSeenAt: int | None
+    expiresAt: int | None
+    staff: _Dict[str, _Any] | None
+    today: int
+    createdAt: int
+    sessionId: str | None = None
+    adminSession: bool | None = None
+    adminUser: _Dict[str, _Any] | None
+    watch: _Dict[str, _Any] | None
+    pairing: _Dict[str, _Any] | None
+
+class ScanSetupsCreateResponseAccepts1(_Model):
+    templateIds: _List[str]
+    eventIds: _List[str]
+
+class ScanSetupsCreateResponseAccepts2(_Model):
+    eventId: str
+
+class ScanSetupsCreateResponseAccepts3(_Model):
+    templateIds: _List[str]
+
 class ScanSetupsListItem(_Model):
     id: str
     orgId: str
@@ -7571,18 +10135,18 @@ class ScanSetupsListItemAccepts2(_Model):
 class ScanSetupsListItemAccepts3(_Model):
     templateIds: _List[str]
 
-class ScanSetupsListResult(_Model):
-    items: _List[ScanSetupsListResultItemsItem]
+class ScanSetupsListResponse(_Model):
+    items: _List[ScanSetupsListResponseItemsItem]
     nextCursor: str | None
 
-class ScanSetupsListResultItemsItem(_Model):
+class ScanSetupsListResponseItemsItem(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     kind: _Literal["device", "terminal", "display"] | str
     deviceRole: _Literal["scan", "customer", "monitor"] | str
     name: str
-    accepts: ScanSetupsListResultItemsItemAccepts1 | ScanSetupsListResultItemsItemAccepts2 | ScanSetupsListResultItemsItemAccepts3 | None
+    accepts: ScanSetupsListResponseItemsItemAccepts1 | ScanSetupsListResponseItemsItemAccepts2 | ScanSetupsListResponseItemsItemAccepts3 | None
     settings: ScannerSettings
     timeZone: str
     status: _Literal["not_paired", "paired", "revoked"] | str
@@ -7599,24 +10163,24 @@ class ScanSetupsListResultItemsItem(_Model):
     adminUser: _Dict[str, _Any] | None
     watch: _Dict[str, _Any] | None
 
-class ScanSetupsListResultItemsItemAccepts1(_Model):
+class ScanSetupsListResponseItemsItemAccepts1(_Model):
     templateIds: _List[str]
     eventIds: _List[str]
 
-class ScanSetupsListResultItemsItemAccepts2(_Model):
+class ScanSetupsListResponseItemsItemAccepts2(_Model):
     eventId: str
 
-class ScanSetupsListResultItemsItemAccepts3(_Model):
+class ScanSetupsListResponseItemsItemAccepts3(_Model):
     templateIds: _List[str]
 
-class ScanSetupsRetrieveResult(_Model):
+class ScanSetupsRetrieveResponse(_Model):
     id: str
     orgId: str
     mode: _Literal["live", "test"] | str
     kind: _Literal["device", "terminal", "display"] | str
     deviceRole: _Literal["scan", "customer", "monitor"] | str
     name: str
-    accepts: ScanSetupsRetrieveResultAccepts1 | ScanSetupsRetrieveResultAccepts2 | ScanSetupsRetrieveResultAccepts3 | None
+    accepts: ScanSetupsRetrieveResponseAccepts1 | ScanSetupsRetrieveResponseAccepts2 | ScanSetupsRetrieveResponseAccepts3 | None
     settings: ScannerSettings
     timeZone: str
     status: _Literal["not_paired", "paired", "revoked"] | str
@@ -7633,14 +10197,14 @@ class ScanSetupsRetrieveResult(_Model):
     adminUser: _Dict[str, _Any] | None
     watch: _Dict[str, _Any] | None
 
-class ScanSetupsRetrieveResultAccepts1(_Model):
+class ScanSetupsRetrieveResponseAccepts1(_Model):
     templateIds: _List[str]
     eventIds: _List[str]
 
-class ScanSetupsRetrieveResultAccepts2(_Model):
+class ScanSetupsRetrieveResponseAccepts2(_Model):
     eventId: str
 
-class ScanSetupsRetrieveResultAccepts3(_Model):
+class ScanSetupsRetrieveResponseAccepts3(_Model):
     templateIds: _List[str]
 
 class ScanSetupsUpdateParams(_Model):
@@ -7692,6 +10256,40 @@ class ScanSetupsUpdateParamsSettingsTags(_Model):
     types: _List[str | _Literal["standard"] | str] | None = None
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
+class ScanSetupsUpdateResponse(_Model):
+    id: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["device", "terminal", "display"] | str
+    deviceRole: _Literal["scan", "customer", "monitor"] | str
+    name: str
+    accepts: ScanSetupsUpdateResponseAccepts1 | ScanSetupsUpdateResponseAccepts2 | ScanSetupsUpdateResponseAccepts3 | None
+    settings: ScannerSettings
+    timeZone: str
+    status: _Literal["not_paired", "paired", "revoked"] | str
+    online: bool
+    pairedAt: int | None
+    pairedLabel: str | None
+    lastSeenAt: int | None
+    expiresAt: int | None
+    staff: _Dict[str, _Any] | None
+    today: int
+    createdAt: int
+    sessionId: str | None = None
+    adminSession: bool | None = None
+    adminUser: _Dict[str, _Any] | None
+    watch: _Dict[str, _Any] | None
+
+class ScanSetupsUpdateResponseAccepts1(_Model):
+    templateIds: _List[str]
+    eventIds: _List[str]
+
+class ScanSetupsUpdateResponseAccepts2(_Model):
+    eventId: str
+
+class ScanSetupsUpdateResponseAccepts3(_Model):
+    templateIds: _List[str]
+
 class ScanStaff(_Model):
     id: str
     orgId: str
@@ -7710,18 +10308,21 @@ class ScanStaffCreateParams(_Model):
     name: str
     role: _Literal["door", "desk", "manager"] | str
 
-class ScanStaffCreateResult(_Model):
+class ScanStaffCreateResponse(_Model):
     staff: ScanStaff
     pin: str | None
 
-class ScanStaffListResult(_Model):
+class ScanStaffListResponse(_Model):
     items: _List[ScanStaff]
     pinOnlyOff: _Literal[True] | None = None
     hasMore: bool | None = None
     nextCursor: str | None = None
 
-class ScanStaffResetPinResult(_Model):
+class ScanStaffResetPinResponse(_Model):
     pin: str | None
+
+class ScanStaffResetUntaggedResponse(_Model):
+    flagged: int
 
 class ScanStaffUpdateParams(_Model):
     name: str | None = None
@@ -7792,7 +10393,7 @@ class ScanSummaryOverridesLatestItem(_Model):
     approvedBy: str | None
     reason: str | None
 
-class ScanZonesArchiveResult(_Model):
+class ScanZonesArchiveResponse(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str
     capacity: int | None
     maxStayMinutes: int | None
@@ -7808,16 +10409,16 @@ class ScanZonesArchiveResult(_Model):
     sort: int
     depth: int
     sessions: int
-    checkedAt: _List[ScanZonesArchiveResultCheckedAtItem]
-    plans: _List[ScanZonesArchiveResultPlansItem]
+    checkedAt: _List[ScanZonesArchiveResponseCheckedAtItem]
+    plans: _List[ScanZonesArchiveResponsePlansItem]
     inNow: int | None
     archivedAt: int | None
 
-class ScanZonesArchiveResultCheckedAtItem(_Model):
+class ScanZonesArchiveResponseCheckedAtItem(_Model):
     id: str
     name: str
 
-class ScanZonesArchiveResultPlansItem(_Model):
+class ScanZonesArchiveResponsePlansItem(_Model):
     templateId: str
     templateName: str
     planId: str
@@ -7836,7 +10437,7 @@ class ScanZonesCreateParams(_Model):
     timeZone: str | None = None
     sort: int | None = None
 
-class ScanZonesCreateResult(_Model):
+class ScanZonesCreateResponse(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str
     capacity: int | None
     maxStayMinutes: int | None
@@ -7852,20 +10453,49 @@ class ScanZonesCreateResult(_Model):
     sort: int
     depth: int
     sessions: int
-    checkedAt: _List[ScanZonesCreateResultCheckedAtItem]
-    plans: _List[ScanZonesCreateResultPlansItem]
+    checkedAt: _List[ScanZonesCreateResponseCheckedAtItem]
+    plans: _List[ScanZonesCreateResponsePlansItem]
     inNow: int | None
     archivedAt: int | None
 
-class ScanZonesCreateResultCheckedAtItem(_Model):
+class ScanZonesCreateResponseCheckedAtItem(_Model):
     id: str
     name: str
 
-class ScanZonesCreateResultPlansItem(_Model):
+class ScanZonesCreateResponsePlansItem(_Model):
     templateId: str
     templateName: str
     planId: str
     label: str
+
+class ScanZonesListInsideResponse(_Model):
+    items: _List[ScanZonesListInsideResponseItemsItem]
+    count: int
+    rev: int
+    places: _List[ScanZonesListInsideResponsePlacesItem]
+    nextCursor: str | None
+
+class ScanZonesListInsideResponseItemsItem(_Model):
+    passId: str
+    holder: str | None
+    photoUrl: str | None
+    plan: str | None
+    type: str | None
+    host: str | None
+    place: str
+    placeName: str
+    parentName: str | None
+    since: int
+    dueAt: int | None
+    via: str | None
+    flags: _List[_Literal["long_stay", "pass_ended"] | str]
+
+class ScanZonesListInsideResponsePlacesItem(_Model):
+    name: str
+    inNow: int
+    capacity: int | None
+    place: str
+    rev: int
 
 class ScanZonesListItem(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str
@@ -7898,11 +10528,11 @@ class ScanZonesListItemPlansItem(_Model):
     planId: str
     label: str
 
-class ScanZonesListResult(_Model):
-    items: _List[ScanZonesListResultItemsItem]
+class ScanZonesListResponse(_Model):
+    items: _List[ScanZonesListResponseItemsItem]
     nextCursor: str | None
 
-class ScanZonesListResultItemsItem(_Model):
+class ScanZonesListResponseItemsItem(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str
     capacity: int | None
     maxStayMinutes: int | None
@@ -7918,16 +10548,16 @@ class ScanZonesListResultItemsItem(_Model):
     sort: int
     depth: int
     sessions: int
-    checkedAt: _List[ScanZonesListResultItemsItemCheckedAtItem]
-    plans: _List[ScanZonesListResultItemsItemPlansItem]
+    checkedAt: _List[ScanZonesListResponseItemsItemCheckedAtItem]
+    plans: _List[ScanZonesListResponseItemsItemPlansItem]
     inNow: int | None
     archivedAt: int | None
 
-class ScanZonesListResultItemsItemCheckedAtItem(_Model):
+class ScanZonesListResponseItemsItemCheckedAtItem(_Model):
     id: str
     name: str
 
-class ScanZonesListResultItemsItemPlansItem(_Model):
+class ScanZonesListResponseItemsItemPlansItem(_Model):
     templateId: str
     templateName: str
     planId: str
@@ -7937,11 +10567,11 @@ class ScanZonesMarkOutParams(_Model):
     passId: str
     place: str
 
-class ScanZonesResetVisitsResult(_Model):
+class ScanZonesResetVisitsResponse(_Model):
     passId: str
     visits: _Literal[0]
 
-class ScanZonesRestoreResult(_Model):
+class ScanZonesRestoreResponse(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str
     capacity: int | None
     maxStayMinutes: int | None
@@ -7957,16 +10587,16 @@ class ScanZonesRestoreResult(_Model):
     sort: int
     depth: int
     sessions: int
-    checkedAt: _List[ScanZonesRestoreResultCheckedAtItem]
-    plans: _List[ScanZonesRestoreResultPlansItem]
+    checkedAt: _List[ScanZonesRestoreResponseCheckedAtItem]
+    plans: _List[ScanZonesRestoreResponsePlansItem]
     inNow: int | None
     archivedAt: int | None
 
-class ScanZonesRestoreResultCheckedAtItem(_Model):
+class ScanZonesRestoreResponseCheckedAtItem(_Model):
     id: str
     name: str
 
-class ScanZonesRestoreResultPlansItem(_Model):
+class ScanZonesRestoreResponsePlansItem(_Model):
     templateId: str
     templateName: str
     planId: str
@@ -7984,7 +10614,7 @@ class ScanZonesUpdateParams(_Model):
     sort: int | None = None
     archived: bool | None = None
 
-class ScanZonesUpdateResult(_Model):
+class ScanZonesUpdateResponse(_Model):
     occupancy: _Literal["off", "track", "enforce"] | str
     capacity: int | None
     maxStayMinutes: int | None
@@ -8000,16 +10630,16 @@ class ScanZonesUpdateResult(_Model):
     sort: int
     depth: int
     sessions: int
-    checkedAt: _List[ScanZonesUpdateResultCheckedAtItem]
-    plans: _List[ScanZonesUpdateResultPlansItem]
+    checkedAt: _List[ScanZonesUpdateResponseCheckedAtItem]
+    plans: _List[ScanZonesUpdateResponsePlansItem]
     inNow: int | None
     archivedAt: int | None
 
-class ScanZonesUpdateResultCheckedAtItem(_Model):
+class ScanZonesUpdateResponseCheckedAtItem(_Model):
     id: str
     name: str
 
-class ScanZonesUpdateResultPlansItem(_Model):
+class ScanZonesUpdateResponsePlansItem(_Model):
     templateId: str
     templateName: str
     planId: str
@@ -8131,16 +10761,24 @@ class ScannersCreateParamsSettingsTags(_Model):
     types: _List[str | _Literal["standard"] | str] | None = None
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
-class ScannersPairingCreateResult(_Model):
+class ScannersCreateSamplePassResponse(_Model):
+    passId: str
+    templateId: str
+
+class ScannersListResponse(_Model):
+    items: _List[Scanner]
+    nextCursor: str | None
+
+class ScannersPairingCreateResponse(_Model):
     code: str | None
     url: str | None
     expiresAt: int
 
-class ScannersPairingRetrieveResult(_Model):
+class ScannersPairingRetrieveResponse(_Model):
     state: _Literal["waiting", "paired", "expired"] | str
     device: _Dict[str, _Any] | None
 
-class ScannersRotateTokenResult(_Model):
+class ScannersRotateTokenResponse(_Model):
     token: str | None
     expiresAt: int
 
@@ -8488,7 +11126,7 @@ class ScanningSessionsDevicesUpdateParamsOverrides(_Model):
     lookup: bool | None = None
     showPhoto: bool | None = None
 
-class ScanningSessionsListResult(_Model):
+class ScanningSessionsListResponse(_Model):
     items: _List[ScanningSession]
     nextCursor: str | None
 
@@ -8697,11 +11335,11 @@ class ScanningSessionsUpdateParamsSettingsTags(_Model):
     types: _List[str | _Literal["standard"] | str] | None = None
     confirmBasic: _Literal["none", "staff", "manager"] | str | None = None
 
-class ScansListResult1(_Model):
+class ScansListResponse1(_Model):
     items: _List[ScanRecord]
     nextCursor: str | None
 
-class ScansListResult2(_Model):
+class ScansListResponse2(_Model):
     items: _List[ScanFeedRow]
     nextCursor: str | None
 
@@ -8731,13 +11369,87 @@ class SettingsReplyToConfirmParams(_Model):
     orgId: str
     token: str
 
+class SettingsReplyToConfirmResponse(_Model):
+    address: str | None
+    state: _Literal["none", "pending", "confirmed"] | str
+
 class SettingsReplyToResendConfirmationParams(_Model):
     orgId: str
+
+class SettingsReplyToResendConfirmationResponse(_Model):
+    address: str | None
+    state: _Literal["none", "pending", "confirmed"] | str
+
+class SettingsReplyToRetrieveResponse(_Model):
+    address: str | None
+    state: _Literal["none", "pending", "confirmed"] | str
+
+class SettingsRetrieveResponse(_Model):
+    items: _List[SettingsRetrieveResponseItemsItem]
+    configRevision: int | None = None
+    oidc: SettingsRetrieveResponseOidc | None = None
+    released: SettingsRetrieveResponseReleased | None = None
+
+class SettingsRetrieveResponseItemsItem(_Model):
+    scope: _Literal["platform"] | str | str
+    key: str
+    value: _Any | None = None
+    default: _Any | None = None
+    source: _Literal["org", "default"] | str
+    ceiling: int | None = None
+    blockedByPlatform: bool | None = None
+    blockedByPlan: bool | None = None
+    planBlocked: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str] | None = None
+    updatedAt: int | None
+    updatedBy: str | None
+
+class SettingsRetrieveResponseOidc(_Model):
+    issuer: str
+    platformAdminGroup: str | None
+    adminGroup: str | None
+    developerGroup: str | None
+    userGroup: str | None
+    consoleGroupRequired: bool
+
+class SettingsRetrieveResponseReleased(_Model):
+    google: bool
+    samsung: bool
 
 class SettingsUpdateParams(_Model):
     scope: _Literal["platform"] | str | str | None = None
     values: _Dict[str, _Any]
     configRevision: int | None = None
+
+class SettingsUpdateResponse(_Model):
+    items: _List[SettingsUpdateResponseItemsItem]
+    configRevision: int | None = None
+    oidc: SettingsUpdateResponseOidc | None = None
+    released: SettingsUpdateResponseReleased | None = None
+
+class SettingsUpdateResponseItemsItem(_Model):
+    scope: _Literal["platform"] | str | str
+    key: str
+    value: _Any | None = None
+    default: _Any | None = None
+    source: _Literal["org", "default"] | str
+    ceiling: int | None = None
+    blockedByPlatform: bool | None = None
+    blockedByPlan: bool | None = None
+    planBlocked: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str] | None = None
+    updatedAt: int | None
+    updatedBy: str | None
+
+class SettingsUpdateResponseOidc(_Model):
+    issuer: str
+    platformAdminGroup: str | None
+    adminGroup: str | None
+    developerGroup: str | None
+    userGroup: str | None
+    consoleGroupRequired: bool
+
+class SettingsUpdateResponseReleased(_Model):
+    google: bool
+    samsung: bool
 
 class StagedBrandAsset(_Model):
     slot: _Literal["logo", "icon", "webLogo"] | str
@@ -8830,6 +11542,10 @@ class TemplateDetailVersionsItemReportIssuesItem(_Model):
 class TemplateDetailVersionsItemReportIssuesItemFix(_Model):
     action: _Literal["upload_logo", "upload_icon"] | str
 
+class TemplateImportsCreateResponse(_Model):
+    uploadId: str
+    workflowInstanceId: str
+
 class TemplateImportsListItem(_Model):
     uploadId: str
     name: str | None
@@ -8840,11 +11556,11 @@ class TemplateImportsListItem(_Model):
     issues: int
     createdAt: int
 
-class TemplateImportsListResult(_Model):
-    items: _List[TemplateImportsListResultItemsItem]
+class TemplateImportsListResponse(_Model):
+    items: _List[TemplateImportsListResponseItemsItem]
     nextCursor: str | None
 
-class TemplateImportsListResultItemsItem(_Model):
+class TemplateImportsListResponseItemsItem(_Model):
     uploadId: str
     name: str | None
     status: _Literal["queued", "running", "complete", "errored", "terminated"] | str
@@ -8854,7 +11570,7 @@ class TemplateImportsListResultItemsItem(_Model):
     issues: int
     createdAt: int
 
-class TemplateImportsRetrieveResult(_Model):
+class TemplateImportsRetrieveResponse(_Model):
     uploadId: str
     status: _Literal["queued", "running", "complete", "errored", "terminated"] | str
     step: str | None
@@ -8979,7 +11695,7 @@ class TemplatesCandidatesApproveParams(_Model):
     candidateHash: str
     alone: bool | None = None
 
-class TemplatesCandidatesApproveResult(_Model):
+class TemplatesCandidatesApproveResponse(_Model):
     id: str
     candidateId: str
     candidateHash: str
@@ -8996,7 +11712,7 @@ class TemplatesCandidatesCreateParams(_Model):
     sourceReleaseId: str | None = None
     projection: _Any | None = None
 
-class TemplatesCandidatesCreateResult(_Model):
+class TemplatesCandidatesCreateResponse(_Model):
     id: str
     templateId: str
     orgId: str
@@ -9020,9 +11736,9 @@ class TemplatesCandidatesCreateResult(_Model):
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
     projection: _Any | None = None
-    approvals: _List[TemplatesCandidatesCreateResultApprovalsItem]
+    approvals: _List[TemplatesCandidatesCreateResponseApprovalsItem]
 
-class TemplatesCandidatesCreateResultApprovalsItem(_Model):
+class TemplatesCandidatesCreateResponseApprovalsItem(_Model):
     id: str
     candidateId: str
     candidateHash: str
@@ -9066,11 +11782,11 @@ class TemplatesCandidatesListItemApprovalsItem(_Model):
     kind: _Literal["peer", "sole", "test"] | str | None = None
     createdAt: int
 
-class TemplatesCandidatesListResult(_Model):
-    items: _List[TemplatesCandidatesListResultItemsItem]
+class TemplatesCandidatesListResponse(_Model):
+    items: _List[TemplatesCandidatesListResponseItemsItem]
     nextCursor: str | None
 
-class TemplatesCandidatesListResultItemsItem(_Model):
+class TemplatesCandidatesListResponseItemsItem(_Model):
     id: str
     templateId: str
     orgId: str
@@ -9094,9 +11810,9 @@ class TemplatesCandidatesListResultItemsItem(_Model):
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
     projection: _Any | None = None
-    approvals: _List[TemplatesCandidatesListResultItemsItemApprovalsItem]
+    approvals: _List[TemplatesCandidatesListResponseItemsItemApprovalsItem]
 
-class TemplatesCandidatesListResultItemsItemApprovalsItem(_Model):
+class TemplatesCandidatesListResponseItemsItemApprovalsItem(_Model):
     id: str
     candidateId: str
     candidateHash: str
@@ -9111,7 +11827,42 @@ class TemplatesCandidatesPromoteParams(_Model):
     provider: _Literal["apple"] | str
     version: str
 
-class TemplatesChannelsListRunsResultItem(_Model):
+class TemplatesCandidatesPromoteResponse(_Model):
+    id: str
+    templateId: str
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
+    version: str
+    contentHash: str
+    candidateHash: str
+    adapterRevision: float
+    adapterCapabilities: _List[str]
+    audiencePolicyRevision: float
+    authorId: str
+    versionAuthorId: str | None
+    authorName: str | None = None
+    versionAuthorName: str | None = None
+    createdAt: int
+    sourceReleaseId: str | None = None
+    sourceReleaseGeneration: int | None = None
+    sourceReleaseHash: str | None = None
+    accountId: str | None = None
+    accountRevision: int | None = None
+    providerIdentityHash: str | None = None
+    projection: _Any | None = None
+    approvals: _List[TemplatesCandidatesPromoteResponseApprovalsItem]
+
+class TemplatesCandidatesPromoteResponseApprovalsItem(_Model):
+    id: str
+    candidateId: str
+    candidateHash: str
+    reviewerId: str
+    reviewerName: str | None = None
+    kind: _Literal["peer", "sole", "test"] | str | None = None
+    createdAt: int
+
+class TemplatesChannelsListRunsResponseItem(_Model):
     id: str
     state: _Literal["pending", "running", "done", "dropped", "failed"] | str
     dueAt: int
@@ -9126,16 +11877,31 @@ class TemplatesChannelsResetPassesParams(_Model):
     dryRun: bool | None = None
     orgId: str | None = None
 
-class TemplatesChannelsRetrieveResult(_Model):
+class TemplatesChannelsResetPassesResponse(_Model):
+    overrides: TemplatesChannelsResetPassesResponseOverrides
+    passes: int
+    done: int
+    skipped: int
+    remaining: int
+
+class TemplatesChannelsResetPassesResponseOverrides(_Model):
+    mobile: int | None = None
+    apple: int | None = None
+    google: int | None = None
+    samsung: int | None = None
+    paper: int | None = None
+    nfc: int | None = None
+
+class TemplatesChannelsRetrieveResponse(_Model):
     channels: _Dict[str, _Any] | None
     revision: int
-    effective: TemplatesChannelsRetrieveResultEffective
-    levels: TemplatesChannelsRetrieveResultLevels
-    overrides: TemplatesChannelsRetrieveResultOverrides
+    effective: TemplatesChannelsRetrieveResponseEffective
+    levels: TemplatesChannelsRetrieveResponseLevels
+    overrides: TemplatesChannelsRetrieveResponseOverrides
     overridePasses: int
-    defaults: TemplatesChannelsRetrieveResultDefaults
+    defaults: TemplatesChannelsRetrieveResponseDefaults
 
-class TemplatesChannelsRetrieveResultDefaults(_Model):
+class TemplatesChannelsRetrieveResponseDefaults(_Model):
     mobile: _Literal["on", "off"] | str | None = None
     apple: _Literal["on", "off"] | str | None = None
     google: _Literal["on", "off"] | str | None = None
@@ -9143,101 +11909,101 @@ class TemplatesChannelsRetrieveResultDefaults(_Model):
     paper: _Literal["on", "off"] | str | None = None
     nfc: _Literal["on", "off"] | str | None = None
 
-class TemplatesChannelsRetrieveResultEffective(_Model):
-    mobile: TemplatesChannelsRetrieveResultEffectiveMobile | None = None
-    apple: TemplatesChannelsRetrieveResultEffectiveApple | None = None
-    google: TemplatesChannelsRetrieveResultEffectiveGoogle | None = None
-    samsung: TemplatesChannelsRetrieveResultEffectiveSamsung | None = None
-    paper: TemplatesChannelsRetrieveResultEffectivePaper | None = None
-    nfc: TemplatesChannelsRetrieveResultEffectiveNfc | None = None
+class TemplatesChannelsRetrieveResponseEffective(_Model):
+    mobile: TemplatesChannelsRetrieveResponseEffectiveMobile | None = None
+    apple: TemplatesChannelsRetrieveResponseEffectiveApple | None = None
+    google: TemplatesChannelsRetrieveResponseEffectiveGoogle | None = None
+    samsung: TemplatesChannelsRetrieveResponseEffectiveSamsung | None = None
+    paper: TemplatesChannelsRetrieveResponseEffectivePaper | None = None
+    nfc: TemplatesChannelsRetrieveResponseEffectiveNfc | None = None
 
-class TemplatesChannelsRetrieveResultEffectiveApple(_Model):
+class TemplatesChannelsRetrieveResponseEffectiveApple(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class TemplatesChannelsRetrieveResultEffectiveGoogle(_Model):
+class TemplatesChannelsRetrieveResponseEffectiveGoogle(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class TemplatesChannelsRetrieveResultEffectiveMobile(_Model):
+class TemplatesChannelsRetrieveResponseEffectiveMobile(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class TemplatesChannelsRetrieveResultEffectiveNfc(_Model):
+class TemplatesChannelsRetrieveResponseEffectiveNfc(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class TemplatesChannelsRetrieveResultEffectivePaper(_Model):
+class TemplatesChannelsRetrieveResponseEffectivePaper(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class TemplatesChannelsRetrieveResultEffectiveSamsung(_Model):
+class TemplatesChannelsRetrieveResponseEffectiveSamsung(_Model):
     on: bool
     source: _Literal["pass", "template", "org", "platform"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     retiredAt: int | None = None
     retiredCause: _Literal["pass", "template"] | str | None = None
 
-class TemplatesChannelsRetrieveResultLevels(_Model):
-    mobile: _List[TemplatesChannelsRetrieveResultLevelsMobileItem] | None = None
-    apple: _List[TemplatesChannelsRetrieveResultLevelsAppleItem] | None = None
-    google: _List[TemplatesChannelsRetrieveResultLevelsGoogleItem] | None = None
-    samsung: _List[TemplatesChannelsRetrieveResultLevelsSamsungItem] | None = None
-    paper: _List[TemplatesChannelsRetrieveResultLevelsPaperItem] | None = None
-    nfc: _List[TemplatesChannelsRetrieveResultLevelsNfcItem] | None = None
+class TemplatesChannelsRetrieveResponseLevels(_Model):
+    mobile: _List[TemplatesChannelsRetrieveResponseLevelsMobileItem] | None = None
+    apple: _List[TemplatesChannelsRetrieveResponseLevelsAppleItem] | None = None
+    google: _List[TemplatesChannelsRetrieveResponseLevelsGoogleItem] | None = None
+    samsung: _List[TemplatesChannelsRetrieveResponseLevelsSamsungItem] | None = None
+    paper: _List[TemplatesChannelsRetrieveResponseLevelsPaperItem] | None = None
+    nfc: _List[TemplatesChannelsRetrieveResponseLevelsNfcItem] | None = None
 
-class TemplatesChannelsRetrieveResultLevelsAppleItem(_Model):
+class TemplatesChannelsRetrieveResponseLevelsAppleItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class TemplatesChannelsRetrieveResultLevelsGoogleItem(_Model):
+class TemplatesChannelsRetrieveResponseLevelsGoogleItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class TemplatesChannelsRetrieveResultLevelsMobileItem(_Model):
+class TemplatesChannelsRetrieveResponseLevelsMobileItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class TemplatesChannelsRetrieveResultLevelsNfcItem(_Model):
+class TemplatesChannelsRetrieveResponseLevelsNfcItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class TemplatesChannelsRetrieveResultLevelsPaperItem(_Model):
+class TemplatesChannelsRetrieveResponseLevelsPaperItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class TemplatesChannelsRetrieveResultLevelsSamsungItem(_Model):
+class TemplatesChannelsRetrieveResponseLevelsSamsungItem(_Model):
     level: _Literal["passbook", "plan", "org", "template", "pass"] | str
     state: _Literal["ok", "partial", "off", "needs", "locked"] | str
     reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
     canChange: bool
 
-class TemplatesChannelsRetrieveResultOverrides(_Model):
+class TemplatesChannelsRetrieveResponseOverrides(_Model):
     mobile: int | None = None
     apple: int | None = None
     google: int | None = None
@@ -9261,9 +12027,153 @@ class TemplatesChannelsUpdateParamsChannels(_Model):
     paper: _Literal["on", "off", "never"] | str | None = None
     nfc: _Literal["on", "off", "never"] | str | None = None
 
+class TemplatesChannelsUpdateResponse(_Model):
+    channels: _Dict[str, _Any] | None
+    revision: int
+    effective: TemplatesChannelsUpdateResponseEffective
+    levels: TemplatesChannelsUpdateResponseLevels
+    overrides: TemplatesChannelsUpdateResponseOverrides
+    overridePasses: int
+    defaults: TemplatesChannelsUpdateResponseDefaults
+    impact: _List[TemplatesChannelsUpdateResponseImpactItem]
+    workflowInstanceId: str | None
+    replaceSupported: bool
+    windows: _List[TemplatesChannelsUpdateResponseWindowsItem]
+    blocked: _Dict[str, _Any] | None
+    allOff: bool
+
+class TemplatesChannelsUpdateResponseDefaults(_Model):
+    mobile: _Literal["on", "off"] | str | None = None
+    apple: _Literal["on", "off"] | str | None = None
+    google: _Literal["on", "off"] | str | None = None
+    samsung: _Literal["on", "off"] | str | None = None
+    paper: _Literal["on", "off"] | str | None = None
+    nfc: _Literal["on", "off"] | str | None = None
+
+class TemplatesChannelsUpdateResponseEffective(_Model):
+    mobile: TemplatesChannelsUpdateResponseEffectiveMobile | None = None
+    apple: TemplatesChannelsUpdateResponseEffectiveApple | None = None
+    google: TemplatesChannelsUpdateResponseEffectiveGoogle | None = None
+    samsung: TemplatesChannelsUpdateResponseEffectiveSamsung | None = None
+    paper: TemplatesChannelsUpdateResponseEffectivePaper | None = None
+    nfc: TemplatesChannelsUpdateResponseEffectiveNfc | None = None
+
+class TemplatesChannelsUpdateResponseEffectiveApple(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class TemplatesChannelsUpdateResponseEffectiveGoogle(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class TemplatesChannelsUpdateResponseEffectiveMobile(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class TemplatesChannelsUpdateResponseEffectiveNfc(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class TemplatesChannelsUpdateResponseEffectivePaper(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class TemplatesChannelsUpdateResponseEffectiveSamsung(_Model):
+    on: bool
+    source: _Literal["pass", "template", "org", "platform"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    retiredAt: int | None = None
+    retiredCause: _Literal["pass", "template"] | str | None = None
+
+class TemplatesChannelsUpdateResponseImpactItem(_Model):
+    channel: _Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str
+    passes: int
+    rotated: int
+    clearedOverrides: int
+
+class TemplatesChannelsUpdateResponseLevels(_Model):
+    mobile: _List[TemplatesChannelsUpdateResponseLevelsMobileItem] | None = None
+    apple: _List[TemplatesChannelsUpdateResponseLevelsAppleItem] | None = None
+    google: _List[TemplatesChannelsUpdateResponseLevelsGoogleItem] | None = None
+    samsung: _List[TemplatesChannelsUpdateResponseLevelsSamsungItem] | None = None
+    paper: _List[TemplatesChannelsUpdateResponseLevelsPaperItem] | None = None
+    nfc: _List[TemplatesChannelsUpdateResponseLevelsNfcItem] | None = None
+
+class TemplatesChannelsUpdateResponseLevelsAppleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsUpdateResponseLevelsGoogleItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsUpdateResponseLevelsMobileItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsUpdateResponseLevelsNfcItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsUpdateResponseLevelsPaperItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsUpdateResponseLevelsSamsungItem(_Model):
+    level: _Literal["passbook", "plan", "org", "template", "pass"] | str
+    state: _Literal["ok", "partial", "off", "needs", "locked"] | str
+    reason: _Literal["not_released", "not_enrolled", "no_design", "tags_off", "printing_off", "not_included", "blocked", "never", "template_off", "pass_off"] | str | None = None
+    canChange: bool
+
+class TemplatesChannelsUpdateResponseOverrides(_Model):
+    mobile: int | None = None
+    apple: int | None = None
+    google: int | None = None
+    samsung: int | None = None
+    paper: int | None = None
+    nfc: int | None = None
+
+class TemplatesChannelsUpdateResponseWindowsItem(_Model):
+    kind: _Literal["event", "session"] | str
+    id: str
+    name: str
+    opensAt: int | None
+    closesAt: int | None
+    open: bool
+    scheduled: bool
+
 class TemplatesCloneParams(_Model):
     orgId: str
     name: str | None = None
+
+class TemplatesDeleteResponse(_Model):
+    ok: _Literal[True]
+    outcome: _Literal["deleted", "archived"] | str
 
 class TemplatesListEligibleItem(_Model):
     templateId: str
@@ -9277,11 +12187,11 @@ class TemplatesListEligibleItem(_Model):
     supportsCheckIn: bool
     rule: _Dict[str, _Any] | None = None
 
-class TemplatesListEligibleResult(_Model):
-    items: _List[TemplatesListEligibleResultItemsItem]
+class TemplatesListEligibleResponse(_Model):
+    items: _List[TemplatesListEligibleResponseItemsItem]
     nextCursor: str | None
 
-class TemplatesListEligibleResultItemsItem(_Model):
+class TemplatesListEligibleResponseItemsItem(_Model):
     templateId: str
     name: str
     templateOrgId: str | None
@@ -9293,25 +12203,25 @@ class TemplatesListEligibleResultItemsItem(_Model):
     supportsCheckIn: bool
     rule: _Dict[str, _Any] | None = None
 
-class TemplatesListPreviewsResult(_Model):
-    items: _List[TemplatesListPreviewsResultItemsItem]
+class TemplatesListPreviewsResponse(_Model):
+    items: _List[TemplatesListPreviewsResponseItemsItem]
 
-class TemplatesListPreviewsResultItemsItem(_Model):
+class TemplatesListPreviewsResponseItemsItem(_Model):
     passJson: _Dict[str, _Any]
-    warnings: _List[TemplatesListPreviewsResultItemsItemWarningsItem]
+    warnings: _List[TemplatesListPreviewsResponseItemsItemWarningsItem]
     assetBaseUrl: str
     assetNames: _List[str]
     id: str
 
-class TemplatesListPreviewsResultItemsItemWarningsItem(_Model):
+class TemplatesListPreviewsResponseItemsItemWarningsItem(_Model):
     severity: _Literal["error", "warning", "info"] | str
     code: str
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
-    fix: TemplatesListPreviewsResultItemsItemWarningsItemFix | None = None
+    fix: TemplatesListPreviewsResponseItemsItemWarningsItemFix | None = None
 
-class TemplatesListPreviewsResultItemsItemWarningsItemFix(_Model):
+class TemplatesListPreviewsResponseItemsItemWarningsItemFix(_Model):
     action: _Literal["upload_logo", "upload_icon"] | str
 
 class TemplatesPreviewParams(_Model):
@@ -9320,21 +12230,21 @@ class TemplatesPreviewParams(_Model):
     input: _Dict[str, _Any] | None = None
     locale: str | None = None
 
-class TemplatesPreviewResult(_Model):
+class TemplatesPreviewResponse(_Model):
     passJson: _Dict[str, _Any]
-    warnings: _List[TemplatesPreviewResultWarningsItem]
+    warnings: _List[TemplatesPreviewResponseWarningsItem]
     assetBaseUrl: str
     assetNames: _List[str]
 
-class TemplatesPreviewResultWarningsItem(_Model):
+class TemplatesPreviewResponseWarningsItem(_Model):
     severity: _Literal["error", "warning", "info"] | str
     code: str
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
-    fix: TemplatesPreviewResultWarningsItemFix | None = None
+    fix: TemplatesPreviewResponseWarningsItemFix | None = None
 
-class TemplatesPreviewResultWarningsItemFix(_Model):
+class TemplatesPreviewResponseWarningsItemFix(_Model):
     action: _Literal["upload_logo", "upload_icon"] | str
 
 class TemplatesReleasesCreateParams(_Model):
@@ -9346,7 +12256,7 @@ class TemplatesReleasesCreateParams(_Model):
     candidateHash: str
     expectedGeneration: int
 
-class TemplatesReleasesCreateResult(_Model):
+class TemplatesReleasesCreateResponse(_Model):
     id: str
     templateId: str
     orgId: str | None
@@ -9394,13 +12304,13 @@ class TemplatesReleasesListItem(_Model):
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
 
-class TemplatesReleasesListResult(_Model):
+class TemplatesReleasesListResponse(_Model):
     active: _Dict[str, _Any] | None
-    items: _List[TemplatesReleasesListResultItemsItem]
+    items: _List[TemplatesReleasesListResponseItemsItem]
     nextCursor: str | None
     promotable: _List[str] | None = None
 
-class TemplatesReleasesListResultItemsItem(_Model):
+class TemplatesReleasesListResponseItemsItem(_Model):
     id: str
     templateId: str
     orgId: str | None
@@ -9424,50 +12334,50 @@ class TemplatesReleasesListResultItemsItem(_Model):
     accountRevision: int | None = None
     providerIdentityHash: str | None = None
 
-class TemplatesReleasesRetrieveImpactResult(_Model):
+class TemplatesReleasesRetrieveImpactResponse(_Model):
     fromVersion: str | None
     toVersion: str
-    passes: TemplatesReleasesRetrieveImpactResultPasses
-    diff: TemplatesReleasesRetrieveImpactResultDiff
-    more: TemplatesReleasesRetrieveImpactResultMore
+    passes: TemplatesReleasesRetrieveImpactResponsePasses
+    diff: TemplatesReleasesRetrieveImpactResponseDiff
+    more: TemplatesReleasesRetrieveImpactResponseMore
 
-class TemplatesReleasesRetrieveImpactResultDiff(_Model):
-    fields: _List[TemplatesReleasesRetrieveImpactResultDiffFieldsItem]
-    images: _List[TemplatesReleasesRetrieveImpactResultDiffImagesItem]
-    barcode: _List[TemplatesReleasesRetrieveImpactResultDiffBarcodeItem]
-    colors: _List[TemplatesReleasesRetrieveImpactResultDiffColorsItem]
+class TemplatesReleasesRetrieveImpactResponseDiff(_Model):
+    fields: _List[TemplatesReleasesRetrieveImpactResponseDiffFieldsItem]
+    images: _List[TemplatesReleasesRetrieveImpactResponseDiffImagesItem]
+    barcode: _List[TemplatesReleasesRetrieveImpactResponseDiffBarcodeItem]
+    colors: _List[TemplatesReleasesRetrieveImpactResponseDiffColorsItem]
 
-class TemplatesReleasesRetrieveImpactResultDiffBarcodeItem(_Model):
+class TemplatesReleasesRetrieveImpactResponseDiffBarcodeItem(_Model):
     label: str
     kind: _Literal["added", "removed", "changed"] | str
     from_: str | None = _Field(alias="from")
     to: str | None
 
-class TemplatesReleasesRetrieveImpactResultDiffColorsItem(_Model):
+class TemplatesReleasesRetrieveImpactResponseDiffColorsItem(_Model):
     label: str
     kind: _Literal["added", "removed", "changed"] | str
     from_: str | None = _Field(alias="from")
     to: str | None
 
-class TemplatesReleasesRetrieveImpactResultDiffFieldsItem(_Model):
+class TemplatesReleasesRetrieveImpactResponseDiffFieldsItem(_Model):
     label: str
     kind: _Literal["added", "removed", "changed"] | str
     from_: str | None = _Field(alias="from")
     to: str | None
 
-class TemplatesReleasesRetrieveImpactResultDiffImagesItem(_Model):
+class TemplatesReleasesRetrieveImpactResponseDiffImagesItem(_Model):
     label: str
     kind: _Literal["added", "removed", "changed"] | str
     from_: str | None = _Field(alias="from")
     to: str | None
 
-class TemplatesReleasesRetrieveImpactResultMore(_Model):
+class TemplatesReleasesRetrieveImpactResponseMore(_Model):
     fields: int
     images: int
     barcode: int
     colors: int
 
-class TemplatesReleasesRetrieveImpactResultPasses(_Model):
+class TemplatesReleasesRetrieveImpactResponsePasses(_Model):
     count: int
     capped: bool
 
@@ -9480,7 +12390,31 @@ class TemplatesReleasesRollbackParams(_Model):
     expectedGeneration: int
     reason: str
 
-class TemplatesRetrieveStampsImpactResult(_Model):
+class TemplatesReleasesRollbackResponse(_Model):
+    id: str
+    templateId: str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["apple", "google", "samsung"] | str
+    version: str
+    generation: int
+    candidateHash: str
+    source: _Literal["approved", "system", "legacy"] | str
+    action: _Literal["release", "rollback", "system", "legacy"] | str
+    previousReleaseId: str | None
+    createdBy: str | None
+    createdByName: str | None = None
+    createdAt: int
+    candidateId: str | None
+    approvalId: str | None
+    sourceReleaseId: str | None = None
+    sourceReleaseGeneration: int | None = None
+    sourceReleaseHash: str | None = None
+    accountId: str | None = None
+    accountRevision: int | None = None
+    providerIdentityHash: str | None = None
+
+class TemplatesRetrieveStampsImpactResponse(_Model):
     passes: int
     readyNow: int
     readyLost: int
@@ -9500,19 +12434,19 @@ class TemplatesSetUpScanningParams(_Model):
     orgId: str
     timeZone: str | None = None
 
-class TemplatesSetUpScanningResult(_Model):
-    session: TemplatesSetUpScanningResultSession
+class TemplatesSetUpScanningResponse(_Model):
+    session: TemplatesSetUpScanningResponseSession
     created: bool
-    events: _List[TemplatesSetUpScanningResultEventsItem]
+    events: _List[TemplatesSetUpScanningResponseEventsItem]
     noEvents: bool
     truncated: bool
 
-class TemplatesSetUpScanningResultEventsItem(_Model):
+class TemplatesSetUpScanningResponseEventsItem(_Model):
     id: str
     name: str
     created: bool
 
-class TemplatesSetUpScanningResultSession(_Model):
+class TemplatesSetUpScanningResponseSession(_Model):
     id: str
     name: str
 
@@ -9534,19 +12468,18 @@ class TemplatesVersionsCreateParamsAssetsItem2(_Model):
     name: str
     upload: str
 
-class TemplatesVersionsRetrieveResult(_Model):
-    version: str
-    createdAt: int
-    createdBy: str | None
-    assets: _List[TemplatesVersionsRetrieveResultAssetsItem]
-    report: TemplatesVersionsRetrieveResultReport
-    active: bool
+class TemplatesVersionsCreateResponse(_Model):
+    saved: bool
+    version: str | None
+    created: bool
     displayOnly: bool
-    passCount: int | None = None
-    manifest: _Any | None = None
-    passJson: _Dict[str, _Any]
+    behindTip: bool | None = None
+    report: TemplatesVersionsCreateResponseReport
+    assets: _List[TemplatesVersionsCreateResponseAssetsItem]
+    passJson: _Dict[str, _Any] | None
+    template: TemplateDetail | None
 
-class TemplatesVersionsRetrieveResultAssetsItem(_Model):
+class TemplatesVersionsCreateResponseAssetsItem(_Model):
     name: str
     slot: str
     scale: _Literal[1] | _Literal[2] | _Literal[3]
@@ -9557,19 +12490,57 @@ class TemplatesVersionsRetrieveResultAssetsItem(_Model):
     width: int | None = None
     height: int | None = None
 
-class TemplatesVersionsRetrieveResultReport(_Model):
+class TemplatesVersionsCreateResponseReport(_Model):
     ok: bool
-    issues: _List[TemplatesVersionsRetrieveResultReportIssuesItem]
+    issues: _List[TemplatesVersionsCreateResponseReportIssuesItem]
 
-class TemplatesVersionsRetrieveResultReportIssuesItem(_Model):
+class TemplatesVersionsCreateResponseReportIssuesItem(_Model):
     severity: _Literal["error", "warning", "info"] | str
     code: str
     message: str
     path: str | None = None
     params: _Dict[str, str] | None = None
-    fix: TemplatesVersionsRetrieveResultReportIssuesItemFix | None = None
+    fix: TemplatesVersionsCreateResponseReportIssuesItemFix | None = None
 
-class TemplatesVersionsRetrieveResultReportIssuesItemFix(_Model):
+class TemplatesVersionsCreateResponseReportIssuesItemFix(_Model):
+    action: _Literal["upload_logo", "upload_icon"] | str
+
+class TemplatesVersionsRetrieveResponse(_Model):
+    version: str
+    createdAt: int
+    createdBy: str | None
+    assets: _List[TemplatesVersionsRetrieveResponseAssetsItem]
+    report: TemplatesVersionsRetrieveResponseReport
+    active: bool
+    displayOnly: bool
+    passCount: int | None = None
+    manifest: _Any | None = None
+    passJson: _Dict[str, _Any]
+
+class TemplatesVersionsRetrieveResponseAssetsItem(_Model):
+    name: str
+    slot: str
+    scale: _Literal[1] | _Literal[2] | _Literal[3]
+    locale: str | None = None
+    size: int
+    sha1: str
+    crc32: int
+    width: int | None = None
+    height: int | None = None
+
+class TemplatesVersionsRetrieveResponseReport(_Model):
+    ok: bool
+    issues: _List[TemplatesVersionsRetrieveResponseReportIssuesItem]
+
+class TemplatesVersionsRetrieveResponseReportIssuesItem(_Model):
+    severity: _Literal["error", "warning", "info"] | str
+    code: str
+    message: str
+    path: str | None = None
+    params: _Dict[str, str] | None = None
+    fix: TemplatesVersionsRetrieveResponseReportIssuesItemFix | None = None
+
+class TemplatesVersionsRetrieveResponseReportIssuesItemFix(_Model):
     action: _Literal["upload_logo", "upload_icon"] | str
 
 class TerminalActParams(_Model):
@@ -9677,7 +12648,7 @@ class TerminalScansUndoParamsScope(_Model):
     templateIds: _List[str] | None = None
     timeZone: str
 
-class VisitorsCancelResult(_Model):
+class VisitorsCancelResponse(_Model):
     id: str
     passId: str
     name: str
@@ -9690,7 +12661,7 @@ class VisitorsCancelResult(_Model):
     autoOut: bool
     hasEmail: bool
 
-class VisitorsCheckOutResult(_Model):
+class VisitorsCheckOutResponse(_Model):
     id: str
     passId: str
     name: str
@@ -9715,7 +12686,7 @@ class VisitorsCreateParams(_Model):
     note: str | None = None
     templateId: str | None = None
 
-class VisitorsCreateResult(_Model):
+class VisitorsCreateResponse(_Model):
     id: str
     passId: str
     name: str
@@ -9733,11 +12704,11 @@ class VisitorsListHostsItem(_Model):
     name: str
     email: str | None
 
-class VisitorsListHostsResult(_Model):
-    items: _List[VisitorsListHostsResultItemsItem]
+class VisitorsListHostsResponse(_Model):
+    items: _List[VisitorsListHostsResponseItemsItem]
     nextCursor: str | None
 
-class VisitorsListHostsResultItemsItem(_Model):
+class VisitorsListHostsResponseItemsItem(_Model):
     id: str
     name: str
     email: str | None
@@ -9755,11 +12726,11 @@ class VisitorsListItem(_Model):
     autoOut: bool
     hasEmail: bool
 
-class VisitorsListResult(_Model):
-    items: _List[VisitorsListResultItemsItem]
+class VisitorsListResponse(_Model):
+    items: _List[VisitorsListResponseItemsItem]
     nextCursor: str | None
 
-class VisitorsListResultItemsItem(_Model):
+class VisitorsListResponseItemsItem(_Model):
     id: str
     passId: str
     name: str
@@ -9775,17 +12746,95 @@ class VisitorsListResultItemsItem(_Model):
 class VisitorsSendHostEmailParams(_Model):
     timeZone: str | None = None
 
-class VisitorsSendHostEmailResult(_Model):
+class VisitorsSendHostEmailResponse(_Model):
     ok: _Literal[True]
 
 class WalletAccountsGoogleManagedCreateParams(_Model):
     mode: _Literal["live"] | str
 
+class WalletAccountsGoogleManagedCreateResponse(_Model):
+    runId: str
+    state: _Literal["queued", "running", "waiting", "succeeded", "failed", "cancelled"] | str
+    step: str | None
+    waitingFor: str | None
+    errorCode: str | None
+    issuerId: str | None
+    updatedAt: int
+
+class WalletAccountsGoogleManagedRetrieveResponse(_Model):
+    run: _Dict[str, _Any] | None
+
 class WalletAccountsGoogleSharedCreateParams(_Model):
     issuerId: str
 
+class WalletAccountsGoogleSharedCreateResponse(_Model):
+    credential: WalletAccountsGoogleSharedCreateResponseCredential
+    serviceAccountEmail: str
+
+class WalletAccountsGoogleSharedCreateResponseCredential(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
+
+class WalletAccountsGoogleSharedRetrieveResponse(_Model):
+    serviceAccountEmail: str | None
+
+class WalletCredentialsChecksCreateResponse(_Model):
+    checkId: str
+    status: _Literal["queued"] | str
+
+class WalletCredentialsChecksRetrieveResponse(_Model):
+    checkId: str
+    status: _Literal["pending", "ok", "failed"] | str
+    code: str | None
+    checkedAt: int | None
+
+class WalletCredentialsListResponse(_Model):
+    items: _List[WalletCredentialsListResponseItemsItem]
+    nextCursor: str | None
+
+class WalletCredentialsListResponseItemsItem(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
+
 class WalletCredentialsRevokeParams(_Model):
     expectedRevision: int
+
+class WalletCredentialsRevokeResponse(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
 
 class WalletCredentialsUpsertParams1(_Model):
     provider: _Literal["google"] | str
@@ -9812,24 +12861,215 @@ class WalletCredentialsUpsertParams2Credentials(_Model):
     partnerCertificatePem: str
     samsungCertificatePem: str
 
+class WalletCredentialsUpsertResponse(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
+
 class WalletEnrollmentsDisableParams(_Model):
     expectedRevision: int
+
+class WalletEnrollmentsDisableResponse(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: WalletEnrollmentsDisableResponsePrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: WalletEnrollmentsDisableResponseIssuance1 | WalletEnrollmentsDisableResponseIssuance2
+
+class WalletEnrollmentsDisableResponseIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class WalletEnrollmentsDisableResponseIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class WalletEnrollmentsDisableResponsePrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
 
 class WalletEnrollmentsEnableParams(_Model):
     expectedRevision: int
 
+class WalletEnrollmentsEnableResponse(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: WalletEnrollmentsEnableResponsePrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: WalletEnrollmentsEnableResponseIssuance1 | WalletEnrollmentsEnableResponseIssuance2
+
+class WalletEnrollmentsEnableResponseIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class WalletEnrollmentsEnableResponseIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class WalletEnrollmentsEnableResponsePrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
+
+class WalletEnrollmentsListResponse(_Model):
+    items: _List[WalletEnrollmentsListResponseItemsItem]
+    nextCursor: str | None
+
+class WalletEnrollmentsListResponseItemsItem(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: WalletEnrollmentsListResponseItemsItemPrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: WalletEnrollmentsListResponseItemsItemIssuance1 | WalletEnrollmentsListResponseItemsItemIssuance2
+
+class WalletEnrollmentsListResponseItemsItemIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class WalletEnrollmentsListResponseItemsItemIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class WalletEnrollmentsListResponseItemsItemPrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
+
 class WalletEnrollmentsRevokeParams(_Model):
     expectedRevision: int
+
+class WalletEnrollmentsRevokeResponse(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: WalletEnrollmentsRevokeResponsePrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: WalletEnrollmentsRevokeResponseIssuance1 | WalletEnrollmentsRevokeResponseIssuance2
+
+class WalletEnrollmentsRevokeResponseIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class WalletEnrollmentsRevokeResponseIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class WalletEnrollmentsRevokeResponsePrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
 
 class WalletEnrollmentsUpdateParams(_Model):
     source: _Literal["platform", "org"] | str
     expectedRevision: int
+
+class WalletEnrollmentsUpdateResponse(_Model):
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    source: _Literal["platform", "org", None] | str
+    platformAvailable: bool
+    state: _Literal["absent", "off", "on", "held", "revoked"] | str
+    enrolmentRevision: int
+    prerequisites: WalletEnrollmentsUpdateResponsePrerequisites
+    hold: _Dict[str, _Any] | None
+    issuance: WalletEnrollmentsUpdateResponseIssuance1 | WalletEnrollmentsUpdateResponseIssuance2
+
+class WalletEnrollmentsUpdateResponseIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class WalletEnrollmentsUpdateResponseIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
+class WalletEnrollmentsUpdateResponsePrerequisites(_Model):
+    check: bool
+    roundTrip: bool | None
+
+class WalletIdentitiesListResponse(_Model):
+    items: _List[WalletIdentitiesListResponseItemsItem]
+    nextCursor: str | None
+
+class WalletIdentitiesListResponseItemsItem(_Model):
+    id: str
+    provider: _Literal["apple"] | str
+    orgId: str | None
+    label: str
+    identifier: str
+    kind: _Literal["platform", "managed", "own"] | str
+    status: _Literal["provisioning", "active", "renewing", "expiring", "expired", "retired", "failed"] | str
+    notBefore: int | None
+    notAfter: int | None
+    rotation: _Literal["auto", "csr", "manual"] | str
+    nextRotationAt: int | None
+    issuing: bool
+    isDefault: bool
+    passCount: int
+    createdAt: int
+
+class WalletProviderAccountsRetrieveResponse(_Model):
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    revision: int
+    state: _Literal["absent", "configured", "revoked"] | str
+    externalApprovalVerified: _Literal[False]
+    issuance: WalletProviderAccountsRetrieveResponseIssuance1 | WalletProviderAccountsRetrieveResponseIssuance2
+    updatedAt: int | None
+
+class WalletProviderAccountsRetrieveResponseIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class WalletProviderAccountsRetrieveResponseIssuance2(_Model):
+    state: _Literal["enabled"] | str
 
 class WalletProviderAccountsRevokeParams(_Model):
     orgId: str
     mode: _Literal["live", "test"] | str
     provider: _Literal["google", "samsung"] | str
     expectedRevision: int
+
+class WalletProviderAccountsRevokeResponse(_Model):
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    revision: int
+    state: _Literal["absent", "configured", "revoked"] | str
+    externalApprovalVerified: _Literal[False]
+    issuance: WalletProviderAccountsRevokeResponseIssuance1 | WalletProviderAccountsRevokeResponseIssuance2
+    updatedAt: int | None
+
+class WalletProviderAccountsRevokeResponseIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class WalletProviderAccountsRevokeResponseIssuance2(_Model):
+    state: _Literal["enabled"] | str
 
 class WalletProviderAccountsUpsertParams1(_Model):
     orgId: str
@@ -9860,11 +13100,34 @@ class WalletProviderAccountsUpsertParams2Credentials(_Model):
     partnerCertificatePem: str
     samsungCertificatePem: str
 
+class WalletProviderAccountsUpsertResponse(_Model):
+    orgId: str
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    accountId: str | None
+    revision: int
+    state: _Literal["absent", "configured", "revoked"] | str
+    externalApprovalVerified: _Literal[False]
+    issuance: WalletProviderAccountsUpsertResponseIssuance1 | WalletProviderAccountsUpsertResponseIssuance2
+    updatedAt: int | None
+
+class WalletProviderAccountsUpsertResponseIssuance1(_Model):
+    state: _Literal["disabled"] | str
+    reason: _Literal["not_released"] | str
+
+class WalletProviderAccountsUpsertResponseIssuance2(_Model):
+    state: _Literal["enabled"] | str
+
 class WalletProviderAccountsVerifyParams(_Model):
     orgId: str
     mode: _Literal["live", "test"] | str
     candidateId: str
     candidateHash: str
+
+class WalletProviderAccountsVerifyResponse(_Model):
+    verified: bool
+    verifiedAt: int | None
+    expiresAt: int | None
 
 class WalletReissue(_Model):
     reissueId: str
@@ -9964,7 +13227,7 @@ class WebhookEndpointsCreateParams(_Model):
     eventTypes: _List[_Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed"] | str]
     templateIds: _List[str] | None = None
 
-class WebhookEndpointsDeleteResult(_Model):
+class WebhookEndpointsDeleteResponse(_Model):
     ok: _Literal[True]
 
 class WebhookEndpointsDeliveriesBulkReplayParams(_Model):
@@ -9974,7 +13237,7 @@ class WebhookEndpointsDeliveriesBulkReplayParams(_Model):
     missing: bool | None = None
     dryRun: bool | None = None
 
-class WebhookEndpointsDeliveriesBulkReplayResult(_Model):
+class WebhookEndpointsDeliveriesBulkReplayResponse(_Model):
     queued: int
 
 class WebhookEndpointsDeliveriesListItem(_Model):
@@ -9991,7 +13254,7 @@ class WebhookEndpointsDeliveriesListItem(_Model):
     finishedAt: int | None
     replays: int
 
-class WebhookEndpointsDeliveriesReplayResult(_Model):
+class WebhookEndpointsDeliveriesReplayResponse(_Model):
     queued: int
 
 class WebhookEndpointsEnsureCaptureParams(_Model):
@@ -10001,7 +13264,7 @@ class WebhookEndpointsEnsureCaptureParams(_Model):
 class WebhookEndpointsRotateSecretParams(_Model):
     overlapHours: _Literal[0] | _Literal[24] | _Literal[72] | None = None
 
-class WebhookEndpointsRotateSecretResult(_Model):
+class WebhookEndpointsRotateSecretResponse(_Model):
     secret: str
 
 class WebhookEndpointsSendTestParams(_Model):
@@ -10070,6 +13333,8 @@ ApiKeysCreateBody = ApiKeysCreateParams
 
 ApiKeysCreateResult = ApiKeyMinted
 
+ApiKeysListResult = ApiKeysListResponse
+
 ApiKeysRetireBody = ApiKeysRetireParams
 
 ApiKeysRetireResult = ApiKeyRetired
@@ -10077,6 +13342,8 @@ ApiKeysRetireResult = ApiKeyRetired
 ApiKeysRetrieveCurrentResult = ApiKeyCurrent
 
 ApiKeysRetrieveResult = ApiKeyDetail
+
+ApiKeysRevokeResult = ApiKeysRevokeResponse
 
 ApiKeysRotateBody = ApiKeysRotateParams
 
@@ -10089,6 +13356,8 @@ ApiKeysRotateResult = ApiKeyRotation
 BlueprintsUseBody = BlueprintsUseParams
 
 BlueprintsUseResult = TemplateDetail
+
+BrandRetrieveResult = BrandRetrieveResponse
 
 BrandUpdateBody = BrandUpdateParams
 
@@ -10104,9 +13373,15 @@ BroadcastsCancelResult = Broadcast
 
 BroadcastsCountRecipientsBody = BroadcastsCountRecipientsParams
 
+BroadcastsCountRecipientsResult = BroadcastsCountRecipientsResponse
+
 BroadcastsCreateBody = BroadcastsCreateParams
 
 BroadcastsCreateResult = Broadcast
+
+BroadcastsListResult = BroadcastsListResponse
+
+BroadcastsRecipientsListResult = BroadcastsRecipientsListResponse
 
 BroadcastsRetrieveResult = Broadcast
 
@@ -10136,15 +13411,63 @@ BulkRunsStopResult = BulkRun
 
 BundlesCreateBody = BundlesCreateParams
 
+BundlesCreateResult = BundlesCreateResponse
+
+BundlesDeleteResult = BundlesDeleteResponse
+
+BundlesListResult = BundlesListResponse
+
+BundlesRetrieveResult = BundlesRetrieveResponse
+
+BundlesRotateLinkResult = BundlesRotateLinkResponse
+
 BundlesSendEmailBody = BundlesSendEmailParams
+
+BundlesSendEmailResult = BundlesSendEmailResponse
 
 ConnectionsCreateBody = ConnectionsCreateParams
 
+ConnectionsCreateResult = ConnectionsCreateResponse
+
+ConnectionsDeleteResult = ConnectionsDeleteResponse
+
+ConnectionsListResult = ConnectionsListResponse
+
 ConnectionsPreviewResult = ConnectionPreview
+
+ConnectionsRetrieveResult = ConnectionsRetrieveResponse
+
+ConnectionsRetrieveSummaryResult = ConnectionsRetrieveSummaryResponse
+
+ConnectionsRevokePreviousWebhookSecretResult = ConnectionsRevokePreviousWebhookSecretResponse
+
+ConnectionsRotateWebhookSecretResult = ConnectionsRotateWebhookSecretResponse
+
+ConnectionsRunsListResult = ConnectionsRunsListResponse
+
+ConnectionsSyncResult = ConnectionsSyncResponse
 
 ConnectionsTestConfigBody = ConnectionsTestConfigParams
 
+ConnectionsTestConfigResult = ConnectionsTestConfigResponse
+
+ConnectionsTestResult = ConnectionsTestResponse
+
 ConnectionsUpdateBody = ConnectionsUpdateParams
+
+ConnectionsUpdateResult = ConnectionsUpdateResponse
+
+ConnectionsWebhookFailuresListResult = ConnectionsWebhookFailuresListResponse
+
+ConnectionsWebhookFailuresReplayResult = ConnectionsWebhookFailuresReplayResponse
+
+ConnectionsWebhookFailuresResolveResult = ConnectionsWebhookFailuresResolveResponse
+
+ConnectorsListResult = ConnectorsListResponse
+
+ConnectorsRetrieveResult = ConnectorsRetrieveResponse
+
+DeliveriesListResult = DeliveriesListResponse
 
 EventsListResult = EventPage
 
@@ -10154,19 +13477,51 @@ EventsRetrieveResult = WebhookEvent
 
 HoldersAssignBody = HoldersAssignParams
 
+HoldersAssignResult = HoldersAssignResponse
+
 HoldersBulkAssignBody = HoldersBulkAssignParams
+
+HoldersBulkAssignResult = HoldersBulkAssignResponse
 
 HoldersClearBlockBody = HoldersClearBlockParams
 
+HoldersClearBlockResult = HoldersClearBlockResponse
+
+HoldersListResult = HoldersListResponse
+
 HoldersOffboardBody = HoldersOffboardParams
+
+HoldersOffboardResult = HoldersOffboardResponse
 
 HoldersReassignBody = HoldersReassignParams
 
+HoldersReassignResult = HoldersReassignResponse
+
+HoldersRetrieveResult = HoldersRetrieveResponse
+
 HoldersUnassignBody = HoldersUnassignParams
+
+HoldersUnassignResult = HoldersUnassignResponse
+
+IdentitiesListResponse = IdentitiesListResponse1 | IdentitiesListResponse2
 
 MessageRulesCountDueBody = MessageRulesCountDueParams
 
+MessageRulesCountDueResult = MessageRulesCountDueResponse
+
 MessageRulesCreateBody = MessageRulesCreateParams
+
+MessageRulesCreateResult = MessageRulesCreateResponse
+
+MessageRulesDeleteResult = MessageRulesDeleteResponse
+
+MessageRulesListResult = MessageRulesListResponse
+
+MessageRulesPauseResult = MessageRulesPauseResponse
+
+MessageRulesRetrieveResult = MessageRulesRetrieveResponse
+
+MessageRulesRunsListResult = MessageRulesRunsListResponse
 
 MessageRulesSendTestBody = MessageRulesSendTestParams
 
@@ -10174,25 +13529,53 @@ MessageRulesSendTestResult = Broadcast
 
 MessageRulesUpdateBody = MessageRulesUpdateParams
 
+MessageRulesUpdateResult = MessageRulesUpdateResponse
+
 NfcKeysetsCreateParams = NfcKeysetsCreateParams1 | NfcKeysetsCreateParams2 | NfcKeysetsCreateParams3
 
 NfcKeysetsCreateBody = NfcKeysetsCreateParams
 
+NfcKeysetsCreateResult = NfcKeysetsCreateResponse
+
+NfcKeysetsDisableResult = NfcKeysetsDisableResponse
+
 NfcKeysetsImportTagsBody = NfcKeysetsImportTagsParams
 
+NfcKeysetsImportTagsResult = NfcKeysetsImportTagsResponse
+
+NfcKeysetsListResult = NfcKeysetsListResponse
+
 NfcKeysetsReenrollBody = NfcKeysetsReenrollParams
+
+NfcKeysetsReenrollResult = NfcKeysetsReenrollResponse
+
+NfcKeysetsRetireKeyResult = NfcKeysetsRetireKeyResponse
+
+NfcKeysetsRevokeKeyResult = NfcKeysetsRevokeKeyResponse
 
 NfcKeysetsRotateParams = NfcKeysetsRotateParams1 | NfcKeysetsRotateParams2 | NfcKeysetsRotateParams3
 
 NfcKeysetsRotateBody = NfcKeysetsRotateParams
 
+NfcKeysetsRotateResult = NfcKeysetsRotateResponse
+
 NfcTagTypesArchiveBody = NfcTagTypesArchiveParams
+
+NfcTagTypesArchiveResult = NfcTagTypesArchiveResponse
 
 NfcTagTypesCreateBody = NfcTagTypesCreateParams
 
+NfcTagTypesCreateResult = NfcTagTypesCreateResponse
+
+NfcTagTypesListResult = NfcTagTypesListResponse
+
 NfcTagTypesUpdateBody = NfcTagTypesUpdateParams
 
+NfcTagTypesUpdateResult = NfcTagTypesUpdateResponse
+
 NfcTagsAssignParams = NfcTagsAssignParams1 | NfcTagsAssignParams2
+
+OrgsEntitlementsRetrieveResult = OrgsEntitlementsRetrieveResponse
 
 OrgsRetrievePassSetupResult = PassSetup
 
@@ -10206,9 +13589,19 @@ OrgsUpdatePassSetupResult = PassSetupResult
 
 PassImportsCheckBody = PassImportsCheckParams
 
+PassImportsCheckResult = PassImportsCheckResponse
+
 PassImportsCommitBody = PassImportsCommitParams
 
+PassImportsCommitResult = PassImportsCommitResponse
+
 PassImportsCreateBody = PassImportsCreateParams
+
+PassImportsCreateResult = PassImportsCreateResponse
+
+PassImportsDeleteResult = PassImportsDeleteResponse
+
+PassImportsListResult = PassImportsListResponse
 
 PassImportsMappingsDeleteResult = PassImportMappings
 
@@ -10218,7 +13611,13 @@ PassImportsMappingsSaveBody = PassImportsMappingsSaveParams
 
 PassImportsMappingsSaveResult = PassImportMappings
 
+PassImportsRetrieveResult = PassImportsRetrieveResponse
+
+PassImportsRowsListResult = PassImportsRowsListResponse
+
 PassImportsSendEmailsBody = PassImportsSendEmailsParams
+
+PassImportsSendEmailsResult = PassImportsSendEmailsResponse
 
 PassImportsUndoBody = PassImportsUndoParams
 
@@ -10230,15 +13629,37 @@ PassViewsReplaceBody = PassViewsReplaceParams
 
 PassViewsReplaceResult = PassViews
 
+PassesActivityListResult = PassesActivityListResponse
+
+PassesAssetsDeleteResult = PassesAssetsDeleteResponse
+
+PassesAssetsListResult = PassesAssetsListResponse
+
+PassesAssetsUploadResult = PassesAssetsUploadResponse
+
 PassesBulkApplyBody = PassesBulkApplyParams
+
+PassesBulkApplyResult = PassesBulkApplyResponse
 
 PassesBulkReissueBody = PassesBulkReissueParams
 
+PassesBulkReissueResult = PassesBulkReissueResponse
+
 PassesBulkUpdateChannelsBody = PassesBulkUpdateChannelsParams
+
+PassesBulkUpdateChannelsResult = PassesBulkUpdateChannelsResponse
+
+PassesChannelsRetrieveResult = PassesChannelsRetrieveResponse
 
 PassesChannelsUpdateBody = PassesChannelsUpdateParams
 
+PassesChannelsUpdateResult = PassesChannelsUpdateResponse
+
+PassesCheckInRulesRetrieveResult = PassesCheckInRulesRetrieveResponse
+
 PassesCheckInRulesUpdateBody = PassesCheckInRulesUpdateParams
+
+PassesCheckInRulesUpdateResult = PassesCheckInRulesUpdateResponse
 
 PassesConnectionUpdateBody = PassesConnectionUpdateParams
 
@@ -10248,17 +13669,35 @@ PassesCreateBody = PassesCreateParams
 
 PassesCreateResult = PassDetail
 
+PassesDeleteResult = PassesDeleteResponse
+
+PassesDevicesListResult = PassesDevicesListResponse
+
 PassesListResult = PassPage
 
 PassesMatchPhotosBody = PassesMatchPhotosParams
 
+PassesMatchPhotosResult = PassesMatchPhotosResponse
+
+PassesMemberPhotoDeleteResult = PassesMemberPhotoDeleteResponse
+
+PassesMemberPhotoRetrieveResult = PassesMemberPhotoRetrieveResponse
+
 PassesMemberPhotoUpdateBody = PassesMemberPhotoUpdateParams
+
+PassesMemberPhotoUpdateResult = PassesMemberPhotoUpdateResponse
 
 PassesMemberPhotoUploadBody = PassesMemberPhotoUploadParams
 
-PassesReissueProviderCopiesBody = PassesReissueProviderCopiesParams
+PassesMemberPhotoUploadResult = PassesMemberPhotoUploadResponse
 
-PassesReissueProviderCopiesResult = WalletReissue
+PassesPrintsCreateResult = PassesPrintsCreateResponse
+
+PassesPrintsListResult = PassesPrintsListResponse
+
+PassesPrintsVoidResult = PassesPrintsVoidResponse
+
+PassesRefreshResult = PassesRefreshResponse
 
 PassesRemoveBody = PassesRemoveParams
 
@@ -10268,11 +13707,23 @@ PassesRenewBody = PassesRenewParams
 
 PassesRenewResult = PassDetail
 
+PassesResendProviderCopiesBody = PassesResendProviderCopiesParams
+
+PassesResendProviderCopiesResult = WalletReissue
+
 PassesRestoreResult = PassSummary
+
+PassesRetrieveProviderStatusResult = PassesRetrieveProviderStatusResponse
 
 PassesRetrieveResult = PassDetail
 
+PassesRotateCodeResult = PassesRotateCodeResponse
+
+PassesRotateLinkResult = PassesRotateLinkResponse
+
 PassesSendEmailBody = PassesSendEmailParams
+
+PassesSendEmailResult = PassesSendEmailResponse
 
 PassesStampsApplyParams = PassesStampsApplyParams1 | PassesStampsApplyParams2
 
@@ -10286,6 +13737,8 @@ PassesUpdateBody = PassesUpdateParams
 
 PassesUpdateResult = PassDetail
 
+PassesVersionsDiffResult = PassesVersionsDiffResponse
+
 PassesVersionsRetrieveResult = PassDetail
 
 PassesVoidResult = PassSummary
@@ -10294,9 +13747,23 @@ PlatformWalletCredentialsUpsertParams = PlatformWalletCredentialsUpsertParams1 |
 
 PrintJobsCreateBody = PrintJobsCreateParams
 
+PrintJobsCreateResult = PrintJobsCreateResponse
+
+PrintJobsRetrieveResult = PrintJobsRetrieveResponse
+
 ReleaseResponse = ReleaseResponse1 | ReleaseResponse2
 
+RollCallsCreateResult = RollCallsCreateResponse
+
+RollCallsEndResult = RollCallsEndResponse
+
 RollCallsMarkBody = RollCallsMarkParams
+
+RollCallsMarkResult = RollCallsMarkResponse
+
+RollCallsRetrieveOpenResult = RollCallsRetrieveOpenResponse
+
+RollCallsRetrieveResult = RollCallsRetrieveResponse
 
 ScanCard = _Dict[str, _Any] | None
 
@@ -10312,6 +13779,8 @@ ScanEventsCreateBody = ScanEventsCreateParams
 
 ScanEventsCreateResult = ScanEvent
 
+ScanEventsListResult = ScanEventsListResponse
+
 ScanEventsRetrieveResult = ScanEvent
 
 ScanEventsUpdateBody = ScanEventsUpdateParams
@@ -10322,7 +13791,17 @@ ScanPrevious = _Dict[str, _Any] | None
 
 ScanSetupAnswer = ScanSetupAnswer1 | ScanSetupAnswer2
 
+ScanSetupsListResult = ScanSetupsListResponse
+
+ScanSetupsRetrieveResult = ScanSetupsRetrieveResponse
+
 ScanStaffCreateBody = ScanStaffCreateParams
+
+ScanStaffCreateResult = ScanStaffCreateResponse
+
+ScanStaffListResult = ScanStaffListResponse
+
+ScanStaffResetPinResult = ScanStaffResetPinResponse
 
 ScanStaffUpdateBody = ScanStaffUpdateParams
 
@@ -10332,15 +13811,33 @@ ScanTemplateRef = _Dict[str, _Any] | None
 
 ScanWorkspace = _Dict[str, _Any] | None
 
+ScanZonesArchiveResult = ScanZonesArchiveResponse
+
 ScanZonesCreateBody = ScanZonesCreateParams
 
+ScanZonesCreateResult = ScanZonesCreateResponse
+
+ScanZonesListResult = ScanZonesListResponse
+
+ScanZonesResetVisitsResult = ScanZonesResetVisitsResponse
+
+ScanZonesRestoreResult = ScanZonesRestoreResponse
+
 ScanZonesUpdateBody = ScanZonesUpdateParams
+
+ScanZonesUpdateResult = ScanZonesUpdateResponse
 
 ScannersCreateBody = ScannersCreateParams
 
 ScannersCreateResult = CreatedScanner
 
+ScannersPairingCreateResult = ScannersPairingCreateResponse
+
+ScannersPairingRetrieveResult = ScannersPairingRetrieveResponse
+
 ScannersRevokeResult = Scanner
+
+ScannersRotateTokenResult = ScannersRotateTokenResponse
 
 ScannersSetModeBody = ScannersSetModeParams
 
@@ -10358,6 +13855,8 @@ ScanningSessionsDevicesUpdateBody = ScanningSessionsDevicesUpdateParams
 
 ScanningSessionsDevicesUpdateResult = ScanningDevice
 
+ScanningSessionsListResult = ScanningSessionsListResponse
+
 ScanningSessionsOverrideHoursParams = ScanningSessionsOverrideHoursParams1 | ScanningSessionsOverrideHoursParams2 | ScanningSessionsOverrideHoursParams3
 
 ScanningSessionsOverrideHoursBody = ScanningSessionsOverrideHoursParams
@@ -10374,31 +13873,61 @@ ScanningSessionsUpdateBody = ScanningSessionsUpdateParams
 
 ScanningSessionsUpdateResult = ScanningSessionDetail
 
-ScansListResult = ScansListResult1 | ScansListResult2
+ScansListResponse = ScansListResponse1 | ScansListResponse2
+
+ScansListResult = ScansListResponse
+
+TemplateImportsListResult = TemplateImportsListResponse
+
+TemplateImportsRetrieveResult = TemplateImportsRetrieveResponse
 
 TemplateInputSchema = _Dict[str, _Any]
 
 TemplatesCandidatesApproveBody = TemplatesCandidatesApproveParams
 
+TemplatesCandidatesApproveResult = TemplatesCandidatesApproveResponse
+
 TemplatesCandidatesCreateBody = TemplatesCandidatesCreateParams
 
-TemplatesChannelsListRunsResult = _List[TemplatesChannelsListRunsResultItem]
+TemplatesCandidatesCreateResult = TemplatesCandidatesCreateResponse
+
+TemplatesCandidatesListResult = TemplatesCandidatesListResponse
+
+TemplatesChannelsListRunsResponse = _List[TemplatesChannelsListRunsResponseItem]
+
+TemplatesChannelsListRunsResult = TemplatesChannelsListRunsResponse
+
+TemplatesChannelsRetrieveResult = TemplatesChannelsRetrieveResponse
+
+TemplatesListEligibleResult = TemplatesListEligibleResponse
+
+TemplatesListPreviewsResult = TemplatesListPreviewsResponse
 
 TemplatesListResult = TemplatePage
 
 TemplatesPreviewBody = TemplatesPreviewParams
 
+TemplatesPreviewResult = TemplatesPreviewResponse
+
 TemplatesReleasesCreateBody = TemplatesReleasesCreateParams
+
+TemplatesReleasesCreateResult = TemplatesReleasesCreateResponse
+
+TemplatesReleasesListResult = TemplatesReleasesListResponse
 
 TemplatesReleasesReleaseBody = ReleaseTemplate
 
 TemplatesReleasesReleaseResult = ReleaseResponse
+
+TemplatesReleasesRetrieveImpactResult = TemplatesReleasesRetrieveImpactResponse
 
 TemplatesRetrieveInputSchemaResult = TemplateInputSchema
 
 TemplatesRetrieveResult = TemplateDetail
 
 TemplatesRetrieveRolloutResult = TemplateRollout
+
+TemplatesRetrieveStampsImpactResult = TemplatesRetrieveStampsImpactResponse
 
 TemplatesReviewsApproveBody = ReviewTemplate
 
@@ -10411,6 +13940,10 @@ TemplatesReviewsRequestBody = ReleaseTemplate
 TemplatesReviewsRequestResult = ReleaseResponse
 
 TemplatesSetUpScanningBody = TemplatesSetUpScanningParams
+
+TemplatesSetUpScanningResult = TemplatesSetUpScanningResponse
+
+TemplatesVersionsRetrieveResult = TemplatesVersionsRetrieveResponse
 
 TerminalActBody = TerminalActParams
 
@@ -10428,9 +13961,21 @@ TestEmailsListResult = CapturedEmailPage
 
 TestEmailsRetrieveResult = CapturedEmailDetail
 
+VisitorsCancelResult = VisitorsCancelResponse
+
+VisitorsCheckOutResult = VisitorsCheckOutResponse
+
 VisitorsCreateBody = VisitorsCreateParams
 
+VisitorsCreateResult = VisitorsCreateResponse
+
+VisitorsListHostsResult = VisitorsListHostsResponse
+
+VisitorsListResult = VisitorsListResponse
+
 VisitorsSendHostEmailBody = VisitorsSendHostEmailParams
+
+VisitorsSendHostEmailResult = VisitorsSendHostEmailResponse
 
 WalletCredentialsUpsertParams = WalletCredentialsUpsertParams1 | WalletCredentialsUpsertParams2
 
@@ -10448,9 +13993,15 @@ WebhookEndpointsCreateBody = WebhookEndpointsCreateParams
 
 WebhookEndpointsCreateResult = WebhookEndpointCreated
 
+WebhookEndpointsDeleteResult = WebhookEndpointsDeleteResponse
+
 WebhookEndpointsDeliveriesBulkReplayBody = WebhookEndpointsDeliveriesBulkReplayParams
 
+WebhookEndpointsDeliveriesBulkReplayResult = WebhookEndpointsDeliveriesBulkReplayResponse
+
 WebhookEndpointsDeliveriesListResult = WebhookDeliveryPage
+
+WebhookEndpointsDeliveriesReplayResult = WebhookEndpointsDeliveriesReplayResponse
 
 WebhookEndpointsDeliveriesRetrieveResult = WebhookDeliveryDetail
 
@@ -10463,6 +14014,8 @@ WebhookEndpointsListResult = WebhookEndpointPage
 WebhookEndpointsRetrieveResult = WebhookEndpoint
 
 WebhookEndpointsRotateSecretBody = WebhookEndpointsRotateSecretParams
+
+WebhookEndpointsRotateSecretResult = WebhookEndpointsRotateSecretResponse
 
 WebhookEndpointsSendTestBody = WebhookEndpointsSendTestParams
 

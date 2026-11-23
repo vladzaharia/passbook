@@ -19,7 +19,8 @@ func main() {
 	var query passbook.TemplatesListEligibleQuery
 	if err := json.Unmarshal([]byte(`{
   "mode": "test",
-  "provider": "apple"
+  "provider": "apple",
+  "limit": 25
 }`), &query); err != nil {
 		panic(err)
 	}

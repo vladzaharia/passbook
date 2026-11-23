@@ -109,7 +109,7 @@ export function ChannelRow({
           aria-expanded={open}
           aria-controls={id}
           onClick={onToggle}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
           <span
             aria-hidden

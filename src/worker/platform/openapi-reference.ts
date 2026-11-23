@@ -58,20 +58,24 @@ export function withReference(doc: Doc): Doc {
   return doc;
 }
 
-/** `passes.create` -> `PassesCreateParams`: each SDK body is a named component, so SDKs get a type for it. */
+/** `passes.create` -> `PassesCreateParams` and `PassesCreateResponse`: each SDK body and 2xx answer is a named component, so SDKs get a type for it. */
 export function withNamedBodies(doc: Doc): Doc {
   const components = doc.components ?? {};
   const schemas = components.schemas ?? {};
   doc.components = { ...components, schemas };
-  for (const op of operations(doc)) {
-    const sdk = op['x-sdk'] as { resource: string; method: string; sdk?: boolean } | undefined;
-    const media = op.requestBody?.content?.[JSON_TYPE];
-    if (!sdk || sdk.sdk === false || !media?.schema) continue;
-    if (typeof media.schema === 'object' && '$ref' in media.schema) continue;
-    const name = `${[...sdk.resource.split('.'), sdk.method].map(pascal).join('')}Params`;
-    if (name in schemas) throw new Error(`request body name ${name} is taken (${op.operationId})`);
+  const hoist = (media: Media | undefined, name: string, op: Op): void => {
+    if (!media?.schema || (typeof media.schema === 'object' && '$ref' in media.schema)) return;
+    if (name in schemas) throw new Error(`component name ${name} is taken (${op.operationId})`);
     schemas[name] = media.schema;
     media.schema = { $ref: `#/components/schemas/${name}` };
+  };
+  for (const op of operations(doc)) {
+    const sdk = op['x-sdk'] as { resource: string; method: string; sdk?: boolean } | undefined;
+    if (!sdk || sdk.sdk === false) continue;
+    const base = [...sdk.resource.split('.'), sdk.method].map(pascal).join('');
+    hoist(op.requestBody?.content?.[JSON_TYPE], `${base}Params`, op);
+    const ok = Object.entries(op.responses ?? {}).find(([code]) => code.startsWith('2'));
+    hoist(ok?.[1].content?.[JSON_TYPE], `${base}Response`, op);
   }
   return doc;
 }

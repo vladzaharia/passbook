@@ -95,7 +95,18 @@ export class Models {
     if (s.$ref) return { k: 'ref', name: refName(s.$ref) };
     if (s.const !== undefined) return { k: 'lit', values: [s.const as Lit] };
     if (s.enum) return { k: 'lit', values: s.enum as Lit[] };
-    if (s.allOf) throw new Error('allOf is not supported');
+    if (s.allOf) {
+      // The shape zod emits for a nullable named schema: a $ref plus a bare nullable object.
+      const named = s.allOf.filter((a) => a.$ref);
+      const rest = s.allOf.filter((a) => !a.$ref);
+      if (named.length !== 1 || rest.some((a) => a.properties || a.anyOf || a.oneOf || a.enum))
+        throw new Error('allOf is supported only as a $ref with a nullable marker');
+      const nullable = rest.some((a) => Array.isArray(a.type) && a.type.includes('null'));
+      return union([
+        this.lower(named[0] as Schema, hint),
+        ...(nullable ? [{ k: 'null' as const }] : []),
+      ]);
+    }
     const alternatives = s.anyOf ?? s.oneOf;
     if (alternatives) return union(alternatives.map((a, i) => this.lower(a, `${hint}${i + 1}`)));
     if (s.type) {
