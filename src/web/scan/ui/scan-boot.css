@@ -206,8 +206,26 @@
 }
 
 /* Tablet portrait: boot cards (start, sign-in, pair) scale up instead of sitting small in empty space. */
-@media (min-width: 640px) and (max-width: 1023px) {
+@media (min-width: 640px) and (max-width: 1023px) and (min-height: 501px) {
   .scan-card.scan-boot-card {
     zoom: 1.2;
+  }
+}
+
+/* A phone on its side: the heading beside the form, as on a wide screen, so the form is not cut off. */
+@media (min-width: 640px) and (max-height: 500px) {
+  .scan-layer.scan-card-layer[data-mode="boot"] .scan-boot-card:has(.scan-boot-body:not(:empty)) {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    width: min(100%, 720px);
+  }
+  .scan-layer.scan-card-layer[data-mode="boot"] .scan-boot-heading {
+    justify-content: center;
+    padding: 16px 24px;
+  }
+  .scan-layer.scan-card-layer[data-mode="boot"] .scan-boot-body {
+    padding: 16px 24px;
+    border-top: 0;
+    border-left: 1px solid var(--pk-border-subtle);
   }
 }
