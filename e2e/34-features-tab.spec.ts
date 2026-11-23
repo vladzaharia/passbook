@@ -232,7 +232,7 @@ test.describe('org features', () => {
       await page.getByRole('button', { name: 'Edit presets' }).click();
       await dialog.getByRole('combobox', { name: /Feature/ }).click();
       await page.getByRole('option', { name: /^Members/ }).click();
-      await dialog.getByLabel('Limit').fill('4');
+      await dialog.getByRole('spinbutton', { name: 'Limit' }).fill('4');
       await dialog.getByRole('button', { name: 'Continue' }).click();
       const confirm = page.getByRole('alertdialog');
       await expect(confirm.getByRole('heading', { name: 'Change Trial?' })).toBeVisible();
@@ -244,7 +244,7 @@ test.describe('org features', () => {
           await page.getByRole('button', { name: 'Edit presets' }).click();
           await dialog.getByRole('combobox', { name: /Feature/ }).click();
           await page.getByRole('option', { name: /^Members/ }).click();
-          await dialog.getByLabel('Limit').fill('4');
+          await dialog.getByRole('spinbutton', { name: 'Limit' }).fill('4');
           await dialog.getByRole('button', { name: 'Continue' }).click();
           await expect(page.getByRole('alertdialog')).toBeVisible();
           await page.waitForTimeout(300);
@@ -255,7 +255,7 @@ test.describe('org features', () => {
       await page.getByRole('button', { name: 'Edit presets' }).click();
       await dialog.getByRole('combobox', { name: /Feature/ }).click();
       await page.getByRole('option', { name: /^Members/ }).click();
-      await dialog.getByLabel('Limit').fill('4');
+      await dialog.getByRole('spinbutton', { name: 'Limit' }).fill('4');
       await dialog.getByRole('button', { name: 'Continue' }).click();
       await page.getByRole('alertdialog').getByRole('button', { name: 'Change' }).click();
       await expect.poll(async () => (await presetOf())?.values.members).toBe(4);

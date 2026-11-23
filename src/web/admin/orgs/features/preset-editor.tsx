@@ -23,21 +23,22 @@ import { FEATURE_GROUPS, formatValue } from './values.ts';
 const KEYS = FEATURE_GROUPS.flatMap((g) => g.keys);
 
 /** Platform: changes a preset's values for every organization on it. */
-export function PresetEditor() {
+/** `current` is the preset the page's organization is on: the one that opens. */
+export function PresetEditor({ current }: { current: string }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
         Edit presets
       </Button>
-      {open ? <PresetDialog onClose={() => setOpen(false)} /> : null}
+      {open ? <PresetDialog current={current} onClose={() => setOpen(false)} /> : null}
     </>
   );
 }
 
-function PresetDialog({ onClose }: { onClose: () => void }) {
+function PresetDialog({ current, onClose }: { current: string; onClose: () => void }) {
   const query = usePresets();
-  const [picked, setPicked] = useState<string | null>(null);
+  const [picked, setPicked] = useState(current);
   const presets = query.data?.presets ?? [];
   const preset = presets.find((p) => p.preset === picked) ?? presets[0];
   return (

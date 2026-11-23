@@ -63,7 +63,7 @@ export function PresetCard({
         actions={
           <div className="flex items-center gap-3">
             <span className="text-xs text-fg-muted">Updated {formatDateTime(state.updatedAt)}</span>
-            <PresetEditor />
+            <PresetEditor current={state.preset} />
           </div>
         }
       />
