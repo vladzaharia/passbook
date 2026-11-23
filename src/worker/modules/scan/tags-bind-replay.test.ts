@@ -35,6 +35,17 @@ describe('a retried bind', () => {
     expect(other.status).toBe(409);
     expect(await json(other)).toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED' });
   });
+
+  it('answers 422 for a client pinned to PassBook-Version 2026-11-22', async () => {
+    const s = await f.desk();
+    const { card } = await f.pass();
+    const k = key();
+    const pinned = { ...s, headers: { ...s.headers, 'PassBook-Version': '2026-11-22' } };
+    await f.bind(pinned, { idempotencyKey: k, card, tag: f.read() });
+    const other = await f.bind(pinned, { idempotencyKey: k, card, tag: f.read() });
+    expect(other.status).toBe(422);
+    expect(await json(other)).toMatchObject({ code: 'IDEMPOTENCY_KEY_REUSED' });
+  });
 });
 
 describe('inspect names', () => {

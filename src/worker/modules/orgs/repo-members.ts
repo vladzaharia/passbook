@@ -40,7 +40,7 @@ export interface AdminFence {
 }
 const noAdmin: AdminFence = { sql: '0', params: [] };
 const adminFence = (admin: AdminFence | boolean): AdminFence =>
-  typeof admin === 'boolean' ? (admin ? { sql: '? = 1', params: [1] } : noAdmin) : admin;
+  typeof admin === 'boolean' ? (admin ? { sql: '1', params: [] } : noAdmin) : admin;
 // Repeat the manager authorization predicate at the read or mutation itself.
 const managerSql = (admin: AdminFence) => `EXISTS (SELECT 1 FROM users u JOIN orgs o ON o.id = ?
  WHERE u.id = ? AND u.status = 'active' AND o.status = 'active' AND
