@@ -1,9 +1,7 @@
 import type { z } from 'zod';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
-import {
-  type CreateScanningDeviceSchema,
-  SESSION_DEVICE_CAP,
-} from '../../../shared/contracts/scanning-sessions.ts';
+import { SESSION_DEVICE_CAP } from '../../../shared/contracts/scan-access.ts';
+import type { CreateScanningDeviceSchema } from '../../../shared/contracts/scanning-sessions.ts';
 import { roleForSurface, surfaceFor } from '../../../shared/scan-surfaces.ts';
 import { ConflictError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';

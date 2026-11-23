@@ -38,11 +38,12 @@ export function DeviceSheet({
     name !== device.name ||
     surface !== device.surface ||
     JSON.stringify(overrides) !== JSON.stringify(device.overrides);
-  const layout = surface === 'desk' ? 'operator' : surface;
+  const shown = surface === 'auto' ? device.effectiveSurface : surface;
+  const layout = shown === 'desk' ? 'operator' : shown;
   async function submit() {
     setError('');
     try {
-      // Only a customer screen follows scanners.
+      // A scan surface leaves `follows` out: the server keeps the stored ids, inert, for a flip back.
       const { follows: _follows, ...scanOverrides } = overrides;
       await save.mutateAsync({
         name: name.trim(),

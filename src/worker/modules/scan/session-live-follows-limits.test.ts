@@ -1,8 +1,10 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { run } from '../../platform/db.ts';
+import { first, run } from '../../platform/db.ts';
 import { liveRecipient } from './live-auth.ts';
+import { commitRoleFlip } from './repo-role.ts';
+import { scanningDeviceRow } from './repo-scanning-devices.ts';
 import { revokeScanner } from './scanning-device-revocation.ts';
-import { updateScanningDevice } from './scanning-devices.ts';
+import { createScanningDevice, updateScanningDevice } from './scanning-devices.ts';
 import {
   pairedScreenAttachment,
   type SessionLiveFixtures,
@@ -81,18 +83,62 @@ describe('customer screen follows: limits and edits', () => {
     ).rejects.toMatchObject({ code: 'SCANNING_FOLLOWS_INVALID' });
   });
 
-  it('drops follows when the device becomes a scanner', async () => {
+  it('keeps follows inert across a flip to scan, an admin save and a flip back', async () => {
     const { kit, authority } = fixtures;
-    const { session, screen } = await screenOf('Role change', 2, (ids) => ids);
+    const { session, doors, screen, cookie } = await screenOf('Flip', 2, (ids) => [ids[0] ?? '']);
+    const flip = async (from: 'scan' | 'customer', to: 'scan' | 'customer') => {
+      const scanner = await first<{
+        credential_epoch: number;
+        config_epoch: number;
+        org_id: string;
+      }>(kit.env.DB, 'SELECT credential_epoch, config_epoch, org_id FROM scanners WHERE id=?', [
+        screen,
+      ]);
+      if (!scanner) throw new Error('Missing scanner.');
+      await commitRoleFlip(kit.ctx, {
+        scannerId: screen,
+        orgId: scanner.org_id,
+        from,
+        to,
+        credentialEpoch: scanner.credential_epoch,
+        configEpoch: scanner.config_epoch,
+        device: await scanningDeviceRow(kit.env.DB, scanner.org_id, screen),
+        surface: to === 'customer' ? 'customer' : 'phone',
+        unlockedBy: null,
+      });
+    };
+    await flip('customer', 'scan');
     const saved = await updateScanningDevice(
       kit.ctx,
       'admin-1',
       session.id,
       screen,
-      { surface: 'operator' },
+      { name: 'Flipped', overrides: {} },
       authority,
     );
-    expect(saved.overrides).toEqual({});
+    expect(saved.overrides.follows).toEqual([doors[0]]);
+    await flip('scan', 'customer');
+    const row = await scanningDeviceRow(kit.env.DB, kit.org.id, screen);
+    expect(JSON.parse(row?.overrides ?? '{}').follows).toEqual([doors[0]]);
+    // The screen's own watch is what the live read derives from those stored ids.
+    const back = await liveRecipient(kit.ctx, await pairedScreenAttachment(kit, screen, cookie));
+    expect(back?.watch.scannerIds).toEqual([doors[0]]);
+  });
+
+  it('stores follows inert on a scanner created with them', async () => {
+    const { kit, authority, parent, child } = fixtures;
+    const session = await parent('Inert create');
+    const door = await child(session.id, 'Inert door');
+    const made = await createScanningDevice(
+      kit.ctx,
+      'admin-1',
+      'live',
+      session.id,
+      { name: 'Scanner with follows', surface: 'phone', overrides: { follows: [door.id] } },
+      'https://wallet.test',
+      authority,
+    );
+    expect(made.overrides.follows).toEqual([door.id]);
   });
 
   it('fails closed when the stored overrides no longer parse', async () => {

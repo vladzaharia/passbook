@@ -1,10 +1,10 @@
 import { ZodError, z } from 'zod';
 import { IdSchema } from '../../../shared/contracts/common.ts';
+import { SESSION_DEVICE_CAP } from '../../../shared/contracts/scan-access.ts';
 import { ScanWatchSchema } from '../../../shared/contracts/scan-setups.ts';
 import {
   ScanDeviceOverridesSchema,
   ScanningSessionSettingsSchema,
-  SESSION_DEVICE_CAP,
   type SessionCustomerSettings,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { AppError } from '../../platform/errors.ts';
