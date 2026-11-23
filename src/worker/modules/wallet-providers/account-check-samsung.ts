@@ -1,6 +1,7 @@
 import type { SamsungWalletCredentials } from '../../../shared/contracts/wallet-providers.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { CERT_WARN_DAYS, type CheckOutcome, DAY_MS } from './account-check-types.ts';
+import { providerFetch } from './mock-endpoint.ts';
 import { DEFAULT_CARD_TYPE, samsungCardEntries } from './samsung-cards.ts';
 import { samsungCredentialWindow, validateSamsungCredentials } from './samsung-credentials.ts';
 import { SAMSUNG_REQUEST_TIMEOUT_MS } from './samsung-limits.ts';
@@ -29,7 +30,7 @@ async function probeCard(
   const now = ctx.clock.now();
   let response: Response;
   try {
-    response = await globalThis.fetch(`${ORIGIN}${path}`, {
+    response = await providerFetch(ctx.env)(`${ORIGIN}${path}`, {
       method: 'GET',
       redirect: 'manual',
       signal: AbortSignal.timeout(SAMSUNG_REQUEST_TIMEOUT_MS),
