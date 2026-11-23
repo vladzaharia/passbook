@@ -67,6 +67,13 @@ function trustedTypesPolicy(names: string[]): string {
   return `trusted-types ${names.length ? names.join(' ') : "'none'"}`;
 }
 
+/**
+ * The one inline <style> Radix Select's viewport injects on every open (its scrollbar hiding, which
+ * base.css repeats). A hash admits exactly that text; the drift test in src/web/lib/static-assets.test.ts
+ * recomputes it from the installed package.
+ */
+export const RADIX_SELECT_STYLE_SOURCE = "'sha256-441zG27rExd4/il+NvIqyL8zFx5XmyNQtE381kSkUJk='";
+
 export function contentSecurityPolicy(
   nonce?: string,
   options: { scan?: boolean; turnstile?: boolean; offline?: boolean } = {},
@@ -78,7 +85,7 @@ export function contentSecurityPolicy(
     "default-src 'none'",
     `script-src 'self'${wasm}${n}${turnstile}`,
     ...(options.scan ? ["worker-src 'self'"] : []),
-    `style-src 'self'${n}`,
+    `style-src 'self'${n} ${RADIX_SELECT_STYLE_SOURCE}`,
     // SSR pass cards set arbitrary pass colors through style attributes. Never scripts.
     ...(nonce ? ["style-src-attr 'unsafe-inline'"] : []),
     "img-src 'self' data: blob:",

@@ -1,8 +1,10 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import indexHtml from '../../../index.html?raw';
 import headersFile from '../../../public/_headers?raw';
 import viteConfig from '../../../vite.config.ts?raw';
+import { RADIX_SELECT_STYLE_SOURCE } from '../../worker/platform/security-headers.ts';
 import mainSource from '../main.tsx?raw';
 
 interface Rule {
@@ -43,7 +45,7 @@ describe('public/_headers', () => {
 
   it('sets a strict CSP for everything', () => {
     expect(directive(csp, 'default-src')).toBe("default-src 'none'");
-    expect(directive(csp, 'style-src')).toBe("style-src 'self'");
+    expect(directive(csp, 'style-src')).toBe(`style-src 'self' ${RADIX_SELECT_STYLE_SOURCE}`);
     expect(directive(csp, 'frame-ancestors')).toBe("frame-ancestors 'none'");
     expect(directive(csp, 'base-uri')).toBe("base-uri 'none'");
     expect(csp).not.toContain('unsafe-inline');
@@ -104,5 +106,15 @@ describe('index.html', () => {
     expect(indexHtml.indexOf('/theme-init.js')).toBeLessThan(
       indexHtml.indexOf('/src/web/main.tsx'),
     );
+  });
+});
+
+describe('Radix Select inline style', () => {
+  it('is admitted by hash, and the hash matches the installed package', () => {
+    const dist = readFileSync('node_modules/@radix-ui/react-select/dist/index.mjs', 'utf8');
+    const css = /__html: `([^`]*scrollbar-width[^`]*)`/.exec(dist)?.[1] ?? '';
+    expect(css).not.toBe('');
+    const hash = createHash('sha256').update(css).digest('base64');
+    expect(RADIX_SELECT_STYLE_SOURCE).toBe(`'sha256-${hash}'`);
   });
 });
