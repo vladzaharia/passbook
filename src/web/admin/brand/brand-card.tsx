@@ -12,7 +12,7 @@ import {
   FormField,
   FormGrid,
   Input,
-  SegmentedControl,
+  RadioGroup,
   SwitchRow,
 } from '@/web/ui/index.ts';
 import { HEX } from '../orgs/branding.ts';
@@ -267,11 +267,13 @@ export function BrandCard({ orgId, view, draft, canEdit, errors, edit, setImage 
               <span className="text-sm font-medium text-fg">{COPY.mark}</span>
               {planMark ? <SourceTag source="plan" /> : null}
             </div>
-            <SegmentedControl
-              label={COPY.mark}
+            {/* The labels are the holder-visible wording, too long for a segmented control. */}
+            <RadioGroup
+              legend={COPY.mark}
+              className="[&>legend]:sr-only"
               options={markOptions}
               value={v.mark}
-              onValueChange={(mark) => canEdit && edit({ mark })}
+              onValueChange={(mark) => canEdit && edit({ mark: mark as 'full' | 'small' | 'none' })}
             />
           </div>
         </FormGrid>

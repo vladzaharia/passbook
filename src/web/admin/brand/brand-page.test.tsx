@@ -223,10 +223,11 @@ describe('Brand and channels', () => {
     const view = viewOf(readyFacts());
     view.brand.mark = { chosen: 'full', effective: 'full', allowed: [...allowed] };
     await setup(view);
-    const group = await screen.findByRole('radiogroup', { name: 'PassBook footer' });
+    // Plain radios in a fieldset: the labels are the holder wording, too long for a segmented control.
+    const group = await screen.findByRole('group', { name: 'PassBook footer' });
     const shown = within(group)
       .getAllByRole('radio')
-      .map((r) => r.getAttribute('aria-label') ?? r.textContent?.trim());
+      .map((r) => (r as HTMLInputElement).labels?.[0]?.textContent?.trim());
     expect(shown.sort()).toEqual([...labels].sort());
     expect(within(group).queryByText('Not in your plan.')).toBeNull();
   });

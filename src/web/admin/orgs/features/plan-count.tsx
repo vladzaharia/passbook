@@ -42,7 +42,11 @@ export function PlanNumber({
   const shown = useTween(value ?? 0, from, playKey);
   if (value === null)
     return (
-      <span key={playKey} aria-hidden className={playKey > 0 ? 'plan-fade' : undefined}>
+      <span
+        key={playKey}
+        aria-hidden
+        className={playKey > 0 ? 'plan-fade text-2xl leading-none' : 'text-2xl leading-none'}
+      >
         {'∞'}
       </span>
     );

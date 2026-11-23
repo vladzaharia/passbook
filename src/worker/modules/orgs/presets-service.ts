@@ -3,7 +3,11 @@ import type {
   SetEntitlementPresetInput,
   SetEntitlementPresetResult,
 } from '../../../shared/contracts/entitlement-presets.ts';
-import { ENTITLEMENT_KEYS, type EntitlementValue } from '../../../shared/contracts/entitlements.ts';
+import {
+  ENTITLEMENT_KEYS,
+  ENTITLEMENT_PRESETS,
+  type EntitlementValue,
+} from '../../../shared/contracts/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '../../../shared/entitlement-impact.ts';
 import type { Actor } from '../../platform/context.ts';
 import { classifyD1Error } from '../../platform/db.ts';
@@ -48,15 +52,22 @@ export async function listPresets(ctx: ServiceContext): Promise<EntitlementPrese
     loadPresetValues(ctx),
     pendingCounts(ctx.env.DB),
   ]);
-  return rows.map((p) => ({
-    preset: p.preset,
-    label: p.label,
-    revision: p.revision,
-    updatedAt: p.updated_at,
-    orgCount: p.org_count,
-    pendingOrgs: pending.get(p.preset) ?? 0,
-    values: (values.get(p.preset) ?? {}) as Record<string, EntitlementValue>,
-  }));
+  // The ladder: registry order, so an editor lists Trial to Unlimited, not A to Z.
+  const rank = (preset: string) => {
+    const at = (ENTITLEMENT_PRESETS as readonly string[]).indexOf(preset);
+    return at < 0 ? ENTITLEMENT_PRESETS.length : at;
+  };
+  return rows
+    .map((p) => ({
+      preset: p.preset,
+      label: p.label,
+      revision: p.revision,
+      updatedAt: p.updated_at,
+      orgCount: p.org_count,
+      pendingOrgs: pending.get(p.preset) ?? 0,
+      values: (values.get(p.preset) ?? {}) as Record<string, EntitlementValue>,
+    }))
+    .sort((a, b) => rank(a.preset) - rank(b.preset) || a.preset.localeCompare(b.preset));
 }
 
 /** One organization moves with its preset: its revision, an audit row, and the channel runs the plan change asks for. */
@@ -92,6 +103,7 @@ async function moveOrg(
       now,
       remove: [],
       put: [],
+      branding: null,
       audit: {
         ...auditActor(actor),
         orgId: org.org_id,

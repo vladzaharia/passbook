@@ -65,11 +65,19 @@ export function PlanCompareSheet({
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
       <SheetContent title={PLAN_COPY.compareTitle} className="sm:w-[min(52rem,calc(100%-2rem))]">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-max border-separate border-spacing-0 text-sm">
+        <section
+          // biome-ignore lint/a11y/noNoninteractiveTabindex: scrollable region, a keyboard scrolls it sideways
+          tabIndex={0}
+          aria-label={PLAN_COPY.compareTitle}
+          className="overflow-x-auto focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-focus"
+        >
+          <table className="w-max min-w-full border-separate border-spacing-0 text-sm">
             <thead>
               <tr>
-                <th scope="col" className="sticky left-0 z-10 bg-surface-raised p-3 text-left">
+                <th
+                  scope="col"
+                  className="sticky left-0 z-10 min-w-40 bg-surface-raised p-3 text-left"
+                >
                   <span className="sr-only">Feature</span>
                 </th>
                 {plans.map((p) => {
@@ -79,7 +87,7 @@ export function PlanCompareSheet({
                       key={p.preset}
                       scope="col"
                       className={cn(
-                        'p-3 text-left align-bottom font-semibold text-fg-strong',
+                        'min-w-28 p-3 text-left align-bottom font-semibold text-fg-strong',
                         p.preset === picked && 'bg-accent-subtle',
                       )}
                     >
@@ -135,7 +143,7 @@ export function PlanCompareSheet({
               );
             })}
           </table>
-        </div>
+        </section>
       </SheetContent>
     </Sheet>
   );
