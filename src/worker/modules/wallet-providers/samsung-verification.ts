@@ -15,6 +15,7 @@ import {
   readConfiguredWalletProviderCredentials,
   snapshotWalletCredentialContext,
 } from './account-service.ts';
+import { providerFetch } from './mock-endpoint.ts';
 import {
   identityCardType,
   type ProjectionV2,
@@ -114,14 +115,18 @@ async function probe(
       startedAt,
       candidate.projection.cardType,
     );
-    const response = await probeSamsungActiveTemplate(credentials, {
-      cardType: candidate.projection.cardType,
-      subType: candidate.projection.cardSubType,
-      countryCode: candidate.projection.countryCode,
-      mode: candidate.mode,
-      now: startedAt,
-      requestId: ctx.ids.id().replaceAll('-', ''),
-    });
+    const response = await probeSamsungActiveTemplate(
+      credentials,
+      {
+        cardType: candidate.projection.cardType,
+        subType: candidate.projection.cardSubType,
+        countryCode: candidate.projection.countryCode,
+        mode: candidate.mode,
+        now: startedAt,
+        requestId: ctx.ids.id().replaceAll('-', ''),
+      },
+      providerFetch(ctx.env),
+    );
     if (
       response.state !== 'ACTIVE' ||
       response.testingModeOff !== 'Y' ||
@@ -252,12 +257,16 @@ export async function refreshSamsungCardState(
     )
       throw new Error();
     const credentials = await validateSamsungCredentials(account.credentials, now, projection.type);
-    const read = await probeSamsungActiveTemplate(credentials, {
-      cardType: projection.type,
-      mode: candidate.mode,
-      now,
-      requestId: ctx.ids.id().replaceAll('-', ''),
-    });
+    const read = await probeSamsungActiveTemplate(
+      credentials,
+      {
+        cardType: projection.type,
+        mode: candidate.mode,
+        now,
+        requestId: ctx.ids.id().replaceAll('-', ''),
+      },
+      providerFetch(ctx.env),
+    );
     const expiresAt = Math.min(now + MAX_EVIDENCE_AGE_MS, credentials.validUntil);
     if (
       expiresAt > now &&

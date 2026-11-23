@@ -46,6 +46,12 @@ describe('buildProblem, uploading from dist/', () => {
     expect(run({ stamp: e2e })).toContain('e2e build');
   });
 
+  it('refuses a dist/ whose Worker carries the e2e provider release, even with a good stamp', () => {
+    const found = 'index.js contains WALLET_E2E_RELEASE (the e2e provider release)';
+    expect(run({ e2eRelease: [found] })).toContain(`e2e provider release: ${found}`);
+    expect(run({ e2eRelease: [] })).toBeNull();
+  });
+
   it('refuses a dist/ built from a dirty tree', () => {
     expect(run({ stamp: stamp(HEAD, true) })).toContain('dirty tree');
   });
