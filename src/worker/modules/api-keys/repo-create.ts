@@ -1,3 +1,4 @@
+import { TEST_ONLY_SCOPES } from '../../../shared/contracts/api-keys.ts';
 import type { OrgRole } from '../../../shared/contracts/org-membership.ts';
 import {
   ROLE_PRESETS,
@@ -137,7 +138,15 @@ export async function createKey(
   const explicit = JSON.parse(key.scopes) as TenantScope[];
   const roles = JSON.parse(key.roles) as OrgRole[];
   const delegable: string[] = delegableScopes(authority);
-  const presets = roles.flatMap((role) => ROLE_PRESETS[role]);
+  // A rotation checks the stored scopes (a role's bundle was written into them at mint), never the bundle as it stands now.
+  const presets = rotating
+    ? []
+    : roles
+        .flatMap((role) => ROLE_PRESETS[role])
+        .filter(
+          (scope) =>
+            key.mode === 'test' || !(TEST_ONLY_SCOPES as readonly string[]).includes(scope),
+        );
   const personal = key.kind === 'personal';
   const byKey = authority.kind === 'api_key';
   // A role preset is held in full or not at all: each of its scopes must be within the creator's roles.

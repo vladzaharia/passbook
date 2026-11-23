@@ -1,7 +1,9 @@
-import { screen, within } from '@testing-library/react';
+import { act, renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
+import { useKeyScopes } from './use-key-scopes.ts';
 
 async function openDialog(over: Parameters<typeof membershipFixture>[1] = {}) {
   await renderApp('/admin/o/o1/api-keys', {
@@ -89,5 +91,46 @@ describe('scope presets', () => {
     const term = (await screen.findAllByText('Holder support')).find((e) => e.tagName === 'DT');
     expect(term?.closest('div')).toHaveTextContent('passes:read, holders:write, messages:write');
     expect(screen.getAllByText('Template authoring').some((e) => e.tagName === 'DT')).toBe(true);
+  });
+
+  it('hide review and release in Live and show them in Test', async () => {
+    resetModeForTests();
+    const live = await openDialog();
+    expect(within(live.scopes).queryByRole('button', { name: 'Release templates' })).toBeNull();
+    expect(within(live.scopes).queryByRole('checkbox', { name: /Approve templates/ })).toBeNull();
+    expect(within(live.scopes).getByRole('button', { name: 'Audit' })).toBeInTheDocument();
+  });
+
+  it('offer review, release and no audit log in Test', async () => {
+    setMode('test');
+    const test = await openDialog();
+    expect(
+      within(test.scopes).getByRole('button', { name: 'Release templates' }),
+    ).toBeInTheDocument();
+    expect(
+      within(test.scopes).getByRole('checkbox', { name: /Approve templates/ }),
+    ).toBeInTheDocument();
+    expect(within(test.scopes).queryByRole('button', { name: 'Audit' })).toBeNull();
+    resetModeForTests();
+  });
+});
+
+describe('changing the mode of a key', () => {
+  it('unticks what Live cannot hold and says so', () => {
+    const { result } = renderHook(() => useKeyScopes(['passes:read'], 'o1', null));
+    act(() => result.current.set(['passes:read', 'templates:review', 'templates:publish']));
+    act(() => result.current.reconcile('service', 'live'));
+    expect(result.current.scopes).toEqual(['passes:read']);
+    expect(result.current.note).toBe(
+      'Removed: Approve templates (Test keys), Release templates (Test keys).',
+    );
+    act(() => result.current.reconcile('service', 'test'));
+    expect(result.current.note).toBeUndefined();
+  });
+
+  it('unticks the audit log when the key becomes a Test key', () => {
+    const { result } = renderHook(() => useKeyScopes(['audit:read'], 'o1', null));
+    act(() => result.current.reconcile('service', 'test'));
+    expect(result.current.scopes).toEqual([]);
   });
 });

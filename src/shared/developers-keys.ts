@@ -1,4 +1,5 @@
-import { MINTABLE_SCOPES } from './contracts/api-keys.ts';
+import { MINTABLE_SCOPES, TEMPLATE_ACT_AS_SCOPES, TEST_ONLY_SCOPES } from './contracts/api-keys.ts';
+import type { Mode } from './contracts/common.ts';
 import { SANDBOX_KEY_SCOPES } from './contracts/developer-home.ts';
 import type { OrgCapability } from './contracts/org-membership.ts';
 
@@ -47,6 +48,8 @@ export const KEY_PRESETS = [
     label: 'Release templates',
     scopes: ['templates:read', 'templates:write', 'templates:review', 'templates:publish'],
   },
+  /** Reads the organization's audit log: a Live key (or a sandbox key); a key never gets it from a role. */
+  { id: 'audit', label: 'Audit', scopes: ['audit:read'] },
   { id: 'brand', label: 'Brand', scopes: ['brand:manage', 'org:read'] },
   {
     id: 'scanner-setup',
@@ -62,14 +65,26 @@ export type KeyPresetId = (typeof KEY_PRESETS)[number]['id'];
 export const FULL_SANDBOX = { id: 'full', label: 'Full sandbox' } as const;
 
 /**
- * Admin's last preset: everything a key can hold except key minting, the terminal scope and the credential scopes
- * (those are ticked on purpose, never by a preset).
+ * Admin's last preset: everything a key can hold except key minting, the terminal scope, the credential scopes and the
+ * audit log (those are ticked on purpose, never by a preset), and, in Live, the Test-only scopes.
  */
-export const FULL_ACCESS = {
-  id: 'full',
-  label: 'Full access',
-  scopes: SANDBOX_KEY_SCOPES,
-} as const;
+export function fullAccess(mode: Mode) {
+  return {
+    id: 'full',
+    label: 'Full access',
+    scopes: SANDBOX_KEY_SCOPES.filter(
+      (s) => s !== 'audit:read' && (mode === 'test' || !isTestOnly(s)),
+    ),
+  } as const;
+}
+
+const isTestOnly = (s: string) => (TEST_ONLY_SCOPES as readonly string[]).includes(s);
+const ORG_ONLY: readonly string[] = [
+  'org:write',
+  'wallet:write',
+  'audit:read',
+  ...TEMPLATE_ACT_AS_SCOPES,
+];
 
 /** The capability each mintable scope exercises (`scopeCapability` in the Worker; a test keeps them equal). */
 export const MINTABLE_SCOPE_CAPABILITY: Record<(typeof MINTABLE_SCOPES)[number], OrgCapability> = {
@@ -95,27 +110,34 @@ export const MINTABLE_SCOPE_CAPABILITY: Record<(typeof MINTABLE_SCOPES)[number],
   'scanning:admin': 'scanning:manage',
   'nfc:keys': 'scanning:manage',
   'api-keys:write': 'integrations:manage',
+  'audit:read': 'audit:read',
 };
 
 /**
- * The scopes a key of this kind may hold for this creator: a personal or platform key never takes the terminal scope,
- * and a member's key never exceeds their capabilities (`null`: a platform admin, no cap).
+ * The scopes a key of this kind and mode may hold for this creator: a personal or platform key never takes the terminal
+ * scope, a platform key none of an organization's setup, template or audit scopes, a Live key neither review nor release,
+ * a Test key no audit log, and a member's key never exceeds their capabilities (`null`: a platform admin, no cap).
  */
 export function holdableScopes(
   kind: 'service' | 'personal' | 'platform',
   capabilities: readonly OrgCapability[] | null,
+  mode: Mode = 'live',
 ): string[] {
   return MINTABLE_SCOPES.filter(
     (s) =>
       (kind === 'service' || s !== 'scans:write') &&
+      (kind !== 'platform' || !ORG_ONLY.includes(s)) &&
+      (mode === 'test' || !isTestOnly(s)) &&
+      (mode === 'live' || s !== 'audit:read') &&
       (capabilities === null || capabilities.includes(MINTABLE_SCOPE_CAPABILITY[s])),
   );
 }
 
 /** Admin's presets for a key: those the creator can hold, then Full access when all of it fits. */
-export function adminPresets(ceiling: readonly string[]) {
+export function adminPresets(ceiling: readonly string[], mode: Mode = 'live') {
   const all = presetsWithin(ceiling);
-  return FULL_ACCESS.scopes.every((s) => ceiling.includes(s)) ? [...all, FULL_ACCESS] : all;
+  const full = fullAccess(mode);
+  return full.scopes.every((s) => ceiling.includes(s)) ? [...all, full] : all;
 }
 
 /** The preset whose scopes are exactly `scopes` (any order), else null. */

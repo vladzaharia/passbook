@@ -1,5 +1,6 @@
 import { Info } from 'lucide-react';
 import { MINTABLE_SCOPES } from '@/shared/contracts/api-keys.ts';
+import type { Mode } from '@/shared/contracts/common.ts';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { adminPresets, holdableScopes, selectedPreset } from '@/shared/developers-keys.ts';
 import {
@@ -22,6 +23,7 @@ export function ScopeRows({
   error,
   platform,
   kind = 'service',
+  mode = 'live',
   capabilities = null,
   note,
 }: {
@@ -32,15 +34,17 @@ export function ScopeRows({
   platform: boolean;
   /** A personal key never takes the terminal scope. */
   kind?: 'service' | 'personal';
+  /** A Live key holds neither review nor release; a Test key no audit log. */
+  mode?: Mode;
   /** The creating member's capabilities; null for a platform admin. */
   capabilities?: readonly OrgCapability[] | null;
   /** Scopes the last change of key kind removed, said once. */
   note?: string | undefined;
 }) {
-  const offered =
-    platform || kind === 'personal' ? SCOPES.filter((s) => s !== 'scans:write') : SCOPES;
-  // Presets the creator can't hold are left out, not disabled.
-  const presets = adminPresets(holdableScopes(platform ? 'platform' : kind, capabilities));
+  // Only what this creator can hold for this kind and mode is offered, as boxes and in presets.
+  const holdable = holdableScopes(platform ? 'platform' : kind, capabilities, mode);
+  const offered = SCOPES.filter((s) => holdable.includes(s));
+  const presets = adminPresets(holdable, mode);
   const picked = selectedPreset(presets, value);
   return (
     <fieldset

@@ -1,17 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { CREDENTIAL_SCOPES, MINTABLE_SCOPES } from './contracts/api-keys.ts';
+import {
+  CREDENTIAL_SCOPES,
+  MINTABLE_SCOPES,
+  TEMPLATE_ACT_AS_SCOPES,
+  TEST_ONLY_SCOPES,
+} from './contracts/api-keys.ts';
 import { SANDBOX_KEY_SCOPES } from './contracts/developer-home.ts';
 import {
   adminPresets,
-  FULL_ACCESS,
+  fullAccess,
   holdableScopes,
   KEY_PRESETS,
   presetsWithin,
   selectedPreset,
 } from './developers-keys.ts';
 
-const ALL = [...KEY_PRESETS, FULL_ACCESS];
+const ALL = [...KEY_PRESETS, fullAccess('test')];
 const KINDS = ['service', 'personal', 'platform'] as const;
+const MODES = ['live', 'test'] as const;
+const ids = (ceiling: readonly string[], mode: 'live' | 'test') =>
+  adminPresets(ceiling, mode).map((p) => p.id);
 
 describe('key presets', () => {
   it('hold only mintable scopes, never a credential scope or key minting', () => {
@@ -23,31 +31,53 @@ describe('key presets', () => {
       }
   });
 
-  it('are subsets of what each kind may hold, or hidden', () => {
-    for (const kind of KINDS) {
-      const ceiling = holdableScopes(kind, null);
-      for (const p of adminPresets(ceiling)) for (const s of p.scopes) expect(ceiling).toContain(s);
-    }
+  it('are subsets of what each kind and mode may hold, or hidden', () => {
+    for (const kind of KINDS)
+      for (const mode of MODES) {
+        const ceiling = holdableScopes(kind, null, mode);
+        for (const p of adminPresets(ceiling, mode))
+          for (const s of p.scopes) expect(ceiling).toContain(s);
+      }
   });
 
   it('keep the terminal scope to service keys', () => {
-    for (const kind of ['personal', 'platform'] as const) {
-      const ids = adminPresets(holdableScopes(kind, null)).map((p) => p.id);
-      expect(ids).not.toContain('till');
-    }
-    expect(adminPresets(holdableScopes('service', null)).map((p) => p.id)).toContain('till');
+    for (const kind of ['personal', 'platform'] as const)
+      expect(ids(holdableScopes(kind, null), 'live')).not.toContain('till');
+    expect(ids(holdableScopes('service', null), 'live')).toContain('till');
   });
 
-  it('offers Full access exactly when the whole sandbox ceiling fits', () => {
-    expect(FULL_ACCESS.scopes).toEqual(SANDBOX_KEY_SCOPES);
-    expect(adminPresets(holdableScopes('service', null)).at(-1)?.id).toBe('full');
-    expect(
-      adminPresets(holdableScopes('personal', ['passes:read'])).map((p) => p.id),
-    ).not.toContain('full');
+  it('hide review and release in Live, and the audit log in Test', () => {
+    const live = holdableScopes('service', null, 'live');
+    const test = holdableScopes('service', null, 'test');
+    for (const s of TEST_ONLY_SCOPES) {
+      expect(live).not.toContain(s);
+      expect(test).toContain(s);
+    }
+    expect(ids(live, 'live')).not.toContain('release');
+    expect(ids(test, 'test')).toContain('release');
+    expect(ids(live, 'live')).toContain('audit');
+    expect(ids(test, 'test')).not.toContain('audit');
+    expect(adminPresets(live, 'live').at(-1)?.scopes).not.toContain('audit:read');
+  });
+
+  it('keeps a platform key off an organization setup, template and audit scopes', () => {
+    const held = holdableScopes('platform', null, 'live');
+    for (const s of ['org:write', 'wallet:write', 'audit:read', ...TEMPLATE_ACT_AS_SCOPES])
+      expect(held).not.toContain(s);
+  });
+
+  it('offers Full access when everything it holds fits, never with audit or credential scopes', () => {
+    for (const mode of MODES) {
+      const full = fullAccess(mode);
+      expect(full.scopes.every((s) => SANDBOX_KEY_SCOPES.includes(s))).toBe(true);
+      expect(full.scopes).not.toContain('audit:read');
+      expect(ids(holdableScopes('service', null, mode), mode).at(-1)).toBe('full');
+    }
+    expect(ids(holdableScopes('personal', ['passes:read']), 'live')).not.toContain('full');
   });
 
   it('marks the preset a checklist equals, in any order', () => {
-    const presets = adminPresets(holdableScopes('service', null));
+    const presets = adminPresets(holdableScopes('service', null), 'live');
     expect(selectedPreset(presets, ['templates:read', 'passes:write', 'passes:read'])?.id).toBe(
       'issue',
     );

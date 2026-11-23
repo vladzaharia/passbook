@@ -2,7 +2,6 @@ import { KeyRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
-import { holdableScopes } from '@/shared/developers-keys.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import { getMode } from '@/web/lib/mode.ts';
 import {
@@ -22,6 +21,7 @@ import { KindFields, SHORT_EXPIRY } from './key-kind-fields.tsx';
 import { KeyReview } from './key-review.tsx';
 import { type ApiKey, SCOPE_LABEL, useCreateKey } from './queries.ts';
 import { type SCOPES, ScopeRows, TerminalRows } from './scope-rows.tsx';
+import { useKeyScopes } from './use-key-scopes.ts';
 
 const DAY = 86_400_000;
 /** The least a key can do; more is ticked on purpose. */
@@ -56,12 +56,12 @@ export function CreateKeyDialog({
 }: CreateKeyDialogProps) {
   const create = useCreateKey(principal);
   const [name, setName] = useState('');
-  const [scopes, setScopes] = useState<string[]>(DEFAULT_SCOPES);
+  const picked = useKeyScopes(DEFAULT_SCOPES, orgId, capabilities);
+  const { scopes } = picked;
   const [terminalIds, setTerminalIds] = useState<string[]>([]);
   const scansWrite = scopes.includes('scans:write');
   const [expiry, setExpiry] = useState('90');
   const [kind, setKind] = useState<'service' | 'personal'>('service');
-  const [removed, setRemoved] = useState<string[]>([]);
   const [access, setAccess] = useState('scopes');
   const [ips, setIps] = useState('');
   const role = ROLES.find((r) => r === access);
@@ -91,11 +91,10 @@ export function CreateKeyDialog({
   function close() {
     onOpenChange(false);
     setName('');
-    setScopes(DEFAULT_SCOPES);
+    picked.reset();
     setTerminalIds([]);
     setExpiry('90');
     setKind('service');
-    setRemoved([]);
     setAccess('scopes');
     setIps('');
     setKeyMode(getMode());
@@ -106,13 +105,14 @@ export function CreateKeyDialog({
     setReviewKey(false);
   }
 
-  // A key kind that cannot hold a ticked scope drops it, and says so.
   function changeKind(next: 'service' | 'personal') {
     setKind(next);
-    const holdable = holdableScopes(orgId === null ? 'platform' : next, capabilities);
-    const gone = scopes.filter((s) => !holdable.includes(s));
-    setRemoved(gone);
-    if (gone.length) setScopes(scopes.filter((s) => holdable.includes(s)));
+    picked.reconcile(next, keyMode);
+  }
+
+  function changeMode(next: Mode) {
+    setKeyMode(next);
+    picked.reconcile(kind, next);
   }
 
   async function submit() {
@@ -253,7 +253,7 @@ export function CreateKeyDialog({
                 <Select
                   {...p}
                   value={keyMode}
-                  onValueChange={(next) => setKeyMode(next === 'test' ? 'test' : 'live')}
+                  onValueChange={(next) => changeMode(next === 'test' ? 'test' : 'live')}
                   options={MODES}
                 />
               )}
@@ -272,18 +272,12 @@ export function CreateKeyDialog({
           {role ? null : (
             <ScopeRows
               value={scopes}
-              onChange={(next) => {
-                setRemoved([]);
-                setScopes(next);
-              }}
-              note={
-                removed.length
-                  ? `Removed: ${removed.map((s) => SCOPE_LABEL[s] ?? s).join(', ')}.`
-                  : undefined
-              }
+              onChange={picked.set}
+              note={picked.note}
               error={errors.scopes}
               platform={orgId === null}
               kind={kind}
+              mode={keyMode}
               capabilities={capabilities}
             />
           )}

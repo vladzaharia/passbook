@@ -16,16 +16,19 @@ describe('the admin key presets', () => {
 
   it('are offered only for scopes the role may delegate', () => {
     for (const role of Object.keys(ROLE_GRANTS) as (keyof typeof ROLE_GRANTS)[]) {
-      const held = holdableScopes('personal', ROLE_GRANTS[role]);
       const delegable = delegableScopes({ kind: 'session', roles: [role] } as never);
-      for (const p of adminPresets(held)) for (const s of p.scopes) expect(delegable).toContain(s);
+      for (const mode of ['live', 'test'] as const) {
+        const held = holdableScopes('personal', ROLE_GRANTS[role], mode);
+        for (const p of adminPresets(held, mode))
+          for (const s of p.scopes) expect(delegable).toContain(s);
+      }
     }
   });
 
   it('hide what a narrow role cannot hold', () => {
     const ids = (role: keyof typeof ROLE_GRANTS) =>
       adminPresets(holdableScopes('personal', ROLE_GRANTS[role])).map((p) => p.id);
-    expect(ids('read_only')).toEqual(['read']);
+    expect(ids('read_only')).toEqual(['read', 'audit']);
     expect(ids('integration_admin')).toEqual(['webhooks', 'integrations']);
     expect(ids('template_author')).toEqual(['templates']);
     expect(ids('template_publisher')).toEqual([]);
