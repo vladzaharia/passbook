@@ -267,7 +267,10 @@ test('a template opts out of Mobile and the org page counts it', async ({ page }
   await shoot(page, 'o10-4-template-channels');
 
   await page.goto(brandUrl(org.id));
-  await expect(page.locator('[data-channel="mobile"]')).toContainText('On for 1 of 2 templates');
+  // The row names the templates that use the channel.
+  const row = page.locator('[data-channel="mobile"]');
+  await expect(row).toContainText('Keeps Mobile');
+  await expect(row).not.toContainText('Opts out');
   await shoot(page, 'o10-4-org-counts');
 });
 
