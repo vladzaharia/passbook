@@ -1030,6 +1030,11 @@ __all__ = [
     "PlatformAppleCallsListResponseItemsItem",
     "PlatformAuditEntriesListResponse",
     "PlatformAuditEntriesListResponseItemsItem",
+    "PlatformEntitlementPresetsListResponse",
+    "PlatformEntitlementPresetsListResponsePresetsItem",
+    "PlatformEntitlementPresetsUpdateParams",
+    "PlatformEntitlementPresetsUpdateResponse",
+    "PlatformEntitlementPresetsUpdateResponsePreset",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
     "PlatformMetricsRetrieveOverviewResponseLiveItem",
@@ -8114,6 +8119,36 @@ class PlatformAuditEntriesListResponseItemsItem(_Model):
     targetLabel: str | None = None
     requestId: str | None
     detail: _Any | None = None
+
+class PlatformEntitlementPresetsListResponse(_Model):
+    presets: _List[PlatformEntitlementPresetsListResponsePresetsItem]
+
+class PlatformEntitlementPresetsListResponsePresetsItem(_Model):
+    preset: str
+    label: str
+    revision: int
+    updatedAt: int
+    orgCount: int
+    pendingOrgs: int
+    values: _Dict[str, float | str | _List[str] | None]
+
+class PlatformEntitlementPresetsUpdateParams(_Model):
+    preset: str
+    expectedRevision: int
+    values: _Dict[str, float | str | _List[str] | None]
+
+class PlatformEntitlementPresetsUpdateResponse(_Model):
+    preset: PlatformEntitlementPresetsUpdateResponsePreset
+    moved: int
+
+class PlatformEntitlementPresetsUpdateResponsePreset(_Model):
+    preset: str
+    label: str
+    revision: int
+    updatedAt: int
+    orgCount: int
+    pendingOrgs: int
+    values: _Dict[str, float | str | _List[str] | None]
 
 class PlatformMetricsRetrieveOverviewResponse(_Model):
     source: _Literal["analytics_engine", "d1"] | str

@@ -6546,6 +6546,37 @@ export type PlatformAuditEntriesListResponse = {
   nextCursor: string | null;
 };
 
+export type PlatformEntitlementPresetsListResponse = {
+  presets: Array<{
+    preset: string;
+    label: string;
+    revision: number;
+    updatedAt: number;
+    orgCount: number;
+    pendingOrgs: number;
+    values: Record<string, number | string | Array<string> | null>;
+  }>;
+};
+
+export type PlatformEntitlementPresetsUpdateParams = {
+  preset: string;
+  expectedRevision: number;
+  values: Record<string, number | string | Array<string> | null>;
+};
+
+export type PlatformEntitlementPresetsUpdateResponse = {
+  preset: {
+    preset: string;
+    label: string;
+    revision: number;
+    updatedAt: number;
+    orgCount: number;
+    pendingOrgs: number;
+    values: Record<string, number | string | Array<string> | null>;
+  };
+  moved: number;
+};
+
 export type PlatformMetricsRetrieveOverviewResponse = {
   source: "analytics_engine" | "d1";
   range: "24h" | "7d" | "30d";

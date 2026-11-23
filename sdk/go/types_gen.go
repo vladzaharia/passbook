@@ -7599,6 +7599,41 @@ type PlatformAuditEntriesListResponseItemsItem struct {
 	Detail      any     `json:"detail,omitempty"`
 }
 
+type PlatformEntitlementPresetsListResponse struct {
+	Presets []PlatformEntitlementPresetsListResponsePresetsItem `json:"presets"`
+}
+
+type PlatformEntitlementPresetsListResponsePresetsItem struct {
+	Preset      string         `json:"preset"`
+	Label       string         `json:"label"`
+	Revision    int64          `json:"revision"`
+	UpdatedAt   int64          `json:"updatedAt"`
+	OrgCount    int64          `json:"orgCount"`
+	PendingOrgs int64          `json:"pendingOrgs"`
+	Values      map[string]any `json:"values"`
+}
+
+type PlatformEntitlementPresetsUpdateParams struct {
+	Preset           string         `json:"preset"`
+	ExpectedRevision int64          `json:"expectedRevision"`
+	Values           map[string]any `json:"values"`
+}
+
+type PlatformEntitlementPresetsUpdateResponse struct {
+	Preset PlatformEntitlementPresetsUpdateResponsePreset `json:"preset"`
+	Moved  int64                                          `json:"moved"`
+}
+
+type PlatformEntitlementPresetsUpdateResponsePreset struct {
+	Preset      string         `json:"preset"`
+	Label       string         `json:"label"`
+	Revision    int64          `json:"revision"`
+	UpdatedAt   int64          `json:"updatedAt"`
+	OrgCount    int64          `json:"orgCount"`
+	PendingOrgs int64          `json:"pendingOrgs"`
+	Values      map[string]any `json:"values"`
+}
+
 type PlatformMetricsRetrieveOverviewResponse struct {
 	Source      string                                              `json:"source"`
 	Range       string                                              `json:"range"`
