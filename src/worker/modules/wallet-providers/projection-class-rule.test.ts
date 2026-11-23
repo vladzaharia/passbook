@@ -151,6 +151,25 @@ describe('the class field rule, input by input', () => {
     expect(bracket.blocked).toBeUndefined();
   });
 
+  it('reads a bare reference in the class key, as the runtime does', () => {
+    const inputs = schema({ event: { type: 'string' } });
+    const sample = { event: 'gala' } as never;
+    const keyed = run(inputs, sample, (i) => ({ event: i.event }), { classKey: '{{event}}' });
+    expect(keyed.blocked).toBeUndefined();
+  });
+
+  it('tries well-formed values when the first alternates do not build', () => {
+    const inputs = schema({ website: { type: 'string', format: 'uri' } });
+    const build = (input: Record<string, unknown>) => {
+      if (input.website !== undefined && !String(input.website).startsWith('https://'))
+        throw new Error('bad');
+    };
+    const fixed = run(inputs, {} as never, () => ({ fixed: true }), { build });
+    expect(fixed.blocked).toBeUndefined();
+    const moves = run(inputs, {} as never, (i) => ({ site: i.website }), { build });
+    expect(moves.blocked?.code).toBe('CLASS_FIELDS_VARY');
+  });
+
   it('blocks the inputs past the compile bound as unchecked, and stays safe', () => {
     const names = Array.from({ length: MAX_PROBE_COMPILES + 6 }, (_, i) => `f${i}`);
     const properties = Object.fromEntries(names.map((n) => [n, { type: 'string' }]));

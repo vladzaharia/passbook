@@ -4,7 +4,13 @@
   "description": "Ten washes, classes or trips. Use one.",
   "wallets": {
     "schema": 1,
+    "roles": {
+      "offerDetails": {
+        "field": "fine"
+      }
+    },
     "google": {
+      "classKey": "{{size}} {{unit}}",
       "images": {
         "logo": "wallets/google/logo.png"
       }

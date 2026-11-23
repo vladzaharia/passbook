@@ -5,6 +5,7 @@
   "wallets": {
     "schema": 1,
     "google": {
+      "classKey": "{{eventName}}|{{startsAt}}|{{endsAt}}",
       "images": {
         "logo": "wallets/google/logo.png"
       }

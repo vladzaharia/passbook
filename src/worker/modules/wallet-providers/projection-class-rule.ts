@@ -1,3 +1,4 @@
+import { ExprError, exprReferences } from '../../../passkit/template/expr.ts';
 import type { Json, Personalization } from '../../../passkit/types.ts';
 import type {
   CompileResult,
@@ -13,7 +14,7 @@ import { canonicalJson } from '../templates/package/hash.ts';
  * input of the schema is changed alone, to a value of its own type, and the class body must not move.
  * An input that cannot be changed and still build is not a pass: it is reported as unchecked and blocks.
  */
-export const CLASS_RULE_REVISION = 1;
+export const CLASS_RULE_REVISION = 2;
 
 /** Compiles the review spends on the probes of one candidate; an input past it is unchecked, which blocks. */
 export const MAX_PROBE_COMPILES = 64;
@@ -25,6 +26,16 @@ const CLASS_KEY_INPUT = /\binput(?:\.([A-Za-z0-9_]+)|\[\s*['"]([^'"]+)['"]\s*\])
 type Schema = Record<string, unknown>;
 const isObject = (value: unknown): value is Schema =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
+
+/** Inputs a class key reads as the runtime does (bare names); a key that does not parse is refused at save. */
+function referencedInputs(classKey: string): string[] {
+  try {
+    return exprReferences(classKey).inputs;
+  } catch (error) {
+    if (error instanceof ExprError) return [];
+    throw error;
+  }
+}
 
 /** Every leaf changed to another value of its type; dates move a day. */
 function deepVary(value: Json): Json {
@@ -41,6 +52,18 @@ function deepVary(value: Json): Json {
     return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, deepVary(v as Json)]));
   return value;
 }
+
+/** Well-formed strings of the common shapes, tried when the schema's own alternates do not build. */
+const STRING_POOL: Json[] = [
+  'https://example.test/alt',
+  'Z',
+  'ZZ',
+  'ZZZ',
+  '2030-01-01T09:00:00-05:00',
+  'Europe/Paris',
+  'a@example.test',
+  '+14155550199',
+];
 
 /** A value that is not the current one: of the schema's type, from its enum, or present where it was absent. */
 function alternatesOf(schema: Schema, current: Json | undefined): Json[] {
@@ -66,6 +89,8 @@ function alternatesOf(schema: Schema, current: Json | undefined): Json[] {
 export interface ClassProbe {
   input: string;
   views: (() => WalletPassView)[];
+  /** Tried, until one builds, only when no view of `views` builds: pool strings, then paired inputs. */
+  fallback?: (() => WalletPassView)[];
 }
 
 /** One probe per input of the schema that `google.classKey` does not read; absent is one more value. */
@@ -79,27 +104,51 @@ export function classProbes(
   const names = new Set([...Object.keys(properties), ...Object.keys(sample)]);
   const kept = new Set(
     typeof classKey === 'string'
-      ? [...classKey.matchAll(CLASS_KEY_INPUT)].flatMap((m) => [m[1] ?? m[2] ?? ''])
+      ? [
+          ...[...classKey.matchAll(CLASS_KEY_INPUT)].flatMap((m) => [m[1] ?? m[2] ?? '']),
+          ...referencedInputs(classKey),
+        ]
       : [],
   );
   const required = isObject(inputs) && Array.isArray(inputs.required) ? inputs.required : [];
-  return [...names]
-    .filter((name) => !kept.has(name))
-    .map((name) => {
-      const schema = isObject(properties[name]) ? properties[name] : {};
-      const current = sample[name];
-      const values: (Json | undefined)[] = alternatesOf(schema, current);
-      if (current !== undefined && !required.includes(name)) values.push(undefined);
-      return {
-        input: name,
-        views: values.map((value) => () => {
-          const input = { ...sample };
-          if (value === undefined) delete input[name];
-          else input[name] = value;
-          return viewFor(input);
-        }),
-      };
-    });
+  const typeOf = (name: string) => {
+    const schema = isObject(properties[name]) ? properties[name] : {};
+    return schema.type === 'string' || schema.type === undefined;
+  };
+  const valuesOf = (name: string): (Json | undefined)[] => {
+    const schema = isObject(properties[name]) ? properties[name] : {};
+    const current = sample[name];
+    const values: (Json | undefined)[] = alternatesOf(schema, current);
+    if (current !== undefined && !required.includes(name)) values.push(undefined);
+    return values;
+  };
+  const viewWith = (changes: [string, Json | undefined][]) => () => {
+    const input = { ...sample };
+    for (const [key, value] of changes) {
+      if (value === undefined) delete input[key];
+      else input[key] = value;
+    }
+    return viewFor(input);
+  };
+  const open = [...names].filter((name) => !kept.has(name));
+  return open.map((name) => {
+    const first = valuesOf(name)[0];
+    return {
+      input: name,
+      views: valuesOf(name).map((value) => viewWith([[name, value]])),
+      fallback: [
+        ...(typeOf(name) ? STRING_POOL.map((value) => viewWith([[name, value]])) : []),
+        ...open
+          .filter((other) => other !== name && sample[other] === undefined)
+          .map((other) =>
+            viewWith([
+              [name, first],
+              [other, valuesOf(other)[0]],
+            ]),
+          ),
+      ],
+    };
+  });
 }
 
 function blocked(result: CompileResult, message: string): CompileResult {
@@ -137,6 +186,21 @@ export function withClassRule(
             break;
           }
         }
+        if (built === 0 && probe.views.length > 0)
+          for (const make of probe.fallback ?? []) {
+            if (compiles >= MAX_PROBE_COMPILES) break;
+            let other: WalletPassView;
+            try {
+              other = make();
+            } catch {
+              continue;
+            }
+            built += 1;
+            compiles += 1;
+            if (canonicalJson(compiler.compile(other, options).classBody) !== base)
+              varies.push(probe.input);
+            break;
+          }
         if (built === 0 && probe.views.length > 0) unchecked.push(probe.input);
       }
       if (varies.length)

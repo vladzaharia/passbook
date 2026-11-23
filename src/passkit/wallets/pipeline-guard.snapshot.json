@@ -1,6 +1,6 @@
 {
   "pipeline": {
-    "google": "d7eaefc4734df1ae860cc0a521b8c638facd4797ec4a6e063ee3867021639107",
+    "google": "273c7668bb0aeea486f4b2d40662072a8b32a0d35a763a971ef7e0426e035485",
     "samsung": "4059b595eaae6f419de475d4d5f4e80ea5cc208767c5c6aa5032f64abd1fac6d"
   },
   "templates": {
@@ -9,24 +9,24 @@
     "starter-access-card": "31f6c9f86eac70f3",
     "starter-boarding-pass": "f7cc309f9e6f7a2b",
     "starter-booking": "f7b95145b32e15d3",
-    "starter-coupon": "0ca6f44cd9b318e9",
+    "starter-coupon": "f7fe0ce6ee25254c",
     "starter-credential": "305eed4dd7fb8dc5",
     "starter-day-pass": "80c740c332f2b0b2",
-    "starter-event-ticket": "f243aa998e6c0ca5",
+    "starter-event-ticket": "ce8ddea8e96ace48",
     "starter-generic": "65ca43eda8be1e3c",
     "starter-guest-pass": "4f527c2110d728db",
     "starter-hotel-stay": "04ccdd7b6f853b74",
     "starter-id-card": "06cb31b6ea4d579c",
     "starter-monthly-pass": "56ca1a0b0aa7b440",
-    "starter-multi-day-pass": "ee0bfb1f2829d8a6",
-    "starter-pack": "5f2efea1c32c6be0",
+    "starter-multi-day-pass": "401378bf57ce6725",
+    "starter-pack": "a942470076932e3d",
     "starter-permit": "7760e99676445707",
     "starter-pickup": "f2608bb1fb370db9",
     "starter-poster-generic": "f735ef73e94c2f4a",
     "starter-staff-badge": "a54df5d5db2abb33",
     "starter-stamp-card": "eace2140151dbb6d",
     "starter-store-card": "3e01c2017b5fd7bf",
-    "starter-timed-ticket": "bbc7d03e96c70abb",
+    "starter-timed-ticket": "fc69607e80700827",
     "starter-transit-ticket": "103a798e490159a6",
     "starter-visitor-pass": "dda69d7345b9334f"
   },
