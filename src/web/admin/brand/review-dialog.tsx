@@ -46,6 +46,8 @@ const isColors = (v: Json): v is { background: string; foreground: string; label
 function sideText(field: PassSetupField, v: Json): ReactNode {
   if (v === null || v === undefined || v === '') return '—';
   if (isColors(v)) return <Swatches colors={v} />;
+  if (field === 'brand.mark' && (v === 'full' || v === 'small' || v === 'none'))
+    return COPY.brand.markOptions[v];
   if (field.startsWith('channels.')) return v === true || v === 'allowed' ? 'Allowed' : 'Blocked';
   if (typeof v === 'boolean') return v ? 'On' : 'Off';
   if (typeof v === 'object') return 'Image';
