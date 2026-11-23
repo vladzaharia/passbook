@@ -214,6 +214,35 @@ body:has(.wl-mode-band) .wl-stage {
   border-radius: var(--pk-radius-sm);
   background: var(--pk-accent-subtle);
 }
+
+/* Off but still open: a hatch says so without an icon (a segment's `hint`, the off preview's veil).
+   On a segment it is a tile under the label; the thumb wipes it as it arrives. */
+.wl-hatch,
+.wl-seg > [data-off]::before {
+  background-image: repeating-linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--pk-border-strong) 32%, transparent) 0 1px,
+    transparent 1px 6px
+  );
+}
+.wl-seg > [data-off] {
+  isolation: isolate;
+}
+.wl-seg > [data-off]::before {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  border-radius: 3px;
+  opacity: 0.75;
+  transition: opacity var(--wl-dur-indicator) var(--wl-ease-out);
+}
+.wl-seg > [data-off]:hover::before {
+  opacity: 1;
+}
+.wl-seg > [data-off][aria-checked="true"]::before {
+  opacity: 0;
+}
 @media (prefers-reduced-motion: no-preference) {
   .wl-indicator[data-ready] {
     transition: transform var(--wl-dur-indicator) var(--wl-ease-spring);

@@ -3,6 +3,7 @@ import { type KeyboardEvent, useId, useRef } from 'react';
 import { cn } from '../lib/cn.ts';
 import { useChangeCount } from '../lib/motion.ts';
 import { ActiveIndicator } from './active-indicator.tsx';
+import { Tooltip } from './tooltip.tsx';
 // Geometry shared with the SSR side toggle (.pc-seg), so both are one size.
 import '../pass-card/stage-seg.css';
 
@@ -13,7 +14,10 @@ export interface SegmentOption<V extends string = string> {
   disabled?: boolean;
   /** Why it is unavailable: the segment stays visible and described but cannot be chosen (aria-disabled, skipped by arrow keys). */
   reason?: string;
-  /** Why it is locked but still open: the tooltip and the description. It stays selectable and keeps its name. */
+  /**
+   * Why it is off but still open: a quieter label on a hatched tile, the tooltip and the
+   * description. It stays selectable and keeps its name; chosen, it looks like any choice.
+   */
   hint?: string;
   /** The full name when the label is short: the tooltip and the accessible name. */
   title?: string;
@@ -34,7 +38,8 @@ export interface SegmentedControlProps<V extends string = string> {
  * A radiogroup on a sunken track; the raised thumb (ActiveIndicator, 280 ms spring) slides to the
  * selection. Arrow keys move and select, Home/End jump. One size: 36 tall with 14 px text, 44 on
  * touch. The geometry lives in pass-card/stage-seg.css (.wl-seg), shared with the SSR fallback (a
- * radio pair, .pc-seg).
+ * radio pair, .pc-seg); the hatch of an off segment in kit-controls.css. A reason, hint or title is
+ * the kit tooltip.
  */
 export function SegmentedControl<V extends string>({
   label,
@@ -88,46 +93,47 @@ export function SegmentedControl<V extends string>({
         const reasonId = `${id}-${o.value}`;
         const described = o.reason ?? o.hint;
         return (
-          // biome-ignore lint/a11y/useSemanticElements: a styled radiogroup with roving focus and a sliding thumb
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={checked}
-            data-value={o.value}
-            title={described ?? o.title}
-            aria-label={o.title ?? (described ? o.label : undefined)}
-            aria-disabled={blocked || undefined}
-            aria-describedby={described ? reasonId : undefined}
-            tabIndex={checked ? 0 : -1}
-            disabled={o.disabled}
-            onClick={() => {
-              if (!blocked) onValueChange(o.value);
-            }}
-            className={cn(
-              'relative inline-flex items-center justify-center gap-1.5 whitespace-nowrap wl-colors',
-              'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
-              'disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4',
-              block && 'flex-1',
-              blocked && 'cursor-not-allowed opacity-50',
-              checked ? 'text-fg-strong' : 'text-fg-muted',
-              !(checked || blocked) && 'hover:not-disabled:text-fg-strong',
-            )}
-          >
-            {o.icon ? (
-              <o.icon
-                key={checked ? changed : 'idle'}
-                aria-hidden
-                className={cn(checked && changed > 0 && 'wl-seg-icon')}
-              />
-            ) : null}
-            {o.label}
-            {described ? (
-              <span id={reasonId} className="sr-only">
-                {described}
-              </span>
-            ) : null}
-          </button>
+          <Tooltip key={o.value} content={described ?? o.title}>
+            {/* biome-ignore lint/a11y/useSemanticElements: a styled radiogroup with roving focus and a sliding thumb */}
+            <button
+              type="button"
+              role="radio"
+              aria-checked={checked}
+              data-value={o.value}
+              data-off={o.hint && !blocked ? '' : undefined}
+              aria-label={o.title ?? (described ? o.label : undefined)}
+              aria-disabled={blocked || undefined}
+              aria-describedby={described ? reasonId : undefined}
+              tabIndex={checked ? 0 : -1}
+              disabled={o.disabled}
+              onClick={() => {
+                if (!blocked) onValueChange(o.value);
+              }}
+              className={cn(
+                'relative inline-flex items-center justify-center gap-1.5 whitespace-nowrap wl-colors',
+                'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus',
+                'disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4',
+                block && 'flex-1',
+                blocked && 'cursor-not-allowed opacity-50',
+                checked ? 'text-fg-strong' : o.hint ? 'text-fg-subtle' : 'text-fg-muted',
+                !(checked || blocked) && 'hover:not-disabled:text-fg-strong',
+              )}
+            >
+              {o.icon ? (
+                <o.icon
+                  key={checked ? changed : 'idle'}
+                  aria-hidden
+                  className={cn(checked && changed > 0 && 'wl-seg-icon')}
+                />
+              ) : null}
+              {o.label}
+              {described ? (
+                <span id={reasonId} className="sr-only">
+                  {described}
+                </span>
+              ) : null}
+            </button>
+          </Tooltip>
         );
       })}
     </div>
