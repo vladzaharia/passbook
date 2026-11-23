@@ -1,6 +1,7 @@
 import { MINTABLE_SCOPES } from '@/shared/contracts/api-keys.ts';
-import { presetsWithin } from '@/shared/developers-keys.ts';
-import { Button, Checkbox, Label } from '@/web/ui/index.ts';
+import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
+import { adminPresets, holdableScopes, selectedPreset } from '@/shared/developers-keys.ts';
+import { Button, Checkbox, Label, Tooltip } from '@/web/ui/index.ts';
 import { SCOPE_LABEL, useTerminals } from './queries.ts';
 
 export const SCOPES = MINTABLE_SCOPES;
@@ -10,14 +11,23 @@ export function ScopeRows({
   onChange,
   error,
   platform,
+  kind = 'service',
+  capabilities = null,
 }: {
   value: readonly string[];
   onChange: (next: string[]) => void;
   error?: string | undefined;
   /** A platform key has no org to scan for. */
   platform: boolean;
+  /** A personal key never takes the terminal scope. */
+  kind?: 'service' | 'personal';
+  /** The creating member's capabilities; null for a platform admin. */
+  capabilities?: readonly OrgCapability[] | null;
 }) {
   const offered = platform ? SCOPES.filter((s) => s !== 'scans:write') : SCOPES;
+  // Presets the creator can't hold are left out, not disabled.
+  const presets = adminPresets(holdableScopes(platform ? 'platform' : kind, capabilities));
+  const picked = selectedPreset(presets, value);
   return (
     <fieldset
       className="flex min-w-0 flex-col"
@@ -30,16 +40,18 @@ export function ScopeRows({
         </span>
       </legend>
       <div className="mb-2 flex flex-wrap items-center gap-2">
-        {presetsWithin(offered).map((p) => (
-          <Button
-            key={p.id}
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={() => onChange([...p.scopes])}
-          >
-            {p.label}
-          </Button>
+        {presets.map((p) => (
+          <Tooltip key={p.id} content={p.scopes.join(', ')}>
+            <Button
+              type="button"
+              size="sm"
+              variant={picked?.id === p.id ? 'primary' : 'outline'}
+              aria-pressed={picked?.id === p.id}
+              onClick={() => onChange([...p.scopes])}
+            >
+              {p.label}
+            </Button>
+          </Tooltip>
         ))}
       </div>
       <ul className="divide-y divide-border rounded-md border border-border-strong">

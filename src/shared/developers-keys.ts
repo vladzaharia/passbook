@@ -1,4 +1,6 @@
+import { MINTABLE_SCOPES } from './contracts/api-keys.ts';
 import { SANDBOX_KEY_SCOPES } from './contracts/developer-home.ts';
+import type { OrgCapability } from './contracts/org-membership.ts';
 
 /**
  * What a key is for, as scopes. One map for the portal's New key sheet and Admin's scope list: a preset is only
@@ -12,11 +14,111 @@ export const KEY_PRESETS = [
     scopes: ['passes:read', 'templates:read', 'scans:read', 'connections:read'],
   },
   { id: 'webhooks', label: 'Webhooks', scopes: ['webhooks:manage'] },
+  {
+    id: 'support',
+    label: 'Holder support',
+    scopes: ['passes:read', 'holders:write', 'messages:write'],
+  },
+  {
+    id: 'messages',
+    label: 'Messages',
+    scopes: ['messages:write', 'passes:read', 'templates:read'],
+  },
+  {
+    id: 'sync',
+    label: 'Import and sync',
+    scopes: [
+      'connections:read',
+      'connections:write',
+      'passes:read',
+      'passes:write',
+      'holders:write',
+    ],
+  },
+  {
+    id: 'integrations',
+    label: 'Integrations',
+    scopes: ['connections:read', 'connections:write', 'webhooks:manage'],
+  },
+  { id: 'brand', label: 'Brand', scopes: ['brand:manage', 'org:read'] },
+  {
+    id: 'scanner-setup',
+    label: 'Scanner setup',
+    scopes: ['scanning:write', 'scan-setup:read', 'scans:read'],
+  },
+  /** Acts as terminals the key is bound to, so only an organization service key holds it. */
+  { id: 'till', label: 'Till', scopes: ['scans:write', 'scans:read', 'passes:read'] },
 ] as const;
 export type KeyPresetId = (typeof KEY_PRESETS)[number]['id'];
 
-/** The portal adds the whole ceiling to the three: every scope a sandbox key may hold. */
+/** The portal adds the whole ceiling to the presets: every scope a sandbox key may hold. */
 export const FULL_SANDBOX = { id: 'full', label: 'Full sandbox' } as const;
+
+/**
+ * Admin's last preset: everything a key can hold except key minting, the terminal scope and the credential scopes
+ * (those are ticked on purpose, never by a preset).
+ */
+export const FULL_ACCESS = {
+  id: 'full',
+  label: 'Full access',
+  scopes: SANDBOX_KEY_SCOPES,
+} as const;
+
+/** The capability each mintable scope exercises (`scopeCapability` in the Worker; a test keeps them equal). */
+export const MINTABLE_SCOPE_CAPABILITY: Record<(typeof MINTABLE_SCOPES)[number], OrgCapability> = {
+  'passes:read': 'passes:read',
+  'passes:write': 'passes:operate',
+  'holders:write': 'passes:operate',
+  'templates:read': 'templates:read',
+  'messages:write': 'messages:manage',
+  'scans:read': 'scanning:read',
+  'scans:write': 'passes:operate',
+  'connections:read': 'integrations:read',
+  'connections:write': 'integrations:manage',
+  'webhooks:manage': 'integrations:manage',
+  'brand:manage': 'org:manage',
+  'org:read': 'org:read',
+  'org:write': 'org:manage',
+  'wallet:write': 'integrations:manage',
+  'scanning:write': 'scanning:manage',
+  'scan-setup:read': 'scanning:read',
+  'scanning:admin': 'scanning:manage',
+  'nfc:keys': 'scanning:manage',
+  'api-keys:write': 'integrations:manage',
+};
+
+/**
+ * The scopes a key of this kind may hold for this creator: a personal or platform key never takes the terminal scope,
+ * and a member's key never exceeds their capabilities (`null`: a platform admin, no cap).
+ */
+export function holdableScopes(
+  kind: 'service' | 'personal' | 'platform',
+  capabilities: readonly OrgCapability[] | null,
+): string[] {
+  return MINTABLE_SCOPES.filter(
+    (s) =>
+      (kind === 'service' || s !== 'scans:write') &&
+      (capabilities === null || capabilities.includes(MINTABLE_SCOPE_CAPABILITY[s])),
+  );
+}
+
+/** Admin's presets for a key: those the creator can hold, then Full access when all of it fits. */
+export function adminPresets(ceiling: readonly string[]) {
+  const all = presetsWithin(ceiling);
+  return FULL_ACCESS.scopes.every((s) => ceiling.includes(s)) ? [...all, FULL_ACCESS] : all;
+}
+
+/** The preset whose scopes are exactly `scopes` (any order), else null. */
+export function selectedPreset<P extends { scopes: readonly string[] }>(
+  presets: readonly P[],
+  scopes: readonly string[],
+): P | null {
+  return (
+    presets.find(
+      (p) => p.scopes.length === scopes.length && p.scopes.every((s) => scopes.includes(s)),
+    ) ?? null
+  );
+}
 
 /** Expiry choices for a personal key (the server's limit is 90 days). */
 export const KEY_EXPIRY_DAYS = [7, 30, 90] as const;

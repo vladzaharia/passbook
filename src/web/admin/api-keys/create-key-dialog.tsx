@@ -1,6 +1,7 @@
 import { KeyRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
+import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import { getMode } from '@/web/lib/mode.ts';
 import {
@@ -40,6 +41,7 @@ export interface CreateKeyDialogProps {
   principal: string;
   orgId: string | null;
   orgName: string;
+  capabilities: readonly OrgCapability[] | null;
 }
 
 export function CreateKeyDialog({
@@ -48,6 +50,7 @@ export function CreateKeyDialog({
   principal,
   orgId,
   orgName,
+  capabilities,
 }: CreateKeyDialogProps) {
   const create = useCreateKey(principal);
   const [name, setName] = useState('');
@@ -259,6 +262,8 @@ export function CreateKeyDialog({
               onChange={setScopes}
               error={errors.scopes}
               platform={orgId === null}
+              kind={kind}
+              capabilities={capabilities}
             />
           )}
           {scansWrite && orgId !== null && !role ? (

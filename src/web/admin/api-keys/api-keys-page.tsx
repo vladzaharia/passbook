@@ -15,6 +15,7 @@ import {
   toast,
 } from '@/web/ui/index.ts';
 import './api-keys.css';
+import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { CreateKeyDialog } from './create-key-dialog.tsx';
 import { keyColumns } from './key-columns.tsx';
 import { type ApiKey, SCOPE_LABEL, useApiKeyPages, useRevokeKey } from './queries.ts';
@@ -53,6 +54,7 @@ export function ApiKeysPage({
       principal={access.principal}
       orgId={access.orgId}
       orgName={access.orgName}
+      capabilities={access.capabilities}
       canManage={canManage}
       createRequested={createRequested}
       onCreateRequestHandled={onCreateRequestHandled}
@@ -64,6 +66,7 @@ function ScopedApiKeys({
   principal,
   orgId,
   orgName,
+  capabilities,
   canManage,
   createRequested,
   onCreateRequestHandled,
@@ -71,6 +74,7 @@ function ScopedApiKeys({
   principal: string;
   orgId: string | null;
   orgName: string;
+  capabilities: readonly OrgCapability[] | null;
   canManage: boolean;
   createRequested: boolean;
   onCreateRequestHandled: () => void;
@@ -179,6 +183,7 @@ function ScopedApiKeys({
         principal={principal}
         orgId={orgId}
         orgName={orgName}
+        capabilities={capabilities}
       />
       <ConfirmDialog
         open={revoking !== undefined}
