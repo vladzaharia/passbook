@@ -48,6 +48,14 @@ export async function sweepEntitlementJournal(ctx: ServiceContext): Promise<void
       revision: org.revision,
       code: 'CHANNEL_ENTITLEMENT_REQUEUED',
     });
-    await onEntitlementsChanged(ctx, org.org_id, was, after, 'system', org.revision);
+    await onEntitlementsChanged(
+      ctx,
+      org.org_id,
+      was,
+      after,
+      'system',
+      org.revision,
+      detail.gap === true,
+    );
   }
 }

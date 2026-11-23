@@ -144,7 +144,7 @@ async function moveOrg(
     }
     throw error;
   }
-  await onEntitlementsChanged(ctx, org.org_id, was, after, admin.userId, revision);
+  await onEntitlementsChanged(ctx, org.org_id, was, after, admin.userId, revision, gap);
   return true;
 }
 

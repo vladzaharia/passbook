@@ -2,6 +2,8 @@
 -- revision an org's features were last aligned to: an org below its preset's revision is still being moved.
 -- `previous_values` is the preset as it stood before the last edit, so a move that stops part-way resumes
 -- with the same before/after.
+-- A full reconcile run (an org left behind by an edit) brings every pass to the plan, whatever came before.
+ALTER TABLE channel_apply_runs ADD COLUMN reconcile_all INTEGER NOT NULL DEFAULT 0 CHECK (reconcile_all IN (0, 1));
 ALTER TABLE entitlement_preset_meta ADD COLUMN previous_values TEXT
   CHECK (previous_values IS NULL OR json_valid(previous_values));
 ALTER TABLE org_entitlements ADD COLUMN preset_revision INTEGER NOT NULL DEFAULT 0;
