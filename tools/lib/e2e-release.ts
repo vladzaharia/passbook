@@ -27,6 +27,22 @@ export function e2eReleaseOn(env: Record<string, string | undefined>): boolean {
   return env.WALLET_E2E === '1' && env.WALLET_E2E_RELEASE === '1';
 }
 
+/**
+ * Why a reused e2e server is the wrong one for this run, or null. The wallets run needs Google and Samsung open;
+ * every other run needs them dark, as in production. Anything else (an unread setting) is a mismatch.
+ */
+export function e2eReleaseMismatch(
+  released: { google?: unknown; samsung?: unknown } | undefined,
+  wantOpen: boolean,
+): string | null {
+  const open = released?.google === true && released.samsung === true;
+  const dark = released?.google === false && released.samsung === false;
+  if (wantOpen ? open : dark) return null;
+  return wantOpen
+    ? 'Google and Samsung are dark on this server. Run the wallet specs with npm run test:e2e:wallets (WALLET_E2E_RELEASE=1).'
+    : 'Google and Samsung are open on this server: an e2e release server is still running on the port. Stop it, then run again.';
+}
+
 /** Vite `define` for the Worker: a literal the minifier folds, so a `false` build drops the path. */
 export function e2eReleaseDefine(env: Record<string, string | undefined>): {
   __WALLET_E2E_RELEASE__: string;

@@ -8,6 +8,8 @@ export const WALLET_SPECS = /\d+-wallets-[\w-]+\.spec\.ts/;
 
 export default defineConfig({
   ...base,
+  // auth.setup.ts refuses a server that does not match: open here, dark in every other run.
+  metadata: { walletsRelease: true },
   projects: [
     { name: 'setup', testMatch: /auth\.setup\.ts/, use: { ...devices['Desktop Chrome'] } },
     {

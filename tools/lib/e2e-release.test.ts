@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import {
   E2E_RELEASE_MARKERS,
   e2eReleaseDefine,
+  e2eReleaseMismatch,
   e2eReleaseOn,
   e2eReleaseProblems,
   ISSUANCE_GUARDS,
@@ -41,6 +42,24 @@ describe('e2e release build switch', () => {
   it('marks strings the Worker module really carries', () => {
     const source = readFileSync(MODULE, 'utf8');
     for (const marker of E2E_RELEASE_MARKERS) expect(source).toContain(`'${marker}'`);
+  });
+});
+
+describe('e2e server check', () => {
+  const open = { google: true, samsung: true };
+  const dark = { google: false, samsung: false };
+
+  it('lets the main run use only a dark server, and the wallets run only an open one', () => {
+    expect(e2eReleaseMismatch(dark, false)).toBeNull();
+    expect(e2eReleaseMismatch(open, true)).toBeNull();
+    expect(e2eReleaseMismatch(open, false)).toMatch(/open on this server/);
+    expect(e2eReleaseMismatch(dark, true)).toMatch(/test:e2e:wallets/);
+  });
+
+  it('refuses a half-open or unread setting either way', () => {
+    for (const released of [undefined, {}, { google: true, samsung: false }, { google: 'true' }])
+      for (const wantOpen of [true, false])
+        expect(e2eReleaseMismatch(released, wantOpen), JSON.stringify(released)).not.toBeNull();
   });
 });
 

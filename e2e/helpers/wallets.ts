@@ -1,6 +1,7 @@
 import { generateKeyPairSync } from 'node:crypto';
 import { expect } from '@playwright/test';
 import { e2ePorts } from '../../tools/lib/e2e-ports.ts';
+import { e2eReleaseMismatch } from '../../tools/lib/e2e-release.ts';
 import { type Api, createPass, requireActiveTemplateRelease, uid } from './api.ts';
 import { runMinuteCron } from './cron.ts';
 import { publishTemplateVersion, templateReviewer } from './releases.ts';
@@ -35,15 +36,17 @@ export const mockState = async (): Promise<{
   samsung: { refs: Record<string, { state: string; type: string; cardId: string }> };
 }> => (await fetch(`${MOCK}/__mock/state`)).json() as never;
 
+/** The platform's release flags as the server reports them (settings, platform scope). */
+export async function releasedOn(admin: Api): Promise<Record<Provider, boolean> | undefined> {
+  return (
+    await admin.get<{ released?: Record<Provider, boolean> }>('/api/v1/settings?scope=platform')
+  ).released;
+}
+
 /** Fails at once on a server started without the e2e release (a reused main e2e server). */
 export async function requireE2eRelease(admin: Api): Promise<void> {
-  const platform = await admin.get<{ released?: Record<Provider, boolean> }>(
-    '/api/v1/settings?scope=platform',
-  );
-  if (!platform.released?.google || !platform.released.samsung)
-    throw new Error(
-      'Google and Samsung are dark on this server. Run the wallet specs with npm run test:e2e:wallets (WALLET_E2E_RELEASE=1).',
-    );
+  const mismatch = e2eReleaseMismatch(await releasedOn(admin), true);
+  if (mismatch) throw new Error(mismatch);
 }
 
 /**
