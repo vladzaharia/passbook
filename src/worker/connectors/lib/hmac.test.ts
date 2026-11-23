@@ -49,9 +49,9 @@ async function outcome(
 
 // Fixtures of the design (section 2.4), signed independently of this code.
 const SHOPIFY = {
-  secret: 'shpss_test_secret_0123456789abcdef',
+  secret: 'shpss_demo_secret',
   body: '{"id":820982911946154508,"email":"jon@example.com","cancelled_at":null,"updated_at":"2026-11-18T10:00:00-05:00"}',
-  sig: 'Oa0gejiNAO+7mpyIGQkoQiRElCprtvWmjRIuEHyuaWc=',
+  sig: 'qpeyKJRa3bUkt+ZRWgwf55zUEalZ3CK2pd2bnT0TWTw=',
 };
 const STRIPE = {
   secret: 'whsec_test_secret',
@@ -60,9 +60,9 @@ const STRIPE = {
   v1: 'c08b1c950ec63622e8063324fbaa10fdf87b6cc13f99187f1c9c2e97fa426a73',
 };
 const CALCOM = {
-  secret: 'cal_test_secret_0123456789',
+  secret: 'cal_demo_secret',
   body: '{"triggerEvent":"BOOKING_CREATED","createdAt":"2026-11-18T10:00:00.000Z","payload":{"uid":"bk_abc123","bookingId":42}}',
-  sig: 'a7d59d35769661660e56d834a09a32b2d430d94dd3e29180338dcd1b279ceb2c',
+  sig: 'ee1cfc3960f20af7a41e74003e60f879932d02411de611c65c7ca3cd114a27a6',
 };
 const STRIPE_NOW = STRIPE.t * 1000;
 const stripeHeader = (t: number | string, ...entries: string[]) => [`t=${t}`, ...entries].join(',');

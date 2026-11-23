@@ -1,0 +1,149 @@
+{
+  "join-links.getJoinLinksByTemplateId": {
+    "response": {
+      "link": {
+        "id": "0193a1b2-7c00-7000-8000-a979095fa2a0",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "mode": "live",
+        "enabled": true,
+        "nameInput": "Northwind Climbing",
+        "nameInputs": [
+          {
+            "key": "tier",
+            "label": "Visits to add"
+          }
+        ],
+        "askEmail": false,
+        "generated": [
+          {
+            "key": "tier",
+            "label": "Plan"
+          }
+        ],
+        "dailyLimit": 25,
+        "issuedToday": 5,
+        "limitReached": false,
+        "url": "https://passbook.mobile/j/Hs7dK2pYw9QxN4tBc6VmRe",
+        "ready": false,
+        "issues": [
+          {
+            "code": "no_release",
+            "input": "tier",
+            "label": "Plan"
+          }
+        ],
+        "revision": 3,
+        "createdAt": 1794362400000,
+        "rotatedAt": 1795570500000
+      },
+      "ready": false,
+      "issues": [
+        {
+          "code": "no_release",
+          "input": "tier",
+          "label": "Plan"
+        }
+      ]
+    }
+  },
+  "join-links.putJoinLinksByTemplateId": {
+    "request": {
+      "enabled": true,
+      "nameInput": "name",
+      "askEmail": true,
+      "revision": 2
+    },
+    "response": {
+      "link": {
+        "id": "0193a1b2-7c00-7000-8000-2dca945f1402",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "mode": "live",
+        "enabled": true,
+        "nameInput": "Northwind Climbing",
+        "nameInputs": [
+          {
+            "key": "tier",
+            "label": "Visits to add"
+          }
+        ],
+        "askEmail": false,
+        "generated": [
+          {
+            "key": "tier",
+            "label": "Plan"
+          }
+        ],
+        "dailyLimit": 25,
+        "issuedToday": 5,
+        "limitReached": false,
+        "url": "https://passbook.mobile/j/Hs7dK2pYw9QxN4tBc6VmRe",
+        "ready": false,
+        "issues": [
+          {
+            "code": "no_release",
+            "input": "tier",
+            "label": "Plan"
+          }
+        ],
+        "revision": 3,
+        "createdAt": 1794362400000,
+        "rotatedAt": 1795570500000
+      },
+      "ready": false,
+      "issues": [
+        {
+          "code": "no_release",
+          "input": "tier",
+          "label": "Plan"
+        }
+      ]
+    }
+  },
+  "join-links.postJoinLinksByTemplateIdRotate": {
+    "response": {
+      "link": {
+        "id": "0193a1b2-7c00-7000-8000-cbba48c76266",
+        "templateId": "0193a1b2-7c00-7000-8000-0000000000b1",
+        "mode": "live",
+        "enabled": true,
+        "nameInput": "Northwind Climbing",
+        "nameInputs": [
+          {
+            "key": "tier",
+            "label": "Visits to add"
+          }
+        ],
+        "askEmail": false,
+        "generated": [
+          {
+            "key": "tier",
+            "label": "Plan"
+          }
+        ],
+        "dailyLimit": 25,
+        "issuedToday": 5,
+        "limitReached": false,
+        "url": "https://passbook.mobile/j/Hs7dK2pYw9QxN4tBc6VmRe",
+        "ready": false,
+        "issues": [
+          {
+            "code": "no_release",
+            "input": "tier",
+            "label": "Plan"
+          }
+        ],
+        "revision": 3,
+        "createdAt": 1794362400000,
+        "rotatedAt": 1795570500000
+      },
+      "ready": false,
+      "issues": [
+        {
+          "code": "no_release",
+          "input": "tier",
+          "label": "Plan"
+        }
+      ]
+    }
+  }
+}

@@ -19,7 +19,9 @@ func main() {
 	var body passbook.PassesUpdateBody
 	if err := json.Unmarshal([]byte(`{
   "input": {
-    "seat": "Row 5, seat 3"
+    "name": "Ada Example",
+    "tier": "Day pass",
+    "validUntil": "2027-01-31"
   },
   "notify": true
 }`), &body); err != nil {

@@ -2,6 +2,7 @@ import { env } from 'cloudflare:workers';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { expectProblem } from '../../../../test/helpers/denial.ts';
 import { fakeAuth, fixtures, makeEnv, makeOrg } from '../../../../test/helpers/index.ts';
+import { pemBlock } from '../../../../test/helpers/pem.ts';
 import { buildManifest, signManifest } from '../../../passkit/index.ts';
 import { createFixtureIdentity } from '../../../passkit/testing/fixture-identity.ts';
 import { createApp } from '../../app.ts';
@@ -531,7 +532,7 @@ describe('identity upload', () => {
     await expectCode(
       await call('POST', '', {
         ...pem(f),
-        privateKeyPem: '-----BEGIN RSA PRIVATE KEY-----\nAA==\n-----END RSA PRIVATE KEY-----',
+        privateKeyPem: pemBlock('RSA PRIVATE KEY', 'AA=='),
       }),
       422,
       'KEY_FORMAT',
@@ -539,7 +540,7 @@ describe('identity upload', () => {
     await expectCode(
       await call('POST', '', {
         ...pem(f),
-        privateKeyPem: '-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----',
+        privateKeyPem: pemBlock('PRIVATE KEY', 'AAAA'),
       }),
       422,
       'KEY_INVALID',

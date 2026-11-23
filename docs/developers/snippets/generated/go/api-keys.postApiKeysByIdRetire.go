@@ -19,7 +19,7 @@ func main() {
 	var body passbook.ApiKeysRetireBody
 	if err := json.Unmarshal([]byte(`{
   "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
-  "retireAt": 1764090000000
+  "retireAt": 1795570500000
 }`), &body); err != nil {
 		panic(err)
 	}

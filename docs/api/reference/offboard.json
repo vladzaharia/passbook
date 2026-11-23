@@ -1,5 +1,16 @@
 {
   "offboard.postOffboard": {
-    "description": "Offboards a person: voids or removes their passes and lets go of their tags."
+    "description": "Offboards a person: voids or removes their passes and lets go of their tags.",
+    "request": {
+      "holderEmail": "ada@example.com",
+      "externalId": "booking_8841",
+      "passes": "void"
+    },
+    "response": {
+      "dryRun": false,
+      "holders": 1,
+      "passes": 2,
+      "tags": 0
+    }
   }
 }

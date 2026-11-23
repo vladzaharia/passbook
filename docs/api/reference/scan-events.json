@@ -1,20 +1,194 @@
 {
   "scan-events.getScanEvents": {
-    "description": "Lists scan events."
+    "description": "Lists scan events.",
+    "response": {
+      "items": [
+        {
+          "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+          "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+          "mode": "live",
+          "name": "Open climbing",
+          "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+          "match": null,
+          "opensAt": 1795568400000,
+          "closesAt": 1795586400000,
+          "timeZone": "America/Los_Angeles",
+          "capacity": 120,
+          "reentry": true,
+          "hardLimit": false,
+          "note": "Doors open 30 minutes early for members.",
+          "status": "live",
+          "arrived": 46,
+          "expected": 128,
+          "scanners": 2
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
   },
   "scan-events.postScanEvents": {
-    "description": "Creates a scan event."
+    "description": "Creates a scan event.",
+    "request": {
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 120,
+      "note": "Doors open 30 minutes early for members."
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "match": null,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 120,
+      "reentry": true,
+      "hardLimit": false,
+      "note": "Doors open 30 minutes early for members.",
+      "status": "live",
+      "arrived": 46,
+      "expected": 128,
+      "scanners": 2
+    }
   },
   "scan-events.getScanEventsById": {
-    "description": "One scan event."
+    "description": "One scan event.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "match": null,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 120,
+      "reentry": true,
+      "hardLimit": false,
+      "note": "Doors open 30 minutes early for members.",
+      "status": "live",
+      "arrived": 46,
+      "expected": 128,
+      "scanners": 2
+    }
   },
   "scan-events.patchScanEventsById": {
-    "description": "Edits a scan event."
+    "description": "Edits a scan event.",
+    "request": {
+      "capacity": 150
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "match": null,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 150,
+      "reentry": true,
+      "hardLimit": false,
+      "note": "Doors open 30 minutes early for members.",
+      "status": "live",
+      "arrived": 46,
+      "expected": 128,
+      "scanners": 2
+    }
   },
   "scan-events.postScanEventsByIdArchive": {
-    "description": "Archives a scan event. Its scanners are detached."
+    "description": "Archives a scan event. Its scanners are detached.",
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "match": null,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 120,
+      "reentry": true,
+      "hardLimit": false,
+      "note": "Doors open 30 minutes early for members.",
+      "status": "archived",
+      "arrived": 46,
+      "expected": 128,
+      "scanners": 2
+    }
   },
   "scan-events.postScanEventsByIdScanners": {
-    "description": "Moves scanners onto a scan event."
+    "description": "Moves scanners onto a scan event.",
+    "request": {
+      "scannerIds": ["0193a1b2-7c00-7000-8000-000000000031"]
+    },
+    "response": {
+      "id": "0193a1b2-7c00-7000-8000-0000000000e1",
+      "orgId": "0193a1b2-7c00-7000-8000-0000000000a1",
+      "mode": "live",
+      "name": "Open climbing",
+      "templateIds": ["0193a1b2-7c00-7000-8000-0000000000b1"],
+      "match": null,
+      "opensAt": 1795568400000,
+      "closesAt": 1795586400000,
+      "timeZone": "America/Los_Angeles",
+      "capacity": 120,
+      "reentry": true,
+      "hardLimit": false,
+      "note": "Doors open 30 minutes early for members.",
+      "status": "live",
+      "arrived": 46,
+      "expected": 128,
+      "scanners": 2
+    }
+  },
+  "scan-events.getScanEventsByIdInside": {
+    "response": {
+      "items": [
+        {
+          "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+          "holder": "Ada Example",
+          "photoUrl": "https://passbook.mobile/p/xK3v9QmT2Lw8Rp4sYb7NcQ",
+          "plan": "Day pass",
+          "type": "pass.issued",
+          "host": "passbook.mobile",
+          "place": "zone:main-hall",
+          "placeName": "Front entrance",
+          "parentName": "Cafe",
+          "since": 1794362400000,
+          "dueAt": 1795570500000,
+          "via": "api",
+          "flags": ["long_stay"]
+        }
+      ],
+      "count": 12,
+      "rev": 24,
+      "places": [
+        {
+          "name": "Front entrance",
+          "inNow": 8,
+          "capacity": 38,
+          "place": "zone:main-hall",
+          "rev": 24
+        }
+      ],
+      "nextCursor": "c1.4812"
+    }
+  },
+  "scan-events.postScanEventsByIdMarkOut": {
+    "request": {
+      "passId": "0193a1b2-7c00-7000-8000-0000000000c1",
+      "place": "zone:main-hall"
+    }
   }
 }

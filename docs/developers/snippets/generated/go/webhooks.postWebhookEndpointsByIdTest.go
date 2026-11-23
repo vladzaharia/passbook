@@ -18,7 +18,7 @@ func main() {
 
 	var body passbook.WebhookEndpointsSendTestBody
 	if err := json.Unmarshal([]byte(`{
-  "type": "pass.updated"
+  "type": "pass.issued"
 }`), &body); err != nil {
 		panic(err)
 	}

@@ -9,7 +9,7 @@ import { type KeyApi, KeyError } from './api.ts';
 import { KeysPage } from './keys-page.tsx';
 import { maskSecret } from './model.ts';
 
-const SECRET = 'pbp_test_Vx9cL2mN7qR4tY8wB3kD5fH1jZ6aQ0sE';
+const SECRET = 'pbp_test_demo0001_demo-demo-demo-demo';
 const DAY = 86_400_000;
 
 beforeAll(() => {

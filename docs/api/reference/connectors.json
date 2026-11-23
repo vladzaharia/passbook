@@ -1,8 +1,85 @@
 {
   "connectors.getConnectors": {
-    "description": "Lists connector types."
+    "description": "Lists connector types.",
+    "response": {
+      "items": [
+        {
+          "type": "csv-url",
+          "version": 1,
+          "displayName": "CSV sheet link",
+          "description": "Keep passes in sync with a published CSV, such as a Google Sheet.",
+          "capabilities": {
+            "poll": true,
+            "delta": false,
+            "webhook": false,
+            "import": false,
+            "snapshot": false
+          },
+          "configSchema": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "x-label": "Sheet link"
+              },
+              "idColumn": {
+                "type": "string",
+                "x-label": "ID column"
+              }
+            },
+            "required": ["url", "idColumn"]
+          },
+          "outputFields": {},
+          "defaults": {
+            "intervalSeconds": 900,
+            "maxConcurrency": 1,
+            "requestsPerMinute": 6,
+            "timeoutMs": 15000
+          },
+          "recipes": []
+        }
+      ],
+      "nextCursor": null
+    }
   },
   "connectors.getConnectorsByType": {
-    "description": "One connector type with its settings."
+    "description": "One connector type with its settings.",
+    "response": {
+      "type": "csv-url",
+      "version": 1,
+      "displayName": "CSV sheet link",
+      "description": "Keep passes in sync with a published CSV, such as a Google Sheet.",
+      "capabilities": {
+        "poll": true,
+        "delta": false,
+        "webhook": false,
+        "import": false,
+        "snapshot": false
+      },
+      "configSchema": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "x-label": "Sheet link"
+          },
+          "idColumn": {
+            "type": "string",
+            "x-label": "ID column"
+          }
+        },
+        "required": ["url", "idColumn"]
+      },
+      "outputFields": {},
+      "defaults": {
+        "intervalSeconds": 900,
+        "maxConcurrency": 1,
+        "requestsPerMinute": 6,
+        "timeoutMs": 15000
+      },
+      "recipes": []
+    }
   }
 }

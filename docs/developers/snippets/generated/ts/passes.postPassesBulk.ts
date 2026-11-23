@@ -3,9 +3,10 @@ import { PassBook } from '@passbook/sdk';
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
 const result = await pb.passes.bulkApply({
-  action: 'void',
+  action: 'send_email',
   ids: [
     '0193a1b2-7c00-7000-8000-0000000000c1',
+    '0193a1b2-7c00-7000-8000-f3f85c24ee38',
   ],
 });
 console.log(result);

@@ -59,8 +59,27 @@ describe('print page document', () => {
     const d = design();
     const base = ready(d) as Extract<PrintPageModel, { state: 'ready' }>;
     expect(renderPrintPage({ ...props, model: base })).not.toContain('data-lossy');
-    const model = { ...base, content: { ...base.content, holder: 'Nguyễn Thị Hương' } };
+    const model = { ...base, content: { ...base.content, holder: '李雷' } };
     expect(renderPrintPage({ ...props, model })).toContain('data-lossy');
+  });
+
+  it('prints Vietnamese and Greek through the fallback font, and still warns for CJK', () => {
+    const base = ready(design()) as Extract<PrintPageModel, { state: 'ready' }>;
+    const warns = (holder: string) =>
+      renderPrintPage({
+        ...props,
+        model: { ...base, content: { ...base.content, holder } },
+      }).includes('data-lossy');
+    expect(warns('Nguyễn Thị Hương')).toBe(false);
+    expect(warns('Αλέξανδρος')).toBe(false);
+    expect(warns('李雷')).toBe(true);
+  });
+
+  it('puts the fallback font after Rubik and serves its subsets', () => {
+    const html = renderPrintPage({ ...props, model: ready(design()) });
+    expect(html).toMatch(/font-family:Rubik,"Noto Sans Print",/);
+    for (const s of ['vietnamese', 'greek', 'cyrillic'])
+      expect(html).toContain(`/fonts/noto/noto-sans-${s}-wght-normal.woff2`);
   });
 
   it('asks the holder to make the ticket when no print exists, and says why when it cannot', () => {

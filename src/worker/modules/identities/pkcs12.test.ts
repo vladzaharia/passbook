@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { pemBlock } from '../../../../test/helpers/pem.ts';
 import { certDetails, checkKeyPem } from './cert.ts';
 import {
   FIXTURE_CERT_PEM,
@@ -38,9 +39,7 @@ describe('readPkcs12', () => {
 describe('checkKeyPem', () => {
   it('accepts PKCS#8 and explains PKCS#1, encrypted and missing keys', () => {
     expect(checkKeyPem(FIXTURE_KEY_PEM)).toContain('BEGIN PRIVATE KEY');
-    expect(() =>
-      checkKeyPem('-----BEGIN RSA PRIVATE KEY-----\nAA\n-----END RSA PRIVATE KEY-----'),
-    ).toThrow(/PKCS#8/);
+    expect(() => checkKeyPem(pemBlock('RSA PRIVATE KEY', 'AA'))).toThrow(/PKCS#8/);
     expect(() =>
       checkKeyPem('-----BEGIN ENCRYPTED PRIVATE KEY-----\nAA\n-----END ENCRYPTED PRIVATE KEY-----'),
     ).toThrow(/encrypted/);

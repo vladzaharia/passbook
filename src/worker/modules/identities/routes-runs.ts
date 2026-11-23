@@ -79,7 +79,7 @@ register(
   {
     method: 'post',
     path: '/{id}/retry',
-    summary: 'Start a failed or cancelled run again',
+    summary: 'Start a failed or canceled run again',
     params: IdParamSchema,
     status: 202,
     response: IdentityRunSchema,

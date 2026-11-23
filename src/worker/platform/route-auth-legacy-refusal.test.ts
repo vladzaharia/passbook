@@ -30,7 +30,7 @@ async function lines(app: Hono<AppBindings>, path: string) {
       `https://wallet.test${path}`,
       {
         headers: {
-          authorization: 'Bearer pb_live_ABCDEFGH_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+          authorization: `Bearer pb_live_ABCDEFGH_${'x'.repeat(43)}`,
         },
       },
       env,

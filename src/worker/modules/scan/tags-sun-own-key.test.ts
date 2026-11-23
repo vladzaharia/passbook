@@ -107,8 +107,8 @@ describe('imported tags, end to end', () => {
       perTag: true,
       metaKey: meta,
     });
-    const keyA = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
-    const keyB = '0f1e2d3c4b5a69788796a5b4c3d2e1f0';
+    const keyA = '00112233445566778899aabbccddeeff';
+    const keyB = 'ffeeddccbbaa99887766554433221100';
     const csv = `uid,key\n04aa00000000a1,${keyA}\n04aa00000000b2,${keyB}\n`;
     expect(await importTags(f.kit.ctx, admin, made.id, { csv, dryRun: false })).toMatchObject({
       added: 2,

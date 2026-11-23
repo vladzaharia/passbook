@@ -194,9 +194,42 @@ export type ApiKeysCreateParams = {
   expiresAt?: number | null;
 };
 
+export type ApiKeysListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string | null;
+    name: string;
+    prefix: string;
+    secretPrefix?: string;
+    scopes: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "templates:write" | "templates:review" | "templates:publish" | "messages:read" | "scanning:write" | "scan-setup:read" | "scan-setup:write" | "scanning:admin" | "nfc:keys" | "nfc:read" | "nfc:write" | "wallet:read" | "wallet:write" | "api-keys:write" | "org:read" | "org:write" | "members:read" | "members:write" | "audit:read" | "platform:orgs" | "platform:users" | "platform:identities" | "platform:wallet" | "platform:settings" | "platform:status" | "platform:templates" | "platform:audit" | "brand:manage">;
+    mode?: "live" | "test";
+    createdBy: string | null;
+    createdByName?: string | null;
+    createdAt: number;
+    lastUsedAt: number | null;
+    expiresAt: number | null;
+    revokedAt: number | null;
+    kind?: "service" | "personal" | "platform";
+    roles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+    retireAt?: number | null;
+    ipAllow?: Array<string>;
+    templateIds?: Array<string>;
+    passStyles?: Array<"generic" | "posterGeneric" | "storeCard" | "coupon" | "eventTicket" | "boardingPass">;
+    rateTier?: "standard" | "high" | "bulk" | null;
+    parentKeyId?: string | null;
+    rotatedFrom?: string | null;
+  }>;
+  nextCursor: string | null;
+  revokedCount?: number;
+};
+
 export type ApiKeysRetireParams = {
   orgId: string | null;
   retireAt: number;
+};
+
+export type ApiKeysRevokeResponse = {
+  ok: true;
 };
 
 export type ApiKeysRotateCurrentParams = {
@@ -206,6 +239,24 @@ export type ApiKeysRotateCurrentParams = {
 export type ApiKeysRotateParams = {
   orgId: string | null;
   overlapHours?: number;
+};
+
+export type AuditEntriesListResponse = {
+  items: Array<{
+    id: number;
+    at: number;
+    orgId: string | null;
+    actorType: "user" | "api_key" | "system" | "connection" | "device" | "scanner";
+    actorId: string | null;
+    actorLabel?: string | null;
+    action: string;
+    targetType: string | null;
+    targetId: string | null;
+    targetLabel?: string | null;
+    requestId: string | null;
+    detail?: unknown;
+  }>;
+  nextCursor: string | null;
 };
 
 export type BlueprintsCheckUseParams = {
@@ -223,6 +274,40 @@ export type BlueprintsCheckUseParams = {
     }>;
   };
   baseVersion?: string;
+};
+
+export type BlueprintsCheckUseResponse = {
+  saved: boolean;
+  version: string | null;
+  created: boolean;
+  displayOnly: boolean;
+  behindTip?: boolean;
+  report: {
+    ok: boolean;
+    issues: Array<{
+      severity: "error" | "warning" | "info";
+      code: string;
+      message: string;
+      path?: string;
+      params?: Record<string, string>;
+      fix?: {
+        action: "upload_logo" | "upload_icon";
+      };
+    }>;
+  };
+  assets: Array<{
+    name: string;
+    slot: string;
+    scale: 1 | 2 | 3;
+    locale?: string;
+    size: number;
+    sha1: string;
+    crc32: number;
+    width?: number;
+    height?: number;
+  }>;
+  passJson: Record<string, unknown> | null;
+  template: (TemplateDetail) & (Record<string, unknown> | null);
 };
 
 export type BlueprintsUseParams = {
@@ -246,6 +331,23 @@ export type BrandPassImagesUploadParams = {
   x3: string;
   x2?: string;
   configRevision?: number;
+};
+
+export type BrandRetrieveResponse = {
+  orgId: string;
+  name: string;
+  accent: string | null;
+  webLogo: {
+    url: string;
+    w: number;
+    h: number;
+  } | null;
+  supportEmail: string | null;
+  supportUrl: string | null;
+  mark: "full" | "small" | "none";
+  markChosen: "full" | "small" | "none";
+  markAllowed: Array<"full" | "small" | "none">;
+  configRevision: number;
 };
 
 export type BrandUpdateParams = {
@@ -363,6 +465,31 @@ export type BroadcastsCountRecipientsParams = {
   message?: string;
 };
 
+export type BroadcastsCountRecipientsResponse = {
+  targeted: number;
+  onDevice: number;
+  overBudget: number;
+  limit: number;
+  samples: Array<{
+    passId: string;
+    title: string | null;
+    changes: Array<{
+      key: string;
+      label: string;
+      from: string | null;
+      to: string | null;
+    }>;
+  }>;
+  unchanged: number;
+  blocked: Array<{
+    code: string;
+    count: number;
+  }>;
+  notified: number;
+  silent: number;
+  estimated?: boolean;
+};
+
 export type BroadcastsCreateParams = {
   orgId: string;
   kind: "message" | "change";
@@ -406,6 +533,22 @@ export type BroadcastsCreateParams = {
   };
   patch: Record<string, unknown>;
   message?: string;
+};
+
+export type BroadcastsListResponse = {
+  items: Array<Broadcast>;
+  nextCursor: string | null;
+};
+
+export type BroadcastsRecipientsListResponse = {
+  items: Array<{
+    passId: string;
+    title: string | null;
+    holderEmail: string | null;
+    outcome: "updated" | "unchanged" | "failed";
+    silent: boolean;
+  }>;
+  nextCursor: string | null;
 };
 
 export type BroadcastsSendParams = {
@@ -490,8 +633,87 @@ export type BundlesCreateParams = {
   sendEmail?: boolean;
 };
 
+export type BundlesCreateResponse = {
+  id: string;
+  orgId: string;
+  mode: "live" | "test";
+  name: string;
+  url: string | null;
+  holderEmail: string | null;
+  passes: Array<{
+    id: string;
+    title: string;
+    status: "active" | "voided";
+    removedAt?: number | null;
+  }>;
+  createdAt: number;
+  linkRotatedAt: number | null;
+};
+
+export type BundlesDeleteResponse = {
+  ok: true;
+};
+
+export type BundlesListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    mode: "live" | "test";
+    name: string;
+    url: string | null;
+    holderEmail: string | null;
+    passes: Array<{
+      id: string;
+      title: string;
+      status: "active" | "voided";
+      removedAt?: number | null;
+    }>;
+    createdAt: number;
+    linkRotatedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type BundlesRetrieveResponse = {
+  id: string;
+  orgId: string;
+  mode: "live" | "test";
+  name: string;
+  url: string | null;
+  holderEmail: string | null;
+  passes: Array<{
+    id: string;
+    title: string;
+    status: "active" | "voided";
+    removedAt?: number | null;
+  }>;
+  createdAt: number;
+  linkRotatedAt: number | null;
+};
+
+export type BundlesRotateLinkResponse = {
+  id: string;
+  orgId: string;
+  mode: "live" | "test";
+  name: string;
+  url: string | null;
+  holderEmail: string | null;
+  passes: Array<{
+    id: string;
+    title: string;
+    status: "active" | "voided";
+    removedAt?: number | null;
+  }>;
+  createdAt: number;
+  linkRotatedAt: number | null;
+};
+
 export type BundlesSendEmailParams = {
   to?: string;
+};
+
+export type BundlesSendEmailResponse = {
+  ok: true;
 };
 
 export type CaptureEndpointCreated = {
@@ -602,6 +824,301 @@ export type ConnectionsCreateParams = {
   requestsPerMinute?: number;
 };
 
+export type ConnectionsCreateResponse = {
+  id: string;
+  orgId: string;
+  connectorType: string;
+  connectorVersion: number;
+  name: string;
+  config: Record<string, unknown>;
+  hasCredential: boolean;
+  hasWebhookSecret: boolean;
+  mapping: Record<string, {
+    from: string;
+    transform?: {
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+      options?: Record<string, unknown>;
+    };
+  }> | null;
+  defaultTemplateId: string | null;
+  holderEmailField: string | null;
+  autoCreate: boolean;
+  autoEmail: boolean;
+  onMissing: "keep" | "flag" | "void";
+  voidWhen: Array<{
+    from: string;
+    op: "in" | "present";
+    values?: Array<string | number | boolean>;
+  }>;
+  webhookPrevUntil: number | null;
+  mode: "poll" | "webhook" | "hybrid" | "manual" | "snapshot";
+  intervalSeconds: number | null;
+  maxConcurrency: number | null;
+  requestsPerMinute: number | null;
+  enabled: boolean;
+  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  consecutiveFailures: number;
+  breakerOpenUntil: number | null;
+  nextRunAt: number | null;
+  lastRunAt: number | null;
+  lastSuccessAt: number | null;
+  lastErrorCode: string | null;
+  lastErrorAt: number | null;
+  webhookUrl: string | null;
+  createdAt: number;
+  updatedAt: number;
+  webhookSecret?: string;
+};
+
+export type ConnectionsDeleteResponse = {
+  ok: true;
+};
+
+export type ConnectionsListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    connectorType: string;
+    connectorVersion: number;
+    name: string;
+    config: Record<string, unknown>;
+    hasCredential: boolean;
+    hasWebhookSecret: boolean;
+    mapping: Record<string, {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    }> | null;
+    defaultTemplateId: string | null;
+    holderEmailField: string | null;
+    autoCreate: boolean;
+    autoEmail: boolean;
+    onMissing: "keep" | "flag" | "void";
+    voidWhen: Array<{
+      from: string;
+      op: "in" | "present";
+      values?: Array<string | number | boolean>;
+    }>;
+    webhookPrevUntil: number | null;
+    mode: "poll" | "webhook" | "hybrid" | "manual" | "snapshot";
+    intervalSeconds: number | null;
+    maxConcurrency: number | null;
+    requestsPerMinute: number | null;
+    enabled: boolean;
+    health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    consecutiveFailures: number;
+    breakerOpenUntil: number | null;
+    nextRunAt: number | null;
+    lastRunAt: number | null;
+    lastSuccessAt: number | null;
+    lastErrorCode: string | null;
+    lastErrorAt: number | null;
+    webhookUrl: string | null;
+    createdAt: number;
+    updatedAt: number;
+    passCount?: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type ConnectionsRetrieveResponse = {
+  id: string;
+  orgId: string;
+  connectorType: string;
+  connectorVersion: number;
+  name: string;
+  config: Record<string, unknown>;
+  hasCredential: boolean;
+  hasWebhookSecret: boolean;
+  mapping: Record<string, {
+    from: string;
+    transform?: {
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+      options?: Record<string, unknown>;
+    };
+  }> | null;
+  defaultTemplateId: string | null;
+  holderEmailField: string | null;
+  autoCreate: boolean;
+  autoEmail: boolean;
+  onMissing: "keep" | "flag" | "void";
+  voidWhen: Array<{
+    from: string;
+    op: "in" | "present";
+    values?: Array<string | number | boolean>;
+  }>;
+  webhookPrevUntil: number | null;
+  mode: "poll" | "webhook" | "hybrid" | "manual" | "snapshot";
+  intervalSeconds: number | null;
+  maxConcurrency: number | null;
+  requestsPerMinute: number | null;
+  enabled: boolean;
+  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  consecutiveFailures: number;
+  breakerOpenUntil: number | null;
+  nextRunAt: number | null;
+  lastRunAt: number | null;
+  lastSuccessAt: number | null;
+  lastErrorCode: string | null;
+  lastErrorAt: number | null;
+  webhookUrl: string | null;
+  createdAt: number;
+  updatedAt: number;
+  runs: Array<{
+    id: string;
+    trigger: "schedule" | "webhook" | "admin" | "user" | "test" | "backfill";
+    startedAt: number;
+    finishedAt: number | null;
+    outcome: "running" | "unchanged" | "changed" | "error" | "skipped";
+    recordsSeen: number | null;
+    passesChanged: number | null;
+    passesCreated: number | null;
+    passesVoided: number | null;
+    recordsFailed: number | null;
+    errorCode: string | null;
+    errorDetail?: string | null;
+    httpStatus: number | null;
+    durationMs: number | null;
+  }>;
+  metrics: {
+    p50Ms: number | null;
+    p95Ms: number | null;
+    errorRate: number | null;
+    passCount: number;
+  };
+};
+
+export type ConnectionsRetrieveSummaryResponse = {
+  total: number;
+  byHealth: Record<string, number>;
+  attention: Array<{
+    id: string;
+    orgId: string;
+    name: string;
+    health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+    lastErrorCode: string | null;
+    lastErrorAt: number | null;
+  }>;
+};
+
+export type ConnectionsRevokePreviousWebhookSecretResponse = {
+  id: string;
+  orgId: string;
+  connectorType: string;
+  connectorVersion: number;
+  name: string;
+  config: Record<string, unknown>;
+  hasCredential: boolean;
+  hasWebhookSecret: boolean;
+  mapping: Record<string, {
+    from: string;
+    transform?: {
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+      options?: Record<string, unknown>;
+    };
+  }> | null;
+  defaultTemplateId: string | null;
+  holderEmailField: string | null;
+  autoCreate: boolean;
+  autoEmail: boolean;
+  onMissing: "keep" | "flag" | "void";
+  voidWhen: Array<{
+    from: string;
+    op: "in" | "present";
+    values?: Array<string | number | boolean>;
+  }>;
+  webhookPrevUntil: number | null;
+  mode: "poll" | "webhook" | "hybrid" | "manual" | "snapshot";
+  intervalSeconds: number | null;
+  maxConcurrency: number | null;
+  requestsPerMinute: number | null;
+  enabled: boolean;
+  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  consecutiveFailures: number;
+  breakerOpenUntil: number | null;
+  nextRunAt: number | null;
+  lastRunAt: number | null;
+  lastSuccessAt: number | null;
+  lastErrorCode: string | null;
+  lastErrorAt: number | null;
+  webhookUrl: string | null;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type ConnectionsRotateWebhookSecretResponse = {
+  id: string;
+  orgId: string;
+  connectorType: string;
+  connectorVersion: number;
+  name: string;
+  config: Record<string, unknown>;
+  hasCredential: boolean;
+  hasWebhookSecret: boolean;
+  mapping: Record<string, {
+    from: string;
+    transform?: {
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+      options?: Record<string, unknown>;
+    };
+  }> | null;
+  defaultTemplateId: string | null;
+  holderEmailField: string | null;
+  autoCreate: boolean;
+  autoEmail: boolean;
+  onMissing: "keep" | "flag" | "void";
+  voidWhen: Array<{
+    from: string;
+    op: "in" | "present";
+    values?: Array<string | number | boolean>;
+  }>;
+  webhookPrevUntil: number | null;
+  mode: "poll" | "webhook" | "hybrid" | "manual" | "snapshot";
+  intervalSeconds: number | null;
+  maxConcurrency: number | null;
+  requestsPerMinute: number | null;
+  enabled: boolean;
+  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  consecutiveFailures: number;
+  breakerOpenUntil: number | null;
+  nextRunAt: number | null;
+  lastRunAt: number | null;
+  lastSuccessAt: number | null;
+  lastErrorCode: string | null;
+  lastErrorAt: number | null;
+  webhookUrl: string | null;
+  createdAt: number;
+  updatedAt: number;
+  webhookSecret?: string;
+};
+
+export type ConnectionsRunsListResponse = {
+  items: Array<{
+    id: string;
+    trigger: "schedule" | "webhook" | "admin" | "user" | "test" | "backfill";
+    startedAt: number;
+    finishedAt: number | null;
+    outcome: "running" | "unchanged" | "changed" | "error" | "skipped";
+    recordsSeen: number | null;
+    passesChanged: number | null;
+    passesCreated: number | null;
+    passesVoided: number | null;
+    recordsFailed: number | null;
+    errorCode: string | null;
+    errorDetail?: string | null;
+    httpStatus: number | null;
+    durationMs: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type ConnectionsSyncResponse = {
+  runId: string;
+  workflowInstanceId: string;
+};
+
 export type ConnectionsTestConfigParams = {
   orgId: string;
   connectorType: string;
@@ -621,6 +1138,59 @@ export type ConnectionsTestConfigParams = {
   }>;
   autoCreate?: boolean;
   defaultTemplateId?: string;
+};
+
+export type ConnectionsTestConfigResponse = {
+  ok: boolean;
+  detail?: string;
+  errorCode?: string;
+  durationMs: number;
+  sample?: Array<{
+    pointer: string;
+    preview: string;
+  }>;
+  records?: number;
+  counts?: {
+    create: number;
+    update: number;
+    unchanged: number;
+    skipped: number;
+    errors: number;
+    waiting: number;
+  };
+  releaseBlocked?: string | null;
+  window?: {
+    days: number;
+    limit: number;
+    since: number;
+    excluded: number;
+  };
+  samples?: Array<{
+    ref: string;
+    action: "create" | "update" | "unchanged" | "skipped" | "error";
+    fields: Record<string, unknown>;
+    message?: string;
+  }>;
+  columns?: Array<{
+    pointer: string;
+    label: string;
+    samples: Array<string>;
+    values: Array<{
+      value: string;
+      count: number;
+    }>;
+  }>;
+};
+
+export type ConnectionsTestResponse = {
+  ok: boolean;
+  detail?: string;
+  errorCode?: string;
+  durationMs: number;
+  sample?: Array<{
+    pointer: string;
+    preview: string;
+  }>;
 };
 
 export type ConnectionsUpdateParams = {
@@ -651,6 +1221,176 @@ export type ConnectionsUpdateParams = {
   requestsPerMinute?: number | null;
   enabled?: boolean;
   overlapSeconds?: 0 | 3600 | 86400 | 604800;
+};
+
+export type ConnectionsUpdateResponse = {
+  id: string;
+  orgId: string;
+  connectorType: string;
+  connectorVersion: number;
+  name: string;
+  config: Record<string, unknown>;
+  hasCredential: boolean;
+  hasWebhookSecret: boolean;
+  mapping: Record<string, {
+    from: string;
+    transform?: {
+      kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+      options?: Record<string, unknown>;
+    };
+  }> | null;
+  defaultTemplateId: string | null;
+  holderEmailField: string | null;
+  autoCreate: boolean;
+  autoEmail: boolean;
+  onMissing: "keep" | "flag" | "void";
+  voidWhen: Array<{
+    from: string;
+    op: "in" | "present";
+    values?: Array<string | number | boolean>;
+  }>;
+  webhookPrevUntil: number | null;
+  mode: "poll" | "webhook" | "hybrid" | "manual" | "snapshot";
+  intervalSeconds: number | null;
+  maxConcurrency: number | null;
+  requestsPerMinute: number | null;
+  enabled: boolean;
+  health: "unknown" | "healthy" | "degraded" | "failing" | "paused" | "disabled";
+  consecutiveFailures: number;
+  breakerOpenUntil: number | null;
+  nextRunAt: number | null;
+  lastRunAt: number | null;
+  lastSuccessAt: number | null;
+  lastErrorCode: string | null;
+  lastErrorAt: number | null;
+  webhookUrl: string | null;
+  createdAt: number;
+  updatedAt: number;
+  webhookSecret?: string;
+};
+
+export type ConnectionsWebhookFailuresListResponse = {
+  items: Array<{
+    id: string;
+    eventRef: string;
+    generation: number;
+    connectionMode: "webhook" | "hybrid" | "unknown";
+    state: "pending" | "failed" | "blocked" | "resolved" | "ignored";
+    errorCode: string | null;
+    uncertainItems: number;
+    receivedAt: number;
+    updatedAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type ConnectionsWebhookFailuresReplayResponse = {
+  ok: true;
+};
+
+export type ConnectionsWebhookFailuresResolveResponse = {
+  ok: true;
+  resolved: number;
+  state: "failed" | "blocked" | "resolved";
+};
+
+export type ConnectorsListResponse = {
+  items: Array<{
+    type: string;
+    version: number;
+    displayName: string;
+    description?: string;
+    capabilities: {
+      poll: boolean;
+      delta: boolean;
+      webhook: boolean;
+      import: boolean;
+      snapshot: boolean;
+    };
+    configSchema?: unknown;
+    secretSchema?: unknown;
+    outputFields: Record<string, {
+      type: "string" | "number" | "boolean" | "date";
+      description?: string;
+    }>;
+    defaults: {
+      intervalSeconds: number;
+      maxConcurrency: number;
+      requestsPerMinute: number;
+      timeoutMs: number;
+    };
+    recipes?: Array<{
+      id: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets";
+      label: string;
+      pasteSecret: boolean;
+      outputFields: Record<string, {
+        type: "string" | "number" | "boolean" | "date";
+        description?: string;
+      }>;
+      mapping: Record<string, {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      }>;
+      holderEmailField: string;
+      voidWhen: Array<{
+        from: string;
+        op: "in" | "present";
+        values?: Array<string | number | boolean>;
+      }>;
+    }>;
+  }>;
+  nextCursor: string | null;
+};
+
+export type ConnectorsRetrieveResponse = {
+  type: string;
+  version: number;
+  displayName: string;
+  description?: string;
+  capabilities: {
+    poll: boolean;
+    delta: boolean;
+    webhook: boolean;
+    import: boolean;
+    snapshot: boolean;
+  };
+  configSchema?: unknown;
+  secretSchema?: unknown;
+  outputFields: Record<string, {
+    type: "string" | "number" | "boolean" | "date";
+    description?: string;
+  }>;
+  defaults: {
+    intervalSeconds: number;
+    maxConcurrency: number;
+    requestsPerMinute: number;
+    timeoutMs: number;
+  };
+  recipes?: Array<{
+    id: "custom" | "shopify-orders" | "shopify-customers" | "stripe-subscriptions" | "stripe-payments" | "calcom-bookings" | "woocommerce-orders" | "tickettailor-tickets";
+    label: string;
+    pasteSecret: boolean;
+    outputFields: Record<string, {
+      type: "string" | "number" | "boolean" | "date";
+      description?: string;
+    }>;
+    mapping: Record<string, {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    }>;
+    holderEmailField: string;
+    voidWhen: Array<{
+      from: string;
+      op: "in" | "present";
+      values?: Array<string | number | boolean>;
+    }>;
+  }>;
 };
 
 export type CreatedScanner = {
@@ -723,6 +1463,18 @@ export type CurrentBulkRun = {
   run?: BulkRun;
 };
 
+export type DeliveriesListResponse = {
+  items: Array<{
+    id: string;
+    kind: "push" | "email";
+    state: "pending" | "enqueued" | "processing" | "sent" | "partial" | "failed" | "cancelled";
+    attempts: number;
+    errorCode: string | null;
+    createdAt: number;
+    finishedAt: number | null;
+  }>;
+};
+
 export type EmailFailedEvent = {
   id: string;
   type: "email.failed";
@@ -748,6 +1500,21 @@ export type HoldersAssignParams = {
   email: string;
 };
 
+export type HoldersAssignResponse = {
+  passId: string;
+  state: "unassigned" | "waiting" | "owned";
+  email: string | null;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  blockedUserIds: Array<string>;
+  transfer: {
+    transferId: string;
+    state: "pending" | "completed";
+  } | null;
+  reissueRequired: boolean;
+  updatedAt: number;
+};
+
 export type HoldersBulkAssignParams = {
   items: Array<{
     passId: string;
@@ -755,9 +1522,49 @@ export type HoldersBulkAssignParams = {
   }>;
 };
 
+export type HoldersBulkAssignResponse = {
+  items: Array<{
+    passId: string;
+    state: "unassigned" | "waiting" | "owned";
+    email: string | null;
+    ownerUserId: string | null;
+    ownerName: string | null;
+    blockedUserIds: Array<string>;
+    transfer: {
+      transferId: string;
+      state: "pending" | "completed";
+    } | null;
+    reissueRequired: boolean;
+    updatedAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
 export type HoldersClearBlockParams = {
   passId: string;
   userId: string;
+};
+
+export type HoldersClearBlockResponse = {
+  ok: true;
+};
+
+export type HoldersListResponse = {
+  items: Array<{
+    passId: string;
+    state: "unassigned" | "waiting" | "owned";
+    email: string | null;
+    ownerUserId: string | null;
+    ownerName: string | null;
+    blockedUserIds: Array<string>;
+    transfer: {
+      transferId: string;
+      state: "pending" | "completed";
+    } | null;
+    reissueRequired: boolean;
+    updatedAt: number;
+  }>;
+  nextCursor: string | null;
 };
 
 export type HoldersOffboardParams = {
@@ -768,19 +1575,109 @@ export type HoldersOffboardParams = {
   dryRun?: boolean;
 };
 
+export type HoldersOffboardResponse = {
+  dryRun: boolean;
+  holders: number;
+  passes: number;
+  tags: number;
+};
+
 export type HoldersReassignParams = {
   passId: string;
   email: string | null;
+};
+
+export type HoldersReassignResponse = {
+  passId: string;
+  state: "unassigned" | "waiting" | "owned";
+  email: string | null;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  blockedUserIds: Array<string>;
+  transfer: {
+    transferId: string;
+    state: "pending" | "completed";
+  } | null;
+  reissueRequired: boolean;
+  updatedAt: number;
+};
+
+export type HoldersRetrieveResponse = {
+  passId: string;
+  state: "unassigned" | "waiting" | "owned";
+  email: string | null;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  blockedUserIds: Array<string>;
+  transfer: {
+    transferId: string;
+    state: "pending" | "completed";
+  } | null;
+  reissueRequired: boolean;
+  updatedAt: number;
 };
 
 export type HoldersUnassignParams = {
   passId: string;
 };
 
+export type HoldersUnassignResponse = {
+  passId: string;
+  state: "unassigned" | "waiting" | "owned";
+  email: string | null;
+  ownerUserId: string | null;
+  ownerName: string | null;
+  blockedUserIds: Array<string>;
+  transfer: {
+    transferId: string;
+    state: "pending" | "completed";
+  } | null;
+  reissueRequired: boolean;
+  updatedAt: number;
+};
+
+export type IdentitiesCertificatesListResponse = {
+  items: Array<{
+    id: string;
+    state: "pending" | "active" | "superseded" | "revoked" | "failed";
+    origin: "upload" | "asc" | "csr" | "env";
+    certSha256: string | null;
+    notBefore: number | null;
+    notAfter: number | null;
+    createdAt: number;
+    activatedAt: number | null;
+    endedAt: number | null;
+  }>;
+};
+
 export type IdentitiesCertificatesRevokeParams = {
   certificateId: string;
   reason: "compromised";
   confirm: string;
+};
+
+export type IdentitiesCertificatesRevokeResponse = {
+  id: string;
+  orgId: string | null;
+  kind: "provision" | "rotate" | "revoke";
+  targetType: "identity" | "org" | "wallet_credential";
+  targetId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  attempt: number;
+  waitingFor: string | null;
+  errorCode: string | null;
+  createdAt: number;
+  updatedAt: number;
+  finishedAt: number | null;
+};
+
+export type IdentitiesCheckApnsResponse = {
+  health: "healthy" | "failing" | "inconclusive" | "unavailable";
+  status: number;
+  reason: string | null;
+  checkedAt: number;
+  method?: "certificate" | "key" | "none";
 };
 
 export type IdentitiesCreateParams = {
@@ -793,9 +1690,297 @@ export type IdentitiesCreateParams = {
   nfcEnabled?: boolean;
 };
 
+export type IdentitiesCreateResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
+};
+
+export type IdentitiesDeleteResponse = {
+  ok: true;
+};
+
+export type IdentitiesListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string | null;
+    label: string;
+    passTypeIdentifier: string;
+    teamIdentifier: string;
+    source: "env" | "db";
+    certSha256: string | null;
+    certSubject: string | null;
+    certSerial: string | null;
+    notBefore: number | null;
+    notAfter: number | null;
+    daysRemaining: number | null;
+    apnsBinding: string | null;
+    apnsAvailable: boolean;
+    pushMethod?: "certificate" | "key" | "none";
+    pushKey?: {
+      keyId: string;
+      createdAt: number;
+      rotatedAt: number | null;
+      identityCount: number;
+      dependentCount: number;
+    } | null;
+    apnsHealth: "unknown" | "healthy" | "failing";
+    apnsCheckedAt?: number | null;
+    apnsReason?: string | null;
+    passCount?: number;
+    nfcEnabled: boolean;
+    nfcKeys?: Array<{
+      id: string;
+      identityId: string;
+      orgId: string;
+      keyId: string;
+      state: "active" | "retiring" | "retired";
+      createdAt: number;
+      activatedAt: number;
+      retiredAt: number | null;
+      passCount: number;
+      passesLeft: number | null;
+    }>;
+    isDefault: boolean;
+    createdAt: number;
+    kind?: "platform" | "managed" | "own";
+    status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+    rotation?: "auto" | "csr" | "manual";
+    issuing?: boolean;
+    nextRotationAt?: number | null;
+    handle?: string | null;
+  }>;
+  nextCursor: string | null;
+} | {
+  items: Array<{
+    id: string;
+    label: string;
+    passTypeIdentifier: string;
+    teamIdentifier: string;
+    certSubject: string | null;
+    certSerial: string | null;
+    notBefore: number | null;
+    notAfter: number | null;
+    daysRemaining: number | null;
+    apnsAvailable: boolean;
+    apnsHealth: "unknown" | "healthy" | "failing";
+  }>;
+  nextCursor: string | null;
+};
+
+export type IdentitiesPushKeyDeleteResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
+};
+
 export type IdentitiesPushKeyUploadParams = {
   keyId: string;
   p8: string;
+};
+
+export type IdentitiesPushKeyUploadResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
+};
+
+export type IdentitiesRenewResponse = {
+  id: string;
+  orgId: string | null;
+  kind: "provision" | "rotate" | "revoke";
+  targetType: "identity" | "org" | "wallet_credential";
+  targetId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  attempt: number;
+  waitingFor: string | null;
+  errorCode: string | null;
+  createdAt: number;
+  updatedAt: number;
+  finishedAt: number | null;
+};
+
+export type IdentitiesRetrieveResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
 };
 
 export type IdentitiesRotateParams = {
@@ -803,6 +1988,56 @@ export type IdentitiesRotateParams = {
   privateKeyPem?: string;
   pkcs12Base64?: string;
   pkcs12Password?: string;
+};
+
+export type IdentitiesRotateResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
 };
 
 export type IdentitiesUpdateParams = {
@@ -814,13 +2049,251 @@ export type IdentitiesUpdateParams = {
   issuing?: boolean;
 };
 
+export type IdentitiesUpdateResponse = {
+  id: string;
+  orgId: string | null;
+  label: string;
+  passTypeIdentifier: string;
+  teamIdentifier: string;
+  source: "env" | "db";
+  certSha256: string | null;
+  certSubject: string | null;
+  certSerial: string | null;
+  notBefore: number | null;
+  notAfter: number | null;
+  daysRemaining: number | null;
+  apnsBinding: string | null;
+  apnsAvailable: boolean;
+  pushMethod?: "certificate" | "key" | "none";
+  pushKey?: {
+    keyId: string;
+    createdAt: number;
+    rotatedAt: number | null;
+    identityCount: number;
+    dependentCount: number;
+  } | null;
+  apnsHealth: "unknown" | "healthy" | "failing";
+  apnsCheckedAt?: number | null;
+  apnsReason?: string | null;
+  passCount?: number;
+  nfcEnabled: boolean;
+  nfcKeys?: Array<{
+    id: string;
+    identityId: string;
+    orgId: string;
+    keyId: string;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    activatedAt: number;
+    retiredAt: number | null;
+    passCount: number;
+    passesLeft: number | null;
+  }>;
+  isDefault: boolean;
+  createdAt: number;
+  kind?: "platform" | "managed" | "own";
+  status?: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+  rotation?: "auto" | "csr" | "manual";
+  issuing?: boolean;
+  nextRotationAt?: number | null;
+  handle?: string | null;
+};
+
+export type IdentityRunsCancelResponse = {
+  id: string;
+  orgId: string | null;
+  kind: "provision" | "rotate" | "revoke";
+  targetType: "identity" | "org" | "wallet_credential";
+  targetId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  attempt: number;
+  waitingFor: string | null;
+  errorCode: string | null;
+  createdAt: number;
+  updatedAt: number;
+  finishedAt: number | null;
+};
+
+export type IdentityRunsListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string | null;
+    kind: "provision" | "rotate" | "revoke";
+    targetType: "identity" | "org" | "wallet_credential";
+    targetId: string;
+    state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    step: string | null;
+    attempt: number;
+    waitingFor: string | null;
+    errorCode: string | null;
+    createdAt: number;
+    updatedAt: number;
+    finishedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type IdentityRunsRetrieveResponse = {
+  id: string;
+  orgId: string | null;
+  kind: "provision" | "rotate" | "revoke";
+  targetType: "identity" | "org" | "wallet_credential";
+  targetId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  attempt: number;
+  waitingFor: string | null;
+  errorCode: string | null;
+  createdAt: number;
+  updatedAt: number;
+  finishedAt: number | null;
+};
+
+export type IdentityRunsRetryResponse = {
+  id: string;
+  orgId: string | null;
+  kind: "provision" | "rotate" | "revoke";
+  targetType: "identity" | "org" | "wallet_credential";
+  targetId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  attempt: number;
+  waitingFor: string | null;
+  errorCode: string | null;
+  createdAt: number;
+  updatedAt: number;
+  finishedAt: number | null;
+};
+
 export type IdentityRunsStartManagedParams = {
   handle?: string;
+};
+
+export type IdentityRunsStartManagedResponse = {
+  id: string;
+  orgId: string | null;
+  kind: "provision" | "rotate" | "revoke";
+  targetType: "identity" | "org" | "wallet_credential";
+  targetId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  attempt: number;
+  waitingFor: string | null;
+  errorCode: string | null;
+  createdAt: number;
+  updatedAt: number;
+  finishedAt: number | null;
 };
 
 export type InvitationsCreateParams = {
   email: string;
   roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+};
+
+export type InvitationsCreateResponse = {
+  id: string;
+  orgId: string;
+  email: string;
+  roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+  createdAt: number;
+  expiresAt: number;
+  revokedAt: number | null;
+  acceptedAt: number | null;
+};
+
+export type InvitationsListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    email: string;
+    roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+    createdAt: number;
+    expiresAt: number;
+    revokedAt: number | null;
+    acceptedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type InvitationsRevokeResponse = {
+  ok: true;
+};
+
+export type JoinLinksRetrieveResponse = {
+  link: {
+    id: string;
+    templateId: string;
+    mode: "live" | "test";
+    enabled: boolean;
+    nameInput: string | null;
+    nameInputs: Array<{
+      key: string;
+      label: string;
+    }>;
+    askEmail: boolean;
+    generated: Array<{
+      key: string;
+      label: string;
+    }>;
+    dailyLimit: number;
+    issuedToday: number;
+    limitReached: boolean;
+    url: string | null;
+    ready: boolean;
+    issues: Array<{
+      code: "no_release" | "barcode_input" | "input_needed" | "archived";
+      input?: string;
+      label?: string;
+    }>;
+    revision: number;
+    createdAt: number;
+    rotatedAt: number | null;
+  } | null;
+  ready: boolean;
+  issues: Array<{
+    code: "no_release" | "barcode_input" | "input_needed" | "archived";
+    input?: string;
+    label?: string;
+  }>;
+};
+
+export type JoinLinksRotateResponse = {
+  link: {
+    id: string;
+    templateId: string;
+    mode: "live" | "test";
+    enabled: boolean;
+    nameInput: string | null;
+    nameInputs: Array<{
+      key: string;
+      label: string;
+    }>;
+    askEmail: boolean;
+    generated: Array<{
+      key: string;
+      label: string;
+    }>;
+    dailyLimit: number;
+    issuedToday: number;
+    limitReached: boolean;
+    url: string | null;
+    ready: boolean;
+    issues: Array<{
+      code: "no_release" | "barcode_input" | "input_needed" | "archived";
+      input?: string;
+      label?: string;
+    }>;
+    revision: number;
+    createdAt: number;
+    rotatedAt: number | null;
+  } | null;
+  ready: boolean;
+  issues: Array<{
+    code: "no_release" | "barcode_input" | "input_needed" | "archived";
+    input?: string;
+    label?: string;
+  }>;
 };
 
 export type JoinLinksUpsertParams = {
@@ -831,9 +2304,94 @@ export type JoinLinksUpsertParams = {
   revision: number;
 };
 
+export type JoinLinksUpsertResponse = {
+  link: {
+    id: string;
+    templateId: string;
+    mode: "live" | "test";
+    enabled: boolean;
+    nameInput: string | null;
+    nameInputs: Array<{
+      key: string;
+      label: string;
+    }>;
+    askEmail: boolean;
+    generated: Array<{
+      key: string;
+      label: string;
+    }>;
+    dailyLimit: number;
+    issuedToday: number;
+    limitReached: boolean;
+    url: string | null;
+    ready: boolean;
+    issues: Array<{
+      code: "no_release" | "barcode_input" | "input_needed" | "archived";
+      input?: string;
+      label?: string;
+    }>;
+    revision: number;
+    createdAt: number;
+    rotatedAt: number | null;
+  } | null;
+  ready: boolean;
+  issues: Array<{
+    code: "no_release" | "barcode_input" | "input_needed" | "archived";
+    input?: string;
+    label?: string;
+  }>;
+};
+
 export type LegalHoldsCreateParams = {
   passId?: string | null;
   reason: string;
+};
+
+export type LegalHoldsCreateResponse = {
+  ok: true;
+};
+
+export type LegalHoldsListResponse = {
+  items: Array<{
+    id: string;
+    passId: string | null;
+    passLabel: string | null;
+    placedByKind: "org" | "platform";
+    placedByLabel: string;
+    reason: string | null;
+    createdAt: number;
+    releasedAt: number | null;
+    releasedByLabel: string | null;
+    canRelease: boolean;
+  }>;
+  nextCursor: string | null;
+};
+
+export type LegalHoldsReleaseResponse = {
+  ok: true;
+};
+
+export type MembershipsListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    orgName: string;
+    orgSlug: string;
+    personal?: boolean;
+    testOnly?: boolean;
+    userId: string;
+    roles: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
+    capabilities: Array<"org:read" | "org:manage" | "members:read" | "members:manage" | "integrations:read" | "integrations:manage" | "templates:read" | "templates:author" | "templates:review" | "templates:publish" | "passes:read" | "passes:operate" | "messages:read" | "messages:manage" | "scanning:read" | "scanning:manage" | "audit:read">;
+    createdAt: number;
+    revokedAt: number | null;
+    userName: string | null;
+    userEmail: string | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type MembershipsRevokeResponse = {
+  ok: true;
 };
 
 export type MessageRulesCountDueParams = {
@@ -873,6 +2431,15 @@ export type MessageRulesCountDueParams = {
   ruleId?: string;
 };
 
+export type MessageRulesCountDueResponse = {
+  days: Array<{
+    date: string;
+    count: number;
+  }>;
+  total: number;
+  atLimit: number;
+};
+
 export type MessageRulesCreateParams = {
   orgId: string;
   name: string;
@@ -907,6 +2474,202 @@ export type MessageRulesCreateParams = {
   message: string;
   clearAfter?: number | null;
   on?: boolean;
+};
+
+export type MessageRulesCreateResponse = {
+  id: string;
+  orgId: string;
+  mode: "live" | "test";
+  name: string;
+  templateIds: Array<string>;
+  match?: Array<{
+    input: string;
+    values: Array<string>;
+  } | {
+    input: string;
+    min?: number;
+    max?: number;
+  } | {
+    input: string;
+    from?: string;
+    to?: string;
+    timeZone: string;
+  }>;
+  anchor: {
+    kind: "input";
+    input: string;
+  } | {
+    kind: "lastScan";
+  };
+  offset: {
+    amount: number;
+    unit: "day" | "hour";
+    when: "before" | "after";
+  };
+  yearly: boolean;
+  sendAt: string;
+  timeZone: string;
+  message: string;
+  clearAfter: number | null;
+  on?: boolean;
+  state: "on" | "paused";
+  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
+  nextCheckAt: number | null;
+  sent: number;
+  skipped: number;
+  createdAt: number;
+  updatedAt: number;
+  version: number;
+};
+
+export type MessageRulesDeleteResponse = {
+  ok: true;
+};
+
+export type MessageRulesListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    mode: "live" | "test";
+    name: string;
+    templateIds: Array<string>;
+    match?: Array<{
+      input: string;
+      values: Array<string>;
+    } | {
+      input: string;
+      min?: number;
+      max?: number;
+    } | {
+      input: string;
+      from?: string;
+      to?: string;
+      timeZone: string;
+    }>;
+    anchor: {
+      kind: "input";
+      input: string;
+    } | {
+      kind: "lastScan";
+    };
+    offset: {
+      amount: number;
+      unit: "day" | "hour";
+      when: "before" | "after";
+    };
+    yearly: boolean;
+    sendAt: string;
+    timeZone: string;
+    message: string;
+    clearAfter: number | null;
+    on?: boolean;
+    state: "on" | "paused";
+    pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
+    nextCheckAt: number | null;
+    sent: number;
+    skipped: number;
+    createdAt: number;
+    updatedAt: number;
+    version: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type MessageRulesPauseResponse = {
+  id: string;
+  orgId: string;
+  mode: "live" | "test";
+  name: string;
+  templateIds: Array<string>;
+  match?: Array<{
+    input: string;
+    values: Array<string>;
+  } | {
+    input: string;
+    min?: number;
+    max?: number;
+  } | {
+    input: string;
+    from?: string;
+    to?: string;
+    timeZone: string;
+  }>;
+  anchor: {
+    kind: "input";
+    input: string;
+  } | {
+    kind: "lastScan";
+  };
+  offset: {
+    amount: number;
+    unit: "day" | "hour";
+    when: "before" | "after";
+  };
+  yearly: boolean;
+  sendAt: string;
+  timeZone: string;
+  message: string;
+  clearAfter: number | null;
+  on?: boolean;
+  state: "on" | "paused";
+  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
+  nextCheckAt: number | null;
+  sent: number;
+  skipped: number;
+  createdAt: number;
+  updatedAt: number;
+  version: number;
+};
+
+export type MessageRulesRetrieveResponse = {
+  id: string;
+  orgId: string;
+  mode: "live" | "test";
+  name: string;
+  templateIds: Array<string>;
+  match?: Array<{
+    input: string;
+    values: Array<string>;
+  } | {
+    input: string;
+    min?: number;
+    max?: number;
+  } | {
+    input: string;
+    from?: string;
+    to?: string;
+    timeZone: string;
+  }>;
+  anchor: {
+    kind: "input";
+    input: string;
+  } | {
+    kind: "lastScan";
+  };
+  offset: {
+    amount: number;
+    unit: "day" | "hour";
+    when: "before" | "after";
+  };
+  yearly: boolean;
+  sendAt: string;
+  timeZone: string;
+  message: string;
+  clearAfter: number | null;
+  on?: boolean;
+  state: "on" | "paused";
+  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
+  nextCheckAt: number | null;
+  sent: number;
+  skipped: number;
+  createdAt: number;
+  updatedAt: number;
+  version: number;
+};
+
+export type MessageRulesRunsListResponse = {
+  items: Array<Broadcast>;
+  nextCursor: string | null;
 };
 
 export type MessageRulesSendTestParams = {
@@ -950,14 +2713,391 @@ export type MessageRulesUpdateParams = {
   version: number;
 };
 
+export type MessageRulesUpdateResponse = {
+  id: string;
+  orgId: string;
+  mode: "live" | "test";
+  name: string;
+  templateIds: Array<string>;
+  match?: Array<{
+    input: string;
+    values: Array<string>;
+  } | {
+    input: string;
+    min?: number;
+    max?: number;
+  } | {
+    input: string;
+    from?: string;
+    to?: string;
+    timeZone: string;
+  }>;
+  anchor: {
+    kind: "input";
+    input: string;
+  } | {
+    kind: "lastScan";
+  };
+  offset: {
+    amount: number;
+    unit: "day" | "hour";
+    when: "before" | "after";
+  };
+  yearly: boolean;
+  sendAt: string;
+  timeZone: string;
+  message: string;
+  clearAfter: number | null;
+  on?: boolean;
+  state: "on" | "paused";
+  pausedCode: "RULE_CREATOR_REVOKED" | "RULE_INPUT_MISSING" | "RULE_TARGET_INVALID" | "ORG_INACTIVE" | null;
+  nextCheckAt: number | null;
+  sent: number;
+  skipped: number;
+  createdAt: number;
+  updatedAt: number;
+  version: number;
+};
+
+export type MetricsRetrieveActivityResponse = {
+  range: "24h" | "7d" | "30d";
+  bucketMs: number;
+  totals: {
+    issued: number;
+    added: number;
+    removed: number;
+    scans: number;
+    redemptions: number;
+    inWallet: number;
+    notAdded: number;
+  };
+  series: {
+    issued: Array<{
+      t: number;
+      v: number;
+    }>;
+    scans: Array<{
+      t: number;
+      v: number;
+    }>;
+  };
+  templates: Array<{
+    templateId: string;
+    name: string;
+    issued: number;
+    added: number;
+    removed: number;
+    scans: number;
+    redemptions: number;
+    inWallet: number;
+    notAdded: number;
+  }>;
+};
+
+export type MetricsRetrieveOverviewResponse = {
+  source: "analytics_engine" | "d1";
+  range: "24h" | "7d" | "30d";
+  bucketMs: number;
+  unavailable: Array<string>;
+  totals: {
+    passes: number;
+    activePasses: number;
+    voidedPasses: number;
+    holders: number;
+    devices: number;
+    issued: number;
+    updated: number;
+    downloads: number;
+    registrations: number;
+    refreshes: number;
+    pushes: number;
+    pushFailures: number;
+    emails: number;
+    emailFailures: number;
+    emailUnknown?: number;
+    syncRuns: number;
+    signIns: number;
+    scans: number;
+    scanRefused: number;
+  };
+  series: {
+    issued: Array<{
+      t: number;
+      v: number;
+    }>;
+    updated: Array<{
+      t: number;
+      v: number;
+    }>;
+    downloads: Array<{
+      t: number;
+      v: number;
+    }>;
+    registrations: Array<{
+      t: number;
+      v: number;
+    }>;
+    refreshes: Array<{
+      t: number;
+      v: number;
+    }>;
+    pushes: Array<{
+      t: number;
+      v: number;
+    }>;
+    pushFailures: Array<{
+      t: number;
+      v: number;
+    }>;
+    emails: Array<{
+      t: number;
+      v: number;
+    }>;
+    emailFailures: Array<{
+      t: number;
+      v: number;
+    }>;
+    emailUnknown?: Array<{
+      t: number;
+      v: number;
+    }>;
+    syncRuns: Array<{
+      t: number;
+      v: number;
+    }>;
+    signIns: Array<{
+      t: number;
+      v: number;
+    }>;
+    scans: Array<{
+      t: number;
+      v: number;
+    }>;
+  };
+  setup: {
+    orgs: number;
+    assignedTemplates: number;
+    passes: number;
+    approvedTemplates: number;
+    releasedTemplates: number;
+    walletPasses: number;
+    passEmailsSent: number;
+    latestPassId: string | null;
+    scanners: number;
+  };
+  directory?: {
+    users: number;
+    walletAccounts: number;
+  };
+  live: Array<{
+    eventId: string;
+    name: string;
+    arrived: number;
+    expected: number;
+    ratePerMin: number;
+  }>;
+  recent: Array<{
+    at: number;
+    action: string;
+    orgId: string | null;
+    targetId: string | null;
+  }>;
+};
+
+export type NfcBindingsDeleteResponse = {
+  id: string;
+  mode: "live" | "test";
+  kind: "uid" | "sun";
+  system?: "uid" | "sun";
+  type?: {
+    id: string;
+    name: string;
+    use: "member" | "staff" | "visitor";
+  } | null;
+  assurance: "basic" | "secure";
+  hint: string;
+  label: string | null;
+  pool: boolean;
+  status: "active" | "retired";
+  state: "assigned" | "spare" | "lent" | "lost" | "retired";
+  createdAt: number;
+  lastSeenAt: number | null;
+  keysetId: string | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+};
+
 export type NfcBindingsUpdateParams = {
   binding: "pass" | "user";
   passId?: string;
 };
 
+export type NfcBindingsUpdateResponse = {
+  id: string;
+  mode: "live" | "test";
+  kind: "uid" | "sun";
+  system?: "uid" | "sun";
+  type?: {
+    id: string;
+    name: string;
+    use: "member" | "staff" | "visitor";
+  } | null;
+  assurance: "basic" | "secure";
+  hint: string;
+  label: string | null;
+  pool: boolean;
+  status: "active" | "retired";
+  state: "assigned" | "spare" | "lent" | "lost" | "retired";
+  createdAt: number;
+  lastSeenAt: number | null;
+  keysetId: string | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+};
+
+export type NfcEnrollmentsCancelResponse = {
+  id: string;
+  passId: string;
+  scannerId: string;
+  scannerName: string;
+  scope: "pass" | "user";
+  state: "pending" | "done" | "cancelled" | "declined" | "expired" | "failed";
+  createdAt: number;
+  expiresAt: number;
+  endedAt: number | null;
+  shownAt: number | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+  errorCode: "TAG_LOST" | "TAG_SECURE_REQUIRED" | "TAG_CHECK_FAILED" | "TAG_ALREADY_ASSIGNED" | "TAG_REQUEST_BUSY" | "TAG_REQUEST_EXPIRED" | "TAG_HELD_BY_OTHER" | "TAG_NO_ACCOUNT" | "TAG_RETIRED" | "TAG_UID_RANDOM" | "TAG_BINDING_LIMIT" | "TAG_LIMIT" | "TAG_ASSURANCE_LOW" | "TAG_HOLDER_CHANGED" | "SCANNER_OFFLINE" | "TAG_UNDO_EXPIRED" | "TAG_PASS_VOIDED" | "TAG_PASS_REMOVED" | "TAG_PASS_EXPIRED" | "TAG_TYPE_MISMATCH" | "TAG_TYPE_LIMIT" | "TAG_USE_MISMATCH" | "TAG_SECURE_NEEDS_TAP" | "TAG_TYPE_SET" | "TAG_TYPE_SYSTEM" | "TAG_TYPE_SCOPE" | "TAG_TYPED_OFF" | "TAG_TYPE_CHOOSE" | null;
+  hint: string | null;
+};
+
 export type NfcEnrollmentsCreateParams = {
   scannerId: string;
   binding?: "pass" | "user";
+};
+
+export type NfcEnrollmentsCreateResponse = {
+  id: string;
+  passId: string;
+  scannerId: string;
+  scannerName: string;
+  scope: "pass" | "user";
+  state: "pending" | "done" | "cancelled" | "declined" | "expired" | "failed";
+  createdAt: number;
+  expiresAt: number;
+  endedAt: number | null;
+  shownAt: number | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+  errorCode: "TAG_LOST" | "TAG_SECURE_REQUIRED" | "TAG_CHECK_FAILED" | "TAG_ALREADY_ASSIGNED" | "TAG_REQUEST_BUSY" | "TAG_REQUEST_EXPIRED" | "TAG_HELD_BY_OTHER" | "TAG_NO_ACCOUNT" | "TAG_RETIRED" | "TAG_UID_RANDOM" | "TAG_BINDING_LIMIT" | "TAG_LIMIT" | "TAG_ASSURANCE_LOW" | "TAG_HOLDER_CHANGED" | "SCANNER_OFFLINE" | "TAG_UNDO_EXPIRED" | "TAG_PASS_VOIDED" | "TAG_PASS_REMOVED" | "TAG_PASS_EXPIRED" | "TAG_TYPE_MISMATCH" | "TAG_TYPE_LIMIT" | "TAG_USE_MISMATCH" | "TAG_SECURE_NEEDS_TAP" | "TAG_TYPE_SET" | "TAG_TYPE_SYSTEM" | "TAG_TYPE_SCOPE" | "TAG_TYPED_OFF" | "TAG_TYPE_CHOOSE" | null;
+  hint: string | null;
+};
+
+export type NfcEnrollmentsListScannersResponse = {
+  items: Array<{
+    id: string;
+    name: string;
+    sessionName: string | null;
+    role: "door" | "desk" | "manager" | null;
+    online: boolean;
+    unavailable: "offline" | "no_tags" | "requests_off" | "busy" | "mode" | "screen" | null;
+    secureOnly: boolean;
+    lastUsedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type NfcEnrollmentsRetrieveResponse = {
+  id: string;
+  passId: string;
+  scannerId: string;
+  scannerName: string;
+  scope: "pass" | "user";
+  state: "pending" | "done" | "cancelled" | "declined" | "expired" | "failed";
+  createdAt: number;
+  expiresAt: number;
+  endedAt: number | null;
+  shownAt: number | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+  errorCode: "TAG_LOST" | "TAG_SECURE_REQUIRED" | "TAG_CHECK_FAILED" | "TAG_ALREADY_ASSIGNED" | "TAG_REQUEST_BUSY" | "TAG_REQUEST_EXPIRED" | "TAG_HELD_BY_OTHER" | "TAG_NO_ACCOUNT" | "TAG_RETIRED" | "TAG_UID_RANDOM" | "TAG_BINDING_LIMIT" | "TAG_LIMIT" | "TAG_ASSURANCE_LOW" | "TAG_HOLDER_CHANGED" | "SCANNER_OFFLINE" | "TAG_UNDO_EXPIRED" | "TAG_PASS_VOIDED" | "TAG_PASS_REMOVED" | "TAG_PASS_EXPIRED" | "TAG_TYPE_MISMATCH" | "TAG_TYPE_LIMIT" | "TAG_USE_MISMATCH" | "TAG_SECURE_NEEDS_TAP" | "TAG_TYPE_SET" | "TAG_TYPE_SYSTEM" | "TAG_TYPE_SCOPE" | "TAG_TYPED_OFF" | "TAG_TYPE_CHOOSE" | null;
+  hint: string | null;
 };
 
 export type NfcKeysetsCreateParams = {
@@ -975,14 +3115,146 @@ export type NfcKeysetsCreateParams = {
   metaKey: string;
 };
 
+export type NfcKeysetsCreateResponse = {
+  id: string;
+  name: string;
+  slug: string;
+  diversify: boolean;
+  perTag: boolean;
+  createdAt: number;
+  disabledAt: number | null;
+  keys: {
+    metaKey: string;
+    fileKey: string;
+  } | null;
+  versions: Array<{
+    version: number;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    stateAt: number | null;
+    revokedAt: number | null;
+    tags: number;
+  }>;
+};
+
+export type NfcKeysetsDisableResponse = {
+  id: string;
+  name: string;
+  slug: string;
+  diversify: boolean;
+  perTag: boolean;
+  createdAt: number;
+  disabledAt: number | null;
+  versions: Array<{
+    version: number;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    stateAt: number | null;
+    revokedAt: number | null;
+    tags: number;
+  }>;
+};
+
 export type NfcKeysetsImportTagsParams = {
   csv: string;
   dryRun: boolean;
   replace?: boolean;
 };
 
+export type NfcKeysetsImportTagsResponse = {
+  dryRun: boolean;
+  rows: number;
+  ok: number;
+  added: number;
+  problems: Array<{
+    line: number;
+    uid: string | null;
+    reason: "bad_uid" | "bad_key" | "weak_key" | "dup_file" | "dup_key" | "meta_key" | "exists" | "not_on_keyset";
+  }>;
+  moreProblems: number;
+};
+
+export type NfcKeysetsListResponse = {
+  items: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    diversify: boolean;
+    perTag: boolean;
+    createdAt: number;
+    disabledAt: number | null;
+    versions: Array<{
+      version: number;
+      state: "active" | "retiring" | "retired";
+      createdAt: number;
+      stateAt: number | null;
+      revokedAt: number | null;
+      tags: number;
+    }>;
+  }>;
+  nextCursor: string | null;
+};
+
 export type NfcKeysetsReenrollParams = {
   toKeysetId: string;
+};
+
+export type NfcKeysetsReenrollResponse = {
+  moved: number;
+  ownKey: number;
+  keyset: {
+    id: string;
+    name: string;
+    slug: string;
+    diversify: boolean;
+    perTag: boolean;
+    createdAt: number;
+    disabledAt: number | null;
+    versions: Array<{
+      version: number;
+      state: "active" | "retiring" | "retired";
+      createdAt: number;
+      stateAt: number | null;
+      revokedAt: number | null;
+      tags: number;
+    }>;
+  };
+};
+
+export type NfcKeysetsRetireKeyResponse = {
+  id: string;
+  name: string;
+  slug: string;
+  diversify: boolean;
+  perTag: boolean;
+  createdAt: number;
+  disabledAt: number | null;
+  versions: Array<{
+    version: number;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    stateAt: number | null;
+    revokedAt: number | null;
+    tags: number;
+  }>;
+};
+
+export type NfcKeysetsRevokeKeyResponse = {
+  id: string;
+  name: string;
+  slug: string;
+  diversify: boolean;
+  perTag: boolean;
+  createdAt: number;
+  disabledAt: number | null;
+  versions: Array<{
+    version: number;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    stateAt: number | null;
+    revokedAt: number | null;
+    tags: number;
+  }>;
 };
 
 export type NfcKeysetsRotateParams = {
@@ -994,8 +3266,48 @@ export type NfcKeysetsRotateParams = {
   metaKey: string;
 };
 
+export type NfcKeysetsRotateResponse = {
+  id: string;
+  name: string;
+  slug: string;
+  diversify: boolean;
+  perTag: boolean;
+  createdAt: number;
+  disabledAt: number | null;
+  keys: {
+    metaKey: string;
+    fileKey: string;
+  } | null;
+  versions: Array<{
+    version: number;
+    state: "active" | "retiring" | "retired";
+    createdAt: number;
+    stateAt: number | null;
+    revokedAt: number | null;
+    tags: number;
+  }>;
+};
+
 export type NfcTagTypesArchiveParams = {
   version: number;
+};
+
+export type NfcTagTypesArchiveResponse = {
+  id: string;
+  system: "uid" | "sun";
+  name: string;
+  use: "member" | "staff" | "visitor";
+  scopes?: "pass" | "user" | "both";
+  perPass?: number;
+  bindingDays?: number | null;
+  confirm?: "none" | "staff" | "manager";
+  typed?: boolean;
+  templateIds?: Array<string>;
+  version: number;
+  tagCount?: number;
+  createdAt: number;
+  updatedAt: number;
+  archivedAt: number | null;
 };
 
 export type NfcTagTypesCreateParams = {
@@ -1010,6 +3322,45 @@ export type NfcTagTypesCreateParams = {
   system?: "uid" | "sun";
 };
 
+export type NfcTagTypesCreateResponse = {
+  id: string;
+  system: "uid" | "sun";
+  name: string;
+  use: "member" | "staff" | "visitor";
+  scopes?: "pass" | "user" | "both";
+  perPass?: number;
+  bindingDays?: number | null;
+  confirm?: "none" | "staff" | "manager";
+  typed?: boolean;
+  templateIds?: Array<string>;
+  version: number;
+  tagCount?: number;
+  createdAt: number;
+  updatedAt: number;
+  archivedAt: number | null;
+};
+
+export type NfcTagTypesListResponse = {
+  items: Array<{
+    id: string;
+    system: "uid" | "sun";
+    name: string;
+    use: "member" | "staff" | "visitor";
+    scopes?: "pass" | "user" | "both";
+    perPass?: number;
+    bindingDays?: number | null;
+    confirm?: "none" | "staff" | "manager";
+    typed?: boolean;
+    templateIds?: Array<string>;
+    version: number;
+    tagCount?: number;
+    createdAt: number;
+    updatedAt: number;
+    archivedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
 export type NfcTagTypesUpdateParams = {
   version: number;
   name?: string;
@@ -1022,6 +3373,24 @@ export type NfcTagTypesUpdateParams = {
   templateIds?: Array<string>;
 };
 
+export type NfcTagTypesUpdateResponse = {
+  id: string;
+  system: "uid" | "sun";
+  name: string;
+  use: "member" | "staff" | "visitor";
+  scopes?: "pass" | "user" | "both";
+  perPass?: number;
+  bindingDays?: number | null;
+  confirm?: "none" | "staff" | "manager";
+  typed?: boolean;
+  templateIds?: Array<string>;
+  version: number;
+  tagCount?: number;
+  createdAt: number;
+  updatedAt: number;
+  archivedAt: number | null;
+};
+
 export type NfcTagsAssignParams = {
   id: string;
   format?: "hex" | "reversed" | "decimal";
@@ -1032,14 +3401,431 @@ export type NfcTagsAssignParams = {
   binding: "pass" | "user";
 };
 
+export type NfcTagsAssignResponse = {
+  id: string;
+  mode: "live" | "test";
+  kind: "uid" | "sun";
+  system?: "uid" | "sun";
+  type?: {
+    id: string;
+    name: string;
+    use: "member" | "staff" | "visitor";
+  } | null;
+  assurance: "basic" | "secure";
+  hint: string;
+  label: string | null;
+  pool: boolean;
+  status: "active" | "retired";
+  state: "assigned" | "spare" | "lent" | "lost" | "retired";
+  createdAt: number;
+  lastSeenAt: number | null;
+  keysetId: string | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+};
+
+export type NfcTagsListForPassResponse = {
+  items: Array<{
+    id: string;
+    mode: "live" | "test";
+    kind: "uid" | "sun";
+    system?: "uid" | "sun";
+    type?: {
+      id: string;
+      name: string;
+      use: "member" | "staff" | "visitor";
+    } | null;
+    assurance: "basic" | "secure";
+    hint: string;
+    label: string | null;
+    pool: boolean;
+    status: "active" | "retired";
+    state: "assigned" | "spare" | "lent" | "lost" | "retired";
+    createdAt: number;
+    lastSeenAt: number | null;
+    keysetId: string | null;
+    binding: {
+      id: string;
+      tagId: string;
+      scope: "pass" | "user";
+      passId: string;
+      passTitle: string | null;
+      userId: string | null;
+      holderName: string | null;
+      source: "scanner" | "remote" | "admin";
+      lent?: boolean;
+      boundAt: number;
+      boundByName: string | null;
+      scannerName: string | null;
+      expiresAt?: number | null;
+      endedAt: number | null;
+      endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+    } | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type NfcTagsListForUserResponse = {
+  items: Array<{
+    id: string;
+    mode: "live" | "test";
+    kind: "uid" | "sun";
+    system?: "uid" | "sun";
+    type?: {
+      id: string;
+      name: string;
+      use: "member" | "staff" | "visitor";
+    } | null;
+    assurance: "basic" | "secure";
+    hint: string;
+    label: string | null;
+    pool: boolean;
+    status: "active" | "retired";
+    state: "assigned" | "spare" | "lent" | "lost" | "retired";
+    createdAt: number;
+    lastSeenAt: number | null;
+    keysetId: string | null;
+    binding: {
+      id: string;
+      tagId: string;
+      scope: "pass" | "user";
+      passId: string;
+      passTitle: string | null;
+      userId: string | null;
+      holderName: string | null;
+      source: "scanner" | "remote" | "admin";
+      lent?: boolean;
+      boundAt: number;
+      boundByName: string | null;
+      scannerName: string | null;
+      expiresAt?: number | null;
+      endedAt: number | null;
+      endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+    } | null;
+    orgId: string;
+    orgName: string;
+  }>;
+  nextCursor: string | null;
+};
+
+export type NfcTagsListHistoryResponse = {
+  items: Array<{
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  }>;
+  nextCursor: string | null;
+  events: Array<{
+    at: number;
+    action: "lost" | "retire" | "restore" | "update";
+    actorName: string | null;
+  }>;
+};
+
+export type NfcTagsListResponse = {
+  items: Array<{
+    id: string;
+    mode: "live" | "test";
+    kind: "uid" | "sun";
+    system?: "uid" | "sun";
+    type?: {
+      id: string;
+      name: string;
+      use: "member" | "staff" | "visitor";
+    } | null;
+    assurance: "basic" | "secure";
+    hint: string;
+    label: string | null;
+    pool: boolean;
+    status: "active" | "retired";
+    state: "assigned" | "spare" | "lent" | "lost" | "retired";
+    createdAt: number;
+    lastSeenAt: number | null;
+    keysetId: string | null;
+    binding: {
+      id: string;
+      tagId: string;
+      scope: "pass" | "user";
+      passId: string;
+      passTitle: string | null;
+      userId: string | null;
+      holderName: string | null;
+      source: "scanner" | "remote" | "admin";
+      lent?: boolean;
+      boundAt: number;
+      boundByName: string | null;
+      scannerName: string | null;
+      expiresAt?: number | null;
+      endedAt: number | null;
+      endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+    } | null;
+  }>;
+  nextCursor: string | null;
+};
+
 export type NfcTagsRebindParams = {
   tagId: string;
   binding: "pass" | "user";
 };
 
+export type NfcTagsRebindResponse = {
+  id: string;
+  mode: "live" | "test";
+  kind: "uid" | "sun";
+  system?: "uid" | "sun";
+  type?: {
+    id: string;
+    name: string;
+    use: "member" | "staff" | "visitor";
+  } | null;
+  assurance: "basic" | "secure";
+  hint: string;
+  label: string | null;
+  pool: boolean;
+  status: "active" | "retired";
+  state: "assigned" | "spare" | "lent" | "lost" | "retired";
+  createdAt: number;
+  lastSeenAt: number | null;
+  keysetId: string | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+};
+
+export type NfcTagsReportLostResponse = {
+  id: string;
+  mode: "live" | "test";
+  kind: "uid" | "sun";
+  system?: "uid" | "sun";
+  type?: {
+    id: string;
+    name: string;
+    use: "member" | "staff" | "visitor";
+  } | null;
+  assurance: "basic" | "secure";
+  hint: string;
+  label: string | null;
+  pool: boolean;
+  status: "active" | "retired";
+  state: "assigned" | "spare" | "lent" | "lost" | "retired";
+  createdAt: number;
+  lastSeenAt: number | null;
+  keysetId: string | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+};
+
+export type NfcTagsRestoreResponse = {
+  id: string;
+  mode: "live" | "test";
+  kind: "uid" | "sun";
+  system?: "uid" | "sun";
+  type?: {
+    id: string;
+    name: string;
+    use: "member" | "staff" | "visitor";
+  } | null;
+  assurance: "basic" | "secure";
+  hint: string;
+  label: string | null;
+  pool: boolean;
+  status: "active" | "retired";
+  state: "assigned" | "spare" | "lent" | "lost" | "retired";
+  createdAt: number;
+  lastSeenAt: number | null;
+  keysetId: string | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+};
+
+export type NfcTagsRetireResponse = {
+  id: string;
+  mode: "live" | "test";
+  kind: "uid" | "sun";
+  system?: "uid" | "sun";
+  type?: {
+    id: string;
+    name: string;
+    use: "member" | "staff" | "visitor";
+  } | null;
+  assurance: "basic" | "secure";
+  hint: string;
+  label: string | null;
+  pool: boolean;
+  status: "active" | "retired";
+  state: "assigned" | "spare" | "lent" | "lost" | "retired";
+  createdAt: number;
+  lastSeenAt: number | null;
+  keysetId: string | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+};
+
+export type NfcTagsRetrieveResponse = {
+  id: string;
+  mode: "live" | "test";
+  kind: "uid" | "sun";
+  system?: "uid" | "sun";
+  type?: {
+    id: string;
+    name: string;
+    use: "member" | "staff" | "visitor";
+  } | null;
+  assurance: "basic" | "secure";
+  hint: string;
+  label: string | null;
+  pool: boolean;
+  status: "active" | "retired";
+  state: "assigned" | "spare" | "lent" | "lost" | "retired";
+  createdAt: number;
+  lastSeenAt: number | null;
+  keysetId: string | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
+};
+
 export type NfcTagsUpdateParams = {
   label?: string | null;
   pool?: boolean;
+};
+
+export type NfcTagsUpdateResponse = {
+  id: string;
+  mode: "live" | "test";
+  kind: "uid" | "sun";
+  system?: "uid" | "sun";
+  type?: {
+    id: string;
+    name: string;
+    use: "member" | "staff" | "visitor";
+  } | null;
+  assurance: "basic" | "secure";
+  hint: string;
+  label: string | null;
+  pool: boolean;
+  status: "active" | "retired";
+  state: "assigned" | "spare" | "lent" | "lost" | "retired";
+  createdAt: number;
+  lastSeenAt: number | null;
+  keysetId: string | null;
+  binding: {
+    id: string;
+    tagId: string;
+    scope: "pass" | "user";
+    passId: string;
+    passTitle: string | null;
+    userId: string | null;
+    holderName: string | null;
+    source: "scanner" | "remote" | "admin";
+    lent?: boolean;
+    boundAt: number;
+    boundByName: string | null;
+    scannerName: string | null;
+    expiresAt?: number | null;
+    endedAt: number | null;
+    endCause: "admin" | "staff" | "undo" | "lost" | "replaced" | "moved" | "holder_changed" | "pass_deleted" | "no_passes" | "offboard" | "visitor_out" | "pass_ended" | "tag_retired" | "channel_off" | "expired" | "type_changed" | null;
+  } | null;
 };
 
 export type Org = {
@@ -1085,6 +3871,36 @@ export type OrgBranding = {
   logoHasName?: boolean;
 };
 
+export type OrgExportsCreateLinkResponse = {
+  url: string;
+  expiresAt: number;
+};
+
+export type OrgExportsCreateResponse = {
+  id: string;
+  state: "queued" | "running" | "ready" | "failed" | "expired";
+  createdAt: number;
+  finishedAt: number | null;
+  expiresAt: number | null;
+  bytes: number | null;
+  entities: Record<string, number> | null;
+  errorCode: string | null;
+};
+
+export type OrgExportsListResponse = {
+  items: Array<{
+    id: string;
+    state: "queued" | "running" | "ready" | "failed" | "expired";
+    createdAt: number;
+    finishedAt: number | null;
+    expiresAt: number | null;
+    bytes: number | null;
+    entities: Record<string, number> | null;
+    errorCode: string | null;
+  }>;
+  nextCursor: string | null;
+};
+
 export type OrgSummary = {
   id: string;
   slug: string;
@@ -1114,6 +3930,50 @@ export type OrgSummary = {
 
 export type OrgsCloseParams = {
   confirmSlug?: string;
+};
+
+export type OrgsCloseResponse = {
+  orgId: string;
+  status: "active" | "suspended" | "closed";
+  closedAt: number | null;
+  purgeAfter: number | null;
+  purging: boolean;
+  purged: boolean;
+  held: boolean;
+  canReopen: boolean;
+};
+
+export type OrgsEntitlementsRetrieveResponse = {
+  orgId: string;
+  preset: string | null;
+  label: string | null;
+  items: Array<{
+    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    value: number | string | Array<string> | null;
+    source: "preset" | "override";
+  }>;
+};
+
+export type OrgsReopenResponse = {
+  orgId: string;
+  status: "active" | "suspended" | "closed";
+  closedAt: number | null;
+  purgeAfter: number | null;
+  purging: boolean;
+  purged: boolean;
+  held: boolean;
+  canReopen: boolean;
+};
+
+export type OrgsRetrieveLifecycleResponse = {
+  orgId: string;
+  status: "active" | "suspended" | "closed";
+  closedAt: number | null;
+  purgeAfter: number | null;
+  purging: boolean;
+  purged: boolean;
+  held: boolean;
+  canReopen: boolean;
 };
 
 export type OrgsStageBrandAssetParams = {
@@ -1462,6 +4322,139 @@ export type PassImportsCheckParams = {
   };
 };
 
+export type PassImportsCheckResponse = {
+  id: string;
+  templateId: string;
+  templateVersion: string | null;
+  mode: "live" | "test";
+  state: "mapping" | "checking" | "ready" | "committing" | "done" | "failed" | "stale" | "expired" | "discarded";
+  source: {
+    kind: "file" | "url";
+    name: string;
+  };
+  columns: Array<{
+    pointer: string;
+    label: string;
+    samples: Array<string>;
+  }>;
+  plan: {
+    mapping: Record<string, {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    }>;
+    holderEmail: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    externalId: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    match: "externalId" | "email" | "none";
+    keepManual?: boolean;
+    save?: boolean;
+    overrides?: Record<string, Record<string, string>>;
+  } | null;
+  counts: {
+    rows: number;
+    create: number;
+    update: number;
+    unchanged: number;
+    errors: number;
+    warnings: number;
+    emailable: number;
+    errorsCreate?: number;
+    errorsUpdate?: number;
+  } | null;
+  previews: Array<{
+    row: number;
+    action: "create" | "update";
+    input: Record<string, unknown>;
+  }>;
+  problems: Array<{
+    row: number;
+    column: string | null;
+    field: string | null;
+    label?: string | null;
+    value?: string | null;
+    code: string;
+    message: string;
+    severity: "error" | "warning";
+  }>;
+  problemTotals: {
+    errors: number;
+    warnings: number;
+  };
+  problemsTruncated: boolean;
+  emailBudget: number | null;
+  email: boolean;
+  progress: {
+    done: number;
+    created: number;
+    updated: number;
+    unchanged: number;
+    failed: number;
+    skipped?: number;
+    notEmailed: number;
+    removed: number;
+  } | null;
+  errorCode: string | null;
+  errorFile: boolean;
+  createdAt: number;
+  checkedAt: number | null;
+  committedAt: number | null;
+  finishedAt: number | null;
+  expiresAt: number;
+  mapping?: {
+    fields: Array<{
+      role: "holderEmail" | "externalId" | "input";
+      target: string;
+      label: string;
+      required: boolean;
+      from: Array<string>;
+      confidence: "exact" | "similar" | "values" | "join" | null;
+      matchBy: boolean;
+      entry: {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      } | null;
+      values: Array<{
+        value: string;
+        count: number;
+        to: string | null;
+      }>;
+      date: {
+        format: "iso" | "ymd" | "mdy" | "dmy" | null;
+        choices: Array<"iso" | "ymd" | "mdy" | "dmy">;
+        parsed: number;
+        total: number;
+      } | null;
+    }>;
+    unused: Array<{
+      pointer: string;
+      label: string;
+    }>;
+    columns: number;
+    used: number;
+    missing: Array<string>;
+  };
+  emailHoldUntil?: number | null;
+  undo?: PassImportUndo;
+  unrevertable?: number;
+};
+
 export type PassImportsCommitParams = {
   skipInvalid?: boolean;
   email?: boolean | {
@@ -1470,6 +4463,139 @@ export type PassImportsCommitParams = {
     send: "held";
     holdMs?: number;
   };
+};
+
+export type PassImportsCommitResponse = {
+  id: string;
+  templateId: string;
+  templateVersion: string | null;
+  mode: "live" | "test";
+  state: "mapping" | "checking" | "ready" | "committing" | "done" | "failed" | "stale" | "expired" | "discarded";
+  source: {
+    kind: "file" | "url";
+    name: string;
+  };
+  columns: Array<{
+    pointer: string;
+    label: string;
+    samples: Array<string>;
+  }>;
+  plan: {
+    mapping: Record<string, {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    }>;
+    holderEmail: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    externalId: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    match: "externalId" | "email" | "none";
+    keepManual?: boolean;
+    save?: boolean;
+    overrides?: Record<string, Record<string, string>>;
+  } | null;
+  counts: {
+    rows: number;
+    create: number;
+    update: number;
+    unchanged: number;
+    errors: number;
+    warnings: number;
+    emailable: number;
+    errorsCreate?: number;
+    errorsUpdate?: number;
+  } | null;
+  previews: Array<{
+    row: number;
+    action: "create" | "update";
+    input: Record<string, unknown>;
+  }>;
+  problems: Array<{
+    row: number;
+    column: string | null;
+    field: string | null;
+    label?: string | null;
+    value?: string | null;
+    code: string;
+    message: string;
+    severity: "error" | "warning";
+  }>;
+  problemTotals: {
+    errors: number;
+    warnings: number;
+  };
+  problemsTruncated: boolean;
+  emailBudget: number | null;
+  email: boolean;
+  progress: {
+    done: number;
+    created: number;
+    updated: number;
+    unchanged: number;
+    failed: number;
+    skipped?: number;
+    notEmailed: number;
+    removed: number;
+  } | null;
+  errorCode: string | null;
+  errorFile: boolean;
+  createdAt: number;
+  checkedAt: number | null;
+  committedAt: number | null;
+  finishedAt: number | null;
+  expiresAt: number;
+  mapping?: {
+    fields: Array<{
+      role: "holderEmail" | "externalId" | "input";
+      target: string;
+      label: string;
+      required: boolean;
+      from: Array<string>;
+      confidence: "exact" | "similar" | "values" | "join" | null;
+      matchBy: boolean;
+      entry: {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      } | null;
+      values: Array<{
+        value: string;
+        count: number;
+        to: string | null;
+      }>;
+      date: {
+        format: "iso" | "ymd" | "mdy" | "dmy" | null;
+        choices: Array<"iso" | "ymd" | "mdy" | "dmy">;
+        parsed: number;
+        total: number;
+      } | null;
+    }>;
+    unused: Array<{
+      pointer: string;
+      label: string;
+    }>;
+    columns: number;
+    used: number;
+    missing: Array<string>;
+  };
+  emailHoldUntil?: number | null;
+  undo?: PassImportUndo;
+  unrevertable?: number;
 };
 
 export type PassImportsCreateParams = {
@@ -1512,6 +4638,279 @@ export type PassImportsCreateParams = {
   mapping?: "auto";
 };
 
+export type PassImportsCreateResponse = {
+  id: string;
+  templateId: string;
+  templateVersion: string | null;
+  mode: "live" | "test";
+  state: "mapping" | "checking" | "ready" | "committing" | "done" | "failed" | "stale" | "expired" | "discarded";
+  source: {
+    kind: "file" | "url";
+    name: string;
+  };
+  columns: Array<{
+    pointer: string;
+    label: string;
+    samples: Array<string>;
+  }>;
+  plan: {
+    mapping: Record<string, {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    }>;
+    holderEmail: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    externalId: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    match: "externalId" | "email" | "none";
+    keepManual?: boolean;
+    save?: boolean;
+    overrides?: Record<string, Record<string, string>>;
+  } | null;
+  counts: {
+    rows: number;
+    create: number;
+    update: number;
+    unchanged: number;
+    errors: number;
+    warnings: number;
+    emailable: number;
+    errorsCreate?: number;
+    errorsUpdate?: number;
+  } | null;
+  previews: Array<{
+    row: number;
+    action: "create" | "update";
+    input: Record<string, unknown>;
+  }>;
+  problems: Array<{
+    row: number;
+    column: string | null;
+    field: string | null;
+    label?: string | null;
+    value?: string | null;
+    code: string;
+    message: string;
+    severity: "error" | "warning";
+  }>;
+  problemTotals: {
+    errors: number;
+    warnings: number;
+  };
+  problemsTruncated: boolean;
+  emailBudget: number | null;
+  email: boolean;
+  progress: {
+    done: number;
+    created: number;
+    updated: number;
+    unchanged: number;
+    failed: number;
+    skipped?: number;
+    notEmailed: number;
+    removed: number;
+  } | null;
+  errorCode: string | null;
+  errorFile: boolean;
+  createdAt: number;
+  checkedAt: number | null;
+  committedAt: number | null;
+  finishedAt: number | null;
+  expiresAt: number;
+  mapping?: {
+    fields: Array<{
+      role: "holderEmail" | "externalId" | "input";
+      target: string;
+      label: string;
+      required: boolean;
+      from: Array<string>;
+      confidence: "exact" | "similar" | "values" | "join" | null;
+      matchBy: boolean;
+      entry: {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      } | null;
+      values: Array<{
+        value: string;
+        count: number;
+        to: string | null;
+      }>;
+      date: {
+        format: "iso" | "ymd" | "mdy" | "dmy" | null;
+        choices: Array<"iso" | "ymd" | "mdy" | "dmy">;
+        parsed: number;
+        total: number;
+      } | null;
+    }>;
+    unused: Array<{
+      pointer: string;
+      label: string;
+    }>;
+    columns: number;
+    used: number;
+    missing: Array<string>;
+  };
+  emailHoldUntil?: number | null;
+  undo?: PassImportUndo;
+  unrevertable?: number;
+};
+
+export type PassImportsDeleteResponse = {
+  ok: true;
+};
+
+export type PassImportsListResponse = {
+  items: Array<{
+    id: string;
+    templateId: string;
+    templateVersion: string | null;
+    mode: "live" | "test";
+    state: "mapping" | "checking" | "ready" | "committing" | "done" | "failed" | "stale" | "expired" | "discarded";
+    source: {
+      kind: "file" | "url";
+      name: string;
+    };
+    columns: Array<{
+      pointer: string;
+      label: string;
+      samples: Array<string>;
+    }>;
+    plan: {
+      mapping: Record<string, {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      }>;
+      holderEmail: {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      } | null;
+      externalId: {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      } | null;
+      match: "externalId" | "email" | "none";
+      keepManual?: boolean;
+      save?: boolean;
+      overrides?: Record<string, Record<string, string>>;
+    } | null;
+    counts: {
+      rows: number;
+      create: number;
+      update: number;
+      unchanged: number;
+      errors: number;
+      warnings: number;
+      emailable: number;
+      errorsCreate?: number;
+      errorsUpdate?: number;
+    } | null;
+    previews: Array<{
+      row: number;
+      action: "create" | "update";
+      input: Record<string, unknown>;
+    }>;
+    problems: Array<{
+      row: number;
+      column: string | null;
+      field: string | null;
+      label?: string | null;
+      value?: string | null;
+      code: string;
+      message: string;
+      severity: "error" | "warning";
+    }>;
+    problemTotals: {
+      errors: number;
+      warnings: number;
+    };
+    problemsTruncated: boolean;
+    emailBudget: number | null;
+    email: boolean;
+    progress: {
+      done: number;
+      created: number;
+      updated: number;
+      unchanged: number;
+      failed: number;
+      skipped?: number;
+      notEmailed: number;
+      removed: number;
+    } | null;
+    errorCode: string | null;
+    errorFile: boolean;
+    createdAt: number;
+    checkedAt: number | null;
+    committedAt: number | null;
+    finishedAt: number | null;
+    expiresAt: number;
+    mapping?: {
+      fields: Array<{
+        role: "holderEmail" | "externalId" | "input";
+        target: string;
+        label: string;
+        required: boolean;
+        from: Array<string>;
+        confidence: "exact" | "similar" | "values" | "join" | null;
+        matchBy: boolean;
+        entry: {
+          from: string;
+          transform?: {
+            kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+            options?: Record<string, unknown>;
+          };
+        } | null;
+        values: Array<{
+          value: string;
+          count: number;
+          to: string | null;
+        }>;
+        date: {
+          format: "iso" | "ymd" | "mdy" | "dmy" | null;
+          choices: Array<"iso" | "ymd" | "mdy" | "dmy">;
+          parsed: number;
+          total: number;
+        } | null;
+      }>;
+      unused: Array<{
+        pointer: string;
+        label: string;
+      }>;
+      columns: number;
+      used: number;
+      missing: Array<string>;
+    };
+    emailHoldUntil?: number | null;
+    undo?: PassImportUndo;
+    unrevertable?: number;
+  }>;
+  nextCursor: string | null;
+};
+
 export type PassImportsMappingsSaveParams = {
   name: string;
   columns: Array<string>;
@@ -1549,8 +4948,179 @@ export type PassImportsRemoveCreatedParams = {
   cursor: string | null;
 };
 
+export type PassImportsRemoveCreatedResponse = {
+  removed: number;
+  skipped: Array<{
+    passId: string;
+    code: string;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PassImportsRetrieveResponse = {
+  id: string;
+  templateId: string;
+  templateVersion: string | null;
+  mode: "live" | "test";
+  state: "mapping" | "checking" | "ready" | "committing" | "done" | "failed" | "stale" | "expired" | "discarded";
+  source: {
+    kind: "file" | "url";
+    name: string;
+  };
+  columns: Array<{
+    pointer: string;
+    label: string;
+    samples: Array<string>;
+  }>;
+  plan: {
+    mapping: Record<string, {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    }>;
+    holderEmail: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    externalId: {
+      from: string;
+      transform?: {
+        kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+        options?: Record<string, unknown>;
+      };
+    } | null;
+    match: "externalId" | "email" | "none";
+    keepManual?: boolean;
+    save?: boolean;
+    overrides?: Record<string, Record<string, string>>;
+  } | null;
+  counts: {
+    rows: number;
+    create: number;
+    update: number;
+    unchanged: number;
+    errors: number;
+    warnings: number;
+    emailable: number;
+    errorsCreate?: number;
+    errorsUpdate?: number;
+  } | null;
+  previews: Array<{
+    row: number;
+    action: "create" | "update";
+    input: Record<string, unknown>;
+  }>;
+  problems: Array<{
+    row: number;
+    column: string | null;
+    field: string | null;
+    label?: string | null;
+    value?: string | null;
+    code: string;
+    message: string;
+    severity: "error" | "warning";
+  }>;
+  problemTotals: {
+    errors: number;
+    warnings: number;
+  };
+  problemsTruncated: boolean;
+  emailBudget: number | null;
+  email: boolean;
+  progress: {
+    done: number;
+    created: number;
+    updated: number;
+    unchanged: number;
+    failed: number;
+    skipped?: number;
+    notEmailed: number;
+    removed: number;
+  } | null;
+  errorCode: string | null;
+  errorFile: boolean;
+  createdAt: number;
+  checkedAt: number | null;
+  committedAt: number | null;
+  finishedAt: number | null;
+  expiresAt: number;
+  mapping?: {
+    fields: Array<{
+      role: "holderEmail" | "externalId" | "input";
+      target: string;
+      label: string;
+      required: boolean;
+      from: Array<string>;
+      confidence: "exact" | "similar" | "values" | "join" | null;
+      matchBy: boolean;
+      entry: {
+        from: string;
+        transform?: {
+          kind: "enum" | "bool-status" | "date" | "constant" | "trim" | "upper" | "lower" | "join";
+          options?: Record<string, unknown>;
+        };
+      } | null;
+      values: Array<{
+        value: string;
+        count: number;
+        to: string | null;
+      }>;
+      date: {
+        format: "iso" | "ymd" | "mdy" | "dmy" | null;
+        choices: Array<"iso" | "ymd" | "mdy" | "dmy">;
+        parsed: number;
+        total: number;
+      } | null;
+    }>;
+    unused: Array<{
+      pointer: string;
+      label: string;
+    }>;
+    columns: number;
+    used: number;
+    missing: Array<string>;
+  };
+  emailHoldUntil?: number | null;
+  undo?: PassImportUndo;
+  unrevertable?: number;
+};
+
+export type PassImportsRowsListResponse = {
+  items: Array<{
+    row: number;
+    action: "create" | "update" | "unchanged" | "error";
+    state: "planned" | "done" | "failed" | "skipped";
+    result: "created" | "updated" | "unchanged" | null;
+    passId: string | null;
+    externalId: string | null;
+    code: string | null;
+    message: string | null;
+    emailed: boolean;
+    changes?: Array<{
+      key: string;
+      label: string;
+      from: string | null;
+      to: string | null;
+    }>;
+    wouldBe?: "create" | "update" | null;
+  }>;
+  nextCursor: string | null;
+};
+
 export type PassImportsSendEmailsParams = {
   cursor: string | null;
+};
+
+export type PassImportsSendEmailsResponse = {
+  sent: number;
+  skipped: number;
+  alreadyQueued?: number;
+  nextCursor: string | null;
 };
 
 export type PassImportsUndoParams = Record<string, unknown>;
@@ -2270,6 +5840,46 @@ export type PassVoidedEvent = {
   sample?: true;
 };
 
+export type PassesActivityListResponse = {
+  items: Array<{
+    id: string;
+    passId: string;
+    mode: "live" | "test";
+    kind: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.link_rotated" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "email.queued" | "email.sent" | "email.failed" | "email.captured" | "page.opened" | "pass.downloaded" | "bundle.opened" | "bundle.downloaded" | "device.registered" | "device.unregistered" | "device.fetched" | "device.log" | "wallet.saved" | "wallet.removed" | "push.queued" | "push.sent" | "push.failed" | "scan.checked_in" | "scan.redeemed" | "scan.adjusted" | "scan.rejected" | "scan.checked_out" | "scan.heads_up" | "scan.undone" | "message.applied" | "schedule.applied";
+    device: string | null;
+    actorType: "user" | "api_key" | "system" | "connection" | "device" | "holder" | "scanner" | null;
+    actorId: string | null;
+    data: Record<string, unknown>;
+    at: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PassesAssetsDeleteResponse = {
+  ok: true;
+};
+
+export type PassesAssetsListResponse = {
+  items: Array<{
+    name: string;
+    sha1: string;
+    size: number;
+    width: number | null;
+    height: number | null;
+    createdAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PassesAssetsUploadResponse = {
+  name: string;
+  sha1: string;
+  size: number;
+  width: number | null;
+  height: number | null;
+  createdAt: number;
+};
+
 export type PassesBulkApplyParams = {
   action: "void" | "send_email" | "remove";
   message?: string;
@@ -2283,12 +5893,24 @@ export type PassesBulkApplyParams = {
   };
 };
 
+export type PassesBulkApplyResponse = {
+  done: number;
+  skipped: Array<{
+    id: string;
+    code: string;
+  }>;
+};
+
 export type PassesBulkReissueParams = {
   templateId?: string;
   version?: string;
   orgId?: string;
   cause?: "template_upgrade" | "resign";
   identityId?: string;
+};
+
+export type PassesBulkReissueResponse = {
+  workflowInstanceId: string;
 };
 
 export type PassesBulkUpdateChannelsParams = {
@@ -2299,6 +5921,147 @@ export type PassesBulkUpdateChannelsParams = {
   replaceCodes?: boolean;
   dryRun?: boolean;
   orgId?: string;
+};
+
+export type PassesBulkUpdateChannelsResponse = {
+  done: number;
+  skipped: Array<{
+    id: string;
+    code: string;
+  }>;
+  preview?: {
+    impact: Array<{
+      channel: "mobile" | "apple" | "google" | "samsung" | "paper" | "nfc";
+      passes: number;
+      rotated: number;
+    }>;
+    unsupported: number;
+    allOff: number;
+    blocked: {
+      name: string;
+      closesAt: number | null;
+    } | null;
+    windows: Array<{
+      kind: "event" | "session";
+      id: string;
+      name: string;
+      opensAt: number | null;
+      closesAt: number | null;
+      open: boolean;
+      scheduled: boolean;
+    }>;
+  };
+};
+
+export type PassesChannelsRetrieveResponse = {
+  effective: {
+    mobile?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    apple?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    google?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    samsung?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    paper?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    nfc?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+  };
+  levels: {
+    mobile?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    apple?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    google?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    samsung?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    paper?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    nfc?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+  };
+  overrides: {
+    mobile?: "on" | "off";
+    apple?: "on" | "off";
+    google?: "on" | "off";
+    samsung?: "on" | "off";
+    paper?: "on" | "off";
+    nfc?: "on" | "off";
+  };
+  replace: {
+    supported: boolean;
+    windows: Array<{
+      kind: "event" | "session";
+      id: string;
+      name: string;
+      opensAt: number | null;
+      closesAt: number | null;
+      open: boolean;
+      scheduled: boolean;
+    }>;
+    owed: boolean;
+    blocked: {
+      name: string;
+      closesAt: number | null;
+    } | null;
+    lastDigital: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
+  };
 };
 
 export type PassesChannelsUpdateParams = {
@@ -2315,6 +6078,150 @@ export type PassesChannelsUpdateParams = {
   orgId?: string;
 };
 
+export type PassesChannelsUpdateResponse = {
+  effective: {
+    mobile?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    apple?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    google?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    samsung?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    paper?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    nfc?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+  };
+  levels: {
+    mobile?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    apple?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    google?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    samsung?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    paper?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    nfc?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+  };
+  overrides: {
+    mobile?: "on" | "off";
+    apple?: "on" | "off";
+    google?: "on" | "off";
+    samsung?: "on" | "off";
+    paper?: "on" | "off";
+    nfc?: "on" | "off";
+  };
+  replace: {
+    supported: boolean;
+    windows: Array<{
+      kind: "event" | "session";
+      id: string;
+      name: string;
+      opensAt: number | null;
+      closesAt: number | null;
+      open: boolean;
+      scheduled: boolean;
+    }>;
+    owed: boolean;
+    blocked: {
+      name: string;
+      closesAt: number | null;
+    } | null;
+    lastDigital: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
+  };
+};
+
+export type PassesCheckInRulesRetrieveResponse = {
+  passId: string;
+  orgId: string;
+  rules: {
+    mode?: "single" | "daily" | "unlimited" | "in_out";
+    eventId?: string | null;
+    validFrom?: number | null;
+    validUntil?: number | null;
+    durationMinutes?: number | null;
+    durationFrom?: "first_scan" | "issued";
+    days?: number | null;
+  };
+  defaults: {
+    mode?: "single" | "daily" | "unlimited" | "in_out";
+    eventId?: string | null;
+    validFrom?: number | null;
+    validUntil?: number | null;
+    durationMinutes?: number | null;
+    durationFrom?: "first_scan" | "issued";
+    days?: number | null;
+  };
+  effective: {
+    mode?: "single" | "daily" | "unlimited" | "in_out";
+    eventId?: string | null;
+    validFrom?: number | null;
+    validUntil?: number | null;
+    durationMinutes?: number | null;
+    durationFrom?: "first_scan" | "issued";
+    days?: number | null;
+  };
+  updatedAt: number | null;
+};
+
 export type PassesCheckInRulesUpdateParams = {
   rules: {
     mode?: "single" | "daily" | "unlimited" | "in_out";
@@ -2325,6 +6232,39 @@ export type PassesCheckInRulesUpdateParams = {
     durationFrom?: "first_scan" | "issued";
     days?: number | null;
   };
+};
+
+export type PassesCheckInRulesUpdateResponse = {
+  passId: string;
+  orgId: string;
+  rules: {
+    mode?: "single" | "daily" | "unlimited" | "in_out";
+    eventId?: string | null;
+    validFrom?: number | null;
+    validUntil?: number | null;
+    durationMinutes?: number | null;
+    durationFrom?: "first_scan" | "issued";
+    days?: number | null;
+  };
+  defaults: {
+    mode?: "single" | "daily" | "unlimited" | "in_out";
+    eventId?: string | null;
+    validFrom?: number | null;
+    validUntil?: number | null;
+    durationMinutes?: number | null;
+    durationFrom?: "first_scan" | "issued";
+    days?: number | null;
+  };
+  effective: {
+    mode?: "single" | "daily" | "unlimited" | "in_out";
+    eventId?: string | null;
+    validFrom?: number | null;
+    validUntil?: number | null;
+    durationMinutes?: number | null;
+    durationFrom?: "first_scan" | "issued";
+    days?: number | null;
+  };
+  updatedAt: number | null;
 };
 
 export type PassesConnectionUpdateParams = {
@@ -2350,18 +6290,133 @@ export type PassesCreateParams = {
   sendEmail?: boolean;
 };
 
+export type PassesDeleteResponse = {
+  ok: true;
+};
+
+export type PassesDevicesListResponse = {
+  version: number;
+  devices: Array<{
+    device: string;
+    status: "current" | "waiting" | "push_failing" | "removed" | "unknown";
+    registeredAt: number | null;
+    unregisteredAt: number | null;
+    lastFetch: {
+      at: number;
+      version: number;
+      httpStatus: number;
+    } | null;
+    lastPush: {
+      at: number;
+      ok: boolean;
+      version: number | null;
+      httpStatus: number | null;
+      reason: string | null;
+    } | null;
+    removal: "pending" | "fetched" | "deleted" | null;
+  }>;
+  removal: {
+    removedAt: number;
+    version: number | null;
+    total: number;
+    done: number;
+  } | null;
+};
+
 export type PassesMatchPhotosParams = {
   orgId?: string;
   keys: Array<string>;
+};
+
+export type PassesMatchPhotosResponse = {
+  matches: Array<{
+    key: string;
+    passId: string | null;
+    state: "matched" | "none" | "ambiguous";
+  }>;
+};
+
+export type PassesMemberPhotoDeleteResponse = {
+  passId: string;
+  orgId: string;
+  url: string | null;
+  includeInPass: boolean;
+  walletSupported: boolean;
+  updatedAt: number | null;
+};
+
+export type PassesMemberPhotoRetrieveResponse = {
+  passId: string;
+  orgId: string;
+  url: string | null;
+  includeInPass: boolean;
+  walletSupported: boolean;
+  updatedAt: number | null;
 };
 
 export type PassesMemberPhotoUpdateParams = {
   includeInPass: boolean;
 };
 
+export type PassesMemberPhotoUpdateResponse = {
+  passId: string;
+  orgId: string;
+  url: string | null;
+  includeInPass: boolean;
+  walletSupported: boolean;
+  updatedAt: number | null;
+};
+
 export type PassesMemberPhotoUploadParams = {
   png: string;
   includeInPass?: boolean;
+};
+
+export type PassesMemberPhotoUploadResponse = {
+  passId: string;
+  orgId: string;
+  url: string | null;
+  includeInPass: boolean;
+  walletSupported: boolean;
+  updatedAt: number | null;
+};
+
+export type PassesPrintsCreateResponse = {
+  id: string;
+  passId: string;
+  generation: number;
+  status: "active" | "voided" | "used";
+  createdAt: number;
+  voidedAt: number | null;
+  voidCause: string | null;
+  code: string;
+};
+
+export type PassesPrintsListResponse = {
+  prints: Array<{
+    id: string;
+    passId: string;
+    generation: number;
+    status: "active" | "voided" | "used";
+    createdAt: number;
+    voidedAt: number | null;
+    voidCause: string | null;
+  }>;
+};
+
+export type PassesPrintsVoidResponse = {
+  id: string;
+  passId: string;
+  generation: number;
+  status: "active" | "voided" | "used";
+  createdAt: number;
+  voidedAt: number | null;
+  voidCause: string | null;
+};
+
+export type PassesRefreshResponse = {
+  accepted: true;
+  requestedAt: number;
 };
 
 export type PassesRemoveParams = {
@@ -2370,9 +6425,69 @@ export type PassesRemoveParams = {
 
 export type PassesRenewParams = Record<string, unknown>;
 
+export type PassesRetrieveProviderStatusResponse = {
+  credentialGeneration: number;
+  providers: [{
+    provider: "google";
+    lifecycle: "absent" | "blocked" | "ready" | "active" | "revoking" | "revoked" | "retired";
+    desiredOperation: {
+      version: number;
+      kind: "upsert" | "revoke";
+      state: "pending" | "claimed" | "retry" | "succeeded" | "failed" | "superseded" | "uncertain";
+      reason: "ok" | "not_issued" | "rate_limited" | "unavailable" | "timeout" | "unauthorized" | "rejected" | "invalid_response" | "provider_error" | null;
+    } | null;
+    priorGenerationRetirementPending: boolean;
+    installation: "unknown";
+    reported?: {
+      event: "saved" | "removed";
+      at: number;
+    };
+    issuance: {
+      state: "disabled";
+      reason: "not_released";
+    } | {
+      state: "enabled";
+    };
+  }, {
+    provider: "samsung";
+    lifecycle: "absent" | "blocked" | "ready" | "active" | "revoking" | "revoked" | "retired";
+    desiredOperation: {
+      version: number;
+      kind: "upsert" | "revoke";
+      state: "pending" | "claimed" | "retry" | "succeeded" | "failed" | "superseded" | "uncertain";
+      reason: "ok" | "not_issued" | "rate_limited" | "unavailable" | "timeout" | "unauthorized" | "rejected" | "invalid_response" | "provider_error" | null;
+    } | null;
+    priorGenerationRetirementPending: boolean;
+    installation: "unknown";
+    reported?: {
+      event: "saved" | "removed";
+      at: number;
+    };
+    issuance: {
+      state: "disabled";
+      reason: "not_released";
+    } | {
+      state: "enabled";
+    };
+  }];
+};
+
+export type PassesRotateCodeResponse = {
+  ok: true;
+};
+
+export type PassesRotateLinkResponse = {
+  downloadUrl: string;
+  publicUrl: string;
+};
+
 export type PassesSendEmailParams = {
   to?: string;
   attach?: boolean;
+};
+
+export type PassesSendEmailResponse = {
+  ok: true;
 };
 
 export type PassesStampsApplyParams = {
@@ -2390,6 +6505,157 @@ export type PassesUpdateParams = {
   notify?: boolean;
 };
 
+export type PassesVersionsDiffResponse = {
+  changes: Array<{
+    path: string;
+    from?: unknown;
+    to?: unknown;
+  }>;
+};
+
+export type PlatformAppleCallsListResponse = {
+  items: Array<{
+    id: number;
+    callId: string;
+    phase: string;
+    method: string;
+    target: string | null;
+    caller: string | null;
+    status: string | null;
+    durationMs: number | null;
+    at: number;
+  }>;
+  available: boolean;
+};
+
+export type PlatformAuditEntriesListResponse = {
+  items: Array<{
+    id: number;
+    at: number;
+    orgId: string | null;
+    actorType: "user" | "api_key" | "system" | "connection" | "device" | "scanner";
+    actorId: string | null;
+    actorLabel?: string | null;
+    action: string;
+    targetType: string | null;
+    targetId: string | null;
+    targetLabel?: string | null;
+    requestId: string | null;
+    detail?: unknown;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformMetricsRetrieveOverviewResponse = {
+  source: "analytics_engine" | "d1";
+  range: "24h" | "7d" | "30d";
+  bucketMs: number;
+  unavailable: Array<string>;
+  totals: {
+    passes: number;
+    activePasses: number;
+    voidedPasses: number;
+    holders: number;
+    devices: number;
+    issued: number;
+    updated: number;
+    downloads: number;
+    registrations: number;
+    refreshes: number;
+    pushes: number;
+    pushFailures: number;
+    emails: number;
+    emailFailures: number;
+    emailUnknown?: number;
+    syncRuns: number;
+    signIns: number;
+    scans: number;
+    scanRefused: number;
+  };
+  series: {
+    issued: Array<{
+      t: number;
+      v: number;
+    }>;
+    updated: Array<{
+      t: number;
+      v: number;
+    }>;
+    downloads: Array<{
+      t: number;
+      v: number;
+    }>;
+    registrations: Array<{
+      t: number;
+      v: number;
+    }>;
+    refreshes: Array<{
+      t: number;
+      v: number;
+    }>;
+    pushes: Array<{
+      t: number;
+      v: number;
+    }>;
+    pushFailures: Array<{
+      t: number;
+      v: number;
+    }>;
+    emails: Array<{
+      t: number;
+      v: number;
+    }>;
+    emailFailures: Array<{
+      t: number;
+      v: number;
+    }>;
+    emailUnknown?: Array<{
+      t: number;
+      v: number;
+    }>;
+    syncRuns: Array<{
+      t: number;
+      v: number;
+    }>;
+    signIns: Array<{
+      t: number;
+      v: number;
+    }>;
+    scans: Array<{
+      t: number;
+      v: number;
+    }>;
+  };
+  setup: {
+    orgs: number;
+    assignedTemplates: number;
+    passes: number;
+    approvedTemplates: number;
+    releasedTemplates: number;
+    walletPasses: number;
+    passEmailsSent: number;
+    latestPassId: string | null;
+    scanners: number;
+  };
+  directory?: {
+    users: number;
+    walletAccounts: number;
+  };
+  live: Array<{
+    eventId: string;
+    name: string;
+    arrived: number;
+    expected: number;
+    ratePerMin: number;
+  }>;
+  recent: Array<{
+    at: number;
+    action: string;
+    orgId: string | null;
+    targetId: string | null;
+  }>;
+};
+
 export type PlatformOrgsCreateParams = {
   slug: string;
   name: string;
@@ -2397,6 +6663,32 @@ export type PlatformOrgsCreateParams = {
   branding?: OrgBranding;
   preset?: "legacy" | "trial" | "standard";
   addMe?: boolean;
+};
+
+export type PlatformOrgsDeleteResponse = {
+  ok: true;
+};
+
+export type PlatformOrgsEntitlementsRetrieveResponse = {
+  orgId: string;
+  preset: string | null;
+  presetLabel: string | null;
+  revision: number;
+  updatedAt: number | null;
+  items: Array<{
+    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    value: number | string | Array<string> | null;
+    presetValue: number | string | Array<string> | null;
+    source: "preset" | "override";
+    note: string | null;
+    expiresAt: number | null;
+  }>;
+  presets: Array<{
+    preset: string;
+    label: string;
+    orgCount: number;
+    values: Record<string, number | string | Array<string> | null>;
+  }>;
 };
 
 export type PlatformOrgsEntitlementsUpdateParams = {
@@ -2409,17 +6701,251 @@ export type PlatformOrgsEntitlementsUpdateParams = {
   }>;
 };
 
+export type PlatformOrgsEntitlementsUpdateResponse = {
+  orgId: string;
+  preset: string | null;
+  presetLabel: string | null;
+  revision: number;
+  updatedAt: number | null;
+  items: Array<{
+    key: "api" | "api.rateTier" | "api.keys" | "apps" | "webhooks" | "webhooks.endpoints" | "connections" | "connectors" | "wallet.google" | "wallet.samsung" | "print" | "nfc" | "scanning.devices" | "join.perDay" | "messages.perDay" | "passes.changesPerDay" | "passes.live" | "passes.test" | "templates" | "templates.uploads" | "templates.stylesBlocked" | "email.perDay" | "members" | "brand.mark" | "domains" | "identity.own" | "identity.managed";
+    value: number | string | Array<string> | null;
+    presetValue: number | string | Array<string> | null;
+    source: "preset" | "override";
+    note: string | null;
+    expiresAt: number | null;
+  }>;
+  presets: Array<{
+    preset: string;
+    label: string;
+    orgCount: number;
+    values: Record<string, number | string | Array<string> | null>;
+  }>;
+};
+
 export type PlatformOrgsLegalHoldsCreateParams = {
   passId?: string | null;
   reason: string;
+};
+
+export type PlatformOrgsLegalHoldsCreateResponse = {
+  ok: true;
+};
+
+export type PlatformOrgsLegalHoldsListResponse = {
+  items: Array<{
+    id: string;
+    passId: string | null;
+    passLabel: string | null;
+    placedByKind: "org" | "platform";
+    placedByLabel: string;
+    reason: string | null;
+    createdAt: number;
+    releasedAt: number | null;
+    releasedByLabel: string | null;
+    canRelease: boolean;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformOrgsLegalHoldsReleaseResponse = {
+  ok: true;
+};
+
+export type PlatformOrgsListClosedResponse = {
+  items: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    closedAt: number;
+    purgeAfter: number;
+    purging: boolean;
+    held: boolean;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformOrgsListResponse = {
+  items: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    status: "active" | "suspended" | "deleted";
+    personal?: boolean;
+    personalOwner?: {
+      id: string;
+      name: string | null;
+    } | null;
+    createdAt: number;
+    counts: {
+      passes: number;
+      templates: number;
+      connections: number;
+      apiKeys: number;
+      members?: number;
+    };
+    countsCapped: boolean;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformOrgsRetentionReceiptsDownloadResponse = {
+  receipt: {
+    id: string;
+    cls: string;
+    kind: "sweep" | "visitor" | "erasure";
+    ranAt: number;
+    cutoffAt: number | null;
+    policyDays: number | null;
+    deleted: number;
+    anonymised: number;
+    verified: boolean;
+    orgId: string | null;
+    seq: number;
+    prevMac: string | null;
+    mac: string;
+    refsDigest: string | null;
+    requestId: string | null;
+  };
+};
+
+export type PlatformOrgsRetentionReceiptsListResponse = {
+  items: Array<{
+    id: string;
+    cls: string;
+    kind: "sweep" | "visitor" | "erasure";
+    ranAt: number;
+    cutoffAt: number | null;
+    policyDays: number | null;
+    deleted: number;
+    anonymised: number;
+    verified: boolean;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformOrgsRetrieveResponse = {
+  id: string;
+  slug: string;
+  name: string;
+  status: "active" | "suspended" | "deleted";
+  personal?: boolean;
+  personalOwner?: {
+    id: string;
+    name: string | null;
+  } | null;
+  createdAt: number;
+  counts: {
+    passes: number;
+    templates: number;
+    connections: number;
+    apiKeys: number;
+    members?: number;
+  };
+  countsCapped: boolean;
 };
 
 export type PlatformOrgsSetStatusParams = {
   status: "active" | "suspended";
 };
 
+export type PlatformOrgsSetStatusResponse = {
+  id: string;
+  slug: string;
+  name: string;
+  status: "active" | "suspended" | "deleted";
+  personal?: boolean;
+  personalOwner?: {
+    id: string;
+    name: string | null;
+  } | null;
+  createdAt: number;
+  counts: {
+    passes: number;
+    templates: number;
+    connections: number;
+    apiKeys: number;
+    members?: number;
+  };
+  countsCapped: boolean;
+};
+
 export type PlatformOrgsWalletEnrollmentsHoldParams = {
   reason: string;
+};
+
+export type PlatformOrgsWalletEnrollmentsHoldResponse = {
+  status: "held" | "released" | "queued";
+};
+
+export type PlatformOrgsWalletEnrollmentsReleaseResponse = {
+  status: "held" | "released" | "queued";
+};
+
+export type PlatformRetentionReceiptsDownloadResponse = {
+  receipt: {
+    id: string;
+    cls: string;
+    kind: "sweep" | "visitor" | "erasure";
+    ranAt: number;
+    cutoffAt: number | null;
+    policyDays: number | null;
+    deleted: number;
+    anonymised: number;
+    verified: boolean;
+    orgId: string | null;
+    seq: number;
+    prevMac: string | null;
+    mac: string;
+    refsDigest: string | null;
+    requestId: string | null;
+  };
+};
+
+export type PlatformRetentionReceiptsListResponse = {
+  items: Array<{
+    id: string;
+    cls: string;
+    kind: "sweep" | "visitor" | "erasure";
+    ranAt: number;
+    cutoffAt: number | null;
+    policyDays: number | null;
+    deleted: number;
+    anonymised: number;
+    verified: boolean;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformSettingsRetrieveImpactResponse = {
+  emailOnlyUsers: number;
+};
+
+export type PlatformStatusListIncidentsResponse = {
+  items: Array<{
+    id: string;
+    title: string;
+    note: string;
+    component: "api" | "apple_push" | "email" | "webhooks" | "google" | "samsung" | null;
+    impact: "notice" | "degraded" | "outage";
+    startedAt: number;
+    resolvedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformStatusListWorkflowRunsResponse = {
+  items: Array<{
+    instanceId: string;
+    kind: "template_import" | "bulk_reissue" | "connection_sync" | "broadcast" | "pass_import";
+    orgId: string | null;
+    targetId: string | null;
+    status: "queued" | "running" | "complete" | "errored" | "terminated";
+    startedAt: number;
+    finishedAt: number | null;
+    errorCode: string | null;
+  }>;
+  nextCursor: string | null;
 };
 
 export type PlatformStatusOpenIncidentParams = {
@@ -2427,6 +6953,44 @@ export type PlatformStatusOpenIncidentParams = {
   note: string;
   component?: "api" | "apple_push" | "email" | "webhooks" | "google" | "samsung" | null;
   impact: "notice" | "degraded" | "outage";
+};
+
+export type PlatformStatusOpenIncidentResponse = {
+  id: string;
+  title: string;
+  note: string;
+  component: "api" | "apple_push" | "email" | "webhooks" | "google" | "samsung" | null;
+  impact: "notice" | "degraded" | "outage";
+  startedAt: number;
+  resolvedAt: number | null;
+};
+
+export type PlatformStatusResolveIncidentResponse = {
+  id: string;
+  title: string;
+  note: string;
+  component: "api" | "apple_push" | "email" | "webhooks" | "google" | "samsung" | null;
+  impact: "notice" | "degraded" | "outage";
+  startedAt: number;
+  resolvedAt: number | null;
+};
+
+export type PlatformStatusRetrieveResponse = {
+  overall: "failing" | "degraded" | "not_configured" | "configured" | "not_in_use" | "verified";
+  build: {
+    id: string | null;
+    tag: string | null;
+    timestamp: string | null;
+  };
+  components: Array<{
+    id: string;
+    kind: "database" | "storage" | "queue" | "workflow" | "identity" | "email" | "oidc" | "connection" | "cron" | "build";
+    label: string;
+    state: "failing" | "degraded" | "not_configured" | "configured" | "not_in_use" | "verified";
+    detail: string | null;
+    checkedAt: number;
+    data?: Record<string, string | number | boolean | null>;
+  }>;
 };
 
 export type PlatformTemplatesAssignParams = {
@@ -2441,16 +7005,307 @@ export type PlatformUsersEmailsCreateParams = {
   email: string;
 };
 
+export type PlatformUsersEmailsCreateResponse = {
+  id: string;
+  name: string | null;
+  primaryEmail: string | null;
+  status: "active" | "disabled";
+  lastRoles: Array<"admin" | "user" | "developer" | "console">;
+  createdAt: number;
+  lastLoginAt: number | null;
+  signInMethods: Array<"oidc" | "magic_link" | "breakglass">;
+  emails: Array<{
+    email: string;
+    verifiedVia: "magic_link" | "oidc" | "admin";
+    verifiedAt: number;
+  }>;
+  identities: Array<{
+    provider: string;
+    subject: string;
+    emailClaim: string | null;
+    emailVerified: boolean;
+    groups: Array<string>;
+    lastUsedAt: number | null;
+  }>;
+  sessions: Array<{
+    id: string;
+    amr: "oidc" | "magic_link" | "breakglass";
+    roles: Array<"admin" | "user" | "developer" | "console">;
+    createdAt: number;
+    lastSeenAt: number;
+    expiresAt: number;
+    revokedAt: number | null;
+    userAgent: string | null;
+    current: boolean;
+    method: string;
+  }>;
+  passes: Array<{
+    id: string;
+    title: string;
+    templateName: string;
+    orgName: string;
+    status: "active" | "voided";
+  }>;
+  passCount: number;
+  recentAudit: Array<{
+    id: number;
+    at: number;
+    action: string;
+    actorType: string;
+    actorId: string | null;
+  }>;
+};
+
+export type PlatformUsersEmailsDeleteResponse = {
+  id: string;
+  name: string | null;
+  primaryEmail: string | null;
+  status: "active" | "disabled";
+  lastRoles: Array<"admin" | "user" | "developer" | "console">;
+  createdAt: number;
+  lastLoginAt: number | null;
+  signInMethods: Array<"oidc" | "magic_link" | "breakglass">;
+  emails: Array<{
+    email: string;
+    verifiedVia: "magic_link" | "oidc" | "admin";
+    verifiedAt: number;
+  }>;
+  identities: Array<{
+    provider: string;
+    subject: string;
+    emailClaim: string | null;
+    emailVerified: boolean;
+    groups: Array<string>;
+    lastUsedAt: number | null;
+  }>;
+  sessions: Array<{
+    id: string;
+    amr: "oidc" | "magic_link" | "breakglass";
+    roles: Array<"admin" | "user" | "developer" | "console">;
+    createdAt: number;
+    lastSeenAt: number;
+    expiresAt: number;
+    revokedAt: number | null;
+    userAgent: string | null;
+    current: boolean;
+    method: string;
+  }>;
+  passes: Array<{
+    id: string;
+    title: string;
+    templateName: string;
+    orgName: string;
+    status: "active" | "voided";
+  }>;
+  passCount: number;
+  recentAudit: Array<{
+    id: number;
+    at: number;
+    action: string;
+    actorType: string;
+    actorId: string | null;
+  }>;
+};
+
+export type PlatformUsersEmailsMakePrimaryResponse = {
+  id: string;
+  name: string | null;
+  primaryEmail: string | null;
+  status: "active" | "disabled";
+  lastRoles: Array<"admin" | "user" | "developer" | "console">;
+  createdAt: number;
+  lastLoginAt: number | null;
+  signInMethods: Array<"oidc" | "magic_link" | "breakglass">;
+  emails: Array<{
+    email: string;
+    verifiedVia: "magic_link" | "oidc" | "admin";
+    verifiedAt: number;
+  }>;
+  identities: Array<{
+    provider: string;
+    subject: string;
+    emailClaim: string | null;
+    emailVerified: boolean;
+    groups: Array<string>;
+    lastUsedAt: number | null;
+  }>;
+  sessions: Array<{
+    id: string;
+    amr: "oidc" | "magic_link" | "breakglass";
+    roles: Array<"admin" | "user" | "developer" | "console">;
+    createdAt: number;
+    lastSeenAt: number;
+    expiresAt: number;
+    revokedAt: number | null;
+    userAgent: string | null;
+    current: boolean;
+    method: string;
+  }>;
+  passes: Array<{
+    id: string;
+    title: string;
+    templateName: string;
+    orgName: string;
+    status: "active" | "voided";
+  }>;
+  passCount: number;
+  recentAudit: Array<{
+    id: number;
+    at: number;
+    action: string;
+    actorType: string;
+    actorId: string | null;
+  }>;
+};
+
+export type PlatformUsersListResponse = {
+  items: Array<{
+    id: string;
+    name: string | null;
+    primaryEmail: string | null;
+    status: "active" | "disabled";
+    lastRoles: Array<"admin" | "user" | "developer" | "console">;
+    createdAt: number;
+    lastLoginAt: number | null;
+    passCount?: number;
+    signInMethods?: Array<"oidc" | "magic_link" | "breakglass">;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformUsersRetrieveResponse = {
+  id: string;
+  name: string | null;
+  primaryEmail: string | null;
+  status: "active" | "disabled";
+  lastRoles: Array<"admin" | "user" | "developer" | "console">;
+  createdAt: number;
+  lastLoginAt: number | null;
+  signInMethods: Array<"oidc" | "magic_link" | "breakglass">;
+  emails: Array<{
+    email: string;
+    verifiedVia: "magic_link" | "oidc" | "admin";
+    verifiedAt: number;
+  }>;
+  identities: Array<{
+    provider: string;
+    subject: string;
+    emailClaim: string | null;
+    emailVerified: boolean;
+    groups: Array<string>;
+    lastUsedAt: number | null;
+  }>;
+  sessions: Array<{
+    id: string;
+    amr: "oidc" | "magic_link" | "breakglass";
+    roles: Array<"admin" | "user" | "developer" | "console">;
+    createdAt: number;
+    lastSeenAt: number;
+    expiresAt: number;
+    revokedAt: number | null;
+    userAgent: string | null;
+    current: boolean;
+    method: string;
+  }>;
+  passes: Array<{
+    id: string;
+    title: string;
+    templateName: string;
+    orgName: string;
+    status: "active" | "voided";
+  }>;
+  passCount: number;
+  recentAudit: Array<{
+    id: number;
+    at: number;
+    action: string;
+    actorType: string;
+    actorId: string | null;
+  }>;
+};
+
+export type PlatformUsersSessionsRevokeAllResponse = {
+  ok: true;
+};
+
+export type PlatformUsersSessionsRevokeResponse = {
+  ok: true;
+};
+
 export type PlatformUsersUpdateParams = {
   status: "active" | "disabled";
+};
+
+export type PlatformUsersUpdateResponse = {
+  id: string;
+  name: string | null;
+  primaryEmail: string | null;
+  status: "active" | "disabled";
+  lastRoles: Array<"admin" | "user" | "developer" | "console">;
+  createdAt: number;
+  lastLoginAt: number | null;
 };
 
 export type PlatformWalletAccountsGoogleManagedCompleteParams = {
   issuerId: string;
 };
 
+export type PlatformWalletAccountsGoogleManagedCompleteResponse = {
+  runId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  waitingFor: string | null;
+  errorCode: string | null;
+  issuerId: string | null;
+  updatedAt: number;
+};
+
 export type PlatformWalletAccountsGoogleManagedCreateParams = {
   mode: "live";
+};
+
+export type PlatformWalletAccountsGoogleManagedCreateResponse = {
+  runId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  waitingFor: string | null;
+  errorCode: string | null;
+  issuerId: string | null;
+  updatedAt: number;
+};
+
+export type PlatformWalletCredentialsChecksCreateResponse = {
+  checkId: string;
+  status: "queued";
+};
+
+export type PlatformWalletCredentialsChecksRetrieveResponse = {
+  checkId: string;
+  status: "pending" | "ok" | "failed";
+  code: string | null;
+  checkedAt: number | null;
+};
+
+export type PlatformWalletCredentialsListResponse = {
+  items: Array<{
+    id: string;
+    scope: "platform" | "org";
+    orgId: string | null;
+    mode: "live" | "test";
+    provider: "google" | "samsung";
+    identityHint: string;
+    provenance: "platform" | "managed" | "own";
+    revision: number;
+    verifiedAt: number | null;
+    revokedAt: number | null;
+    createdAt: number;
+    updatedAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type PlatformWalletCredentialsMigrateResponse = {
+  queued: number;
 };
 
 export type PlatformWalletCredentialsResolveMigrationParams = {
@@ -2460,8 +7315,51 @@ export type PlatformWalletCredentialsResolveMigrationParams = {
   action: "assign_platform" | "merge" | "retire";
 };
 
+export type PlatformWalletCredentialsResolveMigrationResponse = {
+  accounts: number;
+};
+
+export type PlatformWalletCredentialsRetrieveMigrationResponse = {
+  pending: number;
+  migrated: number;
+  items: Array<{
+    accountId: string;
+    orgId: string;
+    mode: "live" | "test";
+    provider: "google" | "samsung";
+    state: "ready" | "refused";
+    reason: "identity_shared" | "org_credential_exists" | "unreadable" | "unproven_claim" | null;
+    identityShared: Array<{
+      orgId: string;
+      mode: "live" | "test";
+      provider: "google" | "samsung";
+    }>;
+  }>;
+  nextCursor: string | null;
+  next: string | null;
+};
+
 export type PlatformWalletCredentialsRevokeParams = {
   expectedRevision: number;
+};
+
+export type PlatformWalletCredentialsRevokeResponse = {
+  id: string;
+  scope: "platform" | "org";
+  orgId: string | null;
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  identityHint: string;
+  provenance: "platform" | "managed" | "own";
+  revision: number;
+  verifiedAt: number | null;
+  revokedAt: number | null;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type PlatformWalletCredentialsRotateKeyResponse = {
+  runId: string;
 };
 
 export type PlatformWalletCredentialsUpsertParams = {
@@ -2489,9 +7387,59 @@ export type PlatformWalletCredentialsUpsertParams = {
   mode: "live" | "test";
 };
 
+export type PlatformWalletCredentialsUpsertResponse = {
+  id: string;
+  scope: "platform" | "org";
+  orgId: string | null;
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  identityHint: string;
+  provenance: "platform" | "managed" | "own";
+  revision: number;
+  verifiedAt: number | null;
+  revokedAt: number | null;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type PlatformWalletEnrollmentsListResponse = {
+  items: Array<{
+    orgId: string;
+    orgName: string;
+    mode: "live" | "test";
+    provider: "google" | "samsung";
+    source: "platform" | "org" | null;
+    state: "off" | "on" | "held" | "revoked";
+    hold: {
+      at: number;
+      reason: string;
+    } | null;
+    updatedAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
 export type PrintJobsCreateParams = {
   ids: Array<string>;
   orgId: string;
+};
+
+export type PrintJobsCreateResponse = {
+  jobId: string;
+  count: number;
+  skipped: Array<{
+    id: string;
+    code: string;
+    reason?: string;
+  }>;
+};
+
+export type PrintJobsRetrieveResponse = {
+  state: "pending" | "ready" | "failed";
+  count: number;
+  skipped: number;
+  engine?: "pdf-lib";
+  lossy: boolean;
 };
 
 export type Problem = {
@@ -2697,6 +7645,41 @@ export type ReleaseTemplate = {
   request?: boolean;
 };
 
+export type RetentionReceiptsDownloadResponse = {
+  receipt: {
+    id: string;
+    cls: string;
+    kind: "sweep" | "visitor" | "erasure";
+    ranAt: number;
+    cutoffAt: number | null;
+    policyDays: number | null;
+    deleted: number;
+    anonymised: number;
+    verified: boolean;
+    orgId: string | null;
+    seq: number;
+    prevMac: string | null;
+    mac: string;
+    refsDigest: string | null;
+    requestId: string | null;
+  };
+};
+
+export type RetentionReceiptsListResponse = {
+  items: Array<{
+    id: string;
+    cls: string;
+    kind: "sweep" | "visitor" | "erasure";
+    ranAt: number;
+    cutoffAt: number | null;
+    policyDays: number | null;
+    deleted: number;
+    anonymised: number;
+    verified: boolean;
+  }>;
+  nextCursor: string | null;
+};
+
 export type ReviewResult = {
   version: string;
   approved: Array<"live" | "test">;
@@ -2752,12 +7735,215 @@ export type ReviewTemplate = {
   note?: string;
 };
 
+export type RollCallsCreateResponse = {
+  id: string;
+  placeNames: Array<string>;
+  startedAt: number;
+  startedBy: string;
+  endedAt: number | null;
+  endedBy: string | null;
+  rev: number;
+  serverNow: number;
+  counts: {
+    total: number;
+    present: number;
+    out: number;
+    unconfirmed: number;
+    notConfirmedOut: number;
+    late: number;
+    inNow: number;
+    tappedIn: number;
+  };
+  people: Array<{
+    passId: string;
+    holder: string | null;
+    plan: string | null;
+    host: string | null;
+    place: string;
+    placeName: string;
+    since: number;
+    basis: "in_now" | "tapped_in";
+    presence: "in" | "left" | "lapsed";
+    late: boolean;
+    mark: {
+      status: "present" | "out" | "none";
+      by: string;
+      at: number;
+    } | null;
+    notConfirmedOut: boolean;
+  }>;
+};
+
+export type RollCallsEndResponse = {
+  id: string;
+  placeNames: Array<string>;
+  startedAt: number;
+  startedBy: string;
+  endedAt: number | null;
+  endedBy: string | null;
+  rev: number;
+  serverNow: number;
+  counts: {
+    total: number;
+    present: number;
+    out: number;
+    unconfirmed: number;
+    notConfirmedOut: number;
+    late: number;
+    inNow: number;
+    tappedIn: number;
+  };
+  people: Array<{
+    passId: string;
+    holder: string | null;
+    plan: string | null;
+    host: string | null;
+    place: string;
+    placeName: string;
+    since: number;
+    basis: "in_now" | "tapped_in";
+    presence: "in" | "left" | "lapsed";
+    late: boolean;
+    mark: {
+      status: "present" | "out" | "none";
+      by: string;
+      at: number;
+    } | null;
+    notConfirmedOut: boolean;
+  }>;
+};
+
 export type RollCallsMarkParams = {
   marks: Array<{
     rollCallId: string;
     passId: string;
     status: "present" | "out" | "none";
     at?: number;
+  }>;
+};
+
+export type RollCallsMarkResponse = {
+  id: string;
+  placeNames: Array<string>;
+  startedAt: number;
+  startedBy: string;
+  endedAt: number | null;
+  endedBy: string | null;
+  rev: number;
+  serverNow: number;
+  counts: {
+    total: number;
+    present: number;
+    out: number;
+    unconfirmed: number;
+    notConfirmedOut: number;
+    late: number;
+    inNow: number;
+    tappedIn: number;
+  };
+  people: Array<{
+    passId: string;
+    holder: string | null;
+    plan: string | null;
+    host: string | null;
+    place: string;
+    placeName: string;
+    since: number;
+    basis: "in_now" | "tapped_in";
+    presence: "in" | "left" | "lapsed";
+    late: boolean;
+    mark: {
+      status: "present" | "out" | "none";
+      by: string;
+      at: number;
+    } | null;
+    notConfirmedOut: boolean;
+  }>;
+  results: Array<{
+    rollCallId: string;
+    passId: string;
+    status: "applied" | "refused";
+    code?: string;
+  }>;
+};
+
+export type RollCallsRetrieveOpenResponse = {
+  rollCall: {
+    id: string;
+    placeNames: Array<string>;
+    startedAt: number;
+    startedBy: string;
+    endedAt: number | null;
+    endedBy: string | null;
+    rev: number;
+    serverNow: number;
+    counts: {
+      total: number;
+      present: number;
+      out: number;
+      unconfirmed: number;
+      notConfirmedOut: number;
+      late: number;
+      inNow: number;
+      tappedIn: number;
+    };
+    people: Array<{
+      passId: string;
+      holder: string | null;
+      plan: string | null;
+      host: string | null;
+      place: string;
+      placeName: string;
+      since: number;
+      basis: "in_now" | "tapped_in";
+      presence: "in" | "left" | "lapsed";
+      late: boolean;
+      mark: {
+        status: "present" | "out" | "none";
+        by: string;
+        at: number;
+      } | null;
+      notConfirmedOut: boolean;
+    }>;
+  } | null;
+};
+
+export type RollCallsRetrieveResponse = {
+  id: string;
+  placeNames: Array<string>;
+  startedAt: number;
+  startedBy: string;
+  endedAt: number | null;
+  endedBy: string | null;
+  rev: number;
+  serverNow: number;
+  counts: {
+    total: number;
+    present: number;
+    out: number;
+    unconfirmed: number;
+    notConfirmedOut: number;
+    late: number;
+    inNow: number;
+    tappedIn: number;
+  };
+  people: Array<{
+    passId: string;
+    holder: string | null;
+    plan: string | null;
+    host: string | null;
+    place: string;
+    placeName: string;
+    since: number;
+    basis: "in_now" | "tapped_in";
+    presence: "in" | "left" | "lapsed";
+    late: boolean;
+    mark: {
+      status: "present" | "out" | "none";
+      by: string;
+      at: number;
+    } | null;
+    notConfirmedOut: boolean;
   }>;
 };
 
@@ -3152,6 +8338,10 @@ export type ScanDeviceCapabilities = {
   preferred: "phone" | "operator" | "desk" | "customer";
 } | null;
 
+export type ScanDisplaysPreviewResponse = {
+  scope: Record<string, unknown>;
+};
+
 export type ScanEvent = {
   id: string;
   orgId: string;
@@ -3194,6 +8384,39 @@ export type ScanEventsCreateParams = {
   reentry?: boolean;
   hardLimit?: boolean;
   note?: string | null;
+};
+
+export type ScanEventsListInsideResponse = {
+  items: Array<{
+    passId: string;
+    holder: string | null;
+    photoUrl: string | null;
+    plan: string | null;
+    type: string | null;
+    host: string | null;
+    place: string;
+    placeName: string;
+    parentName: string | null;
+    since: number;
+    dueAt: number | null;
+    via: string | null;
+    flags: Array<"long_stay" | "pass_ended">;
+  }>;
+  count: number;
+  rev: number;
+  places: Array<{
+    name: string;
+    inNow: number;
+    capacity: number | null;
+    place: string;
+    rev: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type ScanEventsListResponse = {
+  items: Array<ScanEvent>;
+  nextCursor: string | null;
 };
 
 export type ScanEventsMarkOutParams = {
@@ -3960,6 +9183,146 @@ export type ScanSetupsCreateParams = {
   adminUserId?: string;
 };
 
+export type ScanSetupsCreateResponse = {
+  id: string;
+  orgId: string;
+  mode: "live" | "test";
+  kind: "device" | "terminal" | "display";
+  deviceRole: "scan" | "customer" | "monitor";
+  name: string;
+  accepts: {
+    templateIds: Array<string>;
+    eventIds: Array<string>;
+  } | {
+    eventId: string;
+  } | {
+    templateIds: Array<string>;
+  } | null;
+  settings: ScannerSettings;
+  timeZone: string;
+  status: "not_paired" | "paired" | "revoked";
+  online: boolean;
+  pairedAt: number | null;
+  pairedLabel: string | null;
+  lastSeenAt: number | null;
+  expiresAt: number | null;
+  staff: {
+    id: string;
+    name: string | null;
+  } | null;
+  today: number;
+  createdAt: number;
+  sessionId?: string;
+  adminSession?: boolean;
+  adminUser: {
+    id: string;
+    name: string | null;
+  } | null;
+  watch: {
+    scannerIds?: Array<string>;
+    allOrg?: boolean;
+    sessionIds?: Array<string>;
+    eventId?: string;
+    zoneIds?: Array<string>;
+  } | null;
+  pairing: {
+    code: string;
+    url: string;
+    expiresAt: number;
+  } | null;
+};
+
+export type ScanSetupsListResponse = {
+  items: Array<{
+    id: string;
+    orgId: string;
+    mode: "live" | "test";
+    kind: "device" | "terminal" | "display";
+    deviceRole: "scan" | "customer" | "monitor";
+    name: string;
+    accepts: {
+      templateIds: Array<string>;
+      eventIds: Array<string>;
+    } | {
+      eventId: string;
+    } | {
+      templateIds: Array<string>;
+    } | null;
+    settings: ScannerSettings;
+    timeZone: string;
+    status: "not_paired" | "paired" | "revoked";
+    online: boolean;
+    pairedAt: number | null;
+    pairedLabel: string | null;
+    lastSeenAt: number | null;
+    expiresAt: number | null;
+    staff: {
+      id: string;
+      name: string | null;
+    } | null;
+    today: number;
+    createdAt: number;
+    sessionId?: string;
+    adminSession?: boolean;
+    adminUser: {
+      id: string;
+      name: string | null;
+    } | null;
+    watch: {
+      scannerIds?: Array<string>;
+      allOrg?: boolean;
+      sessionIds?: Array<string>;
+      eventId?: string;
+      zoneIds?: Array<string>;
+    } | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type ScanSetupsRetrieveResponse = {
+  id: string;
+  orgId: string;
+  mode: "live" | "test";
+  kind: "device" | "terminal" | "display";
+  deviceRole: "scan" | "customer" | "monitor";
+  name: string;
+  accepts: {
+    templateIds: Array<string>;
+    eventIds: Array<string>;
+  } | {
+    eventId: string;
+  } | {
+    templateIds: Array<string>;
+  } | null;
+  settings: ScannerSettings;
+  timeZone: string;
+  status: "not_paired" | "paired" | "revoked";
+  online: boolean;
+  pairedAt: number | null;
+  pairedLabel: string | null;
+  lastSeenAt: number | null;
+  expiresAt: number | null;
+  staff: {
+    id: string;
+    name: string | null;
+  } | null;
+  today: number;
+  createdAt: number;
+  sessionId?: string;
+  adminSession?: boolean;
+  adminUser: {
+    id: string;
+    name: string | null;
+  } | null;
+  watch: {
+    scannerIds?: Array<string>;
+    allOrg?: boolean;
+    sessionIds?: Array<string>;
+    eventId?: string;
+    zoneIds?: Array<string>;
+  } | null;
+};
+
 export type ScanSetupsUpdateParams = {
   name?: string;
   deviceRole?: "scan" | "customer" | "monitor";
@@ -4011,6 +9374,50 @@ export type ScanSetupsUpdateParams = {
   } | null;
 };
 
+export type ScanSetupsUpdateResponse = {
+  id: string;
+  orgId: string;
+  mode: "live" | "test";
+  kind: "device" | "terminal" | "display";
+  deviceRole: "scan" | "customer" | "monitor";
+  name: string;
+  accepts: {
+    templateIds: Array<string>;
+    eventIds: Array<string>;
+  } | {
+    eventId: string;
+  } | {
+    templateIds: Array<string>;
+  } | null;
+  settings: ScannerSettings;
+  timeZone: string;
+  status: "not_paired" | "paired" | "revoked";
+  online: boolean;
+  pairedAt: number | null;
+  pairedLabel: string | null;
+  lastSeenAt: number | null;
+  expiresAt: number | null;
+  staff: {
+    id: string;
+    name: string | null;
+  } | null;
+  today: number;
+  createdAt: number;
+  sessionId?: string;
+  adminSession?: boolean;
+  adminUser: {
+    id: string;
+    name: string | null;
+  } | null;
+  watch: {
+    scannerIds?: Array<string>;
+    allOrg?: boolean;
+    sessionIds?: Array<string>;
+    eventId?: string;
+    zoneIds?: Array<string>;
+  } | null;
+};
+
 export type ScanStaff = {
   id: string;
   orgId: string;
@@ -4032,6 +9439,26 @@ export type ScanStaffCreateParams = {
   orgId: string;
   name: string;
   role: "door" | "desk" | "manager";
+};
+
+export type ScanStaffCreateResponse = {
+  staff: ScanStaff;
+  pin: string | null;
+};
+
+export type ScanStaffListResponse = {
+  items: Array<ScanStaff>;
+  pinOnlyOff?: true;
+  hasMore?: boolean;
+  nextCursor?: string;
+};
+
+export type ScanStaffResetPinResponse = {
+  pin: string | null;
+};
+
+export type ScanStaffResetUntaggedResponse = {
+  flagged: number;
 };
 
 export type ScanStaffUpdateParams = {
@@ -4107,6 +9534,36 @@ export type ScanWorkspace = {
   device: ScanningDevice;
 } | null;
 
+export type ScanZonesArchiveResponse = {
+  occupancy: "off" | "track" | "enforce";
+  capacity: number | null;
+  maxStayMinutes: number | null;
+  hardLimit?: boolean;
+  clearAt: string | null;
+  id: string;
+  orgId: string;
+  key: string;
+  name: string;
+  parentId: string | null;
+  timeZone: string | null;
+  effectiveTimeZone: string | null;
+  sort: number;
+  depth: number;
+  sessions: number;
+  checkedAt: Array<{
+    id: string;
+    name: string;
+  }>;
+  plans: Array<{
+    templateId: string;
+    templateName: string;
+    planId: string;
+    label: string;
+  }>;
+  inNow: number | null;
+  archivedAt: number | null;
+};
+
 export type ScanZonesCreateParams = {
   occupancy?: "off" | "track" | "enforce";
   capacity?: number | null;
@@ -4121,9 +9578,135 @@ export type ScanZonesCreateParams = {
   sort?: number;
 };
 
+export type ScanZonesCreateResponse = {
+  occupancy: "off" | "track" | "enforce";
+  capacity: number | null;
+  maxStayMinutes: number | null;
+  hardLimit?: boolean;
+  clearAt: string | null;
+  id: string;
+  orgId: string;
+  key: string;
+  name: string;
+  parentId: string | null;
+  timeZone: string | null;
+  effectiveTimeZone: string | null;
+  sort: number;
+  depth: number;
+  sessions: number;
+  checkedAt: Array<{
+    id: string;
+    name: string;
+  }>;
+  plans: Array<{
+    templateId: string;
+    templateName: string;
+    planId: string;
+    label: string;
+  }>;
+  inNow: number | null;
+  archivedAt: number | null;
+};
+
+export type ScanZonesListInsideResponse = {
+  items: Array<{
+    passId: string;
+    holder: string | null;
+    photoUrl: string | null;
+    plan: string | null;
+    type: string | null;
+    host: string | null;
+    place: string;
+    placeName: string;
+    parentName: string | null;
+    since: number;
+    dueAt: number | null;
+    via: string | null;
+    flags: Array<"long_stay" | "pass_ended">;
+  }>;
+  count: number;
+  rev: number;
+  places: Array<{
+    name: string;
+    inNow: number;
+    capacity: number | null;
+    place: string;
+    rev: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type ScanZonesListResponse = {
+  items: Array<{
+    occupancy: "off" | "track" | "enforce";
+    capacity: number | null;
+    maxStayMinutes: number | null;
+    hardLimit?: boolean;
+    clearAt: string | null;
+    id: string;
+    orgId: string;
+    key: string;
+    name: string;
+    parentId: string | null;
+    timeZone: string | null;
+    effectiveTimeZone: string | null;
+    sort: number;
+    depth: number;
+    sessions: number;
+    checkedAt: Array<{
+      id: string;
+      name: string;
+    }>;
+    plans: Array<{
+      templateId: string;
+      templateName: string;
+      planId: string;
+      label: string;
+    }>;
+    inNow: number | null;
+    archivedAt: number | null;
+  }>;
+  nextCursor: string | null;
+};
+
 export type ScanZonesMarkOutParams = {
   passId: string;
   place: string;
+};
+
+export type ScanZonesResetVisitsResponse = {
+  passId: string;
+  visits: 0;
+};
+
+export type ScanZonesRestoreResponse = {
+  occupancy: "off" | "track" | "enforce";
+  capacity: number | null;
+  maxStayMinutes: number | null;
+  hardLimit?: boolean;
+  clearAt: string | null;
+  id: string;
+  orgId: string;
+  key: string;
+  name: string;
+  parentId: string | null;
+  timeZone: string | null;
+  effectiveTimeZone: string | null;
+  sort: number;
+  depth: number;
+  sessions: number;
+  checkedAt: Array<{
+    id: string;
+    name: string;
+  }>;
+  plans: Array<{
+    templateId: string;
+    templateName: string;
+    planId: string;
+    label: string;
+  }>;
+  inNow: number | null;
+  archivedAt: number | null;
 };
 
 export type ScanZonesUpdateParams = {
@@ -4137,6 +9720,36 @@ export type ScanZonesUpdateParams = {
   timeZone?: string | null;
   sort?: number;
   archived?: boolean;
+};
+
+export type ScanZonesUpdateResponse = {
+  occupancy: "off" | "track" | "enforce";
+  capacity: number | null;
+  maxStayMinutes: number | null;
+  hardLimit?: boolean;
+  clearAt: string | null;
+  id: string;
+  orgId: string;
+  key: string;
+  name: string;
+  parentId: string | null;
+  timeZone: string | null;
+  effectiveTimeZone: string | null;
+  sort: number;
+  depth: number;
+  sessions: number;
+  checkedAt: Array<{
+    id: string;
+    name: string;
+  }>;
+  plans: Array<{
+    templateId: string;
+    templateName: string;
+    planId: string;
+    label: string;
+  }>;
+  inNow: number | null;
+  archivedAt: number | null;
 };
 
 export type Scanner = {
@@ -4249,6 +9862,35 @@ export type ScannersCreateParams = {
     };
   };
   timeZone: string;
+};
+
+export type ScannersCreateSamplePassResponse = {
+  passId: string;
+  templateId: string;
+};
+
+export type ScannersListResponse = {
+  items: Array<Scanner>;
+  nextCursor: string | null;
+};
+
+export type ScannersPairingCreateResponse = {
+  code: string | null;
+  url: string | null;
+  expiresAt: number;
+};
+
+export type ScannersPairingRetrieveResponse = {
+  state: "waiting" | "paired" | "expired";
+  device: {
+    label: string;
+    at: number;
+  } | null;
+};
+
+export type ScannersRotateTokenResponse = {
+  token: string | null;
+  expiresAt: number;
 };
 
 export type ScannersSetModeParams = {
@@ -4604,6 +10246,11 @@ export type ScanningSessionsDevicesUpdateParams = {
   revision?: number;
 };
 
+export type ScanningSessionsListResponse = {
+  items: Array<ScanningSession>;
+  nextCursor: string | null;
+};
+
 export type ScanningSessionsOverrideHoursParams = {
   action: "close";
   revision?: number;
@@ -4795,6 +10442,14 @@ export type ScanningSessionsUpdateParams = {
   revision?: number;
 };
 
+export type ScansListResponse = {
+  items: Array<ScanRecord>;
+  nextCursor: string | null;
+} | {
+  items: Array<ScanFeedRow>;
+  nextCursor: string | null;
+};
+
 export type ScansUndoParams = {
   idempotencyKey: string;
 };
@@ -4823,14 +10478,87 @@ export type SettingsReplyToConfirmParams = {
   token: string;
 };
 
+export type SettingsReplyToConfirmResponse = {
+  address: string | null;
+  state: "none" | "pending" | "confirmed";
+};
+
 export type SettingsReplyToResendConfirmationParams = {
   orgId: string;
+};
+
+export type SettingsReplyToResendConfirmationResponse = {
+  address: string | null;
+  state: "none" | "pending" | "confirmed";
+};
+
+export type SettingsReplyToRetrieveResponse = {
+  address: string | null;
+  state: "none" | "pending" | "confirmed";
+};
+
+export type SettingsRetrieveResponse = {
+  items: Array<{
+    scope: "platform" | string;
+    key: string;
+    value?: unknown;
+    default?: unknown;
+    source: "org" | "default";
+    ceiling?: number;
+    blockedByPlatform?: boolean;
+    blockedByPlan?: boolean;
+    planBlocked?: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
+    updatedAt: number | null;
+    updatedBy: string | null;
+  }>;
+  configRevision?: number;
+  oidc?: {
+    issuer: string;
+    platformAdminGroup: string | null;
+    adminGroup: string | null;
+    developerGroup: string | null;
+    userGroup: string | null;
+    consoleGroupRequired: boolean;
+  };
+  released?: {
+    google: boolean;
+    samsung: boolean;
+  };
 };
 
 export type SettingsUpdateParams = {
   scope?: "platform" | string;
   values: Record<string, unknown>;
   configRevision?: number;
+};
+
+export type SettingsUpdateResponse = {
+  items: Array<{
+    scope: "platform" | string;
+    key: string;
+    value?: unknown;
+    default?: unknown;
+    source: "org" | "default";
+    ceiling?: number;
+    blockedByPlatform?: boolean;
+    blockedByPlan?: boolean;
+    planBlocked?: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
+    updatedAt: number | null;
+    updatedBy: string | null;
+  }>;
+  configRevision?: number;
+  oidc?: {
+    issuer: string;
+    platformAdminGroup: string | null;
+    adminGroup: string | null;
+    developerGroup: string | null;
+    userGroup: string | null;
+    consoleGroupRequired: boolean;
+  };
+  released?: {
+    google: boolean;
+    samsung: boolean;
+  };
 };
 
 export type StagedBrandAsset = {
@@ -4930,6 +10658,47 @@ export type TemplateDetail = {
     alone: boolean;
     next: "design" | "try" | "release" | "request_review" | "review" | "wait" | null;
   };
+};
+
+export type TemplateImportsCreateResponse = {
+  uploadId: string;
+  workflowInstanceId: string;
+};
+
+export type TemplateImportsListResponse = {
+  items: Array<{
+    uploadId: string;
+    name: string | null;
+    status: "queued" | "running" | "complete" | "errored" | "terminated";
+    templateId: string | null;
+    version: string | null;
+    error: string | null;
+    issues: number;
+    createdAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type TemplateImportsRetrieveResponse = {
+  uploadId: string;
+  status: "queued" | "running" | "complete" | "errored" | "terminated";
+  step: string | null;
+  templateId: string | null;
+  version: string | null;
+  report: {
+    ok: boolean;
+    issues: Array<{
+      severity: "error" | "warning" | "info";
+      code: string;
+      message: string;
+      path?: string;
+      params?: Record<string, string>;
+      fix?: {
+        action: "upload_logo" | "upload_icon";
+      };
+    }>;
+  } | null;
+  error: string | null;
 };
 
 export type TemplateInputSchema = Record<string, unknown>;
@@ -5049,6 +10818,16 @@ export type TemplatesCandidatesApproveParams = {
   alone?: boolean;
 };
 
+export type TemplatesCandidatesApproveResponse = {
+  id: string;
+  candidateId: string;
+  candidateHash: string;
+  reviewerId: string;
+  reviewerName?: string | null;
+  kind?: "peer" | "sole" | "test";
+  createdAt: number;
+};
+
 export type TemplatesCandidatesCreateParams = {
   orgId: string;
   mode: "live" | "test";
@@ -5058,6 +10837,79 @@ export type TemplatesCandidatesCreateParams = {
   projection?: unknown;
 };
 
+export type TemplatesCandidatesCreateResponse = {
+  id: string;
+  templateId: string;
+  orgId: string;
+  mode: "live" | "test";
+  provider: "apple" | "google" | "samsung";
+  version: string;
+  contentHash: string;
+  candidateHash: string;
+  adapterRevision: number;
+  adapterCapabilities: Array<string>;
+  audiencePolicyRevision: number;
+  authorId: string;
+  versionAuthorId: string | null;
+  authorName?: string | null;
+  versionAuthorName?: string | null;
+  createdAt: number;
+  sourceReleaseId?: string;
+  sourceReleaseGeneration?: number;
+  sourceReleaseHash?: string;
+  accountId?: string;
+  accountRevision?: number;
+  providerIdentityHash?: string;
+  projection?: unknown;
+  approvals: Array<{
+    id: string;
+    candidateId: string;
+    candidateHash: string;
+    reviewerId: string;
+    reviewerName?: string | null;
+    kind?: "peer" | "sole" | "test";
+    createdAt: number;
+  }>;
+};
+
+export type TemplatesCandidatesListResponse = {
+  items: Array<{
+    id: string;
+    templateId: string;
+    orgId: string;
+    mode: "live" | "test";
+    provider: "apple" | "google" | "samsung";
+    version: string;
+    contentHash: string;
+    candidateHash: string;
+    adapterRevision: number;
+    adapterCapabilities: Array<string>;
+    audiencePolicyRevision: number;
+    authorId: string;
+    versionAuthorId: string | null;
+    authorName?: string | null;
+    versionAuthorName?: string | null;
+    createdAt: number;
+    sourceReleaseId?: string;
+    sourceReleaseGeneration?: number;
+    sourceReleaseHash?: string;
+    accountId?: string;
+    accountRevision?: number;
+    providerIdentityHash?: string;
+    projection?: unknown;
+    approvals: Array<{
+      id: string;
+      candidateId: string;
+      candidateHash: string;
+      reviewerId: string;
+      reviewerName?: string | null;
+      kind?: "peer" | "sole" | "test";
+      createdAt: number;
+    }>;
+  }>;
+  nextCursor: string | null;
+};
+
 export type TemplatesCandidatesPromoteParams = {
   orgId: string;
   mode: "live";
@@ -5065,10 +10917,185 @@ export type TemplatesCandidatesPromoteParams = {
   version: string;
 };
 
+export type TemplatesCandidatesPromoteResponse = {
+  id: string;
+  templateId: string;
+  orgId: string;
+  mode: "live" | "test";
+  provider: "apple" | "google" | "samsung";
+  version: string;
+  contentHash: string;
+  candidateHash: string;
+  adapterRevision: number;
+  adapterCapabilities: Array<string>;
+  audiencePolicyRevision: number;
+  authorId: string;
+  versionAuthorId: string | null;
+  authorName?: string | null;
+  versionAuthorName?: string | null;
+  createdAt: number;
+  sourceReleaseId?: string;
+  sourceReleaseGeneration?: number;
+  sourceReleaseHash?: string;
+  accountId?: string;
+  accountRevision?: number;
+  providerIdentityHash?: string;
+  projection?: unknown;
+  approvals: Array<{
+    id: string;
+    candidateId: string;
+    candidateHash: string;
+    reviewerId: string;
+    reviewerName?: string | null;
+    kind?: "peer" | "sole" | "test";
+    createdAt: number;
+  }>;
+};
+
+export type TemplatesChannelsListRunsResponse = Array<{
+  id: string;
+  state: "pending" | "running" | "done" | "dropped" | "failed";
+  dueAt: number;
+  startedAt: number | null;
+  finishedAt: number | null;
+  counts: Record<string, number>;
+  errorCode: string | null;
+  waiting: {
+    name: string;
+    until: number | null;
+  } | null;
+}>;
+
 export type TemplatesChannelsResetPassesParams = {
   channels?: Array<"mobile" | "apple" | "google" | "samsung" | "paper" | "nfc">;
   dryRun?: boolean;
   orgId?: string;
+};
+
+export type TemplatesChannelsResetPassesResponse = {
+  overrides: {
+    mobile?: number;
+    apple?: number;
+    google?: number;
+    samsung?: number;
+    paper?: number;
+    nfc?: number;
+  };
+  passes: number;
+  done: number;
+  skipped: number;
+  remaining: number;
+};
+
+export type TemplatesChannelsRetrieveResponse = {
+  channels: {
+    mobile?: "on" | "off" | "never";
+    apple?: "on" | "off" | "never";
+    google?: "on" | "off" | "never";
+    samsung?: "on" | "off" | "never";
+    paper?: "on" | "off" | "never";
+    nfc?: "on" | "off" | "never";
+  } | null;
+  revision: number;
+  effective: {
+    mobile?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    apple?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    google?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    samsung?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    paper?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    nfc?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+  };
+  levels: {
+    mobile?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    apple?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    google?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    samsung?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    paper?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    nfc?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+  };
+  overrides: {
+    mobile?: number;
+    apple?: number;
+    google?: number;
+    samsung?: number;
+    paper?: number;
+    nfc?: number;
+  };
+  overridePasses: number;
+  defaults: {
+    mobile?: "on" | "off";
+    apple?: "on" | "off";
+    google?: "on" | "off";
+    samsung?: "on" | "off";
+    paper?: "on" | "off";
+    nfc?: "on" | "off";
+  };
 };
 
 export type TemplatesChannelsUpdateParams = {
@@ -5087,9 +11114,189 @@ export type TemplatesChannelsUpdateParams = {
   orgId?: string;
 };
 
+export type TemplatesChannelsUpdateResponse = {
+  channels: {
+    mobile?: "on" | "off" | "never";
+    apple?: "on" | "off" | "never";
+    google?: "on" | "off" | "never";
+    samsung?: "on" | "off" | "never";
+    paper?: "on" | "off" | "never";
+    nfc?: "on" | "off" | "never";
+  } | null;
+  revision: number;
+  effective: {
+    mobile?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    apple?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    google?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    samsung?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    paper?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+    nfc?: {
+      on: boolean;
+      source: "pass" | "template" | "org" | "platform";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      retiredAt?: number;
+      retiredCause?: "pass" | "template";
+    };
+  };
+  levels: {
+    mobile?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    apple?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    google?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    samsung?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    paper?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+    nfc?: Array<{
+      level: "passbook" | "plan" | "org" | "template" | "pass";
+      state: "ok" | "partial" | "off" | "needs" | "locked";
+      reason?: "not_released" | "not_enrolled" | "no_design" | "tags_off" | "printing_off" | "not_included" | "blocked" | "never" | "template_off" | "pass_off";
+      canChange: boolean;
+    }>;
+  };
+  overrides: {
+    mobile?: number;
+    apple?: number;
+    google?: number;
+    samsung?: number;
+    paper?: number;
+    nfc?: number;
+  };
+  overridePasses: number;
+  defaults: {
+    mobile?: "on" | "off";
+    apple?: "on" | "off";
+    google?: "on" | "off";
+    samsung?: "on" | "off";
+    paper?: "on" | "off";
+    nfc?: "on" | "off";
+  };
+  impact: Array<{
+    channel: "mobile" | "apple" | "google" | "samsung" | "paper" | "nfc";
+    passes: number;
+    rotated: number;
+    clearedOverrides: number;
+  }>;
+  workflowInstanceId: string | null;
+  replaceSupported: boolean;
+  windows: Array<{
+    kind: "event" | "session";
+    id: string;
+    name: string;
+    opensAt: number | null;
+    closesAt: number | null;
+    open: boolean;
+    scheduled: boolean;
+  }>;
+  blocked: {
+    name: string;
+    closesAt: number | null;
+  } | null;
+  allOff: boolean;
+};
+
 export type TemplatesCloneParams = {
   orgId: string;
   name?: string;
+};
+
+export type TemplatesDeleteResponse = {
+  ok: true;
+  outcome: "deleted" | "archived";
+};
+
+export type TemplatesListEligibleResponse = {
+  items: Array<{
+    templateId: string;
+    name: string;
+    templateOrgId: string | null;
+    origin: "uploaded" | "baked";
+    releaseId: string;
+    releaseGeneration: number;
+    version: string;
+    candidateHash: string;
+    supportsCheckIn: boolean;
+    rule?: {
+      mode: "single" | "daily" | "unlimited";
+      days: number | null;
+      durationMinutes: number | null;
+      durationFrom: "first_scan" | "issued" | null;
+      plans: Array<"always" | "timed" | "guest">;
+      source: "template" | "action";
+    } | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type TemplatesListPreviewsResponse = {
+  items: Array<{
+    passJson: Record<string, unknown>;
+    warnings: Array<{
+      severity: "error" | "warning" | "info";
+      code: string;
+      message: string;
+      path?: string;
+      params?: Record<string, string>;
+      fix?: {
+        action: "upload_logo" | "upload_icon";
+      };
+    }>;
+    assetBaseUrl: string;
+    assetNames: Array<string>;
+    id: string;
+  }>;
 };
 
 export type TemplatesPreviewParams = {
@@ -5097,6 +11304,22 @@ export type TemplatesPreviewParams = {
   orgId?: string;
   input?: Record<string, unknown>;
   locale?: string;
+};
+
+export type TemplatesPreviewResponse = {
+  passJson: Record<string, unknown>;
+  warnings: Array<{
+    severity: "error" | "warning" | "info";
+    code: string;
+    message: string;
+    path?: string;
+    params?: Record<string, string>;
+    fix?: {
+      action: "upload_logo" | "upload_icon";
+    };
+  }>;
+  assetBaseUrl: string;
+  assetNames: Array<string>;
 };
 
 export type TemplatesReleasesCreateParams = {
@@ -5109,6 +11332,125 @@ export type TemplatesReleasesCreateParams = {
   expectedGeneration: number;
 };
 
+export type TemplatesReleasesCreateResponse = {
+  id: string;
+  templateId: string;
+  orgId: string | null;
+  mode: "live" | "test";
+  provider: "apple" | "google" | "samsung";
+  version: string;
+  generation: number;
+  candidateHash: string;
+  source: "approved" | "system" | "legacy";
+  action: "release" | "rollback" | "system" | "legacy";
+  previousReleaseId: string | null;
+  createdBy: string | null;
+  createdByName?: string | null;
+  createdAt: number;
+  candidateId: string | null;
+  approvalId: string | null;
+  sourceReleaseId?: string;
+  sourceReleaseGeneration?: number;
+  sourceReleaseHash?: string;
+  accountId?: string;
+  accountRevision?: number;
+  providerIdentityHash?: string;
+};
+
+export type TemplatesReleasesListResponse = {
+  active: {
+    id: string;
+    templateId: string;
+    orgId: string | null;
+    mode: "live" | "test";
+    provider: "apple" | "google" | "samsung";
+    version: string;
+    generation: number;
+    candidateHash: string;
+    source: "approved" | "system" | "legacy";
+    action: "release" | "rollback" | "system" | "legacy";
+    previousReleaseId: string | null;
+    createdBy: string | null;
+    createdByName?: string | null;
+    createdAt: number;
+    candidateId: string | null;
+    approvalId: string | null;
+    sourceReleaseId?: string;
+    sourceReleaseGeneration?: number;
+    sourceReleaseHash?: string;
+    accountId?: string;
+    accountRevision?: number;
+    providerIdentityHash?: string;
+  } | null;
+  items: Array<{
+    id: string;
+    templateId: string;
+    orgId: string | null;
+    mode: "live" | "test";
+    provider: "apple" | "google" | "samsung";
+    version: string;
+    generation: number;
+    candidateHash: string;
+    source: "approved" | "system" | "legacy";
+    action: "release" | "rollback" | "system" | "legacy";
+    previousReleaseId: string | null;
+    createdBy: string | null;
+    createdByName?: string | null;
+    createdAt: number;
+    candidateId: string | null;
+    approvalId: string | null;
+    sourceReleaseId?: string;
+    sourceReleaseGeneration?: number;
+    sourceReleaseHash?: string;
+    accountId?: string;
+    accountRevision?: number;
+    providerIdentityHash?: string;
+  }>;
+  nextCursor: string | null;
+  promotable?: Array<string>;
+};
+
+export type TemplatesReleasesRetrieveImpactResponse = {
+  fromVersion: string | null;
+  toVersion: string;
+  passes: {
+    count: number;
+    capped: boolean;
+  };
+  diff: {
+    fields: Array<{
+      label: string;
+      kind: "added" | "removed" | "changed";
+      from: string | null;
+      to: string | null;
+    }>;
+    images: Array<{
+      label: string;
+      kind: "added" | "removed" | "changed";
+      from: string | null;
+      to: string | null;
+    }>;
+    barcode: Array<{
+      label: string;
+      kind: "added" | "removed" | "changed";
+      from: string | null;
+      to: string | null;
+    }>;
+    colors: Array<{
+      label: string;
+      kind: "added" | "removed" | "changed";
+      from: string | null;
+      to: string | null;
+    }>;
+  };
+  more: {
+    fields: number;
+    images: number;
+    barcode: number;
+    colors: number;
+  };
+};
+
 export type TemplatesReleasesRollbackParams = {
   orgId: string;
   mode: "live" | "test";
@@ -5119,9 +11461,58 @@ export type TemplatesReleasesRollbackParams = {
   reason: string;
 };
 
+export type TemplatesReleasesRollbackResponse = {
+  id: string;
+  templateId: string;
+  orgId: string | null;
+  mode: "live" | "test";
+  provider: "apple" | "google" | "samsung";
+  version: string;
+  generation: number;
+  candidateHash: string;
+  source: "approved" | "system" | "legacy";
+  action: "release" | "rollback" | "system" | "legacy";
+  previousReleaseId: string | null;
+  createdBy: string | null;
+  createdByName?: string | null;
+  createdAt: number;
+  candidateId: string | null;
+  approvalId: string | null;
+  sourceReleaseId?: string;
+  sourceReleaseGeneration?: number;
+  sourceReleaseHash?: string;
+  accountId?: string;
+  accountRevision?: number;
+  providerIdentityHash?: string;
+};
+
+export type TemplatesRetrieveStampsImpactResponse = {
+  passes: number;
+  readyNow: number;
+  readyLost: number;
+  newlyReady: number;
+  highest: number;
+  highestKept: number;
+};
+
 export type TemplatesSetUpScanningParams = {
   orgId: string;
   timeZone?: string;
+};
+
+export type TemplatesSetUpScanningResponse = {
+  session: {
+    id: string;
+    name: string;
+  };
+  created: boolean;
+  events: Array<{
+    id: string;
+    name: string;
+    created: boolean;
+  }>;
+  noEvents: boolean;
+  truncated: boolean;
 };
 
 export type TemplatesVersionsCreateFromManifestParams = {
@@ -5140,6 +11531,75 @@ export type TemplatesVersionsCreateParams = {
   }>;
   dryRun?: boolean;
   parentVersion?: string;
+};
+
+export type TemplatesVersionsCreateResponse = {
+  saved: boolean;
+  version: string | null;
+  created: boolean;
+  displayOnly: boolean;
+  behindTip?: boolean;
+  report: {
+    ok: boolean;
+    issues: Array<{
+      severity: "error" | "warning" | "info";
+      code: string;
+      message: string;
+      path?: string;
+      params?: Record<string, string>;
+      fix?: {
+        action: "upload_logo" | "upload_icon";
+      };
+    }>;
+  };
+  assets: Array<{
+    name: string;
+    slot: string;
+    scale: 1 | 2 | 3;
+    locale?: string;
+    size: number;
+    sha1: string;
+    crc32: number;
+    width?: number;
+    height?: number;
+  }>;
+  passJson: Record<string, unknown> | null;
+  template: (TemplateDetail) & (Record<string, unknown> | null);
+};
+
+export type TemplatesVersionsRetrieveResponse = {
+  version: string;
+  createdAt: number;
+  createdBy: string | null;
+  assets: Array<{
+    name: string;
+    slot: string;
+    scale: 1 | 2 | 3;
+    locale?: string;
+    size: number;
+    sha1: string;
+    crc32: number;
+    width?: number;
+    height?: number;
+  }>;
+  report: {
+    ok: boolean;
+    issues: Array<{
+      severity: "error" | "warning" | "info";
+      code: string;
+      message: string;
+      path?: string;
+      params?: Record<string, string>;
+      fix?: {
+        action: "upload_logo" | "upload_icon";
+      };
+    }>;
+  };
+  active: boolean;
+  displayOnly: boolean;
+  passCount?: number;
+  manifest?: unknown;
+  passJson: Record<string, unknown>;
 };
 
 export type TerminalActParams = {
@@ -5235,6 +11695,34 @@ export type TerminalScansUndoParams = {
   };
 };
 
+export type VisitorsCancelResponse = {
+  id: string;
+  passId: string;
+  name: string;
+  hostName: string;
+  windowFrom: number;
+  windowUntil: number;
+  note: string | null;
+  status: "expected" | "in" | "out" | "no_show" | "cancelled";
+  statusAt: number | null;
+  autoOut: boolean;
+  hasEmail: boolean;
+};
+
+export type VisitorsCheckOutResponse = {
+  id: string;
+  passId: string;
+  name: string;
+  hostName: string;
+  windowFrom: number;
+  windowUntil: number;
+  note: string | null;
+  status: "expected" | "in" | "out" | "no_show" | "cancelled";
+  statusAt: number | null;
+  autoOut: boolean;
+  hasEmail: boolean;
+};
+
 export type VisitorsCreateParams = {
   orgId: string;
   name: string;
@@ -5248,20 +11736,153 @@ export type VisitorsCreateParams = {
   templateId?: string;
 };
 
+export type VisitorsCreateResponse = {
+  id: string;
+  passId: string;
+  name: string;
+  hostName: string;
+  windowFrom: number;
+  windowUntil: number;
+  note: string | null;
+  status: "expected" | "in" | "out" | "no_show" | "cancelled";
+  statusAt: number | null;
+  autoOut: boolean;
+  hasEmail: boolean;
+};
+
+export type VisitorsListHostsResponse = {
+  items: Array<{
+    id: string;
+    name: string;
+    email: string | null;
+  }>;
+  nextCursor: string | null;
+};
+
+export type VisitorsListResponse = {
+  items: Array<{
+    id: string;
+    passId: string;
+    name: string;
+    hostName: string;
+    windowFrom: number;
+    windowUntil: number;
+    note: string | null;
+    status: "expected" | "in" | "out" | "no_show" | "cancelled";
+    statusAt: number | null;
+    autoOut: boolean;
+    hasEmail: boolean;
+  }>;
+  nextCursor: string | null;
+};
+
 export type VisitorsSendHostEmailParams = {
   timeZone?: string;
+};
+
+export type VisitorsSendHostEmailResponse = {
+  ok: true;
 };
 
 export type WalletAccountsGoogleManagedCreateParams = {
   mode: "live";
 };
 
+export type WalletAccountsGoogleManagedCreateResponse = {
+  runId: string;
+  state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+  step: string | null;
+  waitingFor: string | null;
+  errorCode: string | null;
+  issuerId: string | null;
+  updatedAt: number;
+};
+
+export type WalletAccountsGoogleManagedRetrieveResponse = {
+  run: {
+    runId: string;
+    state: "queued" | "running" | "waiting" | "succeeded" | "failed" | "cancelled";
+    step: string | null;
+    waitingFor: string | null;
+    errorCode: string | null;
+    issuerId: string | null;
+    updatedAt: number;
+  } | null;
+};
+
 export type WalletAccountsGoogleSharedCreateParams = {
   issuerId: string;
 };
 
+export type WalletAccountsGoogleSharedCreateResponse = {
+  credential: {
+    id: string;
+    scope: "platform" | "org";
+    orgId: string | null;
+    mode: "live" | "test";
+    provider: "google" | "samsung";
+    identityHint: string;
+    provenance: "platform" | "managed" | "own";
+    revision: number;
+    verifiedAt: number | null;
+    revokedAt: number | null;
+    createdAt: number;
+    updatedAt: number;
+  };
+  serviceAccountEmail: string;
+};
+
+export type WalletAccountsGoogleSharedRetrieveResponse = {
+  serviceAccountEmail: string | null;
+};
+
+export type WalletCredentialsChecksCreateResponse = {
+  checkId: string;
+  status: "queued";
+};
+
+export type WalletCredentialsChecksRetrieveResponse = {
+  checkId: string;
+  status: "pending" | "ok" | "failed";
+  code: string | null;
+  checkedAt: number | null;
+};
+
+export type WalletCredentialsListResponse = {
+  items: Array<{
+    id: string;
+    scope: "platform" | "org";
+    orgId: string | null;
+    mode: "live" | "test";
+    provider: "google" | "samsung";
+    identityHint: string;
+    provenance: "platform" | "managed" | "own";
+    revision: number;
+    verifiedAt: number | null;
+    revokedAt: number | null;
+    createdAt: number;
+    updatedAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
 export type WalletCredentialsRevokeParams = {
   expectedRevision: number;
+};
+
+export type WalletCredentialsRevokeResponse = {
+  id: string;
+  scope: "platform" | "org";
+  orgId: string | null;
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  identityHint: string;
+  provenance: "platform" | "managed" | "own";
+  revision: number;
+  verifiedAt: number | null;
+  revokedAt: number | null;
+  createdAt: number;
+  updatedAt: number;
 };
 
 export type WalletCredentialsUpsertParams = {
@@ -5287,16 +11908,130 @@ export type WalletCredentialsUpsertParams = {
   };
 };
 
+export type WalletCredentialsUpsertResponse = {
+  id: string;
+  scope: "platform" | "org";
+  orgId: string | null;
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  identityHint: string;
+  provenance: "platform" | "managed" | "own";
+  revision: number;
+  verifiedAt: number | null;
+  revokedAt: number | null;
+  createdAt: number;
+  updatedAt: number;
+};
+
 export type WalletEnrollmentsDisableParams = {
   expectedRevision: number;
+};
+
+export type WalletEnrollmentsDisableResponse = {
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  accountId: string | null;
+  source: "platform" | "org" | null;
+  platformAvailable: boolean;
+  state: "absent" | "off" | "on" | "held" | "revoked";
+  enrolmentRevision: number;
+  prerequisites: {
+    check: boolean;
+    roundTrip: boolean | null;
+  };
+  hold: {
+    at: number;
+    reason: string;
+  } | null;
+  issuance: {
+    state: "disabled";
+    reason: "not_released";
+  } | {
+    state: "enabled";
+  };
 };
 
 export type WalletEnrollmentsEnableParams = {
   expectedRevision: number;
 };
 
+export type WalletEnrollmentsEnableResponse = {
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  accountId: string | null;
+  source: "platform" | "org" | null;
+  platformAvailable: boolean;
+  state: "absent" | "off" | "on" | "held" | "revoked";
+  enrolmentRevision: number;
+  prerequisites: {
+    check: boolean;
+    roundTrip: boolean | null;
+  };
+  hold: {
+    at: number;
+    reason: string;
+  } | null;
+  issuance: {
+    state: "disabled";
+    reason: "not_released";
+  } | {
+    state: "enabled";
+  };
+};
+
+export type WalletEnrollmentsListResponse = {
+  items: Array<{
+    mode: "live" | "test";
+    provider: "google" | "samsung";
+    accountId: string | null;
+    source: "platform" | "org" | null;
+    platformAvailable: boolean;
+    state: "absent" | "off" | "on" | "held" | "revoked";
+    enrolmentRevision: number;
+    prerequisites: {
+      check: boolean;
+      roundTrip: boolean | null;
+    };
+    hold: {
+      at: number;
+      reason: string;
+    } | null;
+    issuance: {
+      state: "disabled";
+      reason: "not_released";
+    } | {
+      state: "enabled";
+    };
+  }>;
+  nextCursor: string | null;
+};
+
 export type WalletEnrollmentsRevokeParams = {
   expectedRevision: number;
+};
+
+export type WalletEnrollmentsRevokeResponse = {
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  accountId: string | null;
+  source: "platform" | "org" | null;
+  platformAvailable: boolean;
+  state: "absent" | "off" | "on" | "held" | "revoked";
+  enrolmentRevision: number;
+  prerequisites: {
+    check: boolean;
+    roundTrip: boolean | null;
+  };
+  hold: {
+    at: number;
+    reason: string;
+  } | null;
+  issuance: {
+    state: "disabled";
+    reason: "not_released";
+  } | {
+    state: "enabled";
+  };
 };
 
 export type WalletEnrollmentsUpdateParams = {
@@ -5304,11 +12039,90 @@ export type WalletEnrollmentsUpdateParams = {
   expectedRevision: number;
 };
 
+export type WalletEnrollmentsUpdateResponse = {
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  accountId: string | null;
+  source: "platform" | "org" | null;
+  platformAvailable: boolean;
+  state: "absent" | "off" | "on" | "held" | "revoked";
+  enrolmentRevision: number;
+  prerequisites: {
+    check: boolean;
+    roundTrip: boolean | null;
+  };
+  hold: {
+    at: number;
+    reason: string;
+  } | null;
+  issuance: {
+    state: "disabled";
+    reason: "not_released";
+  } | {
+    state: "enabled";
+  };
+};
+
+export type WalletIdentitiesListResponse = {
+  items: Array<{
+    id: string;
+    provider: "apple";
+    orgId: string | null;
+    label: string;
+    identifier: string;
+    kind: "platform" | "managed" | "own";
+    status: "provisioning" | "active" | "renewing" | "expiring" | "expired" | "retired" | "failed";
+    notBefore: number | null;
+    notAfter: number | null;
+    rotation: "auto" | "csr" | "manual";
+    nextRotationAt: number | null;
+    issuing: boolean;
+    isDefault: boolean;
+    passCount: number;
+    createdAt: number;
+  }>;
+  nextCursor: string | null;
+};
+
+export type WalletProviderAccountsRetrieveResponse = {
+  orgId: string;
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  accountId: string | null;
+  revision: number;
+  state: "absent" | "configured" | "revoked";
+  externalApprovalVerified: false;
+  issuance: {
+    state: "disabled";
+    reason: "not_released";
+  } | {
+    state: "enabled";
+  };
+  updatedAt: number | null;
+};
+
 export type WalletProviderAccountsRevokeParams = {
   orgId: string;
   mode: "live" | "test";
   provider: "google" | "samsung";
   expectedRevision: number;
+};
+
+export type WalletProviderAccountsRevokeResponse = {
+  orgId: string;
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  accountId: string | null;
+  revision: number;
+  state: "absent" | "configured" | "revoked";
+  externalApprovalVerified: false;
+  issuance: {
+    state: "disabled";
+    reason: "not_released";
+  } | {
+    state: "enabled";
+  };
+  updatedAt: number | null;
 };
 
 export type WalletProviderAccountsUpsertParams = {
@@ -5338,11 +12152,34 @@ export type WalletProviderAccountsUpsertParams = {
   };
 };
 
+export type WalletProviderAccountsUpsertResponse = {
+  orgId: string;
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  accountId: string | null;
+  revision: number;
+  state: "absent" | "configured" | "revoked";
+  externalApprovalVerified: false;
+  issuance: {
+    state: "disabled";
+    reason: "not_released";
+  } | {
+    state: "enabled";
+  };
+  updatedAt: number | null;
+};
+
 export type WalletProviderAccountsVerifyParams = {
   orgId: string;
   mode: "live" | "test";
   candidateId: string;
   candidateHash: string;
+};
+
+export type WalletProviderAccountsVerifyResponse = {
+  verified: boolean;
+  verifiedAt: number | null;
+  expiresAt: number | null;
 };
 
 export type WebhookCapture = {
@@ -5445,12 +12282,24 @@ export type WebhookEndpointsCreateParams = {
   templateIds?: Array<string> | null;
 };
 
+export type WebhookEndpointsDeleteResponse = {
+  ok: true;
+};
+
 export type WebhookEndpointsDeliveriesBulkReplayParams = {
   from: number;
   to: number;
   include?: "failed" | "failed_and_cancelled" | "all";
   missing?: boolean;
   dryRun?: boolean;
+};
+
+export type WebhookEndpointsDeliveriesBulkReplayResponse = {
+  queued: number;
+};
+
+export type WebhookEndpointsDeliveriesReplayResponse = {
+  queued: number;
 };
 
 export type WebhookEndpointsEnsureCaptureParams = {
@@ -5460,6 +12309,10 @@ export type WebhookEndpointsEnsureCaptureParams = {
 
 export type WebhookEndpointsRotateSecretParams = {
   overlapHours?: 0 | 24 | 72;
+};
+
+export type WebhookEndpointsRotateSecretResponse = {
+  secret: string;
 };
 
 export type WebhookEndpointsSendTestParams = {

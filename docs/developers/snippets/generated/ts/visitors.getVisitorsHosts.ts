@@ -2,5 +2,4 @@ import { PassBook } from '@passbook/sdk';
 
 const pb = new PassBook({ apiKey: process.env.PASSBOOK_KEY ?? '' });
 
-const result = await pb.visitors.listHosts();
-console.log(result);
+for await (const item of pb.visitors.listHosts()) console.log(item);

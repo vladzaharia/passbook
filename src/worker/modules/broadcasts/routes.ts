@@ -282,7 +282,7 @@ register(
     method: 'post',
     path: '/{id}/retry',
     summary:
-      'Send a failed or cancelled message again, as a new one in the same mode; a change resumes (expectCount)',
+      'Send a failed or canceled message again, as a new one in the same mode; a change resumes (expectCount)',
     params: IdParamSchema,
     query: RetryQuerySchema,
     status: 201,

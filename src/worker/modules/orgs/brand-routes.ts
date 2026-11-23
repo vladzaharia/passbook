@@ -72,7 +72,7 @@ register(
   {
     method: 'patch',
     path: '/',
-    summary: 'Set the accent colour and mark level',
+    summary: 'Set the accent color and mark level',
     query: BrandOrgQuerySchema,
     body: UpdateBrandKitSchema,
     response: OrgSchema,

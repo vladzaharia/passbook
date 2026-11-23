@@ -39,7 +39,7 @@ register(
   {
     method: 'get',
     path: '/{orgId}/wallet-enrolments',
-    summary: 'List the wallet provider enrolments of the session mode',
+    summary: 'List the wallet provider enrollments of the session mode',
     params: z.strictObject({ orgId: IdSchema }),
     query: CursorQuerySchema,
     response: WalletEnrolmentListSchema,
@@ -81,7 +81,7 @@ for (const [name, run] of Object.entries(actions))
     {
       method: 'post',
       path: `/{orgId}/wallet-enrolments/{provider}/${name}`,
-      summary: `${name[0]?.toUpperCase()}${name.slice(1)} a wallet provider enrolment`,
+      summary: `${name[0]?.toUpperCase()}${name.slice(1)} a wallet provider enrollment`,
       params: WalletEnrolmentParamsSchema,
       body: WalletEnrolmentActionSchema,
       response: WalletEnrolmentSchema,
