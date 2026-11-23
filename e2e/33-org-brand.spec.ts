@@ -154,15 +154,15 @@ test('admin sets the brand from Brand and channels', async ({ browser }) => {
   await page.goto(`/admin/o/${orgId}/brand`);
   await expect(page.getByRole('heading', { name: 'Brand and channels', level: 1 })).toBeVisible();
   const brand = page.getByRole('region', { name: 'Brand', exact: true });
-  await expect(brand.getByRole('radio', { name: /None/ })).toBeDisabled();
-  await brand.getByRole('radio', { name: /Small/ }).check();
+  await expect(brand.getByRole('radio', { name: 'None' })).toBeDisabled();
+  await brand.getByRole('radio', { name: 'Powered by PassBook' }).check();
   await page.getByRole('button', { name: 'Review', exact: true }).click();
   const dialog = page.getByRole('dialog');
-  await expect(dialog.getByText('PassBook mark')).toBeVisible();
+  await expect(dialog.getByText('PassBook footer')).toBeVisible();
   await dialog.getByRole('button', { name: 'Save', exact: true }).click();
   await expect(dialog).toBeHidden();
   // The bar's "Saved" and the toast are both brief; the saved level is the durable proof.
-  await expect(brand.getByRole('radio', { name: /Small/ })).toBeChecked();
+  await expect(brand.getByRole('radio', { name: 'Powered by PassBook' })).toBeChecked();
   await expect(page.getByRole('region', { name: 'Unsaved changes' })).toBeHidden();
   await shoot(page, 'admin-brand');
   await ctx.close();

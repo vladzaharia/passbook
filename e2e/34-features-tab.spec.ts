@@ -49,7 +49,7 @@ test.describe('org features', () => {
     const label = (text: string) => page.locator('label', { hasText: text }).first();
     const pick = async (preset: string) => {
       await label(preset).click();
-      await expect(page.getByText(`${preset} instead of Legacy`)).toBeVisible();
+      await expect(page.getByText(`${preset} instead of Unlimited`).first()).toBeVisible();
     };
     const openForm = async () => {
       await page.getByRole('button', { name: 'Override Webhooks' }).click();
@@ -57,8 +57,8 @@ test.describe('org features', () => {
     };
     try {
       await page.goto(url);
-      await expect(page.getByRole('heading', { name: 'Preset', level: 2 })).toBeVisible();
-      await expect(page.getByRole('radio', { name: /Legacy/ })).toBeChecked();
+      await expect(page.getByRole('heading', { name: 'Plan', level: 2 })).toBeVisible();
+      await expect(page.getByRole('radio', { name: 'Unlimited' })).toBeChecked();
       const ready = async () => {
         await expect(page.getByRole('heading', { name: 'API and apps', level: 2 })).toBeVisible();
       };
@@ -276,7 +276,7 @@ test.describe('org features', () => {
     }
   });
 
-  test('an org with no features row says so and offers one Apply preset action', async ({
+  test('an org with no features row says so and offers one Apply plan action', async ({
     page,
   }) => {
     const api = await apiAs('admin');
@@ -304,9 +304,9 @@ test.describe('org features', () => {
       const url = `/admin/platform/orgs/${org.id}?tab=features`;
       await page.goto(url);
       await expect(page.getByText('No features set')).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Apply preset' })).toBeDisabled();
+      await expect(page.getByRole('button', { name: 'Apply plan' })).toBeDisabled();
       await page.locator('label', { hasText: 'Standard' }).first().click();
-      await expect(page.getByRole('button', { name: 'Apply preset' })).toBeEnabled();
+      await expect(page.getByRole('button', { name: 'Apply plan' })).toBeEnabled();
       await sweep(page, url, 'features-empty', async () => {
         await expect(page.getByText('No features set')).toBeVisible();
         await page.locator('label', { hasText: 'Standard' }).first().click();

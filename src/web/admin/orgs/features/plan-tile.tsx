@@ -1,0 +1,193 @@
+import { type CSSProperties, useId } from 'react';
+import type { PresetOptionDto } from '@/shared/contracts/entitlement-admin.ts';
+import { CHANNEL_CHIP, PLAN_COPY } from '@/shared/copy/plans.ts';
+import { FOOTER_ENFORCED, type PlanFacts } from '@/shared/plan-facts.ts';
+import { cn } from '@/web/lib/cn.ts';
+import { Badge } from '@/web/ui/index.ts';
+import { PlanNumber } from './plan-count.tsx';
+import { FooterSample, PlanFooterInfo } from './plan-footer-popover.tsx';
+import { planIcon } from './plan-icons.ts';
+import './plans.css';
+
+export interface PlanTileProps {
+  plan: PresetOptionDto;
+  facts: PlanFacts;
+  /** The org's plan now, for the numbers a pick counts from. */
+  from: PlanFacts | undefined;
+  isCurrent: boolean;
+  /** The Current badge arrived after an apply: it pops. */
+  popCurrent: boolean;
+  checked: boolean;
+  /** Counts picks of this tile; each one replays the icon and the numbers. */
+  playKey: number;
+  className?: string;
+  style?: CSSProperties;
+  onSelect: (preset: string) => void;
+}
+
+function Chip({ on, children }: { on: boolean; children: string }) {
+  return on ? (
+    <Badge>{children}</Badge>
+  ) : (
+    <span className="inline-flex min-h-6 items-center rounded-full border border-dashed border-border-strong px-2 text-xs whitespace-nowrap text-fg-subtle">
+      {children}
+      <span className="sr-only"> {PLAN_COPY.notIncluded}</span>
+    </span>
+  );
+}
+
+function Count({
+  value,
+  from,
+  playKey,
+  unit,
+  none,
+  noLimit,
+}: {
+  value: number | null;
+  from: number | null | undefined;
+  playKey: number;
+  unit: string;
+  none: string;
+  noLimit: string;
+}) {
+  if (value === 0) return <span className="text-sm font-medium text-fg-muted">{none}</span>;
+  return (
+    <span className="inline-flex items-baseline gap-1">
+      <span className="text-lg font-semibold text-fg-strong">
+        <PlanNumber value={value} from={from} playKey={playKey} />
+      </span>
+      {value === null ? <span className="sr-only">{noLimit}</span> : null}
+      <span aria-hidden={value === null || undefined} className="text-xs text-fg-muted">
+        {unit}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * One plan as a radio card: icon, name, four facts computed from its values. The info button is a sibling
+ * of the label, over the footer row, so it never selects the card and is not nested in a label.
+ */
+export function PlanTile({
+  plan,
+  facts,
+  from,
+  isCurrent,
+  popCurrent,
+  checked,
+  playKey,
+  className,
+  style,
+  onSelect,
+}: PlanTileProps) {
+  const id = useId();
+  const nameId = `${id}-name`;
+  const factsId = `${id}-facts`;
+  const currentId = `${id}-current`;
+  const Icon = planIcon(plan.preset);
+  return (
+    <div className={cn('@container/plan relative flex', className)} style={style}>
+      <label
+        htmlFor={id}
+        className={cn(
+          'relative flex w-full cursor-pointer flex-col gap-3 rounded-lg border border-border-strong bg-surface-raised p-4 wl-colors dark:shadow-(--wl-edge)',
+          'hover:border-fg-muted has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus',
+        )}
+      >
+        <input
+          id={id}
+          type="radio"
+          name="plan"
+          value={plan.preset}
+          checked={checked}
+          onChange={() => onSelect(plan.preset)}
+          aria-labelledby={nameId}
+          aria-describedby={isCurrent ? `${factsId} ${currentId}` : factsId}
+          className="sr-only"
+        />
+        <span aria-hidden data-on={checked || undefined} className="plan-ring" />
+        <span className="flex items-center gap-3">
+          <span
+            aria-hidden
+            className={cn(
+              'inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface-sunken wl-colors',
+              checked ? 'text-accent-fg' : 'text-fg-muted',
+            )}
+          >
+            <span
+              key={playKey}
+              data-plan={plan.preset}
+              data-play={playKey > 0 || undefined}
+              className="plan-icon inline-flex"
+            >
+              <Icon className="size-5" />
+            </span>
+          </span>
+          <span
+            id={nameId}
+            className="min-w-0 flex-1 truncate text-sm font-semibold text-fg-strong"
+          >
+            {plan.label}
+          </span>
+          {isCurrent ? (
+            <Badge id={currentId} tone="accent" className={popCurrent ? 'plan-pop' : undefined}>
+              {PLAN_COPY.current}
+            </Badge>
+          ) : null}
+        </span>
+        <span
+          id={factsId}
+          className="flex flex-col gap-3 @[34rem]/plan:flex-row @[34rem]/plan:items-center @[34rem]/plan:gap-8"
+        >
+          <span className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
+            <Count
+              value={facts.passes}
+              from={from?.passes}
+              playKey={playKey}
+              unit={PLAN_COPY.passes}
+              none={PLAN_COPY.noPasses}
+              noLimit={PLAN_COPY.noLimitPasses}
+            />
+            <Count
+              value={facts.templates}
+              from={from?.templates}
+              playKey={playKey}
+              unit={PLAN_COPY.templates}
+              none={PLAN_COPY.noTemplates}
+              noLimit={PLAN_COPY.noLimitTemplates}
+            />
+          </span>
+          <ul aria-label={PLAN_COPY.channels} className="flex flex-wrap gap-1.5">
+            <li>
+              <Chip on>{CHANNEL_CHIP.apple}</Chip>
+            </li>
+            <li>
+              <Chip on={facts.google}>{CHANNEL_CHIP.google}</Chip>
+            </li>
+            <li>
+              <Chip on={facts.samsung}>{CHANNEL_CHIP.samsung}</Chip>
+            </li>
+            <li>
+              <Chip on={facts.print}>{CHANNEL_CHIP.print}</Chip>
+            </li>
+            <li>
+              <Chip on={facts.nfc !== 'off'}>{CHANNEL_CHIP.nfc[facts.nfc]}</Chip>
+            </li>
+          </ul>
+        </span>
+        {FOOTER_ENFORCED ? (
+          <span className="mt-auto flex min-h-9 items-center border-t border-border pr-10 pt-2 text-xs text-fg-muted pointer-coarse:min-h-11">
+            <span className="sr-only">{PLAN_COPY.footerLead} </span>
+            <FooterSample level={facts.footer} />
+          </span>
+        ) : null}
+      </label>
+      {FOOTER_ENFORCED ? (
+        <span className="absolute right-3 bottom-4.5 pointer-coarse:bottom-4">
+          <PlanFooterInfo plan={plan.label} level={facts.footer} />
+        </span>
+      ) : null}
+    </div>
+  );
+}
