@@ -54,6 +54,15 @@ describe('kit lint', () => {
     expect(text('ui/status-pill.tsx')).toContain('pointer-coarse:size-11');
   });
 
+  // A segment that is off but open is a `hint` (hatched, quiet, with a tooltip): a lock icon in the
+  // label crowds the row and stays on the chosen segment.
+  it('marks an off segment with a hint, never a lock icon', () => {
+    for (const { path, text } of files) {
+      if (!text.includes('SegmentedControl')) continue;
+      expect(text, path).not.toMatch(/icon:\s*Lock\b/);
+    }
+  });
+
   it('toasts only through the kit toast (ui/toaster.tsx, which loads ui/toaster-impl.tsx)', () => {
     for (const { path, text } of files) {
       if (path === 'ui/toaster-impl.tsx') continue;

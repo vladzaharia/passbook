@@ -1,25 +1,30 @@
-import { Lock } from 'lucide-react';
+import { ToggleLeft } from 'lucide-react';
 import type { ReactNode } from 'react';
-import type { ChainLevel } from '@/shared/contracts/channels.ts';
-import { PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
-import { scanLine } from '@/shared/copy/scan.ts';
+import '../styles/hatch.css';
+
+/** Where an author turns a channel off. A channel stopped above them (PassBook, plan, org) has no tab at all. */
+export type OffLevel = 'template' | 'pass';
 
 /**
- * A channel a level stops: the card greyed under the reason, the level that stops it and, where the
- * viewer can act, the way to the level. Every preview switcher draws this one pane.
+ * A channel the template or pass turns off: the card greyed under a hatched veil (the off tab's
+ * hatch), the channel, why, and where the viewer can, the way back on. Every preview switcher draws
+ * this one pane.
  */
 export function LockedPreview({
-  title,
+  channel,
+  reason,
   level,
   card,
   children,
 }: {
-  /** "Google Wallet: Off for this template". */
-  title: string;
-  level: ChainLevel;
+  /** "Google Wallet". */
+  channel: string;
+  /** "Off for this template". */
+  reason: string;
+  level: OffLevel;
   /** The card, drawn greyed behind the veil. */
   card: ReactNode;
-  /** The action for this level: a link to it, or Ask PassBook. */
+  /** The way back on: the channels tab of this level, or of the template. */
   children?: ReactNode;
 }) {
   return (
@@ -30,13 +35,15 @@ export function LockedPreview({
       <div aria-hidden className="pointer-events-none w-full opacity-40 grayscale">
         {card}
       </div>
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-surface-raised/85 p-4 text-center backdrop-blur-sm">
-        <Lock aria-hidden className="size-5 text-fg-muted" />
-        <p className="text-sm font-medium text-fg-strong">{title}</p>
-        <p className="text-xs text-fg-muted">
-          {scanLine(PASS_SETUP_COPY.page.lockedBy, { level: PASS_SETUP_COPY.levels[level] })}
-        </p>
-        {children}
+      <div className="absolute inset-0 isolate flex flex-col items-center justify-center gap-1 overflow-hidden rounded-xl bg-surface-raised/85 p-4 text-center backdrop-blur-sm">
+        <span
+          aria-hidden
+          className="wl-hatch absolute inset-0 -z-10 opacity-60 [mask-image:linear-gradient(to_bottom,#000_55%,transparent)]"
+        />
+        <ToggleLeft aria-hidden className="mb-1 size-5 text-fg-muted" />
+        <p className="text-sm font-medium text-fg-strong">{channel}</p>
+        <p className="text-xs text-fg-muted">{reason}</p>
+        {children ? <div className="mt-2">{children}</div> : null}
       </div>
     </div>
   );
