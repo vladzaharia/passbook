@@ -117,6 +117,8 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    `.wrangler/d1-bookmarks.log`, applies remote migrations, then promotes the version.
    Queues, workflows and rate-limit namespaces come from step 6. Pass flags after `--`, for
    example `npm run deploy -- --apply --allow-no-push`; `--apply` runs every check first.
+   Never run `wrangler deploy` or `wrangler versions upload` for the main Worker yourself: only
+   `npm run deploy` checks the build stamp and scans `dist/` for the e2e release.
    **First deploy**: use `npm run deploy -- --first --apply`. Cloudflare documents that
    `versions upload` fails for a Worker that was never deployed and cannot apply Durable Object
    class changes (`ScanHub`); it does not document registering queue consumers or workflows

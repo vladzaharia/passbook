@@ -41,6 +41,8 @@ These changes behave the same in production, because they act only where signal 
 - **Build.** `tools/check-bundle.ts` runs as part of `npm run build`. It scans every script and config file in
   `dist/wallet` and fails if any contains `WALLET_E2E_RELEASE` or `Wallet Test WWDR`. The first string also catches
   a define that was never replaced. The check also fails when there is no Worker script to scan.
+  It skips `.map` files on purpose: the uploaded source map lists `e2e-release.ts` with its source, which is never
+  executed. Do not widen the scan to source maps, or every production build fails.
 - **Deploy.** `tools/deploy.ts --apply` refuses a `dist/` whose Worker carries a marker (`buildProblem`). This is in
   addition to the build stamp, which already refuses e2e builds because their rate limits are raised.
 - **Proof.** `tools/lib/e2e-release.test.ts` bundles the Worker's own call with Vite twice.
@@ -67,6 +69,6 @@ Even then, every provider call would go to a loopback mock that a deployed Worke
     npm run test:e2e:wallets            # playwright.wallets.config.ts starts the server with WALLET_E2E_RELEASE=1
 
 - The main run (`npm run test:e2e`) ignores `*-wallets-*` specs and keeps the providers dark, as in production.
-- The wallet specs check that the platform settings report `released` before they start. A reused dark server
-  therefore fails at once, with a clear message.
+- `auth.setup.ts` checks that the server matches the run (`e2eReleaseMismatch`): the wallets run needs both providers
+  open, every other run needs both dark. A server reused from the other kind of run fails at once, with a clear message.
 - What runs today and what is still open: `architecture.md` section 8, "CW12 status".
