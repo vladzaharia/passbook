@@ -44,6 +44,7 @@ const EXEMPT: Record<string, string> = {
   'modules/me/routes.ts': 'the .pkpasses route; its body is me/bundle.ts',
   'modules/apple/variant.ts': 'builds the voided copy; apple/routes.ts decides when',
   'modules/passes/file.ts': 'the shared file server; callers gate',
+  'modules/passes/timed-variant.ts': 'the timed render of the file server; callers gate',
   'modules/passes/package-objects.ts': 'the shared archive writer; callers gate',
   'modules/passes/detail.ts': 'admin links (passes:operate)',
   'modules/passes/import-results.ts': 'admin import report (passes:operate)',

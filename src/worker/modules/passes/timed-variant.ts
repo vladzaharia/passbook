@@ -32,15 +32,19 @@ export async function timedVariant(
   };
 }
 
-/** The pass file a device or holder downloads: `variant` (the voided Apple copy) first, else the render. */
+/** The pass file a holder downloads: the timed render when one is current. Callers gate the channel. */
 export async function serveCurrentPassFile(
   ctx: ServiceContext,
   pass: Pass,
   request: Request,
-  variant?: PassFileVariant,
 ): Promise<Response> {
-  const chosen = variant ?? (await timedVariant(ctx, pass)) ?? undefined;
-  return servePassFile(ctx.env.BUCKET, pass, request, {}, chosen);
+  return servePassFile(
+    ctx.env.BUCKET,
+    pass,
+    request,
+    {},
+    (await timedVariant(ctx, pass)) ?? undefined,
+  );
 }
 
 /** Signed again on each fetch: a device fetches once per render, so nothing is stored. */
