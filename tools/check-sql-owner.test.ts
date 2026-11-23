@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { replaceOnIdentities, sqlOutsideRepo } from './check-sql-owner.ts';
+import { optionalBindPredicate, replaceOnIdentities, sqlOutsideRepo } from './check-sql-owner.ts';
 
 describe('check-sql-owner', () => {
   it('flags SQL in a service and allows it in repo files', () => {
@@ -18,5 +18,66 @@ describe('check-sql-owner', () => {
     expect(replaceOnIdentities('src/worker/modules/identities/repo.ts', text)).toMatch(/replaces/);
     expect(replaceOnIdentities('src/worker/modules/identities/repo.test.ts', text)).toBeNull();
     expect(replaceOnIdentities('src/worker/modules/a/repo.ts', 'INSERT INTO x')).toBeNull();
+  });
+
+  it('flags a bound parameter that switches a filter off, with file:line', () => {
+    const rel = 'src/worker/modules/a/repo.ts';
+    const flagged = (sql: string) => optionalBindPredicate(rel, `const q = \`${sql}\`;`);
+    for (const sql of [
+      'WHERE (? IS NULL OR org_id = ?)',
+      'WHERE x = ? AND (org_id = ? OR ? IS NULL)',
+      'WHERE (NULL IS ? OR a = ?)',
+      'WHERE (?3 IS NULL OR a = ?3)',
+      'WHERE a = ? AND ? = NULL',
+      'WHERE a = COALESCE(?, a)',
+      'WHERE a = IFNULL(?, a)',
+      'WHERE ISNULL(?)',
+      "WHERE (? = '' OR a = ?)",
+      'WHERE CASE WHEN ? THEN 1 END',
+      'WHERE NOT (? IS NOT NULL AND a = ?)',
+      'WHERE x = ?\n  AND (?\n   IS NULL\n   OR org_id = ?)',
+    ])
+      expect(flagged(sql), sql).toHaveLength(1);
+    expect(flagged('WHERE a = ?\n AND (? IS NULL OR b = ?)')[0]).toMatch(/^src\/.*repo\.ts:2 /);
+  });
+
+  it('ignores comments, tests, fixtures and nullable-column checks', () => {
+    const rel = 'src/worker/modules/a/repo.ts';
+    const sql = "q('WHERE (? IS NULL OR org_id = ?)')";
+    expect(optionalBindPredicate(rel, `// ${sql}\n/* ${sql} */`)).toEqual([]);
+    expect(optionalBindPredicate(rel, `/*\n${sql}\n*/\nconst a = \`? IS NULL\`;`)[0]).toContain(
+      ':4 ',
+    );
+    expect(optionalBindPredicate('src/worker/modules/a/repo.test.ts', sql)).toEqual([]);
+    expect(optionalBindPredicate('src/worker/modules/a/x-test-support.ts', sql)).toEqual([]);
+    expect(optionalBindPredicate('src/worker/modules/a/x-fixtures.ts', sql)).toEqual([]);
+    expect(optionalBindPredicate('src/web/a.ts', sql)).toEqual([]);
+    expect(optionalBindPredicate(rel, "'WHERE (pass_id IS NULL OR pass_id = ?)'")).toEqual([]);
+  });
+
+  it('catches flag, subselect and NULLIF forms', () => {
+    const rel = 'src/worker/modules/a/repo.ts';
+    for (const sql of [
+      'WHERE (? = 0 OR org_id = ?)',
+      'WHERE ((SELECT ?) IS NULL OR org_id = ?)',
+      "WHERE org_id = IFNULL(NULLIF(?, ''), org_id)",
+      "WHERE (? = 'all' OR org_id = ?)",
+      'WHERE (? > 0 OR org_id = ?)',
+      'WHERE (? OR org_id = ?)',
+      'WHERE (org_id = ? OR ?)',
+    ])
+      expect(optionalBindPredicate(rel, `const q = \`${sql}\`;`), sql).toHaveLength(1);
+  });
+
+  it('pins each reviewed line by its text, and reports a new one at its own line', () => {
+    const rel = 'src/worker/platform/workflow-runs.ts';
+    const reviewed = 'run_guard = CASE WHEN ? THEN NULL ELSE run_guard END';
+    expect(optionalBindPredicate(rel, `x\n  ${reviewed}\ny`)).toEqual([]);
+    const added = `${reviewed}\nWHERE (? IS NULL OR org_id = ?)`;
+    const found = optionalBindPredicate(rel, added);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatch(/workflow-runs\.ts:2 /);
+    // The same new predicate in place of a reviewed line is still a finding.
+    expect(optionalBindPredicate(rel, 'WHERE (? IS NULL OR org_id = ?)')).toHaveLength(1);
   });
 });

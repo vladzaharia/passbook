@@ -6,7 +6,10 @@ import {
 import { batch, first, stmt } from '../../platform/db.ts';
 import type { Pass } from './repo-map.ts';
 import {
+  REFRESH_BOUND_FENCE,
+  REFRESH_UNBOUND_FENCE,
   type RefreshSnapshot,
+  refreshFenceMismatch,
   refreshParams,
   refreshPredicate,
   validRefreshEpochs,
@@ -45,6 +48,16 @@ export async function setDownloadToken(
   return (updated?.results.length ?? 0) === 1;
 }
 
+const CLAIM_UNBOUND = `UPDATE passes SET refresh_requested_at = ?
+     WHERE id = ? AND ${refreshPredicate} ${REFRESH_UNBOUND_FENCE}
+       AND (refresh_requested_at IS NULL OR refresh_requested_at <= ?)
+     RETURNING id`;
+
+const CLAIM_BOUND = `UPDATE passes SET refresh_requested_at = ?
+     WHERE id = ? AND ${refreshPredicate} ${REFRESH_BOUND_FENCE}
+       AND (refresh_requested_at IS NULL OR refresh_requested_at <= ?)
+     RETURNING id`;
+
 /** Claims the slot only while the selected context  still match. */
 export async function claimRefresh(
   db: D1Database,
@@ -52,13 +65,10 @@ export async function claimRefresh(
   now: number,
   windowMs: number,
 ): Promise<boolean> {
-  if (!validRefreshEpochs(snapshot)) return false;
+  if (!validRefreshEpochs(snapshot) || refreshFenceMismatch(snapshot)) return false;
   const row = await first<{ id: string }>(
     db,
-    `UPDATE passes SET refresh_requested_at = ?
-     WHERE id = ? AND ${refreshPredicate}
-       AND (refresh_requested_at IS NULL OR refresh_requested_at <= ?)
-     RETURNING id`,
+    snapshot.connectionId === null ? CLAIM_UNBOUND : CLAIM_BOUND,
     [now, snapshot.passId, ...refreshParams(snapshot), now - windowMs],
   );
   return row !== null;

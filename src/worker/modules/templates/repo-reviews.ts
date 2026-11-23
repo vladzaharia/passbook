@@ -62,7 +62,7 @@ export async function listOpenReviews(
        SELECT c.template_id, t.name, c.version, c.author_id, MIN(c.created_at) AS at ${OPEN}
          AND c.author_id IS NOT ? AND c.version_author_id IS NOT ?
        GROUP BY c.template_id
-     ) WHERE (? IS NULL OR at < ? OR (at = ? AND template_id < ?))
+     )${after ? ' WHERE (at < ? OR (at = ? AND template_id < ?))' : ''}
      ORDER BY at DESC, template_id DESC LIMIT ?`,
     [
       orgId,
@@ -71,10 +71,7 @@ export async function listOpenReviews(
       AUDIENCE_POLICY_REVISION,
       userId,
       userId,
-      after?.at ?? null,
-      after?.at ?? null,
-      after?.at ?? null,
-      after?.id ?? '',
+      ...(after ? [after.at, after.at, after.id] : []),
       limit,
     ],
   );
