@@ -386,7 +386,7 @@ Open risks:
 - No browser check at tablet and phone widths, or in both themes, for the n1, n2, n3 and n4 UI. n5 was checked.
   At 1280 px the pass detail tabs already overflow.
 - n1 credits a pass-file fetch to the devices that checked in during the last 2 minutes. `bundle.opened` also
-  counts link-preview fetches. n3's `isActive` is set at publish; the minute cron `passes.event_boundaries` republishes the pass at each event start and end (`pass_boundaries`, `src/passkit/boundaries.ts`).
+  counts link-preview fetches. n3's `isActive` is set at publish; at each event start and end the minute cron renders the timed keys again with no new version (`event-boundaries.md`).
 - Gaps 0013 to 0015 are kept for wave 2. Wrangler applies any missing name, so on a database that already has 0016
   they run after it and must not depend on running before it.
 
@@ -431,7 +431,7 @@ Open risks:
 - For the scanner design: `scan.*` event kinds, the `scanner` actor type, the `scan` pass source,
   `passes.scan_code` and `passes.barcode_hash` already exist. There is no scan scope or scanner credential yet.
 - The broadcast entity reuses the `wallet` art; a dedicated art would fit better.
-- `isActive` on upcoming events flips at the next event boundary: the cron rebuilds up to 25 due passes a minute, so a large backlog lags by minutes.
+- `isActive` on upcoming events flips at each event boundary through a timed render, not a version (`event-boundaries.md`).
 
 ## Final review
 
