@@ -1,7 +1,9 @@
+import AxeBuilder from '@axe-core/playwright';
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 import { apiAs, createPass, uid } from './helpers/api.ts';
 import { pairScanner } from './helpers/pair.ts';
 import { readSeed } from './helpers/seed.ts';
+import { shots } from './helpers/shots.ts';
 
 test('a customer screen follows only the door it is bound to', async ({ browser }) => {
   const api = await apiAs('admin');
@@ -58,6 +60,54 @@ test('a customer screen follows only the door it is bound to', async ({ browser 
     await expect(checkedIn(screenN)).toBeVisible();
   } finally {
     await Promise.all(contexts.map((context) => context.close()));
+    await api.dispose();
+  }
+});
+
+test('the admin picks the scanners a customer screen follows', async ({ page }) => {
+  const api = await apiAs('admin');
+  try {
+    const orgId = readSeed().org.id;
+    const session = await api.send('POST', '/api/v1/scanning-sessions', {
+      orgId,
+      name: uid('Follow picker'),
+      timeZone: 'UTC',
+    });
+    const devices = `/api/v1/scanning-sessions/${session.id}/devices`;
+    const north = await api.send('POST', devices, { name: uid('North door'), surface: 'phone' });
+    const south = await api.send('POST', devices, { name: uid('South door'), surface: 'phone' });
+    const screen = await api.send('POST', devices, {
+      name: uid('Door screen'),
+      surface: 'customer',
+    });
+    await page.goto(`/admin/o/${orgId}/scanning/sessions/${session.id}`);
+    await page
+      .getByTestId('session-device')
+      .filter({ hasText: screen.name })
+      .getByRole('button', { name: 'Configure device', exact: true })
+      .click();
+    const sheet = page.getByRole('dialog', { name: `Configure ${screen.name}` });
+    const all = sheet.getByRole('switch', { name: 'All scanners in this session' });
+    await expect(all).toBeChecked();
+    await shots(page, 'follows-all');
+    await all.click();
+    await sheet.getByRole('checkbox', { name: north.name, exact: true }).click();
+    await shots(page, 'follows-chosen');
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      const results = await new AxeBuilder({ page }).analyze();
+      expect(results.violations, scheme).toEqual([]);
+    }
+    const saved = page.waitForResponse(
+      (r) => r.request().method() === 'PATCH' && r.url().includes(`/devices/${screen.id}`),
+    );
+    await sheet.getByRole('button', { name: 'Save device', exact: true }).click();
+    expect((await saved).status()).toBe(200);
+    const stored = await api.get(`/api/v1/scanning-sessions/${session.id}`);
+    expect(
+      stored.devices.find((d: { id: string }) => d.id === screen.id).overrides.follows,
+    ).toEqual([south.id]);
+  } finally {
     await api.dispose();
   }
 });
