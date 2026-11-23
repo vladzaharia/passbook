@@ -4119,6 +4119,24 @@
       ]
     },
     {
+      "code": "SCAN_DRAFT_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_DRAFT_STALE",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCAN_EVENT_CHANGED",
       "statuses": [
         409
