@@ -12,7 +12,6 @@ import { resolveTemplate } from '../passes/builder.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { currentPassJson } from '../passes/repo-read-pass.ts';
 import { walletArtExists } from './assets.ts';
-import { GoogleWalletError } from './google-errors.ts';
 import { googleClassKeyDigest } from './google-ids.ts';
 import type { GoogleGenericProjection } from './google-projection.ts';
 import { sizeShipped, type WalletArt } from './projection-art.ts';
@@ -34,8 +33,6 @@ export type GoogleCompiled = GoogleClassPartition & {
 /** Why a pass cannot be compiled now. None of these is a provider fault, so none is retried. */
 export type GoogleCompileFailure = 'unreadable' | 'blocked' | 'type_changed' | 'art_missing';
 
-const MAX_CLASS_KEY = 200;
-
 /** The type a schema 2 release was approved for; schema 1 is always Generic. */
 export const projectionGoogleType = (projection: NativeProjection): GoogleType =>
   projection.schema === 2 ? (projection.type as GoogleType) : 'generic';
@@ -52,7 +49,6 @@ async function partitionOf(
     lookups: template.manifest.lookups ?? {},
   });
   const key = value === undefined || value === null ? '' : String(value).trim();
-  if (key.length > MAX_CLASS_KEY) throw new GoogleWalletError('invalid_input', 'class key');
   return key === '' || key === 'default'
     ? { type }
     : { type, classKey: await googleClassKeyDigest(key) };
