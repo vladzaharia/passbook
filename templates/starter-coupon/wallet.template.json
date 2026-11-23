@@ -5,12 +5,12 @@
   "wallets": {
     "schema": 1,
     "roles": {
-      "offerDetails": {
+      "finePrint": {
         "field": "fine"
       }
     },
     "google": {
-      "classKey": "{{offer}}",
+      "classKey": "{{offer|url}}",
       "images": {
         "logo": "wallets/google/logo.png"
       }

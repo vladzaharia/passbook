@@ -20,8 +20,10 @@ export const googleOfferCompiler = makeCompiler({
     const channel = ctx.take('redemptionChannel');
     if (!title || channel?.kind !== 'channel')
       return 'An offer needs a title and a redemption channel.';
-    const details = ctx.take('offerDetails') && ctx.roleText('offerDetails');
     const finePrint = ctx.take('finePrint') && ctx.roleText('finePrint');
+    // A template that sets `finePrint` puts its constant terms on the shared class; the details role is
+    // then per-pass text, and its fields stay on the object.
+    const details = !finePrint && ctx.take('offerDetails') && ctx.roleText('offerDetails');
     const titleImage = logoOf(ctx, {
       ...LOGO,
       loss: 'difference',

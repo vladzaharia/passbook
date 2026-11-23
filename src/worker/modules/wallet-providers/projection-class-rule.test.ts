@@ -3,7 +3,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { googleCompiler } from '../../../passkit/wallets/google/compilers.ts';
 import type { CompileResult } from '../../../passkit/wallets/types.ts';
 import { getVersion } from '../templates/repo.ts';
-import { classProbes, MAX_PROBE_COMPILES, withClassRule } from './projection-class-rule.ts';
+import {
+  classProbes,
+  conditionLiterals,
+  MAX_PROBE_COMPILES,
+  withClassRule,
+} from './projection-class-rule.ts';
 import { computeProjectionPins } from './projection-pins.ts';
 import { installV2Env, setup } from './projection-v2-test-fixtures.ts';
 
@@ -54,7 +59,12 @@ describe('the class field rule, input by input', () => {
     inputs: object,
     sample: Record<string, never>,
     classOf: (input: Record<string, unknown>) => unknown,
-    options: { classKey?: string; build?: (input: Record<string, unknown>) => void } = {},
+    options: {
+      classKey?: string;
+      lookups?: Record<string, unknown>;
+      literals?: Record<string, never[]>;
+      build?: (input: Record<string, unknown>) => void;
+    } = {},
   ) => {
     const viewFor = (input: Record<string, unknown>) => {
       options.build?.(input);
@@ -70,7 +80,13 @@ describe('the class field rule, input by input', () => {
         objectBody: {},
       }),
     } as never;
-    const ruled = withClassRule(compiler, classProbes(inputs, sample, options.classKey, viewFor));
+    const ruled = withClassRule(
+      compiler,
+      classProbes(inputs, sample, options.classKey, viewFor, {
+        ...(options.lookups ? { lookups: options.lookups } : {}),
+        ...(options.literals ? { literals: options.literals } : {}),
+      }),
+    );
     return ruled.compile(viewFor(sample), { now: new Date(), omit: [] });
   };
   const schema = (properties: object, required: string[] = []) => ({
@@ -137,18 +153,9 @@ describe('the class field rule, input by input', () => {
       run(inputs, { event: 'gala', note: 'hi' } as never, () => ({ fixed: true })).blocked,
     ).toBeUndefined();
     const keyed = run(inputs, { event: 'gala', note: 'hi' } as never, (i) => ({ event: i.event }), {
-      classKey: '{{input.event}}',
+      classKey: '{{event}}',
     });
     expect(keyed.blocked).toBeUndefined();
-    const bracket = run(
-      inputs,
-      { event: 'gala', note: 'hi' } as never,
-      (i) => ({ event: i.event }),
-      {
-        classKey: "{{input['event']}}",
-      },
-    );
-    expect(bracket.blocked).toBeUndefined();
   });
 
   it('reads a bare reference in the class key, as the runtime does', () => {
@@ -183,5 +190,162 @@ describe('the class field rule, input by input', () => {
     expect(compiles).toBeLessThanOrEqual(MAX_PROBE_COMPILES + 1);
     expect(result.blocked?.code).toBe('CLASS_FIELDS_VARY');
     expect(result.blocked?.message).toContain('could not be checked');
+  });
+});
+
+describe('the class field rule, adversarial templates', () => {
+  const sch = (properties: object, required: string[] = []) => ({
+    type: 'object',
+    properties,
+    required,
+  });
+  const exec = (
+    inputs: object,
+    sample: object,
+    classOf: (input: Record<string, unknown>) => unknown,
+    options: {
+      classKey?: string;
+      lookups?: Record<string, unknown>;
+      literals?: Record<string, never[]>;
+      build?: (input: Record<string, unknown>) => void;
+    } = {},
+  ) => {
+    const viewFor = (input: Record<string, unknown>) => {
+      options.build?.(input);
+      return { input } as never;
+    };
+    const compiler = {
+      target: 'google',
+      revision: 1,
+      compile: (view: { input: Record<string, unknown> }) => ({
+        type: 'event',
+        items: [],
+        classBody: classOf(view.input),
+        objectBody: {},
+      }),
+    } as never;
+    const probes = classProbes(inputs, sample as never, options.classKey, viewFor, {
+      ...(options.lookups ? { lookups: options.lookups } : {}),
+      ...(options.literals ? { literals: options.literals } : {}),
+    });
+    return withClassRule(compiler, probes).compile(viewFor(sample as never), {
+      now: new Date(),
+      omit: [],
+    });
+  };
+
+  it('never reuses the sample value as the probe (time zone, e-mail)', () => {
+    for (const [name, value] of [
+      ['tz', 'Europe/Paris'],
+      ['mail', 'a@example.test'],
+    ] as const) {
+      const result = exec(
+        sch({ [name]: { type: 'string' } }, [name]),
+        { [name]: value },
+        (i) => ({ shown: i[name] }),
+        {
+          build: (i) => {
+            if (i[name] !== value) throw new Error('only the sample is valid');
+          },
+        },
+      );
+      expect(result.blocked?.code).toBe('CLASS_FIELDS_VARY');
+    }
+  });
+
+  it('moves a date a day in its own offset, so a day-only class body is caught', () => {
+    const result = exec(
+      sch({ startsAt: { type: 'string', format: 'date-time' } }, ['startsAt']),
+      { startsAt: '2030-01-01T18:00:00-05:00' },
+      (i) => ({ day: String(i.startsAt).slice(0, 10) }),
+      {
+        build: (i) => {
+          if (!/-05:00$/.test(String(i.startsAt))) throw new Error('needs the offset');
+        },
+      },
+    );
+    expect(result.blocked?.message).toContain('depend on pass data (startsAt)');
+  });
+
+  it('exempts a class key input only when every value changes the key', () => {
+    const tiers = sch({ tier: { type: 'string', enum: ['a', 'b', 'c'] } }, ['tier']);
+    const moves = (i: Record<string, unknown>) => ({ tier: i.tier });
+    for (const lookups of [{ tiers: {} }, { tiers: { a: 'p', b: 'p', c: 'q' } }])
+      expect(
+        exec(tiers, { tier: 'a' }, moves, { classKey: '{{lookups.tiers[tier]}}', lookups }).blocked
+          ?.code,
+      ).toBe('CLASS_FIELDS_VARY');
+    expect(
+      exec(tiers, { tier: 'a' }, moves, {
+        classKey: '{{lookups.tiers[tier]}}',
+        lookups: { tiers: { a: 'x', b: 'y', c: 'z' } },
+      }).blocked,
+    ).toBeUndefined();
+  });
+
+  it('does not exempt a whole object for a key that reads one field or the object', () => {
+    const venue = sch({ venue: { type: 'object' } }, ['venue']);
+    const sample = { venue: { name: 'N', address: 'A' } };
+    const address = (i: Record<string, unknown>) => ({
+      address: (i.venue as { address?: string } | undefined)?.address,
+    });
+    for (const classKey of ['{{venue.name}}', '{{venue}}'])
+      expect(exec(venue, sample, address, { classKey }).blocked?.code).toBe('CLASS_FIELDS_VARY');
+  });
+
+  it('tries a second partner value for a paired input', () => {
+    const result = exec(
+      sch({ a: { type: 'string' }, b: { type: 'string', enum: ['bad', 'ok'] } }),
+      {},
+      (i) => ({ a: i.a }),
+      {
+        build: (i) => {
+          if ((i.a === undefined) !== (i.b === undefined)) throw new Error('a pair');
+          if (i.b === 'bad') throw new Error('bad partner');
+        },
+      },
+    );
+    expect(result.blocked?.message).toContain('depend on pass data (a)');
+  });
+
+  it('counts an input with no value to try as unchecked', () => {
+    const result = exec(
+      sch({ mode: { type: 'string', enum: ['only'] } }, ['mode']),
+      { mode: 'only' },
+      () => ({ fixed: true }),
+      {
+        build: (i) => {
+          if (i.mode !== 'only') throw new Error('only one value');
+        },
+      },
+    );
+    expect(result.blocked?.message).toContain('could not be checked against mode');
+  });
+
+  it('tries the literals the template branches on', () => {
+    const inputs = sch({ kind: { type: 'string' } }, ['kind']);
+    const classOf = (i: Record<string, unknown>) => ({ premium: i.kind === 'premium' });
+    expect(exec(inputs, { kind: 'a' }, classOf).blocked).toBeUndefined();
+    expect(
+      exec(inputs, { kind: 'a' }, classOf, { literals: { kind: ['premium'] as never[] } }).blocked
+        ?.code,
+    ).toBe('CLASS_FIELDS_VARY');
+  });
+
+  it('collects eq and in literals from the manifest', () => {
+    expect(
+      conditionLiterals({
+        behaviors: [
+          {
+            when: {
+              all: [
+                { input: 'kind', eq: 'premium' },
+                { input: 'k', in: [1, 2] },
+              ],
+            },
+          },
+        ],
+      }),
+    ).toEqual({ kind: ['premium'], k: [1, 2] });
   });
 });

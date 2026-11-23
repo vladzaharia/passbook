@@ -112,6 +112,17 @@ export function walletsManifestIssues(
   }
   if (wallets.google?.classKey !== undefined)
     checkExprAt(wallets.google.classKey, 'wallets.google.classKey');
+  const keyed =
+    typeof wallets.google?.classKey === 'string'
+      ? /^\s*\{\{\s*([\w-]+)\s*\}\}\s*$/.exec(wallets.google.classKey)?.[1]
+      : undefined;
+  const keyType = keyed ? (properties[keyed] as { type?: unknown } | undefined)?.type : undefined;
+  if (keyType === 'object' || keyType === 'array')
+    error(
+      'WALLETS_CLASS_KEY',
+      'The class key is an object or list. Read a text or number input, or one field of it.',
+      'wallets.google.classKey',
+    );
 
   const referenced = new Set<string>();
   for (const name of WALLET_TARGETS) {

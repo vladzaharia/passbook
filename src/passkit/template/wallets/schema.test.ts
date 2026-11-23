@@ -203,6 +203,23 @@ describe('wallets block schema', () => {
     );
   });
 
+  it('refuses a class key that is a whole object or list', () => {
+    const manifest = (inputs: object, classKey: string) =>
+      ({
+        inputs: { type: 'object', properties: inputs },
+        wallets: { schema: 1, google: { classKey } },
+      }) as never;
+    const out = (m: never) => walletsManifestIssues(m).map((i) => `${i.severity}:${i.code}`);
+    expect(out(manifest({ venue: { type: 'object' } }, '{{venue}}'))).toEqual([
+      'error:WALLETS_CLASS_KEY',
+    ]);
+    expect(out(manifest({ venue: { type: 'object' } }, '{{venue.name}}'))).toEqual([]);
+    expect(out(manifest({ tags: { type: 'array' } }, '{{tags}}'))).toEqual([
+      'error:WALLETS_CLASS_KEY',
+    ]);
+    expect(out(manifest({ name: { type: 'string' } }, '{{name}}'))).toEqual([]);
+  });
+
   it('checks expressions, inputs and lookups', () => {
     expect(codes({ schema: 1, roles: { tier: { value: '{{level | nope(}}' } } })).toEqual([
       expect.stringMatching(/^error:WALLETS_EXPR:wallets\.roles\.tier\.value$/),
