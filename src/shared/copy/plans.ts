@@ -1,6 +1,6 @@
 import type { EntitlementKey } from '../contracts/entitlements.ts';
 import type { FooterLevel, NfcLevel } from '../plan-facts.ts';
-import { HOLDER_COPY } from './holder.ts';
+import { passbookCredit } from './passbook-credit.ts';
 
 /** The plan picker's words. Facts come from the plan's values (`planFacts`); there is no prose per plan. */
 export const PLAN_COPY = {
@@ -40,9 +40,13 @@ export const CHANNEL_CHIP = {
 } as const;
 
 /** The footer as a holder reads it, by the smallest level a plan allows. `none` has no footer to quote. */
+const credit = (level: FooterLevel): string => {
+  const c = passbookCredit(level === 'quiet' ? 'small' : level === 'full' ? 'full' : 'none');
+  return c ? `${c.lead} ${c.name}`.trim() : 'Nothing';
+};
 export const FOOTER_SAMPLE: Record<FooterLevel, string> = {
-  full: `${HOLDER_COPY.issuedWith} PassBook`,
-  quiet: HOLDER_COPY.poweredBy,
+  full: credit('full'),
+  quiet: credit('quiet'),
   none: 'No PassBook footer',
 };
 
@@ -56,29 +60,14 @@ export const PLAN_PLACES: ReadonlyArray<{
   {
     place: 'Pass pages',
     hint: 'Pass, barcode, bundle, join, tag, print',
-    by: { full: 'Issued with PassBook and logo', quiet: HOLDER_COPY.poweredBy, none: 'Nothing' },
+    by: { full: `${credit('full')} and logo`, quiet: credit('quiet'), none: 'Nothing' },
   },
-  {
-    place: 'Emails',
-    by: {
-      full: `${HOLDER_COPY.issuedWith} PassBook`,
-      quiet: HOLDER_COPY.poweredBy,
-      none: 'Nothing',
-    },
-  },
+  { place: 'Emails', by: { full: credit('full'), quiet: credit('quiet'), none: 'Nothing' } },
   {
     place: 'Email sender',
     by: { full: '{Org} via PassBook', quiet: '{Org} via PassBook', none: '{Org} via PassBook' },
   },
-  {
-    // The print sheets ignore the footer level until print follows it; until then every plan reads full.
-    place: 'Print sheets',
-    by: {
-      full: `${HOLDER_COPY.issuedWith} PassBook`,
-      quiet: `${HOLDER_COPY.issuedWith} PassBook`,
-      none: `${HOLDER_COPY.issuedWith} PassBook`,
-    },
-  },
+  { place: 'Print sheets', by: { full: credit('full'), quiet: credit('quiet'), none: 'Nothing' } },
   { place: 'Scanner screen', by: { full: 'Never', quiet: 'Never', none: 'Never' } },
 ];
 

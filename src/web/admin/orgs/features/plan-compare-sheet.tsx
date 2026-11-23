@@ -9,7 +9,7 @@ import {
   type CompareRow,
   PLAN_COPY,
 } from '@/shared/copy/plans.ts';
-import { FOOTER_ENFORCED, planFacts } from '@/shared/plan-facts.ts';
+import { planFacts } from '@/shared/plan-facts.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { formatCount } from '@/web/lib/format.ts';
 import { Badge, Sheet, SheetContent } from '@/web/ui/index.ts';
@@ -96,8 +96,7 @@ export function PlanCompareSheet({
               </tr>
             </thead>
             {COMPARE_ROWS.map((g) => {
-              const rows = g.rows.filter((r) => r.kind !== 'footer' || FOOTER_ENFORCED);
-              if (rows.length === 0) return null;
+              const rows = g.rows;
               return (
                 <tbody key={g.group}>
                   <tr>

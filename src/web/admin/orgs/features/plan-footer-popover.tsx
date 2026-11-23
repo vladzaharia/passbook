@@ -7,7 +7,7 @@ import { BrandMark } from '@/web/ui/layout/brand-mark.tsx';
 /** The footer as holders read it: the real wording, the glyph where the real footer has it. */
 export function FooterSample({ level }: { level: FooterLevel }) {
   if (level !== 'full') return <span>{FOOTER_SAMPLE[level]}</span>;
-  const [lead] = FOOTER_SAMPLE.full.split(' PassBook');
+  const lead = FOOTER_SAMPLE.full.replace(/ PassBook$/, '');
   return (
     <span className="inline-flex items-center gap-1">
       {lead}

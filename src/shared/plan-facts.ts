@@ -17,12 +17,6 @@ export interface PlanFacts {
   footer: FooterLevel;
 }
 
-/**
- * Whether `brand.mark` is enforced: the footer a plan allows is only a fact once an org cannot pick
- * past it. Cards and Compare show the footer only while this is true.
- */
-export const FOOTER_ENFORCED = false;
-
 const cap = (values: EntitlementValues, key: EntitlementKey): Cap => {
   const v = parseEntitlementValue(key, values[key]);
   return v === null || typeof v === 'number' ? v : 0;

@@ -276,9 +276,7 @@ test.describe('org features', () => {
     }
   });
 
-  test('an org with no features row says so and offers one Apply plan action', async ({
-    page,
-  }) => {
+  test('an org with no features row says so and offers one Apply plan action', async ({ page }) => {
     const api = await apiAs('admin');
     try {
       const name = uid('Nofeatures');

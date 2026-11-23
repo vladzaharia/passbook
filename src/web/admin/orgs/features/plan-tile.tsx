@@ -1,7 +1,7 @@
 import { type CSSProperties, useId } from 'react';
 import type { PresetOptionDto } from '@/shared/contracts/entitlement-admin.ts';
 import { CHANNEL_CHIP, PLAN_COPY } from '@/shared/copy/plans.ts';
-import { FOOTER_ENFORCED, type PlanFacts } from '@/shared/plan-facts.ts';
+import type { PlanFacts } from '@/shared/plan-facts.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { Badge } from '@/web/ui/index.ts';
 import { PlanNumber } from './plan-count.tsx';
@@ -176,18 +176,14 @@ export function PlanTile({
             </li>
           </ul>
         </span>
-        {FOOTER_ENFORCED ? (
-          <span className="mt-auto flex min-h-9 items-center border-t border-border pr-10 pt-2 text-xs text-fg-muted pointer-coarse:min-h-11">
-            <span className="sr-only">{PLAN_COPY.footerLead} </span>
-            <FooterSample level={facts.footer} />
-          </span>
-        ) : null}
-      </label>
-      {FOOTER_ENFORCED ? (
-        <span className="absolute right-3 bottom-4.5 pointer-coarse:bottom-4">
-          <PlanFooterInfo plan={plan.label} level={facts.footer} />
+        <span className="mt-auto flex min-h-9 items-center border-t border-border pr-10 pt-2 text-xs text-fg-muted pointer-coarse:min-h-11">
+          <span className="sr-only">{PLAN_COPY.footerLead} </span>
+          <FooterSample level={facts.footer} />
         </span>
-      ) : null}
+      </label>
+      <span className="absolute right-3 bottom-4.5 pointer-coarse:bottom-4">
+        <PlanFooterInfo plan={plan.label} level={facts.footer} />
+      </span>
     </div>
   );
 }

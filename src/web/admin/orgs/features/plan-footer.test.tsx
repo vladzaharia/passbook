@@ -1,17 +1,12 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { PresetOptionDto } from '@/shared/contracts/entitlement-admin.ts';
 import { presetValues } from '@/shared/contracts/entitlements.ts';
 import { installDomShims } from '@/web/lib/test-utils.tsx';
 import { PlanPicker } from './plan-picker.tsx';
 
 installDomShims();
-// The footer row shows once `brand.mark` is enforced.
-vi.mock('@/shared/plan-facts.ts', async (orig) => ({
-  ...(await orig<typeof import('@/shared/plan-facts.ts')>()),
-  FOOTER_ENFORCED: true,
-}));
 
 const plans: PresetOptionDto[] = (['trial', 'standard', 'premium'] as const).map((p) => ({
   preset: p,
