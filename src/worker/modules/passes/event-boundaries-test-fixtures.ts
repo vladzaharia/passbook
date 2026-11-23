@@ -4,12 +4,17 @@ import { InMemoryTemplateRegistry } from '../../../passkit/template/in-memory-re
 import type { PassJson } from '../../../passkit/types.ts';
 import { createApp } from '../../app.ts';
 import type { JobOf } from '../../jobs/types.ts';
-import { first } from '../../platform/db.ts';
+import type { Clock } from '../../platform/clock.ts';
+import { first, run } from '../../platform/db.ts';
+import type { AppEnv } from '../../platform/env.ts';
+import { createJobContext } from '../../platform/service-context.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { claimBoundaries, handleBoundaryRefresh } from './event-boundaries.ts';
 import { ICON_PNG, type Kit, setupKit } from './pass-test-fixtures.ts';
 import { publishPass } from './publish.ts';
+import { stampBoundary } from './repo-boundary-stamp.ts';
 import type { Pass } from './repo-map.ts';
+import { getPass } from './repo-read-pass.ts';
 
 export const MIN = 60_000;
 export const HOUR = 60 * MIN;
@@ -82,14 +87,15 @@ export const events = (...rows: [string, number, number?][]) =>
 export async function seasonPass(
   kit: Kit,
   list: ReturnType<typeof events>,
-  scope: { orgId?: string; mode?: 'live' | 'test' } = {},
+  scope: { orgId?: string; mode?: 'live' | 'test'; memberName?: string; holderEmail?: string } = {},
 ): Promise<Pass> {
   const created = await kit.pass(scope);
+  const memberName = scope.memberName ?? 'Alex Morgan';
   const published = await publishPass(jobCtxOf(kit), {
     passId: created.id,
     cause: 'admin',
     actor: { type: 'system', id: null },
-    mutate: () => ({ personalization: { memberName: 'Alex Morgan', tier: 'Gold', events: list } }),
+    mutate: () => ({ personalization: { memberName, tier: 'Gold', events: list } }),
   });
   await kit.settle();
   return { ...published.pass, authToken: created.authToken };
@@ -194,3 +200,28 @@ export const active = (json: PassJson | null) =>
 
 export const listed = (json: PassJson | null) =>
   ((json?.upcomingPassInformation ?? []) as { name: string }[]).map((e) => e.name);
+
+/**
+ * The write an event boundary makes, on any pass and template: a render with its own update tag and a
+ * push, committed the way `handleBoundaryRefresh` commits it. For the fences of other modules' flows.
+ */
+export async function stampRender(env: AppEnv, clock: Clock, passId: string): Promise<void> {
+  const ctx = createJobContext(env, 'test', { clock });
+  const pass = await getPass(env.DB, passId);
+  if (!pass) throw new Error('Missing pass');
+  const lease = clock.now() + 1;
+  await run(
+    env.DB,
+    `INSERT INTO pass_boundaries (pass_id, version, object_key, due_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT (pass_id) DO UPDATE SET object_key = excluded.object_key, due_at = excluded.due_at`,
+    [pass.id, pass.version, pass.objectKey, lease],
+  );
+  const outcome = await stampBoundary(
+    ctx,
+    { passId, objectKey: pass.objectKey, lease },
+    pass,
+    { renderedAt: clock.now(), render: '{}', dueAt: null, now: clock.now() },
+    `push:${passId}:boundary:${ctx.ids.id()}`,
+  );
+  if (outcome !== 'stamped') throw new Error(`render ${outcome}`);
+}
