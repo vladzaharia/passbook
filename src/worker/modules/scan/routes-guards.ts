@@ -42,7 +42,8 @@ export function mountScanGuards(router: OpenAPIHono<AppBindings>): void {
     (c.req.method === 'POST' ? operateActor : manageActor)(c, next),
   );
   // A draft is the desk's own, like the actions it previews.
-  router.use('/draft', operateActor);
+  const draftActor = requireScanActor({ capability: 'passes:operate', rateNamespace: 'draft' });
+  router.use('/draft', draftActor);
   // A Desk-actions monitor opens the photos Who's in lists.
   const photoActor = requireScanActor({ capability: 'scanning:read', screenActions: true });
   for (const path of ['/summary', '/stats', '/activity', '/devices'])

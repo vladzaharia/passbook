@@ -11,6 +11,12 @@ export const fill = (text: string, values: Record<string, string>) =>
   text.replace(/\{(\w+)\}/g, (_, key: string) => values[key] ?? '');
 export const clip = (text: string) => sanitized(text, 40);
 
+/** The input's label as a counted noun: "Stamps" is "stamp" for one. */
+const noun = (label: string, n: number) => {
+  const word = label.toLowerCase();
+  return n === 1 && word.length > 3 && word.endsWith('s') ? word.slice(0, -1) : word;
+};
+
 /**
  * What the customer screen says once a value scan has committed, from the committed outcome and never
  * from the client. Null for a scan that changed no value (a check-in): the screen keeps its system words.
@@ -41,14 +47,13 @@ export function receiptOf(
         fill(action.kind === 'take' ? CUSTOMER_COPY.paid : CUSTOMER_COPY.added, { amount }),
       ),
       sub: clip(fill(CUSTOMER_COPY.balance, { balance: moneyText(after, LOCALE, value.currency) })),
+      balance: true,
     };
   }
   if (action.kind === 'take') return { headline: CUSTOMER_COPY.redeemed, sub: null };
   if (moved === null) return null;
   return {
-    headline: clip(
-      fill(CUSTOMER_COPY.plus, { n: String(moved), label: value.label.toLowerCase() }),
-    ),
+    headline: clip(fill(CUSTOMER_COPY.plus, { n: String(moved), label: noun(value.label, moved) })),
     sub:
       value.goal === null
         ? null

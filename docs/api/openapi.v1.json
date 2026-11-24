@@ -138492,6 +138492,10 @@
                               "test": {
                                 "type": "boolean"
                               },
+                              "amount": {
+                                "type": "string",
+                                "maxLength": 24
+                              },
                               "welcome": {
                                 "type": "string",
                                 "maxLength": 40

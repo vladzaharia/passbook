@@ -26,6 +26,7 @@ describe('the customer receipt of a committed scan', () => {
     expect(receiptOf(out('take', value({})), [])).toEqual({
       headline: 'Paid $12.00',
       sub: 'Balance $30.50',
+      balance: true,
     });
   });
 
@@ -33,12 +34,15 @@ describe('the customer receipt of a committed scan', () => {
     expect(receiptOf(out('add', value({ before: 10, after: 30 })), [])).toEqual({
       headline: 'Added $20.00',
       sub: 'Balance $30.00',
+      balance: true,
     });
   });
 
   it('counts stamps against the goal, and a plain counter without one', () => {
     const stamps = value({ label: 'Stamps', format: 'number', before: 7, after: 9, goal: 10 });
     expect(receiptOf(out('add', stamps), [])).toEqual({ headline: '+2 stamps', sub: '9 of 10' });
+    const one = { ...stamps, before: 8, after: 9 };
+    expect(receiptOf(out('add', one), [])?.headline).toBe('+1 stamp');
     expect(receiptOf(out('add', { ...stamps, goal: null }), [])).toEqual({
       headline: '+2 stamps',
       sub: null,
