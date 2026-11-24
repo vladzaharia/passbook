@@ -291,6 +291,14 @@ export function createMockWallets(options: MockWalletsOptions = {}) {
         },
       });
     if (name === 'requests' && request.method === 'GET') return json(200, requests);
+    // The partner portal card a Samsung template read returns (e2e: a loyalty card for storeCard designs).
+    if (name === 'samsung-template' && request.method === 'POST') {
+      const cardId = body?.cardId;
+      if (typeof cardId !== 'string' || !cardId) return json(400, { error: 'cardId is required' });
+      const template = { ...DEFAULT_TEMPLATE, ...((body?.template ?? {}) as Doc) };
+      samsungTemplates.set(cardId, template as MockSamsungTemplate);
+      return json(200, { cardId, ...template });
+    }
     if (name === 'reset' && request.method === 'POST') {
       reset();
       return json(200, { ok: true });
