@@ -51,6 +51,8 @@ export interface AccountRow {
   provider: WalletProviderScope['provider'];
   revision: number;
   credential_id: string | null;
+  /** The new model's source; absent from selects that do not need presence. */
+  credential_source_id?: string | null;
   revoked_at: number | null;
   updated_at: number;
   /** Moves on a revoke or an identity change, not on a rotation under the same identity. */
@@ -93,7 +95,7 @@ export function findAccount(
   return first<AccountRow>(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision,
-      a.credential_id, a.revoked_at, a.updated_at, a.authority_epoch,
+      a.credential_id, a.credential_source_id, a.revoked_at, a.updated_at, a.authority_epoch,
       c.kek_version, c.iv, c.wrapped_dek, c.ciphertext
     FROM wallet_provider_accounts a
     LEFT JOIN wallet_provider_credentials c ON c.id = a.credential_id
@@ -111,7 +113,7 @@ export function findAccountWithCredentialKeyset(
   return first(
     db,
     `SELECT a.id, a.org_id, a.mode, a.provider, ${REVISION_EXPR} AS revision,
-      a.credential_id, a.revoked_at, a.updated_at, a.authority_epoch, c.kek_version, c.iv, c.wrapped_dek,
+      a.credential_id, a.credential_source_id, a.revoked_at, a.updated_at, a.authority_epoch, c.kek_version, c.iv, c.wrapped_dek,
       c.ciphertext, ${OWN_KEY}, a.enabled_at, a.platform_hold_at
     FROM wallet_provider_accounts a
     LEFT JOIN wallet_provider_credentials c ON c.id = a.credential_id

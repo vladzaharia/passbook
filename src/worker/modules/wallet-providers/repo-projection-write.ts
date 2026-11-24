@@ -6,6 +6,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { canonicalJson } from '../templates/package/hash.ts';
 import type { ApprovalRow } from '../templates/repo-releases.ts';
+import { hasCredentialSql } from './account-presence.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import {
   type ProjectionAuthority,
@@ -33,7 +34,7 @@ export function currentSourceAndAccount(alias: string): string {
       JOIN template_versions version ON version.template_id = source.template_id AND version.version = source.version
       JOIN wallet_provider_accounts account ON account.id = ${alias}.provider_account_id
         AND account.org_id = ${alias}.org_id AND account.mode = ${alias}.mode AND account.provider = ${alias}.provider
-        AND account.authority_epoch = ${alias}.provider_account_epoch AND account.credential_id IS NOT NULL
+        AND account.authority_epoch = ${alias}.provider_account_epoch AND ${hasCredentialSql('account')}
         AND account.revoked_at IS NULL
       WHERE source.id = ${alias}.source_release_id AND source.template_id = ${alias}.template_id
         AND source.mode = ${alias}.mode AND source.version = ${alias}.version
@@ -126,7 +127,7 @@ export async function writeProjectionCandidate(
       'config',
       (p) => `EXISTS (SELECT 1 FROM wallet_provider_accounts x
         WHERE x.id = ${p(c.accountId)} AND x.org_id = a.org_id AND x.mode = ${p(c.mode)} AND x.provider = ${p(c.provider)}
-          AND x.authority_epoch = ${p(c.accountEpoch)} AND x.credential_id IS NOT NULL AND x.revoked_at IS NULL)`,
+          AND x.authority_epoch = ${p(c.accountEpoch)} AND ${hasCredentialSql('x')} AND x.revoked_at IS NULL)`,
     ),
     check(
       'lineage',

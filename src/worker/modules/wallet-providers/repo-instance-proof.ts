@@ -1,3 +1,4 @@
+import { hasCredentialSql } from './account-presence.ts';
 import { versionAuthorIndependentSql } from './projection-system-authority.ts';
 import { projectionReleaseBindingPredicateSql } from './repo-projection.ts';
 
@@ -68,7 +69,7 @@ export function walletInstanceProofSql(
       JOIN wallet_provider_accounts account ON account.id = ${i}.account_id
         AND account.org_id = ${i}.org_id AND account.mode = ${i}.mode AND account.provider = ${i}.provider
         AND ${accountPin(byEpoch, op, 'account', 'revision', 'account_revision', 'authority_epoch')}
-        AND account.credential_id IS NOT NULL
+        AND ${hasCredentialSql('account')}
         AND account.revoked_at IS NULL
       WHERE ((p.id = ${i}.pass_id AND p.org_id = ${i}.org_id AND p.mode = ${i}.mode)
         AND (p.version = ${op}.pass_version AND p.revision = ${op}.pass_revision

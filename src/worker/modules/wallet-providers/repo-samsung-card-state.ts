@@ -1,4 +1,5 @@
 import { all, first, run } from '../../platform/db.ts';
+import { hasCredentialSql } from './account-presence.ts';
 
 /** What a live read of one compiled card's template left behind. */
 export interface SamsungCardState {
@@ -88,7 +89,7 @@ export function selectSamsungCardsToRefresh(
     JOIN template_candidates c ON c.id = r.candidate_id
     JOIN orgs owner ON owner.id = r.org_id AND owner.status = 'active'
     JOIN wallet_provider_accounts account ON account.id = c.provider_account_id
-      AND account.authority_epoch = c.provider_account_epoch AND account.credential_id IS NOT NULL
+      AND account.authority_epoch = c.provider_account_epoch AND ${hasCredentialSql('account')}
       AND account.revoked_at IS NULL
     LEFT JOIN wallet_samsung_card_state st ON st.candidate_id = c.id
     WHERE r.provider = 'samsung' AND r.source = 'approved' AND r.action IN ('release', 'rollback')
