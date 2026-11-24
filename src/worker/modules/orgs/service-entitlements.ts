@@ -8,7 +8,6 @@ import {
   ENTITLEMENT_KEYS,
   ENTITLEMENT_PRESETS,
   type EntitlementValue,
-  parseEntitlementValue,
 } from '../../../shared/contracts/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '../../../shared/entitlement-impact.ts';
 import type { Actor } from '../../platform/context.ts';
@@ -18,7 +17,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
 import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
 import { brandingAfterPlan } from './brand-mark-fallback.ts';
-import { parseValuesJson } from './preset-values.ts';
+import { overrideMaps, parseStored, parseValuesJson } from './preset-values.ts';
 import {
   orgEntitlementsRow,
   orgExists,
@@ -26,7 +25,7 @@ import {
   presetRows,
   presetValueRows,
   standingOverrides,
-  storedOverrideKeys,
+  storedOverrides,
   writeEntitlements,
 } from './repo-entitlements.ts';
 
@@ -37,25 +36,6 @@ type Override = NonNullable<Input['overrides'][string]>;
 const notFound = () => new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
 const changed = () =>
   new ConflictError('The features changed. Reload and retry.', 'ENTITLEMENTS_CHANGED');
-
-export function parseStored(
-  ctx: ServiceContext,
-  key: string,
-  text: string,
-): EntitlementValue | undefined {
-  const known = ENTITLEMENT_KEYS.find((k) => k === key);
-  if (known === undefined) return undefined;
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch {
-    raw = undefined;
-  }
-  const value = parseEntitlementValue(known, raw);
-  if (value === undefined)
-    ctx.log.error('entitlement.invalid_value', { code: 'ENTITLEMENT_INVALID', key });
-  return value;
-}
 
 interface State {
   /** Null for an org with no row. */
@@ -239,13 +219,13 @@ export async function setOrgEntitlements(
       !was || !same(was.value, o.value) || was.note !== o.note || was.expiresAt !== o.expiresAt
     );
   });
-  const stored = await storedOverrideKeys(ctx.env.DB, orgId);
-  const remove = stored.filter((key) => !next.has(key));
+  const stored = await storedOverrides(ctx.env.DB, orgId);
+  const remove = stored.map((o) => o.key).filter((key) => !next.has(key));
   const create = before.preset === null;
   const noOp = !create && input.preset === before.preset && put.length === 0 && remove.length === 0;
   if (noOp) return readOrgEntitlements(ctx, orgId);
 
-  const was = resolve(before.lagging ?? before.presetValues, before.overrides);
+  const was = resolve(before.lagging ?? before.presetValues, overrideMaps(ctx, stored, now).all);
   const after = resolve(target.values, next);
   const impact = entitlementImpact(was, after);
   const touched = new Set([...put.map(([k]) => k), ...remove, ...impact.changes.map((c) => c.key)]);

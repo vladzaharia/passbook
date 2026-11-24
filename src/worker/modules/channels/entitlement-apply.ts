@@ -1,4 +1,9 @@
-import { type EntitlementValues, entitlementTransition } from '../../../shared/channels.ts';
+import {
+  blockedByEntitlement,
+  type EntitlementValues,
+  entitlementTransition,
+} from '../../../shared/channels.ts';
+import { CHANNELS, type Channel } from '../../../shared/contracts/channels.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -27,14 +32,24 @@ export async function onEntitlementsChanged(
   after: EntitlementValues,
   requestedBy: string,
   revision: number,
+  full = false,
 ): Promise<void> {
-  for (const effect of entitlementTransition(before, after)) {
+  const effects = full
+    ? [
+        {
+          blockedBefore: [] as Channel[],
+          blockedAfter: CHANNELS.filter((c) => blockedByEntitlement(after)[c] !== undefined),
+        },
+      ]
+    : entitlementTransition(before, after);
+  for (const effect of effects) {
     const job = {
       kind: 'channel.entitlement',
       orgId,
       revision,
       blockedBefore: effect.blockedBefore,
       blockedAfter: effect.blockedAfter,
+      ...(full ? { full: true } : {}),
       requestedBy,
     } as const;
     // The write is committed and a repeated PUT is a no-op, so a lost send would never converge: try a few times.
@@ -82,6 +97,7 @@ export async function handleEntitlementApply(
           revision: job.revision,
           blockedBefore: job.blockedBefore,
           blockedAfter: job.blockedAfter,
+          ...(job.full ? { full: true } : {}),
           requestedBy: job.requestedBy,
         },
         pending && {

@@ -1,14 +1,13 @@
-import { Lock } from 'lucide-react';
 import { lazy, type ReactNode, Suspense, useState } from 'react';
 import { chainLevelOf } from '@/shared/channels.ts';
-import type { ChainLevel, EffectiveChannels } from '@/shared/contracts/channels.ts';
+import type { ChannelStatus, EffectiveChannels } from '@/shared/contracts/channels.ts';
 import { CHANNEL_LABEL, channelReasonText } from '@/shared/copy/channels.ts';
 import { PREVIEW_COPY, PREVIEW_LABEL } from '@/shared/copy/previews.ts';
 import { cn } from '../lib/cn.ts';
 import { useContainerWidth } from '../lib/container-width.ts';
 import { SegmentedControl } from '../ui/segmented-control.tsx';
 import { Skeleton } from '../ui/skeleton.tsx';
-import { LockedPreview } from './locked-preview.tsx';
+import { LockedPreview, type OffLevel } from './locked-preview.tsx';
 import './channel-switch.css';
 import { PREVIEW_CHANNELS, type PreviewChannel, type PreviewSource } from './types.ts';
 import { useWalletPreviews } from './use-wallet-previews.ts';
@@ -20,14 +19,17 @@ export interface ChannelPreviewsProps {
   apple: ReactNode;
   /** The Paper pane: pluggable, so the paper design can change without touching the switcher. */
   paper: ReactNode;
-  /** Effective channels of a pass or template: a channel that is off stays as a disabled tab with its reason. */
+  /**
+   * Effective channels of a pass or template. One the template or pass turns off stays as a quiet
+   * tab with its reason; one PassBook, the plan or the organization stops has no tab.
+   */
   channels?: EffectiveChannels | undefined;
   /** Shown with the empty state when every channel is off: where to turn one on. */
   emptyAction?: ReactNode;
   /** A line above one channel's pane, e.g. a channel the template turns off that the designer still edits. */
   notes?: Partial<Record<PreviewChannel, string>> | undefined;
-  /** The action on a locked channel's pane: a link to the level that stops it, or Ask PassBook. */
-  lockedAction?: ((info: { channel: PreviewChannel; level: ChainLevel }) => ReactNode) | undefined;
+  /** The action on an off channel's pane: a link to the level that turns it off. */
+  lockedAction?: ((info: { channel: PreviewChannel; level: OffLevel }) => ReactNode) | undefined;
   /** The page picks the channel (and draws its own switcher): only that channel's pane shows. */
   value?: PreviewChannel | undefined;
   className?: string;
@@ -49,9 +51,20 @@ const MobilePreview = lazy(() =>
   import('./mobile-preview.tsx').then((m) => ({ default: m.MobilePreview })),
 );
 
+/** The level that turns a channel off, when it is the template's or the pass's: the author can turn it back on. */
+const offLevel = (s: ChannelStatus | undefined): OffLevel | undefined => {
+  if (s?.on !== false) return undefined;
+  const level = chainLevelOf(s.source, s.reason);
+  return level === 'template' || level === 'pass' ? level : undefined;
+};
+
+/** Past three tabs the segments tighten (channel-switch.css); a column under about this much a tab gets a menu. */
+const TAB_MIN = { tight: 60, kit: 80 } as const;
+
 /**
  * One switcher for every way a pass reaches a holder: Apple, Google, Samsung, Mobile and Paper.
- * A channel that is off or not available is a locked tab: its pane names the level that stops it.
+ * Only channels the organization can use have a tab. One the template or pass turns off is a quiet,
+ * hatched tab; its pane says so and links to where it turns back on.
  */
 export function ChannelPreviews({
   source,
@@ -64,22 +77,27 @@ export function ChannelPreviews({
   value,
   className,
 }: ChannelPreviewsProps) {
-  const shown = PREVIEW_CHANNELS.filter((c) => channels?.[c]?.on !== false);
+  const tabs = PREVIEW_CHANNELS.filter(
+    (c) => channels?.[c]?.on !== false || offLevel(channels?.[c]) !== undefined,
+  );
+  const shown = tabs.filter((c) => channels?.[c]?.on !== false);
   const [picked, setPicked] = useState<PreviewChannel | null>(null);
-  // A locked tab can be opened to read why; with nothing on at all the empty state stands instead.
-  const current = value ?? (shown.length > 0 ? (picked ?? shown[0]) : undefined);
+  // An off tab can be opened to read why; with nothing on at all the empty state stands instead.
+  const open = picked && tabs.includes(picked) ? picked : shown[0];
+  const current = value ?? (shown.length > 0 ? open : undefined);
   const [width, measure] = useContainerWidth();
-  // Five segments need about 19 rem; a narrower column gets the same choice as a menu.
-  const compact = width > 0 && width < 300;
-  const options = PREVIEW_CHANNELS.map((value) => {
+  const tight = tabs.length > 3;
+  const compact = width > 0 && width < tabs.length * (tight ? TAB_MIN.tight : TAB_MIN.kit);
+  const options = tabs.map((value) => {
     const status = channels?.[value];
     if (status?.on !== false) return { value, label: PREVIEW_LABEL[value] };
     const hint = status.reason ? channelReasonText(status.reason) : PREVIEW_COPY.off;
-    return { value, label: PREVIEW_LABEL[value], icon: Lock, hint };
+    return { value, label: PREVIEW_LABEL[value], hint };
   });
   const menu = options.map((o) => ('hint' in o ? { ...o, title: o.hint } : o));
   const stopped = current ? channels?.[current] : undefined;
   const locked = stopped?.on === false;
+  const level = offLevel(stopped);
   const wallets = useWalletPreviews(
     source,
     !locked && (current === 'google' || current === 'samsung'),
@@ -109,25 +127,21 @@ export function ChannelPreviews({
           value={current}
           onValueChange={setPicked}
           block
-          className="wp-switch"
+          className={cn('mx-auto max-w-sm', tight && 'wp-switch')}
         />
       )}
       <div className="w-full min-w-0" data-channel={current}>
         {notes?.[current] ? (
           <p className="mb-3 text-center text-xs text-fg-muted">{notes[current]}</p>
         ) : null}
-        {locked && stopped ? (
+        {level && stopped ? (
           <LockedPreview
-            title={`${CHANNEL_LABEL[current]}: ${
-              stopped.reason ? channelReasonText(stopped.reason) : PREVIEW_COPY.off
-            }`}
-            level={chainLevelOf(stopped.source, stopped.reason)}
+            channel={CHANNEL_LABEL[current]}
+            reason={stopped.reason ? channelReasonText(stopped.reason) : PREVIEW_COPY.off}
+            level={level}
             card={apple}
           >
-            {lockedAction?.({
-              channel: current,
-              level: chainLevelOf(stopped.source, stopped.reason),
-            })}
+            {lockedAction?.({ channel: current, level })}
           </LockedPreview>
         ) : null}
         {locked ? null : current === 'apple' ? apple : null}

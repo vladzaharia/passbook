@@ -203,8 +203,8 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   entitlement_presets: { org: null, platform: { columns: ['value'] } },
 };
 
-/** The cron that retires expired overrides and journals the change like a platform save. */
-export const ENTITLEMENT_EXPIRY_PURPOSE = 'platform.job.entitlement_expiry';
+/** The cron that retires one org's expired overrides and journals the change like a platform save (org scope: the grant pins the tenant). */
+export const ENTITLEMENT_EXPIRY_PURPOSE = 'org.job.entitlement_expiry';
 
 const KEYSET_PURPOSES = ['create', 'rotate', 'retire_key', 'revoke_key', 'disable'].map(
   (p) => `org_mode.nfc.keyset.${p}`,

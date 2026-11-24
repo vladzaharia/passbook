@@ -6,10 +6,11 @@ import type {
   SetEntitlementPresetResult,
 } from '../../../shared/contracts/entitlement-presets.ts';
 import type { JobOf } from '../../jobs/types.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { type ApplyKit, applyKit } from '../channels/apply-test-fixtures.ts';
 import { handleEntitlementApply } from '../channels/entitlement-apply.ts';
+import { sweepEntitlementJournal } from '../channels/entitlement-sweep.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { expireEntitlementOverrides } from './entitlement-expiry.ts';
 import { setPreset } from './presets-service.ts';
@@ -386,5 +387,249 @@ describe('an expiring override is journaled like a save', () => {
     const runs = (await t.runs()).filter((r) => r.from_blocked !== null);
     expect(runs).toHaveLength(1);
     expect(runs[0]).toMatchObject({ to_rev: before.revision + 2 });
+  });
+});
+
+const putOverrides = async (
+  t: ApplyKit,
+  orgId: string,
+  overrides: Record<string, { value: unknown; expiresAt?: number }>,
+) => {
+  const path = `/platform/orgs/${orgId}/entitlements`;
+  const read = (await (
+    await t.kit.api(path, { headers: t.kit.auth.admin() })
+  ).json()) as OrgEntitlementsDto;
+  const res = await t.kit.api(path, {
+    method: 'PUT',
+    headers: { ...t.kit.auth.admin(), ...json },
+    body: JSON.stringify({ preset: read.preset, expectedRevision: read.revision, overrides }),
+  });
+  expect(res.status, await res.clone().text()).toBe(200);
+};
+const overrideRows = (t: ApplyKit, orgId: string) =>
+  all<{ key: string }>(t.kit.env.DB, 'SELECT key FROM org_entitlement_overrides WHERE org_id = ?', [
+    orgId,
+  ]);
+
+describe('the expiry hook is scoped to one org', () => {
+  it('expires A and leaves B, even at the same revision and with the same key', async () => {
+    const t = await applyKit(1);
+    const a = (await makeOrg(t.kit.fx)).id;
+    const b = (await makeOrg(t.kit.fx)).id;
+    const at = t.kit.clock.now() + 3_600_000;
+    await putOverrides(t, a, { members: { value: 9, expiresAt: at } });
+    await putOverrides(t, b, { members: { value: 7 } });
+    const revA = (await orgRow(t, a))?.revision;
+    expect(revA).toBe((await orgRow(t, b))?.revision);
+    t.kit.clock.set(at + 1000);
+    await expireEntitlementOverrides(jobCtxOf(t.kit));
+    expect(await overrideRows(t, a)).toEqual([]);
+    expect(await overrideRows(t, b)).toEqual([{ key: 'members' }]);
+    expect((await orgRow(t, a))?.revision).toBe((revA ?? 0) + 1);
+    expect((await orgRow(t, b))?.revision).toBe(revA);
+    expect(await orgAudit(t, b)).toHaveLength(1);
+    expect((await orgAudit(t, a)).at(-1)?.actor_type).toBe('system');
+  });
+});
+
+describe('a preset move reaches suspended orgs and journals expiry', () => {
+  it('moves a suspended org too, and removes an override that expired before the tick', async () => {
+    const t = await applyKit(1);
+    const org = await orgOn(t, 'trial');
+    const at = t.kit.clock.now() + 3_600_000;
+    await putOverrides(t, org, { members: { value: 9, expiresAt: at } });
+    await run(t.kit.env.DB, "UPDATE orgs SET status = 'suspended' WHERE id = ?", [org]);
+    t.kit.clock.set(at + 1000);
+    const before = await trialOf(t);
+    const admin = await liveAdmin(t);
+    const out = await setPreset(jobCtxOf(t.kit), { type: 'user', id: admin.userId }, admin, {
+      preset: 'trial',
+      expectedRevision: before.revision,
+      values: { 'wallet.google': before.flipped },
+    });
+    expect(out.preset.pendingOrgs).toBe(0);
+    expect(await orgRow(t, org)).toMatchObject({ preset_revision: before.revision + 1 });
+    expect(await overrideRows(t, org)).toEqual([]);
+    const audit = JSON.parse((await orgAudit(t, org)).at(-1)?.detail ?? '{}');
+    expect(audit.via).toBe('preset');
+    expect(audit.changes.members).toEqual({ from: 9, to: before.members });
+  });
+});
+
+describe('a lost channel.entitlement job is queued again', () => {
+  it('re-sends once the change is older than the grace, and stops when a run covers it', async () => {
+    const t = await applyKit(2);
+    const path = `/platform/orgs/${t.orgId}/entitlements`;
+    const read = (await (
+      await t.kit.api(path, { headers: t.kit.auth.admin() })
+    ).json()) as OrgEntitlementsDto;
+    const preset = read.preset === 'trial' ? 'legacy' : 'trial';
+    await t.kit.api(path, {
+      method: 'PUT',
+      headers: { ...t.kit.auth.admin(), ...json },
+      body: JSON.stringify({ preset, expectedRevision: read.revision, overrides: {} }),
+    });
+    const sent = jobs(t).length;
+    expect(sent).toBeGreaterThan(0);
+    // Young change: its job is still in flight.
+    await sweepEntitlementJournal(jobCtxOf(t.kit));
+    expect(jobs(t)).toHaveLength(sent);
+    // The send was lost: no run covers the revision.
+    t.kit.clock.advance(180_000);
+    await sweepEntitlementJournal(jobCtxOf(t.kit));
+    expect(jobs(t)).toHaveLength(sent + 1);
+    const again = jobs(t).at(-1) as JobOf<'channel.entitlement'>;
+    expect(again.revision).toBe(read.revision + 1);
+    await handleEntitlementApply(again, jobCtxOf(t.kit));
+    await sweepEntitlementJournal(jobCtxOf(t.kit));
+    expect(jobs(t)).toHaveLength(sent + 1);
+  });
+});
+
+describe('preset history', () => {
+  it('every preset past revision 1 keeps the values before its last edit', async () => {
+    const t = await applyKit(1);
+    const bad = await first<{ n: number }>(
+      t.kit.env.DB,
+      'SELECT count(*) AS n FROM entitlement_preset_meta WHERE revision > 1 AND previous_values IS NULL',
+    );
+    expect(bad?.n).toBe(0);
+  });
+});
+
+describe('failures and gaps in a move', () => {
+  const actorOf = (userId: string) => ({ type: 'user', id: userId }) as const;
+
+  it('one org that throws is logged, the others move, and the rest stays pending', async () => {
+    const t = await applyKit(1);
+    const orgs = [await orgOn(t, 'trial'), await orgOn(t, 'trial')];
+    const bad = orgs[0] as string;
+    const before = await trialOf(t);
+    const admin = await liveAdmin(t);
+    await run(
+      t.kit.env.DB,
+      `CREATE TRIGGER move_boom BEFORE UPDATE ON org_entitlements WHEN NEW.org_id = '${bad}'
+       BEGIN SELECT RAISE(ABORT, 'boom'); END`,
+    );
+    const ctx = jobCtxOf(t.kit);
+    const errors: unknown[] = [];
+    const log = ctx.log;
+    ctx.log = {
+      ...log,
+      error: (e: string, f?: Record<string, unknown>) => void errors.push([e, f]),
+    } as typeof log;
+    try {
+      const out = await setPreset(ctx, actorOf(admin.userId), admin, {
+        preset: 'trial',
+        expectedRevision: before.revision,
+        values: { 'wallet.google': before.flipped },
+      });
+      expect(out.moved).toBe(before.orgCount - 1);
+      expect(out.preset.pendingOrgs).toBe(1);
+      expect(errors).toEqual([
+        [
+          'entitlement.preset_move_failed',
+          expect.objectContaining({ code: 'PRESET_MOVE_FAILED', orgId: bad }),
+        ],
+      ]);
+    } finally {
+      await run(t.kit.env.DB, 'DROP TRIGGER move_boom');
+    }
+    const done = await setPreset(jobCtxOf(t.kit), actorOf(admin.userId), admin, {
+      preset: 'trial',
+      expectedRevision: before.revision + 1,
+      values: {},
+    });
+    expect(done).toMatchObject({ moved: 1, preset: { pendingOrgs: 0 } });
+  });
+
+  it('refuses to move orgs whose preset has no record of its last change', async () => {
+    const t = await applyKit(1);
+    await orgOn(t, 'trial');
+    await orgOn(t, 'trial');
+    const before = await trialOf(t);
+    const admin = await liveAdmin(t);
+    const ctx = jobCtxOf(t.kit);
+    const actor = actorOf(admin.userId);
+    await setPreset(
+      ctx,
+      actor,
+      admin,
+      {
+        preset: 'trial',
+        expectedRevision: before.revision,
+        values: { 'wallet.google': before.flipped },
+      },
+      1,
+    );
+    const kept = await first<{ previous_values: string }>(
+      t.kit.env.DB,
+      "SELECT previous_values FROM entitlement_preset_meta WHERE preset = 'trial'",
+    );
+    await run(
+      t.kit.env.DB,
+      "UPDATE entitlement_preset_meta SET previous_values = NULL WHERE preset = 'trial'",
+    );
+    const resume = { preset: 'trial', expectedRevision: before.revision + 1, values: {} };
+    try {
+      await expect(setPreset(ctx, actor, admin, resume, 1)).rejects.toMatchObject({
+        code: 'PRESET_MOVING',
+        status: 409,
+      });
+      expect((await trialOf(t)).pendingOrgs).toBeGreaterThan(0);
+    } finally {
+      await run(
+        t.kit.env.DB,
+        "UPDATE entitlement_preset_meta SET previous_values = ? WHERE preset = 'trial'",
+        [kept?.previous_values ?? null],
+      );
+    }
+    for (let i = 0; i < before.orgCount; i++) await setPreset(ctx, actor, admin, resume, 1);
+    expect((await trialOf(t)).pendingOrgs).toBe(0);
+  });
+
+  it('journals an org two revisions behind as a full re-evaluation and says so', async () => {
+    const t = await applyKit(1);
+    const org = await orgOn(t, 'trial');
+    const before = await trialOf(t);
+    const admin = await liveAdmin(t);
+    const edit = {
+      preset: 'trial',
+      expectedRevision: before.revision,
+      values: { members: before.members + 1 },
+    };
+    // An edit lands, then the org is left two behind (as an org save racing two edits would).
+    await setPreset(jobCtxOf(t.kit), actorOf(admin.userId), admin, edit);
+    await run(t.kit.env.DB, 'UPDATE org_entitlements SET preset_revision = ? WHERE org_id = ?', [
+      before.revision - 1,
+      org,
+    ]);
+    const warns: unknown[] = [];
+    const ctx = jobCtxOf(t.kit);
+    const log = ctx.log;
+    ctx.log = {
+      ...log,
+      warn: (e: string, f?: Record<string, unknown>) => void warns.push([e, f]),
+    } as typeof log;
+    const sent = jobs(t).length;
+    await setPreset(ctx, actorOf(admin.userId), admin, {
+      preset: 'trial',
+      expectedRevision: before.revision + 1,
+      values: {},
+    });
+    expect(warns).toContainEqual([
+      'entitlement.preset_gap',
+      expect.objectContaining({ code: 'PRESET_GAP', orgId: org, behind: 2 }),
+    ]);
+    expect(JSON.parse((await orgAudit(t, org)).at(-1)?.detail ?? '{}')).toMatchObject({
+      gap: true,
+    });
+    // Everything on before: the channels trial blocks are stopped.
+    const job = jobs(t)
+      .slice(sent)
+      .find((j) => j.orgId === org);
+    expect(job?.blockedBefore).toEqual([]);
+    expect(job?.blockedAfter.length).toBeGreaterThan(0);
+    expect((await orgRow(t, org))?.preset_revision).toBe(before.revision + 1);
   });
 });

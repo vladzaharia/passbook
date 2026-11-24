@@ -65,13 +65,13 @@ export const presetRows = (db: D1Database) =>
      FROM entitlement_preset_meta m ORDER BY m.is_plan, m.preset`,
   );
 
-/** Every stored override key, expired ones too: a save removes what it does not keep. */
-export const storedOverrideKeys = async (db: D1Database, orgId: string): Promise<string[]> =>
-  (
-    await all<{ key: string }>(db, 'SELECT key FROM org_entitlement_overrides WHERE org_id = ?', [
-      orgId,
-    ])
-  ).map((r) => r.key);
+/** Every stored override, expired ones too: a save removes what it does not keep, and the journal reads them. */
+export const storedOverrides = (db: D1Database, orgId: string) =>
+  all<OverrideRow>(
+    db,
+    'SELECT key, value, note, expires_at FROM org_entitlement_overrides WHERE org_id = ? ORDER BY key',
+    [orgId],
+  );
 
 export const presetValueRows = (db: D1Database) =>
   all<{ preset: string; key: string; value: string }>(

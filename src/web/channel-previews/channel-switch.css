@@ -1,4 +1,4 @@
-/* Five channel names fit the 20 rem preview column: the kit's segment padding and size, tightened. */
+/* Four or five channel names fit the 20 rem preview column: the kit's segment padding and size, tightened. */
 .wl-seg.wp-switch > [role="radio"] {
   padding-inline: 0.25rem;
   font-size: 0.8125rem;
