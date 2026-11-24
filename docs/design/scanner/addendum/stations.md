@@ -1,6 +1,20 @@
 # Stations: scanners, customer screens and desk monitors
 
-> **Status:** device roles, the customer and monitor screens and the live hub are built (`device_role`, `scan/scan-hub.ts`). The `scan_stations` table, `station_id` and the station console routes are not; scanning sessions (`0024`, `scanning-sessions.md`) group devices instead. Where this file says `requireAdmin`, read `scanning:manage` on the session's org membership.
+> **Status: superseded by scanning sessions (`0024`, `scanning-sessions.md`), 2026-11-22.** Device roles, the customer and monitor screens and the live hub are built (`device_role`, `scan/scan-hub.ts`); the `scan_stations` table, `station_id` and the station routes were never built and will not be. What replaced each piece:
+>
+> | Station design | Built as |
+> | --- | --- |
+> | `scan_stations` (name, mode) | `scanning_sessions`; devices join through `scanning_devices.session_id`, not `scanners.station_id` |
+> | Station settings (`welcome`, `refusedLine`, `greet`, ...) | the session's `settings.customer` (`ScanningSessionSettingsSchema`, `parseCustomer` in `modules/scan/live-auth.ts`); `showReady` and `showDraft` have no setting |
+> | Console routes `/scan-stations` | `/api/v1/scanning-sessions` (`routes-scanning-sessions.ts`, `routes-sessions-devices.ts`) |
+> | `scanners.watch`, `MonitorWatchSchema` | `ScanWatchSchema` with `sessionIds`, `eventId`, `zoneIds`, `scannerIds`, `allOrg` (`setup-watch.ts`, `live-render.ts` `watches`) |
+> | `scans.station_id` | `scans.session_id` (`0058`) |
+> | `scanner_zones`, `orgs.zones_rev` | `scanning_session_zones` (`0073`), `scanning_sessions.config_epoch`, `scan_place_revs` (`0074`) |
+> | Kick 4409 on a station change | the same, from `ScanHub.kick`; a session config change also moves `config_epoch` |
+>
+> **One gap sessions do not cover (S3):** a customer screen watches every scanner in its session (`parseWatch`, `live-auth.ts:159`), so in a session with two doors it shows both doors' first-name greetings. The design bound a screen to the scanner it faces. Today: one session per counter. Not built; routed to the coordinator.
+>
+> Where this file says `requireAdmin`, read `scanning:manage` on the session's org membership.
 
 > **Superseded in part 2026-11-05, later** (desk overrides, SA §20.9 wins): S8 and the read-only monitor hold only by
 > default. A Desk monitor with **Desk actions** on and a staff member signed in by PIN may override soft refusals and
@@ -328,7 +342,7 @@ Changes to RT, decided here:
 | RT said | Here | Why |
 | --- | --- | --- |
 | Admin sessions may open desk sockets | Not in v1: only device cookies | A desk is a paired `display` device (RT §10.2's own recommendation). One principal, one revocation path |
-| Terminals get a 60 s socket ticket | Not built | Terminals publish (their scans fan out) but never listen |
+| Terminals get a 60 s socket ticket | Not built, by design: `live-auth.ts:130` refuses a terminal's socket. A terminal is a bearer-token till (`kind: terminal`, no CSRF secret) that polls: every request re-reads its row, a lost credential is 401 `SCANNER_REPAIR` and any other config move is 409 `SCAN_CONFIG_CHANGED` (`authority-epochs.md`). Browser devices (`kind: device`) do listen, on the `as=device` socket (`routes-live.ts:36`, `web/scan/enroll/device-socket.ts`) with a poll fallback (`use-scan-session.ts`, 10 s). Closed 2026-11-22 | Terminals publish (their scans fan out) but never listen |
 | Audiences `customer, door, desk, manager` | `customer, door, desk` plus `scan` (scanners get presence only) | Monitors cap at desk (1.3) |
 | One ring buffer for all audiences, 15 min | Customer rows 30 s, replayed only if < 10 s old; staff rows 15 min / 500 | A customer screen must never show the previous customer after a reconnect (S11) |
 | `beat` with `reading`/`idle` | adds `review` (amount under review) and `cancel` | The designer's **To pay** state |

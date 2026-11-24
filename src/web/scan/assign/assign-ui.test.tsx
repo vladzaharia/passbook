@@ -214,6 +214,10 @@ describe('the assign card', () => {
     );
     expect(screen.queryByRole('button', { name: SCAN_TAG_COPY.dock.assignAnother })).toBeNull();
     expect(screen.getByTestId('scan-assign-chip').textContent).toMatch(/Tag for Maya/);
+    // The chip's name is what it shows, then Cancel (label in name).
+    expect(screen.getByRole('button', { name: /^Tag for Maya.*Cancel$/ })).toBe(
+      screen.getByTestId('scan-assign-chip'),
+    );
   });
   it('a finished request names the admin', () => {
     show('request-done');

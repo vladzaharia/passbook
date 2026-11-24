@@ -1,9 +1,8 @@
 import { Link } from '@tanstack/react-router';
 import { Eye } from 'lucide-react';
-import { formatRelative } from '../../lib/format.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import { useTemplateReviews } from '../../lib/template-reviews.ts';
-import { Badge, Button } from '../../ui/index.ts';
+import { Badge, Button, RelTime, useNow } from '../../ui/index.ts';
 
 /** Open review requests for the caller: one row each, straight into the review. */
 export function ReviewInbox() {
@@ -13,8 +12,8 @@ export function ReviewInbox() {
     Boolean(membership?.capabilities.includes('templates:review')),
   );
   const items = reviews.data?.items ?? [];
+  const now = useNow();
   if (!orgId || items.length === 0) return null;
-  const now = Date.now();
   return (
     <section aria-labelledby="needs-review" className="mb-6 grid gap-2">
       <h2
@@ -36,7 +35,7 @@ export function ReviewInbox() {
               </span>
               <span className="text-xs text-fg-muted">
                 {r.requestedBy ? `${r.requestedBy} · ` : ''}
-                {formatRelative(r.requestedAt, now)}
+                <RelTime at={r.requestedAt} now={now} />
               </span>
             </span>
             <Button asChild size="sm" variant="outline" iconStart={<Eye aria-hidden />}>
