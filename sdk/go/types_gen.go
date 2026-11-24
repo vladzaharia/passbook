@@ -2064,11 +2064,12 @@ type CreatedScanningDevice struct {
 }
 
 type CreatedScanningDeviceOverrides struct {
-	Flow      *string `json:"flow,omitempty"`
-	Reader    *string `json:"reader,omitempty"`
-	Direction *string `json:"direction,omitempty"`
-	Lookup    *bool   `json:"lookup,omitempty"`
-	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+	Flow      *string  `json:"flow,omitempty"`
+	Reader    *string  `json:"reader,omitempty"`
+	Direction *string  `json:"direction,omitempty"`
+	Lookup    *bool    `json:"lookup,omitempty"`
+	ShowPhoto *bool    `json:"showPhoto,omitempty"`
+	Follows   []string `json:"follows,omitempty"`
 }
 
 type CurrentBulkRun struct {
@@ -9741,11 +9742,12 @@ type ScanSetupAnswer2SessionsItemDevicesItem struct {
 }
 
 type ScanSetupAnswer2SessionsItemDevicesItemOverrides struct {
-	Flow      *string `json:"flow,omitempty"`
-	Reader    *string `json:"reader,omitempty"`
-	Direction *string `json:"direction,omitempty"`
-	Lookup    *bool   `json:"lookup,omitempty"`
-	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+	Flow      *string  `json:"flow,omitempty"`
+	Reader    *string  `json:"reader,omitempty"`
+	Direction *string  `json:"direction,omitempty"`
+	Lookup    *bool    `json:"lookup,omitempty"`
+	ShowPhoto *bool    `json:"showPhoto,omitempty"`
+	Follows   []string `json:"follows,omitempty"`
 }
 
 type ScanSetupAnswer2SessionsItemSettings struct {
@@ -10849,11 +10851,12 @@ type ScanningDevice struct {
 }
 
 type ScanningDeviceOverrides struct {
-	Flow      *string `json:"flow,omitempty"`
-	Reader    *string `json:"reader,omitempty"`
-	Direction *string `json:"direction,omitempty"`
-	Lookup    *bool   `json:"lookup,omitempty"`
-	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+	Flow      *string  `json:"flow,omitempty"`
+	Reader    *string  `json:"reader,omitempty"`
+	Direction *string  `json:"direction,omitempty"`
+	Lookup    *bool    `json:"lookup,omitempty"`
+	ShowPhoto *bool    `json:"showPhoto,omitempty"`
+	Follows   []string `json:"follows,omitempty"`
 }
 
 type ScanningSession struct {
@@ -11135,11 +11138,12 @@ type ScanningSessionsDevicesCreateParams struct {
 }
 
 type ScanningSessionsDevicesCreateParamsOverrides struct {
-	Flow      *string `json:"flow,omitempty"`
-	Reader    *string `json:"reader,omitempty"`
-	Direction *string `json:"direction,omitempty"`
-	Lookup    *bool   `json:"lookup,omitempty"`
-	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+	Flow      *string  `json:"flow,omitempty"`
+	Reader    *string  `json:"reader,omitempty"`
+	Direction *string  `json:"direction,omitempty"`
+	Lookup    *bool    `json:"lookup,omitempty"`
+	ShowPhoto *bool    `json:"showPhoto,omitempty"`
+	Follows   []string `json:"follows,omitempty"`
 }
 
 type ScanningSessionsDevicesCreateResult = CreatedScanningDevice
@@ -11154,11 +11158,12 @@ type ScanningSessionsDevicesUpdateParams struct {
 }
 
 type ScanningSessionsDevicesUpdateParamsOverrides struct {
-	Flow      *string `json:"flow,omitempty"`
-	Reader    *string `json:"reader,omitempty"`
-	Direction *string `json:"direction,omitempty"`
-	Lookup    *bool   `json:"lookup,omitempty"`
-	ShowPhoto *bool   `json:"showPhoto,omitempty"`
+	Flow      *string  `json:"flow,omitempty"`
+	Reader    *string  `json:"reader,omitempty"`
+	Direction *string  `json:"direction,omitempty"`
+	Lookup    *bool    `json:"lookup,omitempty"`
+	ShowPhoto *bool    `json:"showPhoto,omitempty"`
+	Follows   []string `json:"follows,omitempty"`
 }
 
 type ScanningSessionsDevicesUpdateResult = ScanningDevice

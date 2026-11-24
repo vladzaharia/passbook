@@ -864,6 +864,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
     "key": "GET /api/v1/scans/{id} 200.late: field added",
     "class": "additive",
     "operationId": "scans.getScansById",
@@ -1415,6 +1423,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.patchScanningSessionsById",
@@ -1437,6 +1453,22 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
     "change": "200.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} body.overrides.follows: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "body.overrides.follows: optional input field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "PATCH /api/v1/templates/{id} 200.openReview: field added",
@@ -2837,6 +2869,14 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "class": "notable",
     "operationId": "scanners.postScanningSessions",
@@ -2853,6 +2893,22 @@
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.overrides.follows: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.overrides.follows: optional input field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/devices callable by scanning:admin and scanning:write keys",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdDevices",
@@ -2867,6 +2923,22 @@
     "op": "POST /api/v1/scanning-sessions/{id}/hold",
     "change": "200.devices[].capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.sessions[].devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.sessions[].devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup new operation",

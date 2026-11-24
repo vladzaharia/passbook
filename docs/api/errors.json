@@ -3926,6 +3926,15 @@
       ]
     },
     {
+      "code": "SCANNING_FOLLOWS_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCANNING_HOLD_RANGE",
       "statuses": [
         400
