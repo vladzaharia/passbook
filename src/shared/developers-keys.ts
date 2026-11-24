@@ -1,4 +1,9 @@
-import { MINTABLE_SCOPES, TEMPLATE_ACT_AS_SCOPES, TEST_ONLY_SCOPES } from './contracts/api-keys.ts';
+import {
+  auditScopeAllowed,
+  MINTABLE_SCOPES,
+  TEMPLATE_ACT_AS_SCOPES,
+  TEST_ONLY_SCOPES,
+} from './contracts/api-keys.ts';
 import type { Mode } from './contracts/common.ts';
 import { SANDBOX_KEY_SCOPES } from './contracts/developer-home.ts';
 import type { OrgCapability } from './contracts/org-membership.ts';
@@ -122,13 +127,14 @@ export function holdableScopes(
   kind: 'service' | 'personal' | 'platform',
   capabilities: readonly OrgCapability[] | null,
   mode: Mode = 'live',
+  developerOrg = false,
 ): string[] {
   return MINTABLE_SCOPES.filter(
     (s) =>
       (kind === 'service' || s !== 'scans:write') &&
       (kind !== 'platform' || !ORG_ONLY.includes(s)) &&
       (mode === 'test' || !isTestOnly(s)) &&
-      (mode === 'live' || s !== 'audit:read') &&
+      (s !== 'audit:read' || auditScopeAllowed(mode, developerOrg)) &&
       (capabilities === null || capabilities.includes(MINTABLE_SCOPE_CAPABILITY[s])),
   );
 }

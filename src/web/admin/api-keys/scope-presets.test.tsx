@@ -133,4 +133,11 @@ describe('changing the mode of a key', () => {
     act(() => result.current.reconcile('service', 'test'));
     expect(result.current.scopes).toEqual([]);
   });
+
+  it('keeps the audit log in Test for a developer sandbox', () => {
+    const { result } = renderHook(() => useKeyScopes(['audit:read'], 'o1', null, true));
+    act(() => result.current.reconcile('service', 'test'));
+    expect(result.current.scopes).toEqual(['audit:read']);
+    expect(result.current.note).toBeUndefined();
+  });
 });

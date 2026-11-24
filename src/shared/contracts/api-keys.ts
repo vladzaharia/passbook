@@ -55,6 +55,12 @@ export const TEMPLATE_ACT_AS_SCOPES = [
   'templates:review',
   'templates:publish',
 ] as const satisfies readonly (typeof MINTABLE_SCOPES)[number][];
+/**
+ * Whether a key of this mode may hold `audit:read`: the log has no mode, so only a Live key, or a key of a developer
+ * sandbox (which is Test only). One rule for the mint check and the key dialog.
+ */
+export const auditScopeAllowed = (mode: 'live' | 'test', developerOrg: boolean): boolean =>
+  mode === 'live' || developerOrg;
 export const MintableScopeSchema = z.enum(MINTABLE_SCOPES);
 
 /** `service` belongs to an org, `personal` to one member of it, `platform` to the operator (no org). */

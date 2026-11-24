@@ -1,5 +1,9 @@
 import type { z } from 'zod';
-import { TEMPLATE_ACT_AS_SCOPES, TEST_ONLY_SCOPES } from '../../../shared/contracts/api-keys.ts';
+import {
+  auditScopeAllowed,
+  TEMPLATE_ACT_AS_SCOPES,
+  TEST_ONLY_SCOPES,
+} from '../../../shared/contracts/api-keys.ts';
 import type { CreateApiKeySchema } from '../../../shared/contracts/index.ts';
 import { type ApiKeyKind, secretLabel } from '../../platform/api-key-token.ts';
 import { CREDENTIAL_SCOPES, effectiveScopes } from '../../platform/api-scopes.ts';
@@ -93,7 +97,7 @@ export async function assertAuditScope(
   mode: 'live' | 'test',
 ): Promise<void> {
   if (!scopes.includes('audit:read') || mode === 'live') return;
-  if (orgId !== null && (await orgIsDeveloper(db, orgId))) return;
+  if (auditScopeAllowed(mode, orgId !== null && (await orgIsDeveloper(db, orgId)))) return;
   throw invalid('audit:read works with Live keys only.', 'API_KEY_SCOPE_LIVE_ONLY');
 }
 

@@ -44,6 +44,7 @@ export interface CreateKeyDialogProps {
   orgId: string | null;
   orgName: string;
   capabilities: readonly OrgCapability[] | null;
+  developerOrg: boolean;
 }
 
 export function CreateKeyDialog({
@@ -53,10 +54,11 @@ export function CreateKeyDialog({
   orgId,
   orgName,
   capabilities,
+  developerOrg,
 }: CreateKeyDialogProps) {
   const create = useCreateKey(principal);
   const [name, setName] = useState('');
-  const picked = useKeyScopes(DEFAULT_SCOPES, orgId, capabilities);
+  const picked = useKeyScopes(DEFAULT_SCOPES, orgId, capabilities, developerOrg);
   const { scopes } = picked;
   const [terminalIds, setTerminalIds] = useState<string[]>([]);
   const scansWrite = scopes.includes('scans:write');
@@ -279,6 +281,7 @@ export function CreateKeyDialog({
               kind={kind}
               mode={keyMode}
               capabilities={capabilities}
+              developerOrg={developerOrg}
             />
           )}
           {scansWrite && orgId !== null && !role ? (

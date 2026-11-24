@@ -25,6 +25,7 @@ export function ScopeRows({
   kind = 'service',
   mode = 'live',
   capabilities = null,
+  developerOrg = false,
   note,
 }: {
   value: readonly string[];
@@ -38,11 +39,13 @@ export function ScopeRows({
   mode?: Mode;
   /** The creating member's capabilities; null for a platform admin. */
   capabilities?: readonly OrgCapability[] | null;
+  /** A developer sandbox may hold the audit log in Test. */
+  developerOrg?: boolean;
   /** Scopes the last change of key kind removed, said once. */
   note?: string | undefined;
 }) {
   // Only what this creator can hold for this kind and mode is offered, as boxes and in presets.
-  const holdable = holdableScopes(platform ? 'platform' : kind, capabilities, mode);
+  const holdable = holdableScopes(platform ? 'platform' : kind, capabilities, mode, developerOrg);
   const offered = SCOPES.filter((s) => holdable.includes(s));
   const presets = adminPresets(holdable, mode);
   const picked = selectedPreset(presets, value);

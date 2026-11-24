@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  auditScopeAllowed,
   CREDENTIAL_SCOPES,
   MINTABLE_SCOPES,
   TEMPLATE_ACT_AS_SCOPES,
@@ -88,5 +89,14 @@ describe('key presets', () => {
     expect(new Set(ALL.map((p) => p.id)).size).toBe(ALL.length);
     expect(new Set(ALL.map((p) => p.label)).size).toBe(ALL.length);
     expect(presetsWithin(SANDBOX_KEY_SCOPES).map((p) => p.id)).not.toContain('till');
+  });
+
+  it('lets a developer sandbox hold the audit log in Test, by the rule the server uses', () => {
+    expect(auditScopeAllowed('live', false)).toBe(true);
+    expect(auditScopeAllowed('test', false)).toBe(false);
+    expect(auditScopeAllowed('test', true)).toBe(true);
+    expect(holdableScopes('service', null, 'test', true)).toContain('audit:read');
+    expect(holdableScopes('service', null, 'test', false)).not.toContain('audit:read');
+    expect(ids(holdableScopes('service', null, 'test', true), 'test')).toContain('audit');
   });
 });

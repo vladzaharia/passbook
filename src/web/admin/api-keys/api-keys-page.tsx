@@ -55,6 +55,7 @@ export function ApiKeysPage({
       orgId={access.orgId}
       orgName={access.orgName}
       capabilities={access.capabilities}
+      developerOrg={access.developerOrg}
       canManage={canManage}
       createRequested={createRequested}
       onCreateRequestHandled={onCreateRequestHandled}
@@ -67,6 +68,7 @@ function ScopedApiKeys({
   orgId,
   orgName,
   capabilities,
+  developerOrg,
   canManage,
   createRequested,
   onCreateRequestHandled,
@@ -75,6 +77,7 @@ function ScopedApiKeys({
   orgId: string | null;
   orgName: string;
   capabilities: readonly OrgCapability[] | null;
+  developerOrg: boolean;
   canManage: boolean;
   createRequested: boolean;
   onCreateRequestHandled: () => void;
@@ -184,6 +187,7 @@ function ScopedApiKeys({
         orgId={orgId}
         orgName={orgName}
         capabilities={capabilities}
+        developerOrg={developerOrg}
       />
       <ConfirmDialog
         open={revoking !== undefined}

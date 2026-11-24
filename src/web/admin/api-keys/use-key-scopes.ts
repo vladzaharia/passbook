@@ -14,6 +14,7 @@ export function useKeyScopes(
   initial: readonly string[],
   orgId: string | null,
   capabilities: readonly OrgCapability[] | null,
+  developerOrg = false,
 ) {
   const [scopes, setScopes] = useState<string[]>([...initial]);
   const [removed, setRemoved] = useState<string[]>([]);
@@ -32,7 +33,12 @@ export function useKeyScopes(
     },
     /** Call with the kind and mode the key is about to have. */
     reconcile(kind: Kind, mode: Mode) {
-      const holdable = holdableScopes(orgId === null ? 'platform' : kind, capabilities, mode);
+      const holdable = holdableScopes(
+        orgId === null ? 'platform' : kind,
+        capabilities,
+        mode,
+        developerOrg,
+      );
       const gone = scopes.filter((s) => !holdable.includes(s));
       setRemoved(gone);
       if (gone.length) setScopes(scopes.filter((s) => holdable.includes(s)));
