@@ -1,12 +1,9 @@
-import type { UpcomingEventsConfig } from '../../../passkit/behaviors/upcoming-events/index.ts';
 import {
-  retimePass,
   sameTimedKeys,
   type TimedKeys,
   timedKeysOf,
 } from '../../../passkit/behaviors/upcoming-events/timed.ts';
 import { nextBoundary, passBoundaries } from '../../../passkit/boundaries.ts';
-import { applyDefaults } from '../../../passkit/template/manifest.ts';
 import type { PassJson, Personalization } from '../../../passkit/types.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -24,6 +21,7 @@ import {
   readBoundaryWork,
 } from './repo-boundaries.ts';
 import { stampBoundary } from './repo-boundary-stamp.ts';
+import { eventMinutes, eventsConfig, timedPassJson } from './timed-pass.ts';
 
 const MINUTE = 60_000;
 /** Renders of one pass are at least this far apart; boundaries closer together share one. */
@@ -105,19 +103,17 @@ async function refresh(ctx: ServiceContext, work: BoundaryWork, claim: BoundaryC
     return;
   }
   const template = await resolveTemplate(ctx, p.orgId, p.templateId, p.templateVersion);
-  const use = template.manifest.behaviors?.find((b) => b.use === 'upcoming-events');
   // Events written by a binding alone do not move with the clock.
-  if (!use) {
+  if (!eventsConfig(template)) {
     await dropBoundary(db, claim);
     return;
   }
-  const config = use.config as unknown as UpcomingEventsConfig;
   const built = JSON.parse(work.passJson) as PassJson;
-  const input = applyDefaults(template.manifest, JSON.parse(p.personalization) as Personalization);
+  const personalization = JSON.parse(p.personalization) as Personalization;
   const at = ctx.clock.now() + BOUNDARY_SKEW_MS;
   let rendered: PassJson;
   try {
-    rendered = retimePass(built, input, config, template.manifest.lookups ?? {}, at);
+    rendered = timedPassJson(built, personalization, template, at);
   } catch (error) {
     // The behavior refuses the inputs now (a later code change): retrying cannot help.
     await retire(ctx, work, claim, 'BOUNDARY_RENDER_INVALID', error);
@@ -125,11 +121,8 @@ async function refresh(ctx: ServiceContext, work: BoundaryWork, claim: BoundaryC
   }
   const keys = timedKeysOf(rendered);
   const shown = work.render === null ? timedKeysOf(built) : (JSON.parse(work.render) as TimedKeys);
-  const minutes = config.fallbackMinutes;
-  const upcoming = nextBoundary(
-    passBoundaries(rendered, typeof minutes === 'number' ? { fallbackMinutes: minutes } : {}),
-    at,
-  );
+  const fallbackMinutes = eventMinutes(template);
+  const upcoming = nextBoundary(passBoundaries(rendered, { fallbackMinutes }), at);
   const now = ctx.clock.now();
   if (sameTimedKeys(keys, shown)) {
     // Nothing moved: an event past the cap started, or the boundary is a second run's.

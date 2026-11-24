@@ -160,3 +160,36 @@ export async function currentRender(
     ? { renderedAt: row.rendered_at, stampedAt: row.stamped_at, render: row.render }
     : null;
 }
+
+/** What a wallet's boundaries are read from: the pass's template and its latest artifact pass.json. */
+export async function boundarySource(
+  db: D1Database,
+  passId: string,
+): Promise<{
+  orgId: string;
+  templateId: string;
+  templateVersion: string;
+  passJson: string | null;
+} | null> {
+  const row = await first<{
+    org_id: string;
+    template_id: string;
+    template_version: string;
+    pass_json: string | null;
+  }>(
+    db,
+    `SELECT p.org_id, p.template_id, p.template_version,
+       (SELECT v.pass_json FROM pass_versions v WHERE v.pass_id = p.id
+         ORDER BY v.version DESC LIMIT 1) AS pass_json
+     FROM passes p WHERE p.id = ?`,
+    [passId],
+  );
+  return row
+    ? {
+        orgId: row.org_id,
+        templateId: row.template_id,
+        templateVersion: row.template_version,
+        passJson: row.pass_json,
+      }
+    : null;
+}

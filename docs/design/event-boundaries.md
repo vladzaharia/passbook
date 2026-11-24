@@ -47,5 +47,8 @@ Options weighed:
 
 - `retimePass` takes back only what the events added: a `relevantDate` equal to the first listed start
   follows the first listed event; the expiry never moves earlier.
-- Web previews, the SSR pass page and Google or Samsung compiles read the artifact as built. CW11 can call
-  `retimePass` on `currentPassJson` with the template's config to compile the current render.
+- Web previews and the SSR pass page show the artifact as built.
+- Google and Samsung (CW11) park each wallet instance until `walletBoundaries`: `passBoundaries` on the
+  artifact with the expiry and the template's `fallbackMinutes`, so each start, end and expiry is one
+  operation. The compile and the Samsung card read `timedPassJson`, the same keys at the time they run. An
+  event that moves up past the cap of 10 has no wallet boundary of its own until the next edit.
