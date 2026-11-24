@@ -37,6 +37,8 @@ export async function reconcileWalletInstance(
   instance: WalletInstance,
   expected?: WalletPassRevision,
   forceRetirement = false,
+  /** A wallet reissue: its id keys the update, so the same pass state is sent again under a new operation. */
+  reissueId?: string,
 ): Promise<ScheduleResult | 'stale'> {
   ctx = snapshotWalletCredentialContext(ctx);
   instance = { ...instance };
@@ -130,7 +132,7 @@ export async function reconcileWalletInstance(
     pass.quarantined !== 0
       ? 'revoke'
       : 'upsert';
-  return scheduleInstance(ctx, instance, pass, kind);
+  return scheduleInstance(ctx, instance, pass, kind, reissueId);
 }
 
 async function schedulePass(

@@ -14,16 +14,18 @@ import {
   purgeExpiredWalletOffers,
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
+import { nextInstanceBoundary } from './lifecycle-boundary.ts';
 import { walletProviderEnabled, walletProviderReleaseReason } from './provider-policy.ts';
 import { purgeExpiredGoogleCallbackReplays } from './repo-google-callback-replay.ts';
 import { purgeGoogleMessages } from './repo-google-messages.ts';
-import { refreshExpiringSamsungEvidence } from './repo-samsung-evidence-refresh.ts';
+import { deferDirtyInstance } from './repo-instance.ts';
 import { ackCleanWalletPlaceholder, deferWalletSyncOperation } from './repo-sync-queue.ts';
-import { listUncertainGoogleOperations } from './repo-sync-uncertain.ts';
+import { listUncertainOperations } from './repo-sync-uncertain.ts';
 import { walletSyncHasWork } from './repo-sync-work.ts';
+import { refreshExpiringSamsungCards } from './samsung-verification.ts';
 import { runWalletProviderOperation } from './sync-operation.ts';
 import { finishWalletProviderRetirement } from './sync-operation-retirement.ts';
-import { sweepUncertainGoogleOperations } from './sync-uncertain.ts';
+import { sweepUncertainOperations } from './sync-uncertain.ts';
 
 const BATCH_SIZE = 30;
 const BLOCKED_DELAY_MS = 60_000;
@@ -44,12 +46,12 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
   const db = ctx.env.DB;
   await purgeExpiredWalletOffers(db, ctx.clock.now(), BATCH_SIZE);
   await purgeExpiredGoogleCallbackReplays(db, ctx.clock.now());
+  await refreshExpiringSamsungCards(ctx, 10);
   await purgeGoogleMessages(db, ctx.clock.now(), 100);
-  await refreshExpiringSamsungEvidence(ctx, 10);
   // Nothing queued means nothing to pin: a fresh deployment has no keyset until its first pass.
   if (
     !(await walletSyncHasWork(db, ctx.clock.now())) &&
-    (await listUncertainGoogleOperations(db, ctx.clock.now(), 1)).length === 0
+    (await listUncertainOperations(db, ctx.clock.now(), 1)).length === 0
   )
     return;
   try {
@@ -60,7 +62,7 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
     return;
   }
   await expireWalletClaims(ctx, ctx.clock.now(), BATCH_SIZE);
-  await sweepUncertainGoogleOperations(ctx, BATCH_SIZE);
+  await sweepUncertainOperations(ctx, BATCH_SIZE);
   const dirty = await listDirtyWalletInstances(db, ctx.clock.now(), BATCH_SIZE);
   for (const item of dirty) {
     try {
@@ -70,8 +72,12 @@ export async function drainWalletProviderSync(ctx: ServiceContext): Promise<void
         continue;
       }
       const result = await reconcileWalletInstance(ctx, instance, undefined, false);
-      if (result === 'scheduled' || result === 'unchanged') await ackDirtyWalletInstance(db, item);
-      else if (instance.lifecycle === 'revoked' && instance.retirementCause === 'channel_off')
+      if (result === 'scheduled' || result === 'unchanged') {
+        // A pass that expires or rolls to its next event is recompiled then, with no edit to trigger it.
+        const next = await nextInstanceBoundary(ctx, instance.passId);
+        if (next === null) await ackDirtyWalletInstance(db, item);
+        else await deferDirtyInstance(db, { ...item, nextAttemptAt: next });
+      } else if (instance.lifecycle === 'revoked' && instance.retirementCause === 'channel_off')
         // A settled channel-off copy has nothing left to schedule; a successor is a different row.
         await ackDirtyWalletInstance(db, item);
       else if (

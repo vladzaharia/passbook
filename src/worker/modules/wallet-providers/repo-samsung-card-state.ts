@@ -57,14 +57,17 @@ export async function samsungCardStateFresh(
   c: { id: string; candidateHash: string; accountId: string; accountEpoch: number; mode: string },
   cardType: string,
   now: number,
+  /** Time the row must still have, for a decision that is followed by a write (a publish). */
+  marginMs = 0,
 ): Promise<boolean> {
   const row = await first<{ ok: number }>(
     db,
     `SELECT 1 AS ok FROM wallet_samsung_card_state st
     WHERE st.candidate_id = ? AND st.candidate_hash = ? AND st.account_id = ? AND st.account_epoch = ?
-      AND st.card_type = ? AND (st.testing_mode_off = 'Y' OR ? = 'test')
+      AND st.card_type = ?
+      AND ((st.state = 'ACTIVE' AND st.testing_mode_off = 'Y') OR (? = 'test' AND st.state IN ('ACTIVE', 'DRAFT', 'VERIFYING', 'VERIFIED')))
       AND st.verified_at <= ? AND ? < st.expires_at`,
-    [c.id, c.candidateHash, c.accountId, c.accountEpoch, cardType, c.mode, now, now],
+    [c.id, c.candidateHash, c.accountId, c.accountEpoch, cardType, c.mode, now, now + marginMs],
   );
   return row !== null;
 }
@@ -98,3 +101,6 @@ export function selectSamsungCardsToRefresh(
     [now + ahead, limit],
   );
 }
+
+/** The sync job's work: compiled cards whose row is missing or lapses within a minute. */
+export const CARD_STATE_AHEAD_MS = 60_000;

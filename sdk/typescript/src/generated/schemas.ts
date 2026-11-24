@@ -6425,6 +6425,12 @@ export type PassesRemoveParams = {
 
 export type PassesRenewParams = Record<string, unknown>;
 
+export type PassesResendProviderCopiesParams = {
+  orgId?: string;
+  provider: "google" | "samsung";
+  templateId?: string;
+};
+
 export type PassesRetrieveProviderStatusResponse = {
   credentialGeneration: number;
   providers: [{
@@ -7300,6 +7306,7 @@ export type PlatformWalletCredentialsListResponse = {
     revokedAt: number | null;
     createdAt: number;
     updatedAt: number;
+    cardTypes: Array<string>;
   }>;
   nextCursor: string | null;
 };
@@ -7356,10 +7363,33 @@ export type PlatformWalletCredentialsRevokeResponse = {
   revokedAt: number | null;
   createdAt: number;
   updatedAt: number;
+  cardTypes: Array<string>;
 };
 
 export type PlatformWalletCredentialsRotateKeyResponse = {
   runId: string;
+};
+
+export type PlatformWalletCredentialsSetSamsungCardParams = {
+  type: "loyalty" | "ticket" | "coupon";
+  cardId: string;
+  expectedRevision: number;
+};
+
+export type PlatformWalletCredentialsSetSamsungCardResponse = {
+  id: string;
+  scope: "platform" | "org";
+  orgId: string | null;
+  mode: "live" | "test";
+  provider: "google" | "samsung";
+  identityHint: string;
+  provenance: "platform" | "managed" | "own";
+  revision: number;
+  verifiedAt: number | null;
+  revokedAt: number | null;
+  createdAt: number;
+  updatedAt: number;
+  cardTypes: Array<string>;
 };
 
 export type PlatformWalletCredentialsUpsertParams = {
@@ -7400,6 +7430,7 @@ export type PlatformWalletCredentialsUpsertResponse = {
   revokedAt: number | null;
   createdAt: number;
   updatedAt: number;
+  cardTypes: Array<string>;
 };
 
 export type PlatformWalletEnrollmentsListResponse = {
@@ -11828,6 +11859,7 @@ export type WalletAccountsGoogleSharedCreateResponse = {
     revokedAt: number | null;
     createdAt: number;
     updatedAt: number;
+    cardTypes: Array<string>;
   };
   serviceAccountEmail: string;
 };
@@ -11862,6 +11894,7 @@ export type WalletCredentialsListResponse = {
     revokedAt: number | null;
     createdAt: number;
     updatedAt: number;
+    cardTypes: Array<string>;
   }>;
   nextCursor: string | null;
 };
@@ -11883,6 +11916,7 @@ export type WalletCredentialsRevokeResponse = {
   revokedAt: number | null;
   createdAt: number;
   updatedAt: number;
+  cardTypes: Array<string>;
 };
 
 export type WalletCredentialsUpsertParams = {
@@ -11921,6 +11955,7 @@ export type WalletCredentialsUpsertResponse = {
   revokedAt: number | null;
   createdAt: number;
   updatedAt: number;
+  cardTypes: Array<string>;
 };
 
 export type WalletEnrollmentsDisableParams = {
@@ -12180,6 +12215,11 @@ export type WalletProviderAccountsVerifyResponse = {
   verified: boolean;
   verifiedAt: number | null;
   expiresAt: number | null;
+};
+
+export type WalletReissue = {
+  reissueId: string;
+  instances: number;
 };
 
 export type WebhookCapture = {

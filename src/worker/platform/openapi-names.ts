@@ -88,6 +88,7 @@ import {
   TemplateListSchema,
   TemplateSummarySchema,
 } from '../../shared/contracts/templates.ts';
+import { WalletReissueResponseSchema } from '../../shared/contracts/wallet-provider-actions.ts';
 import {
   CaptureEndpointCreatedSchema,
   CaptureSecretSchema,
@@ -193,6 +194,7 @@ const names = {
   PassSetup: PassSetupSchema,
   PassSetupResult: PassSetupResultSchema,
   StagedBrandAsset: StagedBrandAssetSchema,
+  WalletReissue: WalletReissueResponseSchema,
 };
 
 for (const [refId, schema] of Object.entries(names))

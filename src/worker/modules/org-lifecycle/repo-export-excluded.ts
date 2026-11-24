@@ -136,6 +136,7 @@ export const EXPORT_EXCLUDED: Readonly<Record<string, string>> = {
   wallet_projection_pause_checks: WALLET,
   wallet_provider_account_events: WALLET,
   wallet_provider_accounts: WALLET,
+  wallet_reissue_steps: WALLET,
   wallet_provider_callback_events: WALLET,
   wallet_provider_credentials: WALLET,
   wallet_provider_instance_dirty: WALLET,
