@@ -1399,14 +1399,9 @@ For the owner (genuinely theirs):
 
 For the Unify phase (decide there, not with the owner):
 
-2. **Lookup as POST.** `lookup` moves `q` into a POST body, so a name never appears in a URL (AS§12 has GET).
-3. **Pair preview.** AS adds `pair/preview` for UD§4.3's confirm card, which shows the scanner name without consuming
-   the code.
-4. **Roster.** AS adds the v2 roster endpoint (`GET /api/v1/scan/roster?cursor=`), if access design allows a hashed
-   code roster on a device.
-5. **One reason vocabulary.** UD's reasons (`already_in`, `wrong_day`, `not_open`, `event_ended`, `wrong_event`) and
-   AS's (`already_done`, `not_yet_valid`, `session_closed`) need one list in `contracts/scan.ts`. The client only maps
-   codes to copy.
-6. **Scope.** UD's events (`scan.event`, `GET /scan/events`) versus AS's door sessions (`scan_sessions`). The Start
-   panel lists whatever the session returns, and the client sends the chosen key back as opaque `scope`.
+2. **Lookup as POST.** Answered, built: `POST /scan/lookup` (`modules/scan/routes.ts:277`, client `web/scan/api/scan-api.ts:242`).
+3. **Pair preview.** Answered, built: `POST /scan/pair/preview` (`routes-pair.ts:52`, `previewPairing`).
+4. **Roster.** Answered, built: `GET /api/v1/scan/roster?cursor&since&updatedSince` and `/batch` (`routes-offline.ts:26`), for a paired door with `passes:operate`; no API key reaches them.
+5. **One reason vocabulary.** Answered, built: one list in `contracts/scan.ts:61-100` (`SCAN_REFUSED_REASONS`, `SCAN_HEADS_UP_REASONS`, `ScanReasonSchema`); copy in `shared/copy/scan.ts` (`SCAN_REASON_COPY`). Names differ from both drafts: `still_inside` for `already_in`, `outside_hours` for `wrong_day` and `not_open`, `ended` for `event_ended`, `already_done` and `not_yet_valid` kept; `session_closed` is not a reason (a closed session is `ScanSession.state` `closed`, `contracts/scan-session.ts:50`).
+6. **Scope.** Answered, with a different shape: scanning sessions (`0024`) won over `scan_sessions`, and events (`/scan-events`, console) remain. The device client sends no opaque `scope`; the session is the scope, resolved from its credential. An admin scanning names its scope as `orgId`, `eventId`, `setupId`, `templateIds` and `timeZone` query params (`scopeQuery`, `web/scan/api/scan-api-support.ts:34`).
 7. **Overrides.** An override needs a new idempotency key plus `overrideOf` (3.4), not the original key (UD§5.3).

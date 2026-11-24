@@ -32,6 +32,7 @@ export function AssignChip({
 }) {
   const now = useSecond(expiresAt !== undefined);
   const left = expiresAt === undefined ? null : Math.max(0, expiresAt - now);
+  const timer = left !== null && mode === 'request-open' ? countdown(expiresAt ?? 0, now) : null;
   const label =
     mode === 'assigning'
       ? SCAN_TAG_COPY.chip.assigning
@@ -47,15 +48,14 @@ export function AssignChip({
       data-new={mode === 'request-waiting' ? '' : undefined}
       data-warn={left !== null && left <= ASSIGN_TIMING.WARN ? '' : undefined}
       data-testid="scan-assign-chip"
-      aria-label={mode === 'request-waiting' ? label : `${label}. Cancel`}
       onClick={onPress}
     >
       <Nfc aria-hidden size={14} />
       {label}
       {mode !== 'request-waiting' ? <X aria-hidden size={14} /> : null}
-      {left !== null && mode === 'request-open' ? (
-        <span aria-live="off">{countdown(expiresAt ?? 0, now)}</span>
-      ) : null}
+      {timer ? <span aria-live="off">{timer}</span> : null}
+      {/* The chip's name is its visible text (label in name); Cancel follows it for a screen reader. */}
+      {mode !== 'request-waiting' ? <span className="scan-sr">Cancel</span> : null}
     </button>
   );
 }
