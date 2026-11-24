@@ -6,12 +6,15 @@ import { resolve } from 'node:path';
 import { createFixtureIdentity } from '../src/passkit/testing/fixture-identity.ts';
 import { writeDevVars } from './lib/dev-vars.ts';
 import { e2eOrigin, e2ePorts } from './lib/e2e-ports.ts';
+import { ISSUANCE_GUARDS } from './lib/e2e-release.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const children: ChildProcess[] = [];
 const oidcIssuer = `http://localhost:${e2ePorts.oidc}`;
 const walletsUrl = `http://localhost:${e2ePorts.wallets}`;
 const mode = process.env.WALLET_E2E_PREVIEW === '1' ? 'preview' : 'dev';
+// Google and Samsung open against the mock wallets (playwright.wallets.config.ts; docs/design/wallet-providers/e2e-release.md).
+const release = process.env.WALLET_E2E_RELEASE === '1';
 
 // Own vars file (picked up via CLOUDFLARE_ENV=e2e) so a developer's .dev.vars (other issuer, port,
 // client id) can never leak into the run. Regenerated every start; throwaway fixture keys only.
@@ -38,6 +41,7 @@ writeDevVars(varsFile, {
   SCAN_ENABLED: '1',
   // Provider calls go to test/mock-wallets (honoured only on http loopback, see mock-endpoint.ts).
   WALLET_MOCK_PROVIDERS_URL: walletsUrl,
+  ...(release ? { WALLET_E2E_RELEASE: '1' } : {}),
 });
 
 const env = {
@@ -78,6 +82,23 @@ execFileSync(
   ],
   { cwd: root, stdio: 'inherit' },
 );
+// The e2e release: this throwaway database drops the triggers that refuse provider issuance. Production keeps them.
+if (release)
+  execFileSync(
+    'npx',
+    [
+      'wrangler',
+      'd1',
+      'execute',
+      'wallet-platform',
+      '--local',
+      '--persist-to',
+      state,
+      '--command',
+      ISSUANCE_GUARDS.map((name) => `DROP TRIGGER ${name};`).join(' '),
+    ],
+    { cwd: root, stdio: 'inherit' },
+  );
 if (mode === 'preview') {
   execFileSync('npx', ['vite', 'build'], { cwd: root, stdio: 'inherit', env });
   // The developer portal's prerendered pages (the specs that open /developers need them in the manifest).
