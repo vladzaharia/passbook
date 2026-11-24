@@ -21,8 +21,8 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, diffFields, recordAudit } from '../audit/service.ts';
 import { closeOrg } from '../org-lifecycle/service.ts';
 import { markPassesStale } from './branding-stale.ts';
+import { toDto } from './org-dto.ts';
 import {
-  COUNT_CAP,
   countsFor,
   getOrgRow,
   identityUsableBy,
@@ -37,38 +37,14 @@ import {
   type OrgWriteAuthority,
   updateOrgRow,
 } from './repo-org-writes.ts';
-import { getPersonalUser, insertOrgWithCreator, personalOwners } from './repo-personal.ts';
+import { getPersonalUser, insertOrgWithCreator } from './repo-personal.ts';
 import { plansOf } from './repo-usage.ts';
+import { ownersOf, summarize } from './service-summary.ts';
+
+export { toDto };
 
 type Branding = z.infer<typeof OrgBrandingSchema>;
 type Summary = z.infer<typeof OrgSummarySchema>;
-
-export function toDto(row: OrgRow): OrgDto {
-  const { logo, icon, web, ...branding } = JSON.parse(row.branding) as Branding;
-  const image = (value: NonNullable<Branding['logo']>) => ({
-    sha: value.sha,
-    w: value.w,
-    h: value.h,
-  });
-  return {
-    id: row.id,
-    slug: row.slug,
-    name: row.name,
-    status: row.status,
-    defaultIdentityId: row.default_identity_id,
-    branding: {
-      ...branding,
-      ...(logo ? { logo: image(logo) } : {}),
-      ...(icon ? { icon: image(icon) } : {}),
-      ...(web ? { web: image(web) } : {}),
-    },
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-    configRevision: row.config_revision,
-    personal: row.personal_user_id !== null,
-    kind: row.kind,
-  };
-}
 
 /** Adds the count of live passes a save will rebuild; absent when none. */
 export const withUpdates = (dto: OrgDto, passes: number | undefined): OrgDto =>
@@ -117,32 +93,6 @@ export async function listOrgs(
   return {
     items: page.map((row) => summarize(row, counts.get(row.id), owners, plans)),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
-  };
-}
-
-/** Names of the owners of the personal orgs among `rows`: for platform views only. */
-const ownersOf = async (ctx: ServiceContext, rows: OrgRow[]) =>
-  personalOwners(
-    ctx.env.DB,
-    rows.flatMap((r) => (r.personal_user_id ? [r.personal_user_id] : [])),
-  );
-
-function summarize(
-  row: OrgRow,
-  counts?: Summary['counts'],
-  owners?: Map<string, string | null>,
-  plans?: Map<string, { preset: string; label: string }>,
-): Summary {
-  const c = counts ?? { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 };
-  const owner = row.personal_user_id
-    ? { id: row.personal_user_id, name: owners?.get(row.personal_user_id) ?? null }
-    : null;
-  return {
-    ...toDto(row),
-    counts: c,
-    countsCapped: Object.values(c).some((n) => n >= COUNT_CAP),
-    ...(owners && owner ? { personalOwner: owner } : {}),
-    ...(plans ? { plan: plans.get(row.id) ?? null } : {}),
   };
 }
 
