@@ -26,6 +26,7 @@ export const CUSTOMER_COPY = {
   adding: 'Adding',
   balance: 'Balance {balance}',
   plus: '+{n} {label}',
+  plusStamps: { one: '+{n} stamp', other: '+{n} stamps' },
   ofGoal: '{n} of {goal}',
 } as const;
 

@@ -28,7 +28,11 @@ export async function passDetail(
   | (Pick<
       LiveRingRow,
       'templateId' | 'gen' | 'release' | 'validUntil' | 'holderRoles' | 'photoRoles'
-    > & { holder: string | null; actions: readonly ResolvedScanAction[] })
+    > & {
+      holder: string | null;
+      actions: readonly ResolvedScanAction[];
+      stampsInput: string | null;
+    })
   | null
 > {
   const { pass } = candidate;
@@ -70,5 +74,6 @@ export async function passDetail(
     holderRoles,
     photoRoles,
     actions: found.scan.actions,
+    stampsInput: found.template.manifest.stamps?.input ?? null,
   };
 }

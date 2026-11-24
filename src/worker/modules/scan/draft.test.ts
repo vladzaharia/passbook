@@ -198,7 +198,7 @@ describe('the receipt on a committed scan', () => {
     expect((await d.act('stamp')).status).toBe(200);
     await flush();
     await wait();
-    expect(JSON.stringify(d.seen.messages)).toContain('+1 visit');
+    expect(JSON.stringify(d.seen.messages)).toContain('+1 visits');
     d.close();
   });
 });

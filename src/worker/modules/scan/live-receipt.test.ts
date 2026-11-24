@@ -38,15 +38,27 @@ describe('the customer receipt of a committed scan', () => {
     });
   });
 
-  it('counts stamps against the goal, and a plain counter without one', () => {
-    const stamps = value({ label: 'Stamps', format: 'number', before: 7, after: 9, goal: 10 });
-    expect(receiptOf(out('add', stamps), [])).toEqual({ headline: '+2 stamps', sub: '9 of 10' });
-    const one = { ...stamps, before: 8, after: 9 };
-    expect(receiptOf(out('add', one), [])?.headline).toBe('+1 stamp');
-    expect(receiptOf(out('add', { ...stamps, goal: null }), [])).toEqual({
-      headline: '+2 stamps',
-      sub: null,
-    });
+  it('counts stamps against the goal with real plural forms', () => {
+    const stamps = value({ input: 'stamps', label: 'Stamps', format: 'number', goal: 10 });
+    const at = (before: number, after: number, goal: number | null = 10) =>
+      receiptOf(out('add', { ...stamps, before, after, goal }), [], 'stamps');
+    expect(at(7, 9)).toEqual({ headline: '+2 stamps', sub: '9 of 10' });
+    expect(at(8, 9)?.headline).toBe('+1 stamp');
+    expect(at(9, 9)?.headline).toBe('+0 stamps');
+    expect(at(7, 9, null)).toEqual({ headline: '+2 stamps', sub: null });
+  });
+
+  it('reads another counter under its own label, as written', () => {
+    const counter = (label: string, before: number, after: number) =>
+      receiptOf(
+        out('add', value({ input: 'c', label, format: 'number', before, after })),
+        [],
+        'stamps',
+      )?.headline;
+    expect(counter('Glasses', 0, 2)).toBe('+2 Glasses');
+    expect(counter('Glasses', 0, 1)).toBe('+1 Glasses');
+    expect(counter('Coffee', 0, 1)).toBe('+1 Coffee');
+    expect(counter('Visits', 3, 3)).toBe('+0 Visits');
   });
 
   it('names the reward of a take that has one, and redeemed for a take that has none', () => {
