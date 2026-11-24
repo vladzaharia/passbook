@@ -3,7 +3,7 @@ import {
   type EntitlementValues,
   entitlementTransition,
 } from '../../../shared/channels.ts';
-import { CHANNELS, type Channel } from '../../../shared/contracts/channels.ts';
+import { CHANNELS } from '../../../shared/contracts/channels.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -34,13 +34,11 @@ export async function onEntitlementsChanged(
   revision: number,
   full = false,
 ): Promise<void> {
+  // A full reconcile knows only the plan now: the plan is the same on both sides, so only flips the run
+  // already knows (template and pass changes) are journaled. Plan blocks never retire, so the actions are the same.
+  const now = CHANNELS.filter((c) => blockedByEntitlement(after)[c] !== undefined);
   const effects = full
-    ? [
-        {
-          blockedBefore: [] as Channel[],
-          blockedAfter: CHANNELS.filter((c) => blockedByEntitlement(after)[c] !== undefined),
-        },
-      ]
+    ? [{ blockedBefore: now, blockedAfter: now }]
     : entitlementTransition(before, after);
   for (const effect of effects) {
     const job = {

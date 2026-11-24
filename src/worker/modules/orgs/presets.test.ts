@@ -11,6 +11,10 @@ import { createSessionStore } from '../auth/sessions.ts';
 import { type ApplyKit, applyKit } from '../channels/apply-test-fixtures.ts';
 import { handleEntitlementApply } from '../channels/entitlement-apply.ts';
 import { sweepEntitlementJournal } from '../channels/entitlement-sweep.ts';
+import {
+  latestEntitlementAudit,
+  recentEntitlementOrgs,
+} from '../channels/repo-entitlement-sweep.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { expireEntitlementOverrides } from './entitlement-expiry.ts';
 import { setPreset } from './presets-service.ts';
@@ -621,15 +625,104 @@ describe('failures and gaps in a move', () => {
       'entitlement.preset_gap',
       expect.objectContaining({ code: 'PRESET_GAP', orgId: org, behind: 2 }),
     ]);
-    expect(JSON.parse((await orgAudit(t, org)).at(-1)?.detail ?? '{}')).toMatchObject({
-      gap: true,
-    });
-    // Everything on before: the channels trial blocks are stopped.
+    const gapAudit = JSON.parse((await orgAudit(t, org)).at(-1)?.detail ?? '{}');
+    expect(gapAudit).toMatchObject({ gap: true });
+    // No fictional before: every recorded change has only its `to`.
+    for (const c of Object.values(gapAudit.changes) as { from: unknown }[])
+      expect(c.from).toBeNull();
+    // The plan on both sides: only the flips the run already knows are journaled.
     const job = jobs(t)
       .slice(sent)
       .find((j) => j.orgId === org);
-    expect(job?.blockedBefore).toEqual([]);
+    expect(job).toMatchObject({ full: true });
+    expect(job?.blockedBefore).toEqual(job?.blockedAfter);
     expect(job?.blockedAfter.length).toBeGreaterThan(0);
     expect((await orgRow(t, org))?.preset_revision).toBe(before.revision + 1);
+  });
+});
+
+describe('the journal sweep', () => {
+  it('does not re-queue a run that failed, and checks every org changed in the window', async () => {
+    const t = await applyKit(2);
+    const path = `/platform/orgs/${t.orgId}/entitlements`;
+    const read = (await (
+      await t.kit.api(path, { headers: t.kit.auth.admin() })
+    ).json()) as OrgEntitlementsDto;
+    await t.kit.api(path, {
+      method: 'PUT',
+      headers: { ...t.kit.auth.admin(), ...json },
+      body: JSON.stringify({
+        preset: read.preset === 'trial' ? 'legacy' : 'trial',
+        expectedRevision: read.revision,
+        overrides: {},
+      }),
+    });
+    const job = jobs(t).at(-1) as JobOf<'channel.entitlement'>;
+    await handleEntitlementApply(job, jobCtxOf(t.kit));
+    await run(t.kit.env.DB, "UPDATE channel_apply_runs SET state = 'failed' WHERE org_id = ?", [
+      t.orgId,
+    ]);
+    const sent = jobs(t).length;
+    t.kit.clock.advance(180_000);
+    await sweepEntitlementJournal(jobCtxOf(t.kit));
+    expect(jobs(t)).toHaveLength(sent);
+
+    // A burst larger than the old limit is all returned, in (updated_at, org_id) order.
+    const ids: string[] = [];
+    for (let i = 0; i < 30; i++) ids.push((await makeOrg(t.kit.fx)).id);
+    const at = t.kit.clock.now();
+    for (const id of ids)
+      await run(t.kit.env.DB, 'UPDATE org_entitlements SET updated_at = ? WHERE org_id = ?', [
+        at,
+        id,
+      ]);
+    const found = (await recentEntitlementOrgs(t.kit.env.DB, at, at + 1, 200)).map((o) => o.org_id);
+    expect(found).toEqual([...ids].sort());
+    expect((await latestEntitlementAudit(t.kit.env.DB, t.orgId)).length).toBe(1);
+  });
+
+  it('skips an org an edit has not moved yet: the move queues its own job', async () => {
+    const t = await applyKit(2);
+    const path = `/platform/orgs/${t.orgId}/entitlements`;
+    const read = (await (
+      await t.kit.api(path, { headers: t.kit.auth.admin() })
+    ).json()) as OrgEntitlementsDto;
+    await t.kit.api(path, {
+      method: 'PUT',
+      headers: { ...t.kit.auth.admin(), ...json },
+      body: JSON.stringify({
+        preset: read.preset === 'trial' ? 'legacy' : 'trial',
+        expectedRevision: read.revision,
+        overrides: {},
+      }),
+    });
+    const sent = jobs(t).length;
+    await run(t.kit.env.DB, 'UPDATE org_entitlements SET preset_revision = 0 WHERE org_id = ?', [
+      t.orgId,
+    ]);
+    t.kit.clock.advance(180_000);
+    await sweepEntitlementJournal(jobCtxOf(t.kit));
+    expect(jobs(t)).toHaveLength(sent);
+  });
+});
+
+describe('an org save for an org two edits behind', () => {
+  it('records `to` values only, marks the gap and journals a full reconcile', async () => {
+    const t = await applyKit(1);
+    const org = await orgOn(t, 'trial');
+    const before = await trialOf(t);
+    await run(t.kit.env.DB, 'UPDATE org_entitlements SET preset_revision = ? WHERE org_id = ?', [
+      before.revision - 2,
+      org,
+    ]);
+    const sent = jobs(t).length;
+    await putOverrides(t, org, { members: { value: 9 } });
+    const audit = JSON.parse((await orgAudit(t, org)).at(-1)?.detail ?? '{}');
+    expect(audit.gap).toBe(true);
+    expect(audit.changes.members).toMatchObject({ from: null, to: 9 });
+    const job = jobs(t)
+      .slice(sent)
+      .find((j) => j.orgId === org);
+    expect(job).toMatchObject({ full: true });
   });
 });

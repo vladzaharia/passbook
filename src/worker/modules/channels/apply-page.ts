@@ -101,10 +101,8 @@ function plan(run: ApplyRun, loaded: LoadedPass, now: number, inherited: boolean
   const voidPrints = actions.some((a) => a.kind === 'void_prints');
   // A run that inherited a failed run's start may find passes that run already handled: only a channel
   // whose marker (or print) changes here is news.
-  // A full reconcile does not know what the plan was: it journals no flips, only what it changes (prints it voids).
-  const events = run.reconcileAll
-    ? []
-    : inherited && run.fromBlocked === null
+  const events =
+    inherited && run.fromBlocked === null
       ? flips.filter(
           (e) =>
             marks.some((m) => m.channel === e.channel) || (voidPrints && e.channel === 'paper'),

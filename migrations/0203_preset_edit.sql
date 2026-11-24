@@ -17,3 +17,6 @@ BEGIN
     (SELECT m.revision FROM entitlement_preset_meta m WHERE m.preset = NEW.preset)
   WHERE org_id = NEW.org_id;
 END;
+
+-- The journal sweep reads the orgs changed in a short window.
+CREATE INDEX org_entitlements_updated ON org_entitlements (updated_at, org_id);

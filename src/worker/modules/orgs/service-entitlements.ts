@@ -8,6 +8,7 @@ import {
   ENTITLEMENT_KEYS,
   ENTITLEMENT_PRESETS,
   type EntitlementValue,
+  presetValues,
 } from '../../../shared/contracts/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '../../../shared/entitlement-impact.ts';
 import type { Actor } from '../../platform/context.ts';
@@ -45,6 +46,8 @@ interface State {
   updatedAt: number | null;
   /** The preset as it stood before an edit that has not reached the org yet; null once it has. */
   lagging: EntitlementValues | null;
+  /** More than one preset edit behind: `previous_values` is not its real before (journaled as a full re-evaluation). */
+  gap: boolean;
   presets: {
     preset: string;
     label: string;
@@ -111,6 +114,7 @@ async function stateOf(ctx: ServiceContext, orgId: string): Promise<State> {
             allPresets.find((p) => p.preset === row.preset)?.previous_values ?? null,
           )
         : null,
+    gap: !!(row && current && row.preset_revision < current.revision - 1),
     presets: list,
     presetValues: current?.values ?? {},
     overrides,
@@ -224,7 +228,8 @@ export async function setOrgEntitlements(
   const noOp = !create && input.preset === before.preset && put.length === 0 && remove.length === 0;
   if (noOp) return readOrgEntitlements(ctx, orgId);
 
-  const was = resolve(before.lagging ?? before.presetValues, overrideMaps(ctx, stored, now).all);
+  const base = before.gap ? presetValues('legacy') : (before.lagging ?? before.presetValues);
+  const was = resolve(base, overrideMaps(ctx, stored, now).all);
   const after = resolve(target.values, next);
   const impact = entitlementImpact(was, after);
   const touched = new Set([...put.map(([k]) => k), ...remove, ...impact.changes.map((c) => c.key)]);
@@ -232,7 +237,7 @@ export async function setOrgEntitlements(
   for (const key of ENTITLEMENT_KEYS.filter((k) => touched.has(k))) {
     const o = next.get(key);
     changes[key] = {
-      from: was[key] ?? null,
+      from: before.gap ? null : (was[key] ?? null),
       to: after[key] ?? null,
       ...(o?.note ? { note: o.note } : {}),
       ...(o?.expiresAt != null ? { expiresAt: o.expiresAt } : {}),
@@ -265,6 +270,7 @@ export async function setOrgEntitlements(
             ? {}
             : { preset: { from: before.preset, to: input.preset } }),
           ...(create ? { created: true } : {}),
+          ...(before.gap ? { gap: true } : {}),
           changes,
           off: impact.counts.off,
           down: impact.counts.down,
@@ -282,7 +288,15 @@ export async function setOrgEntitlements(
     throw error;
   }
   // Delivery channels the plan gates converge their passes: one channel-apply run per template.
-  await onEntitlementsChanged(ctx, orgId, was, after, admin.userId, before.revision + 1);
+  await onEntitlementsChanged(
+    ctx,
+    orgId,
+    was,
+    after,
+    admin.userId,
+    before.revision + 1,
+    before.gap,
+  );
   ctx.log.info('org.entitlements_set', { orgId, preset: input.preset });
   return readOrgEntitlements(ctx, orgId);
 }

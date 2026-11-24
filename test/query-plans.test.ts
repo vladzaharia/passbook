@@ -2,6 +2,10 @@ import { env } from 'cloudflare:workers';
 import { describe, expect, it } from 'vitest';
 import { listAuditRows } from '../src/worker/modules/audit/repo.ts';
 import { listBundleRows } from '../src/worker/modules/bundles/repo.ts';
+import {
+  latestEntitlementAudit,
+  recentEntitlementOrgs,
+} from '../src/worker/modules/channels/repo-entitlement-sweep.ts';
 import { deleteOldWebhookEvents } from '../src/worker/modules/connections/repo-sync.ts';
 import { listEvents } from '../src/worker/modules/events/repo.ts';
 import { listSweepWaitingPasses } from '../src/worker/modules/holders/repo.ts';
@@ -513,5 +517,19 @@ describe('outbound webhook query plans', () => {
         'e',
       ),
     ).toContain('webhook_deliveries_due');
+  });
+});
+
+describe('entitlement journal sweep query plans', () => {
+  it('reads the newest org audit row from audit_target, not the whole org log', async () => {
+    const lines = await plans((db) => latestEntitlementAudit(db, 'o'));
+    expect(lines.join('\n')).toContain('audit_target');
+    expect(lines.join('\n')).not.toContain('USING INDEX audit_org');
+  });
+
+  it('finds the orgs changed in the window from the updated_at index', async () => {
+    const lines = await plans((db) => recentEntitlementOrgs(db, 1, 2, 200));
+    expect(lines.join('\n')).toContain('org_entitlements_updated');
+    expect(fullScans(lines, 'org_entitlements')).toEqual([]);
   });
 });
