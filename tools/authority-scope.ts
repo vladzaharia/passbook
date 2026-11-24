@@ -15,8 +15,9 @@ import {
   UNTENANTED_CHECK_ALLOWLIST,
 } from './authority-scope-allowlists.ts';
 import { scanBans } from './authority-scope-bans.ts';
-import { fragmentPlacement, opaqueFindings, opaqueHash } from './authority-scope-opaque.ts';
+import { opaqueFindings, opaqueHash } from './authority-scope-opaque.ts';
 import { OPAQUE_ALLOWLIST } from './authority-scope-opaque-allowlist.ts';
+import { fragmentPlacement } from './authority-scope-placement.ts';
 import {
   type Cx,
   describeStatement,

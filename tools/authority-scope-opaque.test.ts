@@ -2,13 +2,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { fragmentFindings } from './authority-scope.ts';
-import {
-  fragmentPlacement,
-  opaqueDeps,
-  opaqueFindings,
-  opaqueHash,
-} from './authority-scope-opaque.ts';
+import { opaqueDeps, opaqueFindings, opaqueHash } from './authority-scope-opaque.ts';
 import { OPAQUE_ALLOWLIST } from './authority-scope-opaque-allowlist.ts';
 
 const root = new URL('..', import.meta.url).pathname;
@@ -20,47 +14,6 @@ const tree = (dir: string, out = new Map<string, string>()): Map<string, string>
   }
   return out;
 };
-
-const WRITE = 'DELETE FROM scans WHERE id = ?';
-const placement = (tail: string) => fragmentPlacement(`${WRITE} ${tail}`);
-
-describe('authority-scope fragment placement', () => {
-  it('accepts a fragment ANDed in as AND (${...})', () => {
-    expect(placement('AND (${guard.sql})')).toEqual([]);
-    expect(placement('AND NOT (${guard.sql})')).toEqual([]);
-    expect(placement('( AND (${guard.sql})|)')).toEqual([]);
-    expect(placement('AND ((${a.sql})|NOT (${b.sql}))')).toEqual([]);
-    expect(placement('AND (state = ? OR (${guard.sql}))')).toEqual([]);
-    expect(fragmentPlacement('UPDATE t SET x = (${count.sql}) WHERE id = ?')).toEqual([]);
-    expect(placement('AND id IN (${placeholders(n)})')).toEqual([]);
-  });
-
-  it('fails an unparenthesized fragment', () => {
-    expect(placement('AND ${guard.sql}')).toEqual([expect.stringContaining('not parenthesized')]);
-    expect(placement('AND (${a.sql} AND ${b.sql})')).toHaveLength(2);
-    expect(placement('AND (x = ? OR ${guard.sql})')).toEqual([
-      expect.stringContaining('not parenthesized'),
-    ]);
-  });
-
-  it('fails an OR-joined fragment', () => {
-    expect(placement('OR (${guard.sql})')).toEqual([expect.stringContaining('not ANDed')]);
-    expect(placement('OR NOT (${guard.sql})')).toEqual([expect.stringContaining('not ANDed')]);
-    expect(placement('( OR (${guard.sql})|)')).toEqual([expect.stringContaining('not ANDed')]);
-  });
-
-  it('fails a pinned file that interpolates an unparenthesized fragment', () => {
-    const source = (clause: string) =>
-      `run(db, \`DELETE FROM sessions WHERE id = ?$\{guard ? \` ${clause}\` : ''}\`, []);`;
-    expect(fragmentFindings(source('AND (${guard.sql})'))).toEqual([]);
-    expect(fragmentFindings(source('AND ${guard.sql}'))).toEqual([
-      expect.stringContaining('guard.sql} is not parenthesized'),
-    ]);
-    expect(fragmentFindings(source('OR (${guard.sql})'))).toEqual([
-      expect.stringContaining('not ANDed'),
-    ]);
-  });
-});
 
 describe('authority-scope opaque deps', () => {
   const files = new Map([
@@ -102,5 +55,25 @@ describe('authority-scope opaque deps', () => {
     const files = tree(join(root, 'src/worker'));
     for (const [rel, entry] of Object.entries(OPAQUE_ALLOWLIST))
       expect(opaqueHash(rel, files, entry.via), rel).toBe(entry.hash);
+  });
+
+  it('names every depth-2 value import in via, or ignores it with a reason', () => {
+    const files = tree(join(root, 'src/worker'));
+    const W = 'src/worker/';
+    const IGNORED: Record<string, string> = {
+      [`${W}platform/authority-error.ts`]: 'error class; builds no SQL',
+      [`${W}modules/scan/outcome-bucket.ts`]: 'maps an outcome to a label; builds no SQL',
+      [`${W}modules/templates/release-content.ts`]: 'reads release bytes; builds no SQL',
+      [`${W}modules/scan/scan-retention-proof.ts`]: 'signs and verifies a proof; builds no SQL',
+      [`${W}modules/scan/scan-retention-proof-data.ts`]: 'proof field layout; builds no SQL',
+    };
+    const unnamed: string[] = [];
+    for (const [rel, entry] of Object.entries(OPAQUE_ALLOWLIST)) {
+      const covered = new Set([rel, ...opaqueDeps(rel, files, entry.via)]);
+      for (const direct of opaqueDeps(rel, files))
+        for (const dep of opaqueDeps(direct, files))
+          if (!covered.has(dep) && !(dep in IGNORED)) unnamed.push(`${rel} -> ${direct} -> ${dep}`);
+    }
+    expect(unnamed).toEqual([]);
   });
 });

@@ -86,7 +86,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'scans:4df40f2dbb58',
       'scans:5f5758655d9a',
       'scans:8f59dc9eb4bd',
-      'scans:a4620d033950',
+      'scans:e474881b9c47',
       'scans:af3fe65731a1',
       'scans:bece3e07a044',
     ],
