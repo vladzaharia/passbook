@@ -4,6 +4,9 @@ export const SCOPE_LABEL: Record<string, string> = {
   'passes:write': 'Create and update passes',
   'holders:write': 'Assign holders',
   'templates:read': 'Read templates',
+  'templates:write': 'Edit templates and request review',
+  'templates:review': 'Approve templates (Test keys)',
+  'templates:publish': 'Release templates (Test keys)',
   'messages:write': 'Send messages and scheduled changes',
   'scans:read': 'Read scans and counts',
   'scans:write': 'Scan as a terminal',
@@ -18,5 +21,6 @@ export const SCOPE_LABEL: Record<string, string> = {
   'scan-setup:read': 'Read scanner setups',
   'scanning:admin': 'Door credentials: pairing codes, till tokens, staff PINs',
   'nfc:keys': 'Make and rotate NFC tag keys',
+  'audit:read': 'Read the audit log (Live keys)',
   'api-keys:write': 'Manage its own child keys',
 };

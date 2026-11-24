@@ -1,5 +1,6 @@
 {
   "audit.getAudit": {
+    "description": "The organization's audit log, newest first. A key needs audit:read and reads its own organization; send from (at most 90 days before to) and a limit of at most 100.",
     "response": {
       "items": [
         {
@@ -44,5 +45,8 @@
       ],
       "nextCursor": "c1.4812"
     }
+  },
+  "audit.getAuditExport": {
+    "description": "The same entries as CSV, at most 10,000 rows; 2 an hour per key and 6 an hour across the organization's keys. Each export is recorded as audit.export."
   }
 }

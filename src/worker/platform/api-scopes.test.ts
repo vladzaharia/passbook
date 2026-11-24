@@ -14,6 +14,9 @@ describe('role presets', () => {
         'passes:write',
         'holders:write',
         'templates:read',
+        'templates:write',
+        'templates:review',
+        'templates:publish',
         'messages:write',
         'scans:read',
         'scanning:write',
@@ -36,9 +39,9 @@ describe('role presets', () => {
         'api-keys:write',
         'org:read',
       ],
-      template_author: ['templates:read', 'org:read'],
-      template_reviewer: ['templates:read', 'org:read'],
-      template_publisher: ['templates:read', 'org:read'],
+      template_author: ['templates:read', 'templates:write', 'org:read'],
+      template_reviewer: ['templates:read', 'templates:review', 'org:read'],
+      template_publisher: ['templates:read', 'templates:publish', 'org:read'],
       pass_operator: [
         'passes:read',
         'passes:write',
@@ -88,7 +91,7 @@ describe('role presets', () => {
     expect(ROLE_PRESETS.read_only.filter((s) => /:(write|manage|publish|review)$/.test(s))).toEqual(
       [],
     );
-    expect(ROLE_PRESETS.template_author).toEqual(['templates:read', 'org:read']);
+    expect(ROLE_PRESETS.template_author).toEqual(['templates:read', 'templates:write', 'org:read']);
     // Only org_admin changes the org's setup; integration_admin turns wallet accounts on and nothing else there.
     expect(ROLE_PRESETS.integration_admin).not.toContain('org:write');
     expect(ROLE_PRESETS.pass_operator).not.toContain('org:write');
@@ -107,6 +110,7 @@ describe('role presets', () => {
     expect(effectiveScopes(['passes:read', 'templates:read'], ['template_author'])).toEqual([
       'passes:read',
       'templates:read',
+      'templates:write',
       'org:read',
     ]);
     expect(effectiveScopes(['passes:read'], [])).toEqual(['passes:read']);

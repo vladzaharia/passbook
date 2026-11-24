@@ -11,12 +11,14 @@ const EXPORTS_PER_HOUR = 6;
  */
 export async function enforceExportLimit(
   ctx: ServiceContext,
-  keys: readonly string[],
+  keys: readonly (string | { key: string; limit: number })[],
 ): Promise<void> {
   const now = ctx.clock.now();
   const start = Math.floor(now / HOUR) * HOUR;
-  for (const key of keys) {
-    if ((await bump(ctx.env.DB, `audit.export:${key}`, start)) > EXPORTS_PER_HOUR) {
+  for (const entry of keys) {
+    const { key, limit } =
+      typeof entry === 'string' ? { key: entry, limit: EXPORTS_PER_HOUR } : entry;
+    if ((await bump(ctx.env.DB, `audit.export:${key}`, start)) > limit) {
       const minutes = Math.max(1, Math.ceil((start + HOUR - now) / 60_000));
       throw new RateLimitedError(
         Math.ceil((start + HOUR - now) / 1000),

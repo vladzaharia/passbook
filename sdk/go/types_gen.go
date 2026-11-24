@@ -311,6 +311,47 @@ type ApiKeysRotateParams struct {
 
 type ApiKeysRotateResult = ApiKeyRotation
 
+type AuditEntriesExportQuery struct {
+	ActorID       *string `json:"actorId,omitempty"`
+	Action        *string `json:"action,omitempty"`
+	ExcludeAction *string `json:"excludeAction,omitempty"`
+	TargetType    *string `json:"targetType,omitempty"`
+	TargetID      *string `json:"targetId,omitempty"`
+	From          *int64  `json:"from,omitempty"`
+	To            *int64  `json:"to,omitempty"`
+	CreatedAfter  *int64  `json:"createdAfter,omitempty"`
+	CreatedBefore *int64  `json:"createdBefore,omitempty"`
+}
+
+type AuditEntriesListItem struct {
+	ID          int64   `json:"id"`
+	At          int64   `json:"at"`
+	OrgID       *string `json:"orgId"`
+	ActorType   string  `json:"actorType"`
+	ActorID     *string `json:"actorId"`
+	ActorLabel  *string `json:"actorLabel,omitempty"`
+	Action      string  `json:"action"`
+	TargetType  *string `json:"targetType"`
+	TargetID    *string `json:"targetId"`
+	TargetLabel *string `json:"targetLabel,omitempty"`
+	RequestID   *string `json:"requestId"`
+	Detail      any     `json:"detail,omitempty"`
+}
+
+type AuditEntriesListQuery struct {
+	ActorID       *string `json:"actorId,omitempty"`
+	Action        *string `json:"action,omitempty"`
+	ExcludeAction *string `json:"excludeAction,omitempty"`
+	TargetType    *string `json:"targetType,omitempty"`
+	TargetID      *string `json:"targetId,omitempty"`
+	From          *int64  `json:"from,omitempty"`
+	To            *int64  `json:"to,omitempty"`
+	CreatedAfter  *int64  `json:"createdAfter,omitempty"`
+	CreatedBefore *int64  `json:"createdBefore,omitempty"`
+	Cursor        *string `json:"cursor,omitempty"`
+	Limit         *int64  `json:"limit,omitempty"`
+}
+
 type AuditEntriesListResponse struct {
 	Items      []AuditEntriesListResponseItemsItem `json:"items"`
 	NextCursor *string                             `json:"nextCursor"`

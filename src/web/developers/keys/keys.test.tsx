@@ -2,7 +2,12 @@ import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { SANDBOX_KEY_SCOPES } from '../../../shared/contracts/developer-home.ts';
-import { KEY_PRESETS, presetOf, SANDBOX_CEILING } from '../../../shared/developers-keys.ts';
+import {
+  KEY_PRESETS,
+  presetOf,
+  presetsWithin,
+  SANDBOX_CEILING,
+} from '../../../shared/developers-keys.ts';
 import { HIDE_MS } from '../ui/reveal-sheet.tsx';
 import { homeDone, NOW } from '../workbench/home-fixtures.ts';
 import { type KeyApi, KeyError } from './api.ts';
@@ -90,7 +95,10 @@ function heldStrings(root: Element): string[] {
 
 describe('the shared preset map', () => {
   it('fits under the sandbox ceiling, which holds no key minting or terminal scope', () => {
-    for (const p of KEY_PRESETS) for (const s of p.scopes) expect(SANDBOX_KEY_SCOPES).toContain(s);
+    // The till acts as a terminal, which a sandbox key cannot, so the portal hides it.
+    for (const p of presetsWithin(SANDBOX_CEILING))
+      for (const s of p.scopes) expect(SANDBOX_KEY_SCOPES).toContain(s);
+    expect(presetsWithin(SANDBOX_CEILING).length).toBe(KEY_PRESETS.length - 1);
     for (const banned of ['api-keys:write', 'scans:write', 'scanning:admin'])
       expect(SANDBOX_CEILING).not.toContain(banned);
     expect(presetOf(['templates:read', 'passes:write', 'passes:read'])).toBe('Issue passes');

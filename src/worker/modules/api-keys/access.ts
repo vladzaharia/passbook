@@ -1,4 +1,4 @@
-import { MINTABLE_SCOPES } from '../../../shared/contracts/api-keys.ts';
+import { MINTABLE_SCOPES, TEMPLATE_ACT_AS_SCOPES } from '../../../shared/contracts/api-keys.ts';
 import { CREDENTIAL_SCOPES, isPlatformScope, scopeCapability } from '../../platform/api-scopes.ts';
 import type { Amr, ApiScope, AuthContext } from '../../platform/auth.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
@@ -11,6 +11,8 @@ export const CHILD_NEVER: readonly ApiScope[] = [
   'api-keys:write',
   'scans:write',
   ...CREDENTIAL_SCOPES,
+  // These act as the key's creator, and a child has none.
+  ...TEMPLATE_ACT_AS_SCOPES,
 ];
 
 /** A key caller is a service key of the org (it holds `api-keys:write`): it reaches its own children only. */

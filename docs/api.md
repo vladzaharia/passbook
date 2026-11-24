@@ -35,6 +35,10 @@ curl "https://passbook.mobile/api/v1/passes" \
 | `passes:write` | create, update, void, remove, refresh, assets, resend email, bundles, `POST /passes/bulk-reissue` (an org key rebuilds its own org, `orgId` defaults to it; a platform key must name the org; a test key rebuilds test mode; one active run per target, else 409 `BULK_RUN_ACTIVE` with the run id; 6 starts per key per hour, then 429) |
 | `holders:write` | assign, reassign, unassign holders |
 | `templates:read` | GET templates |
+| `audit:read` | `GET /audit` and `/audit/export` for the key's own organization: Live keys only (a developer sandbox key too), named on the key, never through a role. A key reads at most 90 days at a time (send `from`) and 100 entries a page; an export is 2 an hour per key and 6 an hour across the organization's keys, and leaves an `audit.export` entry. Entries are redacted exactly as for a member. Never `/audit/platform` |
+| `templates:write` | clone a blueprint, create a version, request review. A Test key acts as its creator, who must hold `templates:author`; a Live key may only request review |
+| `templates:review` | approve a candidate. Test keys only (a Live key is refused at mint, `API_KEY_SCOPE_TEST_ONLY`); the key acts as its creator, who must hold `templates:review` |
+| `templates:publish` | release a candidate. Test keys only (refused at mint on a Live key); the key acts as its creator, who must hold `templates:publish` |
 | `messages:write` | broadcasts: list, read, create, edit, preview, send, send again, cancel, per-pass items. A `change` also needs `passes:write` |
 | `scans:read` | scoped scanner event and scan-log reads; read a roll call |
 | `scans:write` | scan from a till as one named terminal (see Scan from a till); start, confirm and end a roll call; org-bound keys only |

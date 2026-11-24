@@ -19,6 +19,9 @@ export const MINTABLE_SCOPES = [
   'passes:write',
   'holders:write',
   'templates:read',
+  'templates:write',
+  'templates:review',
+  'templates:publish',
   'messages:write',
   'scans:read',
   'scans:write',
@@ -34,12 +37,30 @@ export const MINTABLE_SCOPES = [
   'scanning:admin',
   'nfc:keys',
   'api-keys:write',
+  'audit:read',
 ] as const satisfies readonly z.infer<typeof ApiScopeSchema>[];
 /** Scopes that mint or reset device credentials: named in `scopes` only, never through a role or a parent key, live and one org. */
 export const CREDENTIAL_SCOPES = [
   'scanning:admin',
   'nfc:keys',
 ] as const satisfies readonly (typeof MINTABLE_SCOPES)[number][];
+/** Review and release run in Test only (a Live key may only request review): a Live key never holds these, named or through a role. */
+export const TEST_ONLY_SCOPES = [
+  'templates:review',
+  'templates:publish',
+] as const satisfies readonly (typeof MINTABLE_SCOPES)[number][];
+/** Template scopes act as the key's creator: a key with no human creator (a platform key, a child) never holds them. */
+export const TEMPLATE_ACT_AS_SCOPES = [
+  'templates:write',
+  'templates:review',
+  'templates:publish',
+] as const satisfies readonly (typeof MINTABLE_SCOPES)[number][];
+/**
+ * Whether a key of this mode may hold `audit:read`: the log has no mode, so only a Live key, or a key of a developer
+ * sandbox (which is Test only). One rule for the mint check and the key dialog.
+ */
+export const auditScopeAllowed = (mode: 'live' | 'test', developerOrg: boolean): boolean =>
+  mode === 'live' || developerOrg;
 export const MintableScopeSchema = z.enum(MINTABLE_SCOPES);
 
 /** `service` belongs to an org, `personal` to one member of it, `platform` to the operator (no org). */

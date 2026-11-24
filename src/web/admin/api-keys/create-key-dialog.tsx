@@ -1,6 +1,7 @@
 import { KeyRound } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Mode } from '@/shared/contracts/common.ts';
+import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import { getMode } from '@/web/lib/mode.ts';
 import {
@@ -17,8 +18,10 @@ import {
 import { ROLE_LABELS, ROLES } from '../orgs/org-roles.ts';
 import { KeyDisclosure } from './key-disclosure.tsx';
 import { KindFields, SHORT_EXPIRY } from './key-kind-fields.tsx';
+import { KeyReview } from './key-review.tsx';
 import { type ApiKey, SCOPE_LABEL, useCreateKey } from './queries.ts';
 import { type SCOPES, ScopeRows, TerminalRows } from './scope-rows.tsx';
+import { useKeyScopes } from './use-key-scopes.ts';
 
 const DAY = 86_400_000;
 /** The least a key can do; more is ticked on purpose. */
@@ -40,6 +43,8 @@ export interface CreateKeyDialogProps {
   principal: string;
   orgId: string | null;
   orgName: string;
+  capabilities: readonly OrgCapability[] | null;
+  developerOrg: boolean;
 }
 
 export function CreateKeyDialog({
@@ -48,10 +53,13 @@ export function CreateKeyDialog({
   principal,
   orgId,
   orgName,
+  capabilities,
+  developerOrg,
 }: CreateKeyDialogProps) {
   const create = useCreateKey(principal);
   const [name, setName] = useState('');
-  const [scopes, setScopes] = useState<string[]>(DEFAULT_SCOPES);
+  const picked = useKeyScopes(DEFAULT_SCOPES, orgId, capabilities, developerOrg);
+  const { scopes } = picked;
   const [terminalIds, setTerminalIds] = useState<string[]>([]);
   const scansWrite = scopes.includes('scans:write');
   const [expiry, setExpiry] = useState('90');
@@ -85,7 +93,7 @@ export function CreateKeyDialog({
   function close() {
     onOpenChange(false);
     setName('');
-    setScopes(DEFAULT_SCOPES);
+    picked.reset();
     setTerminalIds([]);
     setExpiry('90');
     setKind('service');
@@ -97,6 +105,16 @@ export function CreateKeyDialog({
     setFormError(undefined);
     setCreated(undefined);
     setReviewKey(false);
+  }
+
+  function changeKind(next: 'service' | 'personal') {
+    setKind(next);
+    picked.reconcile(next, keyMode);
+  }
+
+  function changeMode(next: Mode) {
+    setKeyMode(next);
+    picked.reconcile(kind, next);
   }
 
   async function submit() {
@@ -221,7 +239,7 @@ export function CreateKeyDialog({
           <KindFields
             orgId={orgId}
             kind={kind}
-            onKind={setKind}
+            onKind={changeKind}
             access={access}
             onAccess={setAccess}
             ips={ips}
@@ -237,7 +255,7 @@ export function CreateKeyDialog({
                 <Select
                   {...p}
                   value={keyMode}
-                  onValueChange={(next) => setKeyMode(next === 'test' ? 'test' : 'live')}
+                  onValueChange={(next) => changeMode(next === 'test' ? 'test' : 'live')}
                   options={MODES}
                 />
               )}
@@ -256,9 +274,14 @@ export function CreateKeyDialog({
           {role ? null : (
             <ScopeRows
               value={scopes}
-              onChange={setScopes}
+              onChange={picked.set}
+              note={picked.note}
               error={errors.scopes}
               platform={orgId === null}
+              kind={kind}
+              mode={keyMode}
+              capabilities={capabilities}
+              developerOrg={developerOrg}
             />
           )}
           {scansWrite && orgId !== null && !role ? (
@@ -283,39 +306,18 @@ export function CreateKeyDialog({
               : 'Review service key'
         }
         description={
-          <span className="block">
-            <span className="block">
-              {orgId === null ? (
-                <>
-                  This key can access all organizations in {keyMode === 'test' ? 'Test' : 'Live'}{' '}
-                  mode.
-                </>
-              ) : (
-                <>
-                  This key is bound to {orgName} in {keyMode === 'test' ? 'Test' : 'Live'} mode.
-                </>
-              )}
-            </span>
-            <span className="mt-3 block">Name: {name.trim()}</span>
-            <span className="block">
-              {kind === 'personal' && orgId !== null ? 'Type: personal, acts as you.' : null}
-            </span>
-            <span className="block">
-              Permissions:{' '}
-              {role ? ROLE_LABELS[role] : scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', ')}
-            </span>
-            {ipAllow.length ? (
-              <span className="block">Allowed IPs: {ipAllow.join(', ')}</span>
-            ) : null}
-            <span className="block">
-              {days === 'never'
-                ? 'It will not expire.'
-                : `It expires after ${days === '365' ? '1 year' : `${days} days`}.`}
-            </span>
-            <span className="mt-3 block">
-              No secret has been issued yet. It will be shown once after creation.
-            </span>
-          </span>
+          <KeyReview
+            orgId={orgId}
+            orgName={orgName}
+            mode={keyMode}
+            name={name.trim()}
+            personal={kind === 'personal'}
+            permissions={
+              role ? ROLE_LABELS[role] : scopes.map((s) => SCOPE_LABEL[s] ?? s).join(', ')
+            }
+            ipAllow={ipAllow}
+            days={days}
+          />
         }
         confirmLabel="Create key"
         onConfirm={submit}

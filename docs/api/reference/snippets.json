@@ -246,5 +246,19 @@
         "role": "manager"
       }
     }
+  },
+  "audit.getAudit": {
+    "snippet": {
+      "query": {
+        "from": 1794000000000
+      }
+    }
+  },
+  "audit.getAuditExport": {
+    "snippet": {
+      "query": {
+        "from": 1794000000000
+      }
+    }
   }
 }
