@@ -267,7 +267,7 @@ describe('the class field rule, adversarial templates', () => {
     expect(result.blocked?.message).toContain('depend on pass data (startsAt)');
   });
 
-  it('exempts a class key input only when every value changes the key', () => {
+  it('does not exempt an input read through a lookup, unknown or many-to-one', () => {
     const tiers = sch({ tier: { type: 'string', enum: ['a', 'b', 'c'] } }, ['tier']);
     const moves = (i: Record<string, unknown>) => ({ tier: i.tier });
     for (const lookups of [{ tiers: {} }, { tiers: { a: 'p', b: 'p', c: 'q' } }])
@@ -275,12 +275,6 @@ describe('the class field rule, adversarial templates', () => {
         exec(tiers, { tier: 'a' }, moves, { classKey: '{{lookups.tiers[tier]}}', lookups }).blocked
           ?.code,
       ).toBe('CLASS_FIELDS_VARY');
-    expect(
-      exec(tiers, { tier: 'a' }, moves, {
-        classKey: '{{lookups.tiers[tier]}}',
-        lookups: { tiers: { a: 'x', b: 'y', c: 'z' } },
-      }).blocked,
-    ).toBeUndefined();
   });
 
   it('does not exempt a whole object for a key that reads one field or the object', () => {
@@ -347,5 +341,32 @@ describe('the class field rule, adversarial templates', () => {
         ],
       }),
     ).toEqual({ kind: ['premium'], k: [1, 2] });
+  });
+
+  it('never exempts an input the key reads only through a lookup', () => {
+    const inputs = sch({ tier: { type: 'string' } }, ['tier']);
+    const result = exec(inputs, { tier: 'gold' }, (i) => ({ tier: i.tier }), {
+      classKey: '{{lookups.tiers[tier]}}',
+      lookups: { tiers: { gold: 'Gold' } },
+    });
+    expect(result.blocked?.message).toContain('depend on pass data (tier)');
+  });
+
+  it('does not count a key that falls to the default class as a move', () => {
+    const inputs = sch({ a: { type: 'string' } });
+    const result = exec(inputs, { a: 'x' }, (i) => ({ a: i.a }), {
+      classKey: '{{a}}',
+      literals: { a: ['  '] as never[] },
+    });
+    expect(result.blocked?.message).toContain('depend on pass data (a)');
+  });
+
+  it('does not let a pair stand in for an input it did not change', () => {
+    const result = exec(
+      sch({ x: { type: ['string', 'null'] }, y: { type: 'string' } }),
+      {},
+      (i) => ({ x: i.x }),
+    );
+    expect(result.blocked?.message).toContain('could not be checked against x');
   });
 });

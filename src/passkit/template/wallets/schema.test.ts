@@ -220,6 +220,18 @@ describe('wallets block schema', () => {
     expect(out(manifest({ name: { type: 'string' } }, '{{name}}'))).toEqual([]);
   });
 
+  it('warns when parts of a class key can run together', () => {
+    const warns = (classKey: string) =>
+      walletsManifestIssues({
+        inputs: { type: 'object', properties: { a: { type: 'string' }, b: { type: 'string' } } },
+        wallets: { schema: 1, google: { classKey } },
+      } as never).map((i) => `${i.severity}:${i.code}`);
+    for (const key of ['{{a}}{{b}}', '{{a}}|{{b}}', '{{a|url}}{{b|url}}'])
+      expect(warns(key)).toEqual(['warning:WALLETS_CLASS_KEY']);
+    for (const key of ['{{a}}', '{{a|url}}|{{b|url}}', '{{a}} {{b}}'])
+      expect(warns(key)).toEqual([]);
+  });
+
   it('checks expressions, inputs and lookups', () => {
     expect(codes({ schema: 1, roles: { tier: { value: '{{level | nope(}}' } } })).toEqual([
       expect.stringMatching(/^error:WALLETS_EXPR:wallets\.roles\.tier\.value$/),

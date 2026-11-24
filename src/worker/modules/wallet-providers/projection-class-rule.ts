@@ -1,4 +1,4 @@
-import { ExprError, evaluate, exprReferences } from '../../../passkit/template/expr.ts';
+import { ExprError, evaluate } from '../../../passkit/template/expr.ts';
 import type { Json, Personalization } from '../../../passkit/types.ts';
 import type {
   CompileResult,
@@ -15,7 +15,7 @@ import { canonicalJson } from '../templates/package/hash.ts';
  * An input is exempt only where changing it changes the evaluated class key, for every value tried.
  * An input that cannot be changed and still build is not a pass: it is reported as unchecked and blocks.
  */
-export const CLASS_RULE_REVISION = 3;
+export const CLASS_RULE_REVISION = 4;
 
 /** Compiles the review spends on the probes of one candidate; an input past it is unchecked, which blocks. */
 export const MAX_PROBE_COMPILES = 64;
@@ -27,14 +27,12 @@ type Schema = Record<string, unknown>;
 const isObject = (value: unknown): value is Schema =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
-/** Inputs a class key reads as the runtime does (bare names); a key that does not parse is refused at save. */
-function referencedInputs(classKey: string): string[] {
-  try {
-    return exprReferences(classKey).inputs;
-  } catch (error) {
-    if (error instanceof ExprError) return [];
-    throw error;
-  }
+/** Inputs the key reads as a whole value (`{{name}}`, `{{name|url}}`), never as a lookup key or a field of one. */
+function directInputs(classKey: string): Set<string> {
+  const names = new Set<string>();
+  for (const m of classKey.matchAll(/\{\{\s*([\w-]+)\s*(?:\|\s*\w+\s*)?\}\}/g))
+    if (m[1] !== undefined) names.add(m[1]);
+  return names;
 }
 
 /** A date or date-time one day later, in the same shape (offset, `Z`, date only); anything else is unchanged. */
@@ -173,14 +171,17 @@ export function classProbes(
       : undefined;
   const keyText = (input: Personalization): string | undefined => {
     try {
-      return canonicalJson(keyOf?.(input) ?? null);
+      const value = keyOf?.(input);
+      return typeof value === 'object' && value !== null
+        ? canonicalJson(value)
+        : String(value ?? '').trim();
     } catch (error) {
       if (error instanceof ExprError) return undefined;
       throw error;
     }
   };
   const baseKey = keyText(sample);
-  const reads = typeof classKey === 'string' ? new Set(referencedInputs(classKey)) : new Set();
+  const reads = typeof classKey === 'string' ? directInputs(classKey) : new Set<string>();
   /** The key moves with this input for every value tried, and the input is a scalar (not one field of an object). */
   const keyed = (name: string): boolean => {
     if (!reads.has(name) || baseKey === undefined) return false;
@@ -194,7 +195,8 @@ export function classProbes(
         if (value === undefined) delete input[name];
         else input[name] = value;
         const moved = keyText(input);
-        return moved !== undefined && moved !== baseKey;
+        // A present value that sends the key to '' (the default class) is no move; an absent input may.
+        return moved !== undefined && (value === undefined || moved !== '') && moved !== baseKey;
       })
     );
   };
@@ -210,7 +212,13 @@ export function classProbes(
           ? poolFor(sample[name]).map((value) => viewWith([[name, value]]))
           : []),
         ...open
-          .filter((other) => other !== name && sample[other] === undefined)
+          .filter(
+            (other) =>
+              other !== name &&
+              sample[other] === undefined &&
+              own.length > 0 &&
+              canonicalJson(own[0]) !== canonicalJson(sample[name]),
+          )
           .flatMap((other) =>
             valuesOf(other)
               .slice(0, 2)

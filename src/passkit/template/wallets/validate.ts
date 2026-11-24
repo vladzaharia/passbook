@@ -112,6 +112,32 @@ export function walletsManifestIssues(
   }
   if (wallets.google?.classKey !== undefined)
     checkExprAt(wallets.google.classKey, 'wallets.google.classKey');
+  if (typeof wallets.google?.classKey === 'string') {
+    const parts = wallets.google.classKey.split(/(\{\{[^}]*\}\})/);
+    const slots = parts.flatMap((part, i) =>
+      part.startsWith('{{')
+        ? [
+            {
+              url: /\|\s*url\s*\}\}$/.test(part),
+              before: parts[i - 1] ?? '',
+              after: parts[i + 1] ?? '',
+            },
+          ]
+        : [],
+    );
+    const loose = slots.some(
+      (slot, i) => i > 0 && (slot.before === '' || (!slot.url && slot.before.includes('|'))),
+    );
+    if (
+      slots.length > 1 &&
+      (loose || slots.some((s, i) => !s.url && s.after.includes('|') && i < slots.length - 1))
+    )
+      warn(
+        'WALLETS_CLASS_KEY',
+        'Parts of the class key can run together: end each with |url and join them with |.',
+        'wallets.google.classKey',
+      );
+  }
   const keyed =
     typeof wallets.google?.classKey === 'string'
       ? /^\s*\{\{\s*([\w-]+)\s*\}\}\s*$/.exec(wallets.google.classKey)?.[1]
