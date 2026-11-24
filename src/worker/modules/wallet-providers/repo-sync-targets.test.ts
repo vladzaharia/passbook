@@ -8,6 +8,7 @@ import {
   ensureSamsungSyncTargets,
   finishSamsungSyncTarget,
   listSamsungSyncTargets,
+  samsungSentState,
   samsungSyncCountryHints,
 } from './repo-sync-targets.ts';
 import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
@@ -98,6 +99,13 @@ describe('Samsung sync target keyset authority', () => {
     expect(
       (await listSamsungSyncTargets(t.kit.ctx, claim)).map((target) => target.countryCode),
     ).toEqual(['FR', 'GB', 'US']);
+    // Mixed recorded states (a market added between two sends): the one that deletes wins, so a tombstone is kept.
+    await run(
+      db,
+      "UPDATE wallet_provider_sync_targets SET sent_state = CASE country_code WHEN 'US' THEN 'DELETED' ELSE 'CANCELED' END WHERE operation_id = ?",
+      [t.operation.id],
+    );
+    expect(await samsungSentState(db, t.operation.instanceId, t.operation.version)).toBe('DELETED');
     await run(
       db,
       'INSERT INTO wallet_samsung_country_hints (ref_id, country_code, received_at) VALUES (?, ?, ?)',

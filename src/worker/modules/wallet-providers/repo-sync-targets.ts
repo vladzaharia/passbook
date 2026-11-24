@@ -64,8 +64,8 @@ export async function ensureSamsungSyncTargets(
     hash,
     claim.now,
   ];
-  // A new market gets only its own send: a country an earlier identical operation delivered is skipped.
-  await run(ctx.env.DB, targetsSql(true), params);
+  // A new market gets only its own send: a country an earlier identical operation delivered the same state to is skipped.
+  await run(ctx.env.DB, targetsSql(true), [...params, sent]);
   // An operation that is the same pass state with nothing new to deliver (an expiry or event boundary, a
   // reissue) skipped every country above: it exists to send again, so it sends to all of them.
   await run(ctx.env.DB, targetsSql(false), params);
@@ -76,6 +76,7 @@ function targetsSql(skipDelivered: boolean): string {
   const delivered = `AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations previous
         JOIN wallet_provider_sync_targets delivered ON delivered.operation_id = previous.id
           AND delivered.country_code = h.country_code AND delivered.state = 'succeeded'
+          AND delivered.sent_state IS ?
         WHERE previous.instance_id = i.id AND previous.version < o.version AND previous.kind = o.kind
           AND previous.credential_keyset_commitment = o.credential_keyset_commitment
           AND previous.pass_row_version = o.pass_row_version AND previous.account_epoch = o.account_epoch
@@ -246,7 +247,8 @@ export async function samsungSentState(
     db,
     `SELECT t.sent_state AS state FROM wallet_provider_sync_targets t
     JOIN wallet_provider_instance_operations o ON o.id = t.operation_id
-    WHERE o.instance_id = ? AND o.version = ? AND t.sent_state IS NOT NULL LIMIT 1`,
+    WHERE o.instance_id = ? AND o.version = ? AND t.sent_state IS NOT NULL
+    ORDER BY t.sent_state = 'DELETED' DESC LIMIT 1`,
     [instanceId, version],
   );
   return row?.state ?? null;

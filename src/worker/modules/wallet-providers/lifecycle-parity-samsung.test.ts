@@ -292,6 +292,46 @@ describe('a new market wakes a parked instance (M1)', () => {
     await drainWalletProviderSync(ctx);
     await drainWalletProviderSync(ctx);
     expect(mock.requests.slice(mark).some((r) => r.path.startsWith('/US/'))).toBe(true);
+    // The market that already had the card is not sent it again.
+    expect(mock.requests.slice(mark).some((r) => r.path.startsWith('/GB/'))).toBe(false);
+  });
+
+  it('a new market that is also an expiry boundary sends the new state to every market', async () => {
+    const { t, mock, ctx } = await card();
+    const soon = t.kit.clock.now() + 3_600_000;
+    await edit(t, ctx);
+    await run(
+      t.kit.env.DB,
+      `UPDATE pass_versions SET pass_json = json_set(pass_json, '$.expirationDate', ?) WHERE pass_id = ?`,
+      [new Date(soon).toISOString(), t.pass.id],
+    );
+    await drainWalletProviderSync(ctx);
+    const added = await t.call({
+      method: 'POST',
+      token: await t.token({ method: 'POST' }),
+      query: '?cc2=us&event=ADDED',
+      requestId: 'second',
+    });
+    expect(added.status).toBe(200);
+    await run(
+      t.kit.env.DB,
+      'UPDATE wallet_samsung_card_state SET verified_at = verified_at + 3600001, expires_at = expires_at + 3600001',
+    );
+    t.kit.clock.advance(3_600_001);
+    const mark = mock.requests.length;
+    await drainWalletProviderSync(ctx);
+    await drainWalletProviderSync(ctx);
+    const states = new Map(
+      mock.requests
+        .slice(mark)
+        .filter((r) => r.path.endsWith('/updates'))
+        .map((r) => [
+          r.path.split('/')[1],
+          (r.body as { card: { data: { state: string }[] } }).card.data[0]?.state,
+        ]),
+    );
+    expect(states.get('GB')).toBe('EXPIRED');
+    expect(states.get('US')).toBe('EXPIRED');
   });
 });
 
