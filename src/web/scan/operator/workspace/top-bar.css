@@ -238,10 +238,18 @@
   .op-org-text,
   .op-sep,
   .op-meter,
-  .op-chip-k,
+  .op-chip-k {
+    display: none;
+  }
+  /* The avatar is all that shows; the name and role stay the button's accessible name. */
   .op-staff-name,
   .op-staff small {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
   .op-chip-state {
     flex: 0 1 auto;
@@ -253,6 +261,7 @@
     text-overflow: ellipsis;
   }
   .op-staff {
+    position: relative;
     padding: 0 3px;
   }
   .op-top-end {
