@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   daysUntil,
+  formatAgo,
   formatCount,
   formatDateTime,
   formatDay,
@@ -42,6 +43,9 @@ describe('format', () => {
     expect(formatRelative(0, 2 * 86_400_000)).toBe('2 days ago');
     expect(formatRelative(3_600_000, 0)).toBe('in 1 hour');
     expect(formatRelative(0, 10_000)).toBe('this minute');
+    expect(formatAgo(0, 10_000)).toBe('just now');
+    expect(formatAgo(10_000, 0)).toBe('just now');
+    expect(formatAgo(0, 120_000)).toBe('2 minutes ago');
     expect(daysUntil(3 * 86_400_000 + 5, 0)).toBe(3);
   });
 });
