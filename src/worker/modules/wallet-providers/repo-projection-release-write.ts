@@ -15,7 +15,6 @@ import {
   currentSourceAndAccount,
   type ProjectionAudit,
 } from './repo-projection-write.ts';
-import { samsungProjectionEvidencePredicateSql } from './repo-samsung-verification.ts';
 
 const RELEASE_COLUMNS = [
   'id',
@@ -71,7 +70,7 @@ export async function writeProjectionRelease(
           AND c.adapter_revision = ${p(policy.adapterRevision)}
           AND c.adapter_capabilities = ${p(JSON.stringify(policy.adapterCapabilities))}
           AND c.audience_policy_revision = ${p(policy.audiencePolicyRevision)}
-          AND (json_extract(c.projection_json, '$.schema') = 2 OR (c.provider = 'samsung' AND json_extract(c.projection_json, '$.schema') = 1))
+          AND json_extract(c.projection_json, '$.schema') = 2
           AND (${currentSourceAndAccount('c')})
           AND ((${p(input.action)} = 'release' AND ${p(input.targetReleaseId)} IS NULL
               AND NOT EXISTS (SELECT 1 FROM template_releases r WHERE r.candidate_id = c.id))
@@ -79,14 +78,6 @@ export async function writeProjectionRelease(
               WHERE r.id = ${p(input.targetReleaseId)} AND ${same} AND r.generation < ${p(input.expectedGeneration)}
                 AND r.candidate_id = c.id AND r.approval_id = ap.id AND r.candidate_hash = c.candidate_hash
                 AND r.credential_keyset_commitment = c.credential_keyset_commitment))))`,
-    ),
-    // Samsung schema 1 evidence is checked at publish only (and by the release trigger); a compiled card has none.
-    check(
-      'release',
-      (
-        p,
-      ) => `EXISTS (SELECT 1 FROM template_candidates c WHERE c.id = ${p(c.id)} AND c.org_id = a.org_id
-        AND (c.provider = 'google' OR (${samsungProjectionEvidencePredicateSql('c', p(input.now))})))`,
     ),
     check(
       'release',

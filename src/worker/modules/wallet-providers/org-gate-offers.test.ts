@@ -15,7 +15,6 @@ import {
   publishProjectionRelease,
 } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
-import { setCompiledRuntimeForTest } from './render-projection.ts';
 import { sessionFor } from './wallet-roundtrip-test-fixtures.ts';
 
 const testEnv = installKeysetTestEnv();
@@ -80,7 +79,7 @@ describe('per-org provider gate', () => {
       expectedGeneration: 0,
     });
     restore = setWalletProvidersEnabledForTest(true);
-    const undo = [setCompiledRuntimeForTest(true), setRuntimeAccountCheckForTest(async () => {})];
+    const undo = [setRuntimeAccountCheckForTest(async () => {})];
     try {
       expect(await offerPassSnapshot(kit.ctx, f.pass.id)).not.toBeNull();
       const before = await listWalletOffers(kit.ctx, f.pass.id);
