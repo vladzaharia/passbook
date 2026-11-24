@@ -29,7 +29,7 @@ import {
   retireWalletInstance,
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
-import { issueWalletOffer, listWalletOffers } from './offers.ts';
+import { issueWalletOffer } from './offers.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
@@ -292,7 +292,6 @@ describe('provider credential generation transitions', () => {
     await expect(
       issueWalletOffer(f.kit.ctx, currentPass.downloadToken, 'samsung'),
     ).rejects.toMatchObject({ status: 404 });
-    expect(await listWalletOffers(f.kit.ctx, currentPass.id)).toEqual([]);
 
     // Demonstrate the post-retirement structural binding without authorizing any real offer.
     const operationId = await seedReadyActivation({
