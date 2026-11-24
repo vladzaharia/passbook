@@ -57,7 +57,6 @@ export function useTemplateStage(t: Template, scope: ReturnType<typeof useOrgSco
         orgId={scope.orgId}
         channels={channels.data?.effective}
         channelsTab="channels"
-        orgName={scope.membership?.orgName}
         apple={
           <PassPreviewPanel
             passJson={preview.data.passJson}
