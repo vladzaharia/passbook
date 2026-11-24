@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -15,7 +16,14 @@ func main() {
 		panic(err)
 	}
 
-	res, err := pb.AuditEntries.Export(ctx, nil)
+	var query passbook.AuditEntriesExportQuery
+	if err := json.Unmarshal([]byte(`{
+  "from": 1794000000000
+}`), &query); err != nil {
+		panic(err)
+	}
+
+	res, err := pb.AuditEntries.Export(ctx, &query)
 	if err != nil {
 		panic(err)
 	}

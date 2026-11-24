@@ -18,6 +18,7 @@ func main() {
 
 	var query passbook.AuditEntriesListQuery
 	if err := json.Unmarshal([]byte(`{
+  "from": 1794000000000,
   "limit": 25
 }`), &query); err != nil {
 		panic(err)
