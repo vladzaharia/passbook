@@ -28,6 +28,7 @@ import { OrgCounts } from './org-overview-counts.tsx';
 import { useOrgActivity, useOrgSetup } from './org-overview-queries.ts';
 import { TemplateBreakdown } from './org-overview-templates.tsx';
 import { NotAddedCard, OrgTiles } from './org-overview-tiles.tsx';
+import { OrgPlanCard } from './org-plan-card.tsx';
 import './org-overview.css';
 import type { OverviewSearch } from './overview-search.ts';
 import type { Range } from './range.ts';
@@ -160,6 +161,7 @@ export function OrgOverviewPage({
         {orgId && !path && !(empty && setup.isPending && !dismissed && !sandbox) ? (
           <OrgCounts orgId={orgId} caps={caps} />
         ) : null}
+        {orgId && caps.includes('org:read') && !sandbox ? <OrgPlanCard orgId={orgId} /> : null}
         {activity.isPending ? (
           <OrgSkeleton />
         ) : activity.isError || !data ? (

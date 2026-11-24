@@ -68,6 +68,8 @@ export const OrgSummarySchema = OrgSchema.extend({
   countsCapped: z.boolean(),
   /** Platform views only: who a personal org belongs to. */
   personalOwner: z.object({ id: IdSchema, name: z.string().nullable() }).nullable().optional(),
+  /** Platform views only: the org's plan; null when it has no features row. */
+  plan: z.object({ preset: z.string(), label: z.string() }).nullable().optional(),
 });
 
 export const OrgListQuerySchema = PageQuerySchema.extend({

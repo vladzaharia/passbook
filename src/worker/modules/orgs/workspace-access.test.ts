@@ -42,6 +42,7 @@ const platformOrg = OrgSummarySchema.pick({
   status: true,
   personal: true,
   personalOwner: true,
+  plan: true,
   createdAt: true,
   counts: true,
   countsCapped: true,

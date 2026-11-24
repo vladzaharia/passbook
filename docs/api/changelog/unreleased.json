@@ -544,6 +544,14 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "GET /api/v1/orgs 200.items[].plan: field added",
+    "class": "additive",
+    "operationId": "orgs.getOrgs",
+    "op": "GET /api/v1/orgs",
+    "change": "200.items[].plan: field added",
+    "note": "plan names the organization's plan (preset and label); present in platform views only, null when it has no features row."
+  },
+  {
     "key": "GET /api/v1/orgs/{id} 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.getOrgsById",
@@ -560,6 +568,14 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
+    "key": "GET /api/v1/orgs/{id} 200.plan: field added",
+    "class": "additive",
+    "operationId": "orgs.getOrgsById",
+    "op": "GET /api/v1/orgs/{id}",
+    "change": "200.plan: field added",
+    "note": "plan names the organization's plan (preset and label); present in platform views only, null when it has no features row."
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
     "class": "notable",
     "operationId": "entitlements.getOrgsByIdEntitlements",
@@ -574,6 +590,14 @@
     "op": "GET /api/v1/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"passes.changesPerDay\" added",
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/entitlements 200.usage: field added",
+    "class": "additive",
+    "operationId": "entitlements.getOrgsByIdEntitlements",
+    "op": "GET /api/v1/orgs/{id}/entitlements",
+    "change": "200.usage: field added",
+    "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
@@ -598,6 +622,14 @@
     "op": "GET /api/v1/orgs/{id}/workspace",
     "change": "200.personalOwner: field added",
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/workspace 200.plan: field added",
+    "class": "additive",
+    "operationId": "orgs.getOrgsByIdWorkspace",
+    "op": "GET /api/v1/orgs/{id}/workspace",
+    "change": "200.plan: field added",
+    "note": "plan names the organization's plan (preset and label); present in platform views only, null when it has no features row."
   },
   {
     "key": "GET /api/v1/orgs/{orgId}/pass-setup new operation",
@@ -2331,6 +2363,14 @@
     "op": "POST /api/v1/orgs/{id}/status",
     "change": "200.personalOwner: field added",
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/status 200.plan: field added",
+    "class": "additive",
+    "operationId": "orgs.postOrgsByIdStatus",
+    "op": "POST /api/v1/orgs/{id}/status",
+    "change": "200.plan: field added",
+    "note": "plan names the organization's plan (preset and label); present in platform views only, null when it has no features row."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/brand-assets new operation",

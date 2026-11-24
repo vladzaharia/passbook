@@ -4651,6 +4651,24 @@
               "id",
               "name"
             ]
+          },
+          "plan": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "preset": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "preset",
+              "label"
+            ]
           }
         },
         "required": [
@@ -22268,13 +22286,21 @@
                 "source"
               ]
             }
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         },
         "required": [
           "orgId",
           "preset",
           "label",
-          "items"
+          "items",
+          "usage"
         ]
       },
       "OrgsUpdatePassSetupParams": {
@@ -22916,6 +22942,24 @@
                     "name"
                   ]
                 },
+                "plan": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "preset": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "preset",
+                    "label"
+                  ]
+                },
                 "createdAt": {
                   "type": "integer",
                   "minimum": 0
@@ -23062,6 +23106,24 @@
             "required": [
               "id",
               "name"
+            ]
+          },
+          "plan": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "preset": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "preset",
+              "label"
             ]
           },
           "createdAt": {
@@ -23219,6 +23281,24 @@
             "required": [
               "id",
               "name"
+            ]
+          },
+          "plan": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "preset": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "preset",
+              "label"
             ]
           },
           "createdAt": {

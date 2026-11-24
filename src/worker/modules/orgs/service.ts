@@ -38,6 +38,7 @@ import {
   updateOrgRow,
 } from './repo-org-writes.ts';
 import { getPersonalUser, insertOrgWithCreator, personalOwners } from './repo-personal.ts';
+import { plansOf } from './repo-usage.ts';
 
 type Branding = z.infer<typeof OrgBrandingSchema>;
 type Summary = z.infer<typeof OrgSummarySchema>;
@@ -109,8 +110,12 @@ export async function listOrgs(
     mode,
   );
   const owners = await ownersOf(ctx, page);
+  const plans = await plansOf(
+    ctx.env.DB,
+    page.map((r) => r.id),
+  );
   return {
-    items: page.map((row) => summarize(row, counts.get(row.id), owners)),
+    items: page.map((row) => summarize(row, counts.get(row.id), owners, plans)),
     nextCursor: rows.length > query.limit ? (page.at(-1)?.id ?? null) : null,
   };
 }
@@ -126,6 +131,7 @@ function summarize(
   row: OrgRow,
   counts?: Summary['counts'],
   owners?: Map<string, string | null>,
+  plans?: Map<string, { preset: string; label: string }>,
 ): Summary {
   const c = counts ?? { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 };
   const owner = row.personal_user_id
@@ -136,6 +142,7 @@ function summarize(
     counts: c,
     countsCapped: Object.values(c).some((n) => n >= COUNT_CAP),
     ...(owners && owner ? { personalOwner: owner } : {}),
+    ...(plans ? { plan: plans.get(row.id) ?? null } : {}),
   };
 }
 
@@ -150,6 +157,7 @@ export async function getOrg(
     row,
     (await countsFor(ctx.env.DB, [id], mode)).get(id),
     platform ? await ownersOf(ctx, [row]) : undefined,
+    platform ? await plansOf(ctx.env.DB, [id]) : undefined,
   );
 }
 

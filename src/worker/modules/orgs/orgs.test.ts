@@ -146,6 +146,7 @@ describe('orgs api', () => {
       createdAt: expect.any(Number),
       counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 },
       countsCapped: false,
+      plan: { preset: 'standard', label: 'Standard' },
     });
     expect(provisioningBody).not.toHaveProperty('branding');
     expect(provisioningBody).not.toHaveProperty('supportEmail');
@@ -279,6 +280,7 @@ describe('orgs api', () => {
       createdAt: expect.any(Number),
       counts: { passes: 0, templates: 0, connections: 0, apiKeys: 2, members: 0 },
       countsCapped: false,
+      plan: { preset: 'legacy', label: 'Unlimited' },
     });
     for (const field of ['branding', 'support', 'supportEmail', 'supportUrl', 'defaultIdentityId'])
       expect(aItem).not.toHaveProperty(field);

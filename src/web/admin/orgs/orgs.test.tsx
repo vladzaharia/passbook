@@ -118,6 +118,26 @@ describe('orgs list', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
+  it("shows each organization's plan, or None when it has no features row", async () => {
+    await renderApp('/admin/orgs', {
+      session: 'admin',
+      memberships: [],
+      handlers: {
+        '/api/v1/orgs': () =>
+          json({
+            items: [
+              { ...provisioning(), plan: { preset: 'premium', label: 'Premium' } },
+              { ...provisioning({ id: 'o9', slug: 'bare', name: 'Bare' }), plan: null },
+            ],
+            nextCursor: null,
+          }),
+      },
+    });
+    expect(await screen.findByRole('columnheader', { name: 'Plan' })).toBeInTheDocument();
+    expect(await screen.findByText('Premium')).toBeVisible();
+    expect(screen.getByText('None')).toBeVisible();
+  });
+
   it('shows plain counts for an organization the admin is not a member of', async () => {
     await renderApp('/admin/orgs', {
       session: 'admin',

@@ -144,6 +144,7 @@ describe('org status', () => {
       createdAt: expect.any(Number),
       counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 },
       countsCapped: false,
+      plan: { preset: 'legacy', label: 'Unlimited' },
     };
     const off = await call('POST', `/${org.id}/status`, { status: 'suspended' });
     expect(off.status).toBe(200);

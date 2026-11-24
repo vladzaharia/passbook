@@ -27,6 +27,7 @@ import {
   storedOverrides,
   writeEntitlements,
 } from './repo-entitlements.ts';
+import { orgUsage } from './repo-usage.ts';
 
 type Input = z.output<typeof SetOrgEntitlementsSchema>;
 type Own = z.infer<typeof OrgOwnEntitlementsSchema>;
@@ -173,6 +174,7 @@ export async function readOwnEntitlements(ctx: ServiceContext, orgId: string): P
     preset: full.preset,
     label: full.presetLabel,
     items: full.items.map(({ key, value, source }) => ({ key, value, source })),
+    usage: await orgUsage(ctx.env.DB, orgId, ctx.clock.now()),
   };
 }
 

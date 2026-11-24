@@ -63,7 +63,7 @@ export function PlanPicker({
               popCurrent={current !== first.current}
               checked={picked === p.preset}
               playKey={plays[p.preset] ?? 0}
-              className={i === plans.length - 1 ? span : undefined}
+              className={i === plans.length - 1 ? `${span} self-start`.trim() : undefined}
               style={{ '--i': i } as CSSProperties}
               onSelect={(id) => {
                 setPlays((s) => ({ ...s, [id]: (s[id] ?? 0) + 1 }));

@@ -3926,6 +3926,10 @@ export type OrgSummary = {
     id: string;
     name: string | null;
   } | null;
+  plan?: {
+    preset: string;
+    label: string;
+  } | null;
 };
 
 export type OrgsCloseParams = {
@@ -3952,6 +3956,7 @@ export type OrgsEntitlementsRetrieveResponse = {
     value: number | string | Array<string> | null;
     source: "preset" | "override";
   }>;
+  usage: Record<string, number>;
 };
 
 export type OrgsReopenResponse = {
@@ -6807,6 +6812,10 @@ export type PlatformOrgsListResponse = {
       id: string;
       name: string | null;
     } | null;
+    plan?: {
+      preset: string;
+      label: string;
+    } | null;
     createdAt: number;
     counts: {
       passes: number;
@@ -6865,6 +6874,10 @@ export type PlatformOrgsRetrieveResponse = {
     id: string;
     name: string | null;
   } | null;
+  plan?: {
+    preset: string;
+    label: string;
+  } | null;
   createdAt: number;
   counts: {
     passes: number;
@@ -6889,6 +6902,10 @@ export type PlatformOrgsSetStatusResponse = {
   personalOwner?: {
     id: string;
     name: string | null;
+  } | null;
+  plan?: {
+    preset: string;
+    label: string;
   } | null;
   createdAt: number;
   counts: {

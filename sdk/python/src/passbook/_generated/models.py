@@ -5669,6 +5669,7 @@ class OrgSummary(_Model):
     counts: OrgSummaryCounts
     countsCapped: bool
     personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
 
 class OrgSummaryCounts(_Model):
     passes: int
@@ -5695,6 +5696,7 @@ class OrgsEntitlementsRetrieveResponse(_Model):
     preset: str | None
     label: str | None
     items: _List[OrgsEntitlementsRetrieveResponseItemsItem]
+    usage: _Dict[str, int]
 
 class OrgsEntitlementsRetrieveResponseItemsItem(_Model):
     key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
@@ -8395,6 +8397,7 @@ class PlatformOrgsListResponseItemsItem(_Model):
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
     personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsListResponseItemsItemCounts
     countsCapped: bool
@@ -8448,6 +8451,7 @@ class PlatformOrgsRetrieveResponse(_Model):
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
     personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsRetrieveResponseCounts
     countsCapped: bool
@@ -8469,6 +8473,7 @@ class PlatformOrgsSetStatusResponse(_Model):
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
     personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsSetStatusResponseCounts
     countsCapped: bool

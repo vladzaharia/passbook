@@ -359,7 +359,20 @@ describe('org read', () => {
       expect(text).not.toContain('Internal deal 42');
       const body = JSON.parse(text);
       expect(body).toMatchObject({ orgId: p.orgId, preset: 'trial', label: 'Trial' });
-      expect(Object.keys(body).sort()).toEqual(['items', 'label', 'orgId', 'preset']);
+      // `usage` is counts only: no notes, no revision, no other plans.
+      expect(Object.keys(body).sort()).toEqual(['items', 'label', 'orgId', 'preset', 'usage']);
+      expect(body.usage.members).toBeGreaterThanOrEqual(2);
+      expect(body.usage['passes.live']).toBe(0);
+      expect(Object.keys(body.usage).sort()).toEqual([
+        'api.keys',
+        'connections',
+        'members',
+        'passes.live',
+        'passes.test',
+        'scanning.devices',
+        'templates',
+        'webhooks.endpoints',
+      ]);
       expect(body.items).toHaveLength(ENTITLEMENT_KEYS.length);
       expect(body.items.find((i: { key: string }) => i.key === 'webhooks')).toEqual({
         key: 'webhooks',

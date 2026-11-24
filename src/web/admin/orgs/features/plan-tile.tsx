@@ -4,6 +4,7 @@ import { CHANNEL_CHIP, PLAN_COPY } from '@/shared/copy/plans.ts';
 import type { PlanFacts } from '@/shared/plan-facts.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { Badge } from '@/web/ui/index.ts';
+import { ChannelChips } from './plan-channels.tsx';
 import { PlanNumber } from './plan-count.tsx';
 import { FooterSample, PlanFooterInfo } from './plan-footer-popover.tsx';
 import { planIcon } from './plan-icons.ts';
@@ -23,17 +24,6 @@ export interface PlanTileProps {
   className?: string;
   style?: CSSProperties;
   onSelect: (preset: string) => void;
-}
-
-function Chip({ on, children }: { on: boolean; children: string }) {
-  return on ? (
-    <Badge>{children}</Badge>
-  ) : (
-    <span className="inline-flex min-h-6 items-center rounded-full border border-dashed border-border-strong px-2 text-xs whitespace-nowrap text-fg-subtle">
-      {children}
-      <span className="sr-only"> {PLAN_COPY.notIncluded}</span>
-    </span>
-  );
 }
 
 function Count({
@@ -158,23 +148,7 @@ export function PlanTile({
               noLimit={PLAN_COPY.noLimitTemplates}
             />
           </span>
-          <ul aria-label={PLAN_COPY.channels} className="flex flex-wrap gap-1.5">
-            <li>
-              <Chip on>{CHANNEL_CHIP.apple}</Chip>
-            </li>
-            <li>
-              <Chip on={facts.google}>{CHANNEL_CHIP.google}</Chip>
-            </li>
-            <li>
-              <Chip on={facts.samsung}>{CHANNEL_CHIP.samsung}</Chip>
-            </li>
-            <li>
-              <Chip on={facts.print}>{CHANNEL_CHIP.print}</Chip>
-            </li>
-            <li>
-              <Chip on={facts.nfc !== 'off'}>{CHANNEL_CHIP.nfc[facts.nfc]}</Chip>
-            </li>
-          </ul>
+          <ChannelChips facts={facts} />
         </span>
         <span className="mt-auto flex min-h-9 items-center border-t border-border pr-10 pt-2 text-xs text-fg-muted pointer-coarse:min-h-11">
           <span className="sr-only">{PLAN_COPY.footerLead} </span>

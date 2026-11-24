@@ -22,6 +22,7 @@ import {
   StatusPill,
 } from '@/web/ui/index.ts';
 import { CreateOrgDialog } from './create-org-dialog.tsx';
+import { planIcon } from './features/plan-icons.ts';
 import { useOrgPages } from './org-pages.ts';
 import type { PlatformOrgSummarySchema } from './queries.ts';
 
@@ -88,6 +89,22 @@ const columnsFor = (isMember: (orgId: string) => boolean): DataColumnDef<Org, ne
     header: 'Status',
     id: 'status',
     cell: ({ row }) => <OrgStatus status={row.original.status} />,
+  },
+  {
+    header: 'Plan',
+    id: 'plan',
+    meta: { hideBelow: 'md', stackHidden: true, nowrap: true },
+    cell: ({ row }) => {
+      const plan = row.original.plan;
+      if (!plan) return <span className="text-fg-subtle">None</span>;
+      const Icon = planIcon(plan.preset);
+      return (
+        <span className="inline-flex items-center gap-1.5">
+          <Icon aria-hidden className="size-4 text-fg-muted" />
+          {plan.label}
+        </span>
+      );
+    },
   },
   {
     header: 'Passes',
