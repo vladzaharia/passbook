@@ -55,7 +55,7 @@ export interface CustomerSay {
   headline: string;
   sub: string | null;
   /** A review's figure, set apart from its label. */
-  amount?: string;
+  figure?: string;
 }
 
 /**
@@ -90,7 +90,7 @@ function customerView(
           screen: screen.screen,
           headline: screen.say.headline,
           sub: screen.say.sub,
-          ...(screen.say.amount ? { amount: screen.say.amount } : {}),
+          ...(screen.say.figure ? { figure: screen.say.figure } : {}),
         }
       : { ...common, screen: screen.screen };
   const view = renderCustomerView(

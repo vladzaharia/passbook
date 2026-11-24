@@ -30,7 +30,7 @@ interface CustomerViewBase {
   /** The line under the headline; on see_desk only the three access subs (`CUSTOMER_REASON_SUB`). */
   sub?: string | null;
   /** The figure under a review headline (To pay, Adding). */
-  amount?: string;
+  figure?: string;
   lines?: ScanCustomerView['lines'];
   milestone?: ScanCustomerView['milestone'];
   /** Fields bound to an `x-scan` input: the customer scope drops them. */
@@ -176,7 +176,7 @@ export function renderCustomerView(
       panel: rendered?.panels[0] ?? null,
       lines: (options.lines ?? []).slice(0, 2),
       milestone: options.milestone ?? null,
-      ...(options.amount ? { amount: sanitized(options.amount, 24) } : {}),
+      ...(options.figure ? { figure: sanitized(options.figure, 24) } : {}),
     });
   } catch (error) {
     options.onError?.(error);

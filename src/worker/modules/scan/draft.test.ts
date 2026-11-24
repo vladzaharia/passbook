@@ -28,7 +28,7 @@ describe('PUT /draft', () => {
         customer: {
           screen: 'review',
           band: { headline: 'To pay', sub: 'Balance after: $30.50' },
-          amount: '$12.00',
+          figure: '$12.00',
         },
       },
     });
@@ -38,7 +38,7 @@ describe('PUT /draft', () => {
     await wait();
     expect(drafts(d.seen).at(-1)).toMatchObject({
       draft: {
-        customer: { band: { headline: 'Adding', sub: 'Balance after: $62.50' }, amount: '$20.00' },
+        customer: { band: { headline: 'Adding', sub: 'Balance after: $62.50' }, figure: '$20.00' },
       },
     });
     d.close();
@@ -50,7 +50,7 @@ describe('PUT /draft', () => {
     expect(await (await d.draft(ref, 'pay', 12)).json()).toEqual({ screens: 1 });
     await wait();
     expect(drafts(d.seen)[0]).toMatchObject({
-      draft: { customer: { band: { headline: 'To pay', sub: null }, amount: '$12.00' } },
+      draft: { customer: { band: { headline: 'To pay', sub: null }, figure: '$12.00' } },
     });
     d.close();
   });

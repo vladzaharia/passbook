@@ -23,7 +23,7 @@ export const ScanCustomerViewSchema = z.strictObject({
   milestone: z.enum(['count', 'all_in', 'reward']).nullable(),
   test: z.boolean(),
   /** The figure of a review body ("$12.00"), for the screen to set large under the headline. */
-  amount: z.string().max(24).optional(),
+  figure: z.string().max(24).optional(),
   /** The session's own welcome line. Absent: the fixed copy. */
   welcome: z.string().max(40).optional(),
 });

@@ -70,7 +70,7 @@ async function sayFor(ctx: ServiceContext, found: Found, card: ScanCard, req: Sc
   }
   return {
     headline: action.kind === 'take' ? CUSTOMER_COPY.toPay : CUSTOMER_COPY.adding,
-    amount: clip(money(req.amount)),
+    figure: clip(money(req.amount)),
     sub: after === null ? null : clip(fill(CUSTOMER_COPY.balanceAfter, { balance: money(after) })),
   };
 }

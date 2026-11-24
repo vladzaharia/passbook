@@ -157,7 +157,7 @@
     "operationId": "api-keys.getApiKeysMe",
     "op": "GET /api/v1/api-keys/me",
     "change": "200.scopes[]: enum value \"scan-setup:read\" added",
-    "note": "A key can hold scan-setup:read to read the org’s managed scanner and screen setups."
+    "note": "A key can hold scan-setup:read to read the org\u2019s managed scanner and screen setups."
   },
   {
     "key": "GET /api/v1/api-keys/me 200.scopes[]: enum value \"scan-setup:write\" added",
@@ -824,12 +824,12 @@
     "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
-    "key": "GET /api/v1/scan/live 200.rows[].customer.amount: field added",
+    "key": "GET /api/v1/scan/live 200.rows[].customer.figure: field added",
     "class": "additive",
     "operationId": "scan.getScanLive",
     "op": "GET /api/v1/scan/live",
-    "change": "200.rows[].customer.amount: field added",
-    "note": "A customer body can carry amount: the figure of a review (To pay, Adding), set apart from its label. The session's showDraft switch also governs the balance line of a receipt."
+    "change": "200.rows[].customer.figure: field added",
+    "note": "A customer body can carry figure, the amount of a review. The session's showDraft also governs a receipt's balance line."
   },
   {
     "key": "GET /api/v1/scan/live 200.rows[].customer.screen: enum value \"review\" added",

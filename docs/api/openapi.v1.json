@@ -138492,7 +138492,7 @@
                               "test": {
                                 "type": "boolean"
                               },
-                              "amount": {
+                              "figure": {
                                 "type": "string",
                                 "maxLength": 24
                               },

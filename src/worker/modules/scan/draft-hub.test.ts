@@ -17,7 +17,7 @@ beforeAll(async () => {
 });
 
 const hub = () => clockedHub(f.kit.ctx, f.kit.clock, f.kit.org.id, 'live');
-const say = { headline: 'To pay', sub: 'Balance after: $30.50', amount: '$12.00' };
+const say = { headline: 'To pay', sub: 'Balance after: $30.50', figure: '$12.00' };
 
 /** A socket on the hub that records every message it is sent. */
 async function listen(attachment: LiveAttachment) {
@@ -100,7 +100,7 @@ describe('a draft over a ready card', () => {
         customer: {
           screen: 'review',
           band: { headline: 'To pay', sub: 'Balance after: $30.50' },
-          amount: '$12.00',
+          figure: '$12.00',
           greet: 'Hi, Anna',
           ref: c.readyId,
         },
