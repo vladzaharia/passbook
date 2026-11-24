@@ -115,7 +115,6 @@ async function moveOrg(
       now,
       remove: expired,
       put: [],
-      branding: null,
       audit: {
         ...auditActor(actor),
         orgId: org.org_id,

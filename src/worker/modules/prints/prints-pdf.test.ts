@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeOrg } from '../../../../test/helpers/index.ts';
-import { all } from '../../platform/db.ts';
+import { all, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { rotateLink } from '../passes/pass-service-delivery.ts';
 import { voidPass } from '../passes/service.ts';
@@ -65,6 +65,29 @@ describe('staff PDF', () => {
     });
     expect(head(await bytesOf(await staffPdf(pass.id)))).toBe('%PDF-');
     expect((await kit.env.BUCKET.head(key))?.customMetadata?.fingerprint).toBe(drawn.fingerprint);
+  });
+
+  it('redraws when the plan changes what the footer shows, with no pass change', async () => {
+    const { kit, printPass, mint, staffPdf } = await pdfKit();
+    const pass = await printPass();
+    const print = await mint(pass.id);
+    await staffPdf(pass.id);
+    const key = pdfKey(kit.org.id, pass.id, print.id);
+    const full = (await kit.env.BUCKET.head(key))?.customMetadata?.fingerprint;
+    await run(kit.env.DB, 'UPDATE orgs SET branding = ? WHERE id = ?', [
+      JSON.stringify({ mark: 'none' }),
+      kit.org.id,
+    ]);
+    await run(
+      kit.env.DB,
+      "INSERT OR REPLACE INTO org_entitlement_overrides (org_id, key, value, updated_at) VALUES (?, 'brand.mark', '\"none\"', 1)",
+      [kit.org.id],
+    );
+    const text = await pdfText(await bytesOf(await staffPdf(pass.id)));
+    expect(text).not.toContain('PassBook');
+    const after = (await kit.env.BUCKET.head(key))?.customMetadata?.fingerprint;
+    expect(after).toMatch(/^[0-9a-f]{24}$/);
+    expect(after).not.toBe(full);
   });
 
   it('draws the print code and the holder, never the scan code, wallet barcode or serial', async () => {

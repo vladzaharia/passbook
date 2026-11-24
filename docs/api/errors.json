@@ -450,6 +450,15 @@
       ]
     },
     {
+      "code": "BRANDING_UNREADABLE",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "BRAND_ASSET_NOT_FOUND",
       "statuses": [
         422

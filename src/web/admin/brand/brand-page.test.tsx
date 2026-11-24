@@ -211,7 +211,6 @@ describe('Brand and channels', () => {
   });
 
   it.each([
-    [['full'], ['Issued with PassBook']],
     [
       ['small', 'full'],
       ['Powered by PassBook', 'Issued with PassBook'],
@@ -231,6 +230,22 @@ describe('Brand and channels', () => {
       .map((r) => (r as HTMLInputElement).labels?.[0]?.textContent?.trim());
     expect(shown.sort()).toEqual([...labels].sort());
     expect(within(group).queryByText('Not in your plan.')).toBeNull();
+  });
+
+  it('hides the footer control when the plan allows one footer', async () => {
+    const view = viewOf(readyFacts());
+    view.brand.mark = { chosen: 'full', effective: 'full', allowed: ['full'] };
+    await setup(view);
+    await screen.findByRole('heading', { name: 'Brand and channels', level: 1 });
+    expect(screen.queryByRole('group', { name: 'PassBook footer' })).toBeNull();
+  });
+
+  it('shows the effective footer when the chosen one is not allowed', async () => {
+    const view = viewOf(readyFacts());
+    view.brand.mark = { chosen: 'none', effective: 'small', allowed: ['small', 'full'] };
+    await setup(view);
+    const group = await screen.findByRole('group', { name: 'PassBook footer' });
+    expect(within(group).getByRole('radio', { name: 'Powered by PassBook' })).toBeChecked();
   });
 
   it('has no preview tab for a channel the plan or PassBook stops', async () => {

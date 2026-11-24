@@ -77,6 +77,19 @@ export function useWebLogoUrl(orgId: string, enabled: boolean) {
   });
 }
 
+/** The mark holders see for the org (its choice, fitted to its plan); full until it loads. */
+export function useBrandMark(orgId: string | undefined) {
+  return (
+    useQuery({
+      queryKey: ['admin', 'brand', orgId],
+      queryFn: ({ signal }) =>
+        api.get('/api/v1/brand', BrandKitSchema, { query: { orgId }, signal }),
+      enabled: Boolean(orgId),
+      select: (kit) => kit.mark,
+    }).data ?? 'full'
+  );
+}
+
 const googleBase = (orgId: string) => `${base(orgId)}/wallet-accounts/google`;
 const GOOGLE_KEY = (orgId: string) => ['orgs', 'google-managed', orgId] as const;
 

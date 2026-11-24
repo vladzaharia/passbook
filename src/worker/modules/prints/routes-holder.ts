@@ -46,7 +46,8 @@ holderPrintRoutes.get('/:token/print', async (c) => {
   const token = c.req.param('token') ?? '';
   try {
     const pass = await passForToken(ctx, token);
-    const model = await printPageModel(ctx, pass, 'holder');
+    const brand = await orgBrandOf(ctx, pass.orgId);
+    const model = await printPageModel(ctx, pass, 'holder', brand);
     const html = renderPrintPage({
       model,
       audience: 'holder',
@@ -54,7 +55,7 @@ holderPrintRoutes.get('/:token/print', async (c) => {
       pdfHref: `/p/${token}/print/pdf`,
       assetBase: `/p/${token}/assets/`,
       nonce: c.var.nonce,
-      brand: await orgBrandOf(ctx, pass.orgId),
+      brand,
       ...(theme ? { theme } : {}),
     });
     return new Response(html, { headers: PRINT_HEADERS });

@@ -98,12 +98,13 @@ export function registerPassPrintRoutes(passesRoutes: Router): void {
       try {
         const { id } = c.req.valid('param');
         const { pass } = await tenantPassForWrite(ctx, authOf(c), id, passScopeOf(c));
-        const model = await printPageModel(ctx, pass, 'staff');
+        const brand = await orgBrandOf(ctx, pass.orgId);
+        const model = await printPageModel(ctx, pass, 'staff', brand);
         const html = renderPrintPage({
           model,
           audience: 'staff',
           nonce: c.var.nonce,
-          brand: await orgBrandOf(ctx, pass.orgId),
+          brand,
           pdfHref: `/api/v1/passes/${encodeURIComponent(pass.id)}/print/pdf`,
           assetBase: `/api/v1/passes/${encodeURIComponent(pass.id)}/print/assets/`,
           ...(theme ? { theme } : {}),

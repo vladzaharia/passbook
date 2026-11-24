@@ -1858,7 +1858,7 @@
                       "small",
                       "none"
                     ],
-                    "description": "What holders see: the chosen one when the plan allows it."
+                    "description": "What holders see: the chosen one when the plan allows it, else the nearest allowed with more PassBook."
                   },
                   "allowed": {
                     "type": "array",
@@ -23396,7 +23396,8 @@
               "full",
               "small",
               "none"
-            ]
+            ],
+            "description": "Refused with BRAND_MARK_NOT_ALLOWED when the plan does not allow it (`markAllowed`)."
           },
           "configRevision": {
             "type": "integer"

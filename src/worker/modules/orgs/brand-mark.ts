@@ -21,7 +21,7 @@ export async function allowedMarks(
   return marksOf((await entitlementsOf(ctx, orgId))['brand.mark']);
 }
 
-/** The chosen level when allowed; otherwise the nearest allowed one with more PassBook. The stored choice is not read here. */
+/** The chosen level when allowed; otherwise the nearest allowed one with more PassBook. The stored choice is never rewritten: a plan that allows it again brings it back. */
 export const effectiveMark = (
   chosen: BrandMark | undefined,
   allowed: readonly BrandMark[],

@@ -1,6 +1,7 @@
 import type { JobOf } from '../../jobs/types.ts';
 import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { orgBrandOf } from '../orgs/brand.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { readStoredBulk, writeBulkStatus } from './bulk-status.ts';
 import { printPageModel } from './page.ts';
@@ -30,6 +31,8 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
       passId,
     });
   };
+  // One brand read for the whole job: every pass is this org's.
+  const brand = await orgBrandOf(ctx, job.orgId);
   for (const passId of job.passIds) {
     const pass = await getPass(ctx.env.DB, passId, job.orgId);
     if (!pass) {
@@ -37,7 +40,7 @@ export async function handlePrintsBulk(job: JobOf<'prints.bulk'>, ctx: ServiceCo
       continue;
     }
     try {
-      const model = await printPageModel(ctx, pass, 'staff');
+      const model = await printPageModel(ctx, pass, 'staff', brand);
       if (model.state === 'ready') {
         sheets.push({
           ...sheetOf(model),

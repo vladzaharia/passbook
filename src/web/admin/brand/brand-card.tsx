@@ -262,20 +262,24 @@ export function BrandCard({ orgId, view, draft, canEdit, errors, edit, setImage 
             tag={<SourceTag source={v.accent ? 'org' : 'passbook'} />}
             onChange={(accent) => edit({ accent })}
           />
-          <div className="flex flex-col gap-2">
-            <div className="flex min-h-6 items-center justify-between gap-2">
-              <span className="text-sm font-medium text-fg">{COPY.mark}</span>
-              {planMark ? <SourceTag source="plan" /> : null}
+          {markOptions.length > 1 ? (
+            <div className="flex min-w-0 flex-col gap-2">
+              <div className="flex min-h-6 items-center justify-between gap-2">
+                <span className="text-sm font-medium text-fg">{COPY.mark}</span>
+                {planMark ? <SourceTag source="plan" /> : null}
+              </div>
+              {/* The labels are the holder-visible wording, too long for a segmented control. */}
+              <RadioGroup
+                legend={COPY.mark}
+                className="[&>legend]:sr-only"
+                options={markOptions}
+                value={v.mark}
+                onValueChange={(mark) =>
+                  canEdit && edit({ mark: mark as 'full' | 'small' | 'none' })
+                }
+              />
             </div>
-            {/* The labels are the holder-visible wording, too long for a segmented control. */}
-            <RadioGroup
-              legend={COPY.mark}
-              className="[&>legend]:sr-only"
-              options={markOptions}
-              value={v.mark}
-              onValueChange={(mark) => canEdit && edit({ mark: mark as 'full' | 'small' | 'none' })}
-            />
-          </div>
+          ) : null}
         </FormGrid>
       </CardBody>
     </Card>

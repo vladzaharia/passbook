@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import type { BrandKit, OrgBrand } from '../../../shared/contracts/brand.ts';
 import { OrgBrandingSchema } from '../../../shared/contracts/orgs.ts';
 import { safeMail, safeUrl } from '../../email/safe.ts';
+import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgSettings } from '../settings/service.ts';
 import { allowedMarks, effectiveMark } from './brand-mark.ts';
@@ -15,6 +16,30 @@ export const brandLogoPath = (orgId: string, sha: string) => `/brand/${orgId}/${
 export const webSameAsLogo = (chosen: boolean | undefined, stored: { web?: unknown }) =>
   chosen ?? !stored.web;
 
+/**
+ * The org's stored branding: validated (`{}` when it does not fit the schema) and as stored, which keeps
+ * the fields the schema strips (an image's `storageVersion`).
+ * Text that is not JSON is a corrupt row: logged with a stable code and thrown, never a raw SyntaxError.
+ */
+export function storedBrandingOf(
+  ctx: ServiceContext,
+  row: { id: string; branding: string },
+): { stored: z.infer<typeof OrgBrandingSchema>; raw: Record<string, unknown> } {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(row.branding);
+  } catch (error) {
+    ctx.log.error('org.branding_unreadable', { orgId: row.id, code: 'BRANDING_UNREADABLE', error });
+    throw new AppError('BRANDING_UNREADABLE', 500, 'The organization brand could not be read.', {
+      cause: error,
+    });
+  }
+  const parsed = OrgBrandingSchema.safeParse(raw);
+  return parsed.success
+    ? { stored: parsed.data, raw: raw as Record<string, unknown> }
+    : { stored: {}, raw: {} };
+}
+
 /** Org settings win over the legacy branding fields; unsafe values are dropped. */
 export async function orgBrandOf(ctx: ServiceContext, orgId: string): Promise<OrgBrand> {
   const [row, settings, allowed] = await Promise.all([
@@ -22,8 +47,7 @@ export async function orgBrandOf(ctx: ServiceContext, orgId: string): Promise<Or
     getOrgSettings(ctx, orgId),
     allowedMarks(ctx, orgId),
   ]);
-  const parsed = OrgBrandingSchema.safeParse(JSON.parse(row.branding));
-  const stored = parsed.success ? parsed.data : {};
+  const { stored } = storedBrandingOf(ctx, row);
   return {
     orgId,
     name: row.name,
@@ -42,8 +66,7 @@ export async function shownLogoKey(
 ): Promise<{ sha: string; key: string } | null> {
   const [row, settings] = await Promise.all([requireOrg(ctx, orgId), getOrgSettings(ctx, orgId)]);
   if (row.status !== 'active') return null;
-  const parsed = OrgBrandingSchema.safeParse(JSON.parse(row.branding));
-  const stored = (parsed.success ? JSON.parse(row.branding) : {}) as {
+  const stored = storedBrandingOf(ctx, row).raw as {
     logo?: { sha: string; storageVersion?: string };
     web?: { sha: string };
   };
@@ -65,7 +88,7 @@ export async function brandKitOf(ctx: ServiceContext, orgId: string): Promise<Br
     requireOrg(ctx, orgId),
     allowedMarks(ctx, orgId),
   ]);
-  const chosen = OrgBrandingSchema.safeParse(JSON.parse(row.branding));
+  const { stored: chosen } = storedBrandingOf(ctx, row);
   return {
     orgId,
     name: brand.name,
@@ -74,7 +97,7 @@ export async function brandKitOf(ctx: ServiceContext, orgId: string): Promise<Br
     supportEmail: brand.supportEmail,
     supportUrl: brand.supportUrl,
     mark: brand.mark,
-    markChosen: (chosen.success ? chosen.data.mark : undefined) ?? 'full',
+    markChosen: chosen.mark ?? 'full',
     markAllowed: [...allowed],
     configRevision: row.config_revision,
   };
