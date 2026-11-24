@@ -529,7 +529,17 @@ describe('entitlement journal sweep query plans', () => {
 
   it('finds the orgs changed in the window from the updated_at index', async () => {
     const lines = await plans((db) => recentEntitlementOrgs(db, 1, 2, 200));
-    expect(lines.join('\n')).toContain('org_entitlements_updated');
-    expect(fullScans(lines, 'org_entitlements')).toEqual([]);
+    const plan = lines.join('\n');
+    expect(plan).toContain('org_entitlements_updated');
+    // Every table is reached through an index: nothing scans runs, passes, overrides or presets per org.
+    expect(plan).toContain('passes_scan_population');
+    expect(plan).toContain('channel_apply_runs_cover');
+    for (const table of [
+      'org_entitlements',
+      'passes',
+      'channel_apply_runs',
+      'org_entitlement_overrides',
+    ])
+      expect(fullScans(lines, table), `${table}\n${plan}`).toEqual([]);
   });
 });

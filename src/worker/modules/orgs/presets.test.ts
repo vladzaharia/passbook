@@ -11,7 +11,7 @@ import { all, first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { type ApplyKit, applyKit } from '../channels/apply-test-fixtures.ts';
 import { handleEntitlementApply } from '../channels/entitlement-apply.ts';
-import { sweepEntitlementJournal } from '../channels/entitlement-sweep.ts';
+import { resetSweepCursor, sweepEntitlementJournal } from '../channels/entitlement-sweep.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { expireEntitlementOverrides } from './entitlement-expiry.ts';
 import { setPreset } from './presets-service.ts';
@@ -801,7 +801,37 @@ describe('the journal sweep at scale and around expiry', () => {
       expect.objectContaining({ code: 'CRON_BUDGET' }),
     ]);
     expect(ticks).toBeGreaterThan(1);
+    resetSweepCursor();
     expect([...new Set(queued())].sort()).toEqual([...orgs].sort());
     expect(queued()).toHaveLength(30);
   }, 240_000);
+
+  it('recovers the scope whose run is missing even when another scope of the org has its run', async () => {
+    const t = await applyKit(1);
+    await t.passIn('test');
+    await putTrial(t, t.orgId);
+    const job = jobs(t)
+      .filter((j) => j.orgId === t.orgId)
+      .at(-1) as JobOf<'channel.entitlement'>;
+    await handleEntitlementApply(job, jobCtxOf(t.kit));
+    const scopes = await all<{ mode: string }>(
+      t.kit.env.DB,
+      'SELECT mode FROM channel_apply_runs WHERE org_id = ? AND from_rev IS NOT NULL ORDER BY mode',
+      [t.orgId],
+    );
+    expect(scopes.map((r) => r.mode)).toEqual(['live', 'test']);
+    const mine = () => jobs(t).filter((j) => j.orgId === t.orgId).length;
+    t.kit.clock.advance(180_000);
+    // Both scopes have their run: nothing to recover.
+    const before = mine();
+    await sweepEntitlementJournal(jobCtxOf(t.kit));
+    expect(mine()).toBe(before);
+    // The test scope's run was lost (a crash between the two): that scope alone brings the org back.
+    await run(t.kit.env.DB, "DELETE FROM channel_apply_runs WHERE org_id = ? AND mode = 'test'", [
+      t.orgId,
+    ]);
+    // Other tests' orgs share the window: a capped tick carries on from its cursor next tick.
+    for (let i = 0; i < 6 && mine() === before; i++) await sweepEntitlementJournal(jobCtxOf(t.kit));
+    expect(mine()).toBe(before + 1);
+  }, 120_000);
 });

@@ -28,6 +28,11 @@ export const SWEEP_QUERY_CAP = 200;
 /** Where the last capped tick stopped; the next tick within the window carries on from it. */
 let resume: { cursor: SweepCursor; at: number } | null = null;
 
+/** Forgets where the last capped tick stopped (tests share the isolate). */
+export const resetSweepCursor = (): void => {
+  resume = null;
+};
+
 /**
  * Minute hook `entitlements.journal_sweep`. A crash between an entitlement commit and the queue send loses the
  * `channel.entitlement` job (no outbox exists). For orgs changed in a ten-minute window after the grace, this

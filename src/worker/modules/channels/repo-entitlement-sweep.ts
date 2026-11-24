@@ -8,8 +8,10 @@ export interface SweepCursor {
 
 /**
  * Orgs whose entitlements changed in the window, oldest first with the org id as tiebreak, after `cursor`.
- * Changes that need no sweep drop out here: an org with no live passes, one whose revision a run already
- * covers (any state), one an edit has not moved yet, and one holding an expired override.
+ * Changes that need no sweep drop out here: an org an edit has not moved yet, one holding an expired override,
+ * and one where every (mode, template) with live passes already has a run, in any state, covering the revision.
+ * The scopes (active passes) come from the covering index `passes_scan_population` (index only), and each coverage test is a lookup
+ * in `channel_apply_runs_cover`.
  */
 export const recentEntitlementOrgs = (
   db: D1Database,
@@ -31,11 +33,14 @@ export const recentEntitlementOrgs = (
      JOIN orgs o ON o.id = e.org_id
      WHERE e.updated_at >= ? AND e.updated_at < ? AND o.status = 'active'
        AND (e.updated_at, e.org_id) > (?, ?)
-       AND EXISTS (SELECT 1 FROM passes p WHERE p.org_id = e.org_id AND p.deleted_at IS NULL)
-       AND NOT EXISTS (SELECT 1 FROM channel_apply_runs r WHERE r.org_id = e.org_id
-         AND r.from_rev <= e.revision AND r.to_rev >= e.revision)
        AND NOT EXISTS (SELECT 1 FROM org_entitlement_overrides v WHERE v.org_id = e.org_id
          AND v.expires_at IS NOT NULL AND v.expires_at <= ?)
+       AND EXISTS (SELECT 1 FROM (SELECT p.mode, p.template_id FROM passes p
+         WHERE p.org_id = e.org_id AND p.deleted_at IS NULL AND p.removed_at IS NULL
+           AND p.status = 'active' AND p.test_data_quarantined = 0 GROUP BY p.mode, p.template_id) s
+         WHERE NOT EXISTS (SELECT 1 FROM channel_apply_runs r WHERE r.org_id = e.org_id
+           AND r.mode = s.mode AND r.template_id = s.template_id
+           AND r.from_rev <= e.revision AND r.to_rev >= e.revision))
        AND e.preset_revision >= (SELECT m.revision FROM entitlement_preset_meta m WHERE m.preset = e.preset)
      ORDER BY e.updated_at, e.org_id LIMIT ?`,
     [from, to, cursor?.updatedAt ?? 0, cursor?.orgId ?? '', now, limit],
