@@ -81,14 +81,10 @@ export interface RuntimeIssuancePurpose {
   kind: 'issuance';
 }
 
-/**
- * Samsung generating a Data Fetch link for an offer: the same rules as Google's `issuance` (current
- * approved release, org-scoped enrolment that still issues), so offer creation can read the card credentials.
- */
+/** Samsung building an offer's Data Fetch link: Google's `issuance` rules (current release, enrolment issues). */
 export interface RuntimeSamsungIssuancePurpose {
   kind: 'samsung-issuance';
 }
-
 export const SAMSUNG_ISSUANCE: RuntimeSamsungIssuancePurpose = { kind: 'samsung-issuance' };
 
 export type RuntimeCredentialPurpose =
@@ -183,7 +179,6 @@ async function snapshot(
   await assertNotPreviewOnly(ctx.env.DB, scope.orgId);
   try {
     await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
-    // A credential read names its purpose; an unpurposed read has no path.
     if (!purpose) throw runtimeAccountUnavailable();
     let account: WalletProviderCredentialSnapshot | null;
     if (purpose.kind === 'retirement') {
