@@ -10,6 +10,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { PreviewPageProps } from '../../ssr/preview-page.tsx';
 import { isPreviewOnlyOrg } from '../developer/fence.ts';
 import { checkPreviewLink, type PreviewTarget } from '../developer/preview-link.ts';
+import { orgBrandOf } from '../orgs/brand.ts';
 import { resolveTemplate } from '../passes/builder.ts';
 import { depsOf } from '../passes/deps.ts';
 import type { Pass } from '../passes/repo-map.ts';
@@ -66,6 +67,7 @@ export async function previewFor(
     resolveTemplate(ctx, pass.orgId, pass.templateId, pass.templateVersion),
     paperTicket(ctx, pass),
   ]);
+  const { mark } = await orgBrandOf(ctx, pass.orgId);
   const base = baseUrl(ctx.env);
   const website = (await getOrgSettings(ctx, pass.orgId))['org.website'];
   const assetBase = `/preview/${link}/assets/`;
@@ -113,6 +115,7 @@ export async function previewFor(
             content: ticket.content,
             design: ticket.design,
             drawing: drawPaperCode(toSvg, ticket.design.barcode, SAMPLE_CODE),
+            mark,
             assets: { logo: file(ticket.files.logo), art: file(ticket.files.art) },
           }
         : null,

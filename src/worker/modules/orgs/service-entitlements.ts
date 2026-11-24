@@ -17,7 +17,6 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor } from '../audit/service.ts';
 import { onEntitlementsChanged } from '../channels/entitlement-apply.ts';
-import { brandingAfterPlan } from './brand-mark-fallback.ts';
 import {
   orgEntitlementsRow,
   orgExists,
@@ -236,11 +235,9 @@ export async function setOrgEntitlements(
       ...(o ? {} : standing(key) ? { override: 'removed' } : {}),
     };
   }
-  const branding = await brandingAfterPlan(ctx, orgId, after);
   try {
     await writeEntitlements(ctx, {
       orgId,
-      branding,
       admin,
       expectedRevision: before.revision,
       preset: input.preset,

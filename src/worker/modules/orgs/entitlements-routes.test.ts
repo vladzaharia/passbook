@@ -166,7 +166,6 @@ describe('platform write', () => {
       writeEntitlements(rk.kit.ctx, {
         orgId: p.orgId,
         admin,
-        branding: null,
         expectedRevision: before.revision,
         preset: 'standard',
         now: rk.kit.clock.now(),

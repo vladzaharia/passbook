@@ -1136,6 +1136,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PATCH /api/v1/brand request.mark: refusal",
+    "class": "additive",
+    "operationId": "brand.patchBrand",
+    "op": "PATCH /api/v1/brand",
+    "change": "request.mark: refusal",
+    "note": "small and none are refused with BRAND_MARK_NOT_ALLOWED (403) when the plan does not allow them. markAllowed follows the plan."
+  },
+  {
     "key": "PATCH /api/v1/broadcasts/{id} 200.message: field added",
     "class": "additive",
     "operationId": "broadcasts.patchBroadcastsById",

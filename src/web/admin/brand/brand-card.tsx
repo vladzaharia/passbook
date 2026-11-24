@@ -262,18 +262,22 @@ export function BrandCard({ orgId, view, draft, canEdit, errors, edit, setImage 
             tag={<SourceTag source={v.accent ? 'org' : 'passbook'} />}
             onChange={(accent) => edit({ accent })}
           />
-          <div className="flex flex-col gap-2">
-            <div className="flex min-h-6 items-center justify-between gap-2">
-              <span className="text-sm font-medium text-fg">{COPY.mark}</span>
-              {planMark ? <SourceTag source="plan" /> : null}
+          {markOptions.length > 1 ? (
+            <div className="flex min-w-0 flex-col gap-2 @[40rem]:col-span-full">
+              <div className="flex min-h-6 items-center justify-between gap-2">
+                <span className="text-sm font-medium text-fg">{COPY.mark}</span>
+                {planMark ? <SourceTag source="plan" /> : null}
+              </div>
+              <div className="flex max-w-full overflow-x-auto pb-1">
+                <SegmentedControl
+                  label={COPY.mark}
+                  options={markOptions}
+                  value={v.mark}
+                  onValueChange={(mark) => canEdit && edit({ mark })}
+                />
+              </div>
             </div>
-            <SegmentedControl
-              label={COPY.mark}
-              options={markOptions}
-              value={v.mark}
-              onValueChange={(mark) => canEdit && edit({ mark })}
-            />
-          </div>
+          ) : null}
         </FormGrid>
       </CardBody>
     </Card>

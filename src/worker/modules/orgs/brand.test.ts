@@ -5,7 +5,7 @@ import { createServiceContext } from '../../platform/service-context.ts';
 import { makePng } from '../templates/package/fixtures.ts';
 import { crc32 } from '../templates/package/hash.ts';
 import { type Api, auditOf, setupApi } from '../webhooks/api-test-fixtures.ts';
-import { orgBrandOf } from './brand.ts';
+import { orgBrandOf, storedBrandingOf } from './brand.ts';
 
 let api: Api;
 let orgId: string;
@@ -207,6 +207,16 @@ describe('mark level', () => {
     );
     await plan('bogus');
     expect((await orgBrandOf(ctx(), orgId)).mark).toBe('full');
+  });
+
+  it('refuses unreadable stored branding with a stable code, not a SyntaxError', () => {
+    // The column is CHECK json_valid, so this is the guard for a row that got past it.
+    expect(() => storedBrandingOf(ctx(), { id: orgId, branding: 'not json' })).toThrow(
+      expect.objectContaining({ code: 'BRANDING_UNREADABLE', status: 500 }),
+    );
+    expect(storedBrandingOf(ctx(), { id: orgId, branding: '{"mark":"none"}' })).toMatchObject({
+      stored: { mark: 'none' },
+    });
   });
 
   it('sets and clears the accent, and refuses a non-hex one', async () => {

@@ -1,5 +1,6 @@
 import type { PaperDesign } from '../../../passkit/template/paper.ts';
 import type { PaperContent } from '../../../passkit/template/paper-content.ts';
+import type { OrgBrand } from '../../../shared/contracts/brand.ts';
 import type { BrandMark } from '../../../shared/contracts/orgs.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -44,6 +45,8 @@ export async function printPageModel(
   ctx: ServiceContext,
   pass: Pass,
   audience: PrintAudience,
+  /** The org's brand when the caller has read it already (one read per request). */
+  known?: OrgBrand,
 ): Promise<PrintPageModel> {
   if (pass.status !== 'active' || pass.removedAt !== null || pass.deletedAt !== null)
     throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
@@ -53,7 +56,7 @@ export async function printPageModel(
     existingChannels(ctx, pass),
     getOrg(ctx.env.DB, pass.orgId),
     paperTicket(ctx, pass),
-    orgBrandOf(ctx, pass.orgId),
+    known ?? orgBrandOf(ctx, pass.orgId),
   ]);
   const base = { orgName: org?.name ?? '', mode: pass.mode };
   let model: PrintPageModel = { ...base, state: 'unavailable' };
