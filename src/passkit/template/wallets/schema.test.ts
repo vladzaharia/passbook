@@ -226,9 +226,15 @@ describe('wallets block schema', () => {
         inputs: { type: 'object', properties: { a: { type: 'string' }, b: { type: 'string' } } },
         wallets: { schema: 1, google: { classKey } },
       } as never).map((i) => `${i.severity}:${i.code}`);
-    for (const key of ['{{a}}{{b}}', '{{a}}|{{b}}', '{{a|url}}{{b|url}}'])
+    for (const key of [
+      '{{a}}{{b}}',
+      '{{a}}|{{b}}',
+      '{{a}} {{b}}',
+      '{{a|url}}{{b|url}}',
+      '{{a|url}}-{{b|url}}',
+    ])
       expect(warns(key)).toEqual(['warning:WALLETS_CLASS_KEY']);
-    for (const key of ['{{a}}', '{{a|url}}|{{b|url}}', '{{a}} {{b}}'])
+    for (const key of ['{{a}}', '{{a|url}}|{{b|url}}', '{{a|url}} {{b|url}}'])
       expect(warns(key)).toEqual([]);
   });
 

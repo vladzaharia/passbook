@@ -116,25 +116,17 @@ export function walletsManifestIssues(
     const parts = wallets.google.classKey.split(/(\{\{[^}]*\}\})/);
     const slots = parts.flatMap((part, i) =>
       part.startsWith('{{')
-        ? [
-            {
-              url: /\|\s*url\s*\}\}$/.test(part),
-              before: parts[i - 1] ?? '',
-              after: parts[i + 1] ?? '',
-            },
-          ]
+        ? [{ url: /\|\s*url\s*\}\}$/.test(part), before: parts[i - 1] ?? '' }]
         : [],
     );
-    const loose = slots.some(
-      (slot, i) => i > 0 && (slot.before === '' || (!slot.url && slot.before.includes('|'))),
+    // `|url` escapes every character but A-Z a-z 0-9 - _ . ! ~ * ' ( ); a joiner from that set can merge parts.
+    const joined = slots.every(
+      (slot, i) => slot.url && (i === 0 || /[^\w\-.!~*'()]/.test(slot.before)),
     );
-    if (
-      slots.length > 1 &&
-      (loose || slots.some((s, i) => !s.url && s.after.includes('|') && i < slots.length - 1))
-    )
+    if (slots.length > 1 && !joined)
       warn(
         'WALLETS_CLASS_KEY',
-        'Parts of the class key can run together: end each with |url and join them with |.',
+        'Parts of the class key can run together: end each with |url and join them with | or a space.',
         'wallets.google.classKey',
       );
   }
