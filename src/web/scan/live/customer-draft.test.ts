@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { liveDraft, nextDraft, splitHeadline } from './customer-draft.ts';
+import { liveDraft, nextDraft, splitHeadline, withoutReplacedReady } from './customer-draft.ts';
 
 const view = { band: { headline: 'To pay $12.00', sub: null } } as never;
 
@@ -21,5 +21,16 @@ describe('customer draft', () => {
     expect(liveDraft(a, 'r', 1000 + 60_000)).toBeNull();
     expect(liveDraft(a, 'x', 1000)).toBeNull();
     expect(liveDraft(a, undefined, 1000)).toBeNull();
+  });
+  it('drops a ready card that a later result of the same scanner replaced', () => {
+    const row = (id: string, kind: 'ready' | 'ok', at: number, scannerId = 's1') =>
+      ({ id, kind, at, scannerId }) as never;
+    const rows = [
+      row('r1', 'ready', 1),
+      row('ok', 'ok', 2),
+      row('r2', 'ready', 3),
+      row('r3', 'ready', 1, 's2'),
+    ];
+    expect(withoutReplacedReady(rows).map((r) => r.id)).toEqual(['ok', 'r2', 'r3']);
   });
 });

@@ -11,7 +11,7 @@ import './live-screen.css';
 import { Toaster, toast } from '../../ui/toaster.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { MonitorHardware } from '../hardware/hardware-control.tsx';
-import { liveDraft, splitHeadline } from './customer-draft.ts';
+import { liveDraft, splitHeadline, withoutReplacedReady } from './customer-draft.ts';
 import { useMonitorBeat } from './monitor-beat.ts';
 import { MonitorBoard } from './monitor-board.tsx';
 import { deskActing, type OverrideNote, StaffControl, useLetIn } from './monitor-desk.tsx';
@@ -110,7 +110,7 @@ export function LiveScreen({
   const branding = session.branding ?? null;
   const logoUrl = scanBrandLogoUrl(branding, session);
   const orgName = session.scanner?.orgName ?? '';
-  const recent = rows.filter(
+  const recent = (customer ? withoutReplacedReady(rows) : rows).filter(
     (row) => now - row.at < (customer ? CUSTOMER_HOLD_MS[row.kind] : 15 * 60_000),
   );
   const latest = recent[0];

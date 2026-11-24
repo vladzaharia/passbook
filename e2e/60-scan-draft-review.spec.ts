@@ -21,12 +21,25 @@ async function rig(
     `/api/v1/templates/${encodeURIComponent(STORE_CARD)}/clone`,
     { orgId, name: uid('Draft card') },
   );
-  const release = await publishTemplateVersion(
-    api,
-    orgId,
-    template.id,
-    template.versions[0].version,
+  // The starter's balance is a plain number; a prepaid card holds money.
+  const detail = await api.get(
+    `/api/v1/templates/${template.id}/versions/${template.versions[0].version}`,
   );
+  const manifest = structuredClone(detail.manifest);
+  Object.assign(manifest.inputs.properties.balance, {
+    'x-format': 'currency',
+    'x-currency': 'USD',
+  });
+  const saved = await api.send('POST', `/api/v1/templates/${template.id}/versions`, {
+    manifest,
+    passJson: detail.passJson,
+    assets: detail.assets.map((a: { name: string; sha1: string }) => ({
+      name: a.name,
+      sha1: a.sha1,
+    })),
+  });
+  if (!saved.saved) throw new Error(`Template not saved: ${JSON.stringify(saved.report)}`);
+  const release = await publishTemplateVersion(api, orgId, template.id, saved.version as string);
   const pass = await api.send(
     'POST',
     '/api/v1/passes',
