@@ -1,3 +1,4 @@
+import AxeBuilder from '@axe-core/playwright';
 import { type BrowserContext, expect, type Page, test } from '@playwright/test';
 import { type Api, apiAs, uid } from './helpers/api.ts';
 import { pairScanner } from './helpers/pair.ts';
@@ -116,6 +117,34 @@ async function rig(
 const status = (page: Page, value: string) =>
   expect(page.getByTestId('duo-customer-display')).toHaveAttribute('data-status', value);
 
+const SIZES = [
+  [390, 844],
+  [834, 1112],
+  [1440, 900],
+  [667, 375],
+] as const;
+
+/** Axe in both themes always; shots at four sizes in both themes when SHOTS_DIR is set. */
+async function look(
+  page: Page,
+  name: string,
+  sizes: readonly (readonly [number, number])[] = SIZES,
+) {
+  const dir = process.env.SHOTS_DIR;
+  for (const [width, height] of sizes)
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.setViewportSize({ width, height });
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.waitForTimeout(300);
+      if (dir) await page.screenshot({ path: `${dir}/${name}-${width}x${height}-${scheme}.png` });
+    }
+  for (const scheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations, `${name} ${scheme}`).toEqual([]);
+  }
+}
+
 test('a followed screen shows the amount, then the receipt, and a cancel clears it', async ({
   browser,
 }) => {
@@ -130,6 +159,8 @@ test('a followed screen shows the amount, then the receipt, and a cancel clears 
     await expect(r.screen.getByText('Hi, Sam')).toBeVisible();
     await expect(r.elsewhere.getByTestId('customer-draft')).toHaveCount(0);
     await status(r.elsewhere, 'ready');
+    await look(r.screen, 'customer-review');
+    await look(r.deskPage, 'scanner-reviewing', [[390, 844]]);
 
     await r.deskPage.getByTestId('scan-picker-commit').click();
     const display = r.screen.getByTestId('duo-customer-display');
