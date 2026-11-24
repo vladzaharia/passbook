@@ -117,6 +117,8 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    `.wrangler/d1-bookmarks.log`, applies remote migrations, then promotes the version.
    Queues, workflows and rate-limit namespaces come from step 6. Pass flags after `--`, for
    example `npm run deploy -- --apply --allow-no-push`; `--apply` runs every check first.
+   Never run `wrangler deploy` or `wrangler versions upload` for the main Worker yourself: only
+   `npm run deploy` checks the build stamp and scans `dist/` for the e2e release.
    **First deploy**: use `npm run deploy -- --first --apply`. Cloudflare documents that
    `versions upload` fails for a Worker that was never deployed and cannot apply Durable Object
    class changes (`ScanHub`); it does not document registering queue consumers or workflows
@@ -310,8 +312,10 @@ injection. Dev and e2e only.
 - The Worker redirects provider calls only when `WALLET_MOCK_PROVIDERS_URL` and `PUBLIC_BASE_URL`
   are both plain-http loopback (`wallet-providers/mock-endpoint.ts`). Never set it in
   `wrangler.jsonc` or a deployed secret; a test fails if it appears there.
-- Google and Samsung issuance is still off (`provider-policy.ts`), so an issued pass cannot reach a
-  save link yet. e2e `32-mock-wallets` covers the provider calls and the save link directly.
+- Set the card a Samsung template read returns: `curl -XPOST localhost:5175/__mock/samsung-template -d '{"cardId":"c1","template":{"cardType":"loyalty"}}'`.
+- Google and Samsung issuance is off (`provider-policy.ts`). `npm run test:e2e:wallets` starts an e2e server with
+  both open against the fake (`docs/design/wallet-providers/e2e-release.md`). No other build can open them, and
+  deploy refuses a Worker that carries that path.
 
 ## Domains
 

@@ -1,8 +1,9 @@
 // Runs after `vite build`: the initial load (entry plus modulepreloads) stays under budget and
-// carries no admin-only library.
+// carries no admin-only library, and the Worker carries no e2e provider release.
 import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
+import { e2eReleaseProblems } from './lib/e2e-release.ts';
 
 const root = resolve(import.meta.dirname, '..');
 const dist = join(root, 'dist/client');
@@ -214,6 +215,13 @@ if (import.meta.main) {
       );
       failed = true;
     }
+  }
+  // Google and Samsung stay dark in every deployable Worker (docs/design/wallet-providers/e2e-release.md).
+  const release = e2eReleaseProblems(join(root, 'dist/wallet'));
+  process.stdout.write(`worker e2e release: ${release.length === 0 ? 'absent' : 'present'}\n`);
+  if (release.length > 0) {
+    process.stderr.write(`${release.join('\n')}\n`);
+    failed = true;
   }
   if (failed) process.exit(1);
 }

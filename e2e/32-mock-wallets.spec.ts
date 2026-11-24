@@ -2,10 +2,10 @@ import { generateKeyPairSync, sign } from 'node:crypto';
 import { expect, test } from '@playwright/test';
 import { e2ePorts } from '../tools/lib/e2e-ports.ts';
 
-// Google and Samsung issuance is dark in the Worker (provider-policy.ts), so no issued pass can
-// reach a save link yet. This covers the provider layer against the fake server that
-// tools/e2e-server.ts starts: the REST calls the runtime makes, then a browser opening the save
-// link. test/mock-wallets/mock-wallets.test.ts drives the real client code against the same fake.
+// Google and Samsung issuance is dark in the Worker (provider-policy.ts) and in this run. This covers the
+// provider layer against the fake server that tools/e2e-server.ts starts: the REST calls the runtime makes,
+// then a browser opening the save link. Issued passes reach the fake in *-wallets-*.spec.ts, on the e2e
+// release server (playwright.wallets.config.ts).
 const mock = `http://localhost:${e2ePorts.wallets}`;
 const SCOPE = 'https://www.googleapis.com/auth/wallet_object.issuer';
 
@@ -97,11 +97,7 @@ test('a Samsung update is recorded and an injected failure is returned once', as
   expect(state.samsung.refs.ref1?.state).toBe('EXPIRED');
 });
 
-// Why this stops at the provider layer: the broadcast to a saved Google pass and the sync-log row cannot run in e2e.
-// ENABLED.google in provider-policy.ts is a code constant that only the in-process test setter changes, and the e2e
-// server is another process with no Google account or release, so lighting issuance here would mean changing the
-// production flag. The send path runs end to end against this same mock in the worker tests
-// (sync-operation-google-messages.test.ts), and the "Wallet message" row is covered by sync-model.test.ts.
+// The fake's own message rules. An issued pass's change message reaching it is 61-wallets-google.spec.ts.
 test('a Google change message lands on the object, and a fourth notification in a day is refused', async ({
   request,
 }) => {

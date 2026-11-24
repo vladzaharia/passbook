@@ -7,6 +7,7 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 import { localSecrets } from './tools/lib/dev-secrets.ts';
+import { e2eReleaseDefine, e2eReleaseOn } from './tools/lib/e2e-release.ts';
 import { DEV_MOCK_WALLETS_URL, mockWallets } from './tools/lib/mock-wallets-dev.ts';
 import { publicBaseUrl, withOrigin } from './tools/lib/site-origin.ts';
 
@@ -38,11 +39,14 @@ function radixNoInlineStyles(): Plugin {
         return code.replace('function makeStyleTag() {', 'function makeStyleTag() { return null;');
       }
       if (/node_modules\/@radix-ui\/react-select\/dist\/index\.mjs/.test(id)) {
-        // No dangerouslySetInnerHTML at all: Trusted Types refuses even an empty string (base.css has the rules).
-        return code.replace(
-          /dangerouslySetInnerHTML: \{\s*__html: `\[data-radix-select-viewport\][^`]*`\s*\}/,
-          'hidden: true',
+        // The whole <style> element goes: Trusted Types refuses even an empty string, and CSP still
+        // blocks an empty element (base.css has the rules).
+        const out = code.replace(
+          /\/\* @__PURE__ \*\/ jsx\(\s*"style",\s*\{\s*dangerouslySetInnerHTML: \{\s*__html: `\[data-radix-select-viewport\][^`]*`\s*\},\s*nonce\s*\}\s*\),/,
+          'null,',
         );
+        if (out === code) this.error('radix-no-inline-styles: Select viewport <style> not found');
+        return out;
       }
       return null;
     },
@@ -102,6 +106,8 @@ function devPublicAtSign(): Plugin {
  * Production config never sees this: wrangler.jsonc is unchanged and deploys do not read this file.
  */
 const e2e = process.env.WALLET_E2E === '1';
+/** e2e with Google and Samsung open against the mock wallets (docs/design/wallet-providers/e2e-release.md). */
+const e2eRelease = e2eReleaseOn(process.env);
 
 type RateLimitConfig = { name: string; simple: { limit: number; period: number } };
 
@@ -153,6 +159,8 @@ const nodeModulesAllow = realNodeModules === join(root, 'node_modules') ? [] : [
 export default defineConfig(({ command }) => ({
   // Worktrees symlink node_modules to one shared copy; the default node_modules/.vite would share the dep optimizer cache.
   cacheDir: join(root, '.cache/vite'),
+  // false in every build but an e2e release one: the Worker then drops the e2e release path.
+  define: e2eReleaseDefine(process.env),
   publicDir: 'public',
   environments: {
     wallet: { build: { minify: true } },
@@ -274,6 +282,8 @@ export default defineConfig(({ command }) => ({
                 ADMIN_SYNC_BUCKET_MS: '',
                 // Declared so the e2e vars file can set it (resolver-memo.ts); empty everywhere else.
                 WEBHOOK_TEST_DNS: '',
+                // The e2e release and the mock wallets it calls (e2e-release.ts, mock-endpoint.ts).
+                ...(e2eRelease ? { WALLET_E2E_RELEASE: '', WALLET_MOCK_PROVIDERS_URL: '' } : {}),
               },
               env: { e2e: { ratelimits: e2eRatelimits(c.ratelimits) } },
             }
