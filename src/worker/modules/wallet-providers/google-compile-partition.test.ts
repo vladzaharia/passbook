@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { bakedTemplates } from '../../../generated/baked-templates.ts';
 import { evaluate } from '../../../passkit/template/expr.ts';
 import type { ResolvedTemplate } from '../../../passkit/template/registry.ts';
+import type { Personalization } from '../../../passkit/types.ts';
 import type { Pass } from '../passes/repo-map.ts';
 import { partitionOf } from './google-compile.ts';
 import { googleClassKeyDigest } from './google-ids.ts';
@@ -35,7 +36,7 @@ describe('the class partition of a pass', () => {
     for (const slug of ['starter-event-ticket', 'starter-multi-day-pass', 'starter-timed-ticket']) {
       const key = bakedTemplates.find((t) => t.slug === slug)?.manifest.wallets?.google?.classKey;
       if (typeof key !== 'string') throw new Error(`${slug} has no class key`);
-      const of = (input: object) => evaluate(key, { input, lookups: {} });
+      const of = (input: Personalization) => evaluate(key, { input, lookups: {} });
       expect(of({ eventName: 'a|b', startsAt: 'c' })).not.toBe(
         of({ eventName: 'a', startsAt: 'b|c' }),
       );
