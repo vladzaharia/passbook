@@ -86,7 +86,6 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
     return true;
   });
   const face = LIVE_FACE[status] ?? LIVE_FACE.ok;
-  const refused = face.kind === 'refused';
   useEffect(() => {
     if (!installed) return;
     const id = `${ID.slice(0, -1)}2`;
@@ -104,12 +103,12 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
       presented: true,
       customer: {
         v: 1 as const,
-        screen: refused ? ('see_desk' as const) : ('ok' as const),
+        screen: face.kind === 'refused' ? ('see_desk' as const) : ('ok' as const),
         ref: id,
         at: Date.now(),
         where: '',
         band: { headline: face.headline, sub: null },
-        greet: refused || status !== 'ok' ? null : 'Hi, Sam',
+        greet: status !== 'ok' ? null : 'Hi, Sam',
         chips: [],
         panel: null,
         lines: [],
@@ -119,7 +118,7 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
     };
     const timer = window.setTimeout(() => VisualSocket.instances.at(-1)?.publish(row), 40);
     return () => window.clearTimeout(timer);
-  }, [installed, status, face, refused]);
+  }, [installed, status, face]);
   return (
     <>
       <LiveScreen session={session} refetch={async () => undefined} />
