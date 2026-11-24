@@ -44,7 +44,8 @@ describe('a full reconcile brings every pass to the plan in both directions', ()
       await onEntitlementsChanged(ctx(), t.orgId, {}, after, 'system', revision, true);
       expect(jobs()).toHaveLength(sent + 1);
       const job = jobs().at(-1) as JobOf<'channel.entitlement'>;
-      expect(job).toMatchObject({ full: true, blockedBefore: [] });
+      expect(job).toMatchObject({ full: true });
+      expect(job.blockedBefore).toEqual(job.blockedAfter);
       expect(job.blockedAfter).toContain('paper');
       await handleEntitlementApply(job, ctx());
       const open = (await t.runs()).find((r) => r.state === 'pending');
@@ -68,5 +69,44 @@ describe('a full reconcile brings every pass to the plan in both directions', ()
     const settled = await state();
     await reconcile();
     expect(await state()).toBe(settled);
+  });
+});
+
+describe('a full job taking over a pending template-save run', () => {
+  it('keeps the flips the save already owes: feed event and per-pass audit', async () => {
+    const t = await applyKit(2);
+    const saved = (await t.saved({ apple: 'off' })) as { workflowInstanceId: string };
+    const ctx = jobCtxOf(t.kit);
+    await t.exec('UPDATE org_entitlements SET revision = revision + 1 WHERE org_id = ?', t.orgId);
+    const revision =
+      (
+        await first<{ revision: number }>(
+          t.db,
+          'SELECT revision FROM org_entitlements WHERE org_id = ?',
+          [t.orgId],
+        )
+      )?.revision ?? 0;
+    await onEntitlementsChanged(
+      ctx,
+      t.orgId,
+      {},
+      await entitlementsOf(ctx, t.orgId),
+      'system',
+      revision,
+      true,
+    );
+    const job = (t.kit.queue.sent as { kind: string }[])
+      .filter((m) => m.kind === 'channel.entitlement')
+      .at(-1) as JobOf<'channel.entitlement'>;
+    const feed = await t.feed();
+    const audits = await t.audits('pass.channels_change');
+    await handleEntitlementApply(job, ctx);
+    const pending = (await t.runs()).filter((r) => r.state === 'pending');
+    expect(pending.map((r) => r.id)).toEqual([saved.workflowInstanceId]);
+    expect(pending[0]).toMatchObject({ reconcile_all: 1, from_blocked: pending[0]?.to_blocked });
+    expect(await t.work(saved.workflowInstanceId).done).toEqual({ state: 'done' });
+    expect(await t.retired('apple')).toHaveLength(2);
+    expect(await t.feed()).toBe(feed + 2);
+    expect(await t.audits('pass.channels_change')).toBe(audits + 2);
   });
 });

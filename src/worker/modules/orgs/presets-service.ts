@@ -126,7 +126,10 @@ async function moveOrg(
           ...(gap ? { gap: true } : {}),
           preset: p.preset,
           changes: Object.fromEntries(
-            impact.changes.map((c) => [c.key, { from: c.from ?? null, to: c.to ?? null }]),
+            impact.changes.map((c) => [
+              c.key,
+              { from: gap ? null : (c.from ?? null), to: c.to ?? null },
+            ]),
           ),
           off: impact.counts.off,
           down: impact.counts.down,
