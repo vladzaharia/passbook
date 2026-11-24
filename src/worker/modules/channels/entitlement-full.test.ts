@@ -110,3 +110,48 @@ describe('a full job taking over a pending template-save run', () => {
     expect(await t.audits('pass.channels_change')).toBe(audits + 2);
   });
 });
+
+describe('a full job taking over a pending entitlement run', () => {
+  it('keeps the recorded start of that run', async () => {
+    const t = await applyKit(1);
+    const ctx = jobCtxOf(t.kit);
+    const path = `/platform/orgs/${t.orgId}/entitlements`;
+    const headers = { ...t.kit.auth.admin(), 'content-type': 'application/json' };
+    const read = (await (await t.kit.api(path, { headers })).json()) as { revision: number };
+    await t.kit.api(path, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ preset: 'trial', expectedRevision: read.revision, overrides: {} }),
+    });
+    const jobsOf = () =>
+      (t.kit.queue.sent as { kind: string }[]).filter(
+        (m) => m.kind === 'channel.entitlement',
+      ) as JobOf<'channel.entitlement'>[];
+    await handleEntitlementApply(jobsOf().at(-1) as JobOf<'channel.entitlement'>, ctx);
+    const [pending] = (await t.runs()).filter((r) => r.state === 'pending');
+    expect(pending?.from_blocked).toBe('[]');
+    await t.exec('UPDATE org_entitlements SET revision = revision + 1 WHERE org_id = ?', t.orgId);
+    const revision =
+      (
+        await first<{ revision: number }>(
+          t.db,
+          'SELECT revision FROM org_entitlements WHERE org_id = ?',
+          [t.orgId],
+        )
+      )?.revision ?? 0;
+    await onEntitlementsChanged(
+      ctx,
+      t.orgId,
+      {},
+      await entitlementsOf(ctx, t.orgId),
+      'system',
+      revision,
+      true,
+    );
+    await handleEntitlementApply(jobsOf().at(-1) as JobOf<'channel.entitlement'>, ctx);
+    const [taken] = (await t.runs()).filter((r) => r.state === 'pending');
+    expect(taken).toMatchObject({ id: pending?.id, reconcile_all: 1, from_blocked: '[]' });
+    expect(taken?.to_blocked).not.toBe('[]');
+    expect(taken?.to_rev).toBe(revision);
+  });
+});

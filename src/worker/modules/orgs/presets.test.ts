@@ -5,16 +5,13 @@ import type {
   EntitlementPresetDto,
   SetEntitlementPresetResult,
 } from '../../../shared/contracts/entitlement-presets.ts';
+import { countQueries } from '../../jobs/query-counter.ts';
 import type { JobOf } from '../../jobs/types.ts';
 import { all, first, run } from '../../platform/db.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { type ApplyKit, applyKit } from '../channels/apply-test-fixtures.ts';
 import { handleEntitlementApply } from '../channels/entitlement-apply.ts';
 import { sweepEntitlementJournal } from '../channels/entitlement-sweep.ts';
-import {
-  latestEntitlementAudit,
-  recentEntitlementOrgs,
-} from '../channels/repo-entitlement-sweep.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { expireEntitlementOverrides } from './entitlement-expiry.ts';
 import { setPreset } from './presets-service.ts';
@@ -666,19 +663,6 @@ describe('the journal sweep', () => {
     t.kit.clock.advance(180_000);
     await sweepEntitlementJournal(jobCtxOf(t.kit));
     expect(jobs(t)).toHaveLength(sent);
-
-    // A burst larger than the old limit is all returned, in (updated_at, org_id) order.
-    const ids: string[] = [];
-    for (let i = 0; i < 30; i++) ids.push((await makeOrg(t.kit.fx)).id);
-    const at = t.kit.clock.now();
-    for (const id of ids)
-      await run(t.kit.env.DB, 'UPDATE org_entitlements SET updated_at = ? WHERE org_id = ?', [
-        at,
-        id,
-      ]);
-    const found = (await recentEntitlementOrgs(t.kit.env.DB, at, at + 1, 200)).map((o) => o.org_id);
-    expect(found).toEqual([...ids].sort());
-    expect((await latestEntitlementAudit(t.kit.env.DB, t.orgId)).length).toBe(1);
   });
 
   it('skips an org an edit has not moved yet: the move queues its own job', async () => {
@@ -776,4 +760,48 @@ describe('the journal sweep at scale and around expiry', () => {
     await expireEntitlementOverrides(jobCtxOf(t.kit));
     expect(await overrideRows(t, t.orgId)).toEqual([]);
   });
+
+  it('stops at its query cap, logs CRON_BUDGET and carries on next tick from where it stopped', async () => {
+    const t = await applyKit(1);
+    const orgs: string[] = [];
+    for (let i = 0; i < 30; i++) {
+      const other = await t.otherOrg();
+      await putTrial(t, other.orgId);
+      orgs.push(other.orgId);
+    }
+    const sent = jobs(t).length;
+    t.kit.clock.advance(180_000);
+    const cap = 40;
+    const warns: unknown[] = [];
+    const counter = countQueries(t.kit.env);
+    const base = jobCtxOf(t.kit);
+    const ctx = {
+      ...base,
+      env: counter.env,
+      log: {
+        ...base.log,
+        warn: (e: string, f?: Record<string, unknown>) => void warns.push([e, f]),
+      },
+    } as typeof base;
+    const queued = () =>
+      jobs(t)
+        .slice(sent)
+        .map((j) => j.orgId)
+        .filter((id) => orgs.includes(id));
+    let ticks = 0;
+    while (new Set(queued()).size < 30 && ticks < 20) {
+      const before = counter.count();
+      await sweepEntitlementJournal(ctx, cap);
+      // The tick stops starting orgs at the cap; one org in flight finishes (a few queries).
+      expect(counter.count() - before).toBeLessThanOrEqual(cap + 25);
+      ticks++;
+    }
+    expect(warns).toContainEqual([
+      'channels.entitlement_sweep_capped',
+      expect.objectContaining({ code: 'CRON_BUDGET' }),
+    ]);
+    expect(ticks).toBeGreaterThan(1);
+    expect([...new Set(queued())].sort()).toEqual([...orgs].sort());
+    expect(queued()).toHaveLength(30);
+  }, 240_000);
 });
