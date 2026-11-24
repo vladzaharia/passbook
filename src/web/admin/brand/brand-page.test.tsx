@@ -222,10 +222,10 @@ describe('Brand and channels', () => {
     const view = viewOf(readyFacts());
     view.brand.mark = { chosen: 'full', effective: 'full', allowed: [...allowed] };
     await setup(view);
-    const group = await screen.findByRole('radiogroup', { name: 'PassBook footer' });
+    const group = await screen.findByRole('group', { name: /PassBook footer/ });
     const shown = within(group)
       .getAllByRole('radio')
-      .map((r) => r.getAttribute('aria-label') ?? r.textContent?.trim());
+      .map((r) => (r as HTMLInputElement).labels?.[0]?.textContent?.trim());
     expect(shown.sort()).toEqual([...labels].sort());
     expect(within(group).queryByText('Not in your plan.')).toBeNull();
   });
@@ -235,14 +235,14 @@ describe('Brand and channels', () => {
     view.brand.mark = { chosen: 'full', effective: 'full', allowed: ['full'] };
     await setup(view);
     await screen.findByRole('heading', { name: 'Brand and channels', level: 1 });
-    expect(screen.queryByRole('radiogroup', { name: 'PassBook footer' })).toBeNull();
+    expect(screen.queryByRole('group', { name: /PassBook footer/ })).toBeNull();
   });
 
   it('shows the effective footer when the chosen one is not allowed', async () => {
     const view = viewOf(readyFacts());
     view.brand.mark = { chosen: 'none', effective: 'small', allowed: ['small', 'full'] };
     await setup(view);
-    const group = await screen.findByRole('radiogroup', { name: 'PassBook footer' });
+    const group = await screen.findByRole('group', { name: /PassBook footer/ });
     expect(within(group).getByRole('radio', { name: 'Powered by PassBook' })).toBeChecked();
   });
 

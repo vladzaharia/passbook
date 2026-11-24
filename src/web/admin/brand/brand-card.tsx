@@ -1,5 +1,6 @@
 import { Check } from 'lucide-react';
 import { useState } from 'react';
+import type { BrandMark } from '@/shared/contracts/orgs.ts';
 import type { PassSetup } from '@/shared/contracts/pass-setup.ts';
 import { PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
 import { scanLine } from '@/shared/copy/scan.ts';
@@ -12,7 +13,7 @@ import {
   FormField,
   FormGrid,
   Input,
-  SegmentedControl,
+  RadioGroup,
   SwitchRow,
 } from '@/web/ui/index.ts';
 import { HEX } from '../orgs/branding.ts';
@@ -263,19 +264,18 @@ export function BrandCard({ orgId, view, draft, canEdit, errors, edit, setImage 
             onChange={(accent) => edit({ accent })}
           />
           {markOptions.length > 1 ? (
-            <div className="flex min-w-0 flex-col gap-2 @[40rem]:col-span-full">
-              <div className="flex min-h-6 items-center justify-between gap-2">
-                <span className="text-sm font-medium text-fg">{COPY.mark}</span>
-                {planMark ? <SourceTag source="plan" /> : null}
-              </div>
-              <div className="flex max-w-full overflow-x-auto pb-1">
-                <SegmentedControl
-                  label={COPY.mark}
-                  options={markOptions}
-                  value={v.mark}
-                  onValueChange={(mark) => canEdit && edit({ mark })}
-                />
-              </div>
+            <div className="flex min-w-0 flex-col gap-2">
+              <RadioGroup
+                legend={
+                  <span className="flex min-h-6 items-center justify-between gap-2">
+                    {COPY.mark}
+                    {planMark ? <SourceTag source="plan" /> : null}
+                  </span>
+                }
+                options={markOptions.map((o) => ({ ...o, disabled: !canEdit }))}
+                value={v.mark}
+                onValueChange={(mark) => edit({ mark: mark as BrandMark })}
+              />
             </div>
           ) : null}
         </FormGrid>
