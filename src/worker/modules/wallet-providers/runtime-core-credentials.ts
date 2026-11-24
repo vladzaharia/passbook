@@ -81,10 +81,21 @@ export interface RuntimeIssuancePurpose {
   kind: 'issuance';
 }
 
+/**
+ * Samsung generating a Data Fetch link for an offer: the same rules as Google's `issuance` (current
+ * approved release, org-scoped enrolment that still issues), so offer creation can read the card credentials.
+ */
+export interface RuntimeSamsungIssuancePurpose {
+  kind: 'samsung-issuance';
+}
+
+export const SAMSUNG_ISSUANCE: RuntimeSamsungIssuancePurpose = { kind: 'samsung-issuance' };
+
 export type RuntimeCredentialPurpose =
   | RuntimeRetirementPurpose
   | RuntimeRefreshPurpose
-  | RuntimeIssuancePurpose;
+  | RuntimeIssuancePurpose
+  | RuntimeSamsungIssuancePurpose;
 
 /** A provider call may have reached the provider even if the final account fence fails. */
 export class WalletRuntimeError extends Error {
@@ -172,7 +183,7 @@ async function snapshot(
   await assertNotPreviewOnly(ctx.env.DB, scope.orgId);
   try {
     await requireCredentialRefKeyset(ctx.env.DB, ctx.env);
-    // Unpurposed reads have no credential path yet; the provider track that enables issuance adds one.
+    // A credential read names its purpose; an unpurposed read has no path.
     if (!purpose) throw runtimeAccountUnavailable();
     let account: WalletProviderCredentialSnapshot | null;
     if (purpose.kind === 'retirement') {
@@ -190,9 +201,9 @@ async function snapshot(
         claimHash: purpose.claimHash,
         ...purpose.target,
       });
-    } else if (purpose.kind === 'issuance') {
+    } else if (purpose.kind === 'issuance' || purpose.kind === 'samsung-issuance') {
       if (
-        provider !== 'google' ||
+        provider !== (purpose.kind === 'issuance' ? 'google' : 'samsung') ||
         !(await isCurrentApprovedProjection(ctx, {
           orgId: scope.orgId,
           mode: scope.mode,

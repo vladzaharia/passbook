@@ -13,6 +13,7 @@ import {
   runtimeAccountUnavailable,
   runtimeGoogleAccount,
   runtimeSamsungAccount,
+  SAMSUNG_ISSUANCE,
   type WalletRetirementClaim,
   WalletRuntimeError,
   type WalletRuntimeScope,
@@ -40,6 +41,7 @@ export {
   runtimeAccountUnavailable,
   runtimeGoogleAccount,
   runtimeSamsungAccount,
+  SAMSUNG_ISSUANCE,
   WalletRuntimeError,
 };
 
@@ -223,6 +225,6 @@ export async function assertWalletRuntimeAccount(
   const scope = copyRuntimeScope(input);
   if (provider !== 'google' && provider !== 'samsung') throw runtimeAccountUnavailable();
   if (provider === 'google') return runtimeGoogleIssuanceCurrent(ctx, scope);
-  await runtimeSamsungAccount(ctx, scope);
-  await current(ctx, scope, provider);
+  await runtimeSamsungAccount(ctx, scope, SAMSUNG_ISSUANCE);
+  await current(ctx, scope, provider, SAMSUNG_ISSUANCE);
 }
