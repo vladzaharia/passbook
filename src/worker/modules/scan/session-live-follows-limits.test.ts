@@ -172,4 +172,25 @@ describe('customer screen follows: limits and edits', () => {
     expect(body).toContain('overrides');
     expect(body).not.toContain('follows');
   });
+
+  it('refuses a PATCH that leaves unreadable stored overrides, and accepts one that replaces them', async () => {
+    const { kit, authority } = fixtures;
+    const { session, doors, screen } = await screenOf('Unreadable', 2, (ids) => ids);
+    await run(kit.env.DB, 'UPDATE scanning_devices SET overrides=? WHERE scanner_id=?', [
+      '{"follows":"x"}',
+      screen,
+    ]);
+    await expect(
+      updateScanningDevice(kit.ctx, 'admin-1', session.id, screen, { name: 'Same' }, authority),
+    ).rejects.toMatchObject({ code: 'SCANNING_FOLLOWS_INVALID' });
+    const fixed = await updateScanningDevice(
+      kit.ctx,
+      'admin-1',
+      session.id,
+      screen,
+      { overrides: { follows: [doors[1] ?? ''] } },
+      authority,
+    );
+    expect(fixed.overrides.follows).toEqual([doors[1]]);
+  });
 });

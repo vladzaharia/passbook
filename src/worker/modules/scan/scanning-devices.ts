@@ -3,6 +3,7 @@ import type { Mode } from '../../../shared/contracts/common.ts';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
 import {
   type CreateScanningDeviceSchema,
+  type ScanDeviceOverrides,
   ScanDeviceOverridesSchema,
   type UpdateScanningDeviceSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
@@ -148,13 +149,13 @@ export async function updateScanningDevice(
       'SCAN_SURFACE_UNSUPPORTED',
     );
   const storedParsed = ScanDeviceOverridesSchema.safeParse(JSON.parse(device.overrides));
-  if (!storedParsed.success)
+  if (!storedParsed.success && input.overrides === undefined)
     throw new ValidationError(
       'Correct this device’s settings first.',
       [],
       'SCANNING_FOLLOWS_INVALID',
     );
-  const storedOverrides = storedParsed.data;
+  const storedOverrides: ScanDeviceOverrides = storedParsed.success ? storedParsed.data : {};
   const overrides = resolveFollows(
     input.overrides ?? storedOverrides,
     effective,
