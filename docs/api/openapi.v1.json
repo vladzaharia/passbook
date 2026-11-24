@@ -138674,6 +138674,7 @@
                         ],
                         "milestone": null,
                         "test": false,
+                        "figure": "$12.00",
                         "welcome": "Welcome to Northwind"
                       }
                     }
