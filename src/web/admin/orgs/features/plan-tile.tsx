@@ -1,6 +1,6 @@
 import { type CSSProperties, useId } from 'react';
 import type { PresetOptionDto } from '@/shared/contracts/entitlement-admin.ts';
-import { CHANNEL_CHIP, PLAN_COPY } from '@/shared/copy/plans.ts';
+import { PLAN_COPY } from '@/shared/copy/plans.ts';
 import type { PlanFacts } from '@/shared/plan-facts.ts';
 import { cn } from '@/web/lib/cn.ts';
 import { Badge } from '@/web/ui/index.ts';
