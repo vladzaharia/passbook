@@ -50,9 +50,37 @@ export async function ensureSamsungSyncTargets(
   claim: WalletClaimRef,
 ): Promise<void> {
   const hash = await walletClaimHash(claim.claimHandle);
-  await run(
-    ctx.env.DB,
-    `INSERT INTO wallet_provider_sync_targets
+  const params = [
+    claim.now,
+    claim.now - SAMSUNG_UNCONFIRMED_SERVE_MS,
+    claim.instanceId,
+    claim.orgId,
+    claim.mode,
+    claim.provider,
+    claim.version,
+    hash,
+    claim.now,
+  ];
+  // A new market gets only its own send: a country an earlier identical operation delivered is skipped.
+  await run(ctx.env.DB, targetsSql(true), params);
+  // An operation that is the same pass state with nothing new to deliver (an expiry or event boundary, a
+  // reissue) skipped every country above: it exists to send again, so it sends to all of them.
+  await run(ctx.env.DB, targetsSql(false), params);
+}
+
+/** The insert of the claimed operation's targets; `skipDelivered` leaves out countries an identical operation delivered. */
+function targetsSql(skipDelivered: boolean): string {
+  const delivered = `AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations previous
+        JOIN wallet_provider_sync_targets delivered ON delivered.operation_id = previous.id
+          AND delivered.country_code = h.country_code AND delivered.state = 'succeeded'
+        WHERE previous.instance_id = i.id AND previous.version < o.version AND previous.kind = o.kind
+          AND previous.credential_keyset_commitment = o.credential_keyset_commitment
+          AND previous.pass_row_version = o.pass_row_version AND previous.account_epoch = o.account_epoch
+          AND previous.lifecycle_generation = o.lifecycle_generation
+          AND previous.pass_credential_generation = o.pass_credential_generation
+          AND previous.projection_release_id = o.projection_release_id
+          AND previous.adapter_revision = o.adapter_revision AND previous.policy_revision = o.policy_revision)`;
+  return `INSERT INTO wallet_provider_sync_targets
       (operation_id, country_code, state, attempts, updated_at)
     SELECT DISTINCT o.id, h.country_code, 'pending', 0, ?
     FROM wallet_provider_instances i
@@ -66,29 +94,8 @@ export async function ensureSamsungSyncTargets(
       AND ? = 'samsung' AND o.version = ? AND o.state = 'claimed'
       AND o.claim_hash = ? AND o.claim_expires_at > ?
       AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND o.credential_keyset_commitment = i.credential_keyset_commitment
-      AND NOT EXISTS (SELECT 1 FROM wallet_provider_instance_operations previous
-        JOIN wallet_provider_sync_targets delivered ON delivered.operation_id = previous.id
-          AND delivered.country_code = h.country_code AND delivered.state = 'succeeded'
-        WHERE previous.instance_id = i.id AND previous.version < o.version AND previous.kind = o.kind
-          AND previous.credential_keyset_commitment = o.credential_keyset_commitment
-          AND previous.pass_row_version = o.pass_row_version AND previous.account_epoch = o.account_epoch
-          AND previous.lifecycle_generation = o.lifecycle_generation
-          AND previous.pass_credential_generation = o.pass_credential_generation
-          AND previous.projection_release_id = o.projection_release_id
-          AND previous.adapter_revision = o.adapter_revision AND previous.policy_revision = o.policy_revision)
-    ON CONFLICT(operation_id, country_code) DO NOTHING`,
-    [
-      claim.now,
-      claim.now - SAMSUNG_UNCONFIRMED_SERVE_MS,
-      claim.instanceId,
-      claim.orgId,
-      claim.mode,
-      claim.provider,
-      claim.version,
-      hash,
-      claim.now,
-    ],
-  );
+      ${skipDelivered ? delivered : 'AND NOT EXISTS (SELECT 1 FROM wallet_provider_sync_targets own WHERE own.operation_id = o.id)'}
+    ON CONFLICT(operation_id, country_code) DO NOTHING`;
 }
 
 /** Only the claim holder can enumerate outcomes, including successes from earlier attempts. */

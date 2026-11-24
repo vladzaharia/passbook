@@ -183,7 +183,7 @@ export async function runSamsungWalletProviderOperation(
   if (results.some((target) => target.state === 'failed')) {
     return complete(ctx, claim, op, { kind: 'failure', reason: 'rejected', retryable: false });
   }
-  const done = await complete(ctx, claim, op, { kind: 'success' });
+  const done = await complete(ctx, claim, op, { kind: 'success' }, state);
   if (done === 'completed' && state !== 'DELETED' && state !== 'CANCELED')
     await recordSamsungMessageOutcome(execution);
   return done;

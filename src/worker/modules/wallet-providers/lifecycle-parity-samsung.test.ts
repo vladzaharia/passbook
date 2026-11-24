@@ -2,6 +2,7 @@
 // door already denying before the provider is called, and what Get Card Data still answers for a kept ref.
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createMockWallets } from '../../../../test/mock-wallets/index.ts';
+import { countQueries } from '../../jobs/query-counter.ts';
 import { first, run } from '../../platform/db.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import { getHolderPass } from '../holders/repo.ts';
@@ -11,6 +12,7 @@ import { deletePass, unvoidPass, updatePass, voidPass } from '../passes/service.
 import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { drainWalletProviderSync } from './sync.ts';
+import { handleWalletReissue, QUERIES_PER_COPY } from './wallet-reissue.ts';
 
 beforeAll(() => {
   setWalletProvidersEnabledForTest(true);
@@ -67,10 +69,12 @@ describe('6.1 Samsung: the state sent for each row', () => {
   });
 
   it('void: denied first, CANCELED sent, the op settles and the ref is still served; unvoid: ACTIVE', async () => {
-    const { t, ctx, sent, denied, scope } = await card();
+    const { t, ctx, sent, denied, scope, getCard } = await card();
     await voidPass(ctx, system, t.pass.id, scope);
     await drainWalletProviderSync(ctx);
     expect(sent()).toBe('CANCELED');
+    // Get Card Data still answers the kept ref (authenticated, no card data), and serves it again after an unvoid.
+    expect((await getCard()).status).toBe(204);
     expect(denied.at(-1)).toBe('voided/kept');
     expect(
       await first(
@@ -87,6 +91,7 @@ describe('6.1 Samsung: the state sent for each row', () => {
     await drainWalletProviderSync(ctx);
     await drainWalletProviderSync(ctx);
     expect(sent()).toBe('ACTIVE');
+    expect((await getCard()).status).toBe(200);
   });
 
   it('quarantine: CANCELED, as a void', async () => {
@@ -113,6 +118,22 @@ describe('6.1 Samsung: the state sent for each row', () => {
   it('delete: DELETED sent and the instance retires with its tombstone', async () => {
     const { t, ctx, sent } = await card();
     await deletePass(ctx, system, t.pass.id, null);
+    await drainWalletProviderSync(ctx);
+    await drainWalletProviderSync(ctx);
+    expect(sent()).toBe('DELETED');
+    expect(await first(t.kit.env.DB, 'SELECT 1 FROM wallet_samsung_tombstones')).not.toBeNull();
+  });
+
+  it('the tombstone follows what was sent: a restore landing before the finish does not skip it', async () => {
+    const { t, ctx, sent } = await card();
+    const real = globalThis.fetch;
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+      const res = await real(input, init);
+      if (String(input instanceof Request ? input.url : input).endsWith('/updates'))
+        await run(t.kit.env.DB, 'UPDATE passes SET removed_at = NULL WHERE id = ?', [t.pass.id]);
+      return res;
+    });
+    await removePass(ctx, system, t.pass.id, {}, null);
     await drainWalletProviderSync(ctx);
     await drainWalletProviderSync(ctx);
     expect(sent()).toBe('DELETED');
@@ -149,6 +170,40 @@ describe('6.1 Samsung: the state sent for each row', () => {
   });
 });
 
+describe('Samsung expiry boundary through the drain', () => {
+  it('parks until the pass expires, then recompiles with no edit and sends EXPIRED', async () => {
+    const { t, mock, ctx, sent } = await card();
+    const soon = t.kit.clock.now() + 3_600_000;
+    await edit(t, ctx);
+    await run(
+      t.kit.env.DB,
+      `UPDATE pass_versions SET pass_json = json_set(pass_json, '$.expirationDate', ?) WHERE pass_id = ?`,
+      [new Date(soon).toISOString(), t.pass.id],
+    );
+    await drainWalletProviderSync(ctx);
+    expect(sent()).toBe('UPDATED');
+    const parked = await first<{ next_attempt_at: number }>(
+      t.kit.env.DB,
+      `SELECT d.next_attempt_at FROM wallet_provider_instance_dirty d
+       JOIN wallet_provider_instances i ON i.id = d.instance_id WHERE i.pass_id = ?`,
+      [t.pass.id],
+    );
+    expect(parked?.next_attempt_at).toBe(soon);
+    const mark = mock.requests.length;
+    await drainWalletProviderSync(ctx);
+    expect(mock.requests.length).toBe(mark);
+    // The stored card-state read lapses in five minutes; the fixture's account cannot be read live again.
+    await run(
+      t.kit.env.DB,
+      'UPDATE wallet_samsung_card_state SET verified_at = verified_at + 3600001, expires_at = expires_at + 3600001',
+    );
+    t.kit.clock.advance(3_600_001);
+    await drainWalletProviderSync(ctx);
+    await drainWalletProviderSync(ctx);
+    expect(sent()).toBe('EXPIRED');
+  });
+});
+
 describe('a new market wakes a parked instance (M1)', () => {
   it('delivers ADDED with a new country and the next drain sends, not at the next boundary', async () => {
     const { t, mock, ctx } = await card();
@@ -165,7 +220,9 @@ describe('a new market wakes a parked instance (M1)', () => {
     await drainWalletProviderSync(ctx);
     const parked = await first<{ next_attempt_at: number }>(
       t.kit.env.DB,
-      'SELECT next_attempt_at FROM wallet_provider_instance_dirty',
+      `SELECT d.next_attempt_at FROM wallet_provider_instance_dirty d
+       JOIN wallet_provider_instances i ON i.id = d.instance_id WHERE i.pass_id = ?`,
+      [t.pass.id],
     );
     expect(parked?.next_attempt_at).toBe(at);
     const mark = mock.requests.length;
@@ -179,5 +236,25 @@ describe('a new market wakes a parked instance (M1)', () => {
     await drainWalletProviderSync(ctx);
     await drainWalletProviderSync(ctx);
     expect(mock.requests.slice(mark).some((r) => r.path.startsWith('/US/'))).toBe(true);
+  });
+});
+
+describe('a Samsung copy fits the reissue batch budget', () => {
+  it('spends no more queries per copy than the batch is sized for', async () => {
+    const { t, ctx } = await card();
+    const counter = countQueries(t.kit.env);
+    await handleWalletReissue(
+      {
+        kind: 'wallet.reissue',
+        reissueId: 'samsung-measured',
+        orgId: t.kit.org.id,
+        mode: 'live',
+        provider: 'samsung',
+      },
+      { ...ctx, env: counter.env },
+    );
+    expect(counter.count()).toBeLessThanOrEqual(QUERIES_PER_COPY);
+    // Measured, to see how much room is left: the run is the listing, the reconcile and the keyset reads.
+    expect(counter.count()).toBeGreaterThan(0);
   });
 });
