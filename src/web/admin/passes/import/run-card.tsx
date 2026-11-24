@@ -1,7 +1,7 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { PassImportDto } from '@/shared/contracts/pass-imports.ts';
 import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
-import { Card, CardBody } from '../../../ui/index.ts';
+import { Card, CardBody, useNow } from '../../../ui/index.ts';
 import { RunDone, RunProgress, RunStats } from '../run-kit.tsx';
 
 /** About how long is left, from the rate so far; nothing until there is a rate to go by. */
@@ -15,11 +15,7 @@ function timeLeft(done: number, total: number, since: number | null, now: number
 export function RunningCard({ imp }: { imp: PassImportDto }) {
   const total = (imp.counts?.create ?? 0) + (imp.counts?.update ?? 0);
   const done = Math.min(imp.progress?.done ?? 0, total);
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 2000);
-    return () => clearInterval(t);
-  }, []);
+  const now = useNow(2000);
   const left = timeLeft(done, total, imp.committedAt, now);
   const text = C.progressText(done, total);
   return (

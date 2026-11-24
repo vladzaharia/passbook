@@ -6,6 +6,7 @@ import { ApprovalSheet } from '../result/approval-sheet.tsx';
 import { VerdictGlyph } from '../result/verdict-glyph.tsx';
 import { fill } from '../ui/copy.ts';
 import { useVisibleViewport } from '../ui/tray.tsx';
+import { useScrollTabStop } from '../ui/use-scroll-tab-stop.ts';
 import { ConfirmBody } from './assign-confirm.tsx';
 import { bannerLine, errorLine } from './assign-lines.ts';
 import { Identity, OpensLine, StepHeader } from './assign-steps.tsx';
@@ -218,6 +219,7 @@ export function AssignCard({
   const tone = toneOf(a);
   const wait = useRetryWait(a.error);
   const card = useRef<HTMLElement>(null);
+  useScrollTabStop(card);
   const view = useVisibleViewport();
   // The Manager PIN form and its error line scroll into the card, above the on-screen keyboard.
   const pinNote = a.pin?.note;

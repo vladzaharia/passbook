@@ -126,7 +126,7 @@ export const watchedOrgEvents = (
   all<{ id: string; name: string; capacity: number | null }>(
     db,
     `SELECT id, name, capacity FROM scan_events
-     WHERE org_id = ? AND mode = ? AND reentry = 1 AND archived_at IS NULL AND (? IS NULL OR id = ?)
+     WHERE org_id = ? AND mode = ? AND reentry = 1 AND archived_at IS NULL${o.id === undefined ? '' : ' AND id = ?'}
      ORDER BY opens_at DESC, id LIMIT ?`,
-    [orgId, mode, o.id ?? null, o.id ?? null, o.limit ?? 64],
+    [orgId, mode, ...(o.id === undefined ? [] : [o.id]), o.limit ?? 64],
   );

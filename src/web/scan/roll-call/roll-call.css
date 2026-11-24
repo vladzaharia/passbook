@@ -96,6 +96,20 @@
 .scan-rc-body {
   flex: 1;
 }
+/* A phone on its side: the head and a wrapped chip row would hold most of the screen above the list. */
+@media (max-height: 500px) {
+  .scan-rc-head {
+    position: static;
+  }
+  .scan-rc-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .scan-rc-filter {
+    flex: none;
+  }
+}
 .scan-rc-row {
   display: flex;
   align-items: center;

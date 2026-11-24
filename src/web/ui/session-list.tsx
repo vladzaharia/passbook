@@ -4,6 +4,7 @@ import { formatLastActive } from '../lib/format.ts';
 import { useInsertHighlight } from '../lib/motion.ts';
 import { Button } from './button.tsx';
 import { ListRow, ListRows } from './list-row.tsx';
+import { useNow } from './rel-time.tsx';
 import { StatusPill } from './status-pill.tsx';
 
 export interface SessionItem {
@@ -40,7 +41,7 @@ export function SessionList({
   className,
 }: SessionListProps) {
   const fresh = useInsertHighlight(items.map((s) => s.id));
-  const now = Date.now();
+  const now = useNow();
   return (
     <ListRows label="Sessions" className={className}>
       {items.map((s) => {

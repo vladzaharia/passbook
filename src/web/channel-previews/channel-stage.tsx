@@ -1,15 +1,15 @@
 import { Link } from '@tanstack/react-router';
 import { Eye } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
-import type { ChainLevel, EffectiveChannels } from '@/shared/contracts/channels.ts';
+import type { EffectiveChannels } from '@/shared/contracts/channels.ts';
 import { CHANNEL_COPY } from '@/shared/copy/channels.ts';
 import { PREVIEW_COPY } from '@/shared/copy/previews.ts';
 import { TEMPLATE_BRAND_COPY } from '@/shared/copy/template-brand.ts';
-import { AskPassbook } from '../admin/brand/channel-row.tsx';
 import { PaperPreview } from '../admin/templates/designer/paper-preview.tsx';
 import { Button, Dialog, DialogContent, Skeleton } from '../ui/index.ts';
 import { ChannelPreviews } from './channel-previews.tsx';
-import type { PreviewChannel, PreviewSource } from './types.ts';
+import type { OffLevel } from './locked-preview.tsx';
+import type { PreviewSource } from './types.ts';
 
 /** The Paper pane for a saved template or a pass: read only, from the template's `paper` block. */
 export function PaperChannel({
@@ -40,34 +40,23 @@ export function PaperChannel({
 }
 
 /**
- * What a locked pane offers for the level that stops it: the org page row, the channels tab of the
- * level this page edits, or Ask PassBook when the plan does not include the channel. PassBook's own
- * switches offer nothing. On a pass page `own` is `pass`, and the template level links to its page.
+ * The way back on from an off pane: the channels tab of the level this page edits, or, on a pass
+ * page, the template's when the template turns it off. On a pass page `own` is `pass`.
  */
 export function lockedAction({
   orgId,
-  orgName,
   channelsTab,
   own = 'template',
   templateId,
   onNavigate,
 }: {
   orgId?: string | undefined;
-  orgName?: string | undefined;
   channelsTab?: string | undefined;
-  own?: 'template' | 'pass' | undefined;
+  own?: OffLevel | undefined;
   templateId?: string | undefined;
   onNavigate?: (() => void) | undefined;
 }) {
-  return ({ channel, level }: { channel: PreviewChannel; level: ChainLevel }): ReactNode => {
-    if (level === 'org' && orgId)
-      return (
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/admin/o/$orgId/brand" params={{ orgId }} hash="channels" onClick={onNavigate}>
-            {TEMPLATE_BRAND_COPY.locked.openOrg}
-          </Link>
-        </Button>
-      );
+  return ({ level }: { level: OffLevel }): ReactNode => {
     if (level === own && channelsTab)
       return (
         <Button variant="outline" size="sm" asChild>
@@ -89,7 +78,7 @@ export function lockedAction({
           </Link>
         </Button>
       );
-    return level === 'plan' ? <AskPassbook channel={channel} orgName={orgName ?? ''} /> : null;
+    return null;
   };
 }
 
@@ -107,7 +96,6 @@ export function ChannelStage({
   orgId,
   channels,
   channelsTab,
-  orgName,
   own,
   lockTab,
 }: {
@@ -120,7 +108,6 @@ export function ChannelStage({
   channels?: EffectiveChannels | undefined;
   /** The page's tab that changes channels: the empty state links to it. */
   channelsTab?: string | undefined;
-  orgName?: string | undefined;
   /** The level this page edits: `pass` on a pass page. */
   own?: 'template' | 'pass' | undefined;
   /** The tab that edits that level, when it is not `channelsTab`. */
@@ -134,7 +121,6 @@ export function ChannelStage({
       channels={channels}
       lockedAction={lockedAction({
         orgId,
-        orgName,
         channelsTab: lockTab ?? channelsTab,
         own,
         templateId,
