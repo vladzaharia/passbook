@@ -9533,7 +9533,30 @@ export type ScanTemplateRef = {
 
 export type ScanWorkspace = {
   session: ScanningSession;
-  device: ScanningDevice;
+  device: {
+    id: string;
+    sessionId: string;
+    name: string;
+    surface: "auto" | "phone" | "operator" | "desk" | "customer";
+    effectiveSurface: "phone" | "operator" | "desk" | "customer";
+    overrides: {
+      flow?: "auto" | "choose";
+      reader?: "none" | "barcode" | "nfc";
+      direction?: "in" | "out" | "both";
+      lookup?: boolean;
+      showPhoto?: boolean;
+    };
+    settings: ScannerSettings;
+    capabilities: ScanDeviceCapabilities;
+    reportedAt: number | null;
+    paired: boolean;
+    online: boolean;
+    revoked: boolean;
+    lastSeenAt: number | null;
+    updatedAt: number;
+    signIn: "paired" | "admin";
+    adminName: string | null;
+  };
 } | null;
 
 export type ScanZonesArchiveResponse = {

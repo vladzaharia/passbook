@@ -7,9 +7,10 @@ import { ValidationError } from '../../platform/errors.ts';
 import type { ScanningDeviceRow } from './repo-scanning-devices.ts';
 
 /**
- * The overrides to store. Only a screen follows scanners, so a scan surface drops `follows`. Ids
- * already stored are kept as they are (the live read intersects with the session, so a revoked one
- * is harmless); only newly added ids must be live scan devices of this session.
+ * The overrides to store. Only newly added ids must be live scan devices of this session: stored
+ * ids are harmless because the live read intersects with the session. On a scan surface `follows`
+ * is inert, so a save that omits it keeps the stored ids; the device may flip back to a screen
+ * without a PIN, and dropping them would widen it to every scanner.
  */
 export function resolveFollows(
   overrides: ScanDeviceOverrides,
@@ -18,7 +19,10 @@ export function resolveFollows(
   stored: readonly string[] = [],
 ): ScanDeviceOverrides {
   const { follows, ...rest } = overrides;
-  if (!follows || roleForSurface(effectiveSurface) === 'scan') return rest;
+  if (!follows)
+    return roleForSurface(effectiveSurface) === 'scan' && stored.length
+      ? { ...rest, follows: [...stored] }
+      : rest;
   const live = new Set(
     siblings
       .filter((d) => d.revoked_at === null && roleForSurface(d.effective_surface) === 'scan')

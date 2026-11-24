@@ -12183,7 +12183,140 @@
             "$ref": "#/components/schemas/ScanningSession"
           },
           "device": {
-            "$ref": "#/components/schemas/ScanningDevice"
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "sessionId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "name": {
+                "type": "string"
+              },
+              "surface": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "phone",
+                  "operator",
+                  "desk",
+                  "customer"
+                ]
+              },
+              "effectiveSurface": {
+                "type": "string",
+                "enum": [
+                  "phone",
+                  "operator",
+                  "desk",
+                  "customer"
+                ]
+              },
+              "overrides": {
+                "type": "object",
+                "properties": {
+                  "flow": {
+                    "type": "string",
+                    "enum": [
+                      "auto",
+                      "choose"
+                    ]
+                  },
+                  "reader": {
+                    "type": "string",
+                    "enum": [
+                      "none",
+                      "barcode",
+                      "nfc"
+                    ]
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "in",
+                      "out",
+                      "both"
+                    ]
+                  },
+                  "lookup": {
+                    "type": "boolean"
+                  },
+                  "showPhoto": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "settings": {
+                "$ref": "#/components/schemas/ScannerSettings"
+              },
+              "capabilities": {
+                "$ref": "#/components/schemas/ScanDeviceCapabilities"
+              },
+              "reportedAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "paired": {
+                "type": "boolean"
+              },
+              "online": {
+                "type": "boolean"
+              },
+              "revoked": {
+                "type": "boolean"
+              },
+              "lastSeenAt": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "updatedAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "signIn": {
+                "type": "string",
+                "enum": [
+                  "paired",
+                  "admin"
+                ]
+              },
+              "adminName": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "sessionId",
+              "name",
+              "surface",
+              "effectiveSurface",
+              "overrides",
+              "settings",
+              "capabilities",
+              "reportedAt",
+              "paired",
+              "online",
+              "revoked",
+              "lastSeenAt",
+              "updatedAt",
+              "signIn",
+              "adminName"
+            ]
           }
         },
         "required": [
@@ -12738,152 +12871,6 @@
           "deviceCount",
           "onlineCount",
           "today"
-        ]
-      },
-      "ScanningDevice": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "sessionId": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 64
-          },
-          "name": {
-            "type": "string"
-          },
-          "surface": {
-            "type": "string",
-            "enum": [
-              "auto",
-              "phone",
-              "operator",
-              "desk",
-              "customer"
-            ]
-          },
-          "effectiveSurface": {
-            "type": "string",
-            "enum": [
-              "phone",
-              "operator",
-              "desk",
-              "customer"
-            ]
-          },
-          "overrides": {
-            "type": "object",
-            "properties": {
-              "flow": {
-                "type": "string",
-                "enum": [
-                  "auto",
-                  "choose"
-                ]
-              },
-              "reader": {
-                "type": "string",
-                "enum": [
-                  "none",
-                  "barcode",
-                  "nfc"
-                ]
-              },
-              "direction": {
-                "type": "string",
-                "enum": [
-                  "in",
-                  "out",
-                  "both"
-                ]
-              },
-              "lookup": {
-                "type": "boolean"
-              },
-              "showPhoto": {
-                "type": "boolean"
-              },
-              "follows": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 64
-                },
-                "minItems": 1,
-                "maxItems": 64
-              }
-            },
-            "additionalProperties": false
-          },
-          "settings": {
-            "$ref": "#/components/schemas/ScannerSettings"
-          },
-          "capabilities": {
-            "$ref": "#/components/schemas/ScanDeviceCapabilities"
-          },
-          "reportedAt": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0
-          },
-          "paired": {
-            "type": "boolean"
-          },
-          "online": {
-            "type": "boolean"
-          },
-          "revoked": {
-            "type": "boolean"
-          },
-          "lastSeenAt": {
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 0
-          },
-          "updatedAt": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "signIn": {
-            "type": "string",
-            "enum": [
-              "paired",
-              "admin"
-            ]
-          },
-          "adminName": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "sessionId",
-          "name",
-          "surface",
-          "effectiveSurface",
-          "overrides",
-          "settings",
-          "capabilities",
-          "reportedAt",
-          "paired",
-          "online",
-          "revoked",
-          "lastSeenAt",
-          "updatedAt",
-          "signIn",
-          "adminName"
         ]
       },
       "ScannerSettings": {
@@ -21336,6 +21323,152 @@
           "onlineCount",
           "today",
           "devices"
+        ]
+      },
+      "ScanningDevice": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "sessionId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "name": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "phone",
+              "operator",
+              "desk",
+              "customer"
+            ]
+          },
+          "effectiveSurface": {
+            "type": "string",
+            "enum": [
+              "phone",
+              "operator",
+              "desk",
+              "customer"
+            ]
+          },
+          "overrides": {
+            "type": "object",
+            "properties": {
+              "flow": {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "choose"
+                ]
+              },
+              "reader": {
+                "type": "string",
+                "enum": [
+                  "none",
+                  "barcode",
+                  "nfc"
+                ]
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "in",
+                  "out",
+                  "both"
+                ]
+              },
+              "lookup": {
+                "type": "boolean"
+              },
+              "showPhoto": {
+                "type": "boolean"
+              },
+              "follows": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                },
+                "minItems": 1,
+                "maxItems": 64
+              }
+            },
+            "additionalProperties": false
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ScannerSettings"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/ScanDeviceCapabilities"
+          },
+          "reportedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "paired": {
+            "type": "boolean"
+          },
+          "online": {
+            "type": "boolean"
+          },
+          "revoked": {
+            "type": "boolean"
+          },
+          "lastSeenAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "signIn": {
+            "type": "string",
+            "enum": [
+              "paired",
+              "admin"
+            ]
+          },
+          "adminName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sessionId",
+          "name",
+          "surface",
+          "effectiveSurface",
+          "overrides",
+          "settings",
+          "capabilities",
+          "reportedAt",
+          "paired",
+          "online",
+          "revoked",
+          "lastSeenAt",
+          "updatedAt",
+          "signIn",
+          "adminName"
         ]
       },
       "CreatedScanningDevice": {

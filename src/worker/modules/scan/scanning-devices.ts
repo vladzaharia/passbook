@@ -1,9 +1,10 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import { ScannerSettingsSchema } from '../../../shared/contracts/scan.ts';
-import type {
-  CreateScanningDeviceSchema,
-  UpdateScanningDeviceSchema,
+import {
+  type CreateScanningDeviceSchema,
+  ScanDeviceOverridesSchema,
+  type UpdateScanningDeviceSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { roleForSurface, surfaceFor } from '../../../shared/scan-surfaces.ts';
 import { readStoredCapabilities } from '../../../shared/stored-capabilities.ts';
@@ -146,12 +147,19 @@ export async function updateScanningDevice(
       [],
       'SCAN_SURFACE_UNSUPPORTED',
     );
-  const storedOverrides = JSON.parse(device.overrides);
+  const storedParsed = ScanDeviceOverridesSchema.safeParse(JSON.parse(device.overrides));
+  if (!storedParsed.success)
+    throw new ValidationError(
+      'Correct this device’s settings first.',
+      [],
+      'SCANNING_FOLLOWS_INVALID',
+    );
+  const storedOverrides = storedParsed.data;
   const overrides = resolveFollows(
     input.overrides ?? storedOverrides,
     effective,
     await scanningDeviceRows(ctx.env.DB, parent.org_id, parent.id),
-    storedOverrides.follows,
+    storedOverrides.follows ?? [],
   );
   const scope = await resolveSessionScope(ctx, parent);
   const parentSettings = input.overrides === undefined ? null : effectiveSessionSettings(parent);

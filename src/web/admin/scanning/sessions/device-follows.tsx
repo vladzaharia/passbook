@@ -31,7 +31,7 @@ export function DeviceFollows({
         help="Greetings from every door appear here."
         checked={!chosen}
         disabled={!scanners.length}
-        onCheckedChange={(all) => set(all ? undefined : scanners.map((d) => d.id).slice(0, 16))}
+        onCheckedChange={(all) => set(all ? undefined : scanners.map((d) => d.id))}
       />
       <DependentSettings open={!!chosen}>
         <fieldset className="grid min-w-0 gap-1">

@@ -1987,8 +1987,8 @@
   },
   "SCANNING_FOLLOWS_INVALID": {
     "title": "Scanners to follow not allowed",
-    "when": "A screen follows a scanner outside its session, or a scanner was given scanners to follow.",
-    "fix": "Pick live scanners from the same session for a customer screen.",
+    "when": "A customer screen was given a scanner that is not a live scanner of its session, or its stored scanners no longer parse.",
+    "fix": "Pick live scanners from the same session, after the session exists.",
     "retryable": false
   },
   "SCANNING_DEVICE_NOT_FOUND": {
