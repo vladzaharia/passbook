@@ -726,3 +726,54 @@ describe('an org save for an org two edits behind', () => {
     expect(job).toMatchObject({ full: true });
   });
 });
+
+describe('the journal sweep at scale and around expiry', () => {
+  const putTrial = async (t: ApplyKit, orgId: string) => {
+    const path = `/platform/orgs/${orgId}/entitlements`;
+    const read = (await (
+      await t.kit.api(path, { headers: t.kit.auth.admin() })
+    ).json()) as OrgEntitlementsDto;
+    const res = await t.kit.api(path, {
+      method: 'PUT',
+      headers: { ...t.kit.auth.admin(), ...json },
+      body: JSON.stringify({ preset: 'trial', expectedRevision: read.revision, overrides: {} }),
+    });
+    expect(res.status, await res.clone().text()).toBe(200);
+  };
+
+  it('checks and recovers every one of 30 orgs changed at once whose job was lost', async () => {
+    const t = await applyKit(1);
+    const orgs: string[] = [];
+    for (let i = 0; i < 30; i++) {
+      const other = await t.otherOrg();
+      await putTrial(t, other.orgId);
+      orgs.push(other.orgId);
+    }
+    const sent = jobs(t).length;
+    t.kit.clock.advance(180_000);
+    await sweepEntitlementJournal(jobCtxOf(t.kit));
+    const again = jobs(t)
+      .slice(sent)
+      .map((j) => j.orgId);
+    expect([...new Set(again)].sort()).toEqual([...orgs].sort());
+    expect(again).toHaveLength(30);
+  }, 240_000);
+
+  it('skips an org holding an expired stored override: its expiry write journals the change', async () => {
+    const t = await applyKit(2);
+    await putTrial(t, t.orgId);
+    await run(
+      t.kit.env.DB,
+      `INSERT INTO org_entitlement_overrides (org_id, key, value, expires_at, updated_at) VALUES (?, 'members', '9', ?, ?)`,
+      [t.orgId, t.kit.clock.now() + 60_000, t.kit.clock.now()],
+    );
+    const mine = () => jobs(t).filter((j) => j.orgId === t.orgId).length;
+    const sent = mine();
+    t.kit.clock.advance(180_000);
+    await sweepEntitlementJournal(jobCtxOf(t.kit));
+    expect(mine()).toBe(sent);
+    // Once the expiry is journaled the org is no longer skipped for that reason.
+    await expireEntitlementOverrides(jobCtxOf(t.kit));
+    expect(await overrideRows(t, t.orgId)).toEqual([]);
+  });
+});
