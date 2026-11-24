@@ -58,6 +58,8 @@ export function useSavePassSetup(orgId: string) {
         client.invalidateQueries({ queryKey: orgKeys.all }),
         client.invalidateQueries({ queryKey: ['settings'] }),
         client.invalidateQueries({ queryKey: ['channels'] }),
+        // The designer's paper preview reads the org's footer from the brand kit.
+        client.invalidateQueries({ queryKey: ['admin', 'brand', orgId] }),
       ]);
     },
   });
@@ -85,6 +87,8 @@ export function useBrandMark(orgId: string | undefined) {
       queryFn: ({ signal }) =>
         api.get('/api/v1/brand', BrandKitSchema, { query: { orgId }, signal }),
       enabled: Boolean(orgId),
+      // A 403 (no org access) draws the full footer rather than retrying.
+      retry: false,
       select: (kit) => kit.mark,
     }).data ?? 'full'
   );
