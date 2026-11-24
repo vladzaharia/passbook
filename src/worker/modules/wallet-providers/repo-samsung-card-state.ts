@@ -60,14 +60,12 @@ export async function samsungCardStateFresh(
   /** Time the row must still have, for a decision that is followed by a write (a publish). */
   marginMs = 0,
 ): Promise<boolean> {
-  const live =
-    c.mode === 'test' ? " OR st.state IN ('ACTIVE', 'DRAFT', 'VERIFYING', 'VERIFIED')" : '';
   const row = await first<{ ok: number }>(
     db,
     `SELECT 1 AS ok FROM wallet_samsung_card_state st
     WHERE st.candidate_id = ? AND st.candidate_hash = ? AND st.account_id = ? AND st.account_epoch = ?
       AND st.card_type = ?
-      AND ((st.state = 'ACTIVE' AND st.testing_mode_off = 'Y')${live})
+      AND ((st.state = 'ACTIVE' AND st.testing_mode_off = 'Y')${c.mode === 'test' ? " OR st.state IN ('ACTIVE', 'DRAFT', 'VERIFYING')" : ''})
       AND st.verified_at <= ? AND ? < st.expires_at`,
     [c.id, c.candidateHash, c.accountId, c.accountEpoch, cardType, now, now + marginMs],
   );
