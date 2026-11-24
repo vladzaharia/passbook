@@ -169,7 +169,7 @@ export function ScopeSwitcher({ onNavigate }: { onNavigate?: () => void }) {
               aria-label="Find an organization"
               className="h-9 w-full border-b border-border bg-transparent px-3 text-sm text-fg outline-hidden placeholder:text-fg-subtle pointer-coarse:h-11 pointer-coarse:text-[max(16px,1rem)]"
             />
-            <Command.List className="max-h-72 overflow-auto p-1">
+            <Command.List className="max-h-[min(18rem,calc(var(--radix-popover-content-available-height)_-_2.5rem))] overflow-auto overscroll-contain p-1">
               <Command.Empty className="px-3 py-2 text-sm text-fg-muted">No results</Command.Empty>
               {isAdmin || personal ? (
                 <Command.Group className={GROUP}>
