@@ -60,14 +60,14 @@ const bindingSql = projectionReleaseBindingPredicateSql({
 
 const CHECK_DEPTH = 32;
 const CHECK_TERMS = 51;
-const CTE_DEPTH = 25;
+const CTE_DEPTH = 26;
 
 describe('expression depth of the largest wallet-provider predicates', () => {
   // Measured when written (the depth is an upper bound): ceilings, so a growing predicate fails here first.
   // CW10b raised three on purpose: a compiled Samsung card (schema 2) bypasses stored evidence with
   // one `OR schema = 2` per evidence predicate (upsert terms 248 -> 252, revoke depth 25 -> 26 and
   // terms 55 -> 56, binding terms 159 -> 162). All stay far below remote D1's limit of 100.
-  // The credential-presence COALESCE (account-presence.ts) put one level on the epoch checks: 24 -> 25, 26 -> 27, 31 -> 32.
+  // The credential-presence COALESCE (account-presence.ts) put one level on the epoch checks: 24 -> 25, 26 -> 27, 31 -> 32, CTE 25 -> 26.
   it.each([
     ['upsert proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now'), 63, 252],
     ['revoke proof', walletInstanceOperationCurrentSql('i', 'op', 'clock.now', 'revoke'), 26, 56],
