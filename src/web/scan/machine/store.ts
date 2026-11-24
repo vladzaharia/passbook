@@ -9,6 +9,7 @@ import { SCAN_TIMING } from '../timing.ts';
 import { accessBeat, type MachineEvent } from './access-events.ts';
 import { createRunner } from './commands.ts';
 import { nextDeadline } from './deadlines.ts';
+import { createDraftSync } from './draft-sync.ts';
 import { manualCheckIn } from './manual-check-in.ts';
 import type { ScanDeps } from './ports.ts';
 import { type ScanView, viewOf } from './present.ts';
@@ -62,6 +63,7 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
     for (const l of listeners) l();
   };
 
+  const drafts = createDraftSync(deps);
   const runner = createRunner(deps, {
     state: () => state,
     dispatch: (e) => dispatch(e),
@@ -153,6 +155,7 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
           deps.unsure.clear().catch((error: unknown) => void error);
         }
         runner.run(result.cmds as Cmd[]);
+        drafts.observe(state, result.cmds);
         if ((next.type === 'online' && next.online) || (next.type === 'visible' && next.visible))
           retry();
       }
@@ -210,6 +213,7 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
       disposed = true;
       for (const t of [beatTimer, tickTimer, retryTimer, pollTimer])
         if (t !== null) deps.clock.clearTimeout(t);
+      drafts.dispose();
       listeners.clear();
     },
   };

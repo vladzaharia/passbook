@@ -96,6 +96,10 @@ export async function createRuntime(
   const store = createScanStore(
     {
       api,
+      draft: {
+        put: (body, o) => api.draftPut(body, o),
+        clear: (ref, o) => api.draftClear(ref, o),
+      },
       tags: tagsPortOf(api),
       toFail,
       camera,

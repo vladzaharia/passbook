@@ -8,20 +8,13 @@ import {
   PassNotesSchema,
 } from '../../../shared/contracts/scan-history.ts';
 import { ScanStaffNewPinSchema } from '../../../shared/contracts/scan-session.ts';
-import type { Call } from './scan-api-support.ts';
+import { draftCalls } from './scan-api-draft.ts';
+import type { Call, ScanRequest } from './scan-api-support.ts';
 
-/** The device's one request function: the credential, the retries and the typed answer. */
-export type ScanRequest = <S extends z.ZodType>(
-  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
-  path: string,
-  schema: S | null,
-  body?: unknown,
-  call?: Call,
-) => Promise<z.infer<S>>;
-
-/** A person's history and staff notes, and the new PIN of a signed-in person whose PIN was shared. */
+/** A person's history and staff notes, the new PIN of a signed-in person whose PIN was shared, and the draft calls. */
 export function personCalls(request: ScanRequest) {
   return {
+    ...draftCalls(request),
     staffNewPin: () => request('POST', '/staff/pin', ScanStaffNewPinSchema),
     history: (
       passId: string,

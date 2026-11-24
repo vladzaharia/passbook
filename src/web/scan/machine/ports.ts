@@ -52,8 +52,19 @@ export interface FailInfo {
   triesLeft?: number;
 }
 
+/** The amount under review on followed customer screens. Fire and forget; rejects are dropped. */
+export interface DraftPort {
+  put(
+    body: { ref: string; actionId: string; amount: number },
+    o: { signal: AbortSignal },
+  ): Promise<unknown>;
+  clear(ref: string, o: { signal: AbortSignal }): Promise<unknown>;
+}
+
 export interface ScanDeps {
   api: ScanApiPort;
+  /** Absent: no customer screen sees a draft. */
+  draft?: DraftPort;
   /** The tag calls (assign, an admin's request). Absent: the scanner has no tags. */
   tags?: TagsPort;
   /** Maps a rejected call to the machine's `fail` event (api/to-fail.ts). */

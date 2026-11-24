@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { ScanLiveMessageSchema, type ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
+import { type CustomerDraft, nextDraft } from './customer-draft.ts';
 import { mergePlaces } from './monitor-model.ts';
 
 /** The live socket (polling while it is down): recent rows, counts, a welcome line. */
 export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) {
   const [rows, setRows] = useState<ScanLiveRow[]>([]);
   const [places, setPlaces] = useState<ScanPlaceRev[]>([]);
+  const [draft, setDraft] = useState<CustomerDraft | null>(null);
   const [welcome, setWelcome] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -24,7 +26,10 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
     let socket: WebSocket | null = null;
     let retry: ReturnType<typeof setTimeout> | undefined;
     let cursor: string | null = null;
+    /** Ready cards a cancel dropped: a later snapshot must not bring them back. */
+    const cancelled = new Set<string>();
     const reset = () => {
+      setDraft(null);
       setRows([]);
       setPlaces([]);
     };
@@ -38,7 +43,16 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
         void refetch();
         return;
       }
-      if ('resolved' in parsed.data || 'enroll' in parsed.data || 'draft' in parsed.data) return;
+      if ('draft' in parsed.data) {
+        const message = parsed.data.draft;
+        if ('cancelled' in message) {
+          cancelled.add(message.ref);
+          setRows((previous) => previous.filter((row) => row.id !== message.ref));
+        }
+        setDraft((previous) => nextDraft(previous, message));
+        return;
+      }
+      if ('resolved' in parsed.data || 'enroll' in parsed.data) return;
       const snapshot = parsed.data;
       cursor = snapshot.cursor;
       if (snapshot.welcome !== undefined) setWelcome(snapshot.welcome);
@@ -49,7 +63,12 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
         ),
       );
       setRows((previous) => {
-        const merged = new Map([...previous, ...snapshot.rows].map((row) => [row.id, row]));
+        const merged = new Map(
+          [...previous, ...snapshot.rows.filter((row) => !cancelled.has(row.id))].map((row) => [
+            row.id,
+            row,
+          ]),
+        );
         return [...merged.values()]
           .sort((a, b) => b.at - a.at || b.id.localeCompare(a.id))
           .slice(0, 100);
@@ -114,5 +133,5 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
       socket?.close();
     };
   }, [refetch, scope]);
-  return { rows, places, welcome, connected, now, setNow };
+  return { rows, places, draft, welcome, connected, now, setNow };
 }

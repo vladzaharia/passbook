@@ -11,6 +11,7 @@ import './live-screen.css';
 import { Toaster, toast } from '../../ui/toaster.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { MonitorHardware } from '../hardware/hardware-control.tsx';
+import { liveDraft, splitHeadline } from './customer-draft.ts';
 import { useMonitorBeat } from './monitor-beat.ts';
 import { MonitorBoard } from './monitor-board.tsx';
 import { deskActing, type OverrideNote, StaffControl, useLetIn } from './monitor-desk.tsx';
@@ -56,7 +57,7 @@ export function LiveScreen({
   /** The device API: Desk actions need it. Without one the monitor only reads. */
   api?: ScanApi;
 }) {
-  const { rows, places, welcome, connected, now, setNow } = useLiveFeed(session, refetch);
+  const { rows, places, draft, welcome, connected, now, setNow } = useLiveFeed(session, refetch);
   const [replay, setReplay] = useState(0);
   const [setup, setSetup] = useState(false);
   const [setupFocused, setSetupFocused] = useState(false);
@@ -113,7 +114,8 @@ export function LiveScreen({
     (row) => now - row.at < (customer ? CUSTOMER_HOLD_MS[row.kind] : 15 * 60_000),
   );
   const latest = recent[0];
-  const view = latest?.customer ?? null;
+  const shown = liveDraft(draft, latest?.kind === 'ready' ? latest.id : undefined, now)?.view;
+  const view = shown ?? latest?.customer ?? null;
   const latestId = latest?.id;
   const latestAt = latest?.at;
   const latestKind = latest?.kind;
@@ -148,6 +150,7 @@ export function LiveScreen({
         brandName={orgName || 'PassBook'}
         logoUrl={logoUrl}
         title={view ? view.band.headline : latest ? latest.label : (welcome ?? undefined)}
+        amount={shown ? splitHeadline(shown.band.headline) : undefined}
         eyebrow={view?.greet ?? undefined}
         hint={view?.band.sub ?? undefined}
         notice={connected ? null : CUSTOMER_COPY.reconnecting}
