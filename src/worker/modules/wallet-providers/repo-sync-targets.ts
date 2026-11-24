@@ -5,6 +5,7 @@ import type { WalletClaimRef, WalletReasonCode } from './instance-types.ts';
 import { samsungRevocableRefSql, samsungRouteCountriesSql } from './repo-callbacks-routing.ts';
 import { pinnedKeysetSql } from './repo-keyset-pin.ts';
 import { SAMSUNG_UNCONFIRMED_SERVE_MS } from './samsung-limits.ts';
+import type { SamsungCardState } from './samsung-token.ts';
 
 export interface SamsungSyncTarget {
   countryCode: string;
@@ -48,10 +49,12 @@ export async function samsungSyncCountryHints(
 export async function ensureSamsungSyncTargets(
   ctx: ServiceContext,
   claim: WalletClaimRef,
+  sent: SamsungCardState,
 ): Promise<void> {
   const hash = await walletClaimHash(claim.claimHandle);
   const params = [
     claim.now,
+    sent,
     claim.now - SAMSUNG_UNCONFIRMED_SERVE_MS,
     claim.instanceId,
     claim.orgId,
@@ -81,8 +84,8 @@ function targetsSql(skipDelivered: boolean): string {
           AND previous.projection_release_id = o.projection_release_id
           AND previous.adapter_revision = o.adapter_revision AND previous.policy_revision = o.policy_revision)`;
   return `INSERT INTO wallet_provider_sync_targets
-      (operation_id, country_code, state, attempts, updated_at)
-    SELECT DISTINCT o.id, h.country_code, 'pending', 0, ?
+      (operation_id, country_code, state, attempts, updated_at, sent_state)
+    SELECT DISTINCT o.id, h.country_code, 'pending', 0, ?, ?
     FROM wallet_provider_instances i
     JOIN wallet_provider_instance_operations o ON o.id = i.desired_operation_id
       AND o.instance_id = i.id AND o.version = i.desired_version
@@ -95,7 +98,8 @@ function targetsSql(skipDelivered: boolean): string {
       AND o.claim_hash = ? AND o.claim_expires_at > ?
       AND i.credential_keyset_commitment = ${pinnedKeysetSql} AND o.credential_keyset_commitment = i.credential_keyset_commitment
       ${skipDelivered ? delivered : 'AND NOT EXISTS (SELECT 1 FROM wallet_provider_sync_targets own WHERE own.operation_id = o.id)'}
-    ON CONFLICT(operation_id, country_code) DO NOTHING`;
+    ON CONFLICT(operation_id, country_code) DO UPDATE SET sent_state = excluded.sent_state
+      WHERE wallet_provider_sync_targets.state IN ('pending', 'retry')`;
 }
 
 /** Only the claim holder can enumerate outcomes, including successes from earlier attempts. */
@@ -230,4 +234,20 @@ export async function finishSamsungSyncTarget(
     ],
   );
   return row !== null;
+}
+
+/** The state this operation's targets were made to send; null for an operation from before it was recorded. */
+export async function samsungSentState(
+  db: D1Database,
+  instanceId: string,
+  version: number,
+): Promise<SamsungCardState | null> {
+  const row = await first<{ state: SamsungCardState }>(
+    db,
+    `SELECT t.sent_state AS state FROM wallet_provider_sync_targets t
+    JOIN wallet_provider_instance_operations o ON o.id = t.operation_id
+    WHERE o.instance_id = ? AND o.version = ? AND t.sent_state IS NOT NULL LIMIT 1`,
+    [instanceId, version],
+  );
+  return row?.state ?? null;
 }

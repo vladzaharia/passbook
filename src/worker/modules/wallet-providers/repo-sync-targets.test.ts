@@ -72,7 +72,7 @@ describe('Samsung sync target keyset authority', () => {
             [value, t.referenceId],
           );
           expect(await samsungSyncCountryHints(t.kit.ctx, instance)).toEqual([]);
-          await ensureSamsungSyncTargets(t.kit.ctx, claim);
+          await ensureSamsungSyncTargets(t.kit.ctx, claim, 'UPDATED');
           expect(await listSamsungSyncTargets(t.kit.ctx, claim)).toEqual([]);
         }
       } finally {
@@ -83,7 +83,7 @@ describe('Samsung sync target keyset authority', () => {
         );
       }
     });
-    await ensureSamsungSyncTargets(t.kit.ctx, claim);
+    await ensureSamsungSyncTargets(t.kit.ctx, claim, 'UPDATED');
     expect(
       (await listSamsungSyncTargets(t.kit.ctx, claim)).map((target) => target.countryCode),
     ).toEqual(['GB', 'US']);
@@ -94,7 +94,7 @@ describe('Samsung sync target keyset authority', () => {
       [t.referenceId, 'FR', now],
     );
 
-    await ensureSamsungSyncTargets(t.kit.ctx, claim);
+    await ensureSamsungSyncTargets(t.kit.ctx, claim, 'UPDATED');
     expect(
       (await listSamsungSyncTargets(t.kit.ctx, claim)).map((target) => target.countryCode),
     ).toEqual(['FR', 'GB', 'US']);
@@ -124,7 +124,7 @@ describe('Samsung sync target keyset authority', () => {
               id,
             ]);
             expect(await samsungSyncCountryHints(t.kit.ctx, instance)).toEqual([]);
-            await ensureSamsungSyncTargets(t.kit.ctx, claim);
+            await ensureSamsungSyncTargets(t.kit.ctx, claim, 'UPDATED');
             expect(
               await first(
                 db,
@@ -146,7 +146,7 @@ describe('Samsung sync target keyset authority', () => {
         }
       });
     }
-    await ensureSamsungSyncTargets(t.kit.ctx, claim);
+    await ensureSamsungSyncTargets(t.kit.ctx, claim, 'UPDATED');
     expect(
       (await listSamsungSyncTargets(t.kit.ctx, claim)).map((target) => target.countryCode),
     ).toEqual(['DE', 'FR', 'GB', 'US']);

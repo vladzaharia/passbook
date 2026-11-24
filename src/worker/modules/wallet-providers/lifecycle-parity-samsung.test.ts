@@ -12,7 +12,39 @@ import { deletePass, unvoidPass, updatePass, voidPass } from '../passes/service.
 import { setupSamsungCallbacks } from './callbacks-test-fixtures.ts';
 import { setWalletProvidersEnabledForTest } from './provider-policy.ts';
 import { drainWalletProviderSync } from './sync.ts';
+import { finishWalletProviderRetirement } from './sync-operation-retirement.ts';
 import { handleWalletReissue, QUERIES_PER_COPY } from './wallet-reissue.ts';
+
+/** Runs once between a revoke's completion and its finish: what lands in that window, and whether the run dies there. */
+const tombstones = vi.hoisted(() => ({ calls: 0 }));
+vi.mock('./callbacks-tombstone.ts', async (original) => {
+  const real = await original<typeof import('./callbacks-tombstone.ts')>();
+  return {
+    ...real,
+    persistSamsungTombstone: (...args: Parameters<typeof real.persistSamsungTombstone>) => {
+      tombstones.calls++;
+      return real.persistSamsungTombstone(...args);
+    },
+  };
+});
+
+const window = vi.hoisted(() => ({ run: null as null | (() => Promise<void>), crash: false }));
+vi.mock('./sync-lag.ts', async (original) => {
+  const real = await original<typeof import('./sync-lag.ts')>();
+  return {
+    ...real,
+    recordSyncLag: async (...args: Parameters<typeof real.recordSyncLag>) => {
+      const run = window.run;
+      window.run = null;
+      if (run) await run();
+      if (window.crash) {
+        window.crash = false;
+        throw new Error('crash between the completion and the finish');
+      }
+      return real.recordSyncLag(...args);
+    },
+  };
+});
 
 beforeAll(() => {
   setWalletProvidersEnabledForTest(true);
@@ -124,20 +156,44 @@ describe('6.1 Samsung: the state sent for each row', () => {
     expect(await first(t.kit.env.DB, 'SELECT 1 FROM wallet_samsung_tombstones')).not.toBeNull();
   });
 
-  it('the tombstone follows what was sent: a restore landing before the finish does not skip it', async () => {
+  /** A removal whose card was told DELETED, a restore landing before the finish, and optionally a crash there. */
+  async function restoreInTheWindow(crash: boolean) {
     const { t, ctx, sent } = await card();
-    const real = globalThis.fetch;
-    vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
-      const res = await real(input, init);
-      if (String(input instanceof Request ? input.url : input).endsWith('/updates'))
-        await run(t.kit.env.DB, 'UPDATE passes SET removed_at = NULL WHERE id = ?', [t.pass.id]);
-      return res;
-    });
+    window.run = async () => {
+      await run(t.kit.env.DB, 'UPDATE passes SET removed_at = NULL WHERE id = ?', [t.pass.id]);
+    };
+    window.crash = crash;
+    const before = tombstones.calls;
     await removePass(ctx, system, t.pass.id, {}, null);
     await drainWalletProviderSync(ctx);
-    await drainWalletProviderSync(ctx);
     expect(sent()).toBe('DELETED');
-    expect(await first(t.kit.env.DB, 'SELECT 1 FROM wallet_samsung_tombstones')).not.toBeNull();
+    return { t, ctx, before };
+  }
+
+  // A tombstone is asked for before the send and again by the finish, because the card was told DELETED although
+  // the pass reads as kept by then.
+  it('the finish follows what was sent: a restore landing before it does not skip the tombstone', async () => {
+    const { before } = await restoreInTheWindow(false);
+    expect(tombstones.calls).toBe(before + 2);
+  });
+
+  it('crash recovery follows the recorded state, not the restored pass', async () => {
+    const { t, ctx, before } = await restoreInTheWindow(true);
+    expect(tombstones.calls).toBe(before + 1);
+    const instance = await first<{ id: string; org_id: string; mode: 'live' | 'test'; v: number }>(
+      t.kit.env.DB,
+      'SELECT id, org_id, mode, desired_version AS v FROM wallet_provider_instances WHERE pass_id = ?',
+      [t.pass.id],
+    );
+    if (!instance) throw new Error('Missing instance');
+    await finishWalletProviderRetirement(ctx, {
+      instanceId: instance.id,
+      orgId: instance.org_id,
+      mode: instance.mode,
+      provider: 'samsung',
+      version: instance.v,
+    });
+    expect(tombstones.calls).toBe(before + 2);
   });
 
   it('transfer: the old holder copy is sent DELETED', async () => {
@@ -253,8 +309,12 @@ describe('a Samsung copy fits the reissue batch budget', () => {
       },
       { ...ctx, env: counter.env },
     );
+    // Printed so the margin under QUERIES_PER_COPY stays visible in the run (32 of 40 when measured).
+    // biome-ignore lint/suspicious/noConsole: the measured margin is this test's output
+    console.info(
+      `wallet reissue, one Samsung copy: ${counter.count()} of ${QUERIES_PER_COPY} queries`,
+    );
     expect(counter.count()).toBeLessThanOrEqual(QUERIES_PER_COPY);
-    // Measured, to see how much room is left: the run is the listing, the reconcile and the keyset reads.
     expect(counter.count()).toBeGreaterThan(0);
   });
 });

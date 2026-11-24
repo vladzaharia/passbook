@@ -79,7 +79,7 @@ export async function runSamsungWalletProviderOperation(
       : 'uncertain';
   }
   const state = await samsungOperationState(ctx, op);
-  await ensureSamsungSyncTargets(ctx, { ...claim, now: ctx.clock.now() });
+  await ensureSamsungSyncTargets(ctx, { ...claim, now: ctx.clock.now() }, state);
   const targets = await listSamsungSyncTargets(ctx, claim);
   for (const item of targets) {
     if (item.state !== 'pending' && item.state !== 'retry') continue;
@@ -183,7 +183,7 @@ export async function runSamsungWalletProviderOperation(
   if (results.some((target) => target.state === 'failed')) {
     return complete(ctx, claim, op, { kind: 'failure', reason: 'rejected', retryable: false });
   }
-  const done = await complete(ctx, claim, op, { kind: 'success' }, state);
+  const done = await complete(ctx, claim, op, { kind: 'success' });
   if (done === 'completed' && state !== 'DELETED' && state !== 'CANCELED')
     await recordSamsungMessageOutcome(execution);
   return done;
