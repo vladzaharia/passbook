@@ -1,6 +1,7 @@
 import { QrCode, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import type { ScanningDevice } from '@/shared/contracts/scanning-sessions.ts';
+import { surfaceFor } from '@/shared/scan-surfaces.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
 import { DiscardDialog } from '@/web/ui/alert-dialog.tsx';
 import { Badge, Button, Callout, FormField, Input, Sheet, SheetContent } from '@/web/ui/index.ts';
@@ -38,8 +39,8 @@ export function DeviceSheet({
     name !== device.name ||
     surface !== device.surface ||
     JSON.stringify(overrides) !== JSON.stringify(device.overrides);
-  const shown = surface === 'auto' ? device.effectiveSurface : surface;
-  const layout = shown === 'desk' ? 'operator' : shown;
+  // The surface the server will resolve for this choice and these capabilities.
+  const layout = surfaceFor(surface, device.capabilities);
   async function submit() {
     setError('');
     try {
