@@ -263,7 +263,7 @@ export function BrandCard({ orgId, view, draft, canEdit, errors, edit, setImage 
             onChange={(accent) => edit({ accent })}
           />
           {markOptions.length > 1 ? (
-            <div className="flex min-w-0 flex-col gap-2">
+            <div className="flex flex-col gap-2">
               <div className="flex min-h-6 items-center justify-between gap-2">
                 <span className="text-sm font-medium text-fg">{COPY.mark}</span>
                 {planMark ? <SourceTag source="plan" /> : null}
