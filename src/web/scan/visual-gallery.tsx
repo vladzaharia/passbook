@@ -69,9 +69,9 @@ function sessionFor(surface: string): ScanSession {
   };
 }
 
-/** Customer-face states by `status`: the live kind, label, headline and, for "out", the direction. */
-const LIVE_FACE: Record<string, { kind: ScanLiveRow['kind']; label: string; headline: string }> = {
-  ok: { kind: 'ok', label: 'Checked in', headline: "You're in" },
+type Face = { kind: ScanLiveRow['kind']; label: string; headline: string };
+const OK_FACE: Face = { kind: 'ok', label: 'Checked in', headline: "You're in" };
+const LIVE_FACE: Record<string, Face> = {
   out: { kind: 'ok', label: 'Checked out', headline: 'See you soon' },
   refused: { kind: 'refused', label: 'Not accepted', headline: 'Please see the desk' },
   heads_up: { kind: 'heads_up', label: 'One more check', headline: 'Please see staff' },
@@ -85,7 +85,7 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
     window.WebSocket = VisualSocket as unknown as typeof WebSocket;
     return true;
   });
-  const face = LIVE_FACE[status] ?? LIVE_FACE.ok;
+  const face = LIVE_FACE[status] ?? OK_FACE;
   useEffect(() => {
     if (!installed) return;
     const id = `${ID.slice(0, -1)}2`;
