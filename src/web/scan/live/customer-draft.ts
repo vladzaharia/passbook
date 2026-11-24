@@ -34,7 +34,8 @@ export function liveDraft(
 /** "To pay $12.00" into its words and its figure, by the copy's own template. */
 export function splitHeadline(headline: string): { label: string; value: string } {
   for (const template of [CUSTOMER_COPY.toPay, CUSTOMER_COPY.adding]) {
-    const label = template.slice(0, template.indexOf('{amount}')).trim();
+    const at = template.indexOf('{amount}');
+    const label = (at < 0 ? template : template.slice(0, at)).trim();
     if (label && headline.startsWith(label) && headline.length > label.length)
       return { label, value: headline.slice(label.length).trim() };
   }

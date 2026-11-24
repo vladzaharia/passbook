@@ -56,7 +56,7 @@ export function SessionCustomerFields({
           onCheckedChange={(showReady) => set({ showReady })}
         />
         <SwitchRow
-          label="Show amount before paying"
+          label="Show amounts"
           checked={c.showDraft ?? true}
           onCheckedChange={(showDraft) => set({ showDraft })}
         />
