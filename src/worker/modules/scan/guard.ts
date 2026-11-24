@@ -42,6 +42,7 @@ import { captureScanEpochs } from './authority-checks.ts';
 import { snapshotCredentialEnv } from './credential-input.ts';
 import { API_KEY_TOKEN, type KeyTerminal, keyActor, keyTerminalOf } from './guard-api-key.ts';
 import { pinResetExempt, pinResetRequired } from './guard-pin-reset.ts';
+import { assertSessionAdmits } from './guard-session-admits.ts';
 import { getScanner, scannerEpochsOf, unbindStaff } from './repo-device.ts';
 import { readScannerScope } from './repo-scope.ts';
 import type { ScanStaffRow } from './repo-staff.ts';
@@ -52,8 +53,6 @@ import {
   restoreObservedScanningSession,
 } from './scanning-workspace-observation.ts';
 import { rawScopeOf, resolveAdminScope } from './scope.ts';
-import { retriesCommitted } from './session-closed-retry.ts';
-import { assertSessionOpen, sessionWindow } from './session-hours.ts';
 import { bindingExpired, boundStaff } from './staff-binding.ts';
 
 export type { ScanActor } from './actor.ts';
@@ -312,31 +311,7 @@ export function requireScanActor(options: GuardOptions = {}): MiddlewareHandler<
       !options.staffOptional
     )
       throw new ForbiddenError('Sign in to act.', 'STAFF_REQUIRED');
-    if (
-      actor.scanningSession &&
-      (c.req.method === 'POST' ||
-        (c.req.method === 'PUT' && /\/draft$/.test(c.req.path)) ||
-        (/^(PATCH|DELETE)$/.test(c.req.method) && /\/notes\/[^/]+$/.test(c.req.path))) &&
-      !/\/(device|mark-out|unpair|open-now|batch)$/.test(c.req.path)
-    ) {
-      if (actor.scanningSession.status !== 'active')
-        throw new ForbiddenError(
-          'This scanning session is paused. Resume it in Scanning.',
-          'SCANNING_SESSION_PAUSED',
-        );
-      // Decided now, from the row this request observed: a missed cron never admits a late scan.
-      const parent = captureObservedScanningSession(actor)?.parent;
-      if (!parent) throw unauthenticated();
-      // A manager signs in while closed, to open early.
-      if (
-        !/\/staff(?:\/pin)?$/.test(c.req.path) &&
-        !(
-          sessionWindow(parent, ctx.clock.now()).open ||
-          (await retriesCommitted(c, ctx.env.DB, actor))
-        )
-      )
-        assertSessionOpen(parent, ctx.clock.now());
-    }
+    await assertSessionAdmits(c, ctx, actor);
     await next();
   });
 }
