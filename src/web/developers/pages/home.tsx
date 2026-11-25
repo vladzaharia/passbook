@@ -215,24 +215,27 @@ function Changelog({ site }: { site: Site }) {
   );
 }
 
-/** A signed-in developer gets the Workbench in `#workbench`; the island then hides the marketing home. */
+/**
+ * The landing is the same for everyone and is never replaced. Under the hero and the tiles sits the sandbox slot: the
+ * signed-out card here is what the Workbench island fills in place for a signed-in developer (the slot's box is
+ * reserved from the first paint, so nothing below it jumps before the session is known).
+ */
 export function HomeView({ site }: { site: Site }) {
   return (
     <>
-      <div id="workbench" className="wb-slot" data-island="workbench" />
-      <div data-home-marketing="">
-        <Hero />
-        <Tiles />
+      <Hero />
+      <Tiles />
+      <div id="workbench" className="wb-slot" data-island="workbench">
         <section className="sect">
-          <div className="two">
-            <Sandbox />
-            <div className="stack g4">
-              <Guides />
-              <Changelog site={site} />
-            </div>
-          </div>
+          <Sandbox />
         </section>
       </div>
+      <section className="sect">
+        <div className="two">
+          <Guides />
+          <Changelog site={site} />
+        </div>
+      </section>
     </>
   );
 }

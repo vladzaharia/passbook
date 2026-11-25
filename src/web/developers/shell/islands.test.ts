@@ -48,3 +48,47 @@ describe('the signed-out markup of the quickstart and console', () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe('the account and sandbox slots', () => {
+  it('are marked ready once their island ran, whatever happened, and without an observer', async () => {
+    const { ISLANDS } = await import('./islands.ts');
+    const original = { ...ISLANDS };
+    ISLANDS.account = async () => ({
+      mount: () => {
+        throw new Error('boom');
+      },
+    });
+    ISLANDS.workbench = async () => ({ mount: () => {} });
+    class Seen {
+      fn: (e: unknown[]) => void;
+      constructor(fn: (e: unknown[]) => void) {
+        this.fn = fn;
+      }
+      observe(el: Element) {
+        this.fn([{ isIntersecting: true, target: el }]);
+      }
+      unobserve() {}
+    }
+    const onError = vi.fn((e: Event) => e.preventDefault());
+    window.addEventListener('error', onError);
+    vi.stubGlobal('IntersectionObserver', Seen);
+    document.body.innerHTML =
+      '<span data-island="account" id="a"></span><div data-island="workbench" id="w"></div>';
+    mountIslands();
+    // Held in CSS from the first paint, not by an attribute script sets late.
+    await vi.waitFor(() => {
+      expect(document.getElementById('a')?.hasAttribute('data-ready')).toBe(true);
+      expect(document.getElementById('w')?.hasAttribute('data-ready')).toBe(true);
+    });
+    expect(document.getElementById('a')?.hasAttribute('data-hydrating')).toBe(false);
+    window.removeEventListener('error', onError);
+    vi.unstubAllGlobals();
+    vi.stubGlobal('IntersectionObserver', undefined);
+    Reflect.deleteProperty(window, 'IntersectionObserver');
+    document.body.innerHTML = '<span data-island="account" id="b"></span>';
+    mountIslands();
+    expect(document.getElementById('b')?.hasAttribute('data-ready')).toBe(true);
+    vi.unstubAllGlobals();
+    Object.assign(ISLANDS, original);
+  });
+});

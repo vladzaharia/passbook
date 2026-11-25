@@ -30,8 +30,11 @@ export const ISLANDS: Record<string, () => Promise<Island>> = {
   'api-rail': async () => (await import('../logs/entry.ts')).railIsland,
 };
 
+/**
+ * `account` and `workbench` hold from the first paint in CSS (dev-run.css) until `data-ready`: the prerender cannot
+ * know the session, and a signed-in page must not show the signed-out markup first.
+ */
 const HOLD_UNTIL_MOUNTED = (el: HTMLElement) =>
-  el.dataset.island === 'account' ||
   el.dataset.island === 'quickstart' ||
   (el.dataset.island === 'run' && el.dataset.mode === 'console');
 
@@ -41,7 +44,11 @@ export function mountIslands(root: ParentNode = document): void {
   const pending = [...root.querySelectorAll<HTMLElement>('[data-island]')].filter(
     (el) => el.dataset.island && ISLANDS[el.dataset.island],
   );
-  if (pending.length === 0 || !('IntersectionObserver' in window)) return;
+  if (pending.length === 0) return;
+  if (!('IntersectionObserver' in window)) {
+    for (const el of pending) el.dataset.ready = '';
+    return;
+  }
   const observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
@@ -58,6 +65,7 @@ export function mountIslands(root: ParentNode = document): void {
           } finally {
             // Mounted or not, the static markup shows again if the island never replaced it.
             delete el.dataset.hydrating;
+            el.dataset.ready = '';
           }
         })();
       }
