@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { stoppingLevel } from '@/shared/channels.ts';
+import { stoppedAboveOrg } from '@/shared/channels.ts';
 import type { Channel } from '@/shared/contracts/channels.ts';
 import type { PassSetup } from '@/shared/contracts/pass-setup.ts';
 import { PASS_SETUP_COPY } from '@/shared/copy/pass-setup.ts';
@@ -52,12 +52,6 @@ function ProviderAccount({
   );
 }
 
-/** PassBook or the plan stops it: the org never sees it. */
-const hidden = (levels: SetupFacts['channels'][Channel]['levels']) => {
-  const level = stoppingLevel(levels)?.level;
-  return level === 'passbook' || level === 'plan';
-};
-
 /**
  * The channels the org can use, in the view's mode; the rest are not listed. Each row's switch is
  * a draft: it saves with the rest of the page, after the review shows what it stops.
@@ -105,7 +99,7 @@ export function ChannelsCard({
         actions={<Badge>{PASS_SETUP_COPY.page.mode[mode]}</Badge>}
       />
       <ul className="m-0 flex list-none flex-col divide-y divide-border p-4">
-        {ORDER.filter((c) => !hidden(draftFacts.channels[c].levels)).map((c) => {
+        {ORDER.filter((c) => !stoppedAboveOrg(draftFacts.channels[c].levels)).map((c) => {
           const row = draftFacts.channels[c];
           return (
             <ChannelRow

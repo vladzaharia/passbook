@@ -1,7 +1,7 @@
 import { Undo2 } from 'lucide-react';
 import { reasonHeadline } from '../../../../shared/copy/scan-headline.ts';
 import { OPERATOR_COPY } from '../../../../shared/copy/scan-operator.ts';
-import { formatRelative } from '../../../lib/format.ts';
+import { formatAgo } from '../../../lib/format.ts';
 import { Buddy } from '../../../ui/art/buddy.tsx';
 import { Button } from '../../../ui/button.tsx';
 import { CountUp } from '../../../ui/count-up.tsx';
@@ -78,9 +78,7 @@ export function IdleView({
                 size="lg"
               />
               <div className="op-last-text">
-                <p className="op-eyebrow">
-                  {I.last.replace('{ago}', formatRelative(last.at, now))}
-                </p>
+                <p className="op-eyebrow">{I.last.replace('{ago}', formatAgo(last.at, now))}</p>
                 <h2 className="op-last-name" data-operator-heading tabIndex={-1}>
                   {nameOf(last)}
                 </h2>

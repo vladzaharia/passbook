@@ -16,6 +16,10 @@ export interface Doc {
   head?: string;
 }
 
+/** The text face, fetched with the page: a swap after first paint moved the hero's lines (font-display: swap). */
+const PRELOAD_FONT =
+  '<link rel="preload" as="font" type="font/woff2" href="/fonts/rubik-var-latin.woff2" crossorigin>';
+
 const ROBOTS = DEVELOPERS_INDEXABLE ? '' : '<meta name="robots" content="noindex, nofollow">';
 
 export function document(doc: Doc, origin: string, assets: string): string {
@@ -26,7 +30,7 @@ export function document(doc: Doc, origin: string, assets: string): string {
       : '';
   return (
     '<!doctype html><html lang="en" data-theme-pref="system"><head>' +
-    `${HEAD_HTML}${ROBOTS}<title>${escapeHtml(doc.title)}</title>` +
+    `${HEAD_HTML}${PRELOAD_FONT}${ROBOTS}<title>${escapeHtml(doc.title)}</title>` +
     `<meta name="description" content="${escapeHtml(doc.description)}">` +
     `<link rel="canonical" href="${url}">${md}${doc.head ?? ''}` +
     `<link rel="alternate" type="application/json" href="${PATHS.openapi}">` +

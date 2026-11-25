@@ -274,6 +274,8 @@ export const ISSUE_WORDS: Record<WarningCode, Words> = {
     ['name'],
     (p) => `${p.name} is not used by any wallet.`,
   ),
+  WALLETS_CLASS_KEY:
+    'Parts of the Google class key can run together. End each with |url and join them with | or a space.',
   WALLETS_INPUT: named(
     'A wallet setting uses an input that does not exist.',
     ['name'],

@@ -38,7 +38,7 @@ export async function auditCsv(
   read: (cursor: string | undefined, limit: number) => Promise<Page>,
   admit: () => Promise<void>,
   max = EXPORT_MAX_ROWS,
-): Promise<{ csv: string; truncated: boolean }> {
+): Promise<{ csv: string; truncated: boolean; rows: number }> {
   let page = await read(undefined, Math.min(PAGE, max + 1));
   await admit();
   const lines: string[] = [`${HEAD.join(',')}\r\n`];
@@ -60,5 +60,5 @@ export async function auditCsv(
     lines.push(
       `# truncated at ${String(max).replace(/\B(?=(\d{3})+$)/g, ',')} rows; narrow the dates\r\n`,
     );
-  return { csv: lines.join(''), truncated };
+  return { csv: lines.join(''), truncated, rows };
 }

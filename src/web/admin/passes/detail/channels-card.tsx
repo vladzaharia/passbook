@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { isDigital, nothingOn } from '@/shared/channels.ts';
+import { isDigital, nothingOn, orgChain, stoppedAboveOrg } from '@/shared/channels.ts';
 import {
   CHANNELS,
   type Channel,
@@ -78,7 +78,7 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
               <Callout tone="warning">{CHANNEL_COPY.nothingOn}</Callout>
             ) : null}
             <ChannelList>
-              {CHANNELS.map((channel) => {
+              {CHANNELS.filter((c) => !stoppedAboveOrg(data.levels[c])).map((channel) => {
                 const status = data.effective[channel];
                 const overridden = data.overrides[channel] !== undefined;
                 const busy = disabled || put.isPending;
@@ -87,7 +87,7 @@ export function ChannelsCard({ pass, readOnly }: { pass: PassDetailDto; readOnly
                     key={channel}
                     channel={channel}
                     status={status}
-                    chain={<ChainBadge levels={data.levels[channel]} />}
+                    chain={<ChainBadge levels={orgChain(data.levels[channel])} />}
                     locked={!canSwitch(status)}
                     extra={
                       overridden ? (

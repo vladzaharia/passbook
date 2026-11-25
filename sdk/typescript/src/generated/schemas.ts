@@ -184,7 +184,7 @@ export type ApiKeysCreateParams = {
   orgId: string | null;
   name: string;
   kind?: "service" | "personal" | "platform";
-  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "api-keys:write">;
+  scopes?: Array<"passes:read" | "passes:write" | "holders:write" | "templates:read" | "templates:write" | "templates:review" | "templates:publish" | "messages:write" | "scans:read" | "scans:write" | "connections:read" | "connections:write" | "webhooks:manage" | "brand:manage" | "org:read" | "org:write" | "wallet:write" | "scanning:write" | "scan-setup:read" | "scanning:admin" | "nfc:keys" | "api-keys:write" | "audit:read">;
   roles?: Array<"org_admin" | "integration_admin" | "template_author" | "template_reviewer" | "template_publisher" | "pass_operator" | "read_only">;
   ipAllow?: Array<string>;
   templateIds?: Array<string>;

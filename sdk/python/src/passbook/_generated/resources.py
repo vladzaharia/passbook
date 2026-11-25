@@ -102,6 +102,47 @@ class ApiKeysResource:
         return self._core.request("POST", "/api/v1/api-keys/me/rotate", body=body, result=m.ApiKeysRotateCurrentResult, **opts)
 
 
+class AuditEntriesResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def export(
+        self,
+        *,
+        actor_id: str | None = None,
+        action: str | None = None,
+        exclude_action: str | None = None,
+        target_type: str | None = None,
+        target_id: str | None = None,
+        from_: int | None | None = None,
+        to: int | None | None = None,
+        created_after: int | None | None = None,
+        created_before: int | None | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> httpx.Response:
+        """Export an organization audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key) `GET /api/v1/audit/export`"""
+        return self._core.request("GET", "/api/v1/audit/export", query={"actorId": actor_id, "action": action, "excludeAction": exclude_action, "targetType": target_type, "targetId": target_id, "from": from_, "to": to, "createdAfter": created_after, "createdBefore": created_before}, raw=True, **opts)
+
+    def list(
+        self,
+        *,
+        actor_id: str | None = None,
+        action: str | None = None,
+        exclude_action: str | None = None,
+        target_type: str | None = None,
+        target_id: str | None = None,
+        from_: int | None | None = None,
+        to: int | None | None = None,
+        created_after: int | None | None = None,
+        created_before: int | None | None = None,
+        cursor: str | None = None,
+        limit: int | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.AuditEntriesListItem]:
+        """Query an organization audit log `GET /api/v1/audit`"""
+        return self._core.paginate("GET", "/api/v1/audit", query={"actorId": actor_id, "action": action, "excludeAction": exclude_action, "targetType": target_type, "targetId": target_id, "from": from_, "to": to, "createdAfter": created_after, "createdBefore": created_before, "cursor": cursor, "limit": limit}, result=m.AuditEntriesListResult, cursor_param="cursor", **opts)
+
+
 class BrandWebLogoResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2596,6 +2637,7 @@ class Resources:
 
     def __init__(self, core: Core) -> None:
         self.api_keys = ApiKeysResource(core)
+        self.audit_entries = AuditEntriesResource(core)
         self.brand = BrandResource(core)
         self.broadcasts = BroadcastsResource(core)
         self.bundles = BundlesResource(core)

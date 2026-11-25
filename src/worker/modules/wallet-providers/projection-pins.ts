@@ -1,4 +1,6 @@
 import type { PlannedPass } from '../../../passkit/build.ts';
+import { evaluate } from '../../../passkit/template/expr.ts';
+import { applyDefaults } from '../../../passkit/template/manifest.ts';
 import type { Personalization } from '../../../passkit/types.ts';
 import { fidelityReport, omissionKeys, reportHash } from '../../../passkit/wallets/fidelity.ts';
 import { samsungPortalUrl } from '../../../passkit/wallets/samsung/index.ts';
@@ -13,7 +15,7 @@ import { canonicalJson } from '../templates/package/hash.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
 import type { VersionRow } from '../templates/repo.ts';
 import { prepareProjectionArt, sizeShipped, type WalletArt } from './projection-art.ts';
-import { classProbes, withClassRule } from './projection-class-rule.ts';
+import { classProbes, conditionLiterals, withClassRule } from './projection-class-rule.ts';
 import type { NativeProvider, ProjectionV2 } from './projection-contract.ts';
 import { COMPILERS, pipelineRevision } from './projection-pipeline.ts';
 
@@ -88,6 +90,14 @@ export async function computeProjectionPins(
                 previewPlan(ctx.env, template, input, template.passJson.organizationName, now),
                 input,
               ),
+            {
+              keyOf: (input) =>
+                evaluate(wallets?.google?.classKey ?? '', {
+                  input: applyDefaults(template.manifest, input),
+                  lookups: template.manifest.lookups ?? {},
+                }),
+              literals: conditionLiterals(template.manifest),
+            },
           ),
         )
       : compiler;

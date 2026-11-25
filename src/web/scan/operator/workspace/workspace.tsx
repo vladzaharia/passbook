@@ -240,7 +240,7 @@ export function OperatorWorkspace(props: WorkspaceProps) {
         }
       />
       <div className="op-body" data-floor>
-        <div className="op-list-pane">
+        <section className="op-list-pane" aria-label={OPERATOR_COPY.landmark.lists}>
           <CommandField
             value={op.lookup.q}
             onChange={op.setQuery}
@@ -273,7 +273,7 @@ export function OperatorWorkspace(props: WorkspaceProps) {
           >
             {list}
           </div>
-        </div>
+        </section>
         <main
           className="op-record-pane"
           data-operator-record
