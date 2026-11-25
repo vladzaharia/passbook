@@ -6,6 +6,12 @@ import { RETENTION_CLASSES } from '../../shared/privacy/data-classes.ts';
 
 /** Every queue message. Add a kind here, to JOB_HANDLERS in registry.ts, and implement it in the owning module. */
 export const JobSchema = z.discriminatedUnion('kind', [
+  /** Runs an operation's kind hook: the delayed backstop of an in-request run, a retry, a stall resend. */
+  z.object({
+    kind: z.literal('operation.run'),
+    operationId: z.string().min(1).max(64),
+    attempt: z.number().int().positive(),
+  }),
   z.object({ kind: z.literal('push.deliver'), outboxId: z.string() }),
   z.object({ kind: z.literal('email.send'), outboxId: z.string() }),
   z.object({ kind: z.literal('join.resend'), passId: z.string(), linkId: z.string() }),

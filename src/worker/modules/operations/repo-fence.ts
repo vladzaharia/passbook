@@ -1,0 +1,53 @@
+import type { Check } from '../../platform/authority-checks.ts';
+import type { Principal } from '../../platform/authority-principal.ts';
+import { authorityPredicate } from '../../platform/authority-read.ts';
+import type { SqlValue } from '../../platform/db.ts';
+
+/**
+ * Who may read which rows, as SQL. `ctes` follow `WITH` (empty for a starter read); `where` is ANDed onto
+ * the `operations` alias `o`. Revoked membership, key, session or org epoch removes the rows at once.
+ */
+export interface Fence {
+  ctes: string;
+  ctesParams: SqlValue[];
+  where: string;
+  whereParams: SqlValue[];
+}
+
+/** Org rows of the actor's own org and mode. The org and mode come from the actor row, never the request. */
+export function orgFence(principal: Principal, checks: Check[], now: number): Fence {
+  const { ctes, params } = authorityPredicate(principal, { scope: 'org_mode', now, checks });
+  return {
+    ctes,
+    ctesParams: params,
+    where: `o.audience = 'org' AND EXISTS (SELECT 1 FROM actor_ok)
+      AND o.org_id = (SELECT org_id FROM actor_ok) AND o.mode = (SELECT mode FROM actor_ok)`,
+    whereParams: [],
+  };
+}
+
+/** Platform rows for a live admin session. */
+export function platformFence(
+  principal: Extract<Principal, { kind: 'platform' }>,
+  now: number,
+): Fence {
+  const { ctes, params } = authorityPredicate(principal, { scope: 'platform', now });
+  return {
+    ctes,
+    ctesParams: params,
+    where: `o.audience = 'platform' AND EXISTS (SELECT 1 FROM actor_ok)`,
+    whereParams: [],
+  };
+}
+
+/** Rows a person started, for the live session that started them. A key never reads these. */
+export function starterFence(session: { userId: string; sessionId: string }, now: number): Fence {
+  return {
+    ctes: '',
+    ctesParams: [],
+    where: `o.audience = 'starter' AND o.actor_type = 'user' AND o.actor_id = ?
+      AND EXISTS (SELECT 1 FROM sessions s WHERE s.id_hash = ? AND s.user_id = ? AND s.revoked_at IS NULL
+        AND s.expires_at > ? AND s.idle_expires_at > ?)`,
+    whereParams: [session.userId, session.sessionId, session.userId, now, now],
+  };
+}
