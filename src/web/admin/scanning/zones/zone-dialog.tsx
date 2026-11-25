@@ -1,30 +1,16 @@
 import { useState } from 'react';
 import type { ScanZone } from '@/shared/contracts/scan-access.ts';
-import { errorMessage } from '@/web/lib/errors.ts';
-import { zoneOptions } from '@/web/lib/timezones.ts';
-import {
-  Button,
-  Callout,
-  Dialog,
-  DialogContent,
-  FormField,
-  Input,
-  Select,
-  toast,
-} from '@/web/ui/index.ts';
-import { OccupancyFields } from './occupancy-fields.tsx';
+import { toast, useWizard, WizardDialog, WizardReview } from '@/web/ui/index.ts';
 import {
   createBody,
   emptyZoneDraft,
   ROOT,
-  SESSION_CLOCK,
   updateBody,
-  withName,
   type ZoneDraft,
   zoneDraft,
   zoneErrors,
 } from './zone-draft.ts';
-import { MAX_DEPTH, zoneNodes } from './zone-tree.ts';
+import { StepOccupancy, StepZone, zoneSummary } from './zone-steps.tsx';
 import { useCreateZone, useUpdateZone } from './zones-api.ts';
 
 interface Props {
@@ -38,156 +24,107 @@ interface Props {
   onClose: () => void;
 }
 
-/** Zones a zone may sit inside: not itself or below it, and with room for what hangs under it. */
-function parentOptions(zones: readonly ScanZone[], zone: ScanZone | undefined) {
-  const nodes = zoneNodes(zones);
-  const own = zone ? nodes.findIndex((n) => n.zone.id === zone.id) : -1;
-  const self = own >= 0 ? nodes[own] : undefined;
-  let height = 0;
-  const blocked = new Set<string>(zone ? [zone.id] : []);
-  if (self) {
-    for (const n of nodes.slice(own + 1)) {
-      if (n.level <= self.level) break;
-      blocked.add(n.zone.id);
-      height = Math.max(height, n.level - self.level);
-    }
-  }
-  return nodes
-    .filter((n) => !blocked.has(n.zone.id))
-    .map((n) => ({
-      value: n.zone.id,
-      label: `${'– '.repeat(n.level - 1)}${n.zone.name}`,
-      disabled: n.level + height > MAX_DEPTH,
-    }));
-}
+const STEPS = [
+  { id: 'zone', title: 'Zone', heading: 'Name the zone' },
+  { id: 'occupancy', title: 'Occupancy', heading: 'Track who is inside' },
+  { id: 'review', title: 'Review', heading: 'Check and create' },
+] as const;
+const HINTS = { zone: 'Name the zone.', occupancy: 'Fix the limits.' };
+const FIELD_STEP = {
+  name: 'zone',
+  key: 'zone',
+  parentId: 'zone',
+  timeZone: 'zone',
+  occupancy: 'occupancy',
+  capacity: 'occupancy',
+  hardLimit: 'occupancy',
+  maxStayMinutes: 'occupancy',
+  clearAt: 'occupancy',
+} as const;
 
+const keep = <K extends string>(all: Record<string, string | undefined>, keys: readonly K[]) =>
+  Object.fromEntries(Object.entries(all).filter(([k]) => (keys as readonly string[]).includes(k)));
+
+/**
+ * A zone as a wizard (Zone, Occupancy, Review) or, with `zone`, its edit mode: every step open
+ * from the rail, Save at the end. Stops its form events at the border so a picker inside another
+ * form (a session's) never submits that form.
+ */
 export function ZoneDialog({ orgId, zones, zone, parentId, onClose }: Props) {
   const create = useCreateZone();
   const update = useUpdateZone(zone?.id ?? '');
-  const [draft, setDraft] = useState<ZoneDraft>(() =>
-    zone ? zoneDraft(zone) : emptyZoneDraft(parentId),
-  );
-  const [error, setError] = useState('');
-  const [shown, setShown] = useState(false);
+  const [initial] = useState(() => (zone ? zoneDraft(zone) : emptyZoneDraft(parentId)));
+  const [draft, setDraft] = useState<ZoneDraft>(initial);
   const parent = zones.find((z) => z.id === draft.parentId);
   const root = draft.parentId === ROOT;
   // Every org has a clock, so a root always has one.
   const clock = root ? true : Boolean(parent?.effectiveTimeZone ?? parent?.timeZone);
-  const errors = zoneErrors(draft, !zone, clock);
-  const invalid = Object.keys(errors).length > 0;
-  const dirty = zone
-    ? JSON.stringify(draft) !== JSON.stringify(zoneDraft(zone))
-    : !!draft.name || !!parentId;
-  const busy = create.isPending || update.isPending;
-  const shownErrors = shown ? errors : {};
+  const found = zoneErrors(draft, !zone, clock);
+  const sections = zoneSummary(draft, zones, root);
+  const summary = (id: 'zone' | 'occupancy') =>
+    id === 'zone'
+      ? draft.name.trim() || undefined
+      : draft.track
+        ? draft.enforce
+          ? 'Tap out required'
+          : 'Tracked'
+        : 'Not tracked';
+  const dirty = JSON.stringify(draft) !== JSON.stringify(initial);
 
-  async function submit() {
-    setShown(true);
-    if (invalid) return;
-    setError('');
-    try {
+  const w = useWizard({
+    open: true,
+    mode: zone ? 'edit' : 'create',
+    dirty,
+    steps: STEPS.filter((s) => !zone || s.id !== 'review').map((s) => ({
+      ...s,
+      ...(s.id === 'review' ? {} : { summary: summary(s.id) }),
+    })),
+    errors: {
+      zone: keep(found, ['name', 'key']),
+      occupancy: keep(found, ['capacity', 'maxStay', 'clearAt']),
+    },
+    hints: HINTS,
+    fieldStep: FIELD_STEP,
+    onFinish: async () => {
       if (zone) await update.mutateAsync(updateBody(draft, zone));
       else await create.mutateAsync(createBody(draft, orgId));
       toast.success(zone ? 'Saved' : 'Zone created');
       onClose();
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
-  }
+    },
+  });
+  const errors = { ...w.errors, maxStay: w.errors.maxStay ?? w.errors.maxStayMinutes };
+
   return (
-    <Dialog open dirty={dirty} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
+    <div
+      className="contents"
+      onSubmit={(e) => e.stopPropagation()}
+      onInput={(e) => e.stopPropagation()}
+    >
+      <WizardDialog
+        open
+        onOpenChange={(open) => !open && onClose()}
         title={zone ? `Edit ${zone.name}` : parentId ? 'Add a zone inside' : 'New zone'}
-        size="md"
-        footer={
-          <>
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button loading={busy} disabled={zone ? !dirty : false} onClick={() => void submit()}>
-              {zone ? 'Save' : 'Create'}
-            </Button>
-          </>
-        }
+        wizard={w}
+        dirty={dirty}
+        finishLabel="Create zone"
+        busy={create.isPending || update.isPending}
       >
-        {error ? (
-          <Callout tone="danger" className="mb-4">
-            {error}
-          </Callout>
-        ) : null}
-        <form
-          className="grid gap-4"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void submit();
-          }}
-        >
-          <FormField label="Name" required error={shownErrors.name}>
-            {(p) => (
-              <Input
-                {...p}
-                autoComplete="off"
-                maxLength={40}
-                placeholder="Pool"
-                value={draft.name}
-                onChange={(e) => setDraft(withName(draft, e.target.value))}
-              />
-            )}
-          </FormField>
-          <FormField
-            label="Key"
-            required={!zone}
-            error={shownErrors.key}
-            help={zone ? 'Cannot change.' : undefined}
-          >
-            {(p) => (
-              <Input
-                {...p}
-                className="font-mono"
-                autoComplete="off"
-                maxLength={40}
-                readOnly={!!zone}
-                value={draft.key}
-                onChange={(e) => setDraft({ ...draft, key: e.target.value, keyEdited: true })}
-              />
-            )}
-          </FormField>
-          <FormField label="Inside">
-            {(p) => (
-              <Select
-                {...p}
-                value={draft.parentId}
-                options={[{ value: ROOT, label: 'None' }, ...parentOptions(zones, zone)]}
-                onValueChange={(parentId) => setDraft({ ...draft, parentId })}
-              />
-            )}
-          </FormField>
-          {root ? (
-            <FormField label="Time zone">
-              {(p) => (
-                <Select
-                  {...p}
-                  value={draft.timeZone}
-                  options={[
-                    {
-                      value: SESSION_CLOCK,
-                      label: 'Organization’s clock',
-                    },
-                    ...zoneOptions(),
-                  ]}
-                  onValueChange={(timeZone) => setDraft({ ...draft, timeZone })}
-                />
-              )}
-            </FormField>
-          ) : null}
-          <OccupancyFields
+        {w.id === 'zone' ? (
+          <StepZone
             draft={draft}
             set={setDraft}
-            errors={shownErrors}
-            inNow={zone?.inNow ?? null}
+            zones={zones}
+            zone={zone}
+            root={root}
+            errors={errors}
+            onEdit={w.clearServer}
           />
-        </form>
-      </DialogContent>
-    </Dialog>
+        ) : null}
+        {w.id === 'occupancy' ? (
+          <StepOccupancy draft={draft} set={setDraft} zone={zone} errors={errors} />
+        ) : null}
+        {w.id === 'review' ? <WizardReview sections={sections} onEdit={w.go} /> : null}
+      </WizardDialog>
+    </div>
   );
 }

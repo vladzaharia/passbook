@@ -114,10 +114,13 @@ describe('Zones tab', () => {
     await user.type(within(dialog).getByRole('textbox', { name: /^Name/ }), 'Front Gate 2');
     expect(within(dialog).getByRole('textbox', { name: /^Key/ })).toHaveValue('front-gate-2');
     expect(within(dialog).queryByRole('spinbutton', { name: 'Capacity' })).toBeNull();
-    await user.click(within(dialog).getByRole('switch', { name: 'Track who’s inside' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await user.click(await within(dialog).findByRole('switch', { name: 'Track who’s inside' }));
     expect(within(dialog).getByRole('spinbutton', { name: 'Max stay' })).toHaveValue(720);
     await user.type(within(dialog).getByRole('spinbutton', { name: 'Capacity' }), '40');
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    expect(await within(dialog).findByRole('heading', { name: 'Check and create' })).toBeVisible();
+    await user.click(within(dialog).getByRole('button', { name: 'Create zone' }));
     await waitFor(() => expect(s.calls).toHaveLength(1));
     expect(s.calls[0]?.body).toEqual({
       orgId: 'o1',
@@ -140,7 +143,8 @@ describe('Zones tab', () => {
     await user.click(await screen.findByRole('button', { name: 'New zone' }));
     const dialog = await screen.findByRole('dialog', { name: 'New zone' });
     await user.type(within(dialog).getByRole('textbox', { name: /^Name/ }), 'Vessel');
-    await user.click(within(dialog).getByRole('switch', { name: 'Track who’s inside' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await user.click(await within(dialog).findByRole('switch', { name: 'Track who’s inside' }));
     const hard = within(dialog).getByRole('switch', { name: 'Hard limit' });
     expect(hard).toBeDisabled();
     const capacity = within(dialog).getByRole('spinbutton', { name: 'Capacity' });
@@ -152,9 +156,48 @@ describe('Zones tab', () => {
     expect(hard).not.toBeChecked();
     await user.type(capacity, '90');
     await user.click(hard);
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Next' }));
+    await user.click(await within(dialog).findByRole('button', { name: 'Create zone' }));
     await waitFor(() => expect(s.calls).toHaveLength(1));
     expect(s.calls[0]?.body).toMatchObject({ capacity: 90, hardLimit: true });
+  });
+
+  it('holds Next on an empty name and says why', async () => {
+    await open(setup());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'New zone' }));
+    const dialog = await screen.findByRole('dialog', { name: 'New zone' });
+    const next = within(dialog).getByRole('button', { name: 'Next' });
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    await user.click(next);
+    expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('heading', { name: 'Track who is inside' })).toBeNull();
+  });
+
+  it('edits from the rail, holds Save until something changes, and sends the change', async () => {
+    const s = setup();
+    await open(s);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Actions for Gym' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Edit Gym' });
+    const save = within(dialog).getByRole('button', { name: 'Save' });
+    expect(save).toHaveAttribute('aria-disabled', 'true');
+    expect(within(dialog).getByText('No changes.')).toBeInTheDocument();
+    expect(within(dialog).queryByRole('heading', { name: 'Check and create' })).toBeNull();
+    await user.click(within(dialog).getByRole('button', { name: 'Occupancy' }));
+    const capacity = await within(dialog).findByRole('spinbutton', { name: 'Capacity' });
+    await user.clear(capacity);
+    await user.type(capacity, '80');
+    await user.click(within(dialog).getByRole('button', { name: 'Zone' }));
+    expect(within(dialog).getByRole('textbox', { name: /^Key/ })).toHaveAttribute('readonly');
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(s.calls).toHaveLength(1));
+    expect(s.calls[0]).toMatchObject({
+      path: '/api/v1/scan-zones/z-gym',
+      method: 'PATCH',
+      body: { name: 'Gym', capacity: 80 },
+    });
   });
 
   it('hides who is inside and Mark as out while the console has no route for them', async () => {
