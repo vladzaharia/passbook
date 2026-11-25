@@ -1358,8 +1358,7 @@
       ],
       "modules": [
         "platform",
-        "scan",
-        "visitors"
+        "scan"
       ]
     },
     {
@@ -2652,8 +2651,7 @@
         409
       ],
       "modules": [
-        "scan",
-        "visitors"
+        "scan"
       ]
     },
     {
@@ -3067,7 +3065,6 @@
         "public",
         "retention",
         "scan",
-        "visitors",
         "wallet-providers"
       ]
     },
@@ -4984,6 +4981,15 @@
       ]
     },
     {
+      "code": "TAG_LENT",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "me"
+      ]
+    },
+    {
       "code": "TAG_LIMIT",
       "statuses": [
         409
@@ -5021,6 +5027,15 @@
       "modules": [
         "nfc",
         "scan"
+      ]
+    },
+    {
+      "code": "TAG_PASS_EXPIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
       ]
     },
     {
@@ -5145,6 +5160,15 @@
       "code": "TAG_TYPE_LIMIT",
       "statuses": [
         409
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
+      "code": "TAG_TYPE_LOANER_SCOPE",
+      "statuses": [
+        422
       ],
       "modules": [
         "nfc"
@@ -5887,88 +5911,6 @@
       ],
       "modules": [
         "passes"
-      ]
-    },
-    {
-      "code": "VISITOR_CHANGED",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_HOST_NOTICE_FAILED",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_HOST_UNKNOWN",
-      "statuses": [
-        403,
-        404
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_IN",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_NOT_FOUND",
-      "statuses": [
-        404
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_NOT_IN",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_OUT",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_RESEND_LIMIT",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
-      ]
-    },
-    {
-      "code": "VISITOR_TEMPLATE_MISSING",
-      "statuses": [
-        409
-      ],
-      "modules": [
-        "visitors"
       ]
     },
     {

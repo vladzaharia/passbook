@@ -73,7 +73,6 @@ function setup(over: { role?: 'door' | 'desk'; roll?: boolean } = {}) {
       nextCursor: null,
       asOf: NOW,
     }),
-    visitors: async () => ({ items: [] }),
     devices: async () => ({
       items: [
         {
@@ -167,12 +166,12 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks());
 
 describe('the floor and its views', () => {
-  it('gives a Desk scanner that counts a place Who’s in and Visitors, and a Door neither', async () => {
+  it('gives a Desk scanner that counts a place Who’s in, and a Door neither', async () => {
     setup({ roll: false });
     const tabs = within(screen.getByRole('tablist'));
     expect(
       tabs.getAllByRole('tab').map((t) => t.textContent?.replace(/\d+|need you/g, '').trim()),
-    ).toEqual(['Activity', 'Problems', 'Who’s in'.replace('’', "'"), 'Visitors']);
+    ).toEqual(['Activity', 'Problems', 'Who’s in'.replace('’', "'")]);
   });
 
   it('shows a Door only Activity and Problems, and no floor cards beyond its count and shift', async () => {
@@ -180,7 +179,6 @@ describe('the floor and its views', () => {
     expect(within(screen.getByRole('tablist')).getAllByRole('tab')).toHaveLength(2);
     const floor = await screen.findByRole('complementary', { name: 'Floor' });
     expect(within(floor).queryByRole('region', { name: 'Devices' })).toBeNull();
-    expect(within(floor).queryByRole('region', { name: 'Visitors today' })).toBeNull();
     expect(await within(floor).findByRole('region', { name: 'Your shift' })).toBeTruthy();
   });
 

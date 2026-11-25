@@ -68,7 +68,6 @@ export const KIND_OF_TAG: Record<string, string> = {
   bundles: 'bundle',
   broadcasts: 'broadcast',
   'message-rules': 'rule',
-  visitors: 'visitor',
   'roll-calls': 'rollCall',
   holders: 'holder',
   identities: 'identity',

@@ -65,7 +65,6 @@ export function canAccessOrgSection(rest: string, membership: OrgMembership | un
     );
   }
   if (within(path, '/scanning')) return hasCapability(membership, 'scanning:read');
-  if (within(path, '/visitors')) return hasCapability(membership, 'passes:read');
   if (within(path, '/messages')) {
     return hasCapability(
       membership,

@@ -107,7 +107,7 @@
   {
     "role": "org",
     "path": "/admin/o/{orgId}/visitors",
-    "name": "admin-visitors"
+    "name": "admin-visitors-redirect"
   },
   {
     "role": "org",

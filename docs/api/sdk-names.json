@@ -1601,12 +1601,6 @@
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
-  "scan.getScanVisitors": {
-    "resource": "terminal",
-    "method": "listVisitors",
-    "sdk": false,
-    "reason": "Scanner device protocol; needs a paired scanner session."
-  },
   "scan.patchScanPassesByPassIdNotesByNoteId": {
     "resource": "terminal.notes",
     "method": "update",
@@ -2134,30 +2128,6 @@
   "users.postUsersByIdSessionsRevoke": {
     "resource": "platform.users.sessions",
     "method": "revokeAll"
-  },
-  "visitors.getVisitors": {
-    "resource": "visitors",
-    "method": "list"
-  },
-  "visitors.getVisitorsHosts": {
-    "resource": "visitors",
-    "method": "listHosts"
-  },
-  "visitors.postVisitors": {
-    "resource": "visitors",
-    "method": "create"
-  },
-  "visitors.postVisitorsByIdCancel": {
-    "resource": "visitors",
-    "method": "cancel"
-  },
-  "visitors.postVisitorsByIdCheckOut": {
-    "resource": "visitors",
-    "method": "checkOut"
-  },
-  "visitors.postVisitorsByIdHostEmail": {
-    "resource": "visitors",
-    "method": "sendHostEmail"
   },
   "wallet-credentials.getOrgsByOrgIdWalletAccountsGoogleManaged": {
     "resource": "walletAccounts.googleManaged",

@@ -1,10 +1,11 @@
 import { grant } from '../../platform/authority.ts';
 import { exactlyOne } from '../../platform/authority-checks.ts';
-import { NotFoundError } from '../../platform/errors.ts';
+import { ConflictError, NotFoundError } from '../../platform/errors.ts';
 import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import { activeBinding, type BindingRow, lostBinding } from '../nfc/repo-tag-bindings.ts';
+import { getTagType } from '../nfc/repo-tag-types.ts';
 import { tagTarget } from '../nfc/repo-tags.ts';
 import { commitTag } from '../nfc/tags.ts';
 
@@ -37,6 +38,10 @@ export async function reportMyTagLost(
     throw notFound();
   }
   if (!ownedBy(binding, userId) || tag.status !== 'active') throw notFound();
+  // A loaner belongs to the desk: the holder cannot report it lost, only hand it back.
+  const type = tag.typeId ? await getTagType(ctx.env.DB, tag.orgId, tag.typeId) : null;
+  if (type?.use === 'visitor')
+    throw new ConflictError('This tag belongs to the desk. Hand it back there.', 'TAG_LENT');
   const g = grant(ctx, {
     purpose: 'org_mode.nfc.tag.holder_lost',
     principal: {

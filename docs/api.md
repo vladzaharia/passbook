@@ -247,6 +247,8 @@ management check and must not be used as a general tenant capability grant.
 
 Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog/`, one file per release date). `/api/v1` changes additively unless a dated `PassBook-Version` carries the change (`docs/api/versions.json`). Send `PassBook-Version: 2026-11-22` to opt in to every dated change (`2026-11-20` for the first only); without it behaviour is unchanged, and an unlisted date answers `422 API_VERSION_UNKNOWN`. `info.version` in the reference is the newest version date. A fix that stops a request from reaching more than it asked (a refused filter, say) ships to every client without a version and is listed as breaking in the changelog.
 
+**Deprecation.** A deprecated operation has `deprecated: true` and `x-sunset` in the reference and answers with `Deprecation`, `Sunset` and `Link` headers. It works until its Sunset date, at least 12 months after the deprecation is listed in the changelog, and is then removed for every client, whatever `PassBook-Version` it sends. A deprecated write may answer `410` before its Sunset when the product no longer does what it did; the changelog says so on the day.
+
 - **Unreleased, managed Apple identities**: `GET /wallet-identities`, `POST /orgs/{orgId}/identities/apple`
   (202, `Idempotency-Key`, needs the `identity.managed` feature), `POST /identities/{id}/renew`,
   `GET /identities/{id}/certificates`, `POST /identities/{id}/revoke-certificate`, `/identity-runs`
@@ -259,7 +261,7 @@ Dated changes are in the [changelog](/developers/changelog) (`docs/api/changelog
 
 - **Status**: creating a resource returns `201`; queuing a job returns `202` and names the job
   or resource to poll; an action on an existing resource returns `200`. `POST /roll-calls` answers
-  `201` under `PassBook-Version: 2026-11-20` and later, `200` without it. `POST /offboard` is an action and stays `200`.
+  `201` under `PassBook-Version: 2026-11-20` and later, `200` without it. `POST /offboard` is an action and stays `200`. It handles up to 100 passes per call: while the answer says `more: true`, send the same request again.
 - **Lists**: return `pageOf(item)` (`{ items, nextCursor }`) and take `cursor` and `limit`. Use
   `after` only for an ordered stream.
 - **Time filters**: `createdAfter`, `createdBefore`, `updatedSince`, in ms.

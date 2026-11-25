@@ -468,7 +468,6 @@ describe('the corpus: every table with a template column is covered', () => {
     scan_event_templates: 'reached through an event, which spans templates',
     scanner_templates: 'reached through a scanner, which spans templates',
     pass_import_rows: 'checked through its import (an org-less child), not as its own table',
-    visitors: 'a visitor row has no template of its own',
     template_version_bases: 'checked through its fork (an org-less child)',
     template_approvals: 'checked through its candidate (an org-less child)',
     pass_assets: 'checked through its pass (an org-less child)',

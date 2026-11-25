@@ -114,6 +114,8 @@ export interface BindPlan {
   clearsLost: boolean;
   /** The binding ends by itself this many days after it is made (the type's `binding_days`). */
   expiryDays?: number | null;
+  /** A loaner's guest end (ms): the binding ends then if that is before the type's expiry. */
+  endsAt?: number | null;
   /** The lost report this bind clears, kept on the binding so a scanner Undo can restore it. */
   cleared?: { at: number; by: string } | null;
   /** A scanner bind's idempotency key and request hash: a retry replays the result. */
@@ -147,6 +149,11 @@ export const bindChecks = (
       : [sunKeysetCheck(p.sun), sunActiveCheck(p.sun)]
     : []),
 ];
+
+const bindingExpiry = (now: number, p: Pick<BindPlan, 'expiryDays' | 'endsAt'>): number | null => {
+  const byType = p.expiryDays ? now + p.expiryDays * DAY_MS : null;
+  return p.endsAt == null ? byType : byType === null ? p.endsAt : Math.min(byType, p.endsAt);
+};
 
 /**
  * Adds a bind to a grant: the tag row if new, the end of the binding it takes over, the new binding and
@@ -222,7 +229,7 @@ export function addBind(g: Grant, ctx: ServiceContext, p: BindPlan): GrantedStat
       p.idempotency?.hash ?? null,
       p.cleared?.at ?? null,
       p.cleared?.by ?? null,
-      p.expiryDays ? now + p.expiryDays * DAY_MS : null,
+      bindingExpiry(now, p),
     ],
     returning: ['id'],
   });

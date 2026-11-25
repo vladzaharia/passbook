@@ -33,6 +33,24 @@ describe('ratchet', () => {
     expect(run(base, { 'passes.getPasses': hidden }).join()).toMatch(/true to false/);
   });
 
+  it('lets an approved removal drop its frozen name, and only that one', () => {
+    const none: Doc = { paths: {} };
+    const gone = (approvedIds: string[]) =>
+      ratchetFailures({ base, next: none, baseNames: names, nextNames: {}, approvedIds });
+    expect(gone(['passes.getPasses'])).toEqual([]);
+    expect(gone(['passes.other']).join()).toMatch(/passes.getPasses: name removed/);
+    // An approval does not cover an operation that is still in the document.
+    expect(
+      ratchetFailures({
+        base,
+        next: base,
+        baseNames: names,
+        nextNames: {},
+        approvedIds: ['passes.getPasses'],
+      }).join(),
+    ).toMatch(/name removed/);
+  });
+
   it('allows false to true', () => {
     const was = {
       'passes.getPasses': { resource: 'passes', method: 'list', sdk: false, reason: 'r' },
@@ -98,5 +116,34 @@ describe('ratchet', () => {
       namedResponse: [1, 1],
       requestExample: [0, 0],
     });
+  });
+});
+
+describe('ratchet at a Sunset', () => {
+  const dep = (sunset: string) =>
+    doc({ '/api/v1/passes': op('passes.getPasses', { deprecated: true, 'x-sunset': sunset }) });
+  const gone = doc({});
+  const go = (b: Doc, on: string) =>
+    ratchetFailures({ base: b, next: gone, baseNames: names, nextNames: {}, on });
+
+  it('lets a name go with its operation on or after the Sunset', () => {
+    expect(go(dep('2027-11-25'), '2027-11-25')).toEqual([]);
+    expect(go(dep('2027-11-25'), '2028-01-01')).toEqual([]);
+  });
+
+  it('keeps names frozen before the Sunset and for operations never deprecated', () => {
+    expect(go(dep('2027-11-25'), '2027-11-24').join()).toMatch(/name removed/);
+    expect(go(base, '2030-01-01').join()).toMatch(/name removed/);
+  });
+
+  it('refuses dropping the name while the operation stays', () => {
+    const out = ratchetFailures({
+      base: dep('2026-12-01'),
+      next: dep('2026-12-01'),
+      baseNames: names,
+      nextNames: {},
+      on: '2027-01-01',
+    });
+    expect(out.join()).toMatch(/name removed/);
   });
 });

@@ -2290,6 +2290,7 @@ type HoldersOffboardResponse struct {
 	Holders int64 `json:"holders"`
 	Passes  int64 `json:"passes"`
 	Tags    int64 `json:"tags"`
+	More    bool  `json:"more"`
 }
 
 type HoldersOffboardResult = HoldersOffboardResponse
@@ -6018,6 +6019,8 @@ type PassScannedEventData struct {
 	Action    *string  `json:"action,omitempty"`
 	Outcome   string   `json:"outcome"`
 	Direction *string  `json:"direction,omitempty"`
+	ZoneID    *string  `json:"zoneId,omitempty"`
+	Exit      *string  `json:"exit,omitempty"`
 	Method    *string  `json:"method,omitempty"`
 	ScannerID *string  `json:"scannerId,omitempty"`
 	StaffID   *string  `json:"staffId,omitempty"`
@@ -13251,142 +13254,6 @@ type TestEmailsRetrieveQuery struct {
 }
 
 type TestEmailsRetrieveResult = CapturedEmailDetail
-
-type VisitorsCancelResponse struct {
-	ID          string  `json:"id"`
-	PassID      string  `json:"passId"`
-	Name        string  `json:"name"`
-	HostName    string  `json:"hostName"`
-	WindowFrom  int64   `json:"windowFrom"`
-	WindowUntil int64   `json:"windowUntil"`
-	Note        *string `json:"note"`
-	Status      string  `json:"status"`
-	StatusAt    *int64  `json:"statusAt"`
-	AutoOut     bool    `json:"autoOut"`
-	HasEmail    bool    `json:"hasEmail"`
-}
-
-type VisitorsCancelResult = VisitorsCancelResponse
-
-type VisitorsCheckOutResponse struct {
-	ID          string  `json:"id"`
-	PassID      string  `json:"passId"`
-	Name        string  `json:"name"`
-	HostName    string  `json:"hostName"`
-	WindowFrom  int64   `json:"windowFrom"`
-	WindowUntil int64   `json:"windowUntil"`
-	Note        *string `json:"note"`
-	Status      string  `json:"status"`
-	StatusAt    *int64  `json:"statusAt"`
-	AutoOut     bool    `json:"autoOut"`
-	HasEmail    bool    `json:"hasEmail"`
-}
-
-type VisitorsCheckOutResult = VisitorsCheckOutResponse
-
-type VisitorsCreateBody = VisitorsCreateParams
-
-type VisitorsCreateParams struct {
-	OrgID       string  `json:"orgId"`
-	Name        string  `json:"name"`
-	Email       *string `json:"email,omitempty"`
-	HostUserID  *string `json:"hostUserId,omitempty"`
-	HostName    *string `json:"hostName,omitempty"`
-	HostEmail   *string `json:"hostEmail,omitempty"`
-	WindowFrom  int64   `json:"windowFrom"`
-	WindowUntil int64   `json:"windowUntil"`
-	Note        *string `json:"note,omitempty"`
-	TemplateID  *string `json:"templateId,omitempty"`
-}
-
-type VisitorsCreateResponse struct {
-	ID          string  `json:"id"`
-	PassID      string  `json:"passId"`
-	Name        string  `json:"name"`
-	HostName    string  `json:"hostName"`
-	WindowFrom  int64   `json:"windowFrom"`
-	WindowUntil int64   `json:"windowUntil"`
-	Note        *string `json:"note"`
-	Status      string  `json:"status"`
-	StatusAt    *int64  `json:"statusAt"`
-	AutoOut     bool    `json:"autoOut"`
-	HasEmail    bool    `json:"hasEmail"`
-}
-
-type VisitorsCreateResult = VisitorsCreateResponse
-
-type VisitorsListHostsItem struct {
-	ID    string  `json:"id"`
-	Name  string  `json:"name"`
-	Email *string `json:"email"`
-}
-
-type VisitorsListHostsQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
-}
-
-type VisitorsListHostsResponse struct {
-	Items      []VisitorsListHostsResponseItemsItem `json:"items"`
-	NextCursor *string                              `json:"nextCursor"`
-}
-
-type VisitorsListHostsResponseItemsItem struct {
-	ID    string  `json:"id"`
-	Name  string  `json:"name"`
-	Email *string `json:"email"`
-}
-
-type VisitorsListItem struct {
-	ID          string  `json:"id"`
-	PassID      string  `json:"passId"`
-	Name        string  `json:"name"`
-	HostName    string  `json:"hostName"`
-	WindowFrom  int64   `json:"windowFrom"`
-	WindowUntil int64   `json:"windowUntil"`
-	Note        *string `json:"note"`
-	Status      string  `json:"status"`
-	StatusAt    *int64  `json:"statusAt"`
-	AutoOut     bool    `json:"autoOut"`
-	HasEmail    bool    `json:"hasEmail"`
-}
-
-type VisitorsListQuery struct {
-	Tab      *string `json:"tab,omitempty"`
-	DayStart *int64  `json:"dayStart,omitempty"`
-	DayEnd   *int64  `json:"dayEnd,omitempty"`
-	Cursor   *string `json:"cursor,omitempty"`
-}
-
-type VisitorsListResponse struct {
-	Items      []VisitorsListResponseItemsItem `json:"items"`
-	NextCursor *string                         `json:"nextCursor"`
-}
-
-type VisitorsListResponseItemsItem struct {
-	ID          string  `json:"id"`
-	PassID      string  `json:"passId"`
-	Name        string  `json:"name"`
-	HostName    string  `json:"hostName"`
-	WindowFrom  int64   `json:"windowFrom"`
-	WindowUntil int64   `json:"windowUntil"`
-	Note        *string `json:"note"`
-	Status      string  `json:"status"`
-	StatusAt    *int64  `json:"statusAt"`
-	AutoOut     bool    `json:"autoOut"`
-	HasEmail    bool    `json:"hasEmail"`
-}
-
-type VisitorsSendHostEmailBody = VisitorsSendHostEmailParams
-
-type VisitorsSendHostEmailParams struct {
-	TimeZone *string `json:"timeZone,omitempty"`
-}
-
-type VisitorsSendHostEmailResponse struct {
-	Ok bool `json:"ok"`
-}
-
-type VisitorsSendHostEmailResult = VisitorsSendHostEmailResponse
 
 type WalletAccountsGoogleManagedCreateParams struct {
 	Mode string `json:"mode"`
