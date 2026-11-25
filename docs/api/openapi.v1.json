@@ -73833,7 +73833,7 @@
     },
     "/auth/oidc/client-metadata.json": {
       "get": {
-        "summary": "Client ID Metadata Document for Pocket ID (when OIDC_CLIENT_ID is its URL)",
+        "summary": "Client ID Metadata Document for Polaris ID (when OIDC_CLIENT_ID is its URL)",
         "tags": [
           "auth"
         ],
@@ -115626,7 +115626,7 @@
     },
     "/api/v1/identities/{id}/revoke-certificate": {
       "post": {
-        "summary": "Revoke a superseded certificate after a compromise; needs a Pocket ID sign-in",
+        "summary": "Revoke a superseded certificate after a compromise; needs a Polaris ID sign-in",
         "tags": [
           "identities"
         ],

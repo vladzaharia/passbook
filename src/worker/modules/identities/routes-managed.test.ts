@@ -421,7 +421,7 @@ describe('identity actions', () => {
       await expectProblem(await revoke('wc-old'), 409, 'IDENTITY_PROTECTED');
     });
 
-    it('needs a Pocket ID sign-in', async () => {
+    it('needs a Polaris ID sign-in', async () => {
       const magic = await makeSession(fx, {
         userId: (await makeUser(fx)).id,
         roles: ['admin', 'user'],

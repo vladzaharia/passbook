@@ -118,7 +118,7 @@ export function stubFetch(handlers: Record<string, FetchHandler>) {
 
 export interface RenderAppOptions {
   session?: SessionKind;
-  /** How the session signed in; Pocket ID unless told. */
+  /** How the session signed in; Polaris ID unless told. */
   amr?: SignInMethod;
   handlers?: Record<string, FetchHandler>;
   memberships?: OrgMembership[];
