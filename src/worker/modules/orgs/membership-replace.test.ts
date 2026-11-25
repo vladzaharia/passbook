@@ -12,11 +12,13 @@ import {
 } from '../../../shared/contracts/org-membership.ts';
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
+import { sha256Hex } from '../../platform/ids.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { ACTOR_HOURLY_INVITES } from './invitation-limits.ts';
 import { changeOrgMemberRoles, resendOrgInvitation } from './membership-replace.ts';
 import { inviteOrgMember } from './membership-service.ts';
+import { ensurePersonalOrg } from './personal.ts';
 
 const sent: { to: string; text: string }[] = [];
 let failMail = false;
@@ -70,6 +72,28 @@ async function setup() {
     if (!auth) throw new Error('session fixture missing');
     return { user, id, auth };
   };
+  /** A platform admin with their personal org: its one member is the owner. */
+  const personal = async () => {
+    const user = await makeUser(f);
+    const session = await makeSession(f, { userId: user.id, roles: ['admin', 'user'] });
+    await ensurePersonalOrg(ctx, {
+      userId: user.id,
+      sessionId: await sha256Hex(session.cookieValue),
+    });
+    const row = await first<{ id: string }>(
+      env.DB,
+      'SELECT id FROM orgs WHERE personal_user_id = ?',
+      [user.id],
+    );
+    const member = await first<{ id: string }>(
+      env.DB,
+      'SELECT id FROM org_memberships WHERE org_id = ?',
+      [row?.id ?? ''],
+    );
+    const auth = await createSessionStore(env, f.clock).resolve(session.cookieValue);
+    if (!auth || !row || !member) throw new Error('personal org fixture missing');
+    return { orgId: row.id, membershipId: member.id, auth };
+  };
   const active = (orgId: string, userId: string) =>
     all<{ id: string; roles: string; revoked_at: number | null }>(
       env.DB,
@@ -80,7 +104,7 @@ async function setup() {
     all<{ target_id: string }>(env.DB, 'SELECT target_id FROM audit_log WHERE action = ?', [
       action,
     ]);
-  return { env, f, ctx, org, other, join, active, audits };
+  return { env, f, ctx, org, other, join, personal, active, audits };
 }
 
 describe('change roles', () => {
@@ -109,22 +133,24 @@ describe('change roles', () => {
     const t = await setup();
     const admin = await t.join(t.org.id, ['org_admin']);
     const member = await t.join(t.org.id, ['pass_operator', 'template_author']);
+    const before = await t.audits('org_membership.roles');
     const result = await changeOrgMemberRoles(t.ctx, admin.auth, t.org.id, member.id, [
       'template_author',
       'pass_operator',
     ]);
     expect(result.id).toBe(member.id);
-    expect(await t.audits('org_membership.roles')).toEqual([]);
+    expect(await t.audits('org_membership.roles')).toEqual(before);
   });
 
   it('keeps the last org admin, and lets the role go once another admin exists', async () => {
     const t = await setup();
     const sole = await t.join(t.org.id, ['org_admin']);
+    const before = await t.audits('org_membership.roles');
     await expect(
       changeOrgMemberRoles(t.ctx, sole.auth, t.org.id, sole.id, ['read_only']),
     ).rejects.toMatchObject({ status: 409, code: 'LAST_ORG_ADMIN' });
     expect((await t.active(t.org.id, sole.user.id))[0]?.revoked_at).toBeNull();
-    expect(await t.audits('org_membership.roles')).toEqual([]);
+    expect(await t.audits('org_membership.roles')).toEqual(before);
     const next = await t.join(t.org.id, ['org_admin']);
     const result = await changeOrgMemberRoles(t.ctx, next.auth, t.org.id, sole.id, ['read_only']);
     expect(result.roles).toEqual(['read_only']);
@@ -170,14 +196,9 @@ describe('change roles', () => {
 
   it('refuses a personal org', async () => {
     const t = await setup();
-    const owner = await t.join(t.org.id, ['org_admin']);
-    const member = await t.join(t.org.id, ['read_only']);
-    await run(t.env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [
-      owner.user.id,
-      t.org.id,
-    ]);
+    const owner = await t.personal();
     await expect(
-      changeOrgMemberRoles(t.ctx, owner.auth, t.org.id, member.id, ['pass_operator']),
+      changeOrgMemberRoles(t.ctx, owner.auth, owner.orgId, owner.membershipId, ['read_only']),
     ).rejects.toMatchObject({ code: 'ORG_PERSONAL_SINGLE_MEMBER' });
   });
 
@@ -229,16 +250,21 @@ describe('resend invitation', () => {
 
   it('works on an expired invitation and refuses a revoked, accepted or unknown one', async () => {
     const t = await setup();
-    const { manager, first: old } = await invited(t);
-    t.f.clock.advance(8 * 24 * 60 * 60 * 1000);
-    const fresh = await resendOrgInvitation(t.ctx, manager.auth, t.org.id, old.id);
-    expect(fresh.expiresAt).toBeGreaterThan(t.f.clock.now());
-    await expect(resendOrgInvitation(t.ctx, manager.auth, t.org.id, old.id)).rejects.toMatchObject({
-      code: 'MEMBERSHIP_CONFLICT',
-    });
-    await expect(resendOrgInvitation(t.ctx, manager.auth, t.org.id, 'nope')).rejects.toMatchObject({
-      code: 'MEMBERSHIP_CONFLICT',
-    });
+    const manager = await t.join(t.org.id, ['org_admin']);
+    const now = t.f.clock.now();
+    const expiredId = t.f.ids.id();
+    await run(
+      t.env.DB,
+      `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at)
+       VALUES (?, ?, 'late@example.test', '["read_only"]', ?, ?, ?)`,
+      [expiredId, t.org.id, t.f.ids.token(), now - 2000, now - 1000],
+    );
+    const fresh = await resendOrgInvitation(t.ctx, manager.auth, t.org.id, expiredId);
+    expect(fresh.expiresAt).toBeGreaterThan(now);
+    for (const id of [expiredId, 'nope'])
+      await expect(resendOrgInvitation(t.ctx, manager.auth, t.org.id, id)).rejects.toMatchObject({
+        code: 'MEMBERSHIP_CONFLICT',
+      });
   });
 
   it('refuses anyone without members:manage, another org and a personal org', async () => {
@@ -257,16 +283,12 @@ describe('resend invitation', () => {
     ).rejects.toMatchObject({
       code: 'MEMBERSHIP_CONFLICT',
     });
-    await run(t.env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [
-      operator.user.id,
-      t.org.id,
-    ]);
-    const manager = await t.join(t.other.id, ['org_admin']);
-    await run(t.env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [
-      manager.user.id,
-      t.other.id,
-    ]);
-    await expect(resendOrgInvitation(t.ctx, operator.auth, t.org.id, old.id)).rejects.toBeDefined();
+    const owner = await t.personal();
+    await expect(resendOrgInvitation(t.ctx, owner.auth, owner.orgId, old.id)).rejects.toMatchObject(
+      {
+        code: 'ORG_PERSONAL_SINGLE_MEMBER',
+      },
+    );
   });
 
   it('counts against the hourly invite limit, and is refused past it', async () => {

@@ -233,7 +233,7 @@ describe('Members page', () => {
     await user.click(within(dialog).getByRole('checkbox', { name: 'Pass operator' }));
     await user.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(success).toHaveBeenCalledWith('Roles saved'));
-    expect(patches).toEqual([['PATCH', { roles: ['template_author'] }]]);
+    expect(patches).toEqual([['PATCH', { roles: ['template_author', 'integration_admin'] }]]);
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
