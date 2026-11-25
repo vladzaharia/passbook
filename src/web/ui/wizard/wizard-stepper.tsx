@@ -65,7 +65,7 @@ export function WizardStepper({ wizard }: { wizard: WizardRail }) {
           const word =
             s.state === 'invalid' ? 'needs attention' : s.state === 'skipped' ? 'skipped' : '';
           const ids = { title: `${base}-t${i}`, detail: `${base}-d${i}`, word: `${base}-w${i}` };
-          const described = [summary && ids.detail, word && ids.word].filter(Boolean).join(' ');
+          const described = [word && ids.word].filter(Boolean).join(' ');
           const body = (
             <>
               <StepMarker state={s.state} n={n} fresh={popped.current.has(s.id)} />
@@ -86,6 +86,7 @@ export function WizardStepper({ wizard }: { wizard: WizardRail }) {
                 >
                   {s.title}
                 </span>
+                {summary ? ' ' : null}
                 {summary ? (
                   <span id={ids.detail} title={summary} className="truncate text-xs text-fg-muted">
                     {summary}
@@ -115,7 +116,7 @@ export function WizardStepper({ wizard }: { wizard: WizardRail }) {
               {jump ? (
                 <button
                   type="button"
-                  aria-labelledby={ids.title}
+                  aria-labelledby={summary ? `${ids.title} ${ids.detail}` : ids.title}
                   aria-describedby={described || undefined}
                   onClick={() => wizard.go(s.id)}
                   className="group flex w-full items-start gap-3 rounded-md"

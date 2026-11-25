@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { axe } from 'vitest-axe';
 import '../../lib/test-utils.tsx';
 import { StepList, StepMarker } from '../step-marker.tsx';
 import { WizardStepper } from './wizard-stepper.tsx';
@@ -48,13 +49,21 @@ describe('WizardStepper compact edit header', () => {
   });
 });
 
+describe('WizardStepper accessible names', () => {
+  it('names a done step by its title and summary, so the name starts with the visible text', async () => {
+    const { container } = render(<WizardStepper wizard={model(['done', 'current'])} />);
+    expect(screen.getByRole('button', { name: 'Step 1 chose 1' })).toBeInTheDocument();
+    expect((await axe(container)).violations).toEqual([]);
+  });
+});
+
 describe('WizardStepper', () => {
   it('names done steps by title, describes them by what was chosen, and jumps on press', async () => {
     const user = userEvent.setup();
     const wizard = model(['done', 'current', 'todo']);
     render(<WizardStepper wizard={wizard} />);
-    const done = screen.getByRole('button', { name: 'Step 1' });
-    expect(done).toHaveAccessibleDescription('chose 1');
+    const done = screen.getByRole('button', { name: /^Step 1/ });
+    expect(done).toHaveAccessibleName('Step 1 chose 1');
     await user.click(done);
     expect(wizard.go).toHaveBeenCalledWith('s0');
     const current = screen
@@ -111,7 +120,7 @@ describe('WizardStepper pop', () => {
 
   it('shows hover on the title through the button group, not a descendant selector', () => {
     render(<WizardStepper wizard={model(['done', 'current'])} />);
-    const button = screen.getByRole('button', { name: 'Step 1' });
+    const button = screen.getByRole('button', { name: /^Step 1/ });
     expect(button.className).toContain('group');
     expect(button.innerHTML).toContain('group-hover:text-fg-strong');
   });
