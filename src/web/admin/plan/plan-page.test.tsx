@@ -35,13 +35,13 @@ describe('plan page', () => {
     await open(planFixture());
     const features = within(await screen.findByRole('region', { name: 'Features' }));
     expect(features.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
-      'Apple Wallet',
-      'Google Wallet',
+      'Apple',
+      'Google',
       'NFC tags',
       'API access, read only',
     ]);
     expect(features.queryByText(/not included|upgrade/i)).toBeNull();
-    expect(features.getByText(/PassBook/)).toBeVisible();
+    expect(features.getByText('Powered by PassBook')).toBeVisible();
   });
 
   it('says so when the organization has no plan', async () => {

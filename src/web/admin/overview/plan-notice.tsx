@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { formatCount } from '@/web/lib/format.ts';
 import { Callout } from '@/web/ui/index.ts';
-import { pressedLimits } from '../plan/limits.ts';
+import { pressedLimits, viewOfOrgPlan } from '../plan/limits.ts';
 import { useOrgPlan } from '../plan/queries.ts';
 
 /**
@@ -10,7 +10,7 @@ import { useOrgPlan } from '../plan/queries.ts';
  */
 export function PlanNotice({ orgId }: { orgId: string }) {
   const plan = useOrgPlan(orgId);
-  const pressed = plan.data ? pressedLimits(plan.data) : [];
+  const pressed = plan.data ? pressedLimits(viewOfOrgPlan(plan.data)) : [];
   const worst = pressed[0];
   if (!worst || worst.limit === null) return null;
   const more = pressed.length - 1;
