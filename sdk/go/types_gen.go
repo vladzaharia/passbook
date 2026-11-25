@@ -4201,6 +4201,8 @@ type NfcBindingsDeleteResponse struct {
 	Binding    map[string]any `json:"binding"`
 }
 
+type NfcBindingsDeleteResult = NfcBindingsDeleteResponse
+
 type NfcBindingsUpdateParams struct {
 	Binding string  `json:"binding"`
 	PassID  *string `json:"passId,omitempty"`
@@ -4693,6 +4695,8 @@ type NfcTagTypesUpdateResponse struct {
 
 type NfcTagTypesUpdateResult = NfcTagTypesUpdateResponse
 
+type NfcTagsAssignBody = NfcTagsAssignParams
+
 type NfcTagsAssignParams = any
 
 type NfcTagsAssignParams1 struct {
@@ -4723,6 +4727,30 @@ type NfcTagsAssignResponse struct {
 	LastSeenAt *int64         `json:"lastSeenAt"`
 	KeysetID   *string        `json:"keysetId"`
 	Binding    map[string]any `json:"binding"`
+}
+
+type NfcTagsAssignResult = NfcTagsAssignResponse
+
+type NfcTagsListForPassItem struct {
+	ID         string         `json:"id"`
+	Mode       string         `json:"mode"`
+	Kind       string         `json:"kind"`
+	System     *string        `json:"system,omitempty"`
+	Type       map[string]any `json:"type,omitempty"`
+	Assurance  string         `json:"assurance"`
+	Hint       string         `json:"hint"`
+	Label      *string        `json:"label"`
+	Pool       bool           `json:"pool"`
+	Status     string         `json:"status"`
+	State      string         `json:"state"`
+	CreatedAt  int64          `json:"createdAt"`
+	LastSeenAt *int64         `json:"lastSeenAt"`
+	KeysetID   *string        `json:"keysetId"`
+	Binding    map[string]any `json:"binding"`
+}
+
+type NfcTagsListForPassQuery struct {
+	Cursor *string `json:"cursor,omitempty"`
 }
 
 type NfcTagsListForPassResponse struct {
@@ -4773,6 +4801,28 @@ type NfcTagsListForUserResponseItemsItem struct {
 	OrgName    string         `json:"orgName"`
 }
 
+type NfcTagsListHistoryItem struct {
+	ID          string  `json:"id"`
+	TagID       string  `json:"tagId"`
+	Scope       string  `json:"scope"`
+	PassID      string  `json:"passId"`
+	PassTitle   *string `json:"passTitle"`
+	UserID      *string `json:"userId"`
+	HolderName  *string `json:"holderName"`
+	Source      string  `json:"source"`
+	Lent        *bool   `json:"lent,omitempty"`
+	BoundAt     int64   `json:"boundAt"`
+	BoundByName *string `json:"boundByName"`
+	ScannerName *string `json:"scannerName"`
+	ExpiresAt   *int64  `json:"expiresAt,omitempty"`
+	EndedAt     *int64  `json:"endedAt"`
+	EndCause    *string `json:"endCause"`
+}
+
+type NfcTagsListHistoryQuery struct {
+	Cursor *int64 `json:"cursor,omitempty"`
+}
+
 type NfcTagsListHistoryResponse struct {
 	Items      []NfcTagsListHistoryResponseItemsItem  `json:"items"`
 	NextCursor *string                                `json:"nextCursor"`
@@ -4801,6 +4851,33 @@ type NfcTagsListHistoryResponseItemsItem struct {
 	ExpiresAt   *int64  `json:"expiresAt,omitempty"`
 	EndedAt     *int64  `json:"endedAt"`
 	EndCause    *string `json:"endCause"`
+}
+
+type NfcTagsListItem struct {
+	ID         string         `json:"id"`
+	Mode       string         `json:"mode"`
+	Kind       string         `json:"kind"`
+	System     *string        `json:"system,omitempty"`
+	Type       map[string]any `json:"type,omitempty"`
+	Assurance  string         `json:"assurance"`
+	Hint       string         `json:"hint"`
+	Label      *string        `json:"label"`
+	Pool       bool           `json:"pool"`
+	Status     string         `json:"status"`
+	State      string         `json:"state"`
+	CreatedAt  int64          `json:"createdAt"`
+	LastSeenAt *int64         `json:"lastSeenAt"`
+	KeysetID   *string        `json:"keysetId"`
+	Binding    map[string]any `json:"binding"`
+}
+
+type NfcTagsListQuery struct {
+	Status  *string `json:"status,omitempty"`
+	PassID  *string `json:"passId,omitempty"`
+	Binding *string `json:"binding,omitempty"`
+	Q       *string `json:"q,omitempty"`
+	Cursor  *string `json:"cursor,omitempty"`
+	Limit   *int64  `json:"limit,omitempty"`
 }
 
 type NfcTagsListResponse struct {
@@ -4867,6 +4944,8 @@ type NfcTagsReportLostResponse struct {
 	Binding    map[string]any `json:"binding"`
 }
 
+type NfcTagsReportLostResult = NfcTagsReportLostResponse
+
 type NfcTagsRestoreResponse struct {
 	ID         string         `json:"id"`
 	Mode       string         `json:"mode"`
@@ -4884,6 +4963,8 @@ type NfcTagsRestoreResponse struct {
 	KeysetID   *string        `json:"keysetId"`
 	Binding    map[string]any `json:"binding"`
 }
+
+type NfcTagsRestoreResult = NfcTagsRestoreResponse
 
 type NfcTagsRetireResponse struct {
 	ID         string         `json:"id"`
@@ -4920,6 +5001,8 @@ type NfcTagsRetrieveResponse struct {
 	KeysetID   *string        `json:"keysetId"`
 	Binding    map[string]any `json:"binding"`
 }
+
+type NfcTagsRetrieveResult = NfcTagsRetrieveResponse
 
 type NfcTagsUpdateParams struct {
 	Label *string `json:"label,omitempty"`

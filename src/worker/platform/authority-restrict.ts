@@ -106,6 +106,13 @@ function rowBody(table: string, alias: string, key: KeyRef): string {
 export const hasTemplateRef = (table: string): boolean => table in TEMPLATE_REFS;
 
 /**
+ * Org-less children whose other parent has no template: the limit rides the one edge named here, so a limited key
+ * writes them only through that edge (`joined` with `via`, `insertJoined`), which holds the pass to its templates.
+ * `tag_bindings`: a tag is org-level stock, the pass it opens is what carries a template.
+ */
+export const CARRIED_BY_EDGE: Readonly<Record<string, string>> = { tag_bindings: 'pass_id' };
+
+/**
  * Whether a limited key may write `table`: an org table needs its own reference; an org-less child needs one on the
  * parent of each edge it is reached through (`via` picks the one edge a joined update uses, none means every edge).
  */
@@ -113,6 +120,12 @@ export function keyMayWrite(table: string, via?: string): boolean {
   const t = GUARDED_TABLES[table];
   if (!t) return false;
   if (t.org !== null) return hasTemplateRef(table);
+  const carrier = CARRIED_BY_EDGE[table];
+  if (carrier !== undefined)
+    return (
+      (via === undefined || via === carrier) &&
+      (t.edges ?? []).some((e) => e.column === carrier && hasTemplateRef(e.parent))
+    );
   const edges = (t.edges ?? []).filter((e) => via === undefined || e.column === via);
   return edges.length > 0 && edges.every((e) => hasTemplateRef(e.parent));
 }

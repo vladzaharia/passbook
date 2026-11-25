@@ -3071,6 +3071,53 @@
   }
  },
  {
+  "id": "nfc-tags.deleteNfcBindingsByBindingId",
+  "call": "nfc.bindings.delete",
+  "http": "DELETE",
+  "path": "/api/v1/nfc/bindings/{bindingId}",
+  "pathParams": [
+   {
+    "name": "bindingId",
+    "py": "binding_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "mode": "live",
+   "kind": "uid",
+   "assurance": "basic",
+   "hint": "x",
+   "label": "x",
+   "pool": false,
+   "status": "active",
+   "state": "assigned",
+   "createdAt": 0,
+   "lastSeenAt": 0,
+   "keysetId": "x",
+   "binding": {
+    "id": "x",
+    "tagId": "x",
+    "scope": "pass",
+    "passId": "x",
+    "passTitle": "x",
+    "userId": "x",
+    "holderName": "x",
+    "source": "scanner",
+    "boundAt": 0,
+    "boundByName": "x",
+    "scannerName": "x",
+    "endedAt": 0,
+    "endCause": "admin"
+   }
+  }
+ },
+ {
   "id": "nfc-keysets.getNfcKeysets",
   "call": "nfc.keysets.list",
   "http": "GET",
@@ -3391,6 +3438,109 @@
   }
  },
  {
+  "id": "nfc-tags.getNfcPassesByPassIdTags",
+  "call": "nfc.tags.list_for_pass",
+  "http": "GET",
+  "path": "/api/v1/nfc/passes/{passId}/tags",
+  "pathParams": [
+   {
+    "name": "passId",
+    "py": "pass_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "mode": "live",
+     "kind": "uid",
+     "assurance": "basic",
+     "hint": "x",
+     "label": "x",
+     "pool": false,
+     "status": "active",
+     "state": "assigned",
+     "createdAt": 0,
+     "lastSeenAt": 0,
+     "keysetId": "x",
+     "binding": {
+      "id": "x",
+      "tagId": "x",
+      "scope": "pass",
+      "passId": "x",
+      "passTitle": "x",
+      "userId": "x",
+      "holderName": "x",
+      "source": "scanner",
+      "boundAt": 0,
+      "boundByName": "x",
+      "scannerName": "x",
+      "endedAt": 0,
+      "endCause": "admin"
+     }
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "nfc-tags.postNfcPassesByPassIdTagsAssign",
+  "call": "nfc.tags.assign",
+  "http": "POST",
+  "path": "/api/v1/nfc/passes/{passId}/tags/assign",
+  "pathParams": [
+   {
+    "name": "passId",
+    "py": "pass_id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "body": {
+   "id": "x",
+   "binding": "pass"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "mode": "live",
+   "kind": "uid",
+   "assurance": "basic",
+   "hint": "x",
+   "label": "x",
+   "pool": false,
+   "status": "active",
+   "state": "assigned",
+   "createdAt": 0,
+   "lastSeenAt": 0,
+   "keysetId": "x",
+   "binding": {
+    "id": "x",
+    "tagId": "x",
+    "scope": "pass",
+    "passId": "x",
+    "passTitle": "x",
+    "userId": "x",
+    "holderName": "x",
+    "source": "scanner",
+    "boundAt": 0,
+    "boundByName": "x",
+    "scannerName": "x",
+    "endedAt": 0,
+    "endCause": "admin"
+   }
+  }
+ },
+ {
   "id": "nfc-tags.getNfcTagTypes",
   "call": "nfc.tag_types.list",
   "http": "GET",
@@ -3503,6 +3653,238 @@
    "createdAt": 0,
    "updatedAt": 0,
    "archivedAt": 0
+  }
+ },
+ {
+  "id": "nfc-tags.getNfcTags",
+  "call": "nfc.tags.list",
+  "http": "GET",
+  "path": "/api/v1/nfc/tags",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "mode": "live",
+     "kind": "uid",
+     "assurance": "basic",
+     "hint": "x",
+     "label": "x",
+     "pool": false,
+     "status": "active",
+     "state": "assigned",
+     "createdAt": 0,
+     "lastSeenAt": 0,
+     "keysetId": "x",
+     "binding": {
+      "id": "x",
+      "tagId": "x",
+      "scope": "pass",
+      "passId": "x",
+      "passTitle": "x",
+      "userId": "x",
+      "holderName": "x",
+      "source": "scanner",
+      "boundAt": 0,
+      "boundByName": "x",
+      "scannerName": "x",
+      "endedAt": 0,
+      "endCause": "admin"
+     }
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "nfc-tags.getNfcTagsById",
+  "call": "nfc.tags.retrieve",
+  "http": "GET",
+  "path": "/api/v1/nfc/tags/{id}",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "mode": "live",
+   "kind": "uid",
+   "assurance": "basic",
+   "hint": "x",
+   "label": "x",
+   "pool": false,
+   "status": "active",
+   "state": "assigned",
+   "createdAt": 0,
+   "lastSeenAt": 0,
+   "keysetId": "x",
+   "binding": {
+    "id": "x",
+    "tagId": "x",
+    "scope": "pass",
+    "passId": "x",
+    "passTitle": "x",
+    "userId": "x",
+    "holderName": "x",
+    "source": "scanner",
+    "boundAt": 0,
+    "boundByName": "x",
+    "scannerName": "x",
+    "endedAt": 0,
+    "endCause": "admin"
+   }
+  }
+ },
+ {
+  "id": "nfc-tags.getNfcTagsByIdHistory",
+  "call": "nfc.tags.list_history",
+  "http": "GET",
+  "path": "/api/v1/nfc/tags/{id}/history",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": "x",
+     "tagId": "x",
+     "scope": "pass",
+     "passId": "x",
+     "passTitle": "x",
+     "userId": "x",
+     "holderName": "x",
+     "source": "scanner",
+     "boundAt": 0,
+     "boundByName": "x",
+     "scannerName": "x",
+     "endedAt": 0,
+     "endCause": "admin"
+    }
+   ],
+   "nextCursor": null,
+   "events": [
+    {
+     "at": 0,
+     "action": "lost",
+     "actorName": "x"
+    }
+   ]
+  }
+ },
+ {
+  "id": "nfc-tags.postNfcTagsByIdLost",
+  "call": "nfc.tags.report_lost",
+  "http": "POST",
+  "path": "/api/v1/nfc/tags/{id}/lost",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "mode": "live",
+   "kind": "uid",
+   "assurance": "basic",
+   "hint": "x",
+   "label": "x",
+   "pool": false,
+   "status": "active",
+   "state": "assigned",
+   "createdAt": 0,
+   "lastSeenAt": 0,
+   "keysetId": "x",
+   "binding": {
+    "id": "x",
+    "tagId": "x",
+    "scope": "pass",
+    "passId": "x",
+    "passTitle": "x",
+    "userId": "x",
+    "holderName": "x",
+    "source": "scanner",
+    "boundAt": 0,
+    "boundByName": "x",
+    "scannerName": "x",
+    "endedAt": 0,
+    "endCause": "admin"
+   }
+  }
+ },
+ {
+  "id": "nfc-tags.postNfcTagsByIdRestore",
+  "call": "nfc.tags.restore",
+  "http": "POST",
+  "path": "/api/v1/nfc/tags/{id}/restore",
+  "pathParams": [
+   {
+    "name": "id",
+    "py": "id",
+    "integer": false
+   }
+  ],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "id": "x",
+   "mode": "live",
+   "kind": "uid",
+   "assurance": "basic",
+   "hint": "x",
+   "label": "x",
+   "pool": false,
+   "status": "active",
+   "state": "assigned",
+   "createdAt": 0,
+   "lastSeenAt": 0,
+   "keysetId": "x",
+   "binding": {
+    "id": "x",
+    "tagId": "x",
+    "scope": "pass",
+    "passId": "x",
+    "passTitle": "x",
+    "userId": "x",
+    "holderName": "x",
+    "source": "scanner",
+    "boundAt": 0,
+    "boundByName": "x",
+    "scannerName": "x",
+    "endedAt": 0,
+    "endCause": "admin"
+   }
   }
  },
  {

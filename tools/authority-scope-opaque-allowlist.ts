@@ -39,7 +39,7 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
       'src/worker/platform/authority-statements.ts',
       'src/worker/modules/scan/outcome-bucket.ts',
     ],
-    hash: '1a6d21b95cce',
+    hash: 'fe5598b53422',
   },
   'src/worker/modules/events/repo.ts': {
     reason:
@@ -64,13 +64,13 @@ export const OPAQUE_ALLOWLIST: Record<string, OpaqueEntry> = {
     reason: 'pass, upload and candidate guards built in repo-history-image.ts',
     exprs: ['passWhere', 'uploadWhere', 'candidateWhere'],
     via: ['src/worker/modules/passes/repo-authority.ts'],
-    hash: '5be6a91bf33e',
+    hash: 'f794a8c86ec3',
   },
   'src/worker/modules/passes/repo-member-photo.ts': {
     reason: 'pass, upload and candidate guards built in repo-history-image.ts',
     exprs: ['passWhere', 'uploadWhere', 'candidateWhere'],
     via: ['src/worker/modules/passes/repo-authority.ts'],
-    hash: '3a49858966c5',
+    hash: '926ac2322c1b',
   },
   'src/worker/modules/passes/repo-ops-retention.ts': {
     reason:

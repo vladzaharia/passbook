@@ -575,6 +575,7 @@ export type ErrorCode =
   | 'TAG_HOLDER_CHANGED'
   | 'TAG_ID_INVALID'
   | 'TAG_INVALID'
+  | 'TAG_KEY_LIMITED'
   | 'TAG_KEY_UNREADABLE'
   | 'TAG_LENT'
   | 'TAG_LIMIT'

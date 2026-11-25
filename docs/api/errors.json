@@ -5346,6 +5346,15 @@
       ]
     },
     {
+      "code": "TAG_KEY_LIMITED",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "nfc"
+      ]
+    },
+    {
       "code": "TAG_KEY_UNREADABLE",
       "statuses": [
         500
