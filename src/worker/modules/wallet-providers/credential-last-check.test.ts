@@ -4,10 +4,13 @@ import { createMockWallets } from '../../../../test/mock-wallets/index.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { runCredentialCheck } from './account-check.ts';
 import {
+  listOrgCredentials,
   listPlatformCredentials,
   revokePlatformCredential,
+  saveOrgCredential,
   savePlatformCredential,
 } from './credential-service.ts';
+import { lastChecksOf } from './repo-credential-checks.ts';
 import { findActiveCredential } from './repo-credentials.ts';
 import { uid } from './repo-wallet-credentials-test-fixtures.ts';
 import { type Kit, kit } from './wallet-wa1b-test-fixtures.ts';
@@ -89,5 +92,41 @@ describe('credential lastCheck', () => {
     expect(await lastCheckOf(admin, saved.id)).toMatchObject({ ok: true });
     await platformSave(saved.revision);
     expect(await lastCheckOf(admin, saved.id)).toBeNull();
+  });
+
+  it('lists an org credential with its check, and null for a check of an earlier version', async () => {
+    stubProviders();
+    const org = await k.org();
+    const { auth } = await k.member(org.id);
+    const created = await saveOrgCredential(k.ctx, auth, org.id, {
+      provider: 'google',
+      expectedRevision: 0,
+      credentials: k.google(),
+    });
+    expect(created.lastCheck).toBeNull();
+    await check(created.id);
+    const [listed] = (await listOrgCredentials(k.ctx, auth, org.id)).items;
+    expect(listed?.lastCheck).toMatchObject({ ok: true, code: null });
+    const rotated = await saveOrgCredential(k.ctx, auth, org.id, {
+      provider: 'google',
+      expectedRevision: listed?.revision ?? 0,
+      credentials: k.google(),
+    });
+    expect(rotated.lastCheck).toBeNull();
+    expect((await listOrgCredentials(k.ctx, auth, org.id)).items[0]?.lastCheck).toBeNull();
+  });
+
+  it("does not read another scope's check", async () => {
+    stubProviders();
+    const admin = await k.admin();
+    const active = await findActiveCredential(env.DB, null, 'live', 'google');
+    if (active)
+      await revokePlatformCredential(k.ctx, admin.auth, active.id, {
+        expectedRevision: active.revision,
+      });
+    const { saved } = await platformSave(0);
+    await check(saved.id);
+    expect(await lastChecksOf(env.DB, 'some-org', [saved.id])).toEqual([]);
+    expect(await lastChecksOf(env.DB, null, [saved.id])).toHaveLength(1);
   });
 });

@@ -7353,8 +7353,12 @@ export type PlatformWalletCredentialsListResponse = {
     updatedAt: number;
     cardTypes: Array<string>;
     lastCheck: {
-      ok: boolean;
-      code: string | null;
+      ok: true;
+      code: null;
+      at: number;
+    } | {
+      ok: false;
+      code: string;
       at: number;
     } | null;
   }>;
@@ -7415,8 +7419,12 @@ export type PlatformWalletCredentialsRevokeResponse = {
   updatedAt: number;
   cardTypes: Array<string>;
   lastCheck: {
-    ok: boolean;
-    code: string | null;
+    ok: true;
+    code: null;
+    at: number;
+  } | {
+    ok: false;
+    code: string;
     at: number;
   } | null;
 };
@@ -7446,8 +7454,12 @@ export type PlatformWalletCredentialsSetSamsungCardResponse = {
   updatedAt: number;
   cardTypes: Array<string>;
   lastCheck: {
-    ok: boolean;
-    code: string | null;
+    ok: true;
+    code: null;
+    at: number;
+  } | {
+    ok: false;
+    code: string;
     at: number;
   } | null;
 };
@@ -7492,8 +7504,12 @@ export type PlatformWalletCredentialsUpsertResponse = {
   updatedAt: number;
   cardTypes: Array<string>;
   lastCheck: {
-    ok: boolean;
-    code: string | null;
+    ok: true;
+    code: null;
+    at: number;
+  } | {
+    ok: false;
+    code: string;
     at: number;
   } | null;
 };
@@ -11955,8 +11971,12 @@ export type WalletAccountsGoogleSharedCreateResponse = {
     updatedAt: number;
     cardTypes: Array<string>;
     lastCheck: {
-      ok: boolean;
-      code: string | null;
+      ok: true;
+      code: null;
+      at: number;
+    } | {
+      ok: false;
+      code: string;
       at: number;
     } | null;
   };
@@ -11995,8 +12015,12 @@ export type WalletCredentialsListResponse = {
     updatedAt: number;
     cardTypes: Array<string>;
     lastCheck: {
-      ok: boolean;
-      code: string | null;
+      ok: true;
+      code: null;
+      at: number;
+    } | {
+      ok: false;
+      code: string;
       at: number;
     } | null;
   }>;
@@ -12022,8 +12046,12 @@ export type WalletCredentialsRevokeResponse = {
   updatedAt: number;
   cardTypes: Array<string>;
   lastCheck: {
-    ok: boolean;
-    code: string | null;
+    ok: true;
+    code: null;
+    at: number;
+  } | {
+    ok: false;
+    code: string;
     at: number;
   } | null;
 };
@@ -12066,8 +12094,12 @@ export type WalletCredentialsUpsertResponse = {
   updatedAt: number;
   cardTypes: Array<string>;
   lastCheck: {
-    ok: boolean;
-    code: string | null;
+    ok: true;
+    code: null;
+    at: number;
+  } | {
+    ok: false;
+    code: string;
     at: number;
   } | null;
 };

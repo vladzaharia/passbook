@@ -18,7 +18,7 @@ afterEach(() => resetModeForTests());
 /** The list serves the stored check, which the result poll records once the check settles. */
 const orgHandlers = (
   check: (init: RequestInit | undefined) => Response,
-  result: { ok: boolean; code: string | null } = { ok: false, code: 'auth_failed' },
+  result: { ok: true } | { ok: false; code: string } = { ok: false, code: 'auth_failed' },
 ) => {
   let lastCheck: WalletCredential['lastCheck'] = null;
   return {
@@ -40,12 +40,13 @@ const orgHandlers = (
     '/api/v1/orgs/o1/wallet-credentials/c1/check': (_u: URL, init: RequestInit | undefined) =>
       check(init),
     '/api/v1/orgs/o1/wallet-credentials/c1/checks/k1': () => {
-      lastCheck = { ok: result.ok, code: result.code, at: Date.now() };
+      const at = Date.now();
+      lastCheck = result.ok ? { ok: true, code: null, at } : { ok: false, code: result.code, at };
       return json({
         checkId: 'k1',
         status: result.ok ? 'ok' : 'failed',
-        code: result.code,
-        checkedAt: lastCheck.at,
+        code: result.ok ? null : result.code,
+        checkedAt: at,
       });
     },
   };
@@ -77,7 +78,6 @@ describe('credential check', () => {
       memberships: [north],
       handlers: orgHandlers(() => json({ checkId: 'k1', status: 'queued' }), {
         ok: true,
-        code: null,
       }),
     });
     const google = await screen.findByRole('region', { name: 'Google Wallet' });

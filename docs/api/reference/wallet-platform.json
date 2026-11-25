@@ -51,7 +51,7 @@
           "cardTypes": ["northwind"],
           "lastCheck": {
             "ok": true,
-            "code": "NW7K2Q",
+            "code": null,
             "at": 1795570500000
           }
         }
@@ -87,7 +87,7 @@
       "cardTypes": ["northwind"],
       "lastCheck": {
         "ok": true,
-        "code": "NW7K2Q",
+        "code": null,
         "at": 1795570500000
       }
     }
@@ -112,7 +112,7 @@
       "cardTypes": ["northwind"],
       "lastCheck": {
         "ok": true,
-        "code": "NW7K2Q",
+        "code": null,
         "at": 1795570500000
       }
     }
@@ -224,7 +224,7 @@
       "cardTypes": ["northwind"],
       "lastCheck": {
         "ok": true,
-        "code": "NW7K2Q",
+        "code": null,
         "at": 1795570500000
       }
     }

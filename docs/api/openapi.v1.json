@@ -23918,31 +23918,59 @@
                 }
               },
               "lastCheck": {
-                "type": [
-                  "object",
-                  "null"
-                ],
-                "properties": {
-                  "ok": {
-                    "type": "boolean"
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ok": {
+                        "type": "boolean",
+                        "enum": [
+                          true
+                        ]
+                      },
+                      "code": {
+                        "type": "null"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "ok",
+                      "code",
+                      "at"
+                    ],
+                    "additionalProperties": false
                   },
-                  "code": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
+                  {
+                    "type": "object",
+                    "properties": {
+                      "ok": {
+                        "type": "boolean",
+                        "enum": [
+                          false
+                        ]
+                      },
+                      "code": {
+                        "type": "string"
+                      },
+                      "at": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "ok",
+                      "code",
+                      "at"
+                    ],
+                    "additionalProperties": false
                   },
-                  "at": {
-                    "type": "integer",
-                    "minimum": 0
+                  {
+                    "type": "null"
                   }
-                },
-                "required": [
-                  "ok",
-                  "code",
-                  "at"
-                ],
-                "additionalProperties": false
+                ]
               }
             },
             "required": [
@@ -24075,31 +24103,59 @@
                   }
                 },
                 "lastCheck": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "ok": {
-                      "type": "boolean"
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "code": {
+                          "type": "null"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
                     },
-                    "code": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
                     },
-                    "at": {
-                      "type": "integer",
-                      "minimum": 0
+                    {
+                      "type": "null"
                     }
-                  },
-                  "required": [
-                    "ok",
-                    "code",
-                    "at"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               },
               "required": [
@@ -24349,31 +24405,59 @@
             }
           },
           "lastCheck": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "ok": {
-                "type": "boolean"
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               },
-              "code": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               },
-              "at": {
-                "type": "integer",
-                "minimum": 0
+              {
+                "type": "null"
               }
-            },
-            "required": [
-              "ok",
-              "code",
-              "at"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "required": [
@@ -24489,31 +24573,59 @@
             }
           },
           "lastCheck": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "ok": {
-                "type": "boolean"
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               },
-              "code": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               },
-              "at": {
-                "type": "integer",
-                "minimum": 0
+              {
+                "type": "null"
               }
-            },
-            "required": [
-              "ok",
-              "code",
-              "at"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "required": [
@@ -26323,31 +26435,59 @@
                   }
                 },
                 "lastCheck": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "ok": {
-                      "type": "boolean"
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "code": {
+                          "type": "null"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
                     },
-                    "code": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "code",
+                        "at"
+                      ],
+                      "additionalProperties": false
                     },
-                    "at": {
-                      "type": "integer",
-                      "minimum": 0
+                    {
+                      "type": "null"
                     }
-                  },
-                  "required": [
-                    "ok",
-                    "code",
-                    "at"
-                  ],
-                  "additionalProperties": false
+                  ]
                 }
               },
               "required": [
@@ -26613,31 +26753,59 @@
             }
           },
           "lastCheck": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "ok": {
-                "type": "boolean"
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               },
-              "code": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               },
-              "at": {
-                "type": "integer",
-                "minimum": 0
+              {
+                "type": "null"
               }
-            },
-            "required": [
-              "ok",
-              "code",
-              "at"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "required": [
@@ -26767,31 +26935,59 @@
             }
           },
           "lastCheck": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "ok": {
-                "type": "boolean"
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               },
-              "code": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               },
-              "at": {
-                "type": "integer",
-                "minimum": 0
+              {
+                "type": "null"
               }
-            },
-            "required": [
-              "ok",
-              "code",
-              "at"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "required": [
@@ -26907,31 +27103,59 @@
             }
           },
           "lastCheck": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "ok": {
-                "type": "boolean"
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      true
+                    ]
+                  },
+                  "code": {
+                    "type": "null"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               },
-              "code": {
-                "type": [
-                  "string",
-                  "null"
-                ]
+              {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "enum": [
+                      false
+                    ]
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "at": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ok",
+                  "code",
+                  "at"
+                ],
+                "additionalProperties": false
               },
-              "at": {
-                "type": "integer",
-                "minimum": 0
+              {
+                "type": "null"
               }
-            },
-            "required": [
-              "ok",
-              "code",
-              "at"
-            ],
-            "additionalProperties": false
+            ]
           }
         },
         "required": [
@@ -84709,7 +84933,7 @@
                     ],
                     "lastCheck": {
                       "ok": true,
-                      "code": "NW7K2Q",
+                      "code": null,
                       "at": 1795570500000
                     }
                   },
@@ -84893,7 +85117,7 @@
                       ],
                       "lastCheck": {
                         "ok": true,
-                        "code": "NW7K2Q",
+                        "code": null,
                         "at": 1795570500000
                       }
                     }
@@ -85001,7 +85225,7 @@
                   ],
                   "lastCheck": {
                     "ok": true,
-                    "code": "NW7K2Q",
+                    "code": null,
                     "at": 1795570500000
                   }
                 }
@@ -85114,7 +85338,7 @@
                   ],
                   "lastCheck": {
                     "ok": true,
-                    "code": "NW7K2Q",
+                    "code": null,
                     "at": 1795570500000
                   }
                 }
@@ -87255,7 +87479,7 @@
                       ],
                       "lastCheck": {
                         "ok": true,
-                        "code": "NW7K2Q",
+                        "code": null,
                         "at": 1795570500000
                       }
                     }
@@ -87349,7 +87573,7 @@
                   ],
                   "lastCheck": {
                     "ok": true,
-                    "code": "NW7K2Q",
+                    "code": null,
                     "at": 1795570500000
                   }
                 }
@@ -87451,7 +87675,7 @@
                   ],
                   "lastCheck": {
                     "ok": true,
-                    "code": "NW7K2Q",
+                    "code": null,
                     "at": 1795570500000
                   }
                 }
@@ -87553,7 +87777,7 @@
                   ],
                   "lastCheck": {
                     "ok": true,
-                    "code": "NW7K2Q",
+                    "code": null,
                     "at": 1795570500000
                   }
                 }

@@ -55,8 +55,10 @@ export function CredentialRow({
   const sessionMode = useMode();
   const runCheck = useCheckCredential();
   const [checking, setChecking] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   async function check(c: WalletCredential) {
     setChecking(true);
+    setFailed(null);
     try {
       const result = await runCheck(target, c);
       if (result.status === 'ok') toast.success('Check passed');
@@ -89,10 +91,12 @@ export function CredentialRow({
           ) : (
             <p className="text-fg-muted">No credentials</p>
           )}
-          {credential?.lastCheck && !credential.lastCheck.ok ? (
+          {failed ? (
             <p role="alert" className="mt-1 text-danger">
-              {checkWords(credential.lastCheck.code)}
+              {failed}
             </p>
+          ) : credential?.lastCheck?.ok === false ? (
+            <p className="mt-1 text-danger">{checkWords(credential.lastCheck.code)}</p>
           ) : null}
         </div>
       </div>

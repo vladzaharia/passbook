@@ -145,8 +145,15 @@ export interface CredentialLastCheck {
   checked_at: number;
 }
 
-/** The newest check of each credential's current version; a credential without one has no row. */
-export function lastChecksOf(db: D1Database, ids: string[]): Promise<CredentialLastCheck[]> {
+/**
+ * The newest check of each credential's current version; a credential without one has no row. Scoped
+ * here to the org, or to the platform's credentials for a null org, whatever ids the caller passes.
+ */
+export function lastChecksOf(
+  db: D1Database,
+  orgId: string | null,
+  ids: string[],
+): Promise<CredentialLastCheck[]> {
   if (ids.length === 0) return Promise.resolve([]);
   return all<CredentialLastCheck>(
     db,
@@ -155,7 +162,8 @@ export function lastChecksOf(db: D1Database, ids: string[]): Promise<CredentialL
     JOIN wallet_credential_checks k ON k.id = (SELECT k2.id FROM wallet_credential_checks k2
       WHERE k2.credential_id = c.id AND k2.version_id = c.current_version_id
       ORDER BY k2.checked_at DESC, k2.rowid DESC LIMIT 1)
-    WHERE c.id IN (${ids.map(() => '?').join(', ')})`,
-    ids,
+    WHERE c.id IN (${ids.map(() => '?').join(', ')})
+      AND ${orgId === null ? "c.scope = 'platform' AND c.org_id IS NULL" : 'c.org_id = ?'}`,
+    orgId === null ? ids : [...ids, orgId],
   );
 }
