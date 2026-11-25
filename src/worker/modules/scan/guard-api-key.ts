@@ -27,8 +27,8 @@ import { ensureSandboxTerminal } from './repo-sandbox-terminal.ts';
 export const DEVICE_HEADER = 'x-passbook-device';
 export const API_KEY_TOKEN = API_KEY_LABEL;
 
-/** A key opens only these calls: read a code, act on it, undo its own scan. */
-const KEY_ROUTE = /^\/api\/v1\/scan\/(?:resolve|actions|scans\/[^/]+\/undo)$/;
+/** A key opens only these calls: read a code, act on it, undo its own scan, sign a person out. */
+const KEY_ROUTE = /^\/api\/v1\/scan\/(?:resolve|actions|sign-out|scans\/[^/]+\/undo)$/;
 
 /** A till's key acting as one named terminal of its own org and mode. */
 export interface KeyTerminal {

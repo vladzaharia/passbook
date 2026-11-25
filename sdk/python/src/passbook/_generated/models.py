@@ -1756,6 +1756,10 @@ __all__ = [
     "TerminalScansUndoParamsApproval",
     "TerminalScansUndoParamsScope",
     "TerminalScansUndoResult",
+    "TerminalSignOutEverywhereParams",
+    "TerminalSignOutEverywhereParamsRead",
+    "TerminalSignOutEverywhereParamsReadNdef",
+    "TerminalSignOutEverywhereResponse",
     "TestEmailsListResult",
     "TestEmailsRetrieveResult",
     "UnknownWebhookEvent",
@@ -12783,6 +12787,29 @@ class TerminalScansUndoParamsScope(_Model):
     eventId: str | None = None
     templateIds: _List[str] | None = None
     timeZone: str
+
+class TerminalSignOutEverywhereParams(_Model):
+    idempotencyKey: str
+    passId: str | None = None
+    read: TerminalSignOutEverywhereParamsRead | None = None
+    tag: _Literal["returned", "not_returned", "none"] | str | None = None
+
+class TerminalSignOutEverywhereParamsRead(_Model):
+    uid: str | None = None
+    uidRandom: bool | None = None
+    tech: _Literal["a", "b", "isodep", "unknown"] | str
+    ndef: TerminalSignOutEverywhereParamsReadNdef | None = None
+    source: _Literal["native", "webnfc"] | str
+
+class TerminalSignOutEverywhereParamsReadNdef(_Model):
+    type: _Literal["U", "T"] | str
+    value: str
+
+class TerminalSignOutEverywhereResponse(_Model):
+    passId: str
+    stayMs: int | None
+    stillInside: int
+    tag: _Literal["returned", "not_returned", "none"] | str
 
 class WalletAccountsGoogleManagedCreateParams(_Model):
     mode: _Literal["live"] | str

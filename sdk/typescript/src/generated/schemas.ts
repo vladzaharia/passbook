@@ -11867,6 +11867,29 @@ export type TerminalScansUndoParams = {
   };
 };
 
+export type TerminalSignOutEverywhereParams = {
+  idempotencyKey: string;
+  passId?: string;
+  read?: {
+    uid?: string;
+    uidRandom?: boolean;
+    tech: "a" | "b" | "isodep" | "unknown";
+    ndef?: {
+      type: "U" | "T";
+      value: string;
+    };
+    source: "native" | "webnfc";
+  };
+  tag?: "returned" | "not_returned" | "none";
+};
+
+export type TerminalSignOutEverywhereResponse = {
+  passId: string;
+  stayMs: number | null;
+  stillInside: number;
+  tag: "returned" | "not_returned" | "none";
+};
+
 export type WalletAccountsGoogleManagedCreateParams = {
   mode: "live";
 };

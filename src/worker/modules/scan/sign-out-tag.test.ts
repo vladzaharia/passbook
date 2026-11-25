@@ -1,11 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-const after = vi.hoisted(() => ({ hook: null as null | (() => Promise<void>) }));
+const after = vi.hoisted(() => ({
+  hook: null as null | (() => Promise<void>),
+  before: null as null | (() => Promise<void>),
+}));
 vi.mock('./occupancy/mark-out.ts', async (original) => {
   const real = await original<typeof import('./occupancy/mark-out.ts')>();
   return {
     ...real,
     markOut: async (...args: Parameters<typeof real.markOut>) => {
+      await after.before?.();
       const out = await real.markOut(...args);
       await after.hook?.();
       return out;
@@ -346,5 +350,63 @@ describe('a tap at commit', () => {
     expect(res.status).toBe(403);
     expect(await res.json()).toMatchObject({ code: 'SCANNING_SESSION_PAUSED' });
     expect((await binding(a.bindingId))?.end_cause).toBeNull();
+  });
+});
+
+describe('edge answers', () => {
+  it('a person past their stay but not swept out is already out: 409 NOT_INSIDE', async () => {
+    const zone = await trackedZone();
+    const pass = await personInside(tpl, 'Leo Park', [`zone:${zone.id}`], {
+      input: GUEST(),
+      dueAt: f.kit.clock.now() - 1000,
+    });
+    const desk = await station([tpl], [zone.id]);
+    const res = await post(desk, { passId: pass.id });
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ code: 'NOT_INSIDE' });
+  });
+
+  it('a Secure counter used between the read and the commit is TAG_CHECK_FAILED', async () => {
+    const zone = await trackedZone();
+    const pass = await personInside(tpl, 'Leo Park', [`zone:${zone.id}`], { input: GUEST() });
+    const desk = await station([tpl], [zone.id]);
+    const keyset = await sunKeyset(f.kit, f.kit.org.id);
+    const secure = await addType(f, { use: 'visitor', scopes: 'pass', system: 'sun' });
+    const uid = '04aabbccddee88';
+    const { tagId, bindingId } = await enrolledSunTag(f.kit, keyset, uid, pass, 5);
+    await run(f.kit.env.DB, 'UPDATE nfc_tags SET type_id = ? WHERE id = ?', [secure, tagId]);
+    after.hook = async () => {
+      await run(f.kit.env.DB, 'UPDATE nfc_tag_sun SET ctr = 50 WHERE tag_id = ?', [tagId]);
+    };
+    try {
+      const res = await post(desk, { read: await sunTap(keyset, uid, 6) });
+      expect(res.status).toBe(409);
+      expect(await res.json()).toMatchObject({ code: 'TAG_CHECK_FAILED' });
+    } finally {
+      after.hook = null;
+    }
+    expect((await binding(bindingId))?.end_cause).toBeNull();
+  });
+
+  it('a pause before the mark-out leaves the person in and the tag lent', async () => {
+    const a = await lent();
+    after.before = async () => {
+      await run(f.kit.env.DB, "UPDATE scanning_sessions SET status = 'paused' WHERE id = ?", [
+        a.desk.sessionId,
+      ]);
+    };
+    try {
+      const res = await post(a.desk, { passId: a.pass.id, tag: 'returned' });
+      expect(res.status).toBe(409);
+    } finally {
+      after.before = null;
+    }
+    expect((await binding(a.bindingId))?.end_cause).toBeNull();
+    const row = await first<{ state: string }>(
+      f.kit.env.DB,
+      'SELECT state FROM scan_presence WHERE pass_id = ? AND scope = ?',
+      [a.pass.id, `zone:${a.zone.id}`],
+    );
+    expect(row?.state).toBe('in');
   });
 });

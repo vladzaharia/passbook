@@ -74,8 +74,10 @@ export async function markOut(
   actor: ScanActor,
   req: MarkOutRequest,
   extra?: WithGrant,
+  /** Called by a sign-out: it judges the actor as a sign-out and refuses a paused session; a bare mark-out still clears who is inside. */
+  signOut = false,
 ): Promise<ScanOutcome> {
-  if (!scanPolicy(policyActor(actor), { kind: 'mark_out' }).allow)
+  if (!scanPolicy(policyActor(actor), { kind: signOut ? 'sign_out' : 'mark_out' }).allow)
     throw new ForbiddenError('Only Desk and above can mark someone out.', 'FORBIDDEN');
   const db = ctx.env.DB;
   const zones = await occupancyZones(db, actor.orgId);
@@ -159,7 +161,7 @@ export async function markOut(
   const g = scanWriteGrant(ctx, actor, {
     purpose: 'org_mode.scan.check_in',
     now,
-    pausedSession: true,
+    pausedSession: !signOut,
     pass: { id: pass.id, facts: { pass, credential: {} } },
     tables: extra ? [...SCAN_COMMIT_TABLES, ...ROLL_TABLES] : SCAN_COMMIT_TABLES,
   });

@@ -39,6 +39,12 @@ export const HEADLINE: Record<string, unknown> = {
     passId: '0193a1b2-7c00-7000-8000-0000000000c1',
     tag: 'returned',
   },
+  'scan.postScanSignOut response': {
+    passId: '0193a1b2-7c00-7000-8000-0000000000c1',
+    stayMs: 1290,
+    stillInside: 0,
+    tag: 'returned',
+  },
   'passes.postPasses request': create,
   'passes.postPasses response': {
     ...PASS,

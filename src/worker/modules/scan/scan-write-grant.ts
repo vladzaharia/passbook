@@ -28,7 +28,7 @@ export interface ScanWriteInput {
   checks?: readonly Check[];
   target?: string;
   codes?: DenialOptions['codes'];
-  /** Mark as out only (C16): a paused session still lets the desk clear who is inside and collect the lent tag at sign-out; its config epoch is still compared. */
+  /** Mark as out only (C16): a paused session still lets the desk clear who is inside (a sign-out refuses it); its config epoch is still compared. */
   pausedSession?: boolean;
   /** Unguarded tables the grant's parts write. */
   tables?: string[];

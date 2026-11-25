@@ -3202,7 +3202,7 @@
     "operationId": "scan.postScanSignOut",
     "op": "POST /api/v1/scan/sign-out",
     "change": "behaviour changed",
-    "note": "Marks out of every place and collects the pass's lent tag; no visit. The request key repeats its first answer. Out-of-scope pass: 404."
+    "note": "Marks out every place and collects the lent tag; not_returned reports it lost. No visit. VISITOR_NOT_IN is gone. tag is the outcome, not an echo."
   },
   {
     "key": "POST /api/v1/scan/sign-out body.read: optional input field added",
@@ -3211,6 +3211,14 @@
     "op": "POST /api/v1/scan/sign-out",
     "change": "body.read: optional input field added",
     "note": "Tap the lent tag instead of naming the pass (passId or read). tag defaults to none (pass) or returned (read). Not lent: 409 TAG_NOT_LENT."
+  },
+  {
+    "key": "POST /api/v1/scan/sign-out keys: accepted at a Desk terminal",
+    "class": "additive",
+    "operationId": "scan.postScanSignOut",
+    "op": "POST /api/v1/scan/sign-out",
+    "change": "keys: accepted at a Desk terminal",
+    "note": "A scans:write key naming a Desk terminal in x-passbook-device may sign a person out, as for /scan/actions."
   },
   {
     "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",

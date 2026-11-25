@@ -71,7 +71,7 @@ export async function collectTags(
         scope: 'pass',
         passId: pass.id,
         bindingId: binding.id,
-        ...(actor.apiKeyId ? { apiKeyId: actor.apiKeyId } : {}),
+        ...(actor.apiKeyId ? { viaKeyId: actor.apiKeyId } : {}),
         ...(actor.staff ? { staffId: actor.staff.id } : {}),
       },
     });

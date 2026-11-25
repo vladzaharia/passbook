@@ -22,7 +22,12 @@ import { insidePlaces } from './repo-sign-out.ts';
 import { collectTags, lentBindings } from './repo-sign-out-tags.ts';
 import { scanPolicy } from './rules.ts';
 import { notFound } from './tags-bind.ts';
-import { assertReadMatches, identifyRead, type ReadIdentity } from './tags-sun.ts';
+import {
+  assertReadMatches,
+  identifyRead,
+  type ReadIdentity,
+  sunUsedMeanwhile,
+} from './tags-sun.ts';
 
 type SignOutRequest = z.infer<typeof SignOutRequestSchema>;
 type SignOutResult = z.infer<typeof SignOutResultSchema>;
@@ -41,6 +46,7 @@ async function lentBindingOf(
   passId: string;
   binding: { id: string; tagId: string };
   sun: { tagId: string; seen: NonNullable<ReadIdentity['sun']> } | null;
+  identity: ReadIdentity;
 }> {
   const db = ctx.env.DB;
   await ensureCredentialRefKeyset(db, ctx.env);
@@ -55,6 +61,7 @@ async function lentBindingOf(
     passId: binding.passId,
     binding: { id: binding.id, tagId: tag.id },
     sun: identity.sun ? { tagId: tag.id, seen: identity.sun } : null,
+    identity,
   };
 }
 
@@ -76,16 +83,19 @@ async function run(
   let skipped = 0;
   for (const place of await insidePlaces(db, actor.orgId, pass.id)) {
     try {
-      const outcome = await markOut(ctx, actor, {
-        idempotencyKey: ctx.ids.ordered(ctx.clock.now()),
-        passId: pass.id,
-        place,
-      });
+      const outcome = await markOut(
+        ctx,
+        actor,
+        { idempotencyKey: ctx.ids.ordered(ctx.clock.now()), passId: pass.id, place },
+        undefined,
+        true,
+      );
       marked += 1;
       stay ??= outcome.occupancy?.stayMs ?? null;
     } catch (error) {
       if (!skippable(error)) throw error;
-      skipped += 1;
+      // Only a place this device cannot reach is still inside; one the person left (or timed out of) is out.
+      if (error instanceof ValidationError) skipped += 1;
       ctx.log.warn('scan.sign_out_place_skipped', { orgId: actor.orgId, code: error.code });
     }
   }
@@ -96,8 +106,15 @@ async function run(
     : want === 'none'
       ? []
       : await lentBindings(db, actor.orgId, actor.mode, pass.id);
-  if (want !== 'none' && lent.length > 0)
-    await collectTags(ctx, actor, pass, lent, want, tapped?.sun ?? undefined);
+  if (want !== 'none' && lent.length > 0) {
+    try {
+      await collectTags(ctx, actor, pass, lent, want, tapped?.sun ?? undefined);
+    } catch (error) {
+      // A Secure counter used since the read is a failed check, not a tag that is not lent.
+      if (tapped) await sunUsedMeanwhile(ctx, actor, tapped.identity, error);
+      throw error;
+    }
+  }
   if (marked === 0 && skipped === 0 && lent.length === 0)
     throw new ConflictError('They are already out.', 'NOT_INSIDE');
   return {
@@ -120,7 +137,7 @@ export async function signOut(
   actor: ScanActor,
   req: SignOutRequest,
 ): Promise<SignOutResult> {
-  if (!scanPolicy(policyActor(actor), { kind: 'mark_out' }).allow)
+  if (!scanPolicy(policyActor(actor), { kind: 'sign_out' }).allow)
     throw new ForbiddenError('Only Desk and above can sign someone out.', 'FORBIDDEN');
   const { idempotencyKey, ...body } = req;
   try {
@@ -140,6 +157,9 @@ export async function signOut(
   } catch (error) {
     if (error instanceof ValidationError && error.code === 'IDEMPOTENCY_KEY_REUSED')
       throw new ConflictError('That request key was used for something else.', 'SCAN_KEY_REUSED');
+    // The scanner client retries this code with the same key.
+    if (error instanceof ConflictError && error.code === 'IDEMPOTENCY_IN_PROGRESS')
+      throw new ConflictError('The first request is still running.', 'SCAN_IN_PROGRESS');
     throw error;
   }
 }
