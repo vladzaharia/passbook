@@ -24,10 +24,12 @@ export interface CredentialRow {
   revoked_at: number | null;
   created_at: number;
   updated_at: number;
+  /** The current version's card map (Samsung): card type to the hash of its card id. */
+  card_map?: string | null;
 }
 
 const COLUMNS =
-  'id, scope, org_id, mode, provider, identity_hash, identity_hint, provenance, signer_ref, next_rotation_at, revision, current_version_id, verified_at, revoked_at, created_at, updated_at';
+  'id, scope, org_id, mode, provider, identity_hash, identity_hint, provenance, signer_ref, next_rotation_at, revision, current_version_id, verified_at, revoked_at, created_at, updated_at, (SELECT v.card_map FROM wallet_credential_versions v WHERE v.id = wallet_credentials.current_version_id) AS card_map';
 
 /** Credentials of one org and mode, or the platform's (`orgId` null, every mode), newest first. */
 export function listCredentials(

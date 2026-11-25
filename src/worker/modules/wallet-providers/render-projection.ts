@@ -4,9 +4,7 @@ import {
   type GoogleProjection,
   type NativeProjection,
   NativeProjectionSchema,
-  type SamsungProjection,
 } from './projection-contract.ts';
-import type { SamsungCardProjection } from './samsung-token.ts';
 
 interface Field {
   key: string;
@@ -32,7 +30,7 @@ function plain(value: unknown, max: number): value is string {
 }
 
 /** Recheck materialized pass semantics, not only the template that was reviewed. */
-function sourceOf(projection: GoogleProjection | SamsungProjection, input: unknown): Source | null {
+function sourceOf(projection: GoogleProjection, input: unknown): Source | null {
   if (
     !NativeProjectionSchema.safeParse(projection).success ||
     !isObject(input) ||
@@ -118,8 +116,7 @@ function sourceOf(projection: GoogleProjection | SamsungProjection, input: unkno
       /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(
         item.message,
       ) ||
-      (item.altText !== undefined &&
-        (projection.provider === 'samsung' || !plain(item.altText, 500)))
+      (item.altText !== undefined && !plain(item.altText, 500))
     )
       return null;
     barcode = {
@@ -181,113 +178,9 @@ export function renderGoogleProjection(
   return { objectProjection, classProjection: {} };
 }
 
-/** Validate the current materialization without inventing a provider reference. */
-function samsungContent(
-  projection: NativeProjection,
-  passJson: unknown,
-): {
-  source: Source;
-  noticeDesc: string;
-} | null {
-  if (projection.schema !== 1 || projection.provider !== 'samsung') return null;
-  const source = sourceOf(projection, passJson);
-  if (
-    !source ||
-    !plain(source.organization, 32) ||
-    !plain(source.title.value, 32) ||
-    source.fields.some((field) => field.label === undefined)
-  )
-    return null;
-  // noticeDesc is the documented free-text slot of the loyalty card (5000); one "label: value" line each.
-  const noticeDesc = [
-    ...source.fields.map((field) => `${field.label}: ${field.value}`),
-    `Description: ${source.description}`,
-  ].join('\n');
-  return measure(noticeDesc, 'bytes') <= 5000 ? { source, noticeDesc } : null;
-}
-
-export function canRenderSamsungProjection(
-  projection: NativeProjection,
-  passJson: unknown,
-): boolean {
-  return samsungContent(projection, passJson) !== null;
-}
-
-/**
- * Samsung's loyalty attributes are flat paths. `updatedAt` is the pass's own revision time, so a
- * pull that changes nothing does not look like new content; it never precedes `createdAt`.
- */
-export function renderSamsungProjection(
-  projection: NativeProjection,
-  passJson: unknown,
-  refId: string,
-  createdAt: number,
-  revisedAt: number,
-): SamsungCardProjection | null {
-  if (
-    projection.schema !== 1 ||
-    projection.provider !== 'samsung' ||
-    !/^[A-Za-z0-9_-]{32}$/.test(refId) ||
-    !Number.isSafeInteger(createdAt) ||
-    !Number.isSafeInteger(revisedAt) ||
-    createdAt < 0 ||
-    revisedAt < 0
-  )
-    return null;
-  const content = samsungContent(projection, passJson);
-  if (!content) return null;
-  const { source, noticeDesc } = content;
-  return {
-    card: {
-      type: projection.cardType,
-      subType: projection.cardSubType,
-      data: [
-        {
-          refId,
-          createdAt,
-          updatedAt: Math.max(createdAt, revisedAt),
-          state: 'ACTIVE',
-          language: projection.language,
-          attributes: {
-            title: source.title.value,
-            providerName: source.organization,
-            logoImage: projection.logoUrl,
-            appLinkLogo: projection.appLinkLogo,
-            appLinkName: projection.appLinkName,
-            appLinkData: projection.appLinkData,
-            noticeDesc,
-            ...(source.barcode
-              ? {
-                  'barcode.value': source.barcode.message,
-                  'barcode.serialType': 'QRCODE',
-                  'barcode.ptFormat': 'QRCODE',
-                  'barcode.ptSubFormat': 'QR_CODE',
-                }
-              : {}),
-          },
-        },
-      ],
-    },
-  };
-}
-
-/** Schema 2 is compiled by the typed runtimes: Google's (CW9b) and Samsung's (CW10b). */
-let compiledRuntime = false;
-
-/** Tests only: pretend the Samsung typed runtime exists, so a test of the offer path is not decided by it. */
-export function setCompiledRuntimeForTest(ready: boolean): () => void {
-  const previous = compiledRuntime;
-  compiledRuntime = ready;
-  return () => {
-    compiledRuntime = previous;
-  };
-}
-
-/** Whether a materialized pass can be offered under this projection. */
+/** Whether a materialized pass can be offered under this projection. Schema 2 is compiled by the typed runtimes. */
 export function canRenderProjection(projection: NativeProjection, passJson: unknown): boolean {
-  if (projection.schema === 2)
-    return projection.provider === 'google' || projection.provider === 'samsung' || compiledRuntime;
-  return projection.provider === 'google'
-    ? renderGoogleProjection(projection, passJson) !== null
-    : canRenderSamsungProjection(projection, passJson);
+  if (projection.schema === 2) return true;
+  // Samsung field mappings are retired; a Google schema 1 mapping renders only for the legacy tests.
+  return projection.provider === 'google' && renderGoogleProjection(projection, passJson) !== null;
 }

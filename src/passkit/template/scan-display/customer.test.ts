@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderCustomerView } from './customer.ts';
+import { type CustomerViewOptions, okHeadline, renderCustomerView } from './customer.ts';
 import { customerIssues } from './customer-issues.ts';
 import type { ScanDisplayDoc } from './schema.ts';
 import { FORMAT, NOW, scopeOf } from './test-kit.ts';
@@ -15,15 +15,17 @@ const field = (id: string, value: string, extra: object = {}) => ({
   ...extra,
 });
 const codes = (d: ScanDisplayDoc) => customerIssues(d).map((i) => i.code);
-const opts = (screen: 'ready' | 'ok' | 'see_desk', more: object = {}) => ({
-  screen,
-  ref: 'ref-1',
-  at: NOW,
-  where: 'Front door',
-  test: false,
-  ...FORMAT,
-  ...more,
-});
+const opts = (screen: 'ready' | 'ok' | 'see_desk', more: object = {}) =>
+  ({
+    screen,
+    ...(screen === 'ok' ? { headline: 'Checked in' } : {}),
+    ref: 'ref-1',
+    at: NOW,
+    where: 'Front door',
+    test: false,
+    ...FORMAT,
+    ...more,
+  }) as CustomerViewOptions;
 const keys = (value: unknown): string[] =>
   Array.isArray(value)
     ? value.flatMap(keys)
@@ -137,13 +139,36 @@ describe('renderCustomerView', () => {
   );
 
   it('greets by first name on ok and shows only what the block names', () => {
-    const view = renderCustomerView(named, scope, opts('ok', { direction: 'in' }));
+    const view = renderCustomerView(named, scope, opts('ok'));
     expect(view.greet).toBe('Hi, Anna');
     expect(view.band).toEqual({ headline: 'Checked in', sub: null });
     expect(view.chips.map((c) => c.text)).toEqual(['c_plan']);
     expect(view.panel?.rows).toHaveLength(1);
     const text = JSON.stringify(view);
     expect(text).not.toMatch(/Meyer|Staff only|F12|EXT-9|Check ID|Banned|Other panel/);
+  });
+
+  it('names the ok headline from the caller, with the system words as its default', () => {
+    expect(okHeadline({})).toBe('Checked in');
+    expect(okHeadline({ direction: 'out' })).toBe('Tapped out');
+    expect(okHeadline({ event: true })).toBe("You're in");
+    expect(okHeadline({ access: true })).toBe('Access granted');
+    const paid = opts('ok', { headline: 'Paid $12.00', sub: 'Balance $30.50' });
+    expect(renderCustomerView(named, scope, paid).band).toEqual({
+      headline: 'Paid $12.00',
+      sub: 'Balance $30.50',
+    });
+  });
+
+  it('shows a draft as the ready card with the amount', () => {
+    const review = { screen: 'review', headline: 'To pay $12.00', sub: 'Balance after: $30.50' };
+    const view = renderCustomerView(named, scope, opts('ready', review));
+    expect(view).toMatchObject({
+      screen: 'review',
+      greet: 'Hi, Anna',
+      band: { headline: 'To pay $12.00', sub: 'Balance after: $30.50' },
+    });
+    expect(view.panel?.rows).toHaveLength(1);
   });
 
   it('puts the greeting in the band on ready, and says Hello without a name', () => {

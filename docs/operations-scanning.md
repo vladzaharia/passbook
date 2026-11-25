@@ -89,6 +89,11 @@ In a session, choose **Add device** and select **Customer display** or **Operato
 show a short, generic verdict for a presented code, without member names or photos. They do not show
 manual lookups and return to Ready after the result expires.
 
+A display shows every scanner in its session. For a two-door session, open the display, turn off
+**All scanners in this session** and tick the door it faces. It then shows only that door; changing
+the choice reconnects a display that is already open. A scanner that is revoked drops out of the list.
+**Show the desk card** controls the desk card; amounts under review are not sent to displays yet.
+
 Operator combines code scanning, pass lookup and session activity. Staff can review or check in from
 the same view. Previously enrolled standalone Desk monitors remain read-only; new session devices use
 Operator for staff activity and actions.

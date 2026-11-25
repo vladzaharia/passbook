@@ -138,7 +138,6 @@ describe('Samsung authenticated callback route', () => {
     expect(Object.keys(parsed.card.data[0]?.attributes ?? {})).toEqual(['title']);
     expect((await t.call({ token: auth, query: '?fields=providerName' })).status).toBe(401);
     t.kit.clock.advance(300_001);
-    await t.renewEvidence();
     expect((await t.call({ token: await t.token() })).status).toBe(200);
   });
 
@@ -193,7 +192,6 @@ describe('Samsung authenticated callback route', () => {
       ),
     ).toBeNull();
     t.kit.clock.advance(300_001);
-    await t.renewEvidence();
     expect((await t.call({ token: await t.token() })).status).toBe(204);
     expect(await refRow()).toEqual({ promoted_at: null, market_cc2: null });
   });
@@ -567,44 +565,5 @@ describe('Samsung authenticated callback route', () => {
     expect(receipts).toHaveLength(1);
     expect(hints.map((hint) => hint.country_code)).toEqual(['GB']);
     expect(instance?.installation_state).toBe('unknown');
-  });
-
-  it('rejects replay admission and final disclosure at the exact provider-evidence expiry', async () => {
-    const t = await setupSamsungCallbacks();
-    const db = t.kit.env.DB;
-    const snapshot = await findSamsungFetchSnapshot(
-      db,
-      await sha256Hex(t.refId),
-      t.kit.clock.now(),
-    );
-    if (!snapshot || !t.samsungRelease?.candidateId) throw new Error('Missing evidence fixture');
-    const raw = await passJsonAtVersion(db, snapshot.passId, snapshot.passVersion);
-    const evidence = await first<{ expires_at: number }>(
-      db,
-      'SELECT expires_at FROM wallet_provider_projection_evidence WHERE candidate_id = ?',
-      [t.samsungRelease.candidateId],
-    );
-    if (!raw || !evidence) throw new Error('Missing verified evidence');
-    t.kit.clock.set(evidence.expires_at);
-    const now = t.kit.clock.now();
-    expect(
-      await claimSamsungFetch(
-        db,
-        snapshot,
-        {
-          tokenHash: 'D'.repeat(43),
-          claimId: t.kit.ctx.ids.id(),
-          now,
-          expiresAt: now + 30_000,
-        },
-        raw,
-      ),
-    ).toBe(false);
-    expect(await samsungFetchSnapshotCurrent(db, snapshot, raw, now)).toBe(false);
-    expect(
-      await first(db, 'SELECT token_hash FROM wallet_samsung_auth_replays WHERE token_hash = ?', [
-        'D'.repeat(43),
-      ]),
-    ).toBeNull();
   });
 });

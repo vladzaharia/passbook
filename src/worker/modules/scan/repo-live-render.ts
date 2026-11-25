@@ -31,11 +31,14 @@ export function liveRecipientStmt(
       )) AS session_watch,
       (SELECT p.settings FROM scanning_sessions p
         WHERE p.id=? AND p.org_id=(SELECT org_id FROM actor_ok) AND p.mode=(SELECT mode FROM actor_ok)
-      ) AS session_settings
+      ) AS session_settings,
+      (SELECT d.overrides FROM scanning_devices d
+        WHERE d.scanner_id=screen.id AND d.session_id=? AND d.org_id=(SELECT org_id FROM actor_ok)
+          AND d.mode=(SELECT mode FROM actor_ok)) AS screen_overrides
       FROM scanners screen LEFT JOIN scanner_setups m
         ON m.scanner_id=screen.id AND m.org_id=screen.org_id AND m.mode=screen.mode
       WHERE screen.id=? AND ${auth.tenant('screen', 'scanners')} AND ${auth.ok}`,
-    [sessionId, sessionId, scannerId],
+    [sessionId, sessionId, sessionId, scannerId],
   );
 }
 

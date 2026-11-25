@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import { CursorQuerySchema, IdSchema } from '../../../shared/contracts/common.ts';
+import { WalletCredentialListQuerySchema } from '../../../shared/contracts/wallet-provider-actions.ts';
 import {
   RevokeWalletCredentialSchema,
   SaveWalletCredentialSchema,
   WalletCredentialCheckParamsSchema,
   WalletCredentialCheckQueuedSchema,
   WalletCredentialCheckResultSchema,
-  WalletCredentialListQuerySchema,
   WalletCredentialListSchema,
   WalletCredentialParamsSchema,
   WalletCredentialSchema,

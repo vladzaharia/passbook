@@ -1,7 +1,9 @@
-import type { z } from 'zod';
-import { ZodError } from 'zod';
+import { ZodError, z } from 'zod';
+import { IdSchema } from '../../../shared/contracts/common.ts';
+import { SESSION_DEVICE_CAP } from '../../../shared/contracts/scan-access.ts';
 import { ScanWatchSchema } from '../../../shared/contracts/scan-setups.ts';
 import {
+  ScanDeviceOverridesSchema,
   ScanningSessionSettingsSchema,
   type SessionCustomerSettings,
 } from '../../../shared/contracts/scanning-sessions.ts';
@@ -155,11 +157,16 @@ function validLiveAttachment(a: LiveAttachment): boolean {
   return true;
 }
 
+/** A session's own scanners are bounded by the session, not by the stored-watch cap. */
+const SessionWatchSchema = ScanWatchSchema.extend({
+  scannerIds: z.array(IdSchema).max(SESSION_DEVICE_CAP).default([]),
+});
+
 /** The watch a screen row stores, or its session's scanners; null when malformed. */
 function parseWatch(
   actor: ScanActor,
   scannerId: string,
-  row: { watch?: unknown; session_watch?: unknown },
+  row: { watch?: unknown; session_watch?: unknown; screen_overrides?: unknown },
 ): z.infer<typeof ScanWatchSchema> | null {
   try {
     if (actor.scanningSession && actor.scanningSession.id !== scannerId) {
@@ -171,12 +178,33 @@ function parseWatch(
         new Set(ids).size !== ids.length
       )
         return null;
-      return ScanWatchSchema.parse({ scannerIds: ids, allOrg: false });
+      return SessionWatchSchema.parse({
+        scannerIds: followed(row.screen_overrides, ids),
+        allOrg: false,
+      });
     }
     if (typeof row.watch !== 'string') return null;
     return ScanWatchSchema.parse(JSON.parse(row.watch));
   } catch (error) {
     if (error instanceof ZodError || error instanceof SyntaxError) return null;
+    throw error;
+  }
+}
+
+/** The scanners a screen follows within its session; no `follows` is all of them. Malformed: none. */
+function followed(raw: unknown, sessionScanners: string[]): string[] {
+  if (typeof raw !== 'string') return [];
+  const parsed = ScanDeviceOverridesSchema.safeParse(safeJson(raw));
+  if (!parsed.success) return [];
+  const follows = parsed.data.follows;
+  return follows ? sessionScanners.filter((id) => follows.includes(id)) : sessionScanners;
+}
+
+function safeJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch (error) {
+    if (error instanceof SyntaxError) return null;
     throw error;
   }
 }
@@ -230,6 +258,7 @@ export async function liveRecipient(
       watch?: unknown;
       session_watch?: unknown;
       session_settings?: unknown;
+      screen_overrides?: unknown;
     }>();
     if (!row) return null;
     // A device socket watches nothing: it only proves the device is still entitled to its messages.

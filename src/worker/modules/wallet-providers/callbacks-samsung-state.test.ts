@@ -90,7 +90,6 @@ describe('Samsung Send Card State events', () => {
     ]);
     // The promoted ref now refreshes after the initial window has closed.
     t.kit.clock.advance(SAMSUNG_TOKEN_WINDOW_MS + 1);
-    await t.renewEvidence();
     expect((await t.call({ token: await t.token() })).status).toBe(200);
     // A later ADDED neither re-promotes nor rewrites the market.
     expect((await post(t, '?cc2=us&event=ADDED', 'second-request')).status).toBe(200);
@@ -318,7 +317,6 @@ describe('Samsung refs that served card data', () => {
     });
   const closeWindow = async (t: Kit) => {
     t.kit.clock.advance(SAMSUNG_TOKEN_WINDOW_MS + 1);
-    await t.renewEvidence();
   };
 
   it('records served_at on the first admitted fetch only', async () => {
@@ -482,7 +480,6 @@ describe('Samsung token window', () => {
     expect((await t.call({ token: old })).status).toBe(401);
     // Past the end of the replay window the next admitted request purges it.
     t.kit.clock.advance(SAMSUNG_CLOCK_SKEW_MS + 2);
-    await t.renewEvidence();
     expect((await t.call({ token: await t.token() })).status).toBe(200);
     expect(await expires()).toBeNull();
   });

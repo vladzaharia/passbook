@@ -29,13 +29,14 @@ import { deepFreeze } from './freeze.ts';
 import { actGroup, undoGroup, withBundle } from './group.ts';
 import { scanActorOf } from './guard.ts';
 import { recentFor, summaryFor } from './history.ts';
-import { publishScan } from './live.ts';
+import { liveReadyId, publishScan } from './live.ts';
 import { lookup } from './lookup.ts';
 import { withParentHint } from './occupancy/parent-hint.ts';
 import { resolveOutcome } from './resolve-outcome.ts';
 import { actTag, resolveTag } from './resolve-tag.ts';
 import { registerScanAssetRoute } from './routes-assets.ts';
 import { registerScanBrandingRoute } from './routes-branding.ts';
+import { registerScanDraftRoutes } from './routes-draft.ts';
 import { registerScanEnrollmentRoutes } from './routes-enrollment.ts';
 import { mountScanGuards } from './routes-guards.ts';
 import { registerScanHistoryRoutes } from './routes-history.ts';
@@ -97,6 +98,7 @@ registerScanStaffRoutes(scanRoutes);
 registerScanOccupancyRoutes(scanRoutes);
 registerScanVisitorRoutes(scanRoutes);
 registerScanRoleRoutes(scanRoutes);
+registerScanDraftRoutes(scanRoutes);
 registerScanTagRoutes(scanRoutes);
 registerScanSessionHoursRoutes(scanRoutes);
 registerScanEnrollmentRoutes(scanRoutes);
@@ -179,6 +181,7 @@ register(
       liveMethod(input),
       false,
       'code' in input,
+      actor.scanner ? { id: await liveReadyId(actor.scanner.id, req.idempotencyKey) } : {},
     );
     return c.json('tag' in input ? outcome : await withBundle(ctx, actor, evaluation));
   },
