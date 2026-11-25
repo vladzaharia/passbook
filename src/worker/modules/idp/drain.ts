@@ -1,4 +1,5 @@
 import { chunk } from '../../platform/db.ts';
+import { closeDeveloperSandbox } from '../developer/jobs.ts';
 import { classify, presenceOf } from './classify.ts';
 import { desiredState, targetKeys } from './desired.ts';
 import { failure } from './drain-failure.ts';
@@ -17,9 +18,16 @@ import {
 } from './effects.ts';
 import { idpCodeOf } from './errors.ts';
 import type { DirtyRow } from './repo-dirty.ts';
-import { openDriftOfSubject } from './repo-drift.ts';
+import { type DriftRow, openDriftOfSubject } from './repo-drift.ts';
 import { statesOfSubject } from './repo-state.ts';
-import { type DrainOutcome, isManaged, type RunEnv, rpcCtx, type Touched } from './run-env.ts';
+import {
+  type DrainOutcome,
+  HOLD_CAP,
+  isManaged,
+  type RunEnv,
+  rpcCtx,
+  type Touched,
+} from './run-env.ts';
 import type { ApplyResult, Target } from './types.ts';
 
 const BATCH = 10;
@@ -32,22 +40,26 @@ const BATCH = 10;
 export async function drainSubject(env: RunEnv, row: DirtyRow): Promise<DrainOutcome> {
   const touched: Touched = { targets: [] };
   try {
-    await plan(env, row.subject, touched);
-    return { mark: 'clear', stop: false };
+    const targets = await plan(env, row.subject, touched);
+    return { mark: 'clear', stop: false, targets };
   } catch (error) {
-    return failure(env, row.subject, touched, error);
+    return {
+      ...(await failure(env, row.subject, touched, error)),
+      targets: touched.targets.length,
+    };
   }
 }
 
-async function plan(env: RunEnv, subject: string, touched: Touched): Promise<void> {
+/** Returns how many targets it looked at. */
+async function plan(env: RunEnv, subject: string, touched: Touched): Promise<number> {
   const { ctx, rpc, runId, dry } = env;
   const db = ctx.env.DB;
   const desired = await desiredState(db, subject, ctx.clock.now());
   const who: Who = { subject, userId: desired.userId };
   touched.targets = targetKeys(desired);
-  if (desired.skip === 'platform_admin') return;
+  if (desired.skip === 'platform_admin') return 0;
   const lookup = await rpc.lookup(subject);
-  if (lookup.isAdmin) return;
+  if (lookup.isAdmin) return 0;
 
   const states = new Map((await statesOfSubject(db, subject)).map((s) => [s.target, s]));
   const open = await openDriftOfSubject(db, subject);
@@ -64,6 +76,19 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<voi
   let account: 'ready' | 'would' | 'no' = 'ready';
   if (lookup.disabled && !wantsNothing) account = await enable(env, who, lookup.class);
 
+  // A developer role taken back whose sandbox did not close: the error stays on the target until it does.
+  const pendingClose = states.get('developer')?.error_code === 'SANDBOX_CLOSE_FAILED';
+  const record = (target: Target, code: string) =>
+    dry ? Promise.resolve() : failTarget(ctx, who, target, code);
+  const observe = (
+    target: Target,
+    seen: Parameters<typeof observeTarget>[3],
+    before: Parameters<typeof observeTarget>[4],
+  ) =>
+    dry || (pendingClose && target === 'developer')
+      ? Promise.resolve()
+      : observeTarget(ctx, who, target, seen, before);
+
   const adds: Target[] = [];
   const removes: Target[] = [];
   for (const target of [...everyTarget].sort()) {
@@ -78,33 +103,38 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<voi
     const presence = presenceOf(facts);
     switch (classify(facts)) {
       case 'ok':
-        await observeTarget(ctx, who, target, { present: true, presence }, s);
+        await observe(target, { present: true, presence }, s);
         await closeDrift(ctx, who, target, open, ['missing', 'unexpected', 'apply_failed'], 'ok');
         break;
       case 'external':
-        await observeTarget(ctx, who, target, { present: true, presence }, s);
+        await observe(target, { present: true, presence }, s);
         await noteDrift(ctx, runId, who, target, 'external_added', open);
         await closeDrift(ctx, who, target, open, ['missing', 'unexpected'], 'external');
         break;
       case 'none':
       case 'held':
-        await observeTarget(ctx, who, target, { present: false, presence: 'none' }, s);
+        await observe(target, { present: false, presence: 'none' }, s);
         await closeDrift(ctx, who, target, open, ['missing', 'unexpected'], 'gone');
         break;
       case 'hold':
-        if (dry) await noteDrift(ctx, runId, who, target, 'owner_removed', open);
-        else await holdTargetForOwner(ctx, runId, who, target);
+        await holdOrReport(env, who, target, open);
         break;
       case 'add':
-        if (env.blocked.has(target)) await failTarget(ctx, who, target, 'IDP_BLOCKED');
+        if (env.blocked.has(target)) await record(target, 'IDP_BLOCKED');
         else if (account === 'would') await noteDrift(ctx, runId, who, target, 'missing', open);
         else if (account === 'no')
           await noteDrift(ctx, runId, who, target, 'disabled_in_idp', open);
-        else adds.push(target);
+        else {
+          // A grant that was never seen present: its write may have been lost, so it goes in again. If the
+          // owner took it before the first drain, this undoes that; PB-R should have lookup() say which grants are confirmed.
+          if (facts.grant)
+            ctx.log.warn('idp.access_readded', { code: 'IDP_READDED', subject, target });
+          adds.push(target);
+        }
         break;
       case 'remove':
       case 'settle':
-        if (env.blocked.has(target)) await failTarget(ctx, who, target, 'IDP_BLOCKED');
+        if (env.blocked.has(target)) await record(target, 'IDP_BLOCKED');
         else removes.push(target);
         break;
     }
@@ -117,7 +147,59 @@ async function plan(env: RunEnv, subject: string, touched: Touched): Promise<voi
     await send(env, who, { add: part }, 'drain', touched, grants, open);
 
   if (wantsNothing && lookup.class === 'created' && !lookup.disabled) await disable(env, who);
-  if (!dry) await settleSponsorships(ctx, who);
+  if (!dry) {
+    const wantsDeveloper = !wantsNothing && desired.targets.has('developer');
+    const taking = removes.includes('developer');
+    const closing = !wantsDeveloper && (taking || (pendingClose && !present.has('developer')));
+    if (closing) await closeSandbox(env, who, pendingClose);
+    await settleSponsorships(ctx, who);
+  }
+  return everyTarget.size;
+}
+
+/**
+ * The developer role is gone and nothing wants it: the person's developer sandbox closes in the same run (its
+ * org's status change then marks the subject, so console goes next). A failure keeps the error on the target and
+ * fails the mark, so the close is tried again and sponsorships settle only after it worked.
+ */
+async function closeSandbox(env: RunEnv, who: Who, pending: boolean): Promise<void> {
+  const { ctx } = env;
+  if (!who.userId) return;
+  try {
+    await closeDeveloperSandbox(ctx, who.userId);
+  } catch (error) {
+    ctx.log.warn('idp.sandbox_close_failed', {
+      code: 'SANDBOX_CLOSE_FAILED',
+      userId: who.userId,
+      error,
+    });
+    await failTarget(ctx, who, 'developer', 'SANDBOX_CLOSE_FAILED');
+    throw error;
+  }
+  if (pending)
+    await observeTarget(ctx, who, 'developer', { present: false, presence: 'none' }, undefined);
+}
+
+/**
+ * The owner took a role PassBook saw: hold it and end its sessions. A dry run, or more removals in one run than
+ * a feed fault would explain (`HOLD_CAP`), records the difference and changes nothing.
+ */
+export async function holdOrReport(
+  env: RunEnv,
+  who: Who,
+  target: Target,
+  open: readonly DriftRow[],
+): Promise<void> {
+  const { ctx, runId } = env;
+  if (env.dry) return noteDrift(ctx, runId, who, target, 'owner_removed', open);
+  if (env.counts.holds >= HOLD_CAP) {
+    if (env.counts.holds === HOLD_CAP)
+      ctx.log.error('idp.hold_breaker', { code: 'IDP_HOLD_BREAKER', limit: HOLD_CAP });
+    env.counts.holds++;
+    return noteDrift(ctx, runId, who, target, 'owner_removed', open);
+  }
+  env.counts.holds++;
+  await holdTargetForOwner(ctx, runId, who, target);
 }
 
 /**
@@ -185,7 +267,7 @@ async function send(
         await settle(env, who, one, await env.rpc.apply(who.subject, one, ctx), why, grants, open);
       } catch (inner) {
         if (idpCodeOf(inner) !== 'IDP_REFUSED') throw inner;
-        await failTarget(env.ctx, who, target, 'IDP_REFUSED');
+        if (!env.dry) await failTarget(env.ctx, who, target, 'IDP_REFUSED');
       }
     }
   }
@@ -218,6 +300,7 @@ async function settle(
   }
   for (const { role, reason } of result.skipped) {
     const adding = delta.add?.includes(role) ?? false;
+    if (env.dry) continue;
     if (adding && reason === 'already') {
       const presence = presenceOf({ present: true, grant: grants.has(role) });
       await observeTarget(ctx, who, role, { present: true, presence }, undefined);

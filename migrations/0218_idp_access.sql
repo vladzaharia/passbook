@@ -146,6 +146,14 @@ CREATE TABLE idp_dirty (
 );
 CREATE INDEX idp_dirty_due ON idp_dirty(next_at);
 
+-- One run at a time: the drain, the reconcile and Check now take `idp-sync` for a few minutes. A lease past its
+-- `expires_at` is free, so a crashed run never blocks the next.
+CREATE TABLE idp_run_lease (
+  name TEXT PRIMARY KEY,
+  holder TEXT NOT NULL,
+  expires_at INTEGER NOT NULL
+);
+
 CREATE TABLE idp_drift (
   id TEXT PRIMARY KEY,
   run_id TEXT NOT NULL,
@@ -316,12 +324,14 @@ CREATE TRIGGER developer_invite_setups_open BEFORE INSERT ON developer_invite_se
 WHEN EXISTS (SELECT 1 FROM developer_invitations i WHERE i.id = NEW.invitation_id AND (i.revoked_at IS NOT NULL OR i.accepted_at IS NOT NULL))
 BEGIN SELECT RAISE(ABORT, 'developer setup refused'); END;
 
--- A claim: at most three per invitation, on an open invitation, never past that invitation's claim window.
+-- A claim: at most three per invitation, on an open invitation, never past that invitation's claim window
+-- (a developer or platform invitation's `claim_until`; an org invitation's expiry and one day).
 CREATE TRIGGER idp_invite_claims_valid BEFORE INSERT ON idp_invite_claims
 WHEN (SELECT count(*) FROM idp_invite_claims
       WHERE org_invitation_id IS NEW.org_invitation_id AND developer_invitation_id IS NEW.developer_invitation_id
         AND platform_invitation_id IS NEW.platform_invitation_id) >= 3
-  OR EXISTS (SELECT 1 FROM org_invitations i WHERE i.id = NEW.org_invitation_id AND (i.revoked_at IS NOT NULL OR i.accepted_at IS NOT NULL))
+  OR EXISTS (SELECT 1 FROM org_invitations i WHERE i.id = NEW.org_invitation_id
+      AND (i.revoked_at IS NOT NULL OR i.accepted_at IS NOT NULL OR NEW.claim_until > i.expires_at + 86400000))
   OR EXISTS (SELECT 1 FROM developer_invitations i WHERE i.id = NEW.developer_invitation_id
       AND (i.revoked_at IS NOT NULL OR i.accepted_at IS NOT NULL OR NEW.claim_until > i.claim_until))
   OR EXISTS (SELECT 1 FROM platform_invitations i WHERE i.id = NEW.platform_invitation_id
@@ -422,13 +432,29 @@ BEGIN
   ON CONFLICT (subject) DO UPDATE SET version = version + 1, attempts = 0, next_at = 0;
 END;
 
--- An org's status decides whether its memberships count: every live member is marked.
+-- An org's status decides whether its memberships and sponsorships count: every live member, every sponsored
+-- developer and every claim on one of its invitations is marked.
 CREATE TRIGGER idp_dirty_org_status AFTER UPDATE OF status ON orgs
 WHEN NEW.status IS NOT OLD.status
 BEGIN
   INSERT INTO idp_dirty (subject)
   SELECT a.subject FROM org_memberships m JOIN auth_identities a ON a.user_id = m.user_id AND a.provider = 'pocketid'
   WHERE m.org_id = NEW.id AND m.revoked_at IS NULL
+  UNION
+  SELECT a.subject FROM developer_sponsors p JOIN auth_identities a ON a.user_id = p.user_id AND a.provider = 'pocketid'
+  WHERE p.org_id = NEW.id AND p.ended_at IS NULL
+  UNION
+  SELECT c.subject FROM idp_invite_claims c
+  WHERE c.org_invitation_id IN (SELECT i.id FROM org_invitations i WHERE i.org_id = NEW.id)
+    OR c.developer_invitation_id IN (SELECT d.id FROM developer_invitations d WHERE d.org_id = NEW.id)
+  ON CONFLICT (subject) DO UPDATE SET version = version + 1, attempts = 0, next_at = 0;
+END;
+
+-- A sign-in that changes the roles a user last held (admin gained or lost) moves what they should hold.
+CREATE TRIGGER idp_dirty_user_roles AFTER UPDATE OF last_roles ON users
+WHEN NEW.last_roles IS NOT OLD.last_roles
+BEGIN
+  INSERT INTO idp_dirty (subject) SELECT a.subject FROM auth_identities a WHERE a.provider = 'pocketid' AND a.user_id = NEW.id
   ON CONFLICT (subject) DO UPDATE SET version = version + 1, attempts = 0, next_at = 0;
 END;
 

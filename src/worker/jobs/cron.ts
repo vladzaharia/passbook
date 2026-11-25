@@ -155,7 +155,7 @@ export async function handleScheduled(
         continue;
       }
       try {
-        await hook.run(hookCtx(counter.env, hook.name));
+        await hook.run({ ...hookCtx(counter.env, hook.name), spent: counter.count });
       } catch (error) {
         failed(hook.name, error);
       }

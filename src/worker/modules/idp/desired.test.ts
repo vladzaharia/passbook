@@ -265,7 +265,7 @@ describe('desired state: open setups and claims', () => {
     await group(f, 'g_other');
     await rule(f, 'g_invited', org.id, admin.id, ['read_only']);
     await rule(f, 'g_other', org.id, admin.id, ['org_admin']);
-    const inv = await orgInvitation(f, org.id, invitee.email, ['read_only']);
+    const inv = await orgInvitation(f, org.id, invitee.email, ['read_only'], 5000);
     const id = await claim(f, { org: inv }, invitee.subject, now + 3000);
     const { d, targets } = await wants(invitee.subject);
     expect(targets).toEqual(['console', 'g:g_invited']);
@@ -338,5 +338,33 @@ describe('desired state: open setups and claims', () => {
     const { d } = await wants('sub-no-user');
     expect(d.userId).toBeNull();
     expect(targetKeys(d)).toEqual(['g:g_solo']);
+  });
+});
+
+describe('desired state: sponsorships need an active standard org', () => {
+  it('a suspended, closed or personal org no longer sponsors', async () => {
+    const org = await standardOrg(f);
+    const p = await person(f);
+    await sponsor(f, org.id, p);
+    expect((await wants(p.subject)).targets).toEqual(['developer']);
+    await run(db(), 'UPDATE orgs SET status = ? WHERE id = ?', ['suspended', org.id]);
+    expect((await wants(p.subject)).targets).toEqual([]);
+    await run(db(), 'UPDATE orgs SET status = ? WHERE id = ?', ['active', org.id]);
+    expect((await wants(p.subject)).targets).toEqual(['developer']);
+    await run(db(), 'UPDATE orgs SET status = ? WHERE id = ?', ['deleted', org.id]);
+    expect((await wants(p.subject)).targets).toEqual([]);
+  });
+
+  it('a member claim ends with its org or when its invitation expires', async () => {
+    const org = await standardOrg(f);
+    const p = await person(f);
+    const inv = await orgInvitation(f, org.id, p.email, ['read_only'], 5000);
+    await claim(f, { org: inv }, p.subject, now + 4000);
+    expect((await wants(p.subject, now + 100)).targets).toEqual(['console']);
+    expect((await wants(p.subject, now + 5000)).targets).toEqual([]);
+    await run(db(), 'UPDATE orgs SET status = ? WHERE id = ?', ['suspended', org.id]);
+    expect((await wants(p.subject, now + 100)).targets).toEqual(['console']);
+    await run(db(), 'UPDATE orgs SET status = ? WHERE id = ?', ['deleted', org.id]);
+    expect((await wants(p.subject, now + 100)).targets).toEqual([]);
   });
 });

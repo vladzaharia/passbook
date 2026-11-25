@@ -32,6 +32,32 @@ async function marks(people: { subject: string }[], change: () => Promise<unknow
   return out;
 }
 
+describe('dirty marks from org status, sponsorships and roles', () => {
+  it('an org status change marks its sponsored developers and the claims on its invitations too', async () => {
+    const org = await standardOrg(f);
+    const sponsored = await person(f);
+    await sponsor(f, org.id, sponsored);
+    const invited = await person(f, { link: false });
+    const inv = await orgInvitation(f, org.id, 'x@example.test');
+    await claim(f, { org: inv }, invited.subject);
+    const bystander = await person(f);
+    expect(
+      await marks([sponsored, invited, bystander], () =>
+        run(db(), 'UPDATE orgs SET status = ? WHERE id = ?', ['suspended', org.id]),
+      ),
+    ).toEqual([sponsored.subject, invited.subject].sort());
+  });
+
+  it('a change of last_roles marks the user, a sign-in that repeats them does not', async () => {
+    const p = await person(f);
+    const set = (roles: string[]) =>
+      run(db(), 'UPDATE users SET last_roles = ? WHERE id = ?', [JSON.stringify(roles), p.id]);
+    expect(await marks([p], () => set(['user', 'admin']))).toEqual([p.subject]);
+    expect(await marks([p], () => set(['user', 'admin']))).toEqual([]);
+    expect(await marks([p], () => set(['user']))).toEqual([p.subject]);
+  });
+});
+
 describe('dirty marks from user-keyed sources', () => {
   it('linking a Polaris ID identity marks its subject, another provider does not', async () => {
     const p = await person(f, { link: false });

@@ -133,7 +133,7 @@ describe('reconcile: putting the drain to work', () => {
     expect(await dirtyRow(p.subject)).toBeNull();
   });
 
-  it('a dry-run week lists what is missing, then the first live runs apply it', async () => {
+  it('a dry-run week lists what is missing without queuing it, then live runs apply it', async () => {
     const r = await rig({ mode: 'dry_run' });
     const org = await standardOrg(r.f);
     const p = await person(r.f);
@@ -141,8 +141,9 @@ describe('reconcile: putting the drain to work', () => {
     await membership(r.f, org.id, p);
     await clearMarks();
     await reconcileIdp(r.ctx);
-    await drainIdp(r.ctx);
     expect(await driftKinds(p.subject)).toEqual(['missing:console']);
+    expect(await dirtyRow(p.subject)).toBeNull();
+    expect(await stateRows(p.subject)).toEqual([]);
     expect(r.fake.writes).toBe(0);
     r.fake.mode = 'live';
     await reconcileIdp(r.ctx);
@@ -230,6 +231,7 @@ describe('reconcile: budget', () => {
       runId: 'run-1',
       dry: false,
       blocked: new Set(),
+      counts: { holds: 0 },
     };
     const first = await reconcile(run1, counter.count, 40);
     expect(first?.capped).toBe(true);
@@ -277,6 +279,7 @@ describe('reconcile: budget', () => {
         runId: 'run-big',
         dry: false,
         blocked: new Set(),
+        counts: { holds: 0 },
       },
       counter.count,
       300,

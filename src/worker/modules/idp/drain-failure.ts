@@ -12,11 +12,12 @@ export async function failure(
   subject: string,
   touched: Touched,
   error: unknown,
-): Promise<DrainOutcome> {
+): Promise<Omit<DrainOutcome, 'targets'>> {
   const { ctx } = env;
   const code = idpCodeOf(error);
   const who: Who = { subject, userId: null };
   const record = async (stable: string) => {
+    if (env.dry) return;
     for (const target of touched.targets) await failTarget(ctx, who, target, stable);
   };
   switch (code) {

@@ -1,4 +1,4 @@
-import { countQueries } from '../../jobs/query-counter.ts';
+import { CRON_QUERY_BUDGET, countQueries } from '../../jobs/query-counter.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { idpClient, idpConfigured } from './client.ts';
 import { drainSubject } from './drain.ts';
@@ -6,6 +6,8 @@ import { idpCodeOf } from './errors.ts';
 import { reconcile } from './reconcile.ts';
 import { clearDirty, dueDirty, failDirty, markDirty } from './repo-dirty.ts';
 import { markClaimSwept, unsettledClaims } from './repo-invite-claims.ts';
+import { dropLease, SYNC_LEASE, takeLease } from './repo-lease.ts';
+import { deferDirty } from './repo-sync.ts';
 import type { RunEnv } from './run-env.ts';
 import type { IdpRpc } from './types.ts';
 
@@ -13,15 +15,22 @@ import type { IdpRpc } from './types.ts';
 export const DRAIN_BATCH = 20;
 /** The minute hooks share one invocation's 1,000 D1 queries: the drain stops starting subjects past this. */
 export const DRAIN_QUERY_CAP = 250;
-/** The daily hooks share 900: the reconcile stops verifying past this many of its own. */
+/** Targets one minute run looks at: a subject with many groups costs more than one with one role. */
+export const DRAIN_TARGET_CAP = 80;
+/** The daily hooks share 900: the reconcile stops starting phases past this many of its own queries. */
 export const RECONCILE_QUERY_CAP = 300;
+/** A dry run looks at a mark again after this long, so a week of dry runs costs one look a day each. */
+export const DRY_DEFER_MS = 86_400_000;
 const SWEEP_LIMIT = 20;
 
 type Gate = Pick<RunEnv, 'dry' | 'blocked'>;
 
 /**
  * One health read per run. Polaris ID unreachable, frozen or unsafe ends the run before any change is
- * attempted; marks stay due. `dry` is Polaris ID's mode: a dry run changes nothing in PassBook either.
+ * attempted; marks stay due. `dry` is Polaris ID's mode.
+ *
+ * A dry run records drift rows and nothing else: no observed state, error codes, hold, session change, sandbox
+ * close, sponsorship settle, claim sweep or reconcile mark. Its marks stay, due again after `DRY_DEFER_MS`.
  */
 async function openGate(ctx: ServiceContext, rpc: IdpRpc, job: string): Promise<Gate | null> {
   try {
@@ -40,12 +49,35 @@ async function openGate(ctx: ServiceContext, rpc: IdpRpc, job: string): Promise<
   }
 }
 
+/** Runs `work` holding the shared lease; a run that finds it taken skips (the next minute or day tries again). */
+async function leased(
+  ctx: ServiceContext,
+  db: D1Database,
+  job: string,
+  work: () => Promise<void>,
+): Promise<void> {
+  const holder = ctx.ids.id();
+  if (!(await takeLease(db, SYNC_LEASE, holder, ctx.clock.now()))) {
+    ctx.log.info(`${job}.busy`, { lease: SYNC_LEASE });
+    return;
+  }
+  try {
+    await work();
+  } finally {
+    await dropLease(db, SYNC_LEASE, holder);
+  }
+}
+
 /**
- * Existing-account claims whose window ended unaccepted, or whose invitation was revoked: their reason is gone
- * from the desired state, so marking the subject lets the drain take back what the claim gave.
+ * Existing-account claims whose window ended unaccepted, or whose invitation was revoked or expired: their reason
+ * is gone from the desired state, so marking the subject lets the drain take back what the claim gave.
  */
-async function sweepClaims(db: D1Database, now: number): Promise<void> {
-  for (const claim of await unsettledClaims(db, now, SWEEP_LIMIT)) {
+async function sweepClaims(
+  db: D1Database,
+  claims: Awaited<ReturnType<typeof unsettledClaims>>,
+  now: number,
+): Promise<void> {
+  for (const claim of claims) {
     await markDirty(db, claim.subject);
     await markClaimSwept(db, claim.id, now);
   }
@@ -54,51 +86,85 @@ async function sweepClaims(db: D1Database, now: number): Promise<void> {
 /**
  * Minute hook `idp.drain`: up to 20 due subjects, oldest due first, one `apply` each at most. A breaker, a
  * freeze or a spent budget stops the run; a failed subject backs off (1 m, 5 m, 30 m, 6 h); a mark that
- * arrived meanwhile stays due. With nothing due, or no binding, it costs one query and no call.
+ * arrived meanwhile stays due. With nothing due, or no binding, it costs a query or two and no call. It never
+ * overlaps another sync run (the `idp-sync` lease).
  */
-export async function drainIdp(ctx: ServiceContext, cap = DRAIN_QUERY_CAP): Promise<void> {
+export async function drainIdp(
+  ctx: ServiceContext,
+  cap = DRAIN_QUERY_CAP,
+  targetCap = DRAIN_TARGET_CAP,
+): Promise<void> {
   if (!idpConfigured(ctx.env)) return;
   const counter = countQueries(ctx.env);
   const counted: ServiceContext = { ...ctx, env: counter.env };
   const db = counter.env.DB;
-  await sweepClaims(db, ctx.clock.now());
-  const due = await dueDirty(db, ctx.clock.now(), DRAIN_BATCH);
-  if (due.length === 0) return;
-  const rpc = idpClient(counter.env, ctx.log);
-  const gate = await openGate(ctx, rpc, 'idp.drain');
-  if (!gate) return;
-  const env: RunEnv = { ctx: counted, rpc, runId: ctx.ids.id(), ...gate };
-  for (const [i, row] of due.entries()) {
-    if (counter.count() >= cap) {
-      ctx.log.warn('idp.drain.capped', {
-        code: 'CRON_BUDGET',
-        queries: counter.count(),
-        left: due.length - i,
-      });
-      return;
+  const claims = await unsettledClaims(db, ctx.clock.now(), SWEEP_LIMIT);
+  if (claims.length === 0 && (await dueDirty(db, ctx.clock.now(), 1)).length === 0) return;
+  await leased(ctx, db, 'idp.drain', async () => {
+    const rpc = idpClient(counter.env, ctx.log);
+    const gate = await openGate(ctx, rpc, 'idp.drain');
+    if (!gate) return;
+    if (!gate.dry) await sweepClaims(db, claims, ctx.clock.now());
+    const due = await dueDirty(db, ctx.clock.now(), DRAIN_BATCH);
+    const env: RunEnv = {
+      ctx: counted,
+      rpc,
+      runId: ctx.ids.id(),
+      ...gate,
+      counts: { holds: 0 },
+    };
+    let targets = 0;
+    for (const [i, row] of due.entries()) {
+      if (counter.count() >= cap || targets >= targetCap) {
+        ctx.log.warn('idp.drain.capped', {
+          code: 'CRON_BUDGET',
+          queries: counter.count(),
+          targets,
+          left: due.length - i,
+        });
+        return;
+      }
+      const outcome = await drainSubject(env, row);
+      targets += outcome.targets;
+      if (outcome.mark === 'clear') {
+        if (gate.dry)
+          await deferDirty(db, row.subject, row.version, ctx.clock.now() + DRY_DEFER_MS);
+        else await clearDirty(db, row.subject, row.version);
+      } else if (outcome.mark === 'fail')
+        await failDirty(db, row.subject, row.version, ctx.clock.now());
+      if (outcome.stop) {
+        ctx.log.warn('idp.drain.stopped', { code: 'IDP_RUN_STOPPED', left: due.length - i - 1 });
+        return;
+      }
     }
-    const outcome = await drainSubject(env, row);
-    if (outcome.mark === 'clear') await clearDirty(db, row.subject, row.version);
-    else if (outcome.mark === 'fail')
-      await failDirty(db, row.subject, row.version, ctx.clock.now());
-    if (outcome.stop) {
-      ctx.log.warn('idp.drain.stopped', { code: 'IDP_RUN_STOPPED', left: due.length - i - 1 });
-      return;
-    }
-  }
+  });
 }
 
 /**
  * Daily hook `idp.reconcile` (also behind Check now): one snapshot of every group, classified with the same
- * table as the drain. Starts only while the daily hooks have query budget left.
+ * table as the drain. Its query cap is what is left of the shared daily budget, and at most `cap`.
  */
 export async function reconcileIdp(ctx: ServiceContext, cap = RECONCILE_QUERY_CAP): Promise<void> {
   if (!idpConfigured(ctx.env)) return;
+  const left = CRON_QUERY_BUDGET - (ctx.spent?.() ?? 0);
+  const limit = Math.min(cap, left);
+  if (limit <= 0) {
+    ctx.log.warn('idp.reconcile.capped', { code: 'CRON_BUDGET', phase: 'start', left });
+    return;
+  }
   const counter = countQueries(ctx.env);
   const counted: ServiceContext = { ...ctx, env: counter.env };
-  const rpc = idpClient(counter.env, ctx.log);
-  const gate = await openGate(ctx, rpc, 'idp.reconcile');
-  if (!gate) return;
-  const env: RunEnv = { ctx: counted, rpc, runId: ctx.ids.id(), ...gate };
-  await reconcile(env, counter.count, cap);
+  await leased(ctx, counter.env.DB, 'idp.reconcile', async () => {
+    const rpc = idpClient(counter.env, ctx.log);
+    const gate = await openGate(ctx, rpc, 'idp.reconcile');
+    if (!gate) return;
+    const env: RunEnv = {
+      ctx: counted,
+      rpc,
+      runId: ctx.ids.id(),
+      ...gate,
+      counts: { holds: 0 },
+    };
+    await reconcile(env, counter.count, limit);
+  });
 }

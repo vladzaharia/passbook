@@ -9,6 +9,11 @@ describe('classify: the owner wins', () => {
     ['present, ours, wanted', { present: true, grant: true, wanted: true }, 'ok'],
     ['present, ours, unwanted', { present: true, grant: true }, 'remove'],
     ['present without our grant, wanted', { present: true, wanted: true }, 'external'],
+    [
+      'present again after a hold (the owner put it back)',
+      { present: true, grant: true, wanted: true, held: true },
+      'external',
+    ],
     ['present without our grant, unwanted', { present: true }, 'external'],
     [
       'absent, ours, wanted, seen present before',
@@ -23,7 +28,12 @@ describe('classify: the owner wins', () => {
     ],
     ['absent, ours, unwanted', { grant: true, seen: true }, 'settle'],
     ['absent, ours, unwanted, held', { grant: true, held: true }, 'settle'],
-    ['absent, no grant, wanted', { wanted: true }, 'add'],
+    ['absent, no grant, wanted, never seen', { wanted: true }, 'add'],
+    [
+      'absent, no grant, wanted, seen present (an owner role the owner took)',
+      { wanted: true, seen: true },
+      'hold',
+    ],
     [
       'absent, no grant, wanted, held (grant ended by the owner)',
       { wanted: true, held: true },
@@ -31,6 +41,11 @@ describe('classify: the owner wins', () => {
     ],
     ['absent, no grant, unwanted', {}, 'none'],
   ])('%s', (_name, facts, expected) => expect(verdict(facts)).toBe(expected));
+
+  it('holds a role seen present and wanted whether or not PassBook added it', () => {
+    for (const grant of [true, false])
+      expect(verdict({ grant, wanted: true, seen: true })).toBe('hold');
+  });
 
   it('never removes a role PassBook did not add, whatever is wanted', () => {
     for (const wanted of [true, false])

@@ -118,6 +118,7 @@ export async function orgInvitation(
   orgId: string,
   email: string,
   roles: string[] = ['read_only'],
+  lifetimeMs = 1000,
 ): Promise<string> {
   const id = f.ids.id();
   const now = f.clock.now();
@@ -125,7 +126,7 @@ export async function orgInvitation(
     env.DB,
     `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, orgId, email, JSON.stringify(roles), f.ids.token(), now, now + 1000],
+    [id, orgId, email, JSON.stringify(roles), f.ids.token(), now, now + lifetimeMs],
   );
   return id;
 }

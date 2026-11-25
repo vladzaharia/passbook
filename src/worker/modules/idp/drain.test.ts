@@ -12,7 +12,7 @@ import {
   sponsor,
   standardOrg,
 } from './access-test-fixtures.ts';
-import { drainIdp } from './jobs.ts';
+import { DRY_DEFER_MS, drainIdp } from './jobs.ts';
 import { markDirty } from './repo-dirty.ts';
 import { clearHold } from './repo-state.ts';
 import {
@@ -425,25 +425,38 @@ describe('drain: dry run', () => {
     expect(await liveSessions(unwanted.id)).toEqual([sess]);
     expect(await auditActions(wanted.id)).toEqual([]);
     expect(await auditActions(unwanted.id)).toEqual([]);
-    for (const s of await stateRows(wanted.subject))
-      expect([s.held_at, s.applied_at]).toEqual([null, null]);
-    expect(await dirtyRow(wanted.subject)).toBeNull();
+    expect(await stateRows(wanted.subject)).toEqual([]);
+    expect(await stateRows(unwanted.subject)).toEqual([]);
+    expect(await dirtyRow(wanted.subject)).toMatchObject({
+      attempts: 0,
+      next_at: r.f.clock.now() + DRY_DEFER_MS,
+    });
   });
 
-  it('records an owner removal as a difference without holding or ending sessions', async () => {
+  it('leaves marks, claims and error codes alone, and looks at a mark again after a day', async () => {
     const r = await rig({ mode: 'dry_run' });
     const org = await standardOrg(r.f);
-    const p = await person(r.f);
+    const p = await quietPerson(r, { link: false });
+    const invitation = await orgInvitation(r.f, org.id, 'invitee@example.test');
     passbookAdded(r, p.subject, ['console']);
-    await membership(r.f, org.id, p);
-    await drainIdp(r.ctx);
-    ownerRemoves(r, p.subject, 'console');
+    await claim(r.f, { org: invitation }, p.subject, r.f.clock.now() + 3000);
     await markDirty(env.DB, p.subject);
-    const sess = await session(r, p.id, ['user', 'console']);
+    later(r, 3001);
     await drainIdp(r.ctx);
-    expect(await driftKinds(p.subject)).toEqual(['owner_removed:console']);
-    expect((await stateRows(p.subject))[0]?.held_at).toBeNull();
-    expect(await liveSessions(p.id)).toEqual([sess]);
+    const [swept] = await all<{ swept_at: number | null }>(
+      env.DB,
+      'SELECT swept_at FROM idp_invite_claims WHERE subject = ?',
+      [p.subject],
+    );
+    expect(swept?.swept_at).toBeNull();
+    expect(await stateRows(p.subject)).toEqual([]);
+    const lookups = calls(r.fake, 'lookup');
+    await drainIdp(r.ctx);
+    expect(calls(r.fake, 'lookup')).toBe(lookups);
+    later(r, DRY_DEFER_MS);
+    await drainIdp(r.ctx);
+    expect(calls(r.fake, 'lookup')).toBe(lookups + 1);
+    expect(r.fake.writes).toBe(0);
   });
 });
 

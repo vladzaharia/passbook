@@ -123,6 +123,9 @@ export function accountMethods(
         .filter((e) => e.at >= (ctx.since ?? 0))
         .map(({ subject, role }) => ({ subject, role }));
       const roles: Record<string, { name: string; members: SnapshotMember[] }> = {};
+      // Every managed group is listed, empty or not, as the binding's snapshot does.
+      for (const [key, g] of env.groups)
+        roles[g.kind === 'role' ? key : `g:${key}`] = { name: g.name, members: [] };
       for (const [subject, a] of accounts)
         for (const role of a.roles) {
           const entry = roles[role] ?? { name: role, members: [] };

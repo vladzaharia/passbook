@@ -41,12 +41,18 @@ export const membershipSources = (db: D1Database, userId: string) =>
     [userId],
   );
 
-/** Orgs where the user has a live sponsorship as a developer. */
+/**
+ * Orgs where the user has a live sponsorship as a developer. Only an active standard org sponsors: a suspended,
+ * closed or deleted one no longer vouches, and a personal org never does.
+ */
 export const sponsorOrgs = async (db: D1Database, userId: string): Promise<string[]> =>
   (
     await all<{ org_id: string }>(
       db,
-      'SELECT org_id FROM developer_sponsors WHERE user_id = ? AND ended_at IS NULL ORDER BY org_id',
+      `SELECT p.org_id FROM developer_sponsors p JOIN orgs o ON o.id = p.org_id
+       WHERE p.user_id = ? AND p.ended_at IS NULL
+         AND o.status = 'active' AND o.kind = 'standard' AND o.personal_user_id IS NULL
+       ORDER BY p.org_id`,
       [userId],
     )
   ).map((r) => r.org_id);
@@ -127,17 +133,19 @@ export const claimSources = (db: D1Database, subject: string, now: number) =>
        pi.groups, pi.developer
      FROM idp_invite_claims c
      LEFT JOIN org_invitations oi ON oi.id = c.org_invitation_id
-       AND oi.revoked_at IS NULL AND oi.accepted_at IS NULL
+       AND oi.revoked_at IS NULL AND oi.accepted_at IS NULL AND oi.expires_at > ?
+       AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = oi.org_id AND o.status IN ('active', 'suspended'))
      LEFT JOIN developer_invitations di ON di.id = c.developer_invitation_id
        AND di.revoked_at IS NULL AND di.accepted_at IS NULL
      LEFT JOIN org_invitations po ON po.id = di.org_invitation_id
-       AND po.revoked_at IS NULL AND po.accepted_at IS NULL
+       AND po.revoked_at IS NULL AND po.accepted_at IS NULL AND po.expires_at > ?
+       AND EXISTS (SELECT 1 FROM orgs o WHERE o.id = po.org_id AND o.status IN ('active', 'suspended'))
      LEFT JOIN platform_invitations pi ON pi.id = c.platform_invitation_id
        AND pi.revoked_at IS NULL AND pi.accepted_at IS NULL
      WHERE c.subject = ? AND c.claim_until > ? AND c.swept_at IS NULL
        AND (oi.id IS NOT NULL OR di.id IS NOT NULL OR pi.id IS NOT NULL)
      ORDER BY c.created_at, c.id`,
-    [subject, now],
+    [now, now, subject, now],
   );
 
 /** The keys among `keys` that name a group that still exists. */

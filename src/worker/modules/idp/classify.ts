@@ -17,12 +17,13 @@ export interface TargetFacts {
 
 /**
  * - `ok`: as wanted, nothing to do.
- * - `add`: wanted, absent, no grant, not held: PassBook adds it.
+ * - `add`: wanted, absent, not held, never seen present: PassBook adds it.
  * - `remove`: PassBook added it and nothing wants it any more.
  * - `settle`: a grant for a role that is gone and unwanted: the binding ends it, no group write.
- * - `hold`: the owner removed a role PassBook added and still wants. Held, sessions revoked, never re-added.
+ * - `hold`: PassBook saw the role present, wants it, and it is gone: the owner took it, whoever added it. Held,
+ *   sessions revoked, never re-added.
  * - `held`: already held; nothing to do.
- * - `external`: present without a PassBook grant: the owner's, never removed by automation.
+ * - `external`: present without a PassBook grant, or held (the owner put it back): never removed by automation.
  * - `none`: absent, no grant and unwanted.
  */
 export type Verdict = 'ok' | 'add' | 'remove' | 'settle' | 'hold' | 'held' | 'external' | 'none';
@@ -30,15 +31,12 @@ export type Verdict = 'ok' | 'add' | 'remove' | 'settle' | 'hold' | 'held' | 'ex
 /** The owner-wins table (design 1 section 3.5), shared by the drain and the daily reconcile. */
 export function classify(f: TargetFacts): Verdict {
   if (f.present) {
-    if (!f.grant) return 'external';
+    if (!f.grant || f.held) return 'external';
     return f.wanted ? 'ok' : 'remove';
   }
   if (f.held) return f.grant && !f.wanted ? 'settle' : 'held';
-  if (f.grant) {
-    if (!f.wanted) return 'settle';
-    return f.seen ? 'hold' : 'add';
-  }
-  return f.wanted ? 'add' : 'none';
+  if (f.wanted) return f.seen ? 'hold' : 'add';
+  return f.grant ? 'settle' : 'none';
 }
 
 /** The presence to record for a target, from what Polaris ID and the binding say. */

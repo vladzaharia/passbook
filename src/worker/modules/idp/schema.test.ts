@@ -370,6 +370,30 @@ describe('setups', () => {
   });
 });
 
+describe('idp_invite_claims: org invitation bound', () => {
+  it('is refused past the invitation expiry and one day', async () => {
+    const org = await standardOrg(f);
+    const inv = await orgInvitation(f, org.id, 'bound@example.test');
+    const ins = (until: number) =>
+      refused(
+        'INSERT INTO idp_invite_claims (id, org_invitation_id, subject, created_at, claim_until) VALUES (?, ?, ?, ?, ?)',
+        [f.ids.id(), inv, f.ids.id(), now, until],
+      );
+    expect(await ins(now + 1000 + 86_400_000 + 1)).toMatch(/claim refused/);
+    expect(await ins(now + 1000 + 86_400_000)).toBeNull();
+  });
+});
+
+describe('idp_run_lease', () => {
+  it('holds one row per name', async () => {
+    const name = `lease-${f.ids.id()}`;
+    expect(await insert('idp_run_lease', { name, holder: 'a', expires_at: now + 1 })).toBeNull();
+    expect(await insert('idp_run_lease', { name, holder: 'b', expires_at: now + 1 })).toMatch(
+      /UNIQUE/,
+    );
+  });
+});
+
 describe('idp_invite_claims', () => {
   it('names exactly one invitation, one claim per subject, at most three per invitation', async () => {
     const org = await standardOrg(f);

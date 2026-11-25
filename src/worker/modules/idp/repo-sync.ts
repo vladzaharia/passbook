@@ -55,6 +55,7 @@ export async function unobservedWanted(db: D1Database, limit: number): Promise<s
      WHERE a.provider = 'pocketid'
        AND NOT EXISTS (SELECT 1 FROM idp_target_state s WHERE s.subject = a.subject)
        AND NOT EXISTS (SELECT 1 FROM idp_dirty d WHERE d.subject = a.subject)
+       AND NOT EXISTS (SELECT 1 FROM idp_drift f WHERE f.subject = a.subject AND f.resolved_at IS NULL)
        AND (EXISTS (SELECT 1 FROM org_memberships m JOIN orgs o ON o.id = m.org_id
                     WHERE m.user_id = a.user_id AND m.revoked_at IS NULL
                       AND o.status IN ('active', 'suspended') AND o.personal_user_id IS NULL)
@@ -120,4 +121,22 @@ export const touchObserved = (db: D1Database, subject: string, now: number) =>
 /** Runs prepared writes fifty to a round trip, so a long list costs a few queries and not hundreds. */
 export async function flush(db: D1Database, statements: D1PreparedStatement[]): Promise<void> {
   for (const part of chunk(statements, 50)) await batch(db, part);
+}
+
+/** A dry run keeps the mark and looks at it again later: only its due time moves. */
+export async function deferDirty(
+  db: D1Database,
+  subject: string,
+  version: number,
+  until: number,
+): Promise<boolean> {
+  return (
+    (
+      await run(db, 'UPDATE idp_dirty SET next_at = ? WHERE subject = ? AND version = ?', [
+        until,
+        subject,
+        version,
+      ])
+    ).changes > 0
+  );
 }

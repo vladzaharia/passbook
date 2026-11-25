@@ -1,20 +1,21 @@
 import { classify } from './classify.ts';
 import { desiredState } from './desired.ts';
-import { closeDrift, endSessions, holdTargetForOwner, noteDrift, type Who } from './effects.ts';
+import { holdOrReport } from './drain.ts';
+import { closeDrift, endSessions, noteDrift, type Who } from './effects.ts';
 import { idpCodeOf } from './errors.ts';
+import { retireAdmins } from './reconcile-admins.ts';
 import { type DriftKind, type DriftRow, driftStmt, openDrift } from './repo-drift.ts';
 import { observedStmt, type TargetStateRow } from './repo-state.ts';
 import {
   actionableDriftSubjects,
   flush,
   identitiesOfSubjects,
-  linkedAdmins,
   markManyDirty,
   statesOfSubjects,
   touchObserved,
   unobservedWanted,
 } from './repo-sync.ts';
-import { isManaged, type RunEnv, rpcCtx } from './run-env.ts';
+import { DISABLED_CAP, isManaged, type RunEnv, rpcCtx } from './run-env.ts';
 import type { Target } from './types.ts';
 
 const DAY = 86_400_000;
@@ -22,8 +23,7 @@ const DAY = 86_400_000;
 const SINCE_MS = 2 * DAY;
 /** Subjects a run puts on the drain's queue for what it never saw, and for open differences to retry. */
 const MARK_LIMIT = 200;
-/** More platform admins gone than this at once is a feed fault, not an owner's edit: report, revoke nothing. */
-const ADMIN_BREAKER = 5;
+/** Never-seen subjects a dry run checks against the snapshot itself (nothing is queued in a dry run). */
 const OPEN_LIMIT = 2000;
 
 export interface ReconcileReport {
@@ -48,9 +48,13 @@ interface Queued {
 /**
  * The daily pass over Polaris ID (design 1 section 3.4). One `snapshot` of every group, classified with the
  * same table as the drain: owner-added roles are recorded as external and left alone; a grant the owner ended
- * is held and its sessions end; members PassBook does not know are reported. Roles PassBook should add or take
- * back are put on the drain's queue rather than applied here, so the drain's limits cover them. It stops
- * verifying when `spent()` reaches `cap` (the oldest-checked subjects go first, so the rest wait for tomorrow).
+ * is held and its sessions end (first, before the budget runs low); members PassBook does not know are
+ * reported. Roles PassBook should add or take back are put on the drain's queue rather than applied here, so
+ * the drain's limits cover them. Every phase checks `spent()` against `cap` before it starts; the
+ * longest-unchecked subjects verify first, so a capped run resumes the next day.
+ *
+ * Dry run records drift rows and nothing else: no observed state, no hold, no session change, no queue mark. It
+ * lists never-seen subjects that are missing from a group by comparing D1 with the snapshot directly.
  */
 export async function reconcile(
   env: RunEnv,
@@ -70,6 +74,13 @@ export async function reconcile(
     verified: 0,
     capped: false,
   };
+  const over = (phase: string): boolean => {
+    if (spent() < cap) return false;
+    if (!report.capped)
+      ctx.log.warn('idp.reconcile.capped', { code: 'CRON_BUDGET', phase, queries: spent() });
+    report.capped = true;
+    return true;
+  };
   let snapshot: Awaited<ReturnType<typeof rpc.snapshot>>;
   try {
     snapshot = await rpc.snapshot({
@@ -80,11 +91,13 @@ export async function reconcile(
     ctx.log.warn('idp.reconcile.snapshot_failed', { code: idpCodeOf(error) ?? 'IDP_UNAVAILABLE' });
     return null;
   }
+  if (over('snapshot')) return report;
 
   const groups = Object.entries(snapshot.roles).filter(([key]) => isManaged(key)) as [
     Target,
     (typeof snapshot.roles)[string],
   ][];
+  const inGroup = new Map(groups.map(([t, g]) => [t, new Set(g.members.map((m) => m.subject))]));
   const admins = new Set((snapshot.roles.platform_admin?.members ?? []).map((m) => m.subject));
   const subjects = [
     ...new Set([
@@ -120,7 +133,10 @@ export async function reconcile(
   };
   const observe = (subject: string, target: Target, presence: 'passbook' | 'external') => {
     const before = stateOf(subject, target);
-    if (before?.observed === 1 && before.presence === presence && before.error_code === null)
+    if (
+      dry ||
+      (before?.observed === 1 && before.presence === presence && before.error_code === null)
+    )
       return;
     writes.push(observedStmt(db, { ...whoOf(subject), target, observed: true, presence, now }));
   };
@@ -153,12 +169,30 @@ export async function reconcile(
     }
   }
   await flush(db, writes);
-  for (const e of snapshot.ended)
-    if (!admins.has(e.subject) && !isAdminRoles(identities.get(e.subject)?.last_roles ?? ''))
-      queue(e.subject, { target: e.role, ended: true });
-  if (!dry)
-    for (const subject of disabled)
-      await endSessions(ctx, whoOf(subject), 'user', 'disabled_in_idp');
+  if (!dry) await endDisabledSessions(env, [...disabled], whoOf);
+
+  // The owner's removals come first: they are few, and a run low on budget must still hold them.
+  const held = new Set<string>();
+  for (const e of snapshot.ended) {
+    const key = `${e.subject}|${e.role}`;
+    if (held.has(key) || admins.has(e.subject)) continue;
+    if (isAdminRoles(identities.get(e.subject)?.last_roles ?? '')) continue;
+    if (over('ended')) break;
+    held.add(key);
+    const desired = await desiredState(db, e.subject, now);
+    if (desired.skip === 'platform_admin') continue;
+    const s = stateOf(e.subject, e.role);
+    const verdict = classify({
+      present: false,
+      grant: true,
+      wanted: desired.skip === null && desired.targets.has(e.role),
+      held: s?.held_at != null,
+      seen: true,
+    });
+    if (verdict !== 'hold') continue;
+    report.held++;
+    await holdOrReport(env, whoOf(e.subject), e.role, driftOf.get(e.subject) ?? []);
+  }
 
   // Never-checked subjects first, then the longest since a run checked them: a capped run resumes tomorrow.
   const age = (subject: string) => {
@@ -168,71 +202,76 @@ export async function reconcile(
   const order = [...queued.keys()].sort((a, b) => age(a) - age(b) || a.localeCompare(b));
   const toDrain: string[] = [];
   for (const subject of order) {
-    if (spent() >= cap) {
-      report.capped = true;
-      break;
-    }
+    if (over('verify')) break;
     const desired = await desiredState(db, subject, now);
     if (desired.skip === 'platform_admin') continue;
     report.verified++;
-    await touchObserved(db, subject, now);
+    if (!dry) await touchObserved(db, subject, now);
     const who = whoOf(subject);
     for (const q of queued.get(subject) ?? []) {
-      const s = stateOf(subject, q.target);
       const verdict = classify({
-        present: !q.ended,
+        present: true,
         grant: true,
         wanted: desired.skip === null && desired.targets.has(q.target),
-        held: s?.held_at != null,
-        seen: q.ended || s?.observed === 1,
+        held: stateOf(subject, q.target)?.held_at != null,
+        seen: true,
       });
-      if (verdict === 'ok')
-        await closeDrift(
-          ctx,
-          who,
-          q.target,
-          driftOf.get(subject) ?? [],
-          ['missing', 'unexpected'],
-          'ok',
-        );
-      else if (verdict === 'remove') {
+      if (verdict === 'ok') {
+        const open = driftOf.get(subject) ?? [];
+        await closeDrift(ctx, who, q.target, open, ['missing', 'unexpected'], 'ok');
+      } else if (verdict === 'remove') {
         await note(subject, q.target, 'unexpected');
         toDrain.push(subject);
-      } else if (verdict === 'hold') {
-        report.held++;
-        if (dry) await note(subject, q.target, 'owner_removed');
-        else await holdTargetForOwner(ctx, runId, who, q.target);
       }
     }
   }
 
-  await retireAdmins(env, admins, snapshot.roles.platform_admin !== undefined);
+  if (!over('admins'))
+    await retireAdmins(env, admins, snapshot.roles.platform_admin !== undefined, drifts);
 
-  const retry = dry ? [] : await actionableDriftSubjects(db, MARK_LIMIT);
-  const mark = [...new Set([...toDrain, ...(await unobservedWanted(db, MARK_LIMIT)), ...retry])];
-  await markManyDirty(db, mark);
-  report.marked = mark.length;
+  if (!over('candidates')) {
+    const fresh = await unobservedWanted(db, MARK_LIMIT);
+    if (dry) await listMissing(env, fresh, inGroup, note, over);
+    else {
+      const retry = await actionableDriftSubjects(db, MARK_LIMIT);
+      const mark = [...new Set([...toDrain, ...fresh, ...retry])];
+      await markManyDirty(db, mark);
+      report.marked = mark.length;
+    }
+  }
   ctx.log.info('idp.reconcile.done', { ...report, queries: spent() });
   return report;
 }
 
-/**
- * People whose last sign-in was as platform admin but who are no longer in the admin group: their admin
- * sessions end. An empty or missing group, or more than a handful gone at once, is reported and revokes nothing.
- */
-async function retireAdmins(env: RunEnv, admins: Set<string>, seen: boolean): Promise<void> {
-  const { ctx } = env;
-  if (!seen || admins.size === 0) return;
-  const gone = (await linkedAdmins(ctx.env.DB, 200)).filter((a) => !admins.has(a.subject));
-  if (gone.length === 0) return;
-  if (gone.length > ADMIN_BREAKER) {
-    ctx.log.error('idp.reconcile.admin_breaker', { code: 'IDP_BREAKER', count: gone.length });
-    return;
+/** Ends the Polaris ID sessions of members the owner disabled, up to `DISABLED_CAP` a run. */
+async function endDisabledSessions(
+  env: RunEnv,
+  disabled: string[],
+  whoOf: (subject: string) => Who,
+): Promise<void> {
+  for (const [i, subject] of disabled.entries()) {
+    if (i >= DISABLED_CAP) {
+      env.ctx.log.error('idp.hold_breaker', { code: 'IDP_HOLD_BREAKER', limit: DISABLED_CAP });
+      return;
+    }
+    await endSessions(env.ctx, whoOf(subject), 'user', 'disabled_in_idp');
   }
-  for (const a of gone) {
-    const who: Who = { subject: a.subject, userId: a.user_id };
-    // The admin group carries the console role, so the difference is filed under it.
-    await noteDrift(ctx, env.runId, who, 'console', 'admin_changed');
-    if (!env.dry) await endSessions(ctx, who, 'admin', 'admin_removed');
+}
+
+/** A dry run's list of what a live run would add: wanted by D1, absent from the group in the snapshot. */
+async function listMissing(
+  env: RunEnv,
+  subjects: string[],
+  inGroup: ReadonlyMap<Target, ReadonlySet<string>>,
+  note: (subject: string, target: Target, kind: DriftKind) => Promise<void>,
+  over: (phase: string) => boolean,
+): Promise<void> {
+  for (const subject of subjects) {
+    if (over('missing')) return;
+    const desired = await desiredState(env.ctx.env.DB, subject, env.ctx.clock.now());
+    if (desired.skip) continue;
+    for (const target of desired.targets.keys())
+      if (inGroup.has(target) && !inGroup.get(target)?.has(subject))
+        await note(subject, target, 'missing');
   }
 }
