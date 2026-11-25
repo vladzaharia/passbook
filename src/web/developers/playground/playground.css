@@ -72,8 +72,8 @@
 }
 .chan {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 28px 20px;
   padding: 28px 24px 24px;
   align-items: start;
 }
@@ -99,17 +99,27 @@
   font-weight: 500;
   color: var(--pk-text-muted);
 }
-.chan .pg-apple,
 .chan .pg-wallet,
-.chan .pg-paper-img,
-.chan .pg-paper,
 .chan .pg-skel {
   width: 100%;
-  max-width: 230px;
 }
+/* A face is a phone-width card; a pair of them sits in a figure two columns wide. */
+.chan .pg-apple,
+.chan .wp {
+  width: 100%;
+  max-width: 17rem;
+  margin-inline: auto;
+}
+.chan .pg-skel {
+  max-width: 17rem;
+}
+/* A printed page is shown whole: width and height only ever shrink it. */
 .pg-paper-img {
   display: block;
+  width: auto;
   height: auto;
+  max-width: 100%;
+  margin-inline: auto;
   border-radius: 4px;
 }
 .one {
@@ -135,20 +145,8 @@
   color: var(--pk-text-muted);
   text-align: center;
 }
-/* A wallet's card is the front; what a tap opens is the back. */
-.pg-wallet[data-face="front"] .wp-g-details,
-.pg-wallet[data-face="front"] .wp-s-detail,
-.pg-wallet[data-face="back"] .wp-g-card,
-.pg-wallet[data-face="back"] .wp-s-card {
-  display: none;
-}
 
 /* ---------- Narrow ---------- */
-@media (max-width: 1180px) {
-  .chan {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 @media (max-width: 720px) {
   .code-h .file {
     display: none;

@@ -84,3 +84,11 @@
 .wp-phone-page .wl-holder[data-lead] {
   grid-template-areas: "pass" "add" "more" "details" "help";
 }
+
+/* The back of a card with nothing on it (FacePair). */
+.wp-empty {
+  margin: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--pk-text-muted);
+}

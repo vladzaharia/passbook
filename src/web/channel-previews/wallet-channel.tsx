@@ -1,23 +1,33 @@
 import { PREVIEW_COPY, walletName } from '@/shared/copy/previews.ts';
-import { Badge } from '../ui/badge.tsx';
 import { Callout } from '../ui/callout.tsx';
 import { EmptyState } from '../ui/empty-state.tsx';
 import { Skeleton } from '../ui/skeleton.tsx';
 import { GoogleCard } from '../wallet-previews/google/google-card.tsx';
 import { SamsungCard } from '../wallet-previews/samsung/samsung-card.tsx';
+import { FacePair, type PreviewFace } from './face-pair.tsx';
 import { FidelityNotes } from './fidelity-notes.tsx';
 import type { WalletPreviews } from './use-wallet-previews.ts';
 
-/** One wallet's card beside its fidelity report; the report stands alone when there is no card. */
+/**
+ * One wallet's card, front and back (FacePair), beside its fidelity report. A page that lists what
+ * each wallet drops elsewhere passes `notes={false}`.
+ */
 export function WalletChannel({
   target,
   previews,
   testBand,
+  notes = true,
+  face,
+  onFace,
 }: {
   target: 'google' | 'samsung';
   previews: WalletPreviews;
   /** A sandbox pass: the TEST PREVIEW band on the card. */
   testBand?: boolean | undefined;
+  /** The fidelity report beside the card. */
+  notes?: boolean | undefined;
+  face?: PreviewFace | undefined;
+  onFace?: ((face: PreviewFace) => void) | undefined;
 }) {
   const wallet = walletName(target);
   if (previews.state === 'loading')
@@ -37,12 +47,13 @@ export function WalletChannel({
     return (
       <EmptyState inline art="lock" title={PREVIEW_COPY.walletOff.replace('{wallet}', wallet)} />
     );
-  const card =
+  const cardOf = (side: PreviewFace) =>
     target === 'samsung' ? (
       compiled.cardData ? (
         <SamsungCard
           data={compiled.cardData as Parameters<typeof SamsungCard>[0]['data']}
           testBand={testBand}
+          face={side}
         />
       ) : null
     ) : compiled.objectBody ? (
@@ -51,28 +62,26 @@ export function WalletChannel({
         classBody={compiled.classBody}
         objectBody={compiled.objectBody}
         testBand={testBand}
+        face={side}
       />
     ) : null;
+  const card = compiled.blocked ? (
+    <Callout tone="warning" title={PREVIEW_COPY.blocked.replace('{wallet}', wallet)}>
+      {compiled.blocked.message}
+    </Callout>
+  ) : (
+    <FacePair front={cardOf('front')} back={cardOf('back')} face={face} onFace={onFace} />
+  );
   return (
     <div className="wp-wrap w-full" data-testid={`${target}-channel`}>
-      <div className="wp-split">
-        <div className="flex min-w-0 flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="neutral">{PREVIEW_COPY.badge}</Badge>
-            <span className="text-xs text-fg-muted">
-              {PREVIEW_COPY.approximate.replace('{wallet}', wallet)}
-            </span>
-          </div>
-          {compiled.blocked ? (
-            <Callout tone="warning" title={PREVIEW_COPY.blocked.replace('{wallet}', wallet)}>
-              {compiled.blocked.message}
-            </Callout>
-          ) : (
-            card
-          )}
+      {notes ? (
+        <div className="wp-split">
+          <div className="min-w-0">{card}</div>
+          <FidelityNotes report={report} />
         </div>
-        <FidelityNotes report={report} />
-      </div>
+      ) : (
+        card
+      )}
     </div>
   );
 }

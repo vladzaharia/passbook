@@ -20,7 +20,6 @@ import cardText from '../../web/pass-card/pass-card-text.css?raw';
 import stageCss from '../../web/pass-card/stage.css?raw';
 import stageMotion from '../../web/pass-card/stage-motion.css?raw';
 import stageSeg from '../../web/pass-card/stage-seg.css?raw';
-import { Badge } from '../../web/ui/badge.tsx';
 import { Callout } from '../../web/ui/callout.tsx';
 import googleCss from '../../web/wallet-previews/google/google.css?raw';
 import { GoogleCard } from '../../web/wallet-previews/google/google-card.tsx';
@@ -125,12 +124,6 @@ function WalletPane({
     <div className="wp-wrap w-full" data-testid={`${target}-channel`}>
       <div className="wp-split">
         <div className="flex min-w-0 flex-col gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone="neutral">{PREVIEW_COPY.badge}</Badge>
-            <span className="text-xs text-fg-muted">
-              {PREVIEW_COPY.approximate.replace('{wallet}', wallet)}
-            </span>
-          </div>
           {compiled.blocked ? (
             <Callout tone="warning" title={PREVIEW_COPY.blocked.replace('{wallet}', wallet)}>
               {compiled.blocked.message}
