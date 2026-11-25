@@ -35,7 +35,7 @@ function firstSection(code: string): string {
 
 /** Date kind of a custom format code, or null for a number format. */
 export function classifyFormat(code: string): DateKind | null {
-  if (code.length > 255) throw new TabularError('FILE_DAMAGED', 'The spreadsheet is damaged.');
+  if (code.length > 255) return null;
   const section = firstSection(code);
   let elapsed = false;
   const bare = section

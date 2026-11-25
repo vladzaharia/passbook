@@ -104,9 +104,14 @@ const unguard = (v: string) => (/^'(?:[ \t\r\n]*[=+\-@]|[\t\r])/.test(v) ? v.sli
 /** A row wider than this is refused while tokenising, whatever the caller's column limit. */
 const HARD_COLUMNS = 1000;
 
+/** Stands for every blank line, so numbering is kept without storing a row for each. */
+const BLANK: string[] = [''];
+
 function records(text: string, delimiter: string, maxRows: number, maxColumns: number): string[][] {
   const widest = Math.min(HARD_COLUMNS, Math.max(maxColumns * 10, 100));
   const out: string[][] = [];
+  const rawCeiling = maxRows * 2 + 10_000;
+  let filled = 0;
   let row: string[] = [];
   let cell = '';
   let i = 0;
@@ -135,9 +140,14 @@ function records(text: string, delimiter: string, maxRows: number, maxColumns: n
       i++;
     } else if (ch === '\n' || ch === '\r') {
       row.push(cell);
-      out.push(row);
-      // The header is row one; blank lines count here, so this is a ceiling, not the exact row cap.
-      if (out.length > maxRows + 1)
+      if (row.every((c) => c.trim() === '')) out.push(BLANK);
+      else {
+        out.push(row);
+        // The header is row one. Blank rows do not count against the cap, only against the raw ceiling.
+        if (++filled > maxRows + 1)
+          throw new CsvError('IMPORT_TOO_MANY_ROWS', `Use at most ${maxRows} rows.`);
+      }
+      if (out.length > rawCeiling)
         throw new CsvError('IMPORT_TOO_MANY_ROWS', `Use at most ${maxRows} rows.`);
       row = [];
       cell = '';

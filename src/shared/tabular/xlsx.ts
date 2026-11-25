@@ -164,7 +164,8 @@ function read(
   if (chosen.length === 0) throw new TabularError('FILE_EMPTY', 'The workbook has no sheets.');
   const names = sheets.map((x) => x.name);
 
-  const aux = take((n) => n === sstPath || n === stylesPath, false);
+  // Kept: the decoded strings outlive these bytes, so they count against the total.
+  const aux = take((n) => n === sstPath || n === stylesPath);
   const shared = parseSharedStrings(sstPath ? aux.files.get(sstPath) : undefined);
   const styles = parseStyles(stylesPath ? aux.files.get(stylesPath) : undefined);
   aux.files.clear();
