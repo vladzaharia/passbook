@@ -1,15 +1,17 @@
 import type { z } from 'zod';
+import { effectiveChannels } from '../../../shared/channels.ts';
 import type { ScanRosterSchema } from '../../../shared/contracts/scan-session.ts';
 import { ROSTER_MAX_ENTRIES, ROSTER_TTL_MS } from '../../../shared/scan-offline.ts';
 import { derivedHmacKey } from '../../platform/crypto.ts';
 import { ValidationError } from '../../platform/errors.ts';
 import { sha256Hex, toBase64Url } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { loadMany } from '../channels/service.ts';
 import { type ScanActor, scopeSessionId } from './actor.ts';
 import { type AdmitsPass, matchesEvent } from './admits.ts';
 import { localDay } from './counts.ts';
 import { requireOfflineList } from './offline-policy.ts';
-import { type RosterRow, rosterPage } from './repo-roster.ts';
+import { type RosterRow, rosterPage, voidedPrintsSince } from './repo-roster.ts';
 import { configEpochOf, credentialEpochOfActor } from './scan-epochs.ts';
 
 type Roster = z.infer<typeof ScanRosterSchema>;
@@ -51,7 +53,11 @@ const short = (hex: string) => hex.slice(0, 32);
  * brute-forced offline from a stolen door. Only the scan code (128 random bits) and the printed
  * code are checked offline; a barcode that is the scan code is covered by the first.
  */
-async function entriesOf(row: RosterRow, inside: boolean, day: boolean): Promise<Entry[]> {
+async function entriesOf(
+  row: RosterRow,
+  opts: { inside: boolean; day: boolean; paper: boolean; delta: boolean; group: () => string },
+  ended: readonly string[],
+): Promise<{ live: Entry[]; gone: Entry[] }> {
   const status: Entry['status'] =
     row.removed_at !== null || row.deleted_at !== null
       ? 'removed'
@@ -60,9 +66,19 @@ async function entriesOf(row: RosterRow, inside: boolean, day: boolean): Promise
         : 'active';
   const hashes = new Set<string>();
   if (row.scan_code) hashes.add(short(await sha256Hex(row.scan_code)));
-  if (row.print_hash) hashes.add(row.print_hash);
-  const state: Entry['state'] = inside ? 'in' : null;
-  return [...hashes].map((h) => ({ h, status, state, ...(day ? { day: true } : {}) }));
+  // Paper that is not effectively on is left off, so offline never admits what the online door refuses.
+  if (row.print_hash && opts.paper) hashes.add(row.print_hash);
+  const state: Entry['state'] = opts.inside ? 'in' : null;
+  const day = opts.day ? { day: true } : {};
+  // An ordinal shared by one pass's entries in this response lets the device mark the phone and paper codes together.
+  const g = hashes.size > 1 ? { g: opts.group() } : {};
+  return {
+    live: [...hashes].map((h) => ({ h, status, state, ...day, ...g })),
+    // On a delta the device still holds a print that paper-off took off the list: tell it to drop it.
+    gone: [...ended, ...(opts.delta && row.print_hash && !opts.paper ? [row.print_hash] : [])]
+      .filter((h, i, all) => !hashes.has(h) && all.indexOf(h) === i)
+      .map((h) => ({ h, status: 'voided', state: null, ...day })),
+  };
 }
 
 function gateScopes(actor: ScanActor, now: number): string[] {
@@ -103,15 +119,50 @@ export async function rosterFor(
     PAGE,
   );
   const entries: Entry[] = [];
-  for (const row of rows) {
-    const pass: AdmitsPass = {
+  const ended = new Map<string, string[]>();
+  if (since !== null)
+    for (const v of await voidedPrintsSince(
+      ctx.env.DB,
+      rows.map((r) => r.id),
+      since,
+    ))
+      ended.set(v.pass_id, [...(ended.get(v.pass_id) ?? []), v.roster_hash]);
+  const inScope = rows.filter((row) =>
+    matchesEvent(actor, {
       templateId: row.template_id,
       personalization: JSON.parse(row.personalization),
-    };
-    if (!matchesEvent(actor, pass)) continue;
-    entries.push(...(await entriesOf(row, row.inside === 1, daily.has(row.template_id))));
+    } satisfies AdmitsPass),
+  );
+  const printed = inScope.filter((row) => row.print_hash);
+  const loaded = await loadMany(
+    ctx,
+    printed.map((r) => ({
+      id: r.id,
+      orgId: actor.orgId,
+      mode: actor.mode,
+      templateId: r.template_id,
+      templateVersion: r.template_version,
+    })),
+  );
+  let ordinal = 0;
+  for (const row of inScope) {
+    const inputs = loaded.get(row.id)?.inputs;
+    const paper = inputs ? effectiveChannels({ ...inputs, entitlement: {} }).paper.on : false;
+    const { live, gone } = await entriesOf(
+      row,
+      {
+        inside: row.inside === 1,
+        day: daily.has(row.template_id),
+        paper,
+        delta: since !== null,
+        group: () => String(++ordinal),
+      },
+      ended.get(row.id) ?? [],
+    );
+    entries.push(...live, ...gone);
+    // A pass that ended a print only drops hashes: it does not count against the list's size.
+    count += live.length;
   }
-  count += entries.length;
   if (count > ROSTER_MAX_ENTRIES)
     throw new ValidationError(
       'Too many passes for an offline list. Narrow the session.',

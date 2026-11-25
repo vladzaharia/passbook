@@ -108,6 +108,32 @@
       ],
       "linter": { "rules": { "correctness": { "noComponentHookFactories": "off" } } }
     },
+    // The NTAG 424 simulator signs with a test key and hands out factory-blank tags: only tests may import it.
+    {
+      "includes": [
+        "src/**",
+        "!**/*.test.ts",
+        "!src/worker/modules/nfc/ntag424/sim/**",
+        "!**/*test-fixtures.ts"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/ntag424/sim/**", "./sim/**"],
+                    "message": "The NTAG 424 simulator is test-only."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "includes": ["**/*.test.ts", "**/*.test.tsx", "test/**"],
       "linter": {

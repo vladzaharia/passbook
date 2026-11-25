@@ -4,6 +4,7 @@ import type { ScanDeviceOverrides } from './contracts/scanning-sessions.ts';
 import { settingsOfflineVerdict } from './scan-offline.ts';
 import { deviceName, isTracked, sessionHoursOf } from './scan-setup-plan-derive.ts';
 import { type DoorPlanEnv, isRef } from './scan-setup-plan-types.ts';
+import { PRESET_SPECS } from './scan-setup-presets.ts';
 import { roleForSurface } from './scan-surfaces.ts';
 import { resolveOrgTimeZone } from './time-zone.ts';
 
@@ -58,29 +59,57 @@ function admitsOf(door: SetupDoor, path: (string | number)[], env: DoorPlanEnv) 
   return { templateIds: [...templateIds], events: links };
 }
 
+/** The first max up a made place's chain of `inside` parents (made places, then existing zones). */
+function refMax(env: DoorPlanEnv, ref: string): number | null {
+  const seen = new Set<string>();
+  for (let at: string | undefined = ref; at !== undefined && !seen.has(at); ) {
+    seen.add(at);
+    const p = env.intent.places.find((x) => 'ref' in x && x.ref === at);
+    if (p === undefined) return zoneMax(env, at);
+    if (!('ref' in p)) return zoneMax(env, p.zoneId);
+    if (p.max !== undefined) return p.max;
+    at = p.inside;
+  }
+  return null;
+}
+
+/** The first capacity from an existing zone up its parents. */
+function zoneMax(env: DoorPlanEnv, id: string): number | null {
+  const seen = new Set<string>();
+  for (let z = env.ctx.zones.find((x) => x.id === id); z && !seen.has(z.id); ) {
+    if (z.capacity !== null) return z.capacity;
+    seen.add(z.id);
+    const parent = z.parentId;
+    z = parent === null ? undefined : env.ctx.zones.find((x) => x.id === parent);
+  }
+  return null;
+}
+
 /** The door's zone, and whether people scan out of it. */
 function placeOf(door: SetupDoor, path: (string | number)[], env: DoorPlanEnv) {
   const id = door.place;
-  if (id === null || id === undefined) return { zone: null, exits: false };
+  if (id === null || id === undefined) return { zone: null, exits: false, max: null };
   const { intent, ctx, refs, issues } = env;
   const target = refs.get(id);
   if (target?.kind === 'place') {
     const p = intent.places.find((x) => 'ref' in x && x.ref === id);
     const exits = p !== undefined && 'ref' in p && isTracked(p) && p.tapOut !== false;
-    return { zone: { ref: id }, exits };
+    const max = refMax(env, id);
+    return { zone: { ref: id }, exits, max };
   }
   if (target) {
     issues.push({ code: 'SETUP_REF_KIND', path, params: { ref: id, kind: 'place' } });
-    return { zone: null, exits: false };
+    return { zone: null, exits: false, max: null };
   }
   const z = ctx.zones.find((x) => x.id === id);
-  if (z && !z.archived) return { zone: { id }, exits: z.occupancy !== 'off' };
+  if (z && !z.archived)
+    return { zone: { id }, exits: z.occupancy !== 'off', max: zoneMax(env, z.id) };
   issues.push({
     code: z ? 'ZONE_ARCHIVED' : isRef(id) ? 'SETUP_REF_UNKNOWN' : 'ZONE_NOT_FOUND',
     path,
     params: { ref: id },
   });
-  return { zone: null, exits: false };
+  return { zone: null, exits: false, max: null };
 }
 
 /** One door as a session: admits, zone, hours, sign-in, derived direction and its devices. */
@@ -88,13 +117,22 @@ export function planDoor(door: SetupDoor, i: number, env: DoorPlanEnv): PlannedS
   const ref = `door-${i + 1}`;
   const path = ['doors', i];
   const accepts = admitsOf(door, [...path, 'admits'], env);
-  const { zone, exits } = placeOf(door, [...path, 'place'], env);
+  const { zone, exits, max } = placeOf(door, [...path, 'place'], env);
   const reentry = (accepts?.events ?? []).some((l) => eventOf(env, l)?.reentry === true);
   const hours = sessionHoursOf(door.hours);
   if (hours === 'empty')
     env.issues.push({
       code: 'SETUP_HOURS_EMPTY',
       path: [...path, 'hours'],
+      params: { door: door.name },
+    });
+  const eventCap = (accepts?.events ?? []).some(
+    (l) => (eventOf(env, l)?.capacity ?? null) !== null,
+  );
+  if (door.more?.hardLimit === true && max === null && !eventCap)
+    env.issues.push({
+      code: 'SETUP_HARD_LIMIT_NO_CAPACITY',
+      path: [...path, 'more', 'hardLimit'],
       params: { door: door.name },
     });
   const scanners = door.scanners ?? { by: 'anyone', as: 'door' };
@@ -131,10 +169,11 @@ export function planDoor(door: SetupDoor, i: number, env: DoorPlanEnv): PlannedS
   const directed = direction !== undefined || devices.some((d) => d.overrides.direction);
   if ((directed || reentry) && more.checkIn?.mode === undefined)
     settings.checkIn = { ...more.checkIn, mode: 'in_out' };
-  // event_night keeps the line moving offline, but only for a door that needs no exits.
+  // event_night and gates keep the line moving offline, but only for a door that needs no exits.
   const desk = devices.some((d) => d.surface === 'operator');
   if (
-    env.intent.preset === 'event_night' &&
+    env.intent.preset !== undefined &&
+    PRESET_SPECS[env.intent.preset].offlineList === true &&
     !desk &&
     more.offline === undefined &&
     more.whenOffline === undefined &&

@@ -18,6 +18,7 @@ import { channelOn, recordCopy } from '../channels/gate.ts';
 import type { MailAttachment, Mailer } from '../delivery/mailer.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { depsOf } from '../passes/deps.ts';
+import { currentPassBytes } from '../passes/timed-variant.ts';
 import { getPlatformSettings } from '../settings/service.ts';
 import { resolveCaptureSnapshot } from './binding.ts';
 import { openBody } from './captured-body.ts';
@@ -151,15 +152,10 @@ export async function sendCapturedToMe(
       if (snapshot.kind !== 'pass') throw new Error('Invalid captured attachment.');
       // Apple may have been turned off since the capture: the message goes without the copy.
       if (await channelOn(ctx, snapshot.pass, 'apple')) {
-        const object = await ctx.env.BUCKET.get(snapshot.pass.objectKey);
-        if (!object) throw new Error('Captured attachment is missing.');
-        attachments = [
-          {
-            filename: 'pass.pkpass',
-            type: 'application/vnd.apple.pkpass',
-            content: new Uint8Array(await object.arrayBuffer()),
-          },
-        ];
+        // The pass as its last event boundary left it (docs/design/event-boundaries.md).
+        const content = await currentPassBytes(ctx, snapshot.pass);
+        if (!content) throw new Error('Captured attachment is missing.');
+        attachments = [{ filename: 'pass.pkpass', type: 'application/vnd.apple.pkpass', content }];
       }
     }
     // Check the exact intent, members, grant and verified address at the provider boundary.

@@ -55,6 +55,10 @@ export const PlatformSettingsSchema = z.object({
   'retention.eventsDays': defaultDays('events'),
   /** Test-mode passes, bundles and captured emails older than this are deleted daily. */
   'sandbox.purgeDays': z.number().int().min(1).max(365).default(30),
+  /** Passes the minute cron moves past an event start or end at most (docs/design/event-boundaries.md). */
+  'passes.boundaryClaim': z.number().int().min(25).max(10000).default(4000),
+  /** Of those, the most one organization gets a minute. */
+  'passes.boundaryOrgShare': z.number().int().min(25).max(10000).default(2000),
   /** Notifying updates one pass may get per rolling 24 hours; later updates are silent. */
   'push.budgetPerDay': z.number().int().min(0).max(50).default(PUSH_BUDGET_DEFAULT),
   /** Scans older than this are deleted daily. */

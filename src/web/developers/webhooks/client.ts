@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import type { WebhookCaptureDto } from '../../../shared/contracts/webhook-captures.ts';
+import type { OverlapHours } from '../../../shared/contracts/webhook-secrets.ts';
 import type { WebhookTestAttemptSchema } from '../../../shared/contracts/webhook-tests.ts';
 import type {
   WebhookDeliveryDetailSchema,
@@ -60,7 +61,7 @@ export interface TesterApi {
   tests(id: string): Promise<TestAttemptDto[]>;
   replayDelivery(id: string, eventId: string): Promise<void>;
   /** A new signing secret, returned once; the old one keeps signing for `overlapHours`. */
-  rotate(id: string, overlapHours: 0 | 24 | 72): Promise<string>;
+  rotate(id: string, overlapHours: OverlapHours): Promise<string>;
   replay(id: string, captureId: string): Promise<WebhookCaptureDto>;
   secret(id: string): Promise<string>;
 }

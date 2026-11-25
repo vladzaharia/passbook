@@ -9,7 +9,7 @@ type Of<T extends ScanEvent['type']> = Extract<ScanEvent, { type: T }>;
 
 export function amount(s: MachineState, ev: Of<'amount'>, env: Env): Out {
   const l = s.loop;
-  if (l.s !== 'member' || !l.picker || ev.value === null) return same(s);
+  if (l.s !== 'member' || !l.picker) return same(s);
   return out({
     ...s,
     loop: { ...l, picker: { ...l.picker, amount: ev.value } },

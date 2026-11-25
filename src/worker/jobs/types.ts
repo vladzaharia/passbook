@@ -132,6 +132,12 @@ export const JobSchema = z.discriminatedUnion('kind', [
   }),
   /** A claim found a release's wallet art missing: cut and store it again, as publication did. */
   z.object({ kind: z.literal('wallet.google_art'), candidateId: z.string().min(1).max(64) }),
+  /** An event boundary of the pass passed: work out its timed keys. `lease` is the claim's due time. */
+  z.object({
+    kind: z.literal('pass.boundary_refresh'),
+    passId: z.string().min(1),
+    lease: z.number().int().positive(),
+  }),
   /** Apple flipped for a pass: republish (force) so devices fetch the voided or live copy. */
   z.object({
     kind: z.literal('channel.apple_bump'),
