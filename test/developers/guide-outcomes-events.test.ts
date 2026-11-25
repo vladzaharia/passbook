@@ -107,11 +107,7 @@ describe('react to events and go live', () => {
 describe('bulk import', () => {
   it('checks five rows, starts the commit, and refuses more than 100 passes in a bulk call', async () => {
     const { call, makePass } = await guideApi();
-    const made = await call(
-      'POST',
-      '/pass-imports',
-      snippetBody('bulk-import'),
-    );
+    const made = await call('POST', '/pass-imports', snippetBody('bulk-import'));
     expect(made.status).toBe(201);
     const checked = await call(
       'POST',
