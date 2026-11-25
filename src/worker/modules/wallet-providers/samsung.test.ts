@@ -623,45 +623,22 @@ describe('Samsung notifications', () => {
     }
   });
 
-  it('sends MIGRATED only with the new link and the old ref, and validates the trace id', async () => {
+  it('never sends MIGRATED and validates the trace id', async () => {
     const calls: { init: RequestInit }[] = [];
     const fetcher = (async (_url: unknown, init?: RequestInit) => {
       calls.push({ init: init as RequestInit });
       return new Response(null, { status: 200 });
     }) as typeof fetch;
-    const base = {
-      cc2: 'US',
-      requestId: 'req-1',
-      type: 'loyalty',
-      refId,
-      attempt: 1,
-      now: NOW,
-    };
-    const atwLink = `https://a.swallet.link/atw/v3/YMtt/card123#Clip?pdata=${'B'.repeat(32)}`;
-    await sendSamsungUpdate(
-      account,
-      { ...base, state: 'MIGRATED', atwLink, oldRefId: 'C'.repeat(32) },
-      fetcher,
-    );
-    expect(JSON.parse(String(calls[0]?.init.body))).toEqual({
-      card: {
-        type: 'loyalty',
-        data: [{ refId, state: 'MIGRATED', atwLink, oldRefId: 'C'.repeat(32) }],
-      },
-    });
+    const base = { cc2: 'US', requestId: 'req-1', type: 'loyalty', refId, attempt: 1, now: NOW };
     for (const input of [
-      { ...base, state: 'MIGRATED' as const },
-      { ...base, state: 'MIGRATED' as const, atwLink },
-      { ...base, state: 'MIGRATED' as const, atwLink: 'http://a.test/x', oldRefId: 'C'.repeat(32) },
-      { ...base, state: 'MIGRATED' as const, atwLink, oldRefId: refId },
-      { ...base, state: 'UPDATED' as const, atwLink, oldRefId: 'C'.repeat(32) },
+      { ...base, state: 'MIGRATED' as never },
       { ...base, state: 'UPDATED' as const, requestId: '' },
       { ...base, state: 'UPDATED' as const, requestId: 'x'.repeat(33) },
     ])
       await expect(sendSamsungUpdate(account, input, fetcher)).rejects.toMatchObject({
         kind: 'invalid_request',
       });
-    expect(calls).toHaveLength(1);
+    expect(calls).toHaveLength(0);
   });
 
   it('sends signed per-ref updates and event-wide cancels to the fixed public origin', async () => {

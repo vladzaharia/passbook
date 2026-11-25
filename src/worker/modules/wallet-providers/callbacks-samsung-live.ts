@@ -140,6 +140,12 @@ export async function serveSamsungLive(
       orgId: snapshot.orgId,
       event: event ?? 'unknown',
     });
+    if (event === 'ADDED' && !countryHint)
+      ctx.log.warn('wallet.callback_state', {
+        code: 'WALLET_SAMSUNG_NO_MARKET',
+        provider: 'samsung',
+        orgId: snapshot.orgId,
+      });
     return { kind: 'accepted' };
   }
   let projection: SamsungCardProjection | null = null;
