@@ -2,9 +2,6 @@
 export const HOLDER_COPY = {
   /** Under the sign-in card. */
   signInFooter: 'Your passes are tied to your email.',
-  /** Foot of an org's page, by mark level. */
-  issuedWith: 'Issued with',
-  poweredBy: 'Powered by PassBook',
   /** The pass email's title (and its preview in the console). */
   passReady: 'Your pass is ready',
   /** Where this device cannot add to Apple Wallet. */

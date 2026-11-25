@@ -121,13 +121,13 @@ export function AssetTile({
           className="[&>div]:h-28 [&>div]:py-0"
         />
       )}
-      <div className="flex min-h-8 items-center justify-between gap-2">
+      <div className="flex min-h-8 flex-wrap items-center justify-between gap-x-2 gap-y-1">
         {error ? (
-          <p className="text-xs text-danger">{error}</p>
+          <p className="min-w-0 flex-1 basis-40 text-xs text-danger">{error}</p>
         ) : (
-          <p className="text-xs text-fg-muted">{text.help}</p>
+          <p className="min-w-0 flex-1 basis-40 text-xs text-fg-muted">{text.help}</p>
         )}
-        <span className="flex shrink-0 items-center gap-1">
+        <span className="ml-auto flex max-w-full min-w-0 flex-wrap items-center justify-end gap-1">
           {extra}
           {src && canEdit && !note ? (
             <>

@@ -79,6 +79,7 @@ export function sheet(
     paper?: object;
     content?: Partial<PaperContent>;
     mode?: 'live' | 'test';
+    mark?: PrintSheet['mark'];
     images?: PrintSheet['images'];
   } = {},
 ): PrintSheet {
@@ -88,6 +89,7 @@ export function sheet(
     design,
     content: { ...CONTENT[kind], ...over.content },
     code: SAMPLE_CODE,
+    mark: over.mark ?? 'full',
     issued: { generation: 2, at: '2026-11-19T01:02:00Z' },
     ...(over.mode ? { mode: over.mode } : {}),
     ...(over.images ? { images: over.images } : {}),

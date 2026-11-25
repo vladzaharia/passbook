@@ -111,6 +111,7 @@ describe('build-developers', () => {
       '/apple-touch-icon.png',
       '/theme-init.js',
       '/assets/',
+      '/fonts/',
     ];
     for (const [url, entry] of Object.entries(manifest)) {
       if (!entry.type.startsWith('text/html')) continue;

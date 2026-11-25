@@ -42,8 +42,10 @@ __all__ = [
     "ApiKeysRotateCurrentResult",
     "ApiKeysRotateParams",
     "ApiKeysRotateResult",
+    "AuditEntriesListItem",
     "AuditEntriesListResponse",
     "AuditEntriesListResponseItemsItem",
+    "AuditEntriesListResult",
     "BlueprintsCheckUseParams",
     "BlueprintsCheckUseParamsVersion",
     "BlueprintsCheckUseParamsVersionAssetsItem1",
@@ -1033,6 +1035,11 @@ __all__ = [
     "PlatformAppleCallsListResponseItemsItem",
     "PlatformAuditEntriesListResponse",
     "PlatformAuditEntriesListResponseItemsItem",
+    "PlatformEntitlementPresetsListResponse",
+    "PlatformEntitlementPresetsListResponsePresetsItem",
+    "PlatformEntitlementPresetsUpdateParams",
+    "PlatformEntitlementPresetsUpdateResponse",
+    "PlatformEntitlementPresetsUpdateResponsePreset",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
     "PlatformMetricsRetrieveOverviewResponseLiveItem",
@@ -2054,7 +2061,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "api-keys:write"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "api-keys:write", "audit:read"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -2129,6 +2136,20 @@ class ApiKeysRotateCurrentParams(_Model):
 class ApiKeysRotateParams(_Model):
     orgId: str | None
     overlapHours: int | None = None
+
+class AuditEntriesListItem(_Model):
+    id: int
+    at: int
+    orgId: str | None
+    actorType: _Literal["user", "api_key", "system", "connection", "device", "scanner"] | str
+    actorId: str | None
+    actorLabel: str | None = None
+    action: str
+    targetType: str | None
+    targetId: str | None
+    targetLabel: str | None = None
+    requestId: str | None
+    detail: _Any | None = None
 
 class AuditEntriesListResponse(_Model):
     items: _List[AuditEntriesListResponseItemsItem]
@@ -5697,6 +5718,7 @@ class OrgsEntitlementsRetrieveResponse(_Model):
     preset: str | None
     label: str | None
     items: _List[OrgsEntitlementsRetrieveResponseItemsItem]
+    usage: _Dict[str, int]
 
 class OrgsEntitlementsRetrieveResponseItemsItem(_Model):
     key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
@@ -8127,6 +8149,36 @@ class PlatformAuditEntriesListResponseItemsItem(_Model):
     requestId: str | None
     detail: _Any | None = None
 
+class PlatformEntitlementPresetsListResponse(_Model):
+    presets: _List[PlatformEntitlementPresetsListResponsePresetsItem]
+
+class PlatformEntitlementPresetsListResponsePresetsItem(_Model):
+    preset: str
+    label: str
+    revision: int
+    updatedAt: int
+    orgCount: int
+    pendingOrgs: int
+    values: _Dict[str, float | str | _List[str] | None]
+
+class PlatformEntitlementPresetsUpdateParams(_Model):
+    preset: str
+    expectedRevision: int
+    values: _Dict[str, float | str | _List[str] | None]
+
+class PlatformEntitlementPresetsUpdateResponse(_Model):
+    preset: PlatformEntitlementPresetsUpdateResponsePreset
+    moved: int
+
+class PlatformEntitlementPresetsUpdateResponsePreset(_Model):
+    preset: str
+    label: str
+    revision: int
+    updatedAt: int
+    orgCount: int
+    pendingOrgs: int
+    values: _Dict[str, float | str | _List[str] | None]
+
 class PlatformMetricsRetrieveOverviewResponse(_Model):
     source: _Literal["analytics_engine", "d1"] | str
     range: _Literal["24h", "7d", "30d"] | str
@@ -8260,7 +8312,7 @@ class PlatformOrgsCreateParams(_Model):
     name: str
     defaultIdentityId: str | None = None
     branding: OrgBranding | None = None
-    preset: _Literal["legacy", "trial", "standard"] | str | None = None
+    preset: _Literal["trial", "starter", "standard", "premium", "legacy"] | str | None = None
     addMe: bool | None = None
 
 class PlatformOrgsDeleteResponse(_Model):
@@ -8371,10 +8423,11 @@ class PlatformOrgsListResponseItemsItem(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
-    personalOwner: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsListResponseItemsItemCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
 
 class PlatformOrgsListResponseItemsItemCounts(_Model):
     passes: int
@@ -8424,10 +8477,11 @@ class PlatformOrgsRetrieveResponse(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
-    personalOwner: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsRetrieveResponseCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
 
 class PlatformOrgsRetrieveResponseCounts(_Model):
     passes: int
@@ -8445,10 +8499,11 @@ class PlatformOrgsSetStatusResponse(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
-    personalOwner: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsSetStatusResponseCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
 
 class PlatformOrgsSetStatusResponseCounts(_Model):
     passes: int
@@ -13357,6 +13412,8 @@ ApiKeysRotateCurrentBody = ApiKeysRotateCurrentParams
 ApiKeysRotateCurrentResult = ApiKeyRotation
 
 ApiKeysRotateResult = ApiKeyRotation
+
+AuditEntriesListResult = AuditEntriesListResponse
 
 BlueprintsUseBody = BlueprintsUseParams
 

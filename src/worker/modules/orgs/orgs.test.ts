@@ -146,6 +146,7 @@ describe('orgs api', () => {
       createdAt: expect.any(Number),
       counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 0 },
       countsCapped: false,
+      plan: { preset: 'standard', label: 'Standard' },
     });
     expect(provisioningBody).not.toHaveProperty('branding');
     expect(provisioningBody).not.toHaveProperty('supportEmail');
@@ -169,6 +170,8 @@ describe('orgs api', () => {
       counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 2 },
       countsCapped: false,
     });
+    // The plan is a platform directory field: the tenant workspace never carries it.
+    expect(got).not.toHaveProperty('plan');
 
     // A status change travels alone: mixing it with edits would be two commits that can half-apply.
     const mixed = await call('PATCH', `/${org.id}`, { name: 'Acme Inc', status: 'suspended' });
@@ -279,6 +282,7 @@ describe('orgs api', () => {
       createdAt: expect.any(Number),
       counts: { passes: 0, templates: 0, connections: 0, apiKeys: 2, members: 0 },
       countsCapped: false,
+      plan: { preset: 'legacy', label: 'Unlimited' },
     });
     for (const field of ['branding', 'support', 'supportEmail', 'supportUrl', 'defaultIdentityId'])
       expect(aItem).not.toHaveProperty(field);

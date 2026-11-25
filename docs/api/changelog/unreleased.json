@@ -176,6 +176,38 @@
     "note": "Keys may hold scanning:admin: staff PINs and pairing codes in the one-call setup."
   },
   {
+    "key": "GET /api/v1/audit 422: codes AUDIT_WINDOW_REQUIRED, AUDIT_WINDOW_TOO_WIDE, AUDIT_LIMIT_TOO_HIGH added",
+    "class": "additive",
+    "operationId": "audit.getAudit",
+    "op": "GET /api/v1/audit",
+    "change": "422: codes AUDIT_WINDOW_REQUIRED, AUDIT_WINDOW_TOO_WIDE, AUDIT_LIMIT_TOO_HIGH added",
+    "note": "A key must send from, at most 90 days before to, and a limit of at most 100; a session is unchanged."
+  },
+  {
+    "key": "GET /api/v1/audit keys: accepted with audit:read",
+    "class": "additive",
+    "operationId": "audit.getAudit",
+    "op": "GET /api/v1/audit",
+    "change": "keys: accepted with audit:read",
+    "note": "A key holding audit:read reads its own organization's audit log, redacted as for a member. Live keys only, named on the key, never from a role."
+  },
+  {
+    "key": "GET /api/v1/audit/export 422: codes AUDIT_WINDOW_REQUIRED, AUDIT_WINDOW_TOO_WIDE added",
+    "class": "additive",
+    "operationId": "audit.getAuditExport",
+    "op": "GET /api/v1/audit/export",
+    "change": "422: codes AUDIT_WINDOW_REQUIRED, AUDIT_WINDOW_TOO_WIDE added",
+    "note": "A key's export needs from, at most 90 days before to."
+  },
+  {
+    "key": "GET /api/v1/audit/export keys: accepted with audit:read",
+    "class": "additive",
+    "operationId": "audit.getAuditExport",
+    "op": "GET /api/v1/audit/export",
+    "change": "keys: accepted with audit:read",
+    "note": "A key holding audit:read exports its own organization's log as CSV: 2 an hour per key, 6 across the organization's keys, each recorded as audit.export."
+  },
+  {
     "key": "GET /api/v1/broadcasts 200.items[].message: field added",
     "class": "additive",
     "operationId": "broadcasts.getBroadcasts",
@@ -552,12 +584,12 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
-    "key": "GET /api/v1/orgs 200.items[].plan: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/orgs 200.items[].plan: field added",
+    "class": "additive",
     "operationId": "orgs.getOrgs",
     "op": "GET /api/v1/orgs",
-    "change": "200.items[].plan: field removed",
-    "note": ""
+    "change": "200.items[].plan: field added",
+    "note": "plan names the organization's plan (preset and label); platform directory responses only, null when it has no features row."
   },
   {
     "key": "GET /api/v1/orgs/{id} 200.personal: field added",
@@ -576,12 +608,12 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
-    "key": "GET /api/v1/orgs/{id} 200.plan: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/orgs/{id} 200.plan: field added",
+    "class": "additive",
     "operationId": "orgs.getOrgsById",
     "op": "GET /api/v1/orgs/{id}",
-    "change": "200.plan: field removed",
-    "note": ""
+    "change": "200.plan: field added",
+    "note": "plan names the organization's plan (preset and label); platform directory responses only, null when it has no features row."
   },
   {
     "key": "GET /api/v1/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -600,12 +632,12 @@
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
   },
   {
-    "key": "GET /api/v1/orgs/{id}/entitlements 200.usage: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/orgs/{id}/entitlements 200.usage: field added",
+    "class": "additive",
     "operationId": "entitlements.getOrgsByIdEntitlements",
     "op": "GET /api/v1/orgs/{id}/entitlements",
-    "change": "200.usage: field removed",
-    "note": ""
+    "change": "200.usage: field added",
+    "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
@@ -776,12 +808,12 @@
     "note": "Lists recorded Apple provisioning calls."
   },
   {
-    "key": "GET /api/v1/platform/entitlement-presets operation removed",
-    "class": "breaking",
+    "key": "GET /api/v1/platform/entitlement-presets new operation",
+    "class": "additive",
     "operationId": "entitlements.getPlatformEntitlementPresets",
     "op": "GET /api/v1/platform/entitlement-presets",
-    "change": "operation removed",
-    "note": ""
+    "change": "new operation",
+    "note": "Platform admins list every preset with its values, revision, organization count and pendingOrgs."
   },
   {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -1208,6 +1240,14 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "PATCH /api/v1/brand request.mark: refusal",
+    "class": "additive",
+    "operationId": "brand.patchBrand",
+    "op": "PATCH /api/v1/brand",
+    "change": "request.mark: refusal",
+    "note": "small and none are refused with BRAND_MARK_NOT_ALLOWED (403) when the plan does not allow them. markAllowed follows the plan."
+  },
+  {
     "key": "PATCH /api/v1/broadcasts/{id} 200.message: field added",
     "class": "additive",
     "operationId": "broadcasts.patchBroadcastsById",
@@ -1575,6 +1615,22 @@
     "note": "A sandbox key may not hold api-keys:write, scans:write or scanning:admin, at mint or roll: 403, scopes in issues."
   },
   {
+    "key": "POST /api/v1/api-keys 422: code API_KEY_SCOPE_LIVE_ONLY added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "422: code API_KEY_SCOPE_LIVE_ONLY added",
+    "note": "A Test key is refused audit:read, because the audit log has no mode; Live keys and developer sandbox keys may hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys 422: code API_KEY_SCOPE_TEST_ONLY added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "422: code API_KEY_SCOPE_TEST_ONLY added",
+    "note": "A Live key is refused templates:review and templates:publish, named or through a role; they work with Test keys only, and a Live role key leaves them out."
+  },
+  {
     "key": "POST /api/v1/api-keys error code API_KEY_SCANNING_ADMIN_LIVE_ORG renamed",
     "class": "notable",
     "operationId": "api-keys.postApiKeys",
@@ -1597,6 +1653,14 @@
     "op": "POST /api/v1/api-keys",
     "change": "roles: scanning:admin no longer in a role",
     "note": "Role presets no longer include scanning:admin: name it in scopes (live, one org, expiry within 90 days, org_admin session)."
+  },
+  {
+    "key": "POST /api/v1/api-keys templateIds, passStyles: not allowed with templates:write, templates:review, templates:publish",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "templateIds, passStyles: not allowed with templates:write, templates:review, templates:publish",
+    "note": "A template or style restriction narrows templates:read but no longer pairs with the template write, review and publish scopes, whose routes do not honor it."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",
@@ -2381,20 +2445,20 @@
     "note": "addMe (default true) makes the creating admin an org_admin of the new org, with the invitation and membership written in the create batch."
   },
   {
-    "key": "POST /api/v1/orgs body.preset: enum value \"premium\" removed",
-    "class": "breaking",
+    "key": "POST /api/v1/orgs body.preset: enum value \"premium\" added",
+    "class": "additive",
     "operationId": "orgs.postOrgs",
     "op": "POST /api/v1/orgs",
-    "change": "body.preset: enum value \"premium\" removed",
-    "note": ""
+    "change": "body.preset: enum value \"premium\" added",
+    "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
   },
   {
-    "key": "POST /api/v1/orgs body.preset: enum value \"starter\" removed",
-    "class": "breaking",
+    "key": "POST /api/v1/orgs body.preset: enum value \"starter\" added",
+    "class": "additive",
     "operationId": "orgs.postOrgs",
     "op": "POST /api/v1/orgs",
-    "change": "body.preset: enum value \"starter\" removed",
-    "note": ""
+    "change": "body.preset: enum value \"starter\" added",
+    "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
   },
   {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
@@ -2413,12 +2477,12 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
-    "key": "POST /api/v1/orgs/{id}/status 200.plan: field removed",
-    "class": "breaking",
+    "key": "POST /api/v1/orgs/{id}/status 200.plan: field added",
+    "class": "additive",
     "operationId": "orgs.postOrgsByIdStatus",
     "op": "POST /api/v1/orgs/{id}/status",
-    "change": "200.plan: field removed",
-    "note": ""
+    "change": "200.plan: field added",
+    "note": "plan names the organization's plan (preset and label); platform directory responses only, null when it has no features row."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/brand-assets new operation",
@@ -3477,12 +3541,12 @@
     "note": "PUT /passes/views replaces the saved views (at most 20)."
   },
   {
-    "key": "PUT /api/v1/platform/entitlement-presets operation removed",
-    "class": "breaking",
+    "key": "PUT /api/v1/platform/entitlement-presets new operation",
+    "class": "additive",
     "operationId": "entitlements.putPlatformEntitlementPresets",
     "op": "PUT /api/v1/platform/entitlement-presets",
-    "change": "operation removed",
-    "note": ""
+    "change": "new operation",
+    "note": "Platform admins change a preset; its organizations move 50 per call (repeat with no values to continue)."
   },
   {
     "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",

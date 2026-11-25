@@ -82,7 +82,13 @@ export function codeSize(
 export function paperBoxes(
   size: PaperSize,
   kind: PaperKind,
-  options: { barcode?: 'qr' | 'code128'; buddy?: boolean; fold?: boolean } = {},
+  options: {
+    barcode?: 'qr' | 'code128';
+    buddy?: boolean;
+    fold?: boolean;
+    /** The org's footer choice: at `none` the half sheet's cameo takes the right edge. */
+    mark?: 'full' | 'small' | 'none';
+  } = {},
 ): PaperBoxes {
   const { widthMm: W, heightMm: H } = PAPER_SPECS[size];
   const page: Box = { x: 0, y: 0, w: W, h: H };
@@ -118,10 +124,11 @@ export function paperBoxes(
   const slot: Box = { x: door.x, y: door.y + 24, w: door.w, h: door.h - 24 - 16 };
   const out: PaperBoxes = { page, ticket, door, face, code: centred(slot, code.w, code.h) };
   if (half) {
-    // In the footer row under the ticket, left of the "Issued with PassBook" text (about 26 mm).
+    // In the footer row under the ticket, left of the PassBook credit (about 26 mm), or at the edge without one.
+    const credit = options.mark === 'none' ? 0 : 26 + 3;
     if (options.buddy)
       out.buddy = {
-        x: W - FULL_PARTS.infoInset - 26 - 3 - BUDDY_MM.default,
+        x: W - FULL_PARTS.infoInset - credit - BUDDY_MM.default,
         y: H - PAPER_INSET - HALF_FOOT + (HALF_FOOT - buddyH) / 2,
         w: BUDDY_MM.default,
         h: buddyH,

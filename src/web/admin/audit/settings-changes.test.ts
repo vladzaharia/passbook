@@ -40,7 +40,7 @@ describe('settingChanges', () => {
     ).toEqual([
       { key: 'apps', label: 'Apps', from: 'On', to: 'Off' },
       { key: 'passes.live', label: 'Live passes', from: 'No limit', to: '100' },
-      { key: 'nfc', label: 'NFC tags', from: 'Secure', to: 'Basic' },
+      { key: 'nfc', label: 'NFC tags', from: 'Basic and Secure tags', to: 'Basic tags' },
     ]);
   });
 

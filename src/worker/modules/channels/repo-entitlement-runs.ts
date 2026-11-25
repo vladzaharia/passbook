@@ -48,6 +48,8 @@ export interface EntitlementTransition {
   /** The channels the plan blocked before it and after it. */
   blockedBefore: Channel[];
   blockedAfter: Channel[];
+  /** A full reconcile: the plan now on both sides, and the run is never dropped. */
+  full?: boolean;
   requestedBy: string;
 }
 
@@ -95,7 +97,30 @@ export async function writeEntitlementTransition(
   const now = ctx.clock.now();
   const before = JSON.stringify(t.blockedBefore);
   const after = JSON.stringify(t.blockedAfter);
-  if (pending === null) {
+  const full = t.full === true ? 1 : 0;
+  if (pending !== null && t.full) {
+    // The reconcile takes over the pending run and covers both intervals; it is never dropped as a no-op.
+    g.update('channel_apply_runs', {
+      set: {
+        reconcile_all: 1,
+        // A recorded start (an entitlement run) keeps its known flips; a template-save run has none.
+        from_blocked:
+          pending.fromRev !== null && pending.fromBlocked !== null
+            ? JSON.stringify(pending.fromBlocked)
+            : before,
+        // An older full job arriving late keeps the newer end the run already has.
+        to_blocked:
+          pending.toBlocked !== null && (pending.toRev ?? 0) > t.revision
+            ? JSON.stringify(pending.toBlocked)
+            : after,
+        from_rev: Math.min(pending.fromRev ?? t.revision, t.revision),
+        to_rev: Math.max(pending.toRev ?? t.revision, t.revision),
+        updated_at: now,
+      },
+      where: { id: pending.id, state: 'pending', from_rev: pending.fromRev, to_rev: pending.toRev },
+      require: 'one',
+    });
+  } else if (pending === null) {
     g.insertSelect(
       'channel_apply_runs',
       [
@@ -108,6 +133,7 @@ export async function writeEntitlementTransition(
         'to_blocked',
         'from_rev',
         'to_rev',
+        'reconcile_all',
         'requested_by',
         'due_at',
         'created_at',
@@ -123,6 +149,7 @@ export async function writeEntitlementTransition(
         after,
         t.revision,
         t.revision,
+        full,
         t.requestedBy,
         now,
         now,

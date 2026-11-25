@@ -1858,7 +1858,7 @@
                       "small",
                       "none"
                     ],
-                    "description": "What holders see: the chosen one when the plan allows it."
+                    "description": "What holders see: the chosen one when the plan allows it, else the nearest allowed with more PassBook."
                   },
                   "allowed": {
                     "type": "array",
@@ -22447,13 +22447,21 @@
                 "source"
               ]
             }
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
           }
         },
         "required": [
           "orgId",
           "preset",
           "label",
-          "items"
+          "items",
+          "usage"
         ]
       },
       "OrgsUpdatePassSetupParams": {
@@ -23072,29 +23080,6 @@
                   "type": "boolean",
                   "default": false
                 },
-                "personalOwner": {
-                  "type": [
-                    "object",
-                    "null"
-                  ],
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 64
-                    },
-                    "name": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "name"
-                  ]
-                },
                 "createdAt": {
                   "type": "integer",
                   "minimum": 0
@@ -23127,6 +23112,47 @@
                 },
                 "countsCapped": {
                   "type": "boolean"
+                },
+                "personalOwner": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 64
+                    },
+                    "name": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                },
+                "plan": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "preset": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "preset",
+                    "label"
+                  ]
                 }
               },
               "required": [
@@ -23178,9 +23204,11 @@
           "preset": {
             "type": "string",
             "enum": [
-              "legacy",
               "trial",
-              "standard"
+              "starter",
+              "standard",
+              "premium",
+              "legacy"
             ]
           },
           "addMe": {
@@ -23218,29 +23246,6 @@
             "type": "boolean",
             "default": false
           },
-          "personalOwner": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
-              },
-              "name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "id",
-              "name"
-            ]
-          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -23273,6 +23278,47 @@
           },
           "countsCapped": {
             "type": "boolean"
+          },
+          "personalOwner": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "plan": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "preset": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "preset",
+              "label"
+            ]
           }
         },
         "required": [
@@ -23375,29 +23421,6 @@
             "type": "boolean",
             "default": false
           },
-          "personalOwner": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "id": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 64
-              },
-              "name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "id",
-              "name"
-            ]
-          },
           "createdAt": {
             "type": "integer",
             "minimum": 0
@@ -23430,6 +23453,47 @@
           },
           "countsCapped": {
             "type": "boolean"
+          },
+          "personalOwner": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
+          },
+          "plan": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "preset": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "preset",
+              "label"
+            ]
           }
         },
         "required": [
@@ -23573,7 +23637,8 @@
               "full",
               "small",
               "none"
-            ]
+            ],
+            "description": "Refused with BRAND_MARK_NOT_ALLOWED when the plan does not allow it (`markAllowed`)."
           },
           "configRevision": {
             "type": "integer"
@@ -27526,6 +27591,198 @@
           "updatedAt",
           "items",
           "presets"
+        ]
+      },
+      "PlatformEntitlementPresetsListResponse": {
+        "type": "object",
+        "properties": {
+          "presets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "preset": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "updatedAt": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "orgCount": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "pendingOrgs": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "values": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 64
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "maxLength": 130
+                        },
+                        "maxItems": 64
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "preset",
+                "label",
+                "revision",
+                "updatedAt",
+                "orgCount",
+                "pendingOrgs",
+                "values"
+              ]
+            }
+          }
+        },
+        "required": [
+          "presets"
+        ]
+      },
+      "PlatformEntitlementPresetsUpdateParams": {
+        "type": "object",
+        "properties": {
+          "preset": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "expectedRevision": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 130
+                  },
+                  "maxItems": 64
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "preset",
+          "expectedRevision",
+          "values"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformEntitlementPresetsUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "preset": {
+            "type": "object",
+            "properties": {
+              "preset": {
+                "type": "string"
+              },
+              "label": {
+                "type": "string"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "updatedAt": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "orgCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "pendingOrgs": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "values": {
+                "type": "object",
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "maxLength": 64
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 130
+                      },
+                      "maxItems": 64
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            },
+            "required": [
+              "preset",
+              "label",
+              "revision",
+              "updatedAt",
+              "orgCount",
+              "pendingOrgs",
+              "values"
+            ]
+          },
+          "moved": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "preset",
+          "moved"
         ]
       },
       "PlatformOrgsLegalHoldsListResponse": {
@@ -57241,6 +57498,9 @@
                 "passes:write",
                 "holders:write",
                 "templates:read",
+                "templates:write",
+                "templates:review",
+                "templates:publish",
                 "messages:write",
                 "scans:read",
                 "scans:write",
@@ -57255,7 +57515,8 @@
                 "scan-setup:read",
                 "scanning:admin",
                 "nfc:keys",
-                "api-keys:write"
+                "api-keys:write",
+                "audit:read"
               ]
             },
             "default": []
@@ -80265,7 +80526,10 @@
                       "value": 0,
                       "source": "preset"
                     }
-                  ]
+                  ],
+                  "usage": {
+                    "tier": 8
+                  }
                 }
               }
             }
@@ -82412,7 +82676,6 @@
                       "name": "Northwind Climbing",
                       "status": "active",
                       "personal": false,
-                      "personalOwner": null,
                       "createdAt": 1772560800000,
                       "counts": {
                         "passes": 128,
@@ -82421,7 +82684,8 @@
                         "apiKeys": 2,
                         "members": 4
                       },
-                      "countsCapped": false
+                      "countsCapped": false,
+                      "personalOwner": null
                     }
                   ],
                   "nextCursor": "c1.4812"
@@ -82601,7 +82865,6 @@
                   "name": "Northwind Climbing",
                   "status": "active",
                   "personal": false,
-                  "personalOwner": null,
                   "createdAt": 1772560800000,
                   "counts": {
                     "passes": 128,
@@ -82610,7 +82873,8 @@
                     "apiKeys": 2,
                     "members": 4
                   },
-                  "countsCapped": false
+                  "countsCapped": false,
+                  "personalOwner": null
                 }
               }
             }
@@ -82991,7 +83255,6 @@
                   "name": "Northwind Climbing",
                   "status": "active",
                   "personal": false,
-                  "personalOwner": null,
                   "createdAt": 1772560800000,
                   "counts": {
                     "passes": 128,
@@ -83000,7 +83263,8 @@
                     "apiKeys": 2,
                     "members": 4
                   },
-                  "countsCapped": false
+                  "countsCapped": false,
+                  "personalOwner": null
                 }
               }
             }
@@ -87880,6 +88144,155 @@
           "NOT_FOUND",
           "ORG_NOT_FOUND",
           "RATE_LIMITED",
+          "UNAUTHENTICATED",
+          "VALIDATION"
+        ]
+      }
+    },
+    "/api/v1/platform/entitlement-presets": {
+      "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:orgs",
+        "summary": "Read every preset with its values and the organizations on it",
+        "tags": [
+          "entitlements"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformEntitlementPresetsListResponse"
+                },
+                "example": {
+                  "presets": [
+                    {
+                      "preset": "standard",
+                      "label": "Standard",
+                      "revision": 3,
+                      "updatedAt": 1795399200000,
+                      "orgCount": 8,
+                      "pendingOrgs": 39,
+                      "values": {
+                        "tier": 8
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "entitlements.getPlatformEntitlementPresets",
+        "x-sdk": {
+          "resource": "platform.entitlementPresets",
+          "method": "list"
+        },
+        "x-sign-in": "idp",
+        "x-codes": [
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "RATE_LIMITED",
+          "UNAUTHENTICATED"
+        ]
+      },
+      "put": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:orgs",
+        "summary": "Change a preset, then move the organizations on it (a bounded number per call; repeat with no values to continue)",
+        "tags": [
+          "entitlements"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformEntitlementPresetsUpdateParams"
+              },
+              "example": {
+                "preset": "standard",
+                "expectedRevision": 3,
+                "values": {
+                  "tier": 8
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformEntitlementPresetsUpdateResponse"
+                },
+                "example": {
+                  "preset": {
+                    "preset": "standard",
+                    "label": "Standard",
+                    "revision": 3,
+                    "updatedAt": 1795399200000,
+                    "orgCount": 8,
+                    "pendingOrgs": 39,
+                    "values": {
+                      "tier": 8
+                    }
+                  },
+                  "moved": 37
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "operationId": "entitlements.putPlatformEntitlementPresets",
+        "x-sdk": {
+          "resource": "platform.entitlementPresets",
+          "method": "update"
+        },
+        "x-sign-in": "idp",
+        "x-step-up": {
+          "maxAgeSec": 600,
+          "conditional": true
+        },
+        "x-codes": [
+          "ENTITLEMENTS_CHANGED",
+          "FORBIDDEN",
+          "IDP_SIGN_IN_REQUIRED",
+          "PRESET_MOVING",
+          "PRESET_NOT_FOUND",
+          "RATE_LIMITED",
+          "STEP_UP_REQUIRED",
           "UNAUTHENTICATED",
           "VALIDATION"
         ]
@@ -100726,6 +101139,7 @@
           "MODE_MISMATCH",
           "NOT_FOUND",
           "ORG_FORBIDDEN",
+          "ORG_NOT_FOUND",
           "ORG_TEST_ONLY",
           "PASS_NOT_FOUND",
           "PRINT_NOT_FOUND",
@@ -119004,6 +119418,16 @@
     },
     "/api/v1/audit": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "audit:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Query an organization audit log",
         "tags": [
           "audit"
@@ -119178,17 +119602,20 @@
           "resource": "auditEntries",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "description": "The organization's audit log, newest first. A key needs audit:read and reads its own organization; send from (at most 90 days before to) and a limit of at most 100.",
         "x-sign-in": "idp",
         "x-codes": [
+          "AUDIT_LIMIT_TOO_HIGH",
+          "AUDIT_WINDOW_REQUIRED",
+          "AUDIT_WINDOW_TOO_WIDE",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
           "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -119197,6 +119624,12 @@
     },
     "/api/v1/audit/platform": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:audit",
         "summary": "Query the platform audit log",
         "tags": [
           "audit"
@@ -119371,11 +119804,6 @@
           "resource": "platform.auditEntries",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -119389,7 +119817,17 @@
     },
     "/api/v1/audit/export": {
       "get": {
-        "summary": "Export an organization audit log as CSV (10,000 entries at most; 6 an hour)",
+        "security": [
+          {
+            "apiKey": [
+              "audit:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Export an organization audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key)",
         "tags": [
           "audit"
         ],
@@ -119516,17 +119954,20 @@
           "resource": "auditEntries",
           "method": "export"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "description": "The same entries as CSV, at most 10,000 rows; 2 an hour per key and 6 an hour across the organization's keys. Each export is recorded as audit.export.",
         "x-sign-in": "idp",
         "x-codes": [
+          "AUDIT_LIMIT_TOO_HIGH",
+          "AUDIT_WINDOW_REQUIRED",
+          "AUDIT_WINDOW_TOO_WIDE",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
           "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -119535,6 +119976,12 @@
     },
     "/api/v1/audit/platform/export": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:audit",
         "summary": "Export the platform audit log as CSV (10,000 entries at most; 6 an hour)",
         "tags": [
           "audit"
@@ -119662,11 +120109,6 @@
           "resource": "platform.auditEntries",
           "method": "export"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",

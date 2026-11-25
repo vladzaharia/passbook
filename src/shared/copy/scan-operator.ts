@@ -4,6 +4,7 @@ export const OPERATOR_COPY = {
     banner: 'Session',
     search: 'Find or scan',
     tabs: 'Lists',
+    lists: 'People lists',
     record: 'Person',
     status: 'Status',
   },

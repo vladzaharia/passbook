@@ -155,6 +155,8 @@ export const JobSchema = z.discriminatedUnion('kind', [
     /** The channels the plan blocked before the change, and after it. */
     blockedBefore: z.array(ChannelSchema),
     blockedAfter: z.array(ChannelSchema),
+    /** A full reconcile (an org left behind by a preset edit): stop what the plan blocks, resume what it allows. */
+    full: z.boolean().optional(),
     requestedBy: z.string().min(1),
   }),
   /** A bulk "turn off and replace codes": the pass gets a new scan code once its windows are closed. */

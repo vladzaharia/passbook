@@ -96,29 +96,29 @@ describe('Channels card', () => {
       within(apple)
         .getAllByRole('listitem')
         .map((li) => li.textContent),
-    ).toEqual(['PassBook', 'Plan', 'Organization', 'Template', 'This pass']);
+    ).toEqual(['Organization', 'Template', 'This pass']);
     expect(apple.querySelector('[data-stop]')).toBeNull();
     const paper = within(row('Paper')).getByRole('list', { name: 'Chain' });
     expect(paper.querySelector('[data-stop]')).toHaveAttribute('data-level', 'template');
   });
 
-  it('says a channel the plan does not include is not available, with the reason in its tooltip', async () => {
+  it('lists no channel the plan does not include or PassBook withholds', async () => {
     renderTags(
       <ChannelsCard pass={pass()} readOnly={false} />,
       handlers(
         effective({
           paper: off('not_included', 'platform'),
           nfc: off('not_included', 'platform'),
+          google: off('not_released', 'platform'),
         }),
       ),
     );
     await screen.findByRole('switch', { name: 'Apple Wallet' });
-    expect(screen.queryByRole('switch', { name: 'Paper' })).toBeNull();
-    const why = screen.getAllByLabelText(
-      'Not available. Not included for this organization. Ask PassBook to turn it on. Copies stay as they are.',
-    );
-    expect(why).toHaveLength(2);
-    expect(why[0]).toHaveTextContent('Not available');
+    for (const name of ['Paper', 'Linked NFC', 'Google Wallet'])
+      expect(screen.queryByRole('switch', { name })).toBeNull();
+    expect(screen.queryByLabelText(/Not included|Not released/)).toBeNull();
+    expect(screen.queryByText('PassBook')).toBeNull();
+    expect(screen.queryByText('Plan')).toBeNull();
   });
 
   it('asks before turning a channel off, then overrides this pass only', async () => {

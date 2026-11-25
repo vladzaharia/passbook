@@ -121,7 +121,7 @@ export function drawCardBack(pen: Pen, s: Sheet): void {
   const top = H - 3.6 - (0.2 + 1 + pen.lineHeight(meta));
   pen.line(x, top + 0.1, x + w, top + 0.1, COLORS.hair, 0.2);
   pen.text(footMeta(c, s.issued), x, top + 1.2, meta);
-  passbookLine(pen, x + w, pen.baselineOf(meta, top + 1.2), 1.905);
+  passbookLine(pen, s.mark, x + w, pen.baselineOf(meta, top + 1.2), 1.905);
   if (s.mode === 'test')
     watermark(
       pen,

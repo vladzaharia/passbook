@@ -405,6 +405,33 @@
       ]
     },
     {
+      "code": "AUDIT_LIMIT_TOO_HIGH",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "audit"
+      ]
+    },
+    {
+      "code": "AUDIT_WINDOW_REQUIRED",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "audit"
+      ]
+    },
+    {
+      "code": "AUDIT_WINDOW_TOO_WIDE",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "audit"
+      ]
+    },
+    {
       "code": "AUTHORITY_DENIED",
       "statuses": [
         403
@@ -447,6 +474,15 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "BRANDING_UNREADABLE",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "orgs"
       ]
     },
     {
@@ -2832,7 +2868,6 @@
         422
       ],
       "modules": [
-        "audit",
         "bundles",
         "delivery",
         "identities",
@@ -3177,6 +3212,24 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "PRESET_MOVING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "PRESET_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "orgs"
       ]
     },
     {

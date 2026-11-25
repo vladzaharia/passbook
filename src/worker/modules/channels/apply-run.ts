@@ -91,6 +91,7 @@ export async function startOne(ctx: ServiceContext, runId: string): Promise<Star
     // The policy is back where the run began, and so is the plan: nothing to apply.
     if (
       !begin.viaFailed &&
+      !run.reconcileAll &&
       same(
         begin.from,
         to,

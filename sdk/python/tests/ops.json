@@ -315,6 +315,46 @@
   }
  },
  {
+  "id": "audit.getAudit",
+  "call": "audit_entries.list",
+  "http": "GET",
+  "path": "/api/v1/audit",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": "cursor",
+  "result": {
+   "items": [
+    {
+     "id": 0,
+     "at": 0,
+     "orgId": "x",
+     "actorType": "user",
+     "actorId": "x",
+     "action": "x",
+     "targetType": "x",
+     "targetId": "x",
+     "requestId": "x"
+    }
+   ],
+   "nextCursor": null
+  }
+ },
+ {
+  "id": "audit.getAuditExport",
+  "call": "audit_entries.export",
+  "http": "GET",
+  "path": "/api/v1/audit/export",
+  "pathParams": [],
+  "query": [],
+  "binary": false,
+  "idempotent": false,
+  "raw": true,
+  "cursor": null
+ },
+ {
   "id": "brand.getBrand",
   "call": "brand.retrieve",
   "http": "GET",
@@ -3100,7 +3140,8 @@
      "value": 0,
      "source": "preset"
     }
-   ]
+   ],
+   "usage": {}
   }
  },
  {

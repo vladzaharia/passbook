@@ -62,7 +62,7 @@ export function valuesOf(view: PassSetup): Values {
     label: c?.label ?? '',
     logoHasName: b.logoHasName.value ?? false,
     accent: b.accent.source === 'org' ? (b.accent.value ?? '') : '',
-    mark: b.mark.chosen,
+    mark: b.mark.allowed.includes(b.mark.chosen) ? b.mark.chosen : b.mark.effective,
     supportEmail: b.support.email.source === 'org' ? (b.support.email.value ?? '') : '',
     supportUrl: b.support.url.source === 'org' ? (b.support.url.value ?? '') : '',
     fromName: b.email.fromName.source === 'org' ? (b.email.fromName.value ?? '') : '',
