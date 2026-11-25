@@ -1,4 +1,4 @@
-import { all, first, run, stmt } from '../../platform/db.ts';
+import { all, first, stmt } from '../../platform/db.ts';
 
 export interface GroupMemberRow {
   id: string;
@@ -83,18 +83,18 @@ export const liveMembershipsOfSubject = (db: D1Database, subject: string) =>
     [subject],
   );
 
-/** Removes every live member of a group (a delete), returning how many were removed. */
+/** Removes every live member of a group (a delete), returning the removed members' ids. */
 export async function removeMembersOfGroup(
   db: D1Database,
   groupKey: string,
   by: string | null,
   now: number,
-): Promise<number> {
-  return (
-    await run(
-      db,
-      'UPDATE idp_group_members SET removed_at = ?, removed_by = ? WHERE group_key = ? AND removed_at IS NULL',
-      [now, by, groupKey],
-    )
-  ).changes;
+): Promise<string[]> {
+  const rows = await all<{ id: string }>(
+    db,
+    `UPDATE idp_group_members SET removed_at = ?, removed_by = ? WHERE group_key = ? AND removed_at IS NULL
+     RETURNING id`,
+    [now, by, groupKey],
+  );
+  return rows.map((r) => r.id);
 }

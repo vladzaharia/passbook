@@ -114,6 +114,7 @@ describe('developer_invitations', () => {
   it('refuses REPLACE through any unique key', async () => {
     const first = await invitation({
       org_invitation_id: seed.invitationId,
+      email: seed.user.primaryEmail,
       token_hash: 'dup-hash',
     });
     expect(first.error).toBeNull();
@@ -135,9 +136,9 @@ describe('developer_invitations', () => {
       );
     expect(await replace({ id: first.id })).toMatch(/developer_invitations.id/);
     expect(await replace({ token_hash: 'dup-hash' })).toMatch(/developer_invitations.token_hash/);
-    expect(await replace({ org_invitation_id: seed.invitationId })).toMatch(
-      /developer_invitations.org_invitation_id/,
-    );
+    expect(
+      await replace({ org_invitation_id: seed.invitationId, email: seed.user.primaryEmail }),
+    ).toMatch(/developer_invitations.org_invitation_id/);
     expect((await invitation({ token_hash: 'dup-hash' })).error).toMatch(/UNIQUE/);
   });
 });

@@ -28,7 +28,13 @@ import {
   removeMember,
   removeMembersOfGroup,
 } from './repo-group-members.ts';
-import { endRule, insertRule, liveRulesOfGroup, liveRulesOfOrg } from './repo-group-rules.ts';
+import {
+  endRule,
+  endRulesOfGroup,
+  insertRule,
+  liveRulesOfGroup,
+  liveRulesOfOrg,
+} from './repo-group-rules.ts';
 import {
   groupByKey,
   insertGroup,
@@ -133,7 +139,9 @@ describe('drift', () => {
     };
     expect(await recordDrift(db(), { ...base, id: f.ids.id() })).toBe(true);
     expect(await recordDrift(db(), { ...base, id: f.ids.id() })).toBe(false);
-    expect(await recordDrift(db(), { ...base, id: f.ids.id(), kind: 'owner_removed' })).toBe(true);
+    expect(
+      await recordDrift(db(), { ...base, id: f.ids.id(), kind: 'owner_removed', now: now + 1 }),
+    ).toBe(true);
     expect((await openDriftOfSubject(db(), subject)).map((d) => d.kind)).toEqual([
       'missing',
       'owner_removed',
@@ -280,6 +288,8 @@ describe('groups, rules and members', () => {
     expect(await endRule(db(), r1.id, admin.id, now + 2)).toBe(false);
     expect(await liveRulesOfOrg(db(), a.id)).toEqual([]);
     expect((await liveRulesOfOrg(db(), b.id)).length).toBe(1);
+    expect(await endRulesOfGroup(db(), 'repo_rules', admin.id, now + 3)).toHaveLength(1);
+    expect(await liveRulesOfGroup(db(), 'repo_rules')).toEqual([]);
   });
 
   it('a rule of one org gives its group to that org’s members and nobody else', async () => {
@@ -330,7 +340,7 @@ describe('groups, rules and members', () => {
     ]);
     expect(await removeMember(db(), m1.id, null, now + 1)).toBe(true);
     expect(await removeMember(db(), m1.id, null, now + 2)).toBe(false);
-    expect(await removeMembersOfGroup(db(), 'repo_members', null, now + 3)).toBe(1);
+    expect(await removeMembersOfGroup(db(), 'repo_members', null, now + 3)).toHaveLength(1);
     expect(await liveMembersOfGroup(db(), 'repo_members')).toEqual([]);
     await insertMember(db(), { ...mk('sub-m1'), id: f.ids.id() });
   });

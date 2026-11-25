@@ -1,4 +1,4 @@
-import { all, first, run, stmt } from '../../platform/db.ts';
+import { all, first, stmt } from '../../platform/db.ts';
 
 export interface RuleRow {
   id: string;
@@ -70,18 +70,18 @@ export const liveRulesOfOrg = (db: D1Database, orgId: string) =>
     [orgId],
   );
 
-/** Ends every live rule of a group (a delete), returning how many ended. */
+/** Ends every live rule of a group (a delete), returning the ended rules' ids. */
 export async function endRulesOfGroup(
   db: D1Database,
   groupKey: string,
   by: string,
   now: number,
-): Promise<number> {
-  return (
-    await run(
-      db,
-      'UPDATE idp_group_rules SET ended_at = ?, ended_by = ? WHERE group_key = ? AND ended_at IS NULL',
-      [now, by, groupKey],
-    )
-  ).changes;
+): Promise<string[]> {
+  const rows = await all<{ id: string }>(
+    db,
+    `UPDATE idp_group_rules SET ended_at = ?, ended_by = ? WHERE group_key = ? AND ended_at IS NULL
+     RETURNING id`,
+    [now, by, groupKey],
+  );
+  return rows.map((r) => r.id);
 }
