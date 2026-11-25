@@ -273,7 +273,7 @@ Google messages: see `google-messages.md` (it replaces this section for Google; 
 | Scan parity | Barcode message from every compiler equals the Apple message for every fixture | `src/passkit/wallets/barcode.test.ts` |
 | Provider contract | Recorded request/response fixtures (Google REST per type, OAuth, callback envelope; Samsung token, Get Card Data, Send Card State per event, Update Notification). Requests are compared field by field; fixtures recorded in demo/testing mode by the owner and scrubbed | `test/fixtures/wallets/{google,samsung}/`, worker tests (fetch stubbed per `test/setup/block-network.ts`) |
 | Lifecycle | Each row of 6.1 against stubs: deny before fan-out, body content, idempotent replay | `src/worker/modules/wallet-providers/*.test.ts` |
-| Browser e2e | Designer: create a storeCard template, set roles, see Google Loyalty and Samsung previews and reports; import a `.pkpasstemplate`; release with one approved omission; issue; `/p` badges; edit -> stubs get PATCH/UPDATED; void -> scan denied, then INACTIVE/CANCELED. Extends `product.md` section 5 journeys | `e2e/2x-wallets-*.spec.ts` |
+| Browser e2e | Designer: create a storeCard template, set roles, see Google Loyalty and Samsung previews and reports; import a `.pkpasstemplate`; release with one approved omission; issue; `/p` badges; edit -> stubs get PATCH/UPDATED; void -> scan denied, then INACTIVE/CANCELED. Extends `product.md` section 5 journeys | `e2e/*-wallets-*.spec.ts` (server: `e2e-release.md`) |
 
 ## 8. Work packages
 
@@ -294,7 +294,37 @@ Each is one branch, one PR, `npm run check` green. Shared-file touches are named
 | CW10a | Samsung blockers, compiler-independent | `samsung-token*.ts`, `callbacks-samsung.ts`, `callbacks-ref.ts`, `repo-callbacks*.ts`, `routes-callbacks.ts`, `samsung.ts` | release merged | B1 promotion on `ADDED`, R1, R2, R4 events, R5, R7, `UPDATED` purpose, `MIGRATED` |
 | CW10b | Samsung typed runtime | `runtime-samsung.ts`, `sync-operation-samsung.ts`, `samsung-template.ts`, account card ids per type (`samsung-credentials.ts`, migration) | CW4, CW7, CW10a, epochs | Per-type Get Card Data from compiler; mode-aware probe; evidence outside queue predicates |
 | CW11 | Lifecycle parity | `lifecycle*.ts`, `sync*.ts`, `instance*.ts`, `repo-instance*.ts`; hooks in `modules/broadcasts/**` (n7, shared) and `modules/passes/remove*.ts` (n1, shared) | CW9b, CW10b, epochs | Every row of 6.1 tested; `uncertain` reconciler; outcome ledger labels |
-| CW12 | E2E and device runbook | `e2e/2x-wallets-*.spec.ts`, `test/fixtures/wallets/**` | CW8, CW11 | Section 7 e2e green; device runbook from `product.md` section 5 extended per type |
+| CW12 | E2E and device runbook | `e2e/*-wallets-*.spec.ts`, `test/fixtures/wallets/**`, the e2e release (`e2e-release.md`) | CW8, CW11 | Section 7 e2e green; device runbook from `product.md` section 5 extended per type |
+
+CW12 status (2026-11-22):
+
+- **Done.** The e2e release (`e2e-release.md`) opens Google and Samsung on their own e2e server
+  (`npm run test:e2e:wallets`). `e2e/61-wallets-google.spec.ts` covers a Day pass in Test:
+  - the system's Google candidate, approved by a reviewer;
+  - the holder save;
+  - a field edit, and the change message sent with `notify`;
+  - a void (inactive, no barcode, the void message), then an unvoid.
+
+  The per-type device runbook is in `product.md` section 5.
+- **Open: Samsung save and edit e2e.** Blocked because Samsung issuance has no credential path:
+  - `runtime-core-credentials.ts` `snapshot` refuses every read without a purpose.
+  - Both the offer check (`offers-eligibility.ts` `offerStillCurrent`) and `createSamsungRuntimeOffer` make such
+    reads, so no Samsung offer can be listed or redeemed. Worker tests stub that check
+    (`setRuntimeAccountCheckForTest`).
+  - A draft spec, which passes up to the badge, is kept outside the repo; the CW12 report names its path.
+  - It needs a Samsung issuance purpose, like Google's `issuance`, before it can land as
+    `e2e/62-wallets-samsung.spec.ts`. The mock already serves a loyalty card through `POST /__mock/samsung-template`.
+- **Open: Samsung void and unvoid e2e.** Waiting on the issuance purpose above and on CW11
+  (`feat/cw11-lifecycle-parity`), which fixes the Samsung void path. When both are in, add them to the Samsung spec:
+  - void, and the mock records the ref `CANCELED`;
+  - unvoid, and it records `ACTIVE`;
+  - assert both through `__mock/state` `samsung.refs`.
+- **Found while building the specs (not fixed here):**
+  - Projections and offers read the legacy account (`getWalletProviderReadiness` keys on `credential_id`). An org
+    with only a new-model credential and enrolment reads as `absent`, so the spec configures
+    `/api/v1/wallet-providers/accounts`.
+  - The Google class rule blocks Membership, Store card, Stamp card, Coupon and Event ticket as shipped: either
+    "class fields could not be checked" or "class fields depend on pass data". The spec uses Day pass.
 
 Parallel lanes: {CW9a, CW10a} start at once; CW1 -> CW2 -> {CW3, CW4, CW6} -> CW5 -> {CW7 -> CW8}; {CW9b, CW10b} after epochs land; CW11; CW12. The issuance gate stays closed throughout; lifting it is an owner action per account (Q2).
 

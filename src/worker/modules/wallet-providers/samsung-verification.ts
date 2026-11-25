@@ -15,6 +15,7 @@ import {
   readConfiguredWalletProviderCredentials,
   snapshotWalletCredentialContext,
 } from './account-service.ts';
+import { providerFetch } from './mock-endpoint.ts';
 import {
   identityCardType,
   type ProjectionV2,
@@ -161,12 +162,16 @@ export async function refreshSamsungCardState(
     )
       throw new IneligibleCard();
     const credentials = await validateSamsungCredentials(account.credentials, now, projection.type);
-    const read = await probeSamsungActiveTemplate(credentials, {
-      cardType: projection.type,
-      mode: candidate.mode,
-      now,
-      requestId: ctx.ids.id().replaceAll('-', ''),
-    });
+    const read = await probeSamsungActiveTemplate(
+      credentials,
+      {
+        cardType: projection.type,
+        mode: candidate.mode,
+        now,
+        requestId: ctx.ids.id().replaceAll('-', ''),
+      },
+      providerFetch(ctx.env),
+    );
     const expiresAt = Math.min(now + MAX_EVIDENCE_AGE_MS, credentials.validUntil);
     if (
       expiresAt > now &&

@@ -28,7 +28,7 @@ export function DropdownMenuContent({
         sideOffset={sideOffset}
         collisionPadding={collisionPadding}
         className={cn(
-          'wl-pop origin-(--radix-dropdown-menu-content-transform-origin) z-50 min-w-44 rounded-md border border-border bg-surface-overlay p-1 shadow-elevation-2',
+          'wl-pop origin-(--radix-dropdown-menu-content-transform-origin) z-50 max-h-(--radix-dropdown-menu-content-available-height) min-w-44 overflow-y-auto overscroll-contain rounded-md border border-border bg-surface-overlay p-1 shadow-elevation-2',
           // Phones: an action sheet anchored to the bottom edge (kit-motion.css .wl-action-sheet).
           'wl-action-sheet max-sm:w-screen max-sm:rounded-b-none max-sm:rounded-t-xl max-sm:p-2 max-sm:pb-[max(0.5rem,env(safe-area-inset-bottom))]',
           className,

@@ -424,14 +424,19 @@ Open risks:
 
 - The `Broadcast` workflow ran under local Workflows (miniflare) in e2e, not on Cloudflare. Real APNs pushes,
   the cron start path and `clearAfter` follow-ups are covered by Worker tests only.
-- The sandbox purge's batches are bounded by a query-count test, not by a run against a large dataset.
-- A test-mode outbox row cancelled before n6 has no captured email.
-- The sidebar still has a **Scanners** placeholder (`/admin/scanners`) and `/scan` exists as a placeholder route.
-  Hide them or keep them as the scanner design decides.
 - For the scanner design: `scan.*` event kinds, the `scanner` actor type, the `scan` pass source,
   `passes.scan_code` and `passes.barcode_hash` already exist. There is no scan scope or scanner credential yet.
-- The broadcast entity reuses the `wallet` art; a dedicated art would fit better.
 - `isActive` on upcoming events flips at each event boundary through a timed render, not a version (`event-boundaries.md`).
+
+Closed:
+
+- Sandbox purge bound: `purge-broadcasts.test.ts` runs 620 old test broadcasts; one run removes 500, the next the rest.
+  Passes and captured mail are bounded by the same constants (`jobs.ts`), with the query-count test in `sandbox.test.ts`.
+- Test-mode outbox row cancelled before n6: a cancelled row is never rendered (`delivery/email.ts` cancels before
+  `captureEmail`), so there is no body to capture, and the purge drops it with its pass after `sandbox.purgeDays`.
+- Sidebar Scanners and `/scan`: no `/admin/scanners` item remains (`lib/nav.ts` has Scanning) and `/scan` is the
+  scanner shell (`app.ts`).
+- Broadcast art: `ui/art/broadcast.tsx` is its own art (f6496beab).
 
 ## Final review
 

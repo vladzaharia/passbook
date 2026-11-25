@@ -1,12 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import wranglerConfig from '../../../../wrangler.jsonc?raw';
-import { mockProviderInput } from './mock-endpoint.ts';
+import type { ServiceContext } from '../../platform/service-context.ts';
+import { googleCallbackUrl } from './google-callback-binding.ts';
+import { mockProviderInput, mockProvidersUrl, providerFetch } from './mock-endpoint.ts';
 
 const dev = {
   WALLET_MOCK_PROVIDERS_URL: 'http://localhost:5175',
   PUBLIC_BASE_URL: 'http://localhost:5173',
 };
 const google = 'https://walletobjects.googleapis.com/walletobjects/v1/genericClass/1';
+afterEach(() => vi.unstubAllGlobals());
 
 describe('mock provider endpoint', () => {
   it('moves provider calls to the local fake in dev', () => {
@@ -36,6 +39,32 @@ describe('mock provider endpoint', () => {
       { PUBLIC_BASE_URL: dev.PUBLIC_BASE_URL },
     ];
     for (const env of cases) expect(mockProviderInput(env, google)).toBe(google);
+  });
+
+  it('moves a provider fetch (credential checks, Samsung card reads) only where it moves the input', async () => {
+    const seen: string[] = [];
+    vi.stubGlobal('fetch', async (input: RequestInfo | URL) => {
+      seen.push(String(input));
+      return new Response('{}');
+    });
+    await providerFetch(dev)(google);
+    await providerFetch({ ...dev, PUBLIC_BASE_URL: 'https://passbook.mobile' })(google);
+    expect(seen).toEqual(['http://localhost:5175/walletobjects/v1/genericClass/1', google]);
+  });
+
+  it('lets the Google callback use the plain-http origin only while the mock stands in for Google', () => {
+    const url = (env: object) => googleCallbackUrl({ env } as ServiceContext, 'acc1');
+    expect(mockProvidersUrl(dev)?.origin).toBe('http://localhost:5175');
+    expect(url(dev)).toBe('http://localhost:5173/wallet/v1/google/acc1');
+    expect(url({ PUBLIC_BASE_URL: 'https://passbook.mobile' })).toBe(
+      'https://passbook.mobile/wallet/v1/google/acc1',
+    );
+    for (const env of [
+      { PUBLIC_BASE_URL: dev.PUBLIC_BASE_URL },
+      { ...dev, PUBLIC_BASE_URL: 'http://passbook.mobile' },
+      { ...dev, WALLET_MOCK_PROVIDERS_URL: 'http://evil.example:5175' },
+    ])
+      expect(() => url(env), JSON.stringify(env)).toThrow();
   });
 
   it('is never declared in the production Worker config', () => {
