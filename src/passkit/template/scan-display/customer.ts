@@ -15,8 +15,7 @@ import { plausibleName } from './render-header.ts';
 import type { ScanDisplayDoc } from './schema.ts';
 import type { ScanDisplayScope } from './text.ts';
 
-export interface CustomerViewOptions {
-  screen: ScanCustomerView['screen'];
+interface CustomerViewBase {
   /** Orders and replaces bodies; never a pass or scan id. */
   ref: string;
   at: number;
@@ -28,18 +27,35 @@ export interface CustomerViewOptions {
   /** The session's setting; the doc's `customer.greet` can also turn it off. Default on. */
   greet?: boolean;
   refusedLine?: string;
-  /** Replaces the system headline on ok (a count, an amount, a reward). */
-  headline?: string;
-  /** The line under it; on see_desk only the three access subs (`CUSTOMER_REASON_SUB`). */
+  /** The line under the headline; on see_desk only the three access subs (`CUSTOMER_REASON_SUB`). */
   sub?: string | null;
-  direction?: 'in' | 'out' | null;
-  event?: boolean;
-  access?: boolean;
+  /** The figure under a review headline (To pay, Adding). */
+  figure?: string;
   lines?: ScanCustomerView['lines'];
   milestone?: ScanCustomerView['milestone'];
   /** Fields bound to an `x-scan` input: the customer scope drops them. */
   withheldFields?: readonly string[];
   onError?: (error: unknown) => void;
+}
+
+/** ok and review say what happened or what is asked: the caller always names the headline. */
+export type CustomerViewOptions =
+  | (CustomerViewBase & { screen: 'ok' | 'review'; headline: string })
+  | (CustomerViewBase & { screen: 'ready' | 'see_desk'; headline?: undefined });
+
+/** The system headline of an ok body that carries no value receipt. */
+export function okHeadline(o: {
+  access?: boolean;
+  direction?: 'in' | 'out' | null;
+  event?: boolean;
+}): string {
+  return o.access
+    ? CUSTOMER_COPY.accessGranted
+    : o.direction === 'out'
+      ? CUSTOMER_COPY.tappedOut
+      : o.event
+        ? CUSTOMER_COPY.youreIn
+        : CUSTOMER_COPY.checkedIn;
 }
 
 const omit = <T extends object>(value: T, keys: readonly string[]): T =>
@@ -101,19 +117,10 @@ function customerDoc(doc: ScanDisplayDoc, screen: 'ready' | 'ok'): ScanDisplayDo
 }
 
 function band(o: CustomerViewOptions, greet: string | null) {
-  if (o.screen === 'see_desk')
-    return { headline: o.refusedLine ?? CUSTOMER_COPY.refusedLine, sub: o.sub ?? null };
-  if (o.screen === 'ready') return { headline: greet ?? CUSTOMER_COPY.hello, sub: o.sub ?? null };
-  const headline =
-    o.headline ??
-    (o.access
-      ? CUSTOMER_COPY.accessGranted
-      : o.direction === 'out'
-        ? CUSTOMER_COPY.tappedOut
-        : o.event
-          ? CUSTOMER_COPY.youreIn
-          : CUSTOMER_COPY.checkedIn);
-  return { headline, sub: o.sub ?? null };
+  const sub = o.sub ?? null;
+  if (o.screen === 'ok' || o.screen === 'review') return { headline: o.headline, sub };
+  if (o.screen === 'ready') return { headline: greet ?? CUSTOMER_COPY.hello, sub };
+  return { headline: o.refusedLine ?? CUSTOMER_COPY.refusedLine, sub };
 }
 
 const shell = (o: CustomerViewOptions): ScanCustomerView => ({
@@ -140,10 +147,12 @@ export function renderCustomerView(
   const base = shell(options);
   if (options.screen === 'see_desk') return base;
   try {
-    const shown = doc ? customerDoc(doc, options.screen) : null;
+    // A draft is the ready card with the amount: it shows what ready shows.
+    const docScreen = options.screen === 'review' ? 'ready' : options.screen;
+    const shown = doc ? customerDoc(doc, docScreen) : null;
     const rendered = shown
       ? renderScanDisplay(shown, customerScope(scope, options.withheldFields), {
-          screen: options.screen,
+          screen: docScreen,
           role: 'door',
           terminal: false,
           locale: options.locale,
@@ -167,6 +176,7 @@ export function renderCustomerView(
       panel: rendered?.panels[0] ?? null,
       lines: (options.lines ?? []).slice(0, 2),
       milestone: options.milestone ?? null,
+      ...(options.figure ? { figure: sanitized(options.figure, 24) } : {}),
     });
   } catch (error) {
     options.onError?.(error);

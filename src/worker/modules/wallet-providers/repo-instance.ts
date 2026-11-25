@@ -144,7 +144,9 @@ export async function listDueOperations(
     // Keep queue eligibility and the live operation proof in the same snapshot, but in
     // separate SELECTs so D1 does not combine their expression depths.
     `WITH due AS MATERIALIZED (
-      SELECT op.id FROM wallet_provider_instance_operations op
+      SELECT op.id,
+        ROW_NUMBER() OVER (PARTITION BY i.org_id, op.kind = 'revoke' ORDER BY op.id) AS turn
+      FROM wallet_provider_instance_operations op
       JOIN wallet_provider_instances i ON i.id = op.instance_id
         AND i.desired_operation_id = op.id AND i.desired_version = op.version
       WHERE op.state IN ('pending', 'retry') AND op.attempts < 8
@@ -156,9 +158,13 @@ export async function listDueOperations(
     SELECT ${OPERATION_COLUMNS} FROM due
     JOIN wallet_provider_instance_operations op ON op.id = due.id
     JOIN wallet_provider_instances i ON i.id = op.instance_id
-    WHERE ${walletOpReadCurrentSql('i', 'op')}
-    ORDER BY op.id LIMIT ?`,
-    [now, ...(afterId === null ? [] : [afterId]), limit],
+    WHERE due.turn <= ? AND ${walletOpReadCurrentSql('i', 'op')}
+    -- A turn past the limit has that many operations of its org and kind ahead of it, so it is never chosen
+    -- and its live proof is not read.
+    -- Voids and removals before updates (Q5), and each org's turn in turn, so one org's reissue cannot hold up
+    -- another org's operations.
+    ORDER BY (op.kind = 'revoke') DESC, due.turn, op.id LIMIT ?`,
+    [now, ...(afterId === null ? [] : [afterId]), limit, limit],
   );
 }
 export interface DirtyWalletInstance extends WalletScope {

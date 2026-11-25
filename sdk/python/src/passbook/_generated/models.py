@@ -994,6 +994,9 @@ __all__ = [
     "PassesRenewBody",
     "PassesRenewParams",
     "PassesRenewResult",
+    "PassesResendProviderCopiesBody",
+    "PassesResendProviderCopiesParams",
+    "PassesResendProviderCopiesResult",
     "PassesRestoreResult",
     "PassesRetrieveProviderStatusResponse",
     "PassesRetrieveProviderStatusResponseProviders1",
@@ -1149,6 +1152,8 @@ __all__ = [
     "PlatformWalletCredentialsRevokeParams",
     "PlatformWalletCredentialsRevokeResponse",
     "PlatformWalletCredentialsRotateKeyResponse",
+    "PlatformWalletCredentialsSetSamsungCardParams",
+    "PlatformWalletCredentialsSetSamsungCardResponse",
     "PlatformWalletCredentialsUpsertParams",
     "PlatformWalletCredentialsUpsertParams1",
     "PlatformWalletCredentialsUpsertParams1Credentials",
@@ -1820,6 +1825,7 @@ __all__ = [
     "WalletProviderAccountsUpsertResponseIssuance2",
     "WalletProviderAccountsVerifyParams",
     "WalletProviderAccountsVerifyResponse",
+    "WalletReissue",
     "WebhookCapture",
     "WebhookCapturePage",
     "WebhookDeliveryDetail",
@@ -3553,6 +3559,7 @@ class CreatedScanningDeviceOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+    follows: _List[str] | None = None
 
 class CurrentBulkRun(_Model):
     run: BulkRun | None = None
@@ -8018,6 +8025,11 @@ class PassesRemoveParams(_Model):
 class PassesRenewParams(_Model):
     pass
 
+class PassesResendProviderCopiesParams(_Model):
+    orgId: str | None = None
+    provider: _Literal["google", "samsung"] | str
+    templateId: str | None = None
+
 class PassesRetrieveProviderStatusResponse(_Model):
     credentialGeneration: int
     providers: _Tuple[PassesRetrieveProviderStatusResponseProviders1, PassesRetrieveProviderStatusResponseProviders2]
@@ -8891,6 +8903,7 @@ class PlatformWalletCredentialsListResponseItemsItem(_Model):
     revokedAt: int | None
     createdAt: int
     updatedAt: int
+    cardTypes: _List[str]
 
 class PlatformWalletCredentialsMigrateResponse(_Model):
     queued: int
@@ -8941,9 +8954,30 @@ class PlatformWalletCredentialsRevokeResponse(_Model):
     revokedAt: int | None
     createdAt: int
     updatedAt: int
+    cardTypes: _List[str]
 
 class PlatformWalletCredentialsRotateKeyResponse(_Model):
     runId: str
+
+class PlatformWalletCredentialsSetSamsungCardParams(_Model):
+    type: _Literal["loyalty", "ticket", "coupon"] | str
+    cardId: str
+    expectedRevision: int
+
+class PlatformWalletCredentialsSetSamsungCardResponse(_Model):
+    id: str
+    scope: _Literal["platform", "org"] | str
+    orgId: str | None
+    mode: _Literal["live", "test"] | str
+    provider: _Literal["google", "samsung"] | str
+    identityHint: str
+    provenance: _Literal["platform", "managed", "own"] | str
+    revision: int
+    verifiedAt: int | None
+    revokedAt: int | None
+    createdAt: int
+    updatedAt: int
+    cardTypes: _List[str]
 
 class PlatformWalletCredentialsUpsertParams1(_Model):
     provider: _Literal["google"] | str
@@ -8985,6 +9019,7 @@ class PlatformWalletCredentialsUpsertResponse(_Model):
     revokedAt: int | None
     createdAt: int
     updatedAt: int
+    cardTypes: _List[str]
 
 class PlatformWalletEnrollmentsListResponse(_Model):
     items: _List[PlatformWalletEnrollmentsListResponseItemsItem]
@@ -9921,6 +9956,7 @@ class ScanSetupAnswer2SessionsItemDevicesItemOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+    follows: _List[str] | None = None
 
 class ScanSetupAnswer2SessionsItemSettings(_Model):
     checkIn: ScanSetupAnswer2SessionsItemSettingsCheckIn | None = None
@@ -10839,6 +10875,7 @@ class ScanningDeviceOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+    follows: _List[str] | None = None
 
 class ScanningSession(_Model):
     id: str
@@ -11094,6 +11131,7 @@ class ScanningSessionsDevicesCreateParamsOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+    follows: _List[str] | None = None
 
 class ScanningSessionsDevicesUpdateParams(_Model):
     name: str | None = None
@@ -11107,6 +11145,7 @@ class ScanningSessionsDevicesUpdateParamsOverrides(_Model):
     direction: _Literal["in", "out", "both"] | str | None = None
     lookup: bool | None = None
     showPhoto: bool | None = None
+    follows: _List[str] | None = None
 
 class ScanningSessionsListResponse(_Model):
     items: _List[ScanningSession]
@@ -12766,6 +12805,7 @@ class WalletAccountsGoogleSharedCreateResponseCredential(_Model):
     revokedAt: int | None
     createdAt: int
     updatedAt: int
+    cardTypes: _List[str]
 
 class WalletAccountsGoogleSharedRetrieveResponse(_Model):
     serviceAccountEmail: str | None
@@ -12797,6 +12837,7 @@ class WalletCredentialsListResponseItemsItem(_Model):
     revokedAt: int | None
     createdAt: int
     updatedAt: int
+    cardTypes: _List[str]
 
 class WalletCredentialsRevokeParams(_Model):
     expectedRevision: int
@@ -12814,6 +12855,7 @@ class WalletCredentialsRevokeResponse(_Model):
     revokedAt: int | None
     createdAt: int
     updatedAt: int
+    cardTypes: _List[str]
 
 class WalletCredentialsUpsertParams1(_Model):
     provider: _Literal["google"] | str
@@ -12853,6 +12895,7 @@ class WalletCredentialsUpsertResponse(_Model):
     revokedAt: int | None
     createdAt: int
     updatedAt: int
+    cardTypes: _List[str]
 
 class WalletEnrollmentsDisableParams(_Model):
     expectedRevision: int
@@ -13106,6 +13149,10 @@ class WalletProviderAccountsVerifyResponse(_Model):
     verified: bool
     verifiedAt: int | None
     expiresAt: int | None
+
+class WalletReissue(_Model):
+    reissueId: str
+    instances: int
 
 class WebhookCapture(_Model):
     id: str
@@ -13682,6 +13729,10 @@ PassesRemoveResult = PassSummary
 PassesRenewBody = PassesRenewParams
 
 PassesRenewResult = PassDetail
+
+PassesResendProviderCopiesBody = PassesResendProviderCopiesParams
+
+PassesResendProviderCopiesResult = WalletReissue
 
 PassesRestoreResult = PassSummary
 

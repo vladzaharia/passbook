@@ -177,20 +177,22 @@ beforeEach(async () => {
   ctx = {
     env: { ...(await testEnv()), KEK_V1: btoa('0123456789abcdef0123456789abcdef') },
     clock: { now: () => 100_000 },
-  } as ServiceContext;
+    log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  } as unknown as ServiceContext;
   const credentialKeysetCommitment = await credentialKeyset.ensureCredentialRefKeyset(
     ctx.env.DB,
     ctx.env,
   );
   operation = { ...operationFields };
   mocks.orgReason.mockResolvedValue(null);
-  // The release being sent is a field-mapped (schema 1) Samsung card unless a test says otherwise.
+  // The release being sent is a compiled Samsung card whose card is live unless a test says otherwise.
   mocks.release.mockResolvedValue({ id: 'native-1', candidateId: 'candidate-1' });
   mocks.candidate.mockResolvedValue({
     id: 'candidate-1',
     provider: 'samsung',
-    projection: { schema: 1 },
+    projection: { schema: 2 },
   });
+  mocks.ready.mockResolvedValue(true);
   mocks.claim.mockResolvedValue('claimed');
   mocks.fresh.mockResolvedValue(true);
   mocks.getOperation.mockResolvedValue(claimed(operation));
@@ -646,35 +648,6 @@ describe('wallet provider operation fences', () => {
         expect.anything(),
         expect.objectContaining({ type: 'ticket', state: 'UPDATED', cc2: 'US' }),
       );
-    });
-
-    it('keys the check on the release being sent: a schema 2 release over a schema 1 identity is read', async () => {
-      const samsung = compiled('upsert');
-      mocks.metadata.mockResolvedValueOnce({
-        ...(await mocks.metadata()),
-        projection: { schema: 1, provider: 'samsung', cardType: 'loyalty' },
-      });
-      mocks.ready.mockResolvedValue(false);
-      expect(await runWalletProviderOperation(ctx, samsung)).toBe('deferred');
-      expect(mocks.ready).toHaveBeenCalledOnce();
-      expect(mocks.samsung).not.toHaveBeenCalled();
-    });
-
-    it('does not read the card for a schema 1 release over a schema 2 identity (a rollback)', async () => {
-      const samsung = compiled('upsert');
-      mocks.candidate.mockResolvedValue({
-        id: 'candidate-1',
-        provider: 'samsung',
-        projection: { schema: 1 },
-      });
-      mocks.ready.mockResolvedValue(false);
-      mocks.listTargets
-        .mockResolvedValueOnce([{ countryCode: 'US', state: 'pending', attempts: 0 }])
-        .mockResolvedValueOnce([{ countryCode: 'US', state: 'pending', attempts: 0 }])
-        .mockResolvedValue([{ countryCode: 'US', state: 'succeeded', attempts: 1 }]);
-      expect(await runWalletProviderOperation(ctx, samsung)).toBe('completed');
-      expect(mocks.ready).not.toHaveBeenCalled();
-      expect(mocks.samsung).toHaveBeenCalled();
     });
 
     it('defers an update while the card is not live, without calling Samsung', async () => {

@@ -146,11 +146,11 @@ export function parseProjectionInput(
 }
 
 /**
- * Schema 1 maps fields by hand and is refused for Google. Samsung still publishes it beside schema
- * 2 (compiled) until its field-mapped candidates are retired.
+ * Schema 1 maps fields by hand. Google never published it and Samsung's is retired with its evidence, so
+ * only a compiled (schema 2) candidate is published; schema 1 remains readable for history.
  */
-export function publishableSchema(provider: NativeProvider, schema: 1 | 2): boolean {
-  return provider === 'google' ? schema === 2 : true;
+export function publishableSchema(_provider: NativeProvider, schema: 1 | 2): boolean {
+  return schema === 2;
 }
 
 /** The non-secret provider identity is hashed; private credentials never enter a projection. */

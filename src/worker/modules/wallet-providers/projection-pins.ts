@@ -164,7 +164,12 @@ export async function pipelineAddsLoss(
   ctx: ServiceContext,
   pinned: ProjectionV2,
   version: VersionRow,
+  /** The org that owns the release: its website is part of what compiles (Q22). */
+  orgId?: string,
 ): Promise<boolean> {
   if (pinned.pipeline === (await pipelineRevision(pinned.provider))) return false;
-  return !carriesForward(pinned, await computeProjectionPins(ctx, pinned.provider, version, 'dry'));
+  return !carriesForward(
+    pinned,
+    await computeProjectionPins(ctx, pinned.provider, version, 'dry', orgId),
+  );
 }

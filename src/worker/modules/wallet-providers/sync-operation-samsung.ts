@@ -18,11 +18,10 @@ import type {
   WalletSyncRunResult,
 } from './sync-operation-context.ts';
 import { completeWalletSyncOperation as complete } from './sync-operation-retirement.ts';
+import { recordSamsungMessageOutcome } from './sync-samsung-message.ts';
+import { samsungOperationState } from './sync-samsung-state.ts';
 
-/**
- * The card of the release being sent, not of the identity: a schema 1 release carries stored
- * evidence that the queue checks, a schema 2 release reads its card now (or within five minutes).
- */
+/** The card of the release being sent, not of the identity: read now, or from its row within five minutes. */
 async function samsungUpdateReady(
   ctx: WalletSyncOperationExecution['ctx'],
   op: WalletSyncOperationExecution['op'],
@@ -32,7 +31,7 @@ async function samsungUpdateReady(
     ? await getProjectionCandidate(ctx.env.DB, release.candidateId)
     : null;
   if (candidate?.provider !== 'samsung') return false;
-  return candidate.projection.schema === 1 || ensureSamsungCardState(ctx, candidate);
+  return ensureSamsungCardState(ctx, candidate);
 }
 
 export async function runSamsungWalletProviderOperation(
@@ -79,7 +78,8 @@ export async function runSamsungWalletProviderOperation(
       ? 'deferred'
       : 'uncertain';
   }
-  await ensureSamsungSyncTargets(ctx, { ...claim, now: ctx.clock.now() });
+  const state = await samsungOperationState(ctx, op);
+  await ensureSamsungSyncTargets(ctx, { ...claim, now: ctx.clock.now() }, state);
   const targets = await listSamsungSyncTargets(ctx, claim);
   for (const item of targets) {
     if (item.state !== 'pending' && item.state !== 'retry') continue;
@@ -97,7 +97,7 @@ export async function runSamsungWalletProviderOperation(
         cc2: item.countryCode,
         type: cardType,
         refId: target.refId,
-        state: op.kind === 'revoke' ? 'DELETED' : 'UPDATED',
+        state,
         attempt,
         assertCurrent,
         onProviderResponse,
@@ -183,5 +183,8 @@ export async function runSamsungWalletProviderOperation(
   if (results.some((target) => target.state === 'failed')) {
     return complete(ctx, claim, op, { kind: 'failure', reason: 'rejected', retryable: false });
   }
-  return complete(ctx, claim, op, { kind: 'success' });
+  const done = await complete(ctx, claim, op, { kind: 'success' });
+  if (done === 'completed' && state !== 'DELETED' && state !== 'CANCELED')
+    await recordSamsungMessageOutcome(execution);
+  return done;
 }

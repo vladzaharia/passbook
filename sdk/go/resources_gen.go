@@ -1505,6 +1505,15 @@ func (r *PassesResource) Renew(ctx context.Context, id string, body *PassesRenew
 	return &out, nil
 }
 
+// ResendProviderCopies Send every active Google or Samsung copy of an organization's passes again; a key needs passes:write `POST /api/v1/wallet-providers/reissue`
+func (r *PassesResource) ResendProviderCopies(ctx context.Context, body *PassesResendProviderCopiesBody, opts ...RequestOption) (*PassesResendProviderCopiesResult, error) {
+	var out PassesResendProviderCopiesResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/wallet-providers/reissue", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // Restore Undo a removal `POST /api/v1/passes/{id}/restore`
 func (r *PassesResource) Restore(ctx context.Context, id string, opts ...RequestOption) (*PassesRestoreResult, error) {
 	var out PassesRestoreResult
