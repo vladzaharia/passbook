@@ -59,6 +59,12 @@ describe('staff print page of a Test pass', () => {
     expect((await send('GET', `${base}/pdf?mode=test`)).status).toBe(200);
     expect((await send('POST', `${base}/drawn?mode=test`)).status).toBe(200);
     expect((await send('POST', `${base}/drawn`)).status).toBe(409);
+    // A Live key's mode never comes from the query: the Test pass is not found for it.
+    const key = await kit.auth.apiKey({ orgId: kit.org.id, scopes: ['passes:write'] });
+    const asKey = (method: string, path: string) =>
+      kit.api(path, { method, headers: { ...key, ...json } });
+    expect((await asKey('GET', `${base}?mode=test`)).status).toBe(404);
+    expect((await asKey('POST', `${base}/drawn?mode=test`)).status).toBe(404);
     // Only the print paths read the query: a pass route does not.
     expect((await send('POST', `/passes/${pass.id}/prints?mode=test`)).status).toBe(409);
   });

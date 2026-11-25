@@ -140,7 +140,7 @@ export interface ImageMutationResult {
 export function imageUploadWhere(key: string | undefined): string {
   return key === undefined
     ? ''
-    : ` AND EXISTS (SELECT 1 FROM pass_transfer_asset_uploads u
+    : `EXISTS (SELECT 1 FROM pass_transfer_asset_uploads u
     WHERE u.r2_key = ? AND u.pass_id = ? AND u.credential_generation = ?
       AND u.lifecycle_generation = ? AND u.link_generation = ? AND u.pass_version = ? AND u.pass_revision = ?)`;
 }
@@ -163,7 +163,7 @@ export function imageUploadParams(pass: Pass, key: string | undefined) {
 export function imageCandidateWhere(candidateId: number | undefined): string {
   return candidateId === undefined
     ? ''
-    : ` AND EXISTS (SELECT 1 FROM pass_transfer_asset_candidates c
+    : `EXISTS (SELECT 1 FROM pass_transfer_asset_candidates c
     WHERE c.id = ? AND c.pass_id = ? AND c.r2_key = ? AND c.kind = ? AND c.slot = ?)`;
 }
 
