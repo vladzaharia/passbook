@@ -96,7 +96,6 @@ export const PAPER_COPY = {
   zoneNote: (abbr: string, name?: string) =>
     name ? `Times are ${name} (${abbr}).` : `Times are in ${abbr}.`,
   issued: (n: number, when: string) => `Print ${n} · Issued ${when}`,
-  issuedWith: 'Issued with',
   testStrip: 'TEST TICKET · NOT VALID FOR ENTRY',
   testMark: 'TEST · NOT VALID',
   permitHow: 'Place face up on the dashboard, readable through the windscreen.',

@@ -20,6 +20,24 @@ export function applyPresetConfirm(
   };
 }
 
+/** A preset's value changed: every organization on it moves with it. */
+export function editPresetConfirm(
+  preset: string,
+  orgCount: number,
+  impact: EntitlementImpact,
+): ConfirmCopy {
+  const moves =
+    orgCount === 0
+      ? 'No organization is on it.'
+      : `Moves ${orgCount} ${orgCount === 1 ? 'organization' : 'organizations'}.`;
+  return {
+    title: `Change ${preset}?`,
+    confirmLabel: 'Change',
+    description: `${moves} ${describe(impact)}`,
+    typed: false,
+  };
+}
+
 /** One feature set by hand, for as long as the override stands. */
 export function overrideConfirm(feature: string, impact: EntitlementImpact): ConfirmCopy {
   return {

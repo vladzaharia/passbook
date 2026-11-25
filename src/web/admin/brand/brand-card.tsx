@@ -12,7 +12,7 @@ import {
   FormField,
   FormGrid,
   Input,
-  SegmentedControl,
+  RadioGroup,
   SwitchRow,
 } from '@/web/ui/index.ts';
 import { HEX } from '../orgs/branding.ts';
@@ -83,11 +83,9 @@ export function BrandCard({ orgId, view, draft, canEdit, errors, edit, setImage 
   );
   const colorErr = colorErrors(v);
   const planMark = b.mark.allowed.length < 3;
-  const markOptions = (['full', 'small', 'none'] as const).map((value) => ({
-    value,
-    label: COPY.markOptions[value],
-    ...(b.mark.allowed.includes(value) ? {} : { reason: COPY.markLocked }),
-  }));
+  const markOptions = (['full', 'small', 'none'] as const)
+    .filter((value) => b.mark.allowed.includes(value))
+    .map((value) => ({ value, label: COPY.markOptions[value] }));
   const imageTag = (slot: 'logo' | 'icon') => {
     const row = b[slot];
     const set = draft.images?.[slot];
@@ -270,18 +268,24 @@ export function BrandCard({ orgId, view, draft, canEdit, errors, edit, setImage 
               <AccentChips value={v.accent} onPick={(accent) => edit({ accent })} />
             ) : null}
           </div>
-          <div className="flex flex-col gap-2">
-            <div className="flex min-h-6 items-center justify-between gap-2">
-              <span className="text-sm font-medium text-fg">{COPY.mark}</span>
-              {planMark ? <SourceTag source="plan" /> : null}
+          {markOptions.length > 1 ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex min-h-6 items-center justify-between gap-2">
+                <span className="text-sm font-medium text-fg">{COPY.mark}</span>
+                {planMark ? <SourceTag source="plan" /> : null}
+              </div>
+              {/* The labels are the holder-visible wording, too long for a segmented control. */}
+              <RadioGroup
+                legend={COPY.mark}
+                className="[&>legend]:sr-only"
+                options={markOptions}
+                value={v.mark}
+                onValueChange={(mark) =>
+                  canEdit && edit({ mark: mark as 'full' | 'small' | 'none' })
+                }
+              />
             </div>
-            <SegmentedControl
-              label={COPY.mark}
-              options={markOptions}
-              value={v.mark}
-              onValueChange={(mark) => canEdit && edit({ mark })}
-            />
-          </div>
+          ) : null}
         </FormGrid>
       </CardBody>
     </Card>

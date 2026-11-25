@@ -161,6 +161,7 @@ export function drawFull(pen: Pen, s: Sheet, half: boolean): void {
   const boxes = paperBoxes(design.size, c.kind as PaperKind, {
     buddy: pose !== null,
     fold: design.fold,
+    mark: s.mark,
   });
   const t = boxes.ticket as Box;
   const doorW = (t.w - 0.6) / 2;

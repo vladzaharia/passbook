@@ -60,6 +60,8 @@ export const OrgOwnEntitlementsSchema = z.object({
       source: z.enum(['preset', 'override']),
     }),
   ),
+  /** What the organization holds against each limit now: live and test passes, templates, scanners, members, API keys, webhook endpoints, connections. */
+  usage: z.record(z.string(), z.number().int().min(0)),
 });
 
 export const EntitlementOverrideSchema = z.strictObject({

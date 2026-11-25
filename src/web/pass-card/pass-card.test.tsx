@@ -4,7 +4,14 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import type { PassJson } from '../../passkit/types.ts';
-import { assets, fixtures, generic, posterGeneric } from '../../shared/pass-view/fixtures/index.ts';
+import {
+  assets,
+  fixtures,
+  generic,
+  posterFourPrimary,
+  posterGeneric,
+  posterThreePrimary,
+} from '../../shared/pass-view/fixtures/index.ts';
 import { normalize } from '../../shared/pass-view/index.ts';
 import './sync-barcode.ts';
 import { PassCard, PassCardFlip } from './index.tsx';
@@ -85,6 +92,29 @@ describe('style specifics', () => {
     expect(container.querySelector('.pc-poster-primary .pc-label')).toHaveTextContent('Pass');
     expect(container.querySelectorAll('.pc-poster-footer .pc-field')).toHaveLength(2);
     expect(container.querySelector('.pc-art-top')).toHaveTextContent('KEY TAG');
+  });
+
+  it.each([
+    ['three', posterThreePrimary, 2],
+    ['four', posterFourPrimary, 3],
+  ])(
+    'posterGeneric with %s primary fields: title above one row of labelled fields',
+    (_n, pass, count) => {
+      const { container } = render(<PassCard view={view(pass)} />);
+      const block = container.querySelector('.pc-poster-primary') as HTMLElement;
+      const [title, row, ...extra] = [...block.children];
+      if (!row) throw new Error('no primary row');
+      expect(title).toHaveClass('pc-title');
+      expect(row).toHaveClass('pc-primary');
+      expect(extra).toHaveLength(0);
+      expect(row.querySelectorAll('.pc-field')).toHaveLength(count);
+      for (const label of row.querySelectorAll('.pc-label')) expect(label.textContent).toBeTruthy();
+    },
+  );
+
+  it('posterGeneric on the legacy target keeps one primary in the classic face', () => {
+    const { container } = render(<PassCard view={view(posterFourPrimary)} target="legacy" />);
+    expect(container.querySelectorAll('.pc-primary .pc-field')).toHaveLength(1);
   });
 
   it('posterGeneric on the legacy target draws generic', () => {

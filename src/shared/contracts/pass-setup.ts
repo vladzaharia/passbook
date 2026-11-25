@@ -140,7 +140,7 @@ export const PassSetupBrandSchema = z.object({
   mark: z.object({
     chosen: BrandMarkSchema,
     effective: BrandMarkSchema.describe(
-      'What holders see: the chosen one when the plan allows it.',
+      'What holders see: the chosen one when the plan allows it, else the nearest allowed with more PassBook.',
     ),
     allowed: z.array(BrandMarkSchema),
   }),

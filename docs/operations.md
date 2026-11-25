@@ -545,13 +545,13 @@ ORDER BY a.id
 
 ### Entitlements gate
 
-`npm run deploy -- --apply` (and `--promote --apply`) runs `entitlements-gate` remotely after the migrations and refuses to promote while it lists an org. Each row is an org with no `org_entitlements` row: every key call and guarded session call of that org is refused (`FEATURE_NOT_INCLUDED`), and so are wallet enable and offers, new prints and tag binds (the plan fails closed everywhere). Repair: Features tab, apply a preset (platform admin), or insert `legacy` by hand.
+`npm run deploy -- --apply` (and `--promote --apply`) runs `entitlements-gate` remotely after the migrations and refuses to promote while it lists an org. Each row is an org with no `org_entitlements` row: every key call and guarded session call of that org is refused (`FEATURE_NOT_INCLUDED`), and so are wallet enable and offers, new prints and tag binds (the plan fails closed everywhere). Repair: Features tab, apply a plan (platform admin), or insert `legacy` (Unlimited) by hand.
 
 ```sql entitlements-gate
 SELECT o.id FROM orgs o WHERE NOT EXISTS (SELECT 1 FROM org_entitlements e WHERE e.org_id = o.id) ORDER BY o.id
 ```
 
-A plan change that moves a delivery channel (Google, Samsung, Paper, NFC) queues `channel.entitlement`, keyed on the entitlement revision: one apply run per template and mode journals the flips once, in any job order and under retry. Two gaps are known: an override that expires changes the channels live without a run (no journal), and a preset edit must call `onEntitlementsChanged` for each org it moves (`PUT /platform/entitlement-presets` is not built yet).
+A plan change that moves a delivery channel (Google, Samsung, Paper, NFC) queues `channel.entitlement`, keyed on the entitlement revision: one apply run per template and mode journals the flips once, in any job order and under retry. An override that expires goes through the same path: the minute hook `entitlements.override_expiry` removes it, makes a revision and an audit row (actor `system`), and queues the run. A preset edit (`PUT /platform/entitlement-presets`, platform admin, step-up when orgs are on it) moves at most 50 organizations per call, each with its own revision, audit row and run. If more are on the preset, the response shows `pendingOrgs`; repeat the call with no `values` to carry on. A different change is refused (`PRESET_MOVING`) until every org has moved. Suspended orgs move too; the editor keeps calling until none wait. The minute hook `entitlements.journal_sweep` looks at changes from a ten-minute window (after a two-minute grace) and queues `channel.entitlement` again when a template with live passes has no run, in any state, covering the revision (a crash between the commit and the queue send); it skips an org an edit has not moved yet or one holding an expired override, since the write that is coming queues its own job. An org more than one edit behind (`gap: true` in its audit row, with `from: null` on every change) has no recorded before: it is journaled as a full reconcile, so its plan-side changes send no `pass.channels_changed`, while template and pass flips still do. The org save follows the same rule.
 
 
 ### Large connection syncs
@@ -630,6 +630,15 @@ The `pass_events_feed` trigger journals catalog events into `event_feed` and fan
 endpoints. Set the platform setting `events.feed` to `"off"` to skip it without a deploy. Events written
 while it is off are never journaled, so webhook endpoints miss them and `GET /events` pollers see a silent
 gap; turning it back on does not backfill.
+
+### Outbound webhooks
+
+- **Kill switches.** `events.feed` = `"off"` (above) stops journaling and fan-out for everyone. To stop one endpoint, pause or delete it in Connections, Webhooks; to stop a tenant, disable the endpoint through its API.
+- **Disabled endpoints.** After 72 hours of failures with at least 10 failed attempts in a row an endpoint is disabled by the platform: pending deliveries are cancelled (`ENDPOINT_DISABLED`), an audit row `webhook.endpoint_disabled` is written and the log carries `WEBHOOK_ENDPOINT_DISABLED`. The console shows a callout with Resume and Replay failed; there is no email in v1. Resume clears the counters.
+- **Limits.** `RL_WEBHOOK_OUT` (10 a minute) covers test sends (key `test:<org>:<mode>`) and single replays (`replay1:`); per-host sends are paced by `RL_WEBHOOK_HOST_ORG` (120 a minute per org) and `RL_WEBHOOK_HOST` (600 a minute across orgs): a delivery over its share waits, uncounted. Bulk replay is one a minute per org and mode, enforced in the first chunk's own batch from its audit row, at most 10,000 deliveries; a failed first chunk answers `503 REPLAY_NOT_QUEUED` and spends nothing. Creates are capped at 20 an hour per org and 10 endpoints per org and mode.
+- **Deploy.** Create the queue `wallet-webhooks` (wrangler `queues`) before the first deploy of the delivery engine; the rate limit bindings come from `wrangler.jsonc`.
+- **Retention.** Daily `webhooks.retention`: feed rows older than `min(30 d, events retention)`; delivered deliveries after 7 days; failed and cancelled with their feed row; attempts 30 days (test sends 7); secrets a day after expiry.
+- **Watching.** Log codes `WEBHOOK_ENDPOINT_DISABLED`, `WEBHOOK_REPLAY_PARTIAL`, `REPLAY_NOT_QUEUED`, `SECRET_UNAVAILABLE` (a secret that no longer opens: check the KEK ring) and `WEBHOOK_TENANT_MISMATCH` (should never appear; treat it as a bug).
 
 ### Request log and status notes
 

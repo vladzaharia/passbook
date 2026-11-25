@@ -143,6 +143,7 @@ function LivePaper({ source }: { source: PreviewSource }) {
         content={content}
         design={design}
         code="PSAMPLEABCDEFGHIJKLMNOPQRST"
+        mark="full"
         drawing={drawing}
         testBand
         assets={{ logo: logo ? urls[logo] : undefined, art: art ? urls[art] : undefined }}

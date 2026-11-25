@@ -12,6 +12,7 @@ import {
   OrgSchema,
   OrgStatusSchema,
   OrgSummarySchema,
+  PlatformOrgSummarySchema,
   UpdateOrgSchema,
   UploadBrandingImageSchema,
 } from '../../../shared/contracts/index.ts';
@@ -31,17 +32,6 @@ import type { OrgAdmin } from './repo-org-writes.ts';
 import { createOrg, deleteOrg, getOrg, listOrgs, setOrgStatus, updateOrg } from './service.ts';
 
 // Platform provisioning deliberately exposes only the directory projection, not workspace data.
-const PlatformOrgSummarySchema = OrgSummarySchema.pick({
-  id: true,
-  slug: true,
-  name: true,
-  status: true,
-  personal: true,
-  personalOwner: true,
-  createdAt: true,
-  counts: true,
-  countsCapped: true,
-});
 const PlatformOrgListSchema = OrgListSchema.extend({ items: z.array(PlatformOrgSummarySchema) });
 
 export const orgsRoutes = createRouter();

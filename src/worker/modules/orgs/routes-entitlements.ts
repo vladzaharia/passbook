@@ -4,16 +4,21 @@ import {
   OrgOwnEntitlementsSchema,
   SetOrgEntitlementsSchema,
 } from '../../../shared/contracts/entitlement-admin.ts';
+import {
+  EntitlementPresetsSchema,
+  SetEntitlementPresetResultSchema,
+  SetEntitlementPresetSchema,
+} from '../../../shared/contracts/entitlement-presets.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
+import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
 import { authOf, tenantAuthorityOf } from '../passes/http.ts';
-import {
-  readOrgEntitlements,
-  readOwnEntitlements,
-  setOrgEntitlements,
-} from './service-entitlements.ts';
+import { listPresets, setPreset } from './presets-service.ts';
+import { orgsOnPreset } from './repo-presets.ts';
+import { readOrgEntitlements, setOrgEntitlements } from './service-entitlements.ts';
+import { readOwnEntitlements } from './service-own-entitlements.ts';
 
 const noStore = async (
   c: { header: (name: string, value: string) => void },
@@ -30,6 +35,18 @@ const noStore = async (
 export const platformEntitlementsRoutes = createRouter();
 // Only these paths: a sub-router's `*` would wrap every route under the mount, branding images included.
 platformEntitlementsRoutes.use('/orgs/:id/entitlements', noStore);
+platformEntitlementsRoutes.use('/entitlement-presets', noStore);
+
+// An edit that changes values moves every organization on the preset: a fresh sign-in, once it reaches any.
+platformEntitlementsRoutes.put(
+  '/entitlement-presets',
+  requireStepUp(STEP_UP_SECONDS, async (c) => {
+    const { preset, values } = await peekBody(c);
+    if (typeof preset !== 'string' || values === null || typeof values !== 'object') return false;
+    if (Object.keys(values).length === 0) return false;
+    return (await orgsOnPreset(c.env.DB, preset)) > 0;
+  }),
+);
 
 register(
   platformEntitlementsRoutes,
@@ -67,6 +84,45 @@ register(
         c.req.valid('param').id,
         c.req.valid('json'),
         { userId: auth.userId, sessionId: auth.sessionId },
+      ),
+    );
+  },
+);
+
+register(
+  platformEntitlementsRoutes,
+  'entitlements',
+  {
+    method: 'get',
+    path: '/entitlement-presets',
+    summary: 'Read every preset with its values and the organizations on it',
+    response: EntitlementPresetsSchema,
+    auth: { platform: 'platform:orgs' },
+  },
+  async (c) => c.json({ presets: await listPresets(serviceContext(c)) }),
+);
+
+register(
+  platformEntitlementsRoutes,
+  'entitlements',
+  {
+    method: 'put',
+    path: '/entitlement-presets',
+    summary:
+      'Change a preset, then move the organizations on it (a bounded number per call; repeat with no values to continue)',
+    body: SetEntitlementPresetSchema,
+    response: SetEntitlementPresetResultSchema,
+    auth: { platform: 'platform:orgs' },
+  },
+  async (c) => {
+    const auth = authOf(c);
+    if (auth.kind !== 'session') throw new UnauthenticatedError();
+    return c.json(
+      await setPreset(
+        serviceContext(c),
+        requestActor(c),
+        { userId: auth.userId, sessionId: auth.sessionId },
+        c.req.valid('json'),
       ),
     );
   },

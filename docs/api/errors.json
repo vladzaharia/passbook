@@ -477,6 +477,15 @@
       ]
     },
     {
+      "code": "BRANDING_UNREADABLE",
+      "statuses": [
+        500
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "BRAND_ASSET_NOT_FOUND",
       "statuses": [
         422
@@ -3204,6 +3213,24 @@
       ],
       "modules": [
         "scan"
+      ]
+    },
+    {
+      "code": "PRESET_MOVING",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
+      "code": "PRESET_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "orgs"
       ]
     },
     {

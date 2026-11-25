@@ -185,6 +185,7 @@ Conventions (layering, errors, clock and ids, logs, registries, file size, copy 
 - **Capability token seals:** `pass_token_seals`, `bundle_token_seals` (`0059`). Indexes `0054`, `0057`; trigger narrowing `0064`.
 - **Wallet providers (dark):** `wallet_provider_*` (`0037`).
 
+- **Outbound webhooks** (`0090_webhooks.sql`): `event_feed` (append-only journal of catalog events, written by the `pass_events_feed` trigger; unique `(seq, org_id, mode)`), `webhook_endpoints` (per org and mode, cap 10 by trigger, status active|paused|disabled), `webhook_endpoint_secrets` (sealed, current plus one expiring), `webhook_deliveries` (PK `(endpoint_id, event_seq)`, composite FKs to the endpoint and the feed row, state pending|delivered|failed|cancelled, one lane per endpoint) and `webhook_attempts` (per attempt and test send). Module `modules/webhooks`, console `src/web/admin/connections/webhooks`. Retention: feed `min(30 d, events retention)`, delivered deliveries 7 d, attempts 30 d (test sends 7 d), secrets 1 d after expiry (daily `webhooks.retention`).
 Cron hooks (`src/worker/jobs/cron.ts`): the minute hooks include `tokens.remac`, `scan.reconcile` and `scan.backfill`; the daily ones include `authority.sweep` and `orgs.branding_gc`.
 
 Retention (daily cron `17 3 * * *`): pass versions keep current + last 3 (R2 objects deleted in batches, `purged_at` set); revisions 7 d; outbox sent 30 d / failed 90 d; connection_runs 30 d or last 1 000; webhook_events, magic_links, oidc_flows, expired sessions 7 d; wallet_logs 7 d; audit_log 1 y.

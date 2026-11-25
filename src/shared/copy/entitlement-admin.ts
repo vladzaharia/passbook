@@ -1,12 +1,5 @@
 import type { EntitlementImpact, ImpactKind } from '../entitlement-impact.ts';
 
-/** One line per preset on the Features tab. A preset the registry does not know shows its label alone. */
-export const PRESET_NOTE: Record<string, string> = {
-  legacy: 'Everything on, no limits.',
-  trial: 'Small limits. Wallets, print and apps off.',
-  standard: 'Fair-use limits. Quiet PassBook mark.',
-};
-
 /** `{n}` is the count of features the change moves in that way. */
 export const IMPACT_LABEL: Record<ImpactKind, (n: number) => string> = {
   off: (n) => `${n} ${n === 1 ? 'turns' : 'turn'} off`,

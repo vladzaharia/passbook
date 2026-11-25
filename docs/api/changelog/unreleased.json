@@ -600,12 +600,12 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
-    "key": "GET /api/v1/orgs 200.items[].plan: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/orgs 200.items[].plan: field added",
+    "class": "additive",
     "operationId": "orgs.getOrgs",
     "op": "GET /api/v1/orgs",
-    "change": "200.items[].plan: field removed",
-    "note": ""
+    "change": "200.items[].plan: field added",
+    "note": "plan names the organization's plan (preset and label); platform directory responses only, null when it has no features row."
   },
   {
     "key": "GET /api/v1/orgs/{id} 200.personal: field added",
@@ -624,12 +624,12 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
-    "key": "GET /api/v1/orgs/{id} 200.plan: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/orgs/{id} 200.plan: field added",
+    "class": "additive",
     "operationId": "orgs.getOrgsById",
     "op": "GET /api/v1/orgs/{id}",
-    "change": "200.plan: field removed",
-    "note": ""
+    "change": "200.plan: field added",
+    "note": "plan names the organization's plan (preset and label); platform directory responses only, null when it has no features row."
   },
   {
     "key": "GET /api/v1/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -648,12 +648,12 @@
     "note": "Change runs per day: its own plan cap, apart from broadcasts per day."
   },
   {
-    "key": "GET /api/v1/orgs/{id}/entitlements 200.usage: field removed",
-    "class": "breaking",
+    "key": "GET /api/v1/orgs/{id}/entitlements 200.usage: field added",
+    "class": "additive",
     "operationId": "entitlements.getOrgsByIdEntitlements",
     "op": "GET /api/v1/orgs/{id}/entitlements",
-    "change": "200.usage: field removed",
-    "note": ""
+    "change": "200.usage: field added",
+    "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
   },
   {
     "key": "GET /api/v1/orgs/{id}/workspace 200.kind: field added",
@@ -824,12 +824,12 @@
     "note": "Lists recorded Apple provisioning calls."
   },
   {
-    "key": "GET /api/v1/platform/entitlement-presets operation removed",
-    "class": "breaking",
+    "key": "GET /api/v1/platform/entitlement-presets new operation",
+    "class": "additive",
     "operationId": "entitlements.getPlatformEntitlementPresets",
     "op": "GET /api/v1/platform/entitlement-presets",
-    "change": "operation removed",
-    "note": ""
+    "change": "new operation",
+    "note": "Platform admins list every preset with its values, revision, organization count and pendingOrgs."
   },
   {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
@@ -1278,6 +1278,14 @@
     "op": "PATCH /api/v1/brand",
     "change": "200.personal: field added",
     "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "PATCH /api/v1/brand request.mark: refusal",
+    "class": "additive",
+    "operationId": "brand.patchBrand",
+    "op": "PATCH /api/v1/brand",
+    "change": "request.mark: refusal",
+    "note": "small and none are refused with BRAND_MARK_NOT_ALLOWED (403) when the plan does not allow them. markAllowed follows the plan."
   },
   {
     "key": "PATCH /api/v1/broadcasts/{id} 200.message: field added",
@@ -2493,20 +2501,20 @@
     "note": "addMe (default true) makes the creating admin an org_admin of the new org, with the invitation and membership written in the create batch."
   },
   {
-    "key": "POST /api/v1/orgs body.preset: enum value \"premium\" removed",
-    "class": "breaking",
+    "key": "POST /api/v1/orgs body.preset: enum value \"premium\" added",
+    "class": "additive",
     "operationId": "orgs.postOrgs",
     "op": "POST /api/v1/orgs",
-    "change": "body.preset: enum value \"premium\" removed",
-    "note": ""
+    "change": "body.preset: enum value \"premium\" added",
+    "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
   },
   {
-    "key": "POST /api/v1/orgs body.preset: enum value \"starter\" removed",
-    "class": "breaking",
+    "key": "POST /api/v1/orgs body.preset: enum value \"starter\" added",
+    "class": "additive",
     "operationId": "orgs.postOrgs",
     "op": "POST /api/v1/orgs",
-    "change": "body.preset: enum value \"starter\" removed",
-    "note": ""
+    "change": "body.preset: enum value \"starter\" added",
+    "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
   },
   {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
@@ -2525,12 +2533,12 @@
     "note": "Organizations carry personal: true for a personal org; platform views add personalOwner."
   },
   {
-    "key": "POST /api/v1/orgs/{id}/status 200.plan: field removed",
-    "class": "breaking",
+    "key": "POST /api/v1/orgs/{id}/status 200.plan: field added",
+    "class": "additive",
     "operationId": "orgs.postOrgsByIdStatus",
     "op": "POST /api/v1/orgs/{id}/status",
-    "change": "200.plan: field removed",
-    "note": ""
+    "change": "200.plan: field added",
+    "note": "plan names the organization's plan (preset and label); platform directory responses only, null when it has no features row."
   },
   {
     "key": "POST /api/v1/orgs/{orgId}/brand-assets new operation",
@@ -3773,12 +3781,12 @@
     "note": "PUT /passes/views replaces the saved views (at most 20)."
   },
   {
-    "key": "PUT /api/v1/platform/entitlement-presets operation removed",
-    "class": "breaking",
+    "key": "PUT /api/v1/platform/entitlement-presets new operation",
+    "class": "additive",
     "operationId": "entitlements.putPlatformEntitlementPresets",
     "op": "PUT /api/v1/platform/entitlement-presets",
-    "change": "operation removed",
-    "note": ""
+    "change": "new operation",
+    "note": "Platform admins change a preset; its organizations move 50 per call (repeat with no values to continue)."
   },
   {
     "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
