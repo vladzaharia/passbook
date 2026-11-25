@@ -355,7 +355,7 @@ describe('reset: completeness and resume', () => {
   it('the reopen window is in the write: a window that ended after the read refuses the reopen', async () => {
     const d = await t.developer();
     expect(
-      (await t.call('/developer/sandbox', { method: 'DELETE', headers: d.browser })).status,
+      (await t.call('/developer/sandbox/close', { method: 'POST', headers: d.browser })).status,
     ).toBe(200);
     // The service read saw an open window; by the write it has passed.
     await run(db(), 'UPDATE orgs SET purge_after = ? WHERE id = ?', [

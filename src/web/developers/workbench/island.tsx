@@ -37,7 +37,7 @@ export async function syncChip(home: DeveloperHome): Promise<void> {
             templateId: home.sandbox.templateId,
           },
         }
-      : { kind: 'closed', csrf: session.csrf },
+      : { kind: 'closed', csrf: session.csrf, siteKey },
   );
 }
 

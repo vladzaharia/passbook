@@ -33,7 +33,7 @@ describe('the keys page without keys to list', () => {
   });
 
   it('says the keys stopped for a closed sandbox', async () => {
-    await open({ kind: 'closed', csrf: 'c' });
+    await open({ kind: 'closed', csrf: 'c', siteKey: '' });
     expect(await screen.findByRole('heading', { level: 1, name: KEYS_COPY.title })).toBeTruthy();
     expect(screen.getByText(KEYS_COPY.closed)).toBeTruthy();
   });

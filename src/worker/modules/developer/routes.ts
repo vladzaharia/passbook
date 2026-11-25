@@ -19,6 +19,7 @@ import { clientIp, enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { verifyTurnstile } from '../auth/turnstile.ts';
+import { deleteOwnSandbox, recreateSandbox } from './delete.ts';
 import { developerHome } from './home.ts';
 import { reopenOwnSandbox, resetSandbox } from './reset.ts';
 import { developerLogRoutes } from './routes-logs.ts';
@@ -137,10 +138,10 @@ register(
   developerRoutes,
   'developer',
   {
-    method: 'delete',
-    path: '/sandbox',
+    method: 'post',
+    path: '/sandbox/close',
     summary: 'Close your developer sandbox: its keys stop and it goes read-only',
-    operationId: 'developer.deleteSandbox',
+    operationId: 'developer.postSandboxClose',
     auth: { human: true, signIn: 'strict', developer: true },
     response: DeveloperSandboxSchema,
   },
@@ -148,6 +149,63 @@ register(
     const auth = c.var.auth;
     if (auth?.kind !== 'session') throw new UnauthenticatedError();
     return c.json(await closeOwnSandbox(serviceContext(c), auth));
+  },
+);
+
+register(
+  developerRoutes,
+  'developer',
+  {
+    method: 'delete',
+    path: '/sandbox',
+    summary:
+      'Delete your developer sandbox, open or closed: keys, passes, webhooks, logs and templates go, and you can make a new one. Three a day.',
+    operationId: 'developer.deleteSandbox',
+    auth: { human: true, signIn: 'strict', developer: true },
+    status: 204,
+  },
+  async (c) => {
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    await deleteOwnSandbox(serviceContext(c), auth);
+    return new Response(null, { status: 204 });
+  },
+);
+
+register(
+  developerRoutes,
+  'developer',
+  {
+    method: 'post',
+    path: '/sandbox/recreate',
+    summary:
+      'Start over from nothing: delete your sandbox and make a new one, with a new key shown once. Counts as a delete.',
+    operationId: 'developer.postSandboxRecreate',
+    auth: { human: true, signIn: 'strict', developer: true },
+    body: CreateDeveloperSandboxSchema,
+    status: 201,
+    response: CreatedDeveloperSandboxSchema,
+  },
+  async (c) => {
+    const ctx = serviceContext(c);
+    const auth = c.var.auth;
+    if (auth?.kind !== 'session') throw new UnauthenticatedError();
+    await enforceRateLimit(c.env, 'RL_REFRESH', `RL_REFRESH:developer-sandbox:${auth.userId}`);
+    const input = c.req.valid('json');
+    if (
+      !(await verifyTurnstile(
+        c.env,
+        input.turnstileToken,
+        clientIp(c),
+        ctx.log,
+        fetch,
+        TURNSTILE_SANDBOX_ACTION,
+      ))
+    ) {
+      ctx.log.warn('developer.turnstile_failed', { code: 'TURNSTILE_FAILED' });
+      throw new ForbiddenError('Verification failed. Try again.', 'TURNSTILE_FAILED');
+    }
+    return c.json(await recreateSandbox(ctx, auth, { viewedAt: input.viewedAt }), 201);
   },
 );
 

@@ -154,8 +154,8 @@ test('first pass in 5 minutes: sign in, curl from the runner, listener, PATCH, c
   // Closed, the workbench offers Reopen inside its window, and Reopen gives a replacement key.
   const closed = await page.evaluate(async () => {
     const who = (await (await fetch('/api/v1/session')).json()) as { csrfToken: string };
-    const res = await fetch('/api/v1/developer/sandbox', {
-      method: 'DELETE',
+    const res = await fetch('/api/v1/developer/sandbox/close', {
+      method: 'POST',
       headers: { accept: 'application/json', 'x-csrf-token': who.csrfToken },
     });
     return res.status;

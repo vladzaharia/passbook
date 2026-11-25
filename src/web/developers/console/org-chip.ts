@@ -69,23 +69,47 @@ function clockFor(chip: HTMLElement): void {
 function chipFor(session: Session): HTMLElement | null {
   // A sandbox that did not read says nothing here: the page shows the error and Retry.
   if (session.kind === 'out' || session.kind === 'failed') return null;
-  const chip = el('a', 'orgchip');
-  chip.href = PATHS.reference;
   if (session.kind !== 'ready') {
-    chip.className = 'btn outline sm';
-    chip.textContent = session.kind === 'closed' ? 'Sandbox closed' : 'Create sandbox';
-    return chip;
+    const button = el('a', 'btn outline sm');
+    button.href = `${PATHS.quickstart}#sandbox`;
+    button.textContent = session.kind === 'closed' ? 'Sandbox closed' : 'Create sandbox';
+    return button;
   }
   const name = session.sandbox.orgSlug;
+  // The chip opens a small menu: the sandbox, and the two ways to begin again (the quickstart confirms them).
+  const chip = el('details', 'orgchip');
   chip.title = 'Your test sandbox';
-  chip.append(
+  const head = el('summary', 'orgchip-head');
+  head.setAttribute('aria-label', 'Sandbox menu');
+  head.append(
     el('span', 'orgchip-dot', (name[0] ?? 's').toUpperCase()),
     el('span', 'orgchip-name', name),
   );
-  clockFor(chip);
+  clockFor(head);
   const meter = budgetMeter();
-  chip.append(meter.node);
+  head.append(meter.node);
   subscribe(meter.paint);
+  const menu = el('div', 'orgchip-menu');
+  const items: [string, string][] = [
+    ['Quickstart', `${PATHS.quickstart}#sandbox`],
+    ['Start over', `${PATHS.quickstart}#start-over`],
+    ['Delete sandbox', `${PATHS.quickstart}#delete-sandbox`],
+  ];
+  for (const [label, href] of items) {
+    const link = el('a', 'orgchip-item', label);
+    link.href = href;
+    menu.append(link);
+  }
+  chip.append(head, menu);
+  const dismiss = (e: Event) => {
+    if (!chip.isConnected) {
+      document.removeEventListener('click', dismiss);
+      document.removeEventListener('keydown', dismiss);
+    } else if (e instanceof KeyboardEvent ? e.key === 'Escape' : !chip.contains(e.target as Node))
+      chip.open = false;
+  };
+  document.addEventListener('click', dismiss);
+  document.addEventListener('keydown', dismiss);
   return chip;
 }
 

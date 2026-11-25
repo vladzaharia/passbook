@@ -261,7 +261,7 @@ describe('header chip after Reset or Reopen', () => {
     const { onSession, loadSession: load } = await import('../console/session.ts');
     const { onClock } = await import('../console/run-clock.ts');
     const { syncChip } = await import('./island.tsx');
-    updateSession({ kind: 'closed', csrf: 'c' });
+    updateSession({ kind: 'closed', csrf: 'c', siteKey: '' });
     const kinds: string[] = [];
     const stop = onSession((s) => kinds.push(s.kind));
     let clock: unknown = 'unset';

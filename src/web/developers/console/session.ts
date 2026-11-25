@@ -13,7 +13,8 @@ export interface Sandbox {
 export type Session =
   | { kind: 'out' }
   | { kind: 'none'; csrf: string; siteKey: string }
-  | { kind: 'closed'; csrf: string }
+  /** `siteKey`: the check Start over runs. */
+  | { kind: 'closed'; csrf: string; siteKey: string }
   /** The sandbox could not be read (a server error): not the same as having none. */
   | { kind: 'failed'; csrf: string }
   /** `siteKey`: the check that finishes a sandbox's setup again (the quickstart's repair). */
@@ -66,7 +67,12 @@ async function read(): Promise<Session> {
       csrf,
       siteKey: typeof body.turnstileSiteKey === 'string' ? body.turnstileSiteKey : '',
     };
-  if (box.closedAt) return { kind: 'closed', csrf };
+  if (box.closedAt)
+    return {
+      kind: 'closed',
+      csrf,
+      siteKey: typeof body.turnstileSiteKey === 'string' ? body.turnstileSiteKey : '',
+    };
   return {
     kind: 'ready',
     csrf,
