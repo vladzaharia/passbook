@@ -711,6 +711,45 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"developerInvitations.list", "GET", "/api/v1/orgs/id1/developer-invitations", false,
+		"", `{"items":[{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"state":"pending","createdAt":0,"expiresAt":0,"revokedAt":0}],"nextCursor":null}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.DeveloperInvitations.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"developerInvitations.create", "POST", "/api/v1/orgs/id1/developer-invitations", false,
+		`{"email":"x"}`, `{"id":"x","orgId":"x","email":"x","roles":["org_admin"],"state":"pending","createdAt":0,"expiresAt":0,"revokedAt":0}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b DeveloperInvitationsCreateBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.DeveloperInvitations.Create(ctx, "id1", &b)
+		},
+	},
+	{
+		"developerInvitations.revoke", "DELETE", "/api/v1/orgs/id1/developer-invitations/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.DeveloperInvitations.Revoke(ctx, "id1", "id2")
+		},
+	},
+	{
+		"developers.list", "GET", "/api/v1/orgs/id1/developers", false,
+		"", `{"items":[{"userId":"x","name":"x","email":"x","since":0,"roles":["org_admin"]}],"nextCursor":null,"available":false,"limit":0}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Developers.List(ctx, "id1", nil).All(ctx)
+		},
+	},
+	{
+		"developers.remove", "DELETE", "/api/v1/orgs/id1/developers/id2", false,
+		"", `{"ok":true}`,
+		func(ctx context.Context, c *Client, _ []byte) (any, error) {
+			return c.Developers.Remove(ctx, "id1", "id2")
+		},
+	},
+	{
 		"orgs.entitlements.retrieve", "GET", "/api/v1/orgs/id1/entitlements", false,
 		"", `{"orgId":"x","preset":"x","label":"x","items":[{"key":"api","value":0,"source":"preset"}],"usage":{}}`,
 		func(ctx context.Context, c *Client, _ []byte) (any, error) {

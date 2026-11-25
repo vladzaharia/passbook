@@ -1053,6 +1053,53 @@
   "developer get /sandbox": [
     "UNAUTHENTICATED"
   ],
+  "developer invitations delete /{id}/developer-invitations/{invitationId}": [
+    "DEVELOPER_INVITE_CONFLICT",
+    "FORBIDDEN",
+    "NOT_FOUND",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
+  "developer invitations delete /{id}/developers/{userId}": [
+    "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
+    "FORBIDDEN",
+    "LAST_ORG_ADMIN",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
+  "developer invitations get /{id}/developer-invitations": [
+    "FORBIDDEN",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
+  "developer invitations get /{id}/developers": [
+    "FORBIDDEN",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_REFUSED",
+    "ORG_FORBIDDEN",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
+  "developer invitations post /{id}/developer-invitations": [
+    "DEVELOPER_INVITE_PENDING",
+    "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
+    "FORBIDDEN",
+    "IDEMPOTENCY_IN_PROGRESS",
+    "IDEMPOTENCY_KEY_INVALID",
+    "IDEMPOTENCY_KEY_REUSED",
+    "IDP_BUDGET",
+    "IDP_CONFLICT",
+    "IDP_REFUSED",
+    "ORG_FORBIDDEN",
+    "ORG_PERSONAL_SINGLE_MEMBER",
+    "ORG_TEST_ONLY",
+    "UNAUTHENTICATED",
+    "VALIDATION"
+  ],
   "developer post /beacon": [
     "UNAUTHENTICATED"
   ],

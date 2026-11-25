@@ -868,6 +868,63 @@ class NfcResource:
         self.tag_types = NfcTagTypesResource(core)
 
 
+class DeveloperInvitationsResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def create(
+        self,
+        id: str,
+        body: m.DeveloperInvitationsCreateBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.DeveloperInvitationsCreateResult:
+        """Invite a developer `POST /api/v1/orgs/{id}/developer-invitations`"""
+        return self._core.request("POST", f"/api/v1/orgs/{_p(id)}/developer-invitations", body=body, result=m.DeveloperInvitationsCreateResult, **opts)
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.DeveloperInvitationsListItem]:
+        """List developer invitations `GET /api/v1/orgs/{id}/developer-invitations`"""
+        return self._core.paginate("GET", f"/api/v1/orgs/{_p(id)}/developer-invitations", query={"cursor": cursor}, result=m.DeveloperInvitationsListResult, cursor_param="cursor", **opts)
+
+    def revoke(
+        self,
+        id: str,
+        invitation_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.DeveloperInvitationsRevokeResult:
+        """Revoke a developer invitation `DELETE /api/v1/orgs/{id}/developer-invitations/{invitationId}`"""
+        return self._core.request("DELETE", f"/api/v1/orgs/{_p(id)}/developer-invitations/{_p(invitation_id)}", result=m.DeveloperInvitationsRevokeResult, **opts)
+
+
+class DevelopersResource:
+    def __init__(self, core: Core) -> None:
+        self._core = core
+
+    def list(
+        self,
+        id: str,
+        *,
+        cursor: str | None = None,
+        **opts: _Unpack[RequestOptions],
+    ) -> Page[m.DevelopersListItem]:
+        """List the developers an organization vouches for `GET /api/v1/orgs/{id}/developers`"""
+        return self._core.paginate("GET", f"/api/v1/orgs/{_p(id)}/developers", query={"cursor": cursor}, result=m.DevelopersListResult, cursor_param="cursor", **opts)
+
+    def remove(
+        self,
+        id: str,
+        user_id: str,
+        **opts: _Unpack[RequestOptions],
+    ) -> m.DevelopersRemoveResult:
+        """Remove a developer `DELETE /api/v1/orgs/{id}/developers/{userId}`"""
+        return self._core.request("DELETE", f"/api/v1/orgs/{_p(id)}/developers/{_p(user_id)}", result=m.DevelopersRemoveResult, **opts)
+
+
 class OrgsEntitlementsResource:
     def __init__(self, core: Core) -> None:
         self._core = core
@@ -2656,6 +2713,8 @@ class Resources:
         self.holders = HoldersResource(core)
         self.message_rules = MessageRulesResource(core)
         self.nfc = NfcResource(core)
+        self.developer_invitations = DeveloperInvitationsResource(core)
+        self.developers = DevelopersResource(core)
         self.orgs = OrgsResource(core)
         self.pass_imports = PassImportsResource(core)
         self.passes = PassesResource(core)

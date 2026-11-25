@@ -209,7 +209,8 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
         blocked: groupsApi.blockedTargets(),
         groups: {
           console: 'passbook_console',
-          developer: 'passbook_developers',
+          developer:
+            options.developerGroup === undefined ? 'passbook_developers' : options.developerGroup,
           users: 'passbook_users',
         },
         layout: 'v2',
@@ -288,4 +289,9 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
   };
   idp.binding = idp;
   return idp;
+}
+
+/** Gives a test env the `IDP` binding, backed by the fake. */
+export function installFakeIdp(env: object, idp: FakeIdp): void {
+  Object.assign(env, { IDP: idp.binding });
 }

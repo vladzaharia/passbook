@@ -56,6 +56,8 @@ export interface FakeIdpOptions {
   adopt?: Record<string, string>;
   /** `CLAIM_KEYS`: exact claim keys outside `passbook_*`. */
   claimKeys?: string[];
+  /** The developer group's live name `health()` reports; sign-in reads `OIDC_DEVELOPER_GROUP`. */
+  developerGroup?: string | null;
   /** `CUSTOM_GROUP_LIMIT`. */
   customLimit?: number;
 }

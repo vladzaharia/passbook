@@ -63,7 +63,7 @@ const adminFenceOf = (ctx: ServiceContext, auth: SessionAuth): repo.AdminFence =
  * The grant re-checks the principal inside the write; the capability is re-derived from the membership's
  * own roles.
  */
-async function managerOf(
+export async function managerOf(
   ctx: ServiceContext,
   auth: SessionAuth,
   orgId: string,

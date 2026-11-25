@@ -80,6 +80,22 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
+    "key": "DELETE /api/v1/orgs/{id}/developer-invitations/{invitationId} new operation",
+    "class": "additive",
+    "operationId": "developer-invitations.deleteOrgsByIdDeveloperInvitationsByInvitationId",
+    "op": "DELETE /api/v1/orgs/{id}/developer-invitations/{invitationId}",
+    "change": "new operation",
+    "note": "Developer invitations: invite, list and revoke by organization (members:manage, or a Live key naming members:write), and list and remove developers."
+  },
+  {
+    "key": "DELETE /api/v1/orgs/{id}/developers/{userId} new operation",
+    "class": "additive",
+    "operationId": "developer-invitations.deleteOrgsByIdDevelopersByUserId",
+    "op": "DELETE /api/v1/orgs/{id}/developers/{userId}",
+    "change": "new operation",
+    "note": "Developer invitations: invite, list and revoke by organization (members:manage, or a Live key naming members:write), and list and remove developers."
+  },
+  {
     "key": "DELETE /api/v1/pass-imports/mappings new operation",
     "class": "additive",
     "operationId": "pass-imports.deletePassImportsMappings",
@@ -640,12 +656,36 @@
     "note": "plan names the organization's plan (preset and label); platform directory responses only, null when it has no features row."
   },
   {
+    "key": "GET /api/v1/orgs/{id}/developer-invitations new operation",
+    "class": "additive",
+    "operationId": "developer-invitations.getOrgsByIdDeveloperInvitations",
+    "op": "GET /api/v1/orgs/{id}/developer-invitations",
+    "change": "new operation",
+    "note": "Developer invitations: invite, list and revoke by organization (members:manage, or a Live key naming members:write), and list and remove developers."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/developers new operation",
+    "class": "additive",
+    "operationId": "developer-invitations.getOrgsByIdDevelopers",
+    "op": "GET /api/v1/orgs/{id}/developers",
+    "change": "new operation",
+    "note": "Developer invitations: invite, list and revoke by organization (members:manage, or a Live key naming members:write), and list and remove developers."
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/entitlements 200.items[].key: enum value \"identity.managed\" added",
     "class": "notable",
     "operationId": "entitlements.getOrgsByIdEntitlements",
     "op": "GET /api/v1/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"identity.managed\" added",
     "note": "New entitlement identity.managed gates managed Apple identities."
+  },
+  {
+    "key": "GET /api/v1/orgs/{id}/entitlements 200.items[].key: enum value \"members.developers\" added",
+    "class": "notable",
+    "operationId": "entitlements.getOrgsByIdEntitlements",
+    "op": "GET /api/v1/orgs/{id}/entitlements",
+    "change": "200.items[].key: enum value \"members.developers\" added",
+    "note": "The members.developers limit caps developers and pending developer invitations per organization."
   },
   {
     "key": "GET /api/v1/orgs/{id}/entitlements 200.items[].key: enum value \"passes.changesPerDay\" added",
@@ -870,6 +910,14 @@
     "op": "GET /api/v1/platform/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"identity.managed\" added",
     "note": "New entitlement identity.managed gates managed Apple identities."
+  },
+  {
+    "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"members.developers\" added",
+    "class": "notable",
+    "operationId": "entitlements.getPlatformOrgsByIdEntitlements",
+    "op": "GET /api/v1/platform/orgs/{id}/entitlements",
+    "change": "200.items[].key: enum value \"members.developers\" added",
+    "note": "The members.developers limit caps developers and pending developer invitations per organization."
   },
   {
     "key": "GET /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"passes.changesPerDay\" added",
@@ -1727,6 +1775,22 @@
     "note": "A Live key is refused templates:review and templates:publish, named or through a role; they work with Test keys only, and a Live role key leaves them out."
   },
   {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"members:read\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"members:read\" added",
+    "note": "members:read and members:write can be named on a key. members:write is a credential scope: Live, one organization, at most 90 days, never through a role."
+  },
+  {
+    "key": "POST /api/v1/api-keys body.scopes[]: enum value \"members:write\" added",
+    "class": "additive",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "body.scopes[]: enum value \"members:write\" added",
+    "note": "members:read and members:write can be named on a key. members:write is a credential scope: Live, one organization, at most 90 days, never through a role."
+  },
+  {
     "key": "POST /api/v1/api-keys error code API_KEY_SCANNING_ADMIN_LIVE_ORG renamed",
     "class": "notable",
     "operationId": "api-keys.postApiKeys",
@@ -2555,6 +2619,22 @@
     "op": "POST /api/v1/orgs",
     "change": "body.preset: enum value \"starter\" added",
     "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/developer-invitations 403.code: DEVELOPER_INVITE_ROLE_NEEDS_SESSION added",
+    "class": "additive",
+    "operationId": "developer-invitations.postOrgsByIdDeveloperInvitations",
+    "op": "POST /api/v1/orgs/{id}/developer-invitations",
+    "change": "403.code: DEVELOPER_INVITE_ROLE_NEEDS_SESSION added",
+    "note": "A key cannot invite a developer with an org_admin or integration_admin role, or remove one who holds it; use the console."
+  },
+  {
+    "key": "POST /api/v1/orgs/{id}/developer-invitations new operation",
+    "class": "additive",
+    "operationId": "developer-invitations.postOrgsByIdDeveloperInvitations",
+    "op": "POST /api/v1/orgs/{id}/developer-invitations",
+    "change": "new operation",
+    "note": "Developer invitations: invite, list and revoke by organization (members:manage, or a Live key naming members:write), and list and remove developers."
   },
   {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
@@ -3907,6 +3987,14 @@
     "op": "PUT /api/v1/platform/orgs/{id}/entitlements",
     "change": "200.items[].key: enum value \"identity.managed\" added",
     "note": "New entitlement identity.managed gates managed Apple identities."
+  },
+  {
+    "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"members.developers\" added",
+    "class": "notable",
+    "operationId": "entitlements.putPlatformOrgsByIdEntitlements",
+    "op": "PUT /api/v1/platform/orgs/{id}/entitlements",
+    "change": "200.items[].key: enum value \"members.developers\" added",
+    "note": "The members.developers limit caps developers and pending developer invitations per organization."
   },
   {
     "key": "PUT /api/v1/platform/orgs/{id}/entitlements 200.items[].key: enum value \"passes.changesPerDay\" added",

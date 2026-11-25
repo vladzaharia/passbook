@@ -293,6 +293,22 @@ __all__ = [
     "DeliveriesListResponse",
     "DeliveriesListResponseItemsItem",
     "DeliveriesListResult",
+    "DeveloperInvitationsCreateBody",
+    "DeveloperInvitationsCreateParams",
+    "DeveloperInvitationsCreateResponse",
+    "DeveloperInvitationsCreateResult",
+    "DeveloperInvitationsListItem",
+    "DeveloperInvitationsListResponse",
+    "DeveloperInvitationsListResponseItemsItem",
+    "DeveloperInvitationsListResult",
+    "DeveloperInvitationsRevokeResponse",
+    "DeveloperInvitationsRevokeResult",
+    "DevelopersListItem",
+    "DevelopersListResponse",
+    "DevelopersListResponseItemsItem",
+    "DevelopersListResult",
+    "DevelopersRemoveResponse",
+    "DevelopersRemoveResult",
     "EmailFailedEvent",
     "EmailFailedEventData",
     "EventPage",
@@ -2079,7 +2095,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "api-keys:write", "audit:read"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "api-keys:write", "audit:read", "members:read", "members:write"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -3598,6 +3614,70 @@ class DeliveriesListResponseItemsItem(_Model):
     errorCode: str | None
     createdAt: int
     finishedAt: int | None
+
+class DeveloperInvitationsCreateParams(_Model):
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
+
+class DeveloperInvitationsCreateResponse(_Model):
+    id: str
+    orgId: str
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    state: _Literal["pending", "revoked", "expired"] | str
+    createdAt: int
+    expiresAt: int
+    revokedAt: int | None
+
+class DeveloperInvitationsListItem(_Model):
+    id: str
+    orgId: str
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    state: _Literal["pending", "revoked", "expired"] | str
+    createdAt: int
+    expiresAt: int
+    revokedAt: int | None
+
+class DeveloperInvitationsListResponse(_Model):
+    items: _List[DeveloperInvitationsListResponseItemsItem]
+    nextCursor: str | None
+
+class DeveloperInvitationsListResponseItemsItem(_Model):
+    id: str
+    orgId: str
+    email: str
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str]
+    state: _Literal["pending", "revoked", "expired"] | str
+    createdAt: int
+    expiresAt: int
+    revokedAt: int | None
+
+class DeveloperInvitationsRevokeResponse(_Model):
+    ok: _Literal[True]
+
+class DevelopersListItem(_Model):
+    userId: str
+    name: str | None
+    email: str | None
+    since: int
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None
+
+class DevelopersListResponse(_Model):
+    items: _List[DevelopersListResponseItemsItem]
+    nextCursor: str | None
+    available: bool
+    limit: int | None
+
+class DevelopersListResponseItemsItem(_Model):
+    userId: str
+    name: str | None
+    email: str | None
+    since: int
+    roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None
+
+class DevelopersRemoveResponse(_Model):
+    ok: _Literal[True]
 
 class EmailFailedEvent(_Model):
     id: str
@@ -5739,7 +5819,7 @@ class OrgsEntitlementsRetrieveResponse(_Model):
     usage: _Dict[str, int]
 
 class OrgsEntitlementsRetrieveResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     value: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
 
@@ -8363,7 +8443,7 @@ class PlatformOrgsEntitlementsRetrieveResponse(_Model):
     presets: _List[PlatformOrgsEntitlementsRetrieveResponsePresetsItem]
 
 class PlatformOrgsEntitlementsRetrieveResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     value: float | str | _List[str] | None
     presetValue: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
@@ -8396,7 +8476,7 @@ class PlatformOrgsEntitlementsUpdateResponse(_Model):
     presets: _List[PlatformOrgsEntitlementsUpdateResponsePresetsItem]
 
 class PlatformOrgsEntitlementsUpdateResponseItemsItem(_Model):
-    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
+    key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "members.developers", "brand.mark", "domains", "identity.own", "identity.managed"] | str
     value: float | str | _List[str] | None
     presetValue: float | str | _List[str] | None
     source: _Literal["preset", "override"] | str
@@ -13654,6 +13734,18 @@ ConnectorsListResult = ConnectorsListResponse
 ConnectorsRetrieveResult = ConnectorsRetrieveResponse
 
 DeliveriesListResult = DeliveriesListResponse
+
+DeveloperInvitationsCreateBody = DeveloperInvitationsCreateParams
+
+DeveloperInvitationsCreateResult = DeveloperInvitationsCreateResponse
+
+DeveloperInvitationsListResult = DeveloperInvitationsListResponse
+
+DeveloperInvitationsRevokeResult = DeveloperInvitationsRevokeResponse
+
+DevelopersListResult = DevelopersListResponse
+
+DevelopersRemoveResult = DevelopersRemoveResponse
 
 EventsListResult = EventPage
 
