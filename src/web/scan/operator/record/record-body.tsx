@@ -33,7 +33,7 @@ export interface PersonPanels {
 
 export interface PickerDesk {
   picker: Draft | null;
-  onAmount: (value: number) => void;
+  onAmount: (value: number | null) => void;
   onValue: (value: unknown) => void;
   onConfirm: () => void;
   onCancel: () => void;

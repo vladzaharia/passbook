@@ -7,8 +7,8 @@ import type { ScanApi } from './api/scan-api.ts';
 import { ScanAppView, type ScanAppViewProps } from './app.tsx';
 import type { ShownDirection } from './machine/direction-view.ts';
 import { initialState } from './machine/initial-state.ts';
-import { moodOf, viewOf } from './machine/present.ts';
-import type { ScanStore } from './machine/store.ts';
+import { moodOf } from './machine/present.ts';
+import { staticStore } from './machine/static-store.ts';
 import type { Recent, ScanOutcome } from './machine/types.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { OperatorPanel } from './operator/operator-panel.tsx';
@@ -30,16 +30,7 @@ const STRIP: StripEntry = { kind: 'ok', title: 'Taylor Chen', meta: '6:42 PM', u
 function useStaticStore(recent: Recent[], at: number) {
   const [store] = useState(() => {
     const state = { ...initialState(at), recent };
-    const snapshot = { state, view: viewOf(state), now: at };
-    return {
-      getSnapshot: () => snapshot,
-      subscribe: () => () => undefined,
-      dispatch: () => undefined,
-      checkIn: () => undefined,
-      configure: () => true,
-      retryUnsure: () => undefined,
-      dispose: () => undefined,
-    } as ScanStore;
+    return staticStore(state, at);
   });
   return store;
 }

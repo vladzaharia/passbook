@@ -1,13 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { ScanLiveMessageSchema, type ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
+import { type Drafts, nextDrafts, settledDrafts } from './customer-draft.ts';
 import { mergePlaces } from './monitor-model.ts';
 
 /** The live socket (polling while it is down): recent rows, counts, a welcome line. */
+/** How long a cancelled ready card is remembered: the ring keeps a row this long. */
+const LIVE_ROW_TTL_MS = 15 * 60_000;
+
 export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) {
   const [rows, setRows] = useState<ScanLiveRow[]>([]);
+  /** The rows as the socket handler sees them: a late draft is checked against them. */
+  const known = useRef<ScanLiveRow[]>([]);
+  known.current = rows;
   const [places, setPlaces] = useState<ScanPlaceRev[]>([]);
+  const [drafts, setDrafts] = useState<Drafts>(new Map());
   const [welcome, setWelcome] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -24,7 +32,10 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
     let socket: WebSocket | null = null;
     let retry: ReturnType<typeof setTimeout> | undefined;
     let cursor: string | null = null;
+    /** Ready cards a cancel dropped, by when: a later snapshot must not bring them back. */
+    const cancelled = new Map<string, number>();
     const reset = () => {
+      setDrafts(new Map());
       setRows([]);
       setPlaces([]);
     };
@@ -38,9 +49,23 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
         void refetch();
         return;
       }
-      if ('resolved' in parsed.data || 'enroll' in parsed.data || 'draft' in parsed.data) return;
+      if ('draft' in parsed.data) {
+        const message = parsed.data.draft;
+        const at = Date.now();
+        // A draft-only cancel (`keep`) leaves the ready card up, and a re-pick draws over it.
+        if ('cancelled' in message && !message.keep) {
+          for (const [ref, when] of cancelled)
+            if (at - when > LIVE_ROW_TTL_MS) cancelled.delete(ref);
+          cancelled.set(message.ref, at);
+          setRows((previous) => previous.filter((row) => row.id !== message.ref));
+        }
+        setDrafts((previous) => settledDrafts(nextDrafts(previous, message, at), known.current));
+        return;
+      }
+      if ('resolved' in parsed.data || 'enroll' in parsed.data) return;
       const snapshot = parsed.data;
       cursor = snapshot.cursor;
+      setDrafts((previous) => settledDrafts(previous, snapshot.rows));
       if (snapshot.welcome !== undefined) setWelcome(snapshot.welcome);
       setPlaces((previous) =>
         mergePlaces(
@@ -49,7 +74,12 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
         ),
       );
       setRows((previous) => {
-        const merged = new Map([...previous, ...snapshot.rows].map((row) => [row.id, row]));
+        const merged = new Map(
+          [...previous, ...snapshot.rows.filter((row) => !cancelled.has(row.id))].map((row) => [
+            row.id,
+            row,
+          ]),
+        );
         return [...merged.values()]
           .sort((a, b) => b.at - a.at || b.id.localeCompare(a.id))
           .slice(0, 100);
@@ -114,5 +144,5 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
       socket?.close();
     };
   }, [refetch, scope]);
-  return { rows, places, welcome, connected, now, setNow };
+  return { rows, places, drafts, welcome, connected, now, setNow };
 }

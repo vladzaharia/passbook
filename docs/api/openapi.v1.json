@@ -13440,6 +13440,11 @@
             },
             "maxItems": 16
           },
+          "draftFailures": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
           "surfaces": {
             "type": "array",
             "items": {
@@ -121842,6 +121847,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -122279,6 +122285,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -122800,6 +122807,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -123174,6 +123182,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -123560,6 +123569,7 @@
                               "state": "active"
                             }
                           ],
+                          "draftFailures": 1,
                           "surfaces": [
                             "phone"
                           ],
@@ -127194,6 +127204,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -127503,7 +127514,7 @@
         ]
       },
       "delete": {
-        "summary": "Clear the draft and the ready card on the customer screen",
+        "summary": "Clear the draft, and the ready card unless keep=ready",
         "tags": [
           "scan"
         ],
@@ -127515,6 +127526,17 @@
             },
             "required": true,
             "name": "ref",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ready"
+              ]
+            },
+            "required": false,
+            "name": "keep",
             "in": "query"
           }
         ],
@@ -131069,6 +131091,7 @@
                           "state": "active"
                         }
                       ],
+                      "draftFailures": 1,
                       "surfaces": [
                         "phone"
                       ],
@@ -135749,6 +135772,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136027,6 +136051,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136292,6 +136317,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136583,6 +136609,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136805,6 +136832,7 @@
                         "state": "active"
                       }
                     ],
+                    "draftFailures": 1,
                     "surfaces": [
                       "phone"
                     ],
@@ -137020,6 +137048,7 @@
                         "state": "active"
                       }
                     ],
+                    "draftFailures": 1,
                     "surfaces": [
                       "phone"
                     ],

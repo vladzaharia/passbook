@@ -272,6 +272,8 @@ describe('createScanApi', () => {
         'addPhoto',
         'deleteNote',
         'devices',
+        'draftClear',
+        'draftPut',
         'editNote',
         'reportDevice',
         'batch',
@@ -312,6 +314,24 @@ describe('createScanApi', () => {
         'visitors',
       ].sort(),
     );
+  });
+
+  it('puts and clears a draft', async () => {
+    const { api, calls } = setup(() => json({ screens: 1 }));
+    const ref = '01900000-0000-7000-8000-000000000001';
+    await api.draftPut({ ref, actionId: 'charge', amount: 12 });
+    await api.draftClear(ref, false);
+    await api.draftClear(ref, true);
+    expect(calls.map((c) => [c.init.method, c.url])).toEqual([
+      ['PUT', '/api/v1/scan/draft'],
+      ['DELETE', `/api/v1/scan/draft?ref=${ref}`],
+      ['DELETE', `/api/v1/scan/draft?ref=${ref}&keep=ready`],
+    ]);
+    expect(JSON.parse(calls[0]?.init.body as string)).toEqual({
+      ref,
+      actionId: 'charge',
+      amount: 12,
+    });
   });
 
   describe('tags', () => {

@@ -119,14 +119,19 @@ export async function putDraft(ctx: ServiceContext, actor: ScanActor, req: ScanD
 }
 
 /** Clear the draft and the ready card: the desk cancelled the read. */
-export async function deleteDraft(ctx: ServiceContext, actor: ScanActor, ref: string) {
+export async function deleteDraft(
+  ctx: ServiceContext,
+  actor: ScanActor,
+  query: { ref: string; keep?: 'ready' | undefined },
+) {
   const { scannerId, orgId, mode } = drafter(actor);
-  const readyId = await liveReadyId(scannerId, ref);
+  const readyId = await liveReadyId(scannerId, query.ref);
   const now = ctx.clock.now();
+  const keep = query.keep ? { keep: query.keep } : {};
   const screens = await told(
     ctx,
     orgId,
-    () => scanHub(ctx, orgId, mode).clearDraft({ orgId, mode, readyId, scannerId, now }),
+    () => scanHub(ctx, orgId, mode).clearDraft({ orgId, mode, readyId, scannerId, now, ...keep }),
     0,
   );
   return { screens: screens ?? 0 };

@@ -8366,6 +8366,7 @@ export type ScanDeviceCapabilities = {
     connected: boolean | null;
     state: "ready" | "active" | "off" | "needs-permission" | "unavailable" | "error";
   }>;
+  draftFailures?: number;
   surfaces: Array<"phone" | "operator" | "desk" | "customer">;
   preferred: "phone" | "operator" | "desk" | "customer";
 } | null;
