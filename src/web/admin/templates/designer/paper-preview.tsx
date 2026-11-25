@@ -17,6 +17,7 @@ import type { PassJson, TemplateManifest } from '@/passkit/types.ts';
 import { TemplateChannelsResponseSchema } from '@/shared/contracts/channels.ts';
 import { channelReason } from '@/shared/copy/channels.ts';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
+import { FitBox } from '../../../channel-previews/fit-box.tsx';
 import { api } from '../../../lib/api.ts';
 import { PAPER_CSS } from '../../../paper/css.ts';
 import { drawPaperCode, type PaperDrawing } from '../../../paper/drawing.ts';
@@ -101,6 +102,7 @@ export function PaperPreview({
   assetBase = '',
   onEdit,
   testBand,
+  fitHeight,
 }: {
   passJson: Record<string, unknown> | null | undefined;
   manifest: Record<string, unknown>;
@@ -115,6 +117,8 @@ export function PaperPreview({
   onEdit?: ((patch: PaperPatch) => void) | undefined;
   /** A sandbox pass: the TEST PREVIEW band on every page. */
   testBand?: boolean | undefined;
+  /** Draws the page whole, scaled to the room and at most this tall (px), instead of by its size's width. */
+  fitHeight?: number | undefined;
 }) {
   const inlineCss = usePaperCss();
   const channels = useTemplatePaper(templateId, orgId);
@@ -159,6 +163,18 @@ export function PaperPreview({
     };
   }, [assets, urls, content?.art]);
 
+  const ticket = (c: NonNullable<typeof content>, d: PaperDrawing | undefined) => (
+    <PaperTicket
+      content={c}
+      design={design}
+      code={SAMPLE_CODE}
+      mark={mark}
+      drawing={d}
+      assets={files}
+      testBand={testBand}
+    />
+  );
+
   return (
     <div className="flex w-full flex-col items-center gap-3" data-testid="designer-paper">
       {inlineCss ? <style>{PAPER_CSS}</style> : null}
@@ -198,19 +214,15 @@ export function PaperPreview({
             onCheckedChange={(on) => setGrey(on === true)}
           />
           <div
-            className={`w-full ${WIDTH[picked]}`}
+            className={fitHeight ? 'w-full' : `w-full ${WIDTH[picked]}`}
             style={grey ? { filter: 'grayscale(1)' } : undefined}
           >
             {content && drawing !== null ? (
-              <PaperTicket
-                content={content}
-                design={design}
-                code={SAMPLE_CODE}
-                mark={mark}
-                drawing={drawing}
-                assets={files}
-                testBand={testBand}
-              />
+              fitHeight ? (
+                <FitBox maxHeight={fitHeight}>{ticket(content, drawing)}</FitBox>
+              ) : (
+                ticket(content, drawing)
+              )
             ) : passJson && content === null ? (
               <p role="alert" className="text-sm text-danger">
                 This ticket cannot be previewed. See the issues.

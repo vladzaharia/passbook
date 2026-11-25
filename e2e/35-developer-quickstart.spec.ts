@@ -91,7 +91,8 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   await expect(preview.getByText(/Rendered in/)).toBeVisible();
   // A sandbox pass is a preview on every channel, and says so.
   await expect(
-    preview.getByRole('note').filter({ hasText: 'TEST PREVIEW · NOT INSTALLABLE' }),
+    // Each face of the card carries the band.
+    preview.getByRole('note').filter({ hasText: 'TEST PREVIEW · NOT INSTALLABLE' }).first(),
   ).toBeVisible();
   await expect(preview.getByRole('link', { name: /\/preview\// })).toBeVisible();
   await expect(preview.getByAltText('QR code of the test preview link')).toBeVisible();
