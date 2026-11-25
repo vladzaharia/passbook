@@ -234,7 +234,7 @@ describe('POST /access', () => {
 
   it('logs a sent request by purpose only', async () => {
     const { post } = await setup();
-    const out = await logged(() => post(VALID, { json: true }));
+    const out = await logged(async () => post(VALID, { json: true }));
     const line = out.split('\n').find((l) => l.includes('marketing.access_sent')) ?? '';
     expect(JSON.parse(line)).toMatchObject({
       code: 'ACCESS_SENT',
