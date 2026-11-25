@@ -1,20 +1,19 @@
-import { useId, useState } from 'react';
+import { useState } from 'react';
 import type {
   TemplateRelease,
   TemplateReleaseScope,
 } from '@/shared/contracts/template-releases.ts';
-import { errorMessage } from '../../../lib/errors.ts';
+import { UserMessageError } from '../../../lib/errors.ts';
 import {
-  Button,
   Callout,
-  Dialog,
-  DialogContent,
   ErrorState,
+  FormDialog,
   FormField,
   KeyValue,
   Skeleton,
   TechnicalDetails,
   Textarea,
+  useFormErrors,
 } from '../../../ui/index.ts';
 import { useReleasePlan } from './flow-api.ts';
 import { PlanSummary } from './plan-summary.tsx';
@@ -45,58 +44,48 @@ export function ReleaseDialog({
   onClose: () => void;
   onConfirm: (operation: ReleaseOperation, reason: string) => Promise<void>;
 }) {
-  const formId = useId();
   const [reason, setReason] = useState('');
-  const [error, setError] = useState<string>();
+  const check = useFormErrors(reason.trim() ? {} : { reason: 'Give a reason.' });
   const stale = operation.generation !== currentGeneration;
   const version = operation.release.version;
   const plan = useReleasePlan(templateId, scope.orgId, version, [scope.mode]);
   const people = [{ label: 'Published by', value: operation.release.createdByName ?? UNKNOWN }];
 
   async function submit() {
-    setError(undefined);
-    try {
-      await onConfirm(operation, reason.trim());
-      onClose();
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
+    if (!available || stale) throw new UserMessageError('Nothing was restored.');
+    await onConfirm(operation, reason.trim());
+    onClose();
   }
 
   return (
-    <Dialog
+    <FormDialog
       open
+      onOpenChange={(open) => !open && onClose()}
+      title={`Restore ${versionShort(versions, version)}`}
       dirty={Boolean(reason.trim())}
-      onOpenChange={(open) => {
-        if (!open && !busy) onClose();
-      }}
-    >
-      <DialogContent
-        title={`Restore ${versionShort(versions, version)}`}
-        footer={
+      check={check}
+      onSubmit={submit}
+      submitLabel="Restore"
+      busy={busy}
+      notice={
+        stale || !available ? (
           <>
-            <Button variant="outline" disabled={busy} onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              form={formId}
-              loading={busy}
-              disabled={!available || stale || !reason.trim()}
-            >
-              Restore
-            </Button>
+            {stale ? (
+              <Callout tone="danger">
+                The release history changed. Close this dialog and review it again.
+              </Callout>
+            ) : null}
+            {!available ? (
+              <Callout tone="danger">
+                You can no longer publish here. Close this dialog and check your access.
+              </Callout>
+            ) : null}
           </>
-        }
-      >
-        <form
-          id={formId}
-          className="grid gap-4"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (available && !stale && !busy && reason.trim()) void submit();
-          }}
-        >
+        ) : null
+      }
+    >
+      {({ errors, clear }) => (
+        <>
           <KeyValue
             items={[{ label: 'Version', value: versionShort(versions, version) }, ...people]}
           />
@@ -115,17 +104,21 @@ export function ReleaseDialog({
               <Skeleton className="h-16 w-full" />
             </div>
           )}
-
-          <FormField label="Reason" required help="Recorded in the audit log.">
+          <FormField
+            label="Reason"
+            required
+            error={check.errors.reason ?? errors.reason}
+            help="Recorded in the audit log."
+          >
             {(control) => (
               <Textarea
                 {...control}
-                required
+                data-autofocus
                 maxLength={500}
                 value={reason}
                 onChange={(event) => {
                   setReason(event.target.value);
-                  setError(undefined);
+                  clear('reason');
                 }}
               />
             )}
@@ -139,19 +132,8 @@ export function ReleaseDialog({
               { label: 'New generation', value: operation.generation + 1 },
             ]}
           />
-          {stale ? (
-            <Callout tone="danger">
-              The release history changed. Close this dialog and review it again.
-            </Callout>
-          ) : null}
-          {!available ? (
-            <Callout tone="danger">
-              You can no longer publish here. Close this dialog and check your access.
-            </Callout>
-          ) : null}
-          {error ? <Callout tone="danger">{error}</Callout> : null}
-        </form>
-      </DialogContent>
-    </Dialog>
+        </>
+      )}
+    </FormDialog>
   );
 }

@@ -108,6 +108,20 @@ describe('rollout card', () => {
     expect(screen.getByText(/6 passes are still updating/)).toBeInTheDocument();
   });
 
+  it('blocks an empty message with its error instead of a disabled button', async () => {
+    stubFetch({
+      '/api/v1/templates/t1/rollout': () => json(rollout()),
+      '/api/v1/broadcasts/preview': () =>
+        json({ targeted: 4, onDevice: 3, overBudget: 0, limit: 5 }),
+    });
+    mount();
+    await userEvent.click(await screen.findByRole('button', { name: 'Tell holders' }));
+    const field = await screen.findByRole('textbox', { name: /Notify on the lock screen/ });
+    await userEvent.clear(field);
+    await userEvent.click(await screen.findByRole('button', { name: 'Tell 4 holders' }));
+    expect(await screen.findByText('Write a message.')).toBeInTheDocument();
+  });
+
   it('renders nothing once every pass is on the release and holders were told', async () => {
     stubFetch({
       '/api/v1/templates/t1/rollout': () =>
