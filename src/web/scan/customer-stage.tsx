@@ -78,7 +78,6 @@ export function CustomerStage({
           <h1
             className="cstage-draft"
             data-testid="customer-draft"
-            aria-label={`${amount.label} ${amount.value}`.trim()}
             aria-atomic="true"
             {...(leaving ? { 'data-leaving': '' } : {})}
           >
@@ -87,6 +86,7 @@ export function CustomerStage({
                 {amount.label}{' '}
               </span>
             ) : null}
+            <span className="sr-only">{`${amount.label} ${amount.value}`.trim()}</span>
             <span className="cstage-draft-figure" aria-hidden="true">
               {figureSlots(amount.value).map(({ char, slot }) => (
                 <span key={`${slot}-${char}`} className="cstage-digit">

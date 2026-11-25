@@ -8,10 +8,11 @@ import {
 } from './customer-draft.ts';
 
 const view = { band: { headline: 'To pay', sub: null }, figure: '$12.00' } as never;
-const say = (ref: string, at: number, scannerId = 's1') => ({
+const say = (ref: string, at: number, scannerId = 's1', readyAt = at - 100) => ({
   ref,
   at,
   scannerId,
+  readyAt,
   customer: view,
 });
 
@@ -34,20 +35,29 @@ describe('customer draft', () => {
     expect(nextDrafts(a, say('s', 21_001), 21_001).has('r')).toBe(false);
   });
 
-  it('shows the newest fresh draft, for its card or over anything older', () => {
-    const a = nextDrafts(new Map(), say('r', 1000), 1000);
-    expect(shownDraft(a, { id: 'r', at: 900 }, 1500)?.ref).toBe('r');
+  it('shows the newest fresh draft over its card, an idle screen or an older result', () => {
+    const a = nextDrafts(new Map(), say('r', 1000, 's1', 900), 1000);
+    expect(shownDraft(a, { id: 'r', at: 900, kind: 'ready' }, 1500)?.ref).toBe('r');
     expect(shownDraft(a, undefined, 1500)?.ref).toBe('r');
-    expect(shownDraft(a, { id: 'x', at: 800 }, 1500)?.ref).toBe('r');
-    expect(shownDraft(a, { id: 'x', at: 1200 }, 1500)).toBeNull();
-    expect(shownDraft(a, { id: 'r', at: 900 }, 1000 + 20_000)).toBeNull();
+    expect(shownDraft(a, { id: 'x', at: 800, kind: 'ok' }, 1500)?.ref).toBe('r');
+    expect(shownDraft(a, { id: 'r', at: 900, kind: 'ready' }, 1000 + 20_000)).toBeNull();
   });
 
-  it("a desk's result ends its drafts, and no other desk's", () => {
+  it('never shows over a newer result, even for a draft that is newer than it', () => {
+    // The draft was sent after the receipt landed, but for a read that began before it.
+    const a = nextDrafts(new Map(), say('r', 2000, 's1', 1000), 2000);
+    expect(shownDraft(a, { id: 'ok', at: 1500, kind: 'ok' }, 2100)).toBeNull();
+    // Nor over another desk's ready card.
+    expect(shownDraft(a, { id: 'other', at: 500, kind: 'ready' }, 2100)).toBeNull();
+  });
+
+  it("a later row from the desk ends its draft: a result, or the next read's ready card", () => {
     const a = nextDrafts(nextDrafts(new Map(), say('r', 1000), 1000), say('t', 1000, 's2'), 1000);
-    const after = settledDrafts(a, [{ kind: 'ok', scannerId: 's1', at: 1500 }]);
-    expect([...after.keys()]).toEqual(['t']);
-    expect(settledDrafts(a, [{ kind: 'ready', scannerId: 's1', at: 1500 }])).toBe(a);
+    const row = (id: string, scannerId: string, at: number) => ({ id, scannerId, at });
+    expect([...settledDrafts(a, [row('ok', 's1', 1500)]).keys()]).toEqual(['t']);
+    expect([...settledDrafts(a, [row('r2', 's1', 1500)]).keys()]).toEqual(['t']);
+    // Its own ready card does not end it, nor does an older row.
+    expect(settledDrafts(a, [row('r', 's1', 900), row('old', 's1', 800)])).toBe(a);
   });
 
   it('drops a ready card that a later result of the same scanner replaced', () => {

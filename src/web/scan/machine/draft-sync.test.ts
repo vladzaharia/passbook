@@ -235,6 +235,34 @@ describe('draft sync', () => {
     expect(d.clears).toHaveLength(2);
   });
 
+  it('sends a re-pick that waited behind a clear once the clear has gone', async () => {
+    const d = await desk({ manual: true });
+    open(d);
+    d.clock.advance(300);
+    d.store.dispatch({ type: 'cancel' });
+    open(d);
+    d.clock.advance(300);
+    expect(d.puts).toHaveLength(1);
+    d.puts[0]?.settle();
+    await flush();
+    await flush();
+    expect(d.clears).toHaveLength(2);
+    expect(d.puts).toHaveLength(2);
+  });
+
+  it('re-arms the 15 s resend when the call lands, and when the timer finds one on the wire', async () => {
+    const d = await desk({ manual: true });
+    open(d);
+    d.clock.advance(300);
+    d.clock.advance(15_000);
+    expect(d.puts).toHaveLength(1);
+    d.puts[0]?.settle();
+    await flush();
+    d.clock.advance(15_000);
+    await flush();
+    expect(d.puts).toHaveLength(2);
+  });
+
   it('drafts only a single currency value with an amount to choose', async () => {
     const stamps = await desk({ outcome: { values: [{ ...money[0], format: 'number' }] } });
     open(stamps);

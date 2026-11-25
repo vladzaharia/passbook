@@ -32,6 +32,8 @@ export const ScanLiveDraftSchema = z.union([
     at: TimestampSchema,
     /** The desk that drafted: a later result from it ends the draft. Rows already carry it. */
     scannerId: IdSchema,
+    /** The ready card's own time: any later row from that desk ends this draft. */
+    readyAt: TimestampSchema,
     customer: ScanCustomerViewSchema,
   }),
   z.strictObject({

@@ -43,12 +43,14 @@ export async function draftToScreens(
   if (!entry || !own) return say ? null : 0;
   if (say && (!entry.row.presented || now - entry.row.at > DRAFT_WINDOW_MS || !entry.row.passId))
     return null;
-  // A result of this scanner after the ready card closed that read: a late draft must not show over it.
+  // Any newer row from this scanner (a result, or the next read's ready card) means this read is over.
   if (
     say &&
     ring.some(
       (r) =>
-        r.row.scannerId === input.scannerId && r.row.kind !== 'ready' && r.row.at >= entry.row.at,
+        r.row.scannerId === input.scannerId &&
+        r.row.id !== entry.row.id &&
+        r.row.at >= entry.row.at,
     )
   )
     return null;
@@ -84,6 +86,7 @@ export async function draftToScreens(
           ref: entry.row.id,
           at: now,
           scannerId: entry.row.scannerId,
+          readyAt: entry.row.at,
           customer: { ...draftView(recipient, entry, say), at: now },
         };
       }

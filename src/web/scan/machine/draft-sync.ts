@@ -84,7 +84,9 @@ export function createDraftSync(deps: ScanDeps, health: DraftHealth = draftHealt
     resend = stop(resend);
     resend = deps.clock.setTimeout(() => {
       resend = null;
-      if (shown && !inflight) {
+      if (!shown) return;
+      if (inflight) armResend();
+      else {
         pending = shown;
         send();
       }
@@ -99,14 +101,15 @@ export function createDraftSync(deps: ScanDeps, health: DraftHealth = draftHealt
     pending = null;
     inflight = true;
     shown = w;
-    armResend();
-    void counted(port.put(w, { signal: gone.signal })).then(() => {
+    void counted(port.put(w, { signal: gone.signal })).then(async () => {
       inflight = false;
       if (clearAfter) {
         const c = clearAfter;
         clearAfter = null;
-        void counted(port.clear(c.ref, c.keep, { signal: gone.signal }));
+        await counted(port.clear(c.ref, c.keep, { signal: gone.signal }));
+        if (pending) send();
       } else if (pending) send();
+      else if (shown) armResend();
     });
   }
 

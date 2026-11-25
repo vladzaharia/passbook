@@ -203,4 +203,20 @@ describe('a draft over a ready card', () => {
     expect(await hub().draft({ ...c.input, say })).toBeNull();
     for (const s of [c.screen, c.monitor]) s.close();
   });
+
+  it("is stale once the same desk's next read has a ready card, but not for another desk", async () => {
+    const c = await counter('Draft next read');
+    const entry = await c.ready();
+    expect(await hub().draft({ ...c.input, say })).toBe(1);
+    const next = await f.withSourceProof({
+      ...f.row(c.source.id),
+      id: key(),
+      kind: 'ready',
+      passId: c.pass.id,
+      at: entry.row.at + 500,
+    });
+    expect(await hub().publish({ orgId: f.kit.org.id, mode: 'live', row: next })).toBe(true);
+    expect(await hub().draft({ ...c.input, say })).toBeNull();
+    for (const s of [c.screen, c.monitor]) s.close();
+  });
 });

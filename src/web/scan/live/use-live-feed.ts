@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { ScanLiveMessageSchema, type ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
@@ -11,6 +11,9 @@ const LIVE_ROW_TTL_MS = 15 * 60_000;
 
 export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) {
   const [rows, setRows] = useState<ScanLiveRow[]>([]);
+  /** The rows as the socket handler sees them: a late draft is checked against them. */
+  const known = useRef<ScanLiveRow[]>([]);
+  known.current = rows;
   const [places, setPlaces] = useState<ScanPlaceRev[]>([]);
   const [drafts, setDrafts] = useState<Drafts>(new Map());
   const [welcome, setWelcome] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
           cancelled.set(message.ref, at);
           setRows((previous) => previous.filter((row) => row.id !== message.ref));
         }
-        setDrafts((previous) => nextDrafts(previous, message, at));
+        setDrafts((previous) => settledDrafts(nextDrafts(previous, message, at), known.current));
         return;
       }
       if ('resolved' in parsed.data || 'enroll' in parsed.data) return;

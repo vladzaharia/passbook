@@ -62,11 +62,18 @@ const ready = (id = READY): ScanLiveRow => ({
   customer: view('ready', 'Hi, Sam', null),
 });
 
-const draft = (ref: string, at: number, figure = '$12.00') => ({
+const draft = (
+  ref: string,
+  at: number,
+  figure = '$12.00',
+  scannerId = READY,
+  readyAt = at - 1,
+) => ({
   draft: {
     ref,
     at,
-    scannerId: READY,
+    scannerId,
+    readyAt,
     customer: view('review', 'To pay', 'Balance after: $30.50', figure),
   },
 });
@@ -105,7 +112,9 @@ describe('customer screen draft', () => {
     act(() => socket.say({ cursor: READY, rows: [ready()] }));
     act(() => socket.say(draft(READY, Date.now())));
     expect(getByTestId('customer-draft')).toHaveTextContent('To pay $12.00');
-    expect(getByTestId('customer-draft')).toHaveAttribute('aria-label', 'To pay $12.00');
+    expect(getByTestId('customer-draft').querySelector('.sr-only')).toHaveTextContent(
+      'To pay $12.00',
+    );
     expect(hero).toHaveTextContent('Balance after: $30.50');
     expect(hero).toHaveTextContent('Hi, Sam');
     expect(hero?.querySelector('[data-buddy]')).toHaveAttribute('data-scene', 'inspect');
@@ -154,6 +163,30 @@ describe('customer screen draft', () => {
     act(() => socket.say({ cursor: OTHER, rows: [receipt] }));
     act(() => socket.say({ draft: { ref: OTHER, at: Date.now() + 1_100, cancelled: true } }));
     await waitFor(() => expect(queryByTestId('customer-draft')).toBeNull());
+  });
+
+  it('a late draft for the first pass never shows over the next read of the same desk', async () => {
+    const { socket, queryByTestId, hero } = screen();
+    const first = ready(READY);
+    act(() => socket.say({ cursor: READY, rows: [first] }));
+    act(() => socket.say(draft(READY, first.at + 1, '$12.00', READY, first.at)));
+    const second = { ...ready(OTHER), at: first.at + 50 };
+    act(() => socket.say({ cursor: OTHER, rows: [second] }));
+    await waitFor(() => expect(queryByTestId('customer-draft')).toBeNull());
+    act(() => socket.say(draft(READY, first.at + 100, '$12.00', READY, first.at)));
+    expect(queryByTestId('customer-draft')).toBeNull();
+    expect(hero).toHaveTextContent('Hi, Sam');
+  });
+
+  it("one desk's re-send does not cover another desk's card, and each keeps its draft", () => {
+    const { socket, getByTestId, queryByTestId } = screen();
+    const a = ready(READY);
+    const b = { ...ready(OTHER), scannerId: OTHER, at: a.at + 10 };
+    act(() => socket.say({ cursor: OTHER, rows: [a, b] }));
+    act(() => socket.say(draft(READY, a.at + 20, '$12.00', READY, a.at)));
+    expect(queryByTestId('customer-draft')).toBeNull();
+    act(() => socket.say(draft(OTHER, a.at + 30, '$3.00', OTHER, b.at)));
+    expect(getByTestId('customer-draft')).toHaveTextContent('$3.00');
   });
 
   it('a draft-only cancel keeps the ready card, and a re-pick shows again', async () => {

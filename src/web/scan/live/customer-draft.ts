@@ -9,6 +9,8 @@ export interface CustomerDraft {
   ref: string;
   at: number;
   scannerId: string;
+  /** The ready card's time: a later row from the desk ends the draft. */
+  readyAt: number;
   view: ScanCustomerView;
 }
 
@@ -27,38 +29,46 @@ export function nextDrafts(previous: Drafts, message: ScanLiveDraft, now: number
       ref: message.ref,
       at: message.at,
       scannerId: message.scannerId,
+      readyAt: message.readyAt,
       view: message.customer,
     });
   return next;
 }
 
-/** A result of a desk ends its drafts: the read they were for is over, whatever the ready card did. */
+/** Any later row from the desk (a result, or the next read's ready card) ends its draft. */
 export function settledDrafts(
   drafts: Drafts,
-  rows: readonly Pick<ScanLiveRow, 'kind' | 'scannerId' | 'at'>[],
+  rows: readonly Pick<ScanLiveRow, 'id' | 'scannerId' | 'at'>[],
 ): Drafts {
-  const ended = rows.filter((row) => row.kind !== 'ready');
   const next = new Map(
     [...drafts].filter(
-      ([, d]) => !ended.some((row) => row.scannerId === d.scannerId && row.at >= d.at),
+      ([, d]) =>
+        !rows.some(
+          (row) => row.scannerId === d.scannerId && row.id !== d.ref && row.at >= d.readyAt,
+        ),
     ),
   );
   return next.size === drafts.size ? drafts : next;
 }
 
 /**
- * The draft that shows: the newest fresh one, over the ready card it belongs to, or over anything
- * older than it (an idle screen, or a session that hides the desk card). A later result wins.
+ * The draft that shows: the newest fresh one, over its own ready card, or over a row that is not a
+ * ready card and is older than the read (an idle screen, a session that hides the desk card).
  */
 export function shownDraft(
   drafts: Drafts,
-  latest: Pick<ScanLiveRow, 'id' | 'at'> | undefined,
+  latest: Pick<ScanLiveRow, 'id' | 'at' | 'kind'> | undefined,
   now: number,
 ): CustomerDraft | null {
   let best: CustomerDraft | null = null;
   for (const draft of drafts.values()) {
     if (now - draft.at >= DRAFT_HOLD_MS) continue;
-    if (latest && draft.ref !== latest.id && draft.at < latest.at) continue;
+    if (
+      latest &&
+      latest.id !== draft.ref &&
+      (latest.kind === 'ready' || latest.at >= draft.readyAt)
+    )
+      continue;
     if (!best || draft.at > best.at) best = draft;
   }
   return best;
