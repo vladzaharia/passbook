@@ -1096,6 +1096,15 @@
       ]
     },
     {
+      "code": "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
+      "statuses": [
+        403
+      ],
+      "modules": [
+        "dev-access"
+      ]
+    },
+    {
       "code": "DEVICE_INVALID",
       "statuses": [
         400

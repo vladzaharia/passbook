@@ -2597,6 +2597,14 @@
     "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
   },
   {
+    "key": "POST /api/v1/orgs/{id}/developer-invitations 403.code: DEVELOPER_INVITE_ROLE_NEEDS_SESSION added",
+    "class": "additive",
+    "operationId": "developer-invitations.postOrgsByIdDeveloperInvitations",
+    "op": "POST /api/v1/orgs/{id}/developer-invitations",
+    "change": "403.code: DEVELOPER_INVITE_ROLE_NEEDS_SESSION added",
+    "note": "A key cannot invite a developer with an org_admin or integration_admin role, or remove one who holds it; use the console."
+  },
+  {
     "key": "POST /api/v1/orgs/{id}/developer-invitations new operation",
     "class": "additive",
     "operationId": "developer-invitations.postOrgsByIdDeveloperInvitations",

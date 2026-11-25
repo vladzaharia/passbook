@@ -63,7 +63,7 @@ describe('POST /orgs/{id}/developer-invitations', () => {
     expect(h.mail).toHaveLength(1);
     const mail = h.mail[0];
     expect(mail?.subject).toMatch(/^Developer invitation from /);
-    expect(mail?.text).toMatch(/\/api\/v1\/developer\/invitations\/accept#[\w-]{43}/);
+    expect(mail?.text).toMatch(/\/invite#d_[\w-]{43}/);
     expect(mail?.text).not.toContain('id.test');
     const audit = await first<{ actor_type: string; detail: string }>(
       h.env.DB,
@@ -86,7 +86,7 @@ describe('POST /orgs/{id}/developer-invitations', () => {
       [dev?.org_invitation_id as string],
     );
     expect(paired).toEqual({ roles: '["read_only"]', email: 'dev@agency.test' });
-    const token = /accept#([\w-]{43})/.exec(h.mail[0]?.text ?? '')?.[1] ?? '';
+    const token = /invite#(d_[\w-]{43})/.exec(h.mail[0]?.text ?? '')?.[1] ?? '';
     expect(h.mail[0]?.text).toContain('You also join as a read-only member');
     expect((await invitationByHash(h.env.DB, await sha256Hex(token)))?.id).toBe(dev?.id);
   });
@@ -294,6 +294,68 @@ describe('a key', () => {
       403,
       'MISSING_SCOPE',
     );
+  });
+});
+
+describe('administering roles and races', () => {
+  it('refuses a key pairing an administering role, and takes a plain one', async () => {
+    const key = await liveKey(['members:write']);
+    for (const role of ['org_admin', 'integration_admin'])
+      await expectProblem(
+        await invite(key.headers, { email: `${role}@a.test`, roles: [role] }),
+        403,
+        'DEVELOPER_INVITE_ROLE_NEEDS_SESSION',
+      );
+    expect(await rows('developer_invitations')).toHaveLength(0);
+    expect(await rows('org_invitations')).toHaveLength(0);
+    expect((await invite(key.headers, { email: 'ok@a.test', roles: ['read_only'] })).status).toBe(
+      201,
+    );
+  });
+
+  it('refuses a key removing a developer whose membership administers', async () => {
+    const { session } = await member('org_admin');
+    const key = await liveKey(['members:write']);
+    const dev = await makeUser(f());
+    const made = (await (
+      await invite(session.headers, { email: 'adm@a.test', roles: ['org_admin'] })
+    ).json()) as { id: string };
+    const [row] = await rows('developer_invitations');
+    await run(
+      h.env.DB,
+      `INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at)
+       VALUES ('m-adm', ?, ?, ?, '["org_admin"]', 1)`,
+      [org.id, dev.id, row?.org_invitation_id as string],
+    );
+    await run(
+      h.env.DB,
+      `INSERT INTO developer_sponsors (id, org_id, user_id, invitation_id, idp_subject, group_source, created_at)
+       VALUES ('s-adm', ?, ?, ?, 'sub-adm', 'added', 1)`,
+      [org.id, dev.id, made.id],
+    );
+    await expectProblem(
+      await h.call(`/api/v1/orgs/${org.id}/developers/${dev.id}`, {
+        method: 'DELETE',
+        headers: key.headers,
+      }),
+      403,
+      'DEVELOPER_INVITE_ROLE_NEEDS_SESSION',
+    );
+    const live = await first<{ ended_at: number | null }>(
+      h.env.DB,
+      "SELECT ended_at FROM developer_sponsors WHERE id = 's-adm'",
+    );
+    expect(live?.ended_at).toBeNull();
+  });
+
+  it('lets only one of two racing invitations for an address through', async () => {
+    const key = await liveKey(['members:write']);
+    const results = await Promise.all([
+      invite(key.headers, { email: 'race@a.test' }),
+      invite(key.headers, { email: 'race@a.test' }),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
+    expect(await rows('developer_invitations')).toHaveLength(1);
   });
 });
 

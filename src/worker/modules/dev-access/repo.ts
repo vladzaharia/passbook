@@ -1,6 +1,6 @@
 import { grant } from '../../platform/authority.ts';
 import type { Check } from '../../platform/authority-checks.ts';
-import { exists } from '../../platform/authority-cond.ts';
+import { exists, tenantCheck } from '../../platform/authority-cond.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { all, first } from '../../platform/db.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -114,7 +114,19 @@ export async function insertDeveloperInvitation(
   row: NewDeveloperInvitation,
   audit: AuditEntry,
 ): Promise<void> {
-  const g = grant(ctx, { purpose: 'org.developer.invite', principal, checks, target: row.id });
+  const pending = tenantCheck(
+    'config',
+    `NOT EXISTS (SELECT 1 FROM developer_invitations p WHERE p.org_id = {org} AND p.email = ?
+       AND p.revoked_at IS NULL AND p.accepted_at IS NULL AND p.expires_at > ?)`,
+    [row.email, row.now],
+  );
+  const g = grant(ctx, {
+    purpose: 'org.developer.invite',
+    principal,
+    checks: [...checks, pending],
+    target: row.id,
+    codes: { config: 'DEVELOPER_INVITE_PENDING' },
+  });
   if (row.org)
     g.insertSelect(
       'org_invitations',

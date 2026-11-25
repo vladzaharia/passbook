@@ -1062,6 +1062,7 @@
     "UNAUTHENTICATED"
   ],
   "developer invitations delete /{id}/developers/{userId}": [
+    "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
     "FORBIDDEN",
     "LAST_ORG_ADMIN",
     "ORG_FORBIDDEN",
@@ -1085,6 +1086,7 @@
   ],
   "developer invitations post /{id}/developer-invitations": [
     "DEVELOPER_INVITE_PENDING",
+    "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
     "FORBIDDEN",
     "IDEMPOTENCY_IN_PROGRESS",
     "IDEMPOTENCY_KEY_INVALID",

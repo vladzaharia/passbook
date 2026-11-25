@@ -81088,6 +81088,7 @@
         },
         "x-codes": [
           "DEVELOPER_INVITE_PENDING",
+          "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -81463,6 +81464,7 @@
           "conditional": false
         },
         "x-codes": [
+          "DEVELOPER_INVITE_ROLE_NEEDS_SESSION",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",

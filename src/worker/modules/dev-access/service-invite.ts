@@ -4,15 +4,22 @@ import {
   InviteDeveloperSchema,
 } from '../../../shared/contracts/developer-invitations.ts';
 import { PERSONAL_ORG_COPY } from '../../../shared/copy/personal-org.ts';
+import {
+  DEVELOPER_INVITE_PATH,
+  DEVELOPER_INVITE_PREFIX,
+} from '../../../shared/developer-invite-link.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { baseUrl } from '../../platform/env.ts';
 import {
+  AppError,
   ConflictError,
+  ForbiddenError,
   NotFoundError,
   UnavailableError,
   ValidationError,
 } from '../../platform/errors.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
 import { assertNotPreviewOnly } from '../developer/fence.ts';
@@ -92,10 +99,15 @@ export async function inviteDeveloper(
   if (!parsed.success) throw new ValidationError();
   const { email } = parsed.data;
   const roles = parsed.data.roles ?? [];
+  if (actor.actorType === 'api_key' && roles.some((r) => ADMINISTERING_ROLES.includes(r)))
+    throw new ForbiddenError(
+      'Invite an org or integration admin from the console.',
+      'DEVELOPER_INVITE_ROLE_NEEDS_SESSION',
+    );
   await assertIdpReady(ctx);
   await checkDeveloperInviteAllowed(ctx, { actorId: actor.actorId, orgId, email });
   const now = ctx.clock.now();
-  const secret = ctx.ids.token(32);
+  const secret = `${DEVELOPER_INVITE_PREFIX}${ctx.ids.token(32)}`;
   const row = {
     id: ctx.ids.id(),
     email,
@@ -109,16 +121,26 @@ export async function inviteDeveloper(
       : null,
   };
   const checks = [...actor.checks, developersLimit(now), ...(row.org ? [membersLimit(now)] : [])];
-  await insertDeveloperInvitation(
-    ctx,
-    actor.principal,
-    checks,
-    row,
-    auditOf(actor, orgId, 'developer_invitation.create', 'developer_invitation', row.id, {
-      roles,
-      via: actor.via,
-    }),
-  );
+  try {
+    await insertDeveloperInvitation(
+      ctx,
+      actor.principal,
+      checks,
+      row,
+      auditOf(actor, orgId, 'developer_invitation.create', 'developer_invitation', row.id, {
+        roles,
+        via: actor.via,
+      }),
+    );
+  } catch (error) {
+    // Two invitations racing for one address: the grant's own check lets only one through.
+    if (error instanceof AppError && error.code === 'DEVELOPER_INVITE_PENDING')
+      throw new ConflictError(
+        'This address already has a pending developer invitation. Revoke it to send a new one.',
+        'DEVELOPER_INVITE_PENDING',
+      );
+    throw error;
+  }
   const org = await members.orgName(ctx.env.DB, orgId);
   await assertNotPreviewOnly(ctx.env.DB, orgId);
   try {
@@ -128,7 +150,7 @@ export async function inviteDeveloper(
         orgName: org?.name ?? 'an organization',
         roles,
         inviter: actor.userId ? await members.userName(ctx.env.DB, actor.userId) : null,
-        link: `${baseUrl(ctx.env)}/api/v1/developer/invitations/accept#${secret}`,
+        link: `${baseUrl(ctx.env)}${DEVELOPER_INVITE_PATH}#${secret}`,
         base: baseUrl(ctx.env),
       }),
     });

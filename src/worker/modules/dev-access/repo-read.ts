@@ -1,5 +1,6 @@
 import { all, first } from '../../platform/db.ts';
 import { knownEmailSql } from '../../platform/known-email-sql.ts';
+import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 
 export interface InvitationListRow {
   id: string;
@@ -58,3 +59,17 @@ export const pairedMembershipId = async (
       [invitationId, orgId, userId],
     )
   )?.id ?? null;
+
+/** The membership holds a role that administers the org (a key may not end it). */
+export const pairedAdministers = async (db: D1Database, membershipId: string): Promise<boolean> => {
+  const row = await first<{ roles: string }>(db, 'SELECT roles FROM org_memberships WHERE id = ?', [
+    membershipId,
+  ]);
+  try {
+    return (JSON.parse(row?.roles ?? '[]') as string[]).some((r) =>
+      (ADMINISTERING_ROLES as readonly string[]).includes(r),
+    );
+  } catch {
+    return true;
+  }
+};

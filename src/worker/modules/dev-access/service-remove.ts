@@ -1,12 +1,12 @@
 import type { DeveloperList } from '../../../shared/contracts/developer-invitations.ts';
 import type { AuthContext } from '../../platform/auth.ts';
-import { AppError, ConflictError } from '../../platform/errors.ts';
+import { AppError, ConflictError, ForbiddenError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { revokeActiveMembership } from '../orgs/repo-member-writes.ts';
 import { auditOf, devActorOf } from './authority.ts';
 import { developerLimit, idpReady } from './availability.ts';
 import { developerDto } from './dto.ts';
-import { orgDevelopers, pairedMembershipId } from './repo-read.ts';
+import { orgDevelopers, pairedAdministers, pairedMembershipId } from './repo-read.ts';
 import { endSponsor, liveSponsorOf } from './repo-sponsors.ts';
 
 export async function listDevelopers(
@@ -37,6 +37,11 @@ export async function removeDeveloper(
   if (!sponsor) return;
   const membershipId = await pairedMembershipId(ctx.env.DB, orgId, userId, sponsor.invitation_id);
   if (membershipId) {
+    if (actor.actorType === 'api_key' && (await pairedAdministers(ctx.env.DB, membershipId)))
+      throw new ForbiddenError(
+        'Remove an org or integration admin from the console.',
+        'DEVELOPER_INVITE_ROLE_NEEDS_SESSION',
+      );
     try {
       await revokeActiveMembership(
         ctx,

@@ -3646,5 +3646,11 @@
     "when": "The Polaris ID account or group changed while the request ran.",
     "fix": "Send the request again.",
     "retryable": true
+  },
+  "DEVELOPER_INVITE_ROLE_NEEDS_SESSION": {
+    "title": "Admin roles need the console",
+    "when": "A key invited a developer with, or removed one who holds, an org or integration admin role.",
+    "fix": "Do it from the console with a recent sign-in.",
+    "retryable": false
   }
 }
