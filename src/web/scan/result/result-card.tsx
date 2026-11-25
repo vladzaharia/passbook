@@ -64,7 +64,7 @@ export function ResultCard({
   /** The desk's value regions: the open picker, and a Manager's PIN for a `needs_approval` verdict. */
   desk?: {
     picker: Draft | null;
-    onAmount: (value: number) => void;
+    onAmount: (value: number | null) => void;
     onValue: (value: unknown) => void;
     onConfirm: () => void;
     onCancel: () => void;

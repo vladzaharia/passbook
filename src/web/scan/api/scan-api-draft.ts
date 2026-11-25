@@ -9,10 +9,10 @@ export function draftCalls(request: ScanRequest) {
   return {
     draftPut: (body: ScanDraftRequest, call?: Call) =>
       request('PUT', '/draft', ScanDraftResultSchema, body, call),
-    draftClear: (ref: string, call?: Call) =>
+    draftClear: (ref: string, keep: boolean, call?: Call) =>
       request(
         'DELETE',
-        `/draft?ref=${encodeURIComponent(ref)}`,
+        `/draft?ref=${encodeURIComponent(ref)}${keep ? '&keep=ready' : ''}`,
         ScanDraftResultSchema,
         undefined,
         call,

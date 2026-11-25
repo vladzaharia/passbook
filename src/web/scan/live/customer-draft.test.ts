@@ -1,26 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { liveDraft, nextDraft, reviewAmount, withoutReplacedReady } from './customer-draft.ts';
+import { nextDrafts, reviewAmount, shownDraft, withoutReplacedReady } from './customer-draft.ts';
 
 const view = { band: { headline: 'To pay', sub: null }, figure: '$12.00' } as never;
+const say = (ref: string, at: number) => ({ ref, at, customer: view });
 
 describe('customer draft', () => {
   it('reads the words and the figure from the view', () => {
     expect(reviewAmount(view)).toEqual({ label: 'To pay', value: '$12.00' });
     expect(reviewAmount({ band: { headline: 'Hello', sub: null } } as never)).toBeUndefined();
   });
-  it('the latest at wins and a cancel for the same ref clears', () => {
-    const a = nextDraft(null, { ref: 'r', at: 10, customer: view });
-    expect(nextDraft(a, { ref: 'r', at: 5, customer: view })).toBe(a);
-    expect(nextDraft(a, { ref: 'r', at: 11, cancelled: true })).toBeNull();
-    expect(nextDraft(a, { ref: 'other', at: 11, cancelled: true })).toBe(a);
+
+  it('keeps one draft per ref, the latest at wins, and a cancel drops only its own', () => {
+    const a = nextDrafts(new Map(), say('r', 10), 10);
+    const both = nextDrafts(a, say('s', 11), 11);
+    expect([...both.keys()]).toEqual(['r', 's']);
+    expect(nextDrafts(both, say('r', 5), 12).get('r')?.at).toBe(10);
+    expect([...nextDrafts(both, { ref: 'r', at: 12, cancelled: true }, 12).keys()]).toEqual(['s']);
   });
-  it('ignores a draft for another ref or older than 60 s', () => {
-    const a = nextDraft(null, { ref: 'r', at: 1000, customer: view });
-    expect(liveDraft(a, 'r', 1000 + 59_999)).toBe(a);
-    expect(liveDraft(a, 'r', 1000 + 60_000)).toBeNull();
-    expect(liveDraft(a, 'x', 1000)).toBeNull();
-    expect(liveDraft(a, undefined, 1000)).toBeNull();
+
+  it('prunes a draft past its hold', () => {
+    const a = nextDrafts(new Map(), say('r', 1000), 1000);
+    expect(nextDrafts(a, say('s', 21_001), 21_001).has('r')).toBe(false);
   });
+
+  it('shows the newest fresh draft, for its card or over anything older', () => {
+    const a = nextDrafts(new Map(), say('r', 1000), 1000);
+    expect(shownDraft(a, { id: 'r', at: 900 }, 1500)?.ref).toBe('r');
+    expect(shownDraft(a, undefined, 1500)?.ref).toBe('r');
+    expect(shownDraft(a, { id: 'x', at: 800 }, 1500)?.ref).toBe('r');
+    expect(shownDraft(a, { id: 'x', at: 1200 }, 1500)).toBeNull();
+    expect(shownDraft(a, { id: 'r', at: 900 }, 1000 + 20_000)).toBeNull();
+  });
+
   it('drops a ready card that a later result of the same scanner replaced', () => {
     const row = (id: string, kind: 'ready' | 'ok', at: number, scannerId = 's1') =>
       ({ id, kind, at, scannerId }) as never;

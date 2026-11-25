@@ -27,6 +27,7 @@ export function CustomerStage({
   logoUrl,
   title,
   amount,
+  leaving,
   eyebrow,
   hint,
   notice,
@@ -39,6 +40,8 @@ export function CustomerStage({
   title?: string;
   /** An amount under review: the words and the figure, which rolls when it changes. */
   amount?: { label: string; value: string };
+  /** The amount is fading out: the draft was cancelled. */
+  leaving?: boolean;
   eyebrow?: string;
   hint?: string;
   /** A short line for a connection problem, shown small at the bottom. */
@@ -72,9 +75,19 @@ export function CustomerStage({
         </span>
         <p className="cstage-eyebrow">{eyebrow || look.eyebrow}</p>
         {amount ? (
-          <h1 className="cstage-draft" data-testid="customer-draft">
-            {amount.label ? <span className="cstage-draft-label">{amount.label} </span> : null}
-            <span className="cstage-draft-figure">
+          <h1
+            className="cstage-draft"
+            data-testid="customer-draft"
+            aria-label={`${amount.label} ${amount.value}`.trim()}
+            aria-atomic="true"
+            {...(leaving ? { 'data-leaving': '' } : {})}
+          >
+            {amount.label ? (
+              <span className="cstage-draft-label" aria-hidden="true">
+                {amount.label}{' '}
+              </span>
+            ) : null}
+            <span className="cstage-draft-figure" aria-hidden="true">
               {figureSlots(amount.value).map(({ char, slot }) => (
                 <span key={`${slot}-${char}`} className="cstage-digit">
                   {char}

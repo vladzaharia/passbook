@@ -1,116 +1,294 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { draftHealth } from './draft-health.ts';
 import { fixtureCard, fixtureInput, fixtureOutcome, states } from './fixtures.test-support.ts';
 import { resetIds } from './reduce.test-support.ts';
 import { fakeClock, fakeDeps, flush } from './store.test-support.ts';
 import { createScanStore } from './store.ts';
 
-beforeEach(resetIds);
+beforeEach(() => {
+  resetIds();
+  draftHealth.reset();
+});
 
-const take = {
-  ...(fixtureCard().actions[1] as NonNullable<ReturnType<typeof fixtureCard>['actions'][number]>),
+type Action = ReturnType<typeof fixtureCard>['actions'][number];
+const base = fixtureCard().actions[1] as Action;
+const take: Action = {
+  ...base,
   id: 'take_money',
+  kind: 'take',
   available: true,
   lock: null,
   confirm: false,
   amount: { max: 100, presets: [10, 20], default: 12 },
 };
-const card = fixtureCard({ actions: [take as never, ...fixtureCard().actions.slice(0, 1)] });
+const money: Record<string, unknown>[] = [
+  {
+    input: 'balance',
+    label: 'Balance',
+    before: 42.5,
+    after: null,
+    goal: null,
+    format: 'currency',
+    currency: 'USD',
+  },
+];
+const card = (over = {}) => fixtureCard({ actions: [take], values: money as never, ...over });
 
-const keyOf = (api: { resolve: { mock: { calls: unknown[][] } } }): string =>
-  ((api.resolve.mock.calls[0]?.[0] ?? {}) as { idempotencyKey: string }).idempotencyKey;
+interface Deferred {
+  body: { ref: string; actionId: string; amount: number };
+  at: number;
+  settle: (screens?: number) => void;
+  fail: () => void;
+}
 
-async function desk(passId?: string) {
+/** A draft port whose calls the test settles itself. */
+function port(clock: ReturnType<typeof fakeClock>, manual = false) {
+  const puts: Deferred[] = [];
+  const clears: { ref: string; keep: boolean }[] = [];
+  return {
+    puts,
+    clears,
+    port: {
+      put: vi.fn((body: Deferred['body']) => {
+        return new Promise<{ screens: number }>((resolve, reject) => {
+          const call = {
+            body,
+            at: clock.now(),
+            settle: (screens = 1) => resolve({ screens }),
+            fail: () => reject(Object.assign(new Error('no'), { code: 'SCAN_DRAFT_STALE' })),
+          };
+          puts.push(call);
+          if (!manual) call.settle();
+        });
+      }),
+      clear: vi.fn(async (ref: string, keep: boolean) => {
+        clears.push({ ref, keep });
+        return { screens: 1 };
+      }),
+    },
+  };
+}
+
+async function desk(opts: { manual?: boolean; passId?: string; outcome?: object } = {}) {
   const clock = fakeClock();
   const fake = fakeDeps(clock);
-  const draft = {
-    put: vi.fn(async (_body: { ref: string; actionId: string; amount: number }, _o: unknown) => ({
-      screens: 1,
-    })),
-    clear: vi.fn(async (_ref: string, _o: unknown) => ({ screens: 1 })),
-  };
-  fake.api.resolve.mockResolvedValue(fixtureOutcome('ready', null, { card }));
-  const store = createScanStore({ ...fake.deps, draft }, { ...states.ready(), posture: 'desk' });
-  const input = fixtureInput({
-    code: 'AAAA1111',
-    sig: 'c:AAAA1111',
-    ...(passId ? { passId } : {}),
+  const draft = port(clock, opts.manual);
+  fake.api.resolve.mockResolvedValue(fixtureOutcome('ready', null, { card: card(opts.outcome) }));
+  const store = createScanStore(
+    { ...fake.deps, draft: draft.port },
+    { ...states.ready(), posture: 'desk' },
+  );
+  store.dispatch({
+    type: 'read',
+    input: fixtureInput({
+      code: 'AAAA1111',
+      sig: 'c:AAAA1111',
+      ...(opts.passId ? { passId: opts.passId } : {}),
+    }),
   });
-  store.dispatch({ type: 'read', input });
   await flush();
-  return { clock, store, draft, api: fake.api, input };
+  const resolveKey = (fake.api.resolve.mock.calls[0]?.[0] as { idempotencyKey: string })
+    .idempotencyKey;
+  return { clock, store, api: fake.api, ...draft, key: resolveKey };
 }
+
+const open = (d: Awaited<ReturnType<typeof desk>>) =>
+  d.store.dispatch({ type: 'pick', actionId: take.id });
 
 describe('draft sync', () => {
   it('sends the resolve key and the amount once the typing settles', async () => {
-    const { clock, store, draft, api } = await desk();
-    store.dispatch({ type: 'pick', actionId: take.id });
-    clock.advance(100);
-    store.dispatch({ type: 'amount', value: 20 });
-    clock.advance(249);
-    expect(draft.put).not.toHaveBeenCalled();
-    clock.advance(1);
-    const key = keyOf(api);
-    expect(draft.put).toHaveBeenCalledTimes(1);
-    expect(draft.put).toHaveBeenCalledWith(
-      { ref: key, actionId: take.id, amount: 20 },
-      expect.anything(),
-    );
+    const d = await desk();
+    open(d);
+    d.clock.advance(100);
+    d.store.dispatch({ type: 'amount', value: 20 });
+    d.clock.advance(249);
+    expect(d.puts).toHaveLength(0);
+    d.clock.advance(1);
+    expect(d.puts.map((p) => p.body)).toEqual([{ ref: d.key, actionId: take.id, amount: 20 }]);
   });
 
-  it('sends at most four a second', async () => {
-    const { clock, store, draft } = await desk();
-    store.dispatch({ type: 'pick', actionId: take.id });
-    for (let v = 1; v <= 40; v++) {
-      store.dispatch({ type: 'amount', value: v });
-      clock.advance(50);
+  it('collapses a burst of typing into one draft with the last amount', async () => {
+    const d = await desk();
+    open(d);
+    for (let v = 1; v <= 60; v++) {
+      d.store.dispatch({ type: 'amount', value: v });
+      d.clock.advance(40);
     }
-    clock.advance(300);
-    expect(draft.put.mock.calls.length).toBeLessThanOrEqual(9);
-    expect(draft.put.mock.calls.at(-1)?.[0]).toMatchObject({ amount: 40 });
+    d.clock.advance(300);
+    await flush();
+    expect(d.puts.map((p) => p.body.amount)).toEqual([60]);
   });
 
-  it('Cancel clears the draft and drops a pending one', async () => {
-    const { clock, store, draft, api } = await desk();
-    store.dispatch({ type: 'pick', actionId: take.id });
-    clock.advance(300);
-    store.dispatch({ type: 'amount', value: 30 });
-    store.dispatch({ type: 'cancel' });
-    clock.advance(1000);
-    const key = keyOf(api);
-    expect(draft.put).toHaveBeenCalledTimes(1);
-    expect(draft.clear).toHaveBeenCalledWith(key, expect.anything());
+  it('sends slower typing at least 250 ms apart, so never more than four a second', async () => {
+    const d = await desk();
+    open(d);
+    for (let v = 1; v <= 30; v++) {
+      d.store.dispatch({ type: 'amount', value: v });
+      d.clock.advance(255);
+      await flush();
+    }
+    const times = d.puts.map((p) => p.at);
+    expect(times.length).toBeGreaterThan(20);
+    for (let i = 1; i < times.length; i++)
+      expect(times[i]! - times[i - 1]!).toBeGreaterThanOrEqual(250);
   });
 
-  it('Confirm sends no clear and no late draft', async () => {
-    const { clock, store, draft } = await desk();
-    store.dispatch({ type: 'pick', actionId: take.id });
-    store.dispatch({ type: 'amount', value: 30 });
-    store.dispatch({ type: 'confirm' });
-    clock.advance(1000);
-    expect(draft.put).not.toHaveBeenCalled();
-    expect(draft.clear).not.toHaveBeenCalled();
+  it('keeps one call on the wire and sends only the latest when it lands', async () => {
+    const d = await desk({ manual: true });
+    open(d);
+    d.clock.advance(250);
+    expect(d.puts).toHaveLength(1);
+    for (const v of [31, 32, 33]) {
+      d.store.dispatch({ type: 'amount', value: v });
+      d.clock.advance(300);
+    }
+    expect(d.puts).toHaveLength(1);
+    d.puts[0]?.settle();
+    await flush();
+    expect(d.puts).toHaveLength(2);
+    expect(d.puts[1]?.body.amount).toBe(33);
+  });
+
+  it('closing the picker on the same read clears only the draft', async () => {
+    const d = await desk();
+    open(d);
+    d.clock.advance(300);
+    await flush();
+    d.store.dispatch({ type: 'amount', value: 30 });
+    d.store.dispatch({ type: 'cancel' });
+    d.clock.advance(1000);
+    await flush();
+    expect(d.puts).toHaveLength(1);
+    expect(d.clears).toEqual([{ ref: d.key, keep: true }]);
+    // A re-pick draws again.
+    open(d);
+    d.clock.advance(300);
+    expect(d.puts).toHaveLength(2);
+  });
+
+  it('leaving the read clears the draft and the ready card', async () => {
+    const d = await desk();
+    open(d);
+    d.clock.advance(300);
+    await flush();
+    d.store.dispatch({ type: 'cancel' });
+    d.store.dispatch({ type: 'dismiss' });
+    expect(d.clears.at(-1)).toEqual({ ref: d.key, keep: false });
+  });
+
+  it('an empty or invalid field clears only the draft', async () => {
+    const d = await desk();
+    open(d);
+    d.clock.advance(300);
+    d.store.dispatch({ type: 'amount', value: null });
+    expect(d.clears).toEqual([{ ref: d.key, keep: true }]);
+    d.clock.advance(1000);
+    expect(d.puts).toHaveLength(1);
+  });
+
+  it('a Confirm that ends ok forgets the draft; a late one never goes out', async () => {
+    const d = await desk();
+    open(d);
+    d.store.dispatch({ type: 'amount', value: 30 });
+    d.store.dispatch({ type: 'confirm' });
+    d.clock.advance(1000);
+    await flush();
+    expect(d.store.getSnapshot().state.loop).toMatchObject({
+      s: 'verdict',
+      outcome: { kind: 'ok' },
+    });
+    expect(d.puts).toHaveLength(0);
+    expect(d.clears).toEqual([]);
+  });
+
+  it('a Confirm that does not end ok clears the draft and the ready card', async () => {
+    const d = await desk();
+    d.api.act.mockResolvedValue(fixtureOutcome('refused', 'expired'));
+    open(d);
+    d.clock.advance(300);
+    await flush();
+    d.store.dispatch({ type: 'amount', value: 30 });
+    d.store.dispatch({ type: 'confirm' });
+    await flush();
+    expect(d.clears).toEqual([{ ref: d.key, keep: false }]);
+  });
+
+  it('sends the open draft again every 15 s', async () => {
+    const d = await desk();
+    open(d);
+    d.clock.advance(300);
+    await flush();
+    expect(d.puts).toHaveLength(1);
+    d.clock.advance(15_000);
+    await flush();
+    expect(d.puts).toHaveLength(2);
+    expect(d.puts[1]?.body).toEqual(d.puts[0]?.body);
+  });
+
+  it('sends a clear again when it passed a draft still on the wire', async () => {
+    const d = await desk({ manual: true });
+    open(d);
+    d.clock.advance(300);
+    d.store.dispatch({ type: 'cancel' });
+    expect(d.clears).toHaveLength(1);
+    d.puts[0]?.settle();
+    await flush();
+    expect(d.clears).toHaveLength(2);
+  });
+
+  it('drafts only a single currency value with an amount to choose', async () => {
+    const stamps = await desk({ outcome: { values: [{ ...money[0], format: 'number' }] } });
+    open(stamps);
+    stamps.clock.advance(1000);
+    expect(stamps.puts).toHaveLength(0);
+    const fixed = await desk({ outcome: { actions: [{ ...take, amount: { fixed: 5 } }] } });
+    open(fixed);
+    fixed.clock.advance(1000);
+    expect(fixed.puts).toHaveLength(0);
+    const two = await desk({ outcome: { values: [money[0], money[0]] } });
+    open(two);
+    two.clock.advance(1000);
+    expect(two.puts).toHaveLength(0);
   });
 
   it('never drafts a lookup read, an offline read or a non-money action', async () => {
-    const lookup = await desk('pass-1');
-    lookup.store.dispatch({ type: 'pick', actionId: take.id });
+    const lookup = await desk({ passId: 'pass-1' });
+    open(lookup);
     lookup.clock.advance(1000);
-    expect(lookup.draft.put).not.toHaveBeenCalled();
+    expect(lookup.puts).toHaveLength(0);
     const offline = await desk();
     offline.store.dispatch({ type: 'online', online: false });
-    offline.store.dispatch({ type: 'pick', actionId: take.id });
+    open(offline);
     offline.clock.advance(1000);
-    expect(offline.draft.put).not.toHaveBeenCalled();
+    expect(offline.puts).toHaveLength(0);
+    const set = await desk({ outcome: { actions: [{ ...take, kind: 'set' }] } });
+    open(set);
+    set.clock.advance(1000);
+    expect(set.puts).toHaveLength(0);
   });
 
-  it('swallows a failed draft', async () => {
-    const { clock, store, draft } = await desk();
-    draft.put.mockRejectedValue(new Error('boom'));
-    store.dispatch({ type: 'pick', actionId: take.id });
-    clock.advance(300);
+  it('counts a failed draft and shows nothing to staff', async () => {
+    const d = await desk({ manual: true });
+    open(d);
+    d.clock.advance(300);
+    d.puts[0]?.fail();
     await flush();
-    expect(store.getSnapshot().state.loop.s).toBe('member');
-    expect(store.getSnapshot().state.block).toBeNull();
-    expect(store.getSnapshot().draftFailures).toEqual({ count: 1, last: 'network' });
+    expect(draftHealth.failures()).toBe(1);
+    expect(draftHealth.onScreen()).toBe(false);
+    expect(d.store.getSnapshot().state.loop.s).toBe('member');
+  });
+
+  it('says it is on screen only while the last draft reached a screen', async () => {
+    const d = await desk({ manual: true });
+    open(d);
+    d.clock.advance(300);
+    d.puts[0]?.settle(1);
+    await flush();
+    expect(draftHealth.onScreen()).toBe(true);
+    d.store.dispatch({ type: 'amount', value: 40 });
+    d.clock.advance(300);
+    d.puts[1]?.settle(0);
+    await flush();
+    expect(draftHealth.onScreen()).toBe(false);
   });
 });

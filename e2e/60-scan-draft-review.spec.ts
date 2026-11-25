@@ -98,33 +98,54 @@ async function rig(
     await pairScanner(page, code);
     return page;
   };
-  const deskPage = await pair(desk.pairing.code, 390, 844, true);
   const screen = await pair(followed.pairing.code, 800);
   const elsewhere = await pair(apart.pairing.code, 800);
-  await deskPage.getByTestId('scan-start').click();
   let n = 0;
-  const scan = () =>
-    deskPage.evaluate(
-      ([value, id]) =>
-        (
-          window as unknown as { PassBookNative: { onmessage: (e: { data: string }) => void } }
-        ).PassBookNative.onmessage({
-          data: JSON.stringify({ version: 1, event: 'scan', source: 'barcode', id, value }),
-        }),
-      [barcode, `draft-scan-${++n}`],
-    );
-  const charge = async (amount: string) => {
-    await scan();
-    await deskPage.getByTestId('scan-action-charge').click();
-    await deskPage.getByTestId('scan-money-input').fill(amount);
+  /** A desk phone with the native bridge, started, that reads the card and types an amount. */
+  const startDesk = async (code: string) => {
+    const page = await pair(code, 390, 844, true);
+    await page.getByTestId('scan-start').click();
+    const scan = () =>
+      page.evaluate(
+        ([value, id]) =>
+          (
+            window as unknown as { PassBookNative: { onmessage: (e: { data: string }) => void } }
+          ).PassBookNative.onmessage({
+            data: JSON.stringify({ version: 1, event: 'scan', source: 'barcode', id, value }),
+          }),
+        [barcode, `draft-scan-${++n}`],
+      );
+    const pick = page.getByTestId('scan-action-charge');
+    return {
+      page,
+      /** Reads the card until the desk answers (the same code is ignored for a few seconds after an accepted scan). */
+      read: () =>
+        expect(async () => {
+          await scan();
+          await expect(pick).toBeVisible({ timeout: 1_000 });
+        }).toPass({ timeout: 15_000 }),
+      pick: () => pick.click(),
+      type: (amount: string) => page.getByTestId('scan-money-input').fill(amount),
+    };
   };
+  const deskA = await startDesk(desk.pairing.code);
+  const deskB = await startDesk(other.pairing.code);
   return {
-    deskPage,
+    deskA,
+    deskB,
+    deskPage: deskA.page,
     screen,
     elsewhere,
-    charge,
     close: () => Promise.all(contexts.map((c) => c.close())),
   };
+}
+
+type Desk = Awaited<ReturnType<typeof rig>>['deskA'];
+/** Reads the card at a desk and types an amount into the charge. */
+async function charge(d: Desk, amount: string) {
+  await d.read();
+  await d.pick();
+  await d.type(amount);
 }
 
 const status = (page: Page, value: string) =>
@@ -149,7 +170,7 @@ async function look(
     for (const scheme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width, height });
       await page.emulateMedia({ colorScheme: scheme });
-      await page.waitForTimeout(300);
+      await page.evaluate(() => Promise.all(document.getAnimations().map((a) => a.finished)));
       if (dir) await page.screenshot({ path: `${dir}/${name}-${width}x${height}-${scheme}.png` });
     }
   for (const scheme of ['light', 'dark'] as const) {
@@ -159,20 +180,25 @@ async function look(
   }
 }
 
-test('a followed screen shows the amount, then the receipt, and a cancel clears it', async ({
+test('a followed screen shows the amount, then the receipt; a desk cancel keeps the card and a re-pick shows again', async ({
   browser,
 }) => {
   const api = await apiAs('admin');
   const r = await rig(api, browser);
   try {
     await status(r.screen, 'ready');
-    await r.charge('12.00');
+    await charge(r.deskA, '12.00');
     const draft = r.screen.getByTestId('customer-draft');
     await expect(draft).toHaveText('To pay $12.00');
     await expect(r.screen.getByText('Balance after: $30.50')).toBeVisible();
     await expect(r.screen.getByText('Hi, Sam')).toBeVisible();
-    await expect(r.elsewhere.getByTestId('customer-draft')).toHaveCount(0);
-    await status(r.elsewhere, 'ready');
+    await expect(r.deskPage.getByTestId('scan-draft-onscreen')).toBeVisible();
+
+    // A live draft at the other desk reaches only the screen that follows it.
+    await charge(r.deskB, '3.00');
+    await expect(r.elsewhere.getByTestId('customer-draft')).toHaveText('To pay $3.00');
+    await expect(draft).toHaveText('To pay $12.00');
+    await expect(r.elsewhere.getByText('$12.00')).toHaveCount(0);
     await look(r.screen, 'customer-review');
     await look(r.deskPage, 'scanner-reviewing', [[390, 844]]);
 
@@ -181,14 +207,21 @@ test('a followed screen shows the amount, then the receipt, and a cancel clears 
     await expect(display).toContainText('Paid $12.00', { timeout: 10_000 });
     await expect(display).toContainText('Balance $30.50');
     await expect(draft).toHaveCount(0);
-
-    // The same code is ignored for a few seconds after an accepted scan.
     await r.deskPage.getByTestId('dock-primary').click();
-    await r.deskPage.waitForTimeout(5_200);
-    await r.charge('7.00');
-    await expect(r.screen.getByTestId('customer-draft')).toHaveText('To pay $7.00');
+
+    // Cancel closes the amount field: the amount goes, the desk card stays, and a re-pick shows again.
+    await charge(r.deskA, '7.00');
+    await expect(draft).toHaveText('To pay $7.00');
     await r.deskPage.getByRole('button', { name: 'Cancel', exact: true }).click();
-    await expect(r.screen.getByTestId('customer-draft')).toHaveCount(0);
+    await expect(draft).toHaveCount(0);
+    await expect(r.screen.getByText('Hi, Sam')).toBeVisible();
+    await r.deskA.pick();
+    await r.deskA.type('9.00');
+    await expect(draft).toHaveText('To pay $9.00');
+    // Leaving the read clears both.
+    await r.deskPage.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await r.deskPage.getByTestId('dock-primary').click();
+    await expect(draft).toHaveCount(0);
     await status(r.screen, 'ready');
     await expect(r.screen.getByText('Hi, Sam')).toHaveCount(0);
   } finally {
@@ -202,9 +235,14 @@ test('showDraft off shows no amount', async ({ browser }) => {
   const r = await rig(api, browser, false);
   try {
     await status(r.screen, 'ready');
-    await r.charge('12.00');
+    const sent = r.deskPage.waitForResponse(
+      (res) => res.url().endsWith('/api/v1/scan/draft') && res.request().method() === 'PUT',
+    );
+    await charge(r.deskA, '12.00');
     await expect(r.deskPage.getByTestId('scan-picker-change')).toContainText('$30.50');
-    await r.deskPage.waitForTimeout(1_500);
+    const body = await (await sent).json();
+    expect(body.screens).toBe(0);
+    await expect(r.deskPage.getByTestId('scan-draft-onscreen')).toHaveCount(0);
     await expect(r.screen.getByTestId('customer-draft')).toHaveCount(0);
     await expect(r.screen.getByText('$12.00')).toHaveCount(0);
   } finally {

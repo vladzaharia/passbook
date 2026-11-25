@@ -5,6 +5,7 @@ import { digitsMessage, fromMinor, minorDigits, parseMoney } from '../../../shar
 import { formatCount, formatMoney } from '../../lib/format.ts';
 import { Button } from '../../ui/button.tsx';
 import { ScanTextField } from '../input/wedge-field.tsx';
+import { useDraftOnScreen } from '../machine/draft-health.ts';
 import type { Draft } from '../machine/types.ts';
 import './picker.css';
 
@@ -19,7 +20,7 @@ export function ValuePicker({
 }: {
   card: ScanCard;
   draft: Draft;
-  onAmount: (value: number) => void;
+  onAmount: (value: number | null) => void;
   onValue: (value: unknown) => void;
   onConfirm: () => void;
   onCancel: () => void;
@@ -133,10 +134,11 @@ function MoneyPicker({
   range: { presets: number[] } | null;
   value: ScanCard['values'][number];
   amount: number | null | undefined;
-  onAmount: (value: number) => void;
+  onAmount: (value: number | null) => void;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const onScreen = useDraftOnScreen();
   const digits = minorDigits(value.currency);
   const currency = value.currency ?? null;
   const [text, setText] = useState(amount ? amount.toFixed(digits) : '');
@@ -160,7 +162,8 @@ function MoneyPicker({
   const set = (next: string) => {
     setText(next);
     const p = parseMoney(next, digits);
-    if ('minor' in p && p.minor > 0) onAmount(fromMinor(p.minor, digits));
+    // An empty or invalid field is no amount: the customer screen stops showing the last one.
+    onAmount('minor' in p && p.minor > 0 ? fromMinor(p.minor, digits) : null);
   };
   return (
     <div className="scan-picker" data-testid="scan-picker">
@@ -202,6 +205,11 @@ function MoneyPicker({
       {after !== null ? (
         <p className="scan-picker-change" data-testid="scan-picker-change">
           Balance after: {formatMoney(after, currency)}
+        </p>
+      ) : null}
+      {onScreen && minor > 0 ? (
+        <p className="scan-picker-onscreen" data-testid="scan-draft-onscreen">
+          On screen
         </p>
       ) : null}
       <div className="scan-picker-actions">

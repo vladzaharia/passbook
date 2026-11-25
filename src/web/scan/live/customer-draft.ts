@@ -2,8 +2,8 @@ import type { ScanCustomerView } from '../../../shared/contracts/scan-customer.t
 import type { ScanLiveDraft } from '../../../shared/contracts/scan-draft.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 
-/** A draft older than this is a read the desk walked away from. */
-export const DRAFT_HOLD_MS = 60_000;
+/** A draft older than this is a read the desk walked away from. The desk sends the open one again every 15 s. */
+export const DRAFT_HOLD_MS = 20_000;
 
 export interface CustomerDraft {
   ref: string;
@@ -11,24 +11,37 @@ export interface CustomerDraft {
   view: ScanCustomerView;
 }
 
-/** The latest draft per ref wins; a cancel drops it. */
-export function nextDraft(
-  previous: CustomerDraft | null,
-  message: ScanLiveDraft,
-): CustomerDraft | null {
-  if ('cancelled' in message) return previous?.ref === message.ref ? null : previous;
-  if (previous?.ref === message.ref && previous.at >= message.at) return previous;
-  return { ref: message.ref, at: message.at, view: message.customer };
+export type Drafts = ReadonlyMap<string, CustomerDraft>;
+
+/** One draft per ref, so two desks on one screen never overwrite each other. Stale ones are pruned. */
+export function nextDrafts(previous: Drafts, message: ScanLiveDraft, now: number): Drafts {
+  const next = new Map([...previous].filter(([, draft]) => now - draft.at < DRAFT_HOLD_MS));
+  if ('cancelled' in message) {
+    next.delete(message.ref);
+    return next;
+  }
+  const held = next.get(message.ref);
+  if (!held || held.at < message.at)
+    next.set(message.ref, { ref: message.ref, at: message.at, view: message.customer });
+  return next;
 }
 
-/** The draft that shows now: for the card on screen, not older than a minute. */
-export function liveDraft(
-  draft: CustomerDraft | null,
-  shownRef: string | undefined,
+/**
+ * The draft that shows: the newest fresh one, over the ready card it belongs to, or over anything
+ * older than it (an idle screen, or a session that hides the desk card). A later result wins.
+ */
+export function shownDraft(
+  drafts: Drafts,
+  latest: Pick<ScanLiveRow, 'id' | 'at'> | undefined,
   now: number,
 ): CustomerDraft | null {
-  if (!draft || draft.ref !== shownRef || now - draft.at >= DRAFT_HOLD_MS) return null;
-  return draft;
+  let best: CustomerDraft | null = null;
+  for (const draft of drafts.values()) {
+    if (now - draft.at >= DRAFT_HOLD_MS) continue;
+    if (latest && draft.ref !== latest.id && draft.at < latest.at) continue;
+    if (!best || draft.at > best.at) best = draft;
+  }
+  return best;
 }
 
 /** The words and the figure of a review body ("To pay", "$12.00"); none when the view carries no figure. */

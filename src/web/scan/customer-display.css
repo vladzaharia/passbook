@@ -176,6 +176,14 @@
   display: inline-block;
   animation: cstage-roll 120ms ease-out both;
 }
+@keyframes cstage-amount-out {
+  to {
+    opacity: 0;
+  }
+}
+.cstage-copy h1.cstage-draft[data-leaving] {
+  animation: cstage-amount-out 150ms ease-in forwards;
+}
 @keyframes cstage-amount-in {
   from {
     opacity: 0;
@@ -197,6 +205,7 @@
 @media (prefers-reduced-motion: reduce) {
   .cstage-copy,
   .cstage-copy h1.cstage-draft,
+  .cstage-copy h1.cstage-draft[data-leaving],
   .cstage-digit {
     animation: none;
   }

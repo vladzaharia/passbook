@@ -10,6 +10,6 @@ export function draftPortOf(session: ScanSession, api: ScanApi): DraftPort | und
   if (session.principal !== 'scanner' || session.scanner?.deviceRole !== 'scan') return undefined;
   return {
     put: (body, o) => api.draftPut(body, o),
-    clear: (ref, o) => api.draftClear(ref, o),
+    clear: (ref, keep, o) => api.draftClear(ref, keep, o),
   };
 }

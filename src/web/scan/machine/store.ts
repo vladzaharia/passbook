@@ -21,8 +21,6 @@ export interface ScanSnapshot {
   view: ScanView;
   /** The store clock at the last change. Views derive time-based hints from it. */
   now: number;
-  /** Failed draft calls (`scan.draft_failed`): staff never see them; a debug view can. */
-  draftFailures: { count: number; last: string | null };
 }
 
 export interface ScanStore {
@@ -65,12 +63,7 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
     for (const l of listeners) l();
   };
 
-  const draftFailures = { count: 0, last: null as string | null };
-  const drafts = createDraftSync(deps, (code) => {
-    draftFailures.count += 1;
-    draftFailures.last = code;
-    publish();
-  });
+  const drafts = createDraftSync(deps);
   const runner = createRunner(deps, {
     state: () => state,
     dispatch: (e) => dispatch(e),
@@ -177,12 +170,7 @@ export function createScanStore(deps: ScanDeps, initial: ScanState): ScanStore {
 
   return {
     getSnapshot() {
-      snapshot ??= {
-        state,
-        view: viewOf(state, shown),
-        now: deps.clock.now(),
-        draftFailures: { ...draftFailures },
-      };
+      snapshot ??= { state, view: viewOf(state, shown), now: deps.clock.now() };
       return snapshot;
     },
     subscribe(listener) {

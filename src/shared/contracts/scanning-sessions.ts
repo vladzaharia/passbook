@@ -88,6 +88,8 @@ export const ScanDeviceCapabilitiesSchema = z.strictObject({
   native: NativeScannerCapabilitiesSchema.omit({ hardware: true }).optional(),
   /** Found hardware by kind and state. Optional: older devices send none. */
   hardware: z.array(ReportedHardwareSchema).max(16).optional(),
+  /** Customer-screen drafts that failed since the page loaded (`scan.draft_failed`). Absent: none. */
+  draftFailures: z.number().int().min(1).max(1_000_000).optional(),
   surfaces: z.array(ScanSurfaceSchema).min(1).max(4),
   preferred: ScanSurfaceSchema,
 });

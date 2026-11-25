@@ -15,6 +15,8 @@ export interface DraftInput {
   readyId: string;
   /** The caller's scanner: the ready card must come from it. */
   scannerId: string;
+  /** A cancel that leaves the ready card up. */
+  keep?: 'ready';
   /** The review body. Absent: cancel the draft and the ready card. */
   say?: CustomerSay;
   now?: number;
@@ -34,11 +36,21 @@ export async function draftToScreens(
   send: (socket: WebSocket, text: string) => void,
 ): Promise<number | null> {
   const now = ctx.clock.now();
-  const entry = (await readRing(state.storage, now)).find((r) => r.row.id === input.readyId);
+  const ring = await readRing(state.storage, now);
+  const entry = ring.find((r) => r.row.id === input.readyId);
   const { say } = input;
   const own = entry?.row.kind === 'ready' && entry.row.scannerId === input.scannerId;
   if (!entry || !own) return say ? null : 0;
   if (say && (!entry.row.presented || now - entry.row.at > DRAFT_WINDOW_MS || !entry.row.passId))
+    return null;
+  // A result of this scanner after the ready card closed that read: a late draft must not show over it.
+  if (
+    say &&
+    ring.some(
+      (r) =>
+        r.row.scannerId === input.scannerId && r.row.kind !== 'ready' && r.row.at >= entry.row.at,
+    )
+  )
     return null;
   let sent = 0;
   await Promise.all(
@@ -59,7 +71,12 @@ export async function draftToScreens(
         return;
       }
       if (recipient.actor.scanner?.deviceRole !== 'customer' || !watches(recipient, entry)) return;
-      let draft: ScanLiveDraft = { ref: entry.row.id, at: now, cancelled: true };
+      let draft: ScanLiveDraft = {
+        ref: entry.row.id,
+        at: now,
+        cancelled: true,
+        ...(input.keep ? { keep: input.keep } : {}),
+      };
       if (say) {
         if (recipient.customer.showDraft === false || !(await entryIsLive(ctx, recipient, entry)))
           return;

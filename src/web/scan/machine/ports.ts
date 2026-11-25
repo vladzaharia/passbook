@@ -57,8 +57,9 @@ export interface DraftPort {
   put(
     body: { ref: string; actionId: string; amount: number },
     o: { signal: AbortSignal },
-  ): Promise<unknown>;
-  clear(ref: string, o: { signal: AbortSignal }): Promise<unknown>;
+  ): Promise<{ screens: number }>;
+  /** `keep`: only the draft clears; the ready card stays. */
+  clear(ref: string, keep: boolean, o: { signal: AbortSignal }): Promise<{ screens: number }>;
 }
 
 export interface ScanDeps {

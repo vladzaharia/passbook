@@ -103,6 +103,11 @@ export function DeviceSheet({
                   )}
                   {device.capabilities.keyboard ? <Badge>Keyboard input</Badge> : null}
                   {device.capabilities.touch ? <Badge>Touch</Badge> : null}
+                  {device.capabilities.draftFailures ? (
+                    <Badge tone="warning">
+                      Amount drafts failed ×{device.capabilities.draftFailures}
+                    </Badge>
+                  ) : null}
                   {device.capabilities.native ? (
                     <>
                       <Badge>

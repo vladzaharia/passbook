@@ -17,7 +17,7 @@ export function deskOf(
   const selfId = session.staff?.id;
   return {
     picker: loop.s === 'member' ? loop.picker : null,
-    onAmount: (value: number) => dispatch({ type: 'amount', value }),
+    onAmount: (value: number | null) => dispatch({ type: 'amount', value }),
     onValue: (value: unknown) => dispatch({ type: 'value', value }),
     onConfirm: () => dispatch({ type: 'confirm' }),
     onCancel: () => dispatch({ type: 'cancel' }),

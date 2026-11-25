@@ -9,8 +9,8 @@ import { TagProp } from './assign/tag-prop.tsx';
 import { AssignChip } from './enroll/request-chip.tsx';
 import { RequestStrip } from './enroll/request-strip.tsx';
 import { initialState } from './machine/initial-state.ts';
-import { moodOf, presentOutcome, viewOf } from './machine/present.ts';
-import type { ScanStore } from './machine/store.ts';
+import { moodOf, presentOutcome } from './machine/present.ts';
+import { staticStore } from './machine/static-store.ts';
 import { ScanStoreContext } from './machine/use-scan-machine.ts';
 import { ResultCard } from './result/result-card.tsx';
 import { DoorDock } from './ui/door-dock.tsx';
@@ -48,12 +48,7 @@ export function useStaticStore() {
   const [store] = useState(() => {
     const state = initialState(Date.now());
     state.prefs.holdResults = true;
-    const snapshot = { state, view: viewOf(state), now: Date.now() };
-    return {
-      getSnapshot: () => snapshot,
-      subscribe: () => () => undefined,
-      dispatch: () => undefined,
-    } as unknown as ScanStore;
+    return staticStore(state, Date.now());
   });
   return store;
 }

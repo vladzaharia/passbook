@@ -2,14 +2,17 @@ import { useEffect, useState } from 'react';
 import type { ScanPlaceRev } from '../../../shared/contracts/scan-occupancy.ts';
 import type { ScanSession } from '../../../shared/contracts/scan-session.ts';
 import { ScanLiveMessageSchema, type ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
-import { type CustomerDraft, nextDraft } from './customer-draft.ts';
+import { type Drafts, nextDrafts } from './customer-draft.ts';
 import { mergePlaces } from './monitor-model.ts';
 
 /** The live socket (polling while it is down): recent rows, counts, a welcome line. */
+/** How long a cancelled ready card is remembered: the ring keeps a row this long. */
+const LIVE_ROW_TTL_MS = 15 * 60_000;
+
 export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) {
   const [rows, setRows] = useState<ScanLiveRow[]>([]);
   const [places, setPlaces] = useState<ScanPlaceRev[]>([]);
-  const [draft, setDraft] = useState<CustomerDraft | null>(null);
+  const [drafts, setDrafts] = useState<Drafts>(new Map());
   const [welcome, setWelcome] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -26,10 +29,10 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
     let socket: WebSocket | null = null;
     let retry: ReturnType<typeof setTimeout> | undefined;
     let cursor: string | null = null;
-    /** Ready cards a cancel dropped: a later snapshot must not bring them back. */
-    const cancelled = new Set<string>();
+    /** Ready cards a cancel dropped, by when: a later snapshot must not bring them back. */
+    const cancelled = new Map<string, number>();
     const reset = () => {
-      setDraft(null);
+      setDrafts(new Map());
       setRows([]);
       setPlaces([]);
     };
@@ -45,11 +48,15 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
       }
       if ('draft' in parsed.data) {
         const message = parsed.data.draft;
-        if ('cancelled' in message) {
-          cancelled.add(message.ref);
+        const at = Date.now();
+        // A draft-only cancel (`keep`) leaves the ready card up, and a re-pick draws over it.
+        if ('cancelled' in message && !message.keep) {
+          for (const [ref, when] of cancelled)
+            if (at - when > LIVE_ROW_TTL_MS) cancelled.delete(ref);
+          cancelled.set(message.ref, at);
           setRows((previous) => previous.filter((row) => row.id !== message.ref));
         }
-        setDraft((previous) => nextDraft(previous, message));
+        setDrafts((previous) => nextDrafts(previous, message, at));
         return;
       }
       if ('resolved' in parsed.data || 'enroll' in parsed.data) return;
@@ -133,5 +140,5 @@ export function useLiveFeed(session: ScanSession, refetch: () => Promise<void>) 
       socket?.close();
     };
   }, [refetch, scope]);
-  return { rows, places, draft, welcome, connected, now, setNow };
+  return { rows, places, drafts, welcome, connected, now, setNow };
 }
