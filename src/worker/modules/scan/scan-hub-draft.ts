@@ -45,7 +45,15 @@ export async function draftToScreens(
     state.getWebSockets().map(async (socket) => {
       if (state.getTags(socket).some((t) => t.startsWith(DEVICE_TAG))) return;
       const attachment = await socketAttachment(ctx, socket);
-      const recipient = attachment ? await liveRecipient(ctx, attachment) : null;
+      if (!attachment) {
+        socket.close(4409, 'Setup changed');
+        return;
+      }
+      // The sealed role and session come first: monitors and other sessions are skipped before any re-authorizing.
+      if (attachment.role !== 'customer') return;
+      if (entry.sessionId && attachment.session && attachment.session.id !== entry.sessionId)
+        return;
+      const recipient = await liveRecipient(ctx, attachment);
       if (!recipient) {
         socket.close(4409, 'Setup changed');
         return;

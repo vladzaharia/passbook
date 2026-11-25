@@ -139,7 +139,7 @@ describe('derivedHmacKey', () => {
 });
 
 describe('scan rate limits', () => {
-  it.each(['RL_SCAN_PAIR', 'RL_SCAN', 'RL_SCAN_LOOKUP', 'RL_SCAN_ORG'] as const)(
+  it.each(['RL_SCAN_PAIR', 'RL_SCAN', 'RL_SCAN_LOOKUP', 'RL_SCAN_ORG', 'RL_SCAN_DRAFT'] as const)(
     'a missing %s binding is a 503',
     async (name) => {
       const e = await makeEnv({ [name]: undefined } as never);

@@ -21,11 +21,12 @@ export const CUSTOMER_COPY = {
   redeemed: 'Redeemed',
   updated: 'Updated',
   rewardReady: 'Reward ready',
-  toPay: 'To pay {amount}',
+  toPay: 'To pay',
   balanceAfter: 'Balance after: {balance}',
-  adding: 'Adding {amount}',
+  adding: 'Adding',
   balance: 'Balance {balance}',
   plus: '+{n} {label}',
+  plusStamps: { one: '+{n} stamp', other: '+{n} stamps' },
   ofGoal: '{n} of {goal}',
 } as const;
 

@@ -824,6 +824,14 @@
     "note": "An org-bound key may omit orgId and acts in its own organization; a session still names one."
   },
   {
+    "key": "GET /api/v1/scan/live 200.rows[].customer.figure: field added",
+    "class": "additive",
+    "operationId": "scan.getScanLive",
+    "op": "GET /api/v1/scan/live",
+    "change": "200.rows[].customer.figure: field added",
+    "note": "A customer body can carry figure, the amount of a review. The session's showDraft also governs a receipt's balance line."
+  },
+  {
     "key": "GET /api/v1/scan/live 200.rows[].customer.screen: enum value \"review\" added",
     "class": "notable",
     "operationId": "scan.getScanLive",

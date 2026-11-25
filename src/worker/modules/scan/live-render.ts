@@ -54,6 +54,8 @@ function monitorExtras(row: ScanLiveRow, role: ScanRole | null): Partial<ScanLiv
 export interface CustomerSay {
   headline: string;
   sub: string | null;
+  /** A review's figure, set apart from its label. */
+  figure?: string;
 }
 
 /**
@@ -83,7 +85,13 @@ function customerView(
   };
   const options: CustomerViewOptions =
     'say' in screen
-      ? { ...common, screen: screen.screen, headline: screen.say.headline, sub: screen.say.sub }
+      ? {
+          ...common,
+          screen: screen.screen,
+          headline: screen.say.headline,
+          sub: screen.say.sub,
+          ...(screen.say.figure ? { figure: screen.say.figure } : {}),
+        }
       : { ...common, screen: screen.screen };
   const view = renderCustomerView(
     named ? { v: 1, header: {}, holder: '{{pass.title}}' } : null,
@@ -97,6 +105,13 @@ function customerView(
     ...(settings.welcome ? { welcome: settings.welcome } : {}),
   });
   return checked.success ? checked.data : view;
+}
+
+/** The receipt as this screen may show it: the headline always, the balance line only while the session shows amounts. */
+function receiptSay(recipient: LiveRecipient, receipt: LiveRingRow['receipt']): CustomerSay | null {
+  if (!receipt) return null;
+  const hide = receipt.balance && recipient.customer.showDraft === false;
+  return { headline: receipt.headline, sub: hide ? null : receipt.sub };
 }
 
 /** The body a customer screen draws for a ring row; null when the session hides it. */
@@ -114,7 +129,7 @@ function customerRow(
       ? customerView(recipient, entry, visible, {
           screen: 'ok',
           // The receipt names the value, so it rides a visible pass like the doc-named panel.
-          say: (visible ? entry.receipt : null) ?? {
+          say: receiptSay(recipient, visible ? entry.receipt : null) ?? {
             headline: okHeadline({
               direction: row.direction,
               event: entry.eventId !== null && entry.eventId !== undefined,

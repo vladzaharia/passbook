@@ -17,7 +17,7 @@ beforeAll(async () => {
 });
 
 const hub = () => clockedHub(f.kit.ctx, f.kit.clock, f.kit.org.id, 'live');
-const say = { headline: 'To pay $12.00', sub: 'Balance after: $30.50' };
+const say = { headline: 'To pay', sub: 'Balance after: $30.50', figure: '$12.00' };
 
 /** A socket on the hub that records every message it is sent. */
 async function listen(attachment: LiveAttachment) {
@@ -97,7 +97,13 @@ describe('a draft over a ready card', () => {
     expect(c.screen.drafts()[0]).toMatchObject({
       draft: {
         ref: c.readyId,
-        customer: { screen: 'review', band: say, greet: 'Hi, Anna', ref: c.readyId },
+        customer: {
+          screen: 'review',
+          band: { headline: 'To pay', sub: 'Balance after: $30.50' },
+          figure: '$12.00',
+          greet: 'Hi, Anna',
+          ref: c.readyId,
+        },
       },
     });
     expect(JSON.stringify(c.screen.drafts())).not.toMatch(/Popescu/);
@@ -138,6 +144,17 @@ describe('a draft over a ready card', () => {
       await first(f.kit.env.DB, 'SELECT 1 FROM passes WHERE id=?', [kept.pass.id]),
     ).not.toBeNull();
     for (const s of [c.screen, c.monitor, kept.screen, kept.monitor]) s.close();
+  });
+
+  it('never reaches a screen of another session', async () => {
+    const a = await counter('Draft session A');
+    const b = await counter('Draft session B');
+    await a.ready();
+    expect(await hub().draft({ ...a.input, say })).toBe(1);
+    await settle();
+    expect(a.screen.drafts()).toHaveLength(1);
+    expect(b.screen.drafts()).toEqual([]);
+    for (const s of [a.screen, a.monitor, b.screen, b.monitor]) s.close();
   });
 
   it('is withheld by a session that hides drafts, and the ready card stays', async () => {

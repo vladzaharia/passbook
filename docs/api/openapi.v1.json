@@ -138492,6 +138492,10 @@
                               "test": {
                                 "type": "boolean"
                               },
+                              "figure": {
+                                "type": "string",
+                                "maxLength": 24
+                              },
                               "welcome": {
                                 "type": "string",
                                 "maxLength": 40
@@ -138670,6 +138674,7 @@
                         ],
                         "milestone": null,
                         "test": false,
+                        "figure": "$12.00",
                         "welcome": "Welcome to Northwind"
                       }
                     }

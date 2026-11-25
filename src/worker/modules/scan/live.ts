@@ -171,7 +171,8 @@ export async function liveRingRow(
     eventId: source.event?.id ?? null,
     zoneIds: extra.zoneIds ?? [],
     customer: detail ? (extra.customer ?? null) : null,
-    receipt: detail && extra.outcome ? receiptOf(extra.outcome, detail.actions) : null,
+    receipt:
+      detail && extra.outcome ? receiptOf(extra.outcome, detail.actions, detail.stampsInput) : null,
     ...(extra.overridable ? { overridable: true } : {}),
   };
 }
