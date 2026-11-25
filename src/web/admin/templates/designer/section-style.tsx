@@ -1,8 +1,8 @@
 import { PASS_STYLES, type PassStyle } from '@/passkit/types.ts';
-import { SwitchRow } from '../../../ui/index.ts';
+import { SegmentedControl, SwitchRow } from '../../../ui/index.ts';
 import { useDesigner } from './context.tsx';
 import { Group, PickEdit, TextEdit } from './controls.tsx';
-import { dictOf, STYLE_LABEL, styleOf } from './model.ts';
+import { dictOf, hasBothFaces, legacyStyleOf, STYLE_LABEL, type Target } from './model.ts';
 import { hasPoster } from './ops-pass.ts';
 
 const TRANSIT = [
@@ -14,13 +14,14 @@ const TRANSIT = [
 ] as const;
 
 const POSTER_LABEL: Partial<Record<PassStyle, string>> = {
+  generic: 'Poster layout',
   eventTicket: 'Poster layout',
   boardingPass: 'Semantic layout',
 };
 
 export function StyleSection() {
   const { doc, edit } = useDesigner();
-  const style = styleOf(doc.passJson);
+  const style = legacyStyleOf(doc.passJson);
   const poster = POSTER_LABEL[style];
   const text = (key: string) =>
     typeof doc.passJson[key] === 'string' ? (doc.passJson[key] as string) : '';
@@ -29,7 +30,10 @@ export function StyleSection() {
       <PickEdit
         label="Style"
         value={style}
-        options={PASS_STYLES.map((s) => ({ value: s, label: STYLE_LABEL[s] }))}
+        options={PASS_STYLES.filter((s) => s !== 'posterGeneric').map((s) => ({
+          value: s,
+          label: STYLE_LABEL[s],
+        }))}
         onPick={(v) => edit({ op: 'style', style: v as PassStyle })}
         help="Switching keeps your fields. Fields the style cannot show move to the back."
       />
@@ -39,10 +43,23 @@ export function StyleSection() {
           help={
             style === 'eventTicket'
               ? 'Poster layout on iOS 27. Classic ticket on earlier iOS.'
-              : 'Semantic boarding pass on iOS 26 and later.'
+              : style === 'generic'
+                ? 'Poster layout on iOS 27. Generic on earlier iOS.'
+                : 'Semantic boarding pass on iOS 26 and later.'
           }
           checked={hasPoster(doc.passJson)}
           onCheckedChange={(on) => edit({ op: 'poster', on })}
+        />
+      ) : null}
+      {hasBothFaces(doc.passJson) ? (
+        <SegmentedControl
+          label="Edit layout"
+          options={[
+            { value: 'poster', label: 'iOS 27' },
+            { value: 'legacy', label: 'iOS 26 and earlier' },
+          ]}
+          value={doc.target ?? 'legacy'}
+          onValueChange={(target: Target) => edit({ op: 'target', target })}
         />
       ) : null}
       {style === 'boardingPass' ? (
