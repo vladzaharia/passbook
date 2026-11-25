@@ -20,6 +20,7 @@ import { enqueueVersionCheck } from './account-check.ts';
 import { snapshotWalletCredentialContext } from './account-credential-material.ts';
 import { credentialIdentityHash } from './account-credential-source.ts';
 import { validateGoogleAccount } from './google-credentials.ts';
+import { lastChecksOf } from './repo-credential-checks.ts';
 import {
   type CredentialRow,
   type CredentialWriter,
@@ -44,7 +45,10 @@ function cardTypesOf(row: CredentialRow): string[] {
   }
 }
 
-export function credentialDto(row: CredentialRow): WalletCredential {
+export function credentialDto(
+  row: CredentialRow,
+  lastCheck: WalletCredential['lastCheck'] = null,
+): WalletCredential {
   return {
     id: row.id,
     scope: row.scope,
@@ -59,7 +63,40 @@ export function credentialDto(row: CredentialRow): WalletCredential {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     cardTypes: cardTypesOf(row),
+    lastCheck,
   };
+}
+
+/** The rows of one scope (an org, or the platform for null) as DTOs, each with its current version's newest check. */
+export async function withLastChecks(
+  ctx: ServiceContext,
+  orgId: string | null,
+  rows: CredentialRow[],
+): Promise<WalletCredential[]> {
+  const checks = new Map(
+    (
+      await lastChecksOf(
+        ctx.env.DB,
+        orgId,
+        rows.map((row) => row.id),
+      )
+    ).map((k) => [
+      k.credential_id,
+      k.ok === 1
+        ? { ok: true as const, code: null, at: k.checked_at }
+        : { ok: false as const, code: k.code ?? 'check_failed', at: k.checked_at },
+    ]),
+  );
+  return rows.map((row) => credentialDto(row, checks.get(row.id) ?? null));
+}
+
+/** One row of the scope as a DTO. */
+export async function withLastCheck(
+  ctx: ServiceContext,
+  orgId: string | null,
+  row: CredentialRow,
+): Promise<WalletCredential> {
+  return (await withLastChecks(ctx, orgId, [row]))[0] as WalletCredential;
 }
 
 export const changed = () =>
@@ -209,7 +246,7 @@ export async function listOrgCredentials(
     mode: auth.mode,
     ...(provider ? { provider } : {}),
   });
-  return { items: rows.map(credentialDto), nextCursor: null };
+  return { items: await withLastChecks(ctx, orgId, rows), nextCursor: null };
 }
 
 export async function saveOrgCredential(
@@ -220,7 +257,7 @@ export async function saveOrgCredential(
 ): Promise<WalletCredential> {
   ctx = snapshotWalletCredentialContext(ctx);
   const w = await orgWriter(ctx, auth, orgId, 'org_mode.wallet.credential_save');
-  return credentialDto(await save(ctx, w, { orgId, mode: auth.mode }, input));
+  return withLastCheck(ctx, orgId, await save(ctx, w, { orgId, mode: auth.mode }, input));
 }
 
 export async function revokeOrgCredential(
@@ -233,7 +270,11 @@ export async function revokeOrgCredential(
   const w = await orgWriter(ctx, auth, orgId, 'org_mode.wallet.credential_revoke');
   const row = await findCredential(ctx.env.DB, id, orgId);
   // A credential of the other mode is not this session's to revoke.
-  return credentialDto(await revoke(ctx, w, row?.mode === auth.mode ? row : null, input));
+  return withLastCheck(
+    ctx,
+    orgId,
+    await revoke(ctx, w, row?.mode === auth.mode ? row : null, input),
+  );
 }
 
 export async function listPlatformCredentials(
@@ -242,7 +283,7 @@ export async function listPlatformCredentials(
 ): Promise<WalletCredentialList> {
   platformWriter(auth, 'platform.wallet.credential_save');
   return {
-    items: (await listCredentials(ctx.env.DB, { orgId: null })).map(credentialDto),
+    items: await withLastChecks(ctx, null, await listCredentials(ctx.env.DB, { orgId: null })),
     nextCursor: null,
   };
 }
@@ -255,7 +296,11 @@ export async function savePlatformCredential(
   ctx = snapshotWalletCredentialContext(ctx);
   const w = platformWriter(auth, 'platform.wallet.credential_save');
   const { mode, ...rest } = input;
-  return credentialDto(await save(ctx, w, { orgId: null, mode }, rest as SaveWalletCredential));
+  return withLastCheck(
+    ctx,
+    null,
+    await save(ctx, w, { orgId: null, mode }, rest as SaveWalletCredential),
+  );
 }
 
 export async function revokePlatformCredential(
@@ -265,5 +310,9 @@ export async function revokePlatformCredential(
   input: RevokeWalletCredential,
 ): Promise<WalletCredential> {
   const w = platformWriter(auth, 'platform.wallet.credential_revoke');
-  return credentialDto(await revoke(ctx, w, await findCredential(ctx.env.DB, id, null), input));
+  return withLastCheck(
+    ctx,
+    null,
+    await revoke(ctx, w, await findCredential(ctx.env.DB, id, null), input),
+  );
 }

@@ -154,6 +154,65 @@ describe('paper.holder false', () => {
   });
 });
 
+describe('audience and region', () => {
+  const setZone = async (
+    kit: Awaited<ReturnType<typeof setup>>['kit'],
+    zone: string | undefined,
+  ) => {
+    if (zone)
+      await run(
+        kit.env.DB,
+        "INSERT OR REPLACE INTO settings (scope, key, value, updated_by, updated_at) VALUES (?, 'org.timeZone', ?, 'test', 1)",
+        [`org:${kit.org.id}`, JSON.stringify(zone)],
+      );
+    clearSettingsCache(kit.env.DB);
+  };
+
+  it.each([
+    ['America/Chicago', '--w:215.9', '--h:279.4'],
+    ['Europe/Berlin', '--w:210', '--h:297'],
+  ])('a holder prints a card on the %s home sheet, staff the exact page', async (zone, w, h) => {
+    const { kit, api, withPaper, token, holder } = await setup();
+    await setZone(kit, zone);
+    const pass = await withPaper({ schema: 1, size: 'cr80', barcode: 'qr' });
+    await api('POST', `/passes/${pass.id}/prints`);
+    const holderHtml = await (await holder(await token(pass))).text();
+    expect(holderHtml).toContain('class="pp-hs"');
+    expect(holderHtml).toContain(w);
+    expect(holderHtml).toContain(h);
+    expect(holderHtml).toContain('class="pp-fold-line"');
+    const staffHtml = await (
+      await kit.api(`/passes/${pass.id}/print`, { headers: kit.auth.admin() })
+    ).text();
+    expect(staffHtml).not.toContain('class="pp-hs"');
+    expect(staffHtml).toContain('class="pp-sheet pp-page pp-cr80 ');
+    expect(staffHtml).toContain('@page{size:85.6mm 54mm;margin:0}');
+  });
+
+  it('an explicit paper.sheet overrides the region for the holder', async () => {
+    const { kit, api, withPaper, token, holder } = await setup();
+    await setZone(kit, 'America/Chicago');
+    const pass = await withPaper({ schema: 1, size: 'atb', barcode: 'qr', sheet: 'a4' });
+    await api('POST', `/passes/${pass.id}/prints`);
+    const html = await (await holder(await token(pass))).text();
+    expect(html).toContain('--w:210');
+    expect(html).toContain('class="pp-sheet pp-page pp-atb pp-strip');
+  });
+
+  it('a page size is its own for everyone, and a US org with no block prints on Letter', async () => {
+    const { kit, api, withPaper, token, holder } = await setup();
+    await setZone(kit, 'US/Eastern');
+    const derived = await withPaper();
+    await api('POST', `/passes/${derived.id}/prints`);
+    expect(await (await holder(await token(derived))).text()).toContain(
+      'class="pp-sheet pp-page pp-letter',
+    );
+    const a4 = await withPaper({ schema: 1, size: 'a4', barcode: 'qr' });
+    await api('POST', `/passes/${a4.id}/prints`);
+    expect(await (await holder(await token(a4))).text()).toContain('class="pp-sheet pp-page pp-a4');
+  });
+});
+
 describe('staff print page', () => {
   it('shows the active print to passes:operate, nothing before one exists, and refuses readers', async () => {
     const { kit, api, withPaper } = await setup();

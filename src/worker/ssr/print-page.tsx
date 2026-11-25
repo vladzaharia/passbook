@@ -78,9 +78,11 @@ const SCRIPT = (nonce: string) => `<script nonce="${nonce}">(()=>{
 const err=document.querySelector('[data-error]');
 const say=(m)=>{if(err){err.textContent=m;err.hidden=false}};
 const post=async(path)=>{if(err)err.hidden=true;try{const r=await fetch(location.pathname+path,{method:'POST',credentials:'same-origin',headers:{accept:'application/json'}});if(r.status===429)return say(${JSON.stringify(PRINT_COPY.limited)});if(!r.ok)return say(${JSON.stringify(PRINT_COPY.failed)});location.reload()}catch{say(${JSON.stringify(PRINT_COPY.failed)})}};
+// Records a redraw. A staff session also needs its CSRF token; a holder's link does not.
+const drawn=async(staff)=>{try{const h={};if(staff){const s=await (await fetch('/api/v1/session',{credentials:'same-origin'})).json();h['x-csrf-token']=s.csrfToken}await fetch(location.pathname+'/drawn'+location.search,{method:'POST',credentials:'same-origin',headers:h,keepalive:true})}catch{}};
 const ask=(which)=>{for(const c of document.querySelectorAll('[data-confirm]'))c.hidden=c.dataset.confirm!==which};
 document.addEventListener('click',(e)=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
-if(a==='print')window.print();
+if(a==='print'){window.print();if(b.dataset.drawn)drawn(b.dataset.drawn==='staff')}
 else if(a==='make')post('');
 else if(a==='reprint'||a==='void')ask(a);
 else if(a==='cancel')ask('');
@@ -92,8 +94,9 @@ const button = (
   label: string,
   icon: Parameters<typeof iconHtml>[0],
   primary = false,
+  extra = '',
 ) =>
-  `<button class="btn${primary ? '' : ' outline'}" type="button" data-act="${act}">${iconHtml(icon)}${escapeHtml(label)}</button>`;
+  `<button class="btn${primary ? '' : ' outline'}" type="button" data-act="${act}"${extra}>${iconHtml(icon)}${escapeHtml(label)}</button>`;
 
 const confirm = (which: 'reprint' | 'void', text: string, path: string) =>
   `<div class="pp-confirm" data-confirm="${which}" role="group" aria-label="${escapeHtml(text)}" hidden><p>${escapeHtml(text)}</p><button class="btn" type="button" data-act="yes" data-path="${path}">${escapeHtml(PRINT_COPY.confirmYes)}</button><button class="btn outline" type="button" data-act="cancel">${escapeHtml(PRINT_COPY.cancel)}</button></div>`;
@@ -107,6 +110,8 @@ export interface PrintPageProps {
   pdfHref?: string;
   /** Where the template's images are served (ends in `/`): `/p/{token}/assets/` for a holder. */
   assetBase?: string;
+  /** Appended to staff URLs that a browser opens, so a Test pass is read in Test mode: `?mode=test`. */
+  modeQuery?: string;
   nonce: string;
   theme?: PageTheme;
   /** The org's brand kit (`orgBrandOf`): its logo leads the bar, its accent colours the page, its mark sets the foot. */
@@ -122,7 +127,9 @@ type Ready = Extract<PrintPageModel, { state: 'ready' }>;
 function sheetHtml(props: PrintPageProps, model: Ready) {
   const { assetBase } = props;
   const url = (name: string | undefined) =>
-    assetBase && name ? `${assetBase}${encodeURIComponent(name)}` : undefined;
+    assetBase && name
+      ? `${assetBase}${encodeURIComponent(name)}${props.modeQuery ?? ''}`
+      : undefined;
   return renderToStaticMarkup(
     <PaperTicket
       content={model.content}
@@ -141,7 +148,13 @@ function sheetHtml(props: PrintPageProps, model: Ready) {
 function actionsHtml(props: PrintPageProps) {
   const holder = props.audience === 'holder';
   const actions = [
-    button('print', PRINT_COPY.print, Printer, true),
+    button(
+      'print',
+      PRINT_COPY.print,
+      Printer,
+      true,
+      ` data-drawn="${holder ? 'holder' : 'staff'}"`,
+    ),
     ...(props.pdfHref
       ? [
           `<a class="btn outline" href="${escapeHtml(props.pdfHref)}" download>${iconHtml(Download)}${escapeHtml(PRINT_COPY.download)}</a>`,
@@ -155,7 +168,11 @@ function actionsHtml(props: PrintPageProps) {
     props.model.state === 'ready' && hasUndrawable(props.model.content)
       ? `<p class="callout pp-lossy" data-lossy>${iconHtml(TriangleAlert)}<span>${escapeHtml(PRINT_COPY.lossy)}</span></p>`
       : '';
-  return `${lossy}<div class="pp-actions">${actions}</div>${
+  const stale =
+    props.model.state === 'ready' && props.model.stale
+      ? `<p class="callout pp-lossy" data-stale>${iconHtml(TriangleAlert)}<span>${escapeHtml(holder ? PRINT_COPY.staleHolder : PRINT_COPY.stale)}</span></p>`
+      : '';
+  return `${stale}${lossy}<div class="pp-actions">${actions}</div>${
     holder
       ? `${confirm('reprint', PRINT_COPY.confirmReprint, '/reprint')}${confirm('void', PRINT_COPY.confirmVoid, '/void')}`
       : ''
@@ -177,9 +194,9 @@ function stateBody(props: PrintPageProps): { body: string; sheet: boolean } {
   if (model.state === 'empty')
     return {
       sheet: false,
-      body: `<div class="pp-empty pp-stage"><p>${escapeHtml(holder ? PRINT_COPY.noPrint : PRINT_COPY.noPrintStaff)}</p>${
+      body: `<div class="pp-empty pp-stage"><p>${escapeHtml(model.again ? PRINT_COPY.againNote : holder ? PRINT_COPY.noPrint : PRINT_COPY.noPrintStaff)}</p>${
         holder
-          ? `<div class="pp-actions">${button('make', PRINT_COPY.make, Printer, true)}</div>`
+          ? `<div class="pp-actions">${button('make', model.again ? PRINT_COPY.again : PRINT_COPY.make, Printer, true)}</div>`
           : ''
       }<p class="pp-error callout" role="alert" data-error hidden></p></div>${back}`,
     };
@@ -209,7 +226,7 @@ function holderPage(props: PrintPageProps): string {
       </div>
     </div>,
   );
-  const page = model.state === 'ready' ? pageRule(model.design.size) : '';
+  const page = model.state === 'ready' ? pageRule(model.design.size, model.design.sheet) : '';
   const mark = renderToStaticMarkup(
     <div className="pp-noprint">
       <OrgMark brand={props.brand} />
@@ -231,7 +248,7 @@ export function renderPrintPage(props: PrintPageProps): string {
   const strip = renderToStaticMarkup(<TestRibbon mode={model.mode} what="pass" />);
   const ribbon = strip ? `<div class="pp-ribbon">${strip}</div>` : '';
   const { body, sheet } = stateBody(props);
-  const page = model.state === 'ready' ? pageRule(model.design.size) : '';
+  const page = model.state === 'ready' ? pageRule(model.design.size, model.design.sheet) : '';
   return hostedPage({
     nonce: props.nonce,
     ...(props.theme ? { theme: props.theme } : {}),

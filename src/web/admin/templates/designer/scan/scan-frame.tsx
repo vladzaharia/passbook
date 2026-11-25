@@ -14,10 +14,17 @@ export const FRAME_SIZES = {
   operator: { width: 1366, height: 768 },
 } as const satisfies Record<string, FrameSize>;
 
-const SHELL =
-  '<!doctype html><html lang="en"><head><meta charset="utf-8">' +
-  '<meta name="viewport" content="width=device-width, initial-scale=1"></head>' +
-  '<body><div id="root"></div></body></html>';
+/** Builds the frame's page with DOM calls: Trusted Types forbids `document.write` in production. */
+function buildShell(doc: Document) {
+  doc.documentElement.lang = 'en';
+  const meta = doc.createElement('meta');
+  meta.name = 'viewport';
+  meta.content = 'width=device-width, initial-scale=1';
+  doc.head.append(meta);
+  const root = doc.createElement('div');
+  root.id = 'root';
+  doc.body.append(root);
+}
 
 function copyStyles(from: Document, to: Document) {
   const seen = new Set(
@@ -69,9 +76,7 @@ export function ScanFrame({
     const doc = frame.current?.contentDocument;
     if (!doc) return;
     if (!doc.getElementById('root')) {
-      doc.open();
-      doc.write(SHELL);
-      doc.close();
+      buildShell(doc);
     }
     const root = doc.getElementById('root');
     if (!root) return;

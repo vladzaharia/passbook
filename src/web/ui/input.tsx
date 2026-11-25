@@ -1,5 +1,6 @@
 import type { InputHTMLAttributes, Ref, TextareaHTMLAttributes } from 'react';
 import { cn } from '../lib/cn.ts';
+import { useWizardStep } from './wizard/step-context.ts';
 
 /**
  * Shared control look: 3:1 border that darkens on hover, the raised field surface, visible focus ring, danger edge when invalid. Read-only and disabled text fields
@@ -28,8 +29,17 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export function Input({ className, type = 'text', ref, ...props }: InputProps) {
+  const step = useWizardStep();
+  // In a wizard step Enter is Next, or the finish on the last step.
+  const hint = step ? (step.last ? 'go' : 'next') : undefined;
   return (
-    <input ref={ref} type={type} className={cn(CONTROL, CONTROL_HEIGHT, className)} {...props} />
+    <input
+      ref={ref}
+      type={type}
+      enterKeyHint={hint}
+      className={cn(CONTROL, CONTROL_HEIGHT, className)}
+      {...props}
+    />
   );
 }
 

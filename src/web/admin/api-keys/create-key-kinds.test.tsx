@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
+import { createKey, next, toReview } from './wizard-test-utils.ts';
 
 const DAY = 86_400_000;
 const created = (over: Record<string, unknown> = {}) => ({
@@ -56,10 +57,8 @@ describe('key type, role and expiry', () => {
       '1 year',
       'Never',
     ]);
-    expect(screen.getByRole('option', { name: 'Never' })).toBeInTheDocument();
     await user.click(screen.getByRole('option', { name: '1 year' }));
-    await user.click(within(dialog).getByRole('combobox', { name: 'Type' }));
-    await user.click(await screen.findByRole('option', { name: /Personal/ }));
+    await user.click(within(dialog).getByRole('radio', { name: /Personal/ }));
     await user.click(within(dialog).getByRole('combobox', { name: /Expires/ }));
     expect(screen.queryByRole('option', { name: 'Never' })).toBeNull();
     expect(screen.queryByRole('option', { name: '1 year' })).toBeNull();
@@ -69,10 +68,9 @@ describe('key type, role and expiry', () => {
       '90 days',
     ]);
     await user.click(screen.getByRole('option', { name: '30 days' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    const review = await screen.findByRole('alertdialog', { name: 'Review personal key' });
-    expect(within(review).getByText(/personal, acts as you/)).toBeInTheDocument();
-    await user.click(within(review).getByRole('button', { name: 'Create key' }));
+    await toReview(user, dialog);
+    expect(within(dialog).getByText('Personal, acts as you')).toBeInTheDocument();
+    await createKey(user, dialog);
     await waitFor(() => expect(body.kind).toBe('personal'));
     expect(body.expiresAt).toBeGreaterThan(Date.now() + 29 * DAY);
     expect(body.expiresAt).toBeLessThan(Date.now() + 31 * DAY);
@@ -84,17 +82,54 @@ describe('key type, role and expiry', () => {
       body = b;
       return created({ scopes: [], roles: ['pass_operator'] });
     });
-    expect(within(dialog).getByRole('checkbox', { name: 'Read passes' })).toBeInTheDocument();
-    await user.click(within(dialog).getByRole('combobox', { name: 'Access' }));
-    await user.click(await screen.findByRole('option', { name: 'Role: Pass operator' }));
+    await next(user, dialog);
+    expect(
+      await within(dialog).findByRole('checkbox', { name: 'Read passes' }),
+    ).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('radio', { name: 'Pass operator' }));
     expect(within(dialog).queryByRole('checkbox', { name: 'Read passes' })).toBeNull();
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    const review = await screen.findByRole('alertdialog');
-    expect(within(review).getByText(/Permissions: Pass operator/)).toBeInTheDocument();
-    await user.click(within(review).getByRole('button', { name: 'Create key' }));
+    await next(user, dialog);
+    await next(user, dialog);
+    expect(
+      within(await within(dialog).findByRole('region', { name: 'Access' })).getByText(
+        'Pass operator',
+      ),
+    ).toBeInTheDocument();
+    await createKey(user, dialog);
     await waitFor(() => expect(body.roles).toEqual(['pass_operator']));
     expect(body.scopes).toEqual([]);
     expect(body.kind).toBe('service');
+  });
+
+  it('Enter advances a valid step and stays put on an invalid one', async () => {
+    const { user, dialog } = await openOrgDialog(() => created());
+    // The footer's Next is the form's default button. user-event's Enter looks for a submit button
+    // inside the form only, so submit the way the browser does for it.
+    const enter = () => dialog.querySelector('form')?.requestSubmit();
+    enter();
+    expect(
+      await within(dialog).findByRole('heading', { name: 'What it can do' }),
+    ).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Back' }));
+    await user.clear(within(dialog).getByLabelText(/Name/));
+    enter();
+    expect(within(dialog).getByRole('heading', { name: 'Name the key' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+  });
+
+  it('allows going back only to done steps', async () => {
+    const { user, dialog } = await openOrgDialog(() => created());
+    const rail = within(dialog).getByRole('navigation', { name: 'Steps' });
+    expect(within(rail).queryByRole('button')).toBeNull();
+    await next(user, dialog);
+    await user.click(within(rail).getByRole('button', { name: /Basics/ }));
+    expect(
+      await within(dialog).findByRole('heading', { name: 'Name the key' }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByLabelText(/Name/)).toHaveValue('Mine');
   });
 
   it('lists the start of each secret, the kind and the role of a key', async () => {

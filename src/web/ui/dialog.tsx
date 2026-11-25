@@ -52,13 +52,18 @@ export interface DialogContentProps
   footer?: ReactNode;
   /** Visually hide the title; it stays the accessible name. */
   hideTitle?: boolean;
-  /** sm 384 confirms, md 512 forms (default), lg 768 uploads and editors. */
-  size?: 'sm' | 'md' | 'lg';
+  /** sm 384 confirms, md 512 forms (default), lg 768 uploads and editors, xl 896 steps with a side rail (full screen on phones). */
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Destructive confirms have no X. */
   closeButton?: boolean;
 }
 
-const SIZES = { sm: 'sm:max-w-sm', md: 'sm:max-w-lg', lg: 'sm:max-w-3xl' } as const;
+const SIZES = {
+  sm: 'sm:max-w-sm',
+  md: 'sm:max-w-lg',
+  lg: 'sm:max-w-3xl',
+  xl: 'sm:max-w-4xl max-sm:top-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:rounded-none max-sm:pt-[env(safe-area-inset-top)]',
+} as const;
 
 export function DialogContent({
   title,
@@ -110,7 +115,9 @@ export function DialogContent({
             </DialogPrimitive.Close>
           ) : null}
         </div>
-        <div className="min-h-0 flex-1 overflow-auto px-5 py-4">{children}</div>
+        <div data-dialog-body="" className="min-h-0 flex-1 overflow-auto px-5 py-4">
+          {children}
+        </div>
         {footer ? (
           <div className={cn(DIALOG_ACTIONS, 'border-t border-border px-5 py-3')}>{footer}</div>
         ) : null}

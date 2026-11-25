@@ -22,6 +22,9 @@ vi.mock('../../../ui/index.ts', async (orig) => ({
   PageHeader: ({ title }: { title: string }) => <h1>{title}</h1>,
   toast: m.toast,
 }));
+vi.mock('@/web/ui/layout/org-chooser.tsx', () => ({
+  OrgChooser: () => <h1>Choose an organization</h1>,
+}));
 vi.mock('./photo-batch.ts', async (orig) => ({
   ...(await orig<object>()),
   matchEntries: m.match,
@@ -41,7 +44,7 @@ describe('PhotosPage', () => {
   it('asks for an organization, and for the right to change passes', () => {
     m.scope = { orgId: null, membership: null };
     const { rerender } = render(<PhotosPage />);
-    expect(screen.getByText('Choose an organization.')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Choose an organization' })).toBeInTheDocument();
     m.scope = { orgId: 'o1', membership: { capabilities: [] } };
     rerender(<PhotosPage />);
     expect(screen.getByText('You cannot change passes in this organization.')).toBeInTheDocument();

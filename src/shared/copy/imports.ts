@@ -33,7 +33,7 @@ export const IMPORT_COPY = {
   testNote: 'Test mode: passes are made as test passes and their email goes to the test inbox.',
   recent: 'Recent imports',
   noRecent: 'No imports yet',
-  chooseOrg: 'Choose an organization to import passes.',
+  chooseOrg: 'Choose an organization to import passes',
   forbidden: 'You can import passes with the operator or admin role.',
   match: {
     title: 'Match columns',
