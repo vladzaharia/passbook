@@ -82,6 +82,21 @@ function parseCurl(text: string, secret: string) {
   return { method, url, headers, body, binary: line.includes('--data-binary') };
 }
 
+/** What a reader's earlier answers give a hand-written curl snippet: `$PASS_ID`, and the pass's current `$VERSION` for `If-Match`. */
+async function withVars(
+  text: string,
+  world: { passId: string; secret: string; fetch: typeof fetch },
+): Promise<string> {
+  let out = text.replaceAll('$PASS_ID', world.passId);
+  if (out.includes('$VERSION')) {
+    const res = await world.fetch(`https://passbook.mobile/api/v1/passes/${world.passId}`, {
+      headers: { authorization: `Bearer ${world.secret}` },
+    });
+    out = out.replaceAll('$VERSION', String(((await res.json()) as { version: number }).version));
+  }
+  return out;
+}
+
 describe('generated snippets', () => {
   it('has one TypeScript and one curl snippet per operation', () => {
     expect(Object.keys(ts).map(name).sort()).toEqual(Object.keys(curl).map(name).sort());
@@ -195,8 +210,9 @@ describe('guide snippets', () => {
         ? guideSh[`../../docs/developers/snippets/guides/${g.files.curl}`]
         : undefined;
       if (sh === undefined) continue;
+      const text = await withVars(sh, world);
       world.calls.length = 0;
-      const req = parseCurl(sh, world.secret);
+      const req = parseCurl(text, world.secret);
       await world.fetch(req.url, { method: req.method, headers: req.headers, body: req.body });
       problems.push(...handFailures(g, world.calls).map((p) => `${p} (curl)`));
     }
