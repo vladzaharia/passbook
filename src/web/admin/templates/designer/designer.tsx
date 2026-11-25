@@ -42,7 +42,7 @@ import {
   validSelection,
 } from './reducer.ts';
 import { useSaveFlow } from './save-flow.ts';
-import { ScanMode } from './scan/scan-mode.tsx';
+import { ScanModeSafe } from './scan/scan-mode-safe.tsx';
 import { DesignerStage } from './stage.tsx';
 import { useStampsPreview } from './stamp-preview.ts';
 import { useDesignerIssues } from './use-designer-issues.ts';
@@ -267,7 +267,8 @@ export function Designer({
           </Callout>
         ) : null}
         {mode === 'scan' ? (
-          <ScanMode
+          <ScanModeSafe
+            onBack={() => setMode('pass')}
             templateId={templateId}
             orgId={selectedOrg ?? null}
             issues={
