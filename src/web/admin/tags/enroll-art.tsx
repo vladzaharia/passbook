@@ -1,4 +1,4 @@
-import { Check, Laptop, Nfc, Tablet } from 'lucide-react';
+import { Laptop, Nfc, Tablet } from 'lucide-react';
 import './tags.css';
 
 /** Console and scanner joined by a dashed line: one dot travels it, then the scanner's arcs ping. */
@@ -37,14 +37,5 @@ export function EnrollArt({ stage }: { stage: 'waiting' | 'done' | 'refused' }) 
         ) : null}
       </span>
     </div>
-  );
-}
-
-/** The green tile that says the tag is assigned. */
-export function DoneTile() {
-  return (
-    <span className="wl-enroll-tile mx-auto grid size-12 place-items-center rounded-full border border-success-border bg-success-subtle text-success">
-      <Check aria-hidden className="size-6" />
-    </span>
   );
 }
