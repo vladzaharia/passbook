@@ -80,7 +80,7 @@ export function EventDialog({
       title={edit ? 'Edit event' : 'New event'}
       wizard={w}
       dirty={dirty}
-      finishLabel="Create event"
+      finishLabel={edit ? 'Save' : 'Create event'}
       busy={save.isPending}
     >
       {w.id === 'event' ? <StepEvent {...step} /> : null}

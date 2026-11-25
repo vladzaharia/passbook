@@ -261,7 +261,7 @@ export function SessionRulesDialog({
           </Callout>
         ) : null
       }
-      finishLabel="Save session"
+      finishLabel="Save"
       busy={save.isPending}
       onFinish={async () => {
         if (changed) throw new Error('Reload settings first.');

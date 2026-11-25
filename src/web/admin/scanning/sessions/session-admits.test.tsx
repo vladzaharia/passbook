@@ -178,7 +178,7 @@ describe('the Admits picker', () => {
     await user.click(await reach(user, dialog, 'Create session'));
     expect(await within(dialog).findByText(/more than 100 pass types/)).toBeInTheDocument();
     expect(writes).toHaveLength(1);
-    await user.click(within(dialog).getByRole('button', { name: 'Passes' }));
+    await user.click(within(dialog).getByRole('button', { name: /^Passes/ }));
     expect(within(dialog).getByRole('checkbox', { name: 'Type 1' })).toBeChecked();
   });
 

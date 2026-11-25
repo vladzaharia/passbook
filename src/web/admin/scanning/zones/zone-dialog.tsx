@@ -106,7 +106,7 @@ export function ZoneDialog({ orgId, zones, zone, parentId, onClose }: Props) {
         title={zone ? `Edit ${zone.name}` : parentId ? 'Add a zone inside' : 'New zone'}
         wizard={w}
         dirty={dirty}
-        finishLabel="Create zone"
+        finishLabel={zone ? 'Save' : 'Create zone'}
         busy={create.isPending || update.isPending}
       >
         {w.id === 'zone' ? (
