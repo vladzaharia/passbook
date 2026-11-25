@@ -66,7 +66,7 @@ export function IpChips({
         </p>
       ) : null}
       {value.length ? (
-        <ul aria-label="Allowed IPs" className="mt-3 flex flex-wrap gap-2">
+        <ul aria-label="Added IPs" className="mt-3 flex flex-wrap gap-2">
           {value.map((ip) => (
             <li key={ip}>
               <Badge className="gap-1.5 pr-1 font-mono">
