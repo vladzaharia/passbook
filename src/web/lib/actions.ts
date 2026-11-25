@@ -34,6 +34,7 @@ import {
 import { ACTION_ICON } from './action-icons.ts';
 import { AUTH_ACTIONS } from './actions-auth.ts';
 import { BROADCAST_RUN_ACTIONS } from './actions-broadcast.ts';
+import { CONNECTION_FILE_ACTIONS } from './actions-connection-files.ts';
 import { DEVELOPER_ACTIONS } from './actions-developer.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
@@ -81,8 +82,6 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'connection.test': a('Connection tested', I.test, 'info'),
   'connection.update': a('Connection updated', I.edit, 'info'),
   'connection.webhook_resolve': a('Webhook item resolved', CircleCheck, 'info'),
-  'connection.webhook_secret': a('Webhook secret rotated', I.rotate, 'info'),
-  'connection.webhook_secret_revoke_previous': a('Old webhook secret revoked', I.rotate, 'warning'),
   'webhook.capture_secret.reveal': a('Capture secret viewed', I.test, 'info'),
   'webhook.endpoint.create': a('Webhook endpoint created', ENTITY.connection.icon, 'success'),
   'webhook.endpoint.update': a('Webhook endpoint updated', I.edit, 'info'),
@@ -267,6 +266,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'template.upload': a('Template uploaded', ENTITY.template.icon, 'success'),
   ...AUTH_ACTIONS,
   ...MEMBER_ACTIONS,
+  ...CONNECTION_FILE_ACTIONS,
   ...SCAN_PIN_ACTIONS,
   ...TAG_KEY_ACTIONS,
   ...BROADCAST_RUN_ACTIONS,

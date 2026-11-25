@@ -4,6 +4,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import type { ConnectionAuthority } from './access.ts';
 import { toDto } from './dto.ts';
+import { connectorItem, requireConnectorEntitled } from './entitlement.ts';
 import { schedules } from './health.ts';
 import { assertMayIssue, updateIssues } from './issuing.ts';
 import { validateMapping } from './mapping.ts';
@@ -28,7 +29,9 @@ import {
   assertPointer,
   assertSafeUrls,
   assertTemplateUsable,
+  orgZoneOf,
   parseWith,
+  prepare,
   requireConnector,
 } from './validate.ts';
 import { validateVoidWhen } from './void-when.ts';
@@ -81,6 +84,19 @@ function assertCredentialOrigin(
   }
 }
 
+/** A connection the plan no longer includes keeps running and stays editable, but may not move to a new origin. */
+async function assertOriginMoveEntitled(
+  sctx: ServiceContext,
+  def: ReturnType<typeof requireConnector>,
+  conn: ConnectionRow,
+  next: Record<string, unknown>,
+): Promise<void> {
+  if (!def.egress) return;
+  const known = new Set(def.egress(storedConfig(def, conn) as never));
+  if (def.egress(next as never).every((o) => known.has(o))) return;
+  await requireConnectorEntitled(sctx, conn.orgId, connectorItem(def.type, next));
+}
+
 export async function update(
   sctx: ServiceContext,
   actor: Actor,
@@ -108,8 +124,13 @@ export async function update(
 
   if (input.name !== undefined) set('name', input.name);
   if (input.config !== undefined) {
-    const config = parseWith(def.configSchema, input.config, 'config');
+    const config = prepare(def, parseWith(def.configSchema, input.config, 'config'), {
+      now,
+      timeZone: await orgZoneOf(sctx, conn.orgId),
+      previous: def.prepareConfig ? storedConfig(def, conn) : undefined,
+    });
     assertFixedConfig(def, conn, config);
+    await assertOriginMoveEntitled(sctx, def, conn, config as Record<string, unknown>);
     await assertSafeUrls(sctx, def.urls?.(config) ?? []);
     assertCredentialOrigin(def, conn, config, input.secrets);
     patch.config = config;

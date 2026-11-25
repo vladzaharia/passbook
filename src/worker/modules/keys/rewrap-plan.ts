@@ -1,6 +1,7 @@
 import { type KekRing, rewrapSecret } from '../../platform/crypto.ts';
 import { fromBase64, toBase64 } from '../../platform/ids.ts';
-import type { CaptureMove, Move, RawCapture } from './repo-rewrap.ts';
+import type { Move } from './repo-rewrap.ts';
+import type { CaptureMove, RawCapture } from './repo-rewrap-captures.ts';
 import { captureAad, type Raw } from './rewrap-tables.ts';
 
 const EMPTY = new Uint8Array(0);

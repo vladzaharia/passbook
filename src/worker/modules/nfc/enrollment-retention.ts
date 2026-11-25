@@ -3,6 +3,7 @@ import { exists } from '../../platform/authority-cond.ts';
 import { lt, lte, ne } from '../../platform/authority-expr.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
+import { sweepPrograms } from './program-retention.ts';
 import { lapsedEnrollments, purgeableEnrollmentTenants } from './repo-enrollments.ts';
 
 const DAY = 86_400_000;
@@ -55,4 +56,5 @@ export async function sweepEnrollments(ctx: ServiceContext): Promise<void> {
     await g.commit();
   }
   ctx.log.info('tags.enrollment_retention', { expired, tenants: tenants.length });
+  await sweepPrograms(ctx);
 }

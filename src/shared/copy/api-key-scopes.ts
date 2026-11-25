@@ -22,5 +22,7 @@ export const SCOPE_LABEL: Record<string, string> = {
   'scanning:admin': 'Door credentials: pairing codes, till tokens, staff PINs',
   'nfc:keys': 'Make and rotate NFC tag keys',
   'audit:read': 'Read the audit log (Live keys)',
+  'members:read': 'Read developer invitations and developers',
+  'members:write': 'Invite and remove developers (Live keys)',
   'api-keys:write': 'Manage its own child keys',
 };

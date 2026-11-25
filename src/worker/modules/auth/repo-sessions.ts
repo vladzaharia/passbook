@@ -1,4 +1,4 @@
-import type { Amr } from '../../platform/auth.ts';
+import type { Amr, Role } from '../../platform/auth.ts';
 import { all, first, run } from '../../platform/db.ts';
 
 type Db = D1Database;
@@ -107,6 +107,26 @@ export async function revokeUserSessions(
     db,
     `UPDATE sessions SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL AND id_hash IS NOT ?`,
     [now, userId, exceptIdHash ?? null],
+  );
+  return changes;
+}
+
+/**
+ * Revokes a user's live Polaris ID sessions whose roles include `role` (email-link and break-glass sessions stay).
+ * Every Polaris ID session holds `user`, so that revokes them all. Returns the count.
+ */
+export async function revokeSessionsWithRole(
+  db: Db,
+  userId: string,
+  role: Role,
+  now: number,
+): Promise<number> {
+  const { changes } = await run(
+    db,
+    `UPDATE sessions SET revoked_at = ?
+     WHERE user_id = ? AND amr = 'oidc' AND revoked_at IS NULL
+       AND EXISTS (SELECT 1 FROM json_each(sessions.roles) WHERE value = ?)`,
+    [now, userId, role],
   );
   return changes;
 }

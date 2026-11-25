@@ -67,6 +67,10 @@ function chipFor(session: Session): HTMLElement | null {
   for (const [label, href] of items) {
     const link = el('a', 'orgchip-item', label);
     link.href = href;
+    // The menu closes on a choice: on the quickstart the link only changes the hash, so the page stays put.
+    link.addEventListener('click', () => {
+      chip.open = false;
+    });
     menu.append(link);
   }
   chip.append(head, menu);

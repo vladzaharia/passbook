@@ -11,6 +11,7 @@ const TOPICS = [
 export const shopifyOrders: Recipe = {
   id: 'shopify-orders',
   label: 'Shopify orders',
+  category: 'commerce',
   verifier: 'shopify',
   topicHeader: 'x-shopify-topic',
   idPrefix: 'shopify',

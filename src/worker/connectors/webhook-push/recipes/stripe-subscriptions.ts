@@ -12,6 +12,7 @@ const TYPES = [
 export const stripeSubscriptions: Recipe = {
   id: 'stripe-subscriptions',
   label: 'Stripe subscriptions',
+  category: 'commerce',
   verifier: 'stripe',
   topicHeader: null,
   idPrefix: 'stripe',

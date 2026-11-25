@@ -86,7 +86,23 @@ describe('recipes and overlap', () => {
       secretSchema: null,
       outputFields: {},
       defaults: { intervalSeconds: 1, maxConcurrency: 1, requestsPerMinute: 1, timeoutMs: 1 },
+      entitled: true,
     });
     expect(info.recipes).toEqual([]);
+    expect(info).toMatchObject({ category: 'apis', order: 0 });
+    expect(info.capabilities.upload).toBe(false);
+  });
+
+  it('takes a draft file id on create only', () => {
+    const fileId = '01900000-0000-7000-8000-00000000f11e';
+    const create = CreateConnectionSchema.parse({
+      orgId: '01900000-0000-7000-8000-000000000000',
+      connectorType: 'file-upload',
+      name: 'Members',
+      config: { idColumn: '/Member ID' },
+      fileId,
+    });
+    expect(create.fileId).toBe(fileId);
+    expect(UpdateConnectionSchema.parse({ fileId })).toEqual({});
   });
 });

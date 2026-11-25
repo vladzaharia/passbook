@@ -1,0 +1,110 @@
+[
+ {
+  "memberName": "Member M-001",
+  "memberId": "m-001",
+  "status": "inactive",
+  "tier": "Platinum",
+  "points": 895,
+  "guests": 7,
+  "email": "m-001@acme.io"
+ },
+ {
+  "memberName": "Member M-002",
+  "memberId": "m-002",
+  "status": "active",
+  "tier": "Gold",
+  "points": 514,
+  "guests": 6,
+  "email": "m-002@acme.io"
+ },
+ {
+  "memberName": "Member M-003",
+  "memberId": "m-003",
+  "status": "active",
+  "tier": "Silver",
+  "points": 133,
+  "guests": 5,
+  "email": "m-003@acme.io"
+ },
+ {
+  "memberName": "Member M-004",
+  "memberId": "m-004",
+  "status": "active",
+  "tier": "Bronze",
+  "points": 752,
+  "guests": 4,
+  "email": "m-004@acme.io"
+ },
+ {
+  "memberName": "Member M-005",
+  "memberId": "m-005",
+  "status": "active",
+  "tier": "Platinum",
+  "points": 371,
+  "guests": 3,
+  "email": "m-005@acme.io"
+ },
+ {
+  "memberName": "Member M-006",
+  "memberId": "m-006",
+  "status": "active",
+  "tier": "Gold",
+  "points": 990,
+  "guests": 2,
+  "email": "m-006@acme.io"
+ },
+ {
+  "memberName": "Member M-007",
+  "memberId": "m-007",
+  "status": "active",
+  "tier": "Silver",
+  "points": 609,
+  "guests": 1,
+  "email": "m-007@acme.io"
+ },
+ {
+  "memberName": "Member M-008",
+  "memberId": "m-008",
+  "status": "active",
+  "tier": "Bronze",
+  "points": 324,
+  "guests": 6,
+  "email": "m-008@acme.io"
+ },
+ {
+  "memberName": "Member M-009",
+  "memberId": "m-009",
+  "status": "active",
+  "tier": "Platinum",
+  "points": 943,
+  "guests": 5,
+  "email": "m-009@acme.io"
+ },
+ {
+  "memberName": "Member M-010",
+  "memberId": "m-010",
+  "status": "active",
+  "tier": "Silver",
+  "points": 85,
+  "guests": 7,
+  "email": "m-010@acme.io"
+ },
+ {
+  "memberName": "Member M-011",
+  "memberId": "m-011",
+  "status": "active",
+  "tier": "Gold",
+  "points": 466,
+  "guests": 8,
+  "email": "m-011@acme.io"
+ },
+ {
+  "memberName": "Member M-012",
+  "memberId": "m-012",
+  "status": "active",
+  "tier": "Platinum",
+  "points": 847,
+  "guests": 9,
+  "email": "m-012@acme.io"
+ }
+]

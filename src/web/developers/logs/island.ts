@@ -118,14 +118,16 @@ export async function mountLogs(
     const [railRead, portal] = await Promise.all([
       loadRail(),
       bar.filters().source === 'key'
-        ? getJson<Page>(`${LOG_API}?source=try&limit=1`).catch(() => null)
+        ? getJson<Page>(`${LOG_API}?source=try&limit=100`).catch(() => null)
         : null,
     ]);
     if (mine !== run || !list.hidden) return;
     showFirstCall(empty, {
       origin: location.origin,
       hasKey: railRead.body ? railRead.body.key !== null : true,
-      onPortal: portal?.body?.items.length ? () => bar.setSource('try') : undefined,
+      portal: portal?.body?.items.length
+        ? { count: portal.body.items.length, show: () => bar.setSource('try') }
+        : undefined,
     });
   }
 
