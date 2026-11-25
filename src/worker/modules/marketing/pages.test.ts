@@ -7,13 +7,17 @@ import type { AppEnv } from '../../platform/env.ts';
 const ORIGIN = 'https://passbook.mobile';
 const SPA = '<!doctype html><div id="root"></div>';
 const ACCESS =
-  '<!doctype html><div class="panel acc-ticket" id="acc-ticket"><div id="acc-buddy" data-buddy="curious"></div>' +
+  '<!doctype html><script src="/assets/marketing-access-x.js"></script><div class="panel acc-ticket" id="acc-ticket"><div id="acc-buddy" data-buddy="curious"></div>' +
   '<form id="acc-form"></form><div id="acc-done" hidden tabindex="-1"></div></div>';
 const PAGES: Record<string, string> = {
-  '/marketing/': '<!doctype html><title>Home</title>',
-  '/marketing/door': '<!doctype html><title>Door</title>',
-  '/marketing/blueprints': '<!doctype html><title>Blueprints</title>',
-  '/marketing/build': '<!doctype html><title>Build</title>',
+  '/marketing/':
+    '<!doctype html><title>Home</title><script src="/assets/marketing-home-x.js"></script>',
+  '/marketing/door':
+    '<!doctype html><title>Door</title><script src="/assets/marketing-door-x.js"></script>',
+  '/marketing/blueprints':
+    '<!doctype html><title>Blueprints</title><script src="/assets/marketing-blueprints-x.js"></script>',
+  '/marketing/build':
+    '<!doctype html><title>Build</title><script src="/assets/marketing-build-x.js"></script>',
   '/marketing/access': ACCESS,
 };
 
@@ -89,7 +93,7 @@ describe('marketing pages', () => {
     const res = await call('/access/sent');
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html).toContain('<form id="acc-form" hidden>');
+    expect(html).toMatch(/<form id="acc-form" hidden(="")?>/);
     expect(html).toMatch(/<div id="acc-done"\s+tabindex="-1">/);
     expect(html).toContain('class="panel acc-ticket sent"');
     expect(html).toContain('data-buddy="tuck"');
@@ -122,7 +126,7 @@ describe('home', () => {
     expect(res.headers.get('x-shell')).toBe('1');
     expect(res.headers.get('cache-control')).toBe('private, no-cache');
     expect(res.headers.get('vary')).toContain('Cookie');
-    expect(res.headers.get('content-security-policy')).not.toContain('passbook-marketing');
+    expect(res.headers.get('content-security-policy') ?? '').not.toContain('passbook-marketing');
   });
 
   it('other cookies do not count as a session', async () => {

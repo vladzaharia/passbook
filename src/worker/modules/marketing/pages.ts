@@ -8,16 +8,30 @@ import { marketingContentSecurityPolicy, staticAsset } from '../../platform/secu
 type Ctx = Context<AppBindings>;
 type Address = keyof typeof MARKETING_ASSETS;
 
-/** The built page for an address, or null when the build has none. */
-async function builtPage(c: Ctx, address: Address): Promise<Response | null> {
+/** Every built page loads its hashed entry from here; the app's shell never does. */
+const BUILT_MARK = '/assets/marketing-';
+
+/**
+ * The built page for an address, or null when the build has none. A missing file would come back
+ * as the app's shell (the asset layer's SPA fallback), which must not be served as a site page.
+ */
+async function builtPage(
+  c: Ctx,
+  address: Address,
+): Promise<{ html: string; etag: string | null } | null> {
   const asset = new URL(MARKETING_ASSETS[address], c.req.url);
   const res = await c.env.ASSETS.fetch(new Request(asset));
-  const html = (res.headers.get('content-type') ?? '').startsWith('text/html');
-  return res.ok && html ? res : null;
+  if (!res.ok || !(res.headers.get('content-type') ?? '').startsWith('text/html')) return null;
+  const html = await res.text();
+  return html.includes(BUILT_MARK) ? { html, etag: res.headers.get('etag') } : null;
 }
 
-function pageResponse(c: Ctx, res: Response, headers: Record<string, string>): Response {
-  const out = new Response(c.req.method === 'HEAD' ? null : res.body, {
+function pageResponse(
+  c: Ctx,
+  page: { html: string | ReadableStream; etag: string | null },
+  headers: Record<string, string>,
+): Response {
+  const out = new Response(c.req.method === 'HEAD' ? null : page.html, {
     status: 200,
     headers: {
       'content-type': 'text/html; charset=utf-8',
@@ -27,8 +41,8 @@ function pageResponse(c: Ctx, res: Response, headers: Record<string, string>): R
       ...headers,
     },
   });
-  const etag = res.headers.get('etag');
-  if (etag && headers['cache-control']?.startsWith('public')) out.headers.set('etag', etag);
+  if (page.etag && headers['cache-control']?.startsWith('public'))
+    out.headers.set('etag', page.etag);
   return out;
 }
 
@@ -36,9 +50,9 @@ const notBuilt = (c: Ctx) => c.notFound();
 
 /** /door, /blueprints, /build and /access: public, cached for five minutes. */
 export async function marketingPage(c: Ctx, address: Address): Promise<Response> {
-  const res = await builtPage(c, address);
-  if (!res) return notBuilt(c);
-  return pageResponse(c, res, { 'cache-control': 'public, max-age=300, no-transform' });
+  const page = await builtPage(c, address);
+  if (!page) return notBuilt(c);
+  return pageResponse(c, page, { 'cache-control': 'public, max-age=300, no-transform' });
 }
 
 /**
@@ -53,9 +67,9 @@ export async function homePage(c: Ctx): Promise<Response> {
     for (const [name, value] of Object.entries(headers)) out.headers.set(name, value);
     return staticAsset(out);
   }
-  const res = await builtPage(c, MARKETING_PATHS.home);
-  if (!res) return notBuilt(c);
-  return pageResponse(c, res, headers);
+  const page = await builtPage(c, MARKETING_PATHS.home);
+  if (!page) return notBuilt(c);
+  return pageResponse(c, page, headers);
 }
 
 /**
@@ -63,8 +77,8 @@ export async function homePage(c: Ctx): Promise<Response> {
  * with the form hidden, the done panel shown, the ticket marked sent and the Buddy tucking a pass.
  */
 export async function accessSentPage(c: Ctx): Promise<Response> {
-  const res = await builtPage(c, MARKETING_PATHS.access);
-  if (!res) return notBuilt(c);
+  const page = await builtPage(c, MARKETING_PATHS.access);
+  if (!page) return notBuilt(c);
   const rewritten = new HTMLRewriter()
     .on('#acc-form', {
       element: (el) => {
@@ -86,9 +100,13 @@ export async function accessSentPage(c: Ctx): Promise<Response> {
         el.setAttribute('data-buddy', 'tuck');
       },
     })
-    .transform(res);
-  return pageResponse(c, rewritten, {
-    'cache-control': 'no-store',
-    'x-robots-tag': 'noindex, nofollow',
-  });
+    .transform(new Response(page.html));
+  return pageResponse(
+    c,
+    { html: rewritten.body ?? '', etag: null },
+    {
+      'cache-control': 'no-store',
+      'x-robots-tag': 'noindex, nofollow',
+    },
+  );
 }
