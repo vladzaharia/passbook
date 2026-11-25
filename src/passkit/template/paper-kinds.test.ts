@@ -191,7 +191,7 @@ describe('long values', () => {
     });
     const from = c.title.split(' – ')[0] ?? '';
     expect(Array.from(from)).toHaveLength(18);
-    expect(from.isWellFormed()).toBe(true);
+    expect(Array.from(from).every((ch) => ch === '🚀' || ch === '…')).toBe(true);
   });
 });
 
