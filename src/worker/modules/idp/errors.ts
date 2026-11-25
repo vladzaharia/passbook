@@ -23,34 +23,50 @@ export function idpCodeOf(error: unknown): IdpCode | null {
 export function mapIdpError(error: unknown, log?: Logger): AppError {
   if (error instanceof AppError) return error;
   const code = codeOfMessage(error);
-  const make = (
-    appCode: string,
-    status: number,
-    message: string,
-    headers?: Record<string, string>,
-  ) => new AppError(appCode, status, message, { cause: error, ...(headers ? { headers } : {}) });
+  const cause = { cause: error };
   switch (code) {
     case 'IDP_BUDGET':
-      return make('IDP_BUDGET', 429, 'Too many Polaris ID changes today. Try again tomorrow.', {
-        'retry-after': '3600',
-      });
+      return new AppError(
+        'IDP_BUDGET',
+        429,
+        'Too many Polaris ID changes today. Try again tomorrow.',
+        {
+          ...cause,
+          headers: { 'retry-after': '3600' },
+        },
+      );
     case 'IDP_REFUSED':
-      return make('IDP_REFUSED', 403, 'Polaris ID refused this change. Ask the PassBook owner.');
+      return new AppError(
+        'IDP_REFUSED',
+        403,
+        'Polaris ID refused this change. Ask the PassBook owner.',
+        cause,
+      );
     case 'IDP_NOT_FOUND':
     case 'IDP_CONFLICT':
-      return make('IDP_CONFLICT', 409, 'Polaris ID changed. Try again.');
+      return new AppError('IDP_CONFLICT', 409, 'Polaris ID changed. Try again.', cause);
     case 'IDP_FROZEN':
-      return make('IDP_FROZEN', 503, 'Polaris ID changes are paused. Ask the PassBook owner.');
+      return new AppError(
+        'IDP_FROZEN',
+        503,
+        'Polaris ID changes are paused. Ask the PassBook owner.',
+        cause,
+      );
     case 'IDP_NOT_MANAGED':
-      return make('IDP_NOT_MANAGED', 409, "PassBook doesn't manage this Polaris ID account.");
+      return new AppError(
+        'IDP_NOT_MANAGED',
+        409,
+        "PassBook doesn't manage this Polaris ID account.",
+        cause,
+      );
     case 'IDP_IN_USE':
-      return make('IDP_IN_USE', 409, 'This group still has members or apps.');
+      return new AppError('IDP_IN_USE', 409, 'This group still has members or apps.', cause);
     case 'IDP_BREAKER':
       log?.error('idp.breaker', { code: 'IDP_BREAKER' });
-      return make('IDP_UNAVAILABLE', 503, IDP_UNAVAILABLE_MESSAGE);
+      return new AppError('IDP_UNAVAILABLE', 503, IDP_UNAVAILABLE_MESSAGE, cause);
     default:
       // IDP_AUTH, IDP_UPSTREAM, IDP_UNSAFE_CONFIG, IDP_MISCONFIGURED, IDP_DRIFT and anything unknown.
       log?.error('idp.unavailable', { code: code ?? 'IDP_UNKNOWN' });
-      return make('IDP_UNAVAILABLE', 503, IDP_UNAVAILABLE_MESSAGE);
+      return new AppError('IDP_UNAVAILABLE', 503, IDP_UNAVAILABLE_MESSAGE, cause);
   }
 }

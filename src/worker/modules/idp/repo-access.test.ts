@@ -17,6 +17,8 @@ import {
   driftOfRun,
   openDrift,
   openDriftCounts,
+  openDriftOf,
+  openDriftOf,
   openDriftOfSubject,
   recordDrift,
   resolveDrift,
@@ -25,6 +27,7 @@ import {
   insertMember,
   liveMembershipsOfSubject,
   liveMembersOfGroup,
+  memberById,
   removeMember,
   removeMembersOfGroup,
 } from './repo-group-members.ts';
@@ -34,6 +37,7 @@ import {
   insertRule,
   liveRulesOfGroup,
   liveRulesOfOrg,
+  ruleById,
 } from './repo-group-rules.ts';
 import {
   groupByKey,
@@ -58,6 +62,7 @@ import {
   revokeAllGrants,
   revokeGrant,
 } from './repo-role-grants.ts';
+import { subjectsOfUser } from './repo-sources.ts';
 
 const f = await world();
 const now = f.clock.now();
@@ -126,6 +131,15 @@ describe('platform role grants', () => {
   });
 });
 
+describe('identity', () => {
+  it('lists the Polaris ID subjects of a user and none for an unlinked one', async () => {
+    const linked = await person(f);
+    const unlinked = await person(f, { link: false });
+    expect(await subjectsOfUser(db(), linked.id)).toEqual([linked.subject]);
+    expect(await subjectsOfUser(db(), unlinked.id)).toEqual([]);
+  });
+});
+
 describe('drift', () => {
   it('records an open difference once, closes it with a resolution, and reopens as a new row', async () => {
     const subject = `sub-drift-${f.ids.id()}`;
@@ -147,6 +161,7 @@ describe('drift', () => {
       'owner_removed',
     ]);
     expect((await driftOfRun(db(), 'run-1')).filter((d) => d.subject === subject)).toHaveLength(2);
+    expect((await openDriftOf(db(), subject, 'console', 'missing'))?.found_at).toBe(now);
     expect(await resolveDrift(db(), subject, 'console', 'missing', 'applied', now + 1)).toBe(true);
     expect(await resolveDrift(db(), subject, 'console', 'missing', 'applied', now + 2)).toBe(false);
     expect(await recordDrift(db(), { ...base, id: f.ids.id(), now: now + 3 })).toBe(true);
@@ -284,6 +299,8 @@ describe('groups, rules and members', () => {
     expect((await liveRulesOfGroup(db(), 'repo_rules')).map((r) => r.org_id).sort()).toEqual(
       [a.id, b.id].sort(),
     );
+    expect((await ruleById(db(), r1.id))?.org_id).toBe(a.id);
+    expect(await ruleById(db(), 'nope')).toBeNull();
     expect(await endRule(db(), r1.id, admin.id, now + 1)).toBe(true);
     expect(await endRule(db(), r1.id, admin.id, now + 2)).toBe(false);
     expect(await liveRulesOfOrg(db(), a.id)).toEqual([]);
@@ -338,6 +355,7 @@ describe('groups, rules and members', () => {
     expect((await liveMembershipsOfSubject(db(), 'sub-m1')).map((m) => m.group_key)).toEqual([
       'repo_members',
     ]);
+    expect((await memberById(db(), m1.id))?.subject).toBe('sub-m1');
     expect(await removeMember(db(), m1.id, null, now + 1)).toBe(true);
     expect(await removeMember(db(), m1.id, null, now + 2)).toBe(false);
     expect(await removeMembersOfGroup(db(), 'repo_members', null, now + 3)).toHaveLength(1);
