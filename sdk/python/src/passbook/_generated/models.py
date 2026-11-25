@@ -1141,6 +1141,8 @@ __all__ = [
     "PlatformUsersEmailsMakePrimaryResponseSessionsItem",
     "PlatformUsersListResponse",
     "PlatformUsersListResponseItemsItem",
+    "PlatformUsersPassesListResponse",
+    "PlatformUsersPassesListResponseItemsItem",
     "PlatformUsersRetrieveResponse",
     "PlatformUsersRetrieveResponseEmailsItem",
     "PlatformUsersRetrieveResponseIdentitiesItem",
@@ -8900,6 +8902,22 @@ class PlatformUsersListResponseItemsItem(_Model):
     lastLoginAt: int | None
     passCount: int | None = None
     signInMethods: _List[_Literal["oidc", "magic_link", "breakglass"] | str] | None = None
+
+class PlatformUsersPassesListResponse(_Model):
+    items: _List[PlatformUsersPassesListResponseItemsItem]
+    nextCursor: str | None
+
+class PlatformUsersPassesListResponseItemsItem(_Model):
+    id: str
+    orgId: str
+    orgName: str
+    orgStatus: _Literal["active", "suspended"] | str
+    timeZone: str
+    templateName: str
+    status: _Literal["active", "voided"] | str
+    channels: _List[_Literal["mobile", "apple", "google", "samsung", "paper", "nfc"] | str]
+    issuedAt: int
+    updatedAt: int
 
 class PlatformUsersRetrieveResponse(_Model):
     id: str

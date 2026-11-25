@@ -8505,6 +8505,24 @@ type PlatformUsersListResponseItemsItem struct {
 	SignInMethods []string `json:"signInMethods,omitempty"`
 }
 
+type PlatformUsersPassesListResponse struct {
+	Items      []PlatformUsersPassesListResponseItemsItem `json:"items"`
+	NextCursor *string                                    `json:"nextCursor"`
+}
+
+type PlatformUsersPassesListResponseItemsItem struct {
+	ID           string   `json:"id"`
+	OrgID        string   `json:"orgId"`
+	OrgName      string   `json:"orgName"`
+	OrgStatus    string   `json:"orgStatus"`
+	TimeZone     string   `json:"timeZone"`
+	TemplateName string   `json:"templateName"`
+	Status       string   `json:"status"`
+	Channels     []string `json:"channels"`
+	IssuedAt     int64    `json:"issuedAt"`
+	UpdatedAt    int64    `json:"updatedAt"`
+}
+
 type PlatformUsersRetrieveResponse struct {
 	ID            string                                         `json:"id"`
 	Name          *string                                        `json:"name"`
