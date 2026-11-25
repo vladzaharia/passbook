@@ -67,15 +67,20 @@ export function useOrgAccess(orgId: string) {
     const sent = await invite.mutateAsync({ body, principalId });
     return Boolean(sent) && isCurrentPrincipal(principalId);
   };
-  /** The API has no resend: the old link is revoked and the same address invited again. */
-  const resend = async (invitation: { id: string } & InviteBody) => {
-    await revoke.mutateAsync({ kind: 'invitations', id: invitation.id });
-    return sendInvite({ email: invitation.email, roles: invitation.roles });
-  };
+  const resend = useMutation({
+    mutationFn: (id: string) =>
+      api.post(`${path}/invitations/${encodeURIComponent(id)}/resend`, OrgInvitationSchema),
+    onSettled: () => refresh(),
+  });
   const changeRoles = useMutation({
     mutationFn: ({ id, roles }: { id: string; roles: OrgRole[] }) =>
       api.patch(`${path}/memberships/${encodeURIComponent(id)}`, OrgMemberSchema, { roles }),
-    onSettled: () => refresh(),
+    // The member's membership id changes with their roles: the signed-in person's own list is read again.
+    onSettled: () =>
+      Promise.all([
+        refresh(),
+        client.resetQueries({ queryKey: membershipsQuery.queryKey, exact: true }),
+      ]),
   });
   return {
     members,

@@ -8,6 +8,10 @@ import { handlers, invitation, lists, member, renderMembers } from './org-access
 
 afterEach(() => vi.restoreAllMocks());
 
+async function openMenu(user: ReturnType<typeof userEvent.setup>, name: string) {
+  await user.click(await screen.findByRole('button', { name: `Actions for ${name}` }));
+}
+
 const pat = member({ id: 'm-own', userId: 'u1', userName: 'Pat', userEmail: 'pat@example.test' });
 const jo = member({
   id: 'member-2',
@@ -57,7 +61,7 @@ describe('Members page', () => {
     expect((await axe(container)).violations).toEqual([]);
   });
 
-  it('offers no Remove on your own row or the last organization admin', async () => {
+  it('offers no Remove on your own row or the last organization admin, only Change roles', async () => {
     const lone = member({
       id: 'm-lone',
       userId: 'user-lone',
@@ -66,9 +70,15 @@ describe('Members page', () => {
     });
     await renderMembers({ handlers: handlers(lists([pat, ada, lone])) });
     await screen.findByText('Lone');
-    expect(screen.queryByRole('button', { name: 'Remove Pat' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Remove Lone' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Remove Ada Lovelace' })).toBeInTheDocument();
+    const user = userEvent.setup();
+    for (const name of ['Pat', 'Lone']) {
+      await openMenu(user, name);
+      expect(await screen.findByRole('menuitem', { name: 'Change roles' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'Remove' })).toBeNull();
+      await user.keyboard('{Escape}');
+    }
+    await openMenu(user, 'Ada Lovelace');
+    expect(await screen.findByRole('menuitem', { name: 'Remove' })).toBeInTheDocument();
   });
 
   it('offers Remove for an admin when another admin remains', async () => {
@@ -78,7 +88,8 @@ describe('Members page', () => {
       ),
     });
     await screen.findByText('Kim');
-    expect(screen.getByRole('button', { name: 'Remove Kim' })).toBeInTheDocument();
+    await openMenu(userEvent.setup(), 'Kim');
+    expect(await screen.findByRole('menuitem', { name: 'Remove' })).toBeInTheDocument();
   });
 
   it('has no invite or remove on a personal org', async () => {
@@ -118,7 +129,8 @@ describe('Members page', () => {
       }),
     });
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Remove Ada Lovelace' }));
+    await openMenu(user, 'Ada Lovelace');
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
     const confirm = await screen.findByRole('alertdialog', { name: 'Remove Ada Lovelace?' });
     expect(deletes).toEqual([]);
     await user.click(within(confirm).getByRole('button', { name: 'Remove' }));
@@ -139,7 +151,8 @@ describe('Members page', () => {
       }),
     });
     const user = userEvent.setup();
-    await user.click(await screen.findByRole('button', { name: 'Remove Ada Lovelace' }));
+    await openMenu(user, 'Ada Lovelace');
+    await user.click(await screen.findByRole('menuitem', { name: 'Remove' }));
     const confirm = await screen.findByRole('alertdialog', { name: 'Remove Ada Lovelace?' });
     await user.click(within(confirm).getByRole('button', { name: 'Remove' }));
     expect(await within(confirm).findByRole('alert')).toHaveTextContent(
@@ -175,22 +188,16 @@ describe('Members page', () => {
     expect(deletes).toEqual(['DELETE /api/v1/orgs/o1/invitations/invite-1']);
   });
 
-  it('resends by revoking the old invitation and inviting the address again', async () => {
+  it('resends through the resend route and says where it went', async () => {
     const sent = vi.spyOn(toast, 'sent');
     const calls: string[] = [];
     await renderMembers({
       handlers: handlers({
         '/api/v1/orgs/o1/memberships': () => json({ items: [pat, ada], nextCursor: null }),
-        '/api/v1/orgs/o1/invitations': (_url, init) => {
-          if (init?.method === 'POST') {
-            calls.push(`POST ${init.body}`);
-            return json(invitation({ id: 'invite-9' }), 201);
-          }
-          return json({ items: [invitation()], nextCursor: null });
-        },
-        '/api/v1/orgs/o1/invitations/invite-1': (_url, init) => {
-          calls.push(String(init?.method));
-          return json({ ok: true });
+        '/api/v1/orgs/o1/invitations': () => json({ items: [invitation()], nextCursor: null }),
+        '/api/v1/orgs/o1/invitations/invite-1/resend': (url, init) => {
+          calls.push(`${init?.method} ${url.pathname}`);
+          return json(invitation({ id: 'invite-9' }), 201);
         },
       }),
     });
@@ -201,10 +208,33 @@ describe('Members page', () => {
     await waitFor(() =>
       expect(sent).toHaveBeenCalledWith('Invitation sent to pending@example.test'),
     );
-    expect(calls).toEqual([
-      'DELETE',
-      'POST {"email":"pending@example.test","roles":["read_only"]}',
-    ]);
+    expect(calls).toEqual(['POST /api/v1/orgs/o1/invitations/invite-1/resend']);
+  });
+
+  it('changes a member’s roles through the picker and refreshes the list', async () => {
+    const success = vi.spyOn(toast, 'success');
+    let members = [pat, ada];
+    const patches: unknown[] = [];
+    await renderMembers({
+      handlers: handlers({
+        '/api/v1/orgs/o1/memberships': () => json({ items: members, nextCursor: null }),
+        '/api/v1/orgs/o1/memberships/member-1': (_url, init) => {
+          const body = JSON.parse(String(init?.body));
+          patches.push([init?.method, body]);
+          members = members.map((m) => (m.id === 'member-1' ? { ...m, roles: body.roles } : m));
+          return json(members[1]);
+        },
+      }),
+    });
+    const user = userEvent.setup();
+    await openMenu(user, 'Ada Lovelace');
+    await user.click(await screen.findByRole('menuitem', { name: 'Change roles' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Change roles for Ada Lovelace' });
+    await user.click(within(dialog).getByRole('checkbox', { name: 'Pass operator' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(success).toHaveBeenCalledWith('Roles saved'));
+    expect(patches).toEqual([['PATCH', { roles: ['template_author'] }]]);
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
   it('shows a server error rather than an empty list', async () => {

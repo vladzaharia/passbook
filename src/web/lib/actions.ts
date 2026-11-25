@@ -37,6 +37,7 @@ import { BROADCAST_RUN_ACTIONS } from './actions-broadcast.ts';
 import { DEVELOPER_ACTIONS } from './actions-developer.ts';
 import { IDENTITY_RUN_ACTIONS } from './actions-identity.ts';
 import { IMPORT_UNDO_ACTIONS } from './actions-import.ts';
+import { MEMBER_ACTIONS } from './actions-members.ts';
 import { SCAN_PIN_ACTIONS } from './actions-scan-pin.ts';
 import { TAG_KEY_ACTIONS } from './actions-tag-keys.ts';
 import { TEMPLATE_VERSION_ACTIONS } from './actions-template-version.ts';
@@ -269,6 +270,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'template.rollback': a('Template rolled back', I.restore, 'warning'),
   'template.upload': a('Template uploaded', ENTITY.template.icon, 'success'),
   ...AUTH_ACTIONS,
+  ...MEMBER_ACTIONS,
   ...SCAN_PIN_ACTIONS,
   ...TAG_KEY_ACTIONS,
   ...BROADCAST_RUN_ACTIONS,

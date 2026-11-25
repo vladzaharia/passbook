@@ -102,6 +102,29 @@ export function orgInvitations(
     [orgId, ...m.params],
   );
 }
+/** An active membership of the org with the address it was invited by (kept on a role change). */
+export function activeMembershipById(db: D1Database, orgId: string, id: string) {
+  return first<{
+    id: string;
+    user_id: string;
+    invitation_id: string;
+    roles: string;
+    email: string;
+  }>(
+    db,
+    `SELECT m.id, m.user_id, m.invitation_id, m.roles, i.email FROM org_memberships m
+ JOIN org_invitations i ON i.id = m.invitation_id
+ WHERE m.org_id = ? AND m.id = ? AND m.revoked_at IS NULL`,
+    [orgId, id],
+  );
+}
+export function invitationById(db: D1Database, orgId: string, id: string) {
+  return first<InvitationRow>(
+    db,
+    'SELECT id, org_id, email, roles, created_at, expires_at, revoked_at, accepted_at FROM org_invitations WHERE org_id = ? AND id = ?',
+    [orgId, id],
+  );
+}
 export function invitationByHash(db: D1Database, hash: string) {
   return first<InvitationRow>(
     db,

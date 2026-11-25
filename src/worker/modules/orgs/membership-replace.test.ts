@@ -1,0 +1,314 @@
+import { describe, expect, it } from 'vitest';
+import {
+  fixtures,
+  makeEnv,
+  makeOrg,
+  makeSession,
+  makeUser,
+} from '../../../../test/helpers/index.ts';
+import {
+  ChangeOrgMemberRolesSchema,
+  type OrgRole,
+} from '../../../shared/contracts/org-membership.ts';
+import { all, first, run } from '../../platform/db.ts';
+import type { AppEnv } from '../../platform/env.ts';
+import { createServiceContext } from '../../platform/service-context.ts';
+import { createSessionStore } from '../auth/sessions.ts';
+import { ACTOR_HOURLY_INVITES } from './invitation-limits.ts';
+import { changeOrgMemberRoles, resendOrgInvitation } from './membership-replace.ts';
+import { inviteOrgMember } from './membership-service.ts';
+
+const sent: { to: string; text: string }[] = [];
+let failMail = false;
+
+async function setup() {
+  const env = await makeEnv({
+    PUBLIC_BASE_URL: 'https://wallet.test',
+    EMAIL_FROM: 'passes@example.test',
+    EMAIL: {
+      send: async (message: { to: string; text: string }) => {
+        if (failMail) throw new Error('mail down');
+        sent.push(message);
+        return { messageId: 'm' };
+      },
+    } as unknown as AppEnv['EMAIL'],
+  });
+  const f = fixtures(env);
+  const ctx = createServiceContext(env, { clock: f.clock });
+  const org = await makeOrg(f);
+  const other = await makeOrg(f);
+  const join = async (orgId: string, roles: OrgRole[], platform = false) => {
+    const user = await makeUser(f);
+    const invitationId = f.ids.id();
+    const id = f.ids.id();
+    const now = f.clock.now();
+    await run(
+      env.DB,
+      `INSERT INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at, accepted_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        invitationId,
+        orgId,
+        user.primaryEmail,
+        JSON.stringify(roles),
+        f.ids.token(),
+        now,
+        now + 1e6,
+        now,
+      ],
+    );
+    await run(
+      env.DB,
+      'INSERT INTO org_memberships (id, org_id, user_id, invitation_id, roles, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, orgId, user.id, invitationId, JSON.stringify(roles), now],
+    );
+    const session = await makeSession(f, {
+      userId: user.id,
+      roles: platform ? ['admin', 'user'] : ['user'],
+    });
+    const auth = await createSessionStore(env, f.clock).resolve(session.cookieValue);
+    if (!auth) throw new Error('session fixture missing');
+    return { user, id, auth };
+  };
+  const active = (orgId: string, userId: string) =>
+    all<{ id: string; roles: string; revoked_at: number | null }>(
+      env.DB,
+      'SELECT id, roles, revoked_at FROM org_memberships WHERE org_id = ? AND user_id = ? ORDER BY created_at, rowid',
+      [orgId, userId],
+    );
+  const audits = (action: string) =>
+    all<{ target_id: string }>(env.DB, 'SELECT target_id FROM audit_log WHERE action = ?', [
+      action,
+    ]);
+  return { env, f, ctx, org, other, join, active, audits };
+}
+
+describe('change roles', () => {
+  it('replaces the membership in one batch, keeps the invited address and audits it', async () => {
+    const t = await setup();
+    const admin = await t.join(t.org.id, ['org_admin']);
+    const member = await t.join(t.org.id, ['pass_operator']);
+    sent.length = 0;
+    const result = await changeOrgMemberRoles(t.ctx, admin.auth, t.org.id, member.id, [
+      'template_author',
+      'template_reviewer',
+    ]);
+    expect(result.roles).toEqual(['template_author', 'template_reviewer']);
+    expect(result.id).not.toBe(member.id);
+    expect(result.userEmail).toBe(member.user.primaryEmail);
+    const rows = await t.active(t.org.id, member.user.id);
+    expect(rows.map((r) => [r.id === member.id, r.revoked_at !== null])).toEqual([
+      [true, true],
+      [false, false],
+    ]);
+    expect((await t.audits('org_membership.roles')).map((a) => a.target_id)).toEqual([result.id]);
+    expect(sent).toEqual([]);
+  });
+
+  it('is a no-op for the same roles: nothing is written', async () => {
+    const t = await setup();
+    const admin = await t.join(t.org.id, ['org_admin']);
+    const member = await t.join(t.org.id, ['pass_operator', 'template_author']);
+    const result = await changeOrgMemberRoles(t.ctx, admin.auth, t.org.id, member.id, [
+      'template_author',
+      'pass_operator',
+    ]);
+    expect(result.id).toBe(member.id);
+    expect(await t.audits('org_membership.roles')).toEqual([]);
+  });
+
+  it('keeps the last org admin, and lets the role go once another admin exists', async () => {
+    const t = await setup();
+    const sole = await t.join(t.org.id, ['org_admin']);
+    await expect(
+      changeOrgMemberRoles(t.ctx, sole.auth, t.org.id, sole.id, ['read_only']),
+    ).rejects.toMatchObject({ status: 409, code: 'LAST_ORG_ADMIN' });
+    expect((await t.active(t.org.id, sole.user.id))[0]?.revoked_at).toBeNull();
+    expect(await t.audits('org_membership.roles')).toEqual([]);
+    const next = await t.join(t.org.id, ['org_admin']);
+    const result = await changeOrgMemberRoles(t.ctx, next.auth, t.org.id, sole.id, ['read_only']);
+    expect(result.roles).toEqual(['read_only']);
+  });
+
+  it('keeps the last org admin even for a platform admin', async () => {
+    const t = await setup();
+    const sole = await t.join(t.org.id, ['org_admin']);
+    const platform = await t.join(t.other.id, ['read_only'], true);
+    await expect(
+      changeOrgMemberRoles(t.ctx, platform.auth, t.org.id, sole.id, ['pass_operator']),
+    ).rejects.toMatchObject({ code: 'LAST_ORG_ADMIN' });
+  });
+
+  it('lets a platform admin change roles in an org they are not a member of', async () => {
+    const t = await setup();
+    await t.join(t.org.id, ['org_admin']);
+    const member = await t.join(t.org.id, ['read_only']);
+    const platform = await t.join(t.other.id, ['read_only'], true);
+    const result = await changeOrgMemberRoles(t.ctx, platform.auth, t.org.id, member.id, [
+      'pass_operator',
+    ]);
+    expect(result.roles).toEqual(['pass_operator']);
+  });
+
+  it('refuses anyone without members:manage, another org, an unknown member and a revoked one', async () => {
+    const t = await setup();
+    const manager = await t.join(t.org.id, ['org_admin']);
+    const operator = await t.join(t.org.id, ['pass_operator']);
+    const target = await t.join(t.org.id, ['read_only']);
+    const foreign = await t.join(t.other.id, ['read_only']);
+    await expect(
+      changeOrgMemberRoles(t.ctx, operator.auth, t.org.id, target.id, ['pass_operator']),
+    ).rejects.toMatchObject({ status: 403 });
+    await expect(
+      changeOrgMemberRoles(t.ctx, manager.auth, t.org.id, foreign.id, ['pass_operator']),
+    ).rejects.toMatchObject({ status: 404, code: 'MEMBERSHIP_NOT_FOUND' });
+    await expect(
+      changeOrgMemberRoles(t.ctx, manager.auth, t.org.id, 'nope', ['pass_operator']),
+    ).rejects.toMatchObject({ status: 404 });
+    expect((await t.active(t.org.id, target.user.id))[0]?.roles).toBe('["read_only"]');
+  });
+
+  it('refuses a personal org', async () => {
+    const t = await setup();
+    const owner = await t.join(t.org.id, ['org_admin']);
+    const member = await t.join(t.org.id, ['read_only']);
+    await run(t.env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [
+      owner.user.id,
+      t.org.id,
+    ]);
+    await expect(
+      changeOrgMemberRoles(t.ctx, owner.auth, t.org.id, member.id, ['pass_operator']),
+    ).rejects.toMatchObject({ code: 'ORG_PERSONAL_SINGLE_MEMBER' });
+  });
+
+  it('takes Organization admin and Read only alone', () => {
+    for (const roles of [
+      ['org_admin', 'pass_operator'],
+      ['read_only', 'template_author'],
+    ])
+      expect(ChangeOrgMemberRolesSchema.safeParse({ roles }).success).toBe(false);
+    expect(ChangeOrgMemberRolesSchema.safeParse({ roles: ['org_admin'] }).success).toBe(true);
+    expect(
+      ChangeOrgMemberRolesSchema.safeParse({ roles: ['pass_operator', 'template_author'] }).success,
+    ).toBe(true);
+    expect(ChangeOrgMemberRolesSchema.safeParse({ roles: [] }).success).toBe(false);
+  });
+});
+
+describe('resend invitation', () => {
+  async function invited(t: Awaited<ReturnType<typeof setup>>, email = 'new@example.test') {
+    const manager = await t.join(t.org.id, ['org_admin']);
+    const first = await inviteOrgMember(t.ctx, manager.auth, t.org.id, {
+      email,
+      roles: ['pass_operator'],
+    });
+    return { manager, first };
+  }
+
+  it('revokes the old invitation, issues a new one and mails a new link', async () => {
+    const t = await setup();
+    const { manager, first: old } = await invited(t);
+    sent.length = 0;
+    const fresh = await resendOrgInvitation(t.ctx, manager.auth, t.org.id, old.id);
+    expect(fresh.id).not.toBe(old.id);
+    expect([fresh.email, fresh.roles]).toEqual([old.email, old.roles]);
+    expect(sent).toHaveLength(1);
+    expect(sent[0]?.to).toBe('new@example.test');
+    expect(sent[0]?.text).toMatch(/invitations\/accept#[A-Za-z0-9_-]{43}/);
+    const rows = await all<{ id: string; revoked_at: number | null }>(
+      t.env.DB,
+      'SELECT id, revoked_at FROM org_invitations WHERE org_id = ? AND email = ? ORDER BY rowid',
+      [t.org.id, 'new@example.test'],
+    );
+    expect(rows.map((r) => [r.id, r.revoked_at !== null])).toEqual([
+      [old.id, true],
+      [fresh.id, false],
+    ]);
+    expect((await t.audits('org_invitation.resend')).map((a) => a.target_id)).toEqual([fresh.id]);
+  });
+
+  it('works on an expired invitation and refuses a revoked, accepted or unknown one', async () => {
+    const t = await setup();
+    const { manager, first: old } = await invited(t);
+    t.f.clock.advance(8 * 24 * 60 * 60 * 1000);
+    const fresh = await resendOrgInvitation(t.ctx, manager.auth, t.org.id, old.id);
+    expect(fresh.expiresAt).toBeGreaterThan(t.f.clock.now());
+    await expect(resendOrgInvitation(t.ctx, manager.auth, t.org.id, old.id)).rejects.toMatchObject({
+      code: 'MEMBERSHIP_CONFLICT',
+    });
+    await expect(resendOrgInvitation(t.ctx, manager.auth, t.org.id, 'nope')).rejects.toMatchObject({
+      code: 'MEMBERSHIP_CONFLICT',
+    });
+  });
+
+  it('refuses anyone without members:manage, another org and a personal org', async () => {
+    const t = await setup();
+    const { first: old } = await invited(t);
+    const operator = await t.join(t.org.id, ['pass_operator']);
+    const foreign = await t.join(t.other.id, ['org_admin']);
+    await expect(resendOrgInvitation(t.ctx, operator.auth, t.org.id, old.id)).rejects.toMatchObject(
+      { status: 403 },
+    );
+    await expect(resendOrgInvitation(t.ctx, foreign.auth, t.org.id, old.id)).rejects.toMatchObject({
+      status: 403,
+    });
+    await expect(
+      resendOrgInvitation(t.ctx, foreign.auth, t.other.id, old.id),
+    ).rejects.toMatchObject({
+      code: 'MEMBERSHIP_CONFLICT',
+    });
+    await run(t.env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [
+      operator.user.id,
+      t.org.id,
+    ]);
+    const manager = await t.join(t.other.id, ['org_admin']);
+    await run(t.env.DB, 'UPDATE orgs SET personal_user_id = ? WHERE id = ?', [
+      manager.user.id,
+      t.other.id,
+    ]);
+    await expect(resendOrgInvitation(t.ctx, operator.auth, t.org.id, old.id)).rejects.toBeDefined();
+  });
+
+  it('counts against the hourly invite limit, and is refused past it', async () => {
+    const t = await setup();
+    const { manager, first: old } = await invited(t);
+    const hour = 60 * 60 * 1000;
+    await run(
+      t.env.DB,
+      'INSERT OR REPLACE INTO counters (key, window_start, count) VALUES (?, ?, ?)',
+      [
+        `invite:actor:${manager.user.id}`,
+        t.f.clock.now() - (t.f.clock.now() % hour),
+        ACTOR_HOURLY_INVITES,
+      ],
+    );
+    await expect(resendOrgInvitation(t.ctx, manager.auth, t.org.id, old.id)).rejects.toMatchObject({
+      status: 429,
+    });
+    const rows = await first<{ n: number }>(
+      t.env.DB,
+      'SELECT COUNT(*) AS n FROM org_invitations WHERE org_id = ? AND revoked_at IS NULL AND accepted_at IS NULL',
+      [t.org.id],
+    );
+    expect(rows?.n).toBe(1);
+  });
+
+  it('revokes the new invitation again when the mail cannot go', async () => {
+    const t = await setup();
+    const { manager, first: old } = await invited(t);
+    failMail = true;
+    try {
+      await expect(
+        resendOrgInvitation(t.ctx, manager.auth, t.org.id, old.id),
+      ).rejects.toMatchObject({ status: 503 });
+    } finally {
+      failMail = false;
+    }
+    const open = await all(
+      t.env.DB,
+      'SELECT id FROM org_invitations WHERE org_id = ? AND revoked_at IS NULL AND accepted_at IS NULL',
+      [t.org.id],
+    );
+    expect(open).toEqual([]);
+  });
+});

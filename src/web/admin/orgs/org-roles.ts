@@ -26,6 +26,3 @@ export function toggleRole(roles: readonly OrgRole[], role: OrgRole, on: boolean
   if (role === 'org_admin' || role === 'read_only') return [role];
   return roles.includes(role) ? [...roles] : [...roles, role];
 }
-
-/** The API has no route to change a member's roles yet (PATCH /orgs/{id}/memberships/{id}); the action stays out until it does. */
-export const CAN_CHANGE_ROLES = false;

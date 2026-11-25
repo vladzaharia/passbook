@@ -2564,6 +2564,14 @@
     "FORBIDDEN",
     "UNAUTHENTICATED"
   ],
+  "organization memberships patch /{id}/memberships/{membershipId}": [
+    "FORBIDDEN",
+    "LAST_ORG_ADMIN",
+    "MEMBERSHIP_CONFLICT",
+    "MEMBERSHIP_NOT_FOUND",
+    "ORG_PERSONAL_SINGLE_MEMBER",
+    "UNAUTHENTICATED"
+  ],
   "organization memberships post /invitations/accept": [
     "FORBIDDEN",
     "INVITATION_INVALID",
@@ -2579,6 +2587,13 @@
     "ORG_PERSONAL_SINGLE_MEMBER",
     "UNAUTHENTICATED",
     "VALIDATION"
+  ],
+  "organization memberships post /{id}/invitations/{invitationId}/resend": [
+    "FORBIDDEN",
+    "INVITATION_PENDING",
+    "MEMBERSHIP_CONFLICT",
+    "ORG_PERSONAL_SINGLE_MEMBER",
+    "UNAUTHENTICATED"
   ],
   "orgs delete /{id}": [
     "FORBIDDEN",

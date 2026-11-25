@@ -123,6 +123,8 @@ const SENSITIVE: [string, string, unknown?][] = [
   ['POST', '/api/v1/orgs/o1/exports'],
   ['POST', '/api/v1/orgs/o1/exports/e1/link'],
   ['POST', '/api/v1/orgs/o1/invitations', INVITE],
+  ['PATCH', '/api/v1/orgs/o1/memberships/m1', { roles: ['org_admin'] }],
+  ['PATCH', '/api/v1/orgs/o1/memberships/m1', { roles: ['integration_admin'] }],
   [
     'POST',
     '/api/v1/orgs/o1/invitations',
@@ -161,6 +163,7 @@ const NOT_ASKED: [string, string, unknown][] = [
   ['PATCH', '/api/v1/connections/c1', { name: 'Renamed' }],
   ['PATCH', '/api/v1/webhook-endpoints/w1', { description: 'x' }],
   ['POST', '/api/v1/orgs/o1/invitations', { email: 'new@example.test', roles: ['read_only'] }],
+  ['PATCH', '/api/v1/orgs/o1/memberships/m1', { roles: ['pass_operator'] }],
   ['PUT', '/api/v1/settings', { scope: 'platform', values: { 'email.senderName': 'X' } }],
   ['POST', '/api/v1/nfc/keysets/k1/import', { csv: 'x', replace: true, dryRun: true }],
   ['POST', '/api/v1/nfc/keysets/k1/import', { csv: 'x', dryRun: false }],
@@ -238,6 +241,7 @@ describe('step-up route inventory', () => {
     expect(declared).toMatchInlineSnapshot(`
       [
         "PATCH /api/v1/connections/:id",
+        "PATCH /api/v1/orgs/:id/memberships/:membershipId",
         "PATCH /api/v1/webhook-endpoints/:id",
         "POST /api/v1/api-keys",
         "POST /api/v1/api-keys/:id/rotate",

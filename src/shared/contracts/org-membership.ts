@@ -96,6 +96,16 @@ export const InviteOrgMemberSchema = z.strictObject({
 });
 export type InviteOrgMember = z.infer<typeof InviteOrgMemberSchema>;
 
+/** Organization admin covers every role and Read only conflicts with any other: each stands alone. */
+export const ChangeOrgMemberRolesSchema = z.strictObject({
+  roles: OrgRolesSchema.refine(
+    (roles) =>
+      roles.length === 1 || !roles.some((role) => role === 'org_admin' || role === 'read_only'),
+    'Organization admin and Read only cannot be combined with other roles.',
+  ),
+});
+export type ChangeOrgMemberRoles = z.infer<typeof ChangeOrgMemberRolesSchema>;
+
 export const AcceptOrgInvitationSchema = z.strictObject({
   token: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
 });

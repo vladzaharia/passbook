@@ -1,6 +1,7 @@
 import type { Context } from 'hono';
 import {
   AcceptOrgInvitationSchema,
+  ChangeOrgMemberRolesSchema,
   CursorQuerySchema,
   IdParamSchema,
   InviteOrgMemberSchema,
@@ -10,6 +11,7 @@ import {
   OrgInvitationPreviewSchema,
   OrgInvitationSchema,
   OrgMemberListSchema,
+  OrgMemberSchema,
   OrgMembershipListSchema,
   OrgMembershipParamSchema,
   OrgMembershipSchema,
@@ -29,6 +31,7 @@ import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in
 import { requestTheme } from '../../ssr/head.ts';
 import { listMyOrgMemberships } from './access.ts';
 import { invitationPage } from './invitation-page.ts';
+import { changeOrgMemberRoles, resendOrgInvitation } from './membership-replace.ts';
 import {
   acceptOrgInvitation,
   inviteOrgMember,
@@ -67,7 +70,19 @@ membershipRoutes.post(
     );
   }),
 );
+// Giving a member a role that administers the org hands over its credentials, as inviting does.
+membershipRoutes.patch(
+  '/:id/memberships/:membershipId',
+  requireStepUp(STEP_UP_SECONDS, async (c) => {
+    const { roles } = await peekBody(c);
+    return (
+      Array.isArray(roles) &&
+      roles.some((role) => (ADMINISTERING_ROLES as readonly unknown[]).includes(role))
+    );
+  }),
+);
 membershipRoutes.use('/:id/invitations/:invitationId', requireConsoleSession);
+membershipRoutes.use('/:id/invitations/:invitationId/resend', requireConsoleSession);
 
 register(
   membershipRoutes,
@@ -207,5 +222,49 @@ register(
     const { id, membershipId } = c.req.valid('param');
     await revokeOrgMembership(serviceContext(c), session(c), id, membershipId);
     return c.json({ ok: true });
+  },
+);
+register(
+  membershipRoutes,
+  'organization memberships',
+  {
+    method: 'patch',
+    path: '/{id}/memberships/{membershipId}',
+    summary: "Change an organization member's roles",
+    description:
+      'Replaces the roles. The member keeps one active membership; its id changes, and API keys tied to the old membership stop working. Organization admin and Read only stand alone. The last org admin cannot lose the role (`LAST_ORG_ADMIN`).',
+    params: OrgMembershipParamSchema,
+    body: ChangeOrgMemberRolesSchema,
+    response: OrgMemberSchema,
+  },
+  async (c) => {
+    const { id, membershipId } = c.req.valid('param');
+    return c.json(
+      await changeOrgMemberRoles(
+        serviceContext(c),
+        session(c),
+        id,
+        membershipId,
+        c.req.valid('json').roles,
+      ),
+    );
+  },
+);
+register(
+  membershipRoutes,
+  'organization memberships',
+  {
+    method: 'post',
+    path: '/{id}/invitations/{invitationId}/resend',
+    summary: 'Resend an organization invitation',
+    description:
+      'Revokes the pending invitation and issues a new one for the same address and roles, with a fresh link and seven days, and mails it. The answer is the new invitation, with a new id. Counts against the hourly and daily invite limits.',
+    params: OrgInvitationParamSchema,
+    status: 201,
+    response: OrgInvitationSchema,
+  },
+  async (c) => {
+    const { id, invitationId } = c.req.valid('param');
+    return c.json(await resendOrgInvitation(serviceContext(c), session(c), id, invitationId), 201);
   },
 );

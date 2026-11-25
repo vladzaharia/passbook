@@ -10,7 +10,6 @@ import { ChangeRolesDialog } from './change-roles-dialog.tsx';
 import { InvitationList, pendingInvitations } from './invitation-list.tsx';
 import { InviteDialog } from './invite-dialog.tsx';
 import { MemberTable, memberName } from './member-table.tsx';
-import { CAN_CHANGE_ROLES } from './org-roles.ts';
 import { useOrgAccess } from './use-org-access.ts';
 
 type Pending =
@@ -36,7 +35,7 @@ export function MembersPanel({ org, inviteOpen, onInviteOpenChange }: MembersPan
 
   const resend = async (invitation: OrgInvitation) => {
     try {
-      await access.resend(invitation);
+      await access.resend.mutateAsync(invitation.id);
       toast.sent(`Invitation sent to ${invitation.email}`);
     } catch (cause) {
       toast.error(cause, 'Could not resend');
@@ -63,7 +62,7 @@ export function MembersPanel({ org, inviteOpen, onInviteOpenChange }: MembersPan
           readOnly={personal}
           loading={members.isPending}
           onRemove={(member) => setRemoving({ kind: 'member', member })}
-          onChangeRoles={CAN_CHANGE_ROLES ? setEditing : undefined}
+          onChangeRoles={setEditing}
         />
       )}
       {invitations.isError ? (

@@ -2451,6 +2451,15 @@
       ]
     },
     {
+      "code": "MEMBERSHIP_NOT_FOUND",
+      "statuses": [
+        404
+      ],
+      "modules": [
+        "orgs"
+      ]
+    },
+    {
       "code": "MEMBER_PHOTO_CHANGED",
       "statuses": [
         409

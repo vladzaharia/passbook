@@ -1307,6 +1307,12 @@
     "fix": "Fetch it with GET /api/v1/orgs/{id}/memberships and send the change again.",
     "retryable": false
   },
+  "MEMBERSHIP_NOT_FOUND": {
+    "title": "Member not found",
+    "when": "The membership is not an active member of this organization.",
+    "fix": "List the members again and use the current membership id.",
+    "retryable": false
+  },
   "MEMBER_PHOTO_CHANGED": {
     "title": "Member photo changed",
     "when": "The pass or its photo changed while the photo was saving.",

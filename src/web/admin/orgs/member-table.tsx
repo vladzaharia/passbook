@@ -12,7 +12,6 @@ import {
   EntityAvatar,
   IconButton,
   type RowAction,
-  RowActions,
 } from '@/web/ui/index.ts';
 import { NO_EMAIL_LABEL } from '../../../shared/email.ts';
 import { ROLE_LABELS } from './org-roles.ts';
@@ -42,12 +41,9 @@ export function RoleBadges({ roles }: { roles: OrgMember['roles'] }) {
   );
 }
 
-/** One destructive action is the kit's trash button; anything else is a menu, so every row has the same control. */
+/** One kebab on every row, so rows with fewer actions keep the same control. */
 function MemberActions({ actions, label }: { actions: readonly RowAction[]; label: string }) {
-  const [only] = actions;
-  if (!only) return null;
-  if (actions.length === 1 && only.destructive)
-    return <RowActions label={label} actions={actions} />;
+  if (actions.length === 0) return null;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -75,8 +71,7 @@ export interface MemberTableProps {
   /** A personal org: one owner, nothing to change. */
   readOnly: boolean;
   onRemove: (member: OrgMember) => void;
-  /** Absent until the API can change roles. */
-  onChangeRoles?: ((member: OrgMember) => void) | undefined;
+  onChangeRoles: (member: OrgMember) => void;
   loading?: boolean;
   error?: ReactNode;
 }
@@ -129,23 +124,15 @@ export function MemberTable({
         const name = memberName(member);
         const self = member.userId === selfId;
         const lastAdmin = member.roles.includes('org_admin') && admins <= 1;
-        const actions = readOnly
+        const actions: RowAction[] = readOnly
           ? []
           : [
-              ...(onChangeRoles
-                ? [
-                    {
-                      label: 'Change roles',
-                      icon: UserCog,
-                      onSelect: () => onChangeRoles(member),
-                    },
-                  ]
-                : []),
+              { label: 'Change roles', icon: UserCog, onSelect: () => onChangeRoles(member) },
               ...(self || lastAdmin
                 ? []
                 : [
                     {
-                      label: onChangeRoles ? 'Remove' : `Remove ${name}`,
+                      label: 'Remove',
                       icon: Trash2,
                       destructive: true,
                       onSelect: () => onRemove(member),
