@@ -112,6 +112,58 @@ describe('Wizard and OptionTile', () => {
     expect(await screen.findByText('Template step')).toBeInTheDocument();
   });
 
+  it('keeps a soft-disabled Next focusable: a press announces the hint and runs nothing', async () => {
+    const user = userEvent.setup();
+    const onNext = vi.fn();
+    render(
+      <Wizard
+        steps={[
+          { id: 'a', title: 'Source' },
+          { id: 'b', title: 'Check' },
+        ]}
+        current={0}
+        onStep={() => {}}
+        onCancel={() => {}}
+        onNext={onNext}
+        nextDisabled
+        nextHint="Pick a source."
+      >
+        <p>Step</p>
+      </Wizard>,
+    );
+    const next = screen.getByRole('button', { name: 'Next' });
+    expect(next).not.toBeDisabled();
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    expect(next).toHaveAccessibleDescription('Pick a source.');
+    await user.click(next);
+    expect(onNext).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Pick a source.'));
+    expect(screen.getByText('Step 1 of 2')).toBeInTheDocument();
+  });
+
+  it('submits the form a formId names, and a blocked press does not', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn((e: { preventDefault: () => void }) => e.preventDefault());
+    const view = (disabled: boolean) => (
+      <Wizard
+        steps={[{ id: 'a', title: 'Source' }]}
+        current={0}
+        onStep={() => {}}
+        onCancel={() => {}}
+        formId="f"
+        nextDisabled={disabled}
+      >
+        <form id="f" onSubmit={onSubmit} />
+      </Wizard>
+    );
+    const { rerender } = render(view(true));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    rerender(view(false));
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(onSubmit).toHaveBeenCalledOnce();
+  });
+
   it('shows the aside as a labelled stage from 1024 and hides it below', () => {
     const wizard = (
       <Wizard

@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import '../../lib/test-utils.tsx';
 import { StepList, StepMarker } from '../step-marker.tsx';
-import type { WizardModel, WizardStepState } from './use-wizard.ts';
 import { WizardStepper } from './wizard-stepper.tsx';
+import type { WizardModel, WizardStepState } from './wizard-types.ts';
 
 function model(states: WizardStepState[], over: Partial<WizardModel> = {}): WizardModel {
   const steps = states.map((state, i) => ({
