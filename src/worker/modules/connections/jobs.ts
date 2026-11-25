@@ -4,6 +4,7 @@ import { AppError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { requireCredentialRefKeyset } from '../passes/credential-keyset.ts';
 import { getDeps } from './deps.ts';
+import { dailyConnectionFiles } from './files-retention.ts';
 import { type ConnectionRefresh, refreshFromConnection } from './job-refresh-connection.ts';
 import { syncKeysetCurrent } from './keyset-current.ts';
 import { quarantineLegacyWebhookEvents } from './legacy-quarantine.ts';
@@ -144,6 +145,7 @@ export async function dailyConnections(ctx: ServiceContext): Promise<void> {
   const versions = await step(ctx, 'ref_versions', () =>
     deleteIdleRefVersions(ctx, now - REF_VERSION_IDLE_MS),
   );
+  await step(ctx, 'files', () => dailyConnectionFiles(ctx));
   const secrets = await step(ctx, 'previous_secrets', () => dropExpiredPreviousSecrets(ctx, now));
   await step(ctx, 'prev_secret_counters', () =>
     prune(ctx.env.DB, 'webhook-prev-secret:%', now - DAY_MS),

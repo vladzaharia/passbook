@@ -14,6 +14,7 @@ import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts
 import { getDeps } from './deps.ts';
 import { connectorItem, requireConnectorEntitled } from './entitlement.ts';
 import { filesPort } from './files-port.ts';
+import { assertFileInput } from './files-service.ts';
 import { recordConnectionAudit } from './repo-sync.ts';
 import { classify } from './runtime.ts';
 import { auditActor } from './service.ts';
@@ -62,6 +63,11 @@ export async function firstRecord(
   return fetched.status === 'ok' ? fetched.record : null;
 }
 
+const idPointerOf = (config: unknown): { idPointer?: string } => {
+  const idColumn = (config as { idColumn?: unknown } | null)?.idColumn;
+  return typeof idColumn === 'string' ? { idPointer: idColumn } : {};
+};
+
 /**
  * The connector context of an unsaved configuration: the platform safe fetch pinned to the connector's
  * egress, secrets for this request only, and an upload connector's files bound to the draft `fileId`.
@@ -89,7 +95,7 @@ export function unsavedContext(
     now: () => sctx.clock.now(),
     fetch: egressFetch(def, config, safeFetch),
     ...(def.capabilities.upload
-      ? { files: filesPort(sctx, { orgId, draftId: fileId ?? null }) }
+      ? { files: filesPort(sctx, { orgId, draftId: fileId ?? null, ...idPointerOf(config) }) }
       : {}),
     signal: AbortSignal.timeout(30_000),
     log: (event, data) =>
@@ -104,6 +110,7 @@ export async function openUnsaved(
   authority?: ConnectionAuthority,
 ) {
   const def = requireConnector(input.connectorType);
+  assertFileInput(def, input.fileId);
   await assertOrg(sctx, input.orgId);
   const config = parseWith(def.configSchema, input.config, 'config');
   await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
@@ -130,6 +137,7 @@ export async function testConfig(
   if (authority && authority.orgId !== input.orgId) throw new ForbiddenError();
   await assertConnectionAuthority(sctx, authority);
   const def = requireConnector(input.connectorType);
+  assertFileInput(def, input.fileId);
   await assertOrg(sctx, input.orgId);
   const config = parseWith(def.configSchema, input.config, 'config');
   await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));

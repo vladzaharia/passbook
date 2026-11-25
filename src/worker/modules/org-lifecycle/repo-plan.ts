@@ -47,6 +47,8 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('connection_webhook_retention'),
   inOrg('connection_webhook_legacy_sources'),
   inOrg('connection_webhook_replays'),
+  // Files first: connection_files has no cascade to the connection.
+  inOrg('connection_files'),
   inOrg('connections'),
   inOrg('bundles'),
   inOrg('broadcasts'),
@@ -160,7 +162,7 @@ export const PURGE_NOT_TENANT: Readonly<Record<string, string>> = {
 };
 
 /**
- * R2 prefixes that belong to one org: prints, branding, template files, pass import sheets, exports and member
+ * R2 prefixes that belong to one org: prints, branding, template files, pass import sheets, connection files, exports and member
  * photos. Pass files go with the pass rows, staged template uploads by upload id (`purgeUploads`).
  */
 export const orgPrefixes = (orgId: string): string[] => [
@@ -168,6 +170,7 @@ export const orgPrefixes = (orgId: string): string[] => [
   `orgs/${orgId}/`,
   `templates/${orgId}/`,
   `uploads/pass-imports/${orgId}/`,
+  `uploads/connection-files/${orgId}/`,
   `exports/${orgId}/`,
   `member-photos/${orgId}/`,
 ];

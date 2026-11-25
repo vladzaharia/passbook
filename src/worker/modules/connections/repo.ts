@@ -5,6 +5,7 @@ import { first, type SqlValue } from '../../platform/db.ts';
 import { entitled, withinLimit } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { connectorItem } from './entitlement.ts';
+import { addBind, type Bind, bindChecks } from './repo-files.ts';
 import {
   type ConnectionActor,
   commitOrNull,
@@ -181,6 +182,7 @@ export async function insertConnection(
   ctx: ServiceContext,
   row: ConnectionRow,
   actor: ConnectionActor,
+  bind?: Bind,
 ): Promise<void> {
   const g = connectionGrant(
     ctx,
@@ -189,10 +191,12 @@ export async function insertConnection(
     [
       entitled('connectors', connectorItem(row.connectorType, row.config)),
       withinLimit('connections', 'SELECT COUNT(*) FROM connections cn WHERE cn.org_id = {org}'),
+      ...(bind ? bindChecks(bind) : []),
     ],
     row.id,
   );
   g.insertSelect('connections', INSERT_COLUMNS, insertValues(row));
+  if (bind) addBind(g, row.id, bind);
   await g.commit();
 }
 
@@ -267,6 +271,8 @@ export async function deleteConnection(
     [connectionIs({ id, ...(generation === undefined ? {} : { generation }) })],
     id,
   );
+  // connection_files has no cascade: its rows go in this batch, its objects right after.
+  g.delete('connection_files', { where: { connection_id: id } });
   g.delete('connections', { where: { id }, returning: ['id'] });
   const results = await commitOrNull(g, actor);
   return results ? rowCount(results.at(-1)) === 1 : false;
