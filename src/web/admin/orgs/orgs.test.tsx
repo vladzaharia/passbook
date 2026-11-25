@@ -217,6 +217,21 @@ describe('orgs list', () => {
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes('q=zzz'))).toBe(true);
   });
 
+  it('hides developer sandboxes until the Sandboxes filter asks for them', async () => {
+    const user = userEvent.setup();
+    const { fetchMock } = await renderApp('/admin/orgs', {
+      session: 'admin',
+      handlers: { '/api/v1/orgs': () => json({ items: [summary()], nextCursor: null }) },
+    });
+    await screen.findByRole('link', { name: 'Acme Gym' });
+    const orgCalls = () =>
+      fetchMock.mock.calls.map((c) => String(c[0])).filter((u) => u.startsWith('/api/v1/orgs?'));
+    expect(orgCalls().every((u) => !u.includes('sandboxes='))).toBe(true);
+    await user.click(screen.getByRole('combobox', { name: /Sandboxes/ }));
+    await user.click(await screen.findByRole('option', { name: 'Only' }));
+    await waitFor(() => expect(orgCalls().some((u) => u.includes('sandboxes=only'))).toBe(true));
+  });
+
   it('pages with Load more', async () => {
     await renderApp('/admin/orgs', {
       session: 'admin',
