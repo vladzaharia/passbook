@@ -2,7 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { QS_COPY } from '../../../shared/copy/developers-quickstart.ts';
 import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import type { Session } from '../console/session.ts';
-import type { CodeLang } from '../playground/hash.ts';
+import { type CodeLang, LANGS } from '../playground/hash.ts';
+import {
+  onLang as onLangPicked,
+  savedLang,
+  setLang as setLangEverywhere,
+} from '../shell/language.ts';
 import { duration } from '../workbench/model.ts';
 import { beacon } from './beacon.ts';
 import { RunStep } from './call-step.tsx';
@@ -17,8 +22,14 @@ import { usePoll } from './use-home.ts';
 import { useQuickstart } from './use-quickstart.ts';
 
 /** curl is the default while no SDK is published: it is the request that runs today. */
-const defaultLang = (): CodeLang =>
+const firstLang = (): CodeLang =>
   SDK_STATUS.typescript ? 'ts' : SDK_STATUS.python ? 'py' : SDK_STATUS.go ? 'go' : 'curl';
+const isLang = (l: string | null): l is CodeLang => LANGS.some((x) => x === l);
+/** The language picked last on any page, else the default. */
+const defaultLang = (): CodeLang => {
+  const saved = savedLang();
+  return isLang(saved) ? saved : firstLang();
+};
 
 /** Ticks once a second while `running`, from the server's start: the time the page and the header chip show. */
 function useRunTime(startedAt: number | null, skew: number, stopAt: number | null): number {
@@ -38,7 +49,18 @@ function useRunTime(startedAt: number | null, skew: number, stopAt: number | nul
  */
 export function Quickstart({ session }: { session: Exclude<Session, { kind: 'out' }> }) {
   const q = useQuickstart(session);
-  const [lang, setLang] = useState<CodeLang>(defaultLang);
+  const [lang, setLangState] = useState<CodeLang>(defaultLang);
+  const setLang = useCallback((l: CodeLang) => {
+    setLangState(l);
+    setLangEverywhere(l);
+  }, []);
+  useEffect(
+    () =>
+      onLangPicked((l) => {
+        if (isLang(l)) setLangState(l);
+      }),
+    [],
+  );
   const [admission, setAdmission] = useState<string>(ADMISSIONS[0]);
   /** Left the key box of step 2: the key is on the clipboard or in the .env. */
   const [advanced, setAdvanced] = useState(false);
