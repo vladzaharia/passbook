@@ -252,6 +252,14 @@ export function drawCoupon(pen: Pen, s: Sheet): void {
       draw: (y) => pen.para(c.hero?.offerNote ?? '', inner.x, y, colW, note, { maxLines: 2 }),
     });
   }
+  if (c.info.pack && c.holder) {
+    const note: TextStyle = { size: 5.6, font: 'medium', color: COLORS.ink };
+    const line = `For ${c.holder}`;
+    items.push({
+      h: pen.paraHeight(line, colW, note, 1),
+      draw: (y) => pen.para(line, inner.x, y, colW, note, { maxLines: 1 }),
+    });
+  }
   if (c.validUntil) {
     const date = paperAt(c, c.validUntil, 'short');
     const dst: TextStyle = { size: 4.6, font: 'semibold', color: COLORS.ink };

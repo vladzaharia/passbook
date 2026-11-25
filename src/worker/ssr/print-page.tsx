@@ -132,7 +132,7 @@ function sheetHtml(props: PrintPageProps, model: Ready) {
       mode={model.mode}
       mark={model.mark}
       issued={{ generation: model.generation, at: new Date(model.printedAt).toISOString() }}
-      assets={{ logo: url(model.files.logo), art: url(model.files.art) }}
+      assets={{ logo: url(model.files.logo), art: url(model.files.art), photo: model.photo }}
     />,
   );
 }

@@ -64,6 +64,11 @@ export const PRINT_COPY = {
     permit: 'Permit',
     coupon: 'Coupon',
     pickup: 'Pickup',
+    journey: 'Journey',
+    booking: 'Booking',
+    stay: 'Stay',
+    badge: 'Badge',
+    credential: 'Credential',
   },
   inkLabel: 'Ink',
   inkColour: 'Colour',
@@ -86,9 +91,7 @@ export const PAPER_COPY = {
     `This print and your phone ${noun} are the same ${noun}. ${once ? 'Either one gets you in once.' : 'Use either one.'}`,
   ],
   reprints: ['Reprints', 'A reprint cancels this copy. Only the newest print works.'],
-  atDoor: ['At the door', 'Keep the code flat and unmarked. Staff can type the ticket code.'],
   folding: ['Folding', 'Fold on the marks, in half and in half again. The code stays outside.'],
-  bringDefault: (noun: string) => `This page or your phone ${noun}`,
   bringId: (name: string) => `Photo ID in the name ${name}`,
   zoneNote: (abbr: string, name?: string) =>
     name ? `Times are ${name} (${abbr}).` : `Times are in ${abbr}.`,
@@ -97,14 +100,6 @@ export const PAPER_COPY = {
   testMark: 'TEST · NOT VALID',
   permitHow: 'Place face up on the dashboard, readable through the windscreen.',
   fold: 'Fold',
-  codeLabel: {
-    admission: 'Ticket code',
-    day: 'Pass code',
-    membership: 'Card code',
-    permit: 'Permit code',
-    coupon: 'Coupon code',
-    pickup: 'Slip code',
-  },
 } as const;
 
 /** The print code in groups, easier to read and to type. */

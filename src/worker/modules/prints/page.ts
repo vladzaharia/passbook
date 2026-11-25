@@ -12,6 +12,7 @@ import { getOrg } from '../passes/repo-read-issuance.ts';
 import { assertPassSnapshot, capturePassSnapshot } from '../public/snapshot.ts';
 import { printCodeOf } from './codes.ts';
 import { type PaperFiles, paperTicket } from './paper.ts';
+import { loadPhoto } from './pdf-images.ts';
 import * as repo from './repo.ts';
 
 export type PrintAudience = 'holder' | 'staff';
@@ -25,6 +26,8 @@ export type PrintPageModel = { orgName: string; mode: Pass['mode'] } & (
       content: PaperContent;
       /** Image files of the template the sheet draws. */
       files: PaperFiles;
+      /** The holder's photo as a `data:` URL, for a badge or ID; the page is private and never cached. */
+      photo?: string;
       /** When the print was made, epoch ms. */
       printedAt: number;
       /** The print code. It goes into the page's markup and nowhere else. */
@@ -70,6 +73,7 @@ export async function printPageModel(
           design: ticket.design,
           content: ticket.content,
           files: ticket.files,
+          ...(await photoUrl(ctx, pass, ticket.files)),
           printedAt: print.createdAt,
           generation: print.generation,
           printId: print.id,
@@ -87,4 +91,21 @@ export async function printPageModel(
   }
   if (snapshot) await assertPassSnapshot(ctx, snapshot);
   return model;
+}
+
+const base64 = (bytes: Uint8Array): string => {
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 0x8000)
+    out += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(out);
+};
+
+async function photoUrl(
+  ctx: ServiceContext,
+  pass: Pass,
+  files: PaperFiles,
+): Promise<{ photo?: string }> {
+  if (!files.photo) return {};
+  const photo = await loadPhoto(ctx, pass);
+  return photo ? { photo: `data:image/png;base64,${base64(photo.bytes)}` } : {};
 }

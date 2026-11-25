@@ -1,9 +1,11 @@
 import { PAPER_COPY } from '../../shared/copy/print.ts';
+import { BadgeBack, BadgeFront } from './ticket-badge.tsx';
 import { CodeMark, Credit, Plate, sheetProps, type TicketProps, Typed } from './ticket-parts.tsx';
 import { footMeta, paperAt } from './ticket-text.ts';
 
 /** Front: the pass colour (white in mono), the member, the QR on a white tile. */
 export function CardFront({ p }: { p: TicketProps }) {
+  if (p.content.photo) return <BadgeFront p={p} />;
   const { content: c, assets } = p;
   const member = c.kind === 'membership';
   const art = assets?.art && c.art && c.ink !== 'mono';
@@ -38,6 +40,7 @@ export function CardFront({ p }: { p: TicketProps }) {
 
 /** Back: white. Logo, class word, the typed code, one line on what the card is, help, footer. */
 export function CardBack({ p }: { p: TicketProps }) {
+  if (p.content.photo) return <BadgeBack p={p} />;
   const { content: c, assets } = p;
   const label = c.kind === 'membership' ? 'Membership card' : c.kicker;
   const [, line] = PAPER_COPY.oneTicket(c.noun, c.once);

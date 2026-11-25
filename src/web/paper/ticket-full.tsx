@@ -2,9 +2,11 @@ import type { CSSProperties } from 'react';
 import { PAPER_SPECS } from '../../passkit/template/paper.ts';
 import { HALF_FOOT } from '../../passkit/template/paper-geometry.ts';
 import { PAPER_COPY } from '../../shared/copy/print.ts';
+import { BAND, bandFit, bandTitleWidth, faceWidth } from './ticket-fit.ts';
 import {
   CodeMark,
   Foot,
+  Photo,
   Plate,
   Rows,
   sheetProps,
@@ -14,11 +16,13 @@ import {
   Watermark,
 } from './ticket-parts.tsx';
 import {
+  beforeTitle,
   compactBefore,
   doorRows,
   doorWhen,
   faceLines,
   faceNotesFit,
+  folds,
   infoColumns,
   rules,
 } from './ticket-text.ts';
@@ -30,14 +34,25 @@ const ART_POS = {
   strip: 'right center',
 } as const;
 
-function Band({ p }: { p: TicketProps }) {
-  const { content: c, assets } = p;
+function Band({ p, h }: { p: TicketProps; h: number }) {
+  const { content: c, assets, design } = p;
   const mono = c.ink === 'mono';
   const art = assets?.art && c.art && !mono;
+  const fit = bandFit(
+    c.title,
+    bandTitleWidth(faceWidth(PAPER_SPECS[design.size].widthMm), c.photo),
+    h,
+  );
   return (
     <div
       className="pp-band"
-      style={{ ['--art-pos' as string]: c.art ? ART_POS[c.art] : 'center' } as CSSProperties}
+      style={
+        {
+          '--art-pos': c.art ? ART_POS[c.art] : 'center',
+          '--ts': fit.size,
+          '--tl': fit.lines,
+        } as CSSProperties
+      }
     >
       {art ? (
         <>
@@ -45,11 +60,12 @@ function Band({ p }: { p: TicketProps }) {
           <span className="pp-fade" />
         </>
       ) : null}
+      {c.photo ? <Photo p={p} className="pp-band-photo" size={BAND.photo} /> : null}
       <div className="pp-top">
         <Plate p={p} />
         <span className="pp-org">{c.brand}</span>
       </div>
-      <div className="pp-bottom">
+      <div className={`pp-bottom${c.photo ? ' pp-has-photo' : ''}`}>
         <div className="pp-kicker">{c.kicker}</div>
         <h2>{c.title}</h2>
       </div>
@@ -83,7 +99,7 @@ function Info({ p }: { p: TicketProps }) {
   const wash = rules(c, design.fold);
   return (
     <div className="pp-info">
-      <h2>{c.kind === 'pickup' ? PAPER_COPY.beforePickup : PAPER_COPY.before}</h2>
+      <h2>{beforeTitle(c)}</h2>
       <div className="pp-cols" style={{ '--cols': cols.length } as CSSProperties}>
         {cols.map((col) => (
           <div className="pp-col" key={col.title}>
@@ -143,10 +159,11 @@ export function TicketFull({ p, half }: { p: TicketProps; half: boolean }) {
   const rows = doorRows(c);
   const when = doorWhen(c);
   const lines = faceLines(c, half);
-  const fold = design.fold && !half;
+  const fold = design.fold && !half && folds(c);
+  const bandH = c.kind === 'pickup' ? 34 : half ? 38 : 44;
   const vars = {
     '--half': half ? spec.heightMm - HALF_FOOT : spec.heightMm / 2,
-    ...(c.kind === 'pickup' ? { '--band': 34 } : half ? { '--band': 38 } : {}),
+    ...(bandH === 44 ? {} : { '--band': bandH }),
   } as CSSProperties;
   return (
     <article {...sheetProps(p, `pp-k-${c.kind}`, vars)}>
@@ -181,7 +198,7 @@ export function TicketFull({ p, half }: { p: TicketProps; half: boolean }) {
           <Rows rows={rows} />
         </div>
         <div className="pp-face">
-          <Band p={p} />
+          <Band p={p} h={bandH} />
           <div className="pp-face-body">
             <div className="pp-face-lines">
               {lines.map((l) => (

@@ -8,6 +8,7 @@ import type { PdfPicture } from './pdf-png.ts';
 export interface PdfImages {
   logo?: PdfPicture;
   art?: PdfPicture;
+  photo?: PdfPicture;
 }
 
 /** One ticket, ready to draw: words, code drawing and embedded images. */

@@ -5,6 +5,7 @@ import { passbookCredit } from '../../../shared/copy/passbook-credit.ts';
 import { groupPrintCode, PRINT_COPY } from '../../../shared/copy/print.ts';
 import { codeLabel } from '../../../web/paper/ticket-parts.tsx';
 import { footMeta } from '../../../web/paper/ticket-text.ts';
+import { initialsOf } from '../../../web/paper/ticket-text-base.ts';
 import { drawCode } from './pdf-code.ts';
 import { luminosityState } from './pdf-gstate.ts';
 import { type Box, COLORS, type Pen, type TextStyle } from './pdf-kit.ts';
@@ -167,4 +168,29 @@ export function footRow(
     : 0;
   pen.text(pen.wrap(meta, w - used - reserve, META, 1)[0] ?? '', x, top, META);
   passbookLine(pen, s.mark, x + w, pen.baselineOf(META, top));
+}
+
+/**
+ * The holder's photo in `box`, covering it from the upper middle (faces sit high); without one, the
+ * holder's initials on the pass colour. Mirrors `Photo` in the page.
+ */
+export function photo(pen: Pen, s: Sheet, box: Box, radius = 2): void {
+  const c = s.content;
+  const mono = c.ink === 'mono';
+  const pic = s.images.photo;
+  if (pic) {
+    pen.clipped(box, () => pen.cover(pic, box, 0.5, 0.22), radius);
+    return;
+  }
+  const fg = mono ? COLORS.ink : c.colors.fg;
+  pen.fillStrokeBox(box, mono ? COLORS.white : c.colors.bg, fg, 0.4, radius);
+  const st: TextStyle = { size: box.h * 0.4, font: 'semibold', color: fg, lh: 1 };
+  pen.text(
+    initialsOf(c.holder ?? c.title),
+    box.x,
+    box.y + (box.h - st.size) / 2,
+    st,
+    'center',
+    box.w,
+  );
 }

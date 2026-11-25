@@ -17,7 +17,18 @@ export type PaperSize = (typeof PAPER_SIZES)[number];
 export const PAPER_BARCODES = ['qr', 'code128'] as const;
 export type PaperBarcode = (typeof PAPER_BARCODES)[number];
 /** The layout family: what the door panel leads with. Absent in the manifest means derived. */
-export const PAPER_KINDS = ['admission', 'membership', 'permit', 'coupon', 'pickup'] as const;
+export const PAPER_KINDS = [
+  'admission',
+  'membership',
+  'permit',
+  'coupon',
+  'pickup',
+  'journey',
+  'booking',
+  'stay',
+  'badge',
+  'credential',
+] as const;
 export type PaperKind = (typeof PAPER_KINDS)[number];
 export const PAPER_INKS = ['colour', 'mono'] as const;
 export type PaperInk = (typeof PAPER_INKS)[number];
@@ -39,6 +50,9 @@ export const PAPER_SPECS: Record<PaperSize, PaperSpec> = {
   half: { label: 'Half sheet', widthMm: 210, heightMm: 148, qrMm: 38, barMm: 90 },
   cr80: { label: 'Card', widthMm: 85.6, heightMm: 54, qrMm: 30, barMm: 66 },
 };
+
+/** Identity kinds: a lost one is reprinted by staff, so the holder's link neither prints nor voids. */
+export const STAFF_ONLY_KINDS: ReadonlySet<PaperKind> = new Set(['badge', 'credential']);
 
 export const MAX_PAPER_FIELDS = 8;
 const MAX_PAPER_EXPR = 1000;
@@ -100,6 +114,11 @@ export const DERIVED_PAPER: PaperDesign = {
   derived: true,
 };
 
+/** A derived design has no block to say who may print: an ID class is staff-only by default. */
+export function withKind(design: PaperDesign, kind: PaperKind): PaperDesign {
+  return design.derived && STAFF_ONLY_KINDS.has(kind) ? { ...design, holder: false } : design;
+}
+
 /** The design for a manifest's `paper` value. An invalid block falls back to derived. */
 export function resolvePaper(raw: unknown): PaperDesign {
   if (raw === undefined || raw === null) return DERIVED_PAPER;
@@ -112,7 +131,8 @@ export function resolvePaper(raw: unknown): PaperDesign {
     barcode: size === 'cr80' ? 'qr' : barcode,
     fields: fields ?? [],
     ...(terms === undefined ? {} : { terms }),
-    holder: holder !== false,
+    // An ID is reprinted by staff only unless the author says otherwise.
+    holder: holder ?? !(kind && STAFF_ONLY_KINDS.has(kind)),
     ...(kind ? { kind } : {}),
     ink: ink ?? 'colour',
     fold: fold !== false,

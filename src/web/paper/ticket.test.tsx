@@ -22,6 +22,11 @@ const SLUG: Record<PaperKind, string> = {
   permit: 'starter-permit',
   coupon: 'starter-coupon',
   pickup: 'starter-pickup',
+  journey: 'starter-boarding-pass',
+  booking: 'starter-booking',
+  stay: 'starter-hotel-stay',
+  badge: 'starter-staff-badge',
+  credential: 'starter-credential',
 };
 
 async function sheet(
@@ -62,6 +67,13 @@ const COMBOS: [PaperKind, PaperSize][] = [
   ['permit', 'half'],
   ['coupon', 'half'],
   ['pickup', 'letter'],
+  ['journey', 'a4'],
+  ['journey', 'half'],
+  ['booking', 'half'],
+  ['stay', 'a4'],
+  ['badge', 'cr80'],
+  ['badge', 'a4'],
+  ['credential', 'cr80'],
 ];
 
 describe('paper ticket per class and size', () => {
@@ -70,7 +82,7 @@ describe('paper ticket per class and size', () => {
     expect(html).toContain('PABCDEFGH IJKLMNOPQ RSTUVWXYZ');
     expect(html).not.toContain(SCAN_CODE);
     expect(html).toContain(`data-size="${size}"`);
-    expect(html).toContain('aria-label="Ticket for ');
+    expect(html).toMatch(/aria-label="(Ticket|Pass|Booking|Badge|Card) for /);
     expect(html).toMatch(
       /role="img" aria-label="(QR code|Code 128 barcode)\. \w+ code PABCDEFGH, IJKLMNOPQ, RSTUVWXYZ"/,
     );

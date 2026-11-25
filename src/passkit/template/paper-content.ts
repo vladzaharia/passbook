@@ -6,6 +6,7 @@
  * code on paper is the print code, added by the page.
  */
 import { PAPER_COPY } from '../../shared/copy/print.ts';
+import { bringLine, paperNoun } from '../../shared/copy/print-kinds.ts';
 import type { Expr, PassJson, Personalization, TemplateManifest } from '../types.ts';
 import type { RoleValue } from '../wallets/types.ts';
 import { buildFields, styleOf } from '../wallets/view-fields.ts';
@@ -13,9 +14,10 @@ import { relevanceOf } from '../wallets/view-parts.ts';
 import { ExprError, evaluate } from './expr.ts';
 import { applyDefaults } from './manifest.ts';
 import { lookupIsPublic, type PaperDesign, type PaperInk, type PaperKind } from './paper.ts';
+import { wantsPhoto } from './paper-content-util.ts';
 import { checkInOnce, declaredTimes, printZone } from './paper-declared.ts';
 import { type PaperColors, paperInk } from './paper-ink.ts';
-import { ISO, type Kinded, kindContent, kindOf } from './paper-kinds.ts';
+import { type Info, ISO, type Kinded, kindContent, kindOf } from './paper-kinds.ts';
 import { dedupeAddress, idFlagged, paperRoles } from './paper-roles.ts';
 
 export type PaperArt = 'artwork' | 'background' | 'thumbnail' | 'strip';
@@ -63,6 +65,10 @@ export interface PaperContent {
   items?: string[];
   /** Permit zone and plate, coupon offer, pickup name. */
   hero?: { zone?: string; plate?: string; offer?: string; offerNote?: string; name?: string };
+  /** Class facts by key: a journey's route and gate, a stay's nights, a badge's host. */
+  info: Info;
+  /** The holder's photo prints here: a badge, a credential, or an ID-style membership. */
+  photo: boolean;
   bring: string[];
   help: string[];
   terms?: string;
@@ -75,7 +81,8 @@ export interface PaperContentInput {
   manifest: Pick<
     TemplateManifest,
     'wallets' | 'behaviors' | 'inputs' | 'lookups' | 'scan' | 'display' | 'name'
-  >;
+  > &
+    Partial<Pick<TemplateManifest, 'bindings'>>;
   personalization: Personalization;
   design: PaperDesign;
   /** The holder's name when the pass has one; never an email address. */
@@ -106,6 +113,11 @@ const ART_ORDER: Record<PaperKind, PaperArt[]> = {
   membership: ['artwork', 'background'],
   permit: [],
   pickup: [],
+  journey: ['artwork', 'background', 'strip'],
+  booking: ['artwork', 'background'],
+  stay: ['artwork', 'background'],
+  badge: [],
+  credential: [],
 };
 const MAX_HELP = 3;
 const MAX_BRING = 4;
@@ -167,24 +179,34 @@ export function paperContent(input: PaperContentInput): PaperContent {
   )
     credentials.delete(lookupValue);
   const semantics = (passJson.semantics ?? {}) as Record<string, unknown>;
-  const field = (...keys: string[]): string | undefined => {
+  const printable = fields.flatMap((f) => {
+    const value = f.text.trim();
+    return value && !credentials.has(value)
+      ? [{ key: f.key, path: f.path, text: value, ...(f.label ? { label: f.label } : {}) }]
+      : [];
+  });
+  const meta = (...keys: string[]) => {
     for (const key of keys) {
-      const f = fields.find((x) => x.key === key);
-      const value = f?.text.trim();
-      if (value && !credentials.has(value)) return value;
+      const f = printable.find((x) => x.key === key);
+      if (f) return { text: f.text, ...(f.label ? { label: f.label } : {}) };
     }
     return undefined;
   };
+  const field = (...keys: string[]): string | undefined => meta(...keys)?.text;
   const tzInput = Object.entries(manifest.inputs?.properties ?? {}).find(
     ([, schema]) => (schema as Record<string, unknown>)['x-timeZone'] === true,
   )?.[0];
-  const named = tzInput ? plain(input.personalization[tzInput]) : undefined;
+  const named =
+    (tzInput ? plain(input.personalization[tzInput]) : undefined) ??
+    plain(semantics.departureLocationTimeZone);
 
   const kind: PaperKind = design.kind ?? kindOf(manifest, style, roles);
   const ctx: Kinded = {
     kind,
     roles,
     field,
+    meta,
+    all: printable,
     semantics,
     holderName: input.holderName ?? undefined,
     publicLookup: publicLookup ? lookupValue : undefined,
@@ -217,10 +239,10 @@ export function paperContent(input: PaperContentInput): PaperContent {
   const label = parts.kicker ?? manifest.name;
   // The permit blueprint's own label is "Permit"; on paper it says what it is.
   const kicker = (kind === 'permit' && label === 'Permit' ? 'Parking permit' : label) ?? title;
-  const noun = kind === 'admission' && !/pass|card/i.test(kicker) ? 'ticket' : 'pass';
+  const noun = paperNoun(kind, kicker);
   const idRequired = idFlagged(manifest, input.personalization);
   const bring = [
-    PAPER_COPY.bringDefault(noun),
+    bringLine(kind, noun),
     ...(idRequired && holder ? [PAPER_COPY.bringId(holder)] : []),
     ...(design.bring === undefined ? [] : (evalText(design.bring) ?? '').split('\n')),
   ]
@@ -271,6 +293,8 @@ export function paperContent(input: PaperContentInput): PaperContent {
     facts: parts.facts.slice(0, 3),
     ...(parts.items?.length ? { items: parts.items } : {}),
     ...(parts.hero ? { hero: parts.hero } : {}),
+    info: parts.info,
+    photo: wantsPhoto(kind, manifest),
     bring,
     help,
     ...(terms ? { terms } : {}),
