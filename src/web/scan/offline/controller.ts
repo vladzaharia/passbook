@@ -19,8 +19,8 @@ const REFRESH_MS = 60_000;
 const DRAIN_MS = 15_000;
 const BACKOFF_MS = [2000, 4000, 8000, 16_000, 32_000, 60_000] as const;
 const CONFLICTS = 'conflicts';
-/** A scan code is 26 base32 characters; a typed one may be lower case or dashed. */
-const SCAN_CODE = /^[A-Z2-7]{26}$/;
+/** A scan code is 26 base32 characters, a print code `P` plus 26; a typed one may be lower case, spaced or dashed. */
+const SCAN_CODE = /^P?[A-Z2-7]{26}$/;
 
 export interface OfflineEmit {
   outcome(key: string, outcome: ScanOutcome): void;

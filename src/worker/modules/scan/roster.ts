@@ -9,7 +9,7 @@ import { type ScanActor, scopeSessionId } from './actor.ts';
 import { type AdmitsPass, matchesEvent } from './admits.ts';
 import { localDay } from './counts.ts';
 import { requireOfflineList } from './offline-policy.ts';
-import { type RosterRow, rosterPage } from './repo-roster.ts';
+import { type RosterRow, rosterPage, voidedPrintsSince } from './repo-roster.ts';
 import { configEpochOf, credentialEpochOfActor } from './scan-epochs.ts';
 
 type Roster = z.infer<typeof ScanRosterSchema>;
@@ -51,7 +51,13 @@ const short = (hex: string) => hex.slice(0, 32);
  * brute-forced offline from a stolen door. Only the scan code (128 random bits) and the printed
  * code are checked offline; a barcode that is the scan code is covered by the first.
  */
-async function entriesOf(row: RosterRow, inside: boolean, day: boolean): Promise<Entry[]> {
+async function entriesOf(
+  row: RosterRow,
+  inside: boolean,
+  day: boolean,
+  group: (passId: string) => Promise<string>,
+  ended: readonly string[],
+): Promise<Entry[]> {
   const status: Entry['status'] =
     row.removed_at !== null || row.deleted_at !== null
       ? 'removed'
@@ -62,7 +68,13 @@ async function entriesOf(row: RosterRow, inside: boolean, day: boolean): Promise
   if (row.scan_code) hashes.add(short(await sha256Hex(row.scan_code)));
   if (row.print_hash) hashes.add(row.print_hash);
   const state: Entry['state'] = inside ? 'in' : null;
-  return [...hashes].map((h) => ({ h, status, state, ...(day ? { day: true } : {}) }));
+  const live = [...hashes].map((h) => ({ h, status, state, ...(day ? { day: true } : {}) }));
+  const gone = ended
+    .filter((h) => !hashes.has(h))
+    .map((h) => ({ h, status: 'voided' as const, state: null, ...(day ? { day: true } : {}) }));
+  // The sibling key lets the device mark the phone code and the paper code together.
+  const g = live.length > 1 ? { g: await group(row.id) } : {};
+  return [...live.map((e) => ({ ...e, ...g })), ...gone];
 }
 
 function gateScopes(actor: ScanActor, now: number): string[] {
@@ -103,13 +115,41 @@ export async function rosterFor(
     PAGE,
   );
   const entries: Entry[] = [];
+  const key = await derivedHmacKey(ctx.env, 'scan-roster.v1');
+  const scopeKey = scopeKeyOf(actor);
+  const group = async (passId: string) =>
+    toBase64Url(
+      new Uint8Array(
+        await crypto.subtle.sign(
+          'HMAC',
+          key,
+          new TextEncoder().encode(JSON.stringify(['g', scopeKey, passId])),
+        ),
+      ),
+    ).slice(0, 22);
+  const ended = new Map<string, string[]>();
+  if (since !== null)
+    for (const v of await voidedPrintsSince(
+      ctx.env.DB,
+      rows.map((r) => r.id),
+      since,
+    ))
+      ended.set(v.pass_id, [...(ended.get(v.pass_id) ?? []), v.roster_hash]);
   for (const row of rows) {
     const pass: AdmitsPass = {
       templateId: row.template_id,
       personalization: JSON.parse(row.personalization),
     };
     if (!matchesEvent(actor, pass)) continue;
-    entries.push(...(await entriesOf(row, row.inside === 1, daily.has(row.template_id))));
+    entries.push(
+      ...(await entriesOf(
+        row,
+        row.inside === 1,
+        daily.has(row.template_id),
+        group,
+        ended.get(row.id) ?? [],
+      )),
+    );
   }
   count += entries.length;
   if (count > ROSTER_MAX_ENTRIES)

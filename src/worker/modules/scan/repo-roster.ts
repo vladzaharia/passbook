@@ -14,6 +14,11 @@ export interface RosterRow {
   inside: 0 | 1;
 }
 
+export interface VoidedPrint {
+  pass_id: string;
+  roster_hash: string;
+}
+
 export interface RosterScope {
   orgId: string;
   mode: 'live' | 'test';
@@ -49,7 +54,8 @@ export const rosterPage = (
          scope.since === null
            ? ''
            : `AND (p.modified_at >= ?
-            OR EXISTS (SELECT 1 FROM scan_gates c WHERE c.pass_id = p.id AND c.kind = 'check_in' AND c.last_at >= ?))`
+            OR EXISTS (SELECT 1 FROM scan_gates c WHERE c.pass_id = p.id AND c.kind = 'check_in' AND c.last_at >= ?)
+            OR EXISTS (SELECT 1 FROM pass_prints x WHERE x.pass_id = p.id AND (x.created_at >= ? OR x.voided_at >= ?)))`
        }
      ORDER BY p.id LIMIT ?`,
     [
@@ -58,9 +64,22 @@ export const rosterPage = (
       scope.mode,
       after,
       JSON.stringify(scope.templateIds),
-      ...(scope.since === null ? [] : [scope.since, scope.since]),
+      ...(scope.since === null ? [] : [scope.since, scope.since, scope.since, scope.since]),
       limit,
     ],
+  );
+
+/** Prints that ended at or after `since` on the given passes: the device drops their hashes. */
+export const voidedPrintsSince = (
+  db: D1Database,
+  passIds: readonly string[],
+  since: number,
+): Promise<VoidedPrint[]> =>
+  all<VoidedPrint>(
+    db,
+    `SELECT pass_id, roster_hash FROM pass_prints
+     WHERE status = 'voided' AND voided_at >= ? AND pass_id IN (SELECT value FROM json_each(?))`,
+    [since, JSON.stringify(passIds)],
   );
 
 /** The scan a key already produced, so a replay after the session closed returns its first answer. */

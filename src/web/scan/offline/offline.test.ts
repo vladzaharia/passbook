@@ -385,3 +385,36 @@ describe('controller', () => {
     expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'queued' });
   });
 });
+
+describe('prints offline', () => {
+  const PRINT = 'P3QXW7ABCDEFGHIJKLMNOPQRST2';
+
+  it('admits a pass once across its phone code and its paper code', async () => {
+    const phone = await rosterHash('PHONECODE');
+    const paper = await rosterHash(PRINT);
+    const t = harness('list', [
+      { h: phone, status: 'active', state: null, g: 'g1' },
+      { h: paper, status: 'active', state: null, g: 'g1' },
+    ] as never);
+    const c = t.make();
+    t.setOnline(true);
+    await c.start();
+    t.setOnline(false);
+    await c.decide('k1', input('PHONECODE'), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'queued' });
+    await c.decide('k2', input(PRINT), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'heads_up', reason: 'already_done' });
+  });
+
+  it('matches a print code typed with spaces and lower case', async () => {
+    const paper = await rosterHash(PRINT);
+    const t = harness('list', [{ h: paper, status: 'active', state: null }]);
+    const c = t.make();
+    t.setOnline(true);
+    await c.start();
+    t.setOnline(false);
+    const typed = `${PRINT.slice(0, 5)} ${PRINT.slice(5).toLowerCase()}`;
+    await c.decide('k1', input(typed), false);
+    expect(t.outcomes.at(-1)?.[1]).toMatchObject({ kind: 'queued' });
+  });
+});

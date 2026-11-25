@@ -230,6 +230,8 @@ export const ScanRosterSchema = z.object({
       state: z.enum(['in', 'out']).nullable(),
       /** `in` counts for one venue day (a daily check-in), not for good. */
       day: z.boolean().optional(),
+      /** Opaque per-session key shared by the entries of one pass (phone code, paper code). */
+      g: z.string().max(32).optional(),
     }),
   ),
   cursor: z.string().nullable(),
