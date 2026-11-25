@@ -14,7 +14,7 @@
   as production's static assets do.
 - Real Pass Type ID certificate: `P12_PASSWORD=… npm run credentials -- Pass.p12` writes
   `.secrets/platform-{certificate,key}.pem` and `.dev.vars`. Neither is committed.
-- Demo data: with `npm run dev` running, `node tools/seed-demo.ts` (token from `npm run breakglass`;
+- Demo data: with the e2e server running (`WALLET_E2E_PREVIEW=1 E2E_PORT=5473 node tools/e2e-server.ts`; admin sign-in is mock OIDC), `SEED_BREAKGLASS_TOKEN=wbg_e2e-breakglass-token node tools/seed-demo.ts --url http://localhost:5473` (
   `--url` for another port) adds 3 orgs, ~45 passes, portal users, connections and API keys. It waits for the
   baked blueprints, invites and signs in `demo.owner@example.com` (org_admin in every org; org work runs as
   them, since a platform admin without membership gets 404), and needs a valid signing identity in `.dev.vars`
@@ -23,7 +23,8 @@
 - Visual sweep: `node tools/dev/visual-sweep.ts --url http://localhost:5173 --routes tools/dev/visual-routes/admin.json[,portal.json,public.json,scanner.json,scanning.json] [--only name] [--viewports desktop,tablet,mobile] [--themes light,dark] [--emails]`
   screenshots every route at 3 viewports and 2 themes into `.wrangler/visual-sweep/<run>/` with an `index.json` of console errors, failed requests and statuses.
 - Scanning as one system: `scanning.json` holds the scanner gallery (`/scan?visual=1`, phone and tablet sizes), the Duo customer display and the admin scanning pages; `node tools/dev/visual-scan-devices.ts --url <url> --out .wrangler/visual-sweep/scanning` adds the paired device (door, operator, desk, customer, staff sign-in, offline), the monitor and the customer display. Run both into one folder after the seed.
-- It signs in once per role (break-glass, `demo.owner@example.com`, a portal holder), keeps the state in `.wrangler/visual-sweep/state/` and needs seeded demo data (`tools/seed-demo.ts`).
+- Each route also gets `sheets/<name>.png`: its viewport and theme panels in one labelled image.
+- It signs in once per role (break-glass via `SEED_BREAKGLASS_TOKEN`, mock OIDC `e2e-admin`, a portal holder), keeps the state in `.wrangler/visual-sweep/state/` and needs seeded demo data (`tools/seed-demo.ts`).
 - Journeys: `--journeys pass-lifecycle,join,import,connections-webhooks,messages,onboarding-signin,retention,bundles` (or `all`) follows one thing through several screens, emails included, and writes `.wrangler/visual-sweep/journeys/<name>/` with numbered shots at 390 (iPhone), 820 (iPad) and 1440, light and dark, plus an `index.html` in step order. Each run makes its own passes, addresses and bundles (stamped) and ends by revoking its keys; sign-in mail stays under the 5 an hour cap because sessions are reused. A journey is `tools/dev/visual-journeys/<name>.ts`; register it in `index.ts`.
 - Tests: `npm run test:unit|worker|web`, `npm run test:e2e`, `npm run coverage`.
 - e2e runs the dev server or, in CI, the built preview. Both raise `RL_SCAN_PAIR` (30 a minute in production) to 100,000: `vite.config.ts` for dev, `tools/e2e-server.ts` patches the built `wrangler.json` for preview. A worker test covers the real limit.
