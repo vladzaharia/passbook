@@ -80600,6 +80600,7 @@
         "description": "The features and limits of the organization's plan, and how much of each it has used.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -81068,6 +81069,7 @@
         "description": "An organization's brand, channels and accounts in the caller's mode. Each channel carries its chain of levels (PassBook, Plan, Organization, Template), the first of which that is not ok stops it. checks lists what to fix, each with a stable fix action. Send revision back as expectedRevision.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -81596,6 +81598,7 @@
         "description": "Change the brand, support, email and which channels the organization allows, in one write against the revision you read. ?dryRun=true answers with the same shape and writes nothing. Absent leaves a value, null clears it. Name an image by the sha POST /orgs/{orgId}/brand-assets answered. Allowing Google or Samsung also turns on the enrollment when the platform has released the provider and the account is ready; blocking never removes copies. A stale expectedRevision is 409 PASS_SETUP_CHANGED.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BRAND_ASSET_NOT_FOUND",
           "BRAND_MARK_NOT_ALLOWED",
           "CONFLICT",
@@ -81716,6 +81719,7 @@
         "description": "Stage a PNG for a logo, icon or web logo. Nothing about the organization changes: a pass-setup save that names the sha keeps the file, and an unused one is deleted after 24 hours. The logo and icon are the @3x; send the @2x as x2 or let it be derived.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMAGE_BYTES",
@@ -83874,6 +83878,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -83999,6 +84004,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BRAND_MARK_NOT_ALLOWED",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -84127,6 +84133,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -84249,6 +84256,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -89177,6 +89185,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -89370,6 +89379,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -89471,6 +89481,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -89807,6 +89818,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -89968,6 +89980,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -90170,6 +90183,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -91061,6 +91075,7 @@
         "description": "Renders the pass.json a template would produce for `input`, without issuing a pass.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -91225,6 +91240,7 @@
         "description": "Returns the JSON Schema that `input` must satisfy in `POST /passes` for this template's active version. Field labels, groups and order are in the `x-label`, `x-group` and `x-order` keywords. Use it to build a form or generate types.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -91306,6 +91322,7 @@
         "description": "Downloads a sample import file for the template: one column per field, labeled as in the pass form, and Holder email, with one valid row. Importing it with mapping auto maps every column and checks without errors.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -91510,6 +91527,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -91622,6 +91640,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -91927,6 +91946,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -92351,6 +92371,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -92950,6 +92971,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -93159,6 +93181,7 @@
         "description": "Makes a template in an organization from a blueprint. The blueprint is not changed.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
@@ -93660,6 +93683,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "BLUEPRINT_NOT_SCANNABLE",
           "EVENT_IN_USE",
           "EVENT_MATCH_INPUT",
@@ -94161,6 +94185,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -94320,6 +94345,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -94432,6 +94458,7 @@
         "description": "Creates a release candidate from the template's current draft.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -94692,6 +94719,7 @@
         "description": "Approves a release candidate. A key can approve only in Test; Live approval is for a person.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -94869,6 +94897,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -94982,6 +95011,7 @@
         "description": "Publishes an approved release. A key can publish only in Test.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -95168,6 +95198,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -95344,6 +95375,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -95611,6 +95643,7 @@
         "description": "Release a saved version to Test and Live in one call. Test runs first, then Live; each mode creates or reuses its candidate, reuses or writes an approval (a `test` approval in Test, a `sole` approval in Live only for the sole reviewer) and publishes at the expected generation. Test follows Live: a newer Test head stays and is reported as `kept`. Another reviewer's approval is needed otherwise: 409 `TEMPLATE_REVIEW_REQUIRED` with the plan; Test stays released and a repeat call resumes. `?dryRun=true` returns the plan and changes nothing. Send `Idempotency-Key`: the same key and body replays the stored answer with `Idempotent-Replayed: true`. `expected` is the generation each head must still be at, `0` before a first release. A Test key may name only `test`; a Live key cannot release.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
@@ -95805,6 +95838,7 @@
         "description": "Create or reuse the Test and Live candidates of a saved version without approving them, and email the org's other reviewers. A newer request replaces an older open one. Send `Idempotency-Key`.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ARCHIVE_TOO_LARGE",
           "ASSETS_INVALID",
           "ASSET_NOT_FOUND",
@@ -95984,6 +96018,7 @@
         "description": "Approve a requested version in Test and Live as a peer. A Test key approves Test only. Set `release` to also release it when you can publish. You cannot approve your own work.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -96128,6 +96163,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -96378,6 +96414,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -96587,6 +96624,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -96728,6 +96766,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -96834,6 +96873,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -96929,6 +96969,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BULK_RUN_ACTIVE",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -97030,6 +97071,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -97127,6 +97169,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BULK_RUN_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -97226,6 +97269,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BULK_RUN_ENDED",
           "BULK_RUN_NOT_FOUND",
           "FORBIDDEN",
@@ -97408,6 +97452,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_SLOT",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -97491,6 +97536,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -97723,6 +97769,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -97960,6 +98007,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_SLOT",
           "CONNECTION_ORG",
           "FORBIDDEN",
@@ -98070,6 +98118,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -98167,6 +98216,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -98244,6 +98294,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -98323,6 +98374,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -98518,6 +98570,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_SLOT",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -98632,6 +98685,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -98712,6 +98766,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -98843,6 +98898,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "DELIVERY_STALE",
           "EMAIL_INVALID",
@@ -98959,6 +99015,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -99048,6 +99105,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
           "ASSET_NOT_PNG",
@@ -99171,6 +99229,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -99288,6 +99347,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -99385,6 +99445,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_DIMENSIONS",
           "ASSET_NOT_FOUND",
           "ASSET_NOT_PNG",
@@ -99521,6 +99582,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -99640,6 +99702,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -99744,6 +99807,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -99834,6 +99898,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -99923,6 +99988,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -100030,6 +100096,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -100234,6 +100301,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -100467,6 +100535,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -100600,6 +100669,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -100729,6 +100799,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BULK_RUN_ACTIVE",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -100849,6 +100920,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -101168,6 +101240,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -101469,6 +101542,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -101595,6 +101669,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -101687,6 +101762,7 @@
         "description": "The state of a bulk print job.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -101763,6 +101839,7 @@
         "description": "The combined PDF of a finished bulk print job.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -101847,6 +101924,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -101935,6 +102013,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -102025,6 +102104,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -102093,6 +102173,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -102165,6 +102246,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -102248,6 +102330,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -102388,6 +102471,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -102493,6 +102577,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -102603,6 +102688,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -102739,6 +102825,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -102905,6 +102992,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -103071,6 +103159,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_MAPPINGS_FULL",
@@ -103165,6 +103254,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -103272,6 +103362,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_BUSY",
@@ -103596,6 +103687,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -103625,7 +103717,6 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -103892,6 +103983,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_HEADER_TOO_LONG",
@@ -104154,6 +104246,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -104253,6 +104346,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_BUSY",
@@ -104551,6 +104645,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -104850,6 +104945,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -105034,6 +105130,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -105116,6 +105213,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_FILE_GONE",
@@ -105195,6 +105293,7 @@
         "description": "What happened to each row, as CSV with the pass and its links.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "IMPORT_NOT_FOUND",
@@ -105444,6 +105543,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "DELIVERY_STALE",
           "EMAIL_INVALID",
@@ -105600,6 +105700,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -105703,6 +105804,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "BUNDLE_DUPLICATE_PASS",
           "BUNDLE_MODE_MISMATCH",
@@ -105820,6 +105922,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BUNDLE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -105894,6 +105997,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BUNDLE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -105987,6 +106091,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "BUNDLE_NOT_FOUND",
           "DELIVERY_STALE",
@@ -106106,6 +106211,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BUNDLE_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -106623,6 +106729,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CAPTURED_EMAIL_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -106734,6 +106841,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CAPTURED_EMAIL_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -107110,6 +107218,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -107228,6 +107337,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_INVALID_OP",
@@ -107366,6 +107476,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_EMPTY",
           "BROADCAST_NO_RELEASE",
           "BROADCAST_TOO_MANY_TEMPLATES",
@@ -107486,6 +107597,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -107610,6 +107722,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_INVALID_OP",
@@ -107755,6 +107868,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_DRAFT",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_PAST",
@@ -107863,6 +107977,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_CANCELLABLE",
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
@@ -107981,6 +108096,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_EMPTY",
           "BROADCAST_INVALID_INPUT",
           "BROADCAST_INVALID_OP",
@@ -108126,6 +108242,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -108204,6 +108321,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_UNDOABLE",
           "BROADCAST_UNDO_EXPIRED",
@@ -108309,6 +108427,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_FOUND",
           "BROADCAST_NOT_SENDING",
           "FORBIDDEN",
@@ -108451,6 +108570,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -108568,6 +108688,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -108686,6 +108807,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -108819,6 +108941,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -108907,6 +109030,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -109011,6 +109135,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -109140,6 +109265,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -109248,6 +109374,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -109376,6 +109503,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "BROADCAST_NOT_FOUND",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -109521,6 +109649,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -109603,6 +109732,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -109689,6 +109819,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -109837,6 +109968,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -109961,6 +110093,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -110083,6 +110216,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -110198,6 +110332,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -110373,6 +110508,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -110463,6 +110599,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -110609,6 +110746,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -110704,6 +110842,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -110797,6 +110936,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -110893,6 +111033,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
           "IDENTITY_NOT_CONFIGURED",
@@ -110996,6 +111137,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
           "AUTHORITY_DENIED",
@@ -111134,6 +111276,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -111267,6 +111410,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -111282,7 +111426,6 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -111371,6 +111514,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -111457,6 +111601,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -111569,6 +111714,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_NOT_FOUND",
           "FEATURE_LIMIT_REACHED",
@@ -111755,6 +111901,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -111896,6 +112043,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_NOT_FOUND",
           "CONNECTOR_UNKNOWN",
@@ -111993,6 +112141,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -112134,6 +112283,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -112269,6 +112419,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -112361,6 +112512,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -112544,6 +112696,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "CONNECTOR_UNKNOWN",
           "FORBIDDEN",
@@ -112560,7 +112713,6 @@
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED"
         ]
@@ -112636,6 +112788,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -112659,7 +112812,6 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION"
         ]
       }
@@ -112727,6 +112879,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_DISABLED",
@@ -112854,6 +113007,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTION_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -112990,6 +113144,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -113125,6 +113280,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CONNECTION_CONFLICT",
           "CONNECTION_NOT_FOUND",
@@ -113263,6 +113419,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -113382,6 +113539,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONNECTOR_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -113496,6 +113654,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -113620,6 +113779,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -113732,6 +113892,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -113851,6 +114012,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CAPTURE_URL_FIXED",
           "FEATURE_LIMIT_REACHED",
@@ -113941,6 +114103,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -114046,6 +114209,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -114152,6 +114316,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -114178,7 +114343,6 @@
           "TEMPLATE_RELEASE_CHANGED",
           "UNAUTHENTICATED",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WEBHOOK_ENDPOINT_LIMIT",
           "WEBHOOK_ENDPOINT_NOT_FOUND"
@@ -114275,6 +114439,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CAPTURE_DEVELOPER_ONLY",
           "FEATURE_LIMIT_REACHED",
@@ -114429,6 +114594,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -114530,6 +114696,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -114633,6 +114800,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CAPTURE_DEVELOPER_ONLY",
           "CAPTURE_NOT_STORED",
@@ -114731,6 +114899,7 @@
         },
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "CAPTURE_DEVELOPER_ONLY",
           "FEATURE_LIMIT_REACHED",
@@ -114899,6 +115068,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -114985,6 +115155,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -115108,6 +115279,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -115194,6 +115366,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "DELIVERY_PENDING",
           "FEATURE_LIMIT_REACHED",
@@ -115299,6 +115472,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -115459,6 +115633,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -115570,6 +115745,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -117885,6 +118061,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -117964,6 +118141,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -118935,6 +119113,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -119071,6 +119250,7 @@
           "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
+          "API_KEY_MISSING",
           "API_KEY_MODE_MISMATCH",
           "API_KEY_NOT_FOUND",
           "API_KEY_NOT_ROTATABLE",
@@ -119229,6 +119409,7 @@
           "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
+          "API_KEY_MISSING",
           "API_KEY_MODE_MISMATCH",
           "API_KEY_NOT_FOUND",
           "API_KEY_NOT_ROTATABLE",
@@ -119361,6 +119542,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -119456,6 +119638,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -119609,6 +119792,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -119768,6 +119952,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -119884,6 +120069,7 @@
           "API_KEY_CREDENTIAL_LIVE_ORG",
           "API_KEY_EXPIRY_REQUIRED",
           "API_KEY_EXPIRY_TOO_LONG",
+          "API_KEY_MISSING",
           "API_KEY_PARENT_RETIRING",
           "API_KEY_RESTRICTION_UNSUPPORTED",
           "API_KEY_SCAN_ORG_REQUIRED",
@@ -119984,6 +120170,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "API_KEY_NOT_FOUND",
           "API_KEY_RETIRE_SET",
           "FORBIDDEN",
@@ -120644,6 +120831,7 @@
         "description": "The organization's audit log, newest first. A key needs audit:read and reads its own organization; send from (at most 90 days before to) and a limit of at most 100.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "AUDIT_LIMIT_TOO_HIGH",
           "AUDIT_WINDOW_REQUIRED",
           "AUDIT_WINDOW_TOO_WIDE",
@@ -120996,6 +121184,7 @@
         "description": "The same entries as CSV, at most 10,000 rows; 2 an hour per key and 6 an hour across the organization's keys. Each export is recorded as audit.export.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "AUDIT_LIMIT_TOO_HIGH",
           "AUDIT_WINDOW_REQUIRED",
           "AUDIT_WINDOW_TOO_WIDE",
@@ -132938,6 +133127,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "ASSET_SLOT",
           "FORBIDDEN",
           "IDENTITY_EXPIRED",
@@ -133292,6 +133482,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -134324,6 +134515,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -134514,6 +134706,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -134786,6 +134979,7 @@
         "description": "Removes a scanner from use.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -134932,6 +135126,7 @@
         "description": "Moves a scanner live, or to test mode.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -135083,6 +135278,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -135376,6 +135572,7 @@
         "description": "Makes a new pairing code. It replaces any live one.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -135462,6 +135659,7 @@
         "description": "Polls a pairing to see whether the device has paired.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -135551,6 +135749,7 @@
         "description": "Makes a till token, shown once. It replaces the old one.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -136019,6 +136218,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -136476,6 +136676,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -136821,6 +137022,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "EVENT_MATCH_INPUT",
           "EVENT_NEEDS_CAPACITY",
           "EVENT_NOT_FOUND",
@@ -137021,6 +137223,7 @@
         "description": "Lists scanning sessions.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -137563,6 +137766,7 @@
         "description": "A session's rules and devices.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -137830,6 +138034,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -138121,6 +138326,7 @@
         "description": "Closes the session now, opens it now, or goes back to the session hours.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -138342,6 +138548,7 @@
         "description": "Configures one device of a session.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -138564,6 +138771,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ADMITS_TOO_MANY",
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -141181,6 +141389,7 @@
         "description": "Lists scan events.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -141284,6 +141493,7 @@
         "description": "Creates a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_MATCH_INPUT",
           "EVENT_NEEDS_CAPACITY",
           "EVENT_NOT_FOUND",
@@ -141388,6 +141598,7 @@
         "description": "One scan event.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -141495,6 +141706,7 @@
         "description": "Edits a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_MATCH_INPUT",
           "EVENT_NEEDS_CAPACITY",
           "EVENT_NOT_FOUND",
@@ -141600,6 +141812,7 @@
         "description": "Archives a scan event. Its scanners are detached.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_IN_USE",
           "EVENT_NOT_FOUND",
           "FORBIDDEN",
@@ -141714,6 +141927,7 @@
         "description": "Moves scanners onto a scan event.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "EVENT_ARCHIVED",
           "EVENT_MATCH_INPUT",
           "EVENT_NOT_FOUND",
@@ -142422,6 +142636,7 @@
         "description": "Lists an organization's scanner staff.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -142513,6 +142728,7 @@
         "description": "Creates a staff member and reveals their PIN once.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -142636,6 +142852,7 @@
         "description": "Updates or disables a staff member.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -142731,6 +142948,7 @@
         "description": "Replaces a staff PIN and reveals the new one once.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_INVALID",
@@ -143042,6 +143260,7 @@
         "description": "Lists zones.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -143145,6 +143364,7 @@
         "description": "Creates a zone.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -143270,6 +143490,7 @@
         "description": "Edits a zone.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -143382,6 +143603,7 @@
         "description": "Archives a zone and the zones below it.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -143494,6 +143716,7 @@
         "description": "Restores a zone and the zones below it.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -143577,6 +143800,7 @@
         "description": "Resets a pass's visits to a zone.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -144455,6 +144679,7 @@
         ],
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -145246,6 +145471,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -145418,6 +145644,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "API_VERSION_UNKNOWN",
           "ASSET_NOT_FOUND",
@@ -145609,6 +145836,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -145824,6 +146052,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -146013,6 +146242,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "API_KEY_NO_APPROVAL",
           "ASSET_NOT_FOUND",
           "ASSET_SLOT",
@@ -148400,6 +148630,7 @@
         "description": "The tag types of an organization.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -148505,6 +148736,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -148627,6 +148859,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -148749,6 +148982,7 @@
         "x-sign-in": "idp",
         "x-codes": [
           "ACTOR_CHANGED",
+          "API_KEY_MISSING",
           "AUTHORITY_DENIED",
           "FEATURE_LIMIT_REACHED",
           "FEATURE_NOT_INCLUDED",
@@ -148873,6 +149107,7 @@
         "description": "Lists tag keysets.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
@@ -148987,6 +149222,7 @@
         "description": "Creates a tag keyset.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -149115,6 +149351,7 @@
           "conditional": false
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
@@ -149225,6 +149462,7 @@
         "description": "Retires an old key version.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -149329,6 +149567,7 @@
         "description": "Revokes a key version. Tags on it must be written again.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -149440,6 +149679,7 @@
         "description": "Moves the tags of a keyset to another keyset.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -149546,6 +149786,7 @@
           "conditional": true
         },
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -149643,6 +149884,7 @@
         "description": "Disables a keyset.",
         "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
@@ -151732,7 +151974,6 @@
           "TEMPLATE_RELEASE_REQUIRED",
           "TEMPLATE_VERSION_CONTENT_CONFLICT",
           "UNSAFE_URL",
-          "UPSTREAM",
           "VALIDATION",
           "WALLET_PROJECTION_UNSUPPORTED",
           "WEBHOOK_PAYLOAD",

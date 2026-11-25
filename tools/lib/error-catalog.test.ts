@@ -1,0 +1,78 @@
+import { describe, expect, it } from 'vitest';
+import { errorStatuses, errorStatusLabels } from '../../src/web/developers/model/error-status.ts';
+import { buildErrorCatalog } from './error-catalog.ts';
+
+/** Each multi-status code with the status shown first: raised at the most sites; on a tie the 5xx when the tie spans 4xx and 5xx, else the lower. */
+const COMMON: Record<string, number> = {
+  API_KEY_NOT_FOUND: 404,
+  ASSET_SIZE: 413,
+  DEVICE_REQUIRED: 403,
+  EMAIL_CONFLICT: 403,
+  EMAIL_TAKEN: 403,
+  IDEMPOTENCY_KEY_REUSED: 422,
+  IDENTITY_NOT_FOUND: 404,
+  IDENTITY_RUN_INCOMPLETE: 502,
+  NO_RECIPIENT: 422,
+  ORG_INACTIVE: 403,
+  ORG_NOT_FOUND: 404,
+  ORG_REQUIRED: 422,
+  SCANNER_NOT_FOUND: 404,
+  SCANNER_REVOKED: 401,
+  SCANNING_SESSION_CLOSED: 403,
+  SCANNING_SESSION_PAUSED: 409,
+  SCANNING_SESSION_SETTINGS_INVALID: 422,
+  SCAN_MODE_MISMATCH: 403,
+  TAG_NOT_FOUND: 404,
+  TEMPLATE_ARCHIVED: 409,
+  TEMPLATE_NOT_FOUND: 404,
+  VERSION_INVALID: 409,
+  VISITOR_HOST_UNKNOWN: 403,
+  WEBHOOK_STALE_CONTEXT: 503,
+  WORKFLOW_START: 503,
+};
+
+/** The statuses tied for most common raise site. */
+const TIES: Record<string, number[]> = {
+  ASSET_SIZE: [413, 422],
+  EMAIL_TAKEN: [403, 409],
+  ORG_INACTIVE: [403, 409],
+  SCANNER_REVOKED: [401, 409],
+  SCANNING_SESSION_CLOSED: [403, 409],
+  SCAN_MODE_MISMATCH: [403, 422],
+  VISITOR_HOST_UNKNOWN: [403, 404],
+  WEBHOOK_STALE_CONTEXT: [409, 503],
+};
+
+describe('error catalog statuses', () => {
+  const catalog = buildErrorCatalog();
+  const multi = catalog.codes.filter((c) => c.statuses.length > 1);
+
+  it('shows a multi-status code with its most common raise site', () => {
+    expect(Object.fromEntries(multi.map((c) => [c.code, c.statuses[0]]))).toEqual(COMMON);
+    expect(multi).toHaveLength(25);
+  });
+
+  it('carries the tied set where raise sites tie', () => {
+    expect(
+      Object.fromEntries(multi.filter((c) => c.primary).map((c) => [c.code, c.primary])),
+    ).toEqual(TIES);
+    expect(catalog.codes.filter((c) => c.statuses.length === 1 && c.primary)).toEqual([]);
+  });
+
+  it('keeps every status for display', () => {
+    const reused = catalog.codes.find((c) => c.code === 'IDEMPOTENCY_KEY_REUSED');
+    expect([...(reused?.statuses ?? [])].sort()).toEqual([409, 422]);
+  });
+
+  it('does not read a default code across class bodies', () => {
+    const get = (code: string) => catalog.codes.find((c) => c.code === code)?.statuses;
+    expect(get('UPSTREAM')).toEqual([502]);
+    expect(get('VALIDATION')).toEqual([422]);
+  });
+
+  it('the reference reads the first status, and says "or" for a tie', () => {
+    expect(errorStatuses(catalog).get('IDEMPOTENCY_KEY_REUSED')).toBe(422);
+    expect(errorStatusLabels(catalog).get('WEBHOOK_STALE_CONTEXT')).toBe('409 or 503');
+    expect(errorStatusLabels(catalog).has('IDEMPOTENCY_KEY_REUSED')).toBe(false);
+  });
+});

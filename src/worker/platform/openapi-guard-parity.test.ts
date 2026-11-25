@@ -10,6 +10,7 @@ type Doc = { paths: Record<string, Record<string, Op>> };
 /** Refusals that name the credential, not the request or the data. */
 const AUTH_CODES = new Set([
   'UNAUTHENTICATED',
+  'API_KEY_MISSING',
   'INVALID_API_KEY',
   'MISSING_SCOPE',
   'SESSION_REQUIRED',
