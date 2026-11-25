@@ -3,6 +3,7 @@ import { DEV_COPY, DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS } from '../../../shared/developers.ts';
 import { SDK_STATUS } from '../../../shared/developers-sdk.ts';
 import { BuddyArt } from '../../ui/art/buddy-art.tsx';
+import { GuideTile } from '../guide/tile.tsx';
 import { shortDate } from '../model/dates.ts';
 import { highlight } from '../model/highlight.ts';
 import type { Site } from '../model/types.ts';
@@ -11,6 +12,14 @@ import { PassStub } from '../ui/pass-stub.tsx';
 import { Stamp } from '../ui/stamp.tsx';
 import { Ticket } from '../ui/ticket.tsx';
 import { SIGN_IN } from './layout.tsx';
+
+/** The guides the home page features, by id: one per step of the journey that matters first. */
+export const HOME_GUIDES = [
+  'issue-on-purchase',
+  'update-a-pass',
+  'check-in-at-the-door',
+  'react-to-events',
+] as const;
 
 const TILE_ICON = { quickstart: Zap, playground: LayoutTemplate, reference: Braces } as const;
 const TILE_HREF = {
@@ -179,9 +188,9 @@ function Guides() {
         </a>
       </div>
       <div className="card-b recipes">
-        {DEV_GUIDES.slice(0, 4).map((g) => (
+        {HOME_GUIDES.flatMap((id) => DEV_GUIDES.filter((d) => d.id === id)).map((g) => (
           <a key={g.id} className="row g3" href={`${PATHS.guides}/${g.id}`}>
-            <span className={`sw ${g.tone}`} />
+            <GuideTile id={g.id} />
             <span className="strong">{g.title}</span>
           </a>
         ))}

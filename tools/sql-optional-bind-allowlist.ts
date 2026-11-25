@@ -281,9 +281,9 @@ export const OPTIONAL_BIND_ALLOWED: Record<string, { text: string; reason: strin
   ],
   'src/worker/modules/wallet-providers/repo-samsung-card-state.ts': [
     {
-      text: "AND st.card_type = ? AND (st.testing_mode_off = 'Y' OR ? = 'test')",
+      text: "AND ((st.state = 'ACTIVE' AND st.testing_mode_off = 'Y') OR (? = 'test' AND st.state IN ('ACTIVE', 'DRAFT', 'VERIFYING', 'VERIFIED')))",
       reason:
-        'a bind compared with a literal (operation, provider or mode) picks a variant of the statement; its org_id and mode terms are separate and literal',
+        "mode bind selects Test's wider card-state set; scope is candidate_id + account_id + account_epoch",
     },
   ],
   'src/worker/modules/wallet-providers/repo-sync-targets.ts': [

@@ -171,6 +171,29 @@ export async function releaseSystemGoogle(admin: Api, w: WalletOrg): Promise<str
   return candidate.projection.approvedOmissions ?? [];
 }
 
+/** A candidate the test authors for a provider, approved by a second member and published to Test. */
+export async function releaseProjection(
+  admin: Api,
+  w: WalletOrg,
+  provider: Provider,
+  approvedOmissions: string[],
+) {
+  const candidate = await admin.send<Candidate>(
+    'POST',
+    `${templatePath(w)}/candidates`,
+    {
+      orgId: w.org.id,
+      mode: 'test',
+      provider,
+      version: w.apple.version,
+      sourceReleaseId: w.apple.id,
+      projection: { schema: 2, provider, approvedOmissions },
+    },
+    TEST,
+  );
+  await approveAndPublish(admin, w, provider, candidate);
+}
+
 /** A Test pass from the org's Day pass release, with the holder's email. */
 export async function testPass(admin: Api, w: WalletOrg) {
   const memberId = uid('DAY').toUpperCase();

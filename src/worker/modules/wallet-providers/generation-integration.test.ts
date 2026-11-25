@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { all, batch, first, stmt } from '../../platform/db.ts';
+import { revealToken } from '../../platform/capability-token.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { sha256Hex } from '../../platform/ids.ts';
 import { jobCtxOf } from '../delivery/delivery-test-fixtures.ts';
 import {
@@ -29,7 +30,7 @@ import {
   retireWalletInstance,
 } from './instance.ts';
 import { reconcileWalletInstance } from './lifecycle.ts';
-import { issueWalletOffer, listWalletOffers } from './offers.ts';
+import { issueWalletOffer, listWalletOffers, redeemSamsungOffer } from './offers.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { setWalletProvidersEnabledForTest, whileDisabledForTest } from './provider-policy.ts';
@@ -40,70 +41,6 @@ import { walletJobCtx } from './wallet-job-ctx-test-fixtures.ts';
 beforeAll(() => {
   setWalletProvidersEnabledForTest(true);
 });
-
-/**
- * Exercise the storage transition for a hypothetical already-proven future provider incarnation.
- * Only this isolated fixture bypasses the two issuance guards, and restores them in the same D1
- * transaction. It does not supply market evidence, create an offer, or enable production issuance.
- */
-async function seedReadyActivation(input: {
-  db: D1Database;
-  instanceId: string;
-  accountId: string;
-  releaseId: string;
-  now: number;
-}) {
-  const { db, instanceId, accountId, releaseId, now } = input;
-  const names = [
-    'wallet_provider_generation_operation_guard',
-    'wallet_provider_generation_binding_guard',
-  ];
-  const triggers = await all<{ name: string; sql: string }>(
-    db,
-    "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND name IN (?, ?)",
-    names,
-  );
-  const operationGuard = triggers.find((row) => row.name === names[0])?.sql;
-  const bindingGuard = triggers.find((row) => row.name === names[1])?.sql;
-  if (!operationGuard || !bindingGuard) throw new Error('Missing provider issuance guards');
-  const operationId = crypto.randomUUID();
-  const requestHash = await sha256Hex(crypto.randomUUID());
-  const results = await batch(db, [
-    stmt(db, 'DROP TRIGGER wallet_provider_generation_operation_guard'),
-    stmt(db, 'DROP TRIGGER wallet_provider_generation_binding_guard'),
-    stmt(
-      db,
-      `INSERT INTO wallet_provider_instance_operations
-      (id, instance_id, version, kind, request_hash, pass_version, pass_revision,
-       pass_credential_generation, lifecycle_generation, issuing_release_id, projection_release_id,
-       account_revision, adapter_revision, policy_revision, created_at, credential_keyset_commitment)
-      SELECT ?, i.id, 1, 'upsert', ?, p.version, p.revision, p.credential_generation,
-        p.lifecycle_generation, p.release_id, r.id, a.revision, r.adapter_revision, r.audience_policy_revision, ?, i.credential_keyset_commitment
-      FROM wallet_provider_instances i JOIN passes p ON p.id = i.pass_id AND p.org_id = i.org_id AND p.mode = i.mode
-      JOIN wallet_provider_accounts a ON a.id = ? AND a.org_id = i.org_id AND a.mode = i.mode
-        AND a.provider = i.provider AND a.credential_id IS NOT NULL AND a.revoked_at IS NULL
-      JOIN template_releases r ON r.id = ? AND r.org_id = i.org_id AND r.mode = i.mode AND r.provider = i.provider
-        AND r.template_id = p.template_id AND r.version = p.template_version AND r.source = 'approved'
-      JOIN template_candidates c ON c.id = r.candidate_id AND c.source_release_id = p.release_id
-        AND c.provider_account_id = a.id AND c.provider_account_revision = a.revision
-      WHERE i.id = ? AND i.lifecycle = 'ready' AND i.credential_generation = p.credential_generation`,
-      [operationId, requestHash, now, accountId, releaseId, instanceId],
-    ),
-    stmt(
-      db,
-      `UPDATE wallet_provider_instances SET lifecycle = 'active', account_id = ?,
-      identity_projection_release_id = ?, desired_version = 1, desired_operation_id = ?, updated_at = ?
-      WHERE id = ? AND lifecycle = 'ready' RETURNING id`,
-      [accountId, releaseId, operationId, now, instanceId],
-    ),
-    stmt(db, operationGuard),
-    stmt(db, bindingGuard),
-  ]);
-  // RETURNING counts rows: the instance epoch trigger adds a change to meta.changes.
-  if (results[2]?.meta.changes !== 1 || results[3]?.results.length !== 1)
-    throw new Error('Historical structural activation failed');
-  return operationId;
-}
 
 describe('provider credential generation transitions', () => {
   it('holds a transfer behind uncertain old work, retires the old identity, and keeps new offers unavailable', async () => {
@@ -289,27 +226,44 @@ describe('provider credential generation transitions', () => {
         now: f.kit.clock.now(),
       }),
     ).toBeNull();
-    await expect(
-      issueWalletOffer(f.kit.ctx, currentPass.downloadToken, 'samsung'),
-    ).rejects.toMatchObject({ status: 404 });
-    expect(await listWalletOffers(f.kit.ctx, currentPass.id)).toEqual([]);
-
-    // Demonstrate the post-retirement structural binding without authorizing any real offer.
-    const operationId = await seedReadyActivation({
-      db,
-      instanceId: next.id,
-      accountId: approved.release.accountId,
-      releaseId: approved.release.id,
-      now: f.kit.clock.now(),
-    });
+    // The plain capability token, as the holder's link carries it (downloadToken is its stored MAC).
+    const plainToken = await revealToken(
+      f.kit.env,
+      'pass',
+      currentPass.id,
+      currentPass.orgId,
+      currentPass.downloadToken,
+    );
+    // The new holder adds the pass: the placeholder takes its first operation and activates (0208). The
+    // database keeps new instances and offers closed per account (0043, 0114), which this file opens as the
+    // Google fixture does.
+    for (const name of [
+      'wallet_provider_generation_insert_guard',
+      'wallet_provider_generation_binding_guard',
+      'wallet_provider_generation_offer_insert',
+      'wallet_provider_generation_offer_consume',
+      'wallet_provider_generation_samsung_ref',
+    ])
+      await run(db, `DROP TRIGGER IF EXISTS ${name}`);
+    expect(await listWalletOffers(f.kit.ctx, currentPass.id)).toEqual([
+      {
+        provider: 'samsung',
+        href: expect.stringContaining('/wallet/samsung'),
+        installation: 'unknown',
+      },
+    ]);
+    const offerPath = await issueWalletOffer(f.kit.ctx, plainToken, 'samsung');
+    expect(offerPath).toMatch(/^\/p\/wallet\/samsung\//);
+    const redeemed = await redeemSamsungOffer(f.kit.ctx, offerPath.split('/').at(-1) ?? '');
+    expect(redeemed.startsWith('https://a.swallet.link/atw/v3/')).toBe(true);
     const activated = await getWalletInstance(db, { ...scope, passId: currentPass.id });
     expect(activated).toMatchObject({
       id: next.id,
       lifecycle: 'active',
       credentialGeneration: snapshot.credentialGeneration,
-      desiredOperationId: operationId,
       installationState: 'unknown',
     });
+    expect(activated?.accountId).toBe(approved.release.accountId);
     expect(
       await whileDisabledForTest(createWalletOfferRef, db, {
         ...scope,

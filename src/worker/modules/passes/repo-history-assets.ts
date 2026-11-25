@@ -161,7 +161,7 @@ export async function replaceAssetIfCurrent(
           db,
           `UPDATE pass_assets SET r2_key=?, sha1=?, size=?, width=?, height=?, crc32=?, created_at=?
          WHERE pass_id=? AND name=? AND ${oldWhere}
-           AND EXISTS (SELECT 1 FROM passes p WHERE ${passWhere})${uploadWhere}${candidateWhere}${sameKeyWhere} RETURNING pass_id`,
+           AND EXISTS (SELECT 1 FROM passes p WHERE (${passWhere}))${uploadWhere ? ` AND (${uploadWhere})` : ''}${candidateWhere ? ` AND (${candidateWhere})` : ''}${sameKeyWhere} RETURNING pass_id`,
           [
             next.r2Key,
             next.sha1,
@@ -183,7 +183,7 @@ export async function replaceAssetIfCurrent(
         ? stmt(
             db,
             `INSERT INTO pass_assets (pass_id, name, r2_key, sha1, size, width, height, crc32, created_at)
-           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? FROM passes p WHERE ${passWhere} AND ${oldWhere}${uploadWhere}${candidateWhere}${sameKeyWhere}
+           SELECT ?, ?, ?, ?, ?, ?, ?, ?, ? FROM passes p WHERE (${passWhere}) AND ${oldWhere}${uploadWhere ? ` AND (${uploadWhere})` : ''}${candidateWhere ? ` AND (${candidateWhere})` : ''}${sameKeyWhere}
            RETURNING pass_id`,
             [
               passId,
@@ -205,7 +205,7 @@ export async function replaceAssetIfCurrent(
         : stmt(
             db,
             `DELETE FROM pass_assets WHERE pass_id = ? AND name = ? AND ${oldWhere}
-           AND EXISTS (SELECT 1 FROM passes p WHERE ${passWhere}) RETURNING pass_id`,
+           AND EXISTS (SELECT 1 FROM passes p WHERE (${passWhere})) RETURNING pass_id`,
             [passId, name, ...oldParams, ...passParams],
           );
   return commitImageMutation(
