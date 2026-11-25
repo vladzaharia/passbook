@@ -14,6 +14,8 @@ import {
 } from '../../ui/index.ts';
 import { type FormValues, SchemaForm } from '../passes/schema-form/index.ts';
 import { authOptions, flattenSchema, WIZARD_HIDDEN } from './config-schema.ts';
+import { DemoFields } from './demo/demo-fields.tsx';
+import { FieldChips } from './demo/field-chips.tsx';
 import { recipeHidden } from './recipe-copy.ts';
 import { RecipePicker, SigningSecretField } from './recipe-picker.tsx';
 import { secretSchema } from './secret-schema.ts';
@@ -201,6 +203,7 @@ export function ConfigStep({
     [secretsFlat, authType],
   );
   const set = (patch: Partial<ConfigDraft>) => onChange({ ...draft, ...patch });
+  const demo = connector.type === 'demo';
 
   // One card for the step, like Review: the schema's groups take headings inside it.
   return (
@@ -238,14 +241,24 @@ export function ConfigStep({
             error={(showErrors ? secretError : undefined) ?? serverErrors.signing}
           />
         ) : null}
-        <SchemaForm
-          schema={flat}
-          value={draft.config}
-          onChange={(config) => set({ config })}
-          hiddenKeys={mainHidden}
-          showAllErrors={showErrors}
-          serverErrors={serverErrors.config}
-        />
+        {demo ? (
+          <DemoFields
+            schema={flat}
+            value={draft.config}
+            onChange={(config) => set({ config })}
+            showErrors={showErrors}
+            serverErrors={serverErrors.config}
+          />
+        ) : (
+          <SchemaForm
+            schema={flat}
+            value={draft.config}
+            onChange={(config) => set({ config })}
+            hiddenKeys={mainHidden}
+            showAllErrors={showErrors}
+            serverErrors={serverErrors.config}
+          />
+        )}
         {auth ? (
           <RadioGroup
             legend="Authentication"
@@ -286,19 +299,10 @@ export function ConfigStep({
             secrets={draft.secrets}
             test={test}
             onTest={onTest}
+            autoKey={demo ? String(draft.config.dataset ?? '') || undefined : undefined}
           />
           {test?.kind === 'result' && test.result.sample?.length ? (
-            <ul aria-label="Fields in the first record" className="flex flex-wrap gap-1.5">
-              {test.result.sample.map((f) => (
-                <li
-                  key={f.pointer}
-                  title={f.preview}
-                  className="rounded-md border border-border bg-surface-sunken px-2 py-0.5 font-mono text-xs text-fg"
-                >
-                  {f.pointer}
-                </li>
-              ))}
-            </ul>
+            <FieldChips sample={test.result.sample} />
           ) : null}
         </div>
       </CardBody>

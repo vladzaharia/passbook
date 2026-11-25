@@ -94,7 +94,6 @@ export function CreateConnectionWizard() {
     (template.data.orgId === null || template.data.orgId === templateOrg)
       ? template.data
       : undefined;
-
   const dirty = !created && (Boolean(type) || draft.name !== '' || rows.length > 0);
   const guard = useUnsavedChangesGuard(dirty);
 
@@ -262,6 +261,7 @@ export function CreateConnectionWizard() {
               orgId={orgId}
               value={life.defaultTemplateId}
               disabled={!templateOrg}
+              dataset={type === 'demo' ? draft.config.dataset : undefined}
               onChange={(defaultTemplateId) => setLife({ ...life, defaultTemplateId })}
             />
             {info && orgId ? (

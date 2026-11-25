@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { type RefObject, useMemo, useState } from 'react';
+import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import type { z } from 'zod';
 import { TestConfigResponseSchema } from '@/shared/contracts/connection-preview.ts';
 import type { ConnectorInfoSchema } from '@/shared/contracts/connections.ts';
@@ -21,6 +21,7 @@ export function WizardTest({
   secrets,
   test,
   onTest,
+  autoKey,
 }: {
   connector: Connector;
   orgId: string;
@@ -28,6 +29,8 @@ export function WizardTest({
   secrets: FormValues;
   test: TestOutcome | undefined;
   onTest: (outcome: TestOutcome) => void;
+  /** Runs Test whenever this changes after the first render (a free, local test). */
+  autoKey?: string | undefined;
 }) {
   const authType = String(config['auth.type'] ?? 'none');
   const secretsFlat = useMemo(
@@ -51,6 +54,19 @@ export function WizardTest({
         ),
       }),
   });
+  const start = () =>
+    run.mutateAsync().then(
+      (r) => onTest({ kind: 'result', result: r, at: Date.now() }),
+      (error: unknown) => onTest({ kind: 'error', error, at: Date.now() }),
+    );
+  const go = useRef(start);
+  go.current = start;
+  const seen = useRef(autoKey);
+  useEffect(() => {
+    if (autoKey === undefined || seen.current === autoKey) return;
+    seen.current = autoKey;
+    void go.current();
+  }, [autoKey]);
   return (
     <div className="flex flex-wrap items-center gap-3">
       <Button
@@ -58,12 +74,7 @@ export function WizardTest({
         iconStart={<ACTION_ICON.test aria-hidden />}
         busy="pulse"
         loading={run.isPending}
-        onClick={() =>
-          run.mutateAsync().then(
-            (r) => onTest({ kind: 'result', result: r, at: Date.now() }),
-            (error: unknown) => onTest({ kind: 'error', error, at: Date.now() }),
-          )
-        }
+        onClick={() => void start()}
       >
         Test
       </Button>
