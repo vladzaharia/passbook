@@ -121,7 +121,9 @@ describe('API key commit authority', () => {
                   h.clock.now(),
                   membershipId,
                 ]);
-          expect(result).toEqual({ changes: 1 });
+          // D1 counts the rows a trigger writes: revoking a membership also marks the user's Polaris ID subject.
+          if (invalidated === 'session') expect(result).toEqual({ changes: 1 });
+          else expect(result.changes).toBeGreaterThanOrEqual(1);
         },
         () =>
           action === 'create'
