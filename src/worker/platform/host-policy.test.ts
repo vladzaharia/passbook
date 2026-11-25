@@ -147,7 +147,7 @@ describe('host policy in the app', () => {
 
   it("serves the SPA's pages from static assets with their own headers", async () => {
     const fetched: string[] = [];
-    for (const path of ['/', '/login', '/admin/orgs', '/passes/0191']) {
+    for (const path of ['/login', '/admin/orgs', '/passes/0191']) {
       const res = await call(`${CANONICAL}${path}`, {}, appEnv(fetched));
       expect(res.status, path).toBe(200);
       expect(await res.text()).toBe(SHELL);
@@ -157,12 +157,22 @@ describe('host policy in the app', () => {
         assetHeaders['content-security-policy'],
       );
     }
-    expect(fetched).toEqual(['/', '/login', '/admin/orgs', '/passes/0191']);
+    expect(fetched).toEqual(['/login', '/admin/orgs', '/passes/0191']);
+  });
+
+  it('serves the SPA shell at / only to a visitor with a session cookie', async () => {
+    const res = await call(
+      `${CANONICAL}/`,
+      { headers: { cookie: '__Host-wallet_sid=abc' } },
+      appEnv([]),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe(SHELL);
   });
 
   it('keeps Worker paths and unknown files out of the SPA', async () => {
     const fetched: string[] = [];
-    for (const path of ['/api/v1/nope', '/auth/nothing', '/p/x/y', '/hooks/x', '/sitemap.xml']) {
+    for (const path of ['/api/v1/nope', '/auth/nothing', '/p/x/y', '/hooks/x', '/marketing/door']) {
       const res = await call(`${CANONICAL}${path}`, {}, appEnv(fetched));
       expect(res.status, path).toBe(404);
     }

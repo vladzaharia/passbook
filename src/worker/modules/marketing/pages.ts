@@ -3,7 +3,9 @@ import { getCookie } from 'hono/cookie';
 import { MARKETING_ASSETS, MARKETING_PATHS } from '../../../shared/marketing.ts';
 import { SESSION_COOKIE } from '../../platform/auth.ts';
 import type { AppBindings } from '../../platform/context.ts';
+import { notFoundHandler } from '../../platform/error-handler.ts';
 import { marketingContentSecurityPolicy, staticAsset } from '../../platform/security-headers.ts';
+import { asBrowserPage } from '../../ssr/error-response.ts';
 
 type Ctx = Context<AppBindings>;
 type Address = keyof typeof MARKETING_ASSETS;
@@ -46,12 +48,13 @@ function pageResponse(
   return out;
 }
 
-const notBuilt = (c: Ctx) => c.notFound();
+/** A page the build lacks is a 404, never the app shell the asset layer falls back to. */
+const notBuilt = async (c: Ctx) => asBrowserPage(c, notFoundHandler(c));
 
 /** /door, /blueprints, /build and /access: public, cached for five minutes. */
 export async function marketingPage(c: Ctx, address: Address): Promise<Response> {
   const page = await builtPage(c, address);
-  if (!page) return notBuilt(c);
+  if (!page) return await notBuilt(c);
   return pageResponse(c, page, { 'cache-control': 'public, max-age=300, no-transform' });
 }
 
@@ -68,7 +71,7 @@ export async function homePage(c: Ctx): Promise<Response> {
     return staticAsset(out);
   }
   const page = await builtPage(c, MARKETING_PATHS.home);
-  if (!page) return notBuilt(c);
+  if (!page) return await notBuilt(c);
   return pageResponse(c, page, headers);
 }
 
@@ -78,7 +81,7 @@ export async function homePage(c: Ctx): Promise<Response> {
  */
 export async function accessSentPage(c: Ctx): Promise<Response> {
   const page = await builtPage(c, MARKETING_PATHS.access);
-  if (!page) return notBuilt(c);
+  if (!page) return await notBuilt(c);
   const rewritten = new HTMLRewriter()
     .on('#acc-form', {
       element: (el) => {

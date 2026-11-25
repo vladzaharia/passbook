@@ -19,6 +19,19 @@ import { signInLevelOf } from './sign-in-guard.ts';
 const PUBLIC = [
   // The site's Request access form: same origin, honeypot and two rate limits; it only mails PassBook's inbox.
   'POST /access',
+  // The site's pages and sitemap: static, public, no data.
+  'GET /',
+  'GET /door',
+  'GET /door/',
+  'GET /blueprints',
+  'GET /blueprints/',
+  'GET /build',
+  'GET /build/',
+  'GET /access',
+  'GET /access/',
+  'GET /access/sent',
+  'GET /access/sent/',
+  'GET /sitemap.xml',
   'GET /api/v1/session',
   'DELETE /wallet/v1/devices/:deviceId/registrations/:passTypeId/:serial',
   'GET /api/v1/docs',
