@@ -244,17 +244,18 @@ export function groupMethods(env: GroupEnv): Methods & {
       for (const [key, change] of entries as [string, ClaimChange][]) {
         if (!claimKeyOk(key, h.listedOk)) refuse('IDP_REFUSED');
         if (change === null) {
+          // Like the binding: a key that is not there is not "removed".
+          if (key in next) result.removed.push(key);
           delete next[key];
-          result.removed.push(key);
         } else {
           if (sizeOf(change.value) > 2048 || depthOf(change.value) > 5) refuse('IDP_REFUSED');
+          if (JSON.stringify(next[key]) !== JSON.stringify(change)) result.set.push(key);
           next[key] = change;
-          result.set.push(key);
         }
       }
       if (Object.keys(next).length > 20 || sizeOf(next) > 8192) refuse('IDP_REFUSED');
       result.dryRun = env.dry(ctx.dryRun, 'claims_write');
-      if (!result.dryRun) {
+      if (!result.dryRun && (result.set.length > 0 || result.removed.length > 0)) {
         env.write();
         h.set(next);
       }

@@ -10,6 +10,7 @@ export const IDP_ACTIONS = {
   'idp.access_held': a('Paused in Polaris ID', Pause, 'warning'),
   'idp.sessions_revoked': a('Sessions ended', UserX, 'warning'),
   'idp.account_disabled': a('Polaris ID account disabled', KeyRound, 'warning'),
+  'idp.claims_read': a('Polaris ID claims read', Tag, 'neutral'),
   'idp.claims_set': a('Polaris ID claims changed', Tag, 'info'),
   'idp.account_enabled': a('Polaris ID account enabled', KeyRound, 'success'),
 };

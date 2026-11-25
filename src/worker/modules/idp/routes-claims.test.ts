@@ -17,7 +17,10 @@ beforeEach(async () => {
 });
 afterEach(() => h.restore());
 
-async function person(roles: ('admin' | 'user')[] = ['admin', 'user'], amr?: 'magic_link') {
+async function person(
+  roles: ('admin' | 'user')[] = ['admin', 'user'],
+  amr?: 'magic_link' | 'breakglass',
+) {
   const user = await makeUser(f());
   const session = await makeSession(f(), { userId: user.id, roles, ...(amr ? { amr } : {}) });
   return { user, headers: session.headers };
@@ -199,6 +202,135 @@ describe('group claims', () => {
       403,
       'IDP_REFUSED',
     );
+  });
+});
+
+describe('sign-in and CSRF', () => {
+  it('refuses break-glass sessions on every claims route', async () => {
+    const t = await target();
+    const { headers } = await person(['admin', 'user'], 'breakglass');
+    const group = '/api/v1/platform/idp/groups/console/claims';
+    for (const path of [url(t.user.id), group]) {
+      await expectProblem(await h.call(path, { headers }), 403, 'IDP_SIGN_IN_REQUIRED');
+      await expectProblem(
+        await patch(path, headers, { passbook_a: text('x') }),
+        403,
+        'IDP_SIGN_IN_REQUIRED',
+      );
+    }
+    expect(idp.writes).toBe(0);
+    expect(idp.log).not.toContain('claims');
+  });
+
+  it('refuses a write without the CSRF token', async () => {
+    const t = await target();
+    const { headers } = await person();
+    const res = await h.call(url(t.user.id), {
+      method: 'PATCH',
+      json: { set: { passbook_a: text('x') } },
+      headers: { cookie: headers.cookie ?? '', 'sec-fetch-site': 'same-origin' },
+    });
+    await expectProblem(res, 403, 'CSRF_TOKEN');
+    expect(idp.writes).toBe(0);
+  });
+});
+
+describe('more cases', () => {
+  it('refuses a user with several Polaris ID accounts', async () => {
+    const t = await target();
+    await run(
+      h.env.DB,
+      "INSERT INTO auth_identities (provider, subject, user_id, created_at) VALUES ('pocketid', 'sub-second', ?, 0)",
+      [t.user.id],
+    );
+    const { headers } = await person();
+    await expectProblem(await h.call(url(t.user.id), { headers }), 409, 'IDP_MULTIPLE_ACCOUNTS');
+    await expectProblem(
+      await patch(url(t.user.id), headers, { passbook_a: text('x') }),
+      409,
+      'IDP_MULTIPLE_ACCOUNTS',
+    );
+  });
+
+  it('audits a group write against the group, key names only', async () => {
+    const { headers, user } = await person();
+    await patch('/api/v1/platform/idp/groups/console/claims', headers, {
+      passbook_gx: text(SECRET),
+    });
+    const rows = await audit('console');
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      actor_id: user.id,
+      target_type: 'idp_group',
+      target_id: 'console',
+    });
+    expect(JSON.parse(rows[0]?.detail ?? '{}')).toEqual({ set: ['passbook_gx'], removed: [] });
+    expect(rows[0]?.detail).not.toContain(SECRET);
+  });
+
+  it('sends nothing for a group in dry run and writes no audit row', async () => {
+    idp = createFakeIdp({ mode: 'dry_run' });
+    installFakeIdp(h.env, idp);
+    const { headers } = await person();
+    const res = await patch('/api/v1/platform/idp/groups/developer/claims', headers, {
+      passbook_gx: text('x'),
+    });
+    expect(await res.json()).toMatchObject({ dryRun: true });
+    expect(idp.writes).toBe(0);
+    expect(await audit('developer')).toEqual([]);
+  });
+
+  it('treats a same-value PATCH as nothing changed: no write, no audit row', async () => {
+    const t = await target();
+    const { headers } = await person();
+    await patch(url(t.user.id), headers, { passbook_a: text('x') });
+    const writes = idp.writes;
+    const res = await patch(url(t.user.id), headers, { passbook_a: text('x'), passbook_b: null });
+    expect(await res.json()).toEqual({ set: [], removed: [], dryRun: false });
+    expect(idp.writes).toBe(writes);
+    expect(await audit(t.user.id)).toHaveLength(1);
+  });
+
+  it('reports a no-op in dry run as a dry run', async () => {
+    idp = createFakeIdp({ mode: 'dry_run' });
+    installFakeIdp(h.env, idp);
+    const t = await target();
+    idp.accounts.get(t.subject)!.claims = { passbook_a: text('x') } as never;
+    const { headers } = await person();
+    const res = await patch(url(t.user.id), headers, { passbook_a: text('x') });
+    expect(await res.json()).toEqual({ set: [], removed: [], dryRun: true });
+    expect(await audit(t.user.id)).toEqual([]);
+  });
+
+  it('keeps an audit row when the write reached Polaris ID and then failed', async () => {
+    const t = await target();
+    const { headers } = await person();
+    idp.failNext('IDP_DRIFT', 'setClaims');
+    const res = await patch(url(t.user.id), headers, { passbook_a: text(SECRET) });
+    expect(res.status).toBe(503);
+    const [row] = await audit(t.user.id);
+    expect(JSON.parse(row?.detail ?? '{}')).toEqual({
+      attempted: ['passbook_a'],
+      outcome: 'IDP_DRIFT',
+    });
+    idp.failNext('IDP_REFUSED', 'setClaims');
+    await patch(url(t.user.id), headers, { passbook_a: text('y') });
+    expect(await audit(t.user.id)).toHaveLength(1);
+  });
+
+  it('records who read whose claims, with a key count and no values', async () => {
+    const t = await target();
+    const { headers, user } = await person();
+    await patch(url(t.user.id), headers, { passbook_a: text(SECRET), passbook_b: text('2') });
+    await h.call(url(t.user.id), { headers });
+    const rows = await all<{ actor_id: string; target_id: string; detail: string }>(
+      h.env.DB,
+      "SELECT actor_id, target_id, detail FROM audit_log WHERE action = 'idp.claims_read' AND target_id = ?",
+      [t.user.id],
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ actor_id: user.id });
+    expect(JSON.parse(rows[0]?.detail ?? '{}')).toEqual({ keys: 2 });
   });
 });
 

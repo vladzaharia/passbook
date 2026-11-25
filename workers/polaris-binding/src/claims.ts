@@ -161,8 +161,9 @@ export function merge(
     const change = changes[c.key];
     if (change === null || change === undefined) removed.push(c.key);
     else {
-      next.push({ key: c.key, value: encode(change) });
-      set.push(c.key);
+      const value = encode(change);
+      next.push({ key: c.key, value });
+      if (value !== c.value) set.push(c.key);
     }
   }
   for (const [key, change] of Object.entries(changes))

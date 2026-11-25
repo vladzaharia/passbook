@@ -15,7 +15,7 @@ import { type KeyCaller, keyCallerOf } from './browser-signals.ts';
 import type { AppBindings } from './context.ts';
 import { csrfGuard } from './csrf.ts';
 import { noteKeyRefused, reportDenied } from './denied.ts';
-import { ForbiddenError, UnauthenticatedError } from './errors.ts';
+import { ForbiddenError, IdpSignInRequiredError, UnauthenticatedError } from './errors.ts';
 import { enforceFeatures, trackFeatures } from './feature-guard.ts';
 import { enforceRateLimit } from './rate-limit.ts';
 import {
@@ -165,6 +165,7 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const developer = 'human' in auth && auth.developer === true;
   const sessionKind = sessionKindOf(auth);
   const stepUp = auth.stepUp;
+  const oidcOnly = 'platform' in auth && auth.signIn === 'oidc';
   const level: SignInLevel = 'human' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const guard = createMiddleware<AppBindings>(async (c, next) => {
     const token = rule ? bearer(c) : null;
@@ -203,6 +204,10 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
       return next();
     }
     const session = await sessionOrThrow(c, level);
+    if (oidcOnly && session.amr !== 'oidc') {
+      reportDenied(c, 'IDP_SIGN_IN_REQUIRED', session);
+      throw new IdpSignInRequiredError('/auth/oidc/start?next=/admin');
+    }
     if (developer) assertDeveloper(c, session);
     if (sessionKind === 'tenant') assertConsoleGroup(c, session);
     if (sessionKind === 'admin') requireAdminRole(c, session);

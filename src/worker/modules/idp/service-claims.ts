@@ -8,6 +8,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { recordAudit } from '../audit/service.ts';
 import { requireUser } from '../users/service.ts';
 import { idpClient } from './client.ts';
+import { idpCodeOf } from './errors.ts';
 import { subjectsOfUser } from './repo-sources.ts';
 import {
   type ClaimChange,
@@ -40,29 +41,38 @@ const writeCtx = (ctx: ServiceContext, actorId: string): WriteCtx => ({
   actor: { kind: 'user', id: actorId },
 });
 
+type AuditTarget = { type: string; id: string };
+
 /** Values stay out of the audit row and the log: key names only. */
 async function writeClaims(
   ctx: ServiceContext,
   actorId: string,
   owner: ClaimOwner,
-  target: { type: string; id: string },
+  target: AuditTarget,
   update: UpdateClaims,
 ): Promise<ClaimsResult> {
   const changes: Record<string, ClaimChange> = update.set;
-  const result = await idpClient(ctx.env, ctx.log).setClaims(
-    owner,
-    changes,
-    writeCtx(ctx, actorId),
-  );
-  if (!result.dryRun) {
-    await recordAudit(ctx, {
+  const audit = (detail: Record<string, unknown>) =>
+    recordAudit(ctx, {
       actorType: 'user',
       actorId,
       action: 'idp.claims_set',
       targetType: target.type,
       targetId: target.id,
-      detail: { set: result.set, removed: result.removed },
+      detail,
     });
+  let result: ClaimsResult;
+  try {
+    result = await idpClient(ctx.env, ctx.log).setClaims(owner, changes, writeCtx(ctx, actorId));
+  } catch (error) {
+    // The write may have reached Polaris ID before it failed: keep the attempt.
+    const code = idpCodeOf(error);
+    if (code === 'IDP_DRIFT' || code === 'IDP_UPSTREAM')
+      await audit({ attempted: Object.keys(changes), outcome: code });
+    throw error;
+  }
+  if (!result.dryRun && (result.set.length > 0 || result.removed.length > 0)) {
+    await audit({ set: result.set, removed: result.removed });
     ctx.log.info('idp.claims_set', {
       target: target.type,
       set: result.set.length,
@@ -72,8 +82,31 @@ async function writeClaims(
   return result;
 }
 
-export async function userClaims(ctx: ServiceContext, userId: string): Promise<ClaimsView> {
-  return idpClient(ctx.env, ctx.log).claims(await ownerOfUser(ctx, userId));
+/** A read is attributable too: who looked at whose claims, and how many keys, never a value. */
+async function readClaims(
+  ctx: ServiceContext,
+  actorId: string,
+  owner: ClaimOwner,
+  target: AuditTarget,
+): Promise<ClaimsView> {
+  const view = await idpClient(ctx.env, ctx.log).claims(owner);
+  await recordAudit(ctx, {
+    actorType: 'user',
+    actorId,
+    action: 'idp.claims_read',
+    targetType: target.type,
+    targetId: target.id,
+    detail: { keys: Object.keys(view.claims).length },
+  });
+  return view;
+}
+
+export async function userClaims(
+  ctx: ServiceContext,
+  actorId: string,
+  userId: string,
+): Promise<ClaimsView> {
+  return readClaims(ctx, actorId, await ownerOfUser(ctx, userId), { type: 'user', id: userId });
 }
 
 export async function updateUserClaims(
@@ -86,8 +119,12 @@ export async function updateUserClaims(
   return writeClaims(ctx, actorId, owner, { type: 'user', id: userId }, update);
 }
 
-export const groupClaims = (ctx: ServiceContext, key: string): Promise<ClaimsView> =>
-  idpClient(ctx.env, ctx.log).claims({ group: targetOf(key) });
+export const groupClaims = (
+  ctx: ServiceContext,
+  actorId: string,
+  key: string,
+): Promise<ClaimsView> =>
+  readClaims(ctx, actorId, { group: targetOf(key) }, { type: 'idp_group', id: key });
 
 export const updateGroupClaims = (
   ctx: ServiceContext,

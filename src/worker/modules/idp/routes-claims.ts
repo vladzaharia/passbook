@@ -12,8 +12,15 @@ import { STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { groupClaims, updateGroupClaims, updateUserClaims, userClaims } from './service-claims.ts';
 
 const TAG = 'polaris claims';
-/** Claims reach every app that signs in with Polaris ID: platform admins only, with a recent sign-in. */
-const AUTH = { platform: 'platform:claims', stepUp: { maxAgeSec: STEP_UP_SECONDS } } as const;
+/** Claims reach every app that signs in with Polaris ID: platform admins only, signed in with Polaris ID recently (no break-glass). */
+const AUTH = {
+  platform: 'platform:claims',
+  signIn: 'oidc',
+  stepUp: { maxAgeSec: STEP_UP_SECONDS },
+} as const;
+
+/** The binding can pause writes and Polaris ID can be down; neither shows in the call graph. */
+const CODES = ['IDP_FROZEN', 'IDP_UNAVAILABLE'] as const;
 
 const noStore = (router: ReturnType<typeof createRouter>) =>
   router.use('*', async (c, next) => {
@@ -35,8 +42,10 @@ register(
     params: IdParamSchema,
     response: ClaimsViewSchema,
     auth: AUTH,
+    codes: CODES,
   },
-  async (c) => c.json(await userClaims(serviceContext(c), c.req.valid('param').id)),
+  async (c) =>
+    c.json(await userClaims(serviceContext(c), currentUserId(c), c.req.valid('param').id)),
 );
 
 register(
@@ -50,6 +59,7 @@ register(
     body: UpdateClaimsSchema,
     response: ClaimsResultSchema,
     auth: AUTH,
+    codes: CODES,
   },
   async (c) =>
     c.json(
@@ -76,8 +86,10 @@ register(
     params: GroupKeyParamSchema,
     response: ClaimsViewSchema,
     auth: AUTH,
+    codes: CODES,
   },
-  async (c) => c.json(await groupClaims(serviceContext(c), c.req.valid('param').key)),
+  async (c) =>
+    c.json(await groupClaims(serviceContext(c), currentUserId(c), c.req.valid('param').key)),
 );
 
 register(
@@ -91,6 +103,7 @@ register(
     body: UpdateClaimsSchema,
     response: ClaimsResultSchema,
     auth: AUTH,
+    codes: CODES,
   },
   async (c) =>
     c.json(
