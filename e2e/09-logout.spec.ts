@@ -52,6 +52,9 @@ test('portal user signs out', async ({ page }) => {
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page).toHaveURL(/\/login/);
   await expectSignedOut(page);
+  // Signed out, `/` is the public home page; its Sign in link leads to /login.
   await page.goto('/');
+  await expect(page.getByRole('heading', { level: 1, name: /Memberships/ })).toBeVisible();
+  await page.getByRole('banner').getByRole('link', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/\/login/);
 });

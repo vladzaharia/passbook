@@ -58,6 +58,7 @@ const Version = z.number().int().nonnegative();
 const Str = z.string().max(300);
 const Wallet = z.literal('apple');
 const RunId = Str.optional();
+const Opt = Str.nullable().optional();
 const Flag = z.boolean().optional();
 
 /**
@@ -94,6 +95,9 @@ export const WEBHOOK_DATA_SCHEMAS = {
     action: Str.nullable().optional(),
     outcome: z.enum(['ok', 'heads_up']),
     direction: z.enum(['in', 'out']).optional(),
+    zoneId: Opt,
+    /** On direction `out`: `scan` for an exit tap, else how the stay ended. */
+    exit: z.enum(['scan', 'desk', 'stay', 'clear', 'zone', 'forced']).optional(),
     method: Str.nullable().optional(),
     scannerId: Str.nullable().optional(),
     staffId: Str.nullable().optional(),
@@ -110,11 +114,7 @@ export const WEBHOOK_DATA_SCHEMAS = {
     staffId: Str.nullable().optional(),
     eventId: Str.nullable().optional(),
   }),
-  'pass.scan_undone': z.object({
-    scanId: Str.nullable().optional(),
-    scannerId: Str.nullable().optional(),
-    staffId: Str.nullable().optional(),
-  }),
+  'pass.scan_undone': z.object({ scanId: Opt, scannerId: Opt, staffId: Opt }),
   'pass.channels_changed': z.object({
     channel: ChannelSchema,
     from: z.enum(['on', 'off']),

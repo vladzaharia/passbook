@@ -18,7 +18,7 @@ describe('submitAccessRequest', () => {
       await makeEnv({ ACCESS_REQUEST_EMAIL: 'Inbox@PassBook.example' }),
     );
     const mailer = createFakeMailer();
-    await submitAccessRequest(ctx, input, mailer);
+    await submitAccessRequest(ctx, input, { mailer });
     expect(mailer.sent).toHaveLength(1);
     const mail = mailer.sent[0];
     expect(mail?.to).toBe('inbox@passbook.example');
@@ -32,7 +32,7 @@ describe('submitAccessRequest', () => {
     const ctx = createDetachedContext(await makeEnv());
     const mailer = createFakeMailer();
     await expect(
-      submitAccessRequest(ctx, { ...input, website: 'x' }, mailer),
+      submitAccessRequest(ctx, { ...input, website: 'x' }, { mailer }),
     ).resolves.toBeUndefined();
     expect(mailer.sent).toHaveLength(0);
   });
@@ -41,7 +41,7 @@ describe('submitAccessRequest', () => {
     const ctx = createDetachedContext(await makeEnv());
     const mailer = createFakeMailer();
     mailer.fail = new Error('down');
-    await expect(submitAccessRequest(ctx, input, mailer)).rejects.toMatchObject({
+    await expect(submitAccessRequest(ctx, input, { mailer })).rejects.toMatchObject({
       status: 503,
       code: 'ACCESS_MAIL_UNAVAILABLE',
     });

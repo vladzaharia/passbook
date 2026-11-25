@@ -31,7 +31,7 @@ describe('privacy summary', () => {
       '| Scans: Time, place, result and staff of each scan, and staff notes on a pass | 396 days | Deleted | platform |',
     );
     expect(text).toContain(
-      '| Visitor passes: Visitor passes, after the visit ends | 90 days | Pass deleted | platform |',
+      '| Visitor passes: Passes on a guest plan, after the visit ends | 90 days | Pass deleted | platform |',
     );
     expect(text).toContain('- Audit log: 365 days or more');
     expect(text).toContain('Legal holds in force: 0');

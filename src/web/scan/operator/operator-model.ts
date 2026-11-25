@@ -10,15 +10,7 @@ export type RecordRef =
   | {
       kind: 'pass';
       passId: string;
-      from:
-        | 'activity'
-        | 'problems'
-        | 'inside'
-        | 'visitors'
-        | 'roll-call'
-        | 'search'
-        | 'preview'
-        | 'open';
+      from: 'activity' | 'problems' | 'inside' | 'roll-call' | 'search' | 'preview' | 'open';
     }
   | { kind: 'scan'; scanId: string };
 

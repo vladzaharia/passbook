@@ -1581,6 +1581,7 @@ export type HoldersOffboardResponse = {
   holders: number;
   passes: number;
   tags: number;
+  more: boolean;
 };
 
 export type HoldersReassignParams = {
@@ -5274,6 +5275,8 @@ export type PassScannedEvent = {
     action?: string | null;
     outcome: "ok" | "heads_up";
     direction?: "in" | "out";
+    zoneId?: string | null;
+    exit?: "scan" | "desk" | "stay" | "clear" | "zone" | "forced";
     method?: string | null;
     scannerId?: string | null;
     staffId?: string | null;
@@ -11852,95 +11855,6 @@ export type TerminalScansUndoParams = {
     staffId?: string;
     pin: string;
   };
-};
-
-export type VisitorsCancelResponse = {
-  id: string;
-  passId: string;
-  name: string;
-  hostName: string;
-  windowFrom: number;
-  windowUntil: number;
-  note: string | null;
-  status: "expected" | "in" | "out" | "no_show" | "cancelled";
-  statusAt: number | null;
-  autoOut: boolean;
-  hasEmail: boolean;
-};
-
-export type VisitorsCheckOutResponse = {
-  id: string;
-  passId: string;
-  name: string;
-  hostName: string;
-  windowFrom: number;
-  windowUntil: number;
-  note: string | null;
-  status: "expected" | "in" | "out" | "no_show" | "cancelled";
-  statusAt: number | null;
-  autoOut: boolean;
-  hasEmail: boolean;
-};
-
-export type VisitorsCreateParams = {
-  orgId: string;
-  name: string;
-  email?: string;
-  hostUserId?: string;
-  hostName?: string;
-  hostEmail?: string;
-  windowFrom: number;
-  windowUntil: number;
-  note?: string;
-  templateId?: string;
-};
-
-export type VisitorsCreateResponse = {
-  id: string;
-  passId: string;
-  name: string;
-  hostName: string;
-  windowFrom: number;
-  windowUntil: number;
-  note: string | null;
-  status: "expected" | "in" | "out" | "no_show" | "cancelled";
-  statusAt: number | null;
-  autoOut: boolean;
-  hasEmail: boolean;
-};
-
-export type VisitorsListHostsResponse = {
-  items: Array<{
-    id: string;
-    name: string;
-    email: string | null;
-  }>;
-  nextCursor: string | null;
-};
-
-export type VisitorsListResponse = {
-  items: Array<{
-    id: string;
-    passId: string;
-    name: string;
-    hostName: string;
-    windowFrom: number;
-    windowUntil: number;
-    note: string | null;
-    status: "expected" | "in" | "out" | "no_show" | "cancelled";
-    statusAt: number | null;
-    autoOut: boolean;
-    hasEmail: boolean;
-  }>;
-  nextCursor: string | null;
-};
-
-export type VisitorsSendHostEmailParams = {
-  timeZone?: string;
-};
-
-export type VisitorsSendHostEmailResponse = {
-  ok: true;
 };
 
 export type WalletAccountsGoogleManagedCreateParams = {

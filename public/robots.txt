@@ -1,11 +1,16 @@
-# PassBook is private. Crawlers may read the sign-in page, the developer portal and the images a
+# PassBook is private. Crawlers may read the home page and the site's four pages, the sign-in page, the developer portal and the images a
 # search result or a link preview shows; pass links, sign-in links, the API and the signed-in pages
 # stay out. The portal answers noindex until it is linked (DEVELOPERS_INDEXABLE in
-# src/shared/developers.ts); crawling is open so the page can say so. Its sitemap line joins then.
+# src/shared/developers.ts); crawling is open so the page can say so. The sitemap lists the site's five pages; the portal joins it then.
 User-agent: *
 Allow: /$
 Allow: /login
 Allow: /developers
+Allow: /door$
+Allow: /blueprints$
+Allow: /build$
+Allow: /access$
+Allow: /sitemap.xml$
 Allow: /favicon
 Allow: /apple-touch-icon.png
 Allow: /icons/
@@ -18,9 +23,16 @@ User-agent: Google-Valuables
 Allow: /$
 Allow: /login
 Allow: /developers
+Allow: /door$
+Allow: /blueprints$
+Allow: /build$
+Allow: /access$
+Allow: /sitemap.xml$
 Allow: /favicon
 Allow: /apple-touch-icon.png
 Allow: /icons/
 Allow: /og-image.png
 Allow: /wallet/v1/google/
 Disallow: /
+
+Sitemap: https://passbook.mobile/sitemap.xml

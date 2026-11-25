@@ -120,3 +120,19 @@ export async function pendingPushId(db: D1Database, passId: string): Promise<str
   );
   return row?.id ?? null;
 }
+
+/** Retention: why a pass must not be voided and deleted now (a hold, or a pending credential transfer). */
+export async function retentionBlock(
+  db: D1Database,
+  orgId: string,
+  passId: string,
+): Promise<'held' | 'transfer' | null> {
+  const row = await first<{ held: number; moving: number }>(
+    db,
+    `SELECT EXISTS (SELECT 1 FROM retention_holds h WHERE h.released_at IS NULL AND h.org_id = ?
+         AND (h.pass_id IS NULL OR h.pass_id = ?)) AS held,
+       EXISTS (SELECT 1 FROM pass_credential_transfers t WHERE t.pass_id = ? AND t.state = 'pending') AS moving`,
+    [orgId, passId, passId],
+  );
+  return row?.held ? 'held' : row?.moving ? 'transfer' : null;
+}

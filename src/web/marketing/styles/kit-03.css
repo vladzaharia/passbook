@@ -1,0 +1,292 @@
+.ticket-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 32px;
+  padding: 28px clamp(20px, 3vw, 40px);
+}
+.ticket-main .lede {
+  font-weight: 500;
+  color: inherit;
+}
+.ticket-stub {
+  height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding-inline: clamp(20px, 3vw, 40px);
+  font: 500 12px / 1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ticket-stub .kinds-line {
+  letter-spacing: 0.12em;
+}
+.ticket-stub .code {
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.barcode {
+  margin-left: auto;
+  width: 150px;
+  height: 24px;
+  flex: none;
+}
+@media (max-width: 760px) {
+  .hero-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hero .h-display {
+    margin-bottom: 0;
+  }
+  .hero-scene {
+    width: 100%;
+    margin-top: 18px;
+  }
+  .hero-scene .wide {
+    display: none;
+  }
+  .hero-scene .narrow {
+    display: block;
+  }
+  .ticket-main {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 22px 20px;
+  }
+  .ticket-stub .opt,
+  .ticket-stub .barcode {
+    display: none;
+  }
+  .ticket-stub .kinds-line {
+    letter-spacing: 0.04em;
+  }
+}
+@media (max-width: 560px) {
+  .btn-row.stack {
+    flex-direction: column;
+  }
+  .btn-row.stack .btn {
+    width: 100%;
+  }
+}
+
+/* ---------- grids of panels ---------- */
+.stops {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.stop {
+  --notch-y: 176px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-tile);
+  padding-top: 8px;
+}
+.stop .art-box {
+  height: 168px;
+}
+.stop-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 20px 20px;
+}
+.stop-body p {
+  font-size: 15px;
+  line-height: 1.35;
+}
+.stop-body .link {
+  align-self: flex-start;
+  margin-top: 6px;
+  font-size: 14px;
+}
+.num {
+  font: 500 12px / 1 var(--mono);
+  letter-spacing: 0.1em;
+  opacity: 0.75;
+}
+
+.kinds {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+.kind {
+  --notch-y: 132px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-tile);
+}
+.kind .art-box {
+  height: 132px;
+  padding-top: 12px;
+}
+.kind-label {
+  padding: 14px 18px 18px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.more {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 18px 20px;
+  border: 2px dashed var(--border-strong);
+  border-radius: var(--r-tile);
+  color: var(--muted);
+  font-size: 13.5px;
+}
+.more b {
+  color: var(--strong);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.jobs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.job {
+  --notch-y: 160px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-tile);
+}
+.job .art-box {
+  height: 160px;
+}
+.job-label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 20px 18px;
+}
+.job-label b {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.job-label small {
+  font: 500 11px / 1.2 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+@media (max-width: 1000px) {
+  .stops {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kinds {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .kinds .more {
+    grid-column: span 2;
+  }
+  .jobs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .stops {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .kind-label,
+  .job-label b {
+    font-size: 17px;
+  }
+  .kind-label,
+  .job-label {
+    padding-inline: 14px;
+  }
+}
+
+/* ---------- head with a Buddy ---------- */
+.head-buddy {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+}
+.head-buddy > [data-buddy] {
+  width: clamp(96px, 11vw, 140px);
+  flex: none;
+}
+
+/* ---------- live demo (edit, phone, door) ---------- */
+.demo {
+  --notch-y: 84px;
+  border-radius: var(--r-panel);
+}
+.demo-head {
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding-inline: clamp(20px, 3vw, 40px);
+}
+.demo-head .h-card {
+  font-size: clamp(20px, 2.4vw, 28px);
+}
+.demo-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 56px 216px 56px minmax(0, 1fr);
+  align-items: center;
+  padding: 84px clamp(20px, 3vw, 40px) 30px;
+}
+.demo-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.cap {
+  font: 500 11px / 1.2 var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  text-align: center;
+}
+.editor {
+  background: #0d111b;
+  color: #dbe4ff;
+  border-radius: var(--r-card);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 18px 30px -18px rgb(0 0 0 / 0.6);
+}
+.editor-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font: 500 11px / 1.2 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b5bed3;
+}
+.editor-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #2dd4bf;
+  white-space: nowrap;
+}

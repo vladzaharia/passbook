@@ -166,7 +166,7 @@ jobs:
             done
             if [ "$got" = "$2" ]; then echo "ok   $1 $got"; else echo "FAIL $1 expected $2 got $got"; fail=1; fi
           }
-          for p in / /login /admin /developers /scan; do check "$BASE$p" 200; done
+          for p in / /door /blueprints /build /access /login /admin /developers /scan; do check "$BASE$p" 200; done
           check "$BASE/api/v1/orgs" 401
           check https://developers.passbook.mobile/ 308
           check https://wallet.plrs.im/ 308

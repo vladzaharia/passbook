@@ -1,6 +1,7 @@
 import type { OpenAPIHono } from '@hono/zod-openapi';
 import { API_VERSIONS } from './api-version.ts';
 import type { AppBindings } from './context.ts';
+import { sunsetLabel } from './deprecation.ts';
 import { withErrorCodes } from './openapi-codes.ts';
 import { withDecisions, withIdempotencyKey } from './openapi-decisions.ts';
 import { withNamedBodies, withReference } from './openapi-reference.ts';
@@ -12,6 +13,10 @@ type Param = { name: string; in: string; deprecated?: boolean; 'x-platform-only'
 type Op = {
   operationId?: string;
   tags?: string[];
+  description?: string;
+  deprecated?: boolean;
+  'x-sunset'?: string;
+  'x-deprecated'?: string;
   'x-operation-key'?: string;
   parameters?: Param[];
   requestBody?: { content?: Record<string, { schema?: { properties?: Record<string, object> } }> };
@@ -85,6 +90,18 @@ export function withParamMarks(doc: Doc): Doc {
   return doc;
 }
 
+/** Starts the description of a deprecated operation with "Deprecated: ends <date>." (after the reference text is merged). */
+export function withDeprecationNotes(doc: Doc): Doc {
+  for (const item of Object.values(doc.paths ?? {})) {
+    for (const op of Object.values(item)) {
+      if (!op?.deprecated || !op['x-sunset']) continue;
+      const note = `Deprecated: ends ${sunsetLabel(op['x-sunset'])}.`;
+      op.description = op.description ? `${note} ${op.description}` : note;
+    }
+  }
+  return doc;
+}
+
 /** The full document (every operation, with ids and security). The route filters it per caller. */
 export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
   registerWebhookEvents(app);
@@ -96,7 +113,9 @@ export function buildOpenApiDocument(app: OpenAPIHono<AppBindings>): Doc {
   const secured = withSecurity(
     app,
     withNamedBodies(
-      withReference(withSdkNames(withParamMarks(withOperationIds(withKebabTags(doc))))),
+      withDeprecationNotes(
+        withReference(withSdkNames(withParamMarks(withOperationIds(withKebabTags(doc))))) as never,
+      ) as never,
     ) as never,
   );
   return withErrorCodes(

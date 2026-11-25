@@ -4,7 +4,7 @@
  * sheet is drawn from the same table.
  */
 
-export type OperatorView = 'activity' | 'problems' | 'inside' | 'visitors';
+export type OperatorView = 'activity' | 'problems' | 'inside';
 
 /** Where focus is: the command field, another text control (a note), or anywhere else. */
 export type Zone = 'search' | 'text' | 'record';

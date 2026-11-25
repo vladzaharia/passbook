@@ -8,7 +8,6 @@ import { InsideView } from '../lists/inside-view.tsx';
 import { ProblemsView } from '../lists/problems-view.tsx';
 import { RollCallView } from '../lists/roll-call-view.tsx';
 import { SearchResults } from '../lists/search-results.tsx';
-import { VisitorsView } from '../lists/visitors-view.tsx';
 import { searching } from '../operator-model.ts';
 import type { useOperator } from '../use-operator.ts';
 
@@ -19,20 +18,16 @@ export function ListBody({
   controls,
   wide,
   tracks,
-  desk,
   online,
   timeZone,
-  checkIn,
 }: {
   op: ReturnType<typeof useOperator>;
   floor: Floor;
   controls: RollControls;
   wide: boolean;
   tracks: boolean;
-  desk: boolean;
   online: boolean;
   timeZone: string | undefined;
-  checkIn: (v: { passId: string }) => void;
 }) {
   const { ui } = op;
   const view = ui.view;
@@ -89,18 +84,6 @@ export function ListBody({
           </Button>
         </footer>
       }
-    />
-  ) : view === 'visitors' && desk ? (
-    <VisitorsView
-      items={floor.visitors.items}
-      failed={floor.visitors.failed}
-      busy={floor.visitors.busy}
-      online={online}
-      selectedPassId={selectedPassId}
-      timeZone={timeZone}
-      onOpen={(v) => op.open(v.passId, 'visitors')}
-      onCheckIn={checkIn}
-      onCheckOut={(v) => void floor.visitors.checkOut(v)}
     />
   ) : view === 'problems' ? (
     <ProblemsView
