@@ -2,6 +2,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import {
+  DeveloperInvitationSchema,
+  DeveloperListSchema,
+} from '@/shared/contracts/developer-invitations.ts';
+import {
   OrgInvitationListSchema,
   OrgInvitationSchema,
   OrgMemberListSchema,
@@ -45,6 +49,12 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
     queryKey: [...key, 'invitations'],
     queryFn: ({ signal }) => api.get(`${path}/invitations`, OrgInvitationListSchema, { signal }),
   });
+  // Developer access is offered when the plan has seats and Polaris ID can enrol (the API says so).
+  const developers = useQuery({
+    queryKey: [...key, 'developers'],
+    queryFn: ({ signal }) => api.get(`${path}/developers`, DeveloperListSchema, { signal }),
+    enabled: !org.personal,
+  });
   const refresh = () => client.invalidateQueries({ queryKey: key });
   const isCurrentPrincipal = (principalId: string) => {
     const session = client.getQueryData<SessionResponse>(sessionQuery.queryKey);
@@ -55,12 +65,17 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
       body,
       principalId,
     }: {
-      body: { email: string; roles: OrgRole[] };
+      body: { email: string; roles: OrgRole[]; developer?: boolean };
       principalId: string;
     }) => {
       if (!isCurrentPrincipal(principalId)) return undefined;
       try {
-        await api.post(`${path}/invitations`, OrgInvitationSchema, body);
+        if (body.developer)
+          await api.post(`${path}/developer-invitations`, DeveloperInvitationSchema, {
+            email: body.email,
+            ...(body.roles.length ? { roles: body.roles } : {}),
+          });
+        else await api.post(`${path}/invitations`, OrgInvitationSchema, body);
         if (isCurrentPrincipal(principalId)) return true;
       } catch (error) {
         if (isCurrentPrincipal(principalId)) throw error;
@@ -206,7 +221,13 @@ export function AccessCard({ org }: { org: { id: string; name: string; personal?
               })}
             </ListRows>
           )}
-          {org.personal ? null : <InviteForm pending={invite.isPending} onInvite={sendInvite} />}
+          {org.personal ? null : (
+            <InviteForm
+              pending={invite.isPending}
+              onInvite={sendInvite}
+              developers={developers.data?.available === true}
+            />
+          )}
         </section>
         <ConfirmDialog
           open={revoking !== null}

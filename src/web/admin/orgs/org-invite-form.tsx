@@ -7,32 +7,50 @@ import { ROLE_LABELS, ROLES } from './org-roles.ts';
 const ERROR_ID = 'invite-roles-error';
 
 /** Sends the draft; true when it went, so the form clears. A thrown error stays under the field. */
-export type SendInvite = (body: { email: string; roles: OrgRole[] }) => Promise<boolean>;
+export type SendInvite = (body: {
+  email: string;
+  roles: OrgRole[];
+  developer?: boolean;
+}) => Promise<boolean>;
 
-export function InviteForm({ pending, onInvite }: { pending: boolean; onInvite: SendInvite }) {
+export function InviteForm({
+  pending,
+  onInvite,
+  developers = false,
+}: {
+  pending: boolean;
+  onInvite: SendInvite;
+  /** Polaris ID can enrol developers and the plan has seats: offer developer access. */
+  developers?: boolean;
+}) {
   const [email, setEmail] = useState('');
   const [roles, setRoles] = useState<OrgRole[]>([]);
+  const [developer, setDeveloper] = useState(false);
   const [message, setMessage] = useState('');
   const [server, setServer] = useState('');
-  const parsed = InviteOrgMemberSchema.safeParse({ email, roles });
-  const emailOk = InviteOrgMemberSchema.shape.email.safeParse(email).success;
+  const address = InviteOrgMemberSchema.shape.email.safeParse(email);
+  // Developer access alone is an invitation: roles are only needed to join the org as well.
+  const rolesOk =
+    roles.length > 0 ? InviteOrgMemberSchema.safeParse({ email, roles }).success : developer;
   const check = useFormErrors({
-    email: emailOk ? undefined : 'Enter a valid email address.',
-    roles: roles.length ? undefined : 'Choose at least one role.',
+    email: address.success ? undefined : 'Enter a valid email address.',
+    roles: rolesOk ? undefined : 'Choose at least one role.',
   });
 
   async function save() {
     setMessage('');
     setServer('');
-    if (!parsed.success) return;
+    if (!address.success || !rolesOk) return;
     try {
-      if (!(await onInvite(parsed.data))) return;
+      if (!(await onInvite({ email: address.data, roles, ...(developer ? { developer } : {}) })))
+        return;
     } catch (error) {
       setServer(errorMessage(error));
       return 'refused' as const;
     }
     setEmail('');
     setRoles([]);
+    setDeveloper(false);
     check.reset();
     setMessage('Invitation sent.');
     return;
@@ -82,6 +100,13 @@ export function InviteForm({ pending, onInvite }: { pending: boolean; onInvite: 
           </p>
         ) : null}
       </fieldset>
+      {developers ? (
+        <CheckboxField
+          label="Developer access"
+          checked={developer}
+          onCheckedChange={(checked) => setDeveloper(checked === true)}
+        />
+      ) : null}
       {server ? (
         <p role="alert" className="text-sm text-danger">
           {server}

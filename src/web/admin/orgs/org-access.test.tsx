@@ -367,6 +367,64 @@ describe('organization people and service access', () => {
     expect(screen.queryByRole('button', { name: /copy (invitation|link)/i })).toBeNull();
   });
 
+  it('offers Developer access only when the API says developers are available, and invites through it', async () => {
+    const posts: unknown[] = [];
+    const developers = { items: [], nextCursor: null, limit: 5 };
+    const base = {
+      '/api/v1/orgs/o1/developer-invitations': (_url: URL, init?: RequestInit) => {
+        posts.push(JSON.parse(String(init?.body)));
+        return json(
+          {
+            id: 'd1',
+            orgId: 'o1',
+            email: 'dev@example.test',
+            roles: [],
+            state: 'pending',
+            createdAt: 1_700_000_000_000,
+            expiresAt: 4_000_000_000_000,
+            revokedAt: null,
+          },
+          201,
+        );
+      },
+    };
+    const off = await renderApp('/admin/o/o1/members', {
+      session: 'admin',
+      handlers: handlers({
+        ...base,
+        '/api/v1/orgs/o1/developers': () => json({ ...developers, available: false }),
+      }),
+    });
+    await screen.findByLabelText('Email');
+    expect(screen.queryByRole('checkbox', { name: 'Developer access' })).toBeNull();
+    off.unmount();
+
+    await renderApp('/admin/o/o1/members', {
+      session: 'admin',
+      handlers: handlers({
+        ...base,
+        '/api/v1/orgs/o1/developers': () => json({ ...developers, available: true }),
+      }),
+    });
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText('Email'), 'dev@example.test');
+    await user.click(await screen.findByRole('checkbox', { name: 'Developer access' }));
+    await user.click(screen.getByRole('button', { name: 'Invite member' }));
+    await waitFor(() => expect(posts).toEqual([{ email: 'dev@example.test' }]));
+    expect(await screen.findByText('Invitation sent.')).toBeInTheDocument();
+    // With roles ticked as well, the invitation also joins the org.
+    await user.type(screen.getByLabelText('Email'), 'dev2@example.test');
+    await user.click(screen.getByRole('checkbox', { name: 'Developer access' }));
+    await selectRoles(user, ['Read only']);
+    await user.click(screen.getByRole('button', { name: 'Invite member' }));
+    await waitFor(() =>
+      expect(posts).toEqual([
+        { email: 'dev@example.test' },
+        { email: 'dev2@example.test', roles: ['read_only'] },
+      ]),
+    );
+  });
+
   it.each(['success', 'failure'] as const)(
     'ignores a late workspace invitation %s after the principal changes',
     async (outcome) => {
