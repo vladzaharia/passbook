@@ -57,8 +57,8 @@ export function codeSize(
   return { w: (spec.barMm * (332 + 20)) / 332, h: Math.max(13, spec.barMm * 0.22) };
 }
 
-/** Strip margins: the stub is die-cut stock, the rest keep the 8 mm printer margin. */
-export const STRIP_INSET: Record<string, number> = { stub: 3.5, atb: 8, a6: 8, dl: 8 };
+/** Strip margins: the stub and the ATB are die-cut stock, the rest keep the 8 mm printer margin. */
+export const STRIP_INSET: Record<string, number> = { stub: 3.5, atb: 5, a6: 8, dl: 8 };
 /** Padding inside the code column, and the height of the typed-code line under the code. */
 export const STRIP_CODE_PAD = 4;
 export const STRIP_TYPED_H = 9;

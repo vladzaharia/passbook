@@ -25,7 +25,7 @@ describe('new sizes', () => {
     const dims = (s: PaperSize) => [PAPER_SPECS[s].widthMm, PAPER_SPECS[s].heightMm];
     expect(dims('cr80p')).toEqual([54, 85.6]);
     expect(dims('stub')).toEqual([139.7, 50.8]);
-    expect(dims('atb')).toEqual([203.2, 82.55]);
+    expect(dims('atb')).toEqual([187.33, 82.55]);
     expect(dims('a6')).toEqual([148, 105]);
     expect(dims('dl')).toEqual([210, 99]);
     expect(dims('half-letter')).toEqual([215.9, 139.7]);
@@ -73,7 +73,7 @@ describe('new sizes', () => {
     const boxes = paperBoxes(size, 'admission', { barcode: 'code128' });
     expect(boxes.code.w).toBeGreaterThan(83);
     expect(inside(boxes.code, boxes.ticket ?? boxes.page)).toBe(true);
-    expect(boxes.face?.w).toBeGreaterThan(80);
+    expect(boxes.face?.w).toBeGreaterThan(55);
   });
 
   it('a portrait card has its code centred at the foot, a landscape one at the right', () => {

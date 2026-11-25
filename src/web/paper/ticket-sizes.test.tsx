@@ -61,7 +61,7 @@ describe('new sizes on the print page', () => {
 
   it.each([
     ['stub', '@page{size:139.7mm 50.8mm;margin:0}'],
-    ['atb', '@page{size:203.2mm 82.55mm;margin:0}'],
+    ['atb', '@page{size:187.33mm 82.55mm;margin:0}'],
     ['a6', '@page{size:148mm 105mm;margin:0}'],
     ['dl', '@page{size:210mm 99mm;margin:0}'],
     ['half-letter', '@page{size:215.9mm 139.7mm;margin:0}'],

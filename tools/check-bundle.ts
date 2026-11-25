@@ -56,9 +56,9 @@ export const PLAYGROUND_BUDGET_BYTES = 215_000;
 
 /**
  * The quickstart island, on top of the portal's initial load: React, the steps, and the playground's card renderers
- * and compilers' loader (the barcode encoder and the wallet compilers stay lazy). Signed-in visitors only. 197 kB measured (the paper sizes add the strip and sheet renderers).
+ * and compilers' loader (the barcode encoder and the wallet compilers stay lazy). Signed-in visitors only. 183 kB measured.
  */
-export const QUICKSTART_BUDGET_BYTES = 200_000;
+export const QUICKSTART_BUDGET_BYTES = 195_000;
 
 export function initialAssets(html: string, stylesheets = false): string[] {
   const urls = [

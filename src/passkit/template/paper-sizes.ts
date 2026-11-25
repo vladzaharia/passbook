@@ -34,9 +34,9 @@ export const CODE128_MIN_MM = 83;
 /**
  * Page sizes in mm. `half` is a half sheet, landscape; `cr80` and `cr80p` are ISO/IEC 7810 ID-1
  * cards. `stub` is 2 x 5.5 in ticket stock (QR beside the text, a stacked 30 mm QR does not fit).
- * `atb` is 8 x 3.25 in thermal boarding-pass stock: IATA Resolution 722e section 6.6.1 sets the
- * document at 187.33 x 82.55 mm (7.375 x 3.25 in); 203.2 mm is the common stock width with its
- * feed margin, and the 8 mm insets leave 187.2 mm of document. `dl` is ISO 269 (a third of A4).
+ * `atb` is the IATA ATB boarding-pass document: Resolution 722e section 6.6.1 sets it at
+ * 187.33 x 82.55 mm (7.375 x 3.25 in). Thermal stock is wider (203.2 mm with its feed margin);
+ * that margin is the printer's concern, not the page's. `dl` is ISO 269 (a third of A4).
  * `barMm` is 0 where Code 128 does not fit at `CODE128_MIN_MM`.
  */
 export const PAPER_SPECS: Record<PaperSize, PaperSpec> = {
@@ -77,7 +77,7 @@ export const PAPER_SPECS: Record<PaperSize, PaperSpec> = {
   atb: {
     label: 'Boarding pass',
     layout: 'strip',
-    widthMm: 203.2,
+    widthMm: 187.33,
     heightMm: 82.55,
     qrMm: 32,
     barMm: 83,
