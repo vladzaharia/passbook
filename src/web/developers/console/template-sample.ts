@@ -1,6 +1,5 @@
 import { PORTAL_READ } from '../playground/live.ts';
-import { spend } from './budget.ts';
-import { drop, token } from './token.ts';
+import { readWithToken } from './send.ts';
 import type { Json, RunSchema } from './types.ts';
 
 /** What the sandbox template says about its own `input`: a sample that passes, and the schema it is held to. */
@@ -12,24 +11,10 @@ export interface TemplateInput {
 const loaded = new Map<string, Promise<TemplateInput>>();
 const NONE: TemplateInput = { sample: undefined, schema: undefined };
 
-async function get(path: string, csrf: string): Promise<Response> {
-  const bearer = await token(csrf);
-  // A read counts against the same per-minute limit as a Run, so it counts in the gauge too.
-  spend();
-  return fetch(path, {
-    redirect: 'error',
-    headers: { accept: 'application/json', ...PORTAL_READ, authorization: `Bearer ${bearer}` },
-  });
-}
-
 async function read(templateId: string, csrf: string): Promise<TemplateInput> {
   const path = `/api/v1/templates/${encodeURIComponent(templateId)}`;
-  let res = await get(path, csrf);
-  // A stale token is refused as UNAUTHENTICATED: forget it and ask once more.
-  if (res.status === 401) {
-    drop();
-    res = await get(path, csrf);
-  }
+  // A read counts against the same per-minute limit as a Run, so it counts in the gauge too.
+  const res = await readWithToken(path, { accept: 'application/json', ...PORTAL_READ }, csrf);
   if (!res.ok) return NONE;
   const detail = (await res.json()) as Json;
   if (detail === null || typeof detail !== 'object' || Array.isArray(detail)) return NONE;
