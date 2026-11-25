@@ -17,7 +17,7 @@
   padding-left: 18px;
 }
 .qs-quiet-a {
-  justify-self: start;
+  align-self: flex-start;
 }
 @media (max-width: 520px) {
   .qs-quiet {
@@ -51,4 +51,7 @@
   .qs-load-l dd {
     margin-bottom: 6px;
   }
+}
+.qs-quiet-l .inline-code {
+  white-space: nowrap;
 }

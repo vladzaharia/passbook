@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, request as playwrightRequest, test } from '@playwright/test';
 import { apiAs } from './helpers/api.ts';
 import { stubTurnstile } from './helpers/turnstile.ts';
 
@@ -60,10 +60,12 @@ test('quickstart: a call from your terminal, the live TEST preview, hear back, d
   await expect(page.getByText(/Listening for pbp_test_…[\w-]{4}/)).toBeVisible();
   await expect(page.getByText('set -a; . ./.env; set +a')).toBeVisible();
   // An empty key (the shell never exported it) is a 401 the page cannot see: after 45 s it names the causes.
-  const empty = await context.request.post('/api/v1/passes', {
+  const anon = await playwrightRequest.newContext({ baseURL: new URL(page.url()).origin });
+  const empty = await anon.post('/api/v1/passes', {
     headers: { authorization: 'Bearer ', 'idempotency-key': 'e2e-empty' },
     data: {},
   });
+  await anon.dispose();
   expect(empty.status()).toBe(401);
   await expect(page.getByText('Quiet so far.')).toBeVisible({ timeout: 55_000 });
   await expect(page.getByRole('region', { name: 'Quiet so far.' })).toContainText(

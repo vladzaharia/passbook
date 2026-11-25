@@ -83,9 +83,10 @@ export function EnvBox({
           <dt className="xs muted">{M.check}</dt>
           <dd>
             <code className="mono xs">{M.checkLine}</code>
-            <span className="xs muted"> · </span>
+            <br />
             <code className="mono xs">{M.checkPs}</code>
-            <span className="xs muted"> · {M.checkOut}</span>
+            <br />
+            <span className="xs muted">{M.checkOut}</span>
           </dd>
         </dl>
       </div>
