@@ -2,11 +2,11 @@ import { Outlet } from '@tanstack/react-router';
 import { Menu } from 'lucide-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { COARSE_ONLY, useMediaQuery } from '../../lib/media.ts';
+import { useMode } from '../../lib/mode.ts';
 import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
 import { PaletteContext } from '../../lib/palette.ts';
 import { scopePath } from '../../lib/scope.ts';
 import { ScopeCrumbContext } from '../../lib/scope-context.ts';
-import { useMode } from '../../lib/mode.ts';
 import { useSession } from '../../lib/session.ts';
 import { IconButton } from '../icon-button.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
@@ -41,11 +41,16 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const touchOnly = useMediaQuery(COARSE_ONLY);
   const palette = useMemo(() => ({ open: () => setPaletteOpen(true) }), []);
+  const tone = switchable && mode === 'test' ? ('test' as const) : undefined;
   const sidebar = (
     // The shell's column paints the sidebar background full page height; this stays sticky.
     <aside className="sticky top-0 flex h-dvh flex-col pl-[env(safe-area-inset-left)]">
       {/* The bar's brand row: from lg the mark lives here, level with the bar. */}
-      <div className="flex h-14 shrink-0 items-center border-b border-border px-4">
+      <div
+        data-bar-start
+        data-tone={tone}
+        className="flex h-14 shrink-0 items-center border-b border-border px-4"
+      >
         <Wordmark to={home} />
       </div>
       <div className="shrink-0 px-4 py-3">
@@ -72,18 +77,13 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
       />
     ),
     controls: switchable ? <ModeSwitch /> : null,
-    tone: switchable && mode === 'test' ? 'test' : undefined,
+    tone,
     account: <UserMenu />,
   };
   return (
     <PaletteContext.Provider value={palette}>
       <ScopeCrumbContext.Provider value={crumb}>
-        <AppShell
-          bar={bar}
-          sidebar={sidebar}
-          width="console"
-          holder={false}
-        >
+        <AppShell bar={bar} sidebar={sidebar} width="console" holder={false}>
           {switchable ? <ModeAnnouncer /> : null}
           <GraceBanner />
           {children ?? <Outlet />}

@@ -25,13 +25,7 @@ export function AppShell({ bar, sidebar, width, holder, children }: AppShellProp
   const column = (
     <div className="flex min-w-0 flex-1 flex-col">
       {bar ? (
-        <Menubar
-          width={width}
-          {...bar}
-          below={
-            <OfflineBanner />
-          }
-        />
+        <Menubar width={width} {...bar} below={<OfflineBanner />} />
       ) : (
         <div className="sticky top-0 z-20">
           <OfflineBanner className="h-auto min-h-8 pt-[env(safe-area-inset-top)]" />

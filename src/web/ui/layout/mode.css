@@ -11,12 +11,14 @@
 [data-theme="light"] {
   --wl-test-bar: var(--pk-warning-subtle);
 }
-[data-menubar] {
+[data-menubar],
+[data-bar-start] {
   transition:
     background-color 200ms var(--wl-ease-out),
     border-color 200ms var(--wl-ease-out);
 }
-[data-menubar][data-tone="test"] {
+[data-menubar][data-tone="test"],
+[data-bar-start][data-tone="test"] {
   background-color: var(--wl-test-bar);
   border-bottom-color: var(--pk-warning-border);
 }
@@ -24,8 +26,12 @@
 [data-menubar][data-tone="test"] [role="radiogroup"] {
   background-color: color-mix(in srgb, var(--pk-warning-border) 18%, transparent);
 }
+[data-menubar][data-tone="test"] [role="radio"][aria-checked="false"] {
+  color: var(--pk-text-default);
+}
 @media (prefers-reduced-motion: reduce) {
-  [data-menubar] {
+  [data-menubar],
+  [data-bar-start] {
     transition: none;
   }
 }

@@ -1,7 +1,7 @@
 import { FlaskConical } from 'lucide-react';
 import { setMode, useMode } from '../../lib/mode.ts';
-import { TEST_NOTE } from './mode-copy.ts';
 import { SegmentedControl } from '../segmented-control.tsx';
+import { TEST_NOTE } from './mode-copy.ts';
 
 /** Live or Test, in the top bar. Test-only orgs never render it. */
 export function ModeSwitch() {
