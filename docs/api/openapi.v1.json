@@ -84706,7 +84706,12 @@
                     "updatedAt": 1795399200000,
                     "cardTypes": [
                       "northwind"
-                    ]
+                    ],
+                    "lastCheck": {
+                      "ok": true,
+                      "code": "NW7K2Q",
+                      "at": 1795570500000
+                    }
                   },
                   "serviceAccountEmail": "wallet-issuer@example.com"
                 }
@@ -84885,7 +84890,12 @@
                       "updatedAt": 1795399200000,
                       "cardTypes": [
                         "northwind"
-                      ]
+                      ],
+                      "lastCheck": {
+                        "ok": true,
+                        "code": "NW7K2Q",
+                        "at": 1795570500000
+                      }
                     }
                   ],
                   "nextCursor": null
@@ -84988,7 +84998,12 @@
                   "updatedAt": 1795572000000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": "NW7K2Q",
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -85096,7 +85111,12 @@
                   "updatedAt": 1795572000000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": "NW7K2Q",
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -87232,7 +87252,12 @@
                       "updatedAt": 1795399200000,
                       "cardTypes": [
                         "northwind"
-                      ]
+                      ],
+                      "lastCheck": {
+                        "ok": true,
+                        "code": "NW7K2Q",
+                        "at": 1795570500000
+                      }
                     }
                   ],
                   "nextCursor": null
@@ -87321,7 +87346,12 @@
                   "updatedAt": 1795399200000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": "NW7K2Q",
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -87418,7 +87448,12 @@
                   "updatedAt": 1795399200000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": "NW7K2Q",
+                    "at": 1795570500000
+                  }
                 }
               }
             }
@@ -87515,7 +87550,12 @@
                   "updatedAt": 1795572000000,
                   "cardTypes": [
                     "northwind"
-                  ]
+                  ],
+                  "lastCheck": {
+                    "ok": true,
+                    "code": "NW7K2Q",
+                    "at": 1795570500000
+                  }
                 }
               }
             }

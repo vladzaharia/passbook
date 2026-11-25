@@ -29,7 +29,7 @@ const orgHandlers = (
           enrolment({
             state: 'off',
             source: 'org',
-            prerequisites: { check: false, roundTrip: null },
+            prerequisites: { check: result.ok, roundTrip: null },
           }),
           enrolment({ provider: 'samsung' }),
         ],
