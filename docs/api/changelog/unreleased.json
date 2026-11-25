@@ -904,6 +904,14 @@
     "note": "usage holds what the organization has used of each limit: live and test passes, templates, scanners, members, API keys, webhook endpoints and connections."
   },
   {
+    "key": "GET /api/v1/orgs/{id}/plan 200.limits[].key: enum value \"members.developers\" added",
+    "class": "notable",
+    "operationId": "entitlements.getOrgsByIdPlan",
+    "op": "GET /api/v1/orgs/{id}/plan",
+    "change": "200.limits[].key: enum value \"members.developers\" added",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/orgs/{id}/plan new operation",
     "class": "additive",
     "operationId": "entitlements.getOrgsByIdPlan",
