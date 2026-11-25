@@ -298,7 +298,7 @@ export async function update(
     targetId: id,
     detail: {
       changed: [...changed],
-      ...(input.config !== undefined && def.urls
+      ...(patch.config !== undefined && def.urls
         ? {
             from: [...originsOf(def.urls(storedConfig(def, conn) as never))],
             to: [...originsOf(def.urls(patch.config as never))],

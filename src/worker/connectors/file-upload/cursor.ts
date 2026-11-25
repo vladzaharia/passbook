@@ -26,9 +26,7 @@ const b64 = (text: string): string =>
 const unb64 = (text: string): string | null => {
   try {
     const raw = atob(text.replaceAll('-', '+').replaceAll('_', '/'));
-    return new TextDecoder('utf-8', { fatal: true }).decode(
-      Uint8Array.from(raw, (c) => c.charCodeAt(0)),
-    );
+    return new TextDecoder().decode(Uint8Array.from(raw, (c) => c.charCodeAt(0)));
   } catch {
     return null;
   }
@@ -49,7 +47,7 @@ export function decode(cursor: string | null): Cursor | null {
   const parsed = {
     fileId,
     bases: bases === 'all' ? ('all' as const) : bases === '-' ? [] : bases.split(','),
-    phase,
+    phase: phase as Phase,
   };
   if (phase === 'removed') {
     if (at === '-') return { ...parsed, n: 0, after: '' };

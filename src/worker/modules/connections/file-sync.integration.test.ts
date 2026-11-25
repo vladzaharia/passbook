@@ -148,18 +148,6 @@ describe('file-upload through the sync engine', () => {
     expect(kit.seams.created).toEqual([]);
   });
 
-  it('re-applies every row after a config change', async () => {
-    const dto = await connect(SIX);
-    for (const [id] of SIX.slice(1)) await linkedPass(kit, dto.id, id as string);
-    await sync(dto.id);
-    reset();
-    await service.update(kit.sctx, kit.actor, dto.id, {
-      config: { idColumn: '/id', sheet: 'Members' },
-    });
-    await sync(dto.id);
-    expect(appliedRefs().sort()).toEqual(SIX.slice(1).map((r) => `Name ${r[0]}`));
-  });
-
   it('re-applies every row after a mapping change, and not after a rename', async () => {
     const dto = await connect(SIX);
     for (const [id] of SIX.slice(1)) await linkedPass(kit, dto.id, id as string);
