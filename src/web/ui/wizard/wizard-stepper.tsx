@@ -1,5 +1,12 @@
-import { type CSSProperties, useId, useRef } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { type CSSProperties, type ReactNode, useId, useRef } from 'react';
 import { cn } from '../../lib/cn.ts';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../dropdown-menu.tsx';
 import { StepMarker } from '../step-marker.tsx';
 import type { WizardRail } from './wizard-types.ts';
 
@@ -24,13 +31,20 @@ export function WizardStepper({ wizard }: { wizard: WizardRail }) {
   const live = steps.filter((s) => !s.skip);
   const at = steps.slice(0, index + 1).filter((s) => !s.skip).length;
   const step = steps[index];
+  const line = (
+    <>
+      Step {at} of {live.length}
+      {step ? <span className="text-fg-strong"> · {step.title}</span> : null}
+    </>
+  );
   return (
     <nav aria-label="Steps" className="@[43.5rem]:w-52 @[43.5rem]:shrink-0">
       <div className="@[43.5rem]:hidden">
-        <p className="text-sm text-fg-muted">
-          Step {at} of {live.length}
-          {step ? <span className="text-fg-strong"> · {step.title}</span> : null}
-        </p>
+        {wizard.mode === 'edit' ? (
+          <StepPicker wizard={wizard} line={line} />
+        ) : (
+          <p className="text-sm text-fg-muted">{line}</p>
+        )}
         <div className="mt-2 h-0.5 overflow-hidden rounded-full bg-border">
           <div
             className="wl-fill h-full origin-left rounded-full bg-accent"
@@ -118,5 +132,45 @@ export function WizardStepper({ wizard }: { wizard: WizardRail }) {
         })}
       </ol>
     </nav>
+  );
+}
+
+const STATE_WORD = {
+  invalid: 'Needs attention',
+  skipped: 'Skipped',
+  done: 'Done',
+  current: 'Current',
+} as const;
+
+/** Compact edit mode: the "Step 2 of 4" line opens a list of every step, like the rail's buttons. */
+function StepPicker({ wizard, line }: { wizard: WizardRail; line: ReactNode }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label="Go to step"
+        className="-my-2 flex min-h-11 w-full items-center justify-between gap-2 rounded-md py-2 text-left text-sm text-fg-muted focus-visible:outline-2 focus-visible:outline-focus"
+      >
+        <span className="min-w-0 truncate">{line}</span>
+        <ChevronDown aria-hidden className="size-4 shrink-0" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="sm:min-w-64">
+        {wizard.steps.map((s, i) => {
+          const n = wizard.steps.slice(0, i + 1).filter((x) => !x.skip).length;
+          const word = s.state === 'todo' ? '' : STATE_WORD[s.state];
+          return (
+            <DropdownMenuItem
+              key={s.id}
+              disabled={s.state === 'skipped'}
+              aria-current={s.state === 'current' ? 'step' : undefined}
+              onSelect={() => wizard.go(s.id)}
+            >
+              <StepMarker state={s.state} n={n} size="sm" />
+              <span className="min-w-0 flex-1 truncate">{s.title}</span>
+              {word ? <span className="text-xs text-fg-muted">{word}</span> : null}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

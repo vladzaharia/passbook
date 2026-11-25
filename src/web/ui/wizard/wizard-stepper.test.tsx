@@ -23,6 +23,31 @@ function model(states: WizardStepState[], over: Partial<WizardModel> = {}): Wiza
   } as unknown as WizardModel;
 }
 
+describe('WizardStepper compact edit header', () => {
+  it('lists every step with its state and jumps on select', async () => {
+    const user = userEvent.setup();
+    const wizard = model(['current', 'invalid', 'skipped', 'done'], { mode: 'edit' });
+    render(<WizardStepper wizard={wizard} />);
+    await user.click(screen.getByRole('button', { name: 'Go to step' }));
+    const menu = await screen.findByRole('menu');
+    const items = within(menu).getAllByRole('menuitem');
+    expect(items.map((i) => i.textContent)).toEqual([
+      expect.stringContaining('Step 1'),
+      expect.stringContaining('Needs attention'),
+      expect.stringContaining('Skipped'),
+      expect.stringContaining('Done'),
+    ]);
+    expect(items[2]).toHaveAttribute('aria-disabled', 'true');
+    await user.click(items[3] as HTMLElement);
+    expect(wizard.go).toHaveBeenCalledWith('s3');
+  });
+
+  it('stays plain text in create mode', () => {
+    render(<WizardStepper wizard={model(['current', 'todo'])} />);
+    expect(screen.queryByRole('button', { name: 'Go to step' })).toBeNull();
+  });
+});
+
 describe('WizardStepper', () => {
   it('names done steps by title, describes them by what was chosen, and jumps on press', async () => {
     const user = userEvent.setup();
