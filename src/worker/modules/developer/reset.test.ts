@@ -246,7 +246,7 @@ describe('POST /developer/sandbox/reset', () => {
   it('refuses a closed sandbox, a missing one, a failed check, a plain user and a key', async () => {
     const d = await t.developer();
     expect(
-      (await t.call('/developer/sandbox', { method: 'DELETE', headers: d.browser })).status,
+      (await t.call('/developer/sandbox/close', { method: 'POST', headers: d.browser })).status,
     ).toBe(200);
     await expectProblem(await reset(d), 409, 'SANDBOX_CLOSED');
     const nobody = await makeSession(t.kit.f, {
@@ -292,7 +292,8 @@ describe('POST /developer/sandbox/reopen', () => {
       headers: { ...s.headers, ...BROWSER },
     });
   };
-  const close = (d: Dev) => t.call('/developer/sandbox', { method: 'DELETE', headers: d.browser });
+  const close = (d: Dev) =>
+    t.call('/developer/sandbox/close', { method: 'POST', headers: d.browser });
 
   it('reopens its own close inside the window, with a new key, and the data is as it was', async () => {
     const d = await t.developer();

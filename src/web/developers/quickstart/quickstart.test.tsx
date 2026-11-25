@@ -79,7 +79,7 @@ describe('Quickstart', () => {
 
   it('a closed sandbox has an empty stage', () => {
     q.value = base({ session: { kind: 'closed' } });
-    render(<Quickstart session={{ kind: 'closed', csrf: 'c' }} />);
+    render(<Quickstart session={{ kind: 'closed', csrf: 'c', siteKey: '' }} />);
     expect(screen.queryByText(/^stage/)).toBeNull();
   });
 

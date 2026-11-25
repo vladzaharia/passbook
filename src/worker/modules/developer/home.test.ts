@@ -243,7 +243,7 @@ describe('GET /developer/home', () => {
 
   it('closed: read-only, keys revoked, reopenable until the export window ends', async () => {
     const d = await t.developer();
-    const res = await t.call('/developer/sandbox', { method: 'DELETE', headers: d.browser });
+    const res = await t.call('/developer/sandbox/close', { method: 'POST', headers: d.browser });
     expect(res.status, await res.clone().text()).toBe(200);
     const h = await home(d.browser);
     expect(h.state).toBe('closed');

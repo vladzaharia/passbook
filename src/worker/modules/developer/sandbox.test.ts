@@ -228,15 +228,17 @@ describe('POST /developer/sandbox', () => {
   });
 });
 
-describe('DELETE /developer/sandbox', () => {
+describe('POST /developer/sandbox/close', () => {
   it("closes the owner's sandbox: read-only, keys revoked, closed_at set", async () => {
     const s = await sandboxOf();
     const noCsrf = { cookie: s.headers.cookie ?? '', 'sec-fetch-site': 'cross-site' };
-    expect((await send('DELETE', '/developer/sandbox', noCsrf)).status).toBe(403);
-    expect((await send('DELETE', '/developer/sandbox', s.key)).status).toBeGreaterThanOrEqual(401);
+    expect((await send('POST', '/developer/sandbox/close', noCsrf)).status).toBe(403);
+    expect((await send('POST', '/developer/sandbox/close', s.key)).status).toBeGreaterThanOrEqual(
+      401,
+    );
     expect((await send('GET', '/passes', s.key)).status).toBe(200);
 
-    const res = await send('DELETE', '/developer/sandbox', s.headers);
+    const res = await send('POST', '/developer/sandbox/close', s.headers);
     expect(res.status, await res.clone().text()).toBe(200);
     const closed = DeveloperSandboxSchema.parse(await res.json());
     expect(closed.closedAt).toBe(kit.clock.now());
@@ -255,7 +257,7 @@ describe('DELETE /developer/sandbox', () => {
       409,
       'SANDBOX_EXISTS',
     );
-    const twice = await send('DELETE', '/developer/sandbox', s.headers);
+    const twice = await send('POST', '/developer/sandbox/close', s.headers);
     expect(twice.status).toBe(200);
     expect(DeveloperSandboxSchema.parse(await twice.json()).closedAt).toBe(closed.closedAt);
     const audit = await first<{ actor_type: string }>(
@@ -267,7 +269,9 @@ describe('DELETE /developer/sandbox', () => {
   });
 
   it('is 404 for a person with no sandbox', async () => {
-    expect((await send('DELETE', '/developer/sandbox', (await person()).headers)).status).toBe(404);
+    expect((await send('POST', '/developer/sandbox/close', (await person()).headers)).status).toBe(
+      404,
+    );
   });
 });
 

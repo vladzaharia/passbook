@@ -80,6 +80,8 @@
   "developer.getResolve",
   "developer.getSandbox",
   "developer.postSandbox",
+  "developer.postSandboxClose",
+  "developer.postSandboxRecreate",
   "developer.postSandboxReopen",
   "developer.postSandboxReset",
   "developer.postTryToken",

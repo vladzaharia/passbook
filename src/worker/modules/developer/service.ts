@@ -164,7 +164,7 @@ export async function quickstartTemplate(
 
 /**
  * Makes the caller's sandbox, or finishes it: a developer org, their admin membership, the Quickstart ticket
- * released in Test and a Test personal key (30 days, shown once). One per person. A retry after a failure
+ * released in Test and a Test personal key (30 days, shown once). One at a time per person; a deleted one frees the slot. A retry after a failure
  * completes what is missing and returns the sandbox; the key is minted once, so a retry that finds it already
  * made returns `key: null` and `previousKey`, and the person rolls it.
  */
@@ -185,7 +185,7 @@ export async function createSandbox(
   };
   try {
     let row = await sandboxOfUser(db, session.userId);
-    // A closed sandbox is not remade: one per person, for good.
+    // A closed sandbox is not remade; the person deletes it first (delete.ts) to start over.
     if (row?.closed_at != null) throw new ConflictError(SANDBOX_EXISTS_COPY, 'SANDBOX_EXISTS');
     const now = ctx.clock.now();
     const fresh = row === null;

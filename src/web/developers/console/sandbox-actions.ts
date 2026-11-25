@@ -21,9 +21,14 @@ export class ActionError extends Error {
   }
 }
 
-async function post(path: string, csrf: string, body?: unknown): Promise<Record<string, unknown>> {
-  const res = await fetch(`/api/v1/developer/sandbox/${path}`, {
-    method: 'POST',
+async function post(
+  path: string,
+  csrf: string,
+  body?: unknown,
+  method: 'POST' | 'DELETE' = 'POST',
+): Promise<Record<string, unknown>> {
+  const res = await fetch(`/api/v1/developer/sandbox${path ? `/${path}` : ''}`, {
+    method,
     headers: {
       accept: 'application/json',
       'x-csrf-token': csrf,
@@ -70,4 +75,15 @@ export async function resetSandbox(csrf: string, turnstileToken: string): Promis
     ...(b.more === true ? { more: true } : {}),
     ...(typeof b.resetsLeft === 'number' ? { resetsLeft: b.resetsLeft } : {}),
   };
+}
+
+/** `DELETE /developer/sandbox`: the sandbox is gone and the person may make a new one. */
+export async function deleteSandbox(csrf: string): Promise<void> {
+  await post('', csrf, undefined, 'DELETE');
+}
+
+/** `POST /developer/sandbox/recreate` with the Turnstile token: delete, then a new sandbox and a new key, shown once. */
+export async function recreateSandbox(csrf: string, turnstileToken: string): Promise<WithKey> {
+  const b = await post('recreate', csrf, { turnstileToken });
+  return { sandbox: sandboxOf(b), secret: secretOf(b.key) };
 }

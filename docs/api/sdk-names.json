@@ -201,6 +201,14 @@
     "resource": "broadcasts",
     "method": "send"
   },
+  "broadcasts.postBroadcastsByIdStop": {
+    "resource": "broadcasts",
+    "method": "stop"
+  },
+  "broadcasts.postBroadcastsByIdUndo": {
+    "resource": "broadcasts",
+    "method": "undo"
+  },
   "broadcasts.postBroadcastsPreview": {
     "resource": "broadcasts",
     "method": "countRecipients"
@@ -315,7 +323,7 @@
     "resource": "developer.sandbox",
     "method": "close",
     "sdk": false,
-    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration. The name predates the delete; the route now deletes."
   },
   "developer.deleteTryToken": {
     "resource": "developer.tryTokens",
@@ -328,6 +336,12 @@
     "method": "retrieve",
     "sdk": false,
     "reason": "Developer portal access: a signed-in person in a browser, not an integration."
+  },
+  "developer.getHome": {
+    "resource": "developer.home",
+    "method": "retrieve",
+    "sdk": false,
+    "reason": "Developer portal workbench: a signed-in person in a browser, not an integration."
   },
   "developer.getLog": {
     "resource": "developer.requestLogs",
@@ -365,6 +379,18 @@
     "sdk": false,
     "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
   },
+  "developer.postSandboxClose": {
+    "resource": "developer.sandbox",
+    "method": "end",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
+  "developer.postSandboxRecreate": {
+    "resource": "developer.sandbox",
+    "method": "replace",
+    "sdk": false,
+    "reason": "Developer portal sandbox: a signed-in person in a browser, not an integration."
+  },
   "developer.postSandboxReopen": {
     "resource": "developer.sandbox",
     "method": "reopen",
@@ -391,20 +417,20 @@
     "resource": "orgs.plan",
     "method": "retrieve"
   },
-  "entitlements.getPlatformOrgsByIdEntitlements": {
-    "resource": "platform.orgs.entitlements",
-    "method": "retrieve"
-  },
-  "entitlements.putPlatformOrgsByIdEntitlements": {
-    "resource": "platform.orgs.entitlements",
-    "method": "update"
-  },
   "entitlements.getPlatformEntitlementPresets": {
     "resource": "platform.entitlementPresets",
     "method": "list"
   },
+  "entitlements.getPlatformOrgsByIdEntitlements": {
+    "resource": "platform.orgs.entitlements",
+    "method": "retrieve"
+  },
   "entitlements.putPlatformEntitlementPresets": {
     "resource": "platform.entitlementPresets",
+    "method": "update"
+  },
+  "entitlements.putPlatformOrgsByIdEntitlements": {
+    "resource": "platform.orgs.entitlements",
     "method": "update"
   },
   "events.getEvents": {
@@ -1023,6 +1049,18 @@
     "resource": "passImports.mappings",
     "method": "save"
   },
+  "pass-setup.getOrgsByOrgIdPassSetup": {
+    "resource": "orgs",
+    "method": "retrievePassSetup"
+  },
+  "pass-setup.patchOrgsByOrgIdPassSetup": {
+    "resource": "orgs",
+    "method": "updatePassSetup"
+  },
+  "pass-setup.postOrgsByOrgIdBrandAssets": {
+    "resource": "orgs",
+    "method": "stageBrandAsset"
+  },
   "passes.deletePassesById": {
     "resource": "passes",
     "method": "delete"
@@ -1046,6 +1084,14 @@
   "passes.getPassesBulkPrintByJobIdPdf": {
     "resource": "printJobs",
     "method": "downloadPdf"
+  },
+  "passes.getPassesBulkRunsById": {
+    "resource": "bulkRuns",
+    "method": "retrieve"
+  },
+  "passes.getPassesBulkRunsCurrent": {
+    "resource": "bulkRuns",
+    "method": "current"
   },
   "passes.getPassesById": {
     "resource": "passes",
@@ -1103,6 +1149,10 @@
     "resource": "passes.versions",
     "method": "retrieve"
   },
+  "passes.getPassesViews": {
+    "resource": "passViews",
+    "method": "list"
+  },
   "passes.patchPassesById": {
     "resource": "passes",
     "method": "update"
@@ -1130,6 +1180,14 @@
   "passes.postPassesBulkReissue": {
     "resource": "passes",
     "method": "bulkReissue"
+  },
+  "passes.postPassesBulkRuns": {
+    "resource": "bulkRuns",
+    "method": "start"
+  },
+  "passes.postPassesBulkRunsByIdStop": {
+    "resource": "bulkRuns",
+    "method": "stop"
   },
   "passes.postPassesByIdNewCode": {
     "resource": "passes",
@@ -1207,9 +1265,19 @@
     "resource": "passes.memberPhoto",
     "method": "upload"
   },
+  "passes.putPassesViews": {
+    "resource": "passViews",
+    "method": "replace"
+  },
   "public.getBByToken": {
     "resource": "public.bundles",
     "method": "retrievePage",
+    "sdk": false,
+    "reason": "Public page or capability link; the token in the URL is the credential."
+  },
+  "public.getBByTokenByPassId": {
+    "resource": "public.bundles",
+    "method": "retrievePass",
     "sdk": false,
     "reason": "Public page or capability link; the token in the URL is the credential."
   },
@@ -1454,6 +1522,14 @@
   "scan-staff.postScanStaffByIdResetPin": {
     "resource": "scanStaff",
     "method": "resetPin"
+  },
+  "scan-staff.postScanStaffByIdUnlockPin": {
+    "resource": "scanStaff",
+    "method": "unlockPin"
+  },
+  "scan-staff.postScanStaffResetUntagged": {
+    "resource": "scanStaff",
+    "method": "resetUntagged"
   },
   "scan-zones.getScanZones": {
     "resource": "scanZones",
@@ -1733,6 +1809,12 @@
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
+  "scan.postScanStaffPin": {
+    "resource": "terminal.staff",
+    "method": "setPin",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
   "scan.postScanTagEnrollmentsByIdComplete": {
     "resource": "terminal.tagEnrollments",
     "method": "complete",
@@ -1766,6 +1848,12 @@
   "scan.postScanUnpair": {
     "resource": "terminal",
     "method": "unpair",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.putScanDraft": {
+    "resource": "terminal.draft",
+    "method": "set",
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },
@@ -1929,13 +2017,13 @@
     "resource": "platform.status",
     "method": "retrieve"
   },
-  "status.getStatusWorkflows": {
-    "resource": "platform.status",
-    "method": "listWorkflowRuns"
-  },
   "status.getStatusIncidents": {
     "resource": "platform.status",
     "method": "listIncidents"
+  },
+  "status.getStatusWorkflows": {
+    "resource": "platform.status",
+    "method": "listWorkflowRuns"
   },
   "status.postStatusIncidents": {
     "resource": "platform.status",
@@ -1948,6 +2036,10 @@
   "templates.deleteTemplatesById": {
     "resource": "templates",
     "method": "delete"
+  },
+  "templates.getTemplateReviews": {
+    "resource": "templates.reviews",
+    "method": "list"
   },
   "templates.getTemplates": {
     "resource": "templates",
@@ -1984,6 +2076,10 @@
   "templates.getTemplatesByIdReleasesImpact": {
     "resource": "templates.releases",
     "method": "retrieveImpact"
+  },
+  "templates.getTemplatesByIdRollout": {
+    "resource": "templates",
+    "method": "retrieveRollout"
   },
   "templates.getTemplatesByIdSampleCsv": {
     "resource": "templates",
@@ -2057,14 +2153,6 @@
     "resource": "templates.releases",
     "method": "create"
   },
-  "templates.postTemplatesByIdReview": {
-    "resource": "templates.reviews",
-    "method": "approve"
-  },
-  "templates.getTemplateReviews": {
-    "resource": "templates.reviews",
-    "method": "list"
-  },
   "templates.postTemplatesByIdReleasesRollback": {
     "resource": "templates.releases",
     "method": "rollback"
@@ -2072,6 +2160,10 @@
   "templates.postTemplatesByIdRestore": {
     "resource": "templates",
     "method": "restore"
+  },
+  "templates.postTemplatesByIdReview": {
+    "resource": "templates.reviews",
+    "method": "approve"
   },
   "templates.postTemplatesByIdReviewRequests": {
     "resource": "templates.reviews",
@@ -2317,6 +2409,10 @@
     "resource": "webhookEndpoints.deliveries",
     "method": "retrieve"
   },
+  "webhooks.getWebhookEndpointsByIdTests": {
+    "resource": "webhookEndpoints.tests",
+    "method": "list"
+  },
   "webhooks.patchWebhookEndpointsById": {
     "resource": "webhookEndpoints",
     "method": "update"
@@ -2352,89 +2448,5 @@
   "webhooks.postWebhookEndpointsCapture": {
     "resource": "webhookEndpoints",
     "method": "ensureCapture"
-  },
-  "pass-setup.getOrgsByOrgIdPassSetup": {
-    "resource": "orgs",
-    "method": "retrievePassSetup"
-  },
-  "pass-setup.patchOrgsByOrgIdPassSetup": {
-    "resource": "orgs",
-    "method": "updatePassSetup"
-  },
-  "pass-setup.postOrgsByOrgIdBrandAssets": {
-    "resource": "orgs",
-    "method": "stageBrandAsset"
-  },
-  "public.getBByTokenByPassId": {
-    "resource": "public.bundles",
-    "method": "retrievePass",
-    "sdk": false,
-    "reason": "Public page or capability link; the token in the URL is the credential."
-  },
-  "scan-staff.postScanStaffByIdUnlockPin": {
-    "resource": "scanStaff",
-    "method": "unlockPin"
-  },
-  "scan-staff.postScanStaffResetUntagged": {
-    "resource": "scanStaff",
-    "method": "resetUntagged"
-  },
-  "scan.postScanStaffPin": {
-    "resource": "terminal.staff",
-    "method": "setPin",
-    "sdk": false,
-    "reason": "Scanner device protocol; needs a paired scanner session."
-  },
-  "scan.putScanDraft": {
-    "resource": "terminal.draft",
-    "method": "set",
-    "sdk": false,
-    "reason": "Scanner device protocol; needs a paired scanner session."
-  },
-  "developer.getHome": {
-    "resource": "developer.home",
-    "method": "retrieve",
-    "sdk": false,
-    "reason": "Developer portal workbench: a signed-in person in a browser, not an integration."
-  },
-  "broadcasts.postBroadcastsByIdUndo": {
-    "resource": "broadcasts",
-    "method": "undo"
-  },
-  "broadcasts.postBroadcastsByIdStop": {
-    "resource": "broadcasts",
-    "method": "stop"
-  },
-  "passes.getPassesViews": {
-    "resource": "passViews",
-    "method": "list"
-  },
-  "passes.putPassesViews": {
-    "resource": "passViews",
-    "method": "replace"
-  },
-  "passes.postPassesBulkRuns": {
-    "resource": "bulkRuns",
-    "method": "start"
-  },
-  "passes.getPassesBulkRunsById": {
-    "resource": "bulkRuns",
-    "method": "retrieve"
-  },
-  "passes.postPassesBulkRunsByIdStop": {
-    "resource": "bulkRuns",
-    "method": "stop"
-  },
-  "passes.getPassesBulkRunsCurrent": {
-    "resource": "bulkRuns",
-    "method": "current"
-  },
-  "webhooks.getWebhookEndpointsByIdTests": {
-    "resource": "webhookEndpoints.tests",
-    "method": "list"
-  },
-  "templates.getTemplatesByIdRollout": {
-    "resource": "templates",
-    "method": "retrieveRollout"
   }
 }
