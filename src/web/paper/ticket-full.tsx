@@ -13,7 +13,15 @@ import {
   Typed,
   Watermark,
 } from './ticket-parts.tsx';
-import { compactBefore, doorRows, doorWhen, faceLines, infoColumns, rules } from './ticket-text.ts';
+import {
+  compactBefore,
+  doorRows,
+  doorWhen,
+  faceLines,
+  faceNotesFit,
+  infoColumns,
+  rules,
+} from './ticket-text.ts';
 
 const ART_POS = {
   artwork: '50% 30%',
@@ -175,12 +183,14 @@ export function TicketFull({ p, half }: { p: TicketProps; half: boolean }) {
         <div className="pp-face">
           <Band p={p} />
           <div className="pp-face-body">
-            {lines.map((l) => (
-              <div key={l.text} className={l.big ? 'pp-big' : 'pp-sub'}>
-                {l.text}
-              </div>
-            ))}
-            {half ? <FaceNotes p={p} /> : null}
+            <div className="pp-face-lines">
+              {lines.map((l) => (
+                <div key={l.text} className={l.big ? 'pp-big' : 'pp-sub'}>
+                  {l.text}
+                </div>
+              ))}
+              {half && faceNotesFit(lines) ? <FaceNotes p={p} /> : null}
+            </div>
             {c.facts.length ? (
               <div className="pp-facts">
                 {c.facts.map((f) => (

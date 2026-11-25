@@ -48,7 +48,12 @@
           "revokedAt": null,
           "createdAt": 1794362400000,
           "updatedAt": 1795399200000,
-          "cardTypes": ["northwind"]
+          "cardTypes": ["northwind"],
+          "lastCheck": {
+            "ok": true,
+            "code": null,
+            "at": 1795570500000
+          }
         }
       ],
       "nextCursor": null
@@ -79,7 +84,12 @@
       "revokedAt": null,
       "createdAt": 1794362400000,
       "updatedAt": 1795399200000,
-      "cardTypes": ["northwind"]
+      "cardTypes": ["northwind"],
+      "lastCheck": {
+        "ok": true,
+        "code": null,
+        "at": 1795570500000
+      }
     }
   },
   "wallet-platform.postPlatformWalletCredentialsByIdRevoke": {
@@ -99,7 +109,12 @@
       "revokedAt": 1795572000000,
       "createdAt": 1794362400000,
       "updatedAt": 1795572000000,
-      "cardTypes": ["northwind"]
+      "cardTypes": ["northwind"],
+      "lastCheck": {
+        "ok": true,
+        "code": null,
+        "at": 1795570500000
+      }
     }
   },
   "wallet-platform.postPlatformWalletCredentialsByIdCheck": {
@@ -206,7 +221,12 @@
       "revokedAt": null,
       "createdAt": 1794362400000,
       "updatedAt": 1795399200000,
-      "cardTypes": ["northwind"]
+      "cardTypes": ["northwind"],
+      "lastCheck": {
+        "ok": true,
+        "code": null,
+        "at": 1795570500000
+      }
     }
   }
 }

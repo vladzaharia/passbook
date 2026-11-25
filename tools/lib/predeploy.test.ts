@@ -7,6 +7,7 @@ const ready = {
     REDIRECT_HOSTS: 'old.example',
     EMAIL_FROM: 'delivery@passbook.example',
     SUPPORT_EMAIL: 'support@passbook.example',
+    ACCESS_REQUEST_EMAIL: 'support@passbook.example',
     OIDC_CLIENT_ID: 'abc123',
     TURNSTILE_SITE_KEY: '0x4AAAAAAAxyz',
   },
@@ -143,6 +144,14 @@ describe('predeployProblems for domains', () => {
   it('wants a valid PassBook support address', () => {
     for (const bad of ['', 'nope', undefined]) {
       expect(problems({ vars: { ...ready.vars, SUPPORT_EMAIL: bad } })).toMatch(/SUPPORT_EMAIL/);
+    }
+  });
+
+  it('wants a valid Request access address', () => {
+    for (const bad of ['', 'nope', undefined]) {
+      expect(problems({ vars: { ...ready.vars, ACCESS_REQUEST_EMAIL: bad } })).toMatch(
+        /ACCESS_REQUEST_EMAIL/,
+      );
     }
   });
 });

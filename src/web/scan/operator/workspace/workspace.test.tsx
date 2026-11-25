@@ -177,8 +177,11 @@ describe('the workspace', () => {
       timeout: 2000,
     });
     key(field(), { key: 'ArrowDown', code: 'ArrowDown' });
-    await waitFor(() =>
-      expect(screen.getByText('Mara Lopez', { selector: 'h2' })).toBeInTheDocument(),
+    // Opening the record preview renders the whole workspace; under v8 coverage that passed the
+    // global 10 s window. A passing test never waits this long.
+    await waitFor(
+      () => expect(screen.getByText('Mara Lopez', { selector: 'h2' })).toBeInTheDocument(),
+      { timeout: 45_000 },
     );
     expect(resolve).not.toHaveBeenCalled();
     expect(lookup).toHaveBeenCalledTimes(1);

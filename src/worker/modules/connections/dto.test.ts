@@ -60,14 +60,34 @@ describe('toDto config', () => {
 
   it('keeps a row that does not migrate as stored, under its stored version', async () => {
     const broken = { ...V1, recordsPointer: 42 };
-    const dto = toDto(kit.env, { ...(await webhookRow()), connectorVersion: 1, config: broken });
+    const codes: string[] = [];
+    const dto = toDto(
+      kit.env,
+      { ...(await webhookRow()), connectorVersion: 1, config: broken },
+      (c) => codes.push(c),
+    );
     expect(dto.connectorVersion).toBe(1);
     expect(dto.config).toEqual(broken);
+    expect(codes).toEqual(['MIGRATE_FAILED']);
   });
 
   it('keeps an unknown connector type as stored', async () => {
     const row = { ...(await webhookRow()), connectorType: 'gone', connectorVersion: 1 };
     expect(toDto(kit.env, row)).toMatchObject({ connectorVersion: 1, config: row.config });
+  });
+});
+
+describe('draft files', () => {
+  it('refuses a fileId on a connector that takes no uploads', async () => {
+    await expect(
+      service.create(kit.sctx, kit.actor, {
+        orgId: kit.org.id,
+        connectorType: 'demo',
+        name: 'Demo',
+        config: { count: 1 },
+        fileId: kit.sctx.ids.id(),
+      }),
+    ).rejects.toMatchObject({ code: 'VALIDATION' });
   });
 });
 

@@ -167,7 +167,8 @@ async function evaluateObserved(
     return candidateWallet(one)
       ? stop('refused', printed.reason, { ...candidateAudit(one), at: printed.at })
       : stop('refused', 'not_found', { stale: true });
-  if (await paperOff(ctx, one))
+  // The pass's own refusal (a void) comes before the paper channel's.
+  if (one.pass.status === 'active' && (await paperOff(ctx, one)))
     return candidateWallet(one)
       ? stop('refused', 'channel_off', {
           ...candidateAudit(one),

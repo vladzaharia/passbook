@@ -77,7 +77,12 @@ export const ProbeConfigSchema = z.object({
   secrets: SecretsSchema.optional(),
   ...TargetFields,
 });
-/** Probes a saved connection: its stored config and secrets unless these are given. */
+/**
+ * Probes a saved connection: its stored config and secrets unless these are given. A config override
+ * that changes the origin needs fresh secrets (`assertCredentialOrigin`), so stored ones never travel to
+ * a new host. The unsaved probe calls `requireConnectorEntitled`. `next` is re-checked through the
+ * pinned fetch, so a forged token cannot leave the connector's egress origins.
+ */
 export const ProbeConnectionSchema = z.object({
   config: ConfigSchema.optional(),
   secrets: SecretsSchema.optional(),

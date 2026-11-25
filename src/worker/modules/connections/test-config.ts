@@ -14,11 +14,16 @@ import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts
 import { getDeps } from './deps.ts';
 import { connectorItem, requireConnectorEntitled } from './entitlement.ts';
 import { filesPort } from './files-port.ts';
-import { assertFileInput } from './files-service.ts';
 import { recordConnectionAudit } from './repo-sync.ts';
 import { classify } from './runtime.ts';
 import { auditActor } from './service.ts';
-import { assertOrg, assertSafeUrls, parseWith, requireConnector } from './validate.ts';
+import {
+  assertFileIdAllowed,
+  assertOrg,
+  assertSafeUrls,
+  parseWith,
+  requireConnector,
+} from './validate.ts';
 
 type Input = z.infer<typeof TestConfigSchema>;
 type Result = z.infer<typeof TestConfigResponseSchema>;
@@ -110,8 +115,8 @@ export async function openUnsaved(
   authority?: ConnectionAuthority,
 ) {
   const def = requireConnector(input.connectorType);
-  assertFileInput(def, input.fileId);
   await assertOrg(sctx, input.orgId);
+  assertFileIdAllowed(def, input.fileId);
   const config = parseWith(def.configSchema, input.config, 'config');
   await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   const secrets = def.secretSchema
@@ -137,8 +142,8 @@ export async function testConfig(
   if (authority && authority.orgId !== input.orgId) throw new ForbiddenError();
   await assertConnectionAuthority(sctx, authority);
   const def = requireConnector(input.connectorType);
-  assertFileInput(def, input.fileId);
   await assertOrg(sctx, input.orgId);
+  assertFileIdAllowed(def, input.fileId);
   const config = parseWith(def.configSchema, input.config, 'config');
   await requireConnectorEntitled(sctx, input.orgId, connectorItem(def.type, config));
   const secrets = def.secretSchema

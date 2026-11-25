@@ -12,7 +12,10 @@ export function webhookUrl(env: AppEnv, conn: Pick<ConnectionRow, 'id' | 'mode'>
     : null;
 }
 
-type Shown = Pick<ConnectionDto, 'connectorVersion' | 'config'>;
+type Shown = Pick<ConnectionDto, 'connectorVersion' | 'config'> & {
+  /** Set when the stored config is shown as stored because it did not migrate. */
+  issue?: 'MIGRATE_FAILED' | 'MIGRATED_INVALID';
+};
 
 /**
  * The config as runs see it: one stored by an older connector version is shown migrated, under the
@@ -28,17 +31,22 @@ function shownConfig(c: ConnectionRow): Shown {
     migrated = def.migrate(c.connectorVersion, c.config);
   } catch {
     // A broken stored config must not fail a listing; `stored` keeps its old version, so clients can tell.
-    return stored;
+    return { ...stored, issue: 'MIGRATE_FAILED' };
   }
   const parsed = def.configSchema.safeParse(migrated);
   return parsed.success
     ? { connectorVersion: def.version, config: parsed.data as Record<string, Json> }
-    : stored;
+    : { ...stored, issue: 'MIGRATED_INVALID' };
 }
 
 /** Secrets never appear: only whether each credential exists. */
-export function toDto(env: AppEnv, c: ConnectionRow): ConnectionDto {
+export function toDto(
+  env: AppEnv,
+  c: ConnectionRow,
+  onIssue?: (code: NonNullable<Shown['issue']>) => void,
+): ConnectionDto {
   const shown = shownConfig(c);
+  if (shown.issue) onIssue?.(shown.issue);
   return {
     id: c.id,
     orgId: c.orgId,

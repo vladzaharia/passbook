@@ -86,6 +86,7 @@ describe('recipes and overlap', () => {
       secretSchema: null,
       outputFields: {},
       defaults: { intervalSeconds: 1, maxConcurrency: 1, requestsPerMinute: 1, timeoutMs: 1 },
+      entitled: true,
     });
     expect(info.recipes).toEqual([]);
     expect(info).toMatchObject({ category: 'apis', order: 0 });

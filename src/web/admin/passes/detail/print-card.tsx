@@ -5,6 +5,7 @@ import { channelReason } from '@/shared/copy/channels.ts';
 import { PRINT_COPY } from '@/shared/copy/print.ts';
 import { reprintConfirm, voidPrintConfirm } from '../../../lib/confirms.ts';
 import { formatDateTime } from '../../../lib/format.ts';
+import { useMode } from '../../../lib/mode.ts';
 import {
   Button,
   Callout,
@@ -25,8 +26,8 @@ import { printPageUrl, usePassPaper, usePassPrints, usePrintActions } from '../p
  * The staff print page opens in its own tab. The tab opens first, in the click, so a browser does
  * not take it for a pop-up; it moves to the page once the print exists.
  */
-function openPrintPage(passId: string, win: Window | null) {
-  const url = printPageUrl(passId);
+function openPrintPage(passId: string, mode: string, win: Window | null) {
+  const url = printPageUrl(passId, mode);
   if (win) {
     win.opener = null;
     win.location.href = url;
@@ -50,6 +51,7 @@ export function PrintCard({
   const channels = usePassPaper(pass.id);
   const prints = usePassPrints(pass.id);
   const actions = usePrintActions(pass.id);
+  const mode = useMode();
   const [ask, setAsk] = useState<'reprint' | 'void' | null>(null);
   const paper = channels.data?.effective.paper;
   const active = prints.data?.prints.find((p) => p.status === 'active');
@@ -57,12 +59,18 @@ export function PrintCard({
   if (channels.isPending || prints.isPending) return null;
   if (paper && !paper.on && !active && prints.data?.prints.length === 0) return null;
   const canPrint = !readOnly && !voided && paper?.on === true;
+  const lastCause = prints.data?.prints[0]?.voidCause;
+  const ended =
+    canPrint &&
+    !active &&
+    (lastCause === 'pass_voided' || lastCause === 'transfer' || lastCause === 'new_code');
 
   async function print(replace: boolean) {
     const win = window.open('about:blank', '_blank');
     try {
       if (replace || !active) await actions.mint.mutateAsync();
-      openPrintPage(pass.id, win);
+      else await actions.drawn.mutateAsync();
+      openPrintPage(pass.id, mode, win);
       toast.success(replace ? PRINT_COPY.reprinted : PRINT_COPY.made);
     } catch (error) {
       win?.close();
@@ -83,6 +91,7 @@ export function PrintCard({
           {paper && !paper.on && paper.reason ? (
             <Callout tone="info">{channelReason('paper', paper.reason)}</Callout>
           ) : null}
+          {active?.stale ? <Callout tone="warning">{PRINT_COPY.stale}</Callout> : null}
           {active ? (
             <ListRows label={PRINT_COPY.card}>
               <ListRow
@@ -96,7 +105,7 @@ export function PrintCard({
             <EmptyState
               inline
               art="stub"
-              title={PRINT_COPY.cardEmpty}
+              title={ended ? PRINT_COPY.againNote : PRINT_COPY.cardEmpty}
               action={
                 canPrint ? (
                   <Button
@@ -105,7 +114,7 @@ export function PrintCard({
                     loading={actions.mint.isPending}
                     onClick={printFromButton}
                   >
-                    {PRINT_COPY.print}
+                    {ended ? PRINT_COPY.again : PRINT_COPY.print}
                   </Button>
                 ) : undefined
               }

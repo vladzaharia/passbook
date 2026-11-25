@@ -1021,6 +1021,8 @@ __all__ = [
     "PassesPrintsListResponse",
     "PassesPrintsListResponsePrintsItem",
     "PassesPrintsListResult",
+    "PassesPrintsMarkDrawnResponse",
+    "PassesPrintsMarkDrawnResult",
     "PassesPrintsVoidResponse",
     "PassesPrintsVoidResult",
     "PassesRefreshResponse",
@@ -1185,6 +1187,8 @@ __all__ = [
     "PlatformWalletCredentialsChecksRetrieveResponse",
     "PlatformWalletCredentialsListResponse",
     "PlatformWalletCredentialsListResponseItemsItem",
+    "PlatformWalletCredentialsListResponseItemsItemLastCheck1",
+    "PlatformWalletCredentialsListResponseItemsItemLastCheck2",
     "PlatformWalletCredentialsMigrateResponse",
     "PlatformWalletCredentialsResolveMigrationParams",
     "PlatformWalletCredentialsResolveMigrationResponse",
@@ -1193,15 +1197,21 @@ __all__ = [
     "PlatformWalletCredentialsRetrieveMigrationResponseItemsItemIdentitySharedItem",
     "PlatformWalletCredentialsRevokeParams",
     "PlatformWalletCredentialsRevokeResponse",
+    "PlatformWalletCredentialsRevokeResponseLastCheck1",
+    "PlatformWalletCredentialsRevokeResponseLastCheck2",
     "PlatformWalletCredentialsRotateKeyResponse",
     "PlatformWalletCredentialsSetSamsungCardParams",
     "PlatformWalletCredentialsSetSamsungCardResponse",
+    "PlatformWalletCredentialsSetSamsungCardResponseLastCheck1",
+    "PlatformWalletCredentialsSetSamsungCardResponseLastCheck2",
     "PlatformWalletCredentialsUpsertParams",
     "PlatformWalletCredentialsUpsertParams1",
     "PlatformWalletCredentialsUpsertParams1Credentials",
     "PlatformWalletCredentialsUpsertParams2",
     "PlatformWalletCredentialsUpsertParams2Credentials",
     "PlatformWalletCredentialsUpsertResponse",
+    "PlatformWalletCredentialsUpsertResponseLastCheck1",
+    "PlatformWalletCredentialsUpsertResponseLastCheck2",
     "PlatformWalletEnrollmentsListResponse",
     "PlatformWalletEnrollmentsListResponseItemsItem",
     "PrintJobsCreateBody",
@@ -1810,19 +1820,27 @@ __all__ = [
     "WalletAccountsGoogleSharedCreateParams",
     "WalletAccountsGoogleSharedCreateResponse",
     "WalletAccountsGoogleSharedCreateResponseCredential",
+    "WalletAccountsGoogleSharedCreateResponseCredentialLastCheck1",
+    "WalletAccountsGoogleSharedCreateResponseCredentialLastCheck2",
     "WalletAccountsGoogleSharedRetrieveResponse",
     "WalletCredentialsChecksCreateResponse",
     "WalletCredentialsChecksRetrieveResponse",
     "WalletCredentialsListResponse",
     "WalletCredentialsListResponseItemsItem",
+    "WalletCredentialsListResponseItemsItemLastCheck1",
+    "WalletCredentialsListResponseItemsItemLastCheck2",
     "WalletCredentialsRevokeParams",
     "WalletCredentialsRevokeResponse",
+    "WalletCredentialsRevokeResponseLastCheck1",
+    "WalletCredentialsRevokeResponseLastCheck2",
     "WalletCredentialsUpsertParams",
     "WalletCredentialsUpsertParams1",
     "WalletCredentialsUpsertParams1Credentials",
     "WalletCredentialsUpsertParams2",
     "WalletCredentialsUpsertParams2Credentials",
     "WalletCredentialsUpsertResponse",
+    "WalletCredentialsUpsertResponseLastCheck1",
+    "WalletCredentialsUpsertResponseLastCheck2",
     "WalletEnrollmentsDisableParams",
     "WalletEnrollmentsDisableResponse",
     "WalletEnrollmentsDisableResponseIssuance1",
@@ -8269,6 +8287,8 @@ class PassesPrintsCreateResponse(_Model):
     passId: str
     generation: int
     status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -8282,6 +8302,19 @@ class PassesPrintsListResponsePrintsItem(_Model):
     passId: str
     generation: int
     status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
+    createdAt: int
+    voidedAt: int | None
+    voidCause: str | None
+
+class PassesPrintsMarkDrawnResponse(_Model):
+    id: str
+    passId: str
+    generation: int
+    status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -8291,6 +8324,8 @@ class PassesPrintsVoidResponse(_Model):
     passId: str
     generation: int
     status: _Literal["active", "voided", "used"] | str
+    passVersion: int | None
+    stale: bool
     createdAt: int
     voidedAt: int | None
     voidCause: str | None
@@ -9217,6 +9252,17 @@ class PlatformWalletCredentialsListResponseItemsItem(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: PlatformWalletCredentialsListResponseItemsItemLastCheck1 | PlatformWalletCredentialsListResponseItemsItemLastCheck2 | None
+
+class PlatformWalletCredentialsListResponseItemsItemLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletCredentialsListResponseItemsItemLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class PlatformWalletCredentialsMigrateResponse(_Model):
     queued: int
@@ -9268,6 +9314,17 @@ class PlatformWalletCredentialsRevokeResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: PlatformWalletCredentialsRevokeResponseLastCheck1 | PlatformWalletCredentialsRevokeResponseLastCheck2 | None
+
+class PlatformWalletCredentialsRevokeResponseLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletCredentialsRevokeResponseLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class PlatformWalletCredentialsRotateKeyResponse(_Model):
     runId: str
@@ -9291,6 +9348,17 @@ class PlatformWalletCredentialsSetSamsungCardResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: PlatformWalletCredentialsSetSamsungCardResponseLastCheck1 | PlatformWalletCredentialsSetSamsungCardResponseLastCheck2 | None
+
+class PlatformWalletCredentialsSetSamsungCardResponseLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletCredentialsSetSamsungCardResponseLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class PlatformWalletCredentialsUpsertParams1(_Model):
     provider: _Literal["google"] | str
@@ -9333,6 +9401,17 @@ class PlatformWalletCredentialsUpsertResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: PlatformWalletCredentialsUpsertResponseLastCheck1 | PlatformWalletCredentialsUpsertResponseLastCheck2 | None
+
+class PlatformWalletCredentialsUpsertResponseLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class PlatformWalletCredentialsUpsertResponseLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class PlatformWalletEnrollmentsListResponse(_Model):
     items: _List[PlatformWalletEnrollmentsListResponseItemsItem]
@@ -13120,6 +13199,17 @@ class WalletAccountsGoogleSharedCreateResponseCredential(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: WalletAccountsGoogleSharedCreateResponseCredentialLastCheck1 | WalletAccountsGoogleSharedCreateResponseCredentialLastCheck2 | None
+
+class WalletAccountsGoogleSharedCreateResponseCredentialLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class WalletAccountsGoogleSharedCreateResponseCredentialLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class WalletAccountsGoogleSharedRetrieveResponse(_Model):
     serviceAccountEmail: str | None
@@ -13152,6 +13242,17 @@ class WalletCredentialsListResponseItemsItem(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: WalletCredentialsListResponseItemsItemLastCheck1 | WalletCredentialsListResponseItemsItemLastCheck2 | None
+
+class WalletCredentialsListResponseItemsItemLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class WalletCredentialsListResponseItemsItemLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class WalletCredentialsRevokeParams(_Model):
     expectedRevision: int
@@ -13170,6 +13271,17 @@ class WalletCredentialsRevokeResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: WalletCredentialsRevokeResponseLastCheck1 | WalletCredentialsRevokeResponseLastCheck2 | None
+
+class WalletCredentialsRevokeResponseLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class WalletCredentialsRevokeResponseLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class WalletCredentialsUpsertParams1(_Model):
     provider: _Literal["google"] | str
@@ -13210,6 +13322,17 @@ class WalletCredentialsUpsertResponse(_Model):
     createdAt: int
     updatedAt: int
     cardTypes: _List[str]
+    lastCheck: WalletCredentialsUpsertResponseLastCheck1 | WalletCredentialsUpsertResponseLastCheck2 | None
+
+class WalletCredentialsUpsertResponseLastCheck1(_Model):
+    ok: _Literal[True]
+    code: None
+    at: int
+
+class WalletCredentialsUpsertResponseLastCheck2(_Model):
+    ok: _Literal[False]
+    code: str
+    at: int
 
 class WalletEnrollmentsDisableParams(_Model):
     expectedRevision: int
@@ -14055,6 +14178,8 @@ PassesMemberPhotoUploadResult = PassesMemberPhotoUploadResponse
 PassesPrintsCreateResult = PassesPrintsCreateResponse
 
 PassesPrintsListResult = PassesPrintsListResponse
+
+PassesPrintsMarkDrawnResult = PassesPrintsMarkDrawnResponse
 
 PassesPrintsVoidResult = PassesPrintsVoidResponse
 

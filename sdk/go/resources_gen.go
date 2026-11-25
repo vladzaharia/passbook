@@ -1446,6 +1446,15 @@ func (r *PassesPrintsResource) List(ctx context.Context, id string, opts ...Requ
 	return &out, nil
 }
 
+// MarkDrawn Record that the active print was drawn again from the pass as it is now `POST /api/v1/passes/{id}/print/drawn`
+func (r *PassesPrintsResource) MarkDrawn(ctx context.Context, id string, opts ...RequestOption) (*PassesPrintsMarkDrawnResult, error) {
+	var out PassesPrintsMarkDrawnResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/passes/" + pathEscape(id) + "/print/drawn"}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 // RetrievePage The print page of the active print, for staff `GET /api/v1/passes/{id}/print`
 func (r *PassesPrintsResource) RetrievePage(ctx context.Context, id string, opts ...RequestOption) (*http.Response, error) {
 	return r.c.download(ctx, call{method: "GET", path: "/api/v1/passes/" + pathEscape(id) + "/print"}, opts)

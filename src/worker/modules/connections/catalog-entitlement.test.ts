@@ -10,6 +10,7 @@ import { denyAllStores } from '../../platform/auth.ts';
 import { first, run } from '../../platform/db.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
+import { type ConnectionRow, getConnection, insertConnection } from './repo.ts';
 import { addMembership, type Kit, makeKit } from './test-kit.ts';
 
 let kit: Kit;
@@ -201,6 +202,74 @@ describe('connector plans', () => {
     );
     expect(res.status).toBe(403);
     expect(await code(res)).toBe('FEATURE_NOT_INCLUDED');
+  });
+
+  it('refuses the preview of an unsaved config the same way', async () => {
+    await onPreset('trial');
+    const res = await app.request(
+      '/api/v1/connections/test-config?preview=true',
+      {
+        method: 'POST',
+        headers: { ...session.headers, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: kit.org.id,
+          connectorType: 'http-json',
+          config: { baseUrl: 'https://api.example.com/v1' },
+          secrets: { token: 'tok-api-secret-xyz' },
+        }),
+      },
+      kit.env,
+    );
+    expect(res.status).toBe(403);
+    expect(await code(res)).toBe('FEATURE_NOT_INCLUDED');
+  });
+
+  it('refuses the insert itself on a trial org and leaves no row', async () => {
+    await onPreset('legacy');
+    const made = await createRest();
+    expect(made.status).toBe(201);
+    const { id } = (await made.json()) as { id: string };
+    const row = await getConnection(kit.env.DB, id);
+    expect(row).not.toBeNull();
+    await run(kit.env.DB, 'DELETE FROM connections WHERE id = ?', [id]);
+    await onPreset('trial');
+    const again = kit.sctx.ids.id();
+    await expect(
+      insertConnection(kit.sctx, { ...(row as ConnectionRow), id: again }, { orgId: kit.org.id }),
+    ).rejects.toMatchObject({ code: 'FEATURE_NOT_INCLUDED' });
+    expect(await getConnection(kit.env.DB, again)).toBeNull();
+  });
+
+  it('keeps a downgraded REST connection editable but not movable to a new origin', async () => {
+    await onPreset('legacy');
+    const made = await createRest();
+    expect(made.status).toBe(201);
+    const { id } = (await made.json()) as { id: string };
+    const patch = (config: Record<string, unknown>, secrets?: Record<string, string>) =>
+      app.request(
+        `/api/v1/connections/${id}`,
+        {
+          method: 'PATCH',
+          headers: { ...session.headers, 'content-type': 'application/json' },
+          body: JSON.stringify({ config, ...(secrets ? { secrets } : {}) }),
+        },
+        kit.env,
+      );
+    try {
+      await onPreset('trial');
+      const same = await patch({ baseUrl: 'https://api.example.com/v2' });
+      expect(same.status).toBe(200);
+      const moved = await patch(
+        { baseUrl: 'https://other.example.org/v1' },
+        { token: 'tok-new-secret-abc' },
+      );
+      expect(moved.status).toBe(403);
+      expect(await code(moved)).toBe('FEATURE_NOT_INCLUDED');
+      const stored = await getConnection(kit.env.DB, id);
+      expect(stored?.config).toMatchObject({ baseUrl: 'https://api.example.com/v2' });
+    } finally {
+      await run(kit.env.DB, 'DELETE FROM connections WHERE id = ?', [id]);
+    }
   });
 
   it('shows a platform admin with no org everything', async () => {

@@ -1,6 +1,15 @@
 {
   "codes": [
     {
+      "code": "ACCESS_MAIL_UNAVAILABLE",
+      "statuses": [
+        503
+      ],
+      "modules": [
+        "marketing"
+      ]
+    },
+    {
       "code": "ACCOUNT_DISABLED",
       "statuses": [
         403
@@ -6015,7 +6024,8 @@
         415
       ],
       "modules": [
-        "join"
+        "join",
+        "marketing"
       ]
     },
     {

@@ -1119,6 +1119,10 @@
     "resource": "passes",
     "method": "rotateCode"
   },
+  "passes.postPassesByIdPrintDrawn": {
+    "resource": "passes.prints",
+    "method": "markDrawn"
+  },
   "passes.postPassesByIdPrints": {
     "resource": "passes.prints",
     "method": "create"
