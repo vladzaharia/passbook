@@ -16,6 +16,7 @@ import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platf
 import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
+import { requireNotPersonalFor } from '../orgs/personal-guard.ts';
 import { getOrgActivity } from './activity.ts';
 import { developerFunnel } from './developer-funnel.ts';
 import { templateUsableByOrg } from './repo.ts';
@@ -93,6 +94,9 @@ register(
   async (c) => {
     const ctx = serviceContext(c);
     const query = c.req.valid('query');
+    const auth = c.var.auth;
+    if (query.orgId && auth?.kind === 'session')
+      await requireNotPersonalFor(ctx.env.DB, query.orgId, auth.userId);
     if (
       query.orgId &&
       query.templateId &&

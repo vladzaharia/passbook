@@ -68,7 +68,7 @@ describe('ensurePersonalOrg', () => {
     const db = appEnv.DB;
     expect(
       await first(db, 'SELECT preset FROM org_entitlements WHERE org_id = ?', [org?.id]),
-    ).toMatchObject({ preset: 'standard' });
+    ).toMatchObject({ preset: 'legacy' });
     const member = await first<{ roles: string; invitation_id: string }>(
       db,
       'SELECT roles, invitation_id FROM org_memberships WHERE org_id = ? AND user_id = ? AND revoked_at IS NULL',
@@ -308,11 +308,15 @@ describe('guard rails', () => {
     expect((await orgsOf(owner.userId))[0]?.name).toBe('Renamed');
   });
 
-  it('lets platform admins see the personal flag and owner in the directory', async () => {
+  it('shows the personal flag and owner to the owner only; another platform admin is refused', async () => {
     const owner = await adminUser('Visible Owner');
     await ensurePersonalOrg(ctx(), owner);
     const [org] = await orgsOf(owner.userId);
-    const res = await call('GET', `/${org?.id}`);
+    const refused = await call('GET', `/${org?.id}`);
+    expect(refused.status).toBe(403);
+    expect(((await refused.json()) as { code: string }).code).toBe('ORG_PERSONAL');
+    const session = await makeSession(f, { userId: owner.userId, roles: ['admin', 'user'] });
+    const res = await app.request(`/api/v1/orgs/${org?.id}`, { headers: session.headers }, appEnv);
     expect(await res.json()).toMatchObject({
       personal: true,
       personalOwner: { id: owner.userId, name: 'Visible Owner' },

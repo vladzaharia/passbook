@@ -44,7 +44,7 @@ const adminFence = (admin: AdminFence | boolean): AdminFence =>
 // Repeat the manager authorization predicate at the read or mutation itself.
 const managerSql = (admin: AdminFence) => `EXISTS (SELECT 1 FROM users u JOIN orgs o ON o.id = ?
  WHERE u.id = ? AND u.status = 'active' AND o.status = 'active' AND
- ((${admin.sql}) OR EXISTS (SELECT 1 FROM org_memberships m, json_each(m.roles) r
+ ((o.personal_user_id IS NULL AND (${admin.sql})) OR EXISTS (SELECT 1 FROM org_memberships m, json_each(m.roles) r
  WHERE m.org_id = o.id AND m.user_id = u.id AND m.revoked_at IS NULL AND r.value = 'org_admin'
  AND NOT EXISTS (SELECT 1 FROM json_each(m.roles) x WHERE x.type != 'text' OR x.value NOT IN ('org_admin','integration_admin','template_author','template_reviewer','template_publisher','pass_operator','read_only'))
  AND (SELECT count(*) FROM json_each(m.roles)) = (SELECT count(DISTINCT value) FROM json_each(m.roles))))) `;
@@ -127,10 +127,11 @@ export async function userName(db: D1Database, userId: string): Promise<string |
 export function orgName(db: D1Database, orgId: string) {
   return first<{ name: string }>(db, 'SELECT name FROM orgs WHERE id = ?', [orgId]);
 }
+/** A platform admin acts on a live org that is not personal (a personal org's members are its owner's to manage). */
 export function activePrincipal(db: D1Database, userId: string, orgId: string) {
   return first<{ ok: number }>(
     db,
-    `SELECT 1 AS ok FROM users u JOIN orgs o ON o.id = ? WHERE u.id = ? AND u.status = 'active' AND o.status = 'active'`,
+    `SELECT 1 AS ok FROM users u JOIN orgs o ON o.id = ? WHERE u.id = ? AND u.status = 'active' AND o.status = 'active' AND o.personal_user_id IS NULL`,
     [orgId, userId],
   );
 }
