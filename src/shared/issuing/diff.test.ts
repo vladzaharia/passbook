@@ -43,6 +43,14 @@ describe('fieldChanges', () => {
     ]);
   });
 
+  it('reads a date stored as midnight UTC as that day in any zone', () => {
+    const at = { validUntil: '2030-01-01T00:00:00Z' };
+    expect(fieldChanges(inputs, {}, at, LA)[0]?.to).toBe('Jan 1, 2030');
+    expect(fieldChanges(inputs, {}, { validUntil: '2030-01-01T00:00:00.000Z' }, LA)[0]?.to).toBe(
+      'Jan 1, 2030',
+    );
+  });
+
   it('adds the time of day only when there is one', () => {
     const at = { validUntil: '2030-01-01T13:45:00Z' };
     expect(fieldChanges(inputs, {}, at, UTC)[0]?.to).toBe('Jan 1, 2030, 1:45 PM');

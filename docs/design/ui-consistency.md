@@ -363,6 +363,13 @@ Action icons (`src/web/lib/action-icons.ts`):
   one action. Inside a card: `inline` (no border, 64×48 art, one line). Navigation actions are
   outline; only create is primary.
 - Filtered: the entity art dimmed with the lens over it, `No <things> match`, `Clear filters`.
+- No organization: `/admin` and every org-scoped page render the one `OrgChooser`
+  (`ui/layout/org-chooser.tsx`), never an empty state of their own. A raised band with the title
+  (and `Find an organization` past six), the buddy (M) on its foil edge, then the organizations as
+  badges: the org's hue band and mark, the name, your roles, `Last used` first. Choosing one opens
+  the same section there, else the first its roles open. Platform admins also get a Platform card.
+  Arrow keys move through the grid; Down from the filter enters it, Enter opens the first match.
+  Developer sandboxes are not offered. In a tab, `inline` (an h2, no buddy).
 - Truly empty list: the empty state holds the only primary; the header create turns outline and
   the toolbar hides.
 - One state language in the SPA and on SSR pages (`StateArt`, `ui/art/state-art.tsx`); ways back
@@ -543,7 +550,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |
 | Motion hooks | `useArrivalMode`, `useInsertHighlight(ids)`, `removeWithTransition(update)` (`lib/motion.ts`) |
 | Offline | `useOnline()` (`lib/online.ts`); the shells mount `OfflineBanner`; an unloaded route chunk offline renders the route error inside the shell (`lib/offline-routes.ts`) |
-| Org scope | the path names it: `useAdminScope()`, `useOrgScope()` (`lib/org-filter.tsx`); `switchTarget`/`withOrg` (`lib/scope.ts`); no `orgId` search param |
+| Org scope | the path names it: `useAdminScope()`, `useOrgScope()` (`lib/org-filter.tsx`); `switchTarget`/`withOrg` (`lib/scope.ts`); no `orgId` search param; `OrgChooser next? title? inline?` when a page has none |
 | Shell | `AppShell bar sidebar? width holder` (`ui/layout/app-shell.tsx`); `UserMenu` (the one account menu); `useDocumentTitle` (`lib/route-focus.tsx`) |
 | Theme | `useTheme()`; `THEME_OPTIONS` (menu and palette), `THEME_ICON`; `readPref`/`writePref` (`lib/theme.tsx`) |
 | Palette | `usePalette()?.open()` opens the admin palette (null outside the shell) |

@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
 import { useSeededZone } from '@/web/admin/settings/use-org-time-zone.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { useDebounced } from '../../lib/debounce.ts';
 import { isApiError } from '../../lib/errors.ts';
 import { BELOW_LG, useMediaQuery } from '../../lib/media.ts';
@@ -15,7 +16,6 @@ import {
   CardHeader,
   DetailNotFound,
   detailError,
-  EmptyState,
   ErrorState,
   Form,
   PageHeader,
@@ -75,7 +75,7 @@ export function ComposerPage({
   if (scope.isLoading) return <SkeletonDetail label="Loading organization access" />;
   if (scope.isError)
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
-  if (!orgId) return <EmptyState heading art="building" title="Choose an organization" />;
+  if (!orgId) return <OrgChooser />;
   if (!canOperate) return <ForbiddenPage />;
   if (from && b && b.orgId !== orgId)
     return (

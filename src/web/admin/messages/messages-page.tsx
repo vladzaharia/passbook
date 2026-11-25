@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { BroadcastDto, BroadcastState } from '@/shared/contracts/broadcasts.ts';
 import type { DataColumnDef } from '@/web/ui/data-table-meta.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { ENTITY } from '../../lib/entities.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
 import {
@@ -48,7 +49,7 @@ export function MessagesPage({
   if (scope.isLoading) return <SkeletonRows label="Loading organization access" />;
   if (scope.isError)
     return <ErrorState subject="organization access" error={scope.error} onRetry={scope.refetch} />;
-  if (!scope.orgId) return <EmptyState heading art="building" title="Choose an organization" />;
+  if (!scope.orgId) return <OrgChooser />;
   if (!scope.membership?.capabilities.includes('messages:read')) return <ForbiddenPage />;
   return (
     <ScopedMessagesPage

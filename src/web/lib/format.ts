@@ -1,6 +1,6 @@
 import { NO_EMAIL_LABEL } from '../../shared/email.ts';
 import { formatDayIn } from '../../shared/format-date.ts';
-import { CALENDAR_ZONE, DEFAULT_TIME_ZONE } from '../../shared/time-zone.ts';
+import { CALENDAR_ZONE, DEFAULT_TIME_ZONE, isCalendarMidnight } from '../../shared/time-zone.ts';
 
 export { formatEndedOn } from '../../shared/format-date.ts';
 
@@ -104,7 +104,7 @@ export function formatExpiry(iso: string, timeZone?: string): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
   // A date with no time is a calendar day: formatted in UTC it never moves to the day before.
-  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso) || isCalendarMidnight(iso)) {
     return new Intl.DateTimeFormat(LOCALE, {
       month: 'short',
       day: 'numeric',
@@ -281,7 +281,8 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-
 export function formatMaybeDate(text: string, timeZone: string = DEFAULT_TIME_ZONE): string {
   if (!ISO_DATE.test(text)) return text;
   // A bare date is a calendar day: the reader's zone must not move it. A Z time reads in the org zone.
-  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return UTC_DAY.format(Date.parse(text));
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text) || isCalendarMidnight(text))
+    return UTC_DAY.format(Date.parse(text));
   return text.endsWith('Z')
     ? formatDayIn(Date.parse(text), timeZone, LOCALE)
     : formatDay(Date.parse(text));

@@ -78,6 +78,9 @@ describe('formatExpiry and formatMaybeDate in the org zone', () => {
     expect(formatMaybeDate('2026-12-01T03:00:00Z')).toBe('Nov 30, 2026');
     expect(formatMaybeDate('2026-12-01T03:00:00Z', 'Asia/Tokyo')).toBe('Dec 1, 2026');
     expect(formatMaybeDate('2026-12-01', 'Asia/Tokyo')).toBe('Dec 1, 2026');
+    // Midnight UTC is a stored calendar date: the same day in every zone.
+    expect(formatMaybeDate('2026-12-01T00:00:00Z')).toBe('Dec 1, 2026');
+    expect(formatExpiry('2026-12-01T00:00:00.000Z')).toBe('Dec 1, 2026');
   });
 });
 
