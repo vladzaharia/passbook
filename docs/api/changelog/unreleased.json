@@ -909,7 +909,7 @@
     "operationId": "entitlements.getOrgsByIdPlan",
     "op": "GET /api/v1/orgs/{id}/plan",
     "change": "200.limits[].key: enum value \"members.developers\" added",
-    "note": ""
+    "note": "The plan lists a members.developers limit: how many developers an org can invite."
   },
   {
     "key": "GET /api/v1/orgs/{id}/plan new operation",
