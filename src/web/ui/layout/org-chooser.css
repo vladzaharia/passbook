@@ -1,0 +1,230 @@
+/* The org chooser (org-chooser.tsx): a lobby band the buddy sits on, then the organizations as
+   access badges. Each badge's band takes the org's hue (the monogram's); its windows light up
+   when you point at it, and stay lit on the one you used last. Transform and opacity only. */
+
+.wl-kc-lobby {
+  /* The buddy (M) stands on the foil edge, aims its pass down and left at the badges. */
+  --wl-buddy-room: 5.5rem;
+  --wl-buddy-inset: 1.5rem;
+  --wl-drop: 28px;
+  --wl-aim: 1.6;
+  --wl-look: -2.4px 1.6px;
+}
+/* The sign-in card's foil edge, carried onto the first choice after it. */
+.wl-kc-lobby::before {
+  content: "";
+  position: absolute;
+  inset: -1px -1px auto;
+  height: 2px;
+  border-radius: var(--pk-radius-lg) var(--pk-radius-lg) 0 0;
+  background: var(--wl-foil);
+}
+
+.wl-kc {
+  isolation: isolate;
+  --kc-l1: 0.36;
+  --kc-l2: 0.22;
+  --kc-ink: white;
+  --kc-lit: var(--pk-brand-gold);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .wl-kc {
+    --kc-l1: 0.9;
+    --kc-l2: 0.965;
+    --kc-ink: black;
+  }
+}
+[data-theme="light"] .wl-kc {
+  --kc-l1: 0.9;
+  --kc-l2: 0.965;
+  --kc-ink: black;
+}
+
+.wl-kc-band {
+  position: relative;
+  flex-shrink: 0;
+  height: 5.25rem;
+  background: linear-gradient(
+    160deg,
+    oklch(var(--kc-l1) 0.07 var(--h, 250)),
+    oklch(var(--kc-l2) 0.035 var(--h, 250))
+  );
+}
+.wl-kc-ghost .wl-kc-band {
+  background: var(--pk-state-hover-tint);
+}
+/* The lanyard slot, punched through to the page. */
+.wl-kc-slot {
+  position: absolute;
+  top: 0.625rem;
+  left: 50%;
+  width: 2rem;
+  height: 0.375rem;
+  translate: -50% 0;
+  border-radius: 999px;
+  background: var(--pk-surface-page);
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.35);
+}
+.wl-kc-mark {
+  position: absolute;
+  left: 1rem;
+  bottom: -1.25rem;
+  border-radius: var(--pk-radius-lg);
+  box-shadow: 0 0 0 3px var(--pk-surface-raised);
+}
+/* Twelve windows, four across; a few light up, one after another. */
+.wl-kc-windows {
+  position: absolute;
+  right: 0.875rem;
+  bottom: 0.75rem;
+  display: grid;
+  grid-template-columns: repeat(4, 6px);
+  gap: 4px;
+}
+.wl-kc-windows i {
+  position: relative;
+  width: 6px;
+  height: 8px;
+  border-radius: 1px;
+  background: color-mix(in oklab, var(--kc-ink) 14%, transparent);
+}
+.wl-kc-windows i::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--kc-lit);
+  box-shadow: 0 0 6px var(--kc-lit);
+  opacity: 0;
+}
+.wl-kc-windows
+  i:is(:nth-child(1), :nth-child(3), :nth-child(6), :nth-child(8), :nth-child(11))::after {
+  --lit: 1;
+}
+.wl-kc:is(:hover, :has(.wl-kc-link:focus-visible), [data-lit]) .wl-kc-windows i::after {
+  opacity: var(--lit, 0);
+}
+.wl-kc-go {
+  opacity: 0.6;
+}
+.wl-kc:is(:hover, :has(.wl-kc-link:focus-visible)) {
+  border-color: var(--pk-border-strong);
+}
+.wl-kc:is(:hover, :has(.wl-kc-link:focus-visible)) .wl-kc-go {
+  opacity: 1;
+  color: var(--pk-accent-fg);
+}
+/* The badge lifts as a whole; its shadow is a layer under it (the card clips its own), so only
+   the layer's opacity changes. */
+.wl-kc-item {
+  position: relative;
+}
+.wl-kc-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--pk-radius-lg);
+  box-shadow: var(--pk-elevation-2);
+  opacity: 0;
+  pointer-events: none;
+}
+.wl-kc-item:is(:hover, :has(.wl-kc-link:focus-visible))::before {
+  opacity: 1;
+}
+/* The name is the link; its overlay spans the card, and the card wears the focus ring. */
+.wl-kc-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.wl-kc-link:focus-visible {
+  outline: none;
+}
+html:not([data-modality="pointer"]) .wl-kc:has(.wl-kc-link:focus-visible) {
+  outline: 2px solid var(--pk-focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wl-kc-item {
+    transition: transform var(--wl-dur-hover) var(--wl-ease-out);
+  }
+  .wl-kc {
+    transition: border-color var(--wl-dur-hover) var(--wl-ease-out);
+  }
+  .wl-kc-item::before,
+  .wl-kc-go {
+    transition:
+      opacity var(--wl-dur-hover) var(--wl-ease-out),
+      translate var(--wl-dur-hover) var(--wl-ease-out);
+  }
+  .wl-kc-windows i::after {
+    transition: opacity var(--wl-dur-enter) var(--wl-ease-out);
+    transition-delay: calc(var(--w, 0) * 40ms);
+  }
+  .wl-kc-windows i:nth-child(3)::after {
+    --w: 1;
+  }
+  .wl-kc-windows i:nth-child(6)::after {
+    --w: 2;
+  }
+  .wl-kc-windows i:nth-child(8)::after {
+    --w: 3;
+  }
+  .wl-kc-windows i:nth-child(11)::after {
+    --w: 4;
+  }
+  @media (hover: hover) {
+    .wl-kc-item:hover {
+      transform: translateY(-2px);
+    }
+    .wl-kc-item:hover .wl-kc-go {
+      translate: 2px 0;
+    }
+  }
+  .wl-kc-item:active {
+    transform: scale(0.98);
+    transition-duration: var(--wl-dur-press);
+  }
+  /* Arrival: each badge swings in from its lanyard, one after another. */
+  .wl-kc-list[data-enter] > .wl-kc-item {
+    transform-origin: 50% 0;
+    animation: wl-kc-swing var(--wl-dur-card) var(--wl-ease-card) backwards;
+    animation-delay: calc(min(var(--i, 0), 6) * var(--wl-stagger-cards));
+  }
+  .wl-kc-list[data-enter] > .wl-kc-item:nth-child(even) {
+    --kc-swing: 3deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wl-kc-list[data-enter] > .wl-kc-item {
+    animation: wl-fade var(--wl-dur-enter) var(--wl-ease-out) backwards;
+  }
+}
+@keyframes wl-kc-swing {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) rotate(var(--kc-swing, -3deg));
+  }
+}
+
+/* Phones: one column of short badges held sideways, the band at the start. */
+@media (max-width: 639.98px) {
+  .wl-kc-band {
+    width: 5rem;
+    height: auto;
+    min-height: 4.5rem;
+  }
+  .wl-kc-slot,
+  .wl-kc-windows {
+    display: none;
+  }
+  .wl-kc-mark {
+    left: 50%;
+    top: 50%;
+    bottom: auto;
+    translate: -50% -50%;
+    box-shadow: none;
+  }
+}
