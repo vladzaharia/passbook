@@ -189,6 +189,23 @@ describe('customer screen draft', () => {
     expect(getByTestId('customer-draft')).toHaveTextContent('$3.00');
   });
 
+  it('a late draft that lands in the same tick as the receipt stays hidden after the receipt clears', () => {
+    vi.useFakeTimers();
+    const { socket, queryByTestId, hero } = screen();
+    const first = ready(READY);
+    act(() => socket.say({ cursor: READY, rows: [first] }));
+    const receipt = { ...ready(OTHER), kind: 'ok' as const, at: first.at + 500 };
+    act(() => {
+      socket.say({ cursor: OTHER, rows: [receipt] });
+      socket.say(draft(READY, first.at + 600, '$12.00', READY, first.at));
+    });
+    expect(queryByTestId('customer-draft')).toBeNull();
+    act(() => vi.advanceTimersByTime(6_000));
+    expect(queryByTestId('customer-draft')).toBeNull();
+    expect(hero).toHaveAttribute('data-status', 'ready');
+    vi.useRealTimers();
+  });
+
   it('a draft-only cancel keeps the ready card, and a re-pick shows again', async () => {
     const { socket, queryByTestId, hero, getByTestId } = screen();
     act(() => socket.say({ cursor: READY, rows: [ready()] }));

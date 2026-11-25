@@ -102,13 +102,14 @@ export function createDraftSync(deps: ScanDeps, health: DraftHealth = draftHealt
     inflight = true;
     shown = w;
     void counted(port.put(w, { signal: gone.signal })).then(async () => {
-      inflight = false;
       if (clearAfter) {
+        // Still on the wire until the trailing clear settles, so a new PUT cannot overtake it.
         const c = clearAfter;
         clearAfter = null;
         await counted(port.clear(c.ref, c.keep, { signal: gone.signal }));
-        if (pending) send();
-      } else if (pending) send();
+      }
+      inflight = false;
+      if (pending) send();
       else if (shown) armResend();
     });
   }

@@ -11,7 +11,13 @@ import './live-screen.css';
 import { Toaster, toast } from '../../ui/toaster.tsx';
 import type { ScanApi } from '../api/scan-api.ts';
 import { MonitorHardware } from '../hardware/hardware-control.tsx';
-import { DRAFT_HOLD_MS, reviewAmount, shownDraft, withoutReplacedReady } from './customer-draft.ts';
+import {
+  DRAFT_HOLD_MS,
+  reviewAmount,
+  settledDrafts,
+  shownDraft,
+  withoutReplacedReady,
+} from './customer-draft.ts';
 import { useMonitorBeat } from './monitor-beat.ts';
 import { MonitorBoard } from './monitor-board.tsx';
 import { deskActing, type OverrideNote, StaffControl, useLetIn } from './monitor-desk.tsx';
@@ -115,7 +121,7 @@ export function LiveScreen({
     (row) => now - row.at < (customer ? CUSTOMER_HOLD_MS[row.kind] : 15 * 60_000),
   );
   const latest = recent[0];
-  const draft = customer ? shownDraft(drafts, latest, now) : null;
+  const draft = customer ? shownDraft(settledDrafts(drafts, rows), latest, now) : null;
   const held = useLeaving(draft?.view);
   const shown = held.value;
   const view = shown ?? latest?.customer ?? null;

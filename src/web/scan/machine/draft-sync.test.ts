@@ -42,12 +42,14 @@ interface Deferred {
 }
 
 /** A draft port whose calls the test settles itself. */
-function port(clock: ReturnType<typeof fakeClock>, manual = false) {
+function port(clock: ReturnType<typeof fakeClock>, manual = false, slowClear = false) {
   const puts: Deferred[] = [];
   const clears: { ref: string; keep: boolean }[] = [];
+  const clearSettles: (() => void)[] = [];
   return {
     puts,
     clears,
+    clearSettles,
     port: {
       put: vi.fn((body: Deferred['body']) => {
         return new Promise<{ screens: number }>((resolve, reject) => {
@@ -61,18 +63,23 @@ function port(clock: ReturnType<typeof fakeClock>, manual = false) {
           if (!manual) call.settle();
         });
       }),
-      clear: vi.fn(async (ref: string, keep: boolean) => {
+      clear: vi.fn((ref: string, keep: boolean) => {
         clears.push({ ref, keep });
-        return { screens: 1 };
+        if (!slowClear) return Promise.resolve({ screens: 1 });
+        return new Promise<{ screens: number }>((resolve) =>
+          clearSettles.push(() => resolve({ screens: 1 })),
+        );
       }),
     },
   };
 }
 
-async function desk(opts: { manual?: boolean; passId?: string; outcome?: object } = {}) {
+async function desk(
+  opts: { manual?: boolean; slowClear?: boolean; passId?: string; outcome?: object } = {},
+) {
   const clock = fakeClock();
   const fake = fakeDeps(clock);
-  const draft = port(clock, opts.manual);
+  const draft = port(clock, opts.manual, opts.slowClear);
   fake.api.resolve.mockResolvedValue(fixtureOutcome('ready', null, { card: card(opts.outcome) }));
   const store = createScanStore(
     { ...fake.deps, draft: draft.port },
@@ -247,6 +254,22 @@ describe('draft sync', () => {
     await flush();
     await flush();
     expect(d.clears).toHaveLength(2);
+    expect(d.puts).toHaveLength(2);
+  });
+
+  it('keeps the call on the wire until the trailing clear settles, so a new draft cannot overtake it', async () => {
+    const d = await desk({ manual: true, slowClear: true });
+    open(d);
+    d.clock.advance(300);
+    d.store.dispatch({ type: 'cancel' });
+    open(d);
+    d.clock.advance(300);
+    d.puts[0]?.settle();
+    await flush();
+    expect(d.clears).toHaveLength(2); // the immediate clear, then the trailing one
+    expect(d.puts).toHaveLength(1);
+    d.clearSettles[1]?.();
+    await flush();
     expect(d.puts).toHaveLength(2);
   });
 
