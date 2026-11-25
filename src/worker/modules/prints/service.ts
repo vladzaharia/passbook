@@ -133,8 +133,19 @@ export async function voidPrint(
 
 /** The pass's prints, newest first; the active one is stale when the pass now draws something else. */
 export async function listPassPrints(ctx: ServiceContext, pass: Pass): Promise<PassPrint[]> {
-  const ticket = await paperTicket(ctx, pass);
-  return repo.listPrints(ctx.env.DB, pass.id, ticket ? await paperHash(ticket) : null);
+  const prints = await repo.listPrints(ctx.env.DB, pass.id);
+  const active = prints.find((p) => p.status === 'active');
+  if (!active) return prints;
+  // A ticket that cannot be drawn (the template version is gone) is not stale: the list never fails for it.
+  const ticket = await paperTicket(ctx, pass).catch((error: unknown) => {
+    ctx.log.warn('prints.stale_unresolved', {
+      code: 'PRINT_STALE_UNRESOLVED',
+      error: error instanceof Error ? error.name : 'unknown',
+    });
+    return null;
+  });
+  if (!ticket) return prints;
+  return repo.listPrints(ctx.env.DB, pass.id, await paperHash(ticket));
 }
 
 /**

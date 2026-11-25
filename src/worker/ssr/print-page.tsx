@@ -78,9 +78,11 @@ const SCRIPT = (nonce: string) => `<script nonce="${nonce}">(()=>{
 const err=document.querySelector('[data-error]');
 const say=(m)=>{if(err){err.textContent=m;err.hidden=false}};
 const post=async(path)=>{if(err)err.hidden=true;try{const r=await fetch(location.pathname+path,{method:'POST',credentials:'same-origin',headers:{accept:'application/json'}});if(r.status===429)return say(${JSON.stringify(PRINT_COPY.limited)});if(!r.ok)return say(${JSON.stringify(PRINT_COPY.failed)});location.reload()}catch{say(${JSON.stringify(PRINT_COPY.failed)})}};
+// Records a redraw. A staff session also needs its CSRF token; a holder's link does not.
+const drawn=async(staff)=>{try{const h={};if(staff){const s=await (await fetch('/api/v1/session',{credentials:'same-origin'})).json();h['x-csrf-token']=s.csrfToken}await fetch(location.pathname+'/drawn',{method:'POST',credentials:'same-origin',headers:h,keepalive:true})}catch{}};
 const ask=(which)=>{for(const c of document.querySelectorAll('[data-confirm]'))c.hidden=c.dataset.confirm!==which};
 document.addEventListener('click',(e)=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act;
-if(a==='print'){window.print();if(b.dataset.drawn)fetch(location.pathname+'/drawn',{method:'POST',credentials:'same-origin',keepalive:true}).catch(()=>{})}
+if(a==='print'){window.print();if(b.dataset.drawn)drawn(b.dataset.drawn==='staff')}
 else if(a==='make')post('');
 else if(a==='reprint'||a==='void')ask(a);
 else if(a==='cancel')ask('');
@@ -131,6 +133,7 @@ function sheetHtml(props: PrintPageProps, model: Ready) {
       code={model.code}
       drawing={drawPaperCode(toSvg, model.design.barcode, model.code)}
       mode={model.mode}
+      mark={model.mark}
       issued={{ generation: model.generation, at: new Date(model.printedAt).toISOString() }}
       assets={{ logo: url(model.files.logo), art: url(model.files.art) }}
     />,
@@ -141,7 +144,13 @@ function sheetHtml(props: PrintPageProps, model: Ready) {
 function actionsHtml(props: PrintPageProps) {
   const holder = props.audience === 'holder';
   const actions = [
-    button('print', PRINT_COPY.print, Printer, true, holder ? ' data-drawn' : ''),
+    button(
+      'print',
+      PRINT_COPY.print,
+      Printer,
+      true,
+      ` data-drawn="${holder ? 'holder' : 'staff'}"`,
+    ),
     ...(props.pdfHref
       ? [
           `<a class="btn outline" href="${escapeHtml(props.pdfHref)}" download>${iconHtml(Download)}${escapeHtml(PRINT_COPY.download)}</a>`,

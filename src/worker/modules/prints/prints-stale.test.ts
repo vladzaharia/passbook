@@ -125,6 +125,15 @@ describe('prints: stale printouts', () => {
     ]);
   });
 
+  it('lists without failing when the ticket cannot be drawn, and says not stale', async () => {
+    const { api, pass, list, setPass } = await setup();
+    await api('POST', `/passes/${pass.id}/prints`);
+    await setPass("template_version = 'gone'");
+    const res = await api('GET', `/passes/${pass.id}/prints`);
+    expect(res.status).toBe(200);
+    expect(await list()).toMatchObject([{ status: 'active', stale: false }]);
+  });
+
   it('a print without a recorded drawing is never stale', async () => {
     const { kit, api, pass, list, rename } = await setup();
     await api('POST', `/passes/${pass.id}/prints`);

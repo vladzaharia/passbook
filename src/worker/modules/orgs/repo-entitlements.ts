@@ -11,6 +11,8 @@ import type { AuditEntry } from '../audit/types.ts';
 export interface OrgEntitlementsRow {
   preset: string;
   revision: number;
+  /** The preset revision the org was last aligned to; below the preset's, an edit is still moving it. */
+  preset_revision: number;
   updated_at: number;
 }
 
@@ -24,6 +26,9 @@ export interface OverrideRow {
 export interface PresetRow {
   preset: string;
   label: string;
+  revision: number;
+  updated_at: number;
+  previous_values: string | null;
   org_count: number;
 }
 
@@ -39,7 +44,7 @@ export const orgIsDeveloper = async (db: D1Database, orgId: string): Promise<boo
 export const orgEntitlementsRow = (db: D1Database, orgId: string) =>
   first<OrgEntitlementsRow>(
     db,
-    'SELECT preset, revision, updated_at FROM org_entitlements WHERE org_id = ?',
+    'SELECT preset, revision, preset_revision, updated_at FROM org_entitlements WHERE org_id = ?',
     [orgId],
   );
 
@@ -56,17 +61,17 @@ export const standingOverrides = (db: D1Database, orgId: string, now: number) =>
 export const presetRows = (db: D1Database) =>
   all<PresetRow>(
     db,
-    `SELECT m.preset, m.label, (SELECT count(*) FROM org_entitlements e WHERE e.preset = m.preset) AS org_count
+    `SELECT m.preset, m.label, m.revision, m.updated_at, m.previous_values, (SELECT count(*) FROM org_entitlements e WHERE e.preset = m.preset) AS org_count
      FROM entitlement_preset_meta m ORDER BY m.is_plan, m.preset`,
   );
 
-/** Every stored override key, expired ones too: a save removes what it does not keep. */
-export const storedOverrideKeys = async (db: D1Database, orgId: string): Promise<string[]> =>
-  (
-    await all<{ key: string }>(db, 'SELECT key FROM org_entitlement_overrides WHERE org_id = ?', [
-      orgId,
-    ])
-  ).map((r) => r.key);
+/** Every stored override, expired ones too: a save removes what it does not keep, and the journal reads them. */
+export const storedOverrides = (db: D1Database, orgId: string) =>
+  all<OverrideRow>(
+    db,
+    'SELECT key, value, note, expires_at FROM org_entitlement_overrides WHERE org_id = ? ORDER BY key',
+    [orgId],
+  );
 
 export const presetValueRows = (db: D1Database) =>
   all<{ preset: string; key: string; value: string }>(
@@ -80,6 +85,8 @@ export interface EntitlementsWrite {
   /** The revision read; 0 creates the missing row instead of moving an existing one. */
   expectedRevision: number;
   preset: string;
+  /** The preset's revision, which the org is now aligned to. */
+  presetRevision: number;
   now: number;
   /** Keys whose override is removed (including an expired one still stored). */
   remove: string[];
@@ -110,7 +117,12 @@ export async function writeEntitlements(ctx: ServiceContext, w: EntitlementsWrit
     );
   else
     g.update('org_entitlements', {
-      set: { preset: w.preset, updated_at: w.now, updated_by: who },
+      set: {
+        preset: w.preset,
+        preset_revision: w.presetRevision,
+        updated_at: w.now,
+        updated_by: who,
+      },
       inc: ['revision'],
       where: { org_id: w.orgId, revision: w.expectedRevision },
       require: 'one',

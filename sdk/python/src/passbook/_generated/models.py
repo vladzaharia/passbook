@@ -1037,6 +1037,11 @@ __all__ = [
     "PlatformAppleCallsListResponseItemsItem",
     "PlatformAuditEntriesListResponse",
     "PlatformAuditEntriesListResponseItemsItem",
+    "PlatformEntitlementPresetsListResponse",
+    "PlatformEntitlementPresetsListResponsePresetsItem",
+    "PlatformEntitlementPresetsUpdateParams",
+    "PlatformEntitlementPresetsUpdateResponse",
+    "PlatformEntitlementPresetsUpdateResponsePreset",
     "PlatformMetricsRetrieveOverviewResponse",
     "PlatformMetricsRetrieveOverviewResponseDirectory",
     "PlatformMetricsRetrieveOverviewResponseLiveItem",
@@ -5715,6 +5720,7 @@ class OrgsEntitlementsRetrieveResponse(_Model):
     preset: str | None
     label: str | None
     items: _List[OrgsEntitlementsRetrieveResponseItemsItem]
+    usage: _Dict[str, int]
 
 class OrgsEntitlementsRetrieveResponseItemsItem(_Model):
     key: _Literal["api", "api.rateTier", "api.keys", "apps", "webhooks", "webhooks.endpoints", "connections", "connectors", "wallet.google", "wallet.samsung", "print", "nfc", "scanning.devices", "join.perDay", "messages.perDay", "passes.changesPerDay", "passes.live", "passes.test", "templates", "templates.uploads", "templates.stylesBlocked", "email.perDay", "members", "brand.mark", "domains", "identity.own", "identity.managed"] | str
@@ -8162,6 +8168,36 @@ class PlatformAuditEntriesListResponseItemsItem(_Model):
     requestId: str | None
     detail: _Any | None = None
 
+class PlatformEntitlementPresetsListResponse(_Model):
+    presets: _List[PlatformEntitlementPresetsListResponsePresetsItem]
+
+class PlatformEntitlementPresetsListResponsePresetsItem(_Model):
+    preset: str
+    label: str
+    revision: int
+    updatedAt: int
+    orgCount: int
+    pendingOrgs: int
+    values: _Dict[str, float | str | _List[str] | None]
+
+class PlatformEntitlementPresetsUpdateParams(_Model):
+    preset: str
+    expectedRevision: int
+    values: _Dict[str, float | str | _List[str] | None]
+
+class PlatformEntitlementPresetsUpdateResponse(_Model):
+    preset: PlatformEntitlementPresetsUpdateResponsePreset
+    moved: int
+
+class PlatformEntitlementPresetsUpdateResponsePreset(_Model):
+    preset: str
+    label: str
+    revision: int
+    updatedAt: int
+    orgCount: int
+    pendingOrgs: int
+    values: _Dict[str, float | str | _List[str] | None]
+
 class PlatformMetricsRetrieveOverviewResponse(_Model):
     source: _Literal["analytics_engine", "d1"] | str
     range: _Literal["24h", "7d", "30d"] | str
@@ -8295,7 +8331,7 @@ class PlatformOrgsCreateParams(_Model):
     name: str
     defaultIdentityId: str | None = None
     branding: OrgBranding | None = None
-    preset: _Literal["legacy", "trial", "standard"] | str | None = None
+    preset: _Literal["trial", "starter", "standard", "premium", "legacy"] | str | None = None
     addMe: bool | None = None
 
 class PlatformOrgsDeleteResponse(_Model):
@@ -8406,10 +8442,11 @@ class PlatformOrgsListResponseItemsItem(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
-    personalOwner: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsListResponseItemsItemCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
 
 class PlatformOrgsListResponseItemsItemCounts(_Model):
     passes: int
@@ -8459,10 +8496,11 @@ class PlatformOrgsRetrieveResponse(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
-    personalOwner: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsRetrieveResponseCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
 
 class PlatformOrgsRetrieveResponseCounts(_Model):
     passes: int
@@ -8480,10 +8518,11 @@ class PlatformOrgsSetStatusResponse(_Model):
     name: str
     status: _Literal["active", "suspended", "deleted"] | str
     personal: bool | None = None
-    personalOwner: _Dict[str, _Any] | None = None
     createdAt: int
     counts: PlatformOrgsSetStatusResponseCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
+    plan: _Dict[str, _Any] | None = None
 
 class PlatformOrgsSetStatusResponseCounts(_Model):
     passes: int

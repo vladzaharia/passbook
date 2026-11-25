@@ -25,6 +25,7 @@ export const sheetOf = (model: Ready): PrintSheet => ({
   content: model.content,
   code: model.code,
   mode: model.mode,
+  mark: model.mark,
   issued: { generation: model.generation, at: new Date(model.printedAt).toISOString() },
 });
 

@@ -1232,6 +1232,7 @@
     "SANDBOX_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
+  "entitlements get /entitlement-presets": [],
   "entitlements get /orgs/{id}/entitlements": [
     "ORG_NOT_FOUND"
   ],
@@ -1240,6 +1241,12 @@
     "ORG_FORBIDDEN",
     "ORG_NOT_FOUND",
     "ORG_TEST_ONLY",
+    "UNAUTHENTICATED"
+  ],
+  "entitlements put /entitlement-presets": [
+    "ENTITLEMENTS_CHANGED",
+    "PRESET_MOVING",
+    "PRESET_NOT_FOUND",
     "UNAUTHENTICATED"
   ],
   "entitlements put /orgs/{id}/entitlements": [
@@ -3283,6 +3290,7 @@
     "MODE_MISMATCH",
     "NOT_FOUND",
     "ORG_FORBIDDEN",
+    "ORG_NOT_FOUND",
     "ORG_TEST_ONLY",
     "PASS_NOT_FOUND",
     "PRINT_NOT_FOUND",

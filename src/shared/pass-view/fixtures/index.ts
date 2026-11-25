@@ -195,6 +195,27 @@ export const posterGeneric: PassJson = {
   },
 };
 
+type PosterFields = NonNullable<PassJson['posterGeneric']>['primaryFields'];
+const posterWith = (primaryFields: PosterFields): PassJson => ({
+  ...posterGeneric,
+  posterGeneric: { ...posterGeneric.posterGeneric, primaryFields },
+});
+
+/** A poster whose title is followed by two labelled fields. Not in `fixtures`. */
+export const posterThreePrimary: PassJson = posterWith([
+  { key: 'name', value: 'Alex Morgan' },
+  { key: 'door', label: 'Door', value: 'Courtyard app, Check-In' },
+  { key: 'member', label: 'Member ID', value: 'MBR-0001' },
+]);
+
+/** A poster whose title is followed by three labelled fields. Not in `fixtures`. */
+export const posterFourPrimary: PassJson = posterWith([
+  { key: 'name', value: 'Alexandria Morgan-Fitzgerald' },
+  { key: 'door', label: 'Door', value: 'Courtyard app, Check-In' },
+  { key: 'member', label: 'Member ID', value: 'MBR-0001' },
+  { key: 'tier', label: 'Tier', value: 'Annual' },
+]);
+
 export const fixtures = {
   generic,
   storeCard,

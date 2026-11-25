@@ -17,7 +17,7 @@ import {
 } from '../../../../test/helpers/index.ts';
 import { ProblemSchema } from '../../../shared/contracts/common.ts';
 import { OrgMembershipListSchema, type OrgRole } from '../../../shared/contracts/org-membership.ts';
-import { OrgSchema, OrgSummarySchema } from '../../../shared/contracts/orgs.ts';
+import { OrgSchema, PlatformOrgSummarySchema } from '../../../shared/contracts/orgs.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
 import { ManualClock } from '../../platform/clock.ts';
@@ -35,17 +35,7 @@ import { brandingFiles, brandingKey } from './branding-files.ts';
 import { getOrgRow } from './repo.ts';
 import { saveOrgBranding, updateOrgRow } from './repo-org-writes.ts';
 
-const platformOrg = OrgSummarySchema.pick({
-  id: true,
-  slug: true,
-  name: true,
-  status: true,
-  personal: true,
-  personalOwner: true,
-  createdAt: true,
-  counts: true,
-  countsCapped: true,
-}).strict();
+const platformOrg = PlatformOrgSummarySchema.strict();
 
 let fx: Fixtures;
 let org: OrgRow;

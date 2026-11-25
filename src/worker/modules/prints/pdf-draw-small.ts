@@ -170,7 +170,7 @@ export function drawPermit(pen: Pen, s: Sheet): void {
     'right',
     mw,
   );
-  passbookLine(pen, 8 + inner, pen.baselineOf(META, foot + 17 - pen.lineHeight(META)));
+  passbookLine(pen, s.mark, 8 + inner, pen.baselineOf(META, foot + 17 - pen.lineHeight(META)));
   if (test) watermark(pen, PAGE, side, { size: 13, tops: [0.2, 0.5, 0.8] });
 }
 
@@ -289,7 +289,13 @@ export function drawCoupon(pen: Pen, s: Sheet): void {
   const fy = footTop + 0.25 + 2;
   for (const [i, l] of pLines.entries()) pen.text(l, inner.x, fy + i * pen.lineHeight(fine), fine);
   pen.text(footMeta(c, s.issued), inner.x + inner.w - 80, fy, meta, 'right', 80);
-  passbookLine(pen, inner.x + inner.w, pen.baselineOf(meta, fy + pen.lineHeight(meta)), 2.3283);
+  passbookLine(
+    pen,
+    s.mark,
+    inner.x + inner.w,
+    pen.baselineOf(meta, fy + pen.lineHeight(meta)),
+    2.3283,
+  );
   const pose = s.design.buddy ? buddyPose(c.kind, c.noun) : null;
   if (boxes.buddy && pose) drawBuddy(pen, boxes.buddy, pose, mono);
   if (test)

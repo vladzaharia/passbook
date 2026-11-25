@@ -1,5 +1,8 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
+import type { z } from 'zod';
+import type { CreateOrgSchema } from '@/shared/contracts/orgs.ts';
+import { PLAN_COPY } from '@/shared/copy/plans.ts';
 import { errorMessage, isApiError } from '@/web/lib/errors.ts';
 import {
   Button,
@@ -12,6 +15,8 @@ import {
   useFormErrors,
 } from '@/web/ui/index.ts';
 import { markCreated } from '../passes/created.tsx';
+import { PlanPicker } from './features/plan-picker.tsx';
+import { usePresets } from './features/preset-queries.ts';
 import { useCreateOrg } from './queries.ts';
 
 export function slugify(name: string): string {
@@ -22,6 +27,24 @@ export function slugify(name: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 64);
+}
+
+type PlanId = NonNullable<z.input<typeof CreateOrgSchema>['preset']>;
+
+/** What a new org starts on when nothing is picked; the server's own default. */
+const DEFAULT_PLAN = 'standard';
+
+/** The plans as cards, once they load. A failed read leaves the field out; the create still sends the default plan. */
+function PlanField({ value, onChange }: { value: string; onChange: (preset: string) => void }) {
+  const presets = usePresets();
+  const plans = (presets.data?.presets ?? []).filter((p) => p.preset !== 'developer');
+  if (plans.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-medium text-fg">{PLAN_COPY.title}</span>
+      <PlanPicker plans={plans} current={null} picked={value} onPick={onChange} />
+    </div>
+  );
 }
 
 const SLUG = /^[a-z0-9][a-z0-9-]{1,63}$/;
@@ -50,6 +73,7 @@ export function CreateOrgDialog({
   const [slug, setSlug] = useState('');
   const [slugEdited, setSlugEdited] = useState(false);
   const [addMe, setAddMe] = useState(true);
+  const [preset, setPreset] = useState(DEFAULT_PLAN);
   const [serverErrors, setServerErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string>();
   const check = useFormErrors(validate(name, slug));
@@ -61,6 +85,7 @@ export function CreateOrgDialog({
     setSlug('');
     setSlugEdited(false);
     setAddMe(true);
+    setPreset(DEFAULT_PLAN);
     check.reset();
     setServerErrors({});
     setFormError(undefined);
@@ -69,7 +94,12 @@ export function CreateOrgDialog({
   async function submit() {
     setFormError(undefined);
     try {
-      const org = await create.mutateAsync({ name: name.trim(), slug, addMe });
+      const org = await create.mutateAsync({
+        name: name.trim(),
+        slug,
+        addMe,
+        preset: preset as PlanId,
+      });
       close();
       markCreated(`org:${org.id}`);
       void navigate({ to: '/admin/orgs/$orgId', params: { orgId: org.id } });
@@ -87,7 +117,7 @@ export function CreateOrgDialog({
       onOpenChange={(o) => (o ? onOpenChange(true) : close())}
     >
       <DialogContent
-        size="md"
+        size="lg"
         title="New organization"
         footer={
           <>
@@ -143,6 +173,7 @@ export function CreateOrgDialog({
               />
             )}
           </FormField>
+          <PlanField value={preset} onChange={setPreset} />
           <SwitchRow label="Add me as admin" checked={addMe} onCheckedChange={setAddMe} />
           {formError ? <p className="text-sm text-danger">{formError}</p> : null}
         </Form>

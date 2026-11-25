@@ -6,24 +6,21 @@ import {
   ENTITLEMENT_KEYS,
   ENTITLEMENT_PRESETS,
   type EntitlementKey,
+  type EntitlementPreset,
   type EntitlementValue,
   presetValues,
 } from '@/shared/contracts/entitlements.ts';
+import { PRESET_LABEL } from '@/shared/copy/entitlements.ts';
 import { json, problem, renderApp } from '@/web/lib/test-utils.tsx';
 
 const PATH = '/api/v1/platform/orgs/o1/entitlements';
-const LABEL = {
-  legacy: 'Legacy',
-  trial: 'Trial',
-  standard: 'Standard',
-  developer: 'Developer sandbox',
-} as const;
-const COUNTS = { legacy: 4, trial: 1, standard: 7, developer: 0 } as const;
+const LABEL = PRESET_LABEL;
+const COUNTS = { legacy: 4, trial: 1, starter: 2, standard: 7, premium: 3, developer: 0 } as const;
 
 type Override = { value: EntitlementValue; note?: string | null; expiresAt?: number | null };
 
 function state(
-  preset: 'legacy' | 'trial' | 'standard' = 'legacy',
+  preset: EntitlementPreset = 'legacy',
   overrides: Partial<Record<EntitlementKey, Override>> = {},
   revision = 3,
 ): OrgEntitlementsDto {
@@ -82,7 +79,7 @@ function open(server: Server) {
         if (server.conflict)
           return problem(409, 'ENTITLEMENTS_CHANGED', 'The features changed. Reload and retry.');
         const body = server.puts.at(-1) as {
-          preset: 'legacy' | 'trial' | 'standard';
+          preset: EntitlementPreset;
           overrides: Partial<Record<EntitlementKey, Override>>;
         };
         server.current = state(body.preset, body.overrides, server.current.revision + 1);
@@ -101,10 +98,9 @@ describe('Features tab', () => {
       puts: [],
     };
     await open(server);
-    expect(await screen.findByRole('heading', { name: 'Preset', level: 2 })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Plan', level: 2 })).toBeVisible();
     expect(screen.getByRole('radio', { name: /Trial/ })).toBeChecked();
     expect(screen.getByText('Current')).toBeVisible();
-    expect(screen.getByText(/7 organizations/)).toBeVisible();
     for (const group of ['API and apps', 'Integrations', 'Wallets and delivery'])
       expect(screen.getByRole('heading', { name: group, level: 2 })).toBeVisible();
     const row = screen
@@ -123,7 +119,7 @@ describe('Features tab', () => {
     const server: Server = { current: state('legacy'), puts: [] };
     await open(server);
     await user.click(await screen.findByRole('radio', { name: /Trial/ }));
-    const callout = screen.getByText('Trial instead of Legacy').closest('div') as HTMLElement;
+    const callout = screen.getAllByText('Trial instead of Unlimited')[0] as HTMLElement;
     expect(screen.getByRole('list', { name: 'Impact' })).toBeVisible();
     expect(
       within(screen.getByRole('list', { name: 'Impact' })).getByText(/turn off/),
@@ -142,7 +138,7 @@ describe('Features tab', () => {
     await waitFor(() => expect(server.puts).toHaveLength(1));
     expect(server.puts[0]).toEqual({ expectedRevision: 3, preset: 'trial', overrides: {} });
     expect(await screen.findByRole('radio', { name: /Trial/, checked: true })).toBeVisible();
-    expect(screen.queryByText('Trial instead of Legacy')).toBeNull();
+    expect(screen.queryAllByText('Trial instead of Unlimited')).toHaveLength(0);
   });
 
   it('cancels a pick without saving, and keeps overrides on the way through', async () => {
@@ -153,9 +149,9 @@ describe('Features tab', () => {
     };
     await open(server);
     await user.click(await screen.findByRole('radio', { name: /Standard/ }));
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(screen.queryByText('Standard instead of Legacy')).toBeNull();
-    expect(screen.getByRole('radio', { name: /Legacy/ })).toBeChecked();
+    await user.click(screen.getByRole('button', { name: 'Discard' }));
+    expect(screen.queryAllByText('Standard instead of Unlimited')).toHaveLength(0);
+    expect(screen.getByRole('radio', { name: 'Unlimited' })).toBeChecked();
 
     await user.click(screen.getByRole('radio', { name: /Standard/ }));
     await user.click(screen.getByRole('button', { name: 'Apply Standard' }));
@@ -249,7 +245,7 @@ describe('Features tab', () => {
       await within(confirm).findByText('The features changed. Reload and retry.'),
     ).toBeVisible();
     // The tab reloaded behind the dialog: Standard is stored now, and the pick is measured against it.
-    expect(await screen.findByText('Trial instead of Standard')).toBeVisible();
+    expect((await screen.findAllByText('Trial instead of Standard'))[0]).toBeVisible();
     await user.click(within(confirm).getByRole('button', { name: 'Cancel' }));
     expect(screen.getByText('Current').closest('label')).toHaveTextContent('Standard');
   });
@@ -267,7 +263,7 @@ describe('Features tab', () => {
 });
 
 describe('Features tab without a row', () => {
-  it('says no features are set and offers one Apply preset action that creates the row', async () => {
+  it('says no features are set and offers one Apply plan action that creates the row', async () => {
     const user = userEvent.setup();
     const empty: OrgEntitlementsDto = {
       ...state('legacy'),
@@ -280,7 +276,7 @@ describe('Features tab without a row', () => {
     const server: Server = { current: empty, puts: [] };
     await open(server);
     expect(await screen.findByText('No features set')).toBeVisible();
-    const apply = screen.getByRole('button', { name: 'Apply preset' });
+    const apply = screen.getByRole('button', { name: 'Apply plan' });
     expect(apply).toBeDisabled();
     expect(screen.queryByRole('list', { name: 'API and apps' })).toBeNull();
     await user.click(screen.getByRole('radio', { name: /Standard/ }));

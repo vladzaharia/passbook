@@ -395,6 +395,14 @@
     "resource": "platform.orgs.entitlements",
     "method": "update"
   },
+  "entitlements.getPlatformEntitlementPresets": {
+    "resource": "platform.entitlementPresets",
+    "method": "list"
+  },
+  "entitlements.putPlatformEntitlementPresets": {
+    "resource": "platform.entitlementPresets",
+    "method": "update"
+  },
   "events.getEvents": {
     "resource": "events",
     "method": "list"

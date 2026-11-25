@@ -35,7 +35,7 @@ export const ENTITLEMENT_LABEL: Record<EntitlementKey, string> = {
   'templates.stylesBlocked': 'Blocked pass styles',
   'email.perDay': 'Emails per day',
   members: 'Members',
-  'brand.mark': 'PassBook mark',
+  'brand.mark': 'PassBook footer',
   domains: 'Custom domains',
   'identity.own': 'Own Pass Type ID',
   'identity.managed': 'Managed Pass Type ID',
@@ -45,14 +45,16 @@ export const ENTITLEMENT_LABEL: Record<EntitlementKey, string> = {
 export const ENTITLEMENT_LEVEL_LABEL: Partial<Record<EntitlementKey, Record<string, string>>> = {
   api: { off: 'Off', read: 'Read only', full: 'Full' },
   'api.rateTier': { standard: 'Standard', high: 'High', bulk: 'Bulk' },
-  nfc: { off: 'Off', basic: 'Basic', secure: 'Secure' },
-  'brand.mark': { none: 'None', quiet: 'Quiet', full: 'Full' },
+  nfc: { off: 'Off', basic: 'Basic tags', secure: 'Basic and Secure tags' },
+  'brand.mark': { none: 'Can be off', quiet: 'Can be small', full: 'Always full' },
 };
 
 export const PRESET_LABEL: Record<EntitlementPreset, string> = {
-  legacy: 'Legacy',
   trial: 'Trial',
+  starter: 'Starter',
   standard: 'Standard',
+  premium: 'Premium',
+  legacy: 'Unlimited',
   developer: 'Developer sandbox',
 };
 

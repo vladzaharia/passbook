@@ -25,7 +25,10 @@ export const PassPrintSchema = z.object({
   status: PrintStatusSchema,
   /** The pass version the print was made from; null for a print made before versions were recorded. */
   passVersion: z.number().int().min(1).nullable(),
-  /** The pass changed after this print was made. Only an active print is ever stale. */
+  /**
+   * The pass shows different values than this print was drawn from. Only an active print is ever stale.
+   * Not stale means re-drawn from the current values, not proof that the paper on hand is new.
+   */
   stale: z.boolean(),
   createdAt: TimestampSchema,
   voidedAt: TimestampSchema.nullable(),
