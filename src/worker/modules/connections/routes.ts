@@ -93,6 +93,8 @@ connectionsRoutes.patch('/:id', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerWebhookRetentionRoutes(connectionsRoutes);
 registerConnectionListRoutes(connectionsRoutes);
 registerConnectionFileRoutes(connectionsRoutes);
+// A probe that brings its own config or secrets reads through the stored credential: it asks what PATCH asks.
+connectionsRoutes.post('/:id/probe', requireStepUp(STEP_UP_SECONDS, touchesTrust));
 registerConnectionProbeRoutes(connectionsRoutes);
 register(
   connectionsRoutes,

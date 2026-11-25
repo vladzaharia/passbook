@@ -7,13 +7,14 @@ import type { Config, Secrets } from '../../connectors/http-json/config.ts';
 import type { ConnectorContext } from '../../connectors/types.ts';
 import type { Actor } from '../../platform/context.ts';
 import { bump } from '../../platform/counters.ts';
+import { keyedDigest } from '../../platform/crypto.ts';
 import { ForbiddenError, RateLimitedError, ValidationError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { recordAudit } from '../audit/service.ts';
 import { assertConnectionAuthority, type ConnectionAuthority } from './access.ts';
 import { connectorItem, requireConnectorEntitled } from './entitlement.ts';
 import { masker } from './probe-mask.ts';
 import { type ProbeRequest, type ProbeResult, runProbe } from './probe-run.ts';
-import { recordConnectionAudit } from './repo-sync.ts';
 import { readConnectorSecrets } from './secrets.ts';
 import { auditActor, requireConnection } from './service-shared.ts';
 import { assertCredentialOrigin, storedConfig } from './service-update.ts';
@@ -65,27 +66,49 @@ async function finish(
   orgId: string,
   targetId: string | null,
   baseUrl: string | null,
-  result: ProbeResult,
+  result: ProbeResult | null,
+): Promise<void> {
+  // The audit names the host, the status and the outcome only; never a path, a query, a body or a credential.
+  // It carries no authority predicate: a request that went out is recorded even if the grant lapsed meanwhile.
+  await recordAudit(sctx, {
+    orgId,
+    ...auditActor(actor),
+    action: 'connection.probe',
+    targetType: 'connection',
+    targetId,
+    detail: {
+      host: baseUrl && URL.canParse(baseUrl) ? new URL(baseUrl).host : null,
+      status: result?.request?.status ?? null,
+      ok: result?.ok ?? false,
+    },
+  });
+}
+
+/** Runs the probe for a built context; a request that went out is audited whatever happens next. */
+async function execute(
+  sctx: ServiceContext,
+  actor: Actor,
+  orgId: string,
+  connectionId: string | null,
+  cc: Ctx,
+  req: ProbeRequest,
+  secrets: unknown,
   authority: ConnectionAuthority,
 ): Promise<ProbeResult> {
-  // The audit names the host, the status and the outcome only; never a path, a query, a body or a credential.
-  await recordConnectionAudit(
-    sctx,
-    {
-      orgId,
-      ...auditActor(actor),
-      action: 'connection.probe',
-      targetType: 'connection',
-      targetId,
-      detail: {
-        host: baseUrl && URL.canParse(baseUrl) ? new URL(baseUrl).host : null,
-        status: result.request?.status ?? null,
-        ok: result.ok,
-      },
-    },
-    authority,
-  );
-  return result;
+  const config = cc.connection.config;
+  const base = new URL(config.baseUrl);
+  const tokens = {
+    bind: `${orgId}|${connectionId ?? 'unsaved'}|${base.origin}|${base.pathname}`,
+    mac: (value: string) => keyedDigest(sctx.env, 'connection-probe-token.v1', value),
+  };
+  let result: ProbeResult | null = null;
+  try {
+    result = await runProbe(cc, req, masker(secrets, config.auth.queryParam), tokens);
+    await assertConnectionAuthority(sctx, authority);
+    return result;
+  } finally {
+    await finish(sctx, actor, orgId, connectionId, config.baseUrl, result);
+  }
 }
 
 const baseUrlOf = (config: unknown): string | null =>
@@ -115,16 +138,11 @@ export async function probeUnsaved(
   } catch (error) {
     const result = refused(error);
     if (!result) throw error;
-    return finish(sctx, actor, input.orgId, null, baseUrlOf(input.config), result, authority);
+    await finish(sctx, actor, input.orgId, null, baseUrlOf(input.config), result);
+    return result;
   }
   const cc = opened.cc as Ctx;
-  const result = await runProbe(
-    cc,
-    input,
-    masker(cc.secrets, cc.connection.config.auth.queryParam),
-  );
-  await assertConnectionAuthority(sctx, authority);
-  return finish(sctx, actor, input.orgId, null, cc.connection.config.baseUrl, result, authority);
+  return execute(sctx, actor, input.orgId, null, cc, input, cc.secrets, authority);
 }
 
 /** Probes a saved connection: its stored configuration and secrets unless the request gives its own. */
@@ -159,7 +177,8 @@ export async function probeStored(
   } catch (error) {
     const result = refused(error);
     if (!result) throw error;
-    return finish(sctx, actor, conn.orgId, id, baseUrlOf(input.config), result, authority);
+    await finish(sctx, actor, conn.orgId, id, baseUrlOf(input.config), result);
+    return result;
   }
   const given = input.secrets ?? (await readConnectorSecrets(sctx, conn)) ?? {};
   const secrets = (
@@ -167,7 +186,5 @@ export async function probeStored(
   ) as Secrets;
   await assertConnectionAuthority(sctx, authority);
   const cc = unsavedContext(sctx, def, conn.orgId, config, secrets) as Ctx;
-  const result = await runProbe(cc, input as ProbeRequest, masker(secrets, config.auth.queryParam));
-  await assertConnectionAuthority(sctx, authority);
-  return finish(sctx, actor, conn.orgId, id, config.baseUrl, result, authority);
+  return execute(sctx, actor, conn.orgId, id, cc, input as ProbeRequest, secrets, authority);
 }

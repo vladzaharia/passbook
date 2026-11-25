@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { all } from '../../platform/db.ts';
 import { resetDeps, setDeps } from './deps.ts';
 import { BASE, probeApp, reply, upstream } from './probe-fixtures.ts';
 import { publicResolver } from './test-kit.ts';
@@ -147,15 +148,75 @@ describe('POST /connections/probe: what comes back', () => {
     expect(calls).toHaveLength(1);
   });
 
-  it('a forged next token cannot leave the origin', async () => {
+  it('a forged next token is refused before any request', async () => {
     const calls = upstream(() => ({ items: [] }));
-    const forged = `p1.${btoa(JSON.stringify({ p: { u: 'https://evil.example/x' }, k: 1, n: 0, ids: [] })).replace(/=+$/, '')}`;
-    const out = await t.probe({ list: { path: '/m' } }, { next: forged });
-    expect(out.json).toMatchObject({ ok: false, errorCode: 'OFF_ORIGIN' });
+    const body = btoa(
+      JSON.stringify({ p: { u: 'https://evil.example/x' }, k: 1, n: 0, ids: [] }),
+    ).replace(/=+$/, '');
+    for (const forged of [`p2.${body}.${'0'.repeat(32)}`, `p2.${body}`, `p1.${body}`, 'nonsense']) {
+      const out = await t.probe({ list: { path: '/m' } }, { next: forged });
+      expect(out.json).toMatchObject({ ok: false, errorCode: 'CONFIG' });
+    }
     expect(calls).toHaveLength(0);
-    expect((await t.probe({ list: { path: '/m' } }, { next: 'nonsense' })).json.errorCode).toBe(
-      'CONFIG',
+  });
+
+  it('a token is bound to its org, origin and base path', async () => {
+    const calls = upstream(() => ({ items: ids('a', 'b'), next: '/v1/m?page=2' }));
+    const config = {
+      list: { path: '/m', pagination: { style: 'next-link', nextPointer: '/next' } },
+    };
+    const first = await t.probe(config);
+    expect(first.json.page.next).toEqual(expect.any(String));
+    const otherHost = await t.call('/api/v1/connections/probe', {
+      orgId: t.kit.org.id,
+      connectorType: 'http-json',
+      config: { baseUrl: 'https://other.example.com/v1', ...config },
+      target: 'list',
+      next: first.json.page.next,
+    });
+    expect(otherHost.json.errorCode).toBe('CONFIG');
+    const otherPath = await t.probe(
+      { baseUrl: 'https://api.example.com/v2', ...config },
+      { next: first.json.page.next },
     );
+    expect(otherPath.json.errorCode).toBe('CONFIG');
+    expect(calls).toHaveLength(1);
+    expect((await t.probe(config, { next: first.json.page.next })).json.ok).toBe(true);
+  });
+
+  it('keeps the answer small whatever the upstream sends', async () => {
+    const inner: Record<string, number[]> = {};
+    for (let i = 0; i < 500; i++) inner[`a${i}`] = Array(3).fill(0);
+    upstream(() => reply(200, JSON.stringify({ ['k'.repeat(300_000)]: inner })));
+    const res = await t.app.request(
+      '/api/v1/connections/probe',
+      {
+        method: 'POST',
+        headers: { ...t.session.headers, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          orgId: t.kit.org.id,
+          connectorType: 'http-json',
+          config: { baseUrl: BASE, list: { path: '/m' } },
+          target: 'list',
+        }),
+      },
+      t.kit.env,
+    );
+    expect(res.status).toBe(200);
+    expect((await res.text()).length).toBeLessThan(1_000_000);
+  });
+
+  it('a body nested 100,000 levels deep answers and is audited', async () => {
+    const d = 100_000;
+    upstream(() => reply(200, `{"data":${'['.repeat(d)}${']'.repeat(d)}}`));
+    const out = await t.probe({ list: { path: '/m', recordsPointer: '/data' } });
+    expect(out.status).toBe(200);
+    const rows = await all(
+      t.kit.env.DB,
+      "SELECT id FROM audit_log WHERE org_id = ? AND action = 'connection.probe'",
+      [t.kit.org.id],
+    );
+    expect(rows).toHaveLength(1);
   });
 });
 

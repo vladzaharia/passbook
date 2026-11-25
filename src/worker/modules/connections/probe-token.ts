@@ -5,7 +5,7 @@ import {
   pageOf,
 } from '../../connectors/http-json/cursor.ts';
 
-const PREFIX = 'p1.';
+const PREFIX = 'p2.';
 const MAX_TOKEN_CHARS = 4096;
 const MAX_IDS = 200;
 
@@ -20,6 +20,14 @@ export interface ProbeToken {
   ids: string[];
 }
 
+/** What binds a token: a MAC over the org, the connection (or none), the origin, the base path and the token body. */
+export interface TokenKit {
+  /** Keyed digest of a string; the platform's, so a token cannot be made without the server's key. */
+  mac(value: string): Promise<string>;
+  /** `org|connection|origin|basePath`. */
+  bind: string;
+}
+
 /** A 32-bit FNV-1a hash in base 36: enough to count repeated IDs without carrying them. */
 export function idHash(value: unknown): string | null {
   const text = typeof value === 'string' ? value : typeof value === 'number' ? String(value) : '';
@@ -30,20 +38,28 @@ export function idHash(value: unknown): string | null {
 }
 
 /** The token for the next page; the ID list shrinks until the whole token fits. */
-export function encodeToken(token: ProbeToken): string {
+export async function encodeToken(token: ProbeToken, kit: TokenKit): Promise<string> {
   let ids = token.ids.slice(0, MAX_IDS);
   for (;;) {
-    const out = `${PREFIX}${b64urlEncode(JSON.stringify({ ...token, ids }))}`;
+    const body = b64urlEncode(JSON.stringify({ ...token, ids }));
+    const out = `${PREFIX}${body}.${await kit.mac(`${kit.bind}.${body}`)}`;
     if (out.length <= MAX_TOKEN_CHARS || ids.length === 0) return out;
     ids = ids.slice(0, Math.floor(ids.length / 2));
   }
 }
 
-/** A token the probe issued, or null. Its page state is re-checked against the origin when it is used. */
-export function decodeToken(raw: string): ProbeToken | null {
+/** A token this probe issued for this org, connection, origin and base path, or null. */
+export async function decodeToken(raw: string, kit: TokenKit): Promise<ProbeToken | null> {
   if (!raw.startsWith(PREFIX)) return null;
+  const [body, mac, ...rest] = raw.slice(PREFIX.length).split('.');
+  if (!body || !mac || rest.length > 0) return null;
+  const want = await kit.mac(`${kit.bind}.${body}`);
+  // Both are fixed-length hex; compare every character.
+  let diff = want.length ^ mac.length;
+  for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ (mac.charCodeAt(i) || 0);
+  if (diff !== 0) return null;
   try {
-    const o = JSON.parse(b64urlDecode(raw.slice(PREFIX.length))) as Record<string, unknown>;
+    const o = JSON.parse(b64urlDecode(body)) as Record<string, unknown>;
     const count = (v: unknown) =>
       Number.isSafeInteger(v) && (v as number) >= 0 ? (v as number) : null;
     const k = count(o.k);
