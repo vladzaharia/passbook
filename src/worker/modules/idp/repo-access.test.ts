@@ -84,7 +84,7 @@ describe('platform role grants', () => {
       userId: p.id,
       role: 'support',
       grantedBy: p.id,
-      now,
+      now: now - 1,
     }).run();
     expect((await activePlatformGrants(db(), p.id)).map((g) => g.role)).toEqual([
       'developer',
