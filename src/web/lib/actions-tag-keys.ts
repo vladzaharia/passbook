@@ -23,4 +23,7 @@ export const TAG_KEY_ACTIONS = {
   'tag_keyset.import': a('Tags imported', ImagePlus, 'success'),
   'tag_keyset.rekey': a('Tag key replace started', ACTION_ICON.rotate, 'warning'),
   'tag_keyset.rekeyed': a('Tag keys replaced', ACTION_ICON.rotate, 'warning'),
+  'nfc_tag.program_started': a('Tag setup started', ShieldCheck, 'info'),
+  'nfc_tag.programmed': a('Tag set up', ShieldCheck, 'success'),
+  'nfc_tag.program_failed': a('Tag setup failed', ShieldAlert, 'warning'),
 };

@@ -53,6 +53,7 @@ export const PURGE_STEPS: readonly (PurgeStep | readonly PurgeStep[])[] = [
   inOrg('bundles'),
   inOrg('broadcasts'),
   inOrg('message_rules'),
+  inOrg('nfc_tag_programs'),
   inOrg('nfc_tags'),
   inOrg('nfc_tag_keysets'),
   inOrg('nfc_tag_types'),
