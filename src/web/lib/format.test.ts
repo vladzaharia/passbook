@@ -7,6 +7,7 @@ import {
   formatDay,
   formatEndedOn,
   formatExpiry,
+  formatMaybeDate,
   formatRelative,
   formatShortDate,
   formatShortDateHour,
