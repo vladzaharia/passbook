@@ -18,8 +18,10 @@ export interface MenubarProps {
   /** The space's controls, left of the account menu. */
   controls?: ReactNode;
   account: ReactNode;
-  /** In flow under the bar, in the same sticky block (offline bar, Test mode band). */
+  /** In flow under the bar, in the same sticky block (the offline bar). */
   below?: ReactNode;
+  /** `test` re-tones the bar amber (Test mode, mode.css). Never set where Test is the only mode. */
+  tone?: 'test';
 }
 
 /**
@@ -37,11 +39,13 @@ export function Menubar({
   controls,
   account,
   below,
+  tone,
 }: MenubarProps) {
   return (
     <div className="sticky top-0 z-20 [--wl-gutter:1rem] sm:[--wl-gutter:1.5rem]">
       <header
         data-menubar
+        data-tone={tone}
         className="relative z-10 border-b border-border bg-surface-page pt-[env(safe-area-inset-top)]"
       >
         <div

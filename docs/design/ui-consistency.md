@@ -88,6 +88,10 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
   sticky block and pushes the page down; then `main`. `width`: `holder` `max-w-5xl`, `console`
   `max-w-7xl`. Admin adds the sidebar, 15rem at ≥1024 (sheet below); its background and border
   belong to the grid column, so they span the full page height.
+- Test mode is the top bar, not a strip: `Menubar tone="test"` (admin, only where the Live/Test switch
+  shows) re-tones fill, border and switch track from the warning tokens (`ui/layout/mode.css`). The
+  Test segment's description says where emails go, and `ModeAnnouncer` speaks each change. A
+  sandbox, always Test, keeps the plain bar.
 - One `Menubar` (`ui/layout/menubar.tsx`) in admin, portal and the developer site (rendered at
   build time there; `generated/menubar-kit.css` carries its classes). Left: the mark and the
   space's own nav (the developer sections; the console's sidebar carries the mark from lg). Right:

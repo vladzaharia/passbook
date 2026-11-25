@@ -6,13 +6,14 @@ import { useAdminScope, useOrgScope } from '../../lib/org-filter.tsx';
 import { PaletteContext } from '../../lib/palette.ts';
 import { scopePath } from '../../lib/scope.ts';
 import { ScopeCrumbContext } from '../../lib/scope-context.ts';
+import { useMode } from '../../lib/mode.ts';
 import { useSession } from '../../lib/session.ts';
 import { IconButton } from '../icon-button.tsx';
 import { Sheet, SheetContent } from '../sheet.tsx';
 import { AppShell, type AppShellProps } from './app-shell.tsx';
 import { GraceBanner } from './grace-banner.tsx';
 import { MenubarSearch, shortcutHint } from './menubar.tsx';
-import { ModeBand } from './mode-band.tsx';
+import { ModeAnnouncer } from './mode-announcer.tsx';
 import { ModeSwitch } from './mode-switch.tsx';
 import { AdminPalette } from './palette.tsx';
 import { ScopeSwitcher } from './scope-switcher.tsx';
@@ -27,6 +28,9 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
   const org = scope?.kind === 'org';
   const { membership } = useOrgScope();
   const { isAdmin } = useSession();
+  const mode = useMode();
+  // Only where Live and Test are a choice; a sandbox is always Test, so its bar does not change.
+  const switchable = org && !membership?.testOnly;
   const scopeName =
     scope?.kind === 'platform' ? (isAdmin ? 'Platform' : undefined) : membership?.orgName;
   const crumb = useMemo(
@@ -67,7 +71,8 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
         onClick={() => setPaletteOpen(true)}
       />
     ),
-    controls: org && !membership?.testOnly ? <ModeSwitch /> : null,
+    controls: switchable ? <ModeSwitch /> : null,
+    tone: switchable && mode === 'test' ? 'test' : undefined,
     account: <UserMenu />,
   };
   return (
@@ -76,10 +81,10 @@ export function AdminLayout({ children }: { children?: ReactNode }) {
         <AppShell
           bar={bar}
           sidebar={sidebar}
-          band={org ? <ModeBand /> : null}
           width="console"
           holder={false}
         >
+          {switchable ? <ModeAnnouncer /> : null}
           <GraceBanner />
           {children ?? <Outlet />}
         </AppShell>

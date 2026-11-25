@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { cn } from '../../lib/cn.ts';
 import { MAIN_ID } from '../../lib/route-focus.tsx';
 import { OfflineBanner } from '../offline-banner.tsx';
+import './mode.css';
 import { Menubar, type MenubarProps, WIDTH } from './menubar.tsx';
 
 export interface AppShellProps {
@@ -9,8 +10,6 @@ export interface AppShellProps {
   bar?: Omit<MenubarProps, 'width' | 'below'>;
   /** A column left of the page from lg (the admin sidebar). */
   sidebar?: ReactNode;
-  /** In flow under the bar and the offline bar, in the same sticky block (the Test mode band). */
-  band?: ReactNode;
   width: keyof typeof WIDTH;
   /** Holder pages follow the iOS text size (Dynamic Type, base.css .wl-portal). */
   holder: boolean;
@@ -22,7 +21,7 @@ export interface AppShellProps {
  * offline bar under it, sticking with it and pushing the page down; then main. One gutter (1rem,
  * 1.5rem from 640) for the bar and main, and every safe-area edge padded.
  */
-export function AppShell({ bar, sidebar, band, width, holder, children }: AppShellProps) {
+export function AppShell({ bar, sidebar, width, holder, children }: AppShellProps) {
   const column = (
     <div className="flex min-w-0 flex-1 flex-col">
       {bar ? (
@@ -30,16 +29,12 @@ export function AppShell({ bar, sidebar, band, width, holder, children }: AppShe
           width={width}
           {...bar}
           below={
-            <>
-              <OfflineBanner />
-              {band}
-            </>
+            <OfflineBanner />
           }
         />
       ) : (
         <div className="sticky top-0 z-20">
           <OfflineBanner className="h-auto min-h-8 pt-[env(safe-area-inset-top)]" />
-          {band}
         </div>
       )}
       <main

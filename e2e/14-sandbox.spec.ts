@@ -18,8 +18,10 @@ test('Test mode marks a test pass, keeps its email in the Test inbox and out of 
   const toggle = page.getByRole('radio', { name: 'Test' });
   await toggle.click();
   await expect(toggle).toBeChecked();
-  const band = page.getByRole('status').filter({ hasText: 'Test mode' });
-  await expect(band).toBeVisible();
+  await expect(page.locator('[data-menubar][data-tone="test"]')).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Test mode on' })).toHaveText(
+    'Test mode on. New emails go to the Test inbox.',
+  );
 
   const pass = await admin.send(
     'POST',

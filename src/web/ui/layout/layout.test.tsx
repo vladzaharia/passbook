@@ -111,6 +111,25 @@ describe('route guards in the app', () => {
     await waitFor(() => expect(screen.queryByRole('radiogroup', { name: 'Mode' })).toBeNull());
   });
 
+  it('tints the whole top bar in Test mode, with no strip under it', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/passes', {
+      session: 'admin',
+      memberships: [membershipFixture('o1')],
+      selectedOrg: 'o1',
+      handlers: { '/api/v1/passes': () => json({ items: [], nextCursor: null }) },
+    });
+    await screen.findByRole('heading', { name: 'Passes', level: 1 });
+    const bar = document.querySelector('[data-menubar]');
+    expect(bar).not.toHaveAttribute('data-tone');
+    await user.click(screen.getByRole('radio', { name: 'Test' }));
+    expect(bar).toHaveAttribute('data-tone', 'test');
+    expect(screen.getByText('Test mode on. New emails go to the Test inbox.')).toBeInTheDocument();
+    expect(screen.queryByText('Test mode')).toBeNull();
+    await user.click(screen.getByRole('radio', { name: 'Live' }));
+    expect(bar).not.toHaveAttribute('data-tone');
+  });
+
   it('labels a single organization as a link into it, not a menu, from a platform page', async () => {
     await renderApp('/admin/platform/status', {
       session: 'user',
