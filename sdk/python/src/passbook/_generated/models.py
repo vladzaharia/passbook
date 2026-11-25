@@ -2760,6 +2760,7 @@ class ConnectionsCreateParams(_Model):
     intervalSeconds: int | None = None
     maxConcurrency: int | None = None
     requestsPerMinute: int | None = None
+    fileId: str | None = None
 
 class ConnectionsCreateParamsMappingValue(_Model):
     from_: str = _Field(alias="from")
@@ -3153,6 +3154,7 @@ class ConnectionsTestConfigParams(_Model):
     voidWhen: _List[ConnectionsTestConfigParamsVoidWhenItem] | None = None
     autoCreate: bool | None = None
     defaultTemplateId: str | None = None
+    fileId: str | None = None
 
 class ConnectionsTestConfigParamsMappingValue(_Model):
     from_: str = _Field(alias="from")
@@ -3344,6 +3346,8 @@ class ConnectorsListItem(_Model):
     version: int
     displayName: str
     description: str | None = None
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
+    order: int | None = None
     capabilities: ConnectorsListItemCapabilities
     configSchema: _Any | None = None
     secretSchema: _Any | None = None
@@ -3357,6 +3361,7 @@ class ConnectorsListItemCapabilities(_Model):
     webhook: bool
     import_: bool = _Field(alias="import")
     snapshot: bool
+    upload: bool | None = None
 
 class ConnectorsListItemDefaults(_Model):
     intervalSeconds: int
@@ -3371,6 +3376,7 @@ class ConnectorsListItemOutputFieldsValue(_Model):
 class ConnectorsListItemRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
     pasteSecret: bool
     outputFields: _Dict[str, ConnectorsListItemRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsListItemRecipesItemMappingValue]
@@ -3403,6 +3409,8 @@ class ConnectorsListResponseItemsItem(_Model):
     version: int
     displayName: str
     description: str | None = None
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
+    order: int | None = None
     capabilities: ConnectorsListResponseItemsItemCapabilities
     configSchema: _Any | None = None
     secretSchema: _Any | None = None
@@ -3416,6 +3424,7 @@ class ConnectorsListResponseItemsItemCapabilities(_Model):
     webhook: bool
     import_: bool = _Field(alias="import")
     snapshot: bool
+    upload: bool | None = None
 
 class ConnectorsListResponseItemsItemDefaults(_Model):
     intervalSeconds: int
@@ -3430,6 +3439,7 @@ class ConnectorsListResponseItemsItemOutputFieldsValue(_Model):
 class ConnectorsListResponseItemsItemRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
     pasteSecret: bool
     outputFields: _Dict[str, ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsListResponseItemsItemRecipesItemMappingValue]
@@ -3458,6 +3468,8 @@ class ConnectorsRetrieveResponse(_Model):
     version: int
     displayName: str
     description: str | None = None
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
+    order: int | None = None
     capabilities: ConnectorsRetrieveResponseCapabilities
     configSchema: _Any | None = None
     secretSchema: _Any | None = None
@@ -3471,6 +3483,7 @@ class ConnectorsRetrieveResponseCapabilities(_Model):
     webhook: bool
     import_: bool = _Field(alias="import")
     snapshot: bool
+    upload: bool | None = None
 
 class ConnectorsRetrieveResponseDefaults(_Model):
     intervalSeconds: int
@@ -3485,6 +3498,7 @@ class ConnectorsRetrieveResponseOutputFieldsValue(_Model):
 class ConnectorsRetrieveResponseRecipesItem(_Model):
     id: _Literal["custom", "shopify-orders", "shopify-customers", "stripe-subscriptions", "stripe-payments", "calcom-bookings", "woocommerce-orders", "tickettailor-tickets"] | str
     label: str
+    category: _Literal["files", "apis", "commerce", "bookings", "try"] | str | None = None
     pasteSecret: bool
     outputFields: _Dict[str, ConnectorsRetrieveResponseRecipesItemOutputFieldsValue]
     mapping: _Dict[str, ConnectorsRetrieveResponseRecipesItemMappingValue]

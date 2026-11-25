@@ -63,6 +63,8 @@ export const TestConfigSchema = z.object({
   voidWhen: VoidWhenSchema.optional(),
   autoCreate: z.boolean().optional(),
   defaultTemplateId: IdSchema.optional(),
+  /** File upload: the draft to test against. */
+  fileId: IdSchema.optional(),
 });
 export const TestConfigQuerySchema = z.object({ preview: z.enum(['true', 'false']).optional() });
 /** With `?preview=true` the dry run's fields come too (ConnectionPreviewSchema). */

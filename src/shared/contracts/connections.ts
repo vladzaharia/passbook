@@ -62,10 +62,16 @@ export const SecretOverlapSchema = z.union([
   z.literal(604_800),
 ]);
 
+/** Connector picker groups, in the order they show. */
+export const ConnectorCategorySchema = z.enum(['files', 'apis', 'commerce', 'bookings', 'try']);
+export type ConnectorCategory = z.infer<typeof ConnectorCategorySchema>;
+
 /** A sender recipe as the console lists it: the starting point of a webhook connection. */
 export const RecipeInfoSchema = z.object({
   id: RecipeIdSchema,
   label: z.string(),
+  /** Picker group of the sender's tile. */
+  category: ConnectorCategorySchema.default('apis'),
   /** True when the sender generates the secret and the admin pastes it. */
   pasteSecret: z.boolean(),
   outputFields: z.record(
@@ -87,12 +93,18 @@ export const ConnectorInfoSchema = z.object({
   displayName: z.string(),
   /** One line for the connector picker. */
   description: z.string().default(''),
+  /** Picker group. */
+  category: ConnectorCategorySchema.default('apis'),
+  /** Position within the group; lower first. */
+  order: z.number().int().default(0),
   capabilities: z.object({
     poll: z.boolean(),
     delta: z.boolean(),
     webhook: z.boolean(),
     import: z.boolean(),
     snapshot: z.boolean(),
+    /** Records come from uploaded files (`/connections/{id}/files`). */
+    upload: z.boolean().default(false),
   }),
   /** JSON Schema that drives the config form. */
   configSchema: JsonSchema,
@@ -120,6 +132,7 @@ export const ConnectionSchema = z.object({
   id: IdSchema,
   orgId: IdSchema,
   connectorType: z.string(),
+  /** The version `config` is shown in: a config stored by an older version is shown migrated. */
   connectorVersion: z.number().int(),
   name: z.string(),
   config: z.record(z.string(), JsonSchema),
@@ -218,10 +231,13 @@ export const CreateConnectionSchema = z.object({
   intervalSeconds: z.number().int().min(60).optional(),
   maxConcurrency: z.number().int().min(1).max(20).optional(),
   requestsPerMinute: z.number().int().min(1).max(6000).optional(),
+  /** File upload: the draft (`POST /connections/uploads`) that becomes revision 1. */
+  fileId: IdSchema.optional(),
 });
 export const UpdateConnectionSchema = CreateConnectionSchema.omit({
   orgId: true,
   connectorType: true,
+  fileId: true,
 })
   .partial()
   .extend({

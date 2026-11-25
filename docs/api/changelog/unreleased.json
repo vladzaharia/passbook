@@ -312,6 +312,38 @@
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
   },
   {
+    "key": "GET /api/v1/connectors/{type} 200.capabilities.upload: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.capabilities.upload: field added",
+    "note": "Connectors report capabilities.upload: true when records come from uploaded files."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.category: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.category: field added",
+    "note": "Connectors carry category (files, apis, commerce, bookings or try) and order, which group and sort the connector picker."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.order: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.order: field added",
+    "note": "Connectors carry category (files, apis, commerce, bookings or try) and order, which group and sort the connector picker."
+  },
+  {
+    "key": "GET /api/v1/connectors/{type} 200.recipes[].category: field added",
+    "class": "additive",
+    "operationId": "connectors.getConnectorsByType",
+    "op": "GET /api/v1/connectors/{type}",
+    "change": "200.recipes[].category: field added",
+    "note": "Sender recipes carry the picker category of their tile."
+  },
+  {
     "key": "GET /api/v1/developer/access new operation",
     "class": "additive",
     "operationId": "developer.getAccess",
@@ -2077,6 +2109,14 @@
     "note": "Preview resolves templates by the key mode release, as create does."
   },
   {
+    "key": "POST /api/v1/connections body.fileId: optional input field added",
+    "class": "additive",
+    "operationId": "connections.postConnections",
+    "op": "POST /api/v1/connections",
+    "change": "body.fileId: optional input field added",
+    "note": "fileId names the uploaded draft a file-upload connection starts from."
+  },
+  {
     "key": "POST /api/v1/connections/{id}/preview new operation",
     "class": "additive",
     "operationId": "connections.postConnectionsByIdPreview",
@@ -2147,6 +2187,14 @@
     "op": "POST /api/v1/connections/test-config",
     "change": "body.defaultTemplateId: optional input field added",
     "note": "Used only with preview=true: the mapping, void rules and template the dry run applies."
+  },
+  {
+    "key": "POST /api/v1/connections/test-config body.fileId: optional input field added",
+    "class": "additive",
+    "operationId": "connections.postConnectionsTestConfig",
+    "op": "POST /api/v1/connections/test-config",
+    "change": "body.fileId: optional input field added",
+    "note": "fileId tests a file-upload configuration against an uploaded draft."
   },
   {
     "key": "POST /api/v1/connections/test-config body.mapping: optional input field added",

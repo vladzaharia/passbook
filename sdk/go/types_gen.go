@@ -1149,6 +1149,7 @@ type ConnectionsCreateParams struct {
 	IntervalSeconds   *int64                                         `json:"intervalSeconds,omitempty"`
 	MaxConcurrency    *int64                                         `json:"maxConcurrency,omitempty"`
 	RequestsPerMinute *int64                                         `json:"requestsPerMinute,omitempty"`
+	FileID            *string                                        `json:"fileId,omitempty"`
 }
 
 type ConnectionsCreateParamsMappingValue struct {
@@ -1614,6 +1615,7 @@ type ConnectionsTestConfigParams struct {
 	VoidWhen          []ConnectionsTestConfigParamsVoidWhenItem          `json:"voidWhen,omitempty"`
 	AutoCreate        *bool                                              `json:"autoCreate,omitempty"`
 	DefaultTemplateID *string                                            `json:"defaultTemplateId,omitempty"`
+	FileID            *string                                            `json:"fileId,omitempty"`
 }
 
 type ConnectionsTestConfigParamsMappingValue struct {
@@ -1851,6 +1853,8 @@ type ConnectorsListItem struct {
 	Version      int64                                          `json:"version"`
 	DisplayName  string                                         `json:"displayName"`
 	Description  *string                                        `json:"description,omitempty"`
+	Category     *string                                        `json:"category,omitempty"`
+	Order        *int64                                         `json:"order,omitempty"`
 	Capabilities ConnectorsListItemCapabilities                 `json:"capabilities"`
 	ConfigSchema any                                            `json:"configSchema,omitempty"`
 	SecretSchema any                                            `json:"secretSchema,omitempty"`
@@ -1860,11 +1864,12 @@ type ConnectorsListItem struct {
 }
 
 type ConnectorsListItemCapabilities struct {
-	Poll     bool `json:"poll"`
-	Delta    bool `json:"delta"`
-	Webhook  bool `json:"webhook"`
-	Import   bool `json:"import"`
-	Snapshot bool `json:"snapshot"`
+	Poll     bool  `json:"poll"`
+	Delta    bool  `json:"delta"`
+	Webhook  bool  `json:"webhook"`
+	Import   bool  `json:"import"`
+	Snapshot bool  `json:"snapshot"`
+	Upload   *bool `json:"upload,omitempty"`
 }
 
 type ConnectorsListItemDefaults struct {
@@ -1882,6 +1887,7 @@ type ConnectorsListItemOutputFieldsValue struct {
 type ConnectorsListItemRecipesItem struct {
 	ID               string                                                    `json:"id"`
 	Label            string                                                    `json:"label"`
+	Category         *string                                                   `json:"category,omitempty"`
 	PasteSecret      bool                                                      `json:"pasteSecret"`
 	OutputFields     map[string]ConnectorsListItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListItemRecipesItemMappingValue      `json:"mapping"`
@@ -1924,6 +1930,8 @@ type ConnectorsListResponseItemsItem struct {
 	Version      int64                                                       `json:"version"`
 	DisplayName  string                                                      `json:"displayName"`
 	Description  *string                                                     `json:"description,omitempty"`
+	Category     *string                                                     `json:"category,omitempty"`
+	Order        *int64                                                      `json:"order,omitempty"`
 	Capabilities ConnectorsListResponseItemsItemCapabilities                 `json:"capabilities"`
 	ConfigSchema any                                                         `json:"configSchema,omitempty"`
 	SecretSchema any                                                         `json:"secretSchema,omitempty"`
@@ -1933,11 +1941,12 @@ type ConnectorsListResponseItemsItem struct {
 }
 
 type ConnectorsListResponseItemsItemCapabilities struct {
-	Poll     bool `json:"poll"`
-	Delta    bool `json:"delta"`
-	Webhook  bool `json:"webhook"`
-	Import   bool `json:"import"`
-	Snapshot bool `json:"snapshot"`
+	Poll     bool  `json:"poll"`
+	Delta    bool  `json:"delta"`
+	Webhook  bool  `json:"webhook"`
+	Import   bool  `json:"import"`
+	Snapshot bool  `json:"snapshot"`
+	Upload   *bool `json:"upload,omitempty"`
 }
 
 type ConnectorsListResponseItemsItemDefaults struct {
@@ -1955,6 +1964,7 @@ type ConnectorsListResponseItemsItemOutputFieldsValue struct {
 type ConnectorsListResponseItemsItemRecipesItem struct {
 	ID               string                                                                 `json:"id"`
 	Label            string                                                                 `json:"label"`
+	Category         *string                                                                `json:"category,omitempty"`
 	PasteSecret      bool                                                                   `json:"pasteSecret"`
 	OutputFields     map[string]ConnectorsListResponseItemsItemRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsListResponseItemsItemRecipesItemMappingValue      `json:"mapping"`
@@ -1988,6 +1998,8 @@ type ConnectorsRetrieveResponse struct {
 	Version      int64                                                  `json:"version"`
 	DisplayName  string                                                 `json:"displayName"`
 	Description  *string                                                `json:"description,omitempty"`
+	Category     *string                                                `json:"category,omitempty"`
+	Order        *int64                                                 `json:"order,omitempty"`
 	Capabilities ConnectorsRetrieveResponseCapabilities                 `json:"capabilities"`
 	ConfigSchema any                                                    `json:"configSchema,omitempty"`
 	SecretSchema any                                                    `json:"secretSchema,omitempty"`
@@ -1997,11 +2009,12 @@ type ConnectorsRetrieveResponse struct {
 }
 
 type ConnectorsRetrieveResponseCapabilities struct {
-	Poll     bool `json:"poll"`
-	Delta    bool `json:"delta"`
-	Webhook  bool `json:"webhook"`
-	Import   bool `json:"import"`
-	Snapshot bool `json:"snapshot"`
+	Poll     bool  `json:"poll"`
+	Delta    bool  `json:"delta"`
+	Webhook  bool  `json:"webhook"`
+	Import   bool  `json:"import"`
+	Snapshot bool  `json:"snapshot"`
+	Upload   *bool `json:"upload,omitempty"`
 }
 
 type ConnectorsRetrieveResponseDefaults struct {
@@ -2019,6 +2032,7 @@ type ConnectorsRetrieveResponseOutputFieldsValue struct {
 type ConnectorsRetrieveResponseRecipesItem struct {
 	ID               string                                                            `json:"id"`
 	Label            string                                                            `json:"label"`
+	Category         *string                                                           `json:"category,omitempty"`
 	PasteSecret      bool                                                              `json:"pasteSecret"`
 	OutputFields     map[string]ConnectorsRetrieveResponseRecipesItemOutputFieldsValue `json:"outputFields"`
 	Mapping          map[string]ConnectorsRetrieveResponseRecipesItemMappingValue      `json:"mapping"`
