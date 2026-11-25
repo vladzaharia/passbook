@@ -2121,6 +2121,14 @@ class TerminalResource:
         """Read a code `POST /api/v1/scan/resolve`"""
         return self._core.request("POST", "/api/v1/scan/resolve", body=body, result=m.TerminalResolveResult, **opts)
 
+    def sign_out_everywhere(
+        self,
+        body: m.TerminalSignOutEverywhereBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.TerminalSignOutEverywhereResult:
+        """Sign someone out: out of every place, and collect a lent tag `POST /api/v1/scan/sign-out`"""
+        return self._core.request("POST", "/api/v1/scan/sign-out", body=body, result=m.TerminalSignOutEverywhereResult, **opts)
+
 
 class ScannersPairingResource:
     def __init__(self, core: Core) -> None:

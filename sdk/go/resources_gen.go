@@ -2253,6 +2253,15 @@ func (r *TerminalResource) Resolve(ctx context.Context, body *TerminalResolveBod
 	return &out, nil
 }
 
+// SignOutEverywhere Sign someone out: out of every place, and collect a lent tag `POST /api/v1/scan/sign-out`
+func (r *TerminalResource) SignOutEverywhere(ctx context.Context, body *TerminalSignOutEverywhereBody, opts ...RequestOption) (*TerminalSignOutEverywhereResult, error) {
+	var out TerminalSignOutEverywhereResult
+	if err := r.c.do(ctx, call{method: "POST", path: "/api/v1/scan/sign-out", body: body}, &out, opts); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
 type ScannersPairingResource struct {
 	c *core
 }

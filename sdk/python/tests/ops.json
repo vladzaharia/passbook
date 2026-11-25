@@ -9011,6 +9011,27 @@
   }
  },
  {
+  "id": "scan.postScanSignOut",
+  "call": "terminal.sign_out_everywhere",
+  "http": "POST",
+  "path": "/api/v1/scan/sign-out",
+  "pathParams": [],
+  "query": [],
+  "body": {
+   "idempotencyKey": "x"
+  },
+  "binary": false,
+  "idempotent": false,
+  "raw": false,
+  "cursor": null,
+  "result": {
+   "passId": "x",
+   "stayMs": 0,
+   "stillInside": 0,
+   "tag": "returned"
+  }
+ },
+ {
   "id": "scanners.postScanners",
   "call": "scanners.create",
   "http": "POST",

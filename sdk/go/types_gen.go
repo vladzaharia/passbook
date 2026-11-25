@@ -13767,6 +13767,8 @@ type TerminalScansUndoParamsScope struct {
 
 type TerminalScansUndoResult = ScanOutcome
 
+type TerminalSignOutEverywhereBody = TerminalSignOutEverywhereParams
+
 type TerminalSignOutEverywhereParams struct {
 	IdempotencyKey string                               `json:"idempotencyKey"`
 	PassID         *string                              `json:"passId,omitempty"`
@@ -13793,6 +13795,8 @@ type TerminalSignOutEverywhereResponse struct {
 	StillInside int64  `json:"stillInside"`
 	Tag         string `json:"tag"`
 }
+
+type TerminalSignOutEverywhereResult = TerminalSignOutEverywhereResponse
 
 type TestEmailsListQuery struct {
 	Cursor *string `json:"cursor,omitempty"`

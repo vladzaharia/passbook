@@ -551,6 +551,7 @@ __all__ = [
     "MetricsRetrieveOverviewResponseSetup",
     "MetricsRetrieveOverviewResponseTotals",
     "NfcBindingsDeleteResponse",
+    "NfcBindingsDeleteResult",
     "NfcBindingsUpdateParams",
     "NfcBindingsUpdateResponse",
     "NfcEnrollmentsCancelResponse",
@@ -617,25 +618,36 @@ __all__ = [
     "NfcTagTypesUpdateParams",
     "NfcTagTypesUpdateResponse",
     "NfcTagTypesUpdateResult",
+    "NfcTagsAssignBody",
     "NfcTagsAssignParams",
     "NfcTagsAssignParams1",
     "NfcTagsAssignParams2",
     "NfcTagsAssignResponse",
+    "NfcTagsAssignResult",
+    "NfcTagsListForPassItem",
     "NfcTagsListForPassResponse",
     "NfcTagsListForPassResponseItemsItem",
+    "NfcTagsListForPassResult",
     "NfcTagsListForUserResponse",
     "NfcTagsListForUserResponseItemsItem",
+    "NfcTagsListHistoryItem",
     "NfcTagsListHistoryResponse",
     "NfcTagsListHistoryResponseEventsItem",
     "NfcTagsListHistoryResponseItemsItem",
+    "NfcTagsListHistoryResult",
+    "NfcTagsListItem",
     "NfcTagsListResponse",
     "NfcTagsListResponseItemsItem",
+    "NfcTagsListResult",
     "NfcTagsRebindParams",
     "NfcTagsRebindResponse",
     "NfcTagsReportLostResponse",
+    "NfcTagsReportLostResult",
     "NfcTagsRestoreResponse",
+    "NfcTagsRestoreResult",
     "NfcTagsRetireResponse",
     "NfcTagsRetrieveResponse",
+    "NfcTagsRetrieveResult",
     "NfcTagsUpdateParams",
     "NfcTagsUpdateResponse",
     "Org",
@@ -1816,10 +1828,12 @@ __all__ = [
     "TerminalScansUndoParamsApproval",
     "TerminalScansUndoParamsScope",
     "TerminalScansUndoResult",
+    "TerminalSignOutEverywhereBody",
     "TerminalSignOutEverywhereParams",
     "TerminalSignOutEverywhereParamsRead",
     "TerminalSignOutEverywhereParamsReadNdef",
     "TerminalSignOutEverywhereResponse",
+    "TerminalSignOutEverywhereResult",
     "TestEmailsListResult",
     "TestEmailsRetrieveResult",
     "UnknownWebhookEvent",
@@ -2125,7 +2139,7 @@ class ApiKeysCreateParams(_Model):
     orgId: str | None
     name: str
     kind: _Literal["service", "personal", "platform"] | str | None = None
-    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "api-keys:write", "audit:read", "members:read", "members:write"] | str] | None = None
+    scopes: _List[_Literal["passes:read", "passes:write", "holders:write", "templates:read", "templates:write", "templates:review", "templates:publish", "messages:write", "scans:read", "scans:write", "connections:read", "connections:write", "webhooks:manage", "brand:manage", "org:read", "org:write", "wallet:write", "scanning:write", "scan-setup:read", "scanning:admin", "nfc:keys", "nfc:read", "nfc:write", "api-keys:write", "audit:read", "members:read", "members:write"] | str] | None = None
     roles: _List[_Literal["org_admin", "integration_admin", "template_author", "template_reviewer", "template_publisher", "pass_operator", "read_only"] | str] | None = None
     ipAllow: _List[str] | None = None
     templateIds: _List[str] | None = None
@@ -5797,6 +5811,23 @@ class NfcTagsAssignResponse(_Model):
     keysetId: str | None
     binding: _Dict[str, _Any] | None
 
+class NfcTagsListForPassItem(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
+
 class NfcTagsListForPassResponse(_Model):
     items: _List[NfcTagsListForPassResponseItemsItem]
     nextCursor: str | None
@@ -5841,6 +5872,23 @@ class NfcTagsListForUserResponseItemsItem(_Model):
     orgId: str
     orgName: str
 
+class NfcTagsListHistoryItem(_Model):
+    id: str
+    tagId: str
+    scope: _Literal["pass", "user"] | str
+    passId: str
+    passTitle: str | None
+    userId: str | None
+    holderName: str | None
+    source: _Literal["scanner", "remote", "admin"] | str
+    lent: bool | None = None
+    boundAt: int
+    boundByName: str | None
+    scannerName: str | None
+    expiresAt: int | None = None
+    endedAt: int | None
+    endCause: _Literal["admin", "staff", "undo", "lost", "replaced", "moved", "holder_changed", "pass_deleted", "no_passes", "offboard", "visitor_out", "pass_ended", "tag_retired", "channel_off", "expired", "type_changed", None] | str
+
 class NfcTagsListHistoryResponse(_Model):
     items: _List[NfcTagsListHistoryResponseItemsItem]
     nextCursor: str | None
@@ -5867,6 +5915,23 @@ class NfcTagsListHistoryResponseItemsItem(_Model):
     expiresAt: int | None = None
     endedAt: int | None
     endCause: _Literal["admin", "staff", "undo", "lost", "replaced", "moved", "holder_changed", "pass_deleted", "no_passes", "offboard", "visitor_out", "pass_ended", "tag_retired", "channel_off", "expired", "type_changed", None] | str
+
+class NfcTagsListItem(_Model):
+    id: str
+    mode: _Literal["live", "test"] | str
+    kind: _Literal["uid", "sun"] | str
+    system: _Literal["uid", "sun"] | str | None = None
+    type: _Dict[str, _Any] | None = None
+    assurance: _Literal["basic", "secure"] | str
+    hint: str
+    label: str | None
+    pool: bool
+    status: _Literal["active", "retired"] | str
+    state: _Literal["assigned", "spare", "lent", "lost", "retired"] | str
+    createdAt: int
+    lastSeenAt: int | None
+    keysetId: str | None
+    binding: _Dict[str, _Any] | None
 
 class NfcTagsListResponse(_Model):
     items: _List[NfcTagsListResponseItemsItem]
@@ -14085,6 +14150,8 @@ MessageRulesUpdateBody = MessageRulesUpdateParams
 
 MessageRulesUpdateResult = MessageRulesUpdateResponse
 
+NfcBindingsDeleteResult = NfcBindingsDeleteResponse
+
 NfcKeysetsCreateParams = NfcKeysetsCreateParams1 | NfcKeysetsCreateParams2 | NfcKeysetsCreateParams3
 
 NfcKeysetsCreateBody = NfcKeysetsCreateParams
@@ -14128,6 +14195,22 @@ NfcTagTypesUpdateBody = NfcTagTypesUpdateParams
 NfcTagTypesUpdateResult = NfcTagTypesUpdateResponse
 
 NfcTagsAssignParams = NfcTagsAssignParams1 | NfcTagsAssignParams2
+
+NfcTagsAssignBody = NfcTagsAssignParams
+
+NfcTagsAssignResult = NfcTagsAssignResponse
+
+NfcTagsListForPassResult = NfcTagsListForPassResponse
+
+NfcTagsListHistoryResult = NfcTagsListHistoryResponse
+
+NfcTagsListResult = NfcTagsListResponse
+
+NfcTagsReportLostResult = NfcTagsReportLostResponse
+
+NfcTagsRestoreResult = NfcTagsRestoreResponse
+
+NfcTagsRetrieveResult = NfcTagsRetrieveResponse
 
 OrgsEntitlementsRetrieveResult = OrgsEntitlementsRetrieveResponse
 
@@ -14514,6 +14597,10 @@ TerminalResolveResult = ScanOutcome
 TerminalScansUndoBody = TerminalScansUndoParams
 
 TerminalScansUndoResult = ScanOutcome
+
+TerminalSignOutEverywhereBody = TerminalSignOutEverywhereParams
+
+TerminalSignOutEverywhereResult = TerminalSignOutEverywhereResponse
 
 TestEmailsListResult = CapturedEmailPage
 

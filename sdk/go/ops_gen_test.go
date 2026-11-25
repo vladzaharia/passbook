@@ -1705,6 +1705,17 @@ var generatedOps = []opCase{
 		},
 	},
 	{
+		"terminal.signOutEverywhere", "POST", "/api/v1/scan/sign-out", false,
+		`{"idempotencyKey":"x"}`, `{"passId":"x","stayMs":0,"stillInside":0,"tag":"returned"}`,
+		func(ctx context.Context, c *Client, body []byte) (any, error) {
+			var b TerminalSignOutEverywhereBody
+			if err := json.Unmarshal(body, &b); err != nil {
+				return nil, err
+			}
+			return c.Terminal.SignOutEverywhere(ctx, &b)
+		},
+	},
+	{
 		"scanners.create", "POST", "/api/v1/scanners", false,
 		`{"orgId":"x","name":"x","kind":"device","accepts":{"eventId":"x"},"timeZone":"x"}`, `{"id":"x","orgId":"x","mode":"live","kind":"device","deviceRole":"scan","name":"x","accepts":{"templateIds":["x"],"eventIds":["x"]},"settings":{"flow":"auto","defaultActionId":"x","roleWithoutSignIn":"door","staffSignIn":false,"letInAgain":"anyone","reader":"none","lookup":false,"offline":false,"dailyAmount":0},"timeZone":"x","status":"not_paired","online":false,"pairedAt":0,"pairedLabel":"x","lastSeenAt":0,"expiresAt":0,"staff":{"id":"x","name":"x"},"today":0,"createdAt":0,"pairing":{"code":"x","url":"x","expiresAt":0}}`,
 		func(ctx context.Context, c *Client, body []byte) (any, error) {
