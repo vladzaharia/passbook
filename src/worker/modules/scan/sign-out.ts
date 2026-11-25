@@ -11,14 +11,11 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
-import { policyActor } from '../scan/dto.ts';
-import type { ScanActor } from '../scan/guard.ts';
-import { markOut } from '../scan/occupancy/mark-out.ts';
-import { scanPolicy } from '../scan/rules.ts';
-import { stayOf } from './derive.ts';
-import { insidePlaces, visitorByPass } from './repo.ts';
-import { deskOutGrant } from './repo-write.ts';
-import { toVisitor } from './service.ts';
+import { policyActor } from './dto.ts';
+import type { ScanActor } from './guard.ts';
+import { markOut } from './occupancy/mark-out.ts';
+import { insidePlaces } from './repo-sign-out.ts';
+import { scanPolicy } from './rules.ts';
 
 type SignOutRequest = z.infer<typeof SignOutRequestSchema>;
 type SignOutResult = z.infer<typeof SignOutResultSchema>;
@@ -29,8 +26,8 @@ const skippable = (error: unknown): error is ConflictError | ValidationError =>
   (error instanceof ValidationError && error.code === 'SCAN_MARK_OUT_INVALID');
 
 /**
- * POST /scan/sign-out (Desk and above): marks the person out of every tracked place they are in and
- * records a visitor's departure. Someone already out is not an error for a visitor, so a retry is safe.
+ * POST /scan/sign-out (Desk and above): marks the person out of every tracked place they are in.
+ * No visit is recorded; a pass with nothing to mark out is 409 NOT_INSIDE.
  */
 export async function signOut(
   ctx: ServiceContext,
@@ -56,22 +53,9 @@ export async function signOut(
       stay ??= outcome.occupancy?.stayMs ?? null;
     } catch (error) {
       if (!skippable(error)) throw error;
-      ctx.log.warn('visitor.sign_out_place_skipped', { orgId: actor.orgId, code: error.code });
+      ctx.log.warn('scan.sign_out_place_skipped', { orgId: actor.orgId, code: error.code });
     }
   }
-  const visit = await visitorByPass(db, actor.orgId, actor.mode, pass.id);
-  if (!visit) {
-    if (marked === 0) throw new ConflictError('They are already out.', 'NOT_INSIDE');
-    return { passId: pass.id, stayMs: stay, tag: req.tag };
-  }
-  const now = ctx.clock.now();
-  const state = toVisitor(visit, now).status;
-  if (state === 'in') await deskOutGrant(ctx, actor, visit, { pass, credential: {} }).commit();
-  else if (marked === 0 && (state === 'expected' || state === 'no_show'))
-    throw new ConflictError('They have not checked in.', 'VISITOR_NOT_IN');
-  return {
-    passId: pass.id,
-    stayMs: stay ?? (state === 'in' ? stayOf(visit.arrivedAt, now) : null),
-    tag: req.tag,
-  };
+  if (marked === 0) throw new ConflictError('They are already out.', 'NOT_INSIDE');
+  return { passId: pass.id, stayMs: stay, tag: req.tag };
 }

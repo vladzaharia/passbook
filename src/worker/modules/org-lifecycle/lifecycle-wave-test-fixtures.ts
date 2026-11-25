@@ -4,19 +4,13 @@ import type { RetentionKit } from '../retention/retention-test-fixtures.ts';
 /** One row in each table wave A added to an org, so a purge and an export meet every one of them. */
 export async function seedWaveTables(
   kit: RetentionKit['kit'],
-  o: { orgId: string; label: string; passId: string; otherPassId: string; scannerId: string },
+  o: { orgId: string; label: string; passId: string; scannerId: string },
 ): Promise<void> {
   const { env, clock, fx } = kit;
-  const { orgId, label, passId, otherPassId, scannerId } = o;
+  const { orgId, label, passId, scannerId } = o;
   const now = clock.now();
   const bytes = (n: number) => new Uint8Array(n).fill(9);
   const hex = (s: string) => s.padEnd(64, '0');
-  await run(
-    env.DB,
-    `INSERT INTO visitors (id, org_id, mode, pass_id, name, host_name, host_email, window_from, window_until, created_at)
-     VALUES (?, ?, 'live', ?, 'Visitor', 'Host', ?, 1, 2, 1)`,
-    [`visitor-${label}`, orgId, otherPassId, `host-${label}@example.test`],
-  );
   await run(
     env.DB,
     `INSERT INTO roll_calls (id, org_id, mode, scope_key, places, snapshot, started_by, started_at)

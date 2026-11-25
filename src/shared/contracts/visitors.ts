@@ -1,19 +1,9 @@
 import { z } from 'zod';
 import { EmailSchema, IdSchema, PlainLineSchema, pageOf, TimestampSchema } from './common.ts';
 
-export const VISITOR_STATUSES = ['expected', 'in', 'out', 'no_show', 'cancelled'] as const;
-export const VisitorStatusSchema = z.enum(VISITOR_STATUSES);
+const VISITOR_STATUSES = ['expected', 'in', 'out', 'no_show', 'cancelled'] as const;
+const VisitorStatusSchema = z.enum(VISITOR_STATUSES);
 export type VisitorStatus = z.infer<typeof VisitorStatusSchema>;
-
-export const VISITOR_TABS = ['today', 'upcoming', 'past'] as const;
-
-export const VisitorQuerySchema = z.object({
-  orgId: IdSchema.optional(),
-  tab: z.enum(VISITOR_TABS).default('today'),
-  /** The browser's local day, as epoch ms, so Today follows the viewer's clock. */
-  dayStart: z.coerce.number().int().nonnegative(),
-  dayEnd: z.coerce.number().int().nonnegative(),
-});
 
 export const VisitorSchema = z.object({
   id: IdSchema,
@@ -35,7 +25,7 @@ export type Visitor = z.infer<typeof VisitorSchema>;
 
 export const VisitorListSchema = pageOf(VisitorSchema);
 
-export const NewVisitorSchema = z
+const NewVisitorSchema = z
   .strictObject({
     orgId: IdSchema,
     name: PlainLineSchema(80),
@@ -55,10 +45,6 @@ export const NewVisitorSchema = z
     path: ['hostUserId'],
   });
 export type NewVisitor = z.infer<typeof NewVisitorSchema>;
-
-export const VisitorParamsSchema = z.object({ id: IdSchema });
-/** An org key leaves `orgId` out and acts in its own org. */
-export const VisitorOrgQuerySchema = z.object({ orgId: IdSchema.optional() });
 
 export const HostListSchema = z.object({
   /** Emails come only with members:manage. */

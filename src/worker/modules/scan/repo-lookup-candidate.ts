@@ -43,7 +43,6 @@ export type Raw = PassDbRow &
     display_template_version: string | null;
     check_in_rules: string | null;
     channel_rules?: number;
-    visitor?: number;
     in_bundle?: number;
     channel_epoch?: string;
     print_status?: string | null;
@@ -102,7 +101,6 @@ export function toCandidate(r: Raw): Candidate | null {
     displayTemplateVersion: r.display_template_version,
     checkInRules: CheckInPolicySchema.parse(JSON.parse(r.check_in_rules ?? '{}')),
     hasPhoto: r.asset_photo_version !== null,
-    ...(r.visitor === undefined ? {} : { visitor: r.visitor !== 0 }),
     ...(r.in_bundle === undefined ? {} : { inBundle: r.in_bundle !== 0 }),
     ...(r.channel_rules === undefined ? {} : { channelRules: r.channel_rules !== 0 }),
     ...(r.print_status

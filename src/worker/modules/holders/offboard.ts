@@ -9,8 +9,7 @@ import { recordAudit } from '../audit/service.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { removePass } from '../passes/remove.ts';
 import { type Actor, voidPass } from '../passes/service.ts';
-import { activeBindingsOn, offboardPasses } from './repo.ts';
-import { offboardTagsGrant } from './repo-write.ts';
+import { activeBindingsOn, offboardPasses, offboardTagsGrant } from './repo-offboard.ts';
 
 type Request = z.infer<typeof OffboardRequestSchema>;
 type Result = z.infer<typeof OffboardResultSchema>;

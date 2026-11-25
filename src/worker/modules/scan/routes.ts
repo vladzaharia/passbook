@@ -23,8 +23,6 @@ import {
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { serviceContext } from '../../platform/service-context.ts';
-import { notifyHostOfArrival } from '../visitors/arrival.ts';
-import { registerScanVisitorRoutes } from '../visitors/routes-scan.ts';
 import { deepFreeze } from './freeze.ts';
 import { actGroup, undoGroup, withBundle } from './group.ts';
 import { scanActorOf } from './guard.ts';
@@ -45,6 +43,7 @@ import { registerScanOfflineRoutes } from './routes-offline.ts';
 import { limitScanBodies, registerScanPhotoRoute } from './routes-photo.ts';
 import { registerScanRoleRoutes } from './routes-role.ts';
 import { registerScanSessionHoursRoutes } from './routes-session-hours.ts';
+import { registerScanSignOutRoute } from './routes-sign-out.ts';
 import { registerScanStaffRoutes } from './routes-staff-session.ts';
 import { registerScanTagRoutes } from './routes-tags.ts';
 import { capturingContext } from './scan-capture.ts';
@@ -96,7 +95,7 @@ register(
 
 registerScanStaffRoutes(scanRoutes);
 registerScanOccupancyRoutes(scanRoutes);
-registerScanVisitorRoutes(scanRoutes);
+registerScanSignOutRoute(scanRoutes);
 registerScanRoleRoutes(scanRoutes);
 registerScanDraftRoutes(scanRoutes);
 registerScanTagRoutes(scanRoutes);
@@ -219,7 +218,6 @@ register(
         false,
         'code' in input,
       );
-    notifyHostOfArrival(ctx, actor, outcome, evaluatedSnapshot);
     // The door asks which bundle only for a pass that is in one (read with the pass, no extra trip).
     const shown = evaluatedSnapshot?.inBundle ? { ...outcome, inBundle: true } : outcome;
     return c.json(await withParentHint(ctx.env.DB, actor.orgId, shown));
