@@ -34,6 +34,7 @@ const template = (count: number, extra: Record<number, object> = {}) =>
 
 const info = (over: Partial<VersionReleases> = {}): VersionReleases => ({
   orgId: 'org1',
+  mode: 'live',
   live: hash(2),
   test: hash(2),
   releasedAt: new Map([[hash(2), 1_700_100_000_000]]),
@@ -48,7 +49,13 @@ function mount(t: Template, releases: VersionReleases | null, draft?: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <VersionList template={t} releases={releases} draft={draft} onReport={() => undefined} />
+      <VersionList
+        template={t}
+        releases={releases}
+        draft={draft}
+        canCompare
+        onReport={() => undefined}
+      />
     </QueryClientProvider>,
   );
 }
@@ -110,6 +117,7 @@ describe('version list', () => {
       <QueryClientProvider client={client}>
         <VersionList
           template={template(3)}
+          canCompare
           releases={info({ restore: new Map([[hash(1), restore]]) })}
           onRelease={onRelease}
           onReport={() => undefined}
@@ -141,5 +149,24 @@ describe('version list', () => {
     const sheet = await screen.findByRole('dialog', { name: 'v3 changes' });
     expect(await within(sheet).findByText('Background')).toBeInTheDocument();
     expect(sheet).toHaveTextContent('v3 against v2 (Live)');
+  });
+
+  it('offers no Compare without the dry-run capability, and no Restore on the Live row', async () => {
+    const user = userEvent.setup();
+    const client = new QueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <VersionList
+          template={template(3)}
+          releases={info({ restore: new Map([[hash(2), () => undefined]]) })}
+          onReport={() => undefined}
+        />
+      </QueryClientProvider>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Actions for v1' }));
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+      'Report',
+      'Technical details',
+    ]);
   });
 });

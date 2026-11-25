@@ -660,6 +660,27 @@ describe('template detail', () => {
     await waitFor(() => expect(bodies).toEqual([{ orgId: 'org1', name: 'Copper card copy' }]));
   });
 
+  it('gives a built-in version only Report and Technical details', async () => {
+    const user = userEvent.setup();
+    await renderApp('/admin/templates/b1?tab=versions', {
+      session: 'admin',
+      ...orgAccess,
+      handlers: {
+        '/api/v1/orgs': directoryOrgs,
+        '/api/v1/templates/b1': () =>
+          json(templateDetail({ id: 'b1', origin: 'baked', orgId: null })),
+        '/api/v1/templates/previews': previewsHandler,
+        '/api/v1/templates/b1/preview': preview,
+      },
+    });
+    await user.click(await screen.findByRole('button', { name: 'Actions for v1' }));
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+      'Report',
+      'Technical details',
+    ]);
+    expect(screen.getByRole('button', { name: 'Actions for v2' })).toBeInTheDocument();
+  });
+
   it('opens a duplicate in the destination author membership rather than the old scope', async () => {
     const user = userEvent.setup();
     const bodies: unknown[] = [];

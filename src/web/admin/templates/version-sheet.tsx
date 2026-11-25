@@ -12,6 +12,8 @@ import { useReleasePlan } from './releases/flow-api.ts';
 import { ReleaseDiff } from './releases/release-diff.tsx';
 import type { VersionReleases } from './releases/version-info.ts';
 
+const MODE_NAME = { live: 'Live', test: 'Test' } as const;
+
 export type SheetKind = 'compare' | 'details';
 
 interface Props {
@@ -27,7 +29,9 @@ interface Props {
 
 function Compare({ templateId, version, name, info }: Omit<Props, 'kind' | 'onClose'>) {
   const orgId = info?.orgId ?? '';
-  const plan = useReleasePlan(templateId, orgId, version.version, ['live']);
+  const mode = info?.mode ?? 'live';
+  const base = mode === 'test' ? info?.test : info?.live;
+  const plan = useReleasePlan(templateId, orgId, version.version, [mode]);
   const image = (v: Extract<ReleaseDiffValue, { type: 'image' }>) =>
     `/api/v1/templates/${encodeURIComponent(templateId)}/versions/${encodeURIComponent(v.version)}/assets/${encodeURIComponent(v.asset)}?orgId=${encodeURIComponent(orgId)}`;
   if (plan.isError)
@@ -45,7 +49,7 @@ function Compare({ templateId, version, name, info }: Omit<Props, 'kind' | 'onCl
   return (
     <div className="grid gap-4">
       <p className="text-sm text-fg-muted">
-        {name(version.version)} against {info?.live ? `${name(info.live)} (Live)` : 'Live'}
+        {name(version.version)} against {base ? name(base) : MODE_NAME[mode]} ({MODE_NAME[mode]})
       </p>
       <ReleaseDiff groups={plan.data.diff} image={image} />
     </div>
@@ -60,6 +64,18 @@ function Details({ version, info }: Pick<Props, 'version' | 'info'>) {
     ...(release
       ? [
           { label: 'Released', value: formatDateTime(release.createdAt), mono: false },
+          ...(release.action === 'rollback'
+            ? [{ label: 'Release', value: 'Restored', mono: false }]
+            : []),
+          ...(release.createdBy !== null
+            ? [
+                {
+                  label: 'Released by',
+                  value: release.createdByName ?? 'Someone',
+                  mono: false,
+                },
+              ]
+            : []),
           { label: 'Generation', value: release.generation },
           { label: 'Candidate', value: release.candidateHash, copy: true },
         ]

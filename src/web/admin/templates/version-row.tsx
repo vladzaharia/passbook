@@ -38,6 +38,7 @@ export function VersionRow({
   info,
   onTry,
   onRelease,
+  canCompare,
   onReport,
   onSheet,
 }: {
@@ -47,13 +48,15 @@ export function VersionRow({
   info: VersionReleases | null;
   onTry?: (() => void) | undefined;
   onRelease?: (() => void) | undefined;
+  canCompare: boolean;
   onReport: () => void;
   onSheet: (kind: SheetKind) => void;
 }) {
   const releasable = v.report.ok && !v.active;
   const restore = info?.restore.get(v.version);
   const released = info?.releasedAt.get(v.version);
-  const compare = Boolean(info?.live && info.live !== v.version && v.report.ok);
+  const base = info?.mode === 'test' ? info.test : info?.live;
+  const compare = canCompare && Boolean(base && base !== v.version && v.report.ok);
   const actions: RowAction[] = [
     ...(releasable && onRelease ? [{ label: 'Release', icon: Send, onSelect: onRelease }] : []),
     ...(releasable && onTry ? [{ label: 'Try', icon: Smartphone, onSelect: onTry }] : []),

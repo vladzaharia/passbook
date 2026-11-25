@@ -33,6 +33,7 @@ export function VersionList({
   draft,
   onTry,
   onRelease,
+  canCompare = false,
   onReport,
   releases,
   rollout,
@@ -42,6 +43,7 @@ export function VersionList({
   draft?: string | undefined;
   onTry?: ((version: string) => void) | undefined;
   onRelease?: ((version: string) => void) | undefined;
+  canCompare?: boolean;
   onReport: (version: string) => void;
   releases: VersionReleases | null;
   /** How far the Live release has reached the passes: the card's first block. */
@@ -74,6 +76,7 @@ export function VersionList({
               name={name(v.version)}
               draft={v.version === draft}
               info={releases}
+              canCompare={canCompare}
               onTry={onTry ? () => onTry(v.version) : undefined}
               onRelease={onRelease ? () => onRelease(v.version) : undefined}
               onReport={() => onReport(v.version)}
@@ -84,7 +87,7 @@ export function VersionList({
         {newestFirst.length > shown.length || all ? (
           <Button
             size="sm"
-            variant="ghost"
+            variant="link"
             className="mt-3"
             aria-expanded={all}
             onClick={() => setAll(!all)}

@@ -158,4 +158,27 @@ describe('template release actions', () => {
       action: 'rollback',
     });
   });
+
+  it('never offers Restore on the version that is Live now', async () => {
+    const user = userEvent.setup();
+    const older = release({ id: 'older', generation: 1, version: 'version-2' });
+    const head = release({ id: 'head', generation: 3, version: 'version-2' });
+    releaseServer({ active: head, history: [older, head] });
+    mountPanel();
+    await screen.findByRole('list', { name: 'Versions' });
+    await user.click(screen.getByRole('button', { name: 'Actions for v2' }));
+    expect(screen.queryByRole('menuitem', { name: 'Restore' })).not.toBeInTheDocument();
+  });
+
+  it('names who released a version and marks a restore in its details', async () => {
+    const user = userEvent.setup();
+    const restored = release({ id: 'r', generation: 2, action: 'rollback', version: 'version-2' });
+    releaseServer({ active: restored, history: [restored] });
+    mountPanel();
+    await pickRowAction(user, 'v2', 'Technical details');
+    const sheet = await screen.findByRole('dialog', { name: 'v2 details' });
+    expect(within(sheet).getByText('Released by')).toBeInTheDocument();
+    expect(within(sheet).getByText('Pia Publisher')).toBeInTheDocument();
+    expect(within(sheet).getByText('Restored')).toBeInTheDocument();
+  });
 });

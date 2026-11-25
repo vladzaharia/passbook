@@ -108,9 +108,12 @@ function ScopedPanel({
   }
   if (!releases.data || !candidates.data || !liveLists.releases.data || !testLists.releases.data) {
     return (
-      <div role="status" aria-busy className="grid gap-2">
-        <span className="sr-only">Loading releases</span>
-        <Skeleton className="h-24 w-full" />
+      <div className="grid gap-4">
+        <div role="status" aria-busy className="grid gap-2">
+          <span className="sr-only">Loading releases</span>
+          <Skeleton className="h-24 w-full" />
+        </div>
+        {children?.(null)}
       </div>
     );
   }
@@ -143,6 +146,7 @@ function ScopedPanel({
       {children?.(
         versionReleases({
           orgId,
+          mode,
           live,
           test: testLists.releases.data,
           selfApprovals,

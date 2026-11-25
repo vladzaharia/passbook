@@ -148,7 +148,7 @@ const LIST_TEMPLATE = {
 
 /** The Versions list beside the panel, as the template page mounts it. */
 const renderList: NonNullable<TemplateReleasesPanelProps['children']> = (releases) => (
-  <VersionList template={LIST_TEMPLATE} releases={releases} onReport={() => undefined} />
+  <VersionList template={LIST_TEMPLATE} releases={releases} canCompare onReport={() => undefined} />
 );
 
 /** Opens a version row's menu and picks an action. */

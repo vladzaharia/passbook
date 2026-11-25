@@ -1,8 +1,11 @@
+import type { Mode } from '@/shared/contracts/common.ts';
 import type { TemplateRelease } from '@/shared/contracts/template-releases.ts';
 
 /** What the releases tell the Versions list: which version is Live and Test, and what a row may do. */
 export interface VersionReleases {
   orgId: string;
+  /** The mode the page is in: Compare asks the dry run for it alone. */
+  mode: Mode;
   live: string | null;
   test: string | null;
   /** When each version was last released, in either mode. */
@@ -18,6 +21,7 @@ export interface VersionReleases {
 
 export function versionReleases(input: {
   orgId: string;
+  mode: Mode;
   live: { active: TemplateRelease | null; items: readonly TemplateRelease[] };
   test: { active: TemplateRelease | null; items: readonly TemplateRelease[] };
   selfApprovals: ReadonlySet<string>;
@@ -40,10 +44,15 @@ export function versionReleases(input: {
   const { onRestore } = input;
   if (onRestore)
     for (const r of [...input.live.items].sort((a, b) => b.generation - a.generation))
-      if (!restore.has(r.version) && input.restorable(r))
+      if (
+        !restore.has(r.version) &&
+        r.version !== input.live.active?.version &&
+        input.restorable(r)
+      )
         restore.set(r.version, () => onRestore(r));
   return {
     orgId: input.orgId,
+    mode: input.mode,
     live: input.live.active?.version ?? null,
     test: input.test.active?.version ?? null,
     releasedAt,

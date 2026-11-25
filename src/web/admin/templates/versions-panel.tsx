@@ -14,6 +14,7 @@ export function VersionsPanel({
   draft,
   onTry,
   onRelease,
+  canCompare = false,
   releases = null,
   rollout,
 }: {
@@ -23,6 +24,8 @@ export function VersionsPanel({
   /** Set for a viewer who may release: Try and Release show in each valid, non-Live version's menu. */
   onTry?: ((version: string) => void) | undefined;
   onRelease?: ((version: string) => void) | undefined;
+  /** The release dry run is open to the viewer: rows offer Compare. */
+  canCompare?: boolean;
   /** Live and Test, and what a row may restore; null until the releases load. */
   releases?: VersionReleases | null;
   /** How far the Live release has reached the passes: the card's first block. */
@@ -39,6 +42,7 @@ export function VersionsPanel({
         draft={draft}
         onTry={onTry}
         onRelease={onRelease}
+        canCompare={canCompare}
         onReport={setReport}
         releases={releases}
         rollout={rollout}

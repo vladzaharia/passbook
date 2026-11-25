@@ -94,18 +94,19 @@ export function TemplateDetailContent({
     return n ? versionName(n) : null;
   };
   const importedLabel = labelOf(importedVersion.mark);
+  const canRelease = Boolean(state?.next && state.next !== 'wait' && !archived);
+  const canReview = scope.membership?.capabilities.includes('templates:review') ?? false;
+  // The release dry run: the same reach as Release, for a publisher or reviewer, never a built-in.
+  const canCompare = canRelease && t.origin !== 'baked' && (canPublish || canReview);
   const versionsPanel = (releases: VersionReleases | null) => (
     <VersionsPanel
       template={t}
       releases={releases}
       rollout={<RolloutCard template={t} scope={scope} />}
       draft={draftHash || undefined}
-      onTry={
-        state?.next && state.next !== 'wait' && !archived
-          ? (v) => void controls.tryVersion(v)
-          : undefined
-      }
-      onRelease={state?.next && state.next !== 'wait' && !archived ? controls.release : undefined}
+      onTry={canRelease ? (v) => void controls.tryVersion(v) : undefined}
+      onRelease={canRelease ? controls.release : undefined}
+      canCompare={canCompare}
     />
   );
 
