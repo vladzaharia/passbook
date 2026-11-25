@@ -239,6 +239,24 @@ test('a developer sandbox has no Connections: hidden from the nav, a direct URL 
   const nav = page.getByRole('navigation', { name: 'Admin' });
   await expect(nav.getByRole('link', { name: 'Passes' })).toBeVisible();
   await expect(nav.getByRole('link', { name: 'Connections' })).toHaveCount(0);
+  await expect(nav.getByRole('link', { name: 'Webhooks' })).toBeVisible();
+  await shots(page, 'live-only-sandbox-nav');
+  // On a phone the nav is in the menu: open it for the 390 shots.
+  const dir = process.env.SHOTS_DIR;
+  if (dir) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.getByRole('button', { name: 'Menu' }).click();
+    await expect(nav.getByRole('link', { name: 'Webhooks' })).toBeVisible();
+    for (const scheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.screenshot({ path: `${dir}/live-only-sandbox-nav-menu-390-${scheme}.png` });
+    }
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.keyboard.press('Escape');
+    await page.setViewportSize({ width: 1280, height: 720 });
+  }
+  await nav.getByRole('link', { name: 'Webhooks' }).click();
+  await expect(page.getByRole('tab', { name: 'Webhook endpoints', selected: true })).toBeVisible();
   await page.goto(`/admin/o/${encodeURIComponent(orgId)}/connections/${'c'.repeat(26)}`);
   await expect(page.getByText('Connections run in Live.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Switch to Live' })).toHaveCount(0);

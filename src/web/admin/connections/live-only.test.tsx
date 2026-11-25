@@ -56,7 +56,7 @@ describe('Connections in Test mode', () => {
 });
 
 describe('Connections in a developer sandbox', () => {
-  it('hides Connections from the nav and the palette', async () => {
+  it('offers Webhooks, not Connections, in the nav and the palette', async () => {
     const user = userEvent.setup();
     await renderApp(`/admin/o/${ORG.id}/passes`, {
       session: 'admin',
@@ -66,11 +66,18 @@ describe('Connections in a developer sandbox', () => {
     const nav = await screen.findByRole('navigation', { name: 'Admin' });
     expect(await within(nav).findByRole('link', { name: 'Passes' })).toBeInTheDocument();
     expect(within(nav).queryByRole('link', { name: 'Connections' })).toBeNull();
+    expect(within(nav).getByRole('link', { name: 'Webhooks' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('tab=webhooks'),
+    );
     await user.keyboard('{Control>}k{/Control}');
     const input = await screen.findByRole('combobox', { name: 'Search' });
     await user.type(input, 'connection');
     expect(screen.queryByRole('option', { name: /Connections/ })).toBeNull();
     expect(screen.queryByRole('option', { name: 'New connection' })).toBeNull();
+    await user.clear(input);
+    await user.type(input, 'webhooks');
+    expect(await screen.findByRole('option', { name: 'Webhooks' })).toBeInTheDocument();
   });
 
   it('shows the same state at a direct URL, with no way to Live, and keeps the webhook tab', async () => {

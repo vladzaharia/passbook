@@ -171,7 +171,7 @@ export function AdminPalette({
                 id: item.to,
                 label: item.label,
                 icon: item.icon,
-                onSelect: go(item.to),
+                onSelect: go(item.to, item.search),
               })),
               (i) => nav.find((n) => n.to === i.id)?.keywords ?? [],
             ),
