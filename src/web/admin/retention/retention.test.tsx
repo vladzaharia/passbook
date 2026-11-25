@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
 
@@ -88,5 +89,20 @@ describe('retention page', () => {
     expect(await screen.findByRole('heading', { name: 'Retention' })).toBeInTheDocument();
     expect(screen.queryByText('Legal holds')).toBeNull();
     expect(screen.queryByText('Retention receipts')).toBeNull();
+  });
+
+  it('the place hold dialog blocks an empty reason and starts empty after Cancel', async () => {
+    const user = userEvent.setup();
+    await setup(['org:read', 'org:manage', 'audit:read'], []);
+    await user.click(await screen.findByRole('button', { name: 'Place hold' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Place hold' });
+    await user.click(within(dialog).getByRole('button', { name: 'Place hold' }));
+    expect(await within(dialog).findByText('Give a reason.')).toBeInTheDocument();
+    await user.type(within(dialog).getByLabelText(/Reason/), 'Inquiry');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    await user.click(await screen.findByRole('button', { name: 'Place hold' }));
+    const again = await screen.findByRole('dialog', { name: 'Place hold' });
+    expect(within(again).getByLabelText(/Reason/)).toHaveValue('');
+    expect(within(again).queryByText('Give a reason.')).toBeNull();
   });
 });
