@@ -37,11 +37,11 @@ export function mapIdpError(error: unknown): AppError {
 }
 
 /** True when the binding exists. Before the provisioner is deployed it does not, and the feature stays hidden. */
-export const idpConfigured = (env: { IDP?: unknown }): boolean => env.IDP !== undefined;
+export const idpConfigured = (env: object): boolean => (env as { IDP?: unknown }).IDP !== undefined;
 
 /** Typed wrapper over the `IDP` service binding. Every failure is an AppError; a missing binding is `IDP_UNAVAILABLE`. */
-export function idpClient(env: { IDP?: unknown }): IdpRpc {
-  const rpc = env.IDP as IdpRpc | undefined;
+export function idpClient(env: object): IdpRpc {
+  const rpc = (env as { IDP?: IdpRpc }).IDP;
   const call = async <T>(run: (r: IdpRpc) => Promise<T>): Promise<T> => {
     if (!rpc) throw new UnavailableError(UNAVAILABLE, 'IDP_UNAVAILABLE');
     try {

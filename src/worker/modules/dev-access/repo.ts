@@ -40,6 +40,13 @@ export const invitationByHash = (db: D1Database, hash: string) =>
     [hash],
   );
 
+export const invitationById = (db: D1Database, orgId: string, id: string) =>
+  first<DeveloperInvitationRow>(
+    db,
+    `SELECT ${COLUMNS} FROM developer_invitations WHERE org_id = ? AND id = ?`,
+    [orgId, id],
+  );
+
 export const orgInvitations = (db: D1Database, orgId: string) =>
   all<DeveloperInvitationRow>(
     db,
@@ -92,8 +99,8 @@ export interface NewDeveloperInvitation {
   createdByKey: string | null;
   now: number;
   expires: number;
-  /** The paired org invitation: it makes the membership when the person accepts. */
-  org: { id: string; roles: string; hash: string };
+  /** The paired org invitation, which makes the membership when the person accepts; null for developer access alone. */
+  org: { id: string; roles: string; hash: string } | null;
 }
 
 /**
@@ -108,11 +115,12 @@ export async function insertDeveloperInvitation(
   audit: AuditEntry,
 ): Promise<void> {
   const g = grant(ctx, { purpose: 'org.developer.invite', principal, checks, target: row.id });
-  g.insertSelect(
-    'org_invitations',
-    ['id', 'email', 'roles', 'token_hash', 'created_at', 'expires_at'],
-    [row.org.id, row.email, row.org.roles, row.org.hash, row.now, row.expires],
-  );
+  if (row.org)
+    g.insertSelect(
+      'org_invitations',
+      ['id', 'email', 'roles', 'token_hash', 'created_at', 'expires_at'],
+      [row.org.id, row.email, row.org.roles, row.org.hash, row.now, row.expires],
+    );
   g.insertSelect(
     'developer_invitations',
     [
@@ -130,7 +138,7 @@ export async function insertDeveloperInvitation(
       row.id,
       row.email,
       row.hash,
-      row.org.id,
+      row.org?.id ?? null,
       row.createdByUser,
       row.createdByKey,
       row.now,

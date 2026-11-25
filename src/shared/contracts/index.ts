@@ -7,6 +7,7 @@ export * from './common.ts';
 export * from './connection-preview.ts';
 export * from './connections.ts';
 export * from './developer.ts';
+export * from './developer-invitations.ts';
 export * from './entitlement-admin.ts';
 export * from './entitlements.ts';
 export * from './events.ts';

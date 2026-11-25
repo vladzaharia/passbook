@@ -108,3 +108,8 @@ export function createFakeIdp(options: { groupName?: string; now?: () => number 
   idp.binding = idp;
   return idp;
 }
+
+/** Gives a test env the `IDP` binding, backed by the fake. */
+export function installFakeIdp(env: object, idp: FakeIdp): void {
+  Object.assign(env, { IDP: idp.binding });
+}

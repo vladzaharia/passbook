@@ -46,6 +46,8 @@ const GROUPS: Record<string, (typeof GROUP_ORDER)[number]> = {
   brand: 'Organization',
   apiKeys: 'Organization',
   auditEntries: 'Organization',
+  developerInvitations: 'Organization',
+  developers: 'Organization',
 };
 
 const LABELS: Record<string, string> = {

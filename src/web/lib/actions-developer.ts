@@ -1,4 +1,5 @@
 import { CircleCheck, type LucideIcon, Pause, RotateCcw, Unlock } from 'lucide-react';
+import { DEV_ACCESS_ACTIONS } from './actions-dev-access.ts';
 import { ENTITY } from './entities.ts';
 import type { Tone } from './status.ts';
 
@@ -13,4 +14,5 @@ export const DEVELOPER_ACTIONS = {
   'developer_sandbox.reopen': a('Developer sandbox reopened', Unlock, 'success'),
   'developer_sandbox.reset': a('Developer sandbox reset', RotateCcw, 'warning'),
   'developer_sandbox.try_revoke': a('Try it sessions ended', ENTITY.apiKey.icon, 'warning'),
+  ...DEV_ACCESS_ACTIONS,
 };

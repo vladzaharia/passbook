@@ -14,6 +14,7 @@ import { denyAllStores } from '../../src/worker/platform/auth.ts';
 import { run } from '../../src/worker/platform/db.ts';
 import { sha256Hex } from '../../src/worker/platform/ids.ts';
 import { runPassImport } from '../../src/worker/workflows/pass-import.ts';
+import { createFakeIdp, installFakeIdp } from '../helpers/fake-idp.ts';
 import { makeOrg, makeScanner } from './../helpers/index.ts';
 
 const ORIGIN = 'https://passbook.mobile';
@@ -99,6 +100,8 @@ export const kit = () => {
 /** `kind: 'developer'` makes the organization a portal sandbox, which the capture endpoint needs. */
 export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'developer' } = {}) {
   const org = await makeOrg(kit.f, options);
+  // The developer invitation snippet reaches Polaris ID through the provisioner binding, which a test env lacks.
+  installFakeIdp(kit.env, createFakeIdp());
   const owner = await kit.member(org.id, ['org_admin']);
   const id = kit.f.ids.id();
   const prefix = kit.f.ids.token(6);
@@ -134,14 +137,14 @@ export async function snippetWorld(kit: BlueprintKit, options: { kind?: 'develop
         org.id,
         credentialPrefix,
         await sha256Hex(credentialSecret),
-        JSON.stringify(['scanning:admin', 'nfc:keys']),
+        JSON.stringify(['scanning:admin', 'nfc:keys', 'members:read', 'members:write']),
         owner.userId,
         kit.clock.now(),
         kit.clock.now() + 30 * 86_400_000,
       ],
     );
   const CREDENTIAL_PATH =
-    /^\/api\/v1\/(?:scanners\/[^/]+\/(?:pairing|token)|scan-staff(?:\/.*)?|nfc\/keysets(?:\/.*)?)$/;
+    /^\/api\/v1\/(?:scanners\/[^/]+\/(?:pairing|token)|scan-staff(?:\/.*)?|nfc\/keysets(?:\/.*)?|orgs\/[^/]+\/developer(?:-invitations|s)(?:\/.*)?)$/;
   const app = createApp({
     stores: {
       ...denyAllStores,
