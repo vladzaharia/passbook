@@ -200,7 +200,8 @@ describe('what the platform lets through', () => {
     const res = await call('GET', planPath(org?.id ?? ''), who);
     expect(res.status).toBe(200);
     const body = (await res.json()) as OrgPlanDto;
-    expect(body.preset).toBe('standard');
+    // Personal orgs are on Unlimited (`legacy`) and stay private: one member whatever the plan says.
+    expect(body.preset).toBe('legacy');
     expect(limitOf(body, 'members')?.limit).toBe(1);
   });
 
