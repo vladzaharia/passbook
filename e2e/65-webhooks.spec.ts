@@ -38,7 +38,7 @@ test('webhook endpoint: create, secret once, test event, delivery, pause, replay
   // The field shows the start of the secret (whsec_ and a token) and an ellipsis.
   const field = page.getByRole('status').filter({ hasText: /^whsec_/ });
   await expect(field).toBeVisible();
-  const secret = ((await field.textContent()) ?? '').trim().split('…')[0];
+  const secret = ((await field.textContent()) ?? '').trim().split('…')[0] ?? '';
   expect(secret).toMatch(/^whsec_[\w-]{6}/);
   await expect(page.getByRole('button', { name: 'Done' })).toBeDisabled();
 
