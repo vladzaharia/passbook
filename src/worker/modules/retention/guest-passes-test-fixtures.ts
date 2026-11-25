@@ -74,7 +74,8 @@ export function raced(when: 'read' | 'batch', after: () => Promise<void>) {
                     if (bp === 'all')
                       return async () => {
                         const result = await b.all();
-                        await fire();
+                        // Only a read that found candidates: the pass is in hand, then the race lands.
+                        if (result.results.length > 0) await fire();
                         return result;
                       };
                     const value = Reflect.get(b, bp, b);
