@@ -49,12 +49,8 @@ export async function deleteSandbox(
     'EXISTS (SELECT 1 FROM developer_sandboxes d WHERE d.id = ? AND d.user_id = ?)',
     [sandbox.id, by.userId],
   );
-  const g = developerSandboxGrant(
-    ctx,
-    'platform.job.developer_sandbox.delete',
-    [live, owner],
-    orgId,
-  );
+  // No org on the grant, as in reopen: a closed org is not "active", and the owner check names the sandbox.
+  const g = developerSandboxGrant(ctx, 'platform.job.developer_sandbox.delete', [live, owner]);
   // An open sandbox closes now; one the person closed earlier has its 30-day window cut to now.
   g.update('orgs', {
     set: {

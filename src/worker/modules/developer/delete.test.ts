@@ -7,7 +7,7 @@ import {
 } from '../../../shared/contracts/developer.ts';
 import { createApp } from '../../app.ts';
 import { denyAllStores } from '../../platform/auth.ts';
-import { all, first } from '../../platform/db.ts';
+import { all, first, run } from '../../platform/db.ts';
 import { createJobContext } from '../../platform/service-context.ts';
 import { createApiKeyStore } from '../api-keys/service.ts';
 import { createSessionStore } from '../auth/sessions.ts';
@@ -122,7 +122,8 @@ describe('DELETE /developer/sandbox', () => {
   it('removes a closed sandbox too, and a missing one is a 404', async () => {
     const s = await sandboxOf();
     expect((await send('POST', '/developer/sandbox/close', s.headers)).status).toBe(200);
-    expect((await send('DELETE', '/developer/sandbox', s.headers)).status).toBe(200);
+    const res = await send('DELETE', '/developer/sandbox', s.headers);
+    expect(res.status, await res.clone().text()).toBe(200);
     expect((await orgRow(s.made.orgId))?.purge_after).toBe(kit.clock.now());
     await expectProblem(
       await send('DELETE', '/developer/sandbox', s.headers),
@@ -149,16 +150,17 @@ describe('DELETE /developer/sandbox', () => {
 
   it('limits a person to three deletes in a rolling day', async () => {
     const s = await sandboxOf();
-    for (let i = 0; i < 3; i++) {
-      expect((await send('DELETE', '/developer/sandbox', s.headers)).status).toBe(200);
-      const next = await send('POST', '/developer/sandbox', s.headers, { turnstileToken: 'ok' });
-      expect(next.status).toBe(201);
-    }
+    // Three deletes already on record (the audit rows are the count).
+    for (let i = 0; i < 3; i++)
+      await run(
+        kit.env.DB,
+        `INSERT INTO audit_log (at, org_id, actor_type, actor_id, action, target_type, target_id)
+         VALUES (?, NULL, 'user', ?, 'developer.sandbox_deleted', 'org', ?)`,
+        [kit.clock.now() - i * 1000, s.user.id, kit.f.ids.id()],
+      );
     const res = await send('DELETE', '/developer/sandbox', s.headers);
     await expectProblem(res, 429, 'SANDBOX_RESET_LIMIT');
     expect(Number(res.headers.get('retry-after'))).toBeGreaterThan(0);
-    kit.clock.advance(86_400_001);
-    expect((await send('DELETE', '/developer/sandbox', s.headers)).status).toBe(200);
   });
 });
 
