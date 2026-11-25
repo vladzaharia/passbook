@@ -48097,6 +48097,11 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 6000
+          },
+          "fileId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
           }
         },
         "required": [
@@ -49524,6 +49529,11 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 64
+          },
+          "fileId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
           }
         },
         "required": [
@@ -50511,6 +50521,21 @@
                   "type": "string",
                   "default": ""
                 },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "files",
+                    "apis",
+                    "commerce",
+                    "bookings",
+                    "try"
+                  ],
+                  "default": "apis"
+                },
+                "order": {
+                  "type": "integer",
+                  "default": 0
+                },
                 "capabilities": {
                   "type": "object",
                   "properties": {
@@ -50528,6 +50553,10 @@
                     },
                     "snapshot": {
                       "type": "boolean"
+                    },
+                    "upload": {
+                      "type": "boolean",
+                      "default": false
                     }
                   },
                   "required": [
@@ -50606,6 +50635,17 @@
                       },
                       "label": {
                         "type": "string"
+                      },
+                      "category": {
+                        "type": "string",
+                        "enum": [
+                          "files",
+                          "apis",
+                          "commerce",
+                          "bookings",
+                          "try"
+                        ],
+                        "default": "apis"
                       },
                       "pasteSecret": {
                         "type": "boolean"
@@ -50772,6 +50812,21 @@
             "type": "string",
             "default": ""
           },
+          "category": {
+            "type": "string",
+            "enum": [
+              "files",
+              "apis",
+              "commerce",
+              "bookings",
+              "try"
+            ],
+            "default": "apis"
+          },
+          "order": {
+            "type": "integer",
+            "default": 0
+          },
           "capabilities": {
             "type": "object",
             "properties": {
@@ -50789,6 +50844,10 @@
               },
               "snapshot": {
                 "type": "boolean"
+              },
+              "upload": {
+                "type": "boolean",
+                "default": false
               }
             },
             "required": [
@@ -50867,6 +50926,17 @@
                 },
                 "label": {
                   "type": "string"
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "files",
+                    "apis",
+                    "commerce",
+                    "bookings",
+                    "try"
+                  ],
+                  "default": "apis"
                 },
                 "pasteSecret": {
                   "type": "boolean"

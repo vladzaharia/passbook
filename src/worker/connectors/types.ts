@@ -1,6 +1,7 @@
 import type { ZodType } from 'zod';
 import type { Json } from '../../shared/contracts/common.ts';
-import type { RecipeInfo } from '../../shared/contracts/connections.ts';
+import type { ConnectionFileFormat } from '../../shared/contracts/connection-files.ts';
+import type { ConnectorCategory, RecipeInfo } from '../../shared/contracts/connections.ts';
 import type { SafeFetch } from '../platform/safe-fetch.ts';
 
 export type UpstreamRecord = Record<string, Json>;
@@ -11,11 +12,50 @@ export interface ConnectorCapabilities {
   webhook?: true;
   import?: true;
   snapshot?: true;
+  /** Records come from uploaded files, read through `ctx.files`. */
+  upload?: true;
 }
 
 export interface ConnectorOutputField {
   type: 'string' | 'number' | 'boolean' | 'date';
   description?: string;
+}
+
+/** An uploaded file as a connector sees it: counts and column labels, never the file name. */
+export interface ConnectorFile {
+  id: string;
+  /** Null for a draft. */
+  revision: number | null;
+  format: ConnectionFileFormat;
+  rows: number;
+  /** Column labels in file order. */
+  columns: readonly string[];
+  /** Pages of rows written for this file, numbered from 0. */
+  pages: number;
+  skipped: { noId: number; duplicate: number };
+}
+
+/** A row's place in a file: refs sort by `ref`; `digest` is 16 hex of the canonical record's SHA-256. */
+export interface ConnectorFileRef {
+  ref: string;
+  digest: string;
+  page: number;
+}
+
+/**
+ * Read-only files of one connection (or the draft of an unsaved test). Connectors never see D1 or R2;
+ * every read is scoped to the connection's org. A missing or deleted file throws ConnectorError('CONFIG').
+ */
+export interface ConnectionFilesPort {
+  /** The current revision, or the draft for an unsaved test; null when there is none. */
+  current(): Promise<ConnectorFile | null>;
+  /** Earlier revisions still kept, newest first. Empty for a draft. */
+  previous(limit: number): Promise<ConnectorFile[]>;
+  /** One page of rows in file order. */
+  page(fileId: string, n: number): Promise<{ ref: string; record: UpstreamRecord }[]>;
+  refs(fileId: string): Promise<ConnectorFileRef[]>;
+  /** One row, or null when the file has no such ref. */
+  find(fileId: string, ref: string): Promise<UpstreamRecord | null>;
 }
 
 export interface ConnectorContext<C, S> {
@@ -27,8 +67,10 @@ export interface ConnectorContext<C, S> {
   /** Current secret first, then the previous one while its overlap lasts. At most two. */
   webhookSecrets?: readonly string[];
   now(): number;
-  /** HTTPS-only, public hosts, no redirects, timeout and size caps. */
+  /** HTTPS-only, public hosts, no redirects, timeout and size caps; pinned to `egress` when declared. */
   fetch: SafeFetch;
+  /** Set only for a connector with the `upload` capability. */
+  files?: ConnectionFilesPort;
   signal: AbortSignal;
   /** Redacted; goes to connection_runs and Analytics Engine. */
   log(event: string, data?: Record<string, string | number>): void;
@@ -79,6 +121,10 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
   displayName: string;
   /** One line for the connector picker. */
   description?: string;
+  /** Picker group. */
+  category: ConnectorCategory;
+  /** Position within the group; lower first. */
+  order: number;
   capabilities: ConnectorCapabilities;
   /** Whether webhook refs require an embedded record or deletion instead of a source fetch.
    * This metadata does not enable webhooks when verifyWebhook is absent.
@@ -106,6 +152,13 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
   migrate?(oldVersion: number, config: unknown): C;
   /** Every URL the connector will fetch; checked against the SSRF rules at save time. */
   urls?(config: C): string[];
+  /**
+   * The only origins `ctx.fetch` may reach; any other URL throws OFF_ORIGIN before DNS. `[]` means no
+   * egress at all. Absent leaves the fetch unpinned (each URL and hop still passes safe-fetch).
+   */
+  egress?(config: C): string[];
+  /** Fills create-time values (such as a date anchor) once, before a new connection's config is stored. */
+  prepareConfig?(config: C, context: { now: number }): C;
   /** False when listChanges is not usable for this config; the core then fetches per pass. Default: true if listChanges exists. */
   hasList?(config: C): boolean;
 
@@ -130,6 +183,9 @@ export interface ConnectorDefinition<C = unknown, S = unknown> {
   }>;
 }
 
+/** A finer cause inside a code, for the probe and logs. A closed list: upstream text never reaches it. */
+export type ConnectorErrorReason = 'OFF_ORIGIN';
+
 export type ConnectorErrorCode =
   | 'AUTH'
   | 'FORBIDDEN'
@@ -145,9 +201,15 @@ export class ConnectorError extends Error {
   readonly permanent: boolean;
   readonly retryAfterMs?: number;
   readonly httpStatus?: number;
+  readonly reason?: ConnectorErrorReason;
   constructor(
     code: ConnectorErrorCode,
-    options: { permanent?: boolean; retryAfterMs?: number; httpStatus?: number } = {},
+    options: {
+      permanent?: boolean;
+      retryAfterMs?: number;
+      httpStatus?: number;
+      reason?: ConnectorErrorReason;
+    } = {},
   ) {
     super(code);
     this.name = 'ConnectorError';
@@ -155,6 +217,7 @@ export class ConnectorError extends Error {
     this.permanent = options.permanent ?? false;
     if (options.retryAfterMs !== undefined) this.retryAfterMs = options.retryAfterMs;
     if (options.httpStatus !== undefined) this.httpStatus = options.httpStatus;
+    if (options.reason !== undefined) this.reason = options.reason;
   }
 }
 

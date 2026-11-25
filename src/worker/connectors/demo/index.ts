@@ -108,7 +108,10 @@ const definition: ConnectorDefinition<Config, undefined> = {
   version: 1,
   displayName: 'Demo',
   description: 'Sample members to try a sync.',
+  category: 'try',
+  order: 10,
   capabilities: { poll: true, delta: true },
+  egress: () => [],
   webhookReferenceMode: 'refs-only',
   configSchema: config,
   outputFields: {

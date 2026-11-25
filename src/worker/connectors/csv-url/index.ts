@@ -112,11 +112,14 @@ const definition: ConnectorDefinition<Config, unknown> = {
   version: 1,
   displayName: 'CSV sheet link',
   description: 'Keep passes in sync with a published CSV, such as a Google Sheet.',
+  category: 'files',
+  order: 20,
   capabilities: { poll: true },
   webhookReferenceMode: 'refs-only',
   configSchema: config,
   outputFields: {},
   urls: (c) => [c.url],
+  // No egress pin: it sends no credentials, and published links redirect to export hosts; each hop is SSRF-checked.
   hasList: () => true,
   defaults: {
     intervalSeconds: 900,
