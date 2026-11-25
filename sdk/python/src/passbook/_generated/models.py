@@ -6860,6 +6860,8 @@ class PassScannedEventData(_Model):
     action: str | None = None
     outcome: _Literal["ok", "heads_up"] | str
     direction: _Literal["in", "out"] | str | None = None
+    zoneId: str | None = None
+    exit: _Literal["scan", "desk", "stay", "clear", "zone", "forced"] | str | None = None
     method: str | None = None
     scannerId: str | None = None
     staffId: str | None = None

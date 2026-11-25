@@ -25,6 +25,7 @@ const DATA: Record<WebhookEventType, Record<string, unknown>> = {
     method: 'qr',
     scannerId: 'sample-scanner',
     direction: 'in',
+    zoneId: 'sample-zone',
   },
   'pass.scan_refused': { scanId: 'sample-scan', reason: 'already_used', method: 'qr' },
   'pass.scan_undone': { scanId: 'sample-scan', scannerId: 'sample-scanner' },

@@ -213,6 +213,7 @@ export async function commitCheckIn(input: CommitInput): Promise<ScanOutcome> {
     override: override !== null,
     approvedBy,
     direction: place?.direction ?? found.admission?.state.direction,
+    place: presenceScope,
   };
   const stopAuthority = {
     actor: authorityActor,

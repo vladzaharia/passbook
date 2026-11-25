@@ -146,6 +146,8 @@ export async function markOut(
     override: false,
     approvedBy: null,
     direction: 'out',
+    place: req.place,
+    exit: 'desk',
   });
   const { event, retention } = await signMarkOut(
     ctx.env,

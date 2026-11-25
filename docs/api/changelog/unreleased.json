@@ -3677,6 +3677,22 @@
     "note": "pass.removed data carries runId when a bulk run (POST /passes/bulk-runs) made the change."
   },
   {
+    "key": "webhook pass.scanned data.exit: field added",
+    "class": "additive",
+    "operationId": "webhook.pass.scanned",
+    "op": "webhook pass.scanned",
+    "change": "data.exit: field added",
+    "note": "pass.scanned data carries exit when direction is out: scan for an exit tap, else desk, stay, clear, zone or forced."
+  },
+  {
+    "key": "webhook pass.scanned data.zoneId: field added",
+    "class": "additive",
+    "operationId": "webhook.pass.scanned",
+    "op": "webhook pass.scanned",
+    "change": "data.zoneId: field added",
+    "note": "pass.scanned data carries zoneId when the scan was at a zone."
+  },
+  {
     "key": "webhook pass.voided data.runId: field added",
     "class": "additive",
     "operationId": "webhook.pass.voided",

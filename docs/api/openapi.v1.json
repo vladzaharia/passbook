@@ -737,6 +737,24 @@
                   "out"
                 ]
               },
+              "zoneId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 300
+              },
+              "exit": {
+                "type": "string",
+                "enum": [
+                  "scan",
+                  "desk",
+                  "stay",
+                  "clear",
+                  "zone",
+                  "forced"
+                ]
+              },
               "method": {
                 "type": [
                   "string",
