@@ -36,18 +36,24 @@ test('event setup, session assignment and scan history undo', async ({ page }) =
     });
     await page.goto(`/admin/scanning?orgId=${orgId}&tab=events`);
     await page.getByRole('button', { name: 'New event', exact: true }).click();
-    await page.getByRole('textbox', { name: 'Name', exact: true }).fill(name);
+    const dialog = page.getByRole('dialog', { name: 'New event', exact: true });
+    const next = () => dialog.getByRole('button', { name: 'Next', exact: true }).click();
+    await dialog.getByRole('textbox', { name: 'Name', exact: true }).fill(name);
+    await dialog
+      .getByRole('textbox', { name: 'Note for staff', exact: true })
+      .fill('Check the ticket name.');
+    await expect(page.getByText('22/140')).toBeVisible();
+    await next();
     await page.getByRole('checkbox', { name: template.name, exact: true }).check();
+    await next();
     const opens = new Date(Date.now() - 60_000);
     const closes = new Date(Date.now() + 3_600_000);
     const local = (date: Date) =>
       new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
     await page.getByLabel('Scanning opens').fill(local(opens));
     await page.getByLabel('Scanning closes').fill(local(closes));
-    await page
-      .getByRole('textbox', { name: 'Note for staff', exact: true })
-      .fill('Check the ticket name.');
-    await expect(page.getByText('22/140')).toBeVisible();
+    await next();
+    await next();
     await page.getByRole('button', { name: 'Create event', exact: true }).click();
     await page.getByRole('link', { name, exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Sessions' })).toBeVisible();

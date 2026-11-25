@@ -30,12 +30,19 @@ test('shared sessions pair multiple devices, configure live, and keep lookup and
     const dialog = page.getByRole('dialog', { name: 'New session', exact: true });
     const name = uid('Shared membership');
     await dialog.getByRole('textbox', { name: 'Session name', exact: true }).fill(name);
-    await dialog.getByRole('tab', { name: 'Admission', exact: true }).click();
+    const nextTo = async (heading: string) => {
+      for (let i = 0; i < 6; i++) {
+        if (await dialog.getByRole('heading', { name: heading }).isVisible()) return;
+        await dialog.getByRole('button', { name: 'Next', exact: true }).click();
+      }
+    };
+    await nextTo('Set check-in rules');
     await dialog.getByRole('combobox', { name: 'Check-in type', exact: true }).click();
     await page.getByRole('option', { name: 'Track in / out', exact: true }).click();
-    await dialog.getByRole('tab', { name: 'Device defaults', exact: true }).click();
+    await nextTo('Set device defaults');
     await dialog.getByRole('combobox', { name: 'Default reader', exact: true }).click();
     await page.getByRole('option', { name: 'Hardware / keyboard scanner', exact: true }).click();
+    await nextTo('Check and create');
     await dialog.getByRole('button', { name: 'Create session', exact: true }).click();
     await page.waitForURL(/\/admin\/o\/[^/]+\/scanning\/sessions\//);
     const sessionId = new URL(page.url()).pathname.split('/').pop();
