@@ -18,6 +18,8 @@ const MAX_PAGE_RECORDS = 1000;
 /** Serialized changes of one page; the Workflows step result limit is 1 MiB. */
 const MAX_PAGE_JSON = 900_000;
 const ref80 = (r: string) => r.slice(0, 80);
+const note = (pages: number) =>
+  `MAX_PAGES: stopped at ${pages} pages; the next run continues. Raise the page limit or set a larger page size.`;
 
 function asRecord(value: Json | undefined): UpstreamRecord {
   if (value === null || typeof value !== 'object' || Array.isArray(value) || value === undefined) {
@@ -163,6 +165,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
           changes,
           cursor: encodeCursor({ p: step.next, ...hold, ...seen, ...keep }),
           hasMore: false,
+          note: note(pages),
         };
       const end = repeated ? h : maxOf(h, m);
       return {
@@ -175,6 +178,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
       changes,
       cursor: encodeCursor({ p: capped ? step.next : step.rest, ...keep }),
       hasMore: false,
+      ...(capped ? { note: note(pages) } : {}),
     };
   },
 

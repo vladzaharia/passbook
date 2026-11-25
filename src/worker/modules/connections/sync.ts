@@ -178,7 +178,7 @@ export async function startRun(
 }
 
 export type PageFetch =
-  | { ok: true; changes: Change[]; cursor: string | null; hasMore: boolean }
+  | { ok: true; changes: Change[]; cursor: string | null; hasMore: boolean; note?: string }
   | { ok: false; result: StepResult };
 
 /** The listChanges request for one page. Applying and the cursor move are separate steps. */
@@ -210,7 +210,13 @@ export async function fetchListPage(
   if (!current.conn) return { ok: false, result: stopped(null, true, p.cursor, current.staleCode) };
   try {
     const page = await prep.def.listChanges(prep.cc, p.cursor);
-    return { ok: true, changes: page.changes, cursor: page.cursor, hasMore: page.hasMore };
+    return {
+      ok: true,
+      changes: page.changes,
+      cursor: page.cursor,
+      hasMore: page.hasMore,
+      ...(page.note ? { note: page.note } : {}),
+    };
   } catch (error) {
     return { ok: false, result: stopped(classify(error), false, p.cursor) };
   }

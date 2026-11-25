@@ -59,12 +59,14 @@ export async function drain(ctx: ConnectorContext<Cfg, Sec>, from: string | null
   const refs: string[] = [];
   let cursor = from;
   let pages = 0;
+  let note: string | undefined;
   for (; pages < 50; pages++) {
     const res = await connector.listChanges?.(ctx, cursor);
     if (!res) throw new Error('no listChanges');
     refs.push(...res.changes.map((c) => c.ref));
     cursor = res.cursor;
-    if (!res.hasMore) return { refs, cursor, pages: pages + 1 };
+    note = res.note ?? note;
+    if (!res.hasMore) return { refs, cursor, pages: pages + 1, note };
   }
   throw new Error('did not stop');
 }

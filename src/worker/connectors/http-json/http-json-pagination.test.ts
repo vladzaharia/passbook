@@ -317,6 +317,8 @@ describe('pagination stops and limits', () => {
     const first = await drain(ctx);
     expect(first.refs).toEqual(['0', '1', '2']);
     expect(logs).toContain('rest.max_pages');
+    // The run says so too, on the last page it read.
+    expect(first.note).toMatch(/^MAX_PAGES: stopped at 3 pages/);
     const cut = decodeCursor(first.cursor).state;
     expect(cut.p).toEqual({ n: 3 });
     expect(cut.h).toBeUndefined();
@@ -343,7 +345,9 @@ describe('pagination stops and limits', () => {
     const out = await drain(ctx);
     expect(out.refs).toEqual(['0', '1']);
     expect(decodeCursor(out.cursor).state.p).toEqual({ n: 2 });
+    expect(out.note).toMatch(/^MAX_PAGES: stopped at 2 pages/);
     expect((await drain(ctx, out.cursor)).refs).toEqual(['2', '3']);
+    expect((await drain(ctx, out.cursor)).note).toMatch(/^MAX_PAGES/);
   });
 
   it('refuses a page of more than 1,000 records', async () => {

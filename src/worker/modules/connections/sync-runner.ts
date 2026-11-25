@@ -22,6 +22,7 @@ import {
   handOff,
   MAX_HANDOFFS,
   noteCapped,
+  noteListing,
   type SyncChain,
   spent,
 } from './sync-chain.ts';
@@ -212,6 +213,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
               await step.sleep(`page-${page}-pace-${i}`, paceMs(requests, limits.rpm));
             }
           }
+          if (fetched.note) noteListing(samples, fetched.note);
           // Continue updating existing passes, but never advance past blocked issuance.
           if (!releaseBlocked) {
             const moved = await step.do(`page-${page}-cursor`, () =>
