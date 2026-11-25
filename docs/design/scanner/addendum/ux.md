@@ -74,7 +74,7 @@ the screen as on the scanner.
 | Stamps added | ok `add` on a count | **+2 stamps**, sub **9 of 10** | greet, the stamp grid (new ones land from 1.5×, 90 ms apart, with the + badge), caption **1 more for Free coffee** | `hop` | 4 s |
 | Reward ready | milestone `reward` | **Reward ready**, sub **10 of 10**, foil edge, six sparks | greet, the reward tile **Your reward · Free coffee** | `fan` | 4 s |
 | Balance charged | ok `take` on money | **Paid $12.00** | greet, **Balance** label, new balance 64/68 with the old struck | `hop` (coins beat when built, BM §6.1) | 4 s |
-| To pay | `review` beat, money (`showDraft`) | none (desk panel style) | **Hi, Sam · Prepaid card**, **To pay** $12.00, **Balance after: $30.50** | still, happy | until Paid or Back |
+| To pay | a money draft from a followed scanner (`showDraft`) | none (desk panel style) | **Hi, Sam · Prepaid card**, **To pay** $12.00, **Balance after: $30.50** | still, happy | until Paid or Back |
 | Please see the desk | every heads-up and refusal, mode mismatch, not found | slate stacked band, the person squircle, station `refusedLine`, default **Please see the desk** | none | `sorry` (bow, look up). Never the head shake at a customer | 6 s |
 | … with a kind sub | `outside_hours`; `guest_expired`, `guest_visits_used` (AX, agreed) | as above + **Your plan opens at 4 PM.** / **Your guest pass has ended.** | none | `sorry` | 6 s |
 | Reconnecting | socket unhealthy | idle stays | capsule chip **Reconnecting** (amber, spinner); **Not set up** uses the same chip | still, curious | — |

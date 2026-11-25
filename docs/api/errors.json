@@ -3953,6 +3953,15 @@
       ]
     },
     {
+      "code": "SCANNING_FOLLOWS_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
       "code": "SCANNING_HOLD_RANGE",
       "statuses": [
         400
@@ -4131,6 +4140,24 @@
       "code": "SCAN_DISPLAY_PREVIEW_NOT_FOUND",
       "statuses": [
         404
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_DRAFT_INVALID",
+      "statuses": [
+        422
+      ],
+      "modules": [
+        "scan"
+      ]
+    },
+    {
+      "code": "SCAN_DRAFT_STALE",
+      "statuses": [
+        409
       ],
       "modules": [
         "scan"
@@ -5935,6 +5962,15 @@
       ]
     },
     {
+      "code": "WALLET_CARD_SET",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
       "code": "WALLET_CREDENTIALS_INVALID",
       "statuses": [
         422
@@ -6097,6 +6133,15 @@
       ]
     },
     {
+      "code": "WALLET_PROJECTION_SCHEMA_RETIRED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "wallet-providers"
+      ]
+    },
+    {
       "code": "WALLET_PROJECTION_UNSUPPORTED",
       "statuses": [
         409
@@ -6109,15 +6154,6 @@
       "code": "WALLET_RUN_BUSY",
       "statuses": [
         503
-      ],
-      "modules": [
-        "wallet-providers"
-      ]
-    },
-    {
-      "code": "WALLET_VERIFICATION_CONFLICT",
-      "statuses": [
-        409
       ],
       "modules": [
         "wallet-providers"

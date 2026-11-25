@@ -418,68 +418,6 @@ describe('native wallet instance lifecycle', () => {
     expect(await consumeWalletOfferRef(db, secondRef, input.now)).toBeNull();
   });
 
-  it('uses the supplied clock for historical offer and claim evidence expiry while denying creation', async () => {
-    const f = await fixture();
-    const db = f.kit.env.DB;
-    const evidence = await first<{ expires_at: number }>(
-      db,
-      `SELECT e.expires_at
-      FROM template_releases r JOIN wallet_provider_projection_evidence e ON e.candidate_id = r.candidate_id
-      WHERE r.id = ? AND e.status = 'verified'`,
-      [f.proof.projectionReleaseId],
-    );
-    if (!evidence) throw new Error('Expected verified provider evidence');
-    const before = evidence.expires_at - 1;
-    const issued = await f.create();
-    const ref = await seedHistoricalOffer(db, issued, before, before + 60_000);
-    expect(await readOffer(db, await sha256Hex(ref), before)).toMatchObject({
-      instanceId: issued.instanceId,
-    });
-    const claim = { ...reference(issued), claimHandle: newWalletClaimHandle(), now: before };
-    expect(await claimWalletOperation(walletJobCtx(db), claim)).toBe('claimed');
-    // D8: the evidence expiry no longer gates a claim; offers still read it.
-    expect(await walletOperationFresh(db, { ...claim, now: evidence.expires_at })).toBe(true);
-    expect(await readOffer(db, await sha256Hex(ref), evidence.expires_at)).toBeNull();
-    expect(await consumeWalletOfferRef(db, ref, evidence.expires_at)).toBeNull();
-    const second = await f.kit.pass();
-    const snapshot = await readWalletPassSnapshot(db, { ...f.scope, passId: second.id });
-    if (!snapshot) throw new Error('Second pass is missing');
-    const pending = await f.create({
-      ...f.proof,
-      passId: second.id,
-      passVersion: snapshot.passVersion,
-      passRevision: snapshot.passRevision,
-      passCredentialGeneration: snapshot.credentialGeneration,
-      lifecycleGeneration: snapshot.lifecycleGeneration,
-      issuingReleaseId: snapshot.issuingReleaseId,
-    });
-    expect(
-      await claimWalletOperation(walletJobCtx(db), {
-        ...reference(pending),
-        claimHandle: newWalletClaimHandle(),
-        now: evidence.expires_at,
-      }),
-    ).toBe('claimed'); // D8: expired evidence no longer gates the queue; publish and reconcile check it.
-    const third = await f.kit.pass();
-    const thirdSnapshot = await readWalletPassSnapshot(db, { ...f.scope, passId: third.id });
-    if (!thirdSnapshot) throw new Error('Third pass is missing');
-    expect(
-      await whileDisabledForTest(createWalletInstance, db, {
-        ...f.proof,
-        passId: third.id,
-        passVersion: thirdSnapshot.passVersion,
-        passRevision: thirdSnapshot.passRevision,
-        passCredentialGeneration: thirdSnapshot.credentialGeneration,
-        lifecycleGeneration: thirdSnapshot.lifecycleGeneration,
-        issuingReleaseId: thirdSnapshot.issuingReleaseId,
-        instanceId: crypto.randomUUID(),
-        requestKey: crypto.randomUUID(),
-        newId: () => crypto.randomUUID(),
-        now: evidence.expires_at,
-      }),
-    ).toBeNull();
-  });
-
   it('serializes revocation after an in-flight update and discards the stale provider result', async () => {
     const f = await fixture();
     const db = f.kit.env.DB;

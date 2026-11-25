@@ -128,6 +128,7 @@ export const ACTIONS: Record<string, ActionEntry> = {
   'pass.asset.delete': a('Pass image removed', ImageMinus, 'neutral'),
   'pass.asset.put': a('Pass image added', ImagePlus, 'success'),
   'pass.bulk_reissue': a('Passes reissued', I.updateDevices, 'info'),
+  'wallet.reissue': a('Wallet passes reissued', I.updateDevices, 'info'),
   'pass.bind': a('Pass bound to connection', ENTITY.connection.icon, 'info'),
   'pass.create': a('Pass created', ENTITY.pass.icon, 'success'),
   'pass.delete': a('Pass deleted', I.delete, 'danger'),

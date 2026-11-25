@@ -1,8 +1,10 @@
 import { sha256Hex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { currentPassJson } from '../passes/repo-read-pass.ts';
 import { getWalletProviderReadiness } from './account-service.ts';
 import { queueWalletOperation } from './instance.ts';
 import type { WalletInstance, WalletOperationKind, WalletQueueProof } from './instance-types.ts';
+import { boundaryPhase, passBoundaries } from './lifecycle-boundary.ts';
 import { projectionPolicy } from './projection-contract.ts';
 import { getApprovedProjection } from './projection-service.ts';
 import { getInstanceById, readAccountEpoch, type WalletPassSnapshot } from './repo-instance.ts';
@@ -17,6 +19,7 @@ export async function scheduleInstance(
   instance: WalletInstance,
   pass: WalletPassSnapshot,
   kind: WalletOperationKind,
+  reissueId?: string,
 ): Promise<ScheduleResult> {
   if (instance.lifecycle === 'retired') return kind === 'revoke' ? 'unchanged' : 'blocked';
   if (instance.lifecycle === 'blocked' || instance.lifecycle === 'ready') return 'blocked';
@@ -102,6 +105,9 @@ export async function scheduleInstance(
           mode: instance.mode,
         })
       : [];
+  const now = ctx.clock.now();
+  const boundaries =
+    kind === 'upsert' ? passBoundaries(await currentPassJson(ctx.env.DB, pass.passId)) : [];
   const requestKey = await sha256Hex(
     JSON.stringify([
       'wallet-lifecycle-v1',
@@ -119,6 +125,8 @@ export async function scheduleInstance(
       proof.adapterRevision,
       proof.policyRevision,
       countryHints,
+      boundaryPhase(boundaries, now),
+      kind === 'upsert' ? (reissueId ?? null) : null,
     ]),
   );
   const op = await queueWalletOperation(ctx, {

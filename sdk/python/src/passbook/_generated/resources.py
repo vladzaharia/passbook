@@ -1389,6 +1389,14 @@ class PassesResource:
         """Renew the term of a pass `POST /api/v1/passes/{id}/renew`"""
         return self._core.request("POST", f"/api/v1/passes/{_p(id)}/renew", body=body, result=m.PassesRenewResult, **opts)
 
+    def resend_provider_copies(
+        self,
+        body: m.PassesResendProviderCopiesBody | _Dict[str, _Any],
+        **opts: _Unpack[RequestOptions],
+    ) -> m.PassesResendProviderCopiesResult:
+        """Send every active Google or Samsung copy of an organization's passes again; a key needs passes:write `POST /api/v1/wallet-providers/reissue`"""
+        return self._core.request("POST", "/api/v1/wallet-providers/reissue", body=body, result=m.PassesResendProviderCopiesResult, **opts)
+
     def restore(
         self,
         id: str,

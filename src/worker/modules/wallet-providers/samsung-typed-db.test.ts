@@ -78,7 +78,7 @@ describe('a compiled type with no card of its own', () => {
 
 describe('the card-state row is mode-aware', () => {
   it('a card still in testing mode is fresh in Test and never in Live', async () => {
-    const t = await setupWalletOfferKit({ google: 'absent', samsungSchema: 2 });
+    const t = await setupWalletOfferKit({ google: 'absent' });
     const candidate = await getProjectionCandidate(
       t.kit.env.DB,
       t.samsungRelease?.candidateId ?? '',
@@ -119,7 +119,7 @@ describe('the Samsung app link (Q22)', () => {
   };
 
   it('is the organization website when one is set, else the holder portal', async () => {
-    const t = await setupSamsungCallbacks({ samsungSchema: 2 });
+    const t = await setupSamsungCallbacks();
     const portal = `${t.kit.env.PUBLIC_BASE_URL.replace(/\/+$/, '')}/account`;
     expect(await appLink(t)).toBe(portal);
     await run(

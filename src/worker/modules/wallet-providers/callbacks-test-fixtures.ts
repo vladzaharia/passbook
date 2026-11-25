@@ -25,8 +25,6 @@ export async function setupSamsungCallbacks(
   options: {
     promoted?: boolean;
     reference?: boolean;
-    /** `2` serves a compiled card: its release has no evidence row. */
-    samsungSchema?: 1 | 2;
     holderEmail?: string;
     source?: OfferFixtureSource;
     db?: D1Database;
@@ -37,7 +35,6 @@ export async function setupSamsungCallbacks(
   const fixture = await setupWalletOfferKit({
     google: 'absent',
     samsung: 'published',
-    ...(options.samsungSchema ? { samsungSchema: options.samsungSchema } : {}),
     holderEmail: options.holderEmail,
     source: options.source,
     db: options.db,
@@ -163,10 +160,6 @@ export async function setupSamsungCallbacks(
       kit.env,
     );
   }
-  async function renewEvidence(): Promise<void> {
-    if (!samsungRelease?.candidateId) throw new Error('Missing evidence fixture');
-    await fixture.refreshSamsungEvidence(samsungRelease.candidateId, samsungRelease.candidateHash);
-  }
   return {
     ...fixture,
     key,
@@ -176,7 +169,6 @@ export async function setupSamsungCallbacks(
     path,
     token,
     call,
-    renewEvidence,
     credentialKeysetCommitment,
   };
 }
