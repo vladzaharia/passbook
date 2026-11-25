@@ -29,7 +29,7 @@ describe('browser error pages', () => {
   // wrangler.jsonc runs the Worker first for file-like paths public/ does not ship, so a stray
   // *.html is not the SPA (which would show Sign in to a signed-out visitor).
   it('answers an unknown file-like path with the same 404, not the app', async () => {
-    for (const path of ['/no/such/page.html', '/sitemap.xml']) {
+    for (const path of ['/no/such/page.html', '/feed.xml']) {
       const res = await call(path);
       expect(res.status).toBe(404);
       expect(await res.text()).toMatch(/<h1[^>]*>Page not found<\/h1>/);

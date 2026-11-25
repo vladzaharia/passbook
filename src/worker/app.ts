@@ -23,6 +23,7 @@ import { platformAppleRoutes, walletIdentitiesRoutes } from './modules/identitie
 import { joinLinksRoutes } from './modules/join/routes-admin.ts';
 import { joinPublicRoutes } from './modules/join/routes-public.ts';
 import { marketingRoutes } from './modules/marketing/routes.ts';
+import { marketingPageRoutes } from './modules/marketing/routes-pages.ts';
 import { meRoutes } from './modules/me/routes.ts';
 import { messageRulesRoutes } from './modules/message-rules/routes.ts';
 import { metricsRoutes } from './modules/metrics/routes.ts';
@@ -102,7 +103,7 @@ export interface AppOptions {
 }
 
 /** Paths only the Worker answers: an unknown one is a 404, never the SPA. */
-const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|assets|health)(?:\/|$)/;
+const WORKER_ONLY = /^\/(?:api|auth|wallet|p|b|j|w|hooks|assets|health|marketing)(?:\/|$)/;
 
 /**
  * Every other GET is one of the SPA's pages, served from static assets as the asset layer would
@@ -243,6 +244,7 @@ export function createApp(options: AppOptions = {}): OpenAPIHono<AppBindings> {
   app.route('/hooks', hooksRoutes);
   app.route('/developers', developerPortalRoutes);
   app.route('/access', marketingRoutes);
+  app.route('/', marketingPageRoutes);
 
   // The same JSON document at both paths: `/api/v1/docs` is the one to link. Everyone gets the
   // operations an API key can call; signed-in platform admins get the whole document.

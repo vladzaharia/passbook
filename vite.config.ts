@@ -164,7 +164,7 @@ export default defineConfig(({ command }) => ({
   publicDir: 'public',
   environments: {
     wallet: { build: { minify: true } },
-    // Three documents: the SPA, /scan (src/web/scan/main.tsx, no router) and /developers. Client only: the
+    // Documents: the SPA, /scan (src/web/scan/main.tsx, no router), /developers and the five marketing pages. Client only: the
     // Worker environment inherits top-level build options.
     client: {
       build: {
@@ -175,6 +175,14 @@ export default defineConfig(({ command }) => ({
             // The developer portal's browser entry; tools/build-developers.ts links its assets
             // from the prerendered pages.
             developers: fileURLToPath(new URL('./developers.html', import.meta.url)),
+            // The public marketing site (marketing/*.html): plain pages, no React or router.
+            'marketing-home': fileURLToPath(new URL('./marketing/index.html', import.meta.url)),
+            'marketing-door': fileURLToPath(new URL('./marketing/door.html', import.meta.url)),
+            'marketing-blueprints': fileURLToPath(
+              new URL('./marketing/blueprints.html', import.meta.url),
+            ),
+            'marketing-build': fileURLToPath(new URL('./marketing/build.html', import.meta.url)),
+            'marketing-access': fileURLToPath(new URL('./marketing/access.html', import.meta.url)),
           },
         },
       },

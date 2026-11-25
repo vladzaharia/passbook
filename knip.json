@@ -4,6 +4,7 @@
     "src/web/routes/**/*.{ts,tsx}!",
     "src/web/scan/main.tsx!",
     "src/web/developers/main.tsx!",
+    "src/web/marketing/pages/*.ts!",
     "src/web/developers/render.tsx!",
     "src/web/scan/camera/decode-worker.ts!",
     "tools/*.ts",
