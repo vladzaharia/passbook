@@ -20,6 +20,8 @@ export interface SegmentOption<V extends string = string> {
    * description. It stays selectable and keeps its name; chosen, it looks like any choice.
    */
   hint?: string;
+  /** A fact about the option: the tooltip and the accessible description, no change of look. */
+  description?: string;
   /** The full name when the label is short: the tooltip and the accessible name. */
   title?: string;
 }
@@ -92,7 +94,7 @@ export function SegmentedControl<V extends string>({
         const checked = o.value === value;
         const blocked = Boolean(o.reason);
         const reasonId = `${id}-${o.value}`;
-        const described = o.reason ?? o.hint;
+        const described = o.reason ?? o.hint ?? o.description;
         return (
           <Tooltip key={o.value} content={described ?? o.title} plainTitle>
             {/* biome-ignore lint/a11y/useSemanticElements: a styled radiogroup with roving focus and a sliding thumb */}

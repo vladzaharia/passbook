@@ -6,9 +6,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
 import { axe } from 'vitest-axe';
 import { trackCurrentPath } from '../../lib/current-path.ts';
-import { getMode, resetModeForTests, setTestOnlyOrgs } from '../../lib/mode.ts';
+import { getMode, resetModeForTests, setMode, setTestOnlyOrgs } from '../../lib/mode.ts';
 import { TooltipProvider } from '../tooltip.tsx';
-import { ModeBand } from './mode-band.tsx';
+import { ModeAnnouncer } from './mode-announcer.tsx';
 import { ModePill } from './mode-pill.tsx';
 import { ModeSwitch } from './mode-switch.tsx';
 import { TestStrip } from './test-strip.tsx';
@@ -61,41 +61,53 @@ describe('TestStrip', () => {
     expect(css).not.toMatch(/position:\s*(absolute|fixed)/);
   });
 
-  it('shows the band while on, naming new emails', async () => {
-    const user = userEvent.setup();
+  it('has no strip: the fact is the Test segment tooltip and description', () => {
     render(
       <TooltipProvider>
         <ModeSwitch />
-        <ModeBand />
       </TooltipProvider>,
     );
-    await user.click(screen.getByRole('radio', { name: 'Test' }));
-    expect(screen.getByRole('status')).toHaveClass('wl-test-strip');
-    expect(screen.getByRole('status')).toHaveTextContent('New emails go to the Test inbox.');
+    const test = screen.getByRole('radio', { name: 'Test' });
+    expect(test).toHaveAccessibleDescription('New emails go to the Test inbox.');
+    expect(document.querySelector('.wl-test-strip')).toBeNull();
   });
 });
 
-describe('ModeSwitch and ModeBand', () => {
-  it('switches between Live and Test and shows the band while on', async () => {
+describe('ModeSwitch and ModeAnnouncer', () => {
+  it('stays silent when it loads with Test already on', () => {
+    setMode('test');
+    render(
+      <TooltipProvider>
+        <ModeSwitch />
+        <ModeAnnouncer />
+      </TooltipProvider>,
+    );
+    expect(screen.getByRole('radio', { name: 'Test' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+  });
+
+  it('switches between Live and Test and announces each change, not the load', async () => {
     const user = userEvent.setup();
     const { container } = render(
       <TooltipProvider>
         <ModeSwitch />
-        <ModeBand />
+        <ModeAnnouncer />
       </TooltipProvider>,
     );
     const live = screen.getByRole('radio', { name: 'Live' });
     const test = screen.getByRole('radio', { name: 'Test' });
     expect(live).toHaveAttribute('aria-checked', 'true');
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status')).toBeEmptyDOMElement();
     await user.click(test);
     expect(getMode()).toBe('test');
     expect(test).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('status')).toHaveTextContent('Test mode');
+    expect(screen.getByRole('status')).toHaveTextContent(
+      'Test mode on. New emails go to the Test inbox.',
+    );
     expect((await axe(container)).violations).toEqual([]);
     await user.click(live);
     expect(getMode()).toBe('live');
     expect(live).toHaveAttribute('aria-checked', 'true');
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('status')).toHaveTextContent('Live mode on.');
   });
 });
