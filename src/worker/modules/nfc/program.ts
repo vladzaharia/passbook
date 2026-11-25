@@ -19,9 +19,6 @@ import { activeVersion } from './program-keys.ts';
 import { ATTEMPT_CAP, HOLD_TTL_MS, mapNtag, programError } from './program-recover.ts';
 import { hex, openSession, type SessionState, sealSession, unhex } from './program-seal.ts';
 import {
-  changed,
-  insertProgram,
-  moveProgram,
   onlyProgrammableKeyset,
   type ProgramAuthority,
   type ProgramRow,
@@ -30,6 +27,7 @@ import {
   programKeyset,
   unresolvedByRef,
 } from './repo-programs.ts';
+import { changed, insertProgram, moveProgram } from './repo-programs-write.ts';
 import { tagByRef } from './repo-tags.ts';
 import { tagRef } from './tag-ref.ts';
 

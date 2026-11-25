@@ -4917,6 +4917,7 @@
         409
       ],
       "modules": [
+        "nfc",
         "scan"
       ]
     },
@@ -4968,6 +4969,15 @@
       "modules": [
         "nfc",
         "scan"
+      ]
+    },
+    {
+      "code": "TAG_PROGRAM_FAILED",
+      "statuses": [
+        409
+      ],
+      "modules": [
+        "nfc"
       ]
     },
     {

@@ -9,9 +9,11 @@ import { programTag, type RelayPort, type Send } from './ntag424/sim/program.ts'
 import { TagLostError } from './ntag424/sim/state.ts';
 import type { Ntag424Sim } from './ntag424/sim/tag.ts';
 import { startProgram } from './program.ts';
-import { abortProgram, authProgram, probeProgram, reauthProgram } from './program-auth.ts';
+import { authProgram } from './program-auth.ts';
 import { resultProgram } from './program-commit.ts';
+import { abortProgram, probeProgram, reauthProgram } from './program-resume.ts';
 import { openAdmin } from './program-seal.ts';
+import { adminKeysOf } from './repo-admin-keys.ts';
 import type { ProgramAuthority } from './repo-programs.ts';
 import { bytesToHex } from './sun.ts';
 import { tagRef } from './tag-ref.ts';
@@ -143,16 +145,7 @@ export async function programFixture() {
       'SELECT ctr, kek_version, iv, wrapped_dek, ciphertext FROM nfc_tag_sun WHERE tag_id = ?',
       [tag.id],
     );
-    const admin = await first<{
-      kek_version: number;
-      iv: number[];
-      wrapped_dek: number[];
-      ciphertext: number[];
-    }>(
-      kit.env.DB,
-      'SELECT kek_version, iv, wrapped_dek, ciphertext FROM nfc_tag_admin_keys WHERE tag_id = ?',
-      [tag.id],
-    );
+    const admin = await adminKeysOf(kit.env.DB, orgId, 'live', tag.id);
     const env = (r: NonNullable<typeof sun>) => ({
       kekVersion: r.kek_version,
       iv: new Uint8Array(r.iv),
@@ -160,7 +153,7 @@ export async function programFixture() {
       ciphertext: new Uint8Array(r.ciphertext),
     });
     const k2 = sun ? await openTagKey(ring, scope, tag.id, env(sun)) : null;
-    const keys = admin ? await openAdmin(ring, scope, tag.id, env(admin as never)) : null;
+    const keys = admin ? await openAdmin(ring, scope, tag.id, admin.envelope) : null;
     return { tagId: tag.id, ctr: sun?.ctr, k2, ...keys };
   }
 

@@ -1,7 +1,4 @@
-import {
-  TAG_PROGRAM_ERROR_CODES,
-  type TagProgramErrorCode,
-} from '../../../shared/contracts/nfc-tag-programs.ts';
+import type { TagProgramErrorCode } from '../../../shared/contracts/nfc-tag-programs.ts';
 import { SCAN_TAG_PROGRAM_COPY } from '../../../shared/copy/scan-tag-program.ts';
 import { AppError } from '../../platform/errors.ts';
 import { Ntag424Error, ZERO16 } from './ntag424/bytes.ts';
@@ -30,9 +27,6 @@ const STATUS: Record<TagProgramErrorCode, number> = {
 /** The refusal a device is shown. It never carries a UID, key, APDU or response. */
 export const programError = (code: TagProgramErrorCode): AppError =>
   new AppError(code, STATUS[code], SCAN_TAG_PROGRAM_COPY.failed[code]);
-
-export const isProgramCode = (code: string): code is TagProgramErrorCode =>
-  (TAG_PROGRAM_ERROR_CODES as readonly string[]).includes(code);
 
 /**
  * `Ntag424Error` never reaches HTTP: here it becomes the code the device understands. A refused command or a

@@ -9,12 +9,12 @@ import type { KeyScope } from './keyset-seal.ts';
 import { programError } from './program-recover.ts';
 import { openSession, type SessionState } from './program-seal.ts';
 import {
-  moveProgram,
   type ProgramAuthority,
   type ProgramRow,
   programById,
   programGrant,
 } from './repo-programs.ts';
+import { moveProgram } from './repo-programs-write.ts';
 
 export const actorKeyOf = (a: ProgramAuthority) => `${a.actor.type}:${a.actor.id}`;
 

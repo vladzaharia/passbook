@@ -19,13 +19,13 @@ import { checkBatch, sessionOf } from './program-script.ts';
 import { openIntended, sealAdmin } from './program-seal.ts';
 import { insertAdminKeys } from './repo-admin-keys.ts';
 import {
-  moveProgram,
   type ProgramAuthority,
   type ProgramRow,
   programById,
   programGrant,
   programKeyset,
 } from './repo-programs.ts';
+import { moveProgram } from './repo-programs-write.ts';
 import { orgTagCount, tagView } from './repo-tags.ts';
 import { addBind } from './repo-tags-write.ts';
 import { verifySun } from './sun.ts';
