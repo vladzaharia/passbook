@@ -10,7 +10,7 @@ import { Ntag424Sim } from './ntag424/sim/tag.ts';
 import { startProgram } from './program.ts';
 import { authProgram } from './program-auth.ts';
 import { type ProgramFixture, programFixture } from './program-test-fixtures.ts';
-import { bytesToHex } from './sun.ts';
+import { bytesToHex, hexToBytes } from './sun.ts';
 
 vi.mock('./ntag424/originality.ts', () => import('./program-originality-test-fixtures.ts'));
 
@@ -202,9 +202,7 @@ describe('a start and an auth that are sent twice', () => {
     expect((await f.rowsOf(tag))[0]?.attempts).toBe(1);
     // The device answers part 2; the server releases the script once, and again to a repeat.
     const send = f.sendOf(tag);
-    const answer = bytesToHex(
-      await send(Uint8Array.from(Buffer.from(first.apdus[0] as string, 'hex'))),
-    );
+    const answer = bytesToHex(await send(hexToBytes(first.apdus[0] as string) as Uint8Array));
     const one = await authProgram(f.kit.ctx, a, first.id, { responses: [answer] });
     const two = await authProgram(f.kit.ctx, a, first.id, { responses: [answer] });
     expect(two).toEqual(one);
