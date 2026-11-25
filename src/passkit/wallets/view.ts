@@ -6,6 +6,7 @@ import type { PlannedPass } from '../build.ts';
 import type { PassScope } from '../template/expr.ts';
 import { evaluate } from '../template/expr.ts';
 import { applyDefaults } from '../template/manifest.ts';
+import { declaredTimes } from '../template/paper-declared.ts';
 import type { AssetEntry, Personalization, TemplateManifest } from '../types.ts';
 import { resolveRoles } from './roles.ts';
 import type { ViewNote, WalletPassView } from './types.ts';
@@ -48,6 +49,7 @@ export function resolveWalletView(
     lookups: manifest.lookups ?? {},
     ...(ctx.pass ? { pass: ctx.pass } : {}),
   };
+  const declared = declaredTimes(manifest, scope.input);
   const resolved = resolveRoles(
     {
       style,
@@ -56,6 +58,7 @@ export function resolveWalletView(
       ...(pass.semantics ? { semantics: pass.semantics } : {}),
       barcodes,
       dates: relevance.dates,
+      declared,
       locations: relevance.locations,
       ...(pass.expirationDate ? { expirationDate: pass.expirationDate } : {}),
       ...(ctx.appLink ? { appLink: ctx.appLink } : {}),

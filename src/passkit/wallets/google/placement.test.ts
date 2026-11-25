@@ -199,7 +199,7 @@ describe('Generic', () => {
   it('uses one UTC offset for both ends of the interval', async () => {
     const r = await compile('starter-boarding-pass', 'generic');
     expect(object(r).validTimeInterval).toEqual({
-      start: { date: '2030-06-01T13:15:00Z' },
+      start: { date: '2030-06-01T15:00:00Z' },
       end: { date: '2030-06-01T20:30:00Z' },
     });
   });
