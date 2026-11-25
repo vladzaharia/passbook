@@ -4,7 +4,7 @@ import { IMPORT_COPY as C } from '@/shared/copy/imports.ts';
 import { errorMessage } from '../../../lib/errors.ts';
 import { useMediaQuery } from '../../../lib/media.ts';
 import { useSession } from '../../../lib/session.ts';
-import { Callout, Card, CardHeader, ErrorState, Skeleton } from '../../../ui/index.ts';
+import { Callout, Card, ErrorState, Skeleton } from '../../../ui/index.ts';
 import { useTemplate } from '../../templates/api.ts';
 import { useCheckImport } from './api.ts';
 import { useSavedMappings, useSaveMapping } from './api-run.ts';
@@ -120,10 +120,11 @@ function MatchForm({
       aside={aside}
     >
       <Card>
-        <CardHeader
-          title={C.match.title}
-          actions={<SavedPicker saved={saved.data?.saved ?? []} onPick={pick} />}
-        />
+        {(saved.data?.saved.length ?? 0) > 0 ? (
+          <div className="flex min-h-12 items-center justify-end border-b border-border px-4">
+            <SavedPicker saved={saved.data?.saved ?? []} onPick={pick} />
+          </div>
+        ) : null}
         {imp.errorCode && !check.isError ? (
           <Callout tone="warning" className="m-4">
             {errorText(imp.errorCode)}
