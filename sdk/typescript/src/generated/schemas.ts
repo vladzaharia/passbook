@@ -3922,6 +3922,10 @@ export type OrgSummary = {
     members?: number;
   };
   countsCapped: boolean;
+  personalOwner?: {
+    id: string;
+    name: string | null;
+  } | null;
 };
 
 export type OrgsCloseParams = {

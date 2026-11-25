@@ -170,9 +170,8 @@ describe('orgs api', () => {
       counts: { passes: 0, templates: 0, connections: 0, apiKeys: 0, members: 2 },
       countsCapped: false,
     });
-    // The workspace is tenant data: the platform's plan and personal-owner fields never ride on it.
+    // The plan is a platform directory field: the tenant workspace never carries it.
     expect(got).not.toHaveProperty('plan');
-    expect(got).not.toHaveProperty('personalOwner');
 
     // A status change travels alone: mixing it with edits would be two commits that can half-apply.
     const mixed = await call('PATCH', `/${org.id}`, { name: 'Acme Inc', status: 'suspended' });

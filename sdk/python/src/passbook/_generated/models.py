@@ -5668,6 +5668,7 @@ class OrgSummary(_Model):
     passesToUpdate: int | None = None
     counts: OrgSummaryCounts
     countsCapped: bool
+    personalOwner: _Dict[str, _Any] | None = None
 
 class OrgSummaryCounts(_Model):
     passes: int

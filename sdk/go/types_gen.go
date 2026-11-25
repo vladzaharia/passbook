@@ -4583,6 +4583,7 @@ type OrgSummary struct {
 	PassesToUpdate    *int64           `json:"passesToUpdate,omitempty"`
 	Counts            OrgSummaryCounts `json:"counts"`
 	CountsCapped      bool             `json:"countsCapped"`
+	PersonalOwner     map[string]any   `json:"personalOwner,omitempty"`
 }
 
 type OrgSummaryCounts struct {

@@ -7,8 +7,7 @@ import { personalOwners } from './repo-personal.ts';
 
 type Platform = z.infer<typeof PlatformOrgSummarySchema>;
 /** The summary, with the platform-only fields when a platform view asks for them. */
-export type Summary = z.infer<typeof OrgSummarySchema> &
-  Partial<Pick<Platform, 'personalOwner' | 'plan'>>;
+export type Summary = z.infer<typeof OrgSummarySchema> & Partial<Pick<Platform, 'plan'>>;
 
 /** Names of the owners of the personal orgs among `rows`: for platform views only. */
 export const ownersOf = async (ctx: ServiceContext, rows: OrgRow[]) =>

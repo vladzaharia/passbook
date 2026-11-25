@@ -4628,6 +4628,29 @@
           },
           "countsCapped": {
             "type": "boolean"
+          },
+          "personalOwner": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ]
           }
         },
         "required": [
