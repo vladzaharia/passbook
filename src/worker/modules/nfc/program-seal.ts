@@ -5,8 +5,8 @@ import {
   encryptSecret,
   type KekRing,
 } from '../../platform/crypto.ts';
+import { toHex } from '../../platform/ids.ts';
 import { KEY_BYTES, type KeyScope, unreadable } from './keyset-seal.ts';
-import { bytesToHex, hexToBytes } from './sun.ts';
 
 /**
  * Programming keys and sessions at rest, in the platform envelope (`platform/crypto.ts`), bound by AAD to the
@@ -130,5 +130,9 @@ export async function openAdmin(ring: KekRing, s: KeyScope, tagId: string, e: En
   };
 }
 
-export const hex = bytesToHex;
-export const unhex = (s: string): Uint8Array => hexToBytes(s) ?? new Uint8Array(0);
+export const hex = toHex;
+/** Hex to bytes; text that is not hex gives no bytes (every caller then refuses the length). */
+export const unhex = (s: string): Uint8Array =>
+  /^(?:[0-9a-fA-F]{2})*$/.test(s)
+    ? Uint8Array.from((s.match(/../g) ?? []).map((b) => Number.parseInt(b, 16)))
+    : new Uint8Array(0);
