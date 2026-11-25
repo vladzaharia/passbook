@@ -85,6 +85,8 @@ export async function softDeletePass(
   now: number,
   /** Retention: a legal hold on the pass or its org refuses the delete, decided in the same statement. */
   unlessHeld = false,
+  /** Run in the same batch after the delete, so they commit or fail with it (a retention receipt). */
+  extra: D1PreparedStatement[] = [],
 ): Promise<boolean> {
   const held = unlessHeld
     ? ` AND NOT EXISTS (SELECT 1 FROM retention_holds h WHERE h.released_at IS NULL
@@ -127,6 +129,7 @@ export async function softDeletePass(
        next_sync_at = NULL WHERE ${fence} RETURNING id`,
       [now, ...params],
     ),
+    ...extra,
   ]);
   return (deleted?.results?.length ?? 0) === 1;
 }
