@@ -108,7 +108,7 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
         at: Date.now(),
         where: '',
         band: { headline: face.headline, sub: null },
-        greet: status !== 'ok' ? null : 'Hi, Sam',
+        greet: face.kind === 'ok' ? 'Hi, Sam' : null,
         chips: [],
         panel: null,
         lines: [],
