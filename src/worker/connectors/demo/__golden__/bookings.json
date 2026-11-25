@@ -1,0 +1,180 @@
+{
+ "en-US": [
+  {
+   "firstName": "Bridget",
+   "lastName": "Rau",
+   "email": "bridget.rau1@example.com",
+   "phone": "(212) 555-0173",
+   "birthday": "2000-04-01",
+   "address": {
+    "street": "3927 Sawayn Court",
+    "city": "Stratford",
+    "region": "Louisiana",
+    "postcode": "44225"
+   },
+   "initials": "BR",
+   "avatarColor": "green",
+   "bookingRef": "BK-148271",
+   "name": "Bridget Rau",
+   "what": "Lesson",
+   "where": "Anderson Studio",
+   "with": "Maurine Klocko",
+   "startsAt": "2026-03-09T09:00:00-08:00",
+   "endsAt": "2026-03-09T09:30:00-08:00",
+   "status": "Booked",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  },
+  {
+   "firstName": "Marcos",
+   "lastName": "Toy",
+   "email": "marcos.toy2@example.com",
+   "phone": "(212) 555-0124",
+   "birthday": "1982-12-17",
+   "address": {
+    "street": "9967 Connelly Lodge",
+    "city": "Marysville",
+    "region": "Mississippi",
+    "postcode": "83481"
+   },
+   "initials": "MT",
+   "avatarColor": "green",
+   "bookingRef": "BK-196542",
+   "name": "Marcos Toy",
+   "what": "Consultation",
+   "where": "Pawtucket Salon",
+   "with": "Janae Roberts",
+   "startsAt": "2026-03-09T09:00:00-08:00",
+   "endsAt": "2026-03-09T09:30:00-08:00",
+   "status": "Booked",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  },
+  {
+   "firstName": "Ova",
+   "lastName": "Buckridge",
+   "email": "ova.buckridge3@example.com",
+   "phone": "(212) 555-0189",
+   "birthday": "1973-03-29",
+   "address": {
+    "street": "6545 Hills Neck",
+    "city": "Garland",
+    "region": "Indiana",
+    "postcode": "40180"
+   },
+   "initials": "OB",
+   "avatarColor": "pink",
+   "bookingRef": "BK-244813",
+   "name": "Ova Buckridge",
+   "what": "Fitting",
+   "where": "Hollywood Studio",
+   "with": "Keshawn Howell",
+   "startsAt": "2026-03-09T09:00:00-08:00",
+   "endsAt": "2026-03-09T09:30:00-08:00",
+   "status": "Booked",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  }
+ ],
+ "en-GB": [
+  {
+   "firstName": "William",
+   "lastName": "Adams",
+   "email": "william.adams1@example.com",
+   "phone": "07700 900614",
+   "birthday": "1952-03-07",
+   "address": {
+    "street": "119 Howell Street",
+    "city": "Visalia",
+    "region": "Scotland",
+    "postcode": "KW64 61F"
+   },
+   "initials": "WA",
+   "avatarColor": "blue",
+   "bookingRef": "BK-148271",
+   "name": "William Adams",
+   "what": "Massage",
+   "where": "Severn Studio",
+   "with": "Cedric Gulgowski",
+   "startsAt": "2026-03-09T09:00:00+00:00",
+   "endsAt": "2026-03-09T09:30:00+00:00",
+   "status": "Booked",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  }
+ ],
+ "de-DE": [
+  {
+   "firstName": "Nele",
+   "lastName": "Tischmann",
+   "email": "nele.tischmann1@example.com",
+   "phone": "+49 151 55501329",
+   "birthday": "2006-04-24",
+   "address": {
+    "street": "Ponitzschplatz 60",
+    "city": "Fürth",
+    "region": "Nordrhein-Westfalen",
+    "postcode": "65502"
+   },
+   "initials": "NT",
+   "avatarColor": "violet",
+   "bookingRef": "BK-148271",
+   "name": "Nele Tischmann",
+   "what": "Kontrolle",
+   "where": "Nürnberg Studio",
+   "with": "Dominik Marahrens",
+   "startsAt": "2026-03-09T09:00:00+01:00",
+   "endsAt": "2026-03-09T09:30:00+01:00",
+   "status": "Booked",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  }
+ ],
+ "fr-FR": [
+  {
+   "firstName": "Philothée",
+   "lastName": "Jacquet",
+   "email": "philothee.jacquet1@example.com",
+   "phone": "+33 6 39 98 60 46",
+   "birthday": "1979-09-12",
+   "address": {
+    "street": "74 rue de la Paix",
+    "city": "Quimper",
+    "region": "Centre",
+    "postcode": "46872"
+   },
+   "initials": "PJ",
+   "avatarColor": "orange",
+   "bookingRef": "BK-148271",
+   "name": "Philothée Jacquet",
+   "what": "Coupe",
+   "where": "Nanterre Salon",
+   "with": "Catherine Bertrand",
+   "startsAt": "2026-03-09T09:00:00+01:00",
+   "endsAt": "2026-03-09T09:30:00+01:00",
+   "status": "Booked",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  }
+ ],
+ "es-ES": [
+  {
+   "firstName": "Reina",
+   "lastName": "Ceja",
+   "email": "reina.ceja1@example.com",
+   "phone": "+34 619 455 239",
+   "birthday": "1963-02-21",
+   "address": {
+    "street": "Avenida Molina Nueva, 32",
+    "city": "Sevilla",
+    "region": "Baleares",
+    "postcode": "06004"
+   },
+   "initials": "RC",
+   "avatarColor": "amber",
+   "bookingRef": "BK-148271",
+   "name": "Reina Ceja",
+   "what": "Corte",
+   "where": "Guadalajara Studio",
+   "with": "Cristóbal Cadena",
+   "startsAt": "2026-03-09T09:00:00+01:00",
+   "endsAt": "2026-03-09T09:30:00+01:00",
+   "status": "Booked",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  }
+ ]
+}

@@ -1,0 +1,187 @@
+{
+ "en-US": [
+  {
+   "firstName": "Afton",
+   "lastName": "Gerhold",
+   "email": "afton.gerhold1@example.com",
+   "phone": "(212) 555-0167",
+   "birthday": "1987-11-30",
+   "address": {
+    "street": "300 Rogahn Squares",
+    "city": "Lauderhill",
+    "region": "New York",
+    "postcode": "81109"
+   },
+   "initials": "AG",
+   "avatarColor": "blue",
+   "memberName": "Afton Gerhold",
+   "memberId": "E-58271",
+   "company": "Worse Pinstripe Systems",
+   "team": "Finance",
+   "plan": "staff",
+   "zones": "Warehouse, Garage, Lobby, Floor 3",
+   "validFrom": "2026-02-19",
+   "validUntil": "2027-02-19",
+   "status": "Active",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  },
+  {
+   "firstName": "Hettie",
+   "lastName": "Runte",
+   "email": "hettie.runte2@example.com",
+   "phone": "(212) 555-0140",
+   "birthday": "1962-07-24",
+   "address": {
+    "street": "2424 Keebler Wall",
+    "city": "Carolina",
+    "region": "Wisconsin",
+    "postcode": "13812"
+   },
+   "initials": "HR",
+   "avatarColor": "blue",
+   "memberName": "Hettie Runte",
+   "memberId": "E-16542",
+   "company": "Worse Pinstripe Systems",
+   "team": "Facilities",
+   "plan": "staff",
+   "zones": "Garage, Warehouse, Floor 2",
+   "validFrom": "2026-02-03",
+   "validUntil": "2027-02-03",
+   "status": "Active",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  },
+  {
+   "firstName": "Alison",
+   "lastName": "Hyatt",
+   "email": "alison.hyatt3@example.com",
+   "phone": "(212) 555-0182",
+   "birthday": "1947-06-19",
+   "address": {
+    "street": "430 Brown Squares",
+    "city": "Reading",
+    "region": "Mississippi",
+    "postcode": "87465"
+   },
+   "initials": "AH",
+   "avatarColor": "violet",
+   "memberName": "Alison Hyatt",
+   "memberId": "E-64813",
+   "company": "Worse Pinstripe Systems",
+   "team": "Support",
+   "plan": "contractor",
+   "zones": "Garage, Lab",
+   "validFrom": "2026-02-28",
+   "validUntil": "2026-03-14",
+   "status": "Active",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  }
+ ],
+ "en-GB": [
+  {
+   "firstName": "Saul",
+   "lastName": "Keebler",
+   "email": "saul.keebler1@example.com",
+   "phone": "07700 900402",
+   "birthday": "1970-12-15",
+   "address": {
+    "street": "60 Fadel Yard",
+    "city": "Thornton",
+    "region": "England",
+    "postcode": "KW24 20V"
+   },
+   "initials": "SK",
+   "avatarColor": "teal",
+   "memberName": "Saul Keebler",
+   "memberId": "E-58271",
+   "company": "Regular Riser Works",
+   "team": "Facilities",
+   "plan": "staff",
+   "zones": "Lobby, Garage, Floor 2, Warehouse",
+   "validFrom": "2026-03-01",
+   "validUntil": "2027-03-01",
+   "status": "Active",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  }
+ ],
+ "de-DE": [
+  {
+   "firstName": "Benjamin",
+   "lastName": "Wachtel",
+   "email": "benjamin.wachtel1@example.com",
+   "phone": "+49 151 55508960",
+   "birthday": "1965-10-25",
+   "address": {
+    "street": "Ryjikhgasse 17",
+    "city": "Leipzig",
+    "region": "Berlin",
+    "postcode": "83953"
+   },
+   "initials": "BW",
+   "avatarColor": "red",
+   "memberName": "Benjamin Wachtel",
+   "memberId": "E-58271",
+   "company": "Gemütvoll Waffe Works",
+   "team": "Finance",
+   "plan": "contractor",
+   "zones": "Warehouse, Floor 3",
+   "validFrom": "2026-02-14",
+   "validUntil": "2026-02-28",
+   "status": "Active",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  }
+ ],
+ "fr-FR": [
+  {
+   "firstName": "Sylvestre",
+   "lastName": "Mercier",
+   "email": "sylvestre.mercier1@example.com",
+   "phone": "+33 6 39 98 92 22",
+   "birthday": "1993-06-07",
+   "address": {
+    "street": "113 place Delesseux",
+    "city": "Cholet",
+    "region": "Lorraine",
+    "postcode": "91812"
+   },
+   "initials": "SM",
+   "avatarColor": "orange",
+   "memberName": "Sylvestre Mercier",
+   "memberId": "E-58271",
+   "company": "Magnifique Électorat Group",
+   "team": "Support",
+   "plan": "staff",
+   "zones": "Floor 3, Warehouse",
+   "validFrom": "2026-02-10",
+   "validUntil": "2027-02-10",
+   "status": "Active",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  }
+ ],
+ "es-ES": [
+  {
+   "firstName": "Leticia",
+   "lastName": "Salinas",
+   "email": "leticia.salinas1@example.com",
+   "phone": "+34 640 266 073",
+   "birthday": "1973-04-29",
+   "address": {
+    "street": "Paseo Aparicio del Sol, 33",
+    "city": "Barcelona",
+    "region": "Región de Murcia",
+    "postcode": "24576"
+   },
+   "initials": "LS",
+   "avatarColor": "pink",
+   "memberName": "Leticia Salinas",
+   "memberId": "E-58271",
+   "company": "Hopeful Boyfriend Systems",
+   "team": "Operations",
+   "plan": "shift",
+   "zones": "Garage, Warehouse, Floor 3",
+   "validFrom": "2026-02-27",
+   "validUntil": "2026-03-29",
+   "status": "Active",
+   "updatedAt": "2026-03-02T00:00:00Z"
+  }
+ ]
+}
