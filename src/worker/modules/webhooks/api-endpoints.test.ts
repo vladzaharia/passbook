@@ -296,9 +296,17 @@ describe('secrets', () => {
     expect(await auditOf(api.rig.db, 'webhook.secret.rotate')).toHaveLength(3);
   });
 
-  it('accepts only 0, 24 and 72 hours', async () => {
+  it('rotates with each overlap choice: 0, 1, 24, 72 and 168 hours', async () => {
     const id = (await create()).json.endpoint.id as string;
-    for (const overlapHours of [1, -1, 100, '24'])
+    for (const overlapHours of [0, 1, 24, 72, 168])
+      expect((await api.call('POST', `${BASE}/${id}/secret`, { overlapHours }, admin)).status).toBe(
+        200,
+      );
+  });
+
+  it('refuses any other overlap', async () => {
+    const id = (await create()).json.endpoint.id as string;
+    for (const overlapHours of [2, -1, 100, 169, '24'])
       expect((await api.call('POST', `${BASE}/${id}/secret`, { overlapHours }, admin)).status).toBe(
         422,
       );

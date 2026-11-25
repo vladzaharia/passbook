@@ -245,9 +245,6 @@ export const WebhookEndpointCreatedSchema = z.object({
   endpoint: WebhookEndpointSchema,
   secret: z.string(),
 });
-export const RotateWebhookSecretSchema = z.object({
-  overlapHours: z.union([z.literal(0), z.literal(24), z.literal(72)]).default(24),
-});
 
 export const WebhookTestResultSchema = z.object({
   ok: z.boolean(),
