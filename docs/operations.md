@@ -5,7 +5,7 @@
     npm ci
     npm run dev:vars   # fills missing .dev.vars: KEK, mock OIDC, fixture signer, PUBLIC_BASE_URL
     npm run db:local   # apply migrations to the local D1
-    npm run dev:oidc   # mock Pocket ID on :5174
+    npm run dev:oidc   # mock Polaris ID on :5174
     npm run dev        # http://localhost:5173
 
 - `dev:vars` never overwrites. An old `PUBLIC_BASE_URL` on another port must be edited by hand.
@@ -34,12 +34,12 @@
 
 Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangler.jsonc`.
 
-1. **Pocket ID** (`id.plrs.im`). PassBook registers itself with a Client ID Metadata Document:
+1. **Polaris ID** (`id.plrs.im`; runs Pocket ID v2.19.3). PassBook registers itself with a Client ID Metadata Document:
    `vars.OIDC_CLIENT_ID` is `${PUBLIC_BASE_URL}/auth/oidc/client-metadata.json`, which the
    Worker serves (public client, PKCE, no secret; callback and post-logout URLs come from
    `PUBLIC_BASE_URL`).
-   - Groups: the `OIDC_*_GROUP` vars hold the values Pocket ID sends in the `groups` claim, not the
-     display names. Pocket ID derives them from the display name (lowercase, other characters to
+   - Groups: the `OIDC_*_GROUP` vars hold the values Polaris ID sends in the `groups` claim, not the
+     display names. Polaris ID derives them from the display name (lowercase, other characters to
      `_`): `Wallet Admins` or `wallet-admins` arrives as `wallet_admins`. Matching is exact and
      case-sensitive, and a test fails any var that is not `[a-z0-9_]`. `OIDC_PLATFORM_ADMIN_GROUP`
      (`wallet_admins`: every org and the platform scope, developer features included),
@@ -48,7 +48,7 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
      (`wallet_users`). Check the real values in the logs of a refused sign-in
      (`auth.oidc_no_access` lists the groups it received) before a deploy that changes them.
    - Turning on the admin group requirement (`OIDC_CONSOLE_GROUP_REQUIRED`, default `"false"`):
-     1. In Pocket ID create `wallet_org_admins` (display name `wallet-org-admins`) and add everyone
+     1. In Polaris ID create `wallet_org_admins` (display name `wallet-org-admins`) and add everyone
         who uses an org console, including every current org member. Platform admins need no
         other group.
      2. Add the group to the PassBook client's allowed groups.
@@ -62,12 +62,12 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    - Application Configuration → OIDC: add that exact URL to the client metadata document allowlist.
    - After the first sign-in creates the client, set its allowed groups to both groups. PassBook
      also checks the groups claim itself.
-   - Metadata changes reach Pocket ID within an hour, or at once with Refresh in its client list.
-   - Logo: Pocket ID ignores the document's `logo_uri`. On the client, set Logo URL (and Dark logo
-     URL) to `${PUBLIC_BASE_URL}/icons/icon-512.png`; Pocket ID downloads and keeps it.
-   - Emails: Settings → "Trust Polaris ID emails" links and verifies an address only when Pocket ID
-     sends `email_verified: true` (the user verified it in Pocket ID, or an admin ticked "Email
-     verified"). Never set Pocket ID's `EMAILS_VERIFIED=true`: a user could then claim any address.
+   - Metadata changes reach Polaris ID within an hour, or at once with Refresh in its client list.
+   - Logo: Polaris ID ignores the document's `logo_uri`. On the client, set Logo URL (and Dark logo
+     URL) to `${PUBLIC_BASE_URL}/icons/icon-512.png`; Polaris ID downloads and keeps it.
+   - Emails: Settings → "Trust Polaris ID emails" links and verifies an address only when Polaris ID
+     sends `email_verified: true` (the user verified it in Polaris ID, or an admin ticked "Email
+     verified"). Never set Polaris ID's `EMAILS_VERIFIED=true`: a user could then claim any address.
    - A registered client still works: set its id in `vars.OIDC_CLIENT_ID`; a confidential one also
      needs `OIDC_CLIENT_SECRET` (step 5). Local dev only loads secrets listed in
      `secrets.required`, so the mock provider runs as a public client.
@@ -88,7 +88,7 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
 5. **Secrets** (`wrangler secret put <NAME>`, value on stdin)
    - `KEK_V1`: `openssl rand -base64 32`. Back it up outside Cloudflare. Losing it loses every
      stored credential.
-   - `TURNSTILE_SECRET` (and `OIDC_CLIENT_SECRET` only for a registered Pocket ID client).
+   - `TURNSTILE_SECRET` (and `OIDC_CLIENT_SECRET` only for a registered Polaris ID client).
    - `SIGNER_PLATFORM_CERTIFICATE` and `SIGNER_PLATFORM_PRIVATE_KEY`: contents of
      `.secrets/platform-certificate.pem` and `.secrets/platform-key.pem`.
    - `BREAKGLASS_TOKEN_SHA256`: run `npm run breakglass`, then paste the printed command. See
@@ -131,8 +131,8 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    [Cutover](#cutover-from-schema-0024), which is complete.
 10. **First admin**: a new database has no memberships. Run
     `node tools/bootstrap-tenancy.ts --owner <your email> --apply` locally, or the printed remote
-    commands, after signing in once. Then sign in through Pocket ID as a `wallet_admins` member
-    (or break-glass if Pocket ID is down). Check Status: every component should be verified or
+    commands, after signing in once. Then sign in through Polaris ID as a `wallet_admins` member
+    (or break-glass if Polaris ID is down). Check Status: every component should be verified or
     configured.
 11. **Device acceptance test** (a real iPhone)
     - Create an org, a template and a pass from the admin console; email it to yourself. An
@@ -352,15 +352,15 @@ Done (2026-11-03, through the Cloudflare API):
 
 Owner steps:
 
-1. **Pocket ID**, before the deploy. OIDC settings → Client ID Metadata Documents → Allowed
+1. **Polaris ID**, before the deploy. OIDC settings → Client ID Metadata Documents → Allowed
    metadata document URLs: add `https://passbook.mobile/auth/oidc/client-metadata.json` (or
    `CIMD_URL_ALLOWLIST` when the UI config is disabled). The `wallet.plrs.im` entry does not match
-   it. Until then Pocket ID sign-in fails; break-glass still works.
+   it. Until then Polaris ID sign-in fails; break-glass still works.
 2. **Deploy**: `npm run deploy -- --apply`. The token needs Workers Routes Write on
    `passbook.mobile` and `plrs.im`. If `passbook.mobile` already has an apex record, delete it
    first; the custom domain creates its own. The deploy applies `migrations/0008_passes.sql`,
    which moves stored web service URLs off wallet.plrs.im (no pass was on a device).
-3. **First sign-in** through Pocket ID creates a new client: set its allowed groups
+3. **First sign-in** through Polaris ID creates a new client: set its allowed groups
    (`wallet_admins`, `wallet_users`) and its logo as in [Go-live](#go-live-checklist) step 1. User
    ids (`sub`) do not change, so linked accounts carry over; everyone consents once.
 4. If passes existed, rebuild their files: Identities → the platform identity → Re-sign.
@@ -375,15 +375,15 @@ Verify:
     curl -sI 'https://wallet.plrs.im/p/x?y=1'                        # 308 to https://passbook.mobile/p/x?y=1
     curl -s https://passbook.mobile/auth/oidc/client-metadata.json   # every URL on passbook.mobile
 
-- Sign in with Pocket ID and with an email link on passbook.mobile. Status shows Email Sending
+- Sign in with Polaris ID and with an email link on passbook.mobile. Status shows Email Sending
   and Turnstile configured.
 - Issue a pass and add it to Wallet: its back shows the passbook.mobile support link, and an
   update reaches the phone.
-- Once a rollback is off the table, remove the old Pocket ID client, its allowlist entry and
+- Once a rollback is off the table, remove the old Polaris ID client, its allowlist entry and
   `wallet.plrs.im` in the Turnstile widget.
 
 Rollback: revert the change (`routes`, `PUBLIC_BASE_URL`, `REDIRECT_HOSTS`, `OIDC_CLIENT_ID`,
-`EMAIL_FROM` and `send_email` move together) and deploy. The old Pocket ID client and allowlist
+`EMAIL_FROM` and `send_email` move together) and deploy. The old Polaris ID client and allowlist
 entry must still exist. Stored web service URLs stay on passbook.mobile: set them back with the
 reverse `UPDATE`. Do not restore D1 (see [Cutover](#cutover-from-schema-0024)).
 Redirects are uncached, so no browser loops. Everyone signs in again. A pass added to Wallet in
@@ -392,7 +392,7 @@ holder re-adds it from a new link.
 
 ## Break-glass admin
 
-Admin sign-in for when Pocket ID is down.
+Admin sign-in for when Polaris ID is down.
 
 - `npm run breakglass` writes a new token to `.secrets/breakglass-token` (never printed) and its
   SHA-256 to `.dev.vars`, and prints the `wrangler secret put` command for production. The Worker
@@ -401,7 +401,7 @@ Admin sign-in for when Pocket ID is down.
   30 min idle, 4 h max. Every sign-in is in the audit log; failures are logged and rate limited.
 - Turn it off: disable the "Break-glass admin" user in Users, or set the secret to `off`
   (anything that is not a 64-character hex hash makes the route 404).
-- Pocket ID down: deploys still work (the client id is the metadata URL); sign in with
+- Polaris ID down: deploys still work (the client id is the metadata URL); sign in with
   break-glass. `--allow-no-oidc` only matters for a placeholder `OIDC_CLIENT_ID`.
 - Keep the token offline (password manager). Rotate it after any use you did not expect.
 
@@ -654,11 +654,11 @@ A refused API key adds fields to its `request.done` line: `code` `INVALID_API_KE
 
 The console, the developer tools and every API key mint need a Polaris ID sign-in (a passkey) or break-glass. An email link gives My passes and Account only.
 
-- `vars.OIDC_REQUIRE_AMR` is the ID-token `amr` a Polaris ID sign-in must carry. It ships empty (off). Turn it on with `phr` once Pocket ID 2.19.3 or later is confirmed to emit `amr` (sign in once with the check on in a preview, or watch for `oidc.amr_absent`, code `OIDC_AMR_ABSENT`, logged whenever a token has no `amr` at all). With it on, a sign-in made with an emailed login code (`otp`) restarts once with `prompt=login`, then fails with `PASSKEY_REQUIRED`. If every Polaris ID sign-in starts failing with `PASSKEY_REQUIRED` or the log shows `OIDC_AMR_ABSENT`, set it back to `""` and redeploy.
+- `vars.OIDC_REQUIRE_AMR` is the ID-token `amr` a Polaris ID sign-in must carry. It ships empty (off). Turn it on with `phr` once Polaris ID 2.19.3 or later is confirmed to emit `amr` (sign in once with the check on in a preview, or watch for `oidc.amr_absent`, code `OIDC_AMR_ABSENT`, logged whenever a token has no `amr` at all). With it on, a sign-in made with an emailed login code (`otp`) restarts once with `prompt=login`, then fails with `PASSKEY_REQUIRED`. If every Polaris ID sign-in starts failing with `PASSKEY_REQUIRED` or the log shows `OIDC_AMR_ABSENT`, set it back to `""` and redeploy.
 - Migration 0169 puts every active member of an organization in `console_email_grace` (strong sessions never read it) and, when it found any, sets the platform setting `auth.consoleEmailUntil` to 21 days on (ms). Until then those members' email sessions keep the console and their personal keys keep working. Minting or rotating a key, the developer sandbox and Try it, closing an org and accepting an invitation need a Polaris ID sign-in at once, grace or not. The admin shell shows those members "Use Polaris ID by {date} to keep Admin access."; people with no Polaris ID account yet cannot sign in until one exists, so move the date out if that is not settled. Move the date with the platform settings API (`auth.consoleEmailUntil`, ms), or set it to `null` to end grace now. A database with nobody in grace enforces at once.
 - A personal key stops with 403 `KEY_OWNER_NEEDS_IDP` once its owner is outside grace and has no Polaris ID identity; it works again after one Polaris ID sign-in. Service and platform keys are not affected. `api_keys.created_amr` shows how a key's creator signed in.
 - Non-admin Polaris ID sessions last 7 days idle and 30 days in all.
-- Step-up: sensitive actions (key mint and rotate, org close, reopen and export, admin and integration invitations, webhook and connection secrets, signing identities, `auth.*` and `oidc.*` settings) need a sign-in within the last 10 minutes (`auth_time`). Otherwise 403 `STEP_UP_REQUIRED` with a `signInUrl` that sends Pocket ID `prompt=login&max_age=0`. Pocket ID must honour `max_age=0` and put the new `auth_time` in the ID token. The callback checks it: a step-up whose `auth_time` is older than the flow's start (migration 0179, `oidc_flows.step_up_started_at`, 2 minutes of clock skew allowed) fails with `STEP_UP_NOT_FRESH` ("Polaris ID didn't ask you to sign in again") and logs `STEP_UP_NOT_FRESH`; the old session stays as it was. If every step-up lands there, Pocket ID is ignoring `max_age`. A session with no `auth_time` (an email link, or a provider that sends none) is always stale. Break-glass sessions step up by entering the token again.
+- Step-up: sensitive actions (key mint and rotate, org close, reopen and export, admin and integration invitations, webhook and connection secrets, signing identities, `auth.*` and `oidc.*` settings) need a sign-in within the last 10 minutes (`auth_time`). Otherwise 403 `STEP_UP_REQUIRED` with a `signInUrl` that sends Polaris ID `prompt=login&max_age=0`. Polaris ID must honour `max_age=0` and put the new `auth_time` in the ID token. The callback checks it: a step-up whose `auth_time` is older than the flow's start (migration 0179, `oidc_flows.step_up_started_at`, 2 minutes of clock skew allowed) fails with `STEP_UP_NOT_FRESH` ("Polaris ID didn't ask you to sign in again") and logs `STEP_UP_NOT_FRESH`; the old session stays as it was. If every step-up lands there, Polaris ID is ignoring `max_age`. A session with no `auth_time` (an email link, or a provider that sends none) is always stale. Break-glass sessions step up by entering the token again.
 
 ### Staff PIN tags
 
