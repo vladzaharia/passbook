@@ -7,7 +7,6 @@ import {
 } from '../../../shared/contracts/bundles.ts';
 import { passDevice } from '../../../shared/device.ts';
 import { BUNDLE_DOOR_SCRIPT } from '../../../shared/pass-offline.ts';
-import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
@@ -29,8 +28,9 @@ import { appleFileGate, recordCopy } from '../channels/gate.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
 import { svc } from '../passes/http.ts';
 import { serveCurrentPassFile } from '../passes/timed-variant.ts';
+import { holderZone } from '../public/holder-zone.ts';
 import { presentationForPass } from '../public/presentation.ts';
-import { EMAILED, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
+import { EMAILED, langOf, PAGE_HEADERS } from '../public/routes.ts';
 import { isTokenShape, openPublicAsset, supportContacts } from '../public/service.ts';
 import { bundleItems } from './public-items.ts';
 import { registerMemberPage } from './public-member.ts';
@@ -88,7 +88,7 @@ register(
       const bundle = await bundleForToken(ctx, token);
       const members = await bundleMembers(ctx, bundle);
       const lang = langOf(c.req.header('accept-language'));
-      const zone = zoneOf(c) ?? DEFAULT_TIME_ZONE;
+      const zone = await holderZone(ctx, bundle.org_id);
       const now = new Date(ctx.clock.now());
       const wallets = await Promise.all(
         members.map(({ pass }) => bundleWalletProviders(ctx, pass)),

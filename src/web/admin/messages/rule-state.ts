@@ -4,7 +4,7 @@ import {
   type MessageRuleDto,
   RulePreviewBodySchema,
 } from '@/shared/contracts/message-rules.ts';
-import { localZone } from '../../lib/timezones.ts';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import type { FieldDef } from '../passes/schema-form/index.ts';
 import { CLEAR_CHOICES } from './labels.ts';
 
@@ -137,7 +137,7 @@ export function matchOf(
   state: RuleState,
   fields: ReadonlyMap<string, FieldDef>,
 ): { match: InputMatch | undefined; unfinished: boolean } {
-  const zone = state.timeZone || localZone();
+  const zone = state.timeZone || DEFAULT_TIME_ZONE;
   const made = state.match.map((c) => clauseOf(c, fields.get(c.input), zone));
   const match = made.filter((c): c is InputMatch[number] => c !== null);
   return { match: match.length ? match : undefined, unfinished: made.some((c) => c === null) };
@@ -169,7 +169,7 @@ export function bodyOf(
     offset: { amount: state.amount ?? 0, unit: state.unit, when: state.when },
     yearly: state.yearly,
     sendAt: state.sendAt,
-    timeZone: state.timeZone || localZone(),
+    timeZone: state.timeZone || DEFAULT_TIME_ZONE,
     message: state.message.trim(),
     clearAfter: CLEAR_CHOICES.find((c) => c.value === state.clear)?.ms ?? null,
     on: state.on,

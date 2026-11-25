@@ -3,6 +3,7 @@ import type { OrgEntitlementsDto } from '@/shared/contracts/entitlement-admin.ts
 import type { EntitlementKey } from '@/shared/contracts/entitlements.ts';
 import { ENTITLEMENT_LABEL } from '@/shared/copy/entitlements.ts';
 import { type EntitlementValues, entitlementImpact } from '@/shared/entitlement-impact.ts';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { overrideConfirm, resetOverrideConfirm } from '@/web/lib/confirms-features.ts';
 import { useArrivalMode } from '@/web/lib/motion.ts';
 import { ConfirmDialog, ErrorState, SkeletonRows, toast } from '@/web/ui/index.ts';
@@ -43,6 +44,7 @@ function FeaturesBody({
   arrival: false | 'rise' | 'quiet';
 }) {
   const save = useSetFeatures(orgId, state.revision);
+  const timeZone = useOrgTimeZone(orgId);
   const overrides = overridesOf(state.items);
   const presetValues = state.presets.find((p) => p.preset === state.preset)?.values ?? {};
   const [editing, setEditing] = useState<EntitlementKey | null>(null);
@@ -102,6 +104,7 @@ function FeaturesBody({
           item={item}
           presetLabel={presetLabel}
           now={Date.now()}
+          timeZone={timeZone}
           onClose={() => setEditing(null)}
           onContinue={(draft) => {
             setEditing(null);

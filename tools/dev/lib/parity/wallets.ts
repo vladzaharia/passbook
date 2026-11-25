@@ -1,5 +1,6 @@
 // Google and Samsung payloads for one issued pass, from the real compilers (CW3, CW4) and the
 // fidelity report (CW5). No preview renderer exists yet (CW8), so the sheet shows these as tables.
+
 import { planPass } from '../../../../src/passkit/build.ts';
 import { bakedBehaviors, loadBaked } from '../../../../src/passkit/template/baked-fixtures.ts';
 import { FIXTURE_IDENTITY } from '../../../../src/passkit/testing/fixture-identity.ts';
@@ -18,6 +19,7 @@ import type {
   WalletPassView,
 } from '../../../../src/passkit/wallets/types.ts';
 import { resolveWalletView } from '../../../../src/passkit/wallets/view.ts';
+import { DEFAULT_TIME_ZONE } from '../../../../src/shared/time-zone.ts';
 
 const NOW = new Date();
 const assetUrl = (name: string) =>
@@ -60,6 +62,7 @@ export async function viewOfPass(
     template.manifest as TemplateManifest,
     {
       now: NOW,
+      timeZone: DEFAULT_TIME_ZONE,
       locales: ['en'],
       input: sample,
       assets: template.assets,

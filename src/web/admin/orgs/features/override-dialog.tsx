@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type { EntitlementItemDto } from '@/shared/contracts/entitlement-admin.ts';
 import { ENTITLEMENT_LABEL } from '@/shared/copy/entitlements.ts';
-import { localZone } from '@/web/lib/timezones.ts';
 import { DateTimeField, type DateTimeValue } from '@/web/ui/date-time-field.tsx';
 import {
   Button,
@@ -26,18 +25,21 @@ export function OverrideDialog({
   item,
   presetLabel,
   now,
+  timeZone,
   onClose,
   onContinue,
 }: {
   item: EntitlementItemDto;
   presetLabel: string;
   now: number;
+  /** The org's zone: an expiry reads and saves in it. */
+  timeZone: string;
   onClose: () => void;
   onContinue: (draft: OverrideDraft) => void;
 }) {
   const key = item.key;
   const label = ENTITLEMENT_LABEL[key];
-  const zone = localZone();
+  const zone = timeZone;
   const [value, setValue] = useState<ValueDraft>(() => draftOf(key, item.value));
   const [note, setNote] = useState(item.note ?? '');
   const [expires, setExpires] = useState<DateTimeValue | null>(

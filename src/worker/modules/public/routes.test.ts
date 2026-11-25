@@ -5,6 +5,7 @@ import {
   linkToken,
   makeTemplate,
   persistTemplate,
+  saveOrgSettings,
 } from '../../../../test/helpers/index.ts';
 import { MAC_REVEAL_SCRIPT } from '../../../shared/device.ts';
 import { createApp } from '../../app.ts';
@@ -264,7 +265,7 @@ describe('GET /p/:token', () => {
     expect(html).toContain('This pass has expired.');
   });
 
-  it('formats dates in the visitor zone from request.cf, Seattle time otherwise', async () => {
+  it('formats dates in the org zone, Seattle time when it has none, whatever the visitor zone', async () => {
     const { resolved } = makeTemplate({ id: `tpl-tz-${kit.fx.ids.token(4)}` });
     const template = kit.registry.add({
       id: resolved.id,
@@ -305,11 +306,16 @@ describe('GET /p/:token', () => {
       actor: { type: 'system', id: null },
     });
     const url = `${ORIGIN}/p/${await linkToken(kit.env, pass)}`;
+    // The org's zone decides, whatever zone the visitor is in, and it is named after the time.
+    const tokyo = new Request(url, { cf: { timezone: 'Asia/Tokyo' } } as RequestInit);
+    expect(await (await app.request(tokyo, {}, kit.env)).text()).toMatch(/1:00\sAM\sPDT/);
+    expect(await (await get(`/p/${await linkToken(kit.env, pass)}`)).text()).toMatch(
+      /1:00\sAM\sPDT/,
+    );
+    await saveOrgSettings(kit.env.DB, kit.org.id, { 'org.timeZone': 'Asia/Tokyo' }, 1);
     const la = new Request(url, { cf: { timezone: 'America/Los_Angeles' } } as RequestInit);
-    expect(await (await app.request(la, {}, kit.env)).text()).toMatch(/1:00\sAM/);
-    const bad = new Request(url, { cf: { timezone: 'Not/AZone' } } as RequestInit);
-    expect(await (await app.request(bad, {}, kit.env)).text()).toMatch(/1:00\sAM/);
-    expect(await (await get(`/p/${await linkToken(kit.env, pass)}`)).text()).toMatch(/1:00\sAM/);
+    expect(await (await app.request(la, {}, kit.env)).text()).toMatch(/5:00\sPM\sGMT\+9/);
+    await saveOrgSettings(kit.env.DB, kit.org.id, { 'org.timeZone': null }, 1);
   });
 
   it('has a heading, and its only inline styles are pass colour variables', async () => {

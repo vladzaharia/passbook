@@ -1,7 +1,6 @@
 import type { z } from 'zod';
 import type { Mode } from '../../../shared/contracts/common.ts';
 import type { ScanEventDto, ScanEventListQuerySchema } from '../../../shared/contracts/index.ts';
-import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { SessionAuth } from '../../platform/auth.ts';
 import type { Grant } from '../../platform/authority.ts';
 import { AppError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
@@ -21,6 +20,7 @@ import {
   listConsoleEvents,
 } from './repo-events.ts';
 import { addEventCache } from './repo-events-write.ts';
+import { readOrgTimeZone } from './repo-org-clock.ts';
 import { keyScanReadAuthority, scanReadAuthority } from './repo-read-authority.ts';
 import { releaseHeadsComplete } from './repo-scope-releases.ts';
 
@@ -141,7 +141,7 @@ export async function captureEventAuthority(
     orgId: authority.orgId,
     event: null,
     templateIds: [],
-    timeZone: DEFAULT_TIME_ZONE,
+    timeZone: await readOrgTimeZone(ctx.env.DB, authority.orgId),
   });
   actor.tenantAuthority = await captureScanTenantAuthority(ctx, session, authority);
   actor.platformSessionId = session.sessionId;

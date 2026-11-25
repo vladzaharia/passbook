@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import { CALENDAR_ZONE } from '../../../../shared/time-zone.ts';
 import { cn } from '../../../lib/cn.ts';
 import { formatWallTime } from '../../../lib/format.ts';
@@ -42,7 +43,7 @@ export function DateTimeInput({
   zone: venueZone,
   ...control
 }: Props) {
-  const [zone, setZone] = useState(() => venueZone ?? (value ? zoneFor(value) : localZone()));
+  const [zone, setZone] = useState(() => venueZone ?? (value ? zoneFor(value) : DEFAULT_TIME_ZONE));
   // The signed pass shows times in the venue zone, so the editor follows it.
   useEffect(() => {
     if (venueZone) setZone(venueZone);

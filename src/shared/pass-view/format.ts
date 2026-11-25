@@ -14,6 +14,8 @@ export interface FormatContext {
   locale: string;
   now: Date;
   timeZone?: string;
+  /** Name the zone after a time ("7:00 PM PDT"): holder pages, where the zone is the org's, not the viewer's. */
+  showZone?: boolean;
 }
 
 export interface Formatted {
@@ -62,6 +64,18 @@ function relative(date: Date, hasTime: boolean, ctx: FormatContext): string {
   return rtf.format(dayNumber(date, ctx.timeZone) - dayNumber(ctx.now, ctx.timeZone), 'day');
 }
 
+/** "PDT" for a time in `timeZone`; undefined without a zone. */
+function zoneAbbreviation(
+  locale: string,
+  timeZone: string | undefined,
+  date: Date,
+): string | undefined {
+  if (!timeZone) return undefined;
+  return new Intl.DateTimeFormat(locale, { timeZone, timeZoneName: 'short' })
+    .formatToParts(date)
+    .find((p) => p.type === 'timeZoneName')?.value;
+}
+
 function formatDate(value: string, spec: FormatSpec, ctx: FormatContext): Formatted {
   const dateStyle = STYLES[String(spec.dateStyle)];
   const timeStyle = STYLES[String(spec.timeStyle)];
@@ -93,7 +107,11 @@ function formatDate(value: string, spec: FormatSpec, ctx: FormatContext): Format
     };
   }
   const text = new Intl.DateTimeFormat(ctx.locale, { dateStyle, timeStyle, timeZone }).format(date);
-  return { text, dateTime: value };
+  const named =
+    ctx.showZone === true && timeStyle !== undefined && timeZone !== CALENDAR_ZONE
+      ? zoneAbbreviation(ctx.locale, timeZone, date)
+      : undefined;
+  return { text: named ? `${text} ${named}` : text, dateTime: value };
 }
 
 const ONES = [

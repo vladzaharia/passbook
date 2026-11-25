@@ -3,7 +3,6 @@ import { passDevice } from '../../../shared/device.ts';
 import { formatEndedOn } from '../../../shared/format-date.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { stateWordOption } from '../../../shared/state-word.ts';
-import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -26,11 +25,12 @@ import { codesReplacedNotice } from '../channels/service.ts';
 import { recordPassEvent } from '../events/record.ts';
 import { voidedAt } from '../events/repo-voided.ts';
 import { orgBrandOf } from '../orgs/brand.ts';
-import { type C, svc } from '../passes/http.ts';
+import { svc } from '../passes/http.ts';
 import { serveCurrentPassFile } from '../passes/timed-variant.ts';
 import { holderPrintRoutes } from '../prints/routes-holder.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
+import { holderZone } from './holder-zone.ts';
 import { canPresent, presentationForPass } from './presentation.ts';
 import { holderMailProps, resendRoutes } from './routes-resend.ts';
 import { signInRoutes } from './routes-signin.ts';
@@ -98,18 +98,6 @@ export const langOf = (header: string | undefined): string => {
   return tag && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(tag) ? tag : 'en';
 };
 
-/** Visitor zone from Cloudflare, if it is a zone Intl knows. */
-export function zoneOf(c: C): string | undefined {
-  const tz = c.req.raw.cf?.timezone;
-  if (typeof tz !== 'string' || !tz) return undefined;
-  try {
-    new Intl.DateTimeFormat('en', { timeZone: tz });
-    return tz;
-  } catch {
-    return undefined;
-  }
-}
-
 register(
   publicRoutes,
   'public',
@@ -127,6 +115,7 @@ register(
       const pass = await passForToken(svcCtx, token);
       const snapshot = await capturePassSnapshot(svcCtx, pass);
       const model = await pageModel(svcCtx, pass);
+      const zone = await holderZone(svcCtx, pass.orgId);
       const page = `/p/${token}`;
       const notice = model.removal ? undefined : await codesReplacedNotice(svcCtx, pass);
       // Resolve only links to this bearer under the same snapshot as the page and its assets.
@@ -140,14 +129,15 @@ register(
         assets: model.assets,
         locale: lang,
         now: new Date(svcCtx.clock.now()),
-        timeZone: zoneOf(c) ?? DEFAULT_TIME_ZONE,
+        timeZone: zone,
+        showZone: true,
         ...stateWordOption(pass),
       });
       const html = renderPassPage({
         view,
         passJson: model.passJson,
         now: new Date(svcCtx.clock.now()),
-        ...(zoneOf(c) ? { timeZone: zoneOf(c) as string } : {}),
+        timeZone: zone,
         nonce: c.var.nonce,
         theme,
         orgName: view.organizationName || model.orgName,
@@ -173,7 +163,7 @@ register(
           pass,
           pass.status === 'voided' ? await voidedAt(svcCtx.env.DB, pass.orgId, pass.id) : null,
           model.passJson,
-          zoneOf(c),
+          zone,
           lang,
         ),
         ...(notice ? { notice } : {}),

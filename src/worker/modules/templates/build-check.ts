@@ -45,6 +45,8 @@ export function previewPlan(
   input: Personalization,
   organizationName: string,
   now: Date,
+  /** The org's zone, for behaviors whose template names none; a shared template keeps the default. */
+  timeZone?: string,
 ): PlannedPass {
   return planPass({
     template,
@@ -61,6 +63,7 @@ export function previewPlan(
     signing: undefined as never,
     behaviors,
     now,
+    ...(timeZone ? { timeZone } : {}),
   });
 }
 
@@ -71,8 +74,9 @@ export function previewPass(
   input: Personalization,
   organizationName: string,
   now: Date,
+  timeZone?: string,
 ): PreviewResult {
-  const plan = previewPlan(env, template, input, organizationName, now);
+  const plan = previewPlan(env, template, input, organizationName, now, timeZone);
   const { authenticationToken: _token, ...passJson } = plan.passJson;
   return { passJson, issues: plan.report.issues };
 }

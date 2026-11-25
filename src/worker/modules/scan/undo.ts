@@ -1,4 +1,3 @@
-import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { Grant } from '../../platform/authority.ts';
 import { classifyD1Error } from '../../platform/db.ts';
 import { AppError, ForbiddenError, ValidationError } from '../../platform/errors.ts';
@@ -15,6 +14,7 @@ import type { ConsoleUndo } from './feed.ts';
 import { refuseKeyApproval } from './guard-api-key.ts';
 import { isDeskMarkOut, undoDeskMarkOut } from './occupancy/undo-mark-out.ts';
 import { undoWindowMinutes } from './outcome.ts';
+import { readOrgTimeZone } from './repo-org-clock.ts';
 import { scanByKey } from './repo-scans.ts';
 import { commitUndo, UNDO_CODES } from './repo-undo.ts';
 import { guardMiss, undoApprovalGuard } from './repo-undo-approval-guard.ts';
@@ -193,7 +193,7 @@ export const consoleUndo: ConsoleUndo = async (ctx, session, input) => {
       orgId: input.orgId,
       templateIds: [],
       event: null,
-      timeZone: DEFAULT_TIME_ZONE,
+      timeZone: await readOrgTimeZone(ctx.env.DB, input.orgId),
     }),
     platformSessionId: session.sessionId,
     role,

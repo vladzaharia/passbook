@@ -37,6 +37,6 @@ export interface PreviewSource {
   testBand?: boolean | undefined;
   /** The organization's `org.website`: the Samsung app link, else the holder portal. */
   website?: string | undefined;
-  /** The organization's `org.timeZone`: a US or Canadian one previews paper on Letter. */
+  /** The organization's effective `org.timeZone`: offsetless wallet dates read in it, and a US or Canadian one previews paper on Letter. */
   timeZone?: string | undefined;
 }

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useMemo, useState } from 'react';
 import type { BroadcastDto } from '@/shared/contracts/broadcasts.ts';
+import { useSeededZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { useDebounced } from '../../lib/debounce.ts';
 import { isApiError } from '../../lib/errors.ts';
@@ -123,6 +124,9 @@ function ComposerForm({
     draft ? stateOfBroadcast(draft) : { ...INITIAL, kind: kind ?? 'message' },
   );
   const change = (patch: Partial<ComposerState>) => setState((s) => ({ ...s, ...patch }));
+  const orgZone = useSeededZone(orgId, (from, to) =>
+    setState((s) => (s.at?.zone === from ? { ...s, at: { ...s.at, zone: to } } : s)),
+  );
   const templates = useTemplates({ orgId });
   const usable = useMemo(
     () =>
@@ -241,7 +245,12 @@ function ComposerForm({
           <Card>
             <CardHeader title="When" />
             <CardBody>
-              <WhenSection state={state} onChange={change} error={checks.errors.when} />
+              <WhenSection
+                state={state}
+                onChange={change}
+                error={checks.errors.when}
+                timeZone={orgZone}
+              />
             </CardBody>
           </Card>
           <div className="flex flex-wrap items-center gap-2">

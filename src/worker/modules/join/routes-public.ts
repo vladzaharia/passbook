@@ -5,7 +5,6 @@ import {
   PublicTokenParamSchema,
 } from '../../../shared/contracts/public.ts';
 import { passDevice } from '../../../shared/device.ts';
-import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { limitBody } from '../../platform/body-limit.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
@@ -23,7 +22,8 @@ import { requestTheme } from '../../ssr/head.ts';
 import { type JoinPage, renderJoinPage, statusOf } from '../../ssr/join-page.tsx';
 import { orgBrandOf } from '../orgs/brand.ts';
 import { type C, svc } from '../passes/http.ts';
-import { langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
+import { holderZone } from '../public/holder-zone.ts';
+import { langOf, PAGE_HEADERS } from '../public/routes.ts';
 import { platformLimits } from './caps.ts';
 import { readDeviceCookie, setDeviceCookie } from './cookie.ts';
 import { type OpenRelease, openRelease } from './issue.ts';
@@ -73,7 +73,7 @@ async function formPage(
     try {
       card = await joinPreview(ctx, link, open, c.req.param('token') ?? '', {
         locale: langOf(c.req.header('accept-language')),
-        timeZone: zoneOf(c) ?? DEFAULT_TIME_ZONE,
+        timeZone: await holderZone(ctx, link.orgId),
       });
     } catch (error) {
       if (error instanceof AppError && error.status < 500) {

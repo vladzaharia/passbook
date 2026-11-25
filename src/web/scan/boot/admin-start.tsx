@@ -9,9 +9,10 @@ import {
   ScanningSessionListSchema,
 } from '../../../shared/contracts/scanning-sessions.ts';
 import { SessionResponseSchema } from '../../../shared/contracts/session.ts';
+import { SettingsListSchema } from '../../../shared/contracts/settings-list.ts';
+import { resolveOrgTimeZone } from '../../../shared/time-zone.ts';
 import { api } from '../../lib/api.ts';
 import { errorMessage } from '../../lib/errors.ts';
-import { localZone } from '../../lib/timezones.ts';
 import { Button } from '../../ui/button.tsx';
 import { Callout } from '../../ui/callout.tsx';
 import { FormField } from '../../ui/field.tsx';
@@ -27,6 +28,8 @@ interface AdminStartProps {
 }
 
 /** A different authenticated user must explicitly choose an organization again. */
+const ORG_SETTINGS = SettingsListSchema.omit({ oidc: true });
+
 export function AdminStart(props: AdminStartProps) {
   return <AdminStartForUser key={props.userId} {...props} />;
 }
@@ -178,10 +181,19 @@ function AdminStartForUser({ userId, onScope, onCancel }: AdminStartProps) {
       const headers = { 'x-csrf-token': identity.csrfToken };
       let id = chosen;
       if (!id) {
+        const settings = await api.get('/api/v1/settings', ORG_SETTINGS, {
+          query: { scope: `org:${org}` },
+          signal: controller.signal,
+        });
+        const zone = settings.items.find((i) => i.key === 'org.timeZone')?.value;
         const created = await api.post(
           '/api/v1/scanning-sessions',
           ScanningSessionDetailSchema,
-          { orgId: org, name: name.trim(), timeZone: localZone() },
+          {
+            orgId: org,
+            name: name.trim(),
+            timeZone: resolveOrgTimeZone(typeof zone === 'string' ? zone : null),
+          },
           { headers, signal: controller.signal },
         );
         if (controller.signal.aborted) return;
