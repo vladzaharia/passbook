@@ -7906,6 +7906,7 @@ export type ReviewTemplate = {
   orgId?: string;
   version: string;
   release?: boolean;
+  alone?: boolean;
   note?: string;
 };
 

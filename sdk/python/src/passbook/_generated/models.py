@@ -9458,6 +9458,7 @@ class ReviewTemplate(_Model):
     orgId: str | None = None
     version: str
     release: bool | None = None
+    alone: bool | None = None
     note: str | None = None
 
 class RollCallsCreateResponse(_Model):

@@ -9164,6 +9164,7 @@ type ReviewTemplate struct {
 	OrgID   *string `json:"orgId,omitempty"`
 	Version string  `json:"version"`
 	Release *bool   `json:"release,omitempty"`
+	Alone   *bool   `json:"alone,omitempty"`
 	Note    *string `json:"note,omitempty"`
 }
 

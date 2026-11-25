@@ -4,8 +4,6 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ApprovalKind } from './repo-releases.ts';
 import { countEligibleReviewers } from './repo-sole-reviewer.ts';
 
-const DENIED = 'TEMPLATE_SELF_APPROVAL';
-
 /**
  * How an approval by the caller is recorded, for every provider. An independent reviewer is `peer`.
  * The author's own approval needs the caller's explicit `alone` and either Test mode (Apple only) or
@@ -29,19 +27,19 @@ export async function approvalKind(
     if (input.alone !== true)
       throw new ForbiddenError(
         'You wrote this version. Confirm to approve it alone in Test, or ask another reviewer.',
-        DENIED,
+        'TEMPLATE_SELF_APPROVAL',
       );
     return 'test';
   }
   if ((await countEligibleReviewers(ctx.env.DB, input.orgId)) !== 1)
     throw new ForbiddenError(
       'You wrote this version. Another reviewer must approve it: invite one from Members.',
-      DENIED,
+      'TEMPLATE_SELF_APPROVAL',
     );
   if (input.alone !== true)
     throw new ForbiddenError(
       'No one else can review in this organization. Confirm to approve it yourself.',
-      DENIED,
+      'TEMPLATE_SELF_APPROVAL',
     );
   return 'sole';
 }
