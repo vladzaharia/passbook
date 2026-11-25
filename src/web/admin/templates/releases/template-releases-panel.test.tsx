@@ -11,10 +11,8 @@ import {
   candidate,
   mountPanel,
   panelProps,
-  pickRowAction,
   release,
   releaseServer,
-  releasesLoaded,
   TEMPLATE,
 } from './test-fixtures.tsx';
 

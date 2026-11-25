@@ -4,15 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setCsrfProvider } from '../../../lib/api.ts';
 import { resetModeForTests } from '../../../lib/mode.ts';
 import { problem } from '../../../lib/test-utils.tsx';
-import {
-  mountPanel,
-  OLD_HASH,
-  pickRowAction,
-  release,
-  releaseServer,
-  releasesLoaded,
-  SCOPE,
-} from './test-fixtures.tsx';
+import { pickRowAction, releasesLoaded } from './row-actions.ts';
+import { mountPanel, OLD_HASH, release, releaseServer, SCOPE } from './test-fixtures.tsx';
 
 beforeEach(() => setCsrfProvider(async () => 'csrf-token'));
 afterEach(() => {
