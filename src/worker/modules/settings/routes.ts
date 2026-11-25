@@ -17,6 +17,7 @@ import { createRouter, guard, register } from '../../platform/openapi.ts';
 import { type ServiceContext, serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestActor } from '../audit/http.ts';
+import { configuredNames } from '../auth/service.ts';
 import { confirmReplyTo, replyToStatus, resendReplyTo, syncReplyTo } from '../delivery/reply-to.ts';
 import { requireTenantSession, tenantAuthorityOf } from '../passes/http.ts';
 import { walletProviderEnabled } from '../wallet-providers/provider-policy.ts';
@@ -65,10 +66,11 @@ async function scopeAuthority(
 function oidcInfo(c: Context<AppBindings>) {
   return {
     issuer: c.env.OIDC_ISSUER,
-    platformAdminGroup: c.env.OIDC_PLATFORM_ADMIN_GROUP || null,
-    adminGroup: c.env.OIDC_ADMIN_GROUP || null,
-    developerGroup: c.env.OIDC_DEVELOPER_GROUP || null,
-    userGroup: c.env.OIDC_USER_GROUP || null,
+    platformAdminGroup: configuredNames(c.env, 'OIDC_PLATFORM_ADMIN_GROUP'),
+    adminGroup: configuredNames(c.env, 'OIDC_ADMIN_GROUP'),
+    developerGroup: configuredNames(c.env, 'OIDC_DEVELOPER_GROUP'),
+    userGroup: configuredNames(c.env, 'OIDC_USER_GROUP'),
+    platformAdminPinned: configuredNames(c.env, 'OIDC_PLATFORM_ADMIN_SUBJECTS').length,
     consoleGroupRequired: c.env.OIDC_CONSOLE_GROUP_REQUIRED === 'true',
   };
 }

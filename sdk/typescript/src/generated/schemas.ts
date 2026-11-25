@@ -10619,10 +10619,11 @@ export type SettingsRetrieveResponse = {
   configRevision?: number;
   oidc?: {
     issuer: string;
-    platformAdminGroup: string | null;
-    adminGroup: string | null;
-    developerGroup: string | null;
-    userGroup: string | null;
+    platformAdminGroup: Array<string>;
+    adminGroup: Array<string>;
+    developerGroup: Array<string>;
+    userGroup: Array<string>;
+    platformAdminPinned: number;
     consoleGroupRequired: boolean;
   };
   released?: {
@@ -10654,10 +10655,11 @@ export type SettingsUpdateResponse = {
   configRevision?: number;
   oidc?: {
     issuer: string;
-    platformAdminGroup: string | null;
-    adminGroup: string | null;
-    developerGroup: string | null;
-    userGroup: string | null;
+    platformAdminGroup: Array<string>;
+    adminGroup: Array<string>;
+    developerGroup: Array<string>;
+    userGroup: Array<string>;
+    platformAdminPinned: number;
     consoleGroupRequired: boolean;
   };
   released?: {

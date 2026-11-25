@@ -11466,10 +11466,11 @@ class SettingsRetrieveResponseItemsItem(_Model):
 
 class SettingsRetrieveResponseOidc(_Model):
     issuer: str
-    platformAdminGroup: str | None
-    adminGroup: str | None
-    developerGroup: str | None
-    userGroup: str | None
+    platformAdminGroup: _List[str]
+    adminGroup: _List[str]
+    developerGroup: _List[str]
+    userGroup: _List[str]
+    platformAdminPinned: int
     consoleGroupRequired: bool
 
 class SettingsRetrieveResponseReleased(_Model):
@@ -11502,10 +11503,11 @@ class SettingsUpdateResponseItemsItem(_Model):
 
 class SettingsUpdateResponseOidc(_Model):
     issuer: str
-    platformAdminGroup: str | None
-    adminGroup: str | None
-    developerGroup: str | None
-    userGroup: str | None
+    platformAdminGroup: _List[str]
+    adminGroup: _List[str]
+    developerGroup: _List[str]
+    userGroup: _List[str]
+    platformAdminPinned: int
     consoleGroupRequired: bool
 
 class SettingsUpdateResponseReleased(_Model):

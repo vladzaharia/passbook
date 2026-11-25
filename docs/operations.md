@@ -60,7 +60,7 @@ Do in order. `npm run deploy:check` lists what is still a placeholder in `wrangl
    - Pinning platform admins (`OIDC_PLATFORM_ADMIN_SUBJECTS`, default empty): a comma list of Polaris ID
      subject ids (the `sub` claim). While it is not empty, platform admin needs the admin group and a
      listed subject; a group member who is not listed signs in without admin. Empty keeps group-only
-     behaviour. Add the subject before you add the person to the group.
+     behaviour. Add the subject before you add the person to the group. After setting the pin, revoke platform admin sessions or have admins sign in again: existing sessions keep their roles until then. Settings → Polaris ID shows the group lists and how many subjects are pinned (a count only).
    - Turning on the admin group requirement (`OIDC_CONSOLE_GROUP_REQUIRED`, default `"false"`):
      1. In Polaris ID create `wallet_org_admins` (display name `wallet-org-admins`) and add everyone
         who uses an org console, including every current org member. Platform admins need no

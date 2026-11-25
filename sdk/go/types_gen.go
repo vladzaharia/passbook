@@ -11613,12 +11613,13 @@ type SettingsRetrieveResponseItemsItem struct {
 }
 
 type SettingsRetrieveResponseOidc struct {
-	Issuer               string  `json:"issuer"`
-	PlatformAdminGroup   *string `json:"platformAdminGroup"`
-	AdminGroup           *string `json:"adminGroup"`
-	DeveloperGroup       *string `json:"developerGroup"`
-	UserGroup            *string `json:"userGroup"`
-	ConsoleGroupRequired bool    `json:"consoleGroupRequired"`
+	Issuer               string   `json:"issuer"`
+	PlatformAdminGroup   []string `json:"platformAdminGroup"`
+	AdminGroup           []string `json:"adminGroup"`
+	DeveloperGroup       []string `json:"developerGroup"`
+	UserGroup            []string `json:"userGroup"`
+	PlatformAdminPinned  int64    `json:"platformAdminPinned"`
+	ConsoleGroupRequired bool     `json:"consoleGroupRequired"`
 }
 
 type SettingsRetrieveResponseReleased struct {
@@ -11654,12 +11655,13 @@ type SettingsUpdateResponseItemsItem struct {
 }
 
 type SettingsUpdateResponseOidc struct {
-	Issuer               string  `json:"issuer"`
-	PlatformAdminGroup   *string `json:"platformAdminGroup"`
-	AdminGroup           *string `json:"adminGroup"`
-	DeveloperGroup       *string `json:"developerGroup"`
-	UserGroup            *string `json:"userGroup"`
-	ConsoleGroupRequired bool    `json:"consoleGroupRequired"`
+	Issuer               string   `json:"issuer"`
+	PlatformAdminGroup   []string `json:"platformAdminGroup"`
+	AdminGroup           []string `json:"adminGroup"`
+	DeveloperGroup       []string `json:"developerGroup"`
+	UserGroup            []string `json:"userGroup"`
+	PlatformAdminPinned  int64    `json:"platformAdminPinned"`
+	ConsoleGroupRequired bool     `json:"consoleGroupRequired"`
 }
 
 type SettingsUpdateResponseReleased struct {
