@@ -66,7 +66,7 @@ export function FileTab({
           }
         />
       ) : null}
-      <RevisionHistory revisions={rows} />
+      <RevisionHistory revisions={rows} applyingId={watch.applying ? current?.id : undefined} />
     </div>
   );
 }
