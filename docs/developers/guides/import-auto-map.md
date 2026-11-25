@@ -133,7 +133,7 @@ Put the corrected value under the spreadsheet row and the column pointer in `ove
 
 ## Commit
 
-Commit makes the passes in the background. `skipInvalid: true` skips error rows instead of refusing them. Email is off unless you ask: `true` sends at once, and `{ "send": "held" }` holds the mail for `holdMs` (1 to 60 minutes, 5 by default) so an undo cancels it.
+Commit makes the passes in the background. `skipInvalid: true` skips error rows instead of refusing them. Email is off unless you ask: `true` sends at once, and `{ "send": "held" }` holds the mail for `holdMs` (60000 to 86400000, 5 minutes by default) so an undo cancels it.
 
 ```json run=pass-imports.postPassImportsByIdCommit
 {

@@ -24,6 +24,17 @@ describe('PlanV2', () => {
     );
   });
 
+  it.each([60_000, 300_000, 900_000, 3_600_000, 14_400_000, 86_400_000])(
+    'accepts a hold of %d ms',
+    (holdMs) => {
+      expect(PassImportEmailSendSchema.safeParse({ send: 'held', holdMs }).success).toBe(true);
+    },
+  );
+
+  it.each([59_999, 86_400_001])('refuses a hold of %d ms', (holdMs) => {
+    expect(PassImportEmailSendSchema.safeParse({ send: 'held', holdMs }).success).toBe(false);
+  });
+
   it('holds email for 5 minutes by default', () => {
     expect(PassImportEmailSendSchema.parse({ send: 'held' })).toEqual({
       send: 'held',
