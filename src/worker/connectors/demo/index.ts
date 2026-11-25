@@ -1,93 +1,50 @@
-import { z } from 'zod';
-import { type ConnectorDefinition, ConnectorError, type UpstreamRecord } from '../types.ts';
+import { type ConnectorDefinition, ConnectorError } from '../types.ts';
+import { type Config, config } from './config.ts';
+import { buildClassic, CLASSIC_FIELDS, classicRef } from './datasets/classic.ts';
+import { buildRecord, DATASET_DEFS, indexOf, refOf } from './datasets/index.ts';
+import { isoDate } from './world.ts';
 
-const PAGE_SIZE = 10;
-const TIERS = ['Bronze', 'Silver', 'Gold', 'Platinum'];
+const CLASSIC_PAGE = 10;
 
-const config = z.object({
-  seed: z
-    .string()
-    .max(60)
-    .default('demo')
-    .meta({ 'x-label': 'Seed', 'x-help': 'Same seed, same members.', 'x-order': 1 }),
-  /** Upstream holds m-001 .. m-<count>. */
-  count: z
-    .number()
-    .int()
-    .min(0)
-    .max(500)
-    .default(25)
-    .meta({ 'x-label': 'Members', 'x-help': 'Up to 500.', 'x-order': 2 }),
-  /** Raise to simulate upstream changes: points shift for every record. */
-  revision: z
-    .number()
-    .int()
-    .min(0)
-    .max(10_000)
-    .default(0)
-    .meta({ 'x-label': 'Revision', 'x-help': 'Raise it to change every member.', 'x-order': 3 }),
-  /** Refs the upstream reports as deleted / not found. */
-  missing: z
-    .array(z.string().max(60))
-    .max(100)
-    .default([])
-    .meta({ 'x-label': 'Missing members', 'x-help': 'Refs such as m-004.', 'x-order': 6 }),
-  /** Simulate a failing upstream. */
-  fail: z
-    .enum(['none', 'auth', 'timeout', 'upstream', 'rate_limited'])
-    .default('none')
-    .meta({
-      'x-order': 5,
-      'x-label': 'Simulated failure',
-      'x-enumLabels': {
-        none: 'None',
-        auth: 'Auth rejected',
-        timeout: 'Timeout',
-        upstream: 'Upstream error',
-        rate_limited: 'Rate limited',
+/** Every field any dataset can emit, so the mapping UI has names before a dataset is chosen. */
+const outputFields = Object.assign(
+  {},
+  CLASSIC_FIELDS,
+  ...Object.values(DATASET_DEFS).map((d) => d.fields),
+);
+
+function layout(c: Config) {
+  if (c.dataset === 'classic') {
+    return {
+      page: CLASSIC_PAGE,
+      refOf: classicRef,
+      indexOf: (ref: string) => {
+        const m = /^m-(\d+)$/.exec(ref);
+        const n = m ? Number(m[1]) : 0;
+        return n > 0 && classicRef(n) === ref ? n : null;
       },
-    }),
-  holderDomain: z
-    .string()
-    .max(100)
-    .default('example.com')
-    .meta({ 'x-label': 'Holder domain', 'x-placeholder': 'example.com', 'x-order': 4 }),
-});
-type Config = z.infer<typeof config>;
-
-function hash(text: string): number {
-  let h = 2166136261;
-  for (const ch of text) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
-  return h;
-}
-
-export function demoRef(index: number): string {
-  return `m-${String(index).padStart(3, '0')}`;
+      build: (i: number) => buildClassic(c, classicRef(i)),
+    };
+  }
+  const def = DATASET_DEFS[c.dataset];
+  return {
+    page: def.pageSize,
+    refOf: (i: number) => refOf(def, i),
+    indexOf: (ref: string) => indexOf(def, ref),
+    build: (i: number) => buildRecord(def, c, i),
+  };
 }
 
 function refs(c: Config): string[] {
-  return Array.from({ length: c.count }, (_, i) => demoRef(i + 1));
-}
-
-function build(c: Config, ref: string): { record: UpstreamRecord; holderEmail: string } {
-  const h = hash(`${c.seed}:${ref}`);
-  return {
-    record: {
-      memberName: `Member ${ref.toUpperCase()}`,
-      memberId: ref,
-      status: h % 7 === 0 ? 'inactive' : 'active',
-      tier: TIERS[h % TIERS.length] ?? 'Bronze',
-      points: (h % 1000) + c.revision * 10,
-      // Guests left (0 to 9) also moves with the revision: a visible input a resync changes.
-      guests: (h + c.revision) % 10,
-      email: `${ref}@${c.holderDomain}`,
-    },
-    holderEmail: `${ref}@${c.holderDomain}`,
-  };
+  const { refOf: toRef } = layout(c);
+  return Array.from({ length: c.count }, (_, i) => toRef(i + 1));
 }
 
 function maybeFail(c: Config): void {
   if (c.fail === 'auth') throw new ConnectorError('AUTH', { permanent: true, httpStatus: 401 });
+  if (c.fail === 'forbidden') {
+    throw new ConnectorError('FORBIDDEN', { permanent: true, httpStatus: 403 });
+  }
   if (c.fail === 'timeout') throw new ConnectorError('TIMEOUT');
   if (c.fail === 'upstream') throw new ConnectorError('UPSTREAM', { httpStatus: 503 });
   if (c.fail === 'rate_limited') {
@@ -105,25 +62,27 @@ function parseCursor(cursor: string | null, revision: number): number {
 /** Deterministic fake upstream for local dev, e2e and demos. */
 const definition: ConnectorDefinition<Config, undefined> = {
   type: 'demo',
-  version: 1,
+  version: 2,
   displayName: 'Demo',
-  description: 'Sample members to try a sync.',
+  description: 'Sample records to try a sync.',
   category: 'try',
   order: 10,
   capabilities: { poll: true, delta: true },
   egress: () => [],
   webhookReferenceMode: 'refs-only',
   configSchema: config,
-  outputFields: {
-    memberName: { type: 'string' },
-    memberId: { type: 'string' },
-    status: { type: 'string' },
-    tier: { type: 'string' },
-    points: { type: 'number' },
-    guests: { type: 'number' },
-    email: { type: 'string' },
-  },
+  fixedConfig: ['dataset'],
+  outputFields,
   defaults: { intervalSeconds: 60, maxConcurrency: 4, requestsPerMinute: 600, timeoutMs: 5_000 },
+
+  /** Version 1 had no datasets: it is `classic`. */
+  migrate(_old, stored) {
+    return config.parse({ ...(stored as object), dataset: 'classic' });
+  },
+
+  prepareConfig(c, { now }) {
+    return c.dataset === 'classic' || c.anchor ? c : { ...c, anchor: isoDate(now) };
+  },
 
   async test(ctx) {
     maybeFail(ctx.connection.config);
@@ -133,22 +92,32 @@ const definition: ConnectorDefinition<Config, undefined> = {
   async fetchRecord(ctx, ref) {
     const c = ctx.connection.config;
     maybeFail(c);
-    if (c.missing.includes(ref) || !refs(c).includes(ref)) return { status: 'not_found' };
-    const { record, holderEmail } = build(c, ref);
-    return { status: 'ok', record, holderEmail };
+    const l = layout(c);
+    const index = l.indexOf(ref);
+    if (c.missing.includes(ref) || index === null || index > c.count)
+      return { status: 'not_found' };
+    return { status: 'ok', ...l.build(index) };
   },
 
   async listChanges(ctx, cursor) {
     const c = ctx.connection.config;
     maybeFail(c);
-    const all = [...refs(c), ...c.missing.filter((m) => !refs(c).includes(m))];
+    const l = layout(c);
+    const all = [
+      ...refs(c),
+      ...c.missing.filter((m) => !(l.indexOf(m) !== null && (l.indexOf(m) ?? 0) <= c.count)),
+    ];
     const offset = parseCursor(cursor, c.revision);
-    const page = all.slice(offset, offset + PAGE_SIZE);
-    const next = Math.min(offset + PAGE_SIZE, all.length);
+    if (c.fail === 'page_two' && offset > 0)
+      throw new ConnectorError('UPSTREAM', { httpStatus: 503 });
+    const page = all.slice(offset, offset + l.page);
+    const next = Math.min(offset + l.page, all.length);
     return {
-      changes: page.map((ref) =>
-        c.missing.includes(ref) ? { ref, deleted: true } : { ref, record: build(c, ref).record },
-      ),
+      changes: page.map((ref) => {
+        if (c.missing.includes(ref)) return { ref, deleted: true };
+        const index = l.indexOf(ref) ?? 0;
+        return { ref, record: l.build(index).record };
+      }),
       cursor: `${c.revision}:${next}`,
       hasMore: next < all.length,
     };
