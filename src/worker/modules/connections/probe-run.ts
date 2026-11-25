@@ -6,9 +6,8 @@ import type {
 import { detectResponse } from '../../../shared/rest/detect.ts';
 import { prune } from '../../../shared/rest/prune.ts';
 import type { Config, Secrets } from '../../connectors/http-json/config.ts';
-import { advance } from '../../connectors/http-json/pagination.ts';
+import { advance, pageUrl, repeatOf } from '../../connectors/http-json/pagination.ts';
 import { authParamOf, endpoint, getJson } from '../../connectors/http-json/request.ts';
-import { pageUrl } from '../../connectors/http-json/pagination.ts';
 import { getPointer } from '../../connectors/lib/pointer.ts';
 import { type ConnectorContext, ConnectorError } from '../../connectors/types.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -28,7 +27,6 @@ export interface ProbeRequest {
 
 /** A page of more records than this is refused, as a sync refuses it: a cut page would break paging. */
 const MAX_PAGE_RECORDS = 1000;
-const ref80 = (v: unknown) => String(v).slice(0, 80);
 
 interface Seen {
   status: number;
@@ -201,11 +199,8 @@ export async function runProbe(cc: Ctx, req: ProbeRequest, mask: Masker): Promis
       }
       throw error;
     }
-    const first = ids[0];
-    const last = ids.at(-1);
-    const sig =
-      first !== undefined && last !== undefined ? `${ref80(first)}|${ref80(last)}` : undefined;
-    const repeated = step.more && sig !== undefined && prev?.p?.s === sig;
+    const refs = ids.filter((v) => typeof v === 'string' || typeof v === 'number').map(String);
+    const { repeated, stored } = await repeatOf(refs, prev?.p?.s, step.more);
     const next =
       step.more && !repeated && step.next && index < list.maxPages
         ? encodeToken({
@@ -213,7 +208,7 @@ export async function runProbe(cc: Ctx, req: ProbeRequest, mask: Masker): Promis
               ...step.next,
               ...(step.next.c === undefined ? {} : { c: mask.text(step.next.c) }),
               ...(step.next.u === undefined ? {} : { u: mask.text(step.next.u) }),
-              ...(sig === undefined ? {} : { s: sig }),
+              ...(stored === undefined ? {} : { s: stored }),
             },
             k: index,
             n: before + items.length,

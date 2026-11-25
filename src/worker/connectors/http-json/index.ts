@@ -8,7 +8,7 @@ import { type Config, config, type Secrets, secrets } from './config.ts';
 import { decodeCursor, encodeCursor } from './cursor.ts';
 import { highest, maxOf, sinceParam } from './incremental.ts';
 import { migrate } from './migrate.ts';
-import { advance, pageUrl } from './pagination.ts';
+import { advance, pageUrl, repeatOf } from './pagination.ts';
 import { exhaustedUntil, holdUntil } from './rate-limit.ts';
 import { assertCredential, authParamOf, endpoint, getJson } from './request.ts';
 
@@ -17,7 +17,6 @@ const MAX_WEBHOOK_REFS = 100;
 const MAX_PAGE_RECORDS = 1000;
 /** Serialized changes of one page; the Workflows step result limit is 1 MiB. */
 const MAX_PAGE_JSON = 900_000;
-const ref80 = (r: string) => r.slice(0, 80);
 const note = (pages: number) =>
   `MAX_PAGES: stopped at ${pages} pages; the next run continues. Raise the page limit or set a larger page size.`;
 
@@ -128,7 +127,8 @@ const definition: ConnectorDefinition<Config, Secrets> = {
       throw new ConnectorError('INVALID_PAYLOAD');
     }
     const changes = items.map((item) => changeOf(item, list));
-    if (JSON.stringify(changes).length > MAX_PAGE_JSON) {
+    // Bytes, not characters: the step result limit counts UTF-8.
+    if (new TextEncoder().encode(JSON.stringify(changes)).length > MAX_PAGE_JSON) {
       throw new ConnectorError('INVALID_PAYLOAD', { permanent: true, reason: 'PAGE_TOO_LARGE' });
     }
 
@@ -140,11 +140,11 @@ const definition: ConnectorDefinition<Config, Secrets> = {
     const w = exhaustedUntil(page.headers, ctx.now());
     const m = inc ? highest(items, inc, state.m, ctx.now()) : undefined;
     const pages = (state.p?.k ?? 0) + 1;
-    // The same first and last record as the page before: the API ignores our paging.
-    const first = changes[0];
-    const last = changes.at(-1);
-    const sig = first && last ? `${ref80(first.ref)}|${ref80(last.ref)}` : undefined;
-    const repeated = step.more && sig !== undefined && state.p?.s === sig;
+    const { repeated, stored } = await repeatOf(
+      changes.map((c) => c.ref),
+      state.p?.s,
+      step.more,
+    );
     if (repeated) ctx.log('rest.repeat_page', { pages });
     const capped = step.more && !repeated && pages >= list.maxPages;
     if (capped) ctx.log('rest.max_pages', { pages });
@@ -154,7 +154,7 @@ const definition: ConnectorDefinition<Config, Secrets> = {
     const seen = m === undefined ? {} : { m };
 
     if (step.more && !capped && !repeated && step.next) {
-      const p = { ...step.next, k: pages, ...(sig === undefined ? {} : { s: sig }) };
+      const p = { ...step.next, k: pages, ...(stored === undefined ? {} : { s: stored }) };
       return { changes, cursor: encodeCursor({ p, ...hold, ...seen, ...keep }), hasMore: true };
     }
     if (list.listing === 'full') {

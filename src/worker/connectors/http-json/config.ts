@@ -23,15 +23,70 @@ const plainValue = z
  * Config is stored unencrypted and shown to anyone who can read connections, so a name or value that
  * looks like a credential is refused: credentials go through the encrypted auth helper.
  */
-const SECRET_NAME =
-  /auth|key|token|secret|signature|pass|pwd|credential|session|cookie|^proxy-|^bearer$/i;
-const SECRET_VALUE =
-  /^(bearer|basic|token)\s+\S|^(sk|pk|rk)_(live|test)_|^gh[pousr]_|^xox[abposr]-|^[A-Za-z0-9_-]{32,}$/i;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const words = (n: string) =>
+  n
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(Boolean);
+const SECRET_WORDS = new Set([
+  'auth',
+  'authorization',
+  'authentication',
+  'apikey',
+  'token',
+  'secret',
+  'signature',
+  'sig',
+  'password',
+  'passwd',
+  'pass',
+  'pwd',
+  'credential',
+  'credentials',
+  'cookie',
+  'bearer',
+  'jwt',
+  'session',
+]);
+/** `key` alone is ordinary (sort_key, Idempotency-Key); it is a secret after one of these. */
+const KEY_QUALIFIER = new Set([
+  'api',
+  'access',
+  'secret',
+  'private',
+  'client',
+  'subscription',
+  'app',
+  'master',
+  'admin',
+  'account',
+  'license',
+  'consumer',
+  'signing',
+]);
+/** Whole words, not substrings: `author`, `keyword` and `bypass` are fine; `token_type` is not a token. */
+const safeName = (n: string) => {
+  const w = words(n);
+  if (w[0] === 'proxy' || (w.length === 1 && w[0] === 'key')) return false;
+  return !w.some(
+    (x, i) =>
+      (SECRET_WORDS.has(x) && !(x === 'token' && w[i + 1] === 'type')) ||
+      (x === 'key' && i > 0 && KEY_QUALIFIER.has(w[i - 1] ?? '')),
+  );
+};
+const SECRET_VALUE = [
+  /^(bearer|basic|token)\s+\S{8,}/i,
+  /^(sk|pk|rk)_(live|test)_|^sk-[\w-]{20,}|^gh[pousr]_|^github_pat_|^glpat-|^xox[abposr]-|^AKIA[0-9A-Z]{16}$|^SG\.[\w-]{16,}\.|^AIza[\w-]{30,}/,
+  /^eyJ[\w-]{8,}\.[\w-]{8,}\./,
+  // A long token with all three of lower case, upper case and digits; ids and enum values rarely have all.
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z0-9_\-+/=]{32,}$/,
+];
 const USE_AUTH = 'Use Authentication for credentials.';
 
-const plainSafe = plainValue.refine((v) => UUID.test(v) || !SECRET_VALUE.test(v), USE_AUTH);
-const safeName = (n: string) => !SECRET_NAME.test(n);
+const looksSecret = (value: string) => SECRET_VALUE.some((r) => r.test(value));
+
+const plainSafe = plainValue.refine((v) => !looksSecret(v), USE_AUTH);
 
 const staticHeader = z.object({
   name: z

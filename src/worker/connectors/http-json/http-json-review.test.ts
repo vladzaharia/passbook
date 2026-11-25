@@ -179,44 +179,111 @@ describe('stored links and credentials', () => {
 });
 
 describe('config refuses credentials, and bad rows surface as CONFIG', () => {
+  const asHeader = (name: string, value = 'x') => ({ ...base, headers: [{ name, value }] });
+  const asQuery = (name: string, value = '1') => ({
+    ...base,
+    list: { path: '/l', query: [{ name, value }] },
+  });
+  const accepted = (config: object) => connector.configSchema.safeParse(config).success;
+
   it.each([
-    { headers: [{ name: 'X-Authorization', value: 'x' }] },
-    { headers: [{ name: 'X-Auth', value: 'x' }] },
-    { headers: [{ name: 'Authentication', value: 'x' }] },
-    { headers: [{ name: 'X-Password', value: 'x' }] },
-    { headers: [{ name: 'X-Credentials', value: 'x' }] },
-    { headers: [{ name: 'X-Session', value: 'x' }] },
-    { headers: [{ name: 'X-Custom', value: 'Bearer eyJhbGciOiJIUzI1NiJ9' }] },
-    { headers: [{ name: 'X-Custom', value: 'sk_live_abcdefghijklmnop' }] },
-    { headers: [{ name: 'X-Custom', value: 'a'.repeat(40) }] },
-    { list: { path: '/l', query: [{ name: 'api_key', value: '1' }] } },
-    { list: { path: '/l', query: [{ name: 'access_token', value: '1' }] } },
-    {
-      list: {
-        path: '/l',
-        query: [{ name: 'q', value: 'ghp_abcdefghijklmnopqrstuvwxyz0123456789' }],
-      },
-    },
-  ])('rejects %j', (extra) => {
-    expect(connector.configSchema.safeParse({ ...base, ...extra }).success).toBe(false);
+    'keyword',
+    'keywords',
+    'author',
+    'author_id',
+    'authored_after',
+    'sort_key',
+    'partition_key',
+    'passes',
+    'bypass_cache',
+    'token_type',
+    'page[size]',
+    'updatedSince',
+  ])('accepts the parameter name %s', (name) => {
+    expect(accepted(asQuery(name))).toBe(true);
   });
 
-  it('accepts ordinary headers and parameters, a UUID included', () => {
-    const ok = connector.configSchema.safeParse({
-      ...base,
-      headers: [
-        { name: 'Notion-Version', value: '2022-06-28' },
-        { name: 'X-Site-Id', value: '3f2504e0-4f89-11d3-9a0c-0305e82c3301' },
-      ],
-      list: {
-        path: '/l',
-        query: [
-          { name: 'status', value: 'active' },
-          { name: 'limit', value: '100' },
-        ],
-      },
-    });
-    expect(ok.success).toBe(true);
+  it.each([
+    'X-Author',
+    'X-Bypass-Cache',
+    'X-Passthrough',
+    'X-Keycloak-Realm',
+    'X-Compass-Workspace',
+    'Idempotency-Key',
+    'Notion-Version',
+    'X-Site-Id',
+  ])('accepts the header name %s', (name) => {
+    expect(accepted(asHeader(name))).toBe(true);
+  });
+
+  it.each([
+    'a1b2c3d4e5f60718293a4b5c6d7e8f90',
+    '2fd4e1c67a2d28fced849ee1bb76e7391b93eb12',
+    'pending_customer_verification_required',
+    'token based',
+    '3f2504e0-4f89-11d3-9a0c-0305e82c3301',
+    '2022-06-28',
+    'active',
+  ])('accepts the value %s', (value) => {
+    expect(accepted(asHeader('X-Custom', value))).toBe(true);
+    expect(accepted(asQuery('q', value))).toBe(true);
+  });
+
+  it.each([
+    'X-Authorization',
+    'X-Auth',
+    'Authentication',
+    'Authorization',
+    'X-Password',
+    'X-Credentials',
+    'X-Session',
+    'X-Session-Id',
+    'X-Api-Key',
+    'X-Auth-Token',
+    'Cookie',
+    'Proxy-Foo',
+    'X-Signature',
+    'X-Access-Key',
+    'X-Secret-Key',
+    'X-Bearer',
+  ])('refuses the header name %s', (name) => {
+    expect(accepted(asHeader(name))).toBe(false);
+  });
+
+  it.each([
+    'api_key',
+    'apiKey',
+    'access_token',
+    'token',
+    'secret',
+    'client_secret',
+    'password',
+    'key',
+    'session',
+    'signature',
+    'private_key',
+    'auth',
+  ])('refuses the parameter name %s', (name) => {
+    expect(accepted(asQuery(name))).toBe(false);
+  });
+
+  it.each([
+    'Bearer eyJhbGciOiJIUzI1NiJ9',
+    'Basic dXNlcjpwYXNzd29yZA==',
+    'sk_live_abcdefghijklmnop',
+    'sk-abcdefghijklmnopqrstuvwx',
+    'ghp_abcdefghijklmnopqrstuvwxyz0123456789',
+    'github_pat_11ABCDEFG0abcdefghijkl',
+    'glpat-abcdefghijklmnopqrst',
+    'xoxb-1234567890-abcdefghij',
+    'AKIAIOSFODNN7EXAMPLE',
+    'SG.abcdefghijklmnop.qrstuvwxyz0123456789',
+    'AIzaSyA-abcdefghijklmnopqrstuvwxyz01234',
+    'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dBjftJeZ4CVPmB92K27uhbUJU1p1r',
+    'Xk3fA9qLmN2pR7sTuV8wYz1BcD4eGhJ6',
+  ])('refuses the value %s', (value) => {
+    expect(accepted(asHeader('X-Custom', value))).toBe(false);
+    expect(accepted(asQuery('q', value))).toBe(false);
   });
 
   it('a stored row that does not migrate is a permanent CONFIG error', () => {
@@ -236,5 +303,60 @@ describe('config refuses credentials, and bad rows surface as CONFIG', () => {
 
   it('reads a fractional Retry-After', () => {
     expect(waitFromHeaders(new Headers({ 'retry-after': '1.5' }), NOW)).toBe(1500);
+  });
+});
+
+describe('page size is measured in bytes, and repeats in whole pages', () => {
+  it('counts UTF-8 bytes against the step limit', async () => {
+    // 400 refs of 400 CJK characters: about 340,000 characters but over 950,000 UTF-8 bytes.
+    const cjk = '漢'.repeat(400);
+    const { ctx } = harness({ ...base, list: { path: '/m' } }, {}, () => ({
+      body: { items: Array.from({ length: 400 }, (_, i) => ({ id: `${i}${cjk}` })) },
+    }));
+    await expect(connector.listChanges?.(ctx, null)).rejects.toMatchObject({
+      reason: 'PAGE_TOO_LARGE',
+    });
+  });
+
+  const paged = (data: (u: URL) => { id: string }[]) =>
+    harness(
+      {
+        ...base,
+        list: { path: '/m', recordsPointer: '/data', pagination: { style: 'page', start: 1 } },
+      },
+      {},
+      (u) => ({ body: { data: data(u) } }),
+    );
+
+  it('a record that sits on two single-record pages in a row does not end the listing', async () => {
+    const pages: Record<string, { id: string }[]> = {
+      '1': ids('x'),
+      '2': ids('x'),
+      '3': ids('y'),
+      '4': [],
+    };
+    const { ctx } = paged((u) => pages[u.searchParams.get('page') ?? ''] ?? []);
+    expect((await drain(ctx)).refs).toEqual(['x', 'x', 'y']);
+  });
+
+  it('a one-record page that repeats twice ends the listing', async () => {
+    const { ctx, logs } = paged(() => ids('x'));
+    expect((await drain(ctx)).refs).toEqual(['x', 'x', 'x']);
+    expect(logs).toContain('rest.repeat_page');
+  });
+
+  it('pages with the same ends but different middles are not repeats', async () => {
+    const pages: Record<string, { id: string }[]> = {
+      '1': ids('a', 'b', 'c'),
+      '2': ids('a', 'z', 'c'),
+      '3': [],
+    };
+    const { ctx } = paged((u) => pages[u.searchParams.get('page') ?? ''] ?? []);
+    expect((await drain(ctx)).refs).toEqual(['a', 'b', 'c', 'a', 'z', 'c']);
+  });
+
+  it('a longer page that repeats ends the listing at once', async () => {
+    const { ctx } = paged(() => ids('a', 'b'));
+    expect((await drain(ctx)).refs).toEqual(['a', 'b', 'a', 'b']);
   });
 });
