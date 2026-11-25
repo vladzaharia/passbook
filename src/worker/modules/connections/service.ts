@@ -98,7 +98,9 @@ export async function create(
   if (issues) assertMayIssue(authority);
   const def = requireConnector(input.connectorType);
   await assertOrg(sctx, input.orgId);
-  const config = parseWith(def.configSchema, input.config, 'config');
+  const now = sctx.clock.now();
+  const parsed = parseWith(def.configSchema, input.config, 'config');
+  const config = def.prepareConfig ? def.prepareConfig(parsed, { now }) : parsed;
   const mode =
     input.mode ??
     (def.capabilities.poll ? 'poll' : def.capabilities.webhook ? 'webhook' : 'manual');
@@ -121,7 +123,6 @@ export async function create(
   await assertSafeUrls(sctx, def.urls?.(config) ?? []);
   const secretsJson = input.secrets ? secretsFor(def, input.secrets) : null;
 
-  const now = sctx.clock.now();
   const id = sctx.ids.id();
   const wantsWebhook = mode === 'webhook' || mode === 'hybrid';
   const webhookSecret =
