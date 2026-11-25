@@ -67,6 +67,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -177,6 +180,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -251,6 +257,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -320,6 +329,9 @@
                 "maxLength": 300
               }
             }
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -395,6 +407,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -461,6 +476,9 @@
                 "minimum": 0
               }
             }
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -550,6 +568,9 @@
               "deviceCount",
               "firstDevice"
             ]
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -647,6 +668,9 @@
               "lastDevice",
               "cause"
             ]
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -797,6 +821,9 @@
               "outcome"
             ]
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -902,6 +929,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -985,6 +1015,9 @@
                 "maxLength": 300
               }
             }
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -1089,6 +1122,9 @@
               "source"
             ]
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1168,6 +1204,9 @@
               "generation"
             ]
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1244,6 +1283,9 @@
             "required": [
               "printId"
             ]
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -1329,6 +1371,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1399,6 +1444,9 @@
               }
             }
           },
+          "requestId": {
+            "type": "string"
+          },
           "sample": {
             "type": "boolean",
             "enum": [
@@ -1460,6 +1508,9 @@
           "data": {
             "type": "object",
             "properties": {}
+          },
+          "requestId": {
+            "type": "string"
           },
           "sample": {
             "type": "boolean",
@@ -80012,6 +80063,9 @@
                       ],
                       "minimum": 0
                     },
+                    "timeZone": {
+                      "type": "string"
+                    },
                     "key": {
                       "type": [
                         "object",
@@ -80077,6 +80131,7 @@
                     "previewOnly",
                     "createdAt",
                     "closedAt",
+                    "timeZone",
                     "key",
                     "previousKey"
                   ]
@@ -80265,6 +80320,9 @@
                             "null"
                           ],
                           "minimum": 0
+                        },
+                        "timeZone": {
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -80274,7 +80332,8 @@
                         "templateId",
                         "previewOnly",
                         "createdAt",
-                        "closedAt"
+                        "closedAt",
+                        "timeZone"
                       ]
                     },
                     "turnstileSiteKey": {
@@ -80383,6 +80442,9 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "timeZone": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -80392,7 +80454,8 @@
                     "templateId",
                     "previewOnly",
                     "createdAt",
-                    "closedAt"
+                    "closedAt",
+                    "timeZone"
                   ]
                 },
                 "example": {
@@ -80498,6 +80561,9 @@
                         "null"
                       ],
                       "minimum": 0
+                    },
+                    "timeZone": {
+                      "type": "string"
                     }
                   },
                   "required": [
@@ -80507,7 +80573,8 @@
                     "templateId",
                     "previewOnly",
                     "createdAt",
-                    "closedAt"
+                    "closedAt",
+                    "timeZone"
                   ]
                 },
                 "example": {
@@ -80637,6 +80704,9 @@
                       ],
                       "minimum": 0
                     },
+                    "timeZone": {
+                      "type": "string"
+                    },
                     "key": {
                       "type": [
                         "object",
@@ -80702,6 +80772,7 @@
                     "previewOnly",
                     "createdAt",
                     "closedAt",
+                    "timeZone",
                     "key",
                     "previousKey"
                   ]
@@ -80918,6 +80989,9 @@
                             "null"
                           ],
                           "minimum": 0
+                        },
+                        "timeZone": {
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -80927,7 +81001,8 @@
                         "templateId",
                         "previewOnly",
                         "createdAt",
-                        "closedAt"
+                        "closedAt",
+                        "timeZone"
                       ]
                     },
                     "key": {
@@ -81199,6 +81274,9 @@
                       ],
                       "minimum": 0
                     },
+                    "timeZone": {
+                      "type": "string"
+                    },
                     "key": {
                       "type": [
                         "object",
@@ -81264,6 +81342,7 @@
                     "previewOnly",
                     "createdAt",
                     "closedAt",
+                    "timeZone",
                     "key",
                     "previousKey"
                   ]
@@ -115407,6 +115486,26 @@
             "required": false,
             "name": "type",
             "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "requestId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "passId",
+            "in": "query"
           }
         ],
         "responses": {
@@ -115884,6 +115983,26 @@
             },
             "required": false,
             "name": "type",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "requestId",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "required": false,
+            "name": "passId",
             "in": "query"
           }
         ],

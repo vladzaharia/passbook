@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { IdSchema, pageOf, TimestampSchema } from './common.ts';
 import {
+  RequestIdFilterSchema,
   SubscribableEventTypeSchema,
   WebhookEndpointSchema,
   WebhookEventTypeSchema,
@@ -44,6 +45,10 @@ export const WebhookCaptureListQuerySchema = z.object({
     .optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
   type: WebhookEventTypeSchema.optional(),
+  /** Only captures of events caused by this API request (`x-request-id`). */
+  requestId: RequestIdFilterSchema.optional(),
+  /** Only captures of events of this pass. */
+  passId: IdSchema.optional(),
 });
 
 export const WebhookCaptureParamSchema = z.object({ id: IdSchema, captureId: IdSchema });

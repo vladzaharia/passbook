@@ -88,6 +88,8 @@ export async function listDeliveries(
   q: {
     state?: DeliveryState | undefined;
     type?: string | undefined;
+    requestId?: string | undefined;
+    passId?: string | undefined;
     before?: number | undefined;
     limit: number;
   },
@@ -97,6 +99,7 @@ export async function listDeliveries(
     `SELECT ${DELIVERY_COLUMNS} FROM ${DELIVERY_FROM}
      WHERE d.endpoint_id = ? AND d.org_id = ? AND d.mode = ?
        ${q.state ? 'AND d.state = ?' : ''} ${q.type ? 'AND f.type = ?' : ''}
+       ${q.requestId ? "AND json_extract(f.data, '$.requestId') = ?" : ''} ${q.passId ? 'AND f.pass_id = ?' : ''}
        ${q.before !== undefined ? 'AND d.event_seq < ?' : ''}
      ORDER BY d.event_seq DESC LIMIT ?`,
     [
@@ -105,6 +108,8 @@ export async function listDeliveries(
       fence.mode,
       ...(q.state ? [q.state] : []),
       ...(q.type ? [q.type] : []),
+      ...(q.requestId ? [q.requestId] : []),
+      ...(q.passId ? [q.passId] : []),
       ...(q.before !== undefined ? [q.before] : []),
       q.limit + 1,
     ],

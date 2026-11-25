@@ -2427,10 +2427,12 @@ class WebhookEndpointsCapturesResource:
         cursor: str | None = None,
         limit: int | None = None,
         type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
+        request_id: str | None = None,
+        pass_id: str | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.WebhookCapture]:
         """Requests a capture endpoint stored, newest first `GET /api/v1/webhook-endpoints/{id}/captures`"""
-        return self._core.paginate("GET", f"/api/v1/webhook-endpoints/{_p(id)}/captures", query={"cursor": cursor, "limit": limit, "type": type}, result=m.WebhookEndpointsCapturesListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", f"/api/v1/webhook-endpoints/{_p(id)}/captures", query={"cursor": cursor, "limit": limit, "type": type, "requestId": request_id, "passId": pass_id}, result=m.WebhookEndpointsCapturesListResult, cursor_param="cursor", **opts)
 
     def replay(
         self,
@@ -2480,10 +2482,12 @@ class WebhookEndpointsDeliveriesResource:
         limit: int | None = None,
         state: _Literal["pending", "delivered", "failed", "cancelled"] | None = None,
         type: _Literal["pass.issued", "pass.updated", "pass.voided", "pass.unvoided", "pass.removed", "pass.restored", "pass.installed", "pass.uninstalled", "pass.scanned", "pass.scan_refused", "pass.scan_undone", "pass.channels_changed", "pass.printed", "pass.print_voided", "push.failed", "email.failed", "webhook.test"] | None = None,
+        request_id: str | None = None,
+        pass_id: str | None = None,
         **opts: _Unpack[RequestOptions],
     ) -> Page[m.WebhookEndpointsDeliveriesListItem]:
         """Deliveries of an endpoint, newest first `GET /api/v1/webhook-endpoints/{id}/deliveries`"""
-        return self._core.paginate("GET", f"/api/v1/webhook-endpoints/{_p(id)}/deliveries", query={"cursor": cursor, "limit": limit, "state": state, "type": type}, result=m.WebhookEndpointsDeliveriesListResult, cursor_param="cursor", **opts)
+        return self._core.paginate("GET", f"/api/v1/webhook-endpoints/{_p(id)}/deliveries", query={"cursor": cursor, "limit": limit, "state": state, "type": type, "requestId": request_id, "passId": pass_id}, result=m.WebhookEndpointsDeliveriesListResult, cursor_param="cursor", **opts)
 
     def replay(
         self,

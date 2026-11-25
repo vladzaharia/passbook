@@ -1365,6 +1365,8 @@ export type WebhookEndpointsCapturesListQuery = {
   cursor?: string;
   limit?: number;
   type?: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+  requestId?: string;
+  passId?: string;
 };
 
 /** Response of `webhookEndpoints.captures.list`. */
@@ -1385,6 +1387,8 @@ export type WebhookEndpointsDeliveriesListQuery = {
   limit?: number;
   state?: "pending" | "delivered" | "failed" | "cancelled";
   type?: "pass.issued" | "pass.updated" | "pass.voided" | "pass.unvoided" | "pass.removed" | "pass.restored" | "pass.installed" | "pass.uninstalled" | "pass.scanned" | "pass.scan_refused" | "pass.scan_undone" | "pass.channels_changed" | "pass.printed" | "pass.print_voided" | "push.failed" | "email.failed" | "webhook.test";
+  requestId?: string;
+  passId?: string;
 };
 
 /** Response of `webhookEndpoints.deliveries.list`. */

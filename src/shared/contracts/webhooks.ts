@@ -144,6 +144,9 @@ export const WebhookPassRefSchema = z.object({
   templateId: IdSchema,
 });
 
+/** A Cloudflare ray or a UUID, as `x-request-id` carries it. */
+export const RequestIdFilterSchema = z.string().trim().min(1).max(64);
+
 const envelope = <T extends WebhookEventType, P extends z.ZodType>(type: T, pass: P) =>
   z.object({
     id: IdSchema,
@@ -154,6 +157,8 @@ const envelope = <T extends WebhookEventType, P extends z.ZodType>(type: T, pass
     mode: ModeSchema,
     pass,
     data: WEBHOOK_DATA_SCHEMAS[type],
+    /** The id of the API request that caused the event (the `x-request-id` it answered with); absent when no request did. */
+    requestId: z.string().optional(),
     /** Only on a sample sent from "Send test": it describes no real pass. */
     sample: z.literal(true).optional(),
   });
@@ -288,6 +293,10 @@ export const WebhookDeliveryDetailSchema = WebhookDeliverySchema.extend({
 export const WebhookDeliveryListQuerySchema = PageQuerySchema.extend({
   state: WebhookDeliveryStateSchema.optional(),
   type: WebhookEventTypeSchema.optional(),
+  /** Only events caused by this API request (`x-request-id`). */
+  requestId: RequestIdFilterSchema.optional(),
+  /** Only events of this pass. */
+  passId: IdSchema.optional(),
 });
 
 export const WebhookReplaySchema = z

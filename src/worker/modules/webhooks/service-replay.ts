@@ -97,6 +97,8 @@ export async function deliveries(
   const { rows, hasMore } = await listDeliveries(ctx.env.DB, fenceOf(access), endpointId, {
     state: q.state,
     type: q.type,
+    requestId: q.requestId,
+    passId: q.passId,
     before: await seqCursor(ctx, fenceOf(access), q.cursor),
     limit: q.limit,
   });

@@ -2148,6 +2148,7 @@ type EmailFailedEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       WebhookPassRef       `json:"pass"`
 	Data       EmailFailedEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
@@ -4822,6 +4823,7 @@ type PassChannelsChangedEvent struct {
 	Mode       string                       `json:"mode"`
 	Pass       WebhookPassRef               `json:"pass"`
 	Data       PassChannelsChangedEventData `json:"data"`
+	RequestID  *string                      `json:"requestId,omitempty"`
 	Sample     *bool                        `json:"sample,omitempty"`
 }
 
@@ -5914,6 +5916,7 @@ type PassInstalledEvent struct {
 	Mode       string                 `json:"mode"`
 	Pass       WebhookPassRef         `json:"pass"`
 	Data       PassInstalledEventData `json:"data"`
+	RequestID  *string                `json:"requestId,omitempty"`
 	Sample     *bool                  `json:"sample,omitempty"`
 }
 
@@ -5933,6 +5936,7 @@ type PassIssuedEvent struct {
 	Mode       string              `json:"mode"`
 	Pass       WebhookPassRef      `json:"pass"`
 	Data       PassIssuedEventData `json:"data"`
+	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
 }
 
@@ -5956,6 +5960,7 @@ type PassPrintVoidedEvent struct {
 	Mode       string                   `json:"mode"`
 	Pass       WebhookPassRef           `json:"pass"`
 	Data       PassPrintVoidedEventData `json:"data"`
+	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
 }
 
@@ -5973,6 +5978,7 @@ type PassPrintedEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       WebhookPassRef       `json:"pass"`
 	Data       PassPrintedEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
@@ -5991,6 +5997,7 @@ type PassRemovedEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       WebhookPassRef       `json:"pass"`
 	Data       PassRemovedEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
@@ -6009,6 +6016,7 @@ type PassRestoredEvent struct {
 	Mode       string                `json:"mode"`
 	Pass       WebhookPassRef        `json:"pass"`
 	Data       PassRestoredEventData `json:"data"`
+	RequestID  *string               `json:"requestId,omitempty"`
 	Sample     *bool                 `json:"sample,omitempty"`
 }
 
@@ -6025,6 +6033,7 @@ type PassScanRefusedEvent struct {
 	Mode       string                   `json:"mode"`
 	Pass       WebhookPassRef           `json:"pass"`
 	Data       PassScanRefusedEventData `json:"data"`
+	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
 }
 
@@ -6046,6 +6055,7 @@ type PassScanUndoneEvent struct {
 	Mode       string                  `json:"mode"`
 	Pass       WebhookPassRef          `json:"pass"`
 	Data       PassScanUndoneEventData `json:"data"`
+	RequestID  *string                 `json:"requestId,omitempty"`
 	Sample     *bool                   `json:"sample,omitempty"`
 }
 
@@ -6064,6 +6074,7 @@ type PassScannedEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       WebhookPassRef       `json:"pass"`
 	Data       PassScannedEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
@@ -6635,6 +6646,7 @@ type PassUninstalledEvent struct {
 	Mode       string                   `json:"mode"`
 	Pass       WebhookPassRef           `json:"pass"`
 	Data       PassUninstalledEventData `json:"data"`
+	RequestID  *string                  `json:"requestId,omitempty"`
 	Sample     *bool                    `json:"sample,omitempty"`
 }
 
@@ -6655,6 +6667,7 @@ type PassUnvoidedEvent struct {
 	Mode       string                `json:"mode"`
 	Pass       WebhookPassRef        `json:"pass"`
 	Data       PassUnvoidedEventData `json:"data"`
+	RequestID  *string               `json:"requestId,omitempty"`
 	Sample     *bool                 `json:"sample,omitempty"`
 }
 
@@ -6671,6 +6684,7 @@ type PassUpdatedEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       WebhookPassRef       `json:"pass"`
 	Data       PassUpdatedEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
@@ -6730,6 +6744,7 @@ type PassVoidedEvent struct {
 	Mode       string              `json:"mode"`
 	Pass       WebhookPassRef      `json:"pass"`
 	Data       PassVoidedEventData `json:"data"`
+	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
 }
 
@@ -8911,6 +8926,7 @@ type PushFailedEvent struct {
 	Mode       string              `json:"mode"`
 	Pass       WebhookPassRef      `json:"pass"`
 	Data       PushFailedEventData `json:"data"`
+	RequestID  *string             `json:"requestId,omitempty"`
 	Sample     *bool               `json:"sample,omitempty"`
 }
 
@@ -13909,9 +13925,11 @@ type WebhookEndpointPage struct {
 }
 
 type WebhookEndpointsCapturesListQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
-	Limit  *int64  `json:"limit,omitempty"`
-	Type   *string `json:"type,omitempty"`
+	Cursor    *string `json:"cursor,omitempty"`
+	Limit     *int64  `json:"limit,omitempty"`
+	Type      *string `json:"type,omitempty"`
+	RequestID *string `json:"requestId,omitempty"`
+	PassID    *string `json:"passId,omitempty"`
 }
 
 type WebhookEndpointsCapturesReplayResult = WebhookCapture
@@ -13974,10 +13992,12 @@ type WebhookEndpointsDeliveriesListItem struct {
 }
 
 type WebhookEndpointsDeliveriesListQuery struct {
-	Cursor *string `json:"cursor,omitempty"`
-	Limit  *int64  `json:"limit,omitempty"`
-	State  *string `json:"state,omitempty"`
-	Type   *string `json:"type,omitempty"`
+	Cursor    *string `json:"cursor,omitempty"`
+	Limit     *int64  `json:"limit,omitempty"`
+	State     *string `json:"state,omitempty"`
+	Type      *string `json:"type,omitempty"`
+	RequestID *string `json:"requestId,omitempty"`
+	PassID    *string `json:"passId,omitempty"`
 }
 
 type WebhookEndpointsDeliveriesReplayResponse struct {
@@ -14069,6 +14089,7 @@ type WebhookTestEvent struct {
 	Mode       string               `json:"mode"`
 	Pass       any                  `json:"pass"`
 	Data       WebhookTestEventData `json:"data"`
+	RequestID  *string              `json:"requestId,omitempty"`
 	Sample     *bool                `json:"sample,omitempty"`
 }
 
