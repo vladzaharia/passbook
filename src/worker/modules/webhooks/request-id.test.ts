@@ -77,7 +77,8 @@ async function sandbox() {
 describe('sandbox time zone', () => {
   it("is the org's zone, America/Los_Angeles when it has none", async () => {
     const s = await sandbox();
-    const read = async () => (await call('GET', '/developer/sandbox', s.session.headers))[1].sandbox;
+    const read = async () =>
+      (await call('GET', '/developer/sandbox', s.session.headers))[1].sandbox;
     expect((await read()).timeZone).toBe('America/Los_Angeles');
     await run(
       kit.env.DB,
