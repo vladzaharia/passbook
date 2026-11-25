@@ -116,6 +116,11 @@ describe('auto exit proof', () => {
         excluded: 0,
         invalidated: 0,
       });
+      expect(JSON.parse(event?.data ?? '{}')).toMatchObject({
+        direction: 'out',
+        exit: cause,
+        zoneId: z.id,
+      });
       expect(JSON.parse(event?.data ?? '{}').authority).toEqual({
         kind: 'system',
         job: 'scan.occupancy',

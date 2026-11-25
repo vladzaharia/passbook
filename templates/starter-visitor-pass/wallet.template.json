@@ -56,14 +56,6 @@
         "maxLength": 80,
         "x-scan": "desk"
       },
-      "hostEmail": {
-        "type": "string",
-        "format": "email",
-        "maxLength": 120,
-        "x-label": "Host email",
-        "x-group": "Visit",
-        "x-order": 50
-      },
       "validFrom": {
         "type": "string",
         "format": "date-time",
@@ -145,7 +137,6 @@
     "memberId": "VIS-0001",
     "company": "Acme Ltd",
     "sponsor": "Priya Shah",
-    "hostEmail": "priya@example.com",
     "validFrom": "2030-11-18T09:30:00-08:00",
     "validUntil": "2030-11-18T17:00:00-08:00",
     "where": "Floor 3, Oslo",
@@ -279,6 +270,11 @@
     ],
     "lookup": {
       "input": "memberId"
+    },
+    "tags": {
+      "uses": [
+        "visitor"
+      ]
     },
     "flags": [
       {

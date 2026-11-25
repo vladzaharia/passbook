@@ -141,7 +141,6 @@ export const GUARDED_TABLES: Readonly<Record<string, TableScope>> = {
   tag_enrollments: { org: 'org_id', mode: 'mode' },
   // Marks that let cron tokens.remac replace a MAC with a MAC (0069); only repo-pass-trusted.ts writes them.
   token_remac_marks: { org: null, edges: [edge('pass_id', 'passes')] },
-  visitors: { org: 'org_id', mode: 'mode' },
   pass_imports: { org: 'org_id', mode: 'mode' },
   pass_import_rows: { org: null, edges: [edge('import_id', 'pass_imports')] },
   // Org data, not per mode: a plan made in Test works in Live.

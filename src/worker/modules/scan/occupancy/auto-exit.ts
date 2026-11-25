@@ -72,6 +72,8 @@ export async function exitGrant(
       method: 'auto',
       direction: 'out',
       outCause: cause,
+      exit: cause,
+      ...(row.scope.startsWith('zone:') ? { zoneId: row.scope.slice(5) } : {}),
       place: row.scope,
       eventId,
       scannerId: null,

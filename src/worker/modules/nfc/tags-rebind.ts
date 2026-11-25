@@ -89,6 +89,7 @@ export async function place(
       holderOwner: pass.ownerUserId,
       clearsLost: false,
       expiryDays: policy.expiryDays,
+      endsAt: policy.endsAt,
       endLapsed: policy.lapsed,
       audited: rebind !== null,
       source: 'admin',

@@ -151,6 +151,7 @@ async function complete(
         ? null
         : { ref, hint, label: null, system: identity.system, typeId: policy.type?.id ?? null },
       expiryDays: policy.expiryDays,
+      endsAt: policy.endsAt,
       endLapsed: policy.lapsed,
       sun: identity.sun,
       bindingId: ctx.ids.id(),

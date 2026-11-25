@@ -9,6 +9,8 @@ export const JobSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('push.deliver'), outboxId: z.string() }),
   z.object({ kind: z.literal('email.send'), outboxId: z.string() }),
   z.object({ kind: z.literal('join.resend'), passId: z.string(), linkId: z.string() }),
+  /** A guest pass's window inputs changed: its lent tags end with the new window. */
+  z.object({ kind: z.literal('tags.lent_window'), passId: z.string(), orgId: z.string() }),
   z.object({
     kind: z.literal('webhook.deliver'),
     endpointId: z.string(),
