@@ -139,8 +139,12 @@ export async function dailyGuestPasses(ctx: ServiceContext): Promise<void> {
       // The pass is created before its end, so a pass created after the cutoff by `created_at` is skipped here.
       const page = await guestCandidates(ctx.env.DB, cutoff, after, limit, scope);
       reads -= page.length;
+      let stopped = false;
       for (const c of page) {
-        if (spent()) break;
+        if (spent()) {
+          stopped = true;
+          break;
+        }
         after = c.id;
         try {
           const end = endOf(c, await zoneOf(c.org_id));
@@ -154,7 +158,7 @@ export async function dailyGuestPasses(ctx: ServiceContext): Promise<void> {
           });
         }
       }
-      if (page.length < limit) {
+      if (page.length < limit && !stopped) {
         finished = true;
         break;
       }
