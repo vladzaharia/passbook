@@ -5,6 +5,7 @@ import { paperContent } from '@/passkit/template/paper-content.ts';
 import { withRegionSize } from '@/passkit/template/paper-region.ts';
 import type { PassJson, TemplateManifest } from '@/passkit/types.ts';
 import type { PreviewSource } from '../../channel-previews/types.ts';
+import { localZone } from '../../lib/timezones.ts';
 import { PAPER_CSS } from '../../paper/css.ts';
 import { drawPaperCode, type PaperDrawing } from '../../paper/drawing.ts';
 import { PaperTicket } from '../../paper/ticket.tsx';
@@ -14,14 +15,6 @@ import { loadBarcodeEngine } from '../../pass-card/barcode-engine.ts';
 import { Skel } from './skel.tsx';
 
 /** Signed in, the sheet draws in the browser from the edited pass: the same PaperTicket the print page uses. */
-const browserZone = (): string | undefined => {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
-  } catch {
-    return undefined;
-  }
-};
-
 export default function LivePaper({ source }: { source: PreviewSource }) {
   const inline = usePaperCss();
   const [drawing, setDrawing] = useState<PaperDrawing | undefined | null>(null);
@@ -30,7 +23,7 @@ export default function LivePaper({ source }: { source: PreviewSource }) {
     [source.manifest, source.input],
   );
   // No org here: the developer's own zone stands in, so a US developer previews on Letter.
-  const zone = source.timeZone ?? browserZone();
+  const zone = source.timeZone ?? localZone();
   const design = useMemo(
     () => withRegionSize(resolvePaper(manifest.paper), zone),
     [manifest, zone],
