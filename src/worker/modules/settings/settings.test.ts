@@ -406,13 +406,13 @@ describe('settings api', () => {
     expect((await getOrgSettings(ctx, a.id))['org.website']).toBeUndefined();
   });
 
-  it('validates the org time zone, defaults to unset, audits it and resets with null', async () => {
+  it('validates the org time zone, defaults to Seattle, audits it and resets with null', async () => {
     const org = await makeOrg(fx);
     await addMembership(org.id);
     const put = (values: object) =>
       call('PUT', '', { scope: `org:${org.id}`, values }, tenantUser.headers);
     const ctx = createServiceContext(appEnv);
-    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBeUndefined();
+    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBe('America/Los_Angeles');
     for (const bad of ['Mars/Olympus', 'EST5EDT5', '', 5, 'x'.repeat(65)])
       expect((await put({ 'org.timeZone': bad })).status).toBe(422);
     expect((await put({ 'org.timeZone': 'Europe/Berlin' })).status).toBe(200);
@@ -425,7 +425,7 @@ describe('settings api', () => {
       changes: { 'org.timeZone': { from: null, to: 'Europe/Berlin' } },
     });
     expect((await put({ 'org.timeZone': null })).status).toBe(200);
-    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBeUndefined();
+    expect((await getOrgSettings(ctx, org.id))['org.timeZone']).toBe('America/Los_Angeles');
   });
 
   it('requires a platform admin for platform settings', async () => {

@@ -7,6 +7,7 @@ import type {
   SetupPlanContext,
   TemplateFacts,
 } from '../../../shared/scan-setup-plan-types.ts';
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
@@ -106,7 +107,7 @@ async function upcomingOf(
         templateIds: [templateId],
         opensAt: e.opensAt,
         closesAt: e.closesAt,
-        timeZone: e.timeZone ?? 'UTC',
+        timeZone: e.timeZone ?? DEFAULT_TIME_ZONE,
         note: e.venue,
         match: e.match ? { input: e.match.input, values: [e.match.value] } : null,
       }).success

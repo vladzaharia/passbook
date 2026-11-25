@@ -26,6 +26,7 @@ import {
   type SetupPlanResult,
   type ZoneFacts,
 } from './scan-setup-plan-types.ts';
+import { resolveOrgTimeZone } from './time-zone.ts';
 
 function existingDepth(zones: ZoneFacts[], id: string): number {
   const byId = new Map(zones.map((z) => [z.id, z]));
@@ -203,7 +204,7 @@ function planZones(
 export function planScanSetup(input: ScanSetupIntent, ctx: SetupPlanContext): SetupPlanResult {
   const intent = applyPreset(input);
   const issues: SetupIssue[] = [];
-  const timeZone = intent.timeZone ?? ctx.orgTimeZone ?? 'UTC';
+  const timeZone = intent.timeZone ?? resolveOrgTimeZone(ctx.orgTimeZone);
   const refs = registerRefs(intent, issues);
   const zones = planZones(intent, ctx, refs, issues);
   const events = planEvents(intent, ctx, refs, timeZone, issues);

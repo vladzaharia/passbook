@@ -53,8 +53,7 @@ export async function rowChanges(
     imp.org_id,
     wanted.flatMap((r) => r.pass_id ?? []),
   );
-  // Dates read in the org's own zone; UTC only for an org that has none.
-  const timeZone = (await readOrgTimeZone(ctx.env.DB, imp.org_id)) ?? undefined;
+  const timeZone = await readOrgTimeZone(ctx.env.DB, imp.org_id);
   for (const r of wanted) {
     // The commit keeps `{ personalization, fieldSources }`; an older import kept the inputs flat.
     const stored = objectOf(r.before);

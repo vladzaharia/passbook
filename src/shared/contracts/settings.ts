@@ -3,6 +3,7 @@ import { ORG_WEBSITE_INVALID } from '../copy/org-website.ts';
 import { strictEmail } from '../email.ts';
 import { checkFromName } from '../email-from-name.ts';
 import { DATA_CLASSES, type RetentionClass } from '../privacy/data-classes.ts';
+import { DEFAULT_TIME_ZONE } from '../time-zone.ts';
 import { CHANNELS, ChannelSchema } from './channels.ts';
 import { IdSchema, PlainLineSchema } from './common.ts';
 import { TimeZoneSchema } from './scan-base.ts';
@@ -91,8 +92,8 @@ export const PlatformSettingsSchema = z.object({
   'retention.webhooksMaxDays': maxDays('webhooks'),
 });
 export const OrgSettingsSchema = z.object({
-  /** The org's clock for day boundaries (zone Clear at, hours) where no zone or event has its own. Unset: UTC. */
-  'org.timeZone': TimeZoneSchema.optional(),
+  /** The org's clock for day boundaries (zone Clear at, hours) where no zone or event has its own. Unset: Seattle. */
+  'org.timeZone': TimeZoneSchema.default(DEFAULT_TIME_ZONE),
   /** The organization's own site; holder links to "visit the org" use it. Unset: the holder account page. */
   'org.website': z
     .string()
