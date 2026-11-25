@@ -108,6 +108,7 @@ export function DesignerStage({
           manifest={manifest}
           templateId={templateId}
           orgId={orgId}
+          timeZone={timeZone}
           assets={card.assets}
           assetBase={card.assetBase}
           onEdit={onPaper}

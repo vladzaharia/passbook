@@ -111,6 +111,13 @@ export async function planCandidateReads(
       if (printRef) {
         stmts.push(byPrintHashStmt(db, actor.orgId, printRef, actor.mode));
         matchKinds.push('print');
+        // A print of the other mode answers test_pass or live_pass, as a wallet code does.
+        const otherMode = actor.mode === 'live' ? 'test' : 'live';
+        const otherRef = await printCodeRef(ctx.env, actor.orgId, otherMode, clean);
+        if (otherRef) {
+          stmts.push(byPrintHashStmt(db, actor.orgId, otherRef, otherMode));
+          matchKinds.push('print');
+        }
       }
     }
   }

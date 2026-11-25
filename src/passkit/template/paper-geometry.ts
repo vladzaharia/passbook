@@ -5,18 +5,28 @@
  */
 import { BUDDY_MM, BUDDY_RATIO } from '../../shared/paper-buddy.ts';
 import { PAPER_SPECS, type PaperKind, type PaperSize } from './paper.ts';
+import {
+  type Box,
+  cardBoxes,
+  centred,
+  codeSize,
+  type PaperBoxes,
+  stripBoxes,
+} from './paper-geometry-sizes.ts';
 
-export interface Box {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
+export {
+  type Box,
+  codeSize,
+  HALF_DESIGN,
+  halfFit,
+  type PaperBoxes,
+  QR_QUIET_MODULES,
+  type SheetLayout,
+  sheetLayout,
+} from './paper-geometry-sizes.ts';
 
 /** Nothing meaningful sits closer to an edge: home printers clip 3 to 6.5 mm. */
 export const PAPER_INSET = 8;
-/** The QR's quiet zone, in modules. */
-export const QR_QUIET_MODULES = 4;
 /** The 7 mm notches at the stub, the 4 mm fold ticks, and the code's distance from either fold. */
 export const TICKET_SHAPE = {
   notch: 7,
@@ -37,46 +47,6 @@ export const FULL_PARTS = {
 export const HALF_FOOT = 12;
 /** The coupon's colour band; the offer and the code sit under it. */
 export const COUPON_BAND = 50;
-
-export interface PaperBoxes {
-  page: Box;
-  /** The drawn ticket: outline, notches and perforation. Absent on the card and on permit/coupon. */
-  ticket?: Box;
-  /** Left half of the ticket: the code and the four facts staff check. */
-  door?: Box;
-  /** Right half: band, logo, art, when and where. */
-  face?: Box;
-  /** The code with its quiet zone. */
-  code: Box;
-  /** The "Before you go" area (A4/Letter only). */
-  info?: Box;
-  /** The buddy cameo; absent when the class or size has none. */
-  buddy?: Box;
-  /** Vertical fold line x and horizontal fold line y (A4/Letter with `fold`). */
-  fold?: { x: number; y: number };
-}
-
-const centred = (outer: Box, w: number, h: number, dy = 0): Box => ({
-  x: outer.x + (outer.w - w) / 2,
-  y: outer.y + (outer.h - h) / 2 + dy,
-  w,
-  h,
-});
-
-/** Code box: the symbol plus its quiet zone, for the QR (square) or Code 128 (`barHeight` mm). */
-export function codeSize(
-  size: PaperSize,
-  barcode: 'qr' | 'code128',
-  modules = 25,
-): { w: number; h: number } {
-  const spec = PAPER_SPECS[size];
-  if (barcode === 'qr') {
-    const whole = (spec.qrMm * (modules + 2 * QR_QUIET_MODULES)) / modules;
-    return { w: whole, h: whole };
-  }
-  // 332 modules plus a 10-module quiet zone each side.
-  return { w: (spec.barMm * (332 + 20)) / 332, h: 15 };
-}
 
 /** The boxes for one size and class. `buddy` adds the cameo box where the class has one. */
 export function paperBoxes(
@@ -99,10 +69,10 @@ export function paperBoxes(
     w: BUDDY_MM.default,
     h: buddyH,
   });
-  if (size === 'cr80') {
-    const code = codeSize(size, 'qr');
-    return { page, code: { x: W - 3.4 - code.w, y: (H - code.h) / 2, ...code } };
-  }
+  const layout = PAPER_SPECS[size].layout;
+  if (layout === 'card') return cardBoxes(size);
+  if (layout === 'strip')
+    return stripBoxes(size, options.barcode ? { barcode: options.barcode } : {});
   if (size === 'half' && (kind === 'permit' || kind === 'coupon')) {
     const barcode = options.barcode ?? (kind === 'coupon' ? 'code128' : 'qr');
     const code = codeSize(size, barcode);
@@ -114,7 +84,7 @@ export function paperBoxes(
     if (options.buddy && kind === 'coupon') out.buddy = buddyBox(W - 10.5 - 4, H - 10.5 - 11);
     return out;
   }
-  const half = size === 'half';
+  const half = layout === 'half';
   const ticketH = half ? H - 2 * PAPER_INSET - HALF_FOOT : H / 2 - 2 * PAPER_INSET;
   const ticket: Box = { x: PAPER_INSET, y: PAPER_INSET, w: W - 2 * PAPER_INSET, h: ticketH };
   const door: Box = { ...ticket, w: ticket.w / 2 };
