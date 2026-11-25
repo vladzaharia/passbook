@@ -37,7 +37,10 @@ describe('POST /scan/sign-out', () => {
   it('marks the person out of every place they are in, then answers NOT_INSIDE', async () => {
     const [a, b] = [await trackedZone(), await trackedZone()];
     const places = [`zone:${a.id}`, `zone:${b.id}`];
-    const pass = await personInside(tpl, 'Leo Park', places, { at: kit.clock.now() - HOUR });
+    const pass = await personInside(tpl, 'Leo Park', places, {
+      at: kit.clock.now() - HOUR,
+      input: { plan: 'guest' },
+    });
     const desk = await station([tpl], [a.id, b.id]);
 
     const res = await signOut(desk.headers, pass.id);
