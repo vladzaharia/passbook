@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   fixtures,
+  makeApiKey,
   makeEnv,
   makeOrg,
   makeSession,
@@ -13,12 +14,14 @@ import {
 import { all, first, run } from '../../platform/db.ts';
 import type { AppEnv } from '../../platform/env.ts';
 import { sha256Hex } from '../../platform/ids.ts';
+import { keyLive } from '../../platform/repo-api-key-sql.ts';
 import { createServiceContext } from '../../platform/service-context.ts';
 import { createSessionStore } from '../auth/sessions.ts';
 import { ACTOR_HOURLY_INVITES } from './invitation-limits.ts';
 import { changeOrgMemberRoles, resendOrgInvitation } from './membership-replace.ts';
 import { inviteOrgMember } from './membership-service.ts';
 import { ensurePersonalOrg } from './personal.ts';
+import { replaceMembership } from './repo-member-replace.ts';
 
 const sent: { to: string; text: string }[] = [];
 let failMail = false;
@@ -213,6 +216,175 @@ describe('change roles', () => {
       ChangeOrgMemberRolesSchema.safeParse({ roles: ['pass_operator', 'template_author'] }).success,
     ).toBe(true);
     expect(ChangeOrgMemberRolesSchema.safeParse({ roles: [] }).success).toBe(false);
+  });
+});
+
+describe('change roles: edges', () => {
+  const live = async (t: Awaited<ReturnType<typeof setup>>, keyId: string) => {
+    const k = keyLive('k', t.f.clock.now());
+    return (
+      (await first(t.env.DB, `SELECT 1 AS one FROM api_keys k WHERE k.id = ? AND ${k.sql}`, [
+        keyId,
+        ...k.params,
+      ])) !== null
+    );
+  };
+
+  it('answers an admin who demotes themselves with the new membership, not a refusal', async () => {
+    const t = await setup();
+    const me = await t.join(t.org.id, ['org_admin']);
+    await t.join(t.org.id, ['org_admin']);
+    const result = await changeOrgMemberRoles(t.ctx, me.auth, t.org.id, me.id, ['pass_operator']);
+    expect(result.id).not.toBe(me.id);
+    expect(result.roles).toEqual(['pass_operator']);
+    expect(result.userId).toBe(me.user.id);
+  });
+
+  it('answers when the target is disabled', async () => {
+    const t = await setup();
+    const admin = await t.join(t.org.id, ['org_admin']);
+    const target = await t.join(t.org.id, ['read_only']);
+    await run(t.env.DB, "UPDATE users SET status = 'disabled' WHERE id = ?", [target.user.id]);
+    const result = await changeOrgMemberRoles(t.ctx, admin.auth, t.org.id, target.id, [
+      'pass_operator',
+    ]);
+    expect(result.roles).toEqual(['pass_operator']);
+  });
+
+  it('two admins demoting each other: the second is refused and one admin remains', async () => {
+    const t = await setup();
+    const a = await t.join(t.org.id, ['org_admin']);
+    const b = await t.join(t.org.id, ['org_admin']);
+    await changeOrgMemberRoles(t.ctx, a.auth, t.org.id, b.id, ['read_only']);
+    await expect(
+      changeOrgMemberRoles(t.ctx, a.auth, t.org.id, a.id, ['read_only']),
+    ).rejects.toMatchObject({ status: 409, code: 'LAST_ORG_ADMIN' });
+    // B's own request is refused too: B is no longer an admin.
+    await expect(
+      changeOrgMemberRoles(t.ctx, b.auth, t.org.id, a.id, ['read_only']),
+    ).rejects.toMatchObject({ status: 403 });
+    const admins = await all(
+      t.env.DB,
+      `SELECT m.id FROM org_memberships m WHERE m.org_id = ? AND m.revoked_at IS NULL
+         AND EXISTS (SELECT 1 FROM json_each(m.roles) r WHERE r.value = 'org_admin')`,
+      [t.org.id],
+    );
+    expect(admins).toHaveLength(1);
+  });
+
+  it('a second change on the old id is not found, and a raced replace is a conflict', async () => {
+    const t = await setup();
+    const admin = await t.join(t.org.id, ['org_admin']);
+    const target = await t.join(t.org.id, ['read_only']);
+    await changeOrgMemberRoles(t.ctx, admin.auth, t.org.id, target.id, ['pass_operator']);
+    await expect(
+      changeOrgMemberRoles(t.ctx, admin.auth, t.org.id, target.id, ['template_author']),
+    ).rejects.toMatchObject({ status: 404, code: 'MEMBERSHIP_NOT_FOUND' });
+    // Two requests that both read the old row: the batch of the second finds it already retired.
+    await expect(
+      replaceMembership(
+        t.ctx,
+        {
+          kind: 'membership',
+          membershipId: admin.id,
+          via: 'session',
+          sessionIdHash: admin.auth.sessionId,
+        },
+        [],
+        {
+          oldId: target.id,
+          userId: target.user.id,
+          email: target.user.primaryEmail,
+          roles: '["template_author"]',
+          membershipId: t.f.ids.id(),
+          invitationId: t.f.ids.id(),
+          hash: t.f.ids.token(),
+          now: t.f.clock.now(),
+          since: t.f.clock.now(),
+        },
+        {
+          orgId: t.org.id,
+          actorType: 'user',
+          actorId: admin.user.id,
+          action: 'org_membership.roles',
+          targetType: 'org_membership',
+          targetId: 'x',
+        },
+        { config: 'LAST_ORG_ADMIN' },
+      ),
+    ).rejects.toMatchObject({ status: 409 });
+  });
+
+  it('refuses a membership that is already revoked', async () => {
+    const t = await setup();
+    const admin = await t.join(t.org.id, ['org_admin']);
+    const target = await t.join(t.org.id, ['read_only']);
+    await run(t.env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
+      t.f.clock.now(),
+      target.id,
+    ]);
+    await expect(
+      changeOrgMemberRoles(t.ctx, admin.auth, t.org.id, target.id, ['pass_operator']),
+    ).rejects.toMatchObject({ status: 404, code: 'MEMBERSHIP_NOT_FOUND' });
+  });
+
+  it('ends the old membership’s personal key, and leaves a service key alone', async () => {
+    const t = await setup();
+    const admin = await t.join(t.org.id, ['org_admin']);
+    const target = await t.join(t.org.id, ['pass_operator']);
+    const personal = await makeApiKey(t.f, {
+      orgId: t.org.id,
+      kind: 'personal',
+      membershipId: target.id,
+      scopes: ['passes:read'],
+      expiresAt: t.f.clock.now() + 1e8,
+    });
+    const service = await makeApiKey(t.f, {
+      orgId: t.org.id,
+      kind: 'service',
+      scopes: ['passes:read'],
+      expiresAt: t.f.clock.now() + 1e8,
+    });
+    expect(await live(t, personal.id)).toBe(true);
+    await changeOrgMemberRoles(t.ctx, admin.auth, t.org.id, target.id, [
+      'pass_operator',
+      'template_author',
+    ]);
+    expect(await live(t, personal.id)).toBe(false);
+    expect(await live(t, service.id)).toBe(true);
+  });
+
+  it('keeps the member’s scheduled broadcasts scheduled, while a plain revoke still cancels them', async () => {
+    const t = await setup();
+    const admin = await t.join(t.org.id, ['org_admin']);
+    const kept = await t.join(t.org.id, ['pass_operator']);
+    const lost = await t.join(t.org.id, ['pass_operator']);
+    const schedule = async (userId: string) => {
+      const id = t.f.ids.id();
+      await run(
+        t.env.DB,
+        `INSERT INTO broadcasts (id, org_id, mode, kind, name, state, target, patch, created_at, created_by_type, created_by_id)
+         VALUES (?, ?, 'live', 'message', 'B', 'scheduled', '{}', '{}', ?, 'user', ?)`,
+        [id, t.org.id, t.f.clock.now(), userId],
+      );
+      return id;
+    };
+    const stateOf = async (id: string) =>
+      (await first<{ state: string }>(t.env.DB, 'SELECT state FROM broadcasts WHERE id = ?', [id]))
+        ?.state;
+    const a = await schedule(kept.user.id);
+    const b = await schedule(lost.user.id);
+    t.f.clock.advance(1000);
+    await changeOrgMemberRoles(t.ctx, admin.auth, t.org.id, kept.id, [
+      'pass_operator',
+      'template_author',
+    ]);
+    await run(t.env.DB, 'UPDATE org_memberships SET revoked_at = ? WHERE id = ?', [
+      t.f.clock.now(),
+      lost.id,
+    ]);
+    expect(await stateOf(a)).toBe('scheduled');
+    expect(await stateOf(b)).toBe('cancelled');
   });
 });
 

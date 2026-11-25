@@ -1,6 +1,6 @@
 import { env } from 'cloudflare:workers';
 import { Hono } from 'hono';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { fakeAuth } from '../../../test/helpers/fake-auth.ts';
 import { createApp } from '../app.ts';
 import { requireCaller } from './auth.ts';
@@ -100,6 +100,23 @@ describe('step-up at the route guard', () => {
 // Every sensitive route, called with a stale admin session. A route missing from this list has no
 // step-up, and one in it that loses it fails here.
 const STALE = Date.now() - 60 * MIN;
+
+// A pending invitation into an administering role, and one into a read-only role, for the resend guard.
+beforeAll(async () => {
+  await env.DB.prepare(
+    "INSERT OR IGNORE INTO orgs (id, slug, name, created_at, updated_at) VALUES ('o1', 'o1', 'O1', 1, 1)",
+  ).run();
+  for (const [id, roles] of [
+    ['inv-admin', '["org_admin"]'],
+    ['inv-read', '["read_only"]'],
+  ] as const)
+    await env.DB.prepare(
+      `INSERT OR IGNORE INTO org_invitations (id, org_id, email, roles, token_hash, created_at, expires_at)
+       VALUES (?, 'o1', ?, ?, ?, 1, 9999999999999)`,
+    )
+      .bind(id, `${id}@example.test`, roles, `hash-${id}`)
+      .run();
+});
 const INVITE = { email: 'new@example.test', roles: ['org_admin'] };
 const SENSITIVE: [string, string, unknown?][] = [
   [
@@ -123,6 +140,7 @@ const SENSITIVE: [string, string, unknown?][] = [
   ['POST', '/api/v1/orgs/o1/exports'],
   ['POST', '/api/v1/orgs/o1/exports/e1/link'],
   ['POST', '/api/v1/orgs/o1/invitations', INVITE],
+  ['POST', '/api/v1/orgs/o1/invitations/inv-admin/resend'],
   ['PATCH', '/api/v1/orgs/o1/memberships/m1', { roles: ['org_admin'] }],
   ['PATCH', '/api/v1/orgs/o1/memberships/m1', { roles: ['integration_admin'] }],
   [
@@ -163,6 +181,7 @@ const NOT_ASKED: [string, string, unknown][] = [
   ['PATCH', '/api/v1/connections/c1', { name: 'Renamed' }],
   ['PATCH', '/api/v1/webhook-endpoints/w1', { description: 'x' }],
   ['POST', '/api/v1/orgs/o1/invitations', { email: 'new@example.test', roles: ['read_only'] }],
+  ['POST', '/api/v1/orgs/o1/invitations/inv-read/resend', undefined],
   ['PATCH', '/api/v1/orgs/o1/memberships/m1', { roles: ['pass_operator'] }],
   ['PUT', '/api/v1/settings', { scope: 'platform', values: { 'email.senderName': 'X' } }],
   ['POST', '/api/v1/nfc/keysets/k1/import', { csv: 'x', replace: true, dryRun: true }],
@@ -255,6 +274,7 @@ describe('step-up route inventory', () => {
         "POST /api/v1/nfc/keysets/:id/import",
         "POST /api/v1/nfc/keysets/:id/rotate",
         "POST /api/v1/orgs/:id/invitations",
+        "POST /api/v1/orgs/:id/invitations/:invitationId/resend",
         "POST /api/v1/orgs/:orgId/close",
         "POST /api/v1/orgs/:orgId/exports",
         "POST /api/v1/orgs/:orgId/exports/:exportId/link",

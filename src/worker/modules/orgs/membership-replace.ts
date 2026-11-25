@@ -11,7 +11,6 @@ import { assertNotPreviewOnly } from '../developer/fence.ts';
 import { memberDto, parseRoles } from './access.ts';
 import { checkInviteAllowed } from './invitation-limits.ts';
 import {
-  adminFenceOf,
   assertNotPersonal,
   changed,
   deliverInvitation,
@@ -90,16 +89,14 @@ export async function changeOrgMemberRoles(
   await assertNotPersonal(ctx, orgId);
   const current = await repo.activeMembershipById(ctx.env.DB, orgId, membershipId);
   if (!current) throw new NotFoundError('Member not found.', 'MEMBERSHIP_NOT_FOUND');
-  const fence = adminFenceOf(ctx, auth);
-  const listed = async (userId: string) => {
-    const rows = await repo.orgMembers(ctx.env.DB, orgId, auth.userId, fence);
-    const row = rows.find((r) => r.user_id === userId);
+  const answer = async (id: string) => {
+    const row = await repo.memberRowById(ctx.env.DB, orgId, id);
     if (!row) throw changed();
     return memberDto(row);
   };
   const before = parseRoles(current.roles);
   if (before.length === roles.length && before.every((role) => roles.includes(role)))
-    return listed(current.user_id);
+    return answer(current.id);
   const now = ctx.clock.now();
   const next = {
     oldId: current.id,
@@ -110,6 +107,7 @@ export async function changeOrgMemberRoles(
     invitationId: ctx.ids.id(),
     hash: await sha256Hex(ctx.ids.token(32)),
     now,
+    since: current.created_at,
   };
   const losesAdmin = before.includes('org_admin') && !roles.includes('org_admin');
   try {
@@ -137,5 +135,5 @@ export async function changeOrgMemberRoles(
       );
     throw error;
   }
-  return listed(current.user_id);
+  return answer(next.membershipId);
 }

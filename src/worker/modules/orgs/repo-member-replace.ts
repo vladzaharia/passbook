@@ -48,6 +48,8 @@ export interface RoleChange {
   invitationId: string;
   hash: string;
   now: number;
+  /** The member's own start date, kept: a scheduled broadcast needs a creator who joined before it. */
+  since: number;
 }
 
 /**
@@ -96,7 +98,7 @@ export async function replaceMembership(
   g.insertSelect(
     'org_memberships',
     ['id', 'user_id', 'invitation_id', 'roles', 'created_at'],
-    [change.membershipId, change.userId, change.invitationId, change.roles, change.now],
+    [change.membershipId, change.userId, change.invitationId, change.roles, change.since],
   );
   await g.commit();
 }

@@ -29,7 +29,7 @@ import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestTheme } from '../../ssr/head.ts';
-import { listMyOrgMemberships } from './access.ts';
+import { listMyOrgMemberships, parseRoles } from './access.ts';
 import { invitationPage } from './invitation-page.ts';
 import { changeOrgMemberRoles, resendOrgInvitation } from './membership-replace.ts';
 import {
@@ -41,6 +41,7 @@ import {
   revokeOrgInvitation,
   revokeOrgMembership,
 } from './membership-service.ts';
+import { invitationById } from './repo-members.ts';
 
 const session = (c: Context<AppBindings>): SessionAuth => {
   const auth = c.var.auth;
@@ -83,6 +84,21 @@ membershipRoutes.patch(
 );
 membershipRoutes.use('/:id/invitations/:invitationId', requireConsoleSession);
 membershipRoutes.use('/:id/invitations/:invitationId/resend', requireConsoleSession);
+// A resend mails a fresh credential link: for an invitation into an administering role it asks as inviting did.
+membershipRoutes.post(
+  '/:id/invitations/:invitationId/resend',
+  requireStepUp(STEP_UP_SECONDS, async (c) => {
+    const found = await invitationById(c.env.DB, c.req.param('id'), c.req.param('invitationId'));
+    if (!found) return false;
+    try {
+      return parseRoles(found.roles).some((role) =>
+        (ADMINISTERING_ROLES as readonly unknown[]).includes(role),
+      );
+    } catch {
+      return true;
+    }
+  }),
+);
 
 register(
   membershipRoutes,
@@ -232,7 +248,7 @@ register(
     path: '/{id}/memberships/{membershipId}',
     summary: "Change an organization member's roles",
     description:
-      'Replaces the roles. The member keeps one active membership; its id changes, and API keys tied to the old membership stop working. Organization admin and Read only stand alone. The last org admin cannot lose the role (`LAST_ORG_ADMIN`).',
+      'Replaces the roles. The member keeps one active membership, but its id changes: personal API keys tied to the old membership stop working (keys of kind service, which no membership owns, keep working). Scheduled broadcasts of the member stay scheduled. Organization admin and Read only stand alone. The last org admin cannot lose the role (`LAST_ORG_ADMIN`).',
     params: OrgMembershipParamSchema,
     body: ChangeOrgMemberRolesSchema,
     response: OrgMemberSchema,

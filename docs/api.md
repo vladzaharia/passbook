@@ -177,7 +177,7 @@ An active organization administrator, or a platform administrator acting explici
 - `GET /orgs/{id}/memberships` (active members) and `GET /orgs/{id}/invitations` (history)
 - `POST /orgs/{id}/invitations` with `{ "email": "...", "roles": ["read_only"] }`
 - `POST /orgs/{id}/invitations/{invitationId}/resend` revokes the pending invitation and returns a new one (new id, fresh link and seven days) for the same address and roles, mailed again; it counts against the invite limits
-- `PATCH /orgs/{id}/memberships/{membershipId}` with `{ "roles": ["pass_operator"] }` replaces a member's roles and returns the member. Memberships are immutable, so the old one is revoked and a new one (new id) written in one batch; API keys tied to the old membership stop working. Organization admin and Read only stand alone (422); taking the role from the last org admin is `409 LAST_ORG_ADMIN`; an unknown or revoked membership is `404 MEMBERSHIP_NOT_FOUND`. Granting an administering role needs a fresh sign-in, as inviting does
+- `PATCH /orgs/{id}/memberships/{membershipId}` with `{ "roles": ["pass_operator"] }` replaces a member's roles and returns the member. Memberships are immutable, so the old one is revoked and a new one (new id) written in one batch; personal API keys tied to the old membership stop working (service keys and the member's scheduled broadcasts are unaffected). Organization admin and Read only stand alone (422); taking the role from the last org admin is `409 LAST_ORG_ADMIN`; an unknown or revoked membership is `404 MEMBERSHIP_NOT_FOUND`. Granting an administering role needs a fresh sign-in, as inviting does
 - `DELETE /orgs/{id}/invitations/{invitationId}` or
   `DELETE /orgs/{id}/memberships/{membershipId}`
 

@@ -1508,7 +1508,7 @@
     "operationId": "organization-memberships.patchOrgsByIdMembershipsByMembershipId",
     "op": "PATCH /api/v1/orgs/{id}/memberships/{membershipId}",
     "change": "new operation",
-    "note": "Changes a member's roles. The membership is replaced: its id changes and API keys tied to the old membership stop working."
+    "note": "Changes a member's roles. The membership is replaced: its id changes and personal API keys tied to the old membership stop working. Service keys and scheduled broadcasts are unaffected."
   },
   {
     "key": "PATCH /api/v1/orgs/{orgId}/pass-setup new operation",

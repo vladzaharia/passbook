@@ -109,12 +109,28 @@ export function activeMembershipById(db: D1Database, orgId: string, id: string) 
     user_id: string;
     invitation_id: string;
     roles: string;
+    created_at: number;
     email: string;
   }>(
     db,
-    `SELECT m.id, m.user_id, m.invitation_id, m.roles, i.email FROM org_memberships m
+    `SELECT m.id, m.user_id, m.invitation_id, m.roles, m.created_at, i.email FROM org_memberships m
  JOIN org_invitations i ON i.id = m.invitation_id
  WHERE m.org_id = ? AND m.id = ? AND m.revoked_at IS NULL`,
+    [orgId, id],
+  );
+}
+/**
+ * One membership of the org, active or not, as the member list shows it (the address it was invited
+ * by). No manager fence: the caller just wrote the row, and a manager who demoted themselves, or a
+ * target who is suspended, still has the answer to what they did.
+ */
+export function memberRowById(db: D1Database, orgId: string, id: string) {
+  return first<MembershipRow>(
+    db,
+    `SELECT m.*, o.name AS org_name, o.slug AS org_slug, o.personal_user_id, o.kind AS org_kind, u.name AS user_name,
+       COALESCE((SELECT i.email FROM org_invitations i WHERE i.id = m.invitation_id), 'Account') AS user_email
+     FROM org_memberships m JOIN orgs o ON o.id = m.org_id JOIN users u ON u.id = m.user_id
+     WHERE m.org_id = ? AND m.id = ?`,
     [orgId, id],
   );
 }
