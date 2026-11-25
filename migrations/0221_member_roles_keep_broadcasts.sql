@@ -1,6 +1,6 @@
 -- A role change retires the membership and writes its successor in one batch (org.member.roles). The
 -- member's scheduled broadcasts belong to the person, not the row: they stay scheduled, and a send
--- re-checks the creator against the successor, which keeps the member's created_at. Any other revoke
+-- re-checks the creator against the successor, which keeps the member's joined_at. Any other revoke
 -- still cancels them.
 DROP TRIGGER memberships_revoke_cancels_broadcasts;
 CREATE TRIGGER memberships_revoke_cancels_broadcasts AFTER UPDATE OF revoked_at ON org_memberships
