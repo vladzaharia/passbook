@@ -1,6 +1,5 @@
 import { FileSpreadsheet } from 'lucide-react';
 import { useState } from 'react';
-import { pluralize } from '../../../lib/format.ts';
 import { Button, Card, CardBody, FormField, Input, Select } from '../../../ui/index.ts';
 import type { ConfigDraft } from '../wizard-steps.tsx';
 import { FileChecks } from './file-checks.tsx';
@@ -60,10 +59,6 @@ export function UploadConfig({
             <p className="min-w-0 flex-1 text-sm text-fg">
               <span className="font-medium break-all text-fg-strong">{file.name}</span>
               <span className="text-fg-muted">
-                {' · '}
-                {pluralize(file.rows, 'row')}
-                {' · '}
-                {pluralize(file.columns.length, 'column')}
                 {' · '}
                 {sizeOf(file.bytes)}
               </span>

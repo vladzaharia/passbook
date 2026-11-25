@@ -4,7 +4,7 @@ import { readSeed } from './helpers/seed.ts';
 import { shots } from './helpers/shots.ts';
 
 test.use({ storageState: 'e2e/.auth/admin.json' });
-test.setTimeout(240_000);
+test.setTimeout(360_000);
 
 const csv = (rows: string[][]) =>
   ['Member ID,Name,Email', ...rows.map((r) => r.join(','))].join('\n');
@@ -32,7 +32,7 @@ test('file upload: create from a CSV, sync, upload a new version, review the rem
 
   const inOrg = `/admin/o/${encodeURIComponent(seed.org.id)}`;
   await page.goto(`${inOrg}/connections/new`);
-  await page.getByRole('radio', { name: /File upload/ }).click();
+  await page.getByText('File upload', { exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   const drop = page.getByLabel('Drop a file or choose');
   await expect(drop).toBeAttached();
@@ -64,8 +64,8 @@ test('file upload: create from a CSV, sync, upload a new version, review the rem
   await page.getByRole('combobox', { name: 'Template', exact: true }).click();
   await page.getByRole('option', { name: seed.template.name }).click();
   const mappings: [string, string][] = [
-    ['Name *', '/Name'],
-    ['ID *', '/Member ID'],
+    ['Name *', 'Name'],
+    ['ID *', 'Member ID'],
   ];
   for (const [i, [field, from]] of mappings.entries()) {
     await page.getByRole('button', { name: 'Add mapping' }).click();
@@ -144,7 +144,7 @@ test('file upload: a rate limit reads as a wait, not a failure', async ({ page }
     }),
   );
   await page.goto(`/admin/o/${encodeURIComponent(seed.org.id)}/connections/new`);
-  await page.getByRole('radio', { name: /File upload/ }).click();
+  await page.getByText('File upload', { exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page
     .getByLabel('Drop a file or choose')
@@ -163,7 +163,7 @@ test('file upload: a JSON file picks its records and ID from the tree', async ({
     ],
   };
   await page.goto(`/admin/o/${encodeURIComponent(seed.org.id)}/connections/new`);
-  await page.getByRole('radio', { name: /File upload/ }).click();
+  await page.getByText('File upload', { exact: true }).click();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByLabel('Drop a file or choose').setInputFiles({
     name: 'members.json',

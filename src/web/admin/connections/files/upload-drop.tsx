@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Buddy, Callout, FileDrop, StepList } from '../../../ui/index.ts';
 import type { UploadFailure } from './file-errors.ts';
 
-const ACCEPT = '.csv,.xlsx,.json,.ndjson,.jsonl,.tsv,.txt,text/csv,application/json';
+// No accept list: the server reads the bytes, not the name, and says what it cannot read.
 
 /** The failure under the drop: a warning for the hourly allowance, an error for a file we cannot take. */
 export function FailureNote({ failure }: { failure: UploadFailure }) {
@@ -47,7 +47,6 @@ export function UploadDrop({
         <FileDrop
           label={label}
           hint="CSV, Excel or JSON · up to 5 MB"
-          accept={ACCEPT}
           invalid={invalid || failure !== undefined}
           onFiles={(files) => files[0] && onFile(files[0])}
         />
