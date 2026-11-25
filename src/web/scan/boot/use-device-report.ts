@@ -7,6 +7,7 @@ import type {
 import { reportedCapabilities } from '../../../shared/scan-surfaces.ts';
 import type { ScanApi } from '../api/scan-api.ts';
 import { HARDWARE_EVENT, reportedHardware, withoutNativeHardware } from '../hardware/report.ts';
+import { DRAFT_HEALTH_EVENT, draftHealth } from '../machine/draft-health.ts';
 import {
   getNativeCapabilities,
   NATIVE_CAPABILITIES_EVENT,
@@ -23,6 +24,7 @@ export function deviceCapabilities(native?: NativeScannerCapabilities): ScanDevi
     // Kinds and counts only: the shell's names and ids stay on the device.
     ...(native ? { native: withoutNativeHardware(native) } : {}),
     ...(reportedHardware()?.length ? { hardware: reportedHardware() ?? [] } : {}),
+    ...(draftHealth.failures() > 0 ? { draftFailures: draftHealth.failures() } : {}),
     surfaces: ['phone', 'customer'],
     preferred: 'phone',
   });
@@ -82,6 +84,7 @@ export function useDeviceReport(
     window.addEventListener('online', schedule);
     window.addEventListener(NATIVE_CAPABILITIES_EVENT, onNativeCapabilities);
     window.addEventListener(HARDWARE_EVENT, schedule);
+    window.addEventListener(DRAFT_HEALTH_EVENT, schedule);
     window.addEventListener('focus', schedule);
     return () => {
       disposed = true;
@@ -91,6 +94,7 @@ export function useDeviceReport(
       window.removeEventListener('online', schedule);
       window.removeEventListener('focus', schedule);
       window.removeEventListener(HARDWARE_EVENT, schedule);
+      window.removeEventListener(DRAFT_HEALTH_EVENT, schedule);
       window.removeEventListener(NATIVE_CAPABILITIES_EVENT, onNativeCapabilities);
     };
   }, [api, scannerId, refetch]);
