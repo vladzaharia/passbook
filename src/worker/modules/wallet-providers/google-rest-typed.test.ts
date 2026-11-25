@@ -141,6 +141,19 @@ describe('class ids', () => {
     expect(await googleClassId(ISSUER, secret, { ...base, type: 'loyalty' })).toBe(loyalty);
   });
 
+  it('keeps the class id fixed-length for any key length, unique per full key', async () => {
+    const base = { tenantId: 't', releaseId: 'r', type: 'event' as GoogleType };
+    const idOf = async (key: string) =>
+      googleClassId(ISSUER, secret, { ...base, classKey: await googleClassKeyDigest(key) });
+    const long = 'e'.repeat(355);
+    const id = await idOf(long);
+    expect(id.length).toBeLessThanOrEqual(200);
+    expect(await idOf(long)).toBe(id);
+    expect(await idOf(`${long.slice(0, -1)}f`)).not.toBe(id);
+    expect((await idOf('gala')).length).toBe(id.length);
+    expect(await googleClassKeyDigest('gala')).toMatch(/^[0-9a-f]{64}$/);
+  });
+
   it('refuses a class key that is not a digest', async () => {
     await expect(
       googleClassId(ISSUER, secret, {

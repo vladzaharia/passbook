@@ -1,6 +1,10 @@
 import type { z } from 'zod';
-import { CREDENTIAL_SCOPES, MINTABLE_SCOPES } from '../../shared/contracts/api-keys.ts';
-import type { ApiScopeSchema } from '../../shared/contracts/common.ts';
+import {
+  CREDENTIAL_SCOPES,
+  MINTABLE_SCOPES,
+  TEST_ONLY_SCOPES,
+} from '../../shared/contracts/api-keys.ts';
+import type { ApiScopeSchema, Mode } from '../../shared/contracts/common.ts';
 import type { OrgCapability, OrgRole } from '../../shared/contracts/org-membership.ts';
 import { OrgRoleSchema } from '../../shared/contracts/org-membership.ts';
 import { rolesGranting } from './org-role-grants.ts';
@@ -76,6 +80,8 @@ export function scopeExercises(scope: ApiScope, capability: OrgCapability): bool
  */
 const presetScope = (scope: TenantScope) =>
   !NOT_TENANT_AUTHORITY.includes(scope) &&
+  // Reading the org's audit log is named on a key, never carried by a role.
+  scope !== 'audit:read' &&
   !(CREDENTIAL_SCOPES as readonly string[]).includes(scope) &&
   (MINTABLE_SCOPES as readonly string[]).includes(scope);
 
@@ -99,8 +105,18 @@ export const rolesCapableOf = (scope: string): OrgRole[] =>
     ? []
     : rolesGranting(scopeCapability[scope as TenantScope]);
 
-/** The scopes written onto a key at mint: its own plus those of its roles, once each. Read once, never again. */
+/** The scopes written onto a key at mint: its own plus those of its roles, once each. A Live key's bundle leaves out the Test-only scopes. Read once, never again. */
 export const effectiveScopes = (
   scopes: readonly ApiScope[],
   roles: readonly OrgRole[],
-): ApiScope[] => [...new Set([...scopes, ...roles.flatMap((role) => ROLE_PRESETS[role])])];
+  mode: Mode = 'test',
+): ApiScope[] => [
+  ...new Set([
+    ...scopes,
+    ...roles
+      .flatMap((role) => ROLE_PRESETS[role])
+      .filter(
+        (scope) => mode === 'test' || !(TEST_ONLY_SCOPES as readonly string[]).includes(scope),
+      ),
+  ]),
+];

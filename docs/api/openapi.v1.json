@@ -57241,6 +57241,9 @@
                 "passes:write",
                 "holders:write",
                 "templates:read",
+                "templates:write",
+                "templates:review",
+                "templates:publish",
                 "messages:write",
                 "scans:read",
                 "scans:write",
@@ -57255,7 +57258,8 @@
                 "scan-setup:read",
                 "scanning:admin",
                 "nfc:keys",
-                "api-keys:write"
+                "api-keys:write",
+                "audit:read"
               ]
             },
             "default": []
@@ -119004,6 +119008,16 @@
     },
     "/api/v1/audit": {
       "get": {
+        "security": [
+          {
+            "apiKey": [
+              "audit:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
         "summary": "Query an organization audit log",
         "tags": [
           "audit"
@@ -119178,17 +119192,20 @@
           "resource": "auditEntries",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "description": "The organization's audit log, newest first. A key needs audit:read and reads its own organization; send from (at most 90 days before to) and a limit of at most 100.",
         "x-sign-in": "idp",
         "x-codes": [
+          "AUDIT_LIMIT_TOO_HIGH",
+          "AUDIT_WINDOW_REQUIRED",
+          "AUDIT_WINDOW_TOO_WIDE",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
           "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -119197,6 +119214,12 @@
     },
     "/api/v1/audit/platform": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:audit",
         "summary": "Query the platform audit log",
         "tags": [
           "audit"
@@ -119371,11 +119394,6 @@
           "resource": "platform.auditEntries",
           "method": "list"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",
@@ -119389,7 +119407,17 @@
     },
     "/api/v1/audit/export": {
       "get": {
-        "summary": "Export an organization audit log as CSV (10,000 entries at most; 6 an hour)",
+        "security": [
+          {
+            "apiKey": [
+              "audit:read"
+            ]
+          },
+          {
+            "session": []
+          }
+        ],
+        "summary": "Export an organization audit log as CSV (10,000 entries at most; 6 an hour for a person, 2 an hour for a key)",
         "tags": [
           "audit"
         ],
@@ -119516,17 +119544,20 @@
           "resource": "auditEntries",
           "method": "export"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
+        "description": "The same entries as CSV, at most 10,000 rows; 2 an hour per key and 6 an hour across the organization's keys. Each export is recorded as audit.export.",
         "x-sign-in": "idp",
         "x-codes": [
+          "AUDIT_LIMIT_TOO_HIGH",
+          "AUDIT_WINDOW_REQUIRED",
+          "AUDIT_WINDOW_TOO_WIDE",
           "FORBIDDEN",
           "IDP_SIGN_IN_REQUIRED",
+          "INVALID_API_KEY",
           "INVALID_CURSOR",
+          "MISSING_SCOPE",
+          "ORG_FORBIDDEN",
           "ORG_REQUIRED",
+          "ORG_TEST_ONLY",
           "RATE_LIMITED",
           "UNAUTHENTICATED",
           "VALIDATION"
@@ -119535,6 +119566,12 @@
     },
     "/api/v1/audit/platform/export": {
       "get": {
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "x-platform-scope": "platform:audit",
         "summary": "Export the platform audit log as CSV (10,000 entries at most; 6 an hour)",
         "tags": [
           "audit"
@@ -119662,11 +119699,6 @@
           "resource": "platform.auditEntries",
           "method": "export"
         },
-        "security": [
-          {
-            "session": []
-          }
-        ],
         "x-sign-in": "idp",
         "x-codes": [
           "FORBIDDEN",

@@ -1,5 +1,5 @@
 /** The handheld trays of the visual gallery (`?visual=1&surface=tray&case=`). */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PHONE, useMediaQuery } from '../lib/media.ts';
 import type { ScanApi } from './api/scan-api.ts';
 import { LookupSheet } from './lookup/lookup-sheet.tsx';
@@ -36,7 +36,7 @@ const ROWS = [
   ['Annabel Reyes', 'Gold', null],
 ] as const;
 
-function lookupApi(none: boolean): ScanApi {
+export function lookupApi(none: boolean): ScanApi {
   const card = fixtureCard();
   return {
     lookup: async () => ({
@@ -98,6 +98,40 @@ function OpenMenu() {
   );
 }
 
+/** What a named tray needs done after it mounts: a name typed and a row picked, or the PIN button pressed. */
+function DemoSteps({ tray }: { tray: TrayCase }) {
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    if (tray === 'enter-results' || tray === 'enter-confirm')
+      timers.push(
+        setTimeout(() => {
+          const field = document.querySelector<HTMLInputElement>(
+            'input[type="text"], input:not([type])',
+          );
+          if (!field) return;
+          Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set?.call(
+            field,
+            'Ann',
+          );
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+        }, 300),
+      );
+    if (tray === 'enter-confirm')
+      timers.push(
+        setTimeout(() => document.querySelector<HTMLElement>('[data-lookup-result]')?.click(), 900),
+      );
+    if (['pin', 'pin-picker', 'pin-one', 'pin-code'].includes(tray))
+      timers.push(
+        setTimeout(
+          () => document.querySelector<HTMLElement>('.scan-dock [aria-haspopup="dialog"]')?.click(),
+          400,
+        ),
+      );
+    return () => timers.forEach(clearTimeout);
+  }, [tray]);
+  return null;
+}
+
 export function TrayVisual({ tray }: { tray: TrayCase }) {
   const base = SCAN_VISUAL_CASES[0]?.outcome;
   const handheld = useMediaQuery(PHONE);
@@ -137,6 +171,7 @@ export function TrayVisual({ tray }: { tray: TrayCase }) {
       menu={tray === 'menu' ? <OpenMenu /> : <MenuTrigger />}
       approval={handheld ? approval : undefined}
     >
+      <DemoSteps tray={tray} />
       {enter ? (
         <LookupSheet
           open

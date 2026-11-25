@@ -5,7 +5,7 @@ import type { z } from 'zod';
 import type { Mode } from '@/shared/contracts/common.ts';
 import type { TagScannerSchema } from '@/shared/contracts/nfc-tag-enrollments.ts';
 import { TAG_COPY } from '@/shared/copy/tags.ts';
-import { formatRelative } from '@/web/lib/format.ts';
+import { formatAgo } from '@/web/lib/format.ts';
 import {
   Badge,
   Button,
@@ -57,7 +57,7 @@ function why(s: Scanner, mode: Mode, now: number): string | null {
   }
 }
 const fillAgo = (t: string, at: number | null, now: number) =>
-  t.replace('{ago}', at === null ? 'never' : formatRelative(at, now));
+  t.replace('{ago}', at === null ? 'never' : formatAgo(at, now));
 
 /** Last used first, then online desks, then the other online ones, then the ones that cannot. */
 export function sortScanners(items: readonly Scanner[], last: string | undefined): Scanner[] {

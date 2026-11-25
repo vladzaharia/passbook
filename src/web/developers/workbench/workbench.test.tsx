@@ -212,18 +212,18 @@ describe('WorkbenchIsland', () => {
 describe('the workbench island mount', () => {
   const page = () => {
     document.body.innerHTML =
-      '<div id="workbench" data-island="workbench"></div><div data-home-marketing="">Hero</div>';
+      '<div class="hero"><h1>Hero</h1></div><div id="workbench" data-island="workbench"><section><p>Signed-out card</p></section></div>';
     return document.getElementById('workbench') as HTMLElement;
   };
-  const marketing = () => document.querySelector<HTMLElement>('[data-home-marketing]');
+  const hero = () => document.querySelector<HTMLElement>('.hero');
   afterEach(() => document.body.replaceChildren());
 
-  it('leaves the public home alone when signed out', async () => {
+  it('leaves the signed-out card in the slot when signed out', async () => {
     updateSession({ kind: 'out' });
     const el = page();
     await mount(el);
-    expect(el.innerHTML).toBe('');
-    expect(marketing()?.hidden).toBe(false);
+    expect(el.textContent).toBe('Signed-out card');
+    expect(hero()?.textContent).toBe('Hero');
   });
 
   it('leaves it alone without developer access', async () => {
@@ -234,17 +234,23 @@ describe('the workbench island mount', () => {
     );
     const el = page();
     await mount(el);
-    expect(el.innerHTML).toBe('');
-    expect(marketing()?.hidden).toBe(false);
+    expect(el.textContent).toBe('Signed-out card');
+    expect(hero()?.textContent).toBe('Hero');
   });
 
-  it('replaces the home with the Workbench for a developer, reading the home once', async () => {
+  it('takes the card place for a developer, committed before mount resolves, and never touches the hero', async () => {
     updateSession({ kind: 'none', csrf: 'c', siteKey: '' });
     const fetchFn = vi.fn(async () => Response.json(homeFresh));
     vi.stubGlobal('fetch', fetchFn);
     const el = page();
+    const heroNode = hero();
     await act(() => mount(el));
-    expect(marketing()).toBeNull();
+    // Synchronous: no frame where the card is gone and the Workbench is not there yet, or the reverse.
+    expect(el.textContent).not.toContain('Signed-out card');
+    expect(el.querySelector('.wb')).not.toBeNull();
+    expect(hero()).toBe(heroNode);
+    expect(hero()?.textContent).toBe('Hero');
+    expect(document.querySelectorAll('h1')).toHaveLength(1);
     expect(await screen.findByRole('heading', { name: homeFresh.sandbox?.name })).toBeTruthy();
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });

@@ -224,8 +224,19 @@
     padding: 16px 24px;
   }
   .scan-layer.scan-card-layer[data-mode="boot"] .scan-boot-body {
-    padding: 16px 24px;
+    gap: 8px;
+    padding: 12px 24px;
     border-top: 0;
     border-left: 1px solid var(--pk-border-subtle);
+  }
+  /* The PIN pad, its dots and the name link fit a 375 px screen without scrolling the card. */
+  .scan-layer.scan-card-layer[data-mode="boot"] {
+    padding-block: 12px;
+  }
+  .scan-boot-body .scan-keypad {
+    gap: 6px;
+  }
+  .scan-boot-body .scan-key {
+    height: 46px;
   }
 }

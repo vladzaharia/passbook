@@ -1,3 +1,4 @@
+import type { OrgCapability } from '@/shared/contracts/org-membership.ts';
 import { useAdminScope, useOrgScope } from '@/web/lib/org-filter.tsx';
 import { useMemberships, useSession } from '@/web/lib/session.ts';
 
@@ -13,6 +14,10 @@ export type KeyAccess =
       orgId: string | null;
       orgName: string;
       canManage: boolean;
+      /** What the member may delegate to a key; null for the platform. */
+      capabilities: readonly OrgCapability[] | null;
+      /** A developer sandbox (test-only) organization. */
+      developerOrg: boolean;
       /** The audit log, where a key's activity is read from. */
       canAudit: boolean;
     };
@@ -55,6 +60,8 @@ export function useKeyAccess(): KeyAccess {
     principal,
     orgId,
     orgName: membership?.orgName ?? 'Platform',
+    developerOrg: Boolean(membership?.testOnly),
+    capabilities: platform ? null : (membership?.capabilities ?? []),
     canManage: platform || Boolean(membership?.capabilities.includes('integrations:manage')),
     canAudit: platform || Boolean(membership?.capabilities.includes('audit:read')),
   };
