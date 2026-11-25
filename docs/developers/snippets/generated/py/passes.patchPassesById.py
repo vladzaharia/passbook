@@ -8,7 +8,9 @@ result = pb.passes.update(
     "0193a1b2-7c00-7000-8000-0000000000c1",
     {
         "input": {
-            "endsAt": "2026-12-04T23:00:00-08:00",
+            "name": "Ada Example",
+            "tier": "Day pass",
+            "validUntil": "2027-01-31",
         },
         "notify": True,
     },

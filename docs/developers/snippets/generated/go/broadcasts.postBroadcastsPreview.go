@@ -25,7 +25,7 @@ func main() {
     ]
   },
   "patch": {
-    "endsAt": "2026-12-04T23:00:00-08:00"
+    "validUntil": "2027-01-31"
   },
   "notify": true
 }`), &body); err != nil {
