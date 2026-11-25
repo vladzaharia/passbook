@@ -5,6 +5,7 @@ import { axe } from 'vitest-axe';
 import { resetModeForTests, setMode } from '@/web/lib/mode.ts';
 import { json, membershipFixture, problem, renderApp } from '@/web/lib/test-utils.tsx';
 import { keyState } from './api-keys-page.tsx';
+import { createKey, next, toReview } from './wizard-test-utils.ts';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -123,27 +124,41 @@ describe('api keys page', () => {
     await screen.findByText('No API keys');
     await user.click(screen.getByRole('button', { name: 'New API key' }));
     const dialog = await screen.findByRole('dialog');
-    expect(dialog.className).toContain('sm:max-w-lg');
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    expect(await within(dialog).findByText('Required.')).toBeInTheDocument();
-    expect(within(dialog).getByRole('checkbox', { name: 'Read passes' })).toBeChecked();
+    expect(dialog.className).toContain('sm:max-w-4xl');
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(within(dialog).getByRole('heading', { name: 'Name the key' })).toBeInTheDocument();
     expect(within(dialog).getByText('Platform')).toBeInTheDocument();
-    expect(within(dialog).queryByRole('checkbox', { name: 'Scan as a terminal' })).toBeNull();
-    expect(within(dialog).getByRole('checkbox', { name: 'Manage webhooks' })).toBeInTheDocument();
 
     await user.type(within(dialog).getByLabelText(/Name/), 'CI key');
-    await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    let review = await screen.findByRole('alertdialog', { name: 'Create a platform key?' });
-    expect(body).toEqual({});
-    expect(within(review).getByText(/all organizations in Live mode/)).toBeInTheDocument();
-    await user.click(within(review).getByRole('button', { name: 'Cancel' }));
-    expect(within(dialog).getByLabelText(/Name/)).toHaveValue('CI key');
+    await next(user, dialog);
+    expect(await within(dialog).findByRole('heading', { name: 'What it can do' })).toHaveFocus();
     expect(within(dialog).getByRole('checkbox', { name: 'Read passes' })).toBeChecked();
+    expect(within(dialog).queryByRole('checkbox', { name: 'Scan as a terminal' })).toBeNull();
+    expect(within(dialog).getByRole('checkbox', { name: 'Manage webhooks' })).toBeInTheDocument();
+    await next(user, dialog);
+    expect(
+      await within(dialog).findByRole('heading', { name: 'Where it works' }),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24{Enter}');
+    expect(
+      within(dialog).getByRole('button', { name: 'Remove 203.0.113.0/24' }),
+    ).toBeInTheDocument();
+    await next(user, dialog);
+    expect(await within(dialog).findByText('Platform: all organizations')).toBeInTheDocument();
     expect(body).toEqual({});
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    review = await screen.findByRole('alertdialog', { name: 'Create a platform key?' });
-    await user.click(within(review).getByRole('button', { name: 'Create key' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Edit basics' }));
+    expect(within(dialog).getByLabelText(/Name/)).toHaveValue('CI key');
+    await toReview(user, dialog);
+    expect(within(dialog).getByText('203.0.113.0/24')).toBeInTheDocument();
+    expect(body).toEqual({});
+    await createKey(user, dialog);
     await waitFor(() => expect(body.name).toBe('CI key'));
     expect(body.scopes).toEqual(['passes:read']);
     expect(body.ipAllow).toEqual(['203.0.113.0/24']);
@@ -229,16 +244,20 @@ describe('api keys page', () => {
     expect(screen.queryByText('All modes')).toBeNull();
     expect(within(dialog).getByText('North')).toBeInTheDocument();
     await user.type(within(dialog).getByLabelText(/Name/), 'Org integration');
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Scan as a terminal' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    expect(await within(dialog).findByText('Pick at least one terminal.')).toBeInTheDocument();
+    await next(user, dialog);
+    await user.click(await within(dialog).findByRole('checkbox', { name: 'Scan as a terminal' }));
+    expect(within(dialog).getByRole('button', { name: 'Next' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     expect(within(dialog).queryByRole('checkbox', { name: 'Old till' })).toBeNull();
     await user.click(await within(dialog).findByRole('checkbox', { name: 'Front till' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    const review = await screen.findByRole('alertdialog', { name: 'Review service key' });
-    expect(within(review).getByText(/bound to North in Live mode/)).toBeInTheDocument();
+    await next(user, dialog);
+    await next(user, dialog);
+    expect(await within(dialog).findByText('Service')).toBeInTheDocument();
+    expect(within(dialog).getByText('North')).toBeInTheDocument();
     expect(body).toEqual({});
-    await user.click(within(review).getByRole('button', { name: 'Create key' }));
+    await createKey(user, dialog);
     await waitFor(() => expect(body.orgId).toBe('o1'));
     expect(body.scopes).toEqual(['passes:read', 'scans:write']);
     expect(body.terminalIds).toEqual(['t1']);
@@ -317,19 +336,16 @@ describe('api keys page', () => {
       await screen.findByText(/^No (active )?API keys$/);
       await user.click(screen.getByRole('button', { name: 'New API key' }));
       const dialog = await screen.findByRole('dialog');
+      await user.type(within(dialog).getByLabelText(/Name/), 'T');
+      await next(user, dialog);
+      await next(user, dialog);
       // The mode is shown, not offered: the server gives a key the console's mode.
       expect(
         within(dialog).getByText(/Test passes\. Their emails stay in the Test inbox/),
       ).toBeInTheDocument();
-      expect(within(dialog).queryByRole('combobox', { name: /Mode/ })).not.toBeInTheDocument();
-      await user.type(within(dialog).getByLabelText(/Name/), 'T');
-      await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-      await user.click(
-        within(await screen.findByRole('alertdialog', { name: 'Review service key' })).getByRole(
-          'button',
-          { name: 'Create key' },
-        ),
-      );
+      expect(within(dialog).queryByRole('radiogroup', { name: 'Mode' })).not.toBeInTheDocument();
+      await next(user, dialog);
+      await createKey(user, dialog);
       await waitFor(() => expect(body.mode).toBe('test'));
       expect(sentMode).toBe('test');
     } finally {
@@ -360,13 +376,13 @@ describe('api keys page', () => {
     await user.click(screen.getByRole('button', { name: 'New API key' }));
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Name/), 'P');
-    await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');
-    await user.click(within(dialog).getByRole('combobox', { name: /Mode/ }));
-    await user.click(await screen.findByRole('option', { name: 'Test' }));
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    const review = await screen.findByRole('alertdialog', { name: 'Create a platform key?' });
-    expect(within(review).getByText(/all organizations in Test mode/)).toBeInTheDocument();
-    await user.click(within(review).getByRole('button', { name: 'Create key' }));
+    await next(user, dialog);
+    await next(user, dialog);
+    await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24{Enter}');
+    await user.click(within(dialog).getByRole('radio', { name: 'Test' }));
+    await next(user, dialog);
+    expect(await within(dialog).findByText('Test')).toBeInTheDocument();
+    await createKey(user, dialog);
     await waitFor(() => expect(body.mode).toBe('test'));
     expect(sentMode).toBe('test');
     expect(body.orgId).toBeNull();
@@ -391,13 +407,11 @@ describe('api keys page', () => {
       await user.click(screen.getByRole('button', { name: 'New API key' }));
       const dialog = await screen.findByRole('dialog');
       await user.type(within(dialog).getByLabelText(/Name/), 'P');
-      await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');
-      await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-      await user.click(
-        within(
-          await screen.findByRole('alertdialog', { name: 'Create a platform key?' }),
-        ).getByRole('button', { name: 'Create key' }),
-      );
+      await next(user, dialog);
+      await next(user, dialog);
+      await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24{Enter}');
+      await next(user, dialog);
+      await createKey(user, dialog);
       await waitFor(() => expect(sentMode).not.toBe('unset'));
       expect(sentMode).not.toBe('test');
     } finally {
@@ -420,16 +434,18 @@ describe('api keys page', () => {
     await user.click(screen.getByRole('button', { name: 'New API key' }));
     const dialog = await screen.findByRole('dialog');
     await user.type(within(dialog).getByLabelText(/Name/), 'x');
-    await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24');
-    await user.click(within(dialog).getByRole('button', { name: 'Create' }));
-    await user.click(
-      within(await screen.findByRole('alertdialog', { name: 'Create a platform key?' })).getByRole(
-        'button',
-        { name: 'Create key' },
-      ),
-    );
+    await next(user, dialog);
+    await next(user, dialog);
+    await user.type(within(dialog).getByLabelText(/Allowed IPs/), '203.0.113.0/24{Enter}');
+    await next(user, dialog);
+    await createKey(user, dialog);
     expect(await within(dialog).findByText('A key with this name exists.')).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Edit basics' }));
     expect(within(dialog).getByLabelText(/Name/)).toHaveValue('x');
+    // Every later step is still valid: the primary goes straight back to Review.
+    await next(user, dialog);
+    await within(dialog).findByRole('heading', { name: 'Check and create' });
+    await user.click(within(dialog).getByRole('button', { name: 'Edit access' }));
     expect(within(dialog).getByRole('checkbox', { name: 'Read passes' })).toBeChecked();
   });
 

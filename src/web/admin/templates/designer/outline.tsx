@@ -12,6 +12,7 @@ import {
   fieldsOf,
   type GroupId,
   groupsFor,
+  legacyStyleOf,
   listCount,
   type Section,
   sectionLabel,
@@ -91,8 +92,8 @@ const filledSlots = (assets: readonly DraftAsset[]): number =>
 /** The structure of the template: one section per concern; the open one is its inspector. */
 export function Outline() {
   const { doc } = useDesigner();
-  const style = styleOf(doc.passJson);
-  const groups = groupsFor(style);
+  const style = legacyStyleOf(doc.passJson);
+  const groups = groupsFor(styleOf(doc.passJson, doc.target));
   let n = 0;
   const next = () => n++;
   return (
@@ -119,7 +120,12 @@ export function Outline() {
           <CountersSection />
         </Disclosure>
         {groups.map((g: GroupId) => (
-          <Disclosure key={g} section={g} index={next()} count={fieldsOf(doc.passJson, g).length}>
+          <Disclosure
+            key={g}
+            section={g}
+            index={next()}
+            count={fieldsOf(doc.passJson, g, doc.target).length}
+          >
             <FieldsSection group={g} />
           </Disclosure>
         ))}

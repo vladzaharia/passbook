@@ -13,6 +13,7 @@ import {
   setFillingGrayscaleColor,
 } from 'pdf-lib';
 import type { PaperSpec } from '../../../passkit/template/paper.ts';
+import { codeSymbolMm } from '../../../passkit/template/paper-geometry-sizes.ts';
 import type { PaperDrawing } from '../../../web/paper/drawing.ts';
 import type { Box, Pen } from './pdf-kit.ts';
 
@@ -23,7 +24,7 @@ const NUMBER_PAIR = /(-?[\d.]+)[ ,](-?[\d.]+)/g;
 
 /** The code's size in mm: the symbol alone is `qrMm` or `barMm` wide, the quiet zone is extra. */
 export function codeMm(spec: PaperSpec, drawing: PaperDrawing): { w: number; h: number } {
-  const symbolMm = drawing.kind === 'qr' ? spec.qrMm : spec.barMm;
+  const symbolMm = codeSymbolMm(spec, drawing.kind);
   const w = (symbolMm * drawing.whole) / drawing.symbol;
   return { w, h: drawing.kind === 'qr' ? w : Math.max(13, symbolMm * 0.22) };
 }

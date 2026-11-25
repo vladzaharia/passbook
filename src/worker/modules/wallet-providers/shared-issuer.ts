@@ -9,7 +9,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
-import { credentialDto, orgWriter, save } from './credential-service.ts';
+import { orgWriter, save, withLastCheck } from './credential-service.ts';
 import { readGoogleSecret } from './credential-system-save.ts';
 import { isGoogleIssuerId } from './google-credentials.ts';
 import { GoogleWalletError } from './google-errors.ts';
@@ -78,7 +78,7 @@ export async function shareGoogleIssuer(
         'This organization already has a Google issuer.',
         'WALLET_ISSUER_EXISTS',
       );
-    return { credential: credentialDto(current), serviceAccountEmail: email };
+    return { credential: await withLastCheck(ctx, orgId, current), serviceAccountEmail: email };
   }
   await proveOwnership(ctx, access.accessToken, orgId, issuerId);
   await claimIssuer(ctx, { issuerId, orgId, origin: 'shared', owned: true });
@@ -89,7 +89,7 @@ export async function shareGoogleIssuer(
     { provider: 'google', expectedRevision: 0, credentials: secret },
     { provenance: 'own', signerRef: access.credential.id },
   );
-  return { credential: credentialDto(row), serviceAccountEmail: email };
+  return { credential: await withLastCheck(ctx, orgId, row), serviceAccountEmail: email };
 }
 
 /**

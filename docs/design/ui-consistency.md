@@ -113,7 +113,7 @@ No margin hacks (`mt-[…]`) to align controls; use the kit patterns below.
 | Detail (org, user, identity, connection, status) | `TwoPane`: main column + 20rem aside at ≥1280 (summary, counts, danger actions); stacked below |
 | Wizard (new pass, new connection) | Full width, Stepper on top, same width on every step; aside (live preview or summary) at ≥1024; `WizardBar` sticky at the bottom |
 | Upload template | Full width; drop zone and fields left, checklist and report right at ≥1024 |
-| Dialogs | `sm` 384 confirms, `md` 512 forms, `lg` 768 uploads and editors; bottom sheets <640 |
+| Dialogs | `sm` 384 confirms, `md` 512 forms, `lg` 768 uploads and editors, `xl` 896 multi-step dialogs with a side rail (`WizardDialog` only; full screen <640); bottom sheets <640 |
 | Portal | `max-w-5xl`; My passes 1 / 2 / 3 columns (<640 / ≥640 / ≥1024); pass detail two columns at ≥1024, the pass sticky at the left; account cards cap at 48rem |
 | Login and SSR auth pages | `max-w-sm` card, centred |
 | Public pass page | `max-w-5xl` like the portal; the portal's header and pass view (`HolderHeading`, `HolderPassView`): one column, two at ≥1024 (pass left; right: notice, the one lead card, the other ways as a quiet list, the details, help). No section labels, one card per job, no card flip (the details list is the one details) |
@@ -258,6 +258,43 @@ health items):
 - Choices are `OptionTile`s (icon, name, one-line description). Enter or double-click advances.
 - Review is a key-value summary with an `Edit` link per section.
 
+#### Wizard dialogs (`WizardDialog`, `useWizard`)
+
+One kit family in `ui/wizard/*` and `ui/step-marker.tsx`; the New API key dialog is the reference
+adopter.
+
+- Frame: `xl` dialog, constant title. A frame 43.5rem wide or more (a container query on the
+  dialog body, not the viewport) shows the rail: markers down the side, what was chosen under a
+  done step. Narrower: `Step 2 of 4 · Access` over a 2px bar. Full screen under 640.
+- Step: rail title is a noun; the heading is an instruction of four words or fewer, no period; the
+  hint on a blocked Next is four words or fewer with a period. Finish label is a verb and a noun.
+- Next is never hard-disabled for an incomplete step: `aria-disabled`, focusable, hint as its
+  description. A press (or Enter) shows the step's errors, focuses the first and announces the
+  count, or the hint when no field is at fault. `disabled` is for busy only. There is no hidden
+  submit button: the footer's primary is the form's default button, and Enter cannot send twice.
+- The step that finishes answers for every step. If an earlier step has turned invalid, Create
+  refuses, jumps to the first one and shows its errors. A forward jump (rail, `go`) from a step
+  with errors is refused the same way.
+- A passed step stays done. After `Edit` from Review the primary reads `Review` and goes straight
+  back while every later step is still valid.
+- A step change scrolls the dialog body to the top and focuses the heading.
+- Server errors: field errors jump to the earliest step that owns a field (`fieldStep`) and mark
+  it invalid. A field no step owns, or one the step draws no control for, shows as one line at the
+  foot of the step. Typing in the form clears the server errors of the fields the step owns (and of
+  the input's `name`); call `clearServer(field)` only from a custom control that fires no input event.
+- Review (`WizardReview`) comes before the finish, with a note only for a consequence; a section
+  takes `edit: false` when the scope fixes it. A reveal (secret, link, QR) is the `result`
+  (`{ title, icon, body }`): the dialog narrows to `md`, takes the title, drops the X, focuses the
+  title and ignores Esc and outside clicks. Both shells use `ResultDialogContent`.
+- Edit mode (`mode: 'edit'`): every step is reachable, Save is blocked with `No changes.` until
+  `dirty`, and a blocked hint names the step that owns the error ("Limits: Fix the IPs."). `notice`
+  puts a warning Callout at the top of the step.
+- `onClose` runs each time the dialog closes, however it closed (Cancel, X, Esc, a Done button, the
+  parent). The wizard resets as the dialog opens again, so the closing frames keep their step.
+- `FormDialog` is the shell for one-form dialogs (`sm`, `md`, `lg`; never `xl`): Cancel and the
+  primary in the footer, field errors under their fields, one line for the rest, `onClose` and a
+  reset on close. It takes the same `result` and `notice`.
+
 ## Status pills
 
 Icon + Title Case text, always from `src/web/lib/status.ts`. Never render a raw enum.
@@ -330,6 +367,13 @@ Action icons (`src/web/lib/action-icons.ts`):
   one action. Inside a card: `inline` (no border, 64×48 art, one line). Navigation actions are
   outline; only create is primary.
 - Filtered: the entity art dimmed with the lens over it, `No <things> match`, `Clear filters`.
+- No organization: `/admin` and every org-scoped page render the one `OrgChooser`
+  (`ui/layout/org-chooser.tsx`), never an empty state of their own. A raised band with the title
+  (and `Find an organization` past six), the buddy (M) on its foil edge, then the organizations as
+  badges: the org's hue band and mark, the name, your roles, `Last used` first. Choosing one opens
+  the same section there, else the first its roles open. Platform admins also get a Platform card.
+  Arrow keys move through the grid; Down from the filter enters it, Enter opens the first match.
+  Developer sandboxes are not offered. In a tab, `inline` (an h2, no buddy).
 - Truly empty list: the empty state holds the only primary; the header create turns outline and
   the toolbar hides.
 - One state language in the SPA and on SSR pages (`StateArt`, `ui/art/state-art.tsx`); ways back
@@ -498,7 +542,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Layout | `TwoPane aside asideFrom='xl'\|'lg' stickyAside`; `FormGrid` + `FormSpan full`; `FieldGroup title onlyFieldLabel` |
 | Forms | `useFormErrors(found)` + `Form id {...check.form} onValid` (errors on submit, then live; blocked submit: focus, scroll, one polite summary); `FormField label required error help`; `NumberField unit`; `DateTimeField clearLabel defaultZone` |
 | Choices | `SegmentedControl label options value onValueChange`; `OptionTile` (Enter or double-click commits); `EntityPicker kind` |
-| Wizards | `Wizard steps current onStep aside onCancel onBack onNext formId nextLabel busy`; the page owns `useUnsavedChangesGuard` |
+| Wizards | Page: `Wizard steps current onStep aside onCancel onBack onNext formId nextLabel busy`; the page owns `useUnsavedChangesGuard`. Dialog: `useWizard({ steps, errors, hints, fieldStep, onFinish, open })` + `WizardDialog wizard title finishLabel result`; `WizardReview sections onEdit note`; `WizardResult title icon`; `StepMarker` / `StepList`; `FormDialog title onSubmit submitLabel check` |
 | Confirms | `ConfirmDialog`; `DiscardDialog` (unsaved changes); `Dialog dirty`; `TypedConfirmDialog word={confirmWord({ title, slug })}`; `SecretReveal fields onDone` |
 | Notes | `Callout tone title items actions` |
 | Identity | `EntityAvatar kind id name accent size`; `EntityChip kind id name to`; `EntityIcon kind` |
@@ -510,7 +554,7 @@ Everything is exported from `src/web/ui/index.ts`; registries and hooks live in 
 | Pass toggles | `PassSideToggle` (`Front` / `Details`); `PassTargetToggle` (`iOS 27` / `iOS 26 and earlier`), shown only when `usePassFacesDiffer(passJson)` |
 | Motion hooks | `useArrivalMode`, `useInsertHighlight(ids)`, `removeWithTransition(update)` (`lib/motion.ts`) |
 | Offline | `useOnline()` (`lib/online.ts`); the shells mount `OfflineBanner`; an unloaded route chunk offline renders the route error inside the shell (`lib/offline-routes.ts`) |
-| Org scope | the path names it: `useAdminScope()`, `useOrgScope()` (`lib/org-filter.tsx`); `switchTarget`/`withOrg` (`lib/scope.ts`); no `orgId` search param |
+| Org scope | the path names it: `useAdminScope()`, `useOrgScope()` (`lib/org-filter.tsx`); `switchTarget`/`withOrg` (`lib/scope.ts`); no `orgId` search param; `OrgChooser next? title? inline?` when a page has none |
 | Shell | `AppShell bar sidebar? width holder` (`ui/layout/app-shell.tsx`); `UserMenu` (the one account menu); `useDocumentTitle` (`lib/route-focus.tsx`) |
 | Theme | `useTheme()`; `THEME_OPTIONS` (menu and palette), `THEME_ICON`; `readPref`/`writePref` (`lib/theme.tsx`) |
 | Palette | `usePalette()?.open()` opens the admin palette (null outside the shell) |

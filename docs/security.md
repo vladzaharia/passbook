@@ -108,6 +108,8 @@ Each shows on the admin status page.
 | KEK | Secrets cannot be read or written | `build`, probe errors |
 | Magic-link daily cap | Sends dropped, `auth.magic_daily_cap` logged | `email` (degraded at 80 %, failing at cap) |
 
+The Request access form (`POST /access`) mails PassBook's own inbox (`ACCESS_REQUEST_EMAIL`). A missing `EMAIL` binding, an invalid recipient or a failed send answers 503 `ACCESS_MAIL_UNAVAILABLE` and logs `marketing.access_unconfigured` or `marketing.access_failed`; it never answers success without sending. The one exception is the honeypot field, which answers success and sends nothing (`marketing.access_trap`).
+
 Magic-link sends are also capped per address (5/h), per network (30/day) and, for verification mail, per signed-in user (10/day).
 
 ## Hosts
@@ -115,6 +117,7 @@ Magic-link sends are also capped per address (5/h), per network (30/day) and, fo
 - Only `PUBLIC_BASE_URL`'s origin (`passbook.mobile`) serves the app and sets cookies. Sessions and sign-in bindings are host-only `__Host-` cookies there.
 - A `REDIRECT_HOSTS` host (`wallet.plrs.im`) only answers 308 to the same path and query on the canonical origin, uncached. It runs no route, so it sets no cookie and serves no API.
 - Any other host gets 421 and logs `host.refused`, so a stray route or a `workers.dev` URL cannot serve the app under another origin. Plain http on the canonical host gets a 308 to https.
+- The public site's pages (`/`, `/door`, `/blueprints`, `/build`, `/access`) carry their own CSP (`marketingContentSecurityPolicy`): no inline script or style element, same-origin only, Trusted Types limited to the `passbook-marketing` policy. `POST /access` is same-origin only, capped at 4 KB, and limited per network (5 a minute, `RL_ACCESS`) and overall (30 a minute, `RL_ACCESS_ALL`). It takes no Turnstile: the only recipient is our own inbox. Logs hold the purpose and field paths, never a name, address, organization or message.
 - Files `public/` ships are served by the asset layer on every attached host. They are public by design.
 
 ## Personalization
@@ -139,8 +142,8 @@ Magic-link sends are also capped per address (5/h), per network (30/day) and, fo
 
 ## Sign-in
 
-- `oidc.trustEmail` is off by default. When on, it applies only if Pocket ID sends `email_verified=true`. Otherwise the address is proven by mail before any account is made or linked. After the proof the browser goes back through Pocket ID, so the first session carries the group roles. Set `oidc.trustEmail` only if the provider verifies emails. The status `oidc` component is degraded while it is on. Trade-off: on, a Pocket ID user whose email matches an account links at once, and a new subject's first sign-in needs no mail.
-- Ownership of an address is a `user_emails` row (or a primary email on an account with no Pocket ID identity). A primary email on a provider account is a claim: a mailbox proof never merges into it. The proof gets its own account and the claimant keeps its sign-in with a placeholder `<id>@unverified.invalid` primary (`auth.primary_email_unproven`). `isOwnedByOther` ignores such claims.
+- `oidc.trustEmail` is off by default. When on, it applies only if Polaris ID sends `email_verified=true`. Otherwise the address is proven by mail before any account is made or linked. After the proof the browser goes back through Polaris ID, so the first session carries the group roles. Set `oidc.trustEmail` only if the provider verifies emails. The status `oidc` component is degraded while it is on. Trade-off: on, a Polaris ID user whose email matches an account links at once, and a new subject's first sign-in needs no mail.
+- Ownership of an address is a `user_emails` row (or a primary email on an account with no Polaris ID identity). A primary email on a provider account is a claim: a mailbox proof never merges into it. The proof gets its own account and the claimant keeps its sign-in with a placeholder `<id>@unverified.invalid` primary (`auth.primary_email_unproven`). `isOwnedByOther` ignores such claims.
 - Addresses proven while `oidc.trustEmail` was on keep counting as verified after it is turned off; turning it off does not unprove them.
 - Unverified-primary accounts show as "No verified email" (session, admin lists, scanner admin names, verify mail). A claimant is refused when disabled, keeps its account when the proving browser is signed in as it, and is otherwise released once (`auth.primary_email_unproven`). Identity-proof mails are capped per network, per subject and per address. Pre-existing rows were handled at the 2026-11-18 cutover.
 - A platform admin naming an address for a user sends a verification link (`user.email_proof_requested`); the address joins the account, and waiting passes attach, only when the user follows it signed in.
@@ -164,14 +167,14 @@ Org names and the sender name reject controls, line separators and bidi marks at
 ## Owner actions
 
 - Keep NFC off on every signing identity until the personalization fix is deployed.
-- Pocket ID: stop users editing their own email. Decide whether to turn `oidc.trustEmail` back on.
+- Polaris ID: stop users editing their own email. Decide whether to turn `oidc.trustEmail` back on.
 - Break-glass: delete `BREAKGLASS_TOKEN_SHA256` while unneeded, or put Cloudflare Access or a WAF IP rule in front of `/auth/breakglass*`. Keep `.secrets/breakglass-token` offline.
 - After deploy, open the status page: `ratelimits` shows every `RL_*` present; `turnstile` and `breakglass` read as expected.
 - GitHub: default workflow permissions read-only, Dependabot alerts and security updates on, `main` protected with the `ci` check required.
-- Admin offboarding: remove the user from `wallet_admins` in Pocket ID and revoke their sessions (Admin > Users > Revoke sessions). The role snapshot lasts up to 1 h idle and 12 h absolute.
+- Admin offboarding: remove the user from `wallet_admins` in Polaris ID and revoke their sessions (Admin > Users > Revoke sessions). The role snapshot lasts up to 1 h idle and 12 h absolute.
 - Offboarding also revokes organization memberships: each org's Members list, or `DELETE /api/v1/orgs/{id}/memberships/{membershipId}` (`org_admin`, or a platform admin acting as one). A removed `wallet_admins` group does not remove a membership, and a member keeps tenant access until revoked. Revoke the person's API keys and pending invitations in the same pass.
-- Role changes in Pocket ID reach a live session only when it ends. A Polaris ID session for a non-admin lasts 7 days idle and 30 days absolute, an admin's 1 h and 12 h. Back-channel logout (Pocket ID P6) is the fix; until then revoke sessions by hand.
-- `OIDC_REQUIRE_AMR` ships empty. Set it to `phr` once Pocket ID 2.19.3 or later is confirmed to emit `amr`, and keep emailed login codes off in Pocket ID until then: with them on, mailbox access makes a strong session. See `docs/operations.md`.
+- Role changes in Polaris ID reach a live session only when it ends. A Polaris ID session for a non-admin lasts 7 days idle and 30 days absolute, an admin's 1 h and 12 h. Back-channel logout (Polaris ID P6) is the fix; until then revoke sessions by hand.
+- `OIDC_REQUIRE_AMR` ships empty. Set it to `phr` once Polaris ID 2.19.3 or later is confirmed to emit `amr`, and keep emailed login codes off in Polaris ID until then: with them on, mailbox access makes a strong session. See `docs/operations.md`.
 - Platform API keys made before 0142 have no expiry or IP list. They keep working and log `API_KEY_PLATFORM_UNBOUNDED` on each use; the console shows "No expiry". Revoke and reissue them. New platform keys need an expiry of 90 days or less and an IP list.
 - A platform key cannot act in a personal organization, and only its owner exports it. A platform admin may still close or reopen one. Reads of a personal organization's passes by a platform key are not blocked yet.
 - An org export link lasts 1 hour and works once. Pass and bundle links go to another address only when an org admin sends them.

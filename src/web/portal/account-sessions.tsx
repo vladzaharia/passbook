@@ -86,7 +86,7 @@ export function SessionsSection() {
         confirmLabel="Sign out"
         destructive
         onConfirm={async () => {
-          // One call ends every session and leaves through Pocket ID like a single sign-out.
+          // One call ends every session and leaves through Polaris ID like a single sign-out.
           signOutEverywhere(await endSession(authed?.csrfToken, { everywhere: true }));
         }}
       />

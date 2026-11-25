@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { ChevronRight, FlaskConical, Package, Plus } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { pluralize } from '@/web/lib/format.ts';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { ENTITY } from '../../lib/entities.ts';
 import { setMode, useMode } from '../../lib/mode.ts';
 import { useOrgScope } from '../../lib/org-filter.tsx';
@@ -78,6 +79,7 @@ export function InboxPage({
   const rows = canRead && mode === 'test' ? (list.data?.pages.flatMap((p) => p.items) ?? []) : [];
   const now = useNow();
 
+  if (mode === 'test' && !orgId) return <OrgChooser />;
   return (
     <>
       <PageHeader
@@ -102,8 +104,6 @@ export function InboxPage({
             </Button>
           }
         />
-      ) : !orgId ? (
-        <EmptyState art="envelope" title="Choose an organization" />
       ) : !canRead ? (
         <SkeletonRows label="Loading test inbox" />
       ) : list.isError ? (

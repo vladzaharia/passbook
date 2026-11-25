@@ -46,7 +46,7 @@ register(
   {
     method: 'get',
     path: '/oidc/client-metadata.json',
-    summary: 'Client ID Metadata Document for Pocket ID (when OIDC_CLIENT_ID is its URL)',
+    summary: 'Client ID Metadata Document for Polaris ID (when OIDC_CLIENT_ID is its URL)',
   },
   clientMetadataDocument,
 );

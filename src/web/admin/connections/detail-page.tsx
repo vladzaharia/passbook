@@ -1,12 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
+import { OrgChooser } from '@/web/ui/layout/org-chooser.tsx';
 import { useOrgScope, useResourceOrg } from '../../lib/org-filter.tsx';
-import {
-  DetailNotFound,
-  detailError,
-  EmptyState,
-  PageHeader,
-  SkeletonDetail,
-} from '../../ui/index.ts';
+import { DetailNotFound, detailError, PageHeader, SkeletonDetail } from '../../ui/index.ts';
 import { connectionDetailQuery } from './api.ts';
 import { ConnectionDetail } from './detail-content.tsx';
 import type { ConnectionDetailSearch } from './search.ts';
@@ -74,12 +69,7 @@ function ConnectionDetailLoader({
     });
   }
   if (resourceScope === 'choose-org') {
-    return (
-      <>
-        <PageHeader title="Connection" breadcrumbs={crumbs} />
-        <EmptyState art="building" title="Choose an organization" />
-      </>
-    );
+    return <OrgChooser />;
   }
   if (
     scope.isLoading ||
