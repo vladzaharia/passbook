@@ -16,20 +16,20 @@
     "note": "Organizations carry personal: true for a personal org."
   },
   {
-    "key": "DELETE /api/v1/connections/uploads/{fileId} new operation",
-    "class": "additive",
-    "operationId": "connections.deleteConnectionsUploadsByFileId",
-    "op": "DELETE /api/v1/connections/uploads/{fileId}",
-    "change": "new operation",
-    "note": "Discard a draft upload and its stored file."
-  },
-  {
     "key": "DELETE /api/v1/connections/{id}/files/{fileId} new operation",
     "class": "additive",
     "operationId": "connections.deleteConnectionsByIdFilesByFileId",
     "op": "DELETE /api/v1/connections/{id}/files/{fileId}",
     "change": "new operation",
     "note": "Discard a pending revision and its stored file."
+  },
+  {
+    "key": "DELETE /api/v1/connections/uploads/{fileId} new operation",
+    "class": "additive",
+    "operationId": "connections.deleteConnectionsUploadsByFileId",
+    "op": "DELETE /api/v1/connections/uploads/{fileId}",
+    "change": "new operation",
+    "note": "Discard a draft upload and its stored file."
   },
   {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",
@@ -296,14 +296,6 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
-    "key": "GET /api/v1/connections/uploads/{fileId} new operation",
-    "class": "additive",
-    "operationId": "connections.getConnectionsUploadsByFileId",
-    "op": "GET /api/v1/connections/uploads/{fileId}",
-    "change": "new operation",
-    "note": "Read a draft upload."
-  },
-  {
     "key": "GET /api/v1/connections/{id} 200.runs[].passesCreated: field added",
     "class": "additive",
     "operationId": "connections.getConnectionsById",
@@ -358,6 +350,14 @@
     "op": "GET /api/v1/connections/{id}/runs",
     "change": "200.items[].recordsFailed: field added",
     "note": "Connection runs report passesCreated, passesVoided and recordsFailed; null on runs from before they were kept."
+  },
+  {
+    "key": "GET /api/v1/connections/uploads/{fileId} new operation",
+    "class": "additive",
+    "operationId": "connections.getConnectionsUploadsByFileId",
+    "op": "GET /api/v1/connections/uploads/{fileId}",
+    "change": "new operation",
+    "note": "Read a draft upload."
   },
   {
     "key": "GET /api/v1/connectors 200.items[].capabilities.upload: field added",
@@ -848,14 +848,6 @@
     "note": "Credentials carry lastCheck, the newest check of the current version ({ ok, code, at }), or null."
   },
   {
-    "key": "GET /api/v1/pass-imports/mappings new operation",
-    "class": "additive",
-    "operationId": "pass-imports.getPassImportsMappings",
-    "op": "GET /api/v1/pass-imports/mappings",
-    "change": "new operation",
-    "note": "Lists a template's saved column mappings."
-  },
-  {
     "key": "GET /api/v1/pass-imports/{id} 200.problems[].label: field added",
     "class": "additive",
     "operationId": "pass-imports.getPassImportsById",
@@ -896,6 +888,14 @@
     "note": "Each import row shows the fields it changes and what the pass would look like (changes, wouldBe)."
   },
   {
+    "key": "GET /api/v1/pass-imports/mappings new operation",
+    "class": "additive",
+    "operationId": "pass-imports.getPassImportsMappings",
+    "op": "GET /api/v1/pass-imports/mappings",
+    "change": "new operation",
+    "note": "Lists a template's saved column mappings."
+  },
+  {
     "key": "GET /api/v1/passes 200.count: field added",
     "class": "additive",
     "operationId": "passes.getPasses",
@@ -918,30 +918,6 @@
     "op": "GET /api/v1/passes",
     "change": "optional parameter query:count added",
     "note": "count=true adds the number of passes the filters match."
-  },
-  {
-    "key": "GET /api/v1/passes/bulk-runs/current new operation",
-    "class": "additive",
-    "operationId": "passes.getPassesBulkRunsCurrent",
-    "op": "GET /api/v1/passes/bulk-runs/current",
-    "change": "new operation",
-    "note": "GET /passes/bulk-runs/current reports the organization's running bulk run, or the last one to end within the hour."
-  },
-  {
-    "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
-    "class": "additive",
-    "operationId": "passes.getPassesBulkRunsById",
-    "op": "GET /api/v1/passes/bulk-runs/{id}",
-    "change": "new operation",
-    "note": "GET /passes/bulk-runs/{id} reports a bulk run's progress."
-  },
-  {
-    "key": "GET /api/v1/passes/views new operation",
-    "class": "additive",
-    "operationId": "passes.getPassesViews",
-    "op": "GET /api/v1/passes/views",
-    "change": "new operation",
-    "note": "GET /passes/views lists the saved views of the passes list."
   },
   {
     "key": "GET /api/v1/passes/{id}/channels 200.levels: field added",
@@ -974,6 +950,30 @@
     "op": "GET /api/v1/passes/{id}/prints",
     "change": "200.prints[].stale: field added",
     "note": "Prints report stale: true when the active print was made from a different drawing than the pass shows now."
+  },
+  {
+    "key": "GET /api/v1/passes/bulk-runs/{id} new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesBulkRunsById",
+    "op": "GET /api/v1/passes/bulk-runs/{id}",
+    "change": "new operation",
+    "note": "GET /passes/bulk-runs/{id} reports a bulk run's progress."
+  },
+  {
+    "key": "GET /api/v1/passes/bulk-runs/current new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesBulkRunsCurrent",
+    "op": "GET /api/v1/passes/bulk-runs/current",
+    "change": "new operation",
+    "note": "GET /passes/bulk-runs/current reports the organization's running bulk run, or the last one to end within the hour."
+  },
+  {
+    "key": "GET /api/v1/passes/views new operation",
+    "class": "additive",
+    "operationId": "passes.getPassesViews",
+    "op": "GET /api/v1/passes/views",
+    "change": "new operation",
+    "note": "GET /passes/views lists the saved views of the passes list."
   },
   {
     "key": "GET /api/v1/platform/apple-calls new operation",
@@ -1264,22 +1264,6 @@
     "note": "Additive: a template carries openReview, true while a review of its newest version waits for a peer."
   },
   {
-    "key": "GET /api/v1/templates/previews 200.items[].warnings[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.getTemplatesPreviews",
-    "op": "GET /api/v1/templates/previews",
-    "change": "200.items[].warnings[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
-    "key": "GET /api/v1/templates/uploads/{id} 200.report.issues[].fix: field added",
-    "class": "additive",
-    "operationId": "templates.getTemplatesUploadsById",
-    "op": "GET /api/v1/templates/uploads/{id}",
-    "change": "200.report.issues[].fix: field added",
-    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
-  },
-  {
     "key": "GET /api/v1/templates/{id} 200.openReview: field added",
     "class": "additive",
     "operationId": "templates.getTemplatesById",
@@ -1356,6 +1340,22 @@
     "class": "additive",
     "operationId": "templates.getTemplatesByIdVersionsByVersion",
     "op": "GET /api/v1/templates/{id}/versions/{version}",
+    "change": "200.report.issues[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "GET /api/v1/templates/previews 200.items[].warnings[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesPreviews",
+    "op": "GET /api/v1/templates/previews",
+    "change": "200.items[].warnings[].fix: field added",
+    "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
+  },
+  {
+    "key": "GET /api/v1/templates/uploads/{id} 200.report.issues[].fix: field added",
+    "class": "additive",
+    "operationId": "templates.getTemplatesUploadsById",
+    "op": "GET /api/v1/templates/uploads/{id}",
     "change": "200.report.issues[].fix: field added",
     "note": "A PLATFORM_BRANDING warning carries fix: { action: 'upload_logo' | 'upload_icon' }, one warning per placeholder image."
   },
@@ -1480,6 +1480,15 @@
     "note": "A change run's lock-screen text; {Label} tokens read each pass's new value (120 characters). Needs notify."
   },
   {
+    "key": "PATCH /api/v1/broadcasts/{id} body.target: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.patchBroadcastsById",
+    "op": "PATCH /api/v1/broadcasts/{id}",
+    "change": "body.target: unknown keys now refused",
+    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in.",
+    "unversioned": true
+  },
+  {
     "key": "PATCH /api/v1/broadcasts/{id} body.target.expectCount: optional input field added",
     "class": "additive",
     "operationId": "broadcasts.patchBroadcastsById",
@@ -1564,15 +1573,6 @@
     "op": "PATCH /api/v1/broadcasts/{id}",
     "change": "body.target.version: optional input field added",
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
-  },
-  {
-    "key": "PATCH /api/v1/broadcasts/{id} body.target: unknown keys now refused",
-    "class": "breaking",
-    "operationId": "broadcasts.patchBroadcastsById",
-    "op": "PATCH /api/v1/broadcasts/{id}",
-    "change": "body.target: unknown keys now refused",
-    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in.",
-    "unversioned": true
   },
   {
     "key": "PATCH /api/v1/connections/uploads/{fileId} new operation",
@@ -1919,6 +1919,15 @@
     "note": "A change run's lock-screen text; {Label} tokens read each pass's new value (120 characters). Needs notify."
   },
   {
+    "key": "POST /api/v1/broadcasts body.target: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcasts",
+    "op": "POST /api/v1/broadcasts",
+    "change": "body.target: unknown keys now refused",
+    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in.",
+    "unversioned": true
+  },
+  {
     "key": "POST /api/v1/broadcasts body.target.expectCount: optional input field added",
     "class": "additive",
     "operationId": "broadcasts.postBroadcasts",
@@ -2005,15 +2014,6 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
-    "key": "POST /api/v1/broadcasts body.target: unknown keys now refused",
-    "class": "breaking",
-    "operationId": "broadcasts.postBroadcasts",
-    "op": "POST /api/v1/broadcasts",
-    "change": "body.target: unknown keys now refused",
-    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in.",
-    "unversioned": true
-  },
-  {
     "key": "POST /api/v1/broadcasts clear follow-up covers unchanged passes",
     "class": "notable",
     "operationId": "broadcasts.postBroadcasts",
@@ -2052,6 +2052,86 @@
     "op": "POST /api/v1/broadcasts",
     "change": "request: templates resolve by the key mode release",
     "note": "A Test key reads templates at their Test release; with no release in the key mode and no active passes it is 404 TEMPLATE_NOT_FOUND."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/cancel 200.message: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdCancel",
+    "op": "POST /api/v1/broadcasts/{id}/cancel",
+    "change": "200.message: field added",
+    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/cancel 200.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdCancel",
+    "op": "POST /api/v1/broadcasts/{id}/cancel",
+    "change": "200.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/retry 201.message: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdRetry",
+    "op": "POST /api/v1/broadcasts/{id}/retry",
+    "change": "201.message: field added",
+    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/retry 201.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdRetry",
+    "op": "POST /api/v1/broadcasts/{id}/retry",
+    "change": "201.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/retry optional parameter query:expectCount added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdRetry",
+    "op": "POST /api/v1/broadcasts/{id}/retry",
+    "change": "optional parameter query:expectCount added",
+    "note": "A change run resumes over the passes it never changed: send the count it has left (409 SELECTION_CHANGED when it moved, 422 EXPECT_COUNT_REQUIRED without it)."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/send 200.message: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdSend",
+    "op": "POST /api/v1/broadcasts/{id}/send",
+    "change": "200.message: field added",
+    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/send 200.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdSend",
+    "op": "POST /api/v1/broadcasts/{id}/send",
+    "change": "200.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/stop 200.target.version: field added",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdStop",
+    "op": "POST /api/v1/broadcasts/{id}/stop",
+    "change": "200.target.version: field added",
+    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/stop new operation",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdStop",
+    "op": "POST /api/v1/broadcasts/{id}/stop",
+    "change": "new operation",
+    "note": "Stops a sending run after its current chunk; it ends cancelled with errorCode BROADCAST_STOPPED."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/{id}/undo new operation",
+    "class": "additive",
+    "operationId": "broadcasts.postBroadcastsByIdUndo",
+    "op": "POST /api/v1/broadcasts/{id}/undo",
+    "change": "new operation",
+    "note": "Undoes a change run for 24 hours: restores each input still at the value the run set, silently. Asking again returns the same undo."
   },
   {
     "key": "POST /api/v1/broadcasts/preview 200.blocked: field added",
@@ -2124,6 +2204,15 @@
     "op": "POST /api/v1/broadcasts/preview",
     "change": "body.patch: optional input field added",
     "note": "The change to preview: per input a value, or {set}, {clear}, {shift} or {add}."
+  },
+  {
+    "key": "POST /api/v1/broadcasts/preview body.target: unknown keys now refused",
+    "class": "breaking",
+    "operationId": "broadcasts.postBroadcastsPreview",
+    "op": "POST /api/v1/broadcasts/preview",
+    "change": "body.target: unknown keys now refused",
+    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in.",
+    "unversioned": true
   },
   {
     "key": "POST /api/v1/broadcasts/preview body.target.expectCount: optional input field added",
@@ -2212,15 +2301,6 @@
     "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
   },
   {
-    "key": "POST /api/v1/broadcasts/preview body.target: unknown keys now refused",
-    "class": "breaking",
-    "operationId": "broadcasts.postBroadcastsPreview",
-    "op": "POST /api/v1/broadcasts/preview",
-    "change": "body.target: unknown keys now refused",
-    "note": "A target key it does not define (status, holderEmail, templateId, ...) is 422 BROADCAST_UNSUPPORTED_FILTER, not dropped. Safety fix; no version opt-in.",
-    "unversioned": true
-  },
-  {
     "key": "POST /api/v1/broadcasts/preview request: templates resolve by the key mode release",
     "class": "notable",
     "operationId": "broadcasts.postBroadcastsPreview",
@@ -2229,92 +2309,36 @@
     "note": "Preview resolves templates by the key mode release, as create does."
   },
   {
-    "key": "POST /api/v1/broadcasts/{id}/cancel 200.message: field added",
-    "class": "additive",
-    "operationId": "broadcasts.postBroadcastsByIdCancel",
-    "op": "POST /api/v1/broadcasts/{id}/cancel",
-    "change": "200.message: field added",
-    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
-  },
-  {
-    "key": "POST /api/v1/broadcasts/{id}/cancel 200.target.version: field added",
-    "class": "additive",
-    "operationId": "broadcasts.postBroadcastsByIdCancel",
-    "op": "POST /api/v1/broadcasts/{id}/cancel",
-    "change": "200.target.version: field added",
-    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
-  },
-  {
-    "key": "POST /api/v1/broadcasts/{id}/retry 201.message: field added",
-    "class": "additive",
-    "operationId": "broadcasts.postBroadcastsByIdRetry",
-    "op": "POST /api/v1/broadcasts/{id}/retry",
-    "change": "201.message: field added",
-    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
-  },
-  {
-    "key": "POST /api/v1/broadcasts/{id}/retry 201.target.version: field added",
-    "class": "additive",
-    "operationId": "broadcasts.postBroadcastsByIdRetry",
-    "op": "POST /api/v1/broadcasts/{id}/retry",
-    "change": "201.target.version: field added",
-    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
-  },
-  {
-    "key": "POST /api/v1/broadcasts/{id}/retry optional parameter query:expectCount added",
-    "class": "additive",
-    "operationId": "broadcasts.postBroadcastsByIdRetry",
-    "op": "POST /api/v1/broadcasts/{id}/retry",
-    "change": "optional parameter query:expectCount added",
-    "note": "A change run resumes over the passes it never changed: send the count it has left (409 SELECTION_CHANGED when it moved, 422 EXPECT_COUNT_REQUIRED without it)."
-  },
-  {
-    "key": "POST /api/v1/broadcasts/{id}/send 200.message: field added",
-    "class": "additive",
-    "operationId": "broadcasts.postBroadcastsByIdSend",
-    "op": "POST /api/v1/broadcasts/{id}/send",
-    "change": "200.message: field added",
-    "note": "A change run's lock-screen text, with its {Label} tokens. Null for a message."
-  },
-  {
-    "key": "POST /api/v1/broadcasts/{id}/send 200.target.version: field added",
-    "class": "additive",
-    "operationId": "broadcasts.postBroadcastsByIdSend",
-    "op": "POST /api/v1/broadcasts/{id}/send",
-    "change": "200.target.version: field added",
-    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
-  },
-  {
-    "key": "POST /api/v1/broadcasts/{id}/stop 200.target.version: field added",
-    "class": "additive",
-    "operationId": "broadcasts.postBroadcastsByIdStop",
-    "op": "POST /api/v1/broadcasts/{id}/stop",
-    "change": "200.target.version: field added",
-    "note": "A message can target one template's passes on a given version (or an equivalent build) with target.version."
-  },
-  {
-    "key": "POST /api/v1/broadcasts/{id}/stop new operation",
-    "class": "additive",
-    "operationId": "broadcasts.postBroadcastsByIdStop",
-    "op": "POST /api/v1/broadcasts/{id}/stop",
-    "change": "new operation",
-    "note": "Stops a sending run after its current chunk; it ends cancelled with errorCode BROADCAST_STOPPED."
-  },
-  {
-    "key": "POST /api/v1/broadcasts/{id}/undo new operation",
-    "class": "additive",
-    "operationId": "broadcasts.postBroadcastsByIdUndo",
-    "op": "POST /api/v1/broadcasts/{id}/undo",
-    "change": "new operation",
-    "note": "Undoes a change run for 24 hours: restores each input still at the value the run set, silently. Asking again returns the same undo."
-  },
-  {
     "key": "POST /api/v1/connections body.fileId: optional input field added",
     "class": "additive",
     "operationId": "connections.postConnections",
     "op": "POST /api/v1/connections",
     "change": "body.fileId: optional input field added",
     "note": "fileId names the uploaded draft a file-upload connection starts from."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/files new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdFiles",
+    "op": "POST /api/v1/connections/{id}/files",
+    "change": "new operation",
+    "note": "Upload a new revision of a connection file. apply=true applies it and starts a sync. The same bytes as the current revision return unchanged: true."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/files/{fileId}/apply new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdFilesByFileIdApply",
+    "op": "POST /api/v1/connections/{id}/files/{fileId}/apply",
+    "change": "new operation",
+    "note": "Apply a pending revision (it becomes current) and start a sync."
+  },
+  {
+    "key": "POST /api/v1/connections/{id}/preview new operation",
+    "class": "additive",
+    "operationId": "connections.postConnectionsByIdPreview",
+    "op": "POST /api/v1/connections/{id}/preview",
+    "change": "new operation",
+    "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Needs connections:read and passes:read; writes nothing."
   },
   {
     "key": "POST /api/v1/connections/test-config 200.columns: field added",
@@ -2419,30 +2443,6 @@
     "op": "POST /api/v1/connections/uploads",
     "change": "new operation",
     "note": "Upload a CSV, Excel or JSON file as a draft: returns its columns, a preview and ID column candidates. Draft files last 23 hours. Takes Idempotency-Key."
-  },
-  {
-    "key": "POST /api/v1/connections/{id}/files new operation",
-    "class": "additive",
-    "operationId": "connections.postConnectionsByIdFiles",
-    "op": "POST /api/v1/connections/{id}/files",
-    "change": "new operation",
-    "note": "Upload a new revision of a connection file. apply=true applies it and starts a sync. The same bytes as the current revision return unchanged: true."
-  },
-  {
-    "key": "POST /api/v1/connections/{id}/files/{fileId}/apply new operation",
-    "class": "additive",
-    "operationId": "connections.postConnectionsByIdFilesByFileIdApply",
-    "op": "POST /api/v1/connections/{id}/files/{fileId}/apply",
-    "change": "new operation",
-    "note": "Apply a pending revision (it becomes current) and start a sync."
-  },
-  {
-    "key": "POST /api/v1/connections/{id}/preview new operation",
-    "class": "additive",
-    "operationId": "connections.postConnectionsByIdPreview",
-    "op": "POST /api/v1/connections/{id}/preview",
-    "change": "new operation",
-    "note": "Preview a sync: what the next sync would create, update or skip over 30 days of records. Needs connections:read and passes:read; writes nothing."
   },
   {
     "key": "POST /api/v1/developer/sandbox/reopen new operation",
@@ -2733,22 +2733,6 @@
     "note": "Presets starter and premium added. legacy is labelled Unlimited: label and presetLabel read \"Unlimited\"; its id is unchanged."
   },
   {
-    "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
-    "class": "additive",
-    "operationId": "organization-memberships.postOrgsInvitationsAccept",
-    "op": "POST /api/v1/orgs/invitations/accept",
-    "change": "200.personal: field added",
-    "note": "Organizations carry personal: true for a personal org."
-  },
-  {
-    "key": "POST /api/v1/orgs/invitations/accept 200.testOnly: field added",
-    "class": "additive",
-    "operationId": "organization-memberships.postOrgsInvitationsAccept",
-    "op": "POST /api/v1/orgs/invitations/accept",
-    "change": "200.testOnly: field added",
-    "note": "Memberships carry testOnly: true for a developer sandbox, which never holds Live."
-  },
-  {
     "key": "POST /api/v1/orgs/{id}/status 200.personal: field added",
     "class": "additive",
     "operationId": "orgs.postOrgsByIdStatus",
@@ -2845,6 +2829,22 @@
     "note": "Wallet credentials report provenance."
   },
   {
+    "key": "POST /api/v1/orgs/invitations/accept 200.personal: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsInvitationsAccept",
+    "op": "POST /api/v1/orgs/invitations/accept",
+    "change": "200.personal: field added",
+    "note": "Organizations carry personal: true for a personal org."
+  },
+  {
+    "key": "POST /api/v1/orgs/invitations/accept 200.testOnly: field added",
+    "class": "additive",
+    "operationId": "organization-memberships.postOrgsInvitationsAccept",
+    "op": "POST /api/v1/orgs/invitations/accept",
+    "change": "200.testOnly: field added",
+    "note": "Memberships carry testOnly: true for a developer sandbox, which never holds Live."
+  },
+  {
     "key": "POST /api/v1/pass-imports request.mapping: field added",
     "class": "additive",
     "operationId": "pass-imports.postPassImports",
@@ -2907,22 +2907,6 @@
     "op": "POST /api/v1/passes",
     "change": "idempotency-key reserved prefixes",
     "note": "Idempotency-Key cannot start with broadcast-create:, bulk-send: or rollout-tell: (422 IDEMPOTENCY_KEY_RESERVED)."
-  },
-  {
-    "key": "POST /api/v1/passes/bulk-runs new operation",
-    "class": "additive",
-    "operationId": "passes.postPassesBulkRuns",
-    "op": "POST /api/v1/passes/bulk-runs",
-    "change": "new operation",
-    "note": "POST /passes/bulk-runs voids, emails or removes every pass a filter matches, in the background. expectCount must equal the count, or 409 SELECTION_CHANGED."
-  },
-  {
-    "key": "POST /api/v1/passes/bulk-runs/{id}/stop new operation",
-    "class": "additive",
-    "operationId": "passes.postPassesBulkRunsByIdStop",
-    "op": "POST /api/v1/passes/bulk-runs/{id}/stop",
-    "change": "new operation",
-    "note": "POST /passes/bulk-runs/{id}/stop stops a bulk run after its current chunk."
   },
   {
     "key": "POST /api/v1/passes/{id}/print/drawn new operation",
@@ -2995,6 +2979,22 @@
     "op": "POST /api/v1/passes/{id}/void",
     "change": "200.matched: field added",
     "note": "Passes carry matched (input, value) when the list has a match filter."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk-runs new operation",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkRuns",
+    "op": "POST /api/v1/passes/bulk-runs",
+    "change": "new operation",
+    "note": "POST /passes/bulk-runs voids, emails or removes every pass a filter matches, in the background. expectCount must equal the count, or 409 SELECTION_CHANGED."
+  },
+  {
+    "key": "POST /api/v1/passes/bulk-runs/{id}/stop new operation",
+    "class": "additive",
+    "operationId": "passes.postPassesBulkRunsByIdStop",
+    "op": "POST /api/v1/passes/bulk-runs/{id}/stop",
+    "change": "new operation",
+    "note": "POST /passes/bulk-runs/{id}/stop stops a bulk run after its current chunk."
   },
   {
     "key": "POST /api/v1/platform/orgs/{orgId}/wallet-accounts/google/managed new operation",
@@ -3085,14 +3085,6 @@
     "note": "Callable with a live, org-bound scanning:admin key; the secret is in this answer only."
   },
   {
-    "key": "POST /api/v1/scan-staff/reset-untagged new operation",
-    "class": "additive",
-    "operationId": "scan-staff.postScanStaffResetUntagged",
-    "op": "POST /api/v1/scan-staff/reset-untagged",
-    "change": "new operation",
-    "note": "Admins ask everyone whose PIN predates PIN tags for a new PIN with POST /scan-staff/reset-untagged."
-  },
-  {
     "key": "POST /api/v1/scan-staff/{id}/reset-pin 200.pin: now nullable",
     "class": "notable",
     "operationId": "scan-staff.postScanStaffByIdResetPin",
@@ -3123,6 +3115,14 @@
     "op": "POST /api/v1/scan-staff/{id}/unlock-pin",
     "change": "new operation",
     "note": "Admins lift a staff member's daily PIN lock with POST /scan-staff/{id}/unlock-pin."
+  },
+  {
+    "key": "POST /api/v1/scan-staff/reset-untagged new operation",
+    "class": "additive",
+    "operationId": "scan-staff.postScanStaffResetUntagged",
+    "op": "POST /api/v1/scan-staff/reset-untagged",
+    "change": "new operation",
+    "note": "Admins ask everyone whose PIN predates PIN tags for a new PIN with POST /scan-staff/reset-untagged."
   },
   {
     "key": "POST /api/v1/scan/actions 200.exitAllowed: field added",
@@ -3429,6 +3429,70 @@
     "note": "Another mode's event is as good as unknown: no existence oracle."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.draftFailures: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.draftFailures: field added",
+    "note": "Devices report draftFailures, the customer-screen drafts that failed since the page loaded."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices body.overrides.follows: optional input field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "body.overrides.follows: optional input field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices callable by scanning:admin and scanning:write keys",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "callable by scanning:admin and scanning:write keys",
+    "note": "Callable with a live scanning:admin key (the code, once) or a scanning:write key (pairing: null, either mode)."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.draftFailures: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.draftFailures: field added",
+    "note": "Devices report draftFailures, the customer-screen drafts that failed since the page loaded."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.hardware: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.hardware: field added",
+    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",
+    "class": "additive",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].overrides.follows: field added",
+    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"capacity\" added",
     "class": "notable",
     "operationId": "scanners.postScanningSessionsSetup",
@@ -3539,70 +3603,6 @@
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "new operation",
     "note": "Set up scanning in one call: places, events, staff, sessions and devices."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.draftFailures: field added",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsByIdDevices",
-    "op": "POST /api/v1/scanning-sessions/{id}/devices",
-    "change": "201.capabilities.draftFailures: field added",
-    "note": "Devices report draftFailures, the customer-screen drafts that failed since the page loaded."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.hardware: field added",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsByIdDevices",
-    "op": "POST /api/v1/scanning-sessions/{id}/devices",
-    "change": "201.capabilities.hardware: field added",
-    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.overrides.follows: field added",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsByIdDevices",
-    "op": "POST /api/v1/scanning-sessions/{id}/devices",
-    "change": "201.overrides.follows: field added",
-    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/{id}/devices body.overrides.follows: optional input field added",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsByIdDevices",
-    "op": "POST /api/v1/scanning-sessions/{id}/devices",
-    "change": "body.overrides.follows: optional input field added",
-    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/{id}/devices callable by scanning:admin and scanning:write keys",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsByIdDevices",
-    "op": "POST /api/v1/scanning-sessions/{id}/devices",
-    "change": "callable by scanning:admin and scanning:write keys",
-    "note": "Callable with a live scanning:admin key (the code, once) or a scanning:write key (pairing: null, either mode)."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.draftFailures: field added",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsByIdHold",
-    "op": "POST /api/v1/scanning-sessions/{id}/hold",
-    "change": "200.devices[].capabilities.draftFailures: field added",
-    "note": "Devices report draftFailures, the customer-screen drafts that failed since the page loaded."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.hardware: field added",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsByIdHold",
-    "op": "POST /api/v1/scanning-sessions/{id}/hold",
-    "change": "200.devices[].capabilities.hardware: field added",
-    "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
-  },
-  {
-    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].overrides.follows: field added",
-    "class": "additive",
-    "operationId": "scanners.postScanningSessionsByIdHold",
-    "op": "POST /api/v1/scanning-sessions/{id}/hold",
-    "change": "200.devices[].overrides.follows: field added",
-    "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
     "key": "POST /api/v1/scans/{id}/undo 200.exitAllowed: field added",
@@ -4053,20 +4053,20 @@
     "note": "Saves a named column mapping for a template; the same name replaces it."
   },
   {
-    "key": "PUT /api/v1/passes/views new operation",
-    "class": "additive",
-    "operationId": "passes.putPassesViews",
-    "op": "PUT /api/v1/passes/views",
-    "change": "new operation",
-    "note": "PUT /passes/views replaces the saved views (at most 20)."
-  },
-  {
     "key": "PUT /api/v1/passes/{id}/channels 200.levels: field added",
     "class": "additive",
     "operationId": "passes.putPassesByIdChannels",
     "op": "PUT /api/v1/passes/{id}/channels",
     "change": "200.levels: field added",
     "note": "Each channel carries levels: the chain PassBook, Plan, Organization, Template (and This pass on a pass), with the level that stops it."
+  },
+  {
+    "key": "PUT /api/v1/passes/views new operation",
+    "class": "additive",
+    "operationId": "passes.putPassesViews",
+    "op": "PUT /api/v1/passes/views",
+    "change": "new operation",
+    "note": "PUT /passes/views replaces the saved views (at most 20)."
   },
   {
     "key": "PUT /api/v1/platform/entitlement-presets new operation",
