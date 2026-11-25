@@ -76,8 +76,10 @@ export default function VersionSheet({ kind, onClose, ...rest }: Props) {
   const title = `${rest.name(rest.version.version)} ${kind === 'compare' ? 'changes' : 'details'}`;
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
-      <SheetContent title={title} side="right">
-        {kind === 'compare' ? <Compare {...rest} /> : <Details {...rest} />}
+      <SheetContent title={title} side="right" className="sm:w-[26rem]">
+        <div className="p-4">
+          {kind === 'compare' ? <Compare {...rest} /> : <Details {...rest} />}
+        </div>
       </SheetContent>
     </Sheet>
   );
