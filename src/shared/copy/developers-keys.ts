@@ -31,7 +31,7 @@ export const KEYS_COPY = {
     pick: 'Pick scopes',
     presets: 'Presets',
     expires: 'Expires',
-    days: (n: number) => `${n} days`,
+    days: (n: number) => (n === 1 ? '1 day' : `${n} days`),
     passkey: 'Confirms with your passkey',
     create: 'Create key',
     cancel: 'Cancel',
