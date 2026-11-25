@@ -156,6 +156,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     ...groupEnv,
     disabledByUs,
     assertTargets: groupsApi.assertTargets,
+    isAdopted: (t) => groups.get(t.replace(/^g:/, ''))?.kind === 'adopted' && t.startsWith('g:'),
   });
 
   const idp: FakeIdp = {
@@ -168,6 +169,11 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
     frozen: false,
     mode: options.mode ?? 'live',
     holdLease: (key) => void leases.add(key),
+    setGroupState: (key, state) => {
+      const g = groups.get(key);
+      if (!g) throw new Error(`No group ${key}`);
+      Object.assign(g, state);
+    },
     failNext: (code, method = '*') => void failures.push({ code, method }),
     completeSignup: (tokenId, subject, account) => {
       const s = signups.get(tokenId);
@@ -200,6 +206,7 @@ export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
         ok: !idp.frozen,
         unsafe: [],
         warnings: [],
+        blocked: groupsApi.blockedTargets(),
         groups: {
           console: 'passbook_console',
           developer: 'passbook_developers',

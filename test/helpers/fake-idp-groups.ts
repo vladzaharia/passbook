@@ -28,6 +28,10 @@ export interface FakeGroup {
   /** Polaris ID name; the key is `passbook_g_`-prefixed for custom groups. */
   name: string;
   friendlyName: string;
+  /** `gone`: deleted in Polaris ID by the owner; `deleting`: a delete stopped half way. */
+  state?: 'live' | 'gone' | 'deleting';
+  /** The owner renamed it in Polaris ID. */
+  renamed?: boolean;
   /** Allowed clients other than PassBook's. */
   otherClients: number;
   otherClaims?: Record<string, string>;
@@ -73,14 +77,16 @@ type Methods = Pick<
   | 'setClaims'
 >;
 
-const sizeOf = (v: unknown): number => JSON.stringify(v).length;
+const sizeOf = (v: unknown): number => new TextEncoder().encode(JSON.stringify(v)).length;
 const depthOf = (v: unknown): number =>
   v !== null && typeof v === 'object' ? 1 + Math.max(0, ...Object.values(v).map(depthOf)) : 0;
 
 export function groupMethods(env: GroupEnv): Methods & {
   /** Throws `IDP_REFUSED` for a target the binding does not manage. */
-  assertTargets(targets: readonly Target[]): void;
+  assertTargets(targets: readonly Target[], adds?: readonly Target[]): void;
   membersOf(target: string): number;
+  /** `g:<key>` targets health reports as blocked. */
+  blockedTargets(): string[];
 } {
   const { accounts, groups, refuse } = env;
   const membersOf = (target: string): number =>
@@ -92,13 +98,19 @@ export function groupMethods(env: GroupEnv): Methods & {
     name: g.name,
     friendlyName: g.friendlyName,
     members: membersOf(g.kind === 'role' ? key : `g:${key}`),
-    claims: Object.keys(g.claims ?? {}),
+    claims: Object.keys(g.claims ?? {}).filter(
+      (k) => CLAIM_KEY.test(k) || env.claimKeys.includes(k),
+    ),
     otherClients: g.otherClients,
     flags: [],
   });
+  /** Health marks a renamed or gone custom or adopted group blocked: its target alone stops. */
+  const blocked = (g: FakeGroup): boolean =>
+    g.kind !== 'role' && (g.state === 'gone' || !!g.renamed);
   const managed = (key: string): FakeGroup => {
     const g = groups.get(key);
-    return g ?? refuse('IDP_REFUSED');
+    if (!g || blocked(g)) return refuse('IDP_REFUSED');
+    return g;
   };
 
   /** `passbook_*` for anyone; listed keys only on created or linked accounts, never on groups. */
@@ -128,7 +140,7 @@ export function groupMethods(env: GroupEnv): Methods & {
       };
     }
     const g = groups.get(keyOf(owner.group));
-    if (!g || (g.kind === 'role' && !ROLES.includes(keyOf(owner.group))))
+    if (!g || blocked(g) || (g.kind === 'role' && !ROLES.includes(keyOf(owner.group))))
       return refuse('IDP_REFUSED');
     return {
       claims: g.claims,
@@ -142,11 +154,14 @@ export function groupMethods(env: GroupEnv): Methods & {
 
   return {
     membersOf,
-    assertTargets(targets) {
+    blockedTargets: () => [...groups].filter(([, g]) => blocked(g)).map(([k]) => `g:${k}`),
+    assertTargets(targets, adds = []) {
       if (targets.length > 10) refuse('IDP_REFUSED');
       for (const t of targets) {
         if (t.startsWith('g:')) {
-          if (!groups.has(keyOf(t))) refuse('IDP_REFUSED');
+          const g = groups.get(keyOf(t));
+          if (!g || blocked(g) || (g.state === 'deleting' && adds.includes(t)))
+            refuse('IDP_REFUSED');
         } else if (!ROLES.includes(t)) refuse('IDP_REFUSED');
       }
     },
@@ -170,6 +185,7 @@ export function groupMethods(env: GroupEnv): Methods & {
     },
     async ensureRoleGroup(role: WritableRole, ctx) {
       env.enter('ensureRoleGroup', true);
+      env.lease(`role:${role}`);
       if (!ROLES.includes(role) || groups.has(role)) refuse('IDP_REFUSED');
       const name = `passbook_${role}`;
       if ([...groups.values()].some((g) => g.name === name)) refuse('IDP_CONFLICT');
@@ -181,7 +197,7 @@ export function groupMethods(env: GroupEnv): Methods & {
     },
     async updateGroup(target, patch, ctx) {
       env.enter('updateGroup', true);
-      env.lease(target.startsWith('g:') ? target : `g:${target}`);
+      env.lease(target.startsWith('g:') ? target : `role:${target}`);
       const g = managed(keyOf(target));
       if (patch.friendlyName.length < 2 || patch.friendlyName.length > 50) refuse('IDP_REFUSED');
       if (env.dry(ctx.dryRun, 'group_write')) return { dryRun: true };
@@ -195,7 +211,11 @@ export function groupMethods(env: GroupEnv): Methods & {
       const g = groups.get(key);
       if (!g) return refuse('IDP_NOT_FOUND');
       if (g.kind !== 'custom') refuse('IDP_REFUSED');
-      if (membersOf(`g:${key}`) > 0 || g.otherClients > 0) refuse('IDP_IN_USE');
+      if (blocked(g)) refuse('IDP_REFUSED');
+      if (membersOf(`g:${key}`) > 0 || g.otherClients > 0) {
+        g.state = 'live'; // a refused delete puts a `deleting` group back
+        refuse('IDP_IN_USE');
+      }
       if (env.dry(ctx.dryRun, 'group_write')) return { dryRun: true };
       env.write();
       env.removal();
@@ -210,7 +230,13 @@ export function groupMethods(env: GroupEnv): Methods & {
     async setClaims(owner, changes, ctx) {
       env.enter('setClaims', true);
       const h = holderOf(owner);
-      env.lease('subject' in owner ? owner.subject : owner.group);
+      env.lease(
+        'subject' in owner
+          ? `s:${owner.subject}`
+          : owner.group.startsWith('g:')
+            ? owner.group
+            : `role:${owner.group}`,
+      );
       const entries = Object.entries(changes);
       if (entries.length > 20) refuse('IDP_REFUSED');
       const next = { ...h.claims };

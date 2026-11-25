@@ -194,7 +194,7 @@ describe('fake IDP', () => {
     await expect(idp.setClaims({ subject: 'u' }, { passbook_d: deep }, ctx)).rejects.toThrow(
       /^IDP_REFUSED/,
     );
-    idp.holdLease('u');
+    idp.holdLease('s:u');
     await expect(idp.apply('u', { add: ['console'] }, ctx)).rejects.toThrow(/^IDP_CONFLICT/);
     idp.holdLease('g:crew');
     await idp.createGroup('crew', 'Crew', ctx);
@@ -240,5 +240,38 @@ describe('fake IDP', () => {
     );
     await idp.apply('u', { remove: ['console'] }, user);
     await expect(idp.apply('u', { remove: ['developer'] }, user)).rejects.toThrow(/^IDP_BREAKER/);
+  });
+
+  it('blocks a renamed or gone group on its own, and settles half-finished deletes', async () => {
+    const idp = createFakeIdp();
+    idp.addAccount('u', { class: 'created' });
+    await idp.createGroup('ga', 'Group A', ctx);
+    await idp.createGroup('gb', 'Group B', ctx);
+    await idp.createGroup('gc', 'Group C', ctx);
+    idp.setGroupState('ga', { renamed: true });
+    idp.setGroupState('gb', { state: 'gone' });
+    expect((await idp.health()).blocked).toEqual(['g:ga', 'g:gb']);
+    for (const t of ['g:ga', 'g:gb'] as const)
+      await expect(idp.apply('u', { add: [t] }, ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    await expect(idp.setClaims({ group: 'g:ga' }, {}, ctx)).rejects.toThrow();
+    await idp.apply('u', { add: ['g:gc'] }, ctx);
+    idp.setGroupState('gc', { state: 'deleting' });
+    await idp.createGroup('gd', 'Group D', ctx);
+    idp.setGroupState('gd', { state: 'deleting' });
+    await expect(idp.apply('u', { add: ['g:gd'] }, ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    await expect(idp.deleteGroup('gc', ctx)).rejects.toThrow(/^IDP_IN_USE/);
+    expect((await idp.groups()).find((g) => g.key === 'gc')?.flags).toEqual([]);
+    expect(await idp.deleteGroup('gd', ctx)).toEqual({ key: 'gd' });
+  });
+
+  it('does not own accounts in adopted groups, and counts claim sizes in bytes', async () => {
+    const idp = createFakeIdp({ adopt: { crew: 'Their Crew' } });
+    idp.addAccount('u', { class: 'created', roles: ['g:crew'] });
+    await expect(idp.setDisabled('u', true, ctx)).rejects.toThrow(/^IDP_NOT_MANAGED/);
+    idp.addAccount('v', { class: 'created' });
+    const wide = { type: 'text', value: '\u00e9'.repeat(1100) } as const;
+    await expect(idp.setClaims({ subject: 'v' }, { passbook_w: wide }, ctx)).rejects.toThrow(
+      /^IDP_REFUSED/,
+    );
   });
 });

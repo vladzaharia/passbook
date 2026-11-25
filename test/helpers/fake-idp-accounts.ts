@@ -11,7 +11,9 @@ import type { GroupEnv } from './fake-idp-groups.ts';
 export interface AccountEnv extends GroupEnv {
   /** Accounts the fake itself disabled; only those may be re-enabled. */
   disabledByUs: Set<string>;
-  assertTargets(targets: readonly Target[]): void;
+  assertTargets(targets: readonly Target[], adds?: readonly Target[]): void;
+  /** Adopted groups are not PassBook's: an account in one is not managed for disable. */
+  isAdopted(target: string): boolean;
 }
 
 export function accountMethods(
@@ -43,9 +45,9 @@ export function accountMethods(
       env.enter('apply', true);
       const a = account(subject);
       protect(subject, a);
-      lease(subject);
+      lease(`s:${subject}`);
       if (a.disabled && delta.add?.length) refuse('IDP_REFUSED');
-      env.assertTargets([...(delta.add ?? []), ...(delta.remove ?? [])]);
+      env.assertTargets([...(delta.add ?? []), ...(delta.remove ?? [])], delta.add);
       const system = ctx.actor.kind === 'system';
       const buckets = [
         ...(delta.add?.length
@@ -87,7 +89,7 @@ export function accountMethods(
     async setDisabled(subject, disabled, ctx) {
       env.enter('setDisabled', true);
       const a = account(subject);
-      if (a.class !== 'created') refuse('IDP_NOT_MANAGED');
+      if (a.class !== 'created' || [...a.roles].some(env.isAdopted)) refuse('IDP_NOT_MANAGED');
       protect(subject, a);
       if (!disabled && a.disabled && !env.disabledByUs.has(subject)) refuse('IDP_NOT_MANAGED');
       if (a.disabled === disabled) return { result: 'already', dryRun: false };

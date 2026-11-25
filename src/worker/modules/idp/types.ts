@@ -46,6 +46,8 @@ export interface IdpHealth {
   ok: boolean;
   unsafe: string[];
   warnings: string[];
+  /** Custom or adopted targets (`g:<key>`) refused on their own: the group is renamed, gone or not allowed. */
+  blocked: string[];
   groups: Record<string, string | null>;
   layout: string;
   layoutSuspect: boolean;

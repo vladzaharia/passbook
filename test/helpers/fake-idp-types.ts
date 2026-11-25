@@ -26,8 +26,10 @@ export interface FakeIdp extends IdpRpc {
   mode: 'dry_run' | 'live';
   /** Makes the next call to `method` (or any call with `*`) fail as the binding does: `CODE: text`. */
   failNext(code: string, method?: string): void;
-  /** Another write holds this subject or `g:<key>`; writes that need it answer `IDP_CONFLICT`. */
+  /** Another write holds `s:<subject>`, `role:<role>` or `g:<key>`; writes that need it answer `IDP_CONFLICT`. */
   holdLease(key: string): void;
+  /** The owner changed a group in Polaris ID: `state: 'gone'`, `renamed: true` or a half-finished `deleting`. */
+  setGroupState(key: string, state: Pick<FakeGroup, 'state' | 'renamed'>): void;
   /** The person finished signup with this token: `proveSignup` now finds them. */
   completeSignup(
     tokenId: string,
