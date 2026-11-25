@@ -1,4 +1,4 @@
-import { DEFAULT_TIME_ZONE } from '../../shared/time-zone.ts';
+import { CALENDAR_ZONE, DEFAULT_TIME_ZONE, isCalendarMidnight } from '../../shared/time-zone.ts';
 
 /**
  * Dates on paper. Content carries ISO times and a zone; the page and the PDF format them here so
@@ -76,7 +76,9 @@ const lower = (s: string) => s.replace(/\s?([AP])M\b/g, (_, c: string) => ` ${c.
 export function paperDate(iso: string, zone: string | undefined, style: PaperDateStyle): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
-  const base = { timeZone: zone ?? DEFAULT_TIME_ZONE };
+  // A date written at midnight UTC is a calendar day: it reads as that day in every zone.
+  const calendarDay = (style === 'long' || style === 'short') && isCalendarMidnight(iso);
+  const base = { timeZone: calendarDay ? CALENDAR_ZONE : (zone ?? DEFAULT_TIME_ZONE) };
   const fmt = (o: Intl.DateTimeFormatOptions) =>
     new Intl.DateTimeFormat('en-GB', { ...base, ...o });
   const abbr = zone ? paperZoneInfo(zone, iso)?.abbr : undefined;

@@ -191,7 +191,8 @@ describe('designer Paper tab', () => {
     });
     await user.click(await screen.findByRole('radio', { name: 'Paper' }));
     await user.click(await screen.findByRole('button', { name: 'Edit layout' }));
-    expect(onPaper).toHaveBeenLastCalledWith({ size: 'a4' });
+    // No org zone set: the default (Los Angeles) is a US zone, so a derived layout starts on Letter.
+    expect(onPaper).toHaveBeenLastCalledWith({ size: 'letter' });
     first.unmount();
 
     const second = renderTags(

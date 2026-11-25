@@ -26,7 +26,6 @@ const COMMON: Record<string, number> = {
   TEMPLATE_ARCHIVED: 409,
   TEMPLATE_NOT_FOUND: 404,
   VERSION_INVALID: 409,
-  VISITOR_HOST_UNKNOWN: 403,
   WEBHOOK_STALE_CONTEXT: 503,
   WORKFLOW_START: 503,
 };
@@ -39,7 +38,6 @@ const TIES: Record<string, number[]> = {
   SCANNER_REVOKED: [401, 409],
   SCANNING_SESSION_CLOSED: [403, 409],
   SCAN_MODE_MISMATCH: [403, 422],
-  VISITOR_HOST_UNKNOWN: [403, 404],
   WEBHOOK_STALE_CONTEXT: [409, 503],
 };
 
@@ -49,7 +47,7 @@ describe('error catalog statuses', () => {
 
   it('shows a multi-status code with its most common raise site', () => {
     expect(Object.fromEntries(multi.map((c) => [c.code, c.statuses[0]]))).toEqual(COMMON);
-    expect(multi).toHaveLength(25);
+    expect(multi).toHaveLength(24);
   });
 
   it('carries the tied set where raise sites tie', () => {
