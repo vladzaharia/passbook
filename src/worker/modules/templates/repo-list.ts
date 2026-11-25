@@ -67,6 +67,11 @@ export async function listTemplates(db: D1Database, f: ListFilter): Promise<List
     where.push('t.status = ?');
     params.push(f.status);
   } else where.push(f.includeArchived ? "t.status != 'deleted'" : "t.status = 'active'");
+  // A platform-wide read (no org named) never reaches into a personal org.
+  if (f.orgId === undefined)
+    where.push(
+      '(t.org_id IS NULL OR NOT EXISTS (SELECT 1 FROM orgs po WHERE po.id = t.org_id AND po.personal_user_id IS NOT NULL))',
+    );
   if (f.orgId === null) where.push('t.org_id IS NULL');
   else if (f.orgId !== undefined) {
     where.push(templateVisibleSql('t', '?'));

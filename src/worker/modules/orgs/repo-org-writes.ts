@@ -1,9 +1,12 @@
 import type { EntitlementPreset } from '../../../shared/contracts/entitlements.ts';
 import { grant } from '../../platform/authority.ts';
 import { epochIs } from '../../platform/authority-checks.ts';
+import { exists } from '../../platform/authority-cond.ts';
 import { maxNow } from '../../platform/authority-expr.ts';
 import { addOrgEntitlements } from '../../platform/entitlements.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { grantedAudit } from '../audit/repo-granted.ts';
+import type { AuditEntry } from '../audit/types.ts';
 import type { TenantPassWrite } from '../passes/http.ts';
 import { capabilityChecks, tenantPrincipal } from '../passes/repo-authority.ts';
 import { getOrgRow, type OrgRow } from './repo.ts';
@@ -145,6 +148,8 @@ export async function moveOrgStatusAsAdmin(
   from: OrgRow['status'],
   to: OrgRow['status'],
   admin: OrgAdmin,
+  /** Committed in the same batch, and only if the status moved. */
+  audit?: AuditEntry,
 ): Promise<boolean> {
   const g = grant(ctx, {
     purpose: to === 'deleted' ? 'platform.org.delete' : 'platform.org.status',
@@ -160,6 +165,7 @@ export async function moveOrgStatusAsAdmin(
     where: { id, status: from },
     returning: ['id'],
   });
+  if (audit) grantedAudit(g, ctx, audit, [exists('orgs', { id, status: to })]);
   const [result] = await g.commit();
   return (result?.results.length ?? 0) > 0;
 }

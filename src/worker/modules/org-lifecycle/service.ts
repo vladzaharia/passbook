@@ -19,6 +19,7 @@ import { safeEqual, toHex } from '../../platform/ids.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { auditActor, recordAudit } from '../audit/service.ts';
 import { createEmailBindingMailer } from '../delivery/mailer.ts';
+import { requirePersonalClose } from '../orgs/personal-guard.ts';
 import { readOrgAdminEmails } from '../retention/repo.ts';
 import { purgeOrgWalletArt } from '../wallet-providers/projection-art-purge.ts';
 import { exportKey, LINK_MS } from './export.ts';
@@ -113,8 +114,8 @@ async function mailAdmins(
 }
 
 /**
- * Closes the org: read-only, passes stop updating, 30 days to export. A platform admin closes any org; an
- * org admin closes her own by typing its slug. A legal hold refuses it. Every org admin is mailed.
+ * Closes the org: read-only, passes stop updating, 30 days to export. A platform admin closes any org but a
+ * personal one; an org admin closes her own by typing its slug. A legal hold refuses it. Every org admin is mailed.
  */
 export async function closeOrg(
   ctx: ServiceContext,
@@ -132,7 +133,7 @@ export async function closeOrg(
       throw new ValidationError('Invalid request.', [
         { path: 'confirmSlug', message: COPY.slugMismatch },
       ]);
-  }
+  } else await requirePersonalClose(ctx.env.DB, before, by.userId);
   // A closed org is gone from the directory: closing it again is a 404, as deleting it always was.
   if (before.status === 'deleted') throw notFound();
   if (before.held) throw new ConflictError(COPY.held, 'ORG_HELD');

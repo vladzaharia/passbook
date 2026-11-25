@@ -206,6 +206,7 @@
   "orgs.getOrgsByIdBrandingBySlotByScale",
   "orgs.getOrgsByIdEmailPreview",
   "orgs.getOrgsByIdWorkspace",
+  "orgs.getPlatformPersonalOrgLabels",
   "orgs.patchOrgsById",
   "orgs.postOrgs",
   "orgs.postOrgsByIdStatus",

@@ -7,6 +7,7 @@ import {
 } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
+import { requireNotPersonal } from '../orgs/personal-guard.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { getTemplate, type TemplateRow } from './repo.ts';
 import { templateVisibleToOrg } from './repo-list.ts';
@@ -20,6 +21,22 @@ export function requireTemplateReader(
     throw new ForbiddenError('The API key lacks the templates:read scope.', 'MISSING_SCOPE');
 }
 
+/** An org-less platform key is not tenant authority: a personal org's templates are not its to read. */
+async function refusePersonalForPlatformKey(
+  ctx: ServiceContext,
+  auth: Extract<AuthContext, { kind: 'api_key' }>,
+  orgId: string,
+  notFound?: () => NotFoundError,
+): Promise<void> {
+  if (auth.orgId !== null) return;
+  try {
+    await requireNotPersonal(ctx.env.DB, orgId);
+  } catch (error) {
+    if (notFound && error instanceof ForbiddenError) throw notFound();
+    throw error;
+  }
+}
+
 /** The stored org is authoritative; absent membership may be hidden for by-ID reads. */
 export async function requireTemplateOrgRead(
   ctx: ServiceContext,
@@ -31,6 +48,7 @@ export async function requireTemplateOrgRead(
   if (auth.kind === 'api_key') {
     if (notFound && auth.orgId !== null && auth.orgId !== orgId) throw notFound();
     assertOrgAccess(auth, orgId);
+    await refusePersonalForPlatformKey(ctx, auth, orgId, notFound);
     return;
   }
   if (notFound && !(await getOrgAccess(ctx, auth.userId, orgId))) throw notFound();
@@ -55,7 +73,10 @@ export async function templateCollectionOrg(
 ): Promise<string | null | undefined> {
   requireTemplateReader(auth);
   if (auth.kind === 'api_key') {
-    if (requestedOrgId) assertOrgAccess(auth, requestedOrgId);
+    if (requestedOrgId) {
+      assertOrgAccess(auth, requestedOrgId);
+      await refusePersonalForPlatformKey(ctx, auth, requestedOrgId);
+    }
     return auth.orgId ?? requestedOrgId;
   }
   if (requestedOrgId) {

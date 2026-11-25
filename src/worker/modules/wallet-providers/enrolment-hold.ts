@@ -3,12 +3,14 @@ import { grant, jobGrant } from '../../platform/authority.ts';
 import type { Principal } from '../../platform/authority-principal.ts';
 import { ConflictError, ForbiddenError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
+import { requirePersonalRelease } from '../orgs/personal-guard.ts';
 import {
   commitEnrolmentStep,
   ENROLMENT_TABLES,
   type EnrolmentRow,
   type EnrolmentStep,
   findEnrolment,
+  lastHoldActor,
   maxEventRevision,
   orgStatus,
 } from './repo-enrolments.ts';
@@ -122,6 +124,12 @@ export async function releaseEnrolment(
 ): Promise<'released'> {
   const principal = adminOf(auth, scope);
   const row = await heldRow(ctx, scope, true);
+  await requirePersonalRelease(
+    ctx.env.DB,
+    scope.orgId,
+    principal.userId,
+    await lastHoldActor(ctx.env.DB, row.id),
+  );
   const status = await orgStatus(ctx.env.DB, scope.orgId);
   if (status === null || status === 'deleted') throw new NotFoundError();
   const g = grant(ctx, {
