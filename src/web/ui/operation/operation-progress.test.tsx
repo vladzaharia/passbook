@@ -108,7 +108,9 @@ describe('OperationProgress states', () => {
     expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
     // The working marker keeps its spinner under reduced motion (it carries state).
     expect(container.querySelector('[data-state="working"] svg')).toHaveClass('wl-essential');
-    expect(container.querySelector('[data-scene="busy"]')).toBeNull();
+    // One buddy: it rides the bar, none sits on the panel's edge.
+    expect(container.querySelectorAll('[data-scene="busy"]')).toHaveLength(1);
+    expect(container.querySelector('[data-at="end"]')).toBeNull();
   });
 
   it('running without a count: the buddy acts busy beside the step line', () => {
