@@ -53,7 +53,11 @@ export function DemoFields({
   const noun = datasetOf(current)?.noun ?? 'Records';
   const labelled = {
     ...schema,
-    properties: { ...props, count: { ...props.count, 'x-label': noun } },
+    properties: {
+      ...props,
+      count: { ...props.count, 'x-label': noun },
+      seed: { ...props.seed, 'x-placeholder': 'demo' },
+    },
   };
   const failed = (show: readonly string[]) => show.some((k) => serverErrors?.[k]);
   const part = (show: readonly string[], idPrefix: string) => (

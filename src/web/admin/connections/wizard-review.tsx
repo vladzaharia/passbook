@@ -176,7 +176,9 @@ export function WizardAside({
           </div>
         </div>
       ) : null}
-      {sample.length && connector?.type === 'demo' && datasetOfSample(sample) ? (
+      {connector?.type === 'demo' &&
+      sample.some((f) => f.preview !== undefined) &&
+      datasetOfSample(sample) ? (
         <RecordCard
           dataset={datasetOfSample(sample) as NonNullable<ReturnType<typeof datasetOfSample>>}
           sample={sample.map((f) => ({ pointer: f.pointer, preview: f.preview ?? '' }))}
