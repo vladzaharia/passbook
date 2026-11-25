@@ -72,13 +72,14 @@ UPDATE entitlement_presets SET value = 'null' WHERE preset = 'legacy' AND key = 
 -- An org whose effective footer allowance is `full` (its plan's, or a standing override's, read at the fixed
 -- time below) but whose stored choice is the small one keeps it, so enforcing `brand.mark` takes nothing away.
 -- The org's override is set to `quiet`: an existing one (a standing `full`, or an expired one) is replaced, never
--- skipped. The revision bump makes a Features tab opened before this 409.
+-- skipped. Unlimited (`legacy`) orgs are never written to. The revision bump makes a Features tab opened before this 409.
 INSERT INTO org_entitlement_overrides (org_id, key, value, note, expires_at, updated_at, updated_by)
   SELECT e.org_id, 'brand.mark', '"quiet"', 'Kept the small footer when plans changed', NULL, 1795392000000, NULL
   FROM org_entitlements e
   JOIN orgs o ON o.id = e.org_id
   JOIN entitlement_presets p ON p.preset = e.preset AND p.key = 'brand.mark'
-  WHERE json_valid(o.branding) AND json_extract(o.branding, '$.mark') = 'small'
+  WHERE e.preset <> 'legacy'
+    AND json_valid(o.branding) AND json_extract(o.branding, '$.mark') = 'small'
     AND COALESCE(
       (SELECT x.value FROM org_entitlement_overrides x
         WHERE x.org_id = e.org_id AND x.key = 'brand.mark' AND (x.expires_at IS NULL OR x.expires_at > 1795392000000)),

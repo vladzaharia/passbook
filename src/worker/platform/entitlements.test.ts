@@ -91,6 +91,7 @@ describe('storage and seed', () => {
       ['pl-exp', 'trial', '{"mark":"small"}'],
       ['pl-std-full', 'standard', '{"mark":"small"}'],
       ['pl-std-none', 'standard', '{"mark":"small"}'],
+      ['pl-unl-full', 'legacy', '{"mark":"small"}'],
     ];
     for (const [id, preset, branding] of orgs) {
       await run(
@@ -108,6 +109,7 @@ describe('storage and seed', () => {
       ['pl-exp', '"none"', 5],
       ['pl-std-full', '"full"', null],
       ['pl-std-none', '"none"', null],
+      ['pl-unl-full', '"full"', null],
     ] as const)
       await run(
         db,
@@ -126,6 +128,8 @@ describe('storage and seed', () => {
       { org_id: 'pl-std-full', value: '"quiet"', revision: 2 },
       { org_id: 'pl-std-none', value: '"none"', revision: 1 },
       { org_id: 'pl-trial', value: '"quiet"', revision: 2 },
+      // Unlimited is never written to, even with a standing `full` and a stored small footer.
+      { org_id: 'pl-unl-full', value: '"full"', revision: 1 },
     ]);
     const expired = await first<{ expires_at: number | null }>(
       db,
