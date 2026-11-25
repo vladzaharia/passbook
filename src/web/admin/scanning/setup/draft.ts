@@ -1,6 +1,8 @@
 import type { WeeklyHours } from '@/passkit/types.ts';
 import type { ScanRole } from '@/shared/contracts/scan.ts';
 import type { ScanSetupPreset } from '@/shared/contracts/scan-setup-intent.ts';
+import { SCAN_SETUP_PRESET_IDS } from '@/shared/scan-setup-preset-ids.ts';
+import { PRESET_SPECS } from '@/shared/scan-setup-presets.ts';
 
 export type Layout = 'phone' | 'operator' | 'customer' | 'barcode';
 export type Direction = 'in' | 'out' | 'both';
@@ -67,20 +69,17 @@ export interface Draft {
   timeZone: string;
 }
 
-export const PRESETS: readonly ScanSetupPreset[] = ['front_desk', 'event_night', 'venue'];
+export const PRESETS: readonly ScanSetupPreset[] = SCAN_SETUP_PRESET_IDS;
 export const isPreset = (v: unknown): v is ScanSetupPreset =>
   typeof v === 'string' && (PRESETS as readonly string[]).includes(v);
 
-export const PRESET_LABEL: Record<ScanSetupPreset, string> = {
-  front_desk: 'Front desk',
-  event_night: 'Event night',
-  venue: 'Several areas',
-};
-export const NAME_SUGGESTIONS: Record<ScanSetupPreset, readonly string[]> = {
-  front_desk: ['Front desk', 'Main door', 'Reception'],
-  event_night: ['Doors', 'Main entrance', 'Gate'],
-  venue: ['Main door', 'Pool gate', 'Side entrance'],
-};
+export const presetLabel = (p: ScanSetupPreset): string => PRESET_SPECS[p].label;
+export const nameSuggestions = (p: ScanSetupPreset): readonly string[] => PRESET_SPECS[p].names;
+/** A hard limit caps nothing without a max. */
+export const needsMax = (p: ScanSetupPreset): boolean => PRESET_SPECS[p].more.hardLimit === true;
+const whole = (v: string): boolean => Number.isInteger(Number(v)) && Number(v) >= 1;
+/** What Where asks for: nothing, one counted area, or an area tree. */
+export const whereOf = (p: ScanSetupPreset) => PRESET_SPECS[p].where;
 
 export const LAYOUT_LABEL: Record<Layout, string> = {
   phone: 'Phone',
@@ -113,17 +112,22 @@ export const newEvent = (): EventDraft => ({
   reentry: false,
 });
 
-/** What each preset answers up front; the admin edits from there. */
+const span = /^(\d\d:\d\d)-(\d\d:\d\d)$/;
+
+/** What each preset answers up front, read from its spec; the admin edits from there. */
 export function initialDraft(
   preset: ScanSetupPreset,
   timeZone: string,
   fromTemplate: string | null = null,
 ): Draft {
+  const spec = PRESET_SPECS[preset];
+  const every = spec.hours && typeof spec.hours === 'object' ? spec.hours.every?.[0] : undefined;
+  const [, from = '', to = ''] = (every ? span.exec(every) : null) ?? [];
   const base: Draft = {
     preset,
-    name: NAME_SUGGESTIONS[preset][0] ?? '',
-    count: false,
-    area: '',
+    name: spec.names[0],
+    count: spec.count !== undefined,
+    area: spec.count ?? '',
     max: '',
     areas: [],
     doorArea: null,
@@ -133,16 +137,19 @@ export function initialDraft(
     events: [],
     fromTemplate,
     fromIssued: fromTemplate !== null,
-    hours: { mode: 'always', from: '', to: '', split: false, week: undefined, closed: [] },
-    scanners: 'anyone',
-    as: 'door',
+    hours: { mode: every ? 'set' : 'always', from, to, split: false, week: undefined, closed: [] },
+    scanners: spec.scanners.by,
+    as: spec.scanners.by === 'anyone' ? spec.scanners.as : 'door',
     staff: [],
-    devices: [newDevice('phone')],
+    devices: spec.devices.map((v) => ({
+      id: uid('d'),
+      layout:
+        v.reader === 'barcode' ? 'barcode' : v.layout === 'auto' || !v.layout ? 'phone' : v.layout,
+      ...(v.direction ? { direction: v.direction } : {}),
+    })),
     timeZone,
   };
-  if (preset === 'front_desk')
-    return { ...base, scanners: 'staff', devices: [newDevice('operator'), newDevice('phone')] };
-  if (preset === 'venue') {
+  if (spec.where === 'areas') {
     const first = { ...newArea(), name: 'Gym' };
     return { ...base, areas: [first], doorArea: first.ref };
   }
@@ -195,8 +202,10 @@ export function stepProblem(d: Draft, step: StepId): string | undefined {
   switch (step) {
     case 'where':
       if (!d.name.trim()) return 'Name the door.';
-      if (d.preset === 'front_desk' && d.count && !d.area.trim()) return 'Name the area.';
-      if (d.preset === 'venue' && d.areas.some((a) => !a.name.trim())) return 'Name every area.';
+      if (whereOf(d.preset) === 'count' && d.count && !d.area.trim()) return 'Name the area.';
+      if (needsMax(d.preset) && !(d.count && whole(d.max))) return 'Set the max inside.';
+      if (whereOf(d.preset) === 'areas' && d.areas.some((a) => !a.name.trim()))
+        return 'Name every area.';
       return undefined;
     case 'admits':
       if (!d.any && d.templateIds.length + eventCount(d) === 0)

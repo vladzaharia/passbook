@@ -84,7 +84,7 @@ export const CreatePassImportSchema = z.strictObject({
 export const CheckPassImportSchema = z.strictObject({ plan: PassImportPlanSchema });
 /** Commit email: `held` waits out the undo window. The console holds; the API sends now. */
 export const PASS_IMPORT_HOLD_DEFAULT_MS = 5 * 60_000;
-export const PASS_IMPORT_HOLD_MAX_MS = 60 * 60_000;
+export const PASS_IMPORT_HOLD_MAX_MS = 24 * 60 * 60_000;
 export const PassImportEmailSendSchema = z.discriminatedUnion('send', [
   z.strictObject({ send: z.literal('now') }),
   z.strictObject({

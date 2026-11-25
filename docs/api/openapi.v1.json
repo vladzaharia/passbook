@@ -13440,6 +13440,11 @@
             },
             "maxItems": 16
           },
+          "draftFailures": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000000
+          },
           "surfaces": {
             "type": "array",
             "items": {
@@ -18011,6 +18016,10 @@
                 },
                 "day": {
                   "type": "boolean"
+                },
+                "g": {
+                  "type": "string",
+                  "pattern": "^[0-9]{1,6}$"
                 }
               },
               "required": [
@@ -19621,6 +19630,12 @@
                   "front_desk",
                   "event_night",
                   "venue",
+                  "club",
+                  "conference",
+                  "gates",
+                  "counter",
+                  "pickup",
+                  "capacity",
                   null
                 ]
               },
@@ -41028,7 +41043,7 @@
                   "holdMs": {
                     "type": "integer",
                     "minimum": 60000,
-                    "maximum": 3600000,
+                    "maximum": 86400000,
                     "default": 300000
                   }
                 },
@@ -51158,6 +51173,12 @@
               {
                 "type": "number",
                 "enum": [
+                  1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
                   24
                 ]
               },
@@ -51165,6 +51186,12 @@
                 "type": "number",
                 "enum": [
                   72
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  168
                 ]
               }
             ],
@@ -62879,7 +62906,13 @@
             "enum": [
               "front_desk",
               "event_night",
-              "venue"
+              "venue",
+              "club",
+              "conference",
+              "gates",
+              "counter",
+              "pickup",
+              "capacity"
             ]
           },
           "timeZone": {
@@ -75380,6 +75413,10 @@
           "BUNDLE_SNAPSHOT_INVALID",
           "BUNDLE_TOO_LARGE",
           "FORBIDDEN",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "IDP_SIGN_IN_REQUIRED",
           "PASS_FILE_MISSING",
           "PASS_NOT_FOUND",
@@ -105883,6 +105920,7 @@
           "NO_VERIFIED_EMAIL",
           "ORG_FORBIDDEN",
           "ORG_TEST_ONLY",
+          "PASS_FILE_MISSING",
           "RATE_LIMITED",
           "SESSION_REQUIRED",
           "TEST_FORWARD_ALREADY_ATTEMPTED",
@@ -122251,6 +122289,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -122688,6 +122727,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -123209,6 +123249,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -123583,6 +123624,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -123969,6 +124011,7 @@
                               "state": "active"
                             }
                           ],
+                          "draftFailures": 1,
                           "surfaces": [
                             "phone"
                           ],
@@ -127603,6 +127646,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -127912,7 +127956,7 @@
         ]
       },
       "delete": {
-        "summary": "Clear the draft and the ready card on the customer screen",
+        "summary": "Clear the draft, and the ready card unless keep=ready",
         "tags": [
           "scan"
         ],
@@ -127924,6 +127968,17 @@
             },
             "required": true,
             "name": "ref",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ready"
+              ]
+            },
+            "required": false,
+            "name": "keep",
             "in": "query"
           }
         ],
@@ -129421,7 +129476,8 @@
                       "h": "8893d06a3faf43681946ec0a8b3936e7",
                       "status": "active",
                       "state": "in",
-                      "day": false
+                      "day": false,
+                      "g": "1"
                     }
                   ],
                   "cursor": "c1.4812",
@@ -131477,6 +131533,7 @@
                           "state": "active"
                         }
                       ],
+                      "draftFailures": 1,
                       "surfaces": [
                         "phone"
                       ],
@@ -136157,6 +136214,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136435,6 +136493,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136700,6 +136759,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -136991,6 +137051,7 @@
                             "state": "active"
                           }
                         ],
+                        "draftFailures": 1,
                         "surfaces": [
                           "phone"
                         ],
@@ -137213,6 +137274,7 @@
                         "state": "active"
                       }
                     ],
+                    "draftFailures": 1,
                     "surfaces": [
                       "phone"
                     ],
@@ -137428,6 +137490,7 @@
                         "state": "active"
                       }
                     ],
+                    "draftFailures": 1,
                     "surfaces": [
                       "phone"
                     ],
@@ -148709,6 +148772,10 @@
         "x-public": true,
         "x-codes": [
           "BAD_REQUEST",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "PAYLOAD_TOO_LARGE",
           "RATE_LIMITED",
@@ -148773,6 +148840,10 @@
         "x-public": true,
         "x-codes": [
           "BAD_REQUEST",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "PAYLOAD_TOO_LARGE",
           "RATE_LIMITED",
@@ -149338,6 +149409,10 @@
         "security": [],
         "x-public": true,
         "x-codes": [
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "NOT_FOUND",
           "RATE_LIMITED",
           "TEMPLATE_NOT_FOUND",
@@ -149620,6 +149695,10 @@
         "x-public": true,
         "x-codes": [
           "CHANNEL_OFF",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "LINK_NOT_FOUND",
           "NOT_FOUND",
           "PASS_FILE_MISSING",
@@ -149934,6 +150013,10 @@
         "x-codes": [
           "BUNDLE_EMPTY",
           "BUNDLE_TOO_LARGE",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "LINK_NOT_FOUND",
           "NOT_FOUND",
           "PASS_FILE_MISSING",
@@ -149996,6 +150079,10 @@
         "x-public": true,
         "x-codes": [
           "CHANNEL_OFF",
+          "IDENTITY_EXPIRED",
+          "IDENTITY_NOT_CONFIGURED",
+          "IDENTITY_NOT_FOUND",
+          "IDENTITY_RETIRED",
           "LINK_NOT_FOUND",
           "NOT_FOUND",
           "PASS_FILE_MISSING",
