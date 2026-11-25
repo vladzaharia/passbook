@@ -90,7 +90,7 @@ describe('GET /orgs/{id}/plan', () => {
     const body = await plan(p);
     expect(body.limits.find((l) => l.key === 'members')?.limit).toBeNull();
     expect(body.features.map((f) => f.key)).toEqual(
-      expect.arrayContaining(['wallet.google', 'wallet.samsung', 'print', 'nfc', 'api']),
+      expect.arrayContaining(['apple', 'print', 'nfc', 'api']),
     );
     expect(body.features.find((f) => f.key === 'nfc')?.level).toBe('secure');
     expect(body.footer).toBe('none');

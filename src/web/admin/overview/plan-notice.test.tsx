@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { OrgPlanDto } from '@/shared/contracts/org-plan.ts';
 import { json, membershipFixture, renderApp } from '@/web/lib/test-utils.tsx';
@@ -33,7 +33,10 @@ describe('overview plan notice', () => {
       }),
     );
     expect(await screen.findByText('Scanners: 20 of 20, and 1 more')).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Plan' })).toHaveAttribute('href', '/admin/o/o1/plan');
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Plan' })).toHaveAttribute(
+      'href',
+      '/admin/o/o1/plan',
+    );
   });
 
   it('shows nothing when every limit is under 80%', async () => {
@@ -49,7 +52,7 @@ describe('overview plan notice', () => {
     await waitFor(() =>
       expect(fetchMock.mock.calls.map((c) => String(c[0]))).toContain('/api/v1/orgs/o1/plan'),
     );
-    expect(screen.queryByRole('link', { name: 'Plan' })).toBeNull();
+    expect(within(screen.getByRole('main')).queryByRole('link', { name: 'Plan' })).toBeNull();
     expect(screen.queryByText(/of 5,000/)).toBeNull();
   });
 });
