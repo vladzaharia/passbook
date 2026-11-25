@@ -1,6 +1,5 @@
 import { run, stmt } from '../../platform/db.ts';
-import type { Claim } from './repo-scans.ts';
-import type { ScanPredicate } from './scan-predicate.ts';
+import type { Claim, PristineClaimFence } from './repo-scans.ts';
 
 /** Fail only the owned pending generation, preserving retryability when it stayed pristine. */
 export function failPendingActionClaimStmt(
@@ -8,7 +7,7 @@ export function failPendingActionClaimStmt(
   claim: Claim,
   claimAt: number,
   observedAmbiguous: boolean,
-  pristine: ScanPredicate,
+  pristine: PristineClaimFence,
 ): D1PreparedStatement {
   return stmt(
     db,

@@ -24,6 +24,14 @@ describe('guideFailures', () => {
     expect(guideFailures(files, examples, site)).toEqual([]);
   });
 
+  it('catches a line that differs from DEV_GUIDES', () => {
+    expect(
+      check('test-mode', (t) => t.replace('line: Inbox, preview, limits', 'line: Other')).join(
+        '\n',
+      ),
+    ).toContain('differs from DEV_GUIDES');
+  });
+
   it('catches a broken link, an unknown anchor and a relative link', () => {
     expect(check('go-live', (t) => `${t}\n[x](/developers/guides/nowhere)\n`).join('\n')).toContain(
       'points at no page',

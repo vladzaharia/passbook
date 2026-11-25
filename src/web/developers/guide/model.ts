@@ -1,3 +1,4 @@
+import { DEV_GUIDES } from '../../../shared/copy/developers.ts';
 import { PATHS, twin } from '../../../shared/developers.ts';
 import { pagePath } from '../model/markdown.ts';
 import type { Example, Json, Method, Site } from '../model/types.ts';
@@ -129,8 +130,10 @@ export function resolveGuide(doc: GuideDoc, site: Site, examples: Example[]): Gu
           if (l.target.startsWith(CONSOLE)) need(l.target.slice(CONSOLE.length), 'console link');
   }
   for (const op of doc.meta.ops) need(op, 'header ops');
+  const named = DEV_GUIDES.find((g) => g.id === id);
   return {
     ...doc,
+    meta: named ? { ...doc.meta, title: named.title, line: named.line } : doc.meta,
     url: guideUrl(id),
     ops: used.flatMap((o) => ops.get(o) ?? []),
     steps,

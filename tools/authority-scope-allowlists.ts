@@ -86,7 +86,7 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
       'scans:4df40f2dbb58',
       'scans:5f5758655d9a',
       'scans:8f59dc9eb4bd',
-      'scans:a4620d033950',
+      'scans:e474881b9c47',
       'scans:af3fe65731a1',
       'scans:bece3e07a044',
     ],
@@ -151,16 +151,16 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/passes/repo-connection-state.ts': {
     reason:
       'sync_error_code is volatile bookkeeping stamped by connection sync behind a full pass and release snapshot',
-    writes: ['passes:a25f2e7af13b'],
+    writes: ['passes:2fdfca846d49'],
   },
   'src/worker/modules/passes/repo-history-assets.ts': {
     reason:
       'exact-state rollback of an asset write after a failed rebuild, and trusted callers; tenant writes take replaceAssetGranted',
     writes: [
-      'pass_assets:3420bcddbc34',
-      'pass_assets:3683f679f009',
+      'pass_assets:33792f6657b0',
+      'pass_assets:7de21d5f7819',
       'pass_assets:bbb4bf4399cf',
-      'pass_assets:f898a06f4016',
+      'pass_assets:e988bb2b949a',
     ],
   },
   'src/worker/modules/passes/repo-history-image.ts': {
@@ -171,12 +171,12 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
   'src/worker/modules/passes/repo-member-photo.ts': {
     reason:
       "exact-state compensation of this request's own photo write (after authority may be revoked) and trusted callers; tenant writes take replaceMemberPhotoGranted",
-    writes: ['member_photos:1eab4b139064', 'member_photos:a452bec42f60'],
+    writes: ['member_photos:454bce65b9b2', 'member_photos:e63fd03cf294'],
   },
   'src/worker/modules/passes/repo-ops-retention.ts': {
     reason:
       'retention purge of a soft-deleted pass past its grace period: server-selected ids behind a keyset commitment and scan retention proof, no principal',
-    writes: ['passes:3152b8aa078f'],
+    writes: ['passes:04303e1d6c73'],
   },
   'src/worker/modules/passes/repo-transfer-asset-gc.ts': {
     reason:
@@ -211,11 +211,11 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     reason:
       'daily purge of event_feed, deliveries and attempts per retention plan scope (held events excluded, receipt in the same batch), expired secrets, and test captures past 7 days with their hourly counters; platform job',
     writes: [
-      'event_feed:346e3a1e203b',
-      'webhook_attempts:728e5cf7cb30',
+      'event_feed:8077696eb04f',
+      'webhook_attempts:f8ab46ccf9f0',
       'webhook_capture_hours:1650ffd6f374',
       'webhook_captures:b9e00555955d',
-      'webhook_deliveries:1567275cd4be',
+      'webhook_deliveries:d8e809e58534',
       'webhook_endpoint_secrets:98644d3fe974',
     ],
   },
@@ -263,12 +263,12 @@ export const RAW_WRITE_ALLOWLIST: Record<string, RawWriteEntry> = {
     reason:
       'the daily retention sweep (platform job, no principal) deletes server-selected rowids of live scans, live pass events, finished outbox rows, ended roll calls and staff notes (with the scans window, holds honoured) and photos of voided or removed passes (member_photos, by pass id); each delete repeats the class condition, scope and hold check, and runs only while the receipt that records it exists in the same batch',
     writes: [
-      'member_photos:0bd69e0fb6c1',
-      'outbox:fe45188998a1',
-      'pass_events:ab7364044a77',
-      'pass_notes:a79a86710e4d',
-      'roll_calls:866387433c67',
-      'scans:87ef4dfab208',
+      'member_photos:d2d252b6afeb',
+      'outbox:72eab727054c',
+      'pass_events:ab54fbcb111e',
+      'pass_notes:a78a2119f896',
+      'roll_calls:64348c6387af',
+      'scans:b9e37001ebbc',
     ],
   },
   'src/worker/modules/retention/repo-receipts.ts': {
