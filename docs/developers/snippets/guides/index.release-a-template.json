@@ -1,5 +1,18 @@
 [
   {
+    "id": "release-draft",
+    "title": "Make a draft from a blueprint",
+    "guide": "release-a-template",
+    "ops": [
+      "templates.postTemplatesByIdUse"
+    ],
+    "files": {
+      "ts": "release-draft.ts",
+      "curl": "release-draft.sh"
+    },
+    "sandbox": "TEMPLATE_EXISTS"
+  },
+  {
     "id": "release-dry-run",
     "title": "Preview a release",
     "guide": "release-a-template",
@@ -7,8 +20,10 @@
       "templates.postTemplatesByIdRelease"
     ],
     "files": {
-      "ts": "release-dry-run.ts"
-    }
+      "ts": "release-dry-run.ts",
+      "curl": "release-dry-run.sh"
+    },
+    "sandbox": "TEMPLATE_NOT_FOUND"
   },
   {
     "id": "release-try",
@@ -18,8 +33,10 @@
       "templates.postTemplatesByIdRelease"
     ],
     "files": {
-      "ts": "release-try.ts"
-    }
+      "ts": "release-try.ts",
+      "curl": "release-try.sh"
+    },
+    "sandbox": "TEMPLATE_NOT_FOUND"
   },
   {
     "id": "request-review",
@@ -29,8 +46,10 @@
       "templates.postTemplatesByIdReviewRequests"
     ],
     "files": {
-      "ts": "request-review.ts"
-    }
+      "ts": "request-review.ts",
+      "curl": "request-review.sh"
+    },
+    "sandbox": "TEMPLATE_NOT_FOUND"
   },
   {
     "id": "approve-review",
@@ -41,8 +60,9 @@
       "templates.postTemplatesByIdReview"
     ],
     "files": {
-      "ts": "approve-review.ts"
+      "ts": "approve-review.ts",
+      "curl": "approve-review.sh"
     },
-    "sandbox": "TEMPLATE_REVIEW_NOT_FOUND"
+    "sandbox": "TEMPLATE_NOT_FOUND"
   }
 ]

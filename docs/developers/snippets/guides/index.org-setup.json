@@ -33,18 +33,6 @@
     "files": {
       "ts": "pass-setup-preview.ts",
       "curl": "pass-setup-preview.sh"
-    },
-    "sandbox": "PASS_SETUP_CHANGED"
-  },
-  {
-    "id": "pass-setup-apply",
-    "title": "Apply a brand change",
-    "guide": "org-setup",
-    "ops": [
-      "pass-setup.patchOrgsByOrgIdPassSetup"
-    ],
-    "files": {
-      "ts": "pass-setup-apply.ts"
     }
   },
   {
@@ -58,6 +46,19 @@
       "ts": "pass-setup-block.ts",
       "curl": "pass-setup-block.sh"
     },
-    "expect": "fails"
+    "sandbox": "MODE_LIVE_REQUIRED"
+  },
+  {
+    "id": "pass-setup-apply",
+    "title": "Apply a brand change",
+    "guide": "org-setup",
+    "ops": [
+      "pass-setup.patchOrgsByOrgIdPassSetup"
+    ],
+    "files": {
+      "ts": "pass-setup-apply.ts",
+      "curl": "pass-setup-apply.sh"
+    },
+    "sandbox": "PASS_SETUP_CHANGED"
   }
 ]
