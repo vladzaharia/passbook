@@ -190,6 +190,41 @@ Trust boundary: the service binding, not the lint rule (`tools/check-apple-bindi
 
 Rotate the key: create a new one, `secret put` the three values, revoke the old key. Compromise: revoke the key in App Store Connect. Losing it stops automated renewal only; manual upload still works. Calls: `apple-provisioner` D1 table `asc_calls`.
 
+## Polaris ID provisioner
+
+`workers/idp-provisioner` is a separate Worker that holds the Pocket ID API key. The main Worker will reach it only through an `IDP` service binding (entrypoint `IdpProvisioner`); it has no route and no `workers.dev` host, and `fetch` answers 404. Its D1 (`idp-provisioner`) holds the signup tokens it minted (id and SHA-256, never the value), the grants that say which accounts it may take the developers group from (`idp_grants`), a 10-minute health cache, and the append-only call ledger (`idp_calls`).
+
+On Pocket ID v2.19.3 an API key carries no scopes: it is a full admin key of the user that made it. So the key lives only here, and the Worker enforces its own policy:
+
+- The group is config (`DEVELOPER_GROUP_ID`); no method takes one. The signup body is always `{ ttl: "1h", usageLimit: 1, userGroupIds: [DEVELOPER_GROUP_ID] }`, and the answer is read back.
+- Every write needs a safe config, read from Pocket ID at most every 10 minutes (1 minute after an unsafe answer): the group's name equals `DEVELOPER_GROUP_NAME` and is not in `PROTECTED_GROUP_NAMES`; signups are `withToken`; email verification is `required`; require user email is on; `emailsVerified` is off; no signup default groups. Any miss is `IDP_UNSAFE_CONFIG`, no write, and an error log `provisioner.unsafe_config` with the reasons.
+- Group edits never touch a Pocket ID admin (`isAdmin`) or, when adding, a disabled user. The write is the groups read plus or minus the developers group, then read again. A mismatch is `IDP_DRIFT` (error log `provisioner.drift` with the subject), never retried.
+- `removeDeveloper` only for accounts with a live grant (a proven signup, or its own `addDeveloper`); anything else answers `not_ours`. Groups you add by hand are never removed.
+- Budgets, platform-wide per method, fail closed (`IDP_BUDGET`): `createSignup` and `addDeveloper` 10 a minute and 50 a day, `removeDeveloper` 20 and 200, `proveSignup` and `deleteSignup` 30 and 300, its own config read 6 and 300. Past half a daily budget it logs `provisioner.budget_high` (error).
+- HTTP: origin pinned to `POCKET_ID_ORIGIN`, header `X-API-KEY`, no redirects, 5 s, 256 KB; Pocket ID's text is never forwarded. The key, token values and setup links are not logged or stored.
+
+Alert on these error codes in Workers Logs: `provisioner.unsafe_config`, `provisioner.drift`, `provisioner.idp_auth`, `provisioner.budget_high`, `provisioner.proof_ambiguous`.
+
+One-time setup (owner):
+
+1. Pocket ID v2.19.3 or later. In Application Configuration set: Enable User Signups **Signup with token**; Email verification **Required**; Require user email **on**; signup default groups **none**; emails verified **off**; email login code for unauthenticated users **off**.
+2. Create the group `passbook_developers` (that exact name is the claim), allow it on the PassBook client, and note its id (the UUID in the group's URL).
+3. Create a Pocket ID admin user `passbook-provisioner` with a verified address you control, sign in as it once, and create an API key `passbook-provisioner` with a 90-day expiry. On v2.19.3 this key is a full admin key.
+4. `npx wrangler d1 create idp-provisioner`, then put the id in `workers/idp-provisioner/wrangler.jsonc` (it holds a placeholder).
+5. `npx wrangler d1 migrations apply idp-provisioner --config workers/idp-provisioner/wrangler.jsonc --remote`
+6. Set the vars `POCKET_ID_ORIGIN` (the https origin, no path) and `DEVELOPER_GROUP_ID` in `wrangler.jsonc`, then the secret:
+
+       npx wrangler secret put POCKET_ID_API_KEY --config workers/idp-provisioner/wrangler.jsonc
+
+7. `npx wrangler deploy --config workers/idp-provisioner/wrangler.jsonc`. The main Worker's `IDP` binding is added in a later change, once this Worker is live (Cloudflare fails a deploy whose binding names a missing Worker).
+8. Check `health()` reports `ok: true`, the group name, and the key expiry. A 404 on the group read sets `layoutSuspect`: `POCKET_ID_API` does not match the Pocket ID release.
+
+Next Pocket ID release: it moves admin routes to `/api/admin/...` and adds scoped keys. Recreate the key with `users:invite users:read users:write groups:read audit-logs:read config:read account:api-keys` and set `POCKET_ID_API` to `admin` in the same deploy. Both layouts are covered by `test/idp-provisioner`.
+
+Rotate the key (every 90 days; `health().keyExpiresAt` is the nearest expiry among the user's keys): create the new key as `passbook-provisioner`, `secret put` it, check `health()`, then revoke the old one.
+
+Compromise: the key is a Pocket ID admin key on v2.19.3, so treat it as identity provider compromise. Revoke the key in Pocket ID first, then review the Pocket ID audit log for users, groups, signup tokens and OIDC client changes since the last good `idp_calls` row (D1 table `idp_calls`; `calls(since)`), remove any group or admin you did not add, delete unknown signup tokens, and create a new key. The ledger lists the provisioner's own calls only; anything else came from outside it. Never give CI a Cloudflare token that can deploy `idp-provisioner`: anyone who can redeploy it can read the key.
+
 ## Managed identity runs
 
 `IdentityProvision` (workflow binding `IDENTITY_PROVISION`) provisions a managed pass type and certificate for an org (`provision`) and replaces a certificate (`rotate`). The daily hook `identities.rotation_plan` starts a rotate run 60 days before expiry for every `rotation='auto'` identity with no open run. Adding the binding needs `npm run deploy -- --first`.
