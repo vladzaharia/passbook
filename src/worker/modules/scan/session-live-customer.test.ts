@@ -70,6 +70,24 @@ describe('session customer settings', () => {
     ).toBe('ready');
   });
 
+  it('keeps the receipt headline always, and its balance only while the session shows amounts', async () => {
+    const { kit } = fixtures;
+    const template = await kit.scanTemplate('Receipt balance', {
+      actions: [{ id: 'check_in', label: 'Check in', kind: 'check_in' }],
+    });
+    const pass = await kit.scanPass(template);
+    const receipt = { headline: 'Paid $12.00', sub: 'Balance $30.50', balance: true as const };
+    for (const [name, customer, sub] of [
+      ['Amounts shown', {}, 'Balance $30.50'],
+      ['Amounts hidden', { showDraft: false }, null],
+    ] as const) {
+      const c = await customerIn(name, customer);
+      const entry = { ...(await c.entry({ passId: pass.id })), receipt };
+      const body = await liveRowFor(kit.ctx, c.recipient, entry);
+      expect(body?.customer?.band).toEqual({ headline: 'Paid $12.00', sub });
+    }
+  });
+
   it('never greets without a visible pass, and shows nothing but the band', async () => {
     const { kit } = fixtures;
     const session = await customerIn('Anonymous', { greet: true });

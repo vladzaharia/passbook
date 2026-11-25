@@ -5,8 +5,13 @@ import {
 import { SAMSUNG_REQUEST_TIMEOUT_MS } from './samsung-limits.ts';
 import { createSamsungAuthorizationToken } from './samsung-token.ts';
 
-/** The states of a card still in testing mode that Test mode takes; the release trigger (0202) has the same list. */
-export const SANDBOX_CARD_STATES: readonly string[] = ['ACTIVE', 'DRAFT', 'VERIFYING', 'VERIFIED'];
+/**
+ * The states of a card still in testing mode that Test mode takes: Samsung's Templates API names VERIFYING and
+ * ACTIVE, and the partner portal's Draft stage comes before them (docs/design/wallet-providers/samsung-wallet.md).
+ * BLOCKED and Rejected are refused. The release trigger (0202) also lists VERIFIED, which Samsung does not
+ * document; it is a looser backstop behind this list.
+ */
+export const SANDBOX_CARD_STATES: readonly string[] = ['ACTIVE', 'DRAFT', 'VERIFYING'];
 
 const ORIGIN = 'https://tsapi-card.walletsvc.samsung.com';
 const PATH = '/partner/v1/card/template';

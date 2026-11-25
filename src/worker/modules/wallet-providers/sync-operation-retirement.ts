@@ -14,11 +14,15 @@ import type {
   WalletProviderResult,
 } from './instance-types.ts';
 import { retirementReconciled } from './repo-instance-retirement.ts';
+import { samsungSentState } from './repo-sync-targets.ts';
 import { recordSyncLag } from './sync-lag.ts';
 import type { WalletSyncRunResult } from './sync-operation-context.ts';
 import { samsungOperationState } from './sync-samsung-state.ts';
 
+/** What the card was told: the state recorded with its send targets, else (an operation from before) what the pass says now. */
 async function samsungVoidOnly(ctx: ServiceContext, ref: WalletOperationRef): Promise<boolean> {
+  const sent = await samsungSentState(ctx.env.DB, ref.instanceId, ref.version);
+  if (sent) return sent === 'CANCELED';
   const op = await getWalletOperation(ctx.env.DB, ref);
   return op?.kind === 'revoke' && (await samsungOperationState(ctx, op)) === 'CANCELED';
 }

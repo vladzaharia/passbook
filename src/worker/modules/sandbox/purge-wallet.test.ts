@@ -28,9 +28,11 @@ import { startCredentialTransfer } from '../passes/credential-transfer.ts';
 import { type Kit, setupKit, withKitDatabase } from '../passes/pass-test-fixtures.ts';
 import { getPass } from '../passes/repo-read-pass.ts';
 import { codeOf, key, setupScanKit } from '../scan/test-kit.ts';
+import { getVersion } from '../templates/repo.ts';
 import { configureWalletProviderAccount } from '../wallet-providers/account-service.ts';
 import { retireWalletInstance } from '../wallet-providers/instance.ts';
 import { makeProviderTestTemplate } from '../wallet-providers/offers-test-fixtures.ts';
+import { computeProjectionPins } from '../wallet-providers/projection-pins.ts';
 import {
   approveProjectionCandidate,
   createProjectionCandidate,
@@ -156,11 +158,9 @@ async function samsungProjection(kit: Kit, row: PassRow) {
         templateId: source.template_id,
         version: source.template_version,
       });
-      const template = await kit.registry.resolve(source.template_id, source.template_version);
-      const barcode =
-        template.passJson.barcode || template.passJson.barcodes?.length
-          ? ('qr' as const)
-          : ('none' as const);
+      const version = await getVersion(kit.env.DB, source.template_id, source.template_version);
+      if (!version) throw new Error('Missing template version');
+      const { pins } = await computeProjectionPins(kit.ctx, 'samsung', version);
       const candidate = await createProjectionCandidate(
         kit.ctx,
         principals.authorAuth,
@@ -170,20 +170,9 @@ async function samsungProjection(kit: Kit, row: PassRow) {
           version: source.template_version,
           sourceReleaseId: source.release_id!,
           projection: {
-            schema: 1,
-            provider: 'samsung',
-            language: 'en',
-            logoUrl: 'https://example.test/logo.png',
-            sourceArtworkSlots: ['icon'],
-            titleField: 'name',
-            fields: ['name'],
-            barcode,
-            cardType: 'loyalty',
-            cardSubType: 'others',
-            countryCode: 'GB',
-            appLinkLogo: 'https://example.test/app.png',
-            appLinkName: 'Account',
-            appLinkData: 'https://example.test/account',
+            schema: 2 as const,
+            provider: 'samsung' as const,
+            approvedOmissions: pins.approvedOmissions,
           },
         },
       );
@@ -395,25 +384,17 @@ async function samsungFixture() {
       samsungCertificatePem: identity.certificate,
     },
   });
+  const version = await getVersion(kit.env.DB, kit.template.id, kit.template.version);
+  if (!version) throw new Error('Missing template version');
+  const { pins } = await computeProjectionPins(kit.ctx, 'samsung', version);
   const candidate = await createProjectionCandidate(kit.ctx, apple.authorAuth, kit.template.id, {
     ...scope,
     version: kit.template.version,
     sourceReleaseId: apple.id,
     projection: {
-      schema: 1,
-      provider: 'samsung',
-      language: 'en',
-      logoUrl: 'https://example.test/logo.png',
-      sourceArtworkSlots: ['icon'],
-      titleField: 'name',
-      fields: ['name'],
-      barcode: 'none',
-      cardType: 'loyalty',
-      cardSubType: 'others',
-      countryCode: 'GB',
-      appLinkLogo: 'https://example.test/app.png',
-      appLinkName: 'Account',
-      appLinkData: 'https://example.test/account',
+      schema: 2 as const,
+      provider: 'samsung' as const,
+      approvedOmissions: pins.approvedOmissions,
     },
   });
   const approval = await approveProjectionCandidate(

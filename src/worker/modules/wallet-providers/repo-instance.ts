@@ -158,11 +158,13 @@ export async function listDueOperations(
     SELECT ${OPERATION_COLUMNS} FROM due
     JOIN wallet_provider_instance_operations op ON op.id = due.id
     JOIN wallet_provider_instances i ON i.id = op.instance_id
-    WHERE ${walletOpReadCurrentSql('i', 'op')}
+    WHERE due.turn <= ? AND ${walletOpReadCurrentSql('i', 'op')}
+    -- A turn past the limit has that many operations of its org and kind ahead of it, so it is never chosen
+    -- and its live proof is not read.
     -- Voids and removals before updates (Q5), and each org's turn in turn, so one org's reissue cannot hold up
     -- another org's operations.
     ORDER BY (op.kind = 'revoke') DESC, due.turn, op.id LIMIT ?`,
-    [now, ...(afterId === null ? [] : [afterId]), limit],
+    [now, ...(afterId === null ? [] : [afterId]), limit, limit],
   );
 }
 export interface DirtyWalletInstance extends WalletScope {

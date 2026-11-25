@@ -1,5 +1,4 @@
-import { parseIsoDate } from '../../../passkit/schema/util.ts';
-import type { ScanOutcome, ScanRole } from '../../../shared/contracts/scan.ts';
+import type { ScanOutcome } from '../../../shared/contracts/scan.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import { isStrongAmr } from '../../../shared/sign-in.ts';
 import { ForbiddenError, UnauthenticatedError } from '../../platform/errors.ts';
@@ -8,17 +7,14 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import type { ScanActor } from './actor.ts';
 import { epochsMissing } from './authority-capture.ts';
 import type { CredentialTombstoneSnapshot } from './credential-input.ts';
-import { usedRelease } from './effective-release.ts';
-import { sourceActor } from './event-safe-projection-policy.ts';
 import { pinKeyset } from './keyset-pin.ts';
 import type { LiveAttachment } from './live-auth.ts';
+import { passDetail } from './live-pass-detail.ts';
+import { receiptOf } from './live-receipt.ts';
 import type { LiveRingRow } from './live-ring.ts';
-import { photoPolicyForResolved, scannerCandidateAllowed } from './member-photo.ts';
 import { isOverridable } from './outcome.ts';
-import { scanIdentity } from './projection-privacy.ts';
 import { CREDENTIAL_REF_PREFIX } from './repo-credential-tombstones.ts';
 import type { Candidate } from './repo-lookup.ts';
-import { foundOf } from './resolve.ts';
 import { scanEpochsOf } from './scan-epochs.ts';
 import {
   captureObservedScanningSession,
@@ -28,6 +24,10 @@ import {
 /** The live row id of a scan: stable, and never the scan's own id. */
 export const liveRowId = async (scanId: string): Promise<string> =>
   (await sha256Hex(`live-row:${scanId}`)).slice(0, 32);
+
+/** The live row id of a desk read, from the resolve's idempotency key: a later draft names the ready card without a map. */
+export const liveReadyId = async (scannerId: string, idempotencyKey: string): Promise<string> =>
+  (await sha256Hex(`live-ready:${scannerId}:${idempotencyKey}`)).slice(0, 32);
 
 export const scanHub = (ctx: ServiceContext, orgId: string, mode: string) =>
   ctx.env.SCAN_HUB.getByName(`${orgId}:${mode}`);
@@ -137,67 +137,6 @@ export function liveAttachment(
   };
 }
 
-const ROLES: readonly ScanRole[] = ['door', 'desk', 'manager'];
-
-/**
- * The pass facts a live row discloses, taken from the candidate the scan evaluated: the holder name
- * (as the source screen showed it), the roles that would read the same name, the roles a photo is
- * shown to, and the generations and release a render re-checks. Null when the pass cannot be
- * evaluated for the source (the row is then published as a redacted row).
- */
-async function passDetail(
-  ctx: ServiceContext,
-  actor: ScanActor,
-  candidate: Candidate,
-  keyset: string,
-): Promise<
-  | (Pick<
-      LiveRingRow,
-      'templateId' | 'gen' | 'release' | 'validUntil' | 'holderRoles' | 'photoRoles'
-    > & { holder: string | null })
-  | null
-> {
-  const { pass } = candidate;
-  const release = usedRelease(candidate.templateSnapshot?.raw);
-  const found = release === false ? null : await foundOf(ctx, candidate);
-  const now = ctx.clock.now();
-  if (
-    !found ||
-    release === false ||
-    candidate.credentialKeysetCommitment !== keyset ||
-    pass.orgId !== actor.orgId ||
-    pass.mode !== actor.mode ||
-    !scannerCandidateAllowed(actor, candidate, found.passJson, now)
-  )
-    return null;
-  const title = scanIdentity(found, actor).title;
-  const holderRoles = title
-    ? ROLES.filter((r) => scanIdentity(found, sourceActor(actor, r)).title === title)
-    : [];
-  const photoRoles = ROLES.filter((r) =>
-    photoPolicyForResolved(
-      sourceActor(actor, r),
-      candidate,
-      found.template,
-      found.activePolicy,
-      now,
-    ),
-  );
-  return {
-    templateId: pass.templateId,
-    gen: {
-      credential: pass.credentialGeneration,
-      lifecycle: pass.lifecycleGeneration,
-      image: pass.imageGeneration,
-    },
-    release: release === null ? null : release[0],
-    validUntil: parseIsoDate(found.passJson.expirationDate) ?? null,
-    holder: title ? title.slice(0, 40) : null,
-    holderRoles,
-    photoRoles,
-  };
-}
-
 /** The ring entry for a committed scan of `candidate` (null: no pass); null when the pass cannot be shown. */
 export async function liveRingRow(
   ctx: ServiceContext,
@@ -208,7 +147,10 @@ export async function liveRingRow(
   /** The full keyed refs of the credential the scan presented. */
   credentialRefs: readonly string[] = [],
   /** The checked zones and their ancestors, and the doc-named customer body, when the scan has them. */
-  extra: Pick<LiveRingRow, 'zoneIds' | 'customer' | 'overridable'> = {},
+  extra: Pick<LiveRingRow, 'zoneIds' | 'customer' | 'overridable'> & {
+    /** The committed outcome: a customer screen's receipt comes from it. */
+    outcome?: ScanOutcome;
+  } = {},
 ): Promise<LiveRingRow | null> {
   const detail = candidate ? await passDetail(ctx, source, candidate, await pinKeyset(ctx)) : null;
   if (candidate && !detail) return null;
@@ -229,6 +171,8 @@ export async function liveRingRow(
     eventId: source.event?.id ?? null,
     zoneIds: extra.zoneIds ?? [],
     customer: detail ? (extra.customer ?? null) : null,
+    receipt:
+      detail && extra.outcome ? receiptOf(extra.outcome, detail.actions, detail.stampsInput) : null,
     ...(extra.overridable ? { overridable: true } : {}),
   };
 }
@@ -287,6 +231,7 @@ export function publishScan(
         out.scanId,
         credentialContext?.credentialTombstoneRefs ?? [],
         {
+          outcome: out,
           overridable:
             !undo &&
             out.scanId !== null &&

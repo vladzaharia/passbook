@@ -1441,6 +1441,7 @@ export type CreatedScanningDevice = {
     direction?: "in" | "out" | "both";
     lookup?: boolean;
     showPhoto?: boolean;
+    follows?: Array<string>;
   };
   settings: ScannerSettings;
   capabilities: ScanDeviceCapabilities;
@@ -9120,6 +9121,7 @@ export type ScanSetupAnswer = {
         direction?: "in" | "out" | "both";
         lookup?: boolean;
         showPhoto?: boolean;
+        follows?: Array<string>;
       };
       ref: string;
       role: "scan" | "customer" | "monitor";
@@ -9562,7 +9564,30 @@ export type ScanTemplateRef = {
 
 export type ScanWorkspace = {
   session: ScanningSession;
-  device: ScanningDevice;
+  device: {
+    id: string;
+    sessionId: string;
+    name: string;
+    surface: "auto" | "phone" | "operator" | "desk" | "customer";
+    effectiveSurface: "phone" | "operator" | "desk" | "customer";
+    overrides: {
+      flow?: "auto" | "choose";
+      reader?: "none" | "barcode" | "nfc";
+      direction?: "in" | "out" | "both";
+      lookup?: boolean;
+      showPhoto?: boolean;
+    };
+    settings: ScannerSettings;
+    capabilities: ScanDeviceCapabilities;
+    reportedAt: number | null;
+    paired: boolean;
+    online: boolean;
+    revoked: boolean;
+    lastSeenAt: number | null;
+    updatedAt: number;
+    signIn: "paired" | "admin";
+    adminName: string | null;
+  };
 } | null;
 
 export type ScanZonesArchiveResponse = {
@@ -9984,6 +10009,7 @@ export type ScanningDevice = {
     direction?: "in" | "out" | "both";
     lookup?: boolean;
     showPhoto?: boolean;
+    follows?: Array<string>;
   };
   settings: ScannerSettings;
   capabilities: ScanDeviceCapabilities;
@@ -10261,6 +10287,7 @@ export type ScanningSessionsDevicesCreateParams = {
     direction?: "in" | "out" | "both";
     lookup?: boolean;
     showPhoto?: boolean;
+    follows?: Array<string>;
   };
 };
 
@@ -10273,6 +10300,7 @@ export type ScanningSessionsDevicesUpdateParams = {
     direction?: "in" | "out" | "both";
     lookup?: boolean;
     showPhoto?: boolean;
+    follows?: Array<string>;
   };
   revision?: number;
 };

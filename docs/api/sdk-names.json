@@ -1459,6 +1459,12 @@
     "resource": "scanZones",
     "method": "resetVisits"
   },
+  "scan.deleteScanDraft": {
+    "resource": "terminal.draft",
+    "method": "clear",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
   "scan.deleteScanPassesByPassIdNotesByNoteId": {
     "resource": "terminal.notes",
     "method": "delete",
@@ -2378,6 +2384,12 @@
   "scan.postScanStaffPin": {
     "resource": "terminal.staff",
     "method": "setPin",
+    "sdk": false,
+    "reason": "Scanner device protocol; needs a paired scanner session."
+  },
+  "scan.putScanDraft": {
+    "resource": "terminal.draft",
+    "method": "set",
     "sdk": false,
     "reason": "Scanner device protocol; needs a paired scanner session."
   },

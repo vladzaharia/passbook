@@ -69,12 +69,23 @@ function sessionFor(surface: string): ScanSession {
   };
 }
 
+type Face = { kind: ScanLiveRow['kind']; label: string; headline: string };
+const OK_FACE: Face = { kind: 'ok', label: 'Checked in', headline: "You're in" };
+const LIVE_FACE: Record<string, Face> = {
+  out: { kind: 'ok', label: 'Checked out', headline: 'See you soon' },
+  refused: { kind: 'refused', label: 'Not accepted', headline: 'Please see the desk' },
+  heads_up: { kind: 'heads_up', label: 'One more check', headline: 'Please see staff' },
+  ready: { kind: 'ready', label: 'Checking pass', headline: 'Checking pass' },
+  undo: { kind: 'undo', label: 'Entry undone', headline: 'Entry undone' },
+};
+
 function LiveVisual({ session, status }: { session: ScanSession; status: string }) {
   const [installed] = useState(() => {
     VisualSocket.instances = [];
     window.WebSocket = VisualSocket as unknown as typeof WebSocket;
     return true;
   });
+  const face = LIVE_FACE[status] ?? OK_FACE;
   useEffect(() => {
     if (!installed) return;
     const id = `${ID.slice(0, -1)}2`;
@@ -86,21 +97,18 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
       passId: ID,
       holder: 'Private pass holder',
       photoUrl: null,
-      kind: status === 'refused' ? 'refused' : 'ok',
-      direction: 'in',
-      label: status === 'refused' ? 'Not accepted' : 'Checked in',
+      kind: face.kind,
+      direction: status === 'out' ? 'out' : 'in',
+      label: face.label,
       presented: true,
       customer: {
         v: 1 as const,
-        screen: status === 'refused' ? ('see_desk' as const) : ('ok' as const),
+        screen: face.kind === 'refused' ? ('see_desk' as const) : ('ok' as const),
         ref: id,
         at: Date.now(),
         where: '',
-        band:
-          status === 'refused'
-            ? { headline: 'Please see the desk', sub: null }
-            : { headline: "You're in", sub: null },
-        greet: status === 'refused' ? null : 'Hi, Sam',
+        band: { headline: face.headline, sub: null },
+        greet: face.kind === 'ok' ? 'Hi, Sam' : null,
         chips: [],
         panel: null,
         lines: [],
@@ -110,7 +118,7 @@ function LiveVisual({ session, status }: { session: ScanSession; status: string 
     };
     const timer = window.setTimeout(() => VisualSocket.instances.at(-1)?.publish(row), 40);
     return () => window.clearTimeout(timer);
-  }, [installed, status]);
+  }, [installed, status, face]);
   return (
     <>
       <LiveScreen session={session} refetch={async () => undefined} />

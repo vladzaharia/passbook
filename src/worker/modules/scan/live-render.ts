@@ -1,6 +1,13 @@
-import { renderCustomerView } from '../../../passkit/template/scan-display/customer.ts';
+import {
+  type CustomerViewOptions,
+  okHeadline,
+  renderCustomerView,
+} from '../../../passkit/template/scan-display/customer.ts';
 import type { ScanRole } from '../../../shared/contracts/scan.ts';
-import { ScanCustomerViewSchema } from '../../../shared/contracts/scan-customer.ts';
+import {
+  type ScanCustomerView,
+  ScanCustomerViewSchema,
+} from '../../../shared/contracts/scan-customer.ts';
 import type { ScanLiveRow } from '../../../shared/contracts/scan-setups.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { LiveRecipient } from './live-auth.ts';
@@ -43,53 +50,102 @@ function monitorExtras(row: ScanLiveRow, role: ScanRole | null): Partial<ScanLiv
   };
 }
 
+/** What a body says under the band: an ok receipt or a review draft always names its headline. */
+export interface CustomerSay {
+  headline: string;
+  sub: string | null;
+  /** A review's figure, set apart from its label. */
+  figure?: string;
+}
+
 /**
- * The body a customer screen draws. A system view: the band, then the first name on ok and ready when
- * the pass is still visible and the session greets. The doc-named chips and panel ride only a visible
- * pass. No reason, staff, photo, pass id, count or other holder.
+ * The view a customer screen draws. A system view: the band, then the first name on ok, review and
+ * ready when the pass is still visible and the session greets. The doc-named chips and panel ride
+ * only a visible pass. No reason, staff, photo, pass id, count or other holder.
  */
+function customerView(
+  recipient: LiveRecipient,
+  entry: LiveRingRow,
+  visible: boolean,
+  screen: { screen: 'ok' | 'review'; say: CustomerSay } | { screen: 'ready' | 'see_desk' },
+): ScanCustomerView {
+  const { row } = entry;
+  const settings = recipient.customer;
+  const named = visible && screen.screen !== 'see_desk' && row.holder ? row.holder : null;
+  const common = {
+    ref: row.id,
+    at: row.at,
+    where: '',
+    test: recipient.actor.mode === 'test',
+    locale: 'en',
+    timeZone: recipient.actor.timeZone,
+    now: row.at,
+    ...(settings.greet === undefined ? {} : { greet: settings.greet }),
+    ...(settings.refusedLine === undefined ? {} : { refusedLine: settings.refusedLine }),
+  };
+  const options: CustomerViewOptions =
+    'say' in screen
+      ? {
+          ...common,
+          screen: screen.screen,
+          headline: screen.say.headline,
+          sub: screen.say.sub,
+          ...(screen.say.figure ? { figure: screen.say.figure } : {}),
+        }
+      : { ...common, screen: screen.screen };
+  const view = renderCustomerView(
+    named ? { v: 1, header: {}, holder: '{{pass.title}}' } : null,
+    named ? { pass: { title: named, templateName: '' } } : {},
+    options,
+  );
+  const extras = visible && entry.customer && screen.screen !== 'see_desk' ? entry.customer : null;
+  const checked = ScanCustomerViewSchema.safeParse({
+    ...view,
+    ...extras,
+    ...(settings.welcome ? { welcome: settings.welcome } : {}),
+  });
+  return checked.success ? checked.data : view;
+}
+
+/** The receipt as this screen may show it: the headline always, the balance line only while the session shows amounts. */
+function receiptSay(recipient: LiveRecipient, receipt: LiveRingRow['receipt']): CustomerSay | null {
+  if (!receipt) return null;
+  const hide = receipt.balance && recipient.customer.showDraft === false;
+  return { headline: receipt.headline, sub: hide ? null : receipt.sub };
+}
+
+/** The body a customer screen draws for a ring row; null when the session hides it. */
 function customerRow(
   recipient: LiveRecipient,
   entry: LiveRingRow,
   visible: boolean,
 ): ScanLiveRow | null {
   const { row } = entry;
-  const settings = recipient.customer;
   const base = redactedRow(row, true);
   if (row.kind === 'undo') return base;
-  if (row.kind === 'ready' && settings.showReady === false) return null;
-  const screen = row.kind === 'ok' ? 'ok' : row.kind === 'ready' ? 'ready' : 'see_desk';
-  const named = visible && screen !== 'see_desk' && row.holder ? row.holder : null;
-  const view = renderCustomerView(
-    named ? { v: 1, header: {}, holder: '{{pass.title}}' } : null,
-    named ? { pass: { title: named, templateName: '' } } : {},
-    {
-      screen,
-      ref: row.id,
-      at: row.at,
-      where: '',
-      test: recipient.actor.mode === 'test',
-      locale: 'en',
-      timeZone: recipient.actor.timeZone,
-      now: row.at,
-      ...(settings.greet === undefined ? {} : { greet: settings.greet }),
-      ...(settings.refusedLine === undefined ? {} : { refusedLine: settings.refusedLine }),
-      direction: row.direction,
-      event: entry.eventId !== null && entry.eventId !== undefined,
-    },
-  );
-  const extras = visible && entry.customer && screen !== 'see_desk' ? entry.customer : null;
-  const checked = ScanCustomerViewSchema.safeParse({
-    ...view,
-    ...extras,
-    ...(settings.welcome ? { welcome: settings.welcome } : {}),
-  });
-  return {
-    ...base,
-    ...(row.replaces ? { replaces: row.replaces } : {}),
-    customer: checked.success ? checked.data : view,
-  };
+  if (row.kind === 'ready' && recipient.customer.showReady === false) return null;
+  const view =
+    row.kind === 'ok'
+      ? customerView(recipient, entry, visible, {
+          screen: 'ok',
+          // The receipt names the value, so it rides a visible pass like the doc-named panel.
+          say: receiptSay(recipient, visible ? entry.receipt : null) ?? {
+            headline: okHeadline({
+              direction: row.direction,
+              event: entry.eventId !== null && entry.eventId !== undefined,
+            }),
+            sub: null,
+          },
+        })
+      : customerView(recipient, entry, visible, {
+          screen: row.kind === 'ready' ? 'ready' : 'see_desk',
+        });
+  return { ...base, ...(row.replaces ? { replaces: row.replaces } : {}), customer: view };
 }
+
+/** The review body for a draft over a ready entry (the pass is known to be current). */
+export const draftView = (recipient: LiveRecipient, entry: LiveRingRow, say: CustomerSay) =>
+  customerView(recipient, entry, true, { screen: 'review', say });
 
 /**
  * What one recipient may see of a ring row once the scan and pass are known to be current: the
@@ -131,6 +187,45 @@ function visibleRow(
   };
 }
 
+interface LiveFlag {
+  i: number;
+  scan_ok: number;
+  pass_ok: number;
+  staff_ok: number;
+}
+
+/** One D1 statement: the recipient's authority, and each entry's scan and pass, re-checked. Null: unreadable. */
+async function liveFlags(
+  ctx: ServiceContext,
+  recipient: LiveRecipient,
+  entries: readonly LiveRingRow[],
+  now: number,
+): Promise<Map<number, LiveFlag> | null> {
+  const actor = recipient.actor;
+  const auth = scanReadAuthority(actor, { now, read: { stafflessMonitor: true } });
+  const result = await liveRowsStmt(ctx.env.DB, auth, actor, entries).all<LiveFlag>();
+  return result.success ? new Map(result.results.map((r) => [r.i, r])) : null;
+}
+
+/** The scan and its pass are current, and the Wallet has not expired. */
+const isLive = (entry: LiveRingRow, flag: LiveFlag, now: number) =>
+  entry.row.passId !== null &&
+  entry.gen !== null &&
+  flag.scan_ok === 1 &&
+  flag.pass_ok > 0 &&
+  (entry.validUntil === null || now <= entry.validUntil);
+
+/** The same currency check a delivery makes, for one entry: false when the pass moved on. */
+export async function entryIsLive(
+  ctx: ServiceContext,
+  recipient: LiveRecipient,
+  entry: LiveRingRow,
+): Promise<boolean> {
+  const now = ctx.clock.now();
+  const flag = (await liveFlags(ctx, recipient, [entry], now))?.get(0);
+  return flag !== undefined && isLive(entry, flag, now);
+}
+
 /**
  * Render ring rows for one recipient. One D1 statement re-checks the recipient's authority, each
  * row's scan and each row's pass; a row that fails any part is delivered as its redacted shape, and
@@ -150,26 +245,14 @@ export async function liveRowsFor(
       (!customer || (entry.row.presented && start - entry.row.at <= CUSTOMER_WINDOW_MS)),
   );
   if (!entries.length) return [];
-  const auth = scanReadAuthority(actor, { now: start, read: { stafflessMonitor: true } });
-  const result = await liveRowsStmt(ctx.env.DB, auth, actor, entries).all<{
-    i: number;
-    scan_ok: number;
-    pass_ok: number;
-    staff_ok: number;
-  }>();
-  if (!result.success) return [];
-  const flags = new Map(result.results.map((r) => [r.i, r]));
+  const flags = await liveFlags(ctx, recipient, entries, start);
+  if (!flags) return [];
   const now = ctx.clock.now();
   const out: ScanLiveRow[] = [];
   entries.forEach((entry, i) => {
     const flag = flags.get(i);
     if (!flag || (customer && now - entry.row.at > CUSTOMER_WINDOW_MS)) return;
-    const live =
-      entry.row.passId !== null &&
-      entry.gen !== null &&
-      flag.scan_ok === 1 &&
-      flag.pass_ok > 0 &&
-      (entry.validUntil === null || now <= entry.validUntil);
+    const live = isLive(entry, flag, now);
     if (customer) {
       const body = customerRow(recipient, entry, live);
       if (body) out.push(body);
