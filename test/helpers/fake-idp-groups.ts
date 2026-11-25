@@ -51,12 +51,15 @@ export interface GroupEnv {
   claimKeys: string[];
   customLimit: number;
   enter(method: string, write?: boolean): void;
-  dry(flag?: boolean): boolean;
+  /** True for a dry run. Charges `bucket` (`preview` when dry); over its limit answers `IDP_BUDGET`. */
+  dry(flag: boolean | undefined, bucket: string): boolean;
   write(): void;
   refuse(code: string): never;
   account(subject: string): FakeAccount;
   protect(subject: string, a: FakeAccount): void;
   lease(key: string): void;
+  /** Counts a live removal toward the breaker; over its limit answers `IDP_BREAKER`. */
+  removal(): void;
 }
 
 type Methods = Pick<
@@ -95,22 +98,21 @@ export function groupMethods(env: GroupEnv): Methods & {
   });
   const managed = (key: string): FakeGroup => {
     const g = groups.get(key);
-    if (!g || g.kind === 'adopted') return refuse('IDP_REFUSED');
-    return g;
+    return g ?? refuse('IDP_REFUSED');
   };
 
-  /** `passbook_*` for anyone; listed keys only on groups and created or linked accounts. */
-  const claimKeyOk = (key: string, external: boolean): boolean =>
+  /** `passbook_*` for anyone; listed keys only on created or linked accounts, never on groups. */
+  const claimKeyOk = (key: string, listedOk: boolean): boolean =>
     !RESERVED_CLAIMS.has(key) &&
     key !== 'picture' &&
-    (CLAIM_KEY.test(key) || (!external && env.claimKeys.includes(key)));
+    (CLAIM_KEY.test(key) || (listedOk && env.claimKeys.includes(key)));
 
   const holderOf = (
     owner: ClaimOwner,
   ): {
     claims?: Record<string, ClaimValue>;
     otherClaims?: Record<string, string>;
-    external: boolean;
+    listedOk: boolean;
     set(c: Record<string, ClaimValue>): void;
   } => {
     if ('subject' in owner) {
@@ -119,19 +121,19 @@ export function groupMethods(env: GroupEnv): Methods & {
       return {
         claims: a.claims,
         otherClaims: a.otherClaims,
-        external: a.class === 'external',
+        listedOk: a.class !== 'external',
         set: (c) => {
           a.claims = c;
         },
       };
     }
     const g = groups.get(keyOf(owner.group));
-    if (!g || g.kind === 'adopted' || (g.kind === 'role' && !ROLES.includes(keyOf(owner.group))))
+    if (!g || (g.kind === 'role' && !ROLES.includes(keyOf(owner.group))))
       return refuse('IDP_REFUSED');
     return {
       claims: g.claims,
       otherClaims: g.otherClaims,
-      external: false,
+      listedOk: false,
       set: (c) => {
         g.claims = c;
       },
@@ -161,7 +163,7 @@ export function groupMethods(env: GroupEnv): Methods & {
       const name = `${CUSTOM_PREFIX}${key}`;
       if ([...groups.values()].some((g) => g.name === name)) refuse('IDP_CONFLICT');
       const g: FakeGroup = { kind: 'custom', name, friendlyName, otherClients: 0 };
-      if (env.dry(ctx.dryRun)) return { dryRun: true };
+      if (env.dry(ctx.dryRun, 'group_write')) return { dryRun: true };
       env.write();
       groups.set(key, g);
       return { key };
@@ -171,7 +173,7 @@ export function groupMethods(env: GroupEnv): Methods & {
       if (!ROLES.includes(role) || groups.has(role)) refuse('IDP_REFUSED');
       const name = `passbook_${role}`;
       if ([...groups.values()].some((g) => g.name === name)) refuse('IDP_CONFLICT');
-      if (env.dry(ctx.dryRun)) return { dryRun: true };
+      if (env.dry(ctx.dryRun, 'group_write')) return { dryRun: true };
       env.write();
       const g: FakeGroup = { kind: 'role', name, friendlyName: name, otherClients: 0 };
       groups.set(role, g);
@@ -182,7 +184,7 @@ export function groupMethods(env: GroupEnv): Methods & {
       env.lease(target.startsWith('g:') ? target : `g:${target}`);
       const g = managed(keyOf(target));
       if (patch.friendlyName.length < 2 || patch.friendlyName.length > 50) refuse('IDP_REFUSED');
-      if (env.dry(ctx.dryRun)) return { dryRun: true };
+      if (env.dry(ctx.dryRun, 'group_write')) return { dryRun: true };
       env.write();
       g.friendlyName = patch.friendlyName;
       return { target };
@@ -194,8 +196,9 @@ export function groupMethods(env: GroupEnv): Methods & {
       if (!g) return refuse('IDP_NOT_FOUND');
       if (g.kind !== 'custom') refuse('IDP_REFUSED');
       if (membersOf(`g:${key}`) > 0 || g.otherClients > 0) refuse('IDP_IN_USE');
-      if (env.dry(ctx.dryRun)) return { dryRun: true };
+      if (env.dry(ctx.dryRun, 'group_write')) return { dryRun: true };
       env.write();
+      env.removal();
       groups.delete(key);
       return { key };
     },
@@ -213,7 +216,7 @@ export function groupMethods(env: GroupEnv): Methods & {
       const next = { ...h.claims };
       const result = { set: [] as string[], removed: [] as string[], dryRun: false };
       for (const [key, change] of entries as [string, ClaimChange][]) {
-        if (!claimKeyOk(key, h.external)) refuse('IDP_REFUSED');
+        if (!claimKeyOk(key, h.listedOk)) refuse('IDP_REFUSED');
         if (change === null) {
           delete next[key];
           result.removed.push(key);
@@ -224,7 +227,7 @@ export function groupMethods(env: GroupEnv): Methods & {
         }
       }
       if (Object.keys(next).length > 20 || sizeOf(next) > 8192) refuse('IDP_REFUSED');
-      result.dryRun = env.dry(ctx.dryRun);
+      result.dryRun = env.dry(ctx.dryRun, 'claims_write');
       if (!result.dryRun) {
         env.write();
         h.set(next);

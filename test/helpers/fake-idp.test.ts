@@ -91,7 +91,7 @@ describe('fake IDP', () => {
     idp.addAccount('me', { class: 'created' });
     await idp.setDisabled('ours', true, ctx);
     expect(await idp.setDisabled('ours', false, ctx)).toMatchObject({ result: 'enabled' });
-    await expect(idp.setDisabled('theirs', false, ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    await expect(idp.setDisabled('theirs', false, ctx)).rejects.toThrow(/^IDP_NOT_MANAGED/);
     for (const s of ['pa', 'key', 'me']) {
       await expect(idp.apply(s, { add: ['console'] }, ctx)).rejects.toThrow(/^IDP_REFUSED/);
       await expect(idp.setDisabled(s, true, ctx)).rejects.toThrow(/^IDP_REFUSED/);
@@ -99,12 +99,15 @@ describe('fake IDP', () => {
   });
 
   it('simulates the budget and the breaker', async () => {
-    const budget = createFakeIdp({ budget: 1 });
+    const budget = createFakeIdp({ budget: { apply_add_system: 1 } });
     budget.addAccount('u');
     await budget.apply('u', { add: ['console'] }, ctx);
     await expect(budget.apply('u', { add: ['developer'] }, ctx)).rejects.toThrow(/^IDP_BUDGET/);
     const breaker = createFakeIdp({ breaker: 0 });
-    await expect(breaker.createSignup({ kind: 'member' }, ctx)).rejects.toThrow(/^IDP_BREAKER/);
+    breaker.addAccount('u', { roles: ['console'] });
+    await expect(
+      breaker.apply('u', { remove: ['console'] }, { ...ctx, override: true }),
+    ).rejects.toThrow(/^IDP_BREAKER/);
   });
 
   it('creates groups without adopting, and refuses to delete one in use', async () => {
@@ -196,5 +199,46 @@ describe('fake IDP', () => {
     idp.holdLease('g:crew');
     await idp.createGroup('crew', 'Crew', ctx);
     await expect(idp.deleteGroup('crew', ctx)).rejects.toThrow(/^IDP_CONFLICT/);
+  });
+
+  it('answers IDP_NOT_MANAGED when re-enabling an owner-disabled account', async () => {
+    const idp = createFakeIdp();
+    idp.addAccount('theirs', { class: 'created', disabled: true });
+    await expect(idp.setDisabled('theirs', false, ctx)).rejects.toThrow(/^IDP_NOT_MANAGED/);
+  });
+
+  it('keeps group claims to passbook_* keys, and manages adopted groups', async () => {
+    const idp = createFakeIdp({ claimKeys: ['tier'], adopt: { crew: 'Their Crew' } });
+    const text = { type: 'text', value: 'x' } as const;
+    await expect(idp.setClaims({ group: 'console' }, { tier: text }, ctx)).rejects.toThrow(
+      /^IDP_REFUSED/,
+    );
+    await idp.setClaims({ group: 'g:crew' }, { passbook_a: text }, ctx);
+    expect((await idp.claims({ group: 'g:crew' })).claims).toHaveProperty('passbook_a');
+    expect(await idp.updateGroup('g:crew', { friendlyName: 'Crew' }, ctx)).toEqual({
+      target: 'g:crew',
+    });
+    await expect(idp.deleteGroup('crew', ctx)).rejects.toThrow(/^IDP_REFUSED/);
+    const acct = createFakeIdp({ claimKeys: ['tier'] });
+    acct.addAccount('u', { class: 'linked' });
+    await acct.setClaims({ subject: 'u' }, { tier: text }, ctx);
+  });
+
+  it('charges budgets per bucket and counts removals toward the breaker', async () => {
+    const idp = createFakeIdp({
+      budget: { apply_add_system: 1, preview: 1, apply_remove: 5 },
+      breaker: 1,
+    });
+    idp.addAccount('u', { class: 'created' });
+    const user: WriteCtx = { ...ctx, actor: { kind: 'user', id: 'admin' } };
+    await idp.apply('u', { add: ['console'] }, ctx);
+    await expect(idp.apply('u', { add: ['developer'] }, ctx)).rejects.toThrow(/^IDP_BUDGET/);
+    await idp.apply('u', { add: ['developer'] }, user);
+    await idp.apply('u', { add: ['support'] }, { ...user, dryRun: true });
+    await expect(idp.apply('u', { add: ['support'] }, { ...user, dryRun: true })).rejects.toThrow(
+      /^IDP_BUDGET/,
+    );
+    await idp.apply('u', { remove: ['console'] }, user);
+    await expect(idp.apply('u', { remove: ['developer'] }, user)).rejects.toThrow(/^IDP_BREAKER/);
   });
 });

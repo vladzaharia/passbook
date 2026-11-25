@@ -1,19 +1,16 @@
 import type {
-  ApplyResult,
   IdpCall,
   IdpHealth,
-  IdpLookup,
   IdpRpc,
-  IdpSignup,
-  IdpSnapshot,
-  Role,
   SignupKind,
-  SnapshotMember,
   Target,
 } from '../../src/worker/modules/idp/types.ts';
-import { type FakeAccount, type FakeGroup, groupMethods } from './fake-idp-groups.ts';
+import { accountMethods } from './fake-idp-accounts.ts';
+import { type FakeAccount, groupMethods } from './fake-idp-groups.ts';
+import type { FakeIdp, FakeIdpOptions } from './fake-idp-types.ts';
 
 export type { FakeAccount, FakeGroup } from './fake-idp-groups.ts';
+export type { FakeIdp, FakeIdpOptions } from './fake-idp-types.ts';
 
 const KIND_ROLES: Record<SignupKind, Target[]> = {
   member: ['console'],
@@ -22,60 +19,11 @@ const KIND_ROLES: Record<SignupKind, Target[]> = {
   platform: [],
 };
 
-export interface FakeIdp extends IdpRpc {
-  /** The `IDP` binding for a test env. */
-  binding: IdpRpc;
-  /** Signup tokens minted and not deleted, by id. */
-  signups: Map<
-    string,
-    IdpSignup & { kind: SignupKind; targets: Target[]; ref: string; used: boolean }
-  >;
-  /** Role groups (seeded: console, developer), custom and adopted groups, by role or key. */
-  groupStore: Map<string, FakeGroup>;
-  accounts: Map<string, FakeAccount>;
-  /** Method names called, in order. */
-  log: string[];
-  /** Writes the binding would have sent to Polaris ID. Dry runs and refusals add none. */
-  writes: number;
-  frozen: boolean;
-  mode: 'dry_run' | 'live';
-  /** Makes the next call to `method` (or any call with `*`) fail as the binding does: `CODE: text`. */
-  failNext(code: string, method?: string): void;
-  /** Another write holds this subject or `g:<key>`; writes that need it answer `IDP_CONFLICT`. */
-  holdLease(key: string): void;
-  /** The person finished signup with this token: `proveSignup` now finds them. */
-  completeSignup(
-    tokenId: string,
-    subject: string,
-    account?: { email?: string; emailVerified?: boolean },
-  ): void;
-  /** Seeds an account that already exists in Polaris ID. */
-  addAccount(
-    subject: string,
-    init?: Partial<Omit<FakeAccount, 'roles' | 'grants'>> & { roles?: (Role | `g:${string}`)[] },
-  ): void;
-}
-
 const refuse = (code: string): never => {
   throw new Error(`${code}: fake binding refusal`);
 };
 
-export function createFakeIdp(
-  options: {
-    now?: () => number;
-    mode?: 'dry_run' | 'live';
-    /** The key owner's subject: never writable. */
-    keyUser?: string;
-    /** Write calls allowed before `IDP_BUDGET`. */
-    budget?: number;
-    /** Write calls allowed before the breaker answers `IDP_BREAKER`. */
-    breaker?: number;
-    /** `CLAIM_KEYS`: exact claim keys outside `passbook_*`. */
-    claimKeys?: string[];
-    /** `CUSTOM_GROUP_LIMIT`. */
-    customLimit?: number;
-  } = {},
-): FakeIdp {
+export function createFakeIdp(options: FakeIdpOptions = {}): FakeIdp {
   const now = options.now ?? (() => Date.now());
   const signups: FakeIdp['signups'] = new Map();
   const accounts: FakeIdp['accounts'] = new Map();
@@ -85,12 +33,14 @@ export function createFakeIdp(
       { kind: 'role', name: `passbook_${role}`, friendlyName: `passbook_${role}`, otherClients: 0 },
     ]),
   );
+  for (const [key, name] of Object.entries(options.adopt ?? {}))
+    groups.set(key, { kind: 'adopted', name, friendlyName: name, otherClients: 0 });
   const proofs = new Map<string, string>();
   const calls: IdpCall[] = [];
   const log: string[] = [];
   const failures: { code: string; method: string }[] = [];
-  const disabledByUs = new Set<string>();
-  let writeCalls = 0;
+  const spent = new Map<string, number>();
+  let removals = 0;
   let n = 0;
 
   const record = (
@@ -133,16 +83,6 @@ export function createFakeIdp(
       record(method, 'refused', 'IDP_FROZEN');
       refuse('IDP_FROZEN');
     }
-    if (!write) return;
-    writeCalls += 1;
-    if (options.budget !== undefined && writeCalls > options.budget) {
-      record(method, 'budget', 'IDP_BUDGET');
-      refuse('IDP_BUDGET');
-    }
-    if (options.breaker !== undefined && writeCalls > options.breaker) {
-      record(method, 'refused', 'IDP_BREAKER');
-      refuse('IDP_BREAKER');
-    }
   };
 
   /** The binding never writes to admins, platform-admin members, the key user or `me`. */
@@ -164,10 +104,25 @@ export function createFakeIdp(
   const account = (subject: string): FakeAccount =>
     accounts.get(subject) ?? refuse('IDP_NOT_FOUND');
   /** A dry run computes and ledgers the write in the `preview` bucket; it sends nothing. */
-  const dry = (flag?: boolean): boolean => {
+  const dry = (flag: boolean | undefined, bucket: string): boolean => {
     const isDry = flag === true || idp.mode !== 'live';
+    const charged = isDry ? 'preview' : bucket;
+    const count = (spent.get(charged) ?? 0) + 1;
+    spent.set(charged, count);
+    const limit = options.budget?.[charged];
+    if (limit !== undefined && count > limit) {
+      record(current, 'budget', 'IDP_BUDGET', null, charged);
+      refuse('IDP_BUDGET');
+    }
     if (isDry) record(current, 'dry_run', 'preview', null, 'preview');
     return isDry;
+  };
+  const removal = (): void => {
+    removals += 1;
+    if (options.breaker !== undefined && removals > options.breaker) {
+      record(current, 'refused', 'IDP_BREAKER');
+      refuse('IDP_BREAKER');
+    }
   };
   const write = (): void => {
     idp.writes += 1;
@@ -181,7 +136,8 @@ export function createFakeIdp(
     isAdmin: false,
     emailVerified: false,
   });
-  const groupsApi = groupMethods({
+  const disabledByUs = new Set<string>();
+  const groupEnv = {
     accounts,
     groups,
     claimKeys: options.claimKeys ?? [],
@@ -193,6 +149,13 @@ export function createFakeIdp(
     account,
     protect,
     lease,
+    removal,
+  };
+  const groupsApi = groupMethods(groupEnv);
+  const accountsApi = accountMethods({
+    ...groupEnv,
+    disabledByUs,
+    assertTargets: groupsApi.assertTargets,
   });
 
   const idp: FakeIdp = {
@@ -218,6 +181,7 @@ export function createFakeIdp(
       }
     },
     ...groupsApi,
+    ...accountsApi,
     addAccount: (subject, init = {}) => {
       const { roles = [], ...rest } = init;
       accounts.set(subject, {
@@ -256,7 +220,7 @@ export function createFakeIdp(
       if (keys.length > 5 || (spec.kind === 'platform' && keys.length === 0)) refuse('IDP_REFUSED');
       const targets: Target[] = [...KIND_ROLES[spec.kind], ...keys.map((k): Target => `g:${k}`)];
       groupsApi.assertTargets(targets);
-      if (dry(ctx.dryRun)) return { dryRun: true };
+      if (dry(ctx.dryRun, 'createSignup')) return { dryRun: true };
       write();
       const tokenId = `tok-${++n}`;
       const signup = {
@@ -272,7 +236,7 @@ export function createFakeIdp(
       const s = signups.get(tokenId);
       if (!s) return 'gone';
       if (s.used) return 'used';
-      if (dry(ctx.dryRun)) return { dryRun: true };
+      if (dry(ctx.dryRun, 'deleteSignup')) return { dryRun: true };
       write();
       signups.delete(tokenId);
       return 'deleted';
@@ -303,90 +267,6 @@ export function createFakeIdp(
               ? ('match' as const)
               : ('mismatch' as const);
       return { ...first, matches, ...(emailMatch ? { emailMatch } : {}) };
-    },
-    async findByVerifiedEmail(email) {
-      enter('findByVerifiedEmail');
-      const hits = [...accounts].filter(
-        ([, a]) =>
-          a.email === email.trim().toLowerCase() && a.emailVerified && !a.disabled && !a.isAdmin,
-      );
-      const hit = hits[0];
-      return hits.length === 1 && hit ? { subject: hit[0] } : null;
-    },
-    async lookup(subject) {
-      enter('lookup');
-      const a = account(subject);
-      return {
-        roles: [...a.roles] as IdpLookup['roles'],
-        disabled: a.disabled,
-        isAdmin: a.isAdmin,
-        class: a.class,
-        grants: [...a.grants] as Target[],
-      };
-    },
-    async apply(subject, delta, ctx) {
-      enter('apply', true);
-      const a = account(subject);
-      protect(subject, a);
-      lease(subject);
-      if (a.disabled && delta.add?.length) refuse('IDP_REFUSED');
-      groupsApi.assertTargets([...(delta.add ?? []), ...(delta.remove ?? [])]);
-      const isDry = dry(ctx.dryRun);
-      const result: ApplyResult = { added: [], removed: [], skipped: [], dryRun: isDry };
-      for (const role of delta.add ?? []) {
-        if (a.roles.has(role)) result.skipped.push({ role, reason: 'already' });
-        else result.added.push(role);
-      }
-      for (const role of delta.remove ?? []) {
-        if (!a.roles.has(role)) result.skipped.push({ role, reason: 'absent' });
-        else if (!a.grants.has(role) && !ctx.override)
-          result.skipped.push({ role, reason: 'not_ours' });
-        else result.removed.push(role);
-      }
-      if (!isDry && (result.added.length || result.removed.length)) {
-        write();
-        for (const role of result.added) {
-          a.roles.add(role);
-          a.grants.add(role);
-        }
-        for (const role of result.removed) {
-          a.roles.delete(role);
-          a.grants.delete(role);
-        }
-      }
-      return result;
-    },
-    async setDisabled(subject, disabled, ctx) {
-      enter('setDisabled', true);
-      const a = account(subject);
-      if (a.class !== 'created') refuse('IDP_NOT_MANAGED');
-      protect(subject, a);
-      if (!disabled && a.disabled && !disabledByUs.has(subject)) refuse('IDP_REFUSED');
-      if (a.disabled === disabled) return { result: 'already', dryRun: false };
-      const isDry = dry(ctx.dryRun);
-      if (!isDry) {
-        write();
-        a.disabled = disabled;
-        if (disabled) disabledByUs.add(subject);
-        else disabledByUs.delete(subject);
-      }
-      return { result: disabled ? 'disabled' : 'enabled', dryRun: isDry };
-    },
-    async snapshot() {
-      enter('snapshot', true);
-      const roles: Record<string, { name: string; members: SnapshotMember[] }> = {};
-      for (const [subject, a] of accounts)
-        for (const role of a.roles) {
-          const entry = roles[role] ?? { name: role, members: [] };
-          roles[role] = entry;
-          entry.members.push({
-            subject,
-            disabled: a.disabled,
-            isAdmin: a.isAdmin,
-            grant: a.grants.has(role),
-          });
-        }
-      return { roles: roles as IdpSnapshot['roles'], ended: [] };
     },
     async freeze() {
       enter('freeze');
