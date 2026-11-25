@@ -1,6 +1,11 @@
 /* Responsive steps; loads last. */
 /* ---------- Responsive ---------- */
 @media (max-width: 1180px) {
+  /* Three tiles in 754 px leave the text 100 px: one row each until the phone rules take over. */
+  .tiles {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
   .trybar {
     display: flex;
     position: fixed;
