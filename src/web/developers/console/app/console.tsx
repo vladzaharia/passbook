@@ -3,9 +3,11 @@ import { Inspector } from '../../ui/inspector.tsx';
 import { Ticket } from '../../ui/ticket.tsx';
 import { remaining, subscribe } from '../budget.ts';
 import { applyPrefill, type Prefill } from '../prefill.ts';
-import { buildSent, type Draft, initialDraft } from '../request.ts';
+import { buildSent, type Draft, type InputCheck, initialDraft, takesTemplate } from '../request.ts';
 import { type Outcome, RunError, send } from '../send.ts';
-import type { RunOp } from '../types.ts';
+import { loadTemplateInput } from '../template-sample.ts';
+import { tokenHeld } from '../token.ts';
+import type { Json, RunOp } from '../types.ts';
 import { Builder, type Tab } from './builder.tsx';
 import { ResponseEmpty } from './response-empty.tsx';
 
@@ -30,6 +32,11 @@ export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: Cons
     const start = initialDraft(op, templateId);
     return prefill ? applyPrefill(start, op, prefill, templateId) : start;
   });
+  const [check, setCheck] = useState<InputCheck | undefined>();
+  const untouched = useRef(draft.body);
+  const guided = prefill?.body !== undefined;
+  // The template is read on first need (a Run or an edit), unless a token is already held: opening a page mints none.
+  const [asked, setAsked] = useState(tokenHeld);
   const [tab, setTab] = useState<Tab>(() => firstTab(op));
   const [pending, setPending] = useState(false);
   const [outcome, setOutcome] = useState<{ result: Outcome; draft: Draft } | null>(null);
@@ -46,6 +53,25 @@ export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: Cons
       off();
     };
   }, []);
+
+  // The template's own sample replaces the example's `input`, unless a guide link or the reader wrote the body.
+  useEffect(() => {
+    if (!asked || !templateId || !takesTemplate(op)) return;
+    let on = true;
+    void loadTemplateInput(templateId, csrf).then((tpl) => {
+      if (!on) return;
+      if (tpl.schema) setCheck({ templateId, schema: tpl.schema });
+      const sample: Json | undefined = tpl.sample;
+      if (sample === undefined || guided) return;
+      const body = initialDraft(op, templateId, sample).body;
+      const before = untouched.current;
+      untouched.current = body;
+      setDraft((cur) => (cur.body === before ? { ...cur, body } : cur));
+    });
+    return () => {
+      on = false;
+    };
+  }, [op, templateId, csrf, guided, asked]);
 
   const execute = useCallback(
     async (d: Draft, again: boolean) => {
@@ -68,7 +94,14 @@ export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: Cons
     [op, csrf],
   );
 
-  const run = () => void execute(draft, false);
+  const edit = (next: Draft) => {
+    setAsked(true);
+    setDraft(next);
+  };
+  const run = () => {
+    setAsked(true);
+    void execute(draft, false);
+  };
   const replay = outcome ? () => void execute(outcome.draft, true) : undefined;
 
   return (
@@ -89,10 +122,11 @@ export function OpConsole({ op, origin, csrf, templateId, codes, prefill }: Cons
             op={op}
             origin={origin}
             draft={draft}
+            check={check}
             tab={tab}
             pending={pending}
             spent={spent}
-            set={setDraft}
+            set={edit}
             setTab={setTab}
             run={run}
             pressRef={pressRef}
