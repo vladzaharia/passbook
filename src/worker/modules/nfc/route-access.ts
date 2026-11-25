@@ -1,11 +1,10 @@
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
-import { authorityPredicate, tenantFilter } from '../../platform/authority-read.ts';
-import { first } from '../../platform/db.ts';
 import { ForbiddenError, NotFoundError, UnauthenticatedError } from '../../platform/errors.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { getOrgAccess } from '../orgs/access.ts';
 import { type C, type TenantPassWrite, tenantAuthorityOf } from '../passes/http.ts';
 import { tenantPrincipal } from '../passes/repo-authority.ts';
+import { passInTenantLimits } from './repo-tag-bindings.ts';
 import { tagTarget } from './repo-tags.ts';
 
 /** A console session only (the route takes no key): what `requireTenantSession` was. */
@@ -67,16 +66,7 @@ export async function keyReachesPass(
 ): Promise<boolean> {
   if (authority.kind !== 'api_key') return true;
   const ctx = serviceContext(c);
-  const p = authorityPredicate(tenantPrincipal(authority), {
-    scope: 'org_mode',
-    now: ctx.clock.now(),
-  });
-  const row = await first<{ id: string }>(
-    ctx.env.DB,
-    `WITH ${p.ctes} SELECT p.id FROM passes p WHERE EXISTS (SELECT 1 FROM actor_ok) AND p.id = ? AND ${tenantFilter('p', 'passes')}`,
-    [...p.params, passId],
-  );
-  return row !== null;
+  return passInTenantLimits(ctx.env.DB, tenantPrincipal(authority), ctx.clock.now(), passId);
 }
 
 /** A key limited to templates takes spare tags and pass-scope bindings only. */
