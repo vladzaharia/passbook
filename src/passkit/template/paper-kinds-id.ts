@@ -20,5 +20,6 @@ export function idParts(c: Kinded, parts: KindParts): void {
   set('host', c.field('host', 'sponsor', 'guestOf'));
   set('company', c.field('company', 'organization', 'organisation'));
   set('goTo', c.field('where', 'goTo', 'floor'));
+  set('arrives', when(c, undefined, 'arrives', 'arrival'));
   set('zone', c.field('zone', 'zones', 'area'));
 }

@@ -50,3 +50,11 @@ export function initialsOf(name: string | undefined): string {
   const pick = words.length > 1 ? [words[0], words.at(-1)] : words.slice(0, 1);
   return pick.map((w) => ((w ?? '').match(/\p{L}/u)?.[0] ?? '').toUpperCase()).join('');
 }
+
+/** A clock in its own zone, with the zone's name when it differs from the start's (a checkout after the clocks change). */
+export const clockAt = (c: PaperContent, iso: string): string => {
+  const own = abbrAt(c, iso);
+  return own && c.start && own !== abbrAt(c, c.start)
+    ? `${at(c, iso, 'time')} ${own}`
+    : at(c, iso, 'time');
+};

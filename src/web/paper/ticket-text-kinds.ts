@@ -3,7 +3,7 @@ import type { PaperContent } from '../../passkit/template/paper-content.ts';
 import { paperDate, paperZoneFor, paperZoneInfo } from '../../passkit/template/paper-format.ts';
 import { PAPER_COPY } from '../../shared/copy/print.ts';
 import { KIND_LABELS as L } from '../../shared/copy/print-kinds.ts';
-import { at, type Column, join, type Line, zoneAbbr } from './ticket-text-base.ts';
+import { at, type Column, clockAt, join, type Line, zoneAbbr } from './ticket-text-base.ts';
 
 type Row = { label: string; text: string };
 const rowsOf = (rows: { label: string; text: string | undefined }[]): Row[] =>
@@ -83,7 +83,7 @@ export function tripLines(c: PaperContent, half: boolean): Line[] {
     big(named(c.info.vehicleLabel, c.info.vehicle));
     sub(
       c.info.fromCity || c.info.toCity
-        ? `${c.info.fromCity ?? c.info.from ?? ''} → ${c.info.toCity ?? c.info.to ?? ''}`
+        ? `${c.info.fromCity ?? c.info.from ?? ''} to ${c.info.toCity ?? c.info.to ?? ''}`
         : undefined,
     );
     if (!half) sub(c.holder);
@@ -95,7 +95,7 @@ export function tripLines(c: PaperContent, half: boolean): Line[] {
     if (!half) sub(c.holder);
   } else {
     big(c.start && `${L.checkIn} ${noYear(at(c, c.start, 'short'))} · ${at(c, c.start, 'time')}`);
-    big(c.end && `${L.checkOut} ${noYear(at(c, c.end, 'short'))} · ${at(c, c.end, 'time')}`);
+    big(c.end && `${L.checkOut} ${noYear(at(c, c.end, 'short'))} · ${clockAt(c, c.end)}`);
     sub(zoneLine(c));
     sub(join(c.venue, c.address));
     sub(c.info.included);
@@ -117,7 +117,7 @@ export function tripColumns(c: PaperContent, bring: Column): Column[] {
       {
         title: L.checkOut,
         ...(c.end ? { strong: at(c, c.end, 'long') } : {}),
-        lines: [c.end && `By ${at(c, c.end, 'time')}`, zoneLine(c)].filter((x): x is string =>
+        lines: [c.end && `By ${clockAt(c, c.end)}`, zoneLine(c)].filter((x): x is string =>
           Boolean(x),
         ),
       },
@@ -158,6 +158,15 @@ export function tripColumns(c: PaperContent, bring: Column): Column[] {
   ];
 }
 
+/** `Valid: 18 Nov – 20 Nov 2030` from a start, else `Valid until ...`. */
+const validity = (c: PaperContent): { label: string; text: string | undefined } =>
+  c.validFrom && c.validUntil
+    ? {
+        label: 'Valid',
+        text: `${noYear(at(c, c.validFrom, 'short'))} – ${at(c, c.validUntil, 'short')}`,
+      }
+    : { label: L.validUntil, text: c.validUntil && at(c, c.validUntil, 'short') };
+
 /** The details a badge or credential prints, in order; the card faces and the page read this one list. */
 export function idDetails(c: PaperContent): Row[] {
   const role = join(c.type, c.info.team);
@@ -167,7 +176,7 @@ export function idDetails(c: PaperContent): Row[] {
       { label: L.number, text: c.info.number },
       { label: L.issuedBy, text: c.brand },
       { label: L.issued, text: c.info.issued && at(c, c.info.issued, 'short') },
-      { label: L.validUntil, text: c.validUntil && at(c, c.validUntil, 'short') },
+      validity(c),
     ]);
   return rowsOf([
     { label: 'Role', text: role },
@@ -175,8 +184,8 @@ export function idDetails(c: PaperContent): Row[] {
     { label: L.host, text: c.info.host },
     { label: L.goTo, text: c.info.goTo },
     { label: L.zone, text: c.info.zone },
-    { label: L.arrives, text: c.start && at(c, c.start, 'timeZone') },
-    { label: L.validUntil, text: c.validUntil && at(c, c.validUntil, 'short') },
+    { label: L.arrives, text: c.info.arrives && at(c, c.info.arrives, 'timeZone') },
+    validity(c),
   ]);
 }
 
@@ -185,8 +194,8 @@ export const idRows = (c: PaperContent): Row[] => {
   const pick = (...labels: string[]) => d.filter((r) => labels.includes(r.label));
   return (
     c.kind === 'credential'
-      ? pick(L.holder, L.number, L.validUntil)
-      : [{ label: L.holder, text: c.holder ?? '' }, ...pick('Role', L.validUntil)].filter(
+      ? pick(L.holder, L.number, L.validUntil, 'Valid')
+      : [{ label: L.holder, text: c.holder ?? '' }, ...pick('Role', L.validUntil, 'Valid')].filter(
           (r) => r.text,
         )
   ).slice(0, 3);

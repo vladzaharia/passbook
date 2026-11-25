@@ -4,15 +4,16 @@ import { zlibSync } from 'fflate';
 import { PDFDocument } from 'pdf-lib';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { it } from 'vitest';
-import { bakedSlugs } from '../../passkit/template/baked-fixtures.ts';
+import { planPass } from '../../passkit/build.ts';
+import { bakedBehaviors, bakedSlugs, loadBaked } from '../../passkit/template/baked-fixtures.ts';
 import {
   PAPER_SPECS,
   type PaperSize,
   resolvePaper,
   withKind,
 } from '../../passkit/template/paper.ts';
-import { blueprintPass } from '../../passkit/template/paper-blueprint-fixtures.ts';
 import { paperContent } from '../../passkit/template/paper-content.ts';
+import { FIXTURE_IDENTITY } from '../../passkit/testing/fixture-identity.ts';
 import type { Personalization } from '../../passkit/types.ts';
 import { toSvg } from '../../shared/pass-view/barcode-svg.ts';
 import { type RenderOptions, renderPdf } from '../../worker/modules/prints/pdf-render.ts';
@@ -91,14 +92,33 @@ const TARGET: Record<string, PaperSize> = (() => {
   return t;
 })();
 
+async function plan(slug: string) {
+  const { template, registry } = await loadBaked(slug, { strips: slug === 'starter-stamp-card' });
+  const personalization: Personalization = { ...template.manifest.sample };
+  const { passJson } = planPass({
+    template,
+    registry,
+    input: personalization,
+    server: {
+      serial: 'SER-0001',
+      authToken: 'a'.repeat(32),
+      webServiceURL: 'https://wallet.example/wallet',
+      organizationName: 'Org',
+      identity: FIXTURE_IDENTITY,
+      scanCode: 'S',
+    },
+    signing: {} as never,
+    behaviors: bakedBehaviors,
+    now: new Date('2030-01-01T00:00:00Z'),
+  });
+  return { passJson, manifest: template.manifest, personalization };
+}
+
 it('writes shots', async () => {
   mkdirSync(OUT, { recursive: true });
   const index: string[] = [];
   for (const slug of bakedSlugs()) {
-    const over: Personalization = slug === 'starter-stamp-card' ? { stamps: 0 } : {};
-    const { passJson, manifest, personalization } = await blueprintPass(slug, over).catch(
-      async () => blueprintPass(slug, { stamps: 3 }),
-    );
+    const { passJson, manifest, personalization } = await plan(slug);
     const base = resolvePaper(manifest.paper);
     const sizes: [string, PaperSize][] = [['default', base.size]];
     const tgt = TARGET[slug];

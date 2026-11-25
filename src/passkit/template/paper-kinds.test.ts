@@ -56,7 +56,7 @@ describe('derived classes', () => {
 describe('what each class prints', () => {
   it('a boarding pass shows from and to, flight, gate, times and seat', async () => {
     const { c } = await content('starter-boarding-pass');
-    expect(c.title).toBe('SFO → JFK');
+    expect(c.title).toBe('SFO – JFK');
     expect(c.info).toMatchObject({
       from: 'SFO',
       fromCity: 'San Francisco',
@@ -109,7 +109,7 @@ describe('what each class prints', () => {
       company: 'Acme Ltd',
       goTo: 'Floor 3, Oslo',
     });
-    expect(c.start).toBeDefined();
+    expect(c.info.arrives).toBeDefined();
     expect(c.validUntil).toBeDefined();
   });
 
@@ -125,7 +125,7 @@ describe('what each class prints', () => {
     expect(pack.hero?.offer).toBe('Pack of 10 washes');
     expect(JSON.stringify(pack)).not.toContain('"7"');
     const store = (await content('starter-store-card')).c;
-    expect(JSON.stringify(store)).not.toMatch(/balance/i);
+    expect(JSON.stringify(store)).not.toMatch(/\$\s?\d/);
   });
 
   it("Henry's prints neither the member number nor ticket words", async () => {

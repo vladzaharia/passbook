@@ -25,7 +25,7 @@ async function printed(slug: string, over = {}, orgTimeZone?: string, late = {})
 describe('paper prints the real start, never the lock-screen date', () => {
   it.each([
     ['starter-timed-ticket', '2:00 pm EST', '2:30 pm EST', 'America/New_York'],
-    ['starter-boarding-pass', '8:00 am GMT-7', undefined, '-07:00'],
+    ['starter-boarding-pass', '8:00 am PDT', undefined, 'America/Los_Angeles'],
     ['starter-transit-ticket', '7:15 am EST', undefined, 'America/New_York'],
     ['starter-booking', '9:30 am GMT-5', undefined, '-05:00'],
     ['starter-hotel-stay', '3:00 pm GMT-8', '11:00 am GMT-8', '-08:00'],
@@ -88,7 +88,8 @@ describe('times keep their own zone', () => {
       checkIn: '2030-11-02T15:00:00-07:00',
       checkOut: '2030-11-04T11:00:00-08:00',
     });
-    expect(text).toContain('Starts 3:00 pm · Ends Mon 4 Nov 2030, 11:00 am GMT-8');
+    expect(text).toContain('Check-in Sat 2 Nov · 3:00 pm');
+    expect(text).toContain('Check-out Mon 4 Nov · 11:00 am GMT-8');
   });
 
   it('a New York day that springs forward labels the end EDT', async () => {
@@ -153,6 +154,6 @@ describe('fields a layout does not draw', () => {
 describe('an end on another day carries its date', () => {
   it('a hotel checkout names the day', async () => {
     const { text } = await printed('starter-hotel-stay');
-    expect(text).toContain('Ends Thu 21 Nov 2030, 11:00 am');
+    expect(text).toContain('Check-out Thu 21 Nov · 11:00 am');
   });
 });

@@ -33,7 +33,12 @@ export type { Column, Issued, Line } from './ticket-text-base.ts';
 export function doorWhen(c: PaperContent): string | undefined {
   if (c.kind === 'journey' || c.kind === 'booking' || c.kind === 'stay') return tripWhen(c);
   if (c.kind === 'badge' || c.kind === 'credential') {
-    return c.validUntil ? `Valid until ${at(c, c.validUntil, 'short')}` : undefined;
+    return (
+      join(
+        c.info.arrives && `Arrives ${at(c, c.info.arrives, 'timeZone')}`,
+        c.validUntil && `Valid until ${at(c, c.validUntil, 'short')}`,
+      ) || undefined
+    );
   }
   if (c.start) return `${at(c, c.start, 'short')} · ${at(c, c.start, 'timeZone')}`;
   if (!c.validUntil) return undefined;

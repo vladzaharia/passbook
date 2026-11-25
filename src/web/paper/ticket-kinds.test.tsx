@@ -43,7 +43,7 @@ describe('journey paper', () => {
   it('a boarding pass reads from, to, flight, gate, times and seat on a page', async () => {
     const t = text(await html('starter-boarding-pass', 'a4', { kind: 'journey' }));
     for (const s of [
-      'SFO → JFK',
+      'SFO – JFK',
       'Flight WA100',
       'Gate',
       'B12',
@@ -51,7 +51,7 @@ describe('journey paper', () => {
       'Departs 8:00 am',
       'Arrives 4:30 pm EDT',
       '14A',
-      'San Francisco → New York',
+      'San Francisco to New York',
     ])
       expect(t).toContain(s);
   });
@@ -166,6 +166,6 @@ describe('long values', () => {
       },
     );
     expect(h).toMatch(/--tl:\d/);
-    expect(h).toContain('pp-lines');
+    expect(h).toContain('pp-face-lines');
   });
 });

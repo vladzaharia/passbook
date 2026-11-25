@@ -13,9 +13,9 @@ describe('the PDF of each new class says what the page says', () => {
   it('a boarding pass: from, to, flight, times, seat and gate', async () => {
     const t = await text('journey', 'a4');
     for (const want of [
-      'SFO → JFK',
+      'SFO – JFK',
       'Flight WA100',
-      'San Francisco → New York',
+      'San Francisco to New York',
       'Boards 7:15 am',
       'Departs 8:00 am',
       'GATE',
@@ -40,7 +40,7 @@ describe('the PDF of each new class says what the page says', () => {
   });
 
   it('keeps the title clear of the logo on a long route', async () => {
-    const long = 'Wolfeschlegelsteinhausenbergerdorf → Llanfairpwllgwyngyll';
+    const long = 'Wolfeschlegelsteinhausenbergerdorf – Llanfairpwllgwyngyll';
     const bytes = await renderPdf([sheet('journey', 'half', { content: { title: long } })], {
       assets: env.ASSETS,
     });

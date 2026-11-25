@@ -71,13 +71,26 @@ const MEMBERSHIP: PaperContent = {
   validUntil: '2027-12-31T23:59:00+00:00',
 };
 
+type Optional = 'venue' | 'address' | 'room' | 'seat' | 'doors' | 'end' | 'directions';
+const without = (c: PaperContent, ...keys: Optional[]): PaperContent => {
+  const out = { ...c };
+  for (const k of keys) delete out[k];
+  return out;
+};
+/** The shared start of the trip, stay and ID fixtures: no venue, no event wording. */
+const PLAIN: PaperContent = {
+  ...without(ADMISSION, 'venue', 'address', 'room', 'seat', 'doors', 'end'),
+  bring: ['This page or your phone pass'],
+  terms: 'Be there on time.',
+  facts: [],
+};
+
 const JOURNEY: PaperContent = {
-  ...ADMISSION,
+  ...PLAIN,
   kind: 'journey',
   kicker: 'Boarding pass',
   noun: 'pass',
-  title: 'SFO → JFK',
-  venue: undefined as never,
+  title: 'SFO – JFK',
   zone: 'America/Los_Angeles',
   start: '2030-06-01T08:00:00-07:00',
   holder: 'Alex Morgan',
@@ -103,8 +116,9 @@ const JOURNEY: PaperContent = {
 const CONTENT: Record<PaperKind, PaperContent> = {
   journey: JOURNEY,
   booking: {
-    ...ADMISSION,
+    ...PLAIN,
     kind: 'booking',
+    bring: ['This page or your phone booking'],
     kicker: 'Booking',
     noun: 'booking',
     title: 'Cut and colour',
@@ -119,8 +133,9 @@ const CONTENT: Record<PaperKind, PaperContent> = {
     info: { with: 'Sam', status: 'Booked' },
   },
   stay: {
-    ...ADMISSION,
+    ...PLAIN,
     kind: 'stay',
+    bring: ['This page or your phone booking'],
     kicker: 'Hotel stay',
     noun: 'booking',
     title: 'Ana Rivera',
@@ -136,8 +151,9 @@ const CONTENT: Record<PaperKind, PaperContent> = {
     info: { nights: '3', included: 'Breakfast: Included' },
   },
   badge: {
-    ...ADMISSION,
+    ...PLAIN,
     kind: 'badge',
+    bring: ['Your badge or phone pass'],
     kicker: 'Visitor pass',
     noun: 'pass',
     title: 'Leo Brandt',
@@ -147,12 +163,12 @@ const CONTENT: Record<PaperKind, PaperContent> = {
     validUntil: '2030-11-18T17:00:00-08:00',
     zone: 'America/Los_Angeles',
     info: { company: 'Acme Ltd', host: 'Priya Shah', goTo: 'Floor 3, Oslo' },
-    seat: undefined as never,
     facts: [],
   },
   credential: {
-    ...ADMISSION,
+    ...PLAIN,
     kind: 'credential',
+    bring: ['Your card or phone pass'],
     kicker: 'Credential',
     noun: 'card',
     title: 'CPR / AED Provider',

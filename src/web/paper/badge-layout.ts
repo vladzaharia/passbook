@@ -57,13 +57,10 @@ export function badgeFront(c: PaperContent): { name: string; role?: string; deta
   const rest = d.filter(
     (r) => r.label !== 'Role' && !(c.kind === 'credential' && r.label === 'Name'),
   );
-  const valid = c.validUntil ? `Valid until ${at(c, c.validUntil, 'short')}` : undefined;
-  const lines = rest
-    .filter((r) => r.label !== 'Valid until' && r.label !== 'Holder')
-    .map((r) => `${r.label}: ${r.text}`);
+  const lines = rest.filter((r) => r.label !== 'Holder').map((r) => `${r.label}: ${r.text}`);
   return {
     name: c.holder ?? c.title,
     ...(role ? { role: join(role) } : {}),
-    details: [...lines, ...(valid ? [valid] : [])],
+    details: lines,
   };
 }

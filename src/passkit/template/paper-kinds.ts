@@ -68,7 +68,9 @@ export function kindContent(c: Kinded): KindParts {
     field('attendee', 'holder', 'passenger', 'memberName', 'name') ??
     (c.kind === 'permit' || (c.kind === 'coupon' && !field('pack')) ? undefined : c.holderName);
   const start =
-    when(c, roles.eventStart, 'date', 'time', 'departs', 'in', 'when') ?? c.declared?.start;
+    when(c, roles.eventStart, 'date', 'time') ??
+    c.declared?.start ??
+    when(c, undefined, 'departs', 'in', 'when');
   // An event's own start is its validity; a template's start input leaves its validity alone.
   const timed =
     c.kind === 'admission'
@@ -76,7 +78,10 @@ export function kindContent(c: Kinded): KindParts {
       : ['journey', 'booking', 'stay'].includes(c.kind) && Boolean(start);
   const parts: KindParts = {
     start,
-    end: c.kind === 'journey' ? undefined : (iso(roles.eventEnd) ?? c.declared?.end),
+    end:
+      c.kind === 'journey'
+        ? undefined
+        : (iso(roles.eventEnd) ?? c.declared?.end ?? when(c, undefined, 'out')),
     doors: when(c, roles.doorsOpen, 'doors'),
     // An event's own times are its validity; the wallet's relevance dates are not a validity range.
     validFrom: when(c, timed ? undefined : roles.validFrom, 'validFrom'),

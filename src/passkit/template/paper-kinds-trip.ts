@@ -36,7 +36,7 @@ export function tripParts(c: Kinded, parts: KindParts, seat: NonNullable<KindPar
   if (c.kind === 'journey') {
     const from = place(c, ['origin', 'from'], 'departureCityName');
     const to = place(c, ['destination', 'to'], 'destinationCityName');
-    parts.title = [from?.main, to?.main].filter(Boolean).join(' → ') || undefined;
+    parts.title = [from?.main, to?.main].filter(Boolean).join(' – ') || undefined;
     set('from', from?.main);
     set('fromCity', from?.city);
     set('to', to?.main);
