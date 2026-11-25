@@ -3636,9 +3636,21 @@
     "retryable": true
   },
   "IDP_REFUSED": {
-    "title": "Polaris ID refused developer access",
-    "when": "The account is an administrator or is disabled in Polaris ID.",
+    "title": "Polaris ID refused the change",
+    "when": "The account is an administrator, is disabled or is not one PassBook may change in Polaris ID.",
     "fix": "Ask the PassBook owner.",
+    "retryable": false
+  },
+  "IDP_IN_USE": {
+    "title": "Group still in use",
+    "when": "The Polaris ID group still has members or apps, so it cannot be deleted.",
+    "fix": "Remove its members and apps, then delete it.",
+    "retryable": false
+  },
+  "IDP_NOT_MANAGED": {
+    "title": "Account not managed by PassBook",
+    "when": "PassBook did not create this Polaris ID account, so it cannot change it.",
+    "fix": "Change it in Polaris ID.",
     "retryable": false
   },
   "IDP_CONFLICT": {
