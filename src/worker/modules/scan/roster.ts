@@ -55,7 +55,7 @@ const short = (hex: string) => hex.slice(0, 32);
  */
 async function entriesOf(
   row: RosterRow,
-  opts: { inside: boolean; day: boolean; paper: boolean; group: () => string },
+  opts: { inside: boolean; day: boolean; paper: boolean; delta: boolean; group: () => string },
   ended: readonly string[],
 ): Promise<{ live: Entry[]; gone: Entry[] }> {
   const status: Entry['status'] =
@@ -74,8 +74,9 @@ async function entriesOf(
   const g = hashes.size > 1 ? { g: opts.group() } : {};
   return {
     live: [...hashes].map((h) => ({ h, status, state, ...day, ...g })),
-    gone: ended
-      .filter((h) => !hashes.has(h))
+    // On a delta the device still holds a print that paper-off took off the list: tell it to drop it.
+    gone: [...ended, ...(opts.delta && row.print_hash && !opts.paper ? [row.print_hash] : [])]
+      .filter((h, i, all) => !hashes.has(h) && all.indexOf(h) === i)
       .map((h) => ({ h, status: 'voided', state: null, ...day })),
   };
 }
@@ -153,6 +154,7 @@ export async function rosterFor(
         inside: row.inside === 1,
         day: daily.has(row.template_id),
         paper,
+        delta: since !== null,
         group: () => String(++ordinal),
       },
       ended.get(row.id) ?? [],

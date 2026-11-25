@@ -56,6 +56,7 @@ export const rosterPage = (
            ? ''
            : `AND (p.modified_at >= ?
             OR EXISTS (SELECT 1 FROM scan_gates c WHERE c.pass_id = p.id AND c.kind = 'check_in' AND c.last_at >= ?)
+            OR EXISTS (SELECT 1 FROM pass_channels ch WHERE ch.pass_id = p.id AND ch.set_at >= ?)
             OR EXISTS (SELECT 1 FROM pass_prints x WHERE x.pass_id = p.id AND (x.created_at >= ? OR x.voided_at >= ?)))`
        }
      ORDER BY p.id LIMIT ?`,
@@ -65,7 +66,9 @@ export const rosterPage = (
       scope.mode,
       after,
       JSON.stringify(scope.templateIds),
-      ...(scope.since === null ? [] : [scope.since, scope.since, scope.since, scope.since]),
+      ...(scope.since === null
+        ? []
+        : [scope.since, scope.since, scope.since, scope.since, scope.since]),
       limit,
     ],
   );

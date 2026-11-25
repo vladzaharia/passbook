@@ -128,4 +128,22 @@ describe('the offline roster delta and prints', () => {
     );
     expect(res.status).toBe(200);
   });
+
+  it('drops an active print on a delta when paper goes off without voiding it', async () => {
+    kit.clock.set(TEST_NOW);
+    const door = await kit.scanner({ templateIds: [tpl], settings: LIST });
+    const pass = await printed();
+    const p = await mint(pass.id);
+    const since = TEST_NOW + 2_000_000;
+    kit.clock.set(since + 1000);
+    await quiet(pass.id);
+    // Paper goes off for the pass; the print itself stays active.
+    await run(
+      kit.env.DB,
+      "UPDATE pass_channels SET override = 'off', set_at = ? WHERE pass_id = ? AND channel = 'paper'",
+      [since + 1000, pass.id],
+    );
+    const by = new Map((await deltaOf(door, since)).entries.map((e) => [e.h, e] as const));
+    expect(by.get(await hashOf(p.code))).toMatchObject({ status: 'voided' });
+  });
 });
