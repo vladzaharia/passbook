@@ -1,4 +1,4 @@
-import { localZone } from '../../../lib/timezones.ts';
+import { DEFAULT_TIME_ZONE } from '@/shared/time-zone.ts';
 import { DateTimeField, Input, NumberField, Select } from '../../../ui/index.ts';
 import { isoToLocal, localToIso } from '../schema-form/datetime.ts';
 import type { FieldDef } from '../schema-form/index.ts';
@@ -65,7 +65,7 @@ export function ValueControl({
       />
     );
   if (field.widget === 'datetime') {
-    const zone = localZone();
+    const zone = DEFAULT_TIME_ZONE;
     return (
       <DateTimeField
         id={control.id}

@@ -2,7 +2,6 @@ import { PublicBundlePassParamSchema } from '../../../shared/contracts/bundles.t
 import { passDevice } from '../../../shared/device.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { stateWordOption } from '../../../shared/state-word.ts';
-import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
 import { type createRouter, register } from '../../platform/openapi.ts';
@@ -14,6 +13,7 @@ import { svc } from '../passes/http.ts';
 import { canPresent } from '../public/presentation.ts';
 import { endedFor, langOf, PAGE_HEADERS, zoneOf } from '../public/routes.ts';
 import { supportContacts } from '../public/service.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { assertBundleMember, bundleForToken, bundleMember, bundlePass } from './public-service.ts';
 import { bundleWalletHref, bundleWalletProviders } from './wallet-links.ts';
@@ -43,12 +43,13 @@ export function registerMemberPage(router: ReturnType<typeof createRouter>) {
         const pass = await bundlePass(ctx, bundle, p.passId);
         const { model } = await bundleMember(ctx, p.token, pass);
         const now = new Date(ctx.clock.now());
+        const zone = zoneOf(c) ?? (await readOrgTimeZone(ctx.env.DB, pass.orgId));
         const lang = langOf(c.req.header('accept-language'));
         const view = normalize(model.passJson, {
           assets: model.assets,
           locale: lang,
           now,
-          timeZone: zoneOf(c) ?? DEFAULT_TIME_ZONE,
+          timeZone: zone,
           ...stateWordOption(pass),
         });
         const base = `/b/${p.token}/${pass.id}`;
@@ -58,7 +59,7 @@ export function registerMemberPage(router: ReturnType<typeof createRouter>) {
           view,
           passJson: model.passJson,
           now,
-          ...(zoneOf(c) ? { timeZone: zoneOf(c) as string } : {}),
+          timeZone: zone,
           nonce: c.var.nonce,
           theme,
           orgName: view.organizationName || model.orgName,
@@ -86,7 +87,7 @@ export function registerMemberPage(router: ReturnType<typeof createRouter>) {
             pass,
             pass.status === 'voided' ? await voidedAt(ctx.env.DB, pass.orgId, pass.id) : null,
             model.passJson,
-            zoneOf(c),
+            zone,
             lang,
           ),
         });

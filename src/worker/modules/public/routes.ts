@@ -3,7 +3,6 @@ import { passDevice } from '../../../shared/device.ts';
 import { formatEndedOn } from '../../../shared/format-date.ts';
 import { normalize } from '../../../shared/pass-view/index.ts';
 import { stateWordOption } from '../../../shared/state-word.ts';
-import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { writeEvent } from '../../platform/analytics.ts';
 import { baseUrl } from '../../platform/env.ts';
 import { AppError } from '../../platform/errors.ts';
@@ -29,6 +28,7 @@ import { orgBrandOf } from '../orgs/brand.ts';
 import { type C, svc } from '../passes/http.ts';
 import { serveCurrentPassFile } from '../passes/timed-variant.ts';
 import { holderPrintRoutes } from '../prints/routes-holder.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { listWalletOffers } from '../wallet-providers/offers.ts';
 import { walletIssuanceByProvider } from '../wallet-providers/provider-policy.ts';
 import { canPresent, presentationForPass } from './presentation.ts';
@@ -127,6 +127,7 @@ register(
       const pass = await passForToken(svcCtx, token);
       const snapshot = await capturePassSnapshot(svcCtx, pass);
       const model = await pageModel(svcCtx, pass);
+      const zone = zoneOf(c) ?? (await readOrgTimeZone(svcCtx.env.DB, pass.orgId));
       const page = `/p/${token}`;
       const notice = model.removal ? undefined : await codesReplacedNotice(svcCtx, pass);
       // Resolve only links to this bearer under the same snapshot as the page and its assets.
@@ -140,14 +141,14 @@ register(
         assets: model.assets,
         locale: lang,
         now: new Date(svcCtx.clock.now()),
-        timeZone: zoneOf(c) ?? DEFAULT_TIME_ZONE,
+        timeZone: zone,
         ...stateWordOption(pass),
       });
       const html = renderPassPage({
         view,
         passJson: model.passJson,
         now: new Date(svcCtx.clock.now()),
-        ...(zoneOf(c) ? { timeZone: zoneOf(c) as string } : {}),
+        timeZone: zone,
         nonce: c.var.nonce,
         theme,
         orgName: view.organizationName || model.orgName,
@@ -173,7 +174,7 @@ register(
           pass,
           pass.status === 'voided' ? await voidedAt(svcCtx.env.DB, pass.orgId, pass.id) : null,
           model.passJson,
-          zoneOf(c),
+          zone,
           lang,
         ),
         ...(notice ? { notice } : {}),

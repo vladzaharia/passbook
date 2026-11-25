@@ -1,10 +1,10 @@
 import { useQueries } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { useMemo, useRef, useState } from 'react';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { useDebounced } from '../../../lib/debounce.ts';
 import type { ApiError } from '../../../lib/errors.ts';
 import { orgPath } from '../../../lib/scope.ts';
-import { localZone } from '../../../lib/timezones.ts';
 import type { DateTimeValue } from '../../../ui/index.ts';
 import { commonFields } from '../../messages/common-fields.ts';
 import { templateDetailQuery } from '../../templates/api.ts';
@@ -41,12 +41,13 @@ export function useChangeWizard(
     [loadedKey],
   );
   const [step, setStep] = useState(0);
+  const orgZone = useOrgTimeZone(orgId);
   const [kind, setKind] = useState<ChangeKind>(initial);
   const [rows, setRows] = useState<FieldRow[]>([]);
   const [notify, setNotify] = useState(tell && initial === 'design');
   const [message, setMessage] = useState('');
   const [start, setStart] = useState<Start>('now');
-  const [at, setAt] = useState<DateTimeValue>({ local: '', zone: localZone() });
+  const [at, setAt] = useState<DateTimeValue>({ local: '', zone: orgZone });
   const [refusal, setRefusal] = useState<string | null>(null);
   /** The create answered 429: the page says so with a Retry, and the selection and step stay. */
   const [limited, setLimited] = useState<ApiError | null>(null);

@@ -37,4 +37,6 @@ export interface PreviewSource {
   testBand?: boolean | undefined;
   /** The organization's `org.website`: the Samsung app link, else the holder portal. */
   website?: string | undefined;
+  /** The organization's effective zone: wallet dates written without an offset read in it. */
+  timeZone?: string | undefined;
 }

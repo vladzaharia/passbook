@@ -1,7 +1,7 @@
 import type { CheckInPolicy } from '@/shared/contracts/check-in.ts';
 import type { Mode } from '@/shared/contracts/common.ts';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { useMode } from '@/web/lib/mode.ts';
-import { localZone } from '@/web/lib/timezones.ts';
 import { DateTimeField, FormField, NumberField, Select } from '@/web/ui/index.ts';
 import { isoToLocal, localToIso } from '../passes/schema-form/datetime.ts';
 import { useScanEvents } from './scanner-api.ts';
@@ -23,7 +23,8 @@ export function CheckInFields({
   timeZone?: string;
   resourceMode?: Mode;
 }) {
-  const zone = timeZone ?? localZone();
+  const orgZone = useOrgTimeZone(orgId);
+  const zone = timeZone ?? orgZone;
   const mode = useMode();
   const events = useScanEvents(
     orgId || undefined,

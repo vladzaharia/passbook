@@ -5,6 +5,7 @@ import {
   linkToken,
   makeTemplate,
   persistTemplate,
+  saveOrgSettings,
 } from '../../../../test/helpers/index.ts';
 import { MAC_REVEAL_SCRIPT } from '../../../shared/device.ts';
 import { createApp } from '../../app.ts';
@@ -310,6 +311,10 @@ describe('GET /p/:token', () => {
     const bad = new Request(url, { cf: { timezone: 'Not/AZone' } } as RequestInit);
     expect(await (await app.request(bad, {}, kit.env)).text()).toMatch(/1:00\sAM/);
     expect(await (await get(`/p/${await linkToken(kit.env, pass)}`)).text()).toMatch(/1:00\sAM/);
+    // With no visitor zone, the org's own zone applies.
+    await saveOrgSettings(kit.env.DB, kit.org.id, { 'org.timeZone': 'Asia/Tokyo' }, 1);
+    expect(await (await get(`/p/${await linkToken(kit.env, pass)}`)).text()).toMatch(/5:00\sPM/);
+    await saveOrgSettings(kit.env.DB, kit.org.id, { 'org.timeZone': null }, 1);
   });
 
   it('has a heading, and its only inline styles are pass colour variables', async () => {

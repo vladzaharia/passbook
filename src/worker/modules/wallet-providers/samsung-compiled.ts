@@ -10,6 +10,7 @@ import { resolveWalletView } from '../../../passkit/wallets/view.ts';
 import { baseUrl } from '../../platform/env.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { Pass } from '../passes/repo.ts';
+import { readOrgTimeZone } from '../scan/repo-org-clock.ts';
 import { previewPlan } from '../templates/build-check.ts';
 import { createTemplateRegistry } from '../templates/registry.ts';
 import { prepareProjectionArt, sizeShipped, type WalletArt } from './projection-art.ts';
@@ -106,6 +107,7 @@ export async function compileSamsungCard(
     template.manifest,
     {
       now,
+      timeZone: await readOrgTimeZone(ctx.env.DB, pass.orgId),
       locales: [],
       input: pass.personalization,
       ...(pass.scanCode ? { pass: { scanCode: pass.scanCode } } : {}),

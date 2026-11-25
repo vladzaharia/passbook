@@ -27,6 +27,7 @@ describe('baked blueprints and the Google class rule', () => {
         template.manifest,
         {
           now,
+          timeZone: 'UTC',
           locales: [],
           input,
           assets: template.assets,

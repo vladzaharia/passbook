@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { type ScanEventDto, ScanEventSchema } from '@/shared/contracts/scanners.ts';
+import { useOrgTimeZone } from '@/web/admin/settings/use-org-time-zone.ts';
 import { api } from '@/web/lib/api.ts';
 import { errorMessage } from '@/web/lib/errors.ts';
-import { localZone } from '@/web/lib/timezones.ts';
 import { CheckboxField } from '@/web/ui/checkbox.tsx';
 import { DateTimeField, type DateTimeValue } from '@/web/ui/date-time-field.tsx';
 import {
@@ -29,7 +29,8 @@ export function EventDialog({
   event?: ScanEventDto;
   onClose: () => void;
 }) {
-  const zone = event?.timeZone ?? localZone();
+  const orgZone = useOrgTimeZone(orgId);
+  const zone = event?.timeZone ?? orgZone;
   const client = useQueryClient();
   const [name, setName] = useState(event?.name ?? '');
   const [opens, setOpens] = useState<DateTimeValue | null>({

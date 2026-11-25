@@ -7,7 +7,6 @@ import type {
   SetupPlanContext,
   TemplateFacts,
 } from '../../../shared/scan-setup-plan-types.ts';
-import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import { NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { orgIsActive } from '../orgs/repo.ts';
@@ -96,6 +95,7 @@ async function upcomingOf(
     [...own.values, ...listed.values],
     ctx.clock.now(),
   ).events;
+  const orgZone = await readOrgTimeZone(db, orgId);
   const out: NonNullable<TemplateFacts['upcomingEvents']> = [];
   const extras: { key: string; note: string | null }[] = [];
   for (const e of planned) {
@@ -107,7 +107,7 @@ async function upcomingOf(
         templateIds: [templateId],
         opensAt: e.opensAt,
         closesAt: e.closesAt,
-        timeZone: e.timeZone ?? DEFAULT_TIME_ZONE,
+        timeZone: e.timeZone ?? orgZone,
         note: e.venue,
         match: e.match ? { input: e.match.input, values: [e.match.value] } : null,
       }).success
