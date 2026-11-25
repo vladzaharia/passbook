@@ -306,8 +306,9 @@ describe('entity art', () => {
   // and the scenes to 9 kB for the stow scene (tuck's keyframes, a shorter run). Then to 16.25 kB
   // (16,417 B measured) for the scanner's beat API, the xl-scan tier, the card notch and the
   // scanner, stub and badge arts. Then to 16.5 kB (16,846 B measured) for the portal buddy kit
-  // (BX1): the catch scene's envelope, the face's brows, look group and hop.
-  it('fits the 16.5 kB gzip budget; the lazy scenes fit 9 kB; the state parts 2.5 kB', () => {
+  // (BX1): the catch scene's envelope, the face's brows, look group and hop. The lazy scenes rose to 10.75 kB (10,602 B measured) for
+  // listen, catch and explain.
+  it('fits the 16.5 kB gzip budget; the lazy scenes fit 10.75 kB; the state parts 2.5 kB', () => {
     // css.ts is SSR glue: the browser bundle never loads it. The state parts and compositions load
     // with the sign-in page and on SSR pages only.
     const states = ['wallet-states.tsx', 'wallet-states.css', 'state-art.tsx'];
@@ -330,6 +331,6 @@ describe('entity art', () => {
     const scenes = readdirSync(join(DIR, 'scenes')).filter((f) => f !== 'rest.css');
     const registry = readFileSync(join(DIR, 'registry.ts'), 'utf8');
     for (const f of scenes) expect(registry).toContain(`import './scenes/${f}';`);
-    expect(gz(scenes.map((f) => join(DIR, 'scenes', f)))).toBeLessThanOrEqual(9 * 1024);
+    expect(gz(scenes.map((f) => join(DIR, 'scenes', f)))).toBeLessThanOrEqual(10.75 * 1024);
   });
 });
