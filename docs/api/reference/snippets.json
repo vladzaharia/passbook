@@ -212,5 +212,15 @@
         "tag": "returned"
       }
     }
+  },
+  "nfc-tags.postNfcPassesByPassIdTagsAssign": {
+    "snippet": {
+      "request": {
+        "id": "04A1B2C3D4E5F6",
+        "format": "hex",
+        "binding": "pass",
+        "label": "Wristband 14"
+      }
+    }
   }
 }
