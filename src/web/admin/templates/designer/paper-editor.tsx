@@ -1,11 +1,11 @@
 import {
   PAPER_KINDS,
-  PAPER_SPECS,
   type PaperBarcode,
   type PaperDesign,
   type PaperInk,
   type PaperKind,
   paperManifestIssues,
+  sheetApplies,
   supportsCode128,
 } from '@/passkit/template/paper.ts';
 import type { PassJson, TemplateManifest } from '@/passkit/types.ts';
@@ -65,7 +65,7 @@ export function PaperEditor({
   const terms = typeof design.terms === 'string' ? design.terms : '';
   const bring = typeof design.bring === 'string' ? design.bring.split('\n').join('; ') : '';
   const full = design.size === 'a4' || design.size === 'letter';
-  const card = PAPER_SPECS[design.size].layout === 'card';
+  const takesSheet = sheetApplies(design.size);
   return (
     <div className="flex w-full max-w-lg flex-col gap-4" data-testid="paper-editor">
       <FormField label={PRINT_COPY.kindLabel}>
@@ -93,7 +93,10 @@ export function PaperEditor({
           onValueChange={(v: PaperInk) => onEdit({ ink: v })}
         />
       </div>
-      {card ? (
+      {supportsCode128(design.size) ? null : (
+        <p className="-mt-2 text-sm text-fg-muted">{PRINT_SIZE_COPY.code128Off}</p>
+      )}
+      {takesSheet ? (
         <FormField label={PRINT_SIZE_COPY.sheetLabel}>
           {(c) => (
             <Select

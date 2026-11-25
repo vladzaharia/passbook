@@ -10,6 +10,7 @@ import {
 } from '@/passkit/template/paper.ts';
 import { bestImage, imageSlots } from '@/passkit/template/paper-assets.ts';
 import { paperContent } from '@/passkit/template/paper-content.ts';
+import { withRegionSize } from '@/passkit/template/paper-region.ts';
 import type { PassJson, TemplateManifest } from '@/passkit/types.ts';
 import { TemplateChannelsResponseSchema } from '@/shared/contracts/channels.ts';
 import { channelReason } from '@/shared/copy/channels.ts';
@@ -92,6 +93,7 @@ export function PaperPreview({
   manifest,
   templateId,
   orgId,
+  timeZone,
   assets = [],
   assetBase = '',
   onEdit,
@@ -104,6 +106,8 @@ export function PaperPreview({
   assetBase?: string | undefined;
   templateId?: string | undefined;
   orgId?: string | undefined;
+  /** The organization's `org.timeZone`: a layout with no block starts on Letter in the US and Canada. */
+  timeZone?: string | undefined;
   /** Writes the block; absent when the draft is read-only. */
   onEdit?: ((patch: PaperPatch) => void) | undefined;
   /** A sandbox pass: the TEST PREVIEW band on every page. */
@@ -111,7 +115,10 @@ export function PaperPreview({
 }) {
   const inlineCss = usePaperCss();
   const channels = useTemplatePaper(templateId, orgId);
-  const saved = useMemo(() => resolvePaper(manifest.paper), [manifest.paper]);
+  const saved = useMemo(
+    () => withRegionSize(resolvePaper(manifest.paper), timeZone),
+    [manifest.paper, timeZone],
+  );
   const [picked, setPicked] = useState<PaperSize>(saved.size);
   const [grey, setGrey] = useState(false);
   const design = useMemo<PaperDesign>(

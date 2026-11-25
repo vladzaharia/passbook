@@ -11,9 +11,9 @@ import { paperInk } from './paper-ink.ts';
 import {
   PAPER_SHEETS,
   PAPER_SIZES,
-  PAPER_SPECS,
   type PaperSheet,
   type PaperSize,
+  sheetApplies,
   supportsCode128,
 } from './paper-sizes.ts';
 
@@ -27,6 +27,8 @@ export {
   type PaperSheet,
   type PaperSize,
   type PaperSpec,
+  pageSizeOf,
+  sheetApplies,
   supportsCode128,
 } from './paper-sizes.ts';
 export const PAPER_BARCODES = ['qr', 'code128'] as const;
@@ -48,7 +50,7 @@ const expr = z.union([z.string().min(1).max(MAX_PAPER_EXPR), z.strictObject({ co
 export const PaperManifestSchema = z.strictObject({
   schema: z.literal(PAPER_SCHEMA),
   size: z.enum(PAPER_SIZES),
-  /** Card sizes only: print both faces on an A4 or Letter sheet with cut marks. */
+  /** Card and strip sizes: a holder's print on an A4 or Letter sheet with cut marks. Overrides the region's sheet. */
   sheet: z.enum(PAPER_SHEETS).optional(),
   barcode: z.enum(PAPER_BARCODES),
   fields: z
@@ -74,7 +76,7 @@ export type PaperManifest = z.infer<typeof PaperManifestSchema>;
 /** What the print page draws: the block with its defaults filled in. */
 export interface PaperDesign {
   size: PaperSize;
-  /** Cards on a home sheet; absent prints the card at its own size. */
+  /** Card or strip on a home sheet; absent prints at its own size. */
   sheet?: PaperSheet;
   barcode: PaperBarcode;
   fields: string[];
@@ -110,7 +112,7 @@ export function resolvePaper(raw: unknown): PaperDesign {
     parsed.data;
   return {
     size,
-    ...(sheet && PAPER_SPECS[size].layout === 'card' ? { sheet } : {}),
+    ...(sheet && sheetApplies(size) ? { sheet } : {}),
     // A card or a small strip has no room for Code 128 (a validation error); it draws QR.
     barcode: supportsCode128(size) ? barcode : 'qr',
     fields: fields ?? [],
@@ -251,8 +253,8 @@ export function paperManifestIssues(
   }
   if (paper.barcode === 'code128' && !supportsCode128(paper.size))
     error('PAPER_BARCODE', 'Code 128 does not fit this size. Use QR.', 'paper.barcode');
-  if (paper.sheet && PAPER_SPECS[paper.size].layout !== 'card')
-    warn('PAPER_SHEET', 'sheet applies to card sizes only.', 'paper.sheet');
+  if (paper.sheet && !sheetApplies(paper.size))
+    warn('PAPER_SHEET', 'sheet applies to card and strip sizes only.', 'paper.sheet');
   if (paper.ink !== 'mono' && options.passJson && !paperInk(options.passJson as PassJson).colour)
     warn(
       'PAPER_INK',

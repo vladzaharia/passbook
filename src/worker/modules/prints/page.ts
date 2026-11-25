@@ -48,7 +48,7 @@ export async function printPageModel(
     passChannels(ctx, pass),
     existingChannels(ctx, pass),
     getOrg(ctx.env.DB, pass.orgId),
-    paperTicket(ctx, pass),
+    paperTicket(ctx, pass, audience),
   ]);
   const base = { orgName: org?.name ?? '', mode: pass.mode };
   let model: PrintPageModel = { ...base, state: 'unavailable' };

@@ -9,7 +9,7 @@ import {
   popGraphicsState,
   pushGraphicsState,
 } from 'pdf-lib';
-import { PAPER_SPECS, type PaperDesign } from '../../../passkit/template/paper.ts';
+import { PAPER_SPECS, type PaperDesign, sheetApplies } from '../../../passkit/template/paper.ts';
 import type { PaperContent } from '../../../passkit/template/paper-content.ts';
 import { COUPON_BAND, halfFit, sheetLayout } from '../../../passkit/template/paper-geometry.ts';
 import { toSvg } from '../../../shared/pass-view/barcode-svg.ts';
@@ -21,7 +21,7 @@ import { drawFull } from './pdf-draw-full.ts';
 import { drawCoupon, drawPermit } from './pdf-draw-small.ts';
 import { drawStrip } from './pdf-draw-stub.ts';
 import { type AssetSource, embedFonts, type PdfFonts } from './pdf-fonts.ts';
-import { Pen, PT } from './pdf-kit.ts';
+import { COLORS, Pen, PT } from './pdf-kit.ts';
 import { embedPixels, type PdfPicture, type PictureFit, readPng } from './pdf-png.ts';
 import type { PdfImages, Sheet } from './pdf-sheet.ts';
 
@@ -66,8 +66,11 @@ function fitOf(sheet: PrintSheet, role: 'logo' | 'art'): PictureFit {
   return { wMm: (spec.widthMm - 16) / 2, hMm: 44, mode: 'cover' };
 }
 
-/** Both faces of a card on one A4 or Letter sheet: each face is drawn in its own frame, moved into its slot. */
-function drawCardSheet(doc: PDFDocument, fonts: PdfFonts, sheet: Sheet, state: { lossy: boolean }) {
+/**
+ * A holder's print on one A4 or Letter sheet: each face is drawn in its own frame and moved into its
+ * slot (a folded card's back turned half a turn). The full-colour front gets its bleed first.
+ */
+function drawOnSheet(doc: PDFDocument, fonts: PdfFonts, sheet: Sheet, state: { lossy: boolean }) {
   const { design, content: c } = sheet;
   const spec = PAPER_SPECS[design.size];
   const layout = sheetLayout(design.size, design.sheet ?? 'a4');
@@ -76,16 +79,30 @@ function drawCardSheet(doc: PDFDocument, fonts: PdfFonts, sheet: Sheet, state: {
   const page = doc.addPage([w * PT, h * PT]);
   const sheetPen = new Pen(page, fonts, mono, state, h);
   for (const [x1, y1, x2, y2] of layout.cuts) sheetPen.line(x1, y1, x2, y2, '#000000', 0.2);
-  for (const [i, b] of layout.cards.entries()) {
+  for (const [i, face] of layout.faces.entries()) {
+    const b = face.box;
+    const { top, right, bottom, left } = face.bleed;
+    if (!mono && (top || right || bottom || left))
+      sheetPen.fillBox(
+        { x: b.x - left, y: b.y - top, w: b.w + left + right, h: b.h + top + bottom },
+        c.colors.bg,
+      );
     const pen = new Pen(page, fonts, mono, state, spec.heightMm);
+    // Card-local mm from the card's bottom-left to the sheet; a turned face flips about its centre.
+    const bottomY = h - b.y - spec.heightMm;
     pen.ops(
       pushGraphicsState(),
-      concatTransformationMatrix(1, 0, 0, 1, b.x * PT, (h - b.y - spec.heightMm) * PT),
+      face.rotated
+        ? concatTransformationMatrix(-1, 0, 0, -1, (b.x + b.w) * PT, (bottomY + b.h) * PT)
+        : concatTransformationMatrix(1, 0, 0, 1, b.x * PT, bottomY * PT),
     );
-    if (i === 0) drawCardFront(pen, sheet);
+    if (spec.layout === 'strip') drawStrip(pen, sheet);
+    else if (i === 0) drawCardFront(pen, sheet);
     else drawCardBack(pen, sheet);
     pen.ops(popGraphicsState());
   }
+  // Last, so the crease shows over the front's colour.
+  if (layout.fold) sheetPen.line(...layout.fold, COLORS.rule, 0.25, [1.2, 0.8]);
 }
 
 function drawSheet(doc: PDFDocument, fonts: PdfFonts, sheet: Sheet, state: { lossy: boolean }) {
@@ -94,8 +111,8 @@ function drawSheet(doc: PDFDocument, fonts: PdfFonts, sheet: Sheet, state: { los
   const mono = c.ink === 'mono';
   const page = () => doc.addPage([spec.widthMm * PT, spec.heightMm * PT]);
   const pen = () => new Pen(page(), fonts, mono, state, spec.heightMm);
-  if (spec.layout === 'card') {
-    if (design.sheet) return drawCardSheet(doc, fonts, sheet, state);
+  if (design.sheet && sheetApplies(design.size)) drawOnSheet(doc, fonts, sheet, state);
+  else if (spec.layout === 'card') {
     drawCardFront(pen(), sheet);
     drawCardBack(pen(), sheet);
   } else if (spec.layout === 'strip') drawStrip(pen(), sheet);

@@ -3,7 +3,7 @@
  * A6, DL), the cards and the home sheet that carries them, and the half-letter fit of the half-sheet
  * designs. Millimetres from the sheet's top-left corner; the page CSS and the PDF both read these.
  */
-import { PAPER_SPECS, type PaperSheet, type PaperSize } from './paper.ts';
+import { PAPER_SPECS, type PaperSheet, type PaperSize, type PaperSpec } from './paper.ts';
 
 export interface Box {
   x: number;
@@ -42,6 +42,10 @@ export const centred = (outer: Box, w: number, h: number, dy = 0): Box => ({
   h,
 });
 
+/** The symbol's width in mm; a size with no Code 128 width falls back to its QR width, never 0. */
+export const codeSymbolMm = (spec: PaperSpec, kind: 'qr' | 'code128'): number =>
+  kind === 'qr' ? spec.qrMm : spec.barMm || spec.qrMm;
+
 /** Code box: the symbol plus its quiet zone, for the QR (square) or Code 128. */
 export function codeSize(
   size: PaperSize,
@@ -53,8 +57,9 @@ export function codeSize(
     const whole = (spec.qrMm * (modules + 2 * QR_QUIET_MODULES)) / modules;
     return { w: whole, h: whole };
   }
-  // 332 modules plus a 10-module quiet zone each side.
-  return { w: (spec.barMm * (332 + 20)) / 332, h: Math.max(13, spec.barMm * 0.22) };
+  // 332 modules plus a 10-module quiet zone each side. A size with no Code 128 width never draws at 0 mm.
+  const bar = codeSymbolMm(spec, 'code128');
+  return { w: (bar * (332 + 20)) / 332, h: Math.max(13, bar * 0.22) };
 }
 
 /** Strip margins: the stub and the ATB are die-cut stock, the rest keep the 8 mm printer margin. */
@@ -98,35 +103,91 @@ export function cardBoxes(size: PaperSize): PaperBoxes {
 }
 
 export const SHEET_TOP = 20;
-export const SHEET_GAP = 12;
+/** The full-colour face runs this far past its cut line, so a cut that wanders still leaves colour. */
+export const BLEED = 1.5;
 const MARK_GAP = 1.5;
 const MARK_LEN = 4;
+/** The fold line runs this far past the card at both ends. */
+const FOLD_EXTRA = 4;
+
+type Segment = [number, number, number, number];
+
+export interface SheetFace {
+  /** The face's cut line on the sheet. */
+  box: Box;
+  /** Turned half a turn, so folded on the shared edge it reads upright. */
+  rotated: boolean;
+  /** Bleed past the cut line, per side. Only a full-colour face has any. */
+  bleed: { top: number; right: number; bottom: number; left: number };
+}
 
 export interface SheetLayout {
   page: Box;
-  /** Front, then back. */
-  cards: [Box, Box];
-  /** Cut marks as line segments [x1, y1, x2, y2]: a tick at each corner, outside the card. */
-  cuts: [number, number, number, number][];
+  /** A card: front, then back; a strip: its one face. */
+  faces: SheetFace[];
+  /** Cut marks as line segments: a tick at each outer corner, outside the cut line and its bleed. */
+  cuts: Segment[];
+  /** A card's dashed fold line, on the edge the faces share. */
+  fold?: Segment;
 }
 
-/** Both faces of a card side by side near the top of an A4 or Letter sheet, centred, with corner cut marks. */
+const NO_BLEED = { top: 0, right: 0, bottom: 0, left: 0 };
+
+const inside = (page: Box, [x1, y1, x2, y2]: Segment): boolean =>
+  [x1, x2].every((x) => x >= 0 && x <= page.w) && [y1, y2].every((y) => y >= 0 && y <= page.h);
+
+/** Ticks at the corners of `r`, `gap` clear of it; those that would fall off the sheet are dropped. */
+function corners(page: Box, r: Box, gap: number): Segment[] {
+  const out: Segment[] = [];
+  for (const cx of [r.x, r.x + r.w])
+    for (const cy of [r.y, r.y + r.h]) {
+      const sx = cx === r.x ? -1 : 1;
+      const sy = cy === r.y ? -1 : 1;
+      out.push([cx + sx * gap, cy, cx + sx * (gap + MARK_LEN), cy]);
+      out.push([cx, cy + sy * gap, cx, cy + sy * (gap + MARK_LEN)]);
+    }
+  return out.filter((seg) => inside(page, seg));
+}
+
+/**
+ * A holder's print on an A4 or Letter sheet at true size, with cut marks. A strip is one face at
+ * the top centre. A card is a fold: the faces meet on the long edge (stacked for a landscape card,
+ * side by side for a portrait one), the back turned half a turn so it reads upright once folded,
+ * with a dashed fold line and a bleed on the full-colour front.
+ */
 export function sheetLayout(size: PaperSize, sheet: PaperSheet): SheetLayout {
   const { widthMm: pw, heightMm: ph } = PAPER_SPECS[sheet];
-  const { widthMm: cw, heightMm: ch } = PAPER_SPECS[size];
-  const left = (pw - (2 * cw + SHEET_GAP)) / 2;
-  const front: Box = { x: left, y: SHEET_TOP, w: cw, h: ch };
-  const back: Box = { ...front, x: left + cw + SHEET_GAP };
-  const cuts: SheetLayout['cuts'] = [];
-  for (const b of [front, back])
-    for (const cx of [b.x, b.x + b.w])
-      for (const cy of [b.y, b.y + b.h]) {
-        const sx = cx === b.x ? -1 : 1;
-        const sy = cy === b.y ? -1 : 1;
-        cuts.push([cx + sx * MARK_GAP, cy, cx + sx * (MARK_GAP + MARK_LEN), cy]);
-        cuts.push([cx, cy + sy * MARK_GAP, cx, cy + sy * (MARK_GAP + MARK_LEN)]);
-      }
-  return { page: { x: 0, y: 0, w: pw, h: ph }, cards: [front, back], cuts };
+  const { widthMm: cw, heightMm: ch, layout } = PAPER_SPECS[size];
+  const page: Box = { x: 0, y: 0, w: pw, h: ph };
+  if (layout === 'strip') {
+    const box: Box = { x: (pw - cw) / 2, y: SHEET_TOP, w: cw, h: ch };
+    return {
+      page,
+      faces: [{ box, rotated: false, bleed: NO_BLEED }],
+      cuts: corners(page, box, MARK_GAP),
+    };
+  }
+  const stacked = cw > ch;
+  const w = stacked ? cw : 2 * cw;
+  const h = stacked ? 2 * ch : ch;
+  const x = (pw - w) / 2;
+  const front: Box = { x, y: SHEET_TOP, w: cw, h: ch };
+  const back: Box = stacked ? { ...front, y: front.y + ch } : { ...front, x: front.x + cw };
+  const bleed = stacked
+    ? { top: BLEED, right: BLEED, bottom: 0, left: BLEED }
+    : { top: BLEED, right: 0, bottom: BLEED, left: BLEED };
+  const fold: Segment = stacked
+    ? [x - FOLD_EXTRA, front.y + ch, x + cw + FOLD_EXTRA, front.y + ch]
+    : [front.x + cw, SHEET_TOP - FOLD_EXTRA, front.x + cw, SHEET_TOP + ch + FOLD_EXTRA];
+  return {
+    page,
+    faces: [
+      { box: front, rotated: false, bleed },
+      { box: back, rotated: true, bleed: NO_BLEED },
+    ],
+    cuts: corners(page, { x, y: SHEET_TOP, w, h }, MARK_GAP + BLEED),
+    fold,
+  };
 }
 
 /** The 210 x 148 permit and coupon designs. */

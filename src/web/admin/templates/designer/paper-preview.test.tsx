@@ -134,8 +134,9 @@ describe('designer Paper tab', () => {
     });
     await user.click(await screen.findByRole('radio', { name: 'Paper' }));
     expect(screen.queryByRole('radio', { name: 'Code 128' })).toBeNull();
-    await user.click(await screen.findByRole('combobox', { name: /Home print/ }));
-    await user.click(await screen.findByRole('option', { name: 'A4 sheet, cut marks' }));
+    expect(screen.getByText('Code 128 does not fit this size.')).toBeInTheDocument();
+    await user.click(await screen.findByRole('combobox', { name: /Holder sheet/ }));
+    await user.click(await screen.findByRole('option', { name: 'A4' }));
     expect(onPaper).toHaveBeenLastCalledWith({ sheet: 'a4' });
     await user.click(screen.getByRole('combobox', { name: /Paper size/ }));
     await user.click(await screen.findByRole('option', { name: 'Boarding pass' }));

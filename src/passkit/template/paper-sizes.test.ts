@@ -11,7 +11,7 @@ import {
 } from './paper.ts';
 import { overlaps, paperBoxes, QR_QUIET_MODULES, sheetLayout } from './paper-geometry.ts';
 import { halfFit } from './paper-geometry-sizes.ts';
-import { usesLetter, withRegionSize } from './paper-region.ts';
+import { forAudience, regionSheet, usesLetter, withRegionSize } from './paper-region.ts';
 
 const NEW: PaperSize[] = ['cr80p', 'stub', 'atb', 'a6', 'dl', 'half-letter'];
 const inside = (inner: { x: number; y: number; w: number; h: number }, outer: typeof inner) =>
@@ -25,7 +25,7 @@ describe('new sizes', () => {
     const dims = (s: PaperSize) => [PAPER_SPECS[s].widthMm, PAPER_SPECS[s].heightMm];
     expect(dims('cr80p')).toEqual([54, 85.6]);
     expect(dims('stub')).toEqual([139.7, 50.8]);
-    expect(dims('atb')).toEqual([187.33, 82.55]);
+    expect(dims('atb')).toEqual([187.325, 82.55]);
     expect(dims('a6')).toEqual([148, 105]);
     expect(dims('dl')).toEqual([210, 99]);
     expect(dims('half-letter')).toEqual([215.9, 139.7]);
@@ -94,18 +94,8 @@ describe('new sizes', () => {
   });
 });
 
-describe('cards on a home sheet', () => {
-  it.each([
-    ['cr80', 'a4'],
-    ['cr80', 'letter'],
-    ['cr80p', 'a4'],
-    ['cr80p', 'letter'],
-  ] as const)('%s on %s: two faces and eight cut ticks, inside the sheet', (size, sheet) => {
-    const l = sheetLayout(size, sheet);
-    expect(l.cards).toHaveLength(2);
-    expect(overlaps(l.cards[0], l.cards[1])).toBe(false);
-    for (const c of l.cards) expect(inside(c, l.page)).toBe(true);
-    expect(l.cuts).toHaveLength(16);
+describe('home sheet', () => {
+  const tickInside = (l: ReturnType<typeof sheetLayout>) => {
     for (const [x1, y1, x2, y2] of l.cuts) {
       expect(
         inside(
@@ -113,16 +103,66 @@ describe('cards on a home sheet', () => {
           l.page,
         ),
       ).toBe(true);
-      // A tick never crosses a card.
+    }
+  };
+
+  it.each([
+    ['cr80', 'a4'],
+    ['cr80', 'letter'],
+    ['cr80p', 'a4'],
+    ['cr80p', 'letter'],
+  ] as const)('%s on %s: a fold, back turned, bleed on the front only', (size, sheet) => {
+    const l = sheetLayout(size, sheet);
+    const [front, back] = l.faces as [(typeof l.faces)[number], (typeof l.faces)[number]];
+    expect(l.faces).toHaveLength(2);
+    expect(overlaps(front.box, back.box)).toBe(false);
+    for (const f of l.faces) expect(inside(f.box, l.page)).toBe(true);
+    // They share the long edge: stacked when landscape, side by side when portrait.
+    const landscape = PAPER_SPECS[size].widthMm > PAPER_SPECS[size].heightMm;
+    if (landscape) expect(back.box.y).toBeCloseTo(front.box.y + front.box.h, 6);
+    else expect(back.box.x).toBeCloseTo(front.box.x + front.box.w, 6);
+    expect(front.rotated).toBe(false);
+    expect(back.rotated).toBe(true);
+    expect(Object.values(back.bleed).every((v) => v === 0)).toBe(true);
+    // 1.5 mm past the cut on the three outer sides, none across the fold.
+    expect(Object.values(front.bleed).sort()).toEqual([0, 1.5, 1.5, 1.5]);
+    expect(l.fold).toBeDefined();
+    // Four outer corners, a tick each way, clear of the cut line and its bleed.
+    expect(l.cuts).toHaveLength(8);
+    tickInside(l);
+    const whole = {
+      x: Math.min(front.box.x, back.box.x),
+      y: front.box.y,
+      w: landscape ? front.box.w : 2 * front.box.w,
+      h: landscape ? 2 * front.box.h : front.box.h,
+    };
+    for (const [x1, y1, x2, y2] of l.cuts) {
       const tick = {
         x: Math.min(x1, x2),
         y: Math.min(y1, y2),
         w: Math.abs(x2 - x1) || 0.01,
         h: Math.abs(y2 - y1) || 0.01,
       };
-      for (const c of l.cards) expect(overlaps(tick, c)).toBe(false);
+      expect(overlaps(tick, whole)).toBe(false);
     }
   });
+
+  it.each(['stub', 'atb', 'a6', 'dl'] as const)(
+    '%s on a sheet: one face, true size, no fold',
+    (size) => {
+      for (const sheet of ['a4', 'letter'] as const) {
+        const l = sheetLayout(size, sheet);
+        expect(l.faces).toHaveLength(1);
+        expect(l.faces[0]?.box.w).toBe(PAPER_SPECS[size].widthMm);
+        expect(l.faces[0]?.box.h).toBe(PAPER_SPECS[size].heightMm);
+        expect(inside(l.faces[0]?.box as never, l.page)).toBe(true);
+        expect(l.fold).toBeUndefined();
+        tickInside(l);
+      }
+      // A DL is as wide as A4: its side ticks would fall off the sheet, so only top and bottom remain.
+      if (size === 'dl') expect(sheetLayout('dl', 'a4').cuts.length).toBeLessThan(8);
+    },
+  );
 });
 
 describe('schema', () => {
@@ -143,15 +183,18 @@ describe('schema', () => {
       expect(resolvePaper({ schema: 1, size, barcode: 'code128' }).barcode).toBe('code128');
   });
 
-  it('keeps sheet on cards only', () => {
+  it('keeps sheet on cards and strips only', () => {
     expect(resolvePaper({ schema: 1, size: 'cr80p', barcode: 'qr', sheet: 'letter' }).sheet).toBe(
       'letter',
     );
+    expect(resolvePaper({ schema: 1, size: 'atb', barcode: 'qr', sheet: 'letter' }).sheet).toBe(
+      'letter',
+    );
     expect(
-      resolvePaper({ schema: 1, size: 'atb', barcode: 'qr', sheet: 'letter' }).sheet,
+      resolvePaper({ schema: 1, size: 'a4', barcode: 'qr', sheet: 'letter' }).sheet,
     ).toBeUndefined();
     expect(
-      paperManifestIssues(manifest({ schema: 1, size: 'atb', barcode: 'qr', sheet: 'a4' })).map(
+      paperManifestIssues(manifest({ schema: 1, size: 'half', barcode: 'qr', sheet: 'a4' })).map(
         (i) => i.code,
       ),
     ).toContain('PAPER_SHEET');
@@ -178,5 +221,59 @@ describe('region default', () => {
   it('never overrides a size the template chose', () => {
     const chosen = resolvePaper({ schema: 1, size: 'a4', barcode: 'qr' });
     expect(withRegionSize(chosen, 'America/New_York').size).toBe('a4');
+  });
+});
+
+describe('region aliases and audience', () => {
+  it.each([
+    'US/Eastern',
+    'US/Pacific',
+    'US/Hawaii',
+    'Canada/Eastern',
+    'America/Indianapolis',
+    'America/Fort_Wayne',
+    'America/Knox_IN',
+    'America/Louisville',
+    'America/Puerto_Rico',
+    'America/St_Thomas',
+    'Pacific/Guam',
+    'Pacific/Saipan',
+    'Pacific/Pago_Pago',
+    'america/new_york',
+    'AMERICA/CHICAGO',
+  ])('%s is a Letter zone', (zone) => {
+    expect(usesLetter(zone)).toBe(true);
+    expect(regionSheet(zone)).toBe('letter');
+  });
+
+  it.each(['Europe/London', 'Pacific/Auckland', 'America/Mexico_City', 'Not/AZone', ''])(
+    '%s is not',
+    (zone) => {
+      expect(usesLetter(zone)).toBe(false);
+      expect(regionSheet(zone)).toBe('a4');
+    },
+  );
+
+  it('a holder gets every card and strip on the region sheet, staff the exact page', () => {
+    for (const size of ['cr80', 'cr80p', 'stub', 'atb', 'a6', 'dl'] as const) {
+      const d = resolvePaper({ schema: 1, size, barcode: 'qr' });
+      expect(forAudience(d, 'holder', 'America/Denver').sheet).toBe('letter');
+      expect(forAudience(d, 'holder', 'Europe/Berlin').sheet).toBe('a4');
+      expect(forAudience(d, 'staff', 'America/Denver').sheet).toBeUndefined();
+    }
+  });
+
+  it('an explicit sheet overrides the region for the holder; staff still print exact', () => {
+    const d = resolvePaper({ schema: 1, size: 'cr80', barcode: 'qr', sheet: 'a4' });
+    expect(forAudience(d, 'holder', 'America/Denver').sheet).toBe('a4');
+    expect(forAudience(d, 'staff', 'America/Denver').sheet).toBeUndefined();
+  });
+
+  it('pages and half sheets are home sizes: no sheet for anyone', () => {
+    for (const size of ['a4', 'letter', 'half', 'half-letter'] as const)
+      expect(
+        forAudience(resolvePaper({ schema: 1, size, barcode: 'qr' }), 'holder', 'Europe/Berlin')
+          .sheet,
+      ).toBeUndefined();
   });
 });

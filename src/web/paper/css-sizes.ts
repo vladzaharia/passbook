@@ -36,11 +36,17 @@ export const SIZES_CSS = `.pp-strip{--org:#333;--org-fg:#fff;--org-label:#ddd}
 .pp-mono-ink .pp-st-k,.pp-mono-ink .pp-st-rl,.pp-mono-ink .pp-st-foot,.pp-mono-ink .pp-st-text .pp-typed .pp-lbl{color:var(--muted)}
 .pp-mono-ink .pp-st-head .pp-plate{background:#000!important}
 .pp-mono-ink.pp-cd-front .pp-cd-k,.pp-mono-ink.pp-cd-front .pp-cd-tier{color:var(--muted)}
+.pp-cd-front .pp-cd-l img{max-height:${mm('20')};object-fit:contain;object-position:left top}
+.pp-cr80p.pp-cd-front .pp-cd-l img{max-height:${mm('16')}}
+.pp-cr80p.pp-cd-front .pp-cd-tier{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pp-cr80p.pp-cd-front .pp-cd-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pp-cr80p.pp-cd-front .pp-cd-l{width:auto;right:${mm('4')};bottom:${mm('46.6')}}
 .pp-cr80p.pp-cd-front .pp-cd-tile{right:auto;left:50%;top:auto;bottom:${mm('4')};transform:translateX(-50%)}
 .pp-hs{--mm:calc(100cqw / var(--w));position:absolute;inset:0;background:#fff;overflow:hidden;border-radius:${mm('1.5')}}
 .pp-slot{position:absolute;container-type:inline-size;left:${mm('var(--x)')};top:${mm('var(--y)')};width:${mm('var(--cw)')};height:${mm('var(--ch)')};box-shadow:0 0 0 1px rgb(0 0 0/.14)}
 .pp-slot .pp-sheet{border-radius:0;box-shadow:none}
+.pp-turned{transform:rotate(180deg)}
+.pp-bleed{position:absolute;left:${mm('var(--x)')};top:${mm('var(--y)')};width:${mm('var(--cw)')};height:${mm('var(--ch)')}}
 .pp-cuts{position:absolute;inset:0;width:100%;height:100%}
 .pp-hfit{position:absolute;top:0;height:100%;container-type:inline-size}
 .pp-hfit .pp-sheet{box-shadow:none;border-radius:0}

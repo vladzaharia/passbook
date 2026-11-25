@@ -12,6 +12,9 @@ import { type Box, COLORS, type Pen, type TextStyle } from './pdf-kit.ts';
 import type { Sheet } from './pdf-sheet.ts';
 import { watermark } from './pdf-test-mark.ts';
 
+/** The tallest logo on a portrait card's front: what is left above a two-line name and a two-line tier. */
+export const CARD_LOGO_H_PORTRAIT = 16;
+
 export function drawCardFront(pen: Pen, s: Sheet): void {
   const c = s.content;
   const { widthMm: W, heightMm: H } = specOf(s);
@@ -37,8 +40,9 @@ export function drawCardFront(pen: Pen, s: Sheet): void {
   const x = 4;
   const logo = s.images.logo;
   if (c.logo && logo && !mono) {
-    const w = 24;
-    pen.image(logo, { x, y: 4, w, h: Math.min(20, (w * logo.height) / logo.width) });
+    // Contained in 24 mm by the height the face leaves above its text, never stretched.
+    const fit = Math.min(24 / logo.width, (portrait ? CARD_LOGO_H_PORTRAIT : 20) / logo.height);
+    pen.image(logo, { x, y: 4, w: logo.width * fit, h: logo.height * fit });
   } else plate(pen, s, { x, y: 4 }, 9);
   const kicker: TextStyle = {
     size: 1.7639,
@@ -57,7 +61,12 @@ export function drawCardFront(pen: Pen, s: Sheet): void {
     .filter(Boolean)
     .join(' · ');
   const textW = portrait ? W - 8 : 37;
-  const nameLines = pen.wrap(member ? (c.holder ?? c.title) : c.title, textW, name, 3);
+  const nameLines = pen.wrap(
+    member ? (c.holder ?? c.title) : c.title,
+    textW,
+    name,
+    portrait ? 2 : 3,
+  );
   const tierLines = tier ? pen.wrap(tier, textW, tierSt, 2) : [];
   const blockH =
     pen.lineHeight(kicker) +

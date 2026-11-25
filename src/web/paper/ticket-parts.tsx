@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { PAPER_SPECS, type PaperDesign } from '../../passkit/template/paper.ts';
 import type { PaperContent } from '../../passkit/template/paper-content.ts';
+import { codeSymbolMm } from '../../passkit/template/paper-geometry-sizes.ts';
 import { groupPrintCode, PAPER_COPY, PRINT_COPY } from '../../shared/copy/print.ts';
 import type { PaperDrawing } from './drawing.ts';
 import { buddyPose, TicketBuddy } from './ticket-buddy.tsx';
@@ -33,7 +34,7 @@ export const codeLabel = (c: PaperContent): string =>
 /** The code's size in mm: the symbol alone is `qrMm` (QR) or `barMm` (Code 128) wide. */
 function codeStyle(design: PaperDesign, drawing: PaperDrawing): CSSProperties {
   const spec = PAPER_SPECS[design.size];
-  const symbolMm = drawing.kind === 'qr' ? spec.qrMm : spec.barMm;
+  const symbolMm = codeSymbolMm(spec, drawing.kind);
   const width = (symbolMm * drawing.whole) / drawing.symbol;
   const height = drawing.kind === 'qr' ? width : Math.max(13, symbolMm * 0.22);
   return {

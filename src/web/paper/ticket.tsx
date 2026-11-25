@@ -1,11 +1,11 @@
 import type { CSSProperties, ReactNode } from 'react';
-import { PAPER_SPECS } from '../../passkit/template/paper.ts';
+import { PAPER_SPECS, sheetApplies } from '../../passkit/template/paper.ts';
 import { halfFit } from '../../passkit/template/paper-geometry.ts';
 import { TestBand } from '../pass-card/test-band.tsx';
 import { CardBack, CardFront } from './ticket-card.tsx';
 import { TicketFull } from './ticket-full.tsx';
 import type { TicketProps } from './ticket-parts.tsx';
-import { CardsOnSheet } from './ticket-sheet.tsx';
+import { OnSheet } from './ticket-sheet.tsx';
 import { TicketCoupon, TicketPermit } from './ticket-small.tsx';
 import { TicketStrip } from './ticket-strip.tsx';
 
@@ -41,23 +41,22 @@ export function PaperTicket(props: TicketProps) {
     pageWith(...a, props.testBand === true);
   const spec = PAPER_SPECS[design.size];
   const size = { w: spec.widthMm, h: spec.heightMm };
-  if (spec.layout === 'card') {
-    if (design.sheet) {
-      const sheet = PAPER_SPECS[design.sheet];
-      return pageOf(
-        'sheet',
-        { w: sheet.widthMm, h: sheet.heightMm },
-        design.sheet,
-        <CardsOnSheet p={props} />,
-      );
-    }
+  if (design.sheet && sheetApplies(design.size)) {
+    const sheet = PAPER_SPECS[design.sheet];
+    return pageOf(
+      'sheet',
+      { w: sheet.widthMm, h: sheet.heightMm },
+      design.sheet,
+      <OnSheet p={props} />,
+    );
+  }
+  if (spec.layout === 'card')
     return (
       <>
         {pageOf('front', size, design.size, <CardFront p={props} />)}
         {pageOf('back', size, design.size, <CardBack p={props} />)}
       </>
     );
-  }
   if (spec.layout === 'strip') return pageOf('sheet', size, design.size, <TicketStrip p={props} />);
   const half = spec.layout === 'half';
   const small = content.kind === 'permit' || content.kind === 'coupon';

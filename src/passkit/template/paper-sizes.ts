@@ -34,10 +34,10 @@ export const CODE128_MIN_MM = 83;
 /**
  * Page sizes in mm. `half` is a half sheet, landscape; `cr80` and `cr80p` are ISO/IEC 7810 ID-1
  * cards. `stub` is 2 x 5.5 in ticket stock (QR beside the text, a stacked 30 mm QR does not fit).
- * `atb` is the IATA ATB boarding-pass document: Resolution 722e section 6.6.1 sets it at
- * 187.33 x 82.55 mm (7.375 x 3.25 in). Thermal stock is wider (203.2 mm with its feed margin);
- * that margin is the printer's concern, not the page's. `dl` is ISO 269 (a third of A4).
- * `barMm` is 0 where Code 128 does not fit at `CODE128_MIN_MM`.
+ * `atb` is the IATA ATB boarding-pass document, exactly 7.375 x 3.25 in (187.325 x 82.55 mm,
+ * Resolution 722e section 6.6.1). It stays 7.375 in, not the 8 in thermal stock: on 8 in stock a
+ * shorter page just advances to the next gap, a longer one would spill onto the next ticket. `dl` is
+ * the one-third-A4 insert (99 x 210 mm). `barMm` is 0 where Code 128 does not fit at `CODE128_MIN_MM`.
  */
 export const PAPER_SPECS: Record<PaperSize, PaperSpec> = {
   a4: { label: 'A4', layout: 'page', widthMm: 210, heightMm: 297, qrMm: 45, barMm: 100 },
@@ -77,7 +77,7 @@ export const PAPER_SPECS: Record<PaperSize, PaperSpec> = {
   atb: {
     label: 'Boarding pass',
     layout: 'strip',
-    widthMm: 187.33,
+    widthMm: 187.325,
     heightMm: 82.55,
     qrMm: 32,
     barMm: 83,
@@ -98,6 +98,16 @@ export const PAPER_SPECS: Record<PaperSize, PaperSpec> = {
 export const supportsCode128 = (size: PaperSize): boolean =>
   PAPER_SPECS[size].barMm >= CODE128_MIN_MM;
 
-/** Card sizes can print on a home sheet, with cut marks. */
+/** Cards and strips can print on a home sheet, with cut marks. */
 export const PAPER_SHEETS = ['a4', 'letter'] as const;
 export type PaperSheet = (typeof PAPER_SHEETS)[number];
+
+/** Card and strip sizes take a home sheet; pages and half sheets already print on one. */
+export const sheetApplies = (size: PaperSize): boolean =>
+  PAPER_SPECS[size].layout === 'card' || PAPER_SPECS[size].layout === 'strip';
+
+/** The sheet a design prints on: its home sheet when it has one, else its own size. */
+export const pageSizeOf = (design: {
+  size: PaperSize;
+  sheet?: PaperSheet | undefined;
+}): PaperSize => (design.sheet && sheetApplies(design.size) ? design.sheet : design.size);

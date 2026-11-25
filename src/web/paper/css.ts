@@ -1,4 +1,9 @@
-import { PAPER_SPECS, type PaperSheet, type PaperSize } from '../../passkit/template/paper.ts';
+import {
+  PAPER_SPECS,
+  type PaperSheet,
+  type PaperSize,
+  sheetApplies,
+} from '../../passkit/template/paper.ts';
 import bandCss from '../pass-card/test-band.css?raw';
 import { FULL_CSS, HALF_FULL_CSS } from './css-full.ts';
 import { SIZES_CSS } from './css-sizes.ts';
@@ -53,8 +58,8 @@ const BASE_CSS = `${FALLBACK_FONT_CSS}
 
 export const PAPER_CSS = `${BASE_CSS}\n${FULL_CSS}\n${HALF_FULL_CSS}\n${SMALL_CSS}\n${SIZES_CSS}\n${bandCss}`;
 
-/** `@page` for one size, or for the home sheet a card prints on; the sheet fills the page, so the margin is 0. */
+/** `@page` for one size, or for the home sheet a card or strip prints on; the sheet fills the page, so the margin is 0. */
 export function pageRule(size: PaperSize, sheet?: PaperSheet): string {
-  const s = PAPER_SPECS[sheet && PAPER_SPECS[size].layout === 'card' ? sheet : size];
+  const s = PAPER_SPECS[sheet && sheetApplies(size) ? sheet : size];
   return `@page{size:${s.widthMm}mm ${s.heightMm}mm;margin:0}`;
 }
