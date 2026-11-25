@@ -4,7 +4,7 @@ import { fieldSource } from './bindings.ts';
 import { useDesigner } from './context.tsx';
 import { NameEdit, PickEdit, SourcePicker, TextEdit } from './controls.tsx';
 import { readInputs } from './inputs.ts';
-import { allKeys, type Dict, type GroupId } from './model.ts';
+import { type Dict, everyKey, type GroupId } from './model.ts';
 
 const NONE = 'none';
 const words = (s: string) =>
@@ -114,7 +114,7 @@ export function FieldEditor({ field, group }: { field: Dict; group: GroupId }) {
         problem={(text) =>
           text === ''
             ? 'A key is required.'
-            : allKeys(doc.passJson).includes(text)
+            : everyKey(doc.passJson).includes(text)
               ? 'Another field has this key.'
               : null
         }
