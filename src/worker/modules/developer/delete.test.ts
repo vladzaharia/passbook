@@ -98,7 +98,7 @@ describe('DELETE /developer/sandbox', () => {
     ).toBeNull();
     const audit = await first<{ org_id: string | null; target_id: string }>(
       kit.env.DB,
-      "SELECT org_id, target_id FROM audit_log WHERE action = 'developer.sandbox_deleted' AND actor_id = ?",
+      "SELECT org_id, target_id FROM audit_log WHERE action = 'developer_sandbox.delete' AND actor_id = ?",
       [s.user.id],
     );
     expect(audit).toEqual({ org_id: null, target_id: s.made.orgId });
@@ -155,7 +155,7 @@ describe('DELETE /developer/sandbox', () => {
       await run(
         kit.env.DB,
         `INSERT INTO audit_log (at, org_id, actor_type, actor_id, action, target_type, target_id)
-         VALUES (?, NULL, 'user', ?, 'developer.sandbox_deleted', 'org', ?)`,
+         VALUES (?, NULL, 'user', ?, 'developer_sandbox.delete', 'org', ?)`,
         [kit.clock.now() - i * 1000, s.user.id, kit.f.ids.id()],
       );
     const res = await send('DELETE', '/developer/sandbox', s.headers);
@@ -184,5 +184,23 @@ describe('POST /developer/sandbox/recreate', () => {
       turnstileToken: 'ok',
     });
     expect(res.status).toBe(201);
+  });
+});
+
+describe('step-up', () => {
+  it('asks a stale session for a recent sign-in on delete and recreate, and deletes nothing', async () => {
+    const s = await sandboxOf();
+    kit.clock.advance(700_000);
+    await expectProblem(
+      await send('DELETE', '/developer/sandbox', s.headers),
+      403,
+      'STEP_UP_REQUIRED',
+    );
+    await expectProblem(
+      await send('POST', '/developer/sandbox/recreate', s.headers, { turnstileToken: 'ok' }),
+      403,
+      'STEP_UP_REQUIRED',
+    );
+    expect((await orgRow(s.made.orgId))?.status).toBe('active');
   });
 });

@@ -26,6 +26,14 @@ import { developerLogRoutes } from './routes-logs.ts';
 import { closeOwnSandbox, createSandbox, getSandbox } from './service.ts';
 import { mintTryToken, revokeTryTokens } from './try-token.ts';
 
+/** A signed-in developer who proved themselves recently: the sandbox's destructive calls. */
+const STEP_UP_AUTH = {
+  human: true,
+  signIn: 'strict',
+  developer: true,
+  stepUp: { maxAgeSec: STEP_UP_SECONDS },
+} as const;
+
 export const developerRoutes = createRouter();
 developerRoutes.use('*', limitBody(8 * 1024));
 developerRoutes.route('/', developerLogRoutes);
@@ -161,7 +169,7 @@ register(
     summary:
       'Delete your developer sandbox, open or closed: keys, passes, webhooks, logs and templates go, and you can make a new one. Three a day.',
     operationId: 'developer.deleteSandbox',
-    auth: { human: true, signIn: 'strict', developer: true },
+    auth: STEP_UP_AUTH,
     response: DeveloperSandboxSchema,
   },
   async (c) => {
@@ -180,7 +188,7 @@ register(
     summary:
       'Start over from nothing: delete your sandbox and make a new one, with a new key shown once. Counts as a delete.',
     operationId: 'developer.postSandboxRecreate',
-    auth: { human: true, signIn: 'strict', developer: true },
+    auth: STEP_UP_AUTH,
     body: CreateDeveloperSandboxSchema,
     status: 201,
     response: CreatedDeveloperSandboxSchema,
@@ -217,12 +225,7 @@ register(
     summary:
       'Start over: delete your sandbox test passes, captured webhooks and request log, restart the quickstart and replace the key',
     operationId: 'developer.postSandboxReset',
-    auth: {
-      human: true,
-      signIn: 'strict',
-      developer: true,
-      stepUp: { maxAgeSec: STEP_UP_SECONDS },
-    },
+    auth: STEP_UP_AUTH,
     body: ResetDeveloperSandboxSchema,
     response: SandboxResetSchema,
   },
@@ -261,12 +264,7 @@ register(
     path: '/sandbox/reopen',
     summary: 'Reopen your closed sandbox inside its 30 days, with a new key',
     operationId: 'developer.postSandboxReopen',
-    auth: {
-      human: true,
-      signIn: 'strict',
-      developer: true,
-      stepUp: { maxAgeSec: STEP_UP_SECONDS },
-    },
+    auth: STEP_UP_AUTH,
     response: CreatedDeveloperSandboxSchema,
   },
   async (c) => {

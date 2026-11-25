@@ -47,7 +47,9 @@ export function SandboxManage({
       }
       if (!siteKey || !host.current) throw new ActionError('Reload and try again.');
       host.current.replaceChildren();
-      const token = await verify(host.current, siteKey, setShowCheck);
+      const token = await verify(host.current, siteKey, setShowCheck).catch(() => {
+        throw new ActionError('The check did not pass. Try again.');
+      });
       const made = await recreateSandbox(csrf, token);
       setAct(null);
       history.replaceState(null, '', PATHS.quickstart);
@@ -56,7 +58,7 @@ export function SandboxManage({
       setError(
         e instanceof ActionError
           ? { text: e.message, signInUrl: e.signInUrl }
-          : { text: 'The check did not pass. Try again.', signInUrl: undefined },
+          : { text: "Couldn't reach PassBook. Try again.", signInUrl: undefined },
       );
     } finally {
       setWorking(false);
@@ -99,7 +101,7 @@ export function SandboxManage({
           <div className="row g2 wrap-row">
             <button
               type="button"
-              className="btn sm"
+              className="btn sm danger"
               disabled={working}
               aria-busy={working}
               onClick={() => void run()}

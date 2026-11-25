@@ -17,11 +17,11 @@
   },
   {
     "key": "DELETE /api/v1/developer/sandbox behavior changed",
-    "class": "additive",
+    "class": "breaking",
     "operationId": "developer.deleteSandbox",
     "op": "DELETE /api/v1/developer/sandbox",
     "change": "behavior changed",
-    "note": "Now deletes the sandbox (was close, now POST /developer/sandbox/close). 3 a day, SANDBOX_RESET_LIMIT. Answers with the sandbox, closed."
+    "note": "DELETE now deletes the sandbox. A caller that meant close must use POST /developer/sandbox/close. 3 deletes a day."
   },
   {
     "key": "DELETE /api/v1/identities/{id}/push-key 200.handle: field added",

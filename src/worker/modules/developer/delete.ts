@@ -7,15 +7,17 @@ import type { SessionAuth } from '../../platform/auth.ts';
 import { AppError, NotFoundError } from '../../platform/errors.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { quickstartTemplateOf, sandboxOfUser } from './repo.ts';
-import { DELETES_PER_DAY, deleteSandbox, deletesSince } from './repo-grants-delete.ts';
+import { deletesSince } from './repo-grants-delete.ts';
+import { DELETES_PER_DAY, deleteSandbox } from './repo-grants-reset.ts';
 import { createSandbox, dto } from './service.ts';
 
 const DAY_MS = 86_400_000;
 const day = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
-/** Three a day: the wait is until the oldest of them leaves the window. */
+/** Three a day: the wait is until enough of them leave the window. */
 function limited(times: number[], now: number): AppError {
-  const oldest = times.at(-1) ?? now;
+  // The slot that frees first is the one that, once it ages out, leaves fewer than three on record.
+  const oldest = times[times.length - DELETES_PER_DAY] ?? now;
   const wait = Math.max(1, Math.ceil((oldest + DAY_MS - now) / 1000));
   return new AppError(
     'SANDBOX_RESET_LIMIT',
