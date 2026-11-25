@@ -1448,38 +1448,6 @@
     "note": "A bundle's member page, under the bundle link: no member link, print, resend or sign-in. Peeks on /b open it."
   },
   {
-    "key": "POST /api/v1/scan/sign-out 200.stillInside: field added",
-    "class": "additive",
-    "operationId": "scan.postScanSignOut",
-    "op": "POST /api/v1/scan/sign-out",
-    "change": "200.stillInside: field added",
-    "note": "Places the person is still inside that this device could not mark out."
-  },
-  {
-    "key": "POST /api/v1/scan/sign-out behaviour changed",
-    "class": "notable",
-    "operationId": "scan.postScanSignOut",
-    "op": "POST /api/v1/scan/sign-out",
-    "change": "behaviour changed",
-    "note": "Marks out every place, collects the lent tag (not_returned reports it lost); no visit. Same key repeats the answer. VISITOR_NOT_IN is gone."
-  },
-  {
-    "key": "POST /api/v1/scan/sign-out body.read: optional input field added",
-    "class": "additive",
-    "operationId": "scan.postScanSignOut",
-    "op": "POST /api/v1/scan/sign-out",
-    "change": "body.read: optional input field added",
-    "note": "Tap the lent tag instead of naming the pass (passId or read). tag defaults to none (pass) or returned (read). Not lent: 409 TAG_NOT_LENT."
-  },
-  {
-    "key": "POST /api/v1/scan/sign-out keys: accepted at a Desk terminal",
-    "class": "additive",
-    "operationId": "scan.postScanSignOut",
-    "op": "POST /api/v1/scan/sign-out",
-    "change": "keys: accepted at a Desk terminal",
-    "note": "A scans:write key naming a Desk terminal in x-passbook-device may sign a person out, as for /scan/actions."
-  },
-  {
     "key": "Pass input: required issue path",
     "class": "notable",
     "operationId": "",
@@ -3307,6 +3275,38 @@
     "op": "POST /api/v1/scan/scans/{scanId}/undo",
     "change": "200.exitAllowed: field added",
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
+  },
+  {
+    "key": "POST /api/v1/scan/sign-out 200.stillInside: field added",
+    "class": "additive",
+    "operationId": "scan.postScanSignOut",
+    "op": "POST /api/v1/scan/sign-out",
+    "change": "200.stillInside: field added",
+    "note": "Places the person is still inside that this device could not mark out."
+  },
+  {
+    "key": "POST /api/v1/scan/sign-out behaviour changed",
+    "class": "notable",
+    "operationId": "scan.postScanSignOut",
+    "op": "POST /api/v1/scan/sign-out",
+    "change": "behaviour changed",
+    "note": "Marks out every place, collects the lent tag (not_returned reports it lost); no visit. Same key repeats the answer. VISITOR_NOT_IN is gone."
+  },
+  {
+    "key": "POST /api/v1/scan/sign-out body.read: optional input field added",
+    "class": "additive",
+    "operationId": "scan.postScanSignOut",
+    "op": "POST /api/v1/scan/sign-out",
+    "change": "body.read: optional input field added",
+    "note": "Tap the lent tag instead of naming the pass (passId or read). tag defaults to none (pass) or returned (read). Not lent: 409 TAG_NOT_LENT."
+  },
+  {
+    "key": "POST /api/v1/scan/sign-out keys: accepted at a Desk terminal",
+    "class": "additive",
+    "operationId": "scan.postScanSignOut",
+    "op": "POST /api/v1/scan/sign-out",
+    "change": "keys: accepted at a Desk terminal",
+    "note": "A scans:write key naming a Desk terminal in x-passbook-device may sign a person out, as for /scan/actions."
   },
   {
     "key": "POST /api/v1/scan/staff 200.staff.pinResetRequired: field added",

@@ -129357,15 +129357,24 @@
         },
         "security": [
           {
-            "scanner": []
+            "apiKey": [
+              "scans:write"
+            ]
+          },
+          {
+            "session": []
           }
         ],
+        "x-sign-in": "idp",
         "x-codes": [
+          "API_KEY_MISSING",
           "CONFLICT",
           "FORBIDDEN",
           "IDEMPOTENCY_IN_PROGRESS",
           "IDEMPOTENCY_KEY_REUSED",
+          "IDP_SIGN_IN_REQUIRED",
           "INVALID_API_KEY",
+          "MISSING_SCOPE",
           "NOT_INSIDE",
           "PASS_NOT_FOUND",
           "RATE_LIMITED",
