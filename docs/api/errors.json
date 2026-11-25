@@ -400,6 +400,10 @@
         413,
         422
       ],
+      "primary": [
+        413,
+        422
+      ],
       "modules": [
         "passes"
       ]
@@ -1188,6 +1192,10 @@
     {
       "code": "EMAIL_TAKEN",
       "statuses": [
+        403,
+        409
+      ],
+      "primary": [
         403,
         409
       ],
@@ -2805,6 +2813,10 @@
         403,
         409
       ],
+      "primary": [
+        403,
+        409
+      ],
       "modules": [
         "connections",
         "scan"
@@ -3902,6 +3914,10 @@
         401,
         409
       ],
+      "primary": [
+        401,
+        409
+      ],
       "modules": [
         "scan"
       ]
@@ -4026,6 +4042,10 @@
     {
       "code": "SCANNING_SESSION_CLOSED",
       "statuses": [
+        403,
+        409
+      ],
+      "primary": [
         403,
         409
       ],
@@ -4300,6 +4320,10 @@
     {
       "code": "SCAN_MODE_MISMATCH",
       "statuses": [
+        403,
+        422
+      ],
+      "primary": [
         403,
         422
       ],
@@ -5803,7 +5827,6 @@
     {
       "code": "UPSTREAM",
       "statuses": [
-        429,
         502
       ],
       "modules": [
@@ -5824,8 +5847,7 @@
     {
       "code": "VALIDATION",
       "statuses": [
-        422,
-        500
+        422
       ],
       "modules": [
         "platform",
@@ -5899,6 +5921,10 @@
     {
       "code": "VISITOR_HOST_UNKNOWN",
       "statuses": [
+        403,
+        404
+      ],
+      "primary": [
         403,
         404
       ],
@@ -6386,6 +6412,10 @@
     {
       "code": "WEBHOOK_STALE_CONTEXT",
       "statuses": [
+        503,
+        409
+      ],
+      "primary": [
         409,
         503
       ],

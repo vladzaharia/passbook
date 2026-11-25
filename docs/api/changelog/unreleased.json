@@ -112,6 +112,14 @@
     "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
   },
   {
+    "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scan.deleteScanStaff",
+    "op": "DELETE /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.draftFailures: field removed",
+    "note": ""
+  },
+  {
     "key": "DELETE /api/v1/scan/staff 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.deleteScanStaff",
@@ -920,6 +928,14 @@
     "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
   },
   {
+    "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scan.getScanSession",
+    "op": "GET /api/v1/scan/session",
+    "change": "200.workspace.device.capabilities.draftFailures: field removed",
+    "note": ""
+  },
+  {
     "key": "GET /api/v1/scan/session 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.getScanSession",
@@ -950,6 +966,14 @@
     "op": "GET /api/v1/scanners/{id}/pairing",
     "change": "callable by scan-setup:read key",
     "note": "Callable with an org-bound scan-setup:read key; the poll never shows the code."
+  },
+  {
+    "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scanners.getScanningSessionsById",
+    "op": "GET /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.draftFailures: field removed",
+    "note": ""
   },
   {
     "key": "GET /api/v1/scanning-sessions/{id} 200.devices[].capabilities.hardware: field added",
@@ -1527,6 +1551,14 @@
     "note": "Another mode's event is as good as unknown: no existence oracle."
   },
   {
+    "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsById",
+    "op": "PATCH /api/v1/scanning-sessions/{id}",
+    "change": "200.devices[].capabilities.draftFailures: field removed",
+    "note": ""
+  },
+  {
     "key": "PATCH /api/v1/scanning-sessions/{id} 200.devices[].capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scanners.patchScanningSessionsById",
@@ -1557,6 +1589,14 @@
     "op": "PATCH /api/v1/scanning-sessions/{id}",
     "change": "body.removeDevices: optional input field added",
     "note": "Ending a session can revoke all its devices with removeDevices: true."
+  },
+  {
+    "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scanners.patchScanningSessionsByIdDevicesByDeviceId",
+    "op": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId}",
+    "change": "200.capabilities.draftFailures: field removed",
+    "note": ""
   },
   {
     "key": "PATCH /api/v1/scanning-sessions/{id}/devices/{deviceId} 200.capabilities.hardware: field added",
@@ -2813,12 +2853,28 @@
     "note": "Scan outcomes carry exitAllowed: true on a refused voided or ended pass that is inside, on a scanner that can tap out. Send direction out to check it out."
   },
   {
+    "key": "POST /api/v1/scan/device 200.device.capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "200.device.capabilities.draftFailures: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/device 200.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.postScanDevice",
     "op": "POST /api/v1/scan/device",
     "change": "200.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/device body.capabilities.draftFailures: input field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanDevice",
+    "op": "POST /api/v1/scan/device",
+    "change": "body.capabilities.draftFailures: input field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/device body.capabilities.hardware: optional input field added",
@@ -2853,6 +2909,14 @@
     "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
   },
   {
+    "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanPair",
+    "op": "POST /api/v1/scan/pair",
+    "change": "200.workspace.device.capabilities.draftFailures: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/pair 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.postScanPair",
@@ -2885,6 +2949,14 @@
     "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
   },
   {
+    "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanRole",
+    "op": "POST /api/v1/scan/role",
+    "change": "200.workspace.device.capabilities.draftFailures: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/role 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.postScanRole",
@@ -2909,12 +2981,28 @@
     "note": "The signed-in staff member reports pinResetRequired while they must choose a new PIN."
   },
   {
+    "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaff",
+    "op": "POST /api/v1/scan/staff",
+    "change": "200.workspace.device.capabilities.draftFailures: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scan/staff 200.workspace.device.capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scan.postScanStaff",
     "op": "POST /api/v1/scan/staff",
     "change": "200.workspace.device.capabilities.hardware: field added",
     "note": "Scanning devices report found hardware by kind, count and state; never names or ids."
+  },
+  {
+    "key": "POST /api/v1/scan/staff/pin 200.session.workspace.device.capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scan.postScanStaffPin",
+    "op": "POST /api/v1/scan/staff/pin",
+    "change": "200.session.workspace.device.capabilities.draftFailures: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scan/staff/pin new operation",
@@ -3021,6 +3109,14 @@
     "note": "Callable with a live, org-bound scanning:admin key; the secret is in this answer only."
   },
   {
+    "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessions",
+    "op": "POST /api/v1/scanning-sessions",
+    "change": "201.devices[].capabilities.draftFailures: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scanning-sessions 201.devices[].capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessions",
@@ -3043,6 +3139,14 @@
     "op": "POST /api/v1/scanning-sessions",
     "change": "422 SCAN_MODE_MISMATCH for another mode's event: now 404 EVENT_NOT_FOUND",
     "note": "Another mode's event is as good as unknown: no existence oracle."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdDevices",
+    "op": "POST /api/v1/scanning-sessions/{id}/devices",
+    "change": "201.capabilities.draftFailures: field removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scanning-sessions/{id}/devices 201.capabilities.hardware: field added",
@@ -3077,6 +3181,14 @@
     "note": "Callable with a live scanning:admin key (the code, once) or a scanning:write key (pairing: null, either mode)."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.draftFailures: field removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsByIdHold",
+    "op": "POST /api/v1/scanning-sessions/{id}/hold",
+    "change": "200.devices[].capabilities.draftFailures: field removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/{id}/hold 200.devices[].capabilities.hardware: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsByIdHold",
@@ -3093,12 +3205,108 @@
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
   },
   {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"capacity\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.preset: enum value \"capacity\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"club\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.preset: enum value \"club\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"conference\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.preset: enum value \"conference\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"counter\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.preset: enum value \"counter\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"gates\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.preset: enum value \"gates\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup 200|1.preset: enum value \"pickup\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "200|1.preset: enum value \"pickup\" removed",
+    "note": ""
+  },
+  {
     "key": "POST /api/v1/scanning-sessions/setup 200|1.sessions[].devices[].overrides.follows: field added",
     "class": "additive",
     "operationId": "scanners.postScanningSessionsSetup",
     "op": "POST /api/v1/scanning-sessions/setup",
     "change": "200|1.sessions[].devices[].overrides.follows: field added",
     "note": "Overrides may carry follows: up to 64 scanner ids a customer screen shows (default all); kept inert on scanner surfaces."
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"capacity\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "body.preset: enum value \"capacity\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"club\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "body.preset: enum value \"club\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"conference\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "body.preset: enum value \"conference\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"counter\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "body.preset: enum value \"counter\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"gates\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "body.preset: enum value \"gates\" removed",
+    "note": ""
+  },
+  {
+    "key": "POST /api/v1/scanning-sessions/setup body.preset: enum value \"pickup\" removed",
+    "class": "breaking",
+    "operationId": "scanners.postScanningSessionsSetup",
+    "op": "POST /api/v1/scanning-sessions/setup",
+    "change": "body.preset: enum value \"pickup\" removed",
+    "note": ""
   },
   {
     "key": "POST /api/v1/scanning-sessions/setup new operation",

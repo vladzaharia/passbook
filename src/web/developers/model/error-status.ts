@@ -17,3 +17,14 @@ export function errorStatuses(errors: unknown): Map<string, number> {
   }
   return out;
 }
+
+/** "409 or 503" for a code whose raise sites tie; codes with one most common status have no label. */
+export function errorStatusLabels(errors: unknown): Map<string, string> {
+  const out = new Map<string, string>();
+  const list = asDict(errors).codes;
+  for (const r of Array.isArray(list) ? list.map(asDict) : []) {
+    const tied = asNumbers(r.primary);
+    if (typeof r.code === 'string' && tied.length > 1) out.set(r.code, tied.join(' or '));
+  }
+  return out;
+}

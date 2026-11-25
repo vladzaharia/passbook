@@ -9,8 +9,10 @@ const CODE = /'([A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*)'/g;
 
 export interface CatalogCode {
   code: string;
-  /** Every status the code is raised with, the one raised at the most sites first (ties: the lower status). */
+  /** Every status the code is raised with, the one to show first: the most common raise site; on a tie the 5xx when the tie spans 4xx and 5xx, else the lower. */
   statuses: number[];
+  /** The statuses tied for most common, ascending. Only present when there is a tie. */
+  primary?: number[];
   /** Directories under src/worker/modules (or the top-level worker directory) that throw it. */
   modules: string[];
 }
@@ -131,9 +133,10 @@ export function buildErrorCatalog(): ErrorCatalog {
       for (const c of args.matchAll(CODE)) add(c[1] ?? '', explicit, mod);
     }
     // Class constructors with a default code: `code = 'X'`.
-    for (const m of src.matchAll(/class (\w+) extends \w+[^{]*\{[\s\S]*?code = '([A-Z_]+)'/g)) {
+    for (const m of src.matchAll(/class (\w+) extends \w+[^{]*\{([\s\S]*?)\n\}/g)) {
+      const code = /code = '([A-Z_]+)'/.exec(m[2] ?? '')?.[1];
       const status = statuses.get(m[1] ?? '');
-      if (status) add(m[2] ?? '', status, mod);
+      if (code && status) add(code, status, mod);
     }
     if (isErrors) {
       for (const m of src.matchAll(/\?\? '([A-Z_]+)'/g)) {
@@ -152,12 +155,22 @@ export function buildErrorCatalog(): ErrorCatalog {
   const codes = [...found.entries()]
     .filter(([code]) => !isInternalCode(code))
     .sort(([a], [b]) => (a < b ? -1 : 1))
-    .map(([code, e]) => ({
-      code,
-      statuses: [...e.statuses]
-        .sort((a, b) => b[1] - a[1] || a[0] - b[0])
-        .map(([status]) => status),
-      modules: [...e.modules].sort(),
-    }));
+    .map(([code, e]) => ({ code, ...rankStatuses(e.statuses), modules: [...e.modules].sort() }));
   return { codes };
+}
+
+/** Most common first. A tie has no single answer: it is kept as `primary`, and one number is picked for places that need one. */
+function rankStatuses(counts: Map<number, number>): Pick<CatalogCode, 'statuses' | 'primary'> {
+  const top = Math.max(...counts.values());
+  const tied = [...counts]
+    .filter(([, n]) => n === top)
+    .map(([status]) => status)
+    .sort((a, b) => a - b);
+  const spansClasses = tied.some((s) => s >= 500) && tied.some((s) => s < 500);
+  const pick = spansClasses ? (tied.at(-1) as number) : (tied[0] as number);
+  const rest = [...counts]
+    .filter(([status]) => status !== pick)
+    .sort((a, b) => b[1] - a[1] || a[0] - b[0])
+    .map(([status]) => status);
+  return { statuses: [pick, ...rest], ...(tied.length > 1 ? { primary: tied } : {}) };
 }

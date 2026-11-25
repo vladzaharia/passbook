@@ -22,21 +22,33 @@ const requestCaller = (scope: boolean) =>
   requireCaller(scope ? { scope: 'passes:read' } : { human: true });
 
 describe('empty Bearer header', () => {
-  it.each(['Bearer', 'Bearer ', 'bearer  '])(
-    '%j answers API_KEY_MISSING on a key route',
-    async (header) => {
-      const { status, body } = await call(header, true);
-      expect(status).toBe(401);
-      expect(body.code).toBe('API_KEY_MISSING');
-      expect(JSON.stringify(body)).toContain(
-        'Authorization has no key. Set PASSBOOK_KEY and export it.',
-      );
-    },
-  );
+  it.each([
+    'Bearer',
+    'Bearer ',
+    'bearer  ',
+    'Bearer undefined',
+    'Bearer None',
+    'Bearer null',
+    'Bearer $PASSBOOK_KEY',
+    `Bearer $\{PASSBOOK_KEY}`,
+    'pbp_test_abc123',
+  ])('%j answers API_KEY_MISSING on a key route', async (header) => {
+    const { status, body } = await call(header, true);
+    expect(status).toBe(401);
+    expect(body.code).toBe('API_KEY_MISSING');
+    expect(JSON.stringify(body)).toContain(
+      'Authorization has no key. Set PASSBOOK_KEY and export it.',
+    );
+  });
 
   it('an unknown key is still INVALID_API_KEY', async () => {
     const { body } = await call('Bearer wlt_nope_nope', true);
     expect(body.code).toBe('INVALID_API_KEY');
+  });
+
+  it('another scheme is not a missing key', async () => {
+    const { body } = await call('Basic eDp5', true);
+    expect(body.code).toBe('UNAUTHENTICATED');
   });
 
   it('no header is still UNAUTHENTICATED', async () => {

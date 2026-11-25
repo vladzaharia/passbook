@@ -50,6 +50,7 @@ function Params({ fields }: { fields: Field[] }) {
 /** Shown first: what the request's shape decides, before the codes of the resource's module. */
 const COMMON = [
   'UNAUTHENTICATED',
+  'API_KEY_MISSING',
   'INVALID_API_KEY',
   'MISSING_SCOPE',
   'FORBIDDEN',
@@ -80,7 +81,7 @@ function ErrorTable({ rows, known }: { rows: ErrorRow[]; known: Set<string> }) {
               <td className="mono">
                 {known.has(e.code) ? <a href={`${PATHS.errors}/${e.code}`}>{e.code}</a> : e.code}
               </td>
-              <td className="mono">{e.status ?? ''}</td>
+              <td className="mono">{e.statusText ?? e.status ?? ''}</td>
               <td>{e.fix}</td>
             </tr>
           ))}

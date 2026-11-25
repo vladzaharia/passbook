@@ -176,7 +176,7 @@ export function fixOfCall(
     : entry.status === 422 || entry.code === 'PASS_INPUT_INVALID'
       ? missingField(bodies.request, sample)
       : null;
-  // The server now names the field in the path; the title still says it is the missing one.
+  // A path naming the field is not enough for "required": a wrong type names it too, so only the field the body lacks gets that title.
   if (leaf && (!path || leaf === missingField(bodies.request, sample))) {
     path = `input.${leaf}`;
     title = QS_COPY.fail.required(leaf);

@@ -89,6 +89,8 @@ const principals: Record<string, Principal> = {
     ).replace('Bearer', 'bearer'),
   }),
   'bare Bearer': () => ({ authorization: 'Bearer' }),
+  'bare Bearer beside a user cookie': (f) => ({ ...f.user(), authorization: 'Bearer' }),
+  'bare Bearer beside an admin cookie': (f) => ({ ...f.admin(), authorization: 'Bearer' }),
   'Bearer with two tokens': () => ({ authorization: 'Bearer wlt_a_b wlt_c_d' }),
   'Bearer with two tokens beside an admin cookie': (f) => ({
     ...f.admin(),
@@ -163,7 +165,24 @@ async function expectSame(
         run(legacy, legacyTag, principal, method),
       ]);
       // The one deliberate difference: a Bearer header with no key has its own refusal (auth-bearer.test.ts).
-      if (now.code === 'API_KEY_MISSING') continue;
+      if (now.code === 'API_KEY_MISSING') {
+        // Before, a header with no key was no key at all: a cookie beside it still signed the caller in.
+        const withoutHeader: Principal = (f) => {
+          const { authorization: _gone, ...rest } = principal(f);
+          return rest;
+        };
+        const plain = await run(legacy, legacyTag, withoutHeader, method);
+        expect({ status: before.status, code: before.code }).toEqual({
+          status: plain.status,
+          code: plain.code,
+        });
+        if (!name.includes('cookie'))
+          expect({ status: before.status, code: before.code }).toEqual({
+            status: 401,
+            code: 'UNAUTHENTICATED',
+          });
+        continue;
+      }
       expect({ name, method, ...now }).toEqual({ name, method, ...before });
     }
 }

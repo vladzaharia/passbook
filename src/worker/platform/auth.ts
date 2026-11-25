@@ -50,15 +50,27 @@ export type { KeyCaller } from './browser-signals.ts';
 /** Every key guard passes this to the key store: the address, browser signals and session cookie (KEY_IN_BROWSER). */
 export const keyCaller = (c: Context): KeyCaller => keyCallerOf(c, SESSION_COOKIE);
 
-function bearer(c: Context): string | null {
-  const header = c.req.header('authorization');
-  const match = header ? /^Bearer\s+(\S+)$/i.exec(header) : null;
-  return match?.[1] ?? null;
+/** What a script sends when its key variable is unset or never expanded. Purely syntactic: no key is looked up. */
+const PLACEHOLDER = /^(?:undefined|null|none|nil|\$\{?\w+\}?|%\w+%)$/i;
+
+/**
+ * The key an Authorization header carries: `{ token }`; `'empty'` when it names no key (`Bearer`, `Bearer undefined`,
+ * `Bearer $PASSBOOK_KEY`, or a bare key with no scheme); `null` for no header, another scheme or anything else.
+ */
+export function bearerOf(c: Context): { token: string } | 'empty' | null {
+  const header = c.req.header('authorization')?.trim();
+  if (!header) return null;
+  if (/^Bearer$/i.test(header)) return 'empty';
+  const token = /^Bearer\s+(\S+)$/i.exec(header)?.[1];
+  if (token) return PLACEHOLDER.test(token) ? 'empty' : { token };
+  return /\s/.test(header) ? null : 'empty';
 }
 
-/** A Bearer header with no token after the scheme (`Bearer`, `Bearer `). */
-const bearerEmpty = (c: Context): boolean =>
-  /^Bearer\s*$/i.test(c.req.header('authorization') ?? '');
+export const apiKeyMissing = (): UnauthenticatedError =>
+  new UnauthenticatedError(
+    'Authorization has no key. Set PASSBOOK_KEY and export it.',
+    'API_KEY_MISSING',
+  );
 
 async function resolveSession(c: Context<AppBindings>): Promise<SessionAuth | null> {
   const cookie = getCookie(c, SESSION_COOKIE);
@@ -164,13 +176,9 @@ export function requireCaller(auth: RouteAuth): MiddlewareHandler<AppBindings> {
   const stepUp = auth.stepUp;
   const level: SignInLevel = 'human' in auth ? (auth.signIn ?? 'idp') : 'idp';
   const guard = createMiddleware<AppBindings>(async (c, next) => {
-    const token = rule ? bearer(c) : null;
-    if (rule && !token && bearerEmpty(c)) {
-      throw new UnauthenticatedError(
-        'Authorization has no key. Set PASSBOOK_KEY and export it.',
-        'API_KEY_MISSING',
-      );
-    }
+    const sent = rule ? bearerOf(c) : null;
+    if (sent === 'empty') throw apiKeyMissing();
+    const token = sent?.token ?? null;
     if (rule && token) {
       const key = await c.var.stores.apiKeys.resolve(token, keyCaller(c), limited);
       if (!key) {

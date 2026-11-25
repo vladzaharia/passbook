@@ -25,6 +25,7 @@ import { appliedBranding, readBranding, type TenantBranding } from './branding.t
 import { type PrefetchedAuthSeal, plainAuthToken } from './build-auth-token.ts';
 import { type BuildInputs, readBuildInputs } from './build-reads.ts';
 import { artifactOf, editPass, tenantOf } from './builder-finish.ts';
+import { buildIssue } from './builder-issues.ts';
 import { backContactsFor } from './contacts.ts';
 import { depsOf } from './deps.ts';
 import type { Removal } from './remove-build.ts';
@@ -311,7 +312,7 @@ export async function buildArtifact(ctx: ServiceContext, req: BuildRequest): Pro
     if (error instanceof PassBuildError) {
       const issues: FieldIssue[] = error.report.issues
         .filter((i) => i.severity === 'error')
-        .map((i) => ({ path: i.path ?? '', message: i.message, code: i.code }));
+        .map(buildIssue);
       throw new ValidationError(
         error.code === 'INVALID_INPUT'
           ? 'The pass input is invalid.'
