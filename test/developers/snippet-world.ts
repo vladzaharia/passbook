@@ -36,6 +36,7 @@ const SCOPES = [
   'webhooks:manage',
   'api-keys:write',
   'org:write',
+  'audit:read',
   'scans:read',
   'scans:write',
 ];

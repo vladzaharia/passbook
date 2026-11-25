@@ -1,7 +1,6 @@
 import type { OrgCapability } from '../../../shared/contracts/org-membership.ts';
 import type { PassSetup } from '../../../shared/contracts/pass-setup.ts';
 import { orgSetupChecks } from '../../../shared/org-setup-checks.ts';
-import { scopeExercises } from '../../platform/api-scopes.ts';
 import type { AuthContext } from '../../platform/auth.ts';
 import { modeOf } from '../../platform/auth.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
@@ -33,7 +32,8 @@ export async function setupCan(
   return {
     platform: false,
     org: key.includes('org:write'),
-    template: key.some((scope) => scopeExercises(scope, 'templates:publish')),
+    // Saving a template-level setting is a session's: a key holding templates:publish acts through the release flow only.
+    template: false,
   };
 }
 

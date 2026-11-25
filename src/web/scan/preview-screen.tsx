@@ -75,6 +75,8 @@ export interface ScanPreviewScreenProps {
   look?: ScanAppViewProps['look'];
   /** A handheld's Manager PIN: the dock offers the tray for a `needs_approval` hold. */
   approval?: DockApproval;
+  /** The dock's Look up; the gallery opens its fixture lookup, a preview leaves it inert. */
+  onLookup?: () => void;
   /** A Manager's PIN let this through: the sub names them. */
   approvedBy?: string;
   /** Rendered inside the scan store: sheets that read it. */
@@ -153,6 +155,7 @@ export function ScanPreviewScreen({
   onTint,
   clock,
   approval,
+  onLookup,
   approvedBy,
   look,
   children,
@@ -200,7 +203,7 @@ export function ScanPreviewScreen({
           <DoorDock
             outcome={outcome}
             runtime={runtime}
-            open={() => undefined}
+            open={onLookup ?? (() => undefined)}
             onError={() => undefined}
             approval={approval}
             handheld={density === 'glance'}

@@ -192,6 +192,38 @@
     "note": "Keys may hold scanning:admin: staff PINs and pairing codes in the one-call setup."
   },
   {
+    "key": "GET /api/v1/audit 422: codes AUDIT_WINDOW_REQUIRED, AUDIT_WINDOW_TOO_WIDE, AUDIT_LIMIT_TOO_HIGH added",
+    "class": "additive",
+    "operationId": "audit.getAudit",
+    "op": "GET /api/v1/audit",
+    "change": "422: codes AUDIT_WINDOW_REQUIRED, AUDIT_WINDOW_TOO_WIDE, AUDIT_LIMIT_TOO_HIGH added",
+    "note": "A key must send from, at most 90 days before to, and a limit of at most 100; a session is unchanged."
+  },
+  {
+    "key": "GET /api/v1/audit keys: accepted with audit:read",
+    "class": "additive",
+    "operationId": "audit.getAudit",
+    "op": "GET /api/v1/audit",
+    "change": "keys: accepted with audit:read",
+    "note": "A key holding audit:read reads its own organization's audit log, redacted as for a member. Live keys only, named on the key, never from a role."
+  },
+  {
+    "key": "GET /api/v1/audit/export 422: codes AUDIT_WINDOW_REQUIRED, AUDIT_WINDOW_TOO_WIDE added",
+    "class": "additive",
+    "operationId": "audit.getAuditExport",
+    "op": "GET /api/v1/audit/export",
+    "change": "422: codes AUDIT_WINDOW_REQUIRED, AUDIT_WINDOW_TOO_WIDE added",
+    "note": "A key's export needs from, at most 90 days before to."
+  },
+  {
+    "key": "GET /api/v1/audit/export keys: accepted with audit:read",
+    "class": "additive",
+    "operationId": "audit.getAuditExport",
+    "op": "GET /api/v1/audit/export",
+    "change": "keys: accepted with audit:read",
+    "note": "A key holding audit:read exports its own organization's log as CSV: 2 an hour per key, 6 across the organization's keys, each recorded as audit.export."
+  },
+  {
     "key": "GET /api/v1/broadcasts 200.items[].message: field added",
     "class": "additive",
     "operationId": "broadcasts.getBroadcasts",
@@ -1599,6 +1631,22 @@
     "note": "A sandbox key may not hold api-keys:write, scans:write or scanning:admin, at mint or roll: 403, scopes in issues."
   },
   {
+    "key": "POST /api/v1/api-keys 422: code API_KEY_SCOPE_LIVE_ONLY added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "422: code API_KEY_SCOPE_LIVE_ONLY added",
+    "note": "A Test key is refused audit:read, because the audit log has no mode; Live keys and developer sandbox keys may hold it."
+  },
+  {
+    "key": "POST /api/v1/api-keys 422: code API_KEY_SCOPE_TEST_ONLY added",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "422: code API_KEY_SCOPE_TEST_ONLY added",
+    "note": "A Live key is refused templates:review and templates:publish, named or through a role; they work with Test keys only, and a Live role key leaves them out."
+  },
+  {
     "key": "POST /api/v1/api-keys error code API_KEY_SCANNING_ADMIN_LIVE_ORG renamed",
     "class": "notable",
     "operationId": "api-keys.postApiKeys",
@@ -1621,6 +1669,14 @@
     "op": "POST /api/v1/api-keys",
     "change": "roles: scanning:admin no longer in a role",
     "note": "Role presets no longer include scanning:admin: name it in scopes (live, one org, expiry within 90 days, org_admin session)."
+  },
+  {
+    "key": "POST /api/v1/api-keys templateIds, passStyles: not allowed with templates:write, templates:review, templates:publish",
+    "class": "notable",
+    "operationId": "api-keys.postApiKeys",
+    "op": "POST /api/v1/api-keys",
+    "change": "templateIds, passStyles: not allowed with templates:write, templates:review, templates:publish",
+    "note": "A template or style restriction narrows templates:read but no longer pairs with the template write, review and publish scopes, whose routes do not honor it."
   },
   {
     "key": "POST /api/v1/broadcasts 201.message: field added",

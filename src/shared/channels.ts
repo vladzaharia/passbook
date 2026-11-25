@@ -115,6 +115,16 @@ export function levelState(level: ChainLevel, reason?: ChannelReason): ChannelLe
 export const stoppingLevel = (levels: readonly ChannelLevel[]): ChannelLevel | null =>
   levels.find((l) => l.state !== 'ok' && l.state !== 'partial') ?? null;
 
+/** PassBook or the plan stops it: an organization never sees the channel. The one rule every org view uses. */
+export const stoppedAboveOrg = (levels: readonly ChannelLevel[]): boolean => {
+  const level = stoppingLevel(levels)?.level;
+  return level === 'passbook' || level === 'plan';
+};
+
+/** The chain an organization reads: its own levels, without PassBook and Plan. */
+export const orgChain = (levels: readonly ChannelLevel[]): ChannelLevel[] =>
+  levels.filter((l) => l.level !== 'passbook' && l.level !== 'plan');
+
 /** The feature of the organization's plan each delivery channel needs; the rest are not plan-gated. */
 const CHANNEL_FEATURE: Partial<Record<Channel, { key: EntitlementKey; want?: string }>> = {
   google: { key: 'wallet.google' },

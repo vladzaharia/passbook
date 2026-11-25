@@ -36,13 +36,11 @@ export type GoogleCompiled = GoogleClassPartition & {
 /** Why a pass cannot be compiled now. None of these is a provider fault, so none is retried. */
 export type GoogleCompileFailure = 'unreadable' | 'blocked' | 'type_changed' | 'art_missing';
 
-const MAX_CLASS_KEY = 200;
-
 /** The type a schema 2 release was approved for; schema 1 is always Generic. */
 export const projectionGoogleType = (projection: NativeProjection): GoogleType =>
   projection.schema === 2 ? (projection.type as GoogleType) : 'generic';
 
-async function partitionOf(
+export async function partitionOf(
   template: ResolvedTemplate,
   pass: Pass,
   type: GoogleType,
@@ -53,11 +51,11 @@ async function partitionOf(
     input: applyDefaults(template.manifest, pass.personalization),
     lookups: template.manifest.lookups ?? {},
   });
+  if (typeof value === 'object' && value !== null)
+    throw new GoogleWalletError('invalid_input', 'class key');
+  // Only an empty key is the default class: a key that reads `default` is a class of its own.
   const key = value === undefined || value === null ? '' : String(value).trim();
-  if (key.length > MAX_CLASS_KEY) throw new GoogleWalletError('invalid_input', 'class key');
-  return key === '' || key === 'default'
-    ? { type }
-    : { type, classKey: await googleClassKeyDigest(key) };
+  return key === '' ? { type } : { type, classKey: await googleClassKeyDigest(key) };
 }
 
 /** The class partition alone, for a caller that only needs the ids (callback bindings, offers). */

@@ -499,6 +499,7 @@ exports[`resolveWalletView over every starter and baked template > starter-coupo
     "locations": 0,
   },
   "roles": {
+    "finePrint": "manifest text: One use per customer. Not combinable with other offers.",
     "offerDetails": "style text: One use per customer. Not combinable with other offers.",
     "offerTitle": "style text: 20% off",
     "redemptionChannel": "style channel: both",
@@ -1309,6 +1310,7 @@ exports[`resolveWalletView over every starter and baked template > starter-pack 
     "locations": 0,
   },
   "roles": {
+    "finePrint": "manifest text: Show the code each time. Packs don't refund.",
     "offerDetails": "style text: Show the code each time. Packs don't refund.",
     "offerTitle": "style text: 10 washes",
     "redemptionChannel": "style channel: both",

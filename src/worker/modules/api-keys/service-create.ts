@@ -1,4 +1,9 @@
 import type { z } from 'zod';
+import {
+  auditScopeAllowed,
+  TEMPLATE_ACT_AS_SCOPES,
+  TEST_ONLY_SCOPES,
+} from '../../../shared/contracts/api-keys.ts';
 import type { CreateApiKeySchema } from '../../../shared/contracts/index.ts';
 import { type ApiKeyKind, secretLabel } from '../../platform/api-key-token.ts';
 import { CREDENTIAL_SCOPES, effectiveScopes } from '../../platform/api-scopes.ts';
@@ -8,6 +13,7 @@ import { ipListTooBroad, parseCidr } from '../../platform/ip-allow.ts';
 import type { ServiceContext } from '../../platform/service-context.ts';
 import type { AuditEntry } from '../audit/types.ts';
 import { orgIsActive } from '../orgs/repo.ts';
+import { orgIsDeveloper } from '../orgs/repo-entitlements.ts';
 import { type ApiKeyAuthority, actorOf, authorityOrgId, delegableScopes } from './access.ts';
 import { attenuate } from './attenuate.ts';
 import { countOpenChildren, getKey, keyResources } from './repo.ts';
@@ -21,7 +27,7 @@ export const MAX_LIFETIME_MS = 91 * 86_400_000;
 /** Scopes a template or pass-style restriction can narrow: those whose routes name a template. */
 /** Open (not revoked) child keys one key may hold. */
 const MAX_CHILDREN = 50;
-const RESTRICTABLE = /^(passes|templates|nfc):|^holders:write$/;
+const RESTRICTABLE = /^(passes|nfc):|^templates:read$|^holders:write$/;
 
 /** A fresh secret: shown once, stored only as its hash. */
 export async function newSecret(ctx: ServiceContext, kind: ApiKeyKind, mode: 'live' | 'test') {
@@ -66,13 +72,33 @@ export function assertCredentialKey(
     );
 }
 
-/** `org:write` and `wallet:write` change one organization's setup: a platform key never holds them. */
+/** Setup, template and audit scopes belong to one organization (a template scope acts as a member of it): a platform key never holds them. */
 export function assertOrgBoundScopes(scopes: readonly string[], kind: ApiKeyKind): void {
-  if (kind === 'platform' && scopes.some((s) => s === 'org:write' || s === 'wallet:write'))
+  const orgOnly = ['org:write', 'wallet:write', 'audit:read', ...TEMPLATE_ACT_AS_SCOPES];
+  if (kind === 'platform' && scopes.some((s) => orgOnly.includes(s)))
     throw invalid(
-      'org:write and wallet:write are for keys of one organization.',
+      'org:write, wallet:write, audit:read and the template scopes are for keys of one organization.',
       'API_KEY_ORG_SCOPE_ORG_ONLY',
     );
+}
+
+/** Review and release work with Test keys only; a Live key never holds them, named or through a role. */
+export function assertTestOnlyScopes(scopes: readonly string[], mode: 'live' | 'test'): void {
+  const over = scopes.filter((s) => (TEST_ONLY_SCOPES as readonly string[]).includes(s));
+  if (mode === 'live' && over.length)
+    throw invalid(`${over.join(', ')} work with Test keys only.`, 'API_KEY_SCOPE_TEST_ONLY');
+}
+
+/** Reading the audit log shows Live and Test rows alike (the log has no mode), so only a Live key holds it, or a developer sandbox key (Test only). */
+export async function assertAuditScope(
+  db: D1Database,
+  orgId: string | null,
+  scopes: readonly string[],
+  mode: 'live' | 'test',
+): Promise<void> {
+  if (!scopes.includes('audit:read') || mode === 'live') return;
+  if (auditScopeAllowed(mode, orgId !== null && (await orgIsDeveloper(db, orgId)))) return;
+  throw invalid('audit:read works with Live keys only.', 'API_KEY_SCOPE_LIVE_ONLY');
 }
 
 export const invalid = (message: string, code: string, path = 'scopes') =>
@@ -193,8 +219,9 @@ export async function createApiKey(
   ) {
     throw new ForbiddenError();
   }
+  const mode = authority.kind === 'platform' ? given.mode : authority.mode;
   const delegable = delegableScopes(authority);
-  const asked = effectiveScopes(given.scopes, given.roles);
+  const asked = effectiveScopes(given.scopes, given.roles, mode);
   // A child holds a subset of its parent's scopes, whether named or through a role.
   if (authority.kind === 'api_key' && asked.some((scope) => !delegable.includes(scope)))
     throw new ForbiddenError(
@@ -238,10 +265,12 @@ export async function createApiKey(
     throw new NotFoundError('Organization not found.', 'ORG_NOT_FOUND');
   }
   // A sandbox holds the sandbox ceiling, whoever mints (a role's bundle counts too).
-  await assertSandboxCeiling(ctx.env.DB, orgId, effectiveScopes(input.scopes, input.roles));
-  const mode = authority.kind === 'platform' ? input.mode : authority.mode;
-  assertCredentialKey(effectiveScopes(input.scopes, input.roles), kind, mode, input.expiresAt, now);
-  assertOrgBoundScopes(effectiveScopes(input.scopes, input.roles), kind);
+  await assertSandboxCeiling(ctx.env.DB, orgId, effectiveScopes(input.scopes, input.roles, mode));
+  const held = effectiveScopes(input.scopes, input.roles, mode);
+  assertTestOnlyScopes(input.scopes, mode);
+  await assertAuditScope(ctx.env.DB, orgId, held, mode);
+  assertCredentialKey(held, kind, mode, input.expiresAt, now);
+  assertOrgBoundScopes(held, kind);
   const { prefix, label, secret, hash } = await newSecret(ctx, kind, mode);
   const row: ApiKeyRow = {
     id: ctx.ids.id(),
@@ -250,7 +279,7 @@ export async function createApiKey(
     prefix,
     key_hash: hash,
     // A role is a label: its bundle is written out here, so later changes to a bundle never reach this key.
-    scopes: JSON.stringify(effectiveScopes(input.scopes, input.roles)),
+    scopes: JSON.stringify(held),
     mode,
     created_by: authority.kind === 'api_key' ? null : authority.userId,
     created_at: now,

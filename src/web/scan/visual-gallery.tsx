@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import type { ScanReason } from '../../shared/contracts/scan.ts';
 import type { ScanSession } from '../../shared/contracts/scan-session.ts';
 import type { ScanLiveRow } from '../../shared/contracts/scan-setups.ts';
 import { PHONE, useMediaQuery } from '../lib/media.ts';
@@ -9,7 +8,6 @@ import { CustomerDisplayPage } from './customer-display.tsx';
 import { HardwareVisual } from './hardware/visual-hardware.tsx';
 import { LiveScreen } from './live/live-screen.tsx';
 import { FIXTURE_NOW, fixtureOutcome } from './machine/fixture-data.test-support.ts';
-import type { ScanOutcome } from './machine/types.ts';
 import { ScanPreviewScreen } from './preview-screen.tsx';
 import { type PassInspection, PassInspector } from './result/pass-inspector.tsx';
 import { RoleUnlock } from './role/unlock-sheet.tsx';
@@ -19,7 +17,8 @@ import { ACCESS_SCENARIOS, AccessVisual } from './visual-access.tsx';
 import { SCAN_VISUAL_CASES } from './visual-cases.test-support.ts';
 import { ClosedVisual } from './visual-closed.tsx';
 import { DOOR_CASES, DoorVisual } from './visual-door.tsx';
-import { lookFromUrl, recentRows, TINT, withCard, withKind } from './visual-handheld.ts';
+import { lookFromUrl, recentRows, TINT, withCard, withGroup, withKind } from './visual-handheld.ts';
+import { VisualLookup } from './visual-lookup.tsx';
 import { MONITOR_DESK_CASES, MonitorDeskVisual } from './visual-monitor-desk.tsx';
 import { OFFLINE_SCENARIOS, OfflineVisual } from './visual-offline.tsx';
 import { OPERATOR_CASES, OperatorVisual } from './visual-operator.tsx';
@@ -180,33 +179,6 @@ function DuoVisual({ status }: { status: string }) {
   });
   return <CustomerDisplayPage />;
 }
-/** `?group=chip` offers Check in all; `?group=partial` shows a group with a refused member. */
-function withGroup(o: ScanOutcome, mode: string | null): ScanOutcome {
-  if (mode !== 'chip' && mode !== 'partial') return o;
-  const bundle = { id: ID, name: 'Chen family', size: 4, checkedIn: 1 };
-  if (mode === 'chip') return { ...o, bundle };
-  const m = (name: string, state: 'done' | 'already' | 'refused', reason: ScanReason | null) => ({
-    name,
-    state,
-    reason,
-  });
-  return {
-    ...o,
-    bundle,
-    group: {
-      total: 4,
-      done: 2,
-      already: 1,
-      refused: 1,
-      members: [
-        m('Taylor Chen', 'done', null),
-        m('Jo Chen', 'done', null),
-        m('Sam Chen', 'already', 'already_done'),
-        m('Kid Chen', 'refused', 'voided'),
-      ],
-    },
-  };
-}
 
 function ScanResultVisual({
   surface,
@@ -225,6 +197,7 @@ function ScanResultVisual({
       ? { ...withCard(withKind(selected, params)), live: true, tab: sheet }
       : null,
   );
+  const [looking, setLooking] = useState(false);
   const [api] = useState(() => ({ resolve: async () => selected.outcome }) as unknown as ScanApi);
   const outcome = withGroup(withKind(selected, params), params.get('group'));
   return (
@@ -239,8 +212,10 @@ function ScanResultVisual({
       look={lookFromUrl(params)}
       chips={<CountChip count={312} capacity={500} />}
       menu={<MenuTrigger />}
+      onLookup={() => setLooking(true)}
       onPass={(_card, shown) => setInspection({ ...withCard(shown), live: true })}
     >
+      <VisualLookup open={looking} onClose={() => setLooking(false)} />
       {inspection ? (
         <PassInspector
           inspection={inspection}

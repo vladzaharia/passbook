@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { POLARIS_ID_COPY } from '../../../shared/copy/sign-in.ts';
 import { personLabel } from '../../lib/format.ts';
@@ -49,22 +50,25 @@ export function mountMenu(
   },
 ): () => void {
   const root = createRoot(host);
-  root.render(
-    <ThemeProvider>
-      <div className="flex items-center gap-2">
-        {props.polarisId ? (
-          <Button asChild variant="outline" size="sm" className="dev-polaris">
-            <a href={POLARIS_START}>{POLARIS_ID_COPY.signIn}</a>
-          </Button>
-        ) : null}
-        <AccountMenu
-          user={props.user}
-          label={personLabel(props.user)}
-          spaces={props.spaces}
-          onSignOut={() => void signOut(props.csrfToken)}
-        />
-      </div>
-    </ThemeProvider>,
+  // Committed before the slot is shown (shell/islands.ts): Sign in never shows for a frame after the avatar is ready.
+  flushSync(() =>
+    root.render(
+      <ThemeProvider>
+        <div className="flex items-center gap-2">
+          {props.polarisId ? (
+            <Button asChild variant="outline" size="sm" className="dev-polaris">
+              <a href={POLARIS_START}>{POLARIS_ID_COPY.signIn}</a>
+            </Button>
+          ) : null}
+          <AccountMenu
+            user={props.user}
+            label={personLabel(props.user)}
+            spaces={props.spaces}
+            onSignOut={() => void signOut(props.csrfToken)}
+          />
+        </div>
+      </ThemeProvider>,
+    ),
   );
   return () => root.unmount();
 }
