@@ -26,9 +26,9 @@ beforeAll(async () => {
 const db = () => f.kit.env.DB;
 const sim = () =>
   new Ntag424Sim({
+    isoInSession: 'refuse',
     uid: Uint8Array.from([0x04, 0x64, 0, 0, 0, (++seq >> 8) & 255, seq & 255]),
     random: countingRandom(),
-    endSessionOnIso: true,
   });
 const refused = (p: Promise<unknown>, code: string) => expect(p).rejects.toMatchObject({ code });
 const lost = (p: Promise<unknown>) => expect(p).rejects.toMatchObject({ name: 'TagLostError' });
@@ -71,7 +71,8 @@ describe('keys go back to the scanner that released them, or a Manager', () => {
   it('another scanner is refused, a Manager finishes the tag, and the audit says so', async () => {
     const tag = sim();
     const a = await f.authority({ scannerId: 'rel-a' });
-    tag.tearAt(8, 'after');
+    // Late enough that some key slots already changed: a tag still all factory would read as a clone.
+    tag.tearAt(12, 'after');
     await lost(programTag(f.sendOf(tag), f.port(a)));
     tag.reattach();
     f.kit.clock.advance(61_000);
@@ -117,12 +118,13 @@ describe('the keyed recovery script closes the session', () => {
     await f.expectKeysMatch(tag);
   });
 
-  it('the simulator ends an authenticated session on an ISO command', async () => {
+  it('the simulator refuses an ISO command inside an authenticated session', async () => {
     const tag = sim();
     await authenticate(f.sendOf(tag), 0, ZERO16);
     expect(tag.tag.session).not.toBeNull();
-    await f.sendOf(tag)(selectNdefApp());
-    expect(tag.tag.session).toBeNull();
+    const answer = await f.sendOf(tag)(selectNdefApp());
+    expect(bytesToHex(answer.slice(-2))).toBe('6985');
+    expect(tag.tag.session).not.toBeNull();
   });
 });
 
@@ -247,7 +249,7 @@ describe('a builder that refuses ends the hold', () => {
     env.PUBLIC_BASE_URL = `https://${'a'.repeat(240)}.example`;
     try {
       const tag = sim();
-      await refused(programTag(f.sendOf(tag), f.port(await f.authority())), 'TAG_NOT_424');
+      await refused(programTag(f.sendOf(tag), f.port(await f.authority())), 'TAG_PROGRAM_FAILED');
       expect(await f.rowsOf(tag)).toMatchObject([{ state: 'failed', sess_kek_version: null }]);
     } finally {
       env.PUBLIC_BASE_URL = before;

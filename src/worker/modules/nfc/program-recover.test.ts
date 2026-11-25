@@ -16,7 +16,11 @@ const uidOf = (n: number, phase: number) =>
 
 describe('the recovery rows of the design: a tear after each command, then holding the tag again', () => {
   it('knows how many commands a hold is', async () => {
-    const sim = new Ntag424Sim({ uid: uidOf(0, 0), random: countingRandom() });
+    const sim = new Ntag424Sim({
+      isoInSession: 'refuse',
+      uid: uidOf(0, 0),
+      random: countingRandom(),
+    });
     await programTag(f.sendOf(sim), f.port(await f.authority({ scannerId: 'base' })));
     expect(sim.trace.length).toBe(16);
   });
@@ -25,6 +29,7 @@ describe('the recovery rows of the design: a tear after each command, then holdi
     for (const phase of ['after', 'before'] as const) {
       it(`command ${n}, ${phase === 'after' ? 'answer lost' : 'command lost'}`, async () => {
         const sim = new Ntag424Sim({
+          isoInSession: 'refuse',
           uid: uidOf(n, phase === 'after' ? 1 : 2),
           random: countingRandom(),
         });
@@ -47,7 +52,11 @@ describe('the recovery rows of the design: a tear after each command, then holdi
   }
 
   it('three holds each torn at a different command still finish on the fourth, with the same keys', async () => {
-    const sim = new Ntag424Sim({ uid: uidOf(99, 9), random: countingRandom() });
+    const sim = new Ntag424Sim({
+      isoInSession: 'refuse',
+      uid: uidOf(99, 9),
+      random: countingRandom(),
+    });
     const port = f.port(await f.authority());
     for (const at of [8, 14, 12]) {
       sim.tearAt(sim.commands + at, 'after');

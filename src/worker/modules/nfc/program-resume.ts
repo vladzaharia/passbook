@@ -75,6 +75,18 @@ export async function probeProgram(
     return endHold(ctx, a, row, checked.why === 'short' ? 'TAG_MOVED' : 'TAG_PROGRAM_FAILED');
   const ring = await loadKekRing(ctx.env);
   const keys = await openIntended(ring, scopeOf(row), row.id, row.intended);
+  // Keys were released to another device, yet every slot reads as factory: the tag in the field is probably a
+  // clone or a relay's, and a Manager's resume would write the real keys onto it. Only a console abandon clears it.
+  if (
+    row.releasedBy !== null &&
+    row.releasedBy !== session.by &&
+    checked.bodies.length === 4 &&
+    checked.bodies.every((b) => b.length === 1 && b[0] === 0)
+  )
+    return endHold(ctx, a, row, 'TAG_PROGRAM_FAILED', {
+      to: 'failed',
+      audit: 'TAG_CLONE_SUSPECTED',
+    });
   const old = oldKeysFromProbe(checked.bodies, keys, row.keyVersion);
   if (!old) return endHold(ctx, a, row, 'TAG_PROGRAM_FAILED', { to: 'failed' });
   const keyset = await programKeyset(ctx.env.DB, row.orgId, row.mode, row.keysetId);

@@ -131,7 +131,12 @@ export async function resultProgram(
     if (classifyD1Error(error)?.kind === 'unique') throw programError('TAG_KNOWN');
     // A bind that went stale in the meantime is not a reason to lose the tag: set it up as a spare. If the
     // spare commit fails too, that error is the real one.
-    if (!(bound && 'plan' in bound) || !(error instanceof AppError)) throw error;
+    if (
+      !(bound && 'plan' in bound) ||
+      !(error instanceof AppError) ||
+      error.code !== 'TAG_HOLDER_CHANGED'
+    )
+      throw error;
     const spare = { refusal: 'TAG_HOLDER_CHANGED' } as const;
     await commit(ctx, a, ring, made(keyset.typeId), spare);
     return doneOf(ctx, { ...row, state: 'programmed', tagId }, spare.refusal);

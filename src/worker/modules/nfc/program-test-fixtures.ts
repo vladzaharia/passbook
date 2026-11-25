@@ -47,12 +47,13 @@ export async function programFixture(options: { type?: Parameters<typeof insertT
   async function memberOf(row: Row) {
     const operator = await makeUser(kit.fx);
     await grantKitMembership(kit, row.id, operator.id, ['pass_operator']);
-    const session = await makeSession(kit.fx, { userId: operator.id, roles: ['user'] });
-    const resolved = await resolveSession(kit.env, kit.clock, session.cookieValue);
-    if (!resolved) throw new Error('The operator session did not resolve.');
     return {
       org: row,
+      /** A fresh session per call, so a test that moves the clock past one still gets an authority. */
       async authority(mode: Mode = 'live') {
+        const session = await makeSession(kit.fx, { userId: operator.id, roles: ['user'] });
+        const resolved = await resolveSession(kit.env, kit.clock, session.cookieValue);
+        if (!resolved) throw new Error('The operator session did not resolve.');
         return tagAuthorityOf(
           await tenantAuthorityOf(kit.ctx, { ...resolved, mode }, row.id, 'passes:operate'),
         );

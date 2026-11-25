@@ -7,7 +7,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { grantedAudit } from '../audit/repo-granted.ts';
 import type { KeyScope } from './keyset-seal.ts';
 import { Ntag424Error } from './ntag424/bytes.ts';
-import { mapNtag, programError } from './program-recover.ts';
+import { programError } from './program-recover.ts';
 import { openSession, type SessionState } from './program-seal.ts';
 import {
   type ProgramAuthority,
@@ -59,7 +59,7 @@ export async function endHold(
   a: ProgramAuthority,
   row: ProgramRow,
   code: TagProgramErrorCode,
-  options: { to?: 'failed' | 'interrupted' } = {},
+  options: { to?: 'failed' | 'interrupted'; audit?: string } = {},
 ): Promise<never> {
   const to = options.to ?? (row.intended ? 'interrupted' : 'failed');
   const g = programGrant(ctx, a);
@@ -72,9 +72,12 @@ export async function endHold(
     session: null,
     fence: row.session,
   });
-  grantedAudit(g, ctx, programAudit(a, row, 'nfc_tag.program_failed', { code }), [
-    exists('nfc_tag_programs', { id: row.id, state: to }),
-  ]);
+  grantedAudit(
+    g,
+    ctx,
+    programAudit(a, row, 'nfc_tag.program_failed', { code: options.audit ?? code }),
+    [exists('nfc_tag_programs', { id: row.id, state: to })],
+  );
   await g.commit();
   ctx.log.warn('nfc.program.ended', { orgId: row.orgId, code, programId: row.id, hint: row.hint });
   throw programError(code);
@@ -115,8 +118,7 @@ export async function guarded<T>(
     return await build();
   } catch (error) {
     if (error instanceof RangeError) return endHold(ctx, a, row, 'TAG_PROGRAM_FAILED');
-    if (error instanceof Ntag424Error)
-      return endHold(ctx, a, row, mapNtag(error).code as TagProgramErrorCode);
+    if (error instanceof Ntag424Error) return endHold(ctx, a, row, 'TAG_PROGRAM_FAILED');
     throw error;
   }
 }

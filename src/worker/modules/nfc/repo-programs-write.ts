@@ -111,7 +111,7 @@ export function moveProgram(g: Grant, id: string, m: Move): GrantedStatement {
       id,
       state: m.from.length === 1 ? (m.from[0] as string) : inList(m.from),
       ...(m.step ? { step: m.step } : {}),
-      ...(m.fence ? { sess_iv: m.fence.iv } : {}),
+      ...(m.fence !== undefined ? { sess_iv: m.fence?.iv ?? null } : {}),
       ...(m.attempt ? { attempts: lt(m.attempt.cap) } : {}),
     },
     returning: ['id'],

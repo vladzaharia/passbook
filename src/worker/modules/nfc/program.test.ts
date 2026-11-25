@@ -20,7 +20,7 @@ const programs = (orgId = f.o.org.id) =>
 
 describe('programming a blank tag through the service', () => {
   it('keys the tag, makes it a Secure tag with its admin keys, and ends the row with nothing sealed', async () => {
-    const sim = new Ntag424Sim({ random: countingRandom() });
+    const sim = new Ntag424Sim({ isoInSession: 'refuse', random: countingRandom() });
     const a = await f.authority();
     const { url, holds } = await f.finish(sim, f.port(a));
     expect(holds).toBe(1);

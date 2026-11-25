@@ -38,7 +38,6 @@ type StartRequest = z.infer<typeof TagProgramStartSchema>;
 type Started = z.infer<typeof TagProgramStartedSchema>;
 
 const ROUNDS = 3;
-const RESUMABLE = ['started', 'scripted', 'interrupted', 'abandoned'] as const;
 
 /**
  * The UID in GetVersion part 3, proved genuine by NXP's signature over it, on an NTAG 424 DNA. The request's own
@@ -196,10 +195,6 @@ async function resume(
   req: StartRequest,
 ): Promise<Started | null> {
   if (open.state === 'failed') throw programError('TAG_PROGRAM_FAILED');
-  if (open.attempts >= ATTEMPT_CAP) {
-    if (open.state === 'abandoned') throw programError('TAG_PROGRAM_FAILED');
-    return endHold(ctx, a, open, 'TAG_PROGRAM_FAILED', { to: 'failed' });
-  }
   const now = ctx.clock.now();
   const by = actorKeyOf(a);
   // Another device's live hold is not ours to take: its session is the fence of its next call.
@@ -211,6 +206,10 @@ async function resume(
     const held = await openSession(ring, scopeOf(open), open.id, open.session);
     if (held.by !== by) throw programError('TAG_PROGRAM_BUSY');
   }
+  if (open.attempts >= ATTEMPT_CAP) {
+    if (open.state === 'abandoned') throw programError('TAG_PROGRAM_FAILED');
+    return endHold(ctx, a, open, 'TAG_PROGRAM_FAILED', { to: 'failed' });
+  }
   // The keys go back to the device that first released them, or to a Manager.
   const original = open.releasedBy === null || open.releasedBy === by;
   if (!original && !a.manager) throw programError('TAG_PROGRAM_FAILED');
@@ -218,7 +217,7 @@ async function resume(
   const g = programGrant(ctx, a, nfcChecks());
   const expiresAt = now + HOLD_TTL_MS;
   const move = moveProgram(g, open.id, {
-    from: [...RESUMABLE],
+    from: [open.state],
     to: 'started',
     toStep: 'auth',
     now,

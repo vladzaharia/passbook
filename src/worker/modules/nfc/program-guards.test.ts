@@ -22,6 +22,7 @@ beforeAll(async () => {
 const db = () => f.kit.env.DB;
 const sim = () =>
   new Ntag424Sim({
+    isoInSession: 'refuse',
     uid: Uint8Array.from([0x04, 0x62, 0, 0, 0, (++seq >> 8) & 255, seq & 255]),
     random: countingRandom(),
   });
