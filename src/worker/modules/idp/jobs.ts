@@ -3,7 +3,7 @@ import type { ServiceContext } from '../../platform/service-context.ts';
 import { idpClient, idpConfigured } from './client.ts';
 import { drainSubject } from './drain.ts';
 import { idpCodeOf } from './errors.ts';
-import { dueSetups, sweepSetups } from './invitations/sweep.ts';
+import { dueSweeps, sweepSetups } from './invitations/sweep.ts';
 import { reconcile } from './reconcile.ts';
 import { clearDirty, dueDirty, failDirty, markDirty } from './repo-dirty.ts';
 import { markClaimSwept, unsettledClaims } from './repo-invite-claims.ts';
@@ -115,10 +115,11 @@ export async function drainIdp(
   const counted: ServiceContext = { ...ctx, env: counter.env };
   const db = counter.env.DB;
   const claims = await unsettledClaims(db, ctx.clock.now(), SWEEP_LIMIT);
-  const ended = await dueSetups({ ...ctx, env: counter.env }, SWEEP_LIMIT);
+  const swept = await dueSweeps({ ...ctx, env: counter.env }, SWEEP_LIMIT);
   if (
     claims.length === 0 &&
-    ended.length === 0 &&
+    swept.ended.length === 0 &&
+    swept.tokens.length === 0 &&
     (await dueDirty(db, ctx.clock.now(), 1)).length === 0
   )
     return;
@@ -128,7 +129,7 @@ export async function drainIdp(
     if (!gate) return;
     if (!gate.dry) {
       await sweepClaims(db, claims, ctx.clock.now());
-      await sweepSetups(counted, rpc, ended);
+      await sweepSetups(counted, rpc, swept);
     }
     const due = await dueDirty(db, ctx.clock.now(), DRAIN_BATCH);
     const env: RunEnv = {

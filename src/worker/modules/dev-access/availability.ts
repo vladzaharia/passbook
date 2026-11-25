@@ -12,7 +12,7 @@ export async function developerLimit(ctx: ServiceContext, orgId: string): Promis
 /** The groups an invitation puts a person in: the developer group sign-in reads, and the console group for a paired membership. */
 export type IdpNeed = 'console' | 'developer';
 
-/** Polaris ID is reachable, healthy, live (not dry run), not frozen, and each needed group exists (the developer one is the one sign-in reads). */
+/** Polaris ID is reachable, healthy, live (not dry run), not frozen, and each needed group exists and is the one sign-in reads. */
 export async function idpReady(
   ctx: ServiceContext,
   needs: readonly IdpNeed[] = ['developer'],
@@ -28,7 +28,8 @@ export async function idpReady(
       (!needs.includes('developer') ||
         (Boolean(health.groups.developer) &&
           health.groups.developer === ctx.env.OIDC_DEVELOPER_GROUP)) &&
-      (!needs.includes('console') || Boolean(health.groups.console))
+      (!needs.includes('console') ||
+        (Boolean(health.groups.console) && health.groups.console === ctx.env.OIDC_ADMIN_GROUP))
     );
   } catch {
     ctx.log.warn('developer_access.idp_unhealthy', { code: 'IDP_UNAVAILABLE' });

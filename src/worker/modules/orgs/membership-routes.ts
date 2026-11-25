@@ -24,6 +24,7 @@ import type { AppBindings } from '../../platform/context.ts';
 import { UnauthenticatedError } from '../../platform/errors.ts';
 import { createRouter, register } from '../../platform/openapi.ts';
 import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
+import { enforceRateLimit } from '../../platform/rate-limit.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
 import { requestTheme } from '../../ssr/head.ts';
@@ -91,6 +92,7 @@ register(
     response: OrgMembershipSchema,
   },
   async (c) => {
+    await enforceRateLimit(c.env, 'RL_LOGIN', `invitation-accept:${session(c).userId}`);
     const accepted = await acceptInvitation(
       serviceContext(c),
       session(c),

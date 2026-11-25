@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   type InvitationAccept,
   InvitationAcceptSchema,
@@ -50,7 +50,7 @@ export type InviteView =
   | { kind: 'loading' }
   | { kind: 'invalid' }
   /** `weak`: signed in by email link, which cannot accept. */
-  | { kind: 'ready'; preview: InvitationPreview; weak: boolean }
+  | { kind: 'ready'; preview: InvitationPreview; weak: boolean; canAccept: boolean }
   | { kind: 'accepting'; preview: InvitationPreview }
   | { kind: 'made'; preview: InvitationPreview }
   | { kind: 'joined'; preview: InvitationPreview; accepted: InvitationAccept };
@@ -89,26 +89,27 @@ export function useInvite() {
 
   const strong = session?.authenticated === true && isStrongAmr(session.amr);
   const data = preview.data;
-  useEffect(() => {
-    if (!data || !strong || started.current) return;
+  /** Accepting is the person's own click: opening a link, even in a signed-in browser, joins nothing. */
+  const accept = useCallback(async () => {
+    if (started.current) return;
     started.current = true;
+    setError('');
     setPhase('accepting');
-    api
-      .post(`${BASE}/accept`, InvitationAcceptSchema, { token: secret })
-      .then((result) => {
-        forget();
-        if (result.outcome === 'refresh') {
-          goTo(DEVELOPERS_HREF);
-          return;
-        }
-        setAccepted(result);
-        setPhase('joined');
-      })
-      .catch((cause) => {
-        setPhase('idle');
-        fail(cause);
-      });
-  }, [data, strong, secret, fail]);
+    try {
+      const result = await api.post(`${BASE}/accept`, InvitationAcceptSchema, { token: secret });
+      forget();
+      if (result.outcome === 'refresh') {
+        goTo(DEVELOPERS_HREF);
+        return;
+      }
+      setAccepted(result);
+      setPhase('joined');
+    } catch (cause) {
+      started.current = false;
+      setPhase('idle');
+      fail(cause);
+    }
+  }, [secret, fail]);
 
   /** A Turnstile token for the call: the one ready, or the next within a few seconds. */
   const token = useCallback(async () => {
@@ -165,12 +166,20 @@ export function useInvite() {
   else if (phase === 'joined' && accepted) view = { kind: 'joined', preview: data, accepted };
   else if (phase === 'accepting') view = { kind: 'accepting', preview: data };
   else if (phase === 'made') view = { kind: 'made', preview: data };
-  else view = { kind: 'ready', preview: data, weak: session?.authenticated === true || needSignIn };
+  else
+    view = {
+      kind: 'ready',
+      preview: data,
+      weak: session?.authenticated === true || needSignIn,
+      // A strong session may accept; once it was refused (another address) the person signs in again instead.
+      canAccept: strong && !needSignIn && error === '',
+    };
 
   return {
     view,
     error,
     working,
+    accept,
     create,
     have,
     widget: {

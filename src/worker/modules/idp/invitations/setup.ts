@@ -70,10 +70,14 @@ export async function setupInvitation(
     await rpc.deleteSignup(signup.tokenId, write).catch(() => undefined);
     throw error;
   }
-  const previous = earlier.at(-1);
-  if (previous && previous.expires_at > now)
-    await rpc.deleteSignup(previous.idp_token_id, write).catch(() => {
-      ctx.log.warn('invitation.setup_unwithdrawn', { code: 'INVITATION_SETUP_UNWITHDRAWN' });
-    });
+  // Every older live token is withdrawn, read again now, so setups racing leave the newest one (by time, then id).
+  for (const other of await setupsOf(db, kind, row.id)) {
+    const older =
+      other.created_at < now || (other.created_at === now && other.idp_token_id < signup.tokenId);
+    if (older && other.expires_at > now)
+      await rpc.deleteSignup(other.idp_token_id, write).catch(() => {
+        ctx.log.warn('invitation.setup_unwithdrawn', { code: 'INVITATION_SETUP_UNWITHDRAWN' });
+      });
+  }
   return { setupUrl: signup.url, expiresAt: signup.expiresAt };
 }

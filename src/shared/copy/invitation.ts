@@ -15,9 +15,10 @@ export const INVITATION_COPY = {
   have: 'I have a Polaris ID',
   signIn: 'Sign in with Polaris ID',
   accept: 'Accept invitation',
+  otherAccount: 'Use another Polaris ID',
+  accepting: 'Joining…',
   afterSetup: 'In Polaris ID, add a passkey and confirm your email. Then sign in here.',
   noAccount: 'No Polaris ID uses this address. Create one.',
-  refresh: 'One more sign-in to finish.',
   joined: (kind: 'member' | 'developer', orgName: string) =>
     kind === 'developer' ? 'You have developer access.' : `Joined ${orgName}`,
   openAdmin: 'Open admin',

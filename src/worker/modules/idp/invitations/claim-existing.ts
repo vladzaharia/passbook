@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type { InvitationChallengeSchema } from '../../../../shared/contracts/invitations.ts';
 import { AppError } from '../../../platform/errors.ts';
+import { enforceRateLimit } from '../../../platform/rate-limit.ts';
 import type { ServiceContext } from '../../../platform/service-context.ts';
 import { idpClient } from '../client.ts';
 import { claimsOfInvitation } from '../repo-invite-claims.ts';
@@ -36,17 +37,19 @@ export async function claimAccount(
     kind === 'member'
       ? Math.min(now + DAY, row.expires_at + DAY)
       : Math.max(row.claim_until ?? 0, now + DAY);
-  await insertClaim(
-    ctx,
-    { id: ctx.ids.id(), kind, invitationId: row.id, subject, now, claimUntil: until },
-    {
-      orgId: row.org_id,
-      actorType: 'system',
-      action: `${kind === 'member' ? 'org' : 'developer'}_invitation.claim`,
-      targetType: `${kind === 'member' ? 'org' : 'developer'}_invitation`,
-      targetId: row.id,
-    },
-  );
+  // A repeat for an account that already claimed writes nothing (the trigger would refuse a fourth row at the cap).
+  if (!claims.some((c) => c.subject === subject))
+    await insertClaim(
+      ctx,
+      { id: ctx.ids.id(), kind, invitationId: row.id, subject, now, claimUntil: until },
+      {
+        orgId: row.org_id,
+        actorType: 'system',
+        action: `${kind === 'member' ? 'org' : 'developer'}_invitation.claim`,
+        targetType: `${kind === 'member' ? 'org' : 'developer'}_invitation`,
+        targetId: row.id,
+      },
+    );
   const spec = await signupSpecOf(db, invite);
   await idpClient(ctx.env, ctx.log).apply(
     subject,
@@ -65,6 +68,17 @@ export async function claimExisting(
   input: z.infer<typeof InvitationChallengeSchema>,
 ): Promise<void> {
   const invite = await challengedInvite(ctx, ip, input);
+  // One link holder cannot spend the binding's directory-search and write budgets, which the whole platform shares.
+  await enforceRateLimit(ctx.env, 'RL_MAGIC_LINK', `invitation-claim:${invite.row.id}`);
+  const parent = invite.kind === 'member' ? { org: invite.row.id } : { developer: invite.row.id };
+  const now = ctx.clock.now();
+  // An open claim already named the account and applied its groups (the drain finishes it if that failed): no search.
+  if (
+    (await claimsOfInvitation(ctx.env.DB, parent)).some(
+      (c) => c.swept_at === null && c.claim_until > now,
+    )
+  )
+    return;
   const found = await idpClient(ctx.env, ctx.log).findByVerifiedEmail(
     invite.row.email,
     ledgerOf(invite, 'invitation.find'),

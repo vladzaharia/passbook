@@ -75,7 +75,7 @@ function Body({ invite }: { invite: ReturnType<typeof useInvite> }) {
       {invite.error ? <Callout tone="danger">{invite.error}</Callout> : null}
       {view.kind === 'accepting' ? (
         <p role="status" className="text-sm text-fg-muted">
-          {copy.refresh}
+          {copy.accepting}
         </p>
       ) : view.kind === 'joined' ? (
         <Button asChild>
@@ -103,6 +103,7 @@ function Body({ invite }: { invite: ReturnType<typeof useInvite> }) {
           invite={invite}
           polaris={preview.polaris}
           weak={view.weak}
+          canAccept={view.canAccept}
           orgName={preview.orgName}
         />
       )}
@@ -114,11 +115,13 @@ function Choices({
   invite,
   polaris,
   weak,
+  canAccept,
   orgName,
 }: {
   invite: ReturnType<typeof useInvite>;
   polaris: boolean;
   weak: boolean;
+  canAccept: boolean;
   orgName: string;
 }) {
   // Already signed in (by email link, or as someone else): signing in again leads. A stranger starts with an account.
@@ -127,6 +130,15 @@ function Choices({
       <a href={SIGN_IN_HREF}>{copy.signIn}</a>
     </Button>
   );
+  if (canAccept)
+    return (
+      <div className="flex flex-col gap-3">
+        <Button onClick={() => void invite.accept()}>{copy.accept}</Button>
+        <Button asChild variant="outline">
+          <a href={SIGN_IN_HREF}>{copy.otherAccount}</a>
+        </Button>
+      </div>
+    );
   return (
     <div className="flex flex-col gap-3">
       {weak ? (

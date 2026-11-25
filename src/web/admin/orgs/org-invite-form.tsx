@@ -101,11 +101,14 @@ export function InviteForm({
         ) : null}
       </fieldset>
       {developers ? (
-        <CheckboxField
-          label="Developer access"
-          checked={developer}
-          onCheckedChange={(checked) => setDeveloper(checked === true)}
-        />
+        // The roles grid's rows are 8 px apart: this row keeps the same rhythm under it.
+        <div className="-mt-1">
+          <CheckboxField
+            label="Developer access"
+            checked={developer}
+            onCheckedChange={(checked) => setDeveloper(checked === true)}
+          />
+        </div>
       ) : null}
       {server ? (
         <p role="alert" className="text-sm text-danger">

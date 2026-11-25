@@ -20,7 +20,10 @@ let r: Rig;
 beforeEach(async () => {
   r = await rig();
   // The suite's database outlives a test and every test starts at the same time: the sweep's mark starts clean.
-  await run(r.h.env.DB, "DELETE FROM settings WHERE scope = 'system' AND key = 'idp.invite_sweep'");
+  await run(
+    r.h.env.DB,
+    "DELETE FROM settings WHERE scope = 'system' AND key IN ('idp.invite_sweep', 'idp.invite_token_sweep')",
+  );
 });
 afterEach(teardown);
 
@@ -38,7 +41,8 @@ const made = async (secret: string, subject: string, email = 'stranger@elsewhere
 describe('the setup sweep', () => {
   it('takes back the groups of an account made from an invitation nobody accepted', async () => {
     const invite = await memberInvite(r, 'agent@agency.test');
-    await made(invite.secret, 'sub-stranger');
+    // Made with the invited address (verified): it could still accept, so it waits for the end of the window.
+    await made(invite.secret, 'sub-stranger', invite.email);
     r.h.clock.advance(7 * DAY + DAY / 2);
     await drain();
     expect(r.idp.accounts.get('sub-stranger')?.roles.has('console')).toBe(true);
@@ -47,14 +51,14 @@ describe('the setup sweep', () => {
     await drain();
     expect(r.idp.accounts.get('sub-stranger')?.roles.has('console')).toBe(false);
     expect(await marked(['sub-stranger'])).toEqual([]);
-    expect(await readSystemValue(r.h.env.DB, 'idp.invite_sweep')).toBeGreaterThan(
-      r.h.clock.now() - 2 * DAY,
-    );
+    expect(await readSystemValue(r.h.env.DB, 'idp.invite_sweep')).toMatchObject({
+      key: `member:${invite.id}`,
+    });
   });
 
   it('does it for a revoked developer invitation, once its last token has expired', async () => {
     const invite = await developerInvite(r, 'dev@agency.test', { roles: ['read_only'] });
-    await made(invite.secret, 'sub-dev');
+    await made(invite.secret, 'sub-dev', invite.email);
     await r.h.env.DB.prepare('UPDATE developer_invitations SET revoked_at = ? WHERE id = ?')
       .bind(r.h.clock.now(), invite.id)
       .run();
@@ -81,7 +85,7 @@ describe('the setup sweep', () => {
 
   it('does nothing in dry run and keeps the invitation for the next live run', async () => {
     const invite = await memberInvite(r, 'agent@agency.test');
-    await made(invite.secret, 'sub-stranger');
+    await made(invite.secret, 'sub-stranger', invite.email);
     r.h.clock.advance(9 * DAY);
     r.idp.mode = 'dry_run';
     await drain();
@@ -95,8 +99,10 @@ describe('the setup sweep', () => {
 
   it('stops at an invitation Polaris ID could not answer for, and picks it up again', async () => {
     const invite = await memberInvite(r, 'agent@agency.test');
-    await made(invite.secret, 'sub-stranger');
+    await made(invite.secret, 'sub-stranger', invite.email);
     r.h.clock.advance(9 * DAY);
+    // The token pass and the invitation pass each ask once, and both are refused.
+    r.idp.failNext('IDP_UPSTREAM', 'proveSignup');
     r.idp.failNext('IDP_UPSTREAM', 'proveSignup');
     await drain();
     expect(r.idp.accounts.get('sub-stranger')?.roles.has('console')).toBe(true);

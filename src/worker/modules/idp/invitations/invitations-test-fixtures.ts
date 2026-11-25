@@ -31,6 +31,8 @@ export async function rig(options: Parameters<typeof createFakeIdp>[0] = {}): Pr
   const idp = createFakeIdp({ now: () => kit.h.clock.now(), tokenPrefix: tag, ...options });
   installFakeIdp(kit.h.env, idp);
   kit.h.env.TURNSTILE_SECRET = TURNSTILE_TEST_SECRET;
+  // Sign-in reads the console group by this name; the fake binding's console group is `passbook_console`.
+  kit.h.env.OIDC_ADMIN_GROUP = 'passbook_console';
   return {
     h: kit.h,
     idp,

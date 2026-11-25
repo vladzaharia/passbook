@@ -110,8 +110,10 @@ describe('POST /invitations/claim-existing', () => {
       await run(
         r.h.env.DB,
         'INSERT INTO idp_invite_claims (id, org_invitation_id, subject, created_at, claim_until) VALUES (?, ?, ?, ?, ?)',
-        [`claim-${n}`, late.id, `sub-${n}`, r.h.clock.now(), r.h.clock.now() + DAY],
+        [`claim-${n}`, late.id, `sub-${n}`, r.h.clock.now(), r.h.clock.now() + 1000],
       );
+    // Their windows ended (so no open claim answers for the invitation), but they still count against the cap.
+    r.h.clock.advance(2000);
     await expectProblem(
       await post(r, '/claim-existing', challenge(late.secret)),
       429,

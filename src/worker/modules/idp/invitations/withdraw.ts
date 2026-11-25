@@ -5,7 +5,7 @@ import type { InviteRow } from './repo-resolve.ts';
 import { pairedDeveloperOf, setupsOf } from './repo-resolve.ts';
 
 /**
- * A revoked invitation takes back the signup tokens nobody used yet, at once, through the binding (a used token
+ * An invitation that ended (revoked, or accepted by someone) takes back the signup tokens nobody used yet, at once, through the binding (a used token
  * stays: the sweep finds its account). A token Polaris ID cannot withdraw now is logged and left to the sweep,
  * which runs once its last token has expired; the revoke itself never waits on Polaris ID.
  */
@@ -13,6 +13,7 @@ export async function withdrawSetups(
   ctx: ServiceContext,
   kind: InviteRow['kind'],
   invitationId: string,
+  reason = 'invitation.revoked',
 ): Promise<void> {
   if (!idpConfigured(ctx.env)) return;
   const now = ctx.clock.now();
@@ -23,7 +24,7 @@ export async function withdrawSetups(
     try {
       await rpc.deleteSignup(setup.idp_token_id, {
         ref: invitationId,
-        reason: 'invitation.revoked',
+        reason,
         actor: { kind: 'system', job: 'invitations' },
       });
     } catch (error) {

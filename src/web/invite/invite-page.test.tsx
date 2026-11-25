@@ -138,7 +138,7 @@ describe('the invitation page', () => {
     await waitFor(() => expect(goTo).toHaveBeenCalledWith('/auth/oidc/start?next=%2Finvite'));
   });
 
-  it('accepts at once for a Polaris ID session, forgets the secret and opens the console', async () => {
+  it('waits for a click before accepting, then forgets the secret and opens the console', async () => {
     open();
     const accept = vi.fn(() =>
       json({ outcome: 'joined', kind: 'member', orgName: 'Agency', membership: null }),
@@ -147,6 +147,10 @@ describe('the invitation page', () => {
       session: 'user',
       handlers: { ...previewed(preview()), '/api/v1/invitations/accept': accept },
     });
+    const button = await screen.findByRole('button', { name: copy.accept });
+    expect(accept).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('passbook.invite')).toBe(SECRET);
+    await userEvent.click(button);
     expect(await screen.findByRole('heading', { name: 'Joined Agency' })).toBeInTheDocument();
     expect(accept).toHaveBeenCalledTimes(1);
     expect(sessionStorage.getItem('passbook.invite')).toBeNull();
@@ -163,6 +167,7 @@ describe('the invitation page', () => {
           json({ outcome: 'refresh', kind: 'developer', orgName: 'Agency', membership: null }),
       },
     });
+    await userEvent.click(await screen.findByRole('button', { name: copy.accept }));
     await waitFor(() => expect(goTo).toHaveBeenCalledWith('/auth/oidc/start?next=%2Fdevelopers'));
   });
 
@@ -192,10 +197,14 @@ describe('the invitation page', () => {
           ),
       },
     });
+    await userEvent.click(await screen.findByRole('button', { name: copy.accept }));
     expect(
       await screen.findByText(
         'This invitation is for a•••@agency.test. Sign in with that address.',
       ),
     ).toBeInTheDocument();
+    // Refused for this address: signing in again leads now.
+    expect(screen.queryByRole('button', { name: copy.accept })).toBeNull();
+    expect(screen.getByRole('link', { name: copy.signIn })).toBeInTheDocument();
   });
 });
