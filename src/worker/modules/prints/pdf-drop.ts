@@ -13,7 +13,11 @@ export async function dropPrintPdfs(
   try {
     // A combined PDF holds this pass's code too, so it goes with it.
     await deleteBulkOfPass(ctx.env.BUCKET, pass.orgId, pass.id);
-    if (printId) await ctx.env.BUCKET.delete(pdfKey(pass.orgId, pass.id, printId));
+    if (printId)
+      await ctx.env.BUCKET.delete([
+        pdfKey(pass.orgId, pass.id, printId),
+        pdfKey(pass.orgId, pass.id, printId, 'holder'),
+      ]);
     else await deletePassPdfs(ctx.env.BUCKET, pass.orgId, pass.id);
   } catch (error) {
     ctx.log.error('prints.pdf_delete_failed', { code: 'PRINT_PDF_DELETE_FAILED', error });
