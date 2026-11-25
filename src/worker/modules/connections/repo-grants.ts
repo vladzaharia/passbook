@@ -191,7 +191,7 @@ export function workflowTracked(instanceId: string, connectionId: string, keyset
     'lineage',
     `EXISTS (SELECT 1 FROM workflow_runs w WHERE w.instance_id = ? AND w.kind = 'connection_sync'
       AND w.target_id = ? AND w.credential_keyset_commitment = ?
-      AND NOT (w.status = 'errored' AND w.error_code = 'SUPERSEDED'))`,
+      AND (w.status <> 'errored' OR COALESCE(w.error_code, '') <> 'SUPERSEDED'))`,
     [instanceId, connectionId, keyset],
   );
 }

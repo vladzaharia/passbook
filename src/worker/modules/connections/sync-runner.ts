@@ -90,6 +90,7 @@ async function runSync(sctx: ServiceContext, step: StepLike, p: SyncRunParams): 
   const budget = p.writeBudget ?? WRITE_BUDGET_PER_INSTANCE;
   const start = await step.do('start', () => startRun(sctx, p));
   assertSyncStart(start, p);
+  if (start.ok && start.settle) step.arm?.();
   const startedAt = p.chain?.startedAt ?? start.startedAt;
 
   const totals = p.chain ? { ...p.chain.totals } : emptyTotals();

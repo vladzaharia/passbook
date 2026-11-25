@@ -496,14 +496,10 @@ describe('sync hand-off', () => {
       generation: bumped.generation,
     });
     expect(
-      (
-        await first<{ outcome: string }>(
-          kit.env.DB,
-          'SELECT outcome FROM connection_runs WHERE id = ?',
-          ['sync-g-1'],
-        )
-      )?.outcome,
-    ).toBe('error');
+      await first(kit.env.DB, 'SELECT outcome, error_code FROM connection_runs WHERE id = ?', [
+        'sync-g-1',
+      ]),
+    ).toEqual({ outcome: 'skipped', error_code: 'SUPERSEDED' });
   });
 
   it('still adopts a run enqueued under the current generation', async () => {
