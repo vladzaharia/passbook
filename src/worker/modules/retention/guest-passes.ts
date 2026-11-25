@@ -14,6 +14,7 @@ import {
   writeReceipt,
 } from './receipt-service.ts';
 import {
+  deletedGate,
   type GuestCandidate,
   guestCandidates,
   passHeld,
