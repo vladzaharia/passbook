@@ -88,6 +88,7 @@ export type EndCause =
   | 'moved'
   | 'tag_retired'
   | 'offboard'
+  | 'visitor_out'
   | 'expired';
 
 /** Ends one active binding. The batch is refused if it already ended. */

@@ -69,6 +69,6 @@ export function mountScanGuards(router: OpenAPIHono<AppBindings>): void {
     if (c.req.method === 'POST' && /^\/[^/]+\/undo$/.test(suffix)) return operateActor(c, next);
     return manageActor(c, next);
   });
-  for (const path of ['/resolve', '/actions', '/scans/:scanId/undo'])
+  for (const path of ['/resolve', '/actions', '/sign-out', '/scans/:scanId/undo'])
     router.use(path, tillKeyAccess);
 }
