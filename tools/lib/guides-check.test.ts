@@ -26,9 +26,7 @@ describe('guideFailures', () => {
 
   it('catches a line that differs from DEV_GUIDES', () => {
     expect(
-      check('test-mode', (t) => t.replace('line: Inbox, reset, limits', 'line: Other')).join(
-        '\n',
-      ),
+      check('test-mode', (t) => t.replace('line: Inbox, reset, limits', 'line: Other')).join('\n'),
     ).toContain('differs from DEV_GUIDES');
   });
 
