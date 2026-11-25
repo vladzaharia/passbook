@@ -476,13 +476,15 @@ describe('organization memberships', () => {
     );
   });
 
-  it('sends the old landing address to the invitation page and requires CSRF on acceptance', async () => {
+  it('opens the invitation page from the old landing address and requires CSRF on acceptance', async () => {
     const { org, person } = await setup();
     const issued = await invite(org.id, person.primaryEmail);
-    // The old address sends the browser on to the invitation page; the fragment rides along in the browser.
+    // The old address opens a page that carries the fragment on to /invite.
     const page = await call('GET', '/invitations/accept', undefined, {});
-    expect(page.status).toBe(302);
-    expect(page.headers.get('location')).toBe('/invite');
+    expect(page.status).toBe(200);
+    expect(page.headers.get('cache-control')).toContain('no-store');
+    expect(page.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(await page.text()).toContain('location.replace("/invite" + location.hash)');
     const { 'x-csrf-token': _csrf, ...withoutCsrf } = user(person.id);
     expect(
       (await call('POST', '/invitations/accept', { token: issued.token }, withoutCsrf)).status,

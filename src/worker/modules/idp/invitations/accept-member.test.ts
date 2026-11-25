@@ -139,11 +139,11 @@ describe('POST /invitations/accept, member', () => {
     expect((await accept(invite.secret, p.session.headers)).status).toBe(200);
   });
 
-  it('serves the old landing address as a redirect that keeps the fragment, and the old accept call', async () => {
+  it('serves the old landing address as a page that carries the fragment on, and the old accept call', async () => {
     const invite = await memberInvite(r, 'agent@agency.test');
-    const page = await r.h.call('/api/v1/orgs/invitations/accept', { redirect: 'manual' });
-    expect(page.status).toBe(302);
-    expect(page.headers.get('location')).toBe('/invite');
+    const page = await r.h.call('/api/v1/orgs/invitations/accept');
+    expect(page.status).toBe(200);
+    expect(await page.text()).toContain('/invite');
     const p = await person(r, 'agent@agency.test');
     const legacy = await r.h.call('/api/v1/orgs/invitations/accept', {
       method: 'POST',

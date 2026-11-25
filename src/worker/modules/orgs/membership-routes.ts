@@ -14,7 +14,6 @@ import {
   OrgMembershipParamSchema,
   OrgMembershipSchema,
 } from '../../../shared/contracts/index.ts';
-import { INVITE_PATH } from '../../../shared/invitation-link.ts';
 import {
   requireConsoleSession,
   requireHolderSession,
@@ -27,8 +26,10 @@ import { createRouter, register } from '../../platform/openapi.ts';
 import { ADMINISTERING_ROLES } from '../../platform/org-role-grants.ts';
 import { serviceContext } from '../../platform/service-context.ts';
 import { peekBody, requireStepUp, STEP_UP_SECONDS } from '../../platform/sign-in-guard.ts';
+import { requestTheme } from '../../ssr/head.ts';
 import { acceptInvitation } from '../idp/invitations/accept.ts';
 import { listMyOrgMemberships } from './access.ts';
+import { invitationPage } from './invitation-page.ts';
 import {
   inviteOrgMember,
   listOrgInvitations,
@@ -46,7 +47,7 @@ const session = (c: Context<AppBindings>): SessionAuth => {
 
 export const membershipRoutes = createRouter({ bodyLimit: false });
 
-// The old landing address, still in mailed links: it sends the browser to the invitation page, which keeps the secret's fragment.
+// The old landing address, still in mailed links: it opens the invitation page, carrying the fragment on.
 // The accepting POST is always strong-session (no email-link grace) and CSRF protected.
 membershipRoutes.use('/invitations/accept', (c, next) =>
   c.req.method === 'GET' ? next() : requireStrictSession(c, next),
@@ -76,9 +77,8 @@ register(
     method: 'get',
     path: '/invitations/accept',
     summary: 'Open an organization invitation',
-    status: 302,
   },
-  (c) => c.redirect(INVITE_PATH, 302),
+  (c) => invitationPage(c.var.nonce, requestTheme(c)),
 );
 register(
   membershipRoutes,

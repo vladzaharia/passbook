@@ -496,7 +496,7 @@ describe('organization workspace authorization', () => {
       expect((await call('GET', `/${org.id}/invitations`, headers)).status).toBe(200);
     }
     expect((await call('GET', '/memberships/me')).status).toBe(401);
-    expect((await call('GET', '/invitations/accept')).status).toBe(302);
+    expect((await call('GET', '/invitations/accept')).status).toBe(200);
     const revoked = await call(
       'DELETE',
       `/${org.id}/memberships/${operator.membershipId}`,
