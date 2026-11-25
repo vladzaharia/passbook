@@ -100,3 +100,32 @@ describe('ratchet', () => {
     });
   });
 });
+
+describe('ratchet at a Sunset', () => {
+  const dep = (sunset: string) =>
+    doc({ '/api/v1/passes': op('passes.getPasses', { deprecated: true, 'x-sunset': sunset }) });
+  const gone = doc({});
+  const go = (b: Doc, on: string) =>
+    ratchetFailures({ base: b, next: gone, baseNames: names, nextNames: {}, on });
+
+  it('lets a name go with its operation on or after the Sunset', () => {
+    expect(go(dep('2027-11-25'), '2027-11-25')).toEqual([]);
+    expect(go(dep('2027-11-25'), '2028-01-01')).toEqual([]);
+  });
+
+  it('keeps names frozen before the Sunset and for operations never deprecated', () => {
+    expect(go(dep('2027-11-25'), '2027-11-24').join()).toMatch(/name removed/);
+    expect(go(base, '2030-01-01').join()).toMatch(/name removed/);
+  });
+
+  it('refuses dropping the name while the operation stays', () => {
+    const out = ratchetFailures({
+      base: dep('2026-12-01'),
+      next: dep('2026-12-01'),
+      baseNames: names,
+      nextNames: {},
+      on: '2027-01-01',
+    });
+    expect(out.join()).toMatch(/name removed/);
+  });
+});

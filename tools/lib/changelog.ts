@@ -1,5 +1,5 @@
 // The changelog's machine part and its rules. Pure: no I/O. See tools/gen-changelog.ts.
-import type { Change } from './openapi-diff.ts';
+import { type Change, SUNSET_REMOVAL } from './openapi-diff.ts';
 
 export type Kind = 'Added' | 'Changed' | 'Fixed' | 'Removed';
 
@@ -93,7 +93,7 @@ export function versionFailures(next: Versions, base: Versions | null): string[]
 export const hasNewVersion = (next: Versions, base: Versions | null): boolean =>
   next.versions.some((v) => !(base?.versions ?? []).some((b) => b.date === v.date));
 
-/** The breaking changes no `unversioned` entry of unreleased.json covers. */
+/** The breaking changes no `unversioned` entry of unreleased.json covers, and that are not a removal at a Sunset. */
 export const versionedBreaks = (broken: string[], pending: Pending[]): string[] => {
   // Only a request-side tightening may ship unversioned; a removed field or the like still needs a version.
   const free = new Set(
@@ -101,7 +101,8 @@ export const versionedBreaks = (broken: string[], pending: Pending[]): string[] 
       .filter((p) => p.unversioned && p.change.endsWith(': unknown keys now refused'))
       .map((p) => p.key),
   );
-  return broken.filter((b) => !free.has(b));
+  // Removing an operation on or after the Sunset the base announced reaches every client whatever its version.
+  return broken.filter((b) => !free.has(b) && !b.includes(`: ${SUNSET_REMOVAL} `));
 };
 
 /** The dated file a release writes. Refuses while a note is missing. */

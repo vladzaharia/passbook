@@ -7,6 +7,7 @@ import { scopeExercises } from './api-scopes.ts';
 import { authorityUnproven, type RouteAuth, requireCaller } from './auth.ts';
 import { defaultBodyLimit } from './body-limit.ts';
 import type { AppBindings } from './context.ts';
+import { checkDeprecation, deprecationMiddleware, type RouteDeprecation } from './deprecation.ts';
 import { AppError } from './errors.ts';
 import './openapi-names.ts';
 import { checkFeatureRule, type FeatureRule, featureUnchecked } from './feature-guard.ts';
@@ -52,6 +53,11 @@ export interface RouteSpec {
    * from the handler's call graph by `npm run gen`). Read by that tool, not at runtime.
    */
   codes?: readonly string[];
+  /**
+   * The operation is deprecated: the document gets `deprecated` and `x-sunset`, and every response
+   * (problem+json too) carries `Deprecation`, `Sunset` and `Link`. docs/api.md, "Deprecation".
+   */
+  deprecated?: RouteDeprecation;
   /** Names a validation failure of this route's request with its own error; undefined keeps the generic 422. */
   invalid?: (error: ZodError) => AppError | undefined;
 }
@@ -138,12 +144,21 @@ export function register<S extends RouteSpec>(
 ): void {
   const status = spec.status ?? 200;
   checkDeclaration(spec);
+  const retired = spec.deprecated;
+  if (retired) checkDeprecation(`${spec.method.toUpperCase()} ${spec.path}`, retired);
+  // First in the chain, so a 401, 403 or 422 raised by a later guard still carries the headers.
+  const middleware = [
+    ...(retired ? [deprecationMiddleware(retired)] : []),
+    ...(spec.auth ? [requireCaller(spec.auth)] : []),
+  ];
   const config = {
+    ...(middleware.length ? { middleware } : {}),
     ...(spec.auth
-      ? { middleware: requireCaller(spec.auth), ...operationSecurity(spec.auth, spec.method) }
+      ? operationSecurity(spec.auth, spec.method)
       : spec.xFeature === undefined
         ? {}
         : { 'x-feature': spec.xFeature }),
+    ...(retired ? { deprecated: true, 'x-sunset': retired.sunset } : {}),
     method: spec.method,
     path: spec.path,
     summary: spec.summary,
