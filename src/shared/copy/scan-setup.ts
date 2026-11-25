@@ -38,6 +38,8 @@ export const SCAN_SETUP_COPY = {
     SETUP_TOO_MANY_EVENTS: '{door} admits more than 10 events. Remove some.',
     SETUP_TOO_MANY_NEW_EVENTS: 'This setup makes more than 10 events. Remove some.',
     SETUP_TOO_MANY_TEMPLATES: '{door} admits more than 100 pass types. Remove some.',
+    SETUP_HARD_LIMIT_NO_CAPACITY:
+      '{door} has a hard limit but its place has no max. Set a max inside.',
     SETUP_HOURS_EMPTY: 'Add opening hours for {door}, or set it to always open.',
     SETUP_CLOSES_BEFORE_OPENS: '{event} closes before it opens. Change the times.',
   },

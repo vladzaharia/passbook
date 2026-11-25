@@ -4,6 +4,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../../platform/er
 import type { ServiceContext } from '../../platform/service-context.ts';
 import { holderChannelsMany, recordCopy } from '../channels/gate.ts';
 import { assertSignedObject } from '../developer/fence.ts';
+import { currentPassBytes, passRenders } from '../passes/timed-variant.ts';
 import {
   type BundleRow,
   bundlePassIsCurrent,
@@ -11,24 +12,39 @@ import {
   listBundlePasses,
 } from './repo-bundle.ts';
 
-/** Each object is checked again after its R2 read, before the archive emits its bytes. */
-function packageMyPasses(ctx: ServiceContext, userId: string, rows: readonly BundleRow[]) {
+/**
+ * Each object is checked again after its R2 read, before the archive emits its bytes. A pass with a timed
+ * render goes as the render (docs/design/event-boundaries.md), so its size is not known up front.
+ */
+async function packageMyPasses(ctx: ServiceContext, userId: string, rows: readonly BundleRow[]) {
   for (const row of rows) assertSignedObject(row.object_key);
+  const renders = await passRenders(
+    ctx,
+    rows.map((row) => ({ id: row.id, objectKey: row.object_key })),
+  );
   try {
     return packagePasses(
-      rows.map((row) => ({
-        name: row.id,
-        ...(row.object_size ? { size: row.object_size } : {}),
-        bytes: async () => {
-          const object = await ctx.env.BUCKET.get(row.object_key);
-          if (!object) throw new NotFoundError('A pass file is missing.', 'PASS_FILE_MISSING');
-          const bytes = new Uint8Array(await object.arrayBuffer());
-          if (!(await bundlePassIsCurrent(ctx.env.DB, userId, ctx.clock.now(), row))) {
-            throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
-          }
-          return bytes;
-        },
-      })),
+      rows.map((row) => {
+        const render = renders.get(row.id) ?? null;
+        return {
+          name: row.id,
+          ...(row.object_size && !render?.render ? { size: row.object_size } : {}),
+          bytes: async () => {
+            const pass = {
+              id: row.id,
+              objectKey: row.object_key,
+              orgId: row.org_id,
+              identityId: row.identity_id,
+            };
+            const bytes = await currentPassBytes(ctx, pass, render);
+            if (!bytes) throw new NotFoundError('A pass file is missing.', 'PASS_FILE_MISSING');
+            if (!(await bundlePassIsCurrent(ctx.env.DB, userId, ctx.clock.now(), row))) {
+              throw new NotFoundError('Pass not found.', 'PASS_NOT_FOUND');
+            }
+            return bytes;
+          },
+        };
+      }),
     );
   } catch (error) {
     if (error instanceof PackageLimitError) {
@@ -109,5 +125,5 @@ export async function myPassesBundle(
   );
   if (rows.length === 0) throw new NotFoundError('No passes to bundle.', 'BUNDLE_EMPTY');
   for (const row of rows) await recordCopy(ctx, toGate(row), 'apple');
-  return { body: packageMyPasses(ctx, userId, rows), parts: starts.length };
+  return { body: await packageMyPasses(ctx, userId, rows), parts: starts.length };
 }
