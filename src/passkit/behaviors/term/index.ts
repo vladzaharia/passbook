@@ -1,3 +1,4 @@
+import { DEFAULT_TIME_ZONE } from '../../../shared/time-zone.ts';
 import type { BehaviorPlugin, JsonSchemaObject, TemplateManifest } from '../../types.ts';
 import {
   addDays,
@@ -101,7 +102,7 @@ export function parseTermDate(raw: string, key: string, tz: string): number {
 
 /** The end of one term as an instant, grace included. `anchorMs` supplies the day of the month. */
 export function termEnd(startMs: number, config: TermConfig, anchorMs?: number): number {
-  const tz = config.timeZone ?? 'UTC';
+  const tz = config.timeZone ?? DEFAULT_TIME_ZONE;
   const start = localOf(startMs, tz);
   const base = anchorMs === undefined ? start : { ...start, d: localOf(anchorMs, tz).d };
   let local = start;
@@ -150,7 +151,7 @@ export const term: BehaviorPlugin<TermConfig> = {
   version: 1,
   configSchema,
   apply(pass, input, config, ctx) {
-    const tz = config.timeZone ?? 'UTC';
+    const tz = config.timeZone ?? ctx.timeZone ?? DEFAULT_TIME_ZONE;
     if (config.timeZone !== undefined && !isTimeZone(config.timeZone)) {
       throw new Error(`${config.timeZone} is not a time zone.`);
     }
@@ -164,7 +165,7 @@ export const term: BehaviorPlugin<TermConfig> = {
       typeof anchorRaw === 'string' && anchorRaw !== ''
         ? parseTermDate(anchorRaw, config.anchor ?? '', tz)
         : undefined;
-    const end = termEnd(parseTermDate(raw, config.start, tz), config, anchor);
+    const end = termEnd(parseTermDate(raw, config.start, tz), { ...config, timeZone: tz }, anchor);
     pass.expirationDate = iso(end);
     if (config.voidWhenPast && end <= ctx.now.getTime()) pass.voided = true;
   },

@@ -1,4 +1,5 @@
 import { NO_EMAIL_LABEL } from '../../shared/email.ts';
+import { CALENDAR_ZONE } from '../../shared/time-zone.ts';
 
 export { formatEndedOn } from '../../shared/format-date.ts';
 
@@ -23,12 +24,12 @@ const UTC_DAY = new Intl.DateTimeFormat(LOCALE, {
   month: 'short',
   day: 'numeric',
   year: 'numeric',
-  timeZone: 'UTC',
+  timeZone: CALENDAR_ZONE,
 });
 const UTC_TIME = new Intl.DateTimeFormat(LOCALE, {
   hour: 'numeric',
   minute: '2-digit',
-  timeZone: 'UTC',
+  timeZone: CALENDAR_ZONE,
 });
 const COUNT = new Intl.NumberFormat(LOCALE);
 const MONEY = new Map<string, Intl.NumberFormat>();
@@ -45,7 +46,7 @@ export function formatDay(ms: number | null | undefined, empty = 'None'): string
 }
 
 const CALENDAR_DATE = new Intl.DateTimeFormat(LOCALE, {
-  timeZone: 'UTC',
+  timeZone: CALENDAR_ZONE,
   weekday: 'short',
   month: 'short',
   day: 'numeric',
@@ -106,10 +107,10 @@ export function formatExpiry(iso: string, timeZone?: string): string {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
-      timeZone: 'UTC',
+      timeZone: CALENDAR_ZONE,
     }).format(at);
   }
-  const zone = timeZone ?? /([+-]\d{2}:\d{2})$/.exec(iso)?.[1] ?? 'UTC';
+  const zone = timeZone ?? /([+-]\d{2}:\d{2})$/.exec(iso)?.[1] ?? CALENDAR_ZONE;
   const named = timeZone === undefined;
   const key = `${zone}|${named}`;
   let formatter = EXPIRY.get(key);

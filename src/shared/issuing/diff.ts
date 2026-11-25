@@ -3,6 +3,7 @@
 import type { Json } from '../contracts/common.ts';
 import type { FieldChange } from '../contracts/issuing.ts';
 import { formatDayIn } from '../format-date.ts';
+import { CALENDAR_ZONE, DEFAULT_TIME_ZONE } from '../time-zone.ts';
 import { type InputField, inputFields, isDateField } from './fields.ts';
 
 export interface DiffOptions {
@@ -36,7 +37,7 @@ function formatDate(value: string, f: InputField, o: Required<DiffOptions>): str
   const ms = Date.parse(dayOnly ? `${value}T00:00:00Z` : value);
   if (!Number.isFinite(ms)) return value;
   // A calendar day has no zone: read it in UTC so it never moves a day.
-  if (dayOnly || f.format === 'date') return formatDayIn(ms, 'UTC', o.locale);
+  if (dayOnly || f.format === 'date') return formatDayIn(ms, CALENDAR_ZONE, o.locale);
   const day = formatDayIn(ms, o.timeZone, o.locale);
   const at = timeFormat(o.timeZone, o.locale, true).formatToParts(ms);
   const midnight = at.every((p) => p.type === 'literal' || p.value === '00');
@@ -50,7 +51,7 @@ export function formatValue(
   options: DiffOptions = {},
 ): string | null {
   if (empty(value)) return null;
-  const o = { timeZone: options.timeZone ?? 'UTC', locale: options.locale ?? 'en-US' };
+  const o = { timeZone: options.timeZone ?? DEFAULT_TIME_ZONE, locale: options.locale ?? 'en-US' };
   if (typeof value === 'string') {
     const option = f.options?.find((x) => x.value === value);
     if (option) return option.label;

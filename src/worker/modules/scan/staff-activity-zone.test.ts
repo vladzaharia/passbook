@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { makeScanStaff, makeSession, makeUser } from '../../../../test/helpers/index.ts';
-import { createSessionStore } from '../../platform/auth.ts';
 import { run } from '../../platform/db.ts';
+import { createSessionStore } from '../auth/sessions.ts';
 import { tenantAuthorityOf } from '../passes/http.ts';
 import { captureConsoleFeed, consoleReadAuthority } from './feed-console-page.ts';
 import { readStaffActivity } from './repo-staff-activity.ts';

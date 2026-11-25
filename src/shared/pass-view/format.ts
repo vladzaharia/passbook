@@ -1,4 +1,5 @@
 import type { Json } from '../../passkit/types.ts';
+import { CALENDAR_ZONE } from '../time-zone.ts';
 
 export interface FormatSpec {
   dateStyle?: unknown;
@@ -81,7 +82,7 @@ function formatDate(value: string, spec: FormatSpec, ctx: FormatContext): Format
           Number(w[6] ?? 0),
         ),
       );
-      timeZone = 'UTC';
+      timeZone = CALENDAR_ZONE;
     }
   }
   if (Number.isNaN(date.getTime())) return { text: value, warning: 'field.date.invalid' };

@@ -1,3 +1,5 @@
+import { CALENDAR_ZONE } from '../../shared/time-zone.ts';
+
 /**
  * A date or time as text, the way Apple's own styles read it in English, from the pass's own wall
  * clock: no locale lookup, no zone conversion, so a compiler's output never depends on where it
@@ -50,7 +52,7 @@ function dateText(y: number, mo: number, d: number, style: string | undefined): 
 }
 
 function zoneText(zone: string): string {
-  if (zone === 'Z') return 'UTC';
+  if (zone === 'Z') return CALENDAR_ZONE;
   const m = /^([+-])(\d{2}):?(\d{2})$/u.exec(zone);
   if (!m) return '';
   const hours = Number(m[2]);

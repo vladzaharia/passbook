@@ -1,4 +1,5 @@
 import type { PassJson } from '../../passkit/types.ts';
+import { CALENDAR_ZONE } from '../time-zone.ts';
 import type { FormatContext } from './format.ts';
 import type { SemanticView } from './types.ts';
 
@@ -39,7 +40,7 @@ export function placeDate(
     else if (m) {
       const minutes = (Number(m[2]) * 60 + Number(m[3])) * (m[1] === '-' ? -1 : 1);
       date = new Date(date.getTime() + minutes * 60_000);
-      timeZone = 'UTC';
+      timeZone = CALENDAR_ZONE;
     }
   }
   return { date, timeZone };
