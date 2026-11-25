@@ -32,6 +32,8 @@ export function FitBox({
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+  // No ResizeObserver: nothing can be measured, so the content shows as it is, unscaled.
+  if (typeof ResizeObserver === 'undefined') return <div className={className}>{children}</div>;
   const scale = avail > 0 && natural > 0 ? Math.min(avail / layoutWidth, maxHeight / natural) : 0;
   return (
     <div

@@ -66,11 +66,12 @@ export function Stage({
   onChannel: (c: Channel) => void;
   onFace: (f: Face) => void;
 }) {
-  const apple = source ? (
-    <ApplePane source={source} face={face} onFace={onFace} />
-  ) : (
-    <Skel ratio="320/420" />
-  );
+  const appleOf = (label?: string) =>
+    source ? (
+      <ApplePane source={source} face={face} onFace={onFace} label={label} />
+    ) : (
+      <Skel ratio="320/420" />
+    );
   const paperOf = (maxHeight: number) => (
     <PaperPane source={source} image={paperImage} maxHeight={maxHeight} />
   );
@@ -113,15 +114,27 @@ export function Stage({
             tabIndex={0}
           >
             <figure data-channel="apple">
-              {apple}
+              {appleOf('Apple side')}
               <figcaption>{CAPTION.apple}</figcaption>
             </figure>
             <figure data-channel="google">
-              <WalletPane target="google" previews={wallets} face={face} onFace={onFace} />
+              <WalletPane
+                target="google"
+                previews={wallets}
+                face={face}
+                onFace={onFace}
+                label="Google side"
+              />
               <figcaption>{CAPTION.google}</figcaption>
             </figure>
             <figure data-channel="samsung">
-              <WalletPane target="samsung" previews={wallets} face={face} onFace={onFace} />
+              <WalletPane
+                target="samsung"
+                previews={wallets}
+                face={face}
+                onFace={onFace}
+                label="Samsung side"
+              />
               <figcaption>{CAPTION.samsung}</figcaption>
             </figure>
             <figure data-channel="paper">
@@ -133,7 +146,7 @@ export function Stage({
           <div className="one">
             <ChannelPreviews
               source={source}
-              apple={apple}
+              apple={appleOf()}
               paper={paperOf(ONE_PAPER_H)}
               value={channel}
               walletNotes={false}

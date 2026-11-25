@@ -147,7 +147,8 @@
 }
 
 /* ---------- Narrow ---------- */
-@media (max-width: 720px) {
+/* Stacked below 860 px: the 22 rem editor column would leave the previews under 25 rem. */
+@media (max-width: 860px) {
   .code-h .file {
     display: none;
   }
@@ -183,6 +184,12 @@
     border-radius: 0;
     border-inline: 0;
   }
+  .notes-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* A phone: the four channels scroll sideways, a card each. */
+@media (max-width: 720px) {
   .chan {
     display: flex;
     overflow-x: auto;
@@ -193,9 +200,6 @@
   .chan figure {
     flex: 0 0 240px;
     scroll-snap-align: center;
-  }
-  .notes-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
 }
 

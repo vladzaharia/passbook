@@ -34,10 +34,12 @@ export function ApplePane({
   source,
   face,
   onFace,
+  label,
 }: {
   source: PreviewSource;
   face?: PreviewFace | undefined;
   onFace?: ((face: PreviewFace) => void) | undefined;
+  label?: string | undefined;
 }) {
   const view = useMemo(() => {
     try {
@@ -58,7 +60,9 @@ export function ApplePane({
   const side = (s: PreviewFace) => (
     <PassCardStage view={view} face={s} tilt glow testBand className="pg-apple" />
   );
-  return <FacePair face={face} onFace={onFace} front={side('front')} back={side('back')} />;
+  return (
+    <FacePair face={face} onFace={onFace} label={label} front={side('front')} back={side('back')} />
+  );
 }
 
 /** Google and Samsung: the cards the real compilers make. Front is the card, back its details. */
@@ -67,11 +71,13 @@ export function WalletPane({
   previews,
   face,
   onFace,
+  label,
 }: {
   target: 'google' | 'samsung';
   previews: WalletPreviews;
   face?: PreviewFace | undefined;
   onFace?: ((face: PreviewFace) => void) | undefined;
+  label?: string | undefined;
 }) {
   if (previews.state === 'loading') return <Skel ratio="320/420" />;
   if (previews.state === 'error')
@@ -103,7 +109,13 @@ export function WalletPane({
     ) : null;
   return (
     <div className="pg-wallet">
-      <FacePair face={face} onFace={onFace} front={side('front')} back={side('back')} />
+      <FacePair
+        face={face}
+        onFace={onFace}
+        label={label}
+        front={side('front')}
+        back={side('back')}
+      />
     </div>
   );
 }
