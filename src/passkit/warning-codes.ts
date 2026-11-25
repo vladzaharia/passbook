@@ -93,6 +93,7 @@ export const WARNING_CODES = [
   'UPCOMING',
   'URL_SCHEME',
   'WALLETS_ART_UNUSED',
+  'WALLETS_CLASS_KEY',
   'WALLETS_INPUT',
   'WALLETS_ROLE_FIELD',
 ] as const;
