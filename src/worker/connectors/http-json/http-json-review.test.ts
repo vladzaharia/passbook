@@ -360,3 +360,39 @@ describe('page size is measured in bytes, and repeats in whole pages', () => {
     expect((await drain(ctx)).refs).toEqual(['a', 'b', 'a', 'b']);
   });
 });
+
+describe('R2 review: header and parameter rules', () => {
+  const base = { baseUrl: 'https://api.example.com/v1' };
+  it('refuses method-override headers and a _method parameter', () => {
+    for (const name of ['X-HTTP-Method-Override', 'X-HTTP-Method', 'X-Method-Override']) {
+      expect(
+        connector.configSchema.safeParse({ ...base, headers: [{ name, value: 'DELETE' }] }).success,
+      ).toBe(false);
+    }
+    expect(
+      connector.configSchema.safeParse({
+        ...base,
+        list: { path: '/m', query: [{ name: '_method', value: 'DELETE' }] },
+      }).success,
+    ).toBe(false);
+  });
+
+  it('totalPagesHeader may not name a credential-like header', () => {
+    const page = (totalPagesHeader: string) =>
+      connector.configSchema.safeParse({
+        ...base,
+        list: { path: '/m', pagination: { style: 'page', totalPagesHeader } },
+      }).success;
+    expect(page('X-WP-TotalPages')).toBe(true);
+    for (const bad of [
+      'X-Auth-Token',
+      'WWW-Authenticate',
+      'X-Subject-Token',
+      'X-CSRF-Token',
+      'Location',
+      'Set-Cookie',
+    ]) {
+      expect(page(bad)).toBe(false);
+    }
+  });
+});

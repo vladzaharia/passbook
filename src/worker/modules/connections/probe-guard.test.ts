@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { makeApiKey, makeOrg } from '../../../../test/helpers/index.ts';
+import { makeApiKey, makeOrg, makeSession } from '../../../../test/helpers/index.ts';
 import { all, run } from '../../platform/db.ts';
 import { resetDeps } from './deps.ts';
 import { BASE, probeApp, reply, upstream } from './probe-fixtures.ts';
@@ -81,7 +81,7 @@ describe('planted credentials never come back', () => {
       expect(out.json.request.url).not.toMatch(/PLANTED/);
       // The next-page token carries no credential either, in any encoding.
       const token = atob(
-        String(out.json.page.next).slice(3).replaceAll('-', '+').replaceAll('_', '/'),
+        (String(out.json.page.next).split('.')[1] ?? '').replaceAll('-', '+').replaceAll('_', '/'),
       );
       for (const leak of c.leaks) expect(token).not.toContain(leak);
     });
@@ -260,6 +260,79 @@ describe('a saved probe', () => {
     } as never);
     const out = await t.call(`/api/v1/connections/${demo.id}/probe`, { target: 'list' });
     expect(out).toMatchObject({ status: 422, json: { code: 'VALIDATION' } });
+  });
+});
+
+describe('a saved probe: step-up and tokens', () => {
+  it('asks a stale session for a recent sign-in when the request brings config or secrets', async () => {
+    const calls = upstream(() => ({ data: ids('a') }));
+    const conn = await service.create(t.kit.sctx, t.kit.actor, {
+      orgId: t.kit.org.id,
+      connectorType: 'http-json',
+      name: 'REST',
+      mode: 'poll',
+      config: { baseUrl: BASE, list },
+    } as never);
+    const stale = await makeSession(t.kit, {
+      userId: t.kit.actor.id,
+      roles: ['admin', 'user'],
+      authTime: t.kit.clock.now() - 3 * 3_600_000,
+    });
+    const path = `/api/v1/connections/${conn.id}/probe`;
+    const withConfig = await t.call(
+      path,
+      { target: 'list', config: { baseUrl: BASE, list } },
+      stale.headers,
+    );
+    const withSecrets = await t.call(
+      path,
+      { target: 'list', secrets: { token: 'tok-12345678' } },
+      stale.headers,
+    );
+    expect([withConfig.status, withSecrets.status]).toEqual([403, 403]);
+    expect(calls).toHaveLength(0);
+    // The stored configuration alone needs no step-up.
+    expect((await t.call(path, { target: 'list' }, stale.headers)).json.ok).toBe(true);
+  });
+
+  it('refuses a token from another connection or from the unsaved probe', async () => {
+    upstream(() => ({ data: ids('a', 'b'), next: '/v1/m?page=2' }));
+    const config = {
+      baseUrl: BASE,
+      list: { ...list, pagination: { style: 'next-link', nextPointer: '/next' } },
+    };
+    const make = () =>
+      service.create(t.kit.sctx, t.kit.actor, {
+        orgId: t.kit.org.id,
+        connectorType: 'http-json',
+        name: 'REST',
+        mode: 'poll',
+        config,
+      } as never);
+    const [a, b] = [await make(), await make()];
+    const first = await t.call(`/api/v1/connections/${a.id}/probe`, { target: 'list' });
+    const next = first.json.page.next as string;
+    expect(next).toEqual(expect.any(String));
+    expect(
+      (await t.call(`/api/v1/connections/${a.id}/probe`, { target: 'list', next })).json.ok,
+    ).toBe(true);
+    expect(
+      (await t.call(`/api/v1/connections/${b.id}/probe`, { target: 'list', next })).json.errorCode,
+    ).toBe('CONFIG');
+    const unsaved = await t.call('/api/v1/connections/probe', {
+      orgId: t.kit.org.id,
+      connectorType: 'http-json',
+      config,
+      target: 'list',
+    });
+    expect(
+      (
+        await t.call(`/api/v1/connections/${a.id}/probe`, {
+          target: 'list',
+          next: unsaved.json.page.next,
+        })
+      ).json.errorCode,
+    ).toBe('CONFIG');
   });
 });
 

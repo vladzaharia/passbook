@@ -12,6 +12,10 @@ const FORBIDDEN_HEADERS = new Set([
   'upgrade',
   'proxy-authorization',
   'te',
+  // A GET that an upstream reads as a write.
+  'x-http-method-override',
+  'x-http-method',
+  'x-method-override',
 ]);
 
 export const HEADER_NAME = /^[A-Za-z][A-Za-z0-9-]{0,63}$/;

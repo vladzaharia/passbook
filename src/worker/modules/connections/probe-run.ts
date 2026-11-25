@@ -4,7 +4,7 @@ import type {
   ProbeResultSchema,
 } from '../../../shared/contracts/connection-probe.ts';
 import { detectResponse } from '../../../shared/rest/detect.ts';
-import { prune } from '../../../shared/rest/prune.ts';
+import { PROBE_LIMITS, prune } from '../../../shared/rest/prune.ts';
 import type { Config, Secrets } from '../../connectors/http-json/config.ts';
 import { advance, pageUrl, repeatOf } from '../../connectors/http-json/pagination.ts';
 import { authParamOf, endpoint, getJson } from '../../connectors/http-json/request.ts';
@@ -13,7 +13,7 @@ import { type ConnectorContext, ConnectorError } from '../../connectors/types.ts
 import { AppError } from '../../platform/errors.ts';
 import type { SafeFetch } from '../../platform/safe-fetch.ts';
 import type { Masker } from './probe-mask.ts';
-import { decodeToken, encodeToken, idHash } from './probe-token.ts';
+import { decodeToken, encodeToken, idHash, type TokenKit } from './probe-token.ts';
 
 type Ctx = ConnectorContext<Config, Secrets>;
 type Code = z.infer<typeof ProbeErrorCodeSchema>;
@@ -27,6 +27,9 @@ export interface ProbeRequest {
 
 /** A page of more records than this is refused, as a sync refuses it: a cut page would break paging. */
 const MAX_PAGE_RECORDS = 1000;
+/** The whole answer stays under this, whatever the upstream sends. */
+const MAX_RESULT_CHARS = 1_000_000;
+const escapeRe = (t: string): string => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 interface Seen {
   status: number;
@@ -49,6 +52,8 @@ const REFUSED: Record<string, Code> = {
 /** The one code a failure maps to; an error that is not the connector's own is not ours to describe. */
 function codeOf(error: unknown, state: State): { code: Code; retryAfterMs?: number } {
   if (state.refused) return { code: REFUSED[state.refused] ?? 'UPSTREAM' };
+  // A body too deep or too wide for the engine to hold is an oversized answer, not a bug.
+  if (error instanceof RangeError) return { code: 'TOO_LARGE' };
   if (!(error instanceof ConnectorError)) throw error;
   if (error.reason === 'OFF_ORIGIN') return { code: 'OFF_ORIGIN' };
   switch (error.code) {
@@ -75,7 +80,12 @@ function codeOf(error: unknown, state: State): { code: Code; retryAfterMs?: numb
  * the explorer needs. The connector's own request builder, pagination and size caps run; only a 2xx JSON body is
  * returned, pruned and with the request's credentials masked, and nothing is stored or logged.
  */
-export async function runProbe(cc: Ctx, req: ProbeRequest, mask: Masker): Promise<ProbeResult> {
+export async function runProbe(
+  cc: Ctx,
+  req: ProbeRequest,
+  mask: Masker,
+  tokens: TokenKit,
+): Promise<ProbeResult> {
   const started = cc.now();
   const state: State = { seen: null, refused: null, url: null };
   const fetchRecorded: SafeFetch = async (url, init) => {
@@ -121,8 +131,13 @@ export async function runProbe(cc: Ctx, req: ProbeRequest, mask: Masker): Promis
   try {
     const list = config.list;
     const base = new URL(config.baseUrl);
-    const prev = req.next === undefined ? null : decodeToken(req.next);
+    const prev = req.next === undefined ? null : await decodeToken(req.next, tokens);
     if (req.next !== undefined && !prev) return failed('CONFIG');
+    // A token also stays under the configured base path: it cannot reach elsewhere on the origin.
+    const under = base.pathname.replace(/\/+$/, '');
+    const at = prev?.p?.u;
+    if (at !== undefined && under !== '' && !new RegExp(`^${escapeRe(under)}(?:[/?#]|$)`).test(at))
+      return failed('CONFIG');
     let url: URL;
     if (req.target === 'list') {
       if (!list) return failed('CONFIG');
@@ -141,27 +156,34 @@ export async function runProbe(cc: Ctx, req: ProbeRequest, mask: Masker): Promis
         ? [list.pagination.totalPagesHeader]
         : [];
     const headers = mask.headers(fetched.headers, extraHeaders);
-    const body = mask.json(fetched.body);
+    const { value: body, pruned } = prune(fetched.body, PROBE_LIMITS, mask.text);
     const shownUrl = mask.url(url.toString());
     const done = (extra: Pick<ProbeResult, 'ok' | 'page'> & { errorCode?: Code }): ProbeResult => {
-      const cut = prune(body);
-      return {
+      const found =
+        req.target === 'list'
+          ? detectResponse({
+              body,
+              headers,
+              url: shownUrl,
+              ...(list ? { recordsPointer: list.recordsPointer, idPointer: list.idPointer } : {}),
+            })
+          : detectResponse({ body, headers, url: shownUrl, record: config.recordPointer });
+      // Detection saw the pruned body: counts come from what pruning cut.
+      const total = (pointer: string, count: number) =>
+        pruned.arrays.find((a) => a.pointer === pointer)?.total ?? count;
+      const out: ProbeResult = {
         ...extra,
         durationMs: cc.now() - started,
         request: requestOf(),
         headers,
-        body: cut.value as ProbeResult['body'],
-        pruned: cut.pruned,
-        detections:
-          req.target === 'list'
-            ? detectResponse({
-                body,
-                headers,
-                url: shownUrl,
-                ...(list ? { recordsPointer: list.recordsPointer, idPointer: list.idPointer } : {}),
-              })
-            : detectResponse({ body, headers, url: shownUrl, record: config.recordPointer }),
+        body: body as ProbeResult['body'],
+        pruned,
+        detections: {
+          ...found,
+          records: found.records.map((r) => ({ ...r, count: total(r.pointer, r.count) })),
+        },
       };
+      return JSON.stringify(out).length > MAX_RESULT_CHARS ? failed('TOO_LARGE') : out;
     };
     if (req.target === 'record' || !list) return done({ ok: true, page: null });
 
@@ -203,17 +225,20 @@ export async function runProbe(cc: Ctx, req: ProbeRequest, mask: Masker): Promis
     const { repeated, stored } = await repeatOf(refs, prev?.p?.s, step.more);
     const next =
       step.more && !repeated && step.next && index < list.maxPages
-        ? encodeToken({
-            p: {
-              ...step.next,
-              ...(step.next.c === undefined ? {} : { c: mask.text(step.next.c) }),
-              ...(step.next.u === undefined ? {} : { u: mask.text(step.next.u) }),
-              ...(stored === undefined ? {} : { s: stored }),
+        ? await encodeToken(
+            {
+              p: {
+                ...step.next,
+                ...(step.next.c === undefined ? {} : { c: mask.text(step.next.c) }),
+                ...(step.next.u === undefined ? {} : { u: mask.text(step.next.u) }),
+                ...(stored === undefined ? {} : { s: stored }),
+              },
+              k: index,
+              n: before + items.length,
+              ids: hashes,
             },
-            k: index,
-            n: before + items.length,
-            ids: hashes,
-          })
+            tokens,
+          )
         : null;
     return done({
       ok: true,

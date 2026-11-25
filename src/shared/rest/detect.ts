@@ -114,6 +114,10 @@ function fieldRow(f: FieldInfo, rows: readonly unknown[], base: string): FieldRo
   };
 }
 
+/** Rows the contract can carry: a longer pointer or path is left out, not cut. */
+const fits = (r: { pointer: string; jsonPath: string }): boolean =>
+  r.pointer.length <= 500 && r.jsonPath.length <= 600;
+
 const ID_NAMED = /^(id|_id|uuid|guid|key)$/i;
 
 function idRows(fields: FieldInfo[], base: string): ProbeDetections['id'] {
@@ -188,7 +192,7 @@ export function detectResponse(input: DetectInput): ProbeDetections {
   const fields = leafFields(rows, { sample: ROWS }).slice(0, MAX_FIELDS);
   const rowsOut = fields.map((f) => fieldRow(f, rows, base));
   const jsonPath = (p: string) => recordsJsonPath(base, p);
-  return {
+  const out: ProbeDetections = {
     records: records.slice(0, 5).map((c) => ({ ...c, jsonPath: recordsJsonPath(c.pointer) })),
     pagination:
       input.record === undefined
@@ -210,5 +214,13 @@ export function detectResponse(input: DetectInput): ProbeDetections {
       .map((f) => ({ pointer: f.pointer, jsonPath: jsonPath(f.pointer) })),
     fields: rowsOut,
     rateLimit: detectRateLimit(input.headers),
+  };
+  return {
+    ...out,
+    records: out.records.filter(fits),
+    id: out.id.filter(fits),
+    updatedAt: out.updatedAt.filter(fits),
+    holderEmail: out.holderEmail.filter(fits),
+    fields: out.fields.filter(fits),
   };
 }

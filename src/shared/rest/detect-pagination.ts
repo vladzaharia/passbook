@@ -222,6 +222,15 @@ function offsets(
   ];
 }
 
+const pointersOf = (c: RestPagination): string[] =>
+  [
+    'nextPointer' in c ? c.nextPointer : undefined,
+    'cursorPointer' in c ? c.cursorPointer : undefined,
+    'hasMorePointer' in c ? c.hasMorePointer : undefined,
+    'totalPagesPointer' in c ? c.totalPagesPointer : undefined,
+    'totalPointer' in c ? c.totalPointer : undefined,
+  ].filter((p): p is string => p !== undefined);
+
 /**
  * How a response says where the next page is, best first (at most 3), in the order a sync would try:
  * Link header, next URL field, cursor field, page fields, offset fields. Nothing found is `none`.
@@ -243,5 +252,9 @@ export function detectPagination(input: PaginationInput): PaginationCandidate[] 
   if (found.length === 0)
     return [{ confidence: 'low', config: { style: 'none' }, evidence: 'none' }];
   // Array.sort is stable: equal confidence keeps the priority order above.
-  return found.sort((a, b) => RANK[a.confidence] - RANK[b.confidence]).slice(0, MAX_CANDIDATES);
+  return found
+    .filter((c) => pointersOf(c.config).every((p) => p.length <= 500))
+    .sort((a, b) => RANK[a.confidence] - RANK[b.confidence])
+    .slice(0, MAX_CANDIDATES)
+    .map((c) => ({ ...c, evidence: c.evidence.slice(0, 200) }));
 }
